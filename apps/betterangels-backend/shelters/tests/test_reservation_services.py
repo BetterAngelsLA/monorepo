@@ -4,7 +4,7 @@ from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from clients.models import ClientProfile
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.test import TestCase
 from model_bakery import baker
 
@@ -61,9 +61,7 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
 
     def test_requires_bed_or_room(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            reservation_create(
-                user=self.user, data={"clients": [{"client_profile_id": self.client_1.pk}]}
-            )
+            reservation_create(user=self.user, data={"clients": [{"client_profile_id": self.client_1.pk}]})
         self.assertIn("A bed or room must be provided", str(ctx.exception))
 
     def test_bed_maintenance_flag_rejected(self) -> None:
@@ -267,9 +265,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
 
     def test_reservation_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            reservation_update(
-                user=self.user, data={"id": 999999, "notes": "Missing"}
-            )
+            reservation_update(user=self.user, data={"id": 999999, "notes": "Missing"})
         self.assertIn("Reservation matching ID 999999 could not be found.", str(ctx.exception))
 
     def test_user_without_org_access_raises_does_not_exist(self) -> None:
@@ -280,6 +276,42 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
                 user=outsider,
                 data={"id": self.reservation.pk, "notes": "Blocked"},
             )
+
+    def _org_with_shelter_and_bed(self, name: str) -> tuple:
+        org_b = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        shelter_b = shelter_recipe.make(organization=org_b)
+        bed_b = baker.make(Bed, shelter=shelter_b, name=name)
+        return org_b, shelter_b, bed_b
+
+    def test_move_to_another_orgs_bed_allowed_with_change_there(self) -> None:
+        """Writes are identity-wide: holding CHANGE at the destination org authorizes
+        a cross-org reparent (ADR 0001 §2.6 / §7 item 7)."""
+        org_b, _shelter_b, bed_b = self._org_with_shelter_and_bed("Bed-B")
+        org_b.users.add(self.user)
+        OrgRoleManager(org_b).add_roles(self.user, SHELTER_OPERATOR)
+
+        updated = reservation_update(
+            user=self.user,
+            data={"id": self.reservation.pk, "bed_id": bed_b.pk},
+        )
+
+        self.assertEqual(updated.bed_id, bed_b.pk)
+        self.assertEqual(updated.shelter.organization_id, org_b.pk)
+
+    def test_move_to_another_orgs_bed_denied_without_change_there(self) -> None:
+        """A cross-org reparent must fail closed when the user cannot act at the
+        destination org — reach at the reservation's *current* org is not enough."""
+        User = get_user_model()
+        mover = User.objects.create_user(username="cross-org-mover", password="pw")
+        self.org.users.add(mover)
+        OrgRoleManager(self.org).add_roles(mover, SHELTER_OPERATOR)
+        _org_b, _shelter_b, bed_b = self._org_with_shelter_and_bed("Bed-B-Foreign")
+
+        with self.assertRaises(PermissionDenied):
+            reservation_update(user=mover, data={"id": self.reservation.pk, "bed_id": bed_b.pk})
+
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.bed_id, self.bed_1.pk)
 
     def test_update_replaces_clients(self) -> None:
         client_1 = baker.make(ClientProfile)
@@ -341,9 +373,7 @@ class ReservationDeleteTestCase(ReservationServiceTestCase):
         to_delete_2 = baker.make(Reservation, bed=self.bed_2, status=ReservationStatusChoices.CONFIRMED)
         other = baker.make(Reservation, room=self.room_2, bed=None, status=ReservationStatusChoices.CONFIRMED)
 
-        deleted = reservation_delete(
-            user=self.user, reservation_ids=[to_delete_1.pk, to_delete_2.pk]
-        )
+        deleted = reservation_delete(user=self.user, reservation_ids=[to_delete_1.pk, to_delete_2.pk])
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Reservation.objects.filter(pk__in=[to_delete_1.pk, to_delete_2.pk]).exists())

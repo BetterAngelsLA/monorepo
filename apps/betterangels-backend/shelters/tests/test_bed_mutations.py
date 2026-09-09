@@ -76,7 +76,7 @@ class CreateBedMutationTestCase(BedMutationTestCase):
                 "type": BedTypeChoices.TWIN.name,
             }
         }
-        expected_query_count = 40
+        expected_query_count = 41
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -128,6 +128,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         """
 
     def test_update_bed(self) -> None:
+        """Update an existing bed including its room."""
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
         accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
@@ -164,7 +165,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             },
         }
 
-        expected_query_count = 37
+        expected_query_count = 38
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -231,7 +232,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             "data": {"id": str(source.pk), "statusNotes": "New notes"},
         }
 
-        expected_query_count = 18
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -306,7 +307,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             "data": {"id": str(bed.pk), "maintenanceFlag": True},
         }
 
-        expected_query_count = 18
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 

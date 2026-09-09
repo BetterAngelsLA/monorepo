@@ -105,6 +105,19 @@ class BedCreateTestCase(BedServiceTestCase):
             )
         self.assertIn("demographics", ctx.exception.message_dict)
 
+    def test_create_with_room_of_another_shelter_is_rejected(self) -> None:
+        """A bed's room must belong to its shelter (ADR 0001 §2.6 data integrity)."""
+        other_shelter = shelter_recipe.make(organization=self.other_org)
+        foreign_room = baker.make(Room, shelter=other_shelter, name="Foreign Room")
+
+        with self.assertRaises(ValidationError):
+            bed_create(
+                user=self.user,
+                data={"shelter_id": self.shelter.pk, "room_id": foreign_room.pk},
+            )
+
+        self.assertFalse(Bed.objects.filter(room=foreign_room).exists())
+
 
 class BedUpdateTestCase(BedServiceTestCase):
     def setUp(self) -> None:
@@ -173,6 +186,22 @@ class BedUpdateTestCase(BedServiceTestCase):
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.demographics.count(), 0)
+
+    def test_update_to_room_of_another_shelter_is_rejected(self) -> None:
+        """Reparenting a bed into another shelter's room is a data-integrity error.
+
+        Without this, an org-A bed could be parked in an org-B room with no
+        authority at org B (ADR 0001 §2.6) — the bed's org anchor (``shelter``)
+        would no longer match its room's org.
+        """
+        other_shelter = shelter_recipe.make(organization=self.other_org)
+        foreign_room = baker.make(Room, shelter=other_shelter, name="Foreign Room")
+
+        with self.assertRaises(ValidationError):
+            bed_update(user=self.user, data={"id": self.bed.pk, "room_id": foreign_room.pk})
+
+        self.bed.refresh_from_db()
+        self.assertIsNone(self.bed.room_id)
 
 
 class BedDeleteTestCase(BedServiceTestCase):

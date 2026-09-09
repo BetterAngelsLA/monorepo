@@ -155,6 +155,8 @@ def reservation_update(*, user: "User", data: Dict[str, Any]) -> Reservation:
     except Reservation.DoesNotExist:
         raise ObjectDoesNotExist(f"Reservation matching ID {reservation_id} could not be found.")
 
+    original_org = reservation.shelter.organization_id if reservation.shelter is not None else None
+
     clients_data = data.pop("clients", None)
     if clients_data:
         _validate_clients(clients_data)
@@ -172,6 +174,16 @@ def reservation_update(*, user: "User", data: Dict[str, Any]) -> Reservation:
             reservation.checked_out_at = timezone.now()
         elif new_status == ReservationStatusChoices.CHECKED_IN:
             reservation.checked_in_at = timezone.now()
+
+    # Reparenting via ``bed_id``/``room_id`` can move the reservation into a
+    # different org.  Writes are identity-wide but anchored to the row's org
+    # (ADR 0001 §2.6): re-derive the org from the (possibly new) parent and
+    # require CHANGE there, so a cross-org move fails closed unless the user
+    # can act at the destination org.
+    new_shelter = reservation.shelter
+    new_org = new_shelter.organization_id if new_shelter is not None else None
+    if new_org is not None and new_org != original_org:
+        require_can(user, Reservation.perms.CHANGE, org=new_org)
 
     reservation.full_clean()
     _validate_reservation(reservation)
