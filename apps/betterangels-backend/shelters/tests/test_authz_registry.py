@@ -37,6 +37,7 @@ QUERY_AUTHZ_ROUTES: dict[str, str] = {
     "shelter_cities": "IsAuthenticated; platform reference data",
     "shelter_spas": "IsAuthenticated; platform reference data",
     "shelter_occupancy_metrics": "resolver -> shelter_get(VIEW)",
+    "shelter_search": "resolver -> shelter_search(VIEW)",
 }
 
 # mutation -> where authorization happens for that write.
@@ -59,6 +60,8 @@ MUTATION_AUTHZ_ROUTES: dict[str, str] = {
     "resolve_shelter_photo_uploads": "shelter_photo.resolve_uploads -> shelter_get(CHANGE)",
     "update_shelter_photo": "shelter_photo.update_shelter_photo -> shelter_queryset(CHANGE)",
     "delete_shelter_photos": "shelter_photo.delete_shelter_photos -> shelter_queryset(CHANGE)",
+    "create_shelter_photo": "shelter_photo.create_shelter_photo -> shelter_get(CHANGE)",
+    "delete_shelter_photo": "shelter_photo.delete_shelter_photo -> shelter_get(CHANGE)",
 }
 
 
