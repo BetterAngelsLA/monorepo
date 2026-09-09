@@ -135,11 +135,13 @@ describe('Regex', () => {
       ['3105551234 extension 456', true],
       ['310-555-1234 x123', true],
       ['(310) 555-1234 ext 789', true],
-      // invalid — not enough digits
-      ['123', false],
-      ['12345', false],
+      // invalid — too few digits
+      ['4', false],
+      ['56789', false],
+      // invalid — 1XX area code (NANP area codes never start with 0 or 1)
       ['1234567890', false],
       ['123-456-7890', false],
+      ['023-456-7890', false],
       // invalid — non-US country code
       ['+44 20 7946 0958', false],
       // invalid — no main number

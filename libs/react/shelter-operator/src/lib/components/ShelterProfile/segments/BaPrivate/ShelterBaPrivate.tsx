@@ -47,7 +47,6 @@ export function ShelterBaPrivate(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
-  // const [disabled, setDisabled] = useState<boolean>(true);
   const [disabled, setDisabled] = useState<boolean>(false);
 
   const { shelter } = useShelterOperatorProfile(shelterId);
