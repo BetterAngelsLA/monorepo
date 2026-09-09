@@ -27,9 +27,11 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
     @parametrize(
         "user, expected_error",
         [
-            ("org_member", "You don't have permission to access this app."),
+            # Member mgmt is grant-only (ADR 0001 §5.3): a plain member and a
+            # cross-org admin are both denied by require_can at the payload org.
+            ("org_member", "You do not have permission to perform this action in this organization."),
             ("org_1_admin", None),
-            ("org_2_admin", "You do not have permission to view this organization's members."),
+            ("org_2_admin", "You do not have permission to perform this action in this organization."),
         ],
     )
     def test_view_organization_member_permission(self, user: str, expected_error: Optional[str]) -> None:
@@ -61,7 +63,9 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
     @parametrize(
         "user, org, expected_member_count, expected_members",
         [
-            ("org_member", "org_1", 0, []),
+            # Grant-only (ADR 0001 §5.3): a plain member is DENIED the member
+            # list (require_can at the payload org), like any non-grant holder.
+            ("org_member", "org_1", None, []),
             ("org_1_admin", "org_1", 2, ["org member", "org 1 admin"]),
             ("org_1_admin", "org_2", None, []),
             ("org_2_admin", "org_1", None, []),
@@ -109,7 +113,7 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
             self.assertEqual(len(response["errors"]), 1)
             self.assertEqual(
                 response["errors"][0]["message"],
-                "You do not have permission to view this organization's members.",
+                "You do not have permission to perform this action in this organization.",
             )
 
 
@@ -141,6 +145,13 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
         mutation = """
             mutation ($data: OrgInvitationInput!) {
                 addOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                     ... on OrganizationMemberType {
                         email
                     }
@@ -159,12 +170,15 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
         response = self.execute_graphql(mutation, {"data": variables})
 
         if expected_error:
-            self.assertIsNone(response["data"])
-            self.assertEqual(len(response["errors"]), 1)
-            self.assertEqual(expected_error, response["errors"][0]["message"])
+            # Grant-only deny (require_can) is surfaced as an OperationInfo
+            # payload — these mutations return ``T | OperationInfo``.
+            self.assertIsNone(response.get("errors"), response.get("errors"))
+            payload = response["data"]["addOrganizationMember"]
+            self.assertEqual(payload["messages"][0]["message"], expected_error)
             with self.assertRaises(User.DoesNotExist):
                 User.objects.get(email=variables["email"])
         else:
+            self.assertIsNone(response.get("errors"), response.get("errors"))
             self.assertEqual(response["data"]["addOrganizationMember"]["email"], "new+perm@example.com")
 
 
@@ -203,6 +217,13 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
         mutation = """
             mutation ($data: RemoveOrganizationMemberInput!) {
                 removeOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                     ... on DeletedObjectType {
                         id
                     }
@@ -218,9 +239,11 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
         response = self.execute_graphql(mutation, {"data": variables})
 
         if expected_error:
-            self.assertIsNone(response["data"])
-            self.assertEqual(len(response["errors"]), 1)
-            self.assertEqual(expected_error, response["errors"][0]["message"])
+            # Grant-only deny (require_can) is surfaced as an OperationInfo
+            # payload — these mutations return ``T | OperationInfo``.
+            self.assertIsNone(response.get("errors"), response.get("errors"))
+            payload = response["data"]["removeOrganizationMember"]
+            self.assertEqual(payload["messages"][0]["message"], expected_error)
 
             # membership should still exist
             self.assertTrue(
@@ -231,6 +254,7 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
             )
 
         else:
+            self.assertIsNone(response.get("errors"), response.get("errors"))
             self.assertEqual(
                 response["data"]["removeOrganizationMember"]["id"],
                 self.removable_member.pk,
