@@ -504,13 +504,10 @@ class GrantAdmin(SuperuserOnlyWritesMixin, admin.ModelAdmin):
 class LoadedRowRawIdWidget(ForeignKeyRawIdWidget):
     """Raw-id widget that renders the current FK label from the loaded row.
 
-    The stock ``ForeignKeyRawIdWidget.label_and_url_for_value`` re-queries the
-    related model (``self.rel.model._default_manager.get(pk=...)``) for every
-    rendered row — an N+1 that ``select_related`` on the inline queryset cannot
-    fix, because the widget never looks at the row instance.  Grant inlines
-    bind the row (their ``get_queryset`` select_related's it), so the form sets
-    ``current_object`` and this widget renders from it with no query when it
-    matches, falling back to the stock lookup otherwise.
+    The stock widget re-queries the related model for every rendered row — an
+    N+1 ``select_related`` cannot fix, because the widget never looks at the
+    row instance.  This one renders from the row when it matches, and falls
+    back to the stock lookup otherwise.
     """
 
     def __init__(self, *args: Any, current_object: Any = None, **kwargs: Any) -> None:
@@ -532,12 +529,7 @@ class LoadedRowRawIdWidget(ForeignKeyRawIdWidget):
 
 
 class GrantRowForm(forms.ModelForm):
-    """Form for grant-inline rows: bind each raw-id FK widget to its loaded row.
-
-    Inline rows are ``select_related``'d by the inline queryset, so the related
-    object is already in memory — hand it to the widget and skip the stock
-    per-row ``.get()`` (see :class:`LoadedRowRawIdWidget`).
-    """
+    """Bind each raw-id FK widget to its ``select_related``'d row."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -560,20 +552,10 @@ class GrantInline(SuperuserOnlyWritesMixin, admin.TabularInline):
     fk_name = "scope_org"
     extra = 0
     form = GrantRowForm
-    # raw_id_fields (not autocomplete): the autocomplete widget fetches each
-    # existing row's FK label with its own query, turning the org page into an
-    # N+1 (one row per grant — an org with ~90 members was ~540 queries).  A raw
-    # id field renders no label and is fine for superuser-only inlines.
     raw_id_fields = ("principal_user", "principal_org", "role")
-    # Object-grant columns are read-only here: rendering a per-row ContentType
-    # select would cost one query per grant row, and object grants are edited
-    # from the Grant admin, not the org-scope inline.
     readonly_fields = ("scope_object_type", "scope_object_id")
 
     def get_queryset(self, request: Any) -> Any:
-        # Every FK Grant.__str__ touches must be loaded: the row template
-        # stringifies the instance, and any missing relation is one extra query
-        # per rendered grant row.
         return super().get_queryset(request).select_related("principal_user", "principal_org", "role", "scope_org")
 
     def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
@@ -592,7 +574,6 @@ class DelegatedGrantInline(SuperuserOnlyWritesMixin, admin.TabularInline):
     raw_id_fields = ("role", "scope_org")
 
     def get_queryset(self, request: Any) -> Any:
-        # Every FK Grant.__str__ touches must be loaded (see GrantInline).
         return super().get_queryset(request).select_related("principal_user", "principal_org", "role", "scope_org")
 
     def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
@@ -1102,33 +1083,21 @@ class UserAdmin(BaseUserAdmin):
             # bare "Shelter Operator" Role sits right next to the org-scoped
             # PermissionGroup rows of the same name, and picking it would make a
             # scoped role global.  Global Roles stay — the Django admin is the
-            # sanctioned surface for granting those (ADR 0001 §3).  Role-backed
-            # PermissionGroup rows stay in the picker, but adding or removing
-            # one here mirrors the Grant (see save_related), so a group picked
-            # directly never leaves its holder without the grant the role
-            # machinery reads.
+            # sanctioned surface for granting those (ADR 0001 §3).
             groups_field.queryset = _groups_without_scoped_roles()
         return form
 
     @staticmethod
     def _role_backed_group_ids(user: User) -> set[int]:
-        """The template-backed PermissionGroup rows *user* holds.
-
-        Only these map to a scoped Role (and thus a Grant mirror) — label-only
-        hand-made groups are legacy and have nothing to mirror.  Called from
-        ``save_related``, so *user* is already persisted.
-        """
+        """The role-backed (template) PermissionGroup rows *user* holds."""
         return set(PermissionGroup.objects.filter(template__isnull=False, user=user).values_list("id", flat=True))
 
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
-        """Mirror group picker edits to Grants, like ``OrgRoleManager`` does.
+        """Mirror role-backed groups added or removed here to Grants.
 
-        ``OrgRoleManager`` mirrors each role-backed membership it creates, but
-        the raw ``auth.Group`` picker on this page bypasses it — a superuser
-        adding a user straight to an org's "Organization Admin" PermissionGroup
-        used to produce a holder of the legacy group with no Grant, who could
-        then not manage teams.  Mirroring here keeps the two consistent whether
-        the role came from the org's member page or from this one.
+        The raw ``auth.Group`` picker bypasses ``OrgRoleManager``; mirroring
+        keeps group and Grant in step whether the role came from the org's
+        member page or from this one.
         """
         user = cast(User, form.instance)
         with transaction.atomic():

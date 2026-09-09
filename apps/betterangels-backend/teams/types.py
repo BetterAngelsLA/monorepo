@@ -11,9 +11,6 @@ from .models import Team
 @strawberry_django.filter_type(Team)
 class TeamFilter:
     is_active: auto
-    # ``auto`` resolves the FK column to the ``organizationId: ID`` input field
-    # (no custom resolver); the DB-level confine here is defense in depth for
-    # whichever org the resolver authorizes.
     organization_id: auto
 
 
@@ -35,8 +32,6 @@ class TeamType:
 @strawberry_django.input(Team, partial=True)
 class CreateTeamInput:
     name: str
-    # The org to create into — carried in the payload because (unlike
-    # update/delete) there is no existing row to scope by.  No header.
     organization_id: ID
 
 

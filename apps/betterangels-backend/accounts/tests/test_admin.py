@@ -992,25 +992,14 @@ class OrganizationMemberInlineQueryCountTestCase(TestCase):
         with CaptureQueriesContext(connection) as many:
             self.client.get(self.url)
 
-        # Each added member is one flat (prefetched) row in the members inline
-        # PLUS one org-scoped Grant row in GrantInline, so every query that
-        # scales with rows shows up as a positive delta here.  Zero means the
-        # grant inlines render entirely from select_related'd rows — their raw
-        # id widgets and Grant.__str__ never hit the database — and the members
-        # inline is flat.  A real N+1 (a per-row autocomplete label fetch, a
-        # widget re-query, a __str__ miss) fails this strict assertion.
         self.assertEqual(len(many) - len(few), 0)
 
 
 class UserAdminGroupGrantMirrorTestCase(TestCase):
     """Group edits on the user page must keep group and Grant in step.
 
-    The raw ``auth.Group`` picker bypasses ``OrgRoleManager`` — a superuser
-    adding a user straight to an org's role-backed PermissionGroup used to
-    produce a legacy-only holder with no Grant, who after this cutover could
-    not manage teams (review finding on #2443).  ``UserAdmin.save_related``
-    mirrors the same transitions ``OrgRoleManager`` performs, so the two
-    surfaces cannot drift.
+    The ``auth.Group`` picker bypasses ``OrgRoleManager``; ``save_related``
+    mirrors its transitions so the two surfaces cannot drift.
     """
 
     def setUp(self) -> None:

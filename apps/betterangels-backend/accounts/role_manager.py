@@ -33,10 +33,8 @@ def mirror_membership_grant(
 ) -> None:
     """Dual-write a role-backed membership as a ``Grant`` (ADR 0001 §4 phase 2).
 
-    Scoped by the group's own organization, which callers may pass explicitly
-    to avoid re-fetching the FK: ``OrgRoleManager`` already holds the org it
-    manages, while the Django user admin hands over groups from any
-    organization and passes nothing (prefetch the relation there).
+    Scoped by the group's own organization; callers already holding it may
+    pass it explicitly to avoid re-fetching the FK.
     """
     role = scoped_role_for_group(permission_group)
     if role is not None:
