@@ -5,7 +5,7 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from common.graphql.types import PhoneNumberScalar
+from common.graphql.types import NonBlankString, NonEmptyString, PhoneNumberScalar
 from strawberry import ID, UNSET, Maybe, auto
 
 from shelters import models
@@ -68,10 +68,10 @@ class ShelterContactInfoInput:
     """A single additional contact for a shelter (mirrors the admin inline)."""
 
     id: Maybe[ID] = UNSET
-    contact_name: str
+    contact_name: NonEmptyString
     contact_number: PhoneNumberScalar
-    contact_email: Optional[str] = None
-    contact_title: Optional[str] = None
+    contact_email: Optional[NonBlankString] = None
+    contact_title: Optional[NonBlankString] = None
     is_claimant: Optional[bool] = None
 
 

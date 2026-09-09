@@ -2529,10 +2529,10 @@ enum ShelterChoices {
 
 input ShelterContactInfoInput {
   id: ID
-  contactName: String!
+  contactName: NonEmptyString!
   contactNumber: PhoneNumber!
-  contactEmail: String = null
-  contactTitle: String = null
+  contactEmail: NonBlankString = null
+  contactTitle: NonBlankString = null
   isClaimant: Boolean = null
 }
 
