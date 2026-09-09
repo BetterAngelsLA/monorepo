@@ -291,7 +291,7 @@ def seed_org_portal_permissions() -> None:
     ct = ContentType.objects.get_for_model(Organization)
     existing = set(Permission.objects.filter(content_type=ct).values_list("codename", flat=True))
     missing = [
-        Permission(codename=str(perm).rsplit(".", 1)[1], content_type=ct, name=perm.label)
+        Permission(codename=str(perm).rsplit(".", 1)[1], content_type=ct, name=str(perm.label))
         for perm in UserOrganizationPermissions
         if str(perm).rsplit(".", 1)[1] not in existing
     ]
