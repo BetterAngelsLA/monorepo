@@ -1,6 +1,6 @@
 """System checks for the grant-based authorization model (ADR 0001).
 
-IDs: ``permissions.E001``–``permissions.E006``.
+IDs: ``permissions.E001``–``permissions.E007``.
 
 The data-reading checks return ``[]`` on any ``DatabaseError`` — unreachable
 database, or tables not migrated yet — so ``manage.py check``, ``makemigrations``
@@ -242,3 +242,49 @@ def check_object_grant_principal_is_a_user(app_configs: Any, **kwargs: Any) -> l
         return errors
     except DatabaseError:
         return []
+
+
+@register(Tags.models)
+def check_write_tier_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
+    """E007 — ``write_tier`` declarations must be legal (RFC 0002 §Precondition).
+
+    ``write_tier`` is consulted by ``can_obj`` independently of ``org_via``:
+
+    * only a platform-shared model (``org_via = None``) may declare a tier —
+      org-anchored models derive the ORG write tier from their org anchor;
+    * ``WRITE_OBJECT`` stays reserved until the object arm turns on with the
+      clients cutover (ADR 0001 §2.5) — declaring it today would silently route
+      writes to an object-grant predicate nothing can satisfy.
+    """
+    from django.apps import apps
+
+    from common.models import OrgScoped, WRITE_OBJECT
+
+    errors: list[Error] = []
+    for model in apps.get_models():
+        if not issubclass(model, OrgScoped):
+            continue
+        tier = model.__dict__.get("write_tier")
+        if tier is None:
+            continue
+        if model.org_via is not None:
+            errors.append(
+                Error(
+                    f"{model.__name__}.write_tier = {tier!r} on an org-anchored model.",
+                    hint="Org-anchored models derive the ORG write tier from org_via; "
+                    "only a platform-shared model (org_via = None) declares a tier.",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        elif tier == WRITE_OBJECT:
+            errors.append(
+                Error(
+                    f"{model.__name__}.write_tier = {tier!r} is reserved.",
+                    hint="The object-grant arm (WRITE_OBJECT) turns on with the clients "
+                    "cutover (ADR 0001 §2.5) — do not declare it before then.",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+    return errors

@@ -1,8 +1,8 @@
-"""Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E005)."""
+"""Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E007)."""
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import OrgScoped
+from common.models import OrgScoped, WRITE_OBJECT, WRITE_SHARED
 from common.permissions.checks import (
     _org_via_errors_for_model,
     check_grant_never_references_global_role,
@@ -11,6 +11,7 @@ from common.permissions.checks import (
     check_org_via_hops_are_single_valued,
     check_role_permissions_models_declare_org_scoping,
     check_scoped_role_never_in_user_groups,
+    check_write_tier_declarations,
 )
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -170,3 +171,35 @@ class GrantSystemChecksTestCase(TestCase):
             _errors_with(check_role_permissions_models_declare_org_scoping(None), "permissions.E005"),
             [],
         )
+
+
+class WriteTierChecksTestCase(TestCase):
+    """E007 — ``write_tier`` declarations must be legal (RFC 0002 §Precondition)."""
+
+    def test_e007_is_quiet_for_clientprofile_shared_declaration(self) -> None:
+        from clients.models import ClientProfile
+
+        self.assertEqual(ClientProfile.write_tier, WRITE_SHARED)  # guard against a vacuous pass
+        self.assertEqual(_errors_with(check_write_tier_declarations(None), "permissions.E007"), [])
+
+    def test_e007_fires_when_an_org_anchored_model_declares_a_tier(self) -> None:
+        from unittest.mock import patch
+
+        from shelters.models import Shelter
+
+        with patch.object(Shelter, "write_tier", WRITE_SHARED):
+            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("org-anchored", errors[0].msg)
+
+    def test_e007_fires_when_the_object_tier_is_declared_before_the_arm(self) -> None:
+        from unittest.mock import patch
+
+        from clients.models import ClientProfile
+
+        with patch.object(ClientProfile, "write_tier", WRITE_OBJECT):
+            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("reserved", errors[0].msg)
