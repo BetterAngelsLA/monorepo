@@ -3,7 +3,6 @@ from typing import Any
 from unittest.mock import patch
 
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from places import Places
@@ -1529,11 +1528,8 @@ class OperatorShelterFilterQueryTestCase(GraphQLBaseTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        from notes.groups import CASEWORKER
 
-        app_label, codename = Shelter.perms.VIEW.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_1.permission_groups.get(template__name=CASEWORKER.name).permissions.add(perm)
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def get_shelters_query(self, fields: str) -> str:
