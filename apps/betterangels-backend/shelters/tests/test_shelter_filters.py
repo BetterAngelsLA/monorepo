@@ -1072,7 +1072,7 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ($filters: ShelterFilter) {
+            query ($filters: PublicShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results { id }
@@ -1139,7 +1139,7 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ($filters: ShelterFilter) {
+            query ($filters: PublicShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results { id }
@@ -1210,7 +1210,7 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ($filters: ShelterFilter) {
+            query ($filters: PublicShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results { id }
@@ -1533,7 +1533,7 @@ class OperatorShelterFilterQueryTestCase(GraphQLBaseTestCase):
 
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_1.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+        self.org_1.permission_groups.get(template__name=CASEWORKER.name).permissions.add(perm)
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def get_shelters_query(self, fields: str) -> str:

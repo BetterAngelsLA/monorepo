@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from accounts.models import OrgTypeChoices
 from common.permissions.selectors import visible
 from common.utils import get_by_pk_or_not_found
-from django.db.models import Exists, OuterRef, QuerySet
+from django.db.models import QuerySet
 from organizations.models import Organization
 
 from shelters.enums import StatusChoices
@@ -47,30 +47,6 @@ def shelter_organization_list(queryset: "QuerySet[Organization] | None" = None) 
         queryset = Organization.objects.all()
 
     return queryset.filter(profile__org_types__contains=[OrgTypeChoices.SHELTER])
-
-
-def user_shelter_list(
-    queryset: "QuerySet[Shelter]",
-    *,
-    user: "User",
-) -> "QuerySet[Shelter]":
-    """Filter to shelters belonging to organizations that *user* is a member of.
-
-    Does NOT require a specific organization — used by global permission
-    checks (e.g., photo mutations using ``HasPerm``).
-    """
-    return queryset.filter(Exists(Organization.objects.filter(pk=OuterRef("organization_id"), users=user)))
-
-
-def operator_shelter_list(
-    queryset: "QuerySet[Shelter]",
-    *,
-    user: "User",
-    organization_id: str,
-) -> "QuerySet[Shelter]":
-    """Filter to shelters belonging to *organization_id* that *user* is a member of."""
-    user_orgs = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
-    return queryset.filter(Exists(user_orgs), organization_id=organization_id)
 
 
 # ── Queryset wrappers (hide organization_field) ───────────────────────────────
