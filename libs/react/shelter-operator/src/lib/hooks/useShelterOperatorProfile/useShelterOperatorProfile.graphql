@@ -46,8 +46,12 @@ query GetShelterOperatorProfile($id: ID!) {
       name
     }
     additionalContacts {
+      id
       contactName
       contactNumber
+      contactEmail
+      contactTitle
+      isClaimant
     }
     city {
       id
