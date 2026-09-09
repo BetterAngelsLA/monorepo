@@ -30,8 +30,8 @@ from notes.models import Note
 from rest_framework.test import APIClient
 
 REPORT_SUMMARY_QUERY = """
-    query ReportSummary($startDate: Date, $endDate: Date) {
-        reportSummary(startDate: $startDate, endDate: $endDate) {
+    query ReportSummary($organizationId: ID!, $startDate: Date, $endDate: Date) {
+        reportSummary(organizationId: $organizationId, startDate: $startDate, endDate: $endDate) {
             totalNotes
             startDate
             endDate
@@ -41,12 +41,20 @@ REPORT_SUMMARY_QUERY = """
 
 
 class ReportSummaryGraphQLGrantMixin:
-    """Shared GraphQL helpers for the reportSummary query."""
+    """Shared GraphQL helpers for the reportSummary query.
+
+    The org is carried in the payload (``organizationId``); the
+    ``X-Organization-ID`` header is never consulted.  The base fixture leaves
+    the header on ``org_1``, so reading ``org_2`` below doubles as a stale-header
+    check.
+    """
 
     def _read(self, user: User, org: object) -> dict[str, Any]:
         self.graphql_client.force_login(user)
-        self._set_active_org(org)
-        return self.execute_graphql(REPORT_SUMMARY_QUERY, {"startDate": "2025-01-01", "endDate": "2025-01-31"})
+        return self.execute_graphql(
+            REPORT_SUMMARY_QUERY,
+            {"organizationId": str(org.pk), "startDate": "2025-01-01", "endDate": "2025-01-31"},
+        )
 
     def _assert_denied(self, response: dict[str, Any]) -> None:
         self.assertIsNotNone(response.get("errors"))
@@ -102,6 +110,48 @@ class ReportGrantAuthorityTestCase(GraphQLBaseTestCase, ReportSummaryGraphQLGran
         response = self._read(user, self.org_2)
         self.assertIsNone(response.get("errors"))
         self.assertIsNotNone(response["data"]["reportSummary"])
+
+    def test_reads_without_the_org_header(self) -> None:
+        """No X-Organization-ID header at all — the payload org authorizes."""
+        holder = baker.make(User)
+        self._grant_permission(holder, "reports.view_reports", self.org_2, role_name="Report Reader")
+        self.graphql_client.force_login(holder)
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, {"organizationId": str(self.org_2.pk)})
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNotNone(response["data"]["reportSummary"])
+
+    def test_stale_header_is_ignored(self) -> None:
+        """The payload org wins: a stale header naming an unauthorized org is ignored.
+
+        The base fixture leaves the header on ``org_1`` (where this holder has no
+        authority) while ``_read`` names ``org_2`` in the payload.
+        """
+        holder = baker.make(User)
+        self._grant_permission(holder, "reports.view_reports", self.org_2, role_name="Report Reader")
+
+        response = self._read(holder, self.org_2)
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNotNone(response["data"]["reportSummary"])
+
+    def test_unknown_organization_id_fails_closed(self) -> None:
+        """A payload org that does not exist is a permission denial, not a crash."""
+        holder = baker.make(User)
+        self._grant_permission(holder, "reports.view_reports", self.org_2, role_name="Report Reader")
+        self.graphql_client.force_login(holder)
+
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, {"organizationId": "999999999"})
+        self._assert_denied(response)
+
+    def test_non_numeric_organization_id_fails_closed(self) -> None:
+        """A non-numeric payload org id denies cleanly (no ValueError crash)."""
+        holder = baker.make(User)
+        self._grant_permission(holder, "reports.view_reports", self.org_2, role_name="Report Reader")
+        self.graphql_client.force_login(holder)
+
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, {"organizationId": "not-a-number"})
+        self._assert_denied(response)
 
 
 class ReportGrantAuthorityDeniedTestCase(

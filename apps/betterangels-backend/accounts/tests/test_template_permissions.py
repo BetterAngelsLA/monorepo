@@ -59,3 +59,42 @@ def test_all_template_permissions_resolve() -> None:
             "to use the correct app_label.codename."
         )
         pytest.fail("\n".join(lines))
+
+
+@pytest.mark.django_db
+def test_retire_superseded_phantom_permissions() -> None:
+    """Phantom rows with a real-model twin are retired; portal phantoms are kept.
+
+    Simulates a DB seeded before real-model binding: a synthesized
+    ``(reports, reports)`` phantom ContentType + ``view_reports`` Permission that
+    now has a real twin on ``ScheduledReport``.  Retiring must drop the phantom
+    (and its ContentType) but keep the real row — and the member-management
+    portal phantoms (``organizations.*``), which still have no real twin.
+    """
+    from accounts.seed import retire_superseded_phantom_permissions
+    from django.contrib.contenttypes.models import ContentType
+
+    # A real twin exists: reports.view_reports on ScheduledReport (model Meta).
+    real = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
+    assert real.content_type.model_class() is not None
+
+    # Simulate the old synthesized phantom.
+    phantom_ct, _ = ContentType.objects.get_or_create(app_label="reports", model="reports")
+    phantom, _ = Permission.objects.get_or_create(
+        content_type=phantom_ct, codename="view_reports", defaults={"name": "Can view reports"}
+    )
+
+    # A portal phantom with no real twin (member management is still legacy).
+    portal_ct, _ = ContentType.objects.get_or_create(app_label="organizations", model="member")
+    portal_phantom, _ = Permission.objects.get_or_create(
+        content_type=portal_ct, codename="add_org_member", defaults={"name": "Can Add Org Member"}
+    )
+
+    retire_superseded_phantom_permissions()
+
+    assert not Permission.objects.filter(pk=phantom.pk).exists()
+    assert Permission.objects.filter(pk=real.pk).exists()
+    # Portal phantom has no real twin → kept.
+    assert Permission.objects.filter(pk=portal_phantom.pk).exists()
+    # Phantom ContentType dropped once its rows are gone.
+    assert not ContentType.objects.filter(app_label="reports", model="reports").exists()

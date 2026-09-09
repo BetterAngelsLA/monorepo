@@ -180,3 +180,49 @@ def sync_group_permissions(*, organization: Organization | None = None) -> None:
             if {p.pk for p in permission_group.permissions.all()} != wanted:
                 permission_group.permissions.set(wanted)
                 logger.info("Synced permissions for group %s (%d perms)", permission_group.name, len(wanted))
+
+
+def retire_superseded_phantom_permissions() -> None:
+    """Delete phantom Permission rows superseded by a real model's row.
+
+    ``_resolve_permissions`` used to synthesize a ContentType from a custom
+    codename's last ``_`` token, so DBs seeded before real-model binding carry a
+    phantom ``(reports, reports)`` ContentType + ``view_reports`` Permission row
+    (roles/legacy groups may reference them).  Once a codename binds to a real
+    model (e.g. ``reports.view_reports`` on ``ScheduledReport``), the phantom
+    twin is dead weight — authority never consults it (lookups match
+    app+codename against the real row), but it makes
+    ``Permission.objects.get(app_label + codename)`` ambiguous and pollutes the
+    Django admin.
+
+    Deletes every phantom Permission (model-less ContentType) whose codename
+    also exists on a real ContentType in the same app, then drops phantom
+    ContentTypes left with no permissions.  Member-management portal codenames
+    (``organizations.*``) have no real twin, so their phantom rows are kept —
+    they are still the only rows those codenames live on.  Idempotent; runs at
+    ``post_migrate`` once roles/groups have converged onto the real rows.
+    """
+    with transaction.atomic():
+        phantom_cts = [ct for ct in ContentType.objects.all() if ct.model_class() is None]
+        if not phantom_cts:
+            return
+        phantom_ct_ids = {ct.pk for ct in phantom_cts}
+
+        phantom_perms = list(Permission.objects.filter(content_type_id__in=phantom_ct_ids))
+        real_pairs = set(
+            Permission.objects.exclude(content_type_id__in=phantom_ct_ids).values_list(
+                "content_type__app_label", "codename"
+            )
+        )
+        doomed = [p for p in phantom_perms if (p.content_type.app_label, p.codename) in real_pairs]
+        if doomed:
+            Permission.objects.filter(pk__in=[p.pk for p in doomed]).delete()
+            logger.info("Retired %d phantom permissions superseded by real model rows", len(doomed))
+
+        remaining = set(
+            Permission.objects.filter(content_type_id__in=phantom_ct_ids).values_list("content_type_id", flat=True)
+        )
+        orphaned = [ct.pk for ct in phantom_cts if ct.pk not in remaining]
+        if orphaned:
+            ContentType.objects.filter(pk__in=orphaned).delete()
+            logger.info("Retired %d phantom ContentTypes", len(orphaned))
