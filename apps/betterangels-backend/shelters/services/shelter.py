@@ -181,17 +181,20 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
                 errors[f"additional_contacts.{index}.id"] = ["Invalid additional contact id."]
                 continue
 
-            if obj is not None:
-                for key, value in data.items():
-                    setattr(obj, key, value)
-                try:
-                    obj.full_clean()
-                except ValidationError as exc:
-                    errors.update(_contact_error_dict(exc, index))
-                    continue
-                to_save.append(obj)
-                keep_ids.add(obj.pk)
+            if obj is None:
+                errors[f"additional_contacts.{index}.id"] = ["Unknown additional contact id."]
                 continue
+
+            for key, value in data.items():
+                setattr(obj, key, value)
+            try:
+                obj.full_clean()
+            except ValidationError as exc:
+                errors.update(_contact_error_dict(exc, index))
+                continue
+            to_save.append(obj)
+            keep_ids.add(obj.pk)
+            continue
 
         contact = ContactInfo(shelter=shelter, **data)
         try:
@@ -208,7 +211,9 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
         obj.save()
 
     shelter.additional_contacts.exclude(pk__in=keep_ids).delete()
-    ContactInfo.objects.bulk_create(new_objs)
+
+    for contact in new_objs:
+        contact.save()
 
 
 @transaction.atomic

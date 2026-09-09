@@ -211,6 +211,14 @@ class ShelterUpdateAdditionalContactsTestCase(ShelterServiceTestCase):
         with self.assertRaises(ValidationError):
             self._update([{"id": "not-an-int", "contact_name": "Ada", "contact_number": "2125550100"}])
 
+    def test_rejects_unknown_contact_id(self) -> None:
+        """A non-existent id is rejected rather than silently creating a new contact."""
+        with self.assertRaises(ValidationError) as cm:
+            self._update([{"id": "999999", "contact_name": "Ghost", "contact_number": "2125550100"}])
+
+        self.assertIn("additional_contacts.0.id", cm.exception.error_dict)
+        self.assertEqual(self.shelter.additional_contacts.count(), 0)
+
     def test_rejects_invalid_phone(self) -> None:
         with self.assertRaises(ValidationError):
             self._update([{"contact_name": "Ada", "contact_number": "not-a-phone"}])
