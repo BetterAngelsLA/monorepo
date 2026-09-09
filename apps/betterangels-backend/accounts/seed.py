@@ -34,36 +34,91 @@ def _resolve_permissions(permission_strings: list[str]) -> list[int]:
     Returns IDs in the same order as *permission_strings* so callers
     can compare against existing sets.  No Permission objects are
     instantiated — pure ID-based.
+
+    Each codename binds to a ContentType, in preference order:
+
+    1. an existing Permission row bound to a **real** model's ContentType;
+    2. the model in *app_label* that **declares** the codename in its
+       ``Meta.permissions`` (custom codenames like ``reports.view_reports`` on
+       ``ScheduledReport``) — resolved from the app registry so provisioning
+       never depends on ``create_permissions`` having run for that app yet
+       (``post_migrate`` fires per-app, and roles are synced from the accounts
+       handler);
+    3. a ContentType synthesized from the codename's last ``_`` token — the
+       member-management portal codenames (``organizations.add_org_member``,
+       …), which no model declares, keep this fallback for legacy provisioning.
+
+    Binding a scoped ``Role`` permission to a real model (1–2) is what lets it
+    past ``sync_roles``' phantom-ContentType guard
+    (``_raise_on_phantom_role_permissions``).
     """
+    from django.apps import apps as django_apps
+
     parsed = [(ps.split(".", 1)[0], ps.split(".", 1)[1]) for ps in permission_strings]
     app_labels = {a for a, _ in parsed}
     codenames = {c for _, c in parsed}
-    model_of: dict[tuple[str, str], str] = {(a, c): c.rsplit("_", 1)[-1] for a, c in parsed}
 
-    ContentType.objects.bulk_create(
-        [ContentType(app_label=a, model=m) for a, m in {(a, model_of[(a, c)]) for a, c in parsed}],
-        ignore_conflicts=True,
+    # (1) Existing Permission rows bound to a real model's ContentType.
+    ct_by_key: dict[tuple[str, str], ContentType] = {}
+    for perm in Permission.objects.filter(
+        content_type__app_label__in=app_labels, codename__in=codenames
+    ).select_related("content_type"):
+        if perm.content_type.model_class() is not None:
+            ct_by_key.setdefault((perm.content_type.app_label, perm.codename), perm.content_type)
+
+    # (2) The model that declares the codename in Meta.permissions.
+    for app_label in app_labels:
+        try:
+            app_models = django_apps.get_app_config(app_label).get_models()
+        except LookupError:
+            app_models = ()
+        for model in app_models:
+            for codename, _label in getattr(model._meta, "permissions", ()):
+                if codename in codenames:
+                    ct_by_key.setdefault((app_label, codename), ContentType.objects.get_for_model(model))
+
+    # (3) Fallback: synthesize a ContentType from the codename's last ``_``
+    # token for the codenames no real model declares (member-management).
+    missing = [(a, c) for a, c in parsed if (a, c) not in ct_by_key]
+    if missing:
+        # ``missing`` items are (app_label, codename) pairs — index, don't
+        # unpack, so the key stays the full pair.
+        model_of = {pair: pair[1].rsplit("_", 1)[-1] for pair in missing}
+        ContentType.objects.bulk_create(
+            [ContentType(app_label=a, model=m) for (a, _c), m in model_of.items()],
+            ignore_conflicts=True,
+        )
+        ct_lookup = {
+            (ct.app_label, ct.model): ct
+            for ct in ContentType.objects.filter(app_label__in=app_labels, model__in=set(model_of.values()))
+        }
+        for pair in missing:
+            ct_by_key[pair] = ct_lookup[pair[0], model_of[pair]]
+
+    # Ensure a Permission row exists bound to each resolved ContentType.
+    existing = set(
+        Permission.objects.filter(content_type__in=set(ct_by_key.values())).values_list(
+            "content_type__app_label", "codename"
+        )
     )
-
-    ct_lookup = {
-        (ct.app_label, ct.model): ct
-        for ct in ContentType.objects.filter(app_label__in=app_labels, model__in=set(model_of.values()))
-    }
-
     Permission.objects.bulk_create(
         [
-            Permission(codename=c, content_type=ct_lookup[(a, model_of[(a, c)])], name=c.replace("_", " ").title())
+            Permission(codename=c, content_type=ct_by_key[(a, c)], name=c.replace("_", " ").title())
             for a, c in parsed
+            if (a, c) not in existing
         ],
         ignore_conflicts=True,
     )
 
-    id_lookup: dict[tuple[str, str], int] = {
-        (a, c): pk
-        for a, c, pk in Permission.objects.filter(
-            content_type__app_label__in=app_labels, codename__in=codenames
-        ).values_list("content_type__app_label", "codename", "pk")
-    }
+    # Re-read now that everything exists, preferring a real row when both a
+    # synthesized and a real row exist for the same (app_label, codename).
+    id_lookup: dict[tuple[str, str], int] = {}
+    for perm in Permission.objects.filter(
+        content_type__app_label__in=app_labels, codename__in=codenames
+    ).select_related("content_type"):
+        key = (perm.content_type.app_label, perm.codename)
+        if key not in id_lookup or perm.content_type.model_class() is not None:
+            id_lookup[key] = perm.pk
     return [id_lookup[(a, c)] for a, c in parsed]
 
 

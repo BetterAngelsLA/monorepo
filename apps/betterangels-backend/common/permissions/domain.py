@@ -27,11 +27,11 @@ Keep both in step with the ADR §4.1 migration matrix.
 """
 
 #: Grant-only domains — legacy ``PermissionGroup`` rows are inert: not reported
-#: and never consulted for authority.
-LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams"})
+#: and never consulted for authority.  Shelters, teams, and reports.
+LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams", "reports"})
 
-#: Dual-read domains (``can()`` OR legacy, ADR §5.3) — reserved for the still-
-#: legacy-only domains' cutover (#2427-2429: member management, reports).
+#: Dual-read domains (``can()`` OR legacy, ADR §5.3) — reserved for the last
+#: legacy-only domain's cutover (#2429: member management).
 #: Empty today; each app that joins also unlocks that domain's global-tier fold.
 DUAL_APPS: frozenset[str] = frozenset()
 
