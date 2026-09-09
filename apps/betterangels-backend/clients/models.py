@@ -22,7 +22,7 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
-from common.models import Attachment, BaseModel, OrgScoped, PhoneNumber
+from common.models import Attachment, BaseModel, OrgScoped, PhoneNumber, WRITE_SHARED
 from common.permissions.utils import PermissionSet
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
@@ -168,6 +168,11 @@ class ClientProfileManager(models.Manager.from_queryset(ClientProfileQuerySet)["
 )
 class ClientProfile(OrgScoped, AbstractClientProfile):
     org_via = None  # platform-shared by product decision (ADR 0001 §2.3)
+    # SHARED write tier (RFC 0002 decision #1): client CHANGE/DELETE today come
+    # from model-level perms on the CASEWORKER group (global-tier behavior in
+    # disguise), so the cutover preserves that as "holds the permission
+    # anywhere" — can_obj(user, clients.change_clientprofile, row) == can_anywhere.
+    write_tier = WRITE_SHARED
 
     objects = ClientProfileManager()  # hides merged profiles by default
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)

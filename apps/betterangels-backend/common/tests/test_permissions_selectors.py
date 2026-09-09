@@ -139,6 +139,50 @@ class GrantSelectorsTestCase(TestCase):
         self.assertTrue(can_obj(alice, Shelter.perms.VIEW, self.shelter_a))
         self.assertFalse(can_obj(alice, Shelter.perms.VIEW, self.shelter_b))
 
+    def test_can_obj_shared_tier_is_any_holder_anywhere(self) -> None:
+        """ClientProfile declares WRITE_SHARED (RFC 0002 #1): can_obj == can_anywhere."""
+        from clients.models import ClientProfile
+
+        client = baker.make(ClientProfile)
+        editor = baker.make(User)
+        client_role = Role.objects.create(name="Client Editor", is_global=False)
+        perm = Permission.objects.get(
+            codename=ClientProfile.perms.CHANGE.split(".")[1], content_type__app_label="clients"
+        )
+        client_role.permissions.add(perm)
+        grant_create(user=editor, role=client_role, scope_org=self.org_a)
+        stranger = baker.make(User)
+        admin = baker.make(User, is_superuser=True)
+
+        self.assertTrue(can_obj(editor, ClientProfile.perms.CHANGE, client))
+        self.assertFalse(can_obj(stranger, ClientProfile.perms.CHANGE, client))
+        self.assertTrue(can_obj(admin, ClientProfile.perms.CHANGE, client))
+
+    def test_can_obj_fails_closed_for_undeclared_platform_shared(self) -> None:
+        """A platform-shared OrgScoped model with no write_tier: only the global tier acts.
+
+        RFC 0002 §Precondition — the read rule never feeds an undeclared write
+        (finding C1): a finite org-scoped holder is denied; an anywhere/global
+        holder (scopes is ALL) still acts.
+        """
+        from common.models import OrgScoped
+
+        class UndeclaredShared(OrgScoped):
+            org_via = None
+
+            class Meta:
+                app_label = "common"
+                managed = False
+
+        row = UndeclaredShared()  # no DB access in the fail-closed branch
+        scoped = baker.make(User)
+        grant_create(user=scoped, role=self.shelter_role, scope_org=self.org_a)
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+
+        self.assertFalse(can_obj(scoped, Shelter.perms.VIEW, row))
+        self.assertTrue(can_obj(gso, Shelter.perms.VIEW, row))
+
     def test_can_anywhere_holds_for_platform_shared_creates(self) -> None:
         from clients.models import ClientProfile
 
