@@ -48,6 +48,19 @@ describe('YearGrid', () => {
     expect(yearButton(2024).getAttribute('aria-current')).toBeNull();
   });
 
+  it('falls back to this year when none is given', () => {
+    vi.useFakeTimers({ now: new Date(2030, 0, 15) });
+    try {
+      render(<YearGrid onSelect={vi.fn()} />);
+
+      expect(yearButton(2030).getAttribute('aria-current')).toBe('date');
+      expect(screen.getByRole('button', { name: '2040' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: '2024' })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('reports the year that was clicked', () => {
     const onSelect = renderGrid({ selectedYear: 2026 });
 

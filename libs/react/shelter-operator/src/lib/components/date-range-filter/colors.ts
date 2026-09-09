@@ -37,12 +37,8 @@ export const ACCENT_HOVER_BG = 'hover:bg-[#0071C0]';
 /** Primary accent blue ring marking the current day or year */
 export const ACCENT_RING = 'ring-[#008CEE]';
 
-/*
- * The same three scoped to react-day-picker's day cell, which renders its
- * <button> inside the element carrying the class. Spelled out in full rather
- * than composed from the constants above, for the reason at the top of this
- * file.
- */
+// [&>button]: react-day-picker renders the day <button> inside the cell that
+// carries the class.
 
 /** Primary accent blue fill on a selected day button */
 export const DAY_SELECTED_BG = '[&>button]:bg-[#008CEE]';

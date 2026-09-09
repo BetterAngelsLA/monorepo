@@ -1,4 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
+import { useState } from 'react';
 import {
   ACCENT_BG,
   ACCENT_HOVER_BG,
@@ -29,19 +30,23 @@ export interface YearGridProps {
 
 export function YearGrid({
   selectedYear,
-  currentYear = new Date().getFullYear(),
+  currentYear,
   onSelect,
   className,
 }: YearGridProps) {
+  // @eslint-react/purity: reading the clock during render is impure.
+  const [thisYear] = useState(() => new Date().getFullYear());
+  const anchorYear = currentYear ?? thisYear;
+
   return (
     <div
       role="group"
       aria-label="Select year"
       className={mergeCss(['grid grid-cols-4 gap-2 font-sans', className])}
     >
-      {yearsAround(currentYear).map((year) => {
+      {yearsAround(anchorYear).map((year) => {
         const isSelected = year === selectedYear;
-        const isCurrent = year === currentYear;
+        const isCurrent = year === anchorYear;
         return (
           <button
             key={year}
