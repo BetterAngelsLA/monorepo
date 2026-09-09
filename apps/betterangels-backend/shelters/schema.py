@@ -3,12 +3,18 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import User
-from common.graphql.types import AuthorizedPresignedS3UploadsType, BulkDeleteInput, BulkDeleteResult, DeletedObjectType
+from accounts.models import Organization, User
+from accounts.types import OrganizationType
+from common.graphql.types import (
+    AuthorizedPresignedS3UploadsType,
+    BulkDeleteInput,
+    BulkDeleteResult,
+    DeletedObjectType,
+)
 from common.permissions.utils import IsAuthenticated
 from common.services.feature_flags import flag_is_active
 from django.core.exceptions import PermissionDenied
-from django.db.models import Max
+from django.db.models import Max, QuerySet
 from strawberry import ID, UNSET
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -17,7 +23,11 @@ from strawberry_django.pagination import OffsetPaginated
 from shelters.constants import BA_ADMIN_ONLY_FIELDS_FLAG
 from shelters.enums import StatusChoices
 from shelters.models import Shelter
-from shelters.selectors import shelter_get, shelter_metrics_window
+from shelters.selectors import (
+    shelter_get,
+    shelter_metrics_window,
+    shelter_organization_list,
+)
 from shelters.selectors import shelter_occupancy_metrics as shelter_occupancy_metrics_selector
 from shelters.services import shelter_photo
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
@@ -94,6 +104,11 @@ class Query:
     shelter_spas: OffsetPaginated[SPAType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
     )
+
+    @strawberry_django.offset_paginated(OffsetPaginated[OrganizationType])
+    def shelter_organizations(self, info: Info) -> QuerySet[Organization]:
+        """Return every shelter org. Intentionally available to anonymous users."""
+        return shelter_organization_list()
 
     @strawberry.field()
     def shelter_max_stay(self, info: Info) -> Optional[int]:

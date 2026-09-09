@@ -21,7 +21,7 @@ from typing import Any
 from shelters.schema import Mutation, Query
 
 # Fields reachable without a grant/org check — the public approved directory.
-PUBLIC_QUERY_FIELDS = frozenset({"shelter", "shelters", "shelter_max_stay"})
+PUBLIC_QUERY_FIELDS = frozenset({"shelter", "shelters", "shelter_max_stay", "shelter_organizations"})
 
 # field -> where authorization happens for that read.
 QUERY_AUTHZ_ROUTES: dict[str, str] = {

@@ -9,7 +9,8 @@ from shelters.types.filters import (
     ReservationOrder,
     RoomFilter,
     RoomOrder,
-    ShelterFilter,
+    PublicShelterFilter,
+    OperatorShelterFilter,
     ShelterOrder,
     ShelterPropertyInput,
 )
@@ -98,7 +99,8 @@ __all__ = [
     "ReservationOrder",
     "RoomFilter",
     "RoomOrder",
-    "ShelterFilter",
+    "PublicShelterFilter",
+    "OperatorShelterFilter",
     "ShelterOrder",
     "ShelterPropertyInput",
     # inputs

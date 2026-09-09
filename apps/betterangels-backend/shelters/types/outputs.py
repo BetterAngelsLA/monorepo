@@ -59,11 +59,12 @@ from shelters.types.lookups import (
 from .filters import (
     BedFilter,
     BedOrder,
+    OperatorShelterFilter,
+    PublicShelterFilter,
     ReservationFilter,
     ReservationOrder,
     RoomFilter,
     RoomOrder,
-    ShelterFilter,
     ShelterOrder,
 )
 
@@ -270,7 +271,7 @@ class ShelterTypeMixin:
         )
 
 
-@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+@strawberry_django.type(models.Shelter, filters=PublicShelterFilter, ordering=ShelterOrder)
 class ShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
@@ -278,11 +279,9 @@ class ShelterType(ShelterTypeMixin):
         return shelter_list(queryset, user=user)
 
 
+@strawberry_django.type(models.Shelter, filters=OperatorShelterFilter, ordering=ShelterOrder)
 # Operator list reads: the ``*_queryset`` wrappers below are the reach-scoped,
 # fail-closed gate; the query's own ``filters`` variable only narrows the view.
-
-
-@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
 class OperatorShelterType(ShelterTypeMixin):
     @strawberry_django.field(prefetch_related=["additional_contacts"])
     def additional_contacts(self, root: models.Shelter, info: Info) -> List[ShelterContactInfoType]:

@@ -1756,6 +1756,37 @@ enum OperationMessageKind {
   VALIDATION
 }
 
+input OperatorShelterFilter {
+  isPrivate: Boolean
+  AND: OperatorShelterFilter
+  OR: OperatorShelterFilter
+  NOT: OperatorShelterFilter
+  DISTINCT: Boolean
+  name: String
+  accessibility: [AccessibilityChoices!]
+  storage: [StorageChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
+  isAccessCenter: Boolean
+  maxStay: MaxStayInput
+  properties: ShelterPropertyInput
+  openNow: OpenNowInput
+  mapBounds: MapBoundsInput
+  geolocation: GeolocationInput
+  hasAvailableBeds: Boolean
+  spa: [ID!]
+  onSiteSecurity: Boolean
+  city: [ID!]
+  citiesServed: [ID!]
+  spasServed: [ID!]
+  services: [ID!]
+  organizations: [ID!]
+  search: String
+  status: [StatusChoices!]
+  cityCouncilDistrict: [Int!]
+  supervisorialDistrict: [Int!]
+  overallRating: [Int!]
+}
+
 type OperatorShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
@@ -2047,6 +2078,32 @@ enum PronounEnum {
   OTHER
 }
 
+input PublicShelterFilter {
+  isPrivate: Boolean
+  AND: PublicShelterFilter
+  OR: PublicShelterFilter
+  NOT: PublicShelterFilter
+  DISTINCT: Boolean
+  name: String
+  accessibility: [AccessibilityChoices!]
+  storage: [StorageChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
+  isAccessCenter: Boolean
+  maxStay: MaxStayInput
+  properties: ShelterPropertyInput
+  openNow: OpenNowInput
+  mapBounds: MapBoundsInput
+  geolocation: GeolocationInput
+  hasAvailableBeds: Boolean
+  spa: [ID!]
+  onSiteSecurity: Boolean
+  city: [ID!]
+  citiesServed: [ID!]
+  spasServed: [ID!]
+  services: [ID!]
+  organizations: [ID!]
+}
+
 type Query {
   currentUser: CurrentUserType!
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
@@ -2081,9 +2138,9 @@ type Query {
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
   operatorShelter(pk: ID!): OperatorShelterType!
-  operatorShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated!
+  operatorShelters(pagination: OffsetPaginationInput, filters: OperatorShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated!
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  shelters(pagination: OffsetPaginationInput, filters: PublicShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
   bed(pk: ID!): BedType!
   beds(pagination: OffsetPaginationInput, filters: BedFilter, ordering: [BedOrder!]! = []): BedTypeOffsetPaginated!
   reservation(pk: ID!): ReservationType!
@@ -2093,6 +2150,7 @@ type Query {
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
+  shelterOrganizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   shelterMaxStay: Int
   shelterOccupancyMetrics(shelterId: ID!, startDate: Date = null, endDate: Date = null): ShelterOccupancyMetricsType!
   referral(pk: ID!): ReferralType! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
@@ -2545,24 +2603,6 @@ type ShelterContactInfoType {
   isClaimant: Boolean!
 }
 
-input ShelterFilter {
-  isPrivate: Boolean
-  AND: ShelterFilter
-  OR: ShelterFilter
-  NOT: ShelterFilter
-  DISTINCT: Boolean
-  isAccessCenter: Boolean
-  maxStay: MaxStayInput
-  name: String
-  organizations: [ID!]
-  properties: ShelterPropertyInput
-  openNow: OpenNowInput
-  mapBounds: MapBoundsInput
-  geolocation: GeolocationInput
-  hasAvailableBeds: Boolean
-  spa: [ID!]
-}
-
 type ShelterHeroImageType {
   id: ID!
   url: String!
@@ -2593,6 +2633,9 @@ type ShelterOccupancyMetricsType {
 input ShelterOrder {
   name: Ordering
   createdAt: Ordering
+  status: Ordering
+  organization: Ordering
+  bedCount: Ordering
 }
 
 input ShelterPhotoFromUploadInput {
@@ -2665,6 +2708,8 @@ input ShelterPropertyInput {
   roomStylesIncludeNull: Boolean = false
   parking: [ParkingChoices!] = null
   parkingIncludeNull: Boolean = false
+  funders: [FunderChoices!] = null
+  fundersIncludeNull: Boolean = false
 }
 
 type ShelterType {
