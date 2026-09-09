@@ -232,8 +232,7 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
         """
 
         variables = {
-            "id": self.removable_member.pk,
-            "organizationId": self.org_1.pk,
+            "membershipId": OrganizationUser.objects.get(organization=self.org_1, user=self.removable_member).pk,
         }
 
         response = self.execute_graphql(mutation, {"data": variables})

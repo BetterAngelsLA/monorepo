@@ -3,8 +3,9 @@
 The org-root ``organizations.*`` codenames authorize through ``require_can``
 (``can()``): role-backed ORG_ADMIN / ORG_SUPERUSER with backfilled Grants, a
 scoped direct Grant, or the global tier (superuser).  The member reads and the
-add/remove/change-role mutations take the org from the payload
-(``organizationId``); the ``X-Organization-ID`` header is never read.  Legacy
+add mutation take the org from the payload (``organizationId``);
+remove/change-role are keyed on the ``OrganizationUser`` membership row, whose
+org authorizes (no header, no separate org argument).  Legacy
 ``PermissionGroup`` rows alone no longer authorize anything.
 
 These tests pin the flipped contract:
@@ -32,6 +33,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from model_bakery import baker
 from notes.groups import CASEWORKER
+from organizations.models import OrganizationUser
 
 PERMISSION_DENIED = "You do not have permission to perform this action in this organization."
 
@@ -50,6 +52,7 @@ VIEW_MEMBERS_QUERY = """
             totalCount
             results {
                 id
+                membershipId
                 email
             }
         }
@@ -107,9 +110,11 @@ CHANGE_ROLE_MUTATION = """
 
 
 class MemberManagementGraphQLMixin:
-    """Per-operation GraphQL helpers (all payload-org; header left on org_1).
+    """Per-operation GraphQL helpers (header left on org_1).
 
-    Each call force_logins *user*, so a test can flip actors freely.
+    Reads/add authorize at the payload org; remove/change-role resolve the
+    target's membership row and authorize at its org.  Each call force_logins
+    *user*, so a test can flip actors freely.
     """
 
     def _view_member(self, user: User, org: object, member: User) -> dict[str, Any]:
@@ -138,11 +143,15 @@ class MemberManagementGraphQLMixin:
             },
         )
 
+    def _membership_id(self, org: object, member: User) -> int:
+        """The ``OrganizationUser`` row id for *member* at *org* — the mutation key."""
+        return OrganizationUser.objects.get(organization=org, user=member).pk
+
     def _remove_member(self, user: User, org: object, member: User) -> dict[str, Any]:
         self.graphql_client.force_login(user)
         return self.execute_graphql(
             REMOVE_MEMBER_MUTATION,
-            {"data": {"id": member.pk, "organizationId": org.pk}},
+            {"data": {"membershipId": self._membership_id(org, member)}},
         )
 
     def _change_role(self, user: User, org: object, member: User) -> dict[str, Any]:
@@ -151,8 +160,7 @@ class MemberManagementGraphQLMixin:
             CHANGE_ROLE_MUTATION,
             {
                 "data": {
-                    "userId": member.pk,
-                    "organizationId": org.pk,
+                    "membershipId": self._membership_id(org, member),
                     "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
                 }
             },
@@ -184,8 +192,12 @@ class MemberManagementGrantAuthorityTestCase(MemberManagementGraphQLMixin, Graph
         self.assertEqual(response["data"]["organizationMember"]["id"], str(self.org_1_case_manager_1.pk))
         response = self._view_members(admin, self.org_1)
         self.assertIsNone(response.get("errors"))
-        ids = {r["id"] for r in response["data"]["organizationMembers"]["results"]}
+        results = response["data"]["organizationMembers"]["results"]
+        ids = {r["id"] for r in results}
         self.assertIn(str(admin.pk), ids)
+        # The list exposes each member's membership row id — the key the
+        # remove/change-role mutations act on.
+        self.assertTrue(all(r["membershipId"] for r in results))
 
         # add
         response = self._add_member(admin, self.org_1, email="invited@example.com")
@@ -357,3 +369,37 @@ class MemberManagementGrantAuthorityDeniedTestCase(MemberManagementGraphQLMixin,
         response = self._remove_member(admin, self.org_2, removable)
         self.assertGraphQLOperationInfo(response, "removeOrganizationMember", PERMISSION_DENIED, kind="PERMISSION")
         self.assertTrue(self.org_2.users.filter(pk=removable.pk).exists())
+
+    def test_unknown_membership_id_fails_closed(self) -> None:
+        """A remove/change-role key with no row is a denial, never a crash.
+
+        Remove/change-role are keyed on the ``OrganizationUser`` row, so a
+        stale or nonexistent key is indistinguishable from no authority — fail
+        closed with a permission error, not a 500.
+        """
+        admin = baker.make(User, email="grant-admin@example.com")
+        self.org_1.add_user(admin)
+        OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
+
+        self.graphql_client.force_login(admin)
+        response = self.execute_graphql(REMOVE_MEMBER_MUTATION, {"data": {"membershipId": 999_999}})
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+        self.assertEqual(
+            response["data"]["removeOrganizationMember"]["messages"][0]["message"],
+            "You do not have permission to remove this member.",
+        )
+
+        response = self.execute_graphql(
+            CHANGE_ROLE_MUTATION,
+            {
+                "data": {
+                    "membershipId": 999_999,
+                    "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
+                }
+            },
+        )
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+        self.assertEqual(
+            response["data"]["changeOrganizationMemberRole"]["messages"][0]["message"],
+            "You do not have permission to change this member's role.",
+        )

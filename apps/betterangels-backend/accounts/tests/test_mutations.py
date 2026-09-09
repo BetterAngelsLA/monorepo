@@ -279,8 +279,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         """
 
         variables = {
-            "userId": member.pk,
-            "organizationId": self.org.pk,
+            "membershipId": OrganizationUser.objects.get(organization=self.org, user=member).pk,
             "permissionTemplate": PermissionTemplateEnum.SHELTER_OPERATOR.name,
         }
 
@@ -318,8 +317,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         """
 
         variables = {
-            "userId": member.pk,
-            "organizationId": self.org.pk,
+            "membershipId": OrganizationUser.objects.get(organization=self.org, user=member).pk,
             "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
         }
 
@@ -468,8 +466,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         """
 
         variables = {
-            "id": removable_member.pk,
-            "organizationId": self.org.pk,
+            "membershipId": OrganizationUser.objects.get(organization=self.org, user=removable_member).pk,
         }
 
         response = self.execute_graphql(mutation, {"data": variables})
@@ -488,14 +485,12 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         self.assertTrue(User.objects.filter(pk=removable_member.pk).exists())
 
-    def test_remove_organization_member_user_not_in_org(self) -> None:
-        outsider = baker.make(
-            User,
-            first_name="Out",
-            last_name="Side",
-            email="outsider@example.com",
-        )
+    def test_remove_organization_member_unknown_membership_fails_closed(self) -> None:
+        """A membership id with no row is a permission denial, never a crash.
 
+        Remove is keyed on the ``OrganizationUser`` row, so a stale/nonexistent
+        key is indistinguishable from no authority — fail closed.
+        """
         mutation = """
             mutation ($data: RemoveOrganizationMemberInput!) {
                 removeOrganizationMember(data: $data) {
@@ -507,24 +502,13 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             }
         """
 
-        variables = {
-            "id": outsider.pk,
-            "organizationId": self.org.pk,
-        }
+        response = self.execute_graphql(mutation, {"data": {"membershipId": 999_999}})
 
-        response = self.execute_graphql(mutation, {"data": variables})
-
+        self.assertIsNone(response.get("errors"), response.get("errors"))
         self.assertEqual(len(response["data"]["removeOrganizationMember"]["messages"]), 1)
         self.assertEqual(
             response["data"]["removeOrganizationMember"]["messages"][0]["message"],
-            "User is not a member of this organization.",
-        )
-
-        self.assertFalse(
-            OrganizationUser.objects.filter(
-                organization=self.org,
-                user=outsider,
-            ).exists()
+            "You do not have permission to remove this member.",
         )
 
     def test_remove_organization_member_cannot_remove_owner(self) -> None:
@@ -541,8 +525,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         """
 
         variables = {
-            "id": self.org_admin.pk,
-            "organizationId": self.org.pk,
+            "membershipId": OrganizationUser.objects.get(organization=self.org, user=self.org_admin).pk,
         }
 
         response = self.execute_graphql(mutation, {"data": variables})
