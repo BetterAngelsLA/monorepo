@@ -349,3 +349,4 @@ The `_handle_error_response` method maps upstream HTTP status codes to exception
 | `apps/betterangels-backend/clients/enums.py`             | `ErrorCodeEnum` — machine-readable error codes for custom validation                              |
 | `apps/betterangels-backend/hmis/api_bridge.py`           | HMIS proxy — raises `GraphQLError` for upstream 422 responses                                     |
 | `apps/betterangels-backend/schema.graphql`               | Generated schema showing all payload unions with `OperationInfo`                                  |
+| `apps/betterangels-backend/docs/api-compatibility.md`    | Staged rollouts for mobile-visible schema changes (tolerant → release → strict)                   |
