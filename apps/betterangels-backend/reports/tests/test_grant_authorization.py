@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Any
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import PermissionGroup, User
+from accounts.models import Grant, PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.tests.utils import GraphQLBaseTestCase
@@ -167,6 +167,9 @@ class ReportGrantAuthorityDeniedTestCase(ReportSummaryGraphQLGrantMixin, ReportE
         self.org_1.add_user(legacy_admin)
         group = PermissionGroup.objects.get(organization=self.org_1, template__name=ORG_ADMIN.name)
         group.user_set.add(legacy_admin)
+        # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
+        # legacy-only holder has none — drop the mirror to model that state.
+        Grant.objects.filter(principal_user=legacy_admin).delete()
         self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
 
         self._assert_denied(self._read(legacy_admin, self.org_1))
