@@ -148,7 +148,6 @@ class GenerateNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         # Login as org_2 caseworker
         self.graphql_client.logout()
         self.graphql_client.force_login(self.org_2_case_manager_1)
-        self._set_active_org(self.org_2)
 
         response = self.execute_graphql(
             self.MUTATION,
@@ -443,7 +442,6 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         """A caseworker in org_2 should not be able to resolve uploads on an org_1 note."""
         self.graphql_client.logout()
         self.graphql_client.force_login(self.org_2_case_manager_1)
-        self._set_active_org(self.org_2)
 
         response = self.execute_graphql(
             self.MUTATION,

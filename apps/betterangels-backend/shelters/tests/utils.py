@@ -83,5 +83,4 @@ class ShelterTestCase(GraphQLBaseTestCase):
         )
         self.operator = baker.make(User)
         self.org.users.add(self.operator)
-        self._set_active_org(self.org)
         OrgRoleManager(self.org).add_roles(self.operator, SHELTER_OPERATOR)

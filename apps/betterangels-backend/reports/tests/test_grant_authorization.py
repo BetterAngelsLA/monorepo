@@ -43,10 +43,7 @@ REPORT_SUMMARY_QUERY = """
 class ReportSummaryGraphQLGrantMixin(GraphQLBaseTestCase):
     """Shared GraphQL helpers for the reportSummary query.
 
-    The org is carried in the payload (``organizationId``); the
-    ``X-Organization-ID`` header is never consulted.  The base fixture leaves
-    the header on ``org_1``, so reading ``org_2`` below doubles as a stale-header
-    check.
+    The org is carried in the payload (``organizationId``), and nowhere else.
     """
 
     def _read(self, user: User, org: Any) -> dict[str, Any]:
@@ -111,27 +108,13 @@ class ReportGrantAuthorityTestCase(ReportSummaryGraphQLGrantMixin, ReportExportD
         self.assertIsNone(response.get("errors"))
         self.assertIsNotNone(response["data"]["reportSummary"])
 
-    def test_reads_without_the_org_header(self) -> None:
-        """No X-Organization-ID header at all — the payload org authorizes."""
+    def test_reads_use_the_payload_org(self) -> None:
+        """A scoped Grant reads through the payload ``organizationId``."""
         holder = baker.make(User)
         self._grant_permission(holder, "reports.view_reports", self.org_2, role_name="Report Reader")
         self.graphql_client.force_login(holder)
-        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
 
         response = self.execute_graphql(REPORT_SUMMARY_QUERY, {"organizationId": str(self.org_2.pk)})
-        self.assertIsNone(response.get("errors"))
-        self.assertIsNotNone(response["data"]["reportSummary"])
-
-    def test_stale_header_is_ignored(self) -> None:
-        """The payload org wins: a stale header naming an unauthorized org is ignored.
-
-        The base fixture leaves the header on ``org_1`` (where this holder has no
-        authority) while ``_read`` names ``org_2`` in the payload.
-        """
-        holder = baker.make(User)
-        self._grant_permission(holder, "reports.view_reports", self.org_2, role_name="Report Reader")
-
-        response = self._read(holder, self.org_2)
         self.assertIsNone(response.get("errors"))
         self.assertIsNotNone(response["data"]["reportSummary"])
 

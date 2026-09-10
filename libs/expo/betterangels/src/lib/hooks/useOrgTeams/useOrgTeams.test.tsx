@@ -18,13 +18,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useOrgTeams } from './useOrgTeams';
 
 /**
- * Asserts what the store holds at the moment each request is issued — counted
- * at the link, rather than inferred from loading flags, which cannot
+ * Asserts which org each request names in its ``filters.organizationId``,
+ * counted at the link, rather than inferred from loading flags, which cannot
  * distinguish a request that never went out from one still in flight.
  *
- * ``useOrgTeams`` stands in for any org-scoped query; these are the
- * cross-project tests that exercise the store, the provider and the interceptor
- * together.
+ * ``useOrgTeams`` stands in for any org-scoped query: the org now travels in
+ * the operation's variables, read from the same active-org store the (retired)
+ * header interceptor used to read.
  */
 
 const ORG = { id: 'org-1', name: 'Test Org', permissions: [] as const };
@@ -58,19 +58,30 @@ function createSyncStorage(
   };
 }
 
-/** Records the org id visible to the interceptor for each operation issued. */
+type RecordedOperation = {
+  organizationId: string | null | undefined;
+  storeOrgId: string | null;
+};
+
+/** Records the org each operation names and what the store held at the time. */
 function createRecordingClient() {
-  const orgIdPerOperation: (string | null)[] = [];
+  const operations: RecordedOperation[] = [];
   const link = new ApolloLink(
-    () =>
+    (operation) =>
       new Observable((observer) => {
-        orgIdPerOperation.push(getActiveOrgId());
+        const filters = operation.variables?.filters as
+          | { organizationId?: string | null }
+          | undefined;
+        operations.push({
+          organizationId: filters?.organizationId,
+          storeOrgId: getActiveOrgId(),
+        });
         observer.next(TEAMS_RESULT as never);
         observer.complete();
       }),
   );
   return {
-    orgIdPerOperation,
+    operations,
     client: new ApolloClient({ link, cache: new InMemoryCache() }),
   };
 }
@@ -80,7 +91,7 @@ describe('useOrgTeams', () => {
   beforeEach(() => configureActiveOrgStorage(createSyncStorage()));
 
   function renderWith(organizations: readonly (typeof ORG)[]) {
-    const { client, orgIdPerOperation } = createRecordingClient();
+    const { client, operations } = createRecordingClient();
     const wrapper = ({ children }: { children: ReactNode }) => (
       <ApolloProvider client={client}>
         <ActiveOrgProvider organizations={[...organizations]}>
@@ -90,39 +101,57 @@ describe('useOrgTeams', () => {
     );
     return {
       ...renderHook(() => useOrgTeams(), { wrapper }),
-      orgIdPerOperation,
+      operations,
     };
   }
 
-  it('every request it issues carries an active org', async () => {
+  it('every request it issues names the active org', async () => {
     configureActiveOrgStorage(createSyncStorage());
 
-    const { result, orgIdPerOperation } = renderWith([ORG]);
+    const { result, operations } = renderWith([ORG]);
 
     await waitFor(() => expect(result.current.teams).toHaveLength(1));
-    expect(orgIdPerOperation.length).toBeGreaterThan(0);
-    expect(orgIdPerOperation).not.toContain(null);
+    expect(operations.length).toBeGreaterThan(0);
+    expect(operations.every((op) => op.organizationId === 'org-1')).toBe(true);
+    // The request names the same org the store held when it went out.
+    expect(operations.every((op) => op.organizationId === op.storeOrgId)).toBe(
+      true,
+    );
   });
 
   it('uses the remembered organization, not the first one', async () => {
     const other = { ...ORG, id: 'org-2', name: 'Other Org' };
     configureActiveOrgStorage(createSyncStorage('org-2'));
 
-    const { result, orgIdPerOperation } = renderWith([ORG, other]);
+    const { result, operations } = renderWith([ORG, other]);
 
     await waitFor(() => expect(result.current.teams).toHaveLength(1));
-    expect(orgIdPerOperation.every((id) => id === 'org-2')).toBe(true);
+    expect(operations.length).toBeGreaterThan(0);
+    expect(operations.every((op) => op.organizationId === 'org-2')).toBe(true);
   });
 
   it('queries with the remembered org before the org list has loaded', async () => {
     // UserProvider renders children with organizations={[]} while the user
     // query resolves. The store already holds the remembered organization, so
-    // the request is correctly attributed.
+    // the request carries it anyway.
     configureActiveOrgStorage(createSyncStorage('org-1'));
 
-    const { orgIdPerOperation } = renderWith([]);
+    const { operations } = renderWith([]);
 
-    await waitFor(() => expect(orgIdPerOperation.length).toBeGreaterThan(0));
-    expect(orgIdPerOperation.every((id) => id === 'org-1')).toBe(true);
+    await waitFor(() => expect(operations.length).toBeGreaterThan(0));
+    expect(operations.every((op) => op.organizationId === 'org-1')).toBe(true);
+  });
+
+  it('does not query while no org is active', async () => {
+    configureActiveOrgStorage(createSyncStorage());
+
+    const { result, operations } = renderWith([]);
+
+    // Nothing to scope the read to — the hook stays idle instead of issuing a
+    // request the backend would deny.
+    expect(result.current.teams).toHaveLength(0);
+    expect(result.current.loading).toBe(false);
+    await waitFor(() => expect(getActiveOrgId()).toBeNull());
+    expect(operations).toHaveLength(0);
   });
 });

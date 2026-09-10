@@ -365,17 +365,15 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
 
 
 class PublicShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
-    """The shelter directory is public: no login, no organization header.
+    """The shelter directory is public: no login, no organization.
 
-    Every other test here inherits an active organization from
-    ``GraphQLBaseTestCase.setUp``, so nothing else would notice the public
-    queries starting to require one.
+    ``setUp`` logs out so each test exercises the anonymous path — the queries
+    take no org argument and must never require one.
     """
 
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.logout()
-        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
         self.shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
 
     def test_shelters_query_is_public(self) -> None:
