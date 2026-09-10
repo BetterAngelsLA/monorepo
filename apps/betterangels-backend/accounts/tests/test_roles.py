@@ -21,17 +21,7 @@ from notes.models import Note
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 
 from accounts.groups import ORG_ADMIN_ROLE
-
-
-def _add_legacy_membership(group: PermissionGroup, member: User) -> None:
-    """Give *member* the legacy group membership, without the Grant mirror.
-
-    The m2m edge mirrors a Grant for role-backed groups (``accounts.signals``),
-    but a pre-cutover membership — the state a backfill exists to convert — has
-    none, so drop the mirror the add just created.
-    """
-    group.user_set.add(member)
-    Grant.objects.filter(principal_user=member).delete()
+from common.tests.utils import add_legacy_membership, make_permission_group
 
 
 class SyncRolesTestCase(TestCase):
@@ -131,7 +121,7 @@ class BackfillTestCase(TestCase):
     def test_backfill_shelter_grants_creates_one_grant_per_member(self) -> None:
         group = PermissionGroup.objects.get(organization=self.org, template__name=SHELTER_OPERATOR_ROLE.name)
         member = baker.make(User)
-        _add_legacy_membership(group, member)
+        add_legacy_membership(member, group=group)
 
         backfill_shelter_grants()
 
@@ -141,7 +131,7 @@ class BackfillTestCase(TestCase):
     def test_backfill_shelter_grants_is_idempotent(self) -> None:
         group = PermissionGroup.objects.get(organization=self.org, template__name=SHELTER_OPERATOR_ROLE.name)
         member = baker.make(User)
-        _add_legacy_membership(group, member)
+        add_legacy_membership(member, group=group)
 
         backfill_shelter_grants()
         backfill_shelter_grants()
@@ -187,21 +177,11 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
         self.org_admin_role = Role.objects.get(name=ORG_ADMIN_ROLE.name)
         self.caseworker_role = Role.objects.get(name=CASEWORKER_ROLE.name)
 
-    def _legacy_org_admin_group(self) -> PermissionGroup:
-        """A leftover pre-teardown ORG_ADMIN row — none is provisioned now.
-
-        The org-admin roles are grant-only (ADR 0001 teardown) and
-        ``reconcile_org_groups`` retires their ``PermissionGroup`` rows, so a
-        migration test has to recreate the row the backfill exists to convert.
-        """
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=ORG_ADMIN_ROLE.name)
-        group, _ = PermissionGroup.objects.get_or_create(organization=self.org, template=template)
-        return group
-
     def test_backfill_org_admin_grants_creates_one_grant_per_member(self) -> None:
-        group = self._legacy_org_admin_group()
+        # A leftover pre-teardown ORG_ADMIN row — none is provisioned now.
+        group = make_permission_group(organization=self.org, template_name=ORG_ADMIN_ROLE.name)
         member = baker.make(User)
-        _add_legacy_membership(group, member)
+        add_legacy_membership(member, group=group)
 
         backfill_org_admin_grants()
 
@@ -209,9 +189,9 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
         self.assertIsNotNone(grant.pk)
 
     def test_backfill_org_admin_grants_is_idempotent(self) -> None:
-        group = self._legacy_org_admin_group()
+        group = make_permission_group(organization=self.org, template_name=ORG_ADMIN_ROLE.name)
         member = baker.make(User)
-        _add_legacy_membership(group, member)
+        add_legacy_membership(member, group=group)
 
         backfill_org_admin_grants()
         backfill_org_admin_grants()
@@ -224,7 +204,7 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
         cw_group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER_ROLE.name)
         other = PermissionGroup.objects.create(organization=self.org, label="Hand-made Role")
         member = baker.make(User)
-        _add_legacy_membership(cw_group, member)
+        add_legacy_membership(member, group=cw_group)
         other.user_set.add(member)
 
         backfill_org_admin_grants()
@@ -234,7 +214,7 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
     def test_backfill_caseworker_grants_creates_one_grant_per_member(self) -> None:
         group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER_ROLE.name)
         member = baker.make(User)
-        _add_legacy_membership(group, member)
+        add_legacy_membership(member, group=group)
 
         backfill_caseworker_grants()
 
@@ -244,7 +224,7 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
     def test_backfill_caseworker_grants_is_idempotent(self) -> None:
         group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER_ROLE.name)
         member = baker.make(User)
-        _add_legacy_membership(group, member)
+        add_legacy_membership(member, group=group)
 
         backfill_caseworker_grants()
         backfill_caseworker_grants()
@@ -253,9 +233,9 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
 
     def test_backfill_caseworker_converts_only_caseworker(self) -> None:
         # An org-admin membership must not be converted into a caseworker grant.
-        group = self._legacy_org_admin_group()
+        group = make_permission_group(organization=self.org, template_name=ORG_ADMIN_ROLE.name)
         member = baker.make(User)
-        _add_legacy_membership(group, member)
+        add_legacy_membership(member, group=group)
 
         backfill_caseworker_grants()
 
