@@ -14,10 +14,15 @@ from teams.models import Team
 CASEWORKER = TemplateConfig(
     name="Caseworker",
     permissions=[
-        # Note: ADD + VIEW only
+        # Note: ADD + VIEW.  CHANGE/DELETE are deliberately NOT here yet: the
+        # still-legacy write paths (guardian ``filter_for_user``) treat a
+        # model-level perm as "all rows", so granting them before the write
+        # cutover over-permits (RFC 0003 §Option A).  They move with the write
+        # cutover; the Role below already carries the grant-side bundle.
         Note.perms.ADD,
         Note.perms.VIEW,
-        # ServiceRequest: ADD only (VIEW, CHANGE, DELETE granted per-object at creation)
+        # ServiceRequest: ADD only (VIEW, CHANGE, DELETE ride the Role grants;
+        # the legacy model-level perms move with the write cutover).
         ServiceRequest.perms.ADD,
         # Client models: full CRUD
         ClientProfile.perms.ADD,
@@ -61,8 +66,9 @@ CASEWORKER = TemplateConfig(
 # The scoped ``Caseworker`` Role backs the cut-over slices of the caseworker
 # template.  Teams read shipped first (``teams.view_team``); the clients
 # cutover (ADR 0001 §5.1, RFC 0002) adds the client family — grant-only now
-# (SHARED read / SHARED write); the Task slice (RFC 0003) rides next.  Notes
-# and referrals stay legacy until their own slices.
+# (SHARED read / SHARED write); the Task slice (RFC 0003 slice 1) and the
+# Note slice (slice 2) ride next.  Referrals stay legacy until their own
+# slice.
 CASEWORKER_ROLE = RoleDef(
     name=CASEWORKER.name,
     permissions=[
@@ -73,6 +79,19 @@ CASEWORKER_ROLE = RoleDef(
         Task.perms.VIEW,
         Task.perms.CHANGE,
         Task.perms.DELETE,
+        # Note slice — RFC 0003 slice 2: org-scoped writes via ``can_obj``,
+        # reads SHARED.  Attachments ride the note gate; the attachment perms
+        # keep the upload checks passing for grant-only holders.
+        Note.perms.ADD,
+        Note.perms.VIEW,
+        Note.perms.CHANGE,
+        Note.perms.DELETE,
+        ServiceRequest.perms.ADD,
+        ServiceRequest.perms.VIEW,
+        ServiceRequest.perms.CHANGE,
+        ServiceRequest.perms.DELETE,
+        Attachment.perms.ADD,
+        Attachment.perms.VIEW,
         # Client family — the RFC 0002 cutover bundle.
         ClientProfile.perms.ADD,
         ClientProfile.perms.CHANGE,
