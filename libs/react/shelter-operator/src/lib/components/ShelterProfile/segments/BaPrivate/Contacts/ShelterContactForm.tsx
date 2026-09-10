@@ -40,7 +40,7 @@ export function ShelterContactForm(props: TProps) {
           <Button
             variant="trash"
             onClick={onRemove}
-            aria-label="Remove contact"
+            aria-label={`Remove contact: ${entry.contactName || 'name field empty'}`}
           />
         )}
       </div>
