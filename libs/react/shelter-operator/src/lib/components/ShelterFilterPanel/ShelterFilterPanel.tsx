@@ -81,15 +81,17 @@ function SortFilterDrawerContent() {
   }
 
   function setMaxStay(value: string) {
-    if (value === '') {
+    // Whole numbers only: strip decimals, signs, and any other characters.
+    const digits = value.replace(/\D/g, '');
+    if (digits === '') {
       setFilters((prev) => ({ ...prev, maxStayDays: '' }));
       return;
     }
-    const days = Number(value);
+    const days = Number(digits);
     if (!Number.isFinite(days) || days < 1) {
       return;
     }
-    setFilters((prev) => ({ ...prev, maxStayDays: value }));
+    setFilters((prev) => ({ ...prev, maxStayDays: String(days) }));
   }
 
   const normalizedSearch = searchTerm.toLowerCase().trim();
@@ -256,8 +258,9 @@ function SortFilterDrawerContent() {
           }
         >
           <input
-            type="number"
-            min={1}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={filters.maxStayDays}
             onChange={(e) => setMaxStay(e.target.value)}
             placeholder="e.g. 90"
