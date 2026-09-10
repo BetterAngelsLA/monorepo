@@ -33,9 +33,7 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
 
     def _list(self, org: Any) -> Dict[str, Any]:
         """List teams of *org* — the org travels in the filter payload."""
-        return self.execute_graphql(
-            self.get_teams_query(), {"filters": {"organizationId": str(org.pk)}}
-        )
+        return self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": str(org.pk)}})
 
     def test_teams_query(self) -> None:
         # require_can (→ can → scopes) adds grant-arm queries over the old
@@ -108,9 +106,7 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         self.assertEqual(errors[0]["message"], message)
 
     def _list(self, org: Any) -> Dict[str, Any]:
-        return self.execute_graphql(
-            self.get_teams_query(), {"filters": {"organizationId": str(org.pk)}}
-        )
+        return self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": str(org.pk)}})
 
     def test_returns_only_the_filters_orgs_teams(self) -> None:
         response = self._list(self.org_1)
@@ -233,9 +229,7 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         )
 
     def test_denies_an_unknown_filter_org(self) -> None:
-        response = self.execute_graphql(
-            self.get_teams_query(), {"filters": {"organizationId": "999999999"}}
-        )
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": "999999999"}})
 
         self._assert_denied(response, "You do not have access to this organization.")
 

@@ -12,6 +12,14 @@ from .baker_recipes import organization_recipe
 
 
 class OrgRoleManagerTestCase(ParametrizedTestCase, TestCase):
+    """OrgRoleManager after the org-admin teardown (ADR 0001).
+
+    ORG_ADMIN/ORG_SUPERUSER are grant-only: ``add_roles``/``remove_roles``
+    mirror the scoped ``Role`` ``Grant`` and never touch a ``PermissionGroup``
+    row (none exists — reconcile retires them).  CASEWORKER is still dual-write:
+    the org ``PermissionGroup`` membership is created alongside its Grant.
+    """
+
     def setUp(self) -> None:
         super().setUp()
 
@@ -25,7 +33,7 @@ class OrgRoleManagerTestCase(ParametrizedTestCase, TestCase):
         self.omb_2.add_roles(self.user, CASEWORKER, ORG_SUPERUSER)
 
     def _get_org_group(self, org: Organization, template_name: str) -> Group:
-        """Helper: fetch the ``auth.Group`` row for (org, template_name).
+        """Helper: fetch the ``auth.Group`` row for a dual-write (org, template).
 
         The parent instance rather than the ``PermissionGroup``: Django compares
         concrete models in ``__eq__``, so a child never equals the parent row
@@ -36,46 +44,58 @@ class OrgRoleManagerTestCase(ParametrizedTestCase, TestCase):
             permissiongroup__template__name=template_name,
         )
 
+    def _has_grant(self, org: Organization, role_name: str) -> bool:
+        """Whether *user* holds the scoped ``Role`` ``Grant`` at *org*."""
+        return self.user.grants.filter(scope_org=org, role__name=role_name).exists()
+
+    def _assert_no_org_admin_rows(self, org: Organization) -> None:
+        """No PermissionGroup row may exist for the grant-only org-admin roles."""
+        from accounts.models import PermissionGroup
+
+        self.assertFalse(
+            PermissionGroup.objects.filter(
+                organization=org, template__name__in=[ORG_ADMIN.name, ORG_SUPERUSER.name]
+            ).exists()
+        )
+
     def test_set_role(self) -> None:
         omb = OrgRoleManager(self.org_1)
 
-        org_admin_group = self._get_org_group(self.org_1, "Organization Admin")
-        org_superuser_group = self._get_org_group(self.org_1, "Organization Superuser")
-
-        self.assertNotIn(org_admin_group, self.user.groups.all())
-        self.assertNotIn(org_superuser_group, self.user.groups.all())
+        self.assertFalse(self._has_grant(self.org_1, ORG_ADMIN.name))
+        self.assertFalse(self._has_grant(self.org_1, ORG_SUPERUSER.name))
 
         omb.add_roles(self.user, CASEWORKER, ORG_ADMIN)
-        self.assertIn(org_admin_group, self.user.groups.all())
-        self.assertNotIn(org_superuser_group, self.user.groups.all())
+        self.assertTrue(self._has_grant(self.org_1, ORG_ADMIN.name))
+        self.assertFalse(self._has_grant(self.org_1, ORG_SUPERUSER.name))
+        self._assert_no_org_admin_rows(self.org_1)
 
         omb.replace_roles(self.user, CASEWORKER, ORG_SUPERUSER)
-        self.assertNotIn(org_admin_group, self.user.groups.all())
-        self.assertIn(org_superuser_group, self.user.groups.all())
+        self.assertFalse(self._has_grant(self.org_1, ORG_ADMIN.name))
+        self.assertTrue(self._has_grant(self.org_1, ORG_SUPERUSER.name))
 
     def test_remove_roles(self) -> None:
-        """remove_roles should remove only the specified templates, leaving others."""
+        """remove_roles removes only the specified templates, leaving others."""
         omb = OrgRoleManager(self.org_2)
         caseworker_group = self._get_org_group(self.org_2, "Caseworker")
-        org_superuser_group = self._get_org_group(self.org_2, "Organization Superuser")
 
         self.assertIn(caseworker_group, self.user.groups.all())
-        self.assertIn(org_superuser_group, self.user.groups.all())
+        self.assertTrue(self._has_grant(self.org_2, ORG_SUPERUSER.name))
 
         omb.remove_roles(self.user, ORG_SUPERUSER)
         self.assertIn(caseworker_group, self.user.groups.all())
-        self.assertNotIn(org_superuser_group, self.user.groups.all())
+        self.assertFalse(self._has_grant(self.org_2, ORG_SUPERUSER.name))
 
         omb.remove_roles(self.user, CASEWORKER)
         self.assertNotIn(caseworker_group, self.user.groups.all())
 
     def test_clear_roles(self) -> None:
-        org_superuser_group = self._get_org_group(self.org_2, "Organization Superuser")
+        caseworker_group = self._get_org_group(self.org_2, "Caseworker")
 
-        self.assertIn(org_superuser_group, self.user.groups.all())
+        self.assertIn(caseworker_group, self.user.groups.all())
+        self.assertTrue(self._has_grant(self.org_2, ORG_SUPERUSER.name))
 
         self.omb_2.clear_roles(self.user)
 
-        org_admin_group = self._get_org_group(self.org_2, "Organization Admin")
-        self.assertNotIn(org_admin_group, self.user.groups.all())
-        self.assertNotIn(org_superuser_group, self.user.groups.all())
+        self.assertNotIn(caseworker_group, self.user.groups.all())
+        self.assertFalse(self._has_grant(self.org_2, ORG_SUPERUSER.name))
+        self.assertFalse(self._has_grant(self.org_2, ORG_ADMIN.name))

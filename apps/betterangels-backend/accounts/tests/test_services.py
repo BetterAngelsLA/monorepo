@@ -35,7 +35,11 @@ from shelters.groups import SHELTER_OPERATOR
 
 @pytest.mark.django_db
 def test_create_outreach_org() -> None:
-    """Outreach org gets Caseworker + Org Admin + Org Superuser groups."""
+    """Outreach org rows: only the dual-write Caseworker template gets a row.
+
+    ORG_ADMIN/ORG_SUPERUSER are grant-only (ADR 0001 teardown) — no
+    ``PermissionGroup`` row is created for them.
+    """
     org = create_organization_with_presets("Outreach Org", ["outreach"], owner=baker.make(User))
 
     profile = OrganizationProfile.objects.get(organization=org)
@@ -44,12 +48,12 @@ def test_create_outreach_org() -> None:
     names = set(
         PermissionGroupTemplate.objects.filter(permissiongroup__organization=org).values_list("name", flat=True)
     )
-    assert names == {CASEWORKER.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
+    assert names == {CASEWORKER.name}
 
 
 @pytest.mark.django_db
 def test_create_shelter_org() -> None:
-    """Shelter org gets Shelter Operator + Org Admin + Org Superuser groups."""
+    """Shelter org rows: only the dual-write Shelter Operator template."""
     org = create_organization_with_presets("Shelter Org", ["shelter"], owner=baker.make(User))
 
     profile = OrganizationProfile.objects.get(organization=org)
@@ -58,12 +62,12 @@ def test_create_shelter_org() -> None:
     names = set(
         PermissionGroupTemplate.objects.filter(permissiongroup__organization=org).values_list("name", flat=True)
     )
-    assert names == {SHELTER_OPERATOR.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
+    assert names == {SHELTER_OPERATOR.name}
 
 
 @pytest.mark.django_db
 def test_create_dual_type_org() -> None:
-    """Dual-type org deduplicates shared templates."""
+    """Dual-type org deduplicates shared templates (grant-only rows absent)."""
     org = create_organization_with_presets("Dual Org", ["outreach", "shelter"], owner=baker.make(User))
 
     profile = OrganizationProfile.objects.get(organization=org)
@@ -72,7 +76,7 @@ def test_create_dual_type_org() -> None:
     names = set(
         PermissionGroupTemplate.objects.filter(permissiongroup__organization=org).values_list("name", flat=True)
     )
-    assert names == {CASEWORKER.name, SHELTER_OPERATOR.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
+    assert names == {CASEWORKER.name, SHELTER_OPERATOR.name}
 
 
 @pytest.mark.django_db
@@ -93,7 +97,11 @@ def test_create_org_invalid_preset() -> None:
 
 @pytest.mark.django_db
 def test_create_org_with_owner_roles() -> None:
-    """Owner gets explicitly specified roles (not just defaults)."""
+    """Owner gets explicitly specified roles (not just defaults).
+
+    CASEWORKER is dual-write (group membership + Grant); ORG_ADMIN is
+    grant-only (scoped Role Grant, no PermissionGroup row).
+    """
     owner = baker.make(User, email="owner@example.com")
     org = create_organization_with_presets(
         "Roleful Org", ["outreach"], owner=owner, owner_roles=(CASEWORKER, ORG_ADMIN)
@@ -105,14 +113,10 @@ def test_create_org_with_owner_roles() -> None:
     caseworker_group = Group.objects.get(
         permissiongroup__organization=org, permissiongroup__template__name=CASEWORKER.name
     )
-    admin_group = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name=ORG_ADMIN.name)
-    superuser_group = Group.objects.get(
-        permissiongroup__organization=org, permissiongroup__template__name=ORG_SUPERUSER.name
-    )
 
     assert caseworker_group in owner.groups.all()
-    assert admin_group in owner.groups.all()
-    assert superuser_group not in owner.groups.all()
+    assert owner.grants.filter(scope_org=org, role__name=ORG_ADMIN.name).exists()
+    assert not owner.grants.filter(scope_org=org, role__name=ORG_SUPERUSER.name).exists()
 
 
 @pytest.mark.django_db(transaction=True)
@@ -359,7 +363,7 @@ def test_member_add_cross_portal_reinvite() -> None:
 
 @pytest.mark.django_db
 def test_member_add_multiple_templates() -> None:
-    """member_add can assign multiple permission templates at once."""
+    """member_add assigns multiple roles: CASEWORKER dual-write, ORG_ADMIN grant-only."""
     owner = baker.make(User)
     org = create_organization_with_presets("Multi Template Org", ["outreach"], owner=owner)
 
@@ -373,10 +377,9 @@ def test_member_add_multiple_templates() -> None:
     )
 
     cw = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name=CASEWORKER.name)
-    admin = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name=ORG_ADMIN.name)
 
     assert cw in user.groups.all()
-    assert admin in user.groups.all()
+    assert user.grants.filter(scope_org=org, role__name=ORG_ADMIN.name).exists()
 
 
 @pytest.mark.django_db
@@ -627,7 +630,11 @@ class TestMemberRolesReplace:
 
 
 def _role_names(org: Organization, member: User) -> set[str]:
-    return set(PermissionGroup.objects.filter(organization=org, user=member).values_list("template__name", flat=True))
+    """The member's role names at *org*: dual-write PermissionGroup rows merged
+    with grant-only scoped Role Grants (ORG_ADMIN/ORG_SUPERUSER have no rows)."""
+    legacy = set(PermissionGroup.objects.filter(organization=org, user=member).values_list("template__name", flat=True))
+    granted = set(member.grants.filter(scope_org=org).values_list("role__name", flat=True))
+    return legacy | granted
 
 
 # ── create_organization_service: no implicit join ─────────────────────
