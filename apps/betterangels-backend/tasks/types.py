@@ -1,12 +1,14 @@
-from typing import TYPE_CHECKING, Annotated, Optional
+from typing import TYPE_CHECKING, Annotated, Optional, cast
 
 import strawberry
 import strawberry_django
+from accounts.models import User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.graphql.types import make_in_filter
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from strawberry import ID, UNSET, Info, Maybe, auto
+from strawberry_django.auth.utils import get_current_user
 from tasks.enums import TaskStatusEnum
 from teams.types import TeamType
 
@@ -14,6 +16,31 @@ from . import models
 
 if TYPE_CHECKING:
     from hmis.types import HmisClientProfileType
+
+
+def _visible_task_rows(queryset: QuerySet, info: Info, perm: str) -> QuerySet:
+    """List-read gate for tasks (ADR 0001 §5, RFC 0003 slice 1).
+
+    SHARED read: a holder sees every task, a non-holder sees none — the
+    empty-not-error shape the legacy guardian prefilter produced, kept for
+    parity (single-row reads and mutations refuse instead).  The holder check
+    is memoized per request on the user instance (the house pattern —
+    ``invalidate_scope_cache`` drops it with the other authority memos), so
+    nested lists of the same type cost one check, not one each.  Anonymous
+    requests never reach here (``IsAuthenticated`` on the fields) but fail
+    closed anyway.
+    """
+    current = get_current_user(info)
+    if current is None or not getattr(current, "is_authenticated", False):
+        return queryset.none()
+
+    from common.permissions.selectors import can_anywhere
+
+    user = cast(User, current)
+    cache = user.__dict__.setdefault("_visible_task_rows_cache", {})
+    if perm not in cache:
+        cache[perm] = can_anywhere(user, perm)
+    return queryset if cache[perm] else queryset.none()
 
 
 @strawberry_django.filter_type(models.Task, lookups=True)
@@ -118,6 +145,10 @@ class TaskType:
     current_team: Optional[TeamType] = strawberry_django.field(field_name="team", deprecation_reason="Use team instead")
     updated_at: auto
 
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:
+        return _visible_task_rows(queryset, info, models.Task.perms.VIEW)
+
 
 @strawberry_django.input(models.Task, partial=True)
 class CreateTaskInput:
@@ -129,6 +160,10 @@ class CreateTaskInput:
     summary: str
     team_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]
+    # The acting org (ADR 0001 §5, RFC 0003): authority is ``require_can`` at
+    # this org and the created row's ``organization``.  The nested note-tasks
+    # input derives it from the parent note instead.
+    organization_id: ID
 
 
 @strawberry_django.input(models.Task, partial=True)
