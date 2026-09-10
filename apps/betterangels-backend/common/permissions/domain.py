@@ -31,9 +31,7 @@ over.
 #: and never consulted for authority.  Shelters, teams, reports, member
 #: management (``organizations.*`` — bound to the org-root Organization model),
 #: and the client family (RFC 0002 — SHARED read / SHARED write).
-LEGACY_INERT_APPS: frozenset[str] = frozenset(
-    {"shelters", "teams", "reports", "organizations", "clients", "tasks"}
-)
+LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams", "reports", "organizations", "clients", "tasks"})
 
 #: Domains where the global tier is enforceable at any org — exactly the
 #: grant-only set (the effective per-org report may fold global-tier
