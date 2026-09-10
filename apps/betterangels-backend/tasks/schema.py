@@ -2,24 +2,23 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
-from django.db.models import QuerySet
+from django.core.exceptions import PermissionDenied
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm, HasRetvalPerm
-from strawberry_django.utils.query import filter_for_user
+from strawberry_django.permissions import HasPerm
 
 from accounts.models import User
-from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
-from common.graphql.extensions import PermissionedQuerySet
+from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import get_object_or_permission_error
-from common.permissions.utils import IsAuthenticated
+from common.graphql.utils import org_or_deny
+from common.permissions.selectors import can_obj
+from common.permissions.utils import PERMISSION_DENIED_MESSAGE, IsAuthenticated, require_can
+from common.utils import get_or_none
 from hmis.models import HmisClientProfile, HmisNote
-from notes.groups import CASEWORKER
 from notes.models import Note
 from tasks.models import Task
 from tasks.services import task_create, task_delete, task_update
@@ -30,7 +29,8 @@ from .types import CreateTaskInput, TaskAssigneeType, TaskOrder, TaskType, Updat
 @strawberry.type
 class Query:
     task: TaskType = strawberry_django.field(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(Task.perms.VIEW)]
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(Task.perms.VIEW, perm_checker=can_anywhere_checker)],
     )
 
     task_assignees: OffsetPaginated[TaskAssigneeType] = strawberry_django.offset_paginated(
@@ -48,7 +48,11 @@ class Query:
     )
 
     @strawberry_django.offset_paginated(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(Task.perms.VIEW)]
+        permission_classes=[IsAuthenticated],
+        # SHARED read (RFC 0003): a holder sees every task, a non-holder gets an
+        # empty page — the legacy guardian-prefilter shape, kept for parity.
+        # Same declarative pattern as the client family (RFC 0002).
+        extensions=[HasPerm(perms=[Task.perms.VIEW], perm_checker=can_anywhere_checker, fail_silently=True)],
     )
     def tasks(self, info: Info, ordering: Optional[list[TaskOrder]] = None) -> OffsetPaginated[TaskType]:
         request = info.context["request"]
@@ -60,12 +64,14 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Task.perms.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(current_user, template=CASEWORKER)
+        org = org_or_deny(data.organization_id)
+        require_can(current_user, Task.perms.ADD, org=org)
 
         task_data = asdict(data)
+        task_data.pop("organization_id", None)
 
         # Resolve FK references
         note = None
@@ -86,7 +92,7 @@ class Mutation:
 
         tasks = task_create(
             user=current_user,
-            permission_group=permission_group,
+            organization=org,
             data=[task_data],
             note=note,
             hmis_note=hmis_note,
@@ -96,14 +102,14 @@ class Mutation:
 
         return cast(TaskType, tasks[0])
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.CHANGE])],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
-        qs: QuerySet[Task] = info.context.qs
+        user = cast(User, get_current_user(info))
 
-        task = get_object_or_permission_error(qs, data.id)
+        task = get_or_none(Task.objects.all(), data.id)
+        # One refusal for missing and forbidden rows — no existence oracle.
+        if task is None or not can_obj(user, Task.perms.CHANGE, task):
+            raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 
         clean = asdict(data)
 
@@ -113,13 +119,12 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        current_user = get_current_user(info)
+        user = cast(User, get_current_user(info))
 
-        task = get_object_or_permission_error(
-            filter_for_user(Task.objects.all(), current_user, [Task.perms.DELETE]),
-            data.id,
-            "You do not have permission to delete this task.",
-        )
+        task = get_or_none(Task.objects.all(), data.id)
+        # One refusal for missing and forbidden rows — no existence oracle.
+        if task is None or not can_obj(user, Task.perms.DELETE, task):
+            raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 
         deleted_id = task_delete(task=task)
 

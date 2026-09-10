@@ -36,6 +36,7 @@ GRANT_GATED_MODULES = (
     "clients.schema",
     "reports.schema",
     "shelters.schema",
+    "tasks.schema",
     "teams.schema",
 )
 
