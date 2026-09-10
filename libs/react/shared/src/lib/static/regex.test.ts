@@ -11,7 +11,7 @@ describe('Regex', () => {
       ['\t\n', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
+    it.each(cases)('%j => %j', (input, expected) => {
       expect(Regex.nonBlank.test(input)).toBe(expected);
     });
   });
@@ -31,7 +31,7 @@ describe('Regex', () => {
       ['', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
+    it.each(cases)('%j => %j', (input, expected) => {
       expect(Regex.date.test(input)).toBe(expected);
     });
   });
@@ -50,7 +50,7 @@ describe('Regex', () => {
       ['noon', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
+    it.each(cases)('%j => %j', (input, expected) => {
       expect(Regex.time.test(input)).toBe(expected);
     });
   });
@@ -71,7 +71,7 @@ describe('Regex', () => {
       ['user name@domain.com', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
+    it.each(cases)('%j => %j', (input, expected) => {
       expect(Regex.email.test(input)).toBe(expected);
     });
   });
@@ -90,7 +90,7 @@ describe('Regex', () => {
       ['(212) 555-1234', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
+    it.each(cases)('%j => %j', (input, expected) => {
       expect(Regex.phoneNumber.test(input)).toBe(expected);
     });
   });
@@ -105,12 +105,12 @@ describe('Regex', () => {
       ['1234567890', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
+    it.each(cases)('%j => %j', (input, expected) => {
       expect(Regex.phoneNumberWithExtensionUS.test(input)).toBe(expected);
     });
   });
 
-  describe('phoneNumberLoose', () => {
+  describe('phoneNumberLooseUS', () => {
     const cases: [string, boolean][] = [
       // bare digits
       ['3105551234', true],
@@ -119,8 +119,10 @@ describe('Regex', () => {
       ['310-555-1234', true],
       ['(310) 555-1234', true],
       ['310 555 1234', true],
+      ['310   555   1234', true],
       ['310.555.1234', true],
-      // international prefix
+      // US country code
+      ['1 310 555 1234', true],
       ['+1 310 555 1234', true],
       ['+13105551234', true],
       // extensions
@@ -133,6 +135,15 @@ describe('Regex', () => {
       ['3105551234 extension 456', true],
       ['310-555-1234 x123', true],
       ['(310) 555-1234 ext 789', true],
+      // invalid — too few digits
+      ['4', false],
+      ['56789', false],
+      // invalid — 1XX area code (NANP area codes never start with 0 or 1)
+      ['1234567890', false],
+      ['123-456-7890', false],
+      ['023-456-7890', false],
+      // invalid — non-US country code
+      ['+44 20 7946 0958', false],
       // invalid — no main number
       ['ext 123', false],
       ['x123', false],
@@ -147,8 +158,8 @@ describe('Regex', () => {
       ['3105551234 x', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
-      expect(Regex.phoneNumberLoose.test(input)).toBe(expected);
+    it.each(cases)('%j => %j', (input, expected) => {
+      expect(Regex.phoneNumberLooseUS.test(input)).toBe(expected);
     });
   });
 
@@ -163,7 +174,7 @@ describe('Regex', () => {
       ['', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
+    it.each(cases)('%j => %j', (input, expected) => {
       expect(Regex.californiaId.test(input)).toBe(expected);
     });
   });
@@ -192,7 +203,7 @@ describe('Regex', () => {
       ['just text with spaces', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
+    it.each(cases)('%j => %j', (input, expected) => {
       expect(Regex.domain.test(input)).toBe(expected);
     });
   });
@@ -219,7 +230,7 @@ describe('Regex', () => {
       ['http:/example.com', false],
     ];
 
-    it.each(cases)('%p => %p', (input, expected) => {
+    it.each(cases)('%j => %j', (input, expected) => {
       expect(Regex.url.test(input)).toBe(expected);
     });
   });

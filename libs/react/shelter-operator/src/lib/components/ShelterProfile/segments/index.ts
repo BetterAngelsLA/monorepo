@@ -1,3 +1,4 @@
+export * from './BaPrivate';
 export * from './BasicInfo';
 export * from './Details';
 export * from './Ecosystem';

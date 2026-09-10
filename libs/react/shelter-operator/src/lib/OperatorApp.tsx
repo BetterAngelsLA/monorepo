@@ -32,6 +32,7 @@ import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import { ShelterReportPage } from './pages/report/ShelterReportPage';
 import {
+  BaPrivatePage,
   ShelterBasicInfoPage,
   ShelterDetailsPage,
   ShelterEcosystemPage,
@@ -115,6 +116,10 @@ export function OperatorApp() {
               <Route
                 path={profileRouteConfig.children.media}
                 element={<ShelterMediaPage />}
+              />
+              <Route
+                path={profileRouteConfig.children.baPrivate}
+                element={<BaPrivatePage />}
               />
             </Route>
             <Route

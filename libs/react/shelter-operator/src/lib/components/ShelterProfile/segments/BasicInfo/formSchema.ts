@@ -26,7 +26,7 @@ export const formSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(Regex.phoneNumberLoose, 'Please enter a valid phone number')
+    .regex(Regex.phoneNumberLooseUS, 'Please enter a valid phone number')
     .optional()
     .or(z.literal('')),
   website: z
