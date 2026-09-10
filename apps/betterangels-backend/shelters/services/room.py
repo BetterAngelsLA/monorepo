@@ -128,18 +128,18 @@ def room_delete(*, user: "User", room_ids: list[int]) -> list[int]:
     The queryset is reach-scoped by the user's grants.
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
-    deleted IDs are returned.
+    deleted IDs are returned, in the order they were requested (duplicates
+    collapsed) — the response must not depend on the DB's row order.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching rooms exist.
     """
-    qs = room_queryset(user=user, permission=Room.perms.DELETE)
-    qs = qs.filter(pk__in=room_ids)
-    deleted_ids = list(qs.values_list("pk", flat=True))
-    if not deleted_ids:
+    qs = room_queryset(user=user, permission=Room.perms.DELETE).filter(pk__in=room_ids)
+    deletable_ids = set(qs.values_list("pk", flat=True))
+    if not deletable_ids:
         raise ObjectDoesNotExist("No matching rooms found.")
     qs.delete()
-    return deleted_ids
+    return [room_id for room_id in dict.fromkeys(room_ids) if room_id in deletable_ids]
 
 
 @transaction.atomic
