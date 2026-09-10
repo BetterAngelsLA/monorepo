@@ -15,7 +15,7 @@ import {
   TaskType,
   toTaskFilter,
 } from '../../../../apollo';
-import { useSnackbar } from '../../../../hooks';
+import { useActiveOrgId, useSnackbar } from '../../../../hooks';
 import { useModalScreen } from '../../../../providers';
 import {
   enumDisplayTaskStatus,
@@ -56,6 +56,7 @@ export function ClientTasksViewHmis(props: TProps) {
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
+  const activeOrgId = useActiveOrgId();
 
   const [filtersKey, setFiltersKey] = useState(0);
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
@@ -75,7 +76,7 @@ export function ClientTasksViewHmis(props: TProps) {
   }
 
   const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
-    if (!client?.id) return;
+    if (!client?.id || !activeOrgId) return;
     try {
       const result = await createTask({
         variables: {
@@ -85,6 +86,7 @@ export function ClientTasksViewHmis(props: TProps) {
             status: task.status,
             teamId: task.teamId ?? undefined,
             hmisClientProfile: client.id,
+            organizationId: activeOrgId,
           },
         },
         refetchQueries: [TasksDocument],
