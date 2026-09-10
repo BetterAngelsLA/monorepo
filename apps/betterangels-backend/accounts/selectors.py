@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from organizations.models import Organization
 
-from .models import PermissionGroup, User
+from .models import Grant, PermissionGroup, User
 
 logger = logging.getLogger(__name__)
 
@@ -131,19 +131,42 @@ def resolve_permission_group(
 
 
 def member_role_names(*, user_id: int, organization_id: int) -> list[str]:
-    """Names of the roles *user_id* holds in *organization_id*, sorted."""
-    return sorted(
+    """Names of the roles *user_id* holds in *organization_id*, sorted.
+
+    Post-teardown (ADR 0001) a role is either a dual-write legacy
+    ``PermissionGroup`` (member-level templates still enforced by notes/clients)
+    or a grant-only org-portal role backed by a scoped ``Role`` ``Grant`` (whose
+    legacy rows are retired).  Merge both arms so the Django admin still shows
+    e.g. "Organization Admin" for a grant-only holder.
+    """
+    legacy = set(
         PermissionGroup.objects.filter(organization_id=organization_id, user=user_id).values_list("label", flat=True)
     )
+    granted = set(
+        Grant.objects.filter(principal_user_id=user_id, scope_org_id=organization_id).values_list(
+            "role__name", flat=True
+        )
+    )
+    return sorted(legacy | granted)
 
 
 def role_names_by_organization(*, user_id: int) -> dict[str, list[str]]:
-    """Roles *user_id* holds, grouped by organization name and sorted within each."""
+    """Roles *user_id* holds, grouped by organization name and sorted within each.
+
+    Merges the legacy ``PermissionGroup`` arm with the grant-only scoped ``Role``
+    arm (see :func:`member_role_names`).
+    """
     by_organization: dict[str, list[str]] = {}
     for organization_name, role_name in (
         PermissionGroup.objects.filter(user=user_id)
         .select_related("organization")
         .values_list("organization__name", "label")
+    ):
+        by_organization.setdefault(organization_name, []).append(role_name)
+    for organization_name, role_name in (
+        Grant.objects.filter(principal_user_id=user_id)
+        .select_related("scope_org")
+        .values_list("scope_org__name", "role__name")
     ):
         by_organization.setdefault(organization_name, []).append(role_name)
     return {name: sorted(roles) for name, roles in sorted(by_organization.items())}

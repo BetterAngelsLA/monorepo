@@ -1,8 +1,10 @@
 """Org-scoped role manager — mechanical add/remove/clear/replace operations.
 
-Mirroring role-backed memberships to ``Grant`` rows is NOT done here: it is
-enforced at the ``User.groups`` m2m edge (``accounts.signals``) so every
-writer — this manager, the Django admin, scripts — keeps the invariant.
+Mirroring role-backed memberships to ``Grant`` rows rides the ``User.groups``
+m2m edge (``accounts.signals``) so every writer — this manager, the Django
+admin, scripts — keeps the invariant.  The exception is a grant-only
+(``legacy_inert``) role: it has no group edge, so this manager mirrors its
+scoped ``Role`` directly.
 
 Placed in its own module to avoid circular imports between
 :mod:`accounts.services` and :mod:`accounts.utils`.
@@ -83,46 +85,62 @@ class OrgRoleManager:
 
     @transaction.atomic
     def add_roles(self, user: User, *templates: TemplateConfig) -> None:
-        """Add one or more permission groups to *user*.
+        """Add one or more roles to *user* at this organization.
 
         ``templates`` are :class:`~common.permissions.config.TemplateConfig`
-        objects such as :data:`~notes.groups.CASEWORKER`.  Role-backed
-        memberships are mirrored to ``Grant`` rows at the m2m edge
-        (``accounts.signals``), not here — one mechanism no writer can bypass.
+        objects such as :data:`~notes.groups.CASEWORKER`.  A dual-write
+        template resolves its org ``PermissionGroup`` row and adds *user* to
+        it; the m2m edge mirrors the ``Grant`` (``accounts.signals``) — one
+        mechanism no writer can bypass.
+
+        A ``legacy_inert`` template (the ORG_ADMIN/ORG_SUPERUSER org-portal
+        roles) is grant-only (ADR 0001 teardown): no ``PermissionGroup`` row
+        exists for it, so there is no m2m edge to ride — the manager mirrors
+        the scoped ``Role`` Grant directly.
 
         Raises :class:`~django.core.exceptions.ObjectDoesNotExist` if no
-        ``PermissionGroup`` exists for a given template on this organization.
+        ``PermissionGroup`` exists for a dual-write template on this organization.
         """
         for template_config in templates:
-            permission_group = PermissionGroup.objects.get(
-                organization=self.organization,
-                template__name=template_config.name,
-            )
-            user.groups.add(permission_group)
+            if not template_config.legacy_inert:
+                permission_group = PermissionGroup.objects.get(
+                    organization=self.organization,
+                    template__name=template_config.name,
+                )
+                user.groups.add(permission_group)
+            else:
+                self._mirror_grant(user, template_config.name)
 
     @transaction.atomic
     def remove_roles(self, user: User, *templates: TemplateConfig) -> None:
-        """Remove specific permission groups from *user*.
+        """Remove specific roles from *user* at this organization.
 
-        Mirror revocation rides the same m2m edge as ``add_roles``.
+        A dual-write template removes the org ``PermissionGroup`` membership;
+        the m2m edge unmirrors the ``Grant``.  A ``legacy_inert`` template has
+        no ``PermissionGroup`` row to remove — its mirrored ``Grant`` is
+        dropped directly.
 
         Raises :class:`~django.core.exceptions.ObjectDoesNotExist` if no
-        ``PermissionGroup`` exists for a given template on this organization.
+        ``PermissionGroup`` exists for a dual-write template on this organization.
         """
         for template_config in templates:
-            permission_group = PermissionGroup.objects.get(
-                organization=self.organization,
-                template__name=template_config.name,
-            )
-            user.groups.remove(permission_group)
+            if not template_config.legacy_inert:
+                permission_group = PermissionGroup.objects.get(
+                    organization=self.organization,
+                    template__name=template_config.name,
+                )
+                user.groups.remove(permission_group)
+            else:
+                self._unmirror_grant(user, template_config.name)
 
     @transaction.atomic
     def clear_roles(self, user: User) -> None:
-        """Remove **all** org-scoped permission groups from *user*.
+        """Remove **all** org-scoped roles from *user*.
 
-        The m2m edge unmirrors the memberships; the org-wide ``Grant`` delete
-        additionally relinquishes direct grants that no group edge mirrors —
-        removing a member drops every scoped authority they held here.
+        Removes every remaining (dual-write) org ``PermissionGroup`` membership
+        — the m2m edge unmirrors them — and drops every ``Grant`` at this
+        organization, ``legacy_inert`` roles included (their authority is the
+        ``Grant`` alone), so direct grants are relinquished too.
         """
         groups = PermissionGroup.objects.filter(organization=self.organization)
         user.groups.remove(*groups)
@@ -130,6 +148,24 @@ class OrgRoleManager:
 
     @transaction.atomic
     def replace_roles(self, user: User, *templates: TemplateConfig) -> None:
-        """Replace all org-scoped groups.  Convenience: clear + add."""
+        """Replace all org-scoped roles.  Convenience: clear + add."""
         self.clear_roles(user)
         self.add_roles(user, *templates)
+
+    # ── Grant-only roles (no PermissionGroup edge to mirror through) ───────
+
+    def _role_for(self, template_name: str) -> Role | None:
+        """The scoped ``Role`` row backing *template_name*, if role-backed."""
+        return Role.objects.filter(name=template_name, is_global=False).first()
+
+    def _mirror_grant(self, user: User, template_name: str) -> None:
+        """Mirror a grant-only role's scoped ``Role`` as a ``Grant``."""
+        role = self._role_for(template_name)
+        if role is not None:
+            Grant.objects.get_or_create(principal_user=user, role=role, scope_org=self.organization)
+
+    def _unmirror_grant(self, user: User, template_name: str) -> None:
+        """Drop a grant-only role's mirrored ``Grant``."""
+        role = self._role_for(template_name)
+        if role is not None:
+            Grant.objects.filter(principal_user=user, role=role, scope_org=self.organization).delete()

@@ -142,9 +142,10 @@ class OrganizationAdminTestCase(TestCase):
 
         organization = Organization.objects.get(name="Outreach Org")
         self.assertEqual([t.value for t in organization.profile.org_types], ["outreach"])
+        # ORG_ADMIN/ORG_SUPERUSER are grant-only (no PermissionGroup rows).
         self.assertSetEqual(
             set(PermissionGroup.objects.filter(organization=organization).values_list("template__name", flat=True)),
-            {t.name for t in (CASEWORKER,)} | {"Organization Admin", "Organization Superuser"},
+            {t.name for t in (CASEWORKER,)},
         )
 
     def test_form_hides_is_active(self) -> None:
@@ -573,11 +574,15 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         self.organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
 
     def _roles_of(self, member: User) -> set[str]:
-        return set(
+        """Role names at *self.organization*: dual-write PermissionGroup rows merged
+        with grant-only scoped Role Grants (ORG_ADMIN/ORG_SUPERUSER have no rows)."""
+        legacy = set(
             PermissionGroup.objects.filter(organization=self.organization, user=member).values_list(
                 "template__name", flat=True
             )
         )
+        granted = set(member.grants.filter(scope_org=self.organization).values_list("role__name", flat=True))
+        return legacy | granted
 
     def test_inviting_with_two_roles_grants_both(self) -> None:
         with self.captureOnCommitCallbacks(execute=True):
@@ -1354,19 +1359,23 @@ class PermissionGroupTemplateAdminTestCase(TestCase):
     def test_deleting_a_code_owned_role_breaks_the_next_reconcile(self) -> None:
         """Why the guard is a refusal rather than a warning.
 
-        The delete itself succeeds quietly -- ``SET_NULL`` leaves each row with
-        its label and members and no template, so reconciliation stops seeing it
-        as derived.  ``post_migrate`` re-seeds the template, and the next
-        reconcile collides with the orphan on ``auth_group.name``.  Reached here
-        by deleting directly, which is what the admin guard now prevents.
+        ORG_ADMIN/ORG_SUPERUSER are grant-only (ADR 0001 teardown) — reconcile no
+        longer creates their rows, so this guards a *dual-write* code-owned role
+        (CASEWORKER), which reconcile still provisions per org.  The delete
+        itself succeeds quietly -- ``SET_NULL`` leaves each row with its label and
+        members and no template, so reconciliation stops seeing it as derived.
+        ``post_migrate`` re-seeds the template, and the next reconcile collides
+        with the orphan on ``auth_group.name``.  Reached here by deleting
+        directly, which is what the admin guard now prevents.
         """
-        row = PermissionGroup.objects.get(organization=self.organization, template=self.code_owned)
+        template = PermissionGroupTemplate.objects.get(name=CASEWORKER.name)
+        row = PermissionGroup.objects.get(organization=self.organization, template=template)
 
-        self.code_owned.delete()
+        template.delete()
 
         row.refresh_from_db()
         self.assertIsNone(row.template_id)
-        self.assertEqual(row.label, ORG_ADMIN.name)
+        self.assertEqual(row.label, CASEWORKER.name)
 
         seed_permission_templates()
         with self.assertRaises(IntegrityError), transaction.atomic():
