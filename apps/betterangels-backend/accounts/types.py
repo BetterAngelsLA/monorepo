@@ -284,6 +284,16 @@ class OrganizationMemberType(UserBaseType):
             return []
         return [PermissionTemplateEnum(v) for v in raw.split(", ")]
 
+    @strawberry_django.field
+    def membership_id(self, info: Info) -> Optional[ID]:
+        """The ``OrganizationUser`` row binding this member to the queried org.
+
+        The stable key the member mutations act on — the row names its org, so
+        ``removeOrganizationMember``/``changeOrganizationMemberRole`` authorize
+        there (ADR 0001 §5.3).  Set by the org-scoped resolvers.
+        """
+        return getattr(self, "_membership_id", None)
+
 
 @strawberry_django.input(User, partial=True)
 class CreateUserInput(UserBaseType):
@@ -324,8 +334,10 @@ class UpdateUserProfileInput:
 
 @strawberry.input
 class RemoveOrganizationMemberInput:
-    id: ID
-    organization_id: ID
+    # The ``OrganizationUser`` row binding the member to their org — the row
+    # names its org, so remove authorizes there (mirrors teams' row-keyed
+    # update/delete).  No separate ``organizationId`` is needed.
+    membership_id: ID
 
 
 # ── Self-Signup ───────────────────────────────────────────────────────
@@ -348,6 +360,7 @@ class CreateOrganizationResponse:
 
 @strawberry.input
 class ChangeOrganizationMemberRoleInput:
-    user_id: ID
-    organization_id: ID
+    # Keyed on the ``OrganizationUser`` membership row, whose org authorizes
+    # ``change_org_member_role`` (mirrors removeOrganizationMember).
+    membership_id: ID
     permission_template: PermissionTemplateEnum  # type: ignore[valid-type]

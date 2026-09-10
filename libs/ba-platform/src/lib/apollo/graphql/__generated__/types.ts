@@ -191,9 +191,8 @@ export type BulkDeleteResult = {
 };
 
 export type ChangeOrganizationMemberRoleInput = {
-  organizationId: Scalars['ID']['input'];
+  membershipId: Scalars['ID']['input'];
   permissionTemplate: PermissionTemplateEnum;
-  userId: Scalars['ID']['input'];
 };
 
 export type ChangeOrganizationMemberRolePayload = OperationInfo | OrganizationMemberType;
@@ -2372,6 +2371,7 @@ export type OrganizationMemberType = {
   lastLogin?: Maybe<Scalars['DateTime']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   memberRole: OrgRoleEnum;
+  membershipId?: Maybe<Scalars['ID']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   permissionTemplates: Array<PermissionTemplateEnum>;
 };
@@ -2986,8 +2986,7 @@ export type RemoveHmisNoteServiceRequestInput = {
 export type RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo;
 
 export type RemoveOrganizationMemberInput = {
-  id: Scalars['ID']['input'];
-  organizationId: Scalars['ID']['input'];
+  membershipId: Scalars['ID']['input'];
 };
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;

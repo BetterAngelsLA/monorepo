@@ -1,9 +1,4 @@
 """
-Requires the user to have the specified permission(s) in the organization set via X-Organization-ID header.
-"""
-directive @hasOrgPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
-
-"""
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
 
 When the condition fails, the following can be returned (following this priority):
@@ -192,8 +187,7 @@ type BulkDeleteResult {
 }
 
 input ChangeOrganizationMemberRoleInput {
-  userId: ID!
-  organizationId: ID!
+  membershipId: ID!
   permissionTemplate: PermissionTemplateEnum!
 }
 
@@ -1526,10 +1520,10 @@ type Mutation {
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   updateUserProfile(data: UpdateUserProfileInput!): UpdateUserProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
-  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
-  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
+  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload!
+  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload!
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
-  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "change_org_member_role"}], any: true)
+  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload!
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1931,6 +1925,7 @@ type OrganizationMemberType {
   memberRole: OrgRoleEnum!
   isOrgOwner: Boolean!
   permissionTemplates: [PermissionTemplateEnum!]!
+  membershipId: ID
 }
 
 type OrganizationMemberTypeOffsetPaginated {
@@ -2107,8 +2102,8 @@ input PublicShelterFilter {
 
 type Query {
   currentUser: CurrentUserType!
-  organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
+  organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
+  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -2250,8 +2245,7 @@ input RemoveHmisNoteServiceRequestInput {
 union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
 
 input RemoveOrganizationMemberInput {
-  id: ID!
-  organizationId: ID!
+  membershipId: ID!
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
