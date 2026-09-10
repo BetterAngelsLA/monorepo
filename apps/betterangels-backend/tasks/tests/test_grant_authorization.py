@@ -280,35 +280,3 @@ class TaskGrantAuthorityDeniedTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixi
         self.assertGraphQLOperationInfo(foreign_update, "updateTask", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertGraphQLOperationInfo(missing_delete, "deleteTask", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertGraphQLOperationInfo(foreign_delete, "deleteTask", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
-
-
-class TaskCreateCompatWindowTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
-    """Builds that predate the payload organization still create via the legacy group.
-
-    The compat window keeps released binaries working while the app build
-    sending ``organizationId`` ships; the strict flip removes both the fallback
-    and these tests.
-    """
-
-    def setUp(self) -> None:
-        super().setUp()
-        sync_roles()
-
-    def test_pre_payload_build_creates_via_the_legacy_caseworker_group(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        response = self.create_task_fixture({"summary": "legacy client task"}, include_organization=False)
-        self.assertIsNone(response.get("errors"))
-
-        task = Task.objects.get(pk=response["data"]["createTask"]["id"])
-        self.assertEqual(task.organization_id, self.org_1.pk)
-
-    def test_pre_payload_build_without_a_caseworker_group_is_refused(self) -> None:
-        member = baker.make(User)
-        self.org_1.add_user(member)
-        self.graphql_client.force_login(member)
-
-        task_count = Task.objects.count()
-        response = self.create_task_fixture({"summary": "should not appear"}, include_organization=False)
-        self.assertIn("errors", response)
-        self.assertEqual(Task.objects.count(), task_count)
