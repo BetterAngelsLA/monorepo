@@ -15,6 +15,7 @@ export { useClientHmis } from './useClientHmis';
 export * from './useClientProgramsHmis';
 // user
 export { useInitialLocation } from './useInitialLocation';
+export { useActiveOrgId } from './useActiveOrgId/useActiveOrgId';
 export { useOrgTeams } from './useOrgTeams/useOrgTeams';
 export { default as useSignOut } from './user/useSignOut';
 export { useUser } from '../providers/user/UserProvider';

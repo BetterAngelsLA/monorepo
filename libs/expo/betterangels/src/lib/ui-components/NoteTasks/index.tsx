@@ -8,7 +8,7 @@ import {
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
-import { useSnackbar } from '../../hooks';
+import { useActiveOrgId, useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { DraftTask as LocalDraftTask } from '../../screens/NotesHmis/NoteFormHmis/formSchema';
 import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
@@ -62,6 +62,7 @@ export default function NoteTasks(props: INoteTasksProps) {
 
   const { showModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
+  const activeOrgId = useActiveOrgId();
 
   // --- MUTATIONS ---
   const [createTask] = useMutation(CreateTaskDocument);
@@ -136,6 +137,8 @@ export default function NoteTasks(props: INoteTasksProps) {
           },
         });
       } else {
+        if (!activeOrgId) return;
+
         delete data.id;
         await createTask({
           variables: {
@@ -149,6 +152,7 @@ export default function NoteTasks(props: INoteTasksProps) {
               // Handle linking to either Note type
               note: noteId ?? undefined,
               hmisNote: hmisNoteId ?? undefined,
+              organizationId: activeOrgId,
             },
           },
         });
