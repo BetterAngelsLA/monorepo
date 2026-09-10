@@ -1,4 +1,4 @@
-import { TConditionRule, TQuestion, TSurveyForm } from '../types';
+import { TQuestion, TSurveyForm } from '../types';
 
 function findDuplicates(arr: string[]): string[] {
   const seen = new Set<string>();
@@ -65,21 +65,6 @@ function validateNextFormIds(forms: TSurveyForm[]): string[] {
   });
 
   return invalidFormIds;
-}
-
-function _getAllRules(forms: TSurveyForm[]): TConditionRule[] {
-  const rules: TConditionRule[] = [];
-
-  forms.forEach((form) => {
-    const showConditions = form.showConditions;
-    if (showConditions) {
-      showConditions.rules.forEach((rule) => {
-        rules.push(rule);
-      });
-    }
-  });
-
-  return rules;
 }
 
 function validateConditions(forms: TSurveyForm[]): string[] {

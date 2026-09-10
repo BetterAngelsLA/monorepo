@@ -60,69 +60,73 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
         <div className="flex flex-row flex-wrap w-full mb-2">
           <div className="flex flex-row flex-wrap w-full mb-2">
             <div className="flex flex-1 flex-col mb-2">
-              <label htmlFor="firstName" className="mb-1 font-bold">
-                First Name<span className="text-[#FF0000]">*</span>
+              <label className="flex flex-col gap-1 mb-1">
+                <span className="font-bold">
+                  First Name<span className="text-[#FF0000]">*</span>
+                </span>
+                <input
+                  style={styles.input}
+                  onChange={handleChange}
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  required={true}
+                  placeholder="First Name"
+                />
               </label>
-              <input
-                id="firstName"
-                style={styles.input}
-                onChange={handleChange}
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                required={true}
-                placeholder="First Name"
-              />
             </div>
 
             <div className="flex flex-1 flex-col mb-2">
-              <label htmlFor="lastName" className="mb-1 font-bold">
-                Last Name<span className="text-[#FF0000]">*</span>
+              <label className="flex flex-col gap-1 mb-1">
+                <span className="font-bold">
+                  Last Name<span className="text-[#FF0000]">*</span>
+                </span>
+                <input
+                  style={styles.input}
+                  onChange={handleChange}
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  required={true}
+                  placeholder="Last Name"
+                />
               </label>
-              <input
-                id="lastName"
-                style={styles.input}
-                onChange={handleChange}
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                required={true}
-                placeholder="Last Name"
-              />
             </div>
           </div>
 
           <div className="flex flex-row flex-wrap w-full mb-2">
-            <div className="flex flex-1 flex-col mb-2 ">
-              <label htmlFor="email" className="mb-1 font-bold">
-                Email<span className="text-[#FF0000]">*</span>
+            <div className="flex flex-1 flex-col mb-2">
+              <label className="flex flex-col gap-1 mb-1">
+                <span className="font-bold">
+                  Email<span className="text-[#FF0000]">*</span>
+                </span>
+                <input
+                  style={styles.input}
+                  onChange={handleChange}
+                  type="email"
+                  name="email"
+                  pattern={EMAIL_REGEX.source}
+                  value={formData.email}
+                  required={true}
+                  placeholder="Email Address"
+                />
               </label>
-              <input
-                id="email"
-                style={styles.input}
-                onChange={handleChange}
-                type="email"
-                name="email"
-                pattern={EMAIL_REGEX.source}
-                value={formData.email}
-                required={true}
-                placeholder="Email Address"
-              />
             </div>
 
             <div className="flex flex-1 flex-col mb-2">
-              <label htmlFor="zipCode" className="mb-1 font-bold">
-                Zip Code of Fire Impacted Property
+              <label className="flex flex-col gap-1 mb-1">
+                <span className="font-bold">
+                  Zip Code of Fire Impacted Property
+                </span>
+                <input
+                  style={styles.input}
+                  onChange={handleChange}
+                  type="text"
+                  name="zipCode"
+                  value={formData.zipCode}
+                  placeholder="Zip Code"
+                />
               </label>
-              <input
-                id="zipCode"
-                style={styles.input}
-                onChange={handleChange}
-                type="text"
-                name="zipCode"
-                value={formData.zipCode}
-                placeholder="Zip Code"
-              />
             </div>
           </div>
         </div>
@@ -149,10 +153,9 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
           <div className="max-h-[50px] mb-2">
             {status === 'sending' && <div>Sending...</div>}
             {status === 'error' && (
-              <div
-                style={{ color: 'red' }}
-                dangerouslySetInnerHTML={{ __html: message }}
-              />
+              <div style={{ color: 'red' }}>
+                {message ? String(message) : 'An error occurred'}
+              </div>
             )}
             {status === 'success' && (
               <div className="color-brand-dark-blue mt-3">

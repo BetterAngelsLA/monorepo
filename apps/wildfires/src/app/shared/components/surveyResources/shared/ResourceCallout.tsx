@@ -40,12 +40,14 @@ export function ResourceCallout(props: IProps) {
 
   useEffect(() => {
     if (isPrinting) {
-      wasExpandedBeforePrintRef.current = show;
-      setShow(true);
+      setShow((currentShow) => {
+        wasExpandedBeforePrintRef.current = currentShow;
+        return true;
+      });
     } else {
       setShow(wasExpandedBeforePrintRef.current);
     }
-  }, [isPrinting]); // ✅ Removed show from dependencies to prevent race conditions
+  }, [isPrinting]);
 
   const handleToggle = useCallback(() => {
     setShow((prev) => !prev);
