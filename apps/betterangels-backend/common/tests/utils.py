@@ -216,9 +216,7 @@ def make_legacy_only_holder(*, organization: Organization, template_name: str, u
     convert when they apply.
     """
     organization.add_user(user)
-    add_legacy_membership(
-        user, group=make_permission_group(organization=organization, template_name=template_name)
-    )
+    add_legacy_membership(user, group=make_permission_group(organization=organization, template_name=template_name))
     return user
 
 
