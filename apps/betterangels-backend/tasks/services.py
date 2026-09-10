@@ -1,7 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from accounts.models import User
+from accounts.models import PermissionGroup, User
 from clients.models import ClientProfile
+from common.permissions.utils import assign_object_permissions
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from hmis.models import HmisClientProfile, HmisNote
@@ -53,6 +54,60 @@ def task_create(
             # full_clean checks the constraints first, so reaching this means
             # a concurrent write landed between the check and the insert.
             raise ValidationError(str(e)) from e
+
+        created.append(task)
+
+    return created
+
+
+def task_create_legacy(
+    *,
+    user: User,
+    permission_group: PermissionGroup,
+    data: List[Dict[str, Any]],
+    note: Optional[Note] = None,
+    hmis_note: Optional[HmisNote] = None,
+    client_profile: Optional[ClientProfile] = None,
+    hmis_client_profile: Optional[HmisClientProfile] = None,
+) -> List[Task]:
+    """Pre-cutover creation path — compat window only.
+
+    A mobile build that predates the payload org (``organizationId``) still
+    creates through its legacy ``CASEWORKER`` ``PermissionGroup``: the org
+    comes from the group and CHANGE/DELETE guardian rows are assigned, exactly
+    as before the cutover.  The strict flip removes this function once the
+    build sending ``organizationId`` is deployed.
+    """
+    created: List[Task] = []
+
+    for item in data:
+        task = Task(
+            summary=item.get("summary", ""),
+            description=item.get("description") or "",
+            status=item.get("status") or Task.Status.TO_DO,
+            team_id=item.get("team_id"),
+            note=note,
+            hmis_note=hmis_note,
+            client_profile=client_profile,
+            hmis_client_profile=hmis_client_profile,
+            created_by=user,
+            organization=permission_group.organization,
+        )
+        task.full_clean()
+
+        try:
+            task.save()
+        except IntegrityError as e:
+            raise ValidationError(str(e)) from e
+
+        assign_object_permissions(
+            permission_group,
+            task,
+            [
+                Task.perms.CHANGE,
+                Task.perms.DELETE,
+            ],
+        )
 
         created.append(task)
 
