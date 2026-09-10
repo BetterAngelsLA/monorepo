@@ -7,6 +7,7 @@ from accounts.selectors import resolve_permission_group
 from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
+from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
     DeleteDjangoObjectInput,
@@ -41,7 +42,7 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm, HasRetvalPerm
+from strawberry_django.permissions import HasPerm
 
 from .types import (
     CreateNoteDataImportInput,
@@ -69,27 +70,28 @@ from .types import (
 @strawberry.type
 class Query:
     note: NoteType = strawberry_django.field(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(NotePermissions.VIEW, perm_checker=can_anywhere_checker)],
+        filters=NoteFilter,
     )
 
     notes: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
     services: OffsetPaginated[OrganizationServiceType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(NotePermissions.ADD)],
+        extensions=[HasPerm(NotePermissions.ADD, perm_checker=can_anywhere_checker)],
     )
 
     service_categories: OffsetPaginated[OrganizationServiceCategoryType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(NotePermissions.ADD)],
+        extensions=[HasPerm(NotePermissions.ADD, perm_checker=can_anywhere_checker)],
     )
 
     interaction_authors: OffsetPaginated[InteractionAuthorType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(NotePermissions.ADD)],
+        extensions=[HasPerm(NotePermissions.ADD, perm_checker=can_anywhere_checker)],
     )
 
     @strawberry_django.offset_paginated(

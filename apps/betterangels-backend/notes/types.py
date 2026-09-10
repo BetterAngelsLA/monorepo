@@ -6,6 +6,7 @@ import strawberry_django
 from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
+from common.graphql.permission_checkers import visible_rows_for_holder
 from common.graphql.types import (
     AttachmentInterface,
     LocationInput,
@@ -149,6 +150,16 @@ class NoteFilter:
         return query
 
 
+def _visible_note_rows(queryset: QuerySet, info: Info, perm: str) -> QuerySet:
+    """List-read gate for notes (ADR 0001 §5, RFC 0003 slice 2).
+
+    SHARED read: a holder sees every note, a non-holder sees none — see
+    ``visible_rows_for_holder`` for the shape, the per-request memo, and the
+    anonymous fail-closed.
+    """
+    return visible_rows_for_holder(queryset, info, perm=perm, cache_key="_visible_note_rows_cache")
+
+
 @strawberry_django.type(
     models.Note,
     pagination=True,
@@ -175,6 +186,10 @@ class NoteType:
     # ``currentTeam``, so both names resolve the same FK until those builds
     # have rolled over.  Delete this field, not ``team``.
     current_team: Optional[TeamType] = strawberry_django.field(field_name="team", deprecation_reason="Use team instead")
+
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:
+        return _visible_note_rows(queryset, info, NotePermissions.VIEW)
 
     @strawberry_django.field(
         annotate={
