@@ -286,9 +286,9 @@ class OperatorShelterType(ShelterTypeMixin):
     def additional_contacts(self, root: models.Shelter, info: Info) -> List[ShelterContactInfoType]:
         """BA-only contacts — global-tier gate: only the Global Shelter Operator sees them (ADR 0001 §2.4)."""
         user = cast(User, get_current_user(info))
-        if not user or not user.is_authenticated or not holds_globally(user, models.ContactInfo.perms.VIEW):
-            return []
-        return cast(List[ShelterContactInfoType], list(root.additional_contacts.all()))
+        if user and user.is_authenticated and holds_globally(user, models.ContactInfo.perms.VIEW):
+            return cast(List[ShelterContactInfoType], list(root.additional_contacts.all()))
+        return []
 
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
