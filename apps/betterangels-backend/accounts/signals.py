@@ -164,9 +164,16 @@ def mirror_group_membership_grants(
 ) -> None:
     """Keep role-backed ``PermissionGroup`` memberships and Grants in step.
 
-    Wired to ``User.groups.through``, so every writer keeps the invariant —
-    the manager, the user admin, scripts, the shell — and reverse writes
-    (``permission_group.user_set.add/remove/clear``) are handled too.
+    Wired to ``User.groups.through``, so every writer that goes through the m2m
+    manager — the role manager, the user admin, scripts, the shell — keeps the
+    invariant, and reverse writes
+    (``permission_group.user_set.add/remove/clear``) are handled too.  Writers
+    that bypass the m2m manager (``through.objects.bulk_create``, raw SQL,
+    ``loaddata``, ``queryset.update()``) are the documented exception.  A
+    signal is deliberately the seam here: it is the only one every real writer
+    shares, so the invariant cannot be lost by a service-level refactor (ADR
+    0001 §4 phase 2 — a sanctioned exception to the "no logic in signals"
+    styleguide rule).
 
     A cascading delete of a ``PermissionGroup`` (teardown retiring a legacy
     row) does **not** emit ``m2m_changed`` — Django fast-deletes the through
