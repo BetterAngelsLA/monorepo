@@ -101,6 +101,14 @@ export const depConstraints = [
       'scope:shared',
     ],
   },
+  {
+    sourceTag: 'scope:wildfires',
+    onlyDependOnLibsWithTags: [
+      'scope:wildfires',
+      'scope:ba-platform',
+      'scope:shared',
+    ],
+  },
 ];
 
 export default [

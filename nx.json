@@ -102,6 +102,7 @@
         "apps/betterangels/**/*",
         "apps/betterangels-admin/**/*",
         "apps/shelter-web/**/*",
+        "apps/wildfires/**/*",
         "libs/apollo/**/*",
         "libs/ba-platform/permissions/**/*",
         "libs/ba-platform/**/*",

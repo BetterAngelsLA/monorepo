@@ -73,7 +73,7 @@ async function extractFullHTMLFromPrintContainer(
           .filter((rule) => rule instanceof CSSFontFaceRule)
           .map((rule) => rule.cssText)
           .join('\n');
-      } catch (e) {
+      } catch {
         return ''; // Skip sheets that throw due to cross-origin restrictions.
       }
     })
