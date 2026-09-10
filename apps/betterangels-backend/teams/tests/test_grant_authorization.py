@@ -238,8 +238,8 @@ class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
 
     def _list_org_2(self, user: User) -> dict[str, Any]:
         self.graphql_client.force_login(user)
-        self._set_active_org(self.org_2)
-        return self.execute_graphql(self.get_teams_query())
+        # Header-free read: the org travels in the filter payload (no header).
+        return self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": str(self.org_2.pk)}})
 
     def _ids(self, response: dict[str, Any]) -> set[int]:
         self.assertIsNone(response.get("errors"))

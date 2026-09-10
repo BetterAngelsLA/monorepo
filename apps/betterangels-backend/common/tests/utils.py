@@ -216,7 +216,9 @@ class GraphQLBaseTestCase(
         OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_2, CASEWORKER)
         OrgRoleManager(self.org_2).add_roles(self.org_2_case_manager_1, CASEWORKER)
 
-        # Default organization for @HasOrgPerm-scoped mutations/queries.
+        # Default org for the deprecated X-Organization-ID header — still the
+        # read fallback while mobile's team pickers migrate (DEV-2566).  Every
+        # grant-only surface takes its org from the payload instead.
         self._set_active_org(self.org_1)
 
     def _set_active_org(self, org: Organization) -> None:
@@ -233,11 +235,9 @@ class GraphQLBaseTestCase(
     ) -> None:
         """Grant ``app_label.codename`` *perm* to *user* at *org* via a Grant.
 
-        Under the legacy model tests mutated a ``PermissionGroup`` so
-        ``HasOrgPerm``/``permissioned_queryset`` would see the permission at
-        query time.  The grant model (ADR 0001) reads the permission from the
-        ``Role`` a ``Grant`` references, so this creates a scoped test Role
-        carrying *perm* and grants it to *user* at *org*.  Idempotent.
+        The grant model (ADR 0001) reads the permission from the ``Role`` a
+        ``Grant`` references, so this creates a scoped test Role carrying *perm*
+        and grants it to *user* at *org*.  Idempotent.
         """
         from accounts.models import Grant, Role
         from django.contrib.auth.models import Permission
