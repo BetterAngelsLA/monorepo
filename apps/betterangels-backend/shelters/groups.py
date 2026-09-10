@@ -54,6 +54,8 @@ SHELTER_OPERATOR = TemplateConfig(
         # sees their org's private shelters through the org-scoped visible()
         # path instead (ADR 0001 §2.4).
         ClientProfile.perms.VIEW,
+        # ContactInfo deliberately NOT on the scoped role as it is
+        # currenty used for internal BA users only.
     ],
     invite_html="account/email/shelter_operator_invite.html",
     invite_txt="account/messages/shelter_operator_invite.txt",
