@@ -547,8 +547,9 @@ def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[in
     if phantoms:
         raise RuntimeError(
             f"RoleDef {role_def.name!r} permissions {', '.join(phantoms)} resolve to a "
-            "ContentType with no model class.  Custom permission codenames must end in the "
-            "model name they belong to (e.g. 'view_private_shelter')."
+            "ContentType with no model class.  Custom permission codenames must be "
+            "declared in the owning model's Meta.permissions (e.g. 'view_reports' on "
+            "ScheduledReport) — a codename no model declares is a typo."
         )
 
 

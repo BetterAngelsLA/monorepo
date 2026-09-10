@@ -38,7 +38,8 @@ ORG_SUPERUSER = TemplateConfig(
 # member-management codenames (``organizations.*``) are portal actions
 # registered on no concrete model, so they cannot ride a RoleDef and stay
 # legacy until their own cutover; the legacy ``PermissionGroup`` rows are kept
-# (dual write) until reconcile retires them.
+# (dual write) until the org-admin teardown retires them (``reconcile`` only
+# drops stale derived groups, and ORG_ADMIN is still a preset until then).
 ORG_ADMIN_ROLE = RoleDef(
     name=ORG_ADMIN.name,
     permissions=[
@@ -53,9 +54,10 @@ ORG_ADMIN_ROLE = RoleDef(
 
 ORG_SUPERUSER_ROLE = RoleDef(
     name=ORG_SUPERUSER.name,
-    # Same bundle as ORG_ADMIN while teams is the only scoped permission either
-    # role can carry (the phantom-ContentType guard keeps the rest legacy).
-    # Derived so the two cannot drift apart until that changes.
+    # Same bundle as ORG_ADMIN while teams + reports are the only scoped
+    # permissions either role can carry (the phantom-ContentType guard keeps
+    # member management legacy).  Derived so the two cannot drift apart until
+    # that changes.
     permissions=list(ORG_ADMIN_ROLE.permissions),
     is_invitable=ORG_SUPERUSER.is_invitable,
 )

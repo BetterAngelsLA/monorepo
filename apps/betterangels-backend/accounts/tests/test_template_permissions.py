@@ -11,7 +11,7 @@ from functools import reduce
 
 import pytest
 from common.org_types import REGISTRY
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
 from django.db.models import Q
 
 
@@ -90,6 +90,14 @@ def test_retire_superseded_phantom_permissions() -> None:
     holder = get_user_model().objects.create(username="reports-holder")
     holder.user_permissions.add(phantom)
 
+    # Holders referencing BOTH rows (a DB that lived through the transition):
+    # the re-point must drop the phantom reference first instead of colliding
+    # with the through-table unique constraint and aborting post_migrate.
+    both_user = get_user_model().objects.create(username="both-rows-holder")
+    both_user.user_permissions.add(phantom, real)
+    both_group = Group.objects.create(name="both-rows-group")
+    both_group.permissions.add(phantom, real)
+
     # A portal phantom with no real twin (member management is still legacy).
     portal_ct, _ = ContentType.objects.get_or_create(app_label="organizations", model="member")
     portal_phantom, _ = Permission.objects.get_or_create(
@@ -102,6 +110,11 @@ def test_retire_superseded_phantom_permissions() -> None:
     assert Permission.objects.filter(pk=real.pk).exists()
     # The user's grant survived, now on the real row.
     assert holder.user_permissions.filter(pk=real.pk).exists()
+    # Both-rows holders kept the real reference and lost the phantom one.
+    assert not both_user.user_permissions.filter(pk=phantom.pk).exists()
+    assert both_user.user_permissions.filter(pk=real.pk).exists()
+    assert not both_group.permissions.filter(pk=phantom.pk).exists()
+    assert both_group.permissions.filter(pk=real.pk).exists()
     # Portal phantom has no real twin → kept.
     assert Permission.objects.filter(pk=portal_phantom.pk).exists()
     # Phantom ContentType dropped once its rows are gone.

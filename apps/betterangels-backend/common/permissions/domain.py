@@ -13,11 +13,12 @@ three states:
   superuser, or global Roles).  Per-org entries may carry these permissions
   only from the user's org ``PermissionGroup`` rows (the legacy arm).
 * dual — enforced via legacy OR grant (``HasOrgPermOrGrant``, ADR §5.3): the
-  global tier becomes enforceable per org once the grant arm is live.  Empty
-  until PRs #2427-2429.
+  global tier becomes enforceable per org once the grant arm is live.  Reserved
+  for member management's cutover (the last legacy-only domain); empty so far —
+  each landed cutover went grant-only directly.
 * grant-only — enforced via grants (``can()``/``scopes()``); the global tier is
   enforceable at any org, and legacy rows are INERT and must not be reported
-  (e.g. shelters in #2412).
+  (shelters, teams, reports).
 
 ``LEGACY_INERT_APPS`` lists the grant-only domains — the only state in which
 legacy permissions must be suppressed from reports.  ``GLOBAL_TIER_ORG_APPS``

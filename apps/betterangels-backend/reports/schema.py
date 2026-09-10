@@ -5,6 +5,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User as AccountUser
 from common.permissions.utils import IsAuthenticated, require_can
+from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from organizations.models import Organization
 from strawberry import ID
@@ -19,13 +20,11 @@ def _org_or_deny(org_id: object) -> Organization:
     """Resolve an org id from client input, failing closed.
 
     A missing/unknown/non-numeric org is a permission problem
-    (``PermissionDenied``), never a ``DoesNotExist`` crash or a ``ValueError``.
-    Module-level because strawberry-django resolvers are invoked unbound.
+    (``PermissionDenied``), never a ``DoesNotExist`` crash or a ``ValueError``
+    — ``get_or_none`` is the house guard (``common.utils``).  Module-level
+    because strawberry-django resolvers are invoked unbound.
     """
-    try:
-        org = Organization.objects.filter(pk=org_id).first()
-    except TypeError, ValueError:
-        org = None
+    org = get_or_none(Organization.objects.all(), org_id)
     if org is None:
         raise PermissionDenied("You do not have access to this organization.")
     return org

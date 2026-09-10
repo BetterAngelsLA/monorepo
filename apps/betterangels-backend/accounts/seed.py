@@ -111,14 +111,16 @@ def _resolve_permissions(permission_strings: list[str]) -> list[int]:
         ignore_conflicts=True,
     )
 
-    # Re-read now that everything exists, preferring a real row when both a
-    # synthesized and a real row exist for the same (app_label, codename).
+    # Re-read now that everything exists, preferring the row bound to the
+    # ContentType we provisioned against (a real row when one exists — and
+    # deterministic if two real rows ever share an (app_label, codename)).
     id_lookup: dict[tuple[str, str], int] = {}
     for perm in Permission.objects.filter(
         content_type__app_label__in=app_labels, codename__in=codenames
     ).select_related("content_type"):
         key = (perm.content_type.app_label, perm.codename)
-        if key not in id_lookup or perm.content_type.model_class() is not None:
+        bound = ct_by_key.get(key)
+        if key not in id_lookup or (bound is not None and perm.content_type_id == bound.pk):
             id_lookup[key] = perm.pk
     return [id_lookup[(a, c)] for a, c in parsed]
 
@@ -206,16 +208,19 @@ def retire_superseded_phantom_permissions() -> None:
     Django admin.
 
     Deletes every phantom Permission (model-less ContentType) whose codename
-    also exists on a real ContentType in the same app, then drops phantom
-    ContentTypes left with no permissions.  Member-management portal codenames
+    also exists on a real ContentType in the same app, then drops the phantom
+    ContentTypes those retirements emptied.  Member-management portal codenames
     (``organizations.*``) have no real twin, so their phantom rows are kept —
     they are still the only rows those codenames live on.  Idempotent; runs at
     ``post_migrate`` once roles/groups have converged onto the real rows.
 
-    References are **re-pointed, never silently dropped**: a ``user_permission``
-    (or role/group/template row) pointing at a doomed phantom is moved onto its
-    real twin first — deleting a referenced phantom would otherwise silently
-    revoke the holder (nothing else re-points ``user_permissions``).
+    References held through the enumerated M2M throughs (user, group, role,
+    template) are re-pointed onto the real twin before the phantom is deleted —
+    deleting a referenced phantom would otherwise silently revoke the holder
+    (nothing else re-points ``user_permissions``).  Other direct FKs to
+    ``Permission`` (e.g. the guardian object-permission tables) are not
+    re-pointed and still cascade; extend ``permission_m2m_throughs`` if a
+    domain that uses them gains a retirable phantom.
     """
     from accounts.models import PermissionGroup, Role
 
@@ -225,14 +230,20 @@ def retire_superseded_phantom_permissions() -> None:
     user_cls = get_user_model()
 
     # Every model that has an M2M to ``auth.Permission`` in this codebase —
-    # re-point each before the phantom row is deleted.  If another M2M to
-    # Permission is added later, it must join this list.
-    permission_m2m_throughs = (
-        user_cls.user_permissions.through,
-        Group.permissions.through,
-        Role.permissions.through,
-        PermissionGroup.permissions.through,
-        PermissionGroupTemplate.permissions.through,
+    # re-point each before the phantom row is deleted.  Role and PermissionGroup
+    # are MTI subclasses of Group, so their throughs are the same
+    # ``auth_group_permissions`` table; dedupe so it is never processed twice.
+    # If another M2M to Permission is added later, it must join this list.
+    permission_m2m_throughs = tuple(
+        dict.fromkeys(
+            (
+                user_cls.user_permissions.through,
+                Group.permissions.through,
+                Role.permissions.through,
+                PermissionGroup.permissions.through,
+                PermissionGroupTemplate.permissions.through,
+            )
+        )
     )
 
     with transaction.atomic():
@@ -244,7 +255,7 @@ def retire_superseded_phantom_permissions() -> None:
         phantom_perms = list(Permission.objects.filter(content_type_id__in=phantom_ct_ids))
         real_by_key: dict[tuple[str, str], Permission] = {
             (p.content_type.app_label, p.codename): p
-            for p in Permission.objects.exclude(content_type_id__in=phantom_ct_ids)
+            for p in Permission.objects.exclude(content_type_id__in=phantom_ct_ids).select_related("content_type")
         }
         doomed = [p for p in phantom_perms if (p.content_type.app_label, p.codename) in real_by_key]
         if doomed:
@@ -265,7 +276,12 @@ def retire_superseded_phantom_permissions() -> None:
         remaining = set(
             Permission.objects.filter(content_type_id__in=phantom_ct_ids).values_list("content_type_id", flat=True)
         )
-        orphaned = [ct.pk for ct in phantom_cts if ct.pk not in remaining]
+        # Only the ContentTypes this retire actually emptied — never every
+        # model-less CT that happens to have no permissions (stale CTs from
+        # uninstalled apps would otherwise be swept, cascading into FK holders
+        # like the admin log).
+        retired_ct_ids = {p.content_type_id for p in doomed}
+        orphaned = [ct.pk for ct in phantom_cts if ct.pk in retired_ct_ids and ct.pk not in remaining]
         if orphaned:
             ContentType.objects.filter(pk__in=orphaned).delete()
             logger.info("Retired %d phantom ContentTypes", len(orphaned))

@@ -304,6 +304,30 @@ class TestExportInteractionDataView:
         response = api_client.get(f"/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id={other_org.id}")
         assert response.status_code == 403
 
+    def test_export_unknown_org_fails_closed(self, api_client: APIClient, org: Organization) -> None:
+        """An org id that does not exist denies cleanly (no DoesNotExist crash)."""
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        grant_view_reports(user, org)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id=999999999")
+        assert response.status_code == 403
+
+    def test_export_non_numeric_org_id_fails_closed(self, api_client: APIClient, org: Organization) -> None:
+        """A non-numeric org id denies cleanly (no ValueError crash)."""
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        grant_view_reports(user, org)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id=not-a-number")
+        assert response.status_code == 403
+
 
 REPORT_SUMMARY_QUERY = """
     query ReportSummary($organizationId: ID!, $startDate: Date, $endDate: Date) {
@@ -390,7 +414,6 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             team=team_dropin,
             _quantity=2,
         )
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertIsNone(response.get("errors"))
@@ -422,7 +445,6 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         first.provided_services.add(baker.make(ServiceRequest, service=shower))
         first.requested_services.add(baker.make(ServiceRequest, service=shower))
 
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
 
@@ -463,7 +485,6 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             interacted_at=timezone.make_aware(datetime(2025, 1, 15, 12, 0, 0)),
             _quantity=5,
         )
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertIsNone(response.get("errors"))

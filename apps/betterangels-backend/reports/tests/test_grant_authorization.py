@@ -24,6 +24,7 @@ from accounts.models import Grant, PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.auth.models import Permission
 from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note
@@ -64,7 +65,7 @@ class ReportSummaryGraphQLGrantMixin(GraphQLBaseTestCase):
 class ReportExportDRFGrantMixin:
     """Shared DRF helpers for the /reports/export/ endpoint."""
 
-    def _export(self, user: User, org_id: int) -> Any:
+    def _export(self, user: User, org_id: int | str) -> Any:
         api = APIClient()
         api.force_authenticate(user=user)
         return api.get(f"/reports/export/?org_id={org_id}&start_date=2025-01-01&end_date=2025-01-31")
@@ -111,6 +112,20 @@ class ReportGrantAuthorityTestCase(ReportSummaryGraphQLGrantMixin, ReportExportD
         self.assertIsNone(response.get("errors"))
         self.assertIsNotNone(response["data"]["reportSummary"])
 
+    def test_user_permissions_holder_reads_and_exports(self) -> None:
+        """A direct ``user_permissions`` grant is global tier — enforceable at any org."""
+        holder = baker.make(User)
+        perm = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
+        holder.user_permissions.add(perm)
+        self.assertFalse(self.org_2.users.filter(pk=holder.pk).exists())
+
+        response = self._read(holder, self.org_2)
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNotNone(response["data"]["reportSummary"])
+
+        export = self._export(holder, self.org_2.pk)
+        self.assertEqual(export.status_code, 200)
+
     def test_reads_without_the_org_header(self) -> None:
         """No X-Organization-ID header at all — the payload org authorizes."""
         holder = baker.make(User)
@@ -130,6 +145,9 @@ class ReportGrantAuthorityTestCase(ReportSummaryGraphQLGrantMixin, ReportExportD
         """
         holder = baker.make(User)
         self._grant_permission(holder, "reports.view_reports", self.org_2, role_name="Report Reader")
+        # Pin the premise: the base fixture leaves the header on org_1, where
+        # this holder has no authority (that stale header is the point).
+        self.assertEqual(self.graphql_client.defaults.get("HTTP_X_ORGANIZATION_ID"), str(self.org_1.pk))
 
         response = self._read(holder, self.org_2)
         self.assertIsNone(response.get("errors"))
@@ -167,6 +185,9 @@ class ReportGrantAuthorityDeniedTestCase(ReportSummaryGraphQLGrantMixin, ReportE
         self.org_1.add_user(legacy_admin)
         group = PermissionGroup.objects.get(organization=self.org_1, template__name=ORG_ADMIN.name)
         group.user_set.add(legacy_admin)
+        # Pin the premise: the denial below only proves revocation if the legacy
+        # group actually carries the permission it no longer grants.
+        self.assertTrue(group.permissions.filter(content_type__app_label="reports", codename="view_reports").exists())
         # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
         # legacy-only holder has none — drop the mirror to model that state.
         Grant.objects.filter(principal_user=legacy_admin).delete()
