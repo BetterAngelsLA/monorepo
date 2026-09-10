@@ -1099,6 +1099,40 @@ the org-root ``Organization`` ContentType — so they can ride scoped Roles:
   backfilled Grants) — retained only as an inert remainder until the post-cutover
   teardown (see §5.3).
 
+**Status on main — org-admin teardown (2026-09-09).** The inert org-admin rows
+are gone; the org-admin legacy *machinery* is removed:
+
+- ``TemplateConfig.legacy_inert`` marks a template whose ``PermissionGroup`` rows
+  are grant-only — set on ORG_ADMIN/ORG_SUPERUSER (every app their permissions
+  span is in ``LEGACY_INERT_APPS``).
+- ``OrgRoleManager`` mirrors only the scoped ``Role`` ``Grant`` for a
+  ``legacy_inert`` template — no org ``PermissionGroup`` membership is created or
+  removed (``clear_roles`` still drops every grant at the org).
+- ``reconcile_org_groups`` excludes ``legacy_inert`` templates from the expected
+  set and retires any leftover row unconditionally (``_retire_legacy_inert_rows``)
+  — orgs migrated from before the cutover lose their inert org-admin rows on the
+  next reconcile, cascading their ``auth.Group`` and memberships away.
+- Member-role reporting reads the grant arm: ``annotate_member_role``
+  (``memberRole`` on the admin member page) derives SUPERUSER/ADMIN from the
+  scoped ORG_ADMIN/ORG_SUPERUSER ``Grant`` rows, and the Django-admin role labels
+  (``member_role_names`` / ``role_names_by_organization`` / the role form's
+  ``locked_role_names``) merge the grant arm with the surviving dual-write rows.
+  A stale legacy-only holder (no Grant) reports MEMBER — matching enforcement.
+- Dead machinery removed: the ``HasOrgPerm`` strawberry extension,
+  ``get_user_permitted_org``, ``active_org``, and the ``permissioned_queryset`` /
+  ``perm_filter`` legacy predicates had no consumers once member management cut
+  over.  The ``X-Organization-ID`` header read is **kept only as the teams
+  list-read fallback**: mobile's ``useOrgTeams`` callers still send just
+  ``{ isActive }``, so the filter-first read retains the deprecated header
+  fallback (blank/malformed ids deny, never fall back) until mobile passes
+  ``organizationId`` — DEV-2566.  ``OrganizationMiddleware`` /
+  ``get_current_organization`` stay only with it; the teams mutations and every
+  other cut-over surface take their org from the payload/row.
+- Kept (not grant-only): CASEWORKER, SHELTER_OPERATOR and every member-level /
+  unscoped template still dual-write their ``PermissionGroup`` rows until the
+  notes/clients (and shelter-operator) domains cut over.  ``PermissionGroup``
+  rows with no template and hand-managed rows are untouched.
+
 ## 6. References
 
 - [SDB-218] — global shelter operator org-bypass ticket

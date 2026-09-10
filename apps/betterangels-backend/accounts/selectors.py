@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from organizations.models import Organization
 
-from .models import PermissionGroup, User
+from .models import Grant, PermissionGroup, User
 
 logger = logging.getLogger(__name__)
 
@@ -131,19 +131,42 @@ def resolve_permission_group(
 
 
 def member_role_names(*, user_id: int, organization_id: int) -> list[str]:
-    """Names of the roles *user_id* holds in *organization_id*, sorted."""
-    return sorted(
+    """Names of the roles *user_id* holds in *organization_id*, sorted.
+
+    Post-teardown (ADR 0001) a role is either a dual-write legacy
+    ``PermissionGroup`` (member-level templates still enforced by notes/clients)
+    or a grant-only org-portal role backed by a scoped ``Role`` ``Grant`` (whose
+    legacy rows are retired).  Merge both arms so the Django admin still shows
+    e.g. "Organization Admin" for a grant-only holder.
+    """
+    legacy = set(
         PermissionGroup.objects.filter(organization_id=organization_id, user=user_id).values_list("label", flat=True)
     )
+    granted = set(
+        Grant.objects.filter(principal_user_id=user_id, scope_org_id=organization_id).values_list(
+            "role__name", flat=True
+        )
+    )
+    return sorted(legacy | granted)
 
 
 def role_names_by_organization(*, user_id: int) -> dict[str, list[str]]:
-    """Roles *user_id* holds, grouped by organization name and sorted within each."""
+    """Roles *user_id* holds, grouped by organization name and sorted within each.
+
+    Merges the legacy ``PermissionGroup`` arm with the grant-only scoped ``Role``
+    arm (see :func:`member_role_names`).
+    """
     by_organization: dict[str, list[str]] = {}
     for organization_name, role_name in (
         PermissionGroup.objects.filter(user=user_id)
         .select_related("organization")
         .values_list("organization__name", "label")
+    ):
+        by_organization.setdefault(organization_name, []).append(role_name)
+    for organization_name, role_name in (
+        Grant.objects.filter(principal_user_id=user_id)
+        .select_related("scope_org")
+        .values_list("scope_org__name", "role__name")
     ):
         by_organization.setdefault(organization_name, []).append(role_name)
     return {name: sorted(roles) for name, roles in sorted(by_organization.items())}
@@ -262,8 +285,9 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     domain has cut over grant-only (member management ``organizations.*`` on the
     org root, teams, reports, shelters — all in ``LEGACY_INERT_APPS``), so the
     fold carries the full ORG_ADMIN bundle and the caseworker/client domains
-    (notes/clients) still enforced per org by ``HasOrgPerm`` → org
-    ``PermissionGroup`` rows.  Those legacy-only domains never consult the
+    (notes/clients) still enforced per org by legacy ``PermissionGroup`` rows
+    (strawberry ``HasPerm`` at an org the user holds a template group in).
+    Those legacy-only domains never consult the
     global tier — folding their global permissions in would advertise controls
     the backend refuses (e.g. a superuser with no group at that org, or a
     ``user_permission`` on a legacy-only perm).  Their permissions reach an
@@ -273,8 +297,8 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     The superuser case is therefore NOT short-circuited: a superuser's global
     list carries every product-modeled permission, but only the grant-only/dual
     subset folds, and their org-group (legacy) permissions still come from the
-    scoped report — so an entry can only claim what ``can()`` or ``HasOrgPerm``
-    would honor at that org.
+    scoped report — so an entry can only claim what ``can()`` or the legacy
+    ``organization_permissions`` arm would honor at that org.
 
     Bounded to the FINITE switchable set (:func:`common.permissions.selectors.
     switchable_orgs`) — the orgs the FE renders — never an all-orgs expansion.

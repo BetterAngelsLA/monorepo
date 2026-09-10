@@ -305,8 +305,15 @@ def reconcile_org_groups(org: Organization) -> None:
     without this a newly created group would grant nothing until the next
     ``migrate``.
 
+    ``legacy_inert`` templates (ORG_ADMIN/ORG_SUPERUSER — grant-only, ADR 0001
+    teardown) never get a row here: they are excluded from the expected set and
+    any leftover row is retired unconditionally, so orgs migrated from before
+    the cutover lose their inert org-admin rows on the next reconcile.
+
     Safe to call repeatedly — all operations are idempotent.
     """
+    _retire_legacy_inert_rows(org)
+
     org_types = OrganizationProfile.objects.values_list("org_types", flat=True).filter(organization=org).first()
 
     if org_types is not None:
@@ -316,6 +323,8 @@ def reconcile_org_groups(org: Organization) -> None:
             if org_config is None:
                 continue
             for template_config in org_config.templates:
+                if template_config.legacy_inert:
+                    continue
                 expected.add(template_config.name)
 
         for template_name in expected:
@@ -337,6 +346,25 @@ def reconcile_org_groups(org: Organization) -> None:
 
     _refresh_group_names(org)
     sync_group_permissions(organization=org)
+
+
+def _retire_legacy_inert_rows(org: Organization) -> None:
+    """Delete every ``PermissionGroup`` row of *org* for a ``legacy_inert`` template.
+
+    The org-admin org-portal roles are grant-only (ADR 0001 teardown): their
+    legacy rows are inert and redundant with the mirrored ``Grant`` rows, so
+    they are retired idempotently wherever reconcile runs.  Deleting the row
+    tears down its ``auth.Group`` (``delete_orphaned_group``) and drops the
+    group memberships — authority and member-role reporting now read the grant
+    arm only.
+    """
+    grant_only_names = {
+        name
+        for name in REGISTRY.template_names()
+        if (template := REGISTRY.template(name)) is not None and template.legacy_inert
+    }
+    if grant_only_names:
+        PermissionGroup.objects.filter(organization=org, template__name__in=grant_only_names).delete()
 
 
 def _refresh_group_names(org: Organization) -> None:

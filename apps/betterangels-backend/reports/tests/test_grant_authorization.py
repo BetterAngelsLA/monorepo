@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Any
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import Grant, PermissionGroup, User
+from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.tests.utils import GraphQLBaseTestCase
@@ -162,10 +162,15 @@ class ReportGrantAuthorityDeniedTestCase(ReportSummaryGraphQLGrantMixin, ReportE
         sync_roles()
 
     def test_legacy_only_org_admin_is_denied(self) -> None:
-        """A legacy PermissionGroup ORG_ADMIN with no Grant no longer reads reports."""
+        """A legacy PermissionGroup ORG_ADMIN with no Grant no longer reads reports.
+
+        Reconcile retires org-admin rows (ADR 0001 teardown) — this simulates a
+        stale leftover row; even if one exists it confers no report authority.
+        """
         legacy_admin = baker.make(User)
         self.org_1.add_user(legacy_admin)
-        group = PermissionGroup.objects.get(organization=self.org_1, template__name=ORG_ADMIN.name)
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=ORG_ADMIN.name)
+        group, _ = PermissionGroup.objects.get_or_create(organization=self.org_1, template=template)
         group.user_set.add(legacy_admin)
         # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
         # legacy-only holder has none — drop the mirror to model that state.

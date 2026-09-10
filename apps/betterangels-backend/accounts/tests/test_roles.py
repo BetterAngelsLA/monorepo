@@ -187,8 +187,19 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
         self.org_admin_role = Role.objects.get(name=ORG_ADMIN_ROLE.name)
         self.caseworker_role = Role.objects.get(name=CASEWORKER_ROLE.name)
 
+    def _legacy_org_admin_group(self) -> PermissionGroup:
+        """A leftover pre-teardown ORG_ADMIN row — none is provisioned now.
+
+        The org-admin roles are grant-only (ADR 0001 teardown) and
+        ``reconcile_org_groups`` retires their ``PermissionGroup`` rows, so a
+        migration test has to recreate the row the backfill exists to convert.
+        """
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=ORG_ADMIN_ROLE.name)
+        group, _ = PermissionGroup.objects.get_or_create(organization=self.org, template=template)
+        return group
+
     def test_backfill_org_admin_grants_creates_one_grant_per_member(self) -> None:
-        group = PermissionGroup.objects.get(organization=self.org, template__name=ORG_ADMIN_ROLE.name)
+        group = self._legacy_org_admin_group()
         member = baker.make(User)
         _add_legacy_membership(group, member)
 
@@ -198,7 +209,7 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
         self.assertIsNotNone(grant.pk)
 
     def test_backfill_org_admin_grants_is_idempotent(self) -> None:
-        group = PermissionGroup.objects.get(organization=self.org, template__name=ORG_ADMIN_ROLE.name)
+        group = self._legacy_org_admin_group()
         member = baker.make(User)
         _add_legacy_membership(group, member)
 
@@ -242,7 +253,7 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
 
     def test_backfill_caseworker_converts_only_caseworker(self) -> None:
         # An org-admin membership must not be converted into a caseworker grant.
-        group = PermissionGroup.objects.get(organization=self.org, template__name=ORG_ADMIN_ROLE.name)
+        group = self._legacy_org_admin_group()
         member = baker.make(User)
         _add_legacy_membership(group, member)
 

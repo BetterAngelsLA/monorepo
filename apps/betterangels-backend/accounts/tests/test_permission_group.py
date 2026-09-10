@@ -118,7 +118,8 @@ class PermissionGroupTestCase(TestCase):
         # Captured up front: once the rows are gone, a join through them matches
         # nothing whether or not the groups were actually deleted.
         group_ids = list(PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True))
-        self.assertEqual(len(group_ids), 3)
+        # Only the dual-write Caseworker row exists; org-admin roles are grant-only.
+        self.assertEqual(len(group_ids), 1)
 
         organization.delete()
 

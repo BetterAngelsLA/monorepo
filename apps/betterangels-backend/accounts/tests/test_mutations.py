@@ -291,8 +291,10 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
     def test_change_organization_member_role_keeps_a_role_it_cannot_name(self) -> None:
         """``ORG_ADMIN`` is ``is_invitable=False``, so ``PermissionTemplateEnum`` omits it.
 
-        Replacing every org-scoped group therefore demoted an org admin on any
-        call — including one only meant to grant them Caseworker as well.
+        Replacing every org-scoped role therefore demoted an org admin on any
+        call — including one only meant to grant them Caseworker as well.  After
+        the teardown ORG_ADMIN is grant-only, so the surviving admin shows up as
+        a scoped ``Role`` ``Grant`` rather than a ``PermissionGroup`` membership.
         """
         member = baker.make(User, email="keepsadmin@example.com")
         self.org.add_user(member)
@@ -326,7 +328,9 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         held = set(
             PermissionGroup.objects.filter(organization=self.org, user=member).values_list("template__name", flat=True)
         )
-        self.assertSetEqual(held, {CASEWORKER.name, ORG_ADMIN.name})
+        self.assertSetEqual(held, {CASEWORKER.name})
+        # The ORG_ADMIN role (grant-only, ADR 0001 teardown) survived as a Grant.
+        self.assertTrue(member.grants.filter(scope_org=self.org, role__name=ORG_ADMIN.name).exists())
 
     def test_add_organization_member_already_member(self) -> None:
         org_member = baker.make(
