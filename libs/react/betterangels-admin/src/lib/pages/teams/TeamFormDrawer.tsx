@@ -36,12 +36,6 @@ export function TeamFormDrawer(props: TProps) {
 
   const handleSubmit = async () => {
     if (!name.trim()) return;
-    // Create carries the org in the payload; no drawer exists without an
-    // active org, but fail loudly anyway.
-    if (!activeOrg) {
-      showAlert({ type: 'error', content: 'No active organization selected.' });
-      return;
-    }
     setDisabled(true);
     let rejection: string | null;
 
@@ -52,9 +46,19 @@ export function TeamFormDrawer(props: TProps) {
         });
         rejection = extractOperationInfoMessage(response, 'updateTeam');
       } else {
+        // Only create carries the org in the payload; update/delete derive it
+        // from the team row. Fail loudly if it is missing anyway.
+        const organizationId = activeOrg?.id;
+        if (!organizationId) {
+          showAlert({
+            type: 'error',
+            content: 'No active organization selected.',
+          });
+          return;
+        }
         const response = await createTeam({
           variables: {
-            data: { name: name.trim(), organizationId: activeOrg.id },
+            data: { name: name.trim(), organizationId },
           },
         });
         rejection = extractOperationInfoMessage(response, 'createTeam');

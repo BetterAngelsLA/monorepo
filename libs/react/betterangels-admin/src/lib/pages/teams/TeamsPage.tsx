@@ -85,6 +85,9 @@ export function TeamsPage(props: IProps) {
         ...(activeOrg ? { filters: { organizationId: activeOrg.id } } : {}),
       },
       fetchPolicy: 'cache-and-network',
+      // Without the view permission the server refuses; don't issue a doomed
+      // request just to render the "no permission" notice.
+      skip: !canView,
     },
   );
 
