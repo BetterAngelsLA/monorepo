@@ -119,26 +119,6 @@ export const createCsrfInterceptor =
   };
 
 // ---------------------------------------------------------------------------
-// Org Interceptor
-// ---------------------------------------------------------------------------
-
-/**
- * Inject the ``X-Organization-ID`` header, read per request.
- *
- * *readOrgId* must not do I/O — see ``getActiveOrgId`` in
- * ``@monorepo/ba-platform``.
- */
-export const createOrgInterceptor =
-  (readOrgId: () => string | null): FetchInterceptor =>
-  async (_input, init, next) => {
-    const orgId = readOrgId();
-    if (!orgId) return next(_input, init);
-    const headers = new Headers(init.headers);
-    headers.set('X-Organization-ID', orgId);
-    return next(_input, { ...init, headers });
-  };
-
-// ---------------------------------------------------------------------------
 // Credentials Interceptor
 // ---------------------------------------------------------------------------
 
