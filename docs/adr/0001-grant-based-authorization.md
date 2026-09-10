@@ -988,6 +988,61 @@ transitional arm. Schema directives change name as extensions are swapped
 (`@hasOrgPerm` → `@hasOrgPermOrGrant` → none), so `schema.graphql` + FE types are
 regenerated at each step.
 
+**Status on main — teams landed first, on the grant-only model (2026-09-09).**
+Main's machinery evolved past the stack this section sketched: the seam is the
+per-domain `can()`/`require_can` (shelters cut over that way in §4.1/#2412), and
+two of the four org-admin consumers cannot ride a scoped `Role` today — the
+`organizations.*` member-management codenames and `reports.view_reports` resolve
+to no concrete model, so `sync_roles` refuses them on a RoleDef (phantom
+ContentType). The teams cutover therefore landed *teams alone*:
+
+- `ORG_ADMIN`/`ORG_SUPERUSER` are role-backed with a scoped `Role` carrying
+  **`teams.*` only**; `backfill_org_admin_grants()` converts every existing
+  admin's `PermissionGroup` memberships into Grants (post-migrate, before any
+  reconcile). The legacy groups are **kept** (dual) — main's reconcile does not
+  retire role-backed groups — so member management and reports keep enforcing
+  off the legacy arm, and the admin FE's per-org lists stay complete.
+- The three team mutations read `require_can(…, teams.*)` — no `@hasOrgPerm`
+  directive — and `teams` joins `LEGACY_INERT_APPS` (its legacy rows are no
+  longer reported; the global tier folds for it like shelters).  They are
+  **header-free**: `createTeam` carries the org in the payload
+  (`CreateTeamInput.organizationId` — no row exists to scope by yet) and
+  `updateTeam`/`deleteTeam` derive it from the team row the payload names by
+  id, so the team surface never consults `X-Organization-ID`.
+- The teams *query* is **grant-only** too (`require_can(teams.view_team)`), not
+  member-gated: CASEWORKER is role-backed as the RFC 0003 first step — a scoped
+  `Caseworker` Role carrying `teams.view_team`, with
+  `backfill_caseworker_grants()` converting every existing caseworker
+  membership into a Grant — so the workers who pick teams on notes/tasks read
+  via grants. `Team.perms.VIEW` was added to the CASEWORKER template so the
+  template and Role stay consistent. Membership is no longer consulted for
+  the teams read. The org whose teams are listed is passed as a
+  `TeamFilter.organizationId` (authoritative); the `X-Organization-ID` header
+  remains only as a deprecated fallback while clients migrate to the filter
+  and will be stripped once none send it.  Who still sends it (the migration
+  checklist for the strip): betterangels-admin's `TeamsPage` already passes
+  `filters.organizationId`, but every mobile team picker is header-only —
+  `useOrgTeams` (NoteForm's team field, TaskForm, FilterTeamsOptions,
+  UserTeamPreferenceSelect) sends `filters: { isActive }` with no org id, so
+  each must pass the active org as `organizationId` before the header goes.
+  This is also a read behavior change for members with **no role** at the
+  active org: membership alone used to let them list teams; the grant-only
+  read (`teams.view_team`) now denies them — intended, matching the admin FE
+  where the read is grant-gated — and the backfilled caseworker/admin
+  memberships cover the roles that legitimately read teams.
+- Later slices add the remaining perms to the Role/RoleDefs when each consumer
+  flips (reports/member management), then retire the legacy groups.
+- The transition mirror (role-backed membership ⇔ Grant, §4 phase 2) is
+  enforced at the ``User.groups`` m2m edge (``accounts.signals``), so the user
+  admin, data scripts and the shell keep it — not just ``OrgRoleManager``.  A
+  cascading delete of a legacy ``PermissionGroup`` deliberately does **not**
+  revoke the Grants: teardown retires legacy rows, the Grants are the successor
+  authority (the delete page says so).
+- Team mutations deny a malformed or blank org id exactly like an unknown one
+  (``get_or_none``'s pk guard) instead of reaching the DB as an unhandled
+  ``ValueError``, and answer missing-vs-forbidden rows with one refusal, so
+  neither is a crash nor an existence oracle.
+
 ## 6. References
 
 - [SDB-218] — global shelter operator org-bypass ticket

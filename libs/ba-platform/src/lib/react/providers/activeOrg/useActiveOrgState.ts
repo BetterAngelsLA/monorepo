@@ -58,7 +58,7 @@ export interface ActiveOrgState {
  * any org — grant-only/dual domains — and adds the org-scoped
  * grant/delegated/legacy arms), so an org-scoped control must be gated on the
  * active org's entry alone.  Unioning the user's global permissions in would
- * show legacy-only-domain controls (member management, reports, teams —
+ * show legacy-only-domain controls (member management, reports — still
  * enforced per org by ``HasOrgPerm`` → org ``PermissionGroup`` rows) to a
  * global holder with no group at the active org, and the backend would refuse
  * them (ADR 0001 §5.2, finding H2).  Global-tier (non-org) gating is the user

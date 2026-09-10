@@ -3,22 +3,24 @@ from typing import Any, Type, cast
 
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
+from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.utils import unquote
-from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
+from django.contrib.admin.widgets import ForeignKeyRawIdWidget, RelatedFieldWidgetWrapper
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User as DefaultUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Field, Model, QuerySet
 from django.forms import Field as FormField
 from django.forms import ModelMultipleChoiceField
-from django.db.models import Field, Model, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
-from django.urls import URLPattern, path, reverse
+from django.urls import URLPattern, NoReverseMatch, path, reverse
 from django.utils.html import format_html, format_html_join
+from django.utils.text import Truncator
 from organizations.models import Organization, OrganizationInvitation, OrganizationOwner, OrganizationUser
 
 from .forms import (
@@ -39,6 +41,7 @@ from .models import (
     Role,
     User,
 )
+from .role_manager import scoped_roles_for_groups
 from .selectors import member_role_names, role_names_by_organization
 from .services import (
     invitation_role,
@@ -127,15 +130,22 @@ class PermissionGroupAdmin(admin.ModelAdmin):
         """
         deletable, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
 
+        role_backed = set(scoped_roles_for_groups(objs))
         losses = []
         for permission_group in objs:
             holders = permission_group.user_set.count()
             losses.append(
                 format_html(
-                    "{} — revoked from {} member{}",
+                    "{} — revoked from {} member{}{}",
                     permission_group.label,
                     holders,
                     "" if holders == 1 else "s",
+                    # Mirrored Grants deliberately survive the delete (they are
+                    # the successor authority, and teardown retires the legacy
+                    # row) — say so, or this reads as revoking the capability.
+                    " (mirrored Grants are NOT revoked — remove them from Grants directly)"
+                    if permission_group.pk in role_backed
+                    else "",
                 )
             )
 
@@ -497,13 +507,62 @@ class GrantAdmin(SuperuserOnlyWritesMixin, admin.ModelAdmin):
         return f"{obj.scope_object_type}:{obj.scope_object_id}"
 
 
+class LoadedRowRawIdWidget(ForeignKeyRawIdWidget):
+    """Raw-id widget that renders the current FK label from the loaded row.
+
+    The stock widget re-queries the related model for every rendered row — an
+    N+1 ``select_related`` cannot fix, because the widget never looks at the
+    row instance.  This one renders from the row when it matches, and falls
+    back to the stock lookup otherwise.
+    """
+
+    def __init__(self, *args: Any, current_object: Any = None, **kwargs: Any) -> None:
+        self.current_object = current_object
+        super().__init__(*args, **kwargs)
+
+    def label_and_url_for_value(self, value: Any) -> tuple[str, str]:
+        obj = self.current_object
+        if obj is not None and obj.pk is not None and str(obj.pk) == str(value):
+            try:
+                url = reverse(
+                    "%s:%s_%s_change" % (self.admin_site.name, obj._meta.app_label, obj._meta.model_name),
+                    args=(obj.pk,),
+                )
+            except NoReverseMatch:
+                url = ""
+            return Truncator(obj).words(14), url
+        return super().label_and_url_for_value(value)
+
+
+class GrantRowForm(forms.ModelForm):
+    """Bind each raw-id FK widget to its ``select_related``'d row."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            widget = field.widget
+            if isinstance(widget, ForeignKeyRawIdWidget) and not isinstance(widget, LoadedRowRawIdWidget):
+                loaded = getattr(self.instance, name, None)
+                field.widget = LoadedRowRawIdWidget(
+                    rel=widget.rel,
+                    admin_site=widget.admin_site,
+                    attrs=getattr(widget, "attrs", None),
+                    current_object=loaded if loaded is not None and loaded.pk is not None else None,
+                )
+
+
 class GrantInline(SuperuserOnlyWritesMixin, admin.TabularInline):
     """Grants scoped TO this org — who can act here, and how."""
 
     model = Grant
     fk_name = "scope_org"
     extra = 0
-    autocomplete_fields = ("principal_user", "principal_org", "role")
+    form = GrantRowForm
+    raw_id_fields = ("principal_user", "principal_org", "role")
+    readonly_fields = ("scope_object_type", "scope_object_id")
+
+    def get_queryset(self, request: Any) -> Any:
+        return super().get_queryset(request).select_related("principal_user", "principal_org", "role", "scope_org")
 
     def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
         if db_field.name == "role":
@@ -517,7 +576,11 @@ class DelegatedGrantInline(SuperuserOnlyWritesMixin, admin.TabularInline):
     model = Grant
     fk_name = "principal_org"
     extra = 0
-    autocomplete_fields = ("role", "scope_org")
+    form = GrantRowForm
+    raw_id_fields = ("role", "scope_org")
+
+    def get_queryset(self, request: Any) -> Any:
+        return super().get_queryset(request).select_related("principal_user", "principal_org", "role", "scope_org")
 
     def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
         if db_field.name == "role":
@@ -1026,7 +1089,9 @@ class UserAdmin(BaseUserAdmin):
             # bare "Shelter Operator" Role sits right next to the org-scoped
             # PermissionGroup rows of the same name, and picking it would make a
             # scoped role global.  Global Roles stay — the Django admin is the
-            # sanctioned surface for granting those (ADR 0001 §3).
+            # sanctioned surface for granting those (ADR 0001 §3).  Membership
+            # edits here still mirror Grants (``User.groups`` m2m edge,
+            # ``accounts.signals``).
             groups_field.queryset = _groups_without_scoped_roles()
         return form
 

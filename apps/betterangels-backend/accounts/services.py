@@ -550,6 +550,22 @@ def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[in
         )
 
 
+def _all_role_defs() -> tuple[RoleDef, ...]:
+    """Every code-owned ``RoleDef`` — the one list :func:`sync_roles` provisions.
+
+    Kept here (lazy imports) rather than in any one domain module: the role
+    bundles span shelters, accounts and notes.  The backfills below stay
+    domain-specific on purpose — each converts its own template slice at its
+    own cutover.
+    """
+    from shelters.groups import ROLES
+
+    from accounts.groups import ORG_ADMIN_ROLES
+    from notes.groups import CASEWORKER_ROLE
+
+    return (*ROLES, *ORG_ADMIN_ROLES, CASEWORKER_ROLE)
+
+
 def sync_roles() -> None:
     """Create or refresh the code-owned ``Role`` rows (ADR 0001 §2.2).
 
@@ -557,12 +573,8 @@ def sync_roles() -> None:
     provisioned once, never per organization.  Idempotent: get_or_create each
     ``Role``, then reconcile ``permissions`` and ``is_global`` from the RoleDef.
     """
-    from shelters.groups import ROLES
-
-    from accounts.models import Role
-
     with transaction.atomic():
-        for role_def in ROLES:
+        for role_def in _all_role_defs():
             role, created = Role.objects.get_or_create(name=role_def.name)
             wanted = set(_resolve_permissions(role_def.permissions))
             _raise_on_phantom_role_permissions(role_def, wanted)
@@ -577,25 +589,51 @@ def sync_roles() -> None:
                 logger.info("Synced Role %s (%d perms, global=%s)", role.name, len(wanted), role.is_global)
 
 
+def _backfill_role_grants(role_defs: tuple[RoleDef, ...] | list[RoleDef]) -> None:
+    """Backfill ``Grant`` rows from legacy memberships of the given templates.
+
+    One ``Grant(user, role=<template role>, scope=org)`` per member of an org's
+    ``PermissionGroup`` for each template.  Idempotent (``get_or_create``).
+    Runs after :func:`sync_roles` so the Role rows exist, and before any
+    reconcile that would retire the legacy groups.
+    """
+    from accounts.models import Grant, PermissionGroup, Role
+
+    for role_def in role_defs:
+        role = Role.objects.get(name=role_def.name)
+        groups = PermissionGroup.objects.filter(template__name=role_def.name).select_related("organization")
+        for group in groups.prefetch_related("user_set"):
+            for user in group.user_set.all():
+                grant, created = Grant.objects.get_or_create(
+                    principal_user=user, role=role, scope_org=group.organization
+                )
+                if created:
+                    logger.info("Backfilled Grant %s", grant)
+
+
 def backfill_shelter_grants() -> None:
     """Backfill ``Grant`` rows from legacy Shelter Operator memberships.
 
-    One ``Grant(user, role=Shelter Operator, scope=org)`` per member of an org's
-    Shelter Operator ``PermissionGroup``.  Idempotent (``get_or_create``).  Only
-    the scoped shelter role is converted here — every other role keeps its
+    Only the scoped shelter role is converted here — every other role keeps its
     ``PermissionGroup`` until its domain cutover (ADR 0001 §4).
     """
     from shelters.groups import SHELTER_OPERATOR_ROLE
 
-    from accounts.models import Grant, PermissionGroup, Role
+    _backfill_role_grants((SHELTER_OPERATOR_ROLE,))
 
-    role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
-    groups = PermissionGroup.objects.filter(template__name=SHELTER_OPERATOR_ROLE.name)
-    for group in groups.prefetch_related("user_set"):
-        for user in group.user_set.all():
-            grant, created = Grant.objects.get_or_create(principal_user=user, role=role, scope_org=group.organization)
-            if created:
-                logger.info("Backfilled Grant %s", grant)
+
+def backfill_org_admin_grants() -> None:
+    """Backfill ``Grant`` rows from legacy ORG_ADMIN / ORG_SUPERUSER memberships."""
+    from accounts.groups import ORG_ADMIN_ROLES
+
+    _backfill_role_grants(ORG_ADMIN_ROLES)
+
+
+def backfill_caseworker_grants() -> None:
+    """Backfill ``Grant`` rows from legacy CASEWORKER memberships."""
+    from notes.groups import CASEWORKER_ROLE
+
+    _backfill_role_grants((CASEWORKER_ROLE,))
 
 
 def backfill_global_role_members() -> None:

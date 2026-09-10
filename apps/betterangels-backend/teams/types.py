@@ -11,6 +11,7 @@ from .models import Team
 @strawberry_django.filter_type(Team)
 class TeamFilter:
     is_active: auto
+    organization_id: auto
 
 
 @strawberry_django.type(Team, filters=TeamFilter, pagination=True)
@@ -31,6 +32,7 @@ class TeamType:
 @strawberry_django.input(Team, partial=True)
 class CreateTeamInput:
     name: str
+    organization_id: ID
 
 
 @strawberry_django.input(Team, partial=True)

@@ -9,6 +9,8 @@ interface ThreeDotMenuProps {
   onEdit: (team: TeamType) => void;
   onDelete: (team: TeamType) => Promise<void>;
   deleting: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
 }
 
 export function ThreeDotMenu({
@@ -19,6 +21,8 @@ export function ThreeDotMenu({
   onEdit,
   onDelete,
   deleting,
+  canEdit,
+  canDelete,
 }: ThreeDotMenuProps) {
   const isOpen = openMenuRowId === team.id;
 
@@ -39,22 +43,26 @@ export function ThreeDotMenu({
           ref={menuRef}
           className="absolute flex flex-col items-start top-full right-0 shadow-md bg-white z-10 p-2 rounded-lg"
         >
-          <button
-            className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left"
-            onClick={() => {
-              setOpenMenuRowId(() => null);
-              onEdit(team);
-            }}
-          >
-            Edit
-          </button>
-          <button
-            className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
-            onClick={() => void onDelete(team)}
-            disabled={deleting}
-          >
-            Delete
-          </button>
+          {canEdit && (
+            <button
+              className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left"
+              onClick={() => {
+                setOpenMenuRowId(() => null);
+                onEdit(team);
+              }}
+            >
+              Edit
+            </button>
+          )}
+          {canDelete && (
+            <button
+              className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
+              onClick={() => void onDelete(team)}
+              disabled={deleting}
+            >
+              Delete
+            </button>
+          )}
         </div>
       )}
     </div>

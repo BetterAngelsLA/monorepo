@@ -1,4 +1,5 @@
 import { useMutation } from '@apollo/client/react';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { TeamType } from '@monorepo/ba-platform/types';
 import {
   AppDrawer,
@@ -25,6 +26,7 @@ export function TeamFormDrawer(props: TProps) {
   const isEditing = !!team;
   const { closeDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
+  const { activeOrg } = useActiveOrg();
   const [name, setName] = useState(team?.name ?? '');
   const [isActive, setIsActive] = useState<boolean>(team?.isActive !== false);
   const [disabled, setDisabled] = useState(false);
@@ -44,8 +46,20 @@ export function TeamFormDrawer(props: TProps) {
         });
         rejection = extractOperationInfoMessage(response, 'updateTeam');
       } else {
+        // Only create carries the org in the payload; update/delete derive it
+        // from the team row. Fail loudly if it is missing anyway.
+        const organizationId = activeOrg?.id;
+        if (!organizationId) {
+          showAlert({
+            type: 'error',
+            content: 'No active organization selected.',
+          });
+          return;
+        }
         const response = await createTeam({
-          variables: { data: { name: name.trim() } },
+          variables: {
+            data: { name: name.trim(), organizationId },
+          },
         });
         rejection = extractOperationInfoMessage(response, 'createTeam');
       }

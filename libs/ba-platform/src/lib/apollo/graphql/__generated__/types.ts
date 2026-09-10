@@ -794,6 +794,7 @@ export type CreateTaskPayload = OperationInfo | TaskType;
 
 export type CreateTeamInput = {
   name: Scalars['String']['input'];
+  organizationId: Scalars['ID']['input'];
 };
 
 export type CreateTeamPayload = OperationInfo | TeamType;
@@ -3702,6 +3703,7 @@ export type TeamFilter = {
   NOT?: InputMaybe<TeamFilter>;
   OR?: InputMaybe<TeamFilter>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type TeamType = {

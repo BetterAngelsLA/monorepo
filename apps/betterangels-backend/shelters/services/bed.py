@@ -103,18 +103,18 @@ def bed_delete(*, user: "User", bed_ids: list[int]) -> list[int]:
     The queryset is reach-scoped by the user's grants.
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
-    deleted IDs are returned.
+    deleted IDs are returned, in the order they were requested (duplicates
+    collapsed) — the response must not depend on the DB's row order.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching beds exist.
     """
-    qs = bed_queryset(user=user, permission=Bed.perms.DELETE)
-    qs = qs.filter(pk__in=bed_ids)
-    deleted_ids = list(qs.values_list("pk", flat=True))
-    if not deleted_ids:
+    qs = bed_queryset(user=user, permission=Bed.perms.DELETE).filter(pk__in=bed_ids)
+    deletable_ids = set(qs.values_list("pk", flat=True))
+    if not deletable_ids:
         raise ObjectDoesNotExist("No matching beds found.")
     qs.delete()
-    return deleted_ids
+    return [bed_id for bed_id in dict.fromkeys(bed_ids) if bed_id in deletable_ids]
 
 
 @transaction.atomic

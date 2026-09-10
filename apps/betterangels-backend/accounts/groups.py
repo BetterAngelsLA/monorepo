@@ -1,5 +1,5 @@
 from accounts.permissions import UserOrganizationPermissions
-from common.permissions.config import TemplateConfig
+from common.permissions.config import RoleDef, TemplateConfig
 from reports.permissions import ReportPermissions
 from teams.models import Team
 
@@ -27,3 +27,32 @@ ORG_SUPERUSER = TemplateConfig(
     ],
     is_invitable=False,
 )
+
+
+# ── Role definitions (ADR 0001 §2.2 — org-admin cutover) ─────────────────
+# Role-backing ORG_ADMIN / ORG_SUPERUSER lets the team mutations authorize via
+# Grants (``can()``).  The Role carries only ``teams.*``: the member-management
+# codenames (``organizations.*``) and ``reports.view_reports`` resolve to no
+# concrete model, so a RoleDef carrying them fails ``sync_roles``' phantom-
+# ContentType guard; those surfaces stay legacy until their own cutover.
+ORG_ADMIN_ROLE = RoleDef(
+    name=ORG_ADMIN.name,
+    permissions=[
+        Team.perms.ADD,
+        Team.perms.CHANGE,
+        Team.perms.DELETE,
+        Team.perms.VIEW,
+    ],
+    is_invitable=ORG_ADMIN.is_invitable,
+)
+
+ORG_SUPERUSER_ROLE = RoleDef(
+    name=ORG_SUPERUSER.name,
+    # Same bundle as ORG_ADMIN while teams is the only scoped permission either
+    # role can carry (the phantom-ContentType guard keeps the rest legacy).
+    # Derived so the two cannot drift apart until that changes.
+    permissions=list(ORG_ADMIN_ROLE.permissions),
+    is_invitable=ORG_SUPERUSER.is_invitable,
+)
+
+ORG_ADMIN_ROLES: tuple[RoleDef, ...] = (ORG_ADMIN_ROLE, ORG_SUPERUSER_ROLE)

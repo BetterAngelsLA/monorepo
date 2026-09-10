@@ -361,6 +361,18 @@ class DeleteBedsMutationTestCase(BedMutationTestCase):
         self.assertEqual(deleted_ids, [str(bed1.pk), str(bed2.pk)])
         self.assertFalse(Bed.objects.filter(pk__in=[bed1.pk, bed2.pk]).exists())
 
+    def test_delete_multiple_beds_returns_ids_in_request_order(self) -> None:
+        """The response follows the request order, not the DB's row order."""
+        bed1 = baker.make(Bed, shelter=self.shelter, name="Bed A")
+        bed2 = baker.make(Bed, shelter=self.shelter, name="Bed B")
+        variables = {"data": {"ids": [str(bed2.pk), str(bed1.pk)]}}
+
+        response = self.execute_graphql(self.mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        deleted_ids = response["data"]["deleteBeds"]["ids"]
+        self.assertEqual(deleted_ids, [str(bed2.pk), str(bed1.pk)])
+
 
 class CloneBedMutationTestCase(BedMutationTestCase):
     def setUp(self) -> None:

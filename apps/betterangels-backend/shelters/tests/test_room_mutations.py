@@ -400,6 +400,18 @@ class DeleteRoomsMutationTestCase(RoomMutationTestCase):
         self.assertEqual(deleted_ids, [str(room1.pk), str(room2.pk)])
         self.assertFalse(Room.objects.filter(pk__in=[room1.pk, room2.pk]).exists())
 
+    def test_delete_multiple_rooms_returns_ids_in_request_order(self) -> None:
+        """The response follows the request order, not the DB's row order."""
+        room1 = baker.make(Room, shelter=self.shelter, name="Room A")
+        room2 = baker.make(Room, shelter=self.shelter, name="Room B")
+        variables = {"data": {"ids": [str(room2.pk), str(room1.pk)]}}
+
+        response = self.execute_graphql(self.mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        deleted_ids = response["data"]["deleteRooms"]["ids"]
+        self.assertEqual(deleted_ids, [str(room2.pk), str(room1.pk)])
+
 
 class RoomMutationPermissionTestCase(RoomMutationTestCase):
     """Room mutations are gated on the specific Room permission, not membership.

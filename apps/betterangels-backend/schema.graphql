@@ -792,6 +792,7 @@ union CreateTaskPayload = TaskType | OperationInfo
 
 input CreateTeamInput {
   name: String!
+  organizationId: ID!
 }
 
 union CreateTeamPayload = TeamType | OperationInfo
@@ -1578,9 +1579,9 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "add_team"}], any: true)
-  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "change_team"}], any: true)
-  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "delete_team"}], any: true)
+  createTeam(data: CreateTeamInput!): CreateTeamPayload!
+  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload!
+  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload!
   createShelter(data: CreateShelterInput!): CreateShelterPayload!
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload!
   deleteShelter(id: ID!): DeleteShelterPayload!
@@ -2929,6 +2930,7 @@ type TaskTypeOffsetPaginated {
 
 input TeamFilter {
   isActive: Boolean
+  organizationId: ID
   AND: TeamFilter
   OR: TeamFilter
   NOT: TeamFilter

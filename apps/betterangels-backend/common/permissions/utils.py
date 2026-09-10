@@ -263,6 +263,11 @@ def active_org(info: Info) -> str | None:
     return getattr(info.context.request, "organization_id", None)
 
 
+#: The standard refusal for org-scoped authority checks — one string, so every
+#: refusal reads the same.
+PERMISSION_DENIED_MESSAGE = "You do not have permission to perform this action in this organization."
+
+
 def require_can(user: Any, perm: str, *, org: Any) -> None:
     """PermissionDenied unless *user* can exercise *perm* at *org* (ADR 0001 §2.6).
 
@@ -274,7 +279,7 @@ def require_can(user: Any, perm: str, *, org: Any) -> None:
     from common.permissions.selectors import can
 
     if not can(user, perm, org=org):
-        raise PermissionDenied("You do not have permission to perform this action in this organization.")
+        raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 
 
 _T = TypeVar("_T", bound=Model)

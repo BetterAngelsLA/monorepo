@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -148,3 +149,71 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
         # early post_migrate run.  Scoped like the reconcile guard above so a logic
         # error here surfaces instead of leaving the dev fixtures silently roleless.
         logger.warning("Skipping local dev role assignment — test org or users not ready yet.", exc_info=True)
+
+
+# ── Membership ↔ Grant mirror (ADR 0001 §4 phase 2) ─────────────────────
+
+
+def mirror_group_membership_grants(
+    sender: object,
+    instance: Any,
+    action: str,
+    reverse: bool,
+    pk_set: Any,
+    **kwargs: object,
+) -> None:
+    """Keep role-backed ``PermissionGroup`` memberships and Grants in step.
+
+    Wired to ``User.groups.through``, so every writer keeps the invariant —
+    the manager, the user admin, scripts, the shell — and reverse writes
+    (``permission_group.user_set.add/remove/clear``) are handled too.
+
+    A cascading delete of a ``PermissionGroup`` (teardown retiring a legacy
+    row) does **not** emit ``m2m_changed`` — Django fast-deletes the through
+    rows — so the Grants, the successor authority, outlive the legacy row.
+    That asymmetry is deliberate: membership edges revoke, teardown does not.
+    """
+    from accounts.models import PermissionGroup, User
+    from accounts.role_manager import mirror_membership_grants, unmirror_membership_grants
+
+    if action == "pre_clear":
+        # post_clear carries no pk_set; remember what is about to be cleared so
+        # the mirror is dropped for exactly those rows.
+        if reverse:
+            instance.__dict__["_grant_mirror_pre_clear_users"] = list(instance.user_set.all())
+        else:
+            # ``User.groups`` yields ``Group`` rows, not the ``PermissionGroup``
+            # children — resolve the role-backed subset explicitly.
+            group_ids = list(instance.groups.values_list("pk", flat=True))
+            instance.__dict__["_grant_mirror_pre_clear_groups"] = list(
+                PermissionGroup.objects.filter(pk__in=group_ids).select_related("template", "organization")
+            )
+        return
+
+    if action not in {"post_add", "post_remove", "post_clear"}:
+        return
+    if action != "post_clear" and not pk_set:
+        return
+
+    if reverse:
+        if not isinstance(instance, PermissionGroup):
+            return
+        if action == "post_clear":
+            users = instance.__dict__.pop("_grant_mirror_pre_clear_users", [])
+        else:
+            users = list(User.objects.filter(pk__in=pk_set or []))
+        groups = [instance]
+    else:
+        users = [instance]
+        if action == "post_clear":
+            groups = instance.__dict__.pop("_grant_mirror_pre_clear_groups", [])
+        else:
+            groups = list(
+                PermissionGroup.objects.filter(pk__in=pk_set or []).select_related("template", "organization")
+            )
+
+    for user in users:
+        if action == "post_add":
+            mirror_membership_grants(user, groups)
+        else:
+            unmirror_membership_grants(user, groups)

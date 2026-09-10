@@ -3,7 +3,9 @@
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
 from accounts.services import (
     _raise_on_phantom_role_permissions,
+    backfill_caseworker_grants,
     backfill_global_role_members,
+    backfill_org_admin_grants,
     backfill_shelter_grants,
     sync_roles,
 )
@@ -14,8 +16,22 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from model_bakery import baker
+from notes.groups import CASEWORKER_ROLE
 from notes.models import Note
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
+
+from accounts.groups import ORG_ADMIN_ROLE
+
+
+def _add_legacy_membership(group: PermissionGroup, member: User) -> None:
+    """Give *member* the legacy group membership, without the Grant mirror.
+
+    The m2m edge mirrors a Grant for role-backed groups (``accounts.signals``),
+    but a pre-cutover membership — the state a backfill exists to convert — has
+    none, so drop the mirror the add just created.
+    """
+    group.user_set.add(member)
+    Grant.objects.filter(principal_user=member).delete()
 
 
 class SyncRolesTestCase(TestCase):
@@ -113,7 +129,7 @@ class BackfillTestCase(TestCase):
     def test_backfill_shelter_grants_creates_one_grant_per_member(self) -> None:
         group = PermissionGroup.objects.get(organization=self.org, template__name=SHELTER_OPERATOR_ROLE.name)
         member = baker.make(User)
-        group.user_set.add(member)
+        _add_legacy_membership(group, member)
 
         backfill_shelter_grants()
 
@@ -123,7 +139,7 @@ class BackfillTestCase(TestCase):
     def test_backfill_shelter_grants_is_idempotent(self) -> None:
         group = PermissionGroup.objects.get(organization=self.org, template__name=SHELTER_OPERATOR_ROLE.name)
         member = baker.make(User)
-        group.user_set.add(member)
+        _add_legacy_membership(group, member)
 
         backfill_shelter_grants()
         backfill_shelter_grants()
@@ -151,6 +167,115 @@ class BackfillTestCase(TestCase):
         backfill_global_role_members()
 
         self.assertTrue(member.groups.filter(role__is_global=True).exists())
+
+
+class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
+    """backfill_org_admin_grants / backfill_caseworker_grants (ADR 0001 §2.2).
+
+    These are the basis for existing org admins' / caseworkers' teams authority
+    after deploy — a template-name mismatch or wrong role lookup would silently
+    strip team management from every existing member.  Mirror the shelter
+    backfill coverage: one grant per member, idempotent, converts only the
+    intended template.
+    """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        sync_roles()
+        self.org_admin_role = Role.objects.get(name=ORG_ADMIN_ROLE.name)
+        self.caseworker_role = Role.objects.get(name=CASEWORKER_ROLE.name)
+
+    def test_backfill_org_admin_grants_creates_one_grant_per_member(self) -> None:
+        group = PermissionGroup.objects.get(organization=self.org, template__name=ORG_ADMIN_ROLE.name)
+        member = baker.make(User)
+        _add_legacy_membership(group, member)
+
+        backfill_org_admin_grants()
+
+        grant = Grant.objects.get(principal_user=member, role=self.org_admin_role, scope_org=self.org)
+        self.assertIsNotNone(grant.pk)
+
+    def test_backfill_org_admin_grants_is_idempotent(self) -> None:
+        group = PermissionGroup.objects.get(organization=self.org, template__name=ORG_ADMIN_ROLE.name)
+        member = baker.make(User)
+        _add_legacy_membership(group, member)
+
+        backfill_org_admin_grants()
+        backfill_org_admin_grants()
+
+        self.assertEqual(Grant.objects.filter(principal_user=member, role=self.org_admin_role).count(), 1)
+
+    def test_backfill_org_admin_converts_only_org_admin(self) -> None:
+        # A caseworker membership is not an org-admin membership; a hand-made
+        # (label-only) role must not convert either.
+        cw_group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER_ROLE.name)
+        other = PermissionGroup.objects.create(organization=self.org, label="Hand-made Role")
+        member = baker.make(User)
+        _add_legacy_membership(cw_group, member)
+        other.user_set.add(member)
+
+        backfill_org_admin_grants()
+
+        self.assertFalse(Grant.objects.filter(principal_user=member).exists())
+
+    def test_backfill_caseworker_grants_creates_one_grant_per_member(self) -> None:
+        group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER_ROLE.name)
+        member = baker.make(User)
+        _add_legacy_membership(group, member)
+
+        backfill_caseworker_grants()
+
+        grant = Grant.objects.get(principal_user=member, role=self.caseworker_role, scope_org=self.org)
+        self.assertIsNotNone(grant.pk)
+
+    def test_backfill_caseworker_grants_is_idempotent(self) -> None:
+        group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER_ROLE.name)
+        member = baker.make(User)
+        _add_legacy_membership(group, member)
+
+        backfill_caseworker_grants()
+        backfill_caseworker_grants()
+
+        self.assertEqual(Grant.objects.filter(principal_user=member, role=self.caseworker_role).count(), 1)
+
+    def test_backfill_caseworker_converts_only_caseworker(self) -> None:
+        # An org-admin membership must not be converted into a caseworker grant.
+        group = PermissionGroup.objects.get(organization=self.org, template__name=ORG_ADMIN_ROLE.name)
+        member = baker.make(User)
+        _add_legacy_membership(group, member)
+
+        backfill_caseworker_grants()
+
+        self.assertFalse(Grant.objects.filter(principal_user=member).exists())
+
+
+class RoleDefTemplateConsistencyTestCase(TestCase):
+    """Every scoped ``RoleDef`` bundle must fit inside its template's bundle.
+
+    "Template ≈ Role" is the cutover contract: the template is what the org
+    pages and the per-org report read, the Role is what ``can()`` reads.  A
+    permission added to one list and forgotten in the other would make the FE
+    offer an action the backend refuses (or hide one it allows), and nothing
+    else would catch it.
+    """
+
+    def test_scoped_role_defs_are_template_subsets(self) -> None:
+        from accounts.services import _all_role_defs
+
+        for role_def in _all_role_defs():
+            if role_def.is_global:
+                continue
+            with self.subTest(role=role_def.name):
+                template = PermissionGroupTemplate.objects.get(name=role_def.name)
+                template_perms = {
+                    f"{app_label}.{codename}"
+                    for app_label, codename in template.permissions.values_list("content_type__app_label", "codename")
+                }
+                self.assertLessEqual(
+                    set(role_def.permissions),
+                    template_perms,
+                    f"{role_def.name} grants permissions its template does not",
+                )
 
 
 class ViewPrivateGlobalTierTestCase(TestCase):
