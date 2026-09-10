@@ -1189,9 +1189,8 @@ are stable (referenced elsewhere and shared with the rest of the stack).
    consumer) takes the org from the `organizationId` filter, mobile's
    `useOrgTeams` passes the active org from its store, and
    `OrganizationMiddleware` / `get_current_organization` / `active_org` are
-   deleted.  The FE may keep sending the (now ignored) header via its global
-   `createOrgInterceptor`; dropping it there is cosmetic cleanup, not
-   correctness.
+   deleted.  The FE interceptor that sent the (now ignored) header was removed
+   in the follow-up cleanup, so no client attaches a request org.
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407
