@@ -1032,6 +1032,16 @@ ContentType). The teams cutover therefore landed *teams alone*:
   memberships cover the roles that legitimately read teams.
 - Later slices add the remaining perms to the Role/RoleDefs when each consumer
   flips (reports/member management), then retire the legacy groups.
+- The transition mirror (role-backed membership ⇔ Grant, §4 phase 2) is
+  enforced at the ``User.groups`` m2m edge (``accounts.signals``), so the user
+  admin, data scripts and the shell keep it — not just ``OrgRoleManager``.  A
+  cascading delete of a legacy ``PermissionGroup`` deliberately does **not**
+  revoke the Grants: teardown retires legacy rows, the Grants are the successor
+  authority (the delete page says so).
+- Team mutations deny a malformed or blank org id exactly like an unknown one
+  (``get_or_none``'s pk guard) instead of reaching the DB as an unhandled
+  ``ValueError``, and answer missing-vs-forbidden rows with one refusal, so
+  neither is a crash nor an existence oracle.
 
 ## 6. References
 

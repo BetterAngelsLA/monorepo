@@ -1,15 +1,20 @@
-"""OrgRoleManager dual-write: role memberships mirror into ``Grant`` rows.
+"""Membership dual-write: role memberships mirror into ``Grant`` rows.
 
-ADR 0001 §4 phase 2 — during the transition, ``OrgRoleManager`` writes BOTH the
-legacy ``PermissionGroup`` membership AND (for role-backed templates) a
-``Grant`` that is authoritative for the shelter domain.
+ADR 0001 §4 phase 2 — during the transition, a legacy ``PermissionGroup``
+membership is written together with (for role-backed templates) a ``Grant``
+that is authoritative for the cut-over domains.  The mirror is enforced at the
+``User.groups`` m2m edge (``accounts.signals``), so it holds for every writer,
+not just ``OrgRoleManager``.
 """
+
+from typing import Any
 
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
 from accounts.role_manager import OrgRoleManager
 from common.permissions.config import TemplateConfig
 from django.test import TestCase
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from shelters.groups import SHELTER_OPERATOR
 
 from .baker_recipes import organization_recipe
@@ -104,3 +109,68 @@ class OrgRoleManagerDualWriteTestCase(TestCase):
                 permissiongroup__template__name=NOT_ROLE_BACKED.name,
             ).exists()
         )
+
+
+class MembershipEdgeMirrorTestCase(TestCase):
+    """The mirror is enforced at the ``User.groups`` m2m edge (``accounts.signals``).
+
+    Any writer — the Django admin, a data script, the shell — keeps the
+    invariant without going through ``OrgRoleManager``.  A cascading delete of
+    the legacy group does NOT revoke the Grants: teardown retires legacy rows,
+    and the Grants are the successor authority.
+    """
+
+    def setUp(self) -> None:
+        self.user = baker.make(User)
+        self.org = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        self.org.add_user(self.user)
+        self.group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER.name)
+        self.role = Role.objects.get(name=CASEWORKER.name, is_global=False)
+
+    def _mirrors(self) -> Any:
+        return Grant.objects.filter(principal_user=self.user, role=self.role, scope_org=self.org)
+
+    def test_a_direct_group_add_mirrors_a_grant(self) -> None:
+        self.user.groups.add(self.group)
+
+        self.assertTrue(self._mirrors().exists())
+
+    def test_a_reverse_user_set_add_mirrors_a_grant(self) -> None:
+        self.group.user_set.add(self.user)
+
+        self.assertTrue(self._mirrors().exists())
+
+    def test_a_direct_group_remove_unmirrors_the_grant(self) -> None:
+        self.user.groups.add(self.group)
+
+        self.user.groups.remove(self.group)
+
+        self.assertFalse(self._mirrors().exists())
+
+    def test_clearing_groups_unmirrors_every_held_membership(self) -> None:
+        self.user.groups.add(self.group)
+
+        self.user.groups.clear()
+
+        self.assertFalse(self._mirrors().exists())
+
+    def test_a_label_only_group_mirrors_nothing(self) -> None:
+        hand_made = PermissionGroup.objects.create(organization=self.org, label="Hand-made role")
+        self.user.groups.add(hand_made)
+
+        self.assertFalse(Grant.objects.filter(principal_user=self.user, scope_org=self.org).exists())
+
+    def test_a_global_role_group_mirrors_nothing(self) -> None:
+        global_role = Role.objects.create(name="Test Global Role", is_global=True)
+        self.user.groups.add(global_role)
+
+        self.assertFalse(Grant.objects.filter(principal_user=self.user, scope_org=self.org).exists())
+
+    def test_deleting_the_group_leaves_the_grant_for_teardown(self) -> None:
+        """Teardown deletes legacy rows; the Grant is the successor authority."""
+        self.user.groups.add(self.group)
+        self.assertTrue(self._mirrors().exists())
+
+        PermissionGroup.objects.filter(pk=self.group.pk).delete()
+
+        self.assertTrue(self._mirrors().exists())

@@ -12,10 +12,9 @@ from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User as DefaultUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Field, Model, QuerySet
 from django.forms import Field as FormField
 from django.forms import ModelMultipleChoiceField
-from django.db import transaction
-from django.db.models import Field, Model, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
@@ -42,7 +41,7 @@ from .models import (
     Role,
     User,
 )
-from .role_manager import mirror_membership_grant, unmirror_membership_grant
+from .role_manager import scoped_role_for_group
 from .selectors import member_role_names, role_names_by_organization
 from .services import (
     invitation_role,
@@ -136,10 +135,17 @@ class PermissionGroupAdmin(admin.ModelAdmin):
             holders = permission_group.user_set.count()
             losses.append(
                 format_html(
-                    "{} — revoked from {} member{}",
+                    "{} — revoked from {} member{}{}",
                     permission_group.label,
                     holders,
                     "" if holders == 1 else "s",
+                    # Role-backed memberships are mirrored to Grants, and a
+                    # cascading delete deliberately leaves them (the successor
+                    # authority) — say so, or this reads as revoking the
+                    # teams/shelters capability too.
+                    " (mirrored Grants are NOT revoked — remove them from Grants directly)"
+                    if scoped_role_for_group(permission_group) is not None
+                    else "",
                 )
             )
 
@@ -1083,31 +1089,11 @@ class UserAdmin(BaseUserAdmin):
             # bare "Shelter Operator" Role sits right next to the org-scoped
             # PermissionGroup rows of the same name, and picking it would make a
             # scoped role global.  Global Roles stay — the Django admin is the
-            # sanctioned surface for granting those (ADR 0001 §3).
+            # sanctioned surface for granting those (ADR 0001 §3).  Membership
+            # changes made here still mirror their Grants: the mirror is
+            # enforced at the User.groups m2m edge (accounts.signals).
             groups_field.queryset = _groups_without_scoped_roles()
         return form
-
-    @staticmethod
-    def _role_backed_group_ids(user: User) -> set[int]:
-        """The role-backed (template) PermissionGroup rows *user* holds."""
-        return set(PermissionGroup.objects.filter(template__isnull=False, user=user).values_list("id", flat=True))
-
-    def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
-        """Mirror role-backed groups added or removed here to Grants.
-
-        The raw ``auth.Group`` picker bypasses ``OrgRoleManager``; mirroring
-        keeps group and Grant in step whether the role came from the org's
-        member page or from this one.
-        """
-        user = cast(User, form.instance)
-        with transaction.atomic():
-            held_before = self._role_backed_group_ids(user)
-            super().save_related(request, form, formsets, change)
-            held_after = self._role_backed_group_ids(user)
-            for group in PermissionGroup.objects.filter(pk__in=held_after - held_before).select_related("organization"):
-                mirror_membership_grant(user, group)
-            for group in PermissionGroup.objects.filter(pk__in=held_before - held_after).select_related("organization"):
-                unmirror_membership_grant(user, group)
 
     @admin.display(description="Organizations and roles")
     def organizations_and_roles(self, obj: User) -> str:

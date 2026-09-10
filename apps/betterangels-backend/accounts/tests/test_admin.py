@@ -998,8 +998,8 @@ class OrganizationMemberInlineQueryCountTestCase(TestCase):
 class UserAdminGroupGrantMirrorTestCase(TestCase):
     """Group edits on the user page must keep group and Grant in step.
 
-    The ``auth.Group`` picker bypasses ``OrgRoleManager``; ``save_related``
-    mirrors its transitions so the two surfaces cannot drift.
+    The ``auth.Group`` picker bypasses ``OrgRoleManager``; the membership-edge
+    mirror (``accounts.signals``) keeps the two surfaces from drifting.
     """
 
     def setUp(self) -> None:
@@ -1261,7 +1261,26 @@ class PermissionGroupDeleteWarningTestCase(TestCase):
 
         response = self.client.get(reverse("admin:accounts_permissiongroup_delete", args=[self.permission_group.pk]))
 
-        self.assertContains(response, "revoked from 1 member<")
+        self.assertContains(response, "revoked from 1 member (")
+        self.assertNotContains(response, "revoked from 1 members")
+
+    def test_a_role_backed_group_says_mirrored_grants_are_not_revoked(self) -> None:
+        """Role-backed memberships mirror Grants; deleting the row does not.
+
+        Teardown retires the legacy row while the Grant stays the successor
+        authority, so the page must not read as revoking the capability.
+        """
+        response = self.client.get(reverse("admin:accounts_permissiongroup_delete", args=[self.permission_group.pk]))
+
+        self.assertContains(response, "mirrored Grants are NOT revoked")
+
+    def test_a_label_only_group_carries_no_grant_note(self) -> None:
+        hand_made = PermissionGroup.objects.create(organization=self.organization, label="Hand-made role")
+        Group.objects.get(pk=hand_made.pk).user_set.add(self.superuser)
+
+        response = self.client.get(reverse("admin:accounts_permissiongroup_delete", args=[hand_made.pk]))
+
+        self.assertNotContains(response, "mirrored Grants are NOT revoked")
 
 
 class PermissionGroupTemplateAdminTestCase(TestCase):

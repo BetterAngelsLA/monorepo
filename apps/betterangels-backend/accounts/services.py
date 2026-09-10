@@ -550,6 +550,22 @@ def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[in
         )
 
 
+def _all_role_defs() -> tuple[RoleDef, ...]:
+    """Every code-owned ``RoleDef`` — the one list :func:`sync_roles` provisions.
+
+    Kept here (lazy imports) rather than in any one domain module: the role
+    bundles span shelters, accounts and notes.  The backfills below stay
+    domain-specific on purpose — each converts its own template slice at its
+    own cutover.
+    """
+    from shelters.groups import ROLES
+
+    from accounts.groups import ORG_ADMIN_ROLES
+    from notes.groups import CASEWORKER_ROLE
+
+    return (*ROLES, *ORG_ADMIN_ROLES, CASEWORKER_ROLE)
+
+
 def sync_roles() -> None:
     """Create or refresh the code-owned ``Role`` rows (ADR 0001 §2.2).
 
@@ -557,14 +573,8 @@ def sync_roles() -> None:
     provisioned once, never per organization.  Idempotent: get_or_create each
     ``Role``, then reconcile ``permissions`` and ``is_global`` from the RoleDef.
     """
-    from shelters.groups import ROLES
-
-    from accounts.groups import ORG_ADMIN_ROLES
-    from accounts.models import Role
-    from notes.groups import CASEWORKER_ROLE
-
     with transaction.atomic():
-        for role_def in (*ROLES, *ORG_ADMIN_ROLES, CASEWORKER_ROLE):
+        for role_def in _all_role_defs():
             role, created = Role.objects.get_or_create(name=role_def.name)
             wanted = set(_resolve_permissions(role_def.permissions))
             _raise_on_phantom_role_permissions(role_def, wanted)

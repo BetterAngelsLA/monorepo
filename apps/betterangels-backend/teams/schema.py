@@ -7,10 +7,12 @@ import strawberry_django
 from accounts.models import User as AccountUser
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import (
+    PERMISSION_DENIED_MESSAGE,
     IsAuthenticated,
     get_current_organization,
     require_can,
 )
+from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from organizations.models import Organization
@@ -49,33 +51,36 @@ class Query:
 
 
 def _org_or_deny(org_id: object) -> Organization:
-    """Resolve an org id, failing closed on a missing/unknown one.
+    """Resolve an org id, failing closed on a missing/unknown/malformed one.
 
-    A missing/unknown org is a permission problem (``PermissionDenied``), not a
-    ``DoesNotExist`` crash.  Module-level because strawberry-django mutation
-    resolvers are invoked unbound.
+    *org_id* is client input (payload field, filter, or header), so it is
+    validated the way selectors validate pks: an id the column cannot hold
+    (``""``, a UUID string) denies like an unknown one instead of reaching the
+    DB as an unhandled ``ValueError``.  ``get_or_none`` is the house guard
+    (``common.utils``) for exactly that.  Module-level because strawberry-django
+    mutation resolvers are invoked unbound.
     """
-    org = Organization.objects.filter(pk=org_id).first()
+    org = get_or_none(Organization.objects.all(), org_id)
     if org is None:
         raise PermissionDenied("You do not have access to this organization.")
     return org
 
 
 def _resolve_read_org(info: Info, filters: Optional[TeamFilter]) -> Organization:
-    """The org whose teams are listed: the ``organizationId`` filter wins; the
-    ``X-Organization-ID`` header is the deprecated fallback while clients
-    migrate to the filter (and will be stripped once none send it).
+    """The org whose teams are listed: the ``organizationId`` filter when the
+    client sends one, otherwise the deprecated ``X-Organization-ID`` header
+    (mobile's ``useOrgTeams`` callers still send only ``{ isActive }``; they
+    must pass ``organizationId`` before the header is stripped).
 
-    An org id the client omits arrives here as ``""`` — the filter machinery
-    does not distinguish it from an explicitly empty id — so an empty id keeps
-    the header fallback rather than denying.  That is what the mobile
-    ``useOrgTeams`` callers (NoteForm, TaskForm, FilterTeamsOptions,
-    UserTeamPreferenceSelect) rely on today: they send only ``{ isActive }``
-    and must pass ``organizationId`` before the header is stripped.  (An
-    explicitly empty id is rejected further down, when the declared org filter
-    hits the DB.)"""
+    An absent filter field arrives as ``None`` — or ``strawberry.UNSET`` when a
+    filter of another kind is given — and keeps the header fallback; an
+    explicitly empty id is NOT treated as absent — it denies, so a blank value
+    can never silently fall back to the header.
+    """
     filter_org_id = getattr(filters, "organization_id", None) if filters else None
-    return _org_or_deny(filter_org_id or get_current_organization(info))
+    if filter_org_id in (None, strawberry.UNSET):
+        return _org_or_deny(get_current_organization(info))
+    return _org_or_deny(filter_org_id)
 
 
 @strawberry.type
@@ -99,7 +104,9 @@ class Mutation:
     def update_team(self, info: Info, data: UpdateTeamInput) -> TeamType:
         team = team_get(pk=data.id)
         if team is None:
-            raise PermissionDenied("You do not have permission to update this team.")
+            # Same refusal as require_can's below: a caller must not be able to
+            # tell a missing team from one they may not touch.
+            raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
         # The row names its org — authorize there, no header needed.
         require_can(get_current_user(info), Team.perms.CHANGE, org=team.organization_id)
 
@@ -116,7 +123,9 @@ class Mutation:
     def delete_team(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         team = team_get(pk=data.id)
         if team is None:
-            raise PermissionDenied("You do not have permission to delete this team.")
+            # Same refusal as require_can's below: a caller must not be able to
+            # tell a missing team from one they may not touch.
+            raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
         # The row names its org — authorize there, no header needed.
         require_can(get_current_user(info), Team.perms.DELETE, org=team.organization_id)
         deleted_id = team.pk

@@ -9,15 +9,16 @@ The three team mutations authorize through ``require_can`` (``can()``) since
 from typing import Any
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import PermissionGroup, User
+from accounts.models import Grant, PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
+from common.permissions.utils import PERMISSION_DENIED_MESSAGE
 from model_bakery import baker
 from teams.models import Team
 
 from .utils import TeamGraphQLUtilsMixin
 
-PERMISSION_DENIED = "You do not have permission to perform this action in this organization."
+PERMISSION_DENIED = PERMISSION_DENIED_MESSAGE
 
 
 class TeamGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
@@ -102,6 +103,9 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self.org_1.add_user(legacy_admin)
         group = PermissionGroup.objects.get(organization=self.org_1, template__name=ORG_ADMIN.name)
         group.user_set.add(legacy_admin)
+        # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
+        # legacy-only holder has none — drop the mirror to model that state.
+        Grant.objects.filter(principal_user=legacy_admin).delete()
         self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
 
         self._login(legacy_admin, self.org_1)
@@ -174,6 +178,49 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
             response, "createTeam", "You do not have access to this organization.", kind="PERMISSION"
         )
         self.assertEqual(Team.objects.count(), initial_count)
+
+    def test_create_team_with_a_malformed_organization_is_denied(self) -> None:
+        """A payload org the column cannot hold denies like an unknown one.
+
+        Regression: a non-numeric or blank id used to reach Django as an
+        unhandled ``ValueError`` — a 500-class error, not a refusal.
+        """
+        admin = baker.make(User)
+        self.org_1.add_user(admin)
+        OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
+        self._login(admin, self.org_1)
+        initial_count = Team.objects.count()
+
+        for bad_id in ("not-an-id", ""):
+            with self.subTest(organizationId=bad_id):
+                response = self.create_team_fixture({"name": "should not appear", "organizationId": bad_id})
+                self.assertGraphQLOperationInfo(
+                    response, "createTeam", "You do not have access to this organization.", kind="PERMISSION"
+                )
+        self.assertEqual(Team.objects.count(), initial_count)
+
+    def test_missing_and_foreign_teams_read_the_same_refusal(self) -> None:
+        """The refusal must not say whether a team id exists.
+
+        A missing team and a team in an org the caller has no grant at both
+        answer with the standard PERMISSION message, so update/delete are not
+        an existence oracle.
+        """
+        admin = baker.make(User)
+        self.org_1.add_user(admin)
+        OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
+        foreign_team = baker.make(Team, name="foreign", organization=self.org_2)
+        self._login(admin, self.org_1)
+
+        missing_update = self.update_team_fixture({"id": 999999, "name": "nope"})
+        foreign_update = self.update_team_fixture({"id": foreign_team.pk, "name": "nope"})
+        missing_delete = self.delete_team_fixture(999999)
+        foreign_delete = self.delete_team_fixture(foreign_team.pk)
+
+        self.assertGraphQLOperationInfo(missing_update, "updateTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(foreign_update, "updateTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(missing_delete, "deleteTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(foreign_delete, "deleteTeam", PERMISSION_DENIED, kind="PERMISSION")
 
 
 class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):

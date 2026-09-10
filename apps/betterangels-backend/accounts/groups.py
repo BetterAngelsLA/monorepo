@@ -50,7 +50,10 @@ ORG_ADMIN_ROLE = RoleDef(
 
 ORG_SUPERUSER_ROLE = RoleDef(
     name=ORG_SUPERUSER.name,
-    permissions=list(ORG_ADMIN_ROLE_PERMISSIONS),
+    # Same bundle as ORG_ADMIN while teams is the only scoped permission either
+    # role can carry (the phantom-ContentType guard keeps the rest legacy).
+    # Derived so the two cannot drift apart until that changes.
+    permissions=list(ORG_ADMIN_ROLE.permissions),
     is_invitable=ORG_SUPERUSER.is_invitable,
 )
 

@@ -85,6 +85,11 @@ roles, cross-org caseworkers, delegation, object grant — are in **ADR §2.9 wo
 Every PR is based on the previous branch (a linear stack; `#2409` bases `main`).
 Review and merge **bottom-up**. What each PR delivers:
 
+> **Superseded in part (2026-09-10):** as the stack landed it was rebuilt onto
+> main — teams cut over as #2443 on the grant-only model, not through the
+> `#2427`–`#2434` branches below. See ADR 0001 §5.3 "Status on main" for what
+> actually shipped.
+
 | # | Branch | Delivers |
 |---|---|---|
 | 2409 | `grant-redesign` | **This PR.** ADR 0001 + `Role`/`Grant`/`OrgScoped` models, constraints (partial uniques, `NULLS NOT DISTINCT`), E001–E005 checks, migrations. Schema-only — nothing reads it yet. |
