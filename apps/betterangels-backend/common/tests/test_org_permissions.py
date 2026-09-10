@@ -37,11 +37,8 @@ class OrgAdminCanCreateTeamTestCase(GraphQLBaseTestCase):
         self.org_1.add_user(self.org_1_admin)
         OrgRoleManager(self.org_1).add_roles(self.org_1_admin, ORG_ADMIN)
 
-        self._set_active_org(self.org_1)
-
     def _create_team(self, name: str) -> dict:
-        # Teams is grant-only now: create carries its org in the payload (the
-        # header is not consulted for team mutations).
+        # Grant-only: create carries its org in the payload.
         return self.execute_graphql(
             CREATE_TEAM,
             {"data": {"name": name, "organizationId": str(self.org_1.pk)}},

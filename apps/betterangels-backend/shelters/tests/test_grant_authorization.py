@@ -2,8 +2,8 @@
 
 Shelters is the first domain cut over to the grant model: its reads and writes
 are governed by the predicates in ``common.permissions.selectors``
-(``visible`` / ``can`` / ``scopes``), not by legacy ``PermissionGroup`` rows or
-the ``X-Organization-ID`` header (which the domain no longer reads at all).
+(``visible`` / ``can`` / ``scopes``), not by legacy ``PermissionGroup`` rows
+or request headers.
 
 These tests pin the cross-cutting invariants that span features and are easy to
 regress silently:
