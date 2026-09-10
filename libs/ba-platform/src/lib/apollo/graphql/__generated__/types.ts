@@ -784,7 +784,7 @@ export type CreateTaskInput = {
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
   hmisNote?: InputMaybe<Scalars['ID']['input']>;
   note?: InputMaybe<Scalars['ID']['input']>;
-  organizationId: Scalars['ID']['input'];
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
   teamId?: InputMaybe<Scalars['ID']['input']>;

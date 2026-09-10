@@ -780,7 +780,7 @@ input CreateTaskInput {
   summary: String!
   teamId: ID
   status: TaskStatusEnum
-  organizationId: ID!
+  organizationId: ID
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
