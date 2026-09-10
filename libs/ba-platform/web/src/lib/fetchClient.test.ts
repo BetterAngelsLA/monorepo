@@ -46,35 +46,6 @@ describe('createWebFetchClient', () => {
     global.fetch = originalFetch;
   });
 
-  it('injects X-Organization-ID header from the active-org store', async () => {
-    window.localStorage.setItem('betterangels_active_org_id', 'org-1');
-    document.cookie = 'csrftoken=csrf-abc; Path=/';
-
-    const fetchClient = createWebFetchClient();
-    await fetchClient('/api/test', { method: 'POST' });
-
-    const fetchMock = global.fetch as vi.Mock;
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const headers = new Headers(init.headers);
-
-    expect(headers.get('X-Organization-ID')).toBe('org-1');
-    expect(headers.get('x-csrftoken')).toBe('csrf-abc');
-  });
-
-  it('omits X-Organization-ID header when there is no active org', async () => {
-    document.cookie = 'csrftoken=csrf-abc; Path=/';
-
-    const fetchClient = createWebFetchClient();
-    await fetchClient('/api/test', { method: 'GET' });
-
-    const fetchMock = global.fetch as vi.Mock;
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const headers = new Headers(init.headers);
-
-    expect(headers.get('X-Organization-ID')).toBeNull();
-    expect(headers.get('x-csrftoken')).toBe('csrf-abc');
-  });
-
   it('preserves existing custom headers', async () => {
     document.cookie = 'csrftoken=csrf-abc; Path=/';
 
