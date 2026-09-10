@@ -43,7 +43,9 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
 
         if operation == "create":
             # The acting org (RFC 0003): authority is ``require_can`` at this org.
-            variables.setdefault("organizationId", str(self.org_1.pk))
+            # ``org_1`` comes from ``GraphQLBaseTestCase``; this mixin's protocol
+            # cannot see it, hence the ignore.
+            variables.setdefault("organizationId", str(self.org_1.pk))  # type: ignore[attr-defined]
 
         mutation: str = f"""
             mutation {operation.capitalize()}Task($data: {operation.capitalize()}TaskInput!) {{ # noqa: B950

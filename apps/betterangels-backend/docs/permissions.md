@@ -36,7 +36,7 @@ The org always travels in the **payload**: query filters and mutation inputs car
 
 `common/permissions/utils.py`:
 
-- `require_can(user, perm, org=…)` — the write gate: raises `PermissionDenied(PERMISSION_DENIED_MESSAGE)` when `can()` is false.  Creates carry an explicit target org and are authorized by `can()`; `can()` never implies the org exists, so resolvers validate the org first (the `_org_or_deny` pattern).
+- `require_can(user, perm, org=…)` — the write gate: raises `PermissionDenied(PERMISSION_DENIED_MESSAGE)` when `can()` is false.  Creates carry an explicit target org and are authorized by `can()`; `can()` never implies the org exists, so resolvers validate the org first (`resolve_org_or_deny`, `common/graphql/org.py`).
 - `IsAuthenticated` — the custom strawberry permission class (raises `UnauthenticatedGQLError`).
 
 The old `HasOrgPerm` extension and the `permissioned_queryset()` / `perm_filter()` / `_perm_q()` helpers are **deleted** — org-scoped surfaces authorize through the selectors above.
@@ -137,7 +137,8 @@ Each `groups.py` imports `TemplateConfig` and defines one or more template confi
 | `common/permissions/utils.py`       | `require_can()`, `IsAuthenticated`, `register_permission()`, `PERMISSION_DENIED_MESSAGE`              |
 | `common/permissions/config.py`      | `TemplateConfig`, `RoleDef` (incl. `from_template()`)                                                 |
 | `common/permissions/domain.py`      | `LEGACY_INERT_APPS` / `GLOBAL_TIER_ORG_APPS` — which domains are grant-only                           |
-| `common/graphql/permission_checkers.py` | Grant-model `perm_checker` for declarative strawberry fields (`can_anywhere`)                        |
+| `common/graphql/permission_checkers.py` | `can_anywhere_checker` for declarative fields; `visible_rows_for_holder` list-read gate            |
+| `common/graphql/org.py`             | `resolve_org_or_deny()` — payload/filter org resolution, fail-closed                                   |
 | `common/permissions/explain.py`     | `explain()` — arm-by-arm explanation of a verdict; backs `explain_permission`                          |
 | `common/management/commands/explain_permission.py` | `manage.py explain_permission` — the authority debugger                              |
 | `accounts/groups.py`                | `ORG_ADMIN` / `ORG_SUPERUSER` templates + role definitions                                            |

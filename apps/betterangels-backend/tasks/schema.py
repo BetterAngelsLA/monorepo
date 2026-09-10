@@ -5,6 +5,7 @@ import strawberry_django
 from accounts.models import User
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
+from common.graphql.org import resolve_org_or_deny
 from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.selectors import can_obj
@@ -13,7 +14,6 @@ from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from hmis.models import HmisClientProfile, HmisNote
 from notes.models import Note
-from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -23,22 +23,6 @@ from tasks.models import Task
 from tasks.services import task_create, task_delete, task_update
 
 from .types import CreateTaskInput, TaskOrder, TaskType, UpdateTaskInput
-
-
-def _org_or_deny(org_id: object) -> Organization:
-    """Resolve an org id, failing closed on a missing/unknown/malformed one.
-
-    *org_id* is client input, so it is validated the way selectors validate
-    pks: a missing one and an id the column cannot hold deny like an unknown
-    one instead of reaching the DB as an unhandled ``ValueError``.
-    ``get_or_none`` is the house guard (``common.utils``) for the latter.
-    """
-    if org_id is strawberry.UNSET:
-        org_id = None
-    org = get_or_none(Organization.objects.all(), org_id)
-    if org is None:
-        raise PermissionDenied("You do not have access to this organization.")
-    return org
 
 
 @strawberry.type
@@ -62,7 +46,7 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
-        org = _org_or_deny(data.organization_id)
+        org = resolve_org_or_deny(data.organization_id)
         require_can(current_user, Task.perms.ADD, org=org)
 
         task_data = asdict(data)

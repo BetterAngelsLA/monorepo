@@ -1,14 +1,13 @@
-from typing import TYPE_CHECKING, Annotated, Optional, cast
+from typing import TYPE_CHECKING, Annotated, Optional
 
 import strawberry
 import strawberry_django
-from accounts.models import User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
+from common.graphql.permission_checkers import visible_rows_for_holder
 from common.graphql.types import make_in_filter
 from django.db.models import Q, QuerySet
 from strawberry import ID, UNSET, Info, Maybe, auto
-from strawberry_django.auth.utils import get_current_user
 from tasks.enums import TaskStatusEnum
 from teams.types import TeamType
 
@@ -21,26 +20,11 @@ if TYPE_CHECKING:
 def _visible_task_rows(queryset: QuerySet, info: Info, perm: str) -> QuerySet:
     """List-read gate for tasks (ADR 0001 §5, RFC 0003 slice 1).
 
-    SHARED read: a holder sees every task, a non-holder sees none — the
-    empty-not-error shape the legacy guardian prefilter produced, kept for
-    parity (single-row reads and mutations refuse instead).  The holder check
-    is memoized per request on the user instance (the house pattern —
-    ``invalidate_scope_cache`` drops it with the other authority memos), so
-    nested lists of the same type cost one check, not one each.  Anonymous
-    requests never reach here (``IsAuthenticated`` on the fields) but fail
-    closed anyway.
+    SHARED read: a holder sees every task, a non-holder sees none — see
+    ``visible_rows_for_holder`` for the shape, the per-request memo, and the
+    anonymous fail-closed.
     """
-    current = get_current_user(info)
-    if current is None or not getattr(current, "is_authenticated", False):
-        return queryset.none()
-
-    from common.permissions.selectors import can_anywhere
-
-    user = cast(User, current)
-    cache = user.__dict__.setdefault("_visible_task_rows_cache", {})
-    if perm not in cache:
-        cache[perm] = can_anywhere(user, perm)
-    return queryset if cache[perm] else queryset.none()
+    return visible_rows_for_holder(queryset, info, perm=perm, cache_key="_visible_task_rows_cache")
 
 
 @strawberry_django.filter_type(models.Task, lookups=True)
