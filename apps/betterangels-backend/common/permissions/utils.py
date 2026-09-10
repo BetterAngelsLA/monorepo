@@ -9,7 +9,6 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Model, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
-from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
 from common.errors import UnauthenticatedGQLError
@@ -218,24 +217,6 @@ class IsAuthenticated(strawberry.BasePermission):
             raise UnauthenticatedGQLError()
 
         return True
-
-
-def get_current_organization(info: Info) -> str:
-    """Return the organization ID from the ``X-Organization-ID`` header.
-
-    Kept only until mobile migrates its teams reads to the ``organizationId``
-    filter (DEV-2566) — every other org-scoped surface is header-free.  See the
-    ADR 0001 §5.3 strip checklist.
-
-    Raises ``PermissionDenied`` if the header is absent, or ``AttributeError``
-    if ``OrganizationMiddleware`` is not installed.
-    """
-    org_id = info.context.request.organization_id
-
-    if org_id is None:
-        raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
-
-    return str(org_id)
 
 
 #: The standard refusal for org-scoped authority checks — one string, so every
