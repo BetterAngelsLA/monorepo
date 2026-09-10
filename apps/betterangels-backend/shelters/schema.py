@@ -5,14 +5,9 @@ import strawberry
 import strawberry_django
 from accounts.models import Organization, User
 from accounts.types import OrganizationType
-from common.graphql.types import (
-    AuthorizedPresignedS3UploadsType,
-    BulkDeleteInput,
-    BulkDeleteResult,
-    DeletedObjectType,
-)
+from common.graphql.types import AuthorizedPresignedS3UploadsType, BulkDeleteInput, BulkDeleteResult, DeletedObjectType
+from common.permissions.selectors import holds_globally
 from common.permissions.utils import IsAuthenticated
-from common.services.feature_flags import flag_is_active
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max, QuerySet
 from strawberry import ID, UNSET
@@ -20,14 +15,9 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 
-from shelters.constants import BA_ADMIN_ONLY_FIELDS_FLAG
 from shelters.enums import StatusChoices
-from shelters.models import Shelter
-from shelters.selectors import (
-    shelter_get,
-    shelter_metrics_window,
-    shelter_organization_list,
-)
+from shelters.models import ContactInfo, Shelter
+from shelters.selectors import shelter_get, shelter_metrics_window, shelter_organization_list
 from shelters.selectors import shelter_occupancy_metrics as shelter_occupancy_metrics_selector
 from shelters.services import shelter_photo
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
@@ -148,10 +138,13 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:
-        if data.additional_contacts is not UNSET and not flag_is_active(info, BA_ADMIN_ONLY_FIELDS_FLAG):
-            raise PermissionDenied("Editing additional contacts is not enabled.")
-
         user = cast(User, get_current_user(info))
+        # BA-only field: gate on the global tier only — a scoped Grant must
+        # never pass (ADR 0001 §2.4).  Only global Roles carrying the
+        # ContactInfo perms (the Global Shelter Operator) satisfy this.
+        if data.additional_contacts is not UNSET and not holds_globally(user, ContactInfo.perms.CHANGE):
+            raise PermissionDenied("Editing additional contacts requires the Global Shelter Operator role.")
+
         clean = strawberry.asdict(data)
         return cast(ShelterType, shelter_update(user=user, data=clean))
 
