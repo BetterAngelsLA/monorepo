@@ -55,12 +55,35 @@ CASEWORKER = TemplateConfig(
 
 
 # ── Role definition (ADR 0001 §2.2 — caseworker teams-read slice) ────────
-# RFC 0003 first step: a scoped ``Caseworker`` Role carrying
-# ``teams.view_team`` lets the ``teams`` read authorize via ``can()`` (pure
-# grant) instead of org membership.  Only the teams permission rides the Role
-# today; the rest of the caseworker bundle stays legacy until RFC 0003.
+# The scoped ``Caseworker`` Role backs the cut-over slices of the caseworker
+# template.  Teams read shipped first (``teams.view_team``); the clients
+# cutover (ADR 0001 §5.1, RFC 0002) adds the client family — grant-only now
+# (SHARED read / SHARED write).  Notes/tasks stay legacy until RFC 0003.
 CASEWORKER_ROLE = RoleDef(
     name=CASEWORKER.name,
-    permissions=[Team.perms.VIEW],
+    permissions=[
+        Team.perms.VIEW,
+        # Client family — the RFC 0002 cutover bundle.
+        ClientProfile.perms.ADD,
+        ClientProfile.perms.CHANGE,
+        ClientProfile.perms.DELETE,
+        ClientProfile.perms.VIEW,
+        ClientContact.perms.ADD,
+        ClientContact.perms.CHANGE,
+        ClientContact.perms.DELETE,
+        ClientContact.perms.VIEW,
+        ClientHouseholdMember.perms.ADD,
+        ClientHouseholdMember.perms.CHANGE,
+        ClientHouseholdMember.perms.DELETE,
+        ClientHouseholdMember.perms.VIEW,
+        HmisProfile.perms.ADD,
+        HmisProfile.perms.CHANGE,
+        HmisProfile.perms.DELETE,
+        HmisProfile.perms.VIEW,
+        SocialMediaProfile.perms.ADD,
+        SocialMediaProfile.perms.CHANGE,
+        SocialMediaProfile.perms.DELETE,
+        SocialMediaProfile.perms.VIEW,
+    ],
     is_invitable=CASEWORKER.is_invitable,
 )
