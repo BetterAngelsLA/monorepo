@@ -479,7 +479,7 @@ class Mutation:
     )
     def update_client_profile(self, info: Info, data: UpdateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
-            user = get_current_user(info)
+            user = cast(User, get_current_user(info))
             try:
                 client_profile = visible(
                     ClientProfile.objects.all(),
@@ -523,7 +523,7 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_client_profile(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         with transaction.atomic():
-            user = get_current_user(info)
+            user = cast(User, get_current_user(info))
 
             try:
                 client_profile = visible(
@@ -636,7 +636,7 @@ class Mutation:
     )
     def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
         with transaction.atomic():
-            user = get_current_user(info)
+            user = cast(User, get_current_user(info))
 
             try:
                 client_profile = visible(
@@ -661,7 +661,7 @@ class Mutation:
     def delete_client_profile_photo(self, info: Info, client_profile_id: strawberry.ID) -> ClientProfileType:
         """Remove a client's profile photo."""
         with transaction.atomic():
-            user = get_current_user(info)
+            user = cast(User, get_current_user(info))
 
             try:
                 client_profile = visible(
