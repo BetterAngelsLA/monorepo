@@ -865,7 +865,7 @@ input CreateTaskInput {
   teamId: ID
   assigneeId: ID
   status: TaskStatusEnum
-  organizationId: ID!
+  organizationId: ID
 }
 
 union CreateTaskPayload = TaskType | OperationInfo

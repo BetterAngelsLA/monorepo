@@ -28,7 +28,10 @@ QUERY_AUTHZ_ROUTES: dict[str, str] = {
 
 # mutation -> where authorization happens for that write.
 MUTATION_AUTHZ_ROUTES: dict[str, str] = {
-    "create_task": "resolver -> resolve_org_or_deny(organizationId) + require_can(ADD, org)",
+    "create_task": (
+        "resolver -> resolve_org_or_deny(organizationId) + require_can(ADD, org); "
+        "legacy-group fallback while pre-payload builds exist"
+    ),
     "update_task": "resolver -> get_or_none + can_obj(CHANGE, row)",
     "delete_task": "resolver -> get_or_none + can_obj(DELETE, row)",
 }
