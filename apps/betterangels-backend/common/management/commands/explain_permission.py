@@ -84,17 +84,20 @@ class Command(BaseCommand):
     def _resolve_user(ref: str) -> "User":
         from accounts.models import User
 
+        user: User
         if ref.isdigit():
             try:
-                return cast("User", User.objects.get(pk=int(ref)))
+                user = User.objects.get(pk=int(ref))
             except User.DoesNotExist:
                 raise CommandError(f"no user with pk {ref}.") from None
-        matches = list(User.objects.filter(Q(username=ref) | Q(email__iexact=ref))[:2])
-        if not matches:
-            raise CommandError(f"no user matches {ref!r} (pk, username, or email).")
-        if len(matches) > 1:
-            raise CommandError(f"{ref!r} matches more than one user — use the pk.")
-        return cast("User", matches[0])
+        else:
+            matches = list(User.objects.filter(Q(username=ref) | Q(email__iexact=ref))[:2])
+            if not matches:
+                raise CommandError(f"no user matches {ref!r} (pk, username, or email).")
+            if len(matches) > 1:
+                raise CommandError(f"{ref!r} matches more than one user — use the pk.")
+            user = matches[0]
+        return user
 
     @staticmethod
     def _resolve_org(ref: Optional[str]) -> Optional["Organization"]:
