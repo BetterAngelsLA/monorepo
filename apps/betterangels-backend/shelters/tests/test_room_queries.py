@@ -1,6 +1,7 @@
 from accounts.tests.baker_recipes import organization_recipe
 from django.test import TestCase
 from model_bakery import baker
+from common.tests.utils import revoke_grants
 from shelters.enums import (
     BedStatusChoices,
     ReservationStatusChoices,
@@ -225,9 +226,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         # The grant model reads permissions from the Role a Grant references,
         # so removing access means deleting the operator's Grant (ADR 0001).
         # Queries fail closed: no Grant ⇒ no rows, not an error.
-        from accounts.models import Grant
-
-        Grant.objects.filter(principal_user=self.operator).delete()
+        revoke_grants(self.operator)
 
         response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
