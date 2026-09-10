@@ -20,10 +20,10 @@ from datetime import datetime
 from typing import Any
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
-from common.tests.utils import GraphQLBaseTestCase
+from common.tests.utils import GraphQLBaseTestCase, make_legacy_only_holder
 from django.contrib.auth.models import Permission
 from django.utils import timezone
 from model_bakery import baker
@@ -185,21 +185,18 @@ class ReportGrantAuthorityDeniedTestCase(ReportSummaryGraphQLGrantMixin, ReportE
         Reconcile retires org-admin rows (ADR 0001 teardown) — this simulates a
         stale leftover row; even if one exists it confers no report authority.
         """
-        legacy_admin = baker.make(User)
-        self.org_1.add_user(legacy_admin)
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=ORG_ADMIN.name)
-        group, _ = PermissionGroup.objects.get_or_create(organization=self.org_1, template=template)
-        group.user_set.add(legacy_admin)
+        legacy_admin = make_legacy_only_holder(
+            user=baker.make(User), organization=self.org_1, template_name=ORG_ADMIN.name
+        )
         # Pin the premise: the denial below only proves revocation if the legacy
         # group actually carries the permission it no longer grants.  Reconcile
         # no longer provisions org-admin rows (teardown), so seed the leftover
         # row's permission directly to simulate the pre-cutover state.
+        group = PermissionGroup.objects.get(organization=self.org_1, template__name=ORG_ADMIN.name)
         permission = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
         group.permissions.add(permission)
         self.assertTrue(group.permissions.filter(content_type__app_label="reports", codename="view_reports").exists())
-        # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
-        # legacy-only holder has none — drop the mirror to model that state.
-        Grant.objects.filter(principal_user=legacy_admin).delete()
+        self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
         self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
 
         self._assert_denied(self._read(legacy_admin, self.org_1))
