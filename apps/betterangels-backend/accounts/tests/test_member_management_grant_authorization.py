@@ -25,11 +25,11 @@ These tests pin the flipped contract:
 from typing import Any
 
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from accounts.types import PermissionTemplateEnum
-from common.tests.utils import GraphQLBaseTestCase
+from common.tests.utils import GraphQLBaseTestCase, make_legacy_only_holder
 from django.contrib.auth.models import Group
 from model_bakery import baker
 from notes.groups import CASEWORKER
@@ -311,16 +311,13 @@ class MemberManagementGrantAuthorityDeniedTestCase(GraphQLBaseTestCase, MemberMa
         stale leftover row; even if one exists it confers no member-management
         authority.
         """
-        legacy_admin = baker.make(User, email="legacy-admin@example.com")
+        legacy_admin = make_legacy_only_holder(
+            user=baker.make(User, email="legacy-admin@example.com"),
+            organization=self.org_1,
+            template_name=ORG_ADMIN.name,
+        )
         removable = baker.make(User, email="removable@example.com")
-        self.org_1.add_user(legacy_admin)
         self.org_1.add_user(removable)
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=ORG_ADMIN.name)
-        group, _ = PermissionGroup.objects.get_or_create(organization=self.org_1, template=template)
-        group.user_set.add(legacy_admin)
-        # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
-        # legacy-only holder has none — drop the mirror to model that state.
-        Grant.objects.filter(principal_user=legacy_admin).delete()
         self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
 
         response = self._view_members(legacy_admin, self.org_1)

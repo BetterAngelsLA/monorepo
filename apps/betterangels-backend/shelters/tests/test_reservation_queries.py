@@ -1,6 +1,7 @@
 from accounts.tests.baker_recipes import organization_recipe
 from django.test import TestCase
 from model_bakery import baker
+from common.tests.utils import revoke_grants
 
 from shelters.enums import ReservationStatusChoices, StatusChoices
 from shelters.models import Bed, Reservation, Room
@@ -209,9 +210,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
     def test_reservations_query_without_permission_returns_empty(self) -> None:
         # The grant model reads permissions from the Role a Grant references,
         # so removing access means deleting the operator's Grant (ADR 0001).
-        from accounts.models import Grant
-
-        Grant.objects.filter(principal_user=self.operator).delete()
+        revoke_grants(self.operator)
 
         expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
