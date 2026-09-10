@@ -390,7 +390,6 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             team=team_dropin,
             _quantity=2,
         )
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertIsNone(response.get("errors"))
@@ -422,7 +421,6 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         first.provided_services.add(baker.make(ServiceRequest, service=shower))
         first.requested_services.add(baker.make(ServiceRequest, service=shower))
 
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
 
@@ -463,7 +461,6 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             interacted_at=timezone.make_aware(datetime(2025, 1, 15, 12, 0, 0)),
             _quantity=5,
         )
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertIsNone(response.get("errors"))

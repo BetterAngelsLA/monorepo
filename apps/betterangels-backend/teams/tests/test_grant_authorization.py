@@ -32,7 +32,6 @@ class TeamGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         OrgRoleManager(self.org_1).add_roles(self.org_1_admin, ORG_ADMIN)
 
         self.graphql_client.force_login(self.org_1_admin)
-        self._set_active_org(self.org_1)
 
     def test_role_backed_org_admin_can_manage_teams(self) -> None:
         # Sanity: the mirrored Grant is what authorizes — nothing else.
@@ -59,7 +58,6 @@ class TeamGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
             self._grant_permission(grant_user, str(perm), self.org_1, role_name="Team Admin")
 
         self.graphql_client.force_login(grant_user)
-        self._set_active_org(self.org_1)
 
         response = self.create_team_fixture({"name": "grant-only team", "organizationId": self.org_1.pk})
         self.assertIsNone(response.get("errors"))
@@ -77,7 +75,6 @@ class TeamGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         user = baker.make(User, is_superuser=True)
         self.org_1.add_user(user)
         self.graphql_client.force_login(user)
-        self._set_active_org(self.org_1)
 
         response = self.create_team_fixture({"name": "superuser team", "organizationId": self.org_1.pk})
         self.assertIsNone(response.get("errors"))
@@ -91,9 +88,8 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         super().setUp()
         sync_roles()
 
-    def _login(self, user: User, org: object) -> None:
+    def _login(self, user: User) -> None:
         self.graphql_client.force_login(user)
-        self._set_active_org(org)
 
     def test_legacy_only_org_admin_is_denied(self) -> None:
         """A legacy PermissionGroup ORG_ADMIN with no Grant no longer manages teams.
@@ -111,7 +107,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         Grant.objects.filter(principal_user=legacy_admin).delete()
         self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
 
-        self._login(legacy_admin, self.org_1)
+        self._login(legacy_admin)
         initial_count = Team.objects.count()
 
         response = self.create_team_fixture({"name": "should not appear", "organizationId": self.org_1.pk})
@@ -133,7 +129,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
 
         team = baker.make(Team, name="name", organization=self.org_1)
 
-        self._login(add_only, self.org_1)
+        self._login(add_only)
         create_response = self.create_team_fixture({"name": "created", "organizationId": self.org_1.pk})
         self.assertIsNone(create_response.get("errors"))
 
@@ -146,7 +142,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
     def test_member_with_no_authority_is_denied(self) -> None:
         member = baker.make(User)
         self.org_1.add_user(member)
-        self._login(member, self.org_1)
+        self._login(member)
 
         initial_count = Team.objects.count()
         response = self.create_team_fixture({"name": "should not appear", "organizationId": self.org_1.pk})
@@ -159,7 +155,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self.org_1.add_user(admin)
         OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
 
-        self._login(admin, self.org_2)
+        self._login(admin)
         response = self.create_team_fixture({"name": "wrong org", "organizationId": self.org_2.pk})
         self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
@@ -173,7 +169,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         admin = baker.make(User)
         self.org_1.add_user(admin)
         OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
-        self._login(admin, self.org_1)
+        self._login(admin)
         initial_count = Team.objects.count()
 
         response = self.create_team_fixture({"name": "should not appear", "organizationId": 999999})
@@ -191,7 +187,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         admin = baker.make(User)
         self.org_1.add_user(admin)
         OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
-        self._login(admin, self.org_1)
+        self._login(admin)
         initial_count = Team.objects.count()
 
         for bad_id in ("not-an-id", ""):
@@ -213,7 +209,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self.org_1.add_user(admin)
         OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
         foreign_team = baker.make(Team, name="foreign", organization=self.org_2)
-        self._login(admin, self.org_1)
+        self._login(admin)
 
         missing_update = self.update_team_fixture({"id": 999999, "name": "nope"})
         foreign_update = self.update_team_fixture({"id": foreign_team.pk, "name": "nope"})
@@ -243,7 +239,7 @@ class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
 
     def _list_org_2(self, user: User) -> dict[str, Any]:
         self.graphql_client.force_login(user)
-        # Header-free read: the org travels in the filter payload (no header).
+        # The org travels in the filter payload.
         return self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": str(self.org_2.pk)}})
 
     def _ids(self, response: dict[str, Any]) -> set[int]:
@@ -310,24 +306,11 @@ class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         self.assertIsNotNone(response.get("errors"))
         self.assertIsNone((response.get("data") or {}).get("teams"))
 
-    def test_org_filter_reads_without_the_header(self) -> None:
-        """The ``organizationId`` filter replaces the header — no header needed."""
+    def test_grant_holder_reads_via_the_org_filter(self) -> None:
+        """A scoped ``teams.view_team`` Grant reads through the ``organizationId`` filter."""
         holder = baker.make(User)
         self._grant_permission(holder, str(Team.perms.VIEW), self.org_2, role_name="Team Reader")
         self.graphql_client.force_login(holder)
-        # No X-Organization-ID header at all.
-        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
-
-        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": str(self.org_2.pk)}})
-        self.assertEqual(self._ids(response), self._expected_ids())
-
-    def test_org_filter_wins_over_a_stale_header(self) -> None:
-        """A header naming a different org is ignored once the filter provides one."""
-        holder = baker.make(User)
-        self._grant_permission(holder, str(Team.perms.VIEW), self.org_2, role_name="Team Reader")
-        # Holder has no authority at org_1, which the (stale) header names.
-        self.graphql_client.force_login(holder)
-        self._set_active_org(self.org_1)
 
         response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": str(self.org_2.pk)}})
         self.assertEqual(self._ids(response), self._expected_ids())
@@ -337,7 +320,6 @@ class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         holder = baker.make(User)
         self._grant_permission(holder, str(Team.perms.VIEW), self.org_2, role_name="Team Reader")
         self.graphql_client.force_login(holder)
-        self._set_active_org(self.org_2)
 
         response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": "999999999"}})
         self.assertIsNotNone(response.get("errors"))

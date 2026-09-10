@@ -216,15 +216,6 @@ class GraphQLBaseTestCase(
         OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_2, CASEWORKER)
         OrgRoleManager(self.org_2).add_roles(self.org_2_case_manager_1, CASEWORKER)
 
-        # Default org for the deprecated X-Organization-ID header — still the
-        # read fallback while mobile's team pickers migrate (DEV-2566).  Every
-        # grant-only surface takes its org from the payload instead.
-        self._set_active_org(self.org_1)
-
-    def _set_active_org(self, org: Organization) -> None:
-        """Set the X-Organization-ID header for the current test client."""
-        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(org.id)
-
     def _grant_permission(
         self,
         user: User,

@@ -282,16 +282,11 @@ class MemberManagementGrantAuthorityTestCase(GraphQLBaseTestCase, MemberManageme
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["addOrganizationMember"]["email"], "super-invited@example.com")
 
-    def test_reads_and_writes_ignore_the_org_header(self) -> None:
-        """No header at all — the payload org authorizes.
-
-        The base fixture leaves ``X-Organization-ID`` on ``org_1``; acting on
-        ``org_2`` below doubles as a stale-header check.
-        """
+    def test_reads_and_writes_use_the_payload_org(self) -> None:
+        """A member-admin acts on ``org_2`` named in the payload."""
         admin = baker.make(User, email="org2-admin@example.com")
         self.org_2.add_user(admin)
         OrgRoleManager(self.org_2).add_roles(admin, ORG_ADMIN)
-        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
 
         response = self._view_members(admin, self.org_2)
         self.assertIsNone(response.get("errors"))

@@ -88,8 +88,9 @@ sharing across orgs is a future requirement we must not block.
 1. **Roles are organization-independent. Grants carry the organization.**
 2. **The global tier has exactly one home:** a *global* role held directly in
    `user.groups`, read through Django's `has_perm`. Grant rows are always scoped.
-3. **Authority never requires the `X-Organization-ID` header.** The header only
-   *confines the view* (UI context) and only for users with finite scopes.
+3. **Authority never requires a request org.** The retired `X-Organization-ID`
+   header only ever *confined the view* (UI context), and only for users with
+   finite scopes; the org now travels in the operation itself.
 4. **Delegated authority is a grant row. Shared subject matter is a property of the
    data.** Never grant rows written at record-creation time.
 5. **No denies, no transitivity.** The predicate is a pure union; one delegation hop,
@@ -421,32 +422,28 @@ subquery, not a re-derivation.
 | Operation | Rule |
 |---|---|
 | Load by id | `visible(qs, perm).get(pk=…)` → `DoesNotExist` → 404. Authority-only; no header. |
-| List | `visible(qs, perm, in_org=active_org(info))`; header **optional** (absent ⇒ unconfined) — applies to the domains still on the header; the shelter domain's operator list reads are plain reach-scoped `visible(qs, perm)` with the org *view* as the query's `filters` variable (delta 3, PR #2440) |
+| List | `visible(qs, perm, in_org=…)` where the org comes from the operation's own `filters` variable (delta 3, PR #2440); no request header is read (retired, DEV-2566) |
 | Create (org-scoped) | explicit `organization_id` input; `can(user, perm, org=target)` **and** `Organization.objects.filter(pk=target).exists()` → `ValidationError` (finding F7 — `can()` never implies existence) |
 | Create (platform-shared model) | `can_anywhere(user, perm)` — no org to check (finding F14) |
 | Child create under object grant | resolve parent; `can_obj(parent, child_ADD)` (finding F17) |
 | Update / Delete (org-scoped) | load the row via `visible(qs, perm).get(pk=…)` or `can_obj(user, perm, row)` — the org filter *is* the write check; never broaden to the read rule |
 | Update / Delete (platform-shared) | the **write tier** decides (RFC 0002 § Precondition): `OBJECT` / undeclared → `can_obj` (fails closed, finding C1); `SHARED` (e.g. `ClientProfile`) → any holder of the perm anywhere may mutate (`can_anywhere`-equivalent) |
-| Header | `active_org(info)` returns `None` when absent; nothing *requires* it |
 
-**Write authority is the union of the user's full grant set, not the active org.**
-In the domains that still read the header, it confines *list* views
-(`visible(…, in_org=…)`) only; the shelter domain's list views no longer take an
-`in_org` at all (reach-scoped — delta 3, PR #2440, §7 item 7).  Single-row
-writes (`can`/`can_obj`) resolve against every org in `scopes()`. A user
-holding a role at orgs A and B may edit org A's rows while the UI says they are acting
-as B. This matches `main` (authority is identity-wide) and is deliberate — but it is a
-stated product fact so nobody later "fixes" it by confining writes to the header.
+**Write authority is the union of the user's full grant set, not an active org.**
+List views pass `in_org` from the operation's own `filters` variable (or are
+reach-scoped union reads — shelter, delta 3, PR #2440); single-row writes
+(`can`/`can_obj`) resolve against every org in `scopes()`. A user holding a role
+at orgs A and B may edit org A's rows while the UI says they are acting as B.
+This matches `main` (authority is identity-wide) and is deliberate — but it is a
+stated product fact so nobody later "fixes" it by confining writes to a request
+org.
 
-The org-scoped **entity services** that still run on the header act on the *active
-org*: they take the header org and scope the create/update/delete row load to it, so an
-operator acts on the org the UI says they are acting in and an unauthorized row reads
-as a 404 — a fail-closed layer above the predicates. The **shelter domain** is cut over
-to the end state (deltas 3–4, PR #2440): its entity services are reach-scoped union
-checks that derive the org from the operation itself — the payload on the root create,
-the parent/row on child creates, updates, deletes and clones — so no header and no
-active-org scoping remains there (§7 item 7). `can`/`can_obj` are union checks for
-callers that use them directly.
+The org-scoped **entity services** derive the org from the operation itself — the
+payload on creates, the parent/row on child creates, updates, deletes and clones —
+so an operator acts on the org the operation names and an unauthorized row reads as a
+404 from the scoped load, a fail-closed layer above the predicates.  The header-based
+active-org scoping is gone (§7 item 7, DEV-2566).  `can`/`can_obj` are union checks
+for callers that use them directly.
 
 **Contextual reads (nested platform-shared records).** A client (platform-shared)
 shown *because its parent is visible* — e.g. a client on a reservation you can see — is
@@ -896,13 +893,12 @@ tier-3 above are otherwise unchanged:
   mode (`allMode` / `setActiveScope("all")`) was rejected in review and is not
   shipped. Non-admin users are effectively one org at a time.
 - **Org as a query variable / route param.** Org travels as part of the operation
-  (cache-keyed reads) rather than only the `X-Organization-ID` header, fixing the
-  cross-org Apollo cache collision. Done for the shelter domain in #2440: operator
-  reads are reach-scoped (delta 3) and shelter writes derive the org from the
-  operation — input on creates, the row/parent on updates, deletes and clones
-  (delta 4) — so the header no longer confines or authorizes any shelter
-  operation. Remaining domains keep the header until §7 item 7 retirement; backend
-  `can()` remains the authority.
+  (cache-keyed reads) rather than a request header, fixing the cross-org Apollo
+  cache collision. Done for the shelter domain in #2440 (deltas 3–4) and
+  completed everywhere by the §5.3 stack + DEV-2566: the header plumbing
+  (`OrganizationMiddleware` / `get_current_organization` / `active_org`) is
+  deleted and no surface reads a request org; backend `can()` remains the
+  authority.
 
 Deferred but reserved: object-level surfacing (§5.2 tier 3 — per-row `can*` fields)
 and impersonation (the org report is already principal-parameterized,
@@ -946,8 +942,8 @@ them all atomically:
      `organization` FK; the earlier `("organization",)` form was wrong — that hops
      *to* `Organization`, which is not `OrgScoped` and raises at import);
      `teams/selectors.py` and `teams/schema.py` move from `team_list(organization)`
-     + `HasOrgPerm` to `visible()`/`can()`, with the org from the header and
-     per-row `can_obj`-style checks on update/delete; drop the legacy directives.
+     + `HasOrgPerm` to `visible()`/`can()` on the payload org, with per-row
+     `can_obj`-style checks on update/delete; drop the legacy directives.
    - **Reports** — read gate (`view_reports`) moves from `HasOrgPerm` /
      `get_user_permitted_org` to `can()`/`visible()`.
    - **Member management** — the `accounts` mutations gated on
@@ -1026,14 +1022,11 @@ ContentType).  The teams cutover therefore landed *teams alone*:
   via grants. `Team.perms.VIEW` was added to the CASEWORKER template so the
   template and Role stay consistent. Membership is no longer consulted for
   the teams read. The org whose teams are listed is passed as a
-  `TeamFilter.organizationId` (authoritative); the `X-Organization-ID` header
-  remains only as a deprecated fallback while clients migrate to the filter
-  and will be stripped once none send it.  Who still sends it (the migration
-  checklist for the strip): betterangels-admin's `TeamsPage` already passes
-  `filters.organizationId`, but every mobile team picker is header-only —
-  `useOrgTeams` (NoteForm's team field, TaskForm, FilterTeamsOptions,
-  UserTeamPreferenceSelect) sends `filters: { isActive }` with no org id, so
-  each must pass the active org as `organizationId` before the header goes.
+  `TeamFilter.organizationId`, and nowhere else — the `X-Organization-ID`
+  header fallback was stripped once mobile passed the filter (DEV-2566).
+  betterangels-admin's `TeamsPage` and mobile's `useOrgTeams` (NoteForm's team
+  field, TaskForm, FilterTeamsOptions, UserTeamPreferenceSelect) both pass
+  `filters.organizationId`, mobile reading the active org from its store.
   This is also a read behavior change for members with **no role** at the
   active org: membership alone used to let them list teams; the grant-only
   read (`teams.view_team`) now denies them — intended, matching the admin FE
@@ -1128,15 +1121,13 @@ are gone; the org-admin legacy *machinery* is removed:
   ``locked_role_names``) merge the grant arm with the surviving dual-write rows.
   A stale legacy-only holder (no Grant) reports MEMBER — matching enforcement.
 - Dead machinery removed: the ``HasOrgPerm`` strawberry extension,
-  ``get_user_permitted_org``, ``active_org``, and the ``permissioned_queryset`` /
+  ``get_user_permitted_org``, and the ``permissioned_queryset`` /
   ``perm_filter`` legacy predicates had no consumers once member management cut
-  over.  The ``X-Organization-ID`` header read is **kept only as the teams
-  list-read fallback**: mobile's ``useOrgTeams`` callers still send just
-  ``{ isActive }``, so the filter-first read retains the deprecated header
-  fallback (blank/malformed ids deny, never fall back) until mobile passes
-  ``organizationId`` — DEV-2566.  ``OrganizationMiddleware`` /
-  ``get_current_organization`` stay only with it; the teams mutations and every
-  other cut-over surface take their org from the payload/row.
+  over.  The ``X-Organization-ID`` header itself is **retired** (DEV-2566):
+  ``get_current_organization`` / ``OrganizationMiddleware`` are deleted with
+  the teams list-read's header fallback — mobile's ``useOrgTeams`` now passes
+  the active org from its store in the ``organizationId`` filter — so no
+  runtime consumer of a request header remains (notes/clients never read one).
 - Kept (not grant-only): CASEWORKER, SHELTER_OPERATOR and every member-level /
   unscoped template still dual-write their ``PermissionGroup`` rows until the
   notes/clients (and shelter-operator) domains cut over.  ``PermissionGroup``
@@ -1187,23 +1178,20 @@ are stable (referenced elsewhere and shared with the rest of the stack).
    `currentUser.permissions` (rejected in review), and org moves to query
    variables / route params (cache-safe) ahead of the header. Required steps:
    (1) effective lists + finite org list (#2414); (2) org-as-variable transport
-   + header retirement — done for the shelter domain (#2440: reads
-   reach-scoped, writes org-derived from the operation, metrics export
-   header-free); remaining domains cut over as they migrate; (3) FE app
-   migration (admin, shelter-operator, mobile). Deferred but reserved:
+   + header retirement — done per domain as each cut over (shelters #2440;
+   teams/reports/member management in the §5.3 stack) and completed by
+   DEV-2566 (backend header plumbing deleted; mobile teams pickers pass the
+   active org); (3) FE app migration (admin, shelter-operator, mobile) — org
+   travels as a variable, not a request header. Deferred but reserved:
    object-level surfacing (per-row `can*` fields) and impersonation.
-   **Header retirement — remaining scope.** The `X-Organization-ID` header is
-   gone from the shelter domain (reads reach-scoped since delta 3; writes
-   org-derived since delta 4) but is still required by the other domains'
-   writes (no org on the wire; their resolvers read `get_current_organization`)
-   and by their non-GraphQL endpoints. The FE cannot stop sending it yet — one
-   global `createOrgInterceptor` covers every operation and cannot distinguish
-   query from mutation. Remaining sequence: (a) migrate the other domains'
-   writes to explicit `organization_id` inputs / object-derived org on
-   id-targeted updates-deletes; (b) drop the header from their REST endpoints;
-   (c) delete the interceptor + backend `get_current_organization`/`active_org`
-   plumbing app-wide in one cut. Tracked here so "why is the header still
-   sent?" has an answer.
+   **Header retirement — done (DEV-2566).** The backend no longer reads any
+   request org: the teams list read (the last `get_current_organization`
+   consumer) takes the org from the `organizationId` filter, mobile's
+   `useOrgTeams` passes the active org from its store, and
+   `OrganizationMiddleware` / `get_current_organization` / `active_org` are
+   deleted.  The FE may keep sending the (now ignored) header via its global
+   `createOrgInterceptor`; dropping it there is cosmetic cleanup, not
+   correctness.
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407
