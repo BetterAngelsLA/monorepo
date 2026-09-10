@@ -133,7 +133,6 @@ class ReportGrantAuthorityTestCase(ReportSummaryGraphQLGrantMixin, ReportExportD
         self.assertIsNone(response.get("errors"))
         self.assertIsNotNone(response["data"]["reportSummary"])
 
-
     def test_unknown_organization_id_fails_closed(self) -> None:
         """A payload org that does not exist is a permission denial, not a crash."""
         holder = baker.make(User)
