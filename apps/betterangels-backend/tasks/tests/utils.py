@@ -32,6 +32,17 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
             }}
         """
 
+    def task_query(self, task_id: Any) -> Dict[str, Any]:
+        query = """
+            query ($id: ID!) {
+                task(pk: $id) {
+                    id
+                    summary
+                }
+            }
+        """
+        return self.execute_graphql(query, {"id": task_id})
+
     def create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("create", variables)
 
@@ -65,7 +76,7 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def delete_task_fixture(self, task_id: str) -> Dict[str, Any]:
+    def delete_task_fixture(self, task_id: str | int) -> Dict[str, Any]:
         mutation: str = """
             mutation ($id: ID!) {
                 deleteTask(data: { id: $id }) {
