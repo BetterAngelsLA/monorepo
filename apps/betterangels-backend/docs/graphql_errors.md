@@ -154,16 +154,46 @@ In addition to the mutation-level `_handle_exception`, Strawberry's permission e
 1. The extension raises `DjangoNoPermission`.
 2. `DjangoPermissionExtension.resolve()` catches it and calls `handle_no_permission()`.
 3. `handle_no_permission()` checks if the return type union includes `OperationInfo`. If so, it returns an `OperationInfo` with a `PERMISSION` message directly (bypassing `_handle_exception`). The `field` is set to `info.field_name` — the name of the GraphQL mutation field.
-4. If `fail_silently=False`, it instead raises `PermissionDenied`, which flows into `_handle_exception` and produces `kind: PERMISSION` with `field: null` — the path BetterAngels' resolver-level `require_can()` guards take.
+4. If `fail_silently=False`, it instead raises `PermissionDenied`, which flows into `_handle_exception` and produces `kind: PERMISSION` with `field: null` — the path BetterAngels' resolver-level `require_can()` guards take.  On **query** fields (no mutation wrapper) the same raise surfaces as a top-level `errors[]` entry instead.
 
 #### Permission extensions used in BetterAngels
 
 | Extension         | Defined in                                 | Used for                                                   | `fail_silently` default   |
 | ----------------- | ------------------------------------------ | ---------------------------------------------------------- | ------------------------- |
 | `require_can()`   | `common/permissions/utils.py` (not an extension — a resolver guard) | Org-scoped writes (teams, reports, member management, shelters) | n/a — raises `PermissionDenied` |
-| `HasRetvalPerm`   | `strawberry_django` (built-in)             | Object-level mutations (notes, tasks, referrals)           | `True` (built-in default) |
-| `HasPerm`         | `strawberry_django` (built-in)             | Create mutations (clients, documents)                      | `True` (built-in default) |
+| `HasRetvalPerm`   | `strawberry_django` (built-in)             | Object-level mutations (notes, referrals)                  | `True` (built-in default) |
+| `HasPerm`         | `strawberry_django` (built-in)             | Create mutations + single-row reads (clients, documents, tasks) — `perm_checker=can_anywhere_checker` swaps guardian for the grant model | `True`; single-row reads pass `fail_silently=False` |
+| type-level `get_queryset` hook | `common/graphql/permission_checkers.py` (`visible_rows_for_holder`) | List reads (clients, tasks) — not an extension; filters the queryset | n/a — non-holders answer `totalCount: 0` |
 | `IsAuthenticated` | `common/permissions/utils.py` (BetterAngels override) | All mutations; raises `UnauthenticatedGQLError` when anonymous | n/a                       |
+
+---
+
+### 1.4.1 Grant-cutover denial shapes (ADR 0001)
+
+The grant cutover (ADR 0001, RFC 0002 / RFC 0003) fixes which mechanism sits on
+each surface — and each mechanism has one refusal shape.  This is the contract
+to pin denial tests and frontend handling against:
+
+| Mechanism | A non-holder receives | Pinned by |
+| --------- | --------------------- | --------- |
+| **Resolver guard** — `require_can(user, perm, org=…)` at the payload org (resolved with `resolve_org_or_deny`, `common/graphql/org.py`) or `can_obj(user, perm, row)` after the row load | `data.<field> = null` + `messages[0] = {kind: "PERMISSION", field: null, message: "You do not have permission to perform this action in this organization."}` (the mutation's union carries the `OperationInfo`) | `tasks/tests/test_permissions.py` (create/update/delete), `teams/tests/test_grant_authorization.py` |
+| **Declarative extension on a create payload** — `HasPerm(…, perm_checker=can_anywhere_checker)`, default `fail_silently=True` | `messages[0] = {kind: "PERMISSION", field: "<fieldName>", message: "You don't have permission to access this app."}` | `clients/tests/test_permissions.py` (`createClientProfile`) |
+| **Same extension with `fail_silently=False`** — single-row reads/writes | Top-level `errors[0].message = "You don't have permission to access this app."`; no payload item | `clients/tests/test_permissions.py` (`test_view_client_profile_permission`, update) |
+| **A failing extension on a non-optional field with nowhere to put an `OperationInfo`** | `handle_no_permission()` falls through its final `raise PermissionDenied` → top-level `errors[]` | `tasks/tests/test_permissions.py` (`test_view_task_permission`) |
+| **Type-level list hook** — `visible_rows_for_holder(queryset, info, perm=…, cache_key=…)` in the type's `get_queryset` (clients, tasks) | `totalCount: 0` (offset-paginated) or `[]` with **no `errors` key** — the empty-not-error shape the legacy guardian prefilter produced; empty also means "no data", so list UI must gate on `hasPermission()`, not emptiness | `tasks/tests/test_queries.py`, `clients/tests/test_queries.py` |
+| **Anonymous caller** — `IsAuthenticated` runs before any of the above | `data: null`, `errors[0] = {message: "You must be logged in to perform this action.", extensions: {code: "UNAUTHENTICATED", http: {status: 401}}}` | `assertGraphQLUnauthenticated` (`test_utils/assert_mixins.py`) |
+| **DRF views** (reports export) | HTTP `403` | `reports/tests/test_views.py`, `reports/tests/test_grant_authorization.py` |
+
+`assertGraphQLOperationInfo(response, field, PERMISSION_DENIED_MESSAGE, kind="PERMISSION")` (`test_utils/assert_mixins.py`) pins the payload shape when the exact `field`/`message` pairing is not the point of the test.
+
+#### Message families
+
+| Message | Source | Emitted by |
+| ------- | ------ | ---------- |
+| `You don't have permission to access this app.` | strawberry-django `DEFAULT_ERROR_MESSAGE` | Declarative extension denials, both `fail_silently` modes |
+| `You do not have permission to perform this action in this organization.` | `PERMISSION_DENIED_MESSAGE` (`common/permissions/utils.py`) | Org-scoped resolver guards (`require_can`, `can_obj`) |
+| `You do not have permission to perform this action.` | legacy guards | Pre-cutover resolver guards (notes, referrals) |
+| `You must be logged in to perform this action.` | `UnauthenticatedGQLError` (`common/errors.py`) | `IsAuthenticated` for anonymous callers |
 
 ---
 
@@ -344,6 +374,8 @@ The `_handle_error_response` method maps upstream HTTP status codes to exception
 | `strawberry_django/permissions.py`                       | `DjangoPermissionExtension.handle_no_permission()`, `HasPerm`, `HasRetvalPerm`, `IsAuthenticated` |
 | `apps/betterangels-backend/common/permissions/selectors.py` | `can()` / `scopes()` / `visible()` — grant authority                                                                    |
 | `apps/betterangels-backend/common/permissions/utils.py`   | `require_can()`, `IsAuthenticated` (override), `PERMISSION_DENIED_MESSAGE`                        |
+| `apps/betterangels-backend/common/graphql/org.py`         | `resolve_org_or_deny()` — payload/filter org resolution, fail-closed                              |
+| `apps/betterangels-backend/common/graphql/permission_checkers.py` | `can_anywhere_checker` (declarative fields) + `visible_rows_for_holder` (list-read gate)   |
 | `apps/betterangels-backend/common/graphql/extensions.py` | `PermissionedQuerySet` — injects permission-filtered querysets                                    |
 | `apps/betterangels-backend/common/errors.py`             | `UnauthenticatedGQLError`, `NotFoundGQLError` — reusable `GraphQLError` subclasses                |
 | `apps/betterangels-backend/clients/schema.py`            | `validate_client_profile_data()` — custom validation raising `GraphQLError`                       |
