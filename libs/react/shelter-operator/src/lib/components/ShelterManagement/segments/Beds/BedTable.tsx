@@ -88,12 +88,8 @@ export function BedTable({
   headerStyle,
   rowStyle,
 }: BedTableProps) {
-  const {
-    canAddBed,
-    canAddReservation,
-    canDeleteBed,
-    canEditBed,
-  } = useShelterPermissions();
+  const { canAddBed, canAddReservation, canDeleteBed, canEditBed } =
+    useShelterPermissions();
   const columns: TableColumn<Bed>[] = useMemo(
     () => [
       {

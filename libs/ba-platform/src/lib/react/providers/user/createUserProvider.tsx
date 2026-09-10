@@ -12,7 +12,10 @@ import {
   useState,
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
-import { isPermission } from '@monorepo/ba-platform/permissions';
+import {
+  isPermission,
+  type PermissionEnum,
+} from '@monorepo/ba-platform/permissions';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,6 +27,14 @@ export interface UserState<TUser> {
   setUser: Dispatch<SetStateAction<TUser | undefined>>;
   isLoading: boolean;
   refetchUser: () => Promise<void>;
+  /**
+   * Whether the user holds *permission* on the GLOBAL tier
+   * (``currentUser.permissions`` — ADR 0001 §5.2, tier 1).  The tier-2
+   * counterpart is ``useActiveOrg().hasPermission``; the two tiers must never
+   * be unioned client-side (finding H2), so this reads only the global list
+   * and is ``false`` until the user has loaded.
+   */
+  hasGlobalPermission: (permission: PermissionEnum) => boolean;
 }
 
 /**
@@ -65,10 +76,18 @@ export interface UserProviderConfig<TUser, TQuery> {
 }
 
 /** Minimal org shape the provider accepts (raw backend ``permissions``). */
-export type OrgLike = { id: string; name: string; permissions?: readonly string[] };
+export type OrgLike = {
+  id: string;
+  name: string;
+  permissions?: readonly string[];
+};
 
 /** The org shape passed to :component:`ActiveOrgProvider`. */
-export type MappedOrg = { id: string; name: string; permissions: readonly string[] };
+export type MappedOrg = {
+  id: string;
+  name: string;
+  permissions: readonly string[];
+};
 
 /**
  * Default user-organization → ``Org`` mapping, used when the config supplies no
@@ -77,7 +96,9 @@ export type MappedOrg = { id: string; name: string; permissions: readonly string
  * permission can never become gateable.  ``useActiveOrgState`` filters again
  * (defense in depth for providers that bypass this mapper).
  */
-export const defaultMapOrganizations = (orgs: readonly OrgLike[]): MappedOrg[] =>
+export const defaultMapOrganizations = (
+  orgs: readonly OrgLike[],
+): MappedOrg[] =>
   orgs.map((org) => ({
     id: org.id,
     name: org.name,
@@ -196,14 +217,21 @@ export function createUserProvider<
       }
     }, [refetch, updateUser]);
 
+    const hasGlobalPermission = useCallback(
+      (permission: PermissionEnum): boolean =>
+        user?.permissions?.includes(permission) ?? false,
+      [user],
+    );
+
     const contextValue = useMemo<ContextValue>(
       () => ({
         user,
         setUser,
         isLoading: loading,
         refetchUser,
+        hasGlobalPermission,
       }),
-      [user, loading, refetchUser],
+      [user, loading, refetchUser, hasGlobalPermission],
     );
 
     return (

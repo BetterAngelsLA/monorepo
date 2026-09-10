@@ -36,6 +36,12 @@ export const formSchema = z.object({
     .optional()
     .or(z.literal('')),
   isPrivate: z.boolean(),
+  // Create anchor (ADR 0001 §2.6): rendered and required only in the create
+  // form for global operators (enforced in CreateShelterProfile). Kept in the
+  // schema so server VALIDATION errors for this field (``field:
+  // organizationId``) map via ``formFieldNames``; edit flows ignore it — an
+  // existing shelter's organization cannot change.
+  organizationId: z.string().optional(),
 });
 
 export type BasicInfoFormData = z.infer<typeof formSchema>;
@@ -51,6 +57,7 @@ export const defaultFormValues: BasicInfoFormData = {
   phone: '',
   website: '',
   isPrivate: false,
+  organizationId: '',
 };
 
 export function toFormData(shelter: ShelterProfileType): BasicInfoFormData {

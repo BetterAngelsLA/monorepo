@@ -237,7 +237,9 @@ export function Beds({ shelterId }: { shelterId: string }) {
             leftIcon={<Plus />}
             rightIcon={false}
             variant="floating"
-            onClick={() => navigate(shelterCreateResourceRoute(shelterId, 'bed'))}
+            onClick={() =>
+              navigate(shelterCreateResourceRoute(shelterId, 'bed'))
+            }
           >
             Create Bed
           </Button>

@@ -1,22 +1,23 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { useActiveOrg } from '@monorepo/ba-platform';
+import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
+import {
+  Ordering,
+  OrganizationMemberOrdering,
+  OrganizationMemberType,
+  OrgRoleEnum,
+  OrgTypeEnum,
+  PermissionTemplateEnum,
+} from '@monorepo/ba-platform/types';
 import { UserIcon } from '@monorepo/react/icons';
 import { useDebounce } from '@monorepo/react/shared';
 import { useUser } from '@monorepo/react/shelter';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Ordering,
-  OrgRoleEnum,
-  OrganizationMemberOrdering,
-  OrganizationMemberType,
-  OrgTypeEnum,
-  PermissionTemplateEnum,
-} from '@monorepo/ba-platform/types';
-import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { AddUserFormModal } from '../../components/AddUserForm';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
+import { Pagination } from '../../components/base-ui/pagination';
 import {
   Table,
   type SortDirection,
@@ -468,38 +469,6 @@ function StatusMessage({ text }: { text: string }) {
   return (
     <div className="flex justify-center py-8 text-sm text-[#747A82]">
       {text}
-    </div>
-  );
-}
-
-function Pagination({
-  page,
-  totalPages,
-  onPageChange,
-}: {
-  page: number;
-  totalPages: number;
-  onPageChange: (p: number) => void;
-}) {
-  return (
-    <div className="flex justify-center mt-4 space-x-2">
-      <Button
-        variant="primary-sm"
-        onClick={() => onPageChange(Math.max(1, page - 1))}
-        disabled={page === 1}
-      >
-        ‹ Prev
-      </Button>
-      <span className="flex items-center px-4 text-sm text-[#747A82]">
-        Page {page} of {totalPages}
-      </span>
-      <Button
-        variant="primary-sm"
-        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-        disabled={page === totalPages}
-      >
-        Next ›
-      </Button>
     </div>
   );
 }
