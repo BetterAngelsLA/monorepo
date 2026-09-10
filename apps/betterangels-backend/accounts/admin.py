@@ -130,7 +130,7 @@ class PermissionGroupAdmin(admin.ModelAdmin):
         """
         deletable, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
 
-        role_backed = set(scoped_roles_for_groups(objs))
+        role_backed = set(scoped_roles_for_groups(objs).keys())
         losses = []
         for permission_group in objs:
             holders = permission_group.user_set.count()
@@ -487,13 +487,25 @@ class GrantAdmin(SuperuserOnlyWritesMixin, admin.ModelAdmin):
     )
     autocomplete_fields = ("principal_user", "principal_org", "role", "scope_org")
     readonly_fields = ("id",)
-    fields = (
-        "principal_user",
-        "principal_org",
-        "role",
-        "scope_org",
-        "scope_object_type",
-        "scope_object_id",
+    fieldsets = (
+        (
+            "Grant",
+            {
+                "fields": (
+                    "principal_user",
+                    "principal_org",
+                    "role",
+                    "scope_org",
+                    "scope_object_type",
+                    "scope_object_id",
+                ),
+                "description": (
+                    "A role-backed membership mirror creates its Grant row — and removing that "
+                    "membership deletes this row even when the role was also granted directly here "
+                    "(the unique constraint makes them the same row)."
+                ),
+            },
+        ),
     )
 
     @admin.display(description="Principal")
@@ -547,6 +559,7 @@ class GrantRowForm(forms.ModelForm):
                     rel=widget.rel,
                     admin_site=widget.admin_site,
                     attrs=getattr(widget, "attrs", None),
+                    using=getattr(widget, "using", None),
                     current_object=loaded if loaded is not None and loaded.pk is not None else None,
                 )
 
@@ -642,9 +655,12 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         """Confirm before a save takes a role away from the people holding it.
 
         Two edits on this page do that, and neither shows it: unchecking an org
-        type, and ticking Delete on a permission group row.  Both end with
-        ``delete_orphaned_group`` tearing out the ``auth.Group``, and every member
-        holding that role loses it.
+        type, and ticking Delete on a permission group row.  Both delete
+        ``PermissionGroup`` rows, and the delete tears out each row's
+        ``auth.Group`` — the structural MTI cascade — dropping its memberships
+        with it.  The org-type route also revokes the members' mirrored Grants
+        (``reconcile_org_groups`` unmirrors stale derived rows); a plain row
+        delete leaves Grants standing, per the teardown asymmetry.
 
         Interposed here rather than in the form because the form cannot re-render
         the whole change view, and because a ``clean()`` error would be the wrong
