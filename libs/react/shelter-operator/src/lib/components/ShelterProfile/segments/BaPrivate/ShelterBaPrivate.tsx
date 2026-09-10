@@ -7,6 +7,7 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import {
   updateShelterProfileMeta,
   useShelterOperatorProfile,
+  useShelterPermissions,
   useUpdateShelterProfile,
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
@@ -50,6 +51,7 @@ export function ShelterBaPrivate(props: TProps) {
   const [disabled, setDisabled] = useState<boolean>(false);
 
   const { shelter } = useShelterOperatorProfile(shelterId);
+  const { canEditShelter } = useShelterPermissions();
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
 
@@ -135,12 +137,14 @@ export function ShelterBaPrivate(props: TProps) {
     return null;
   }
 
+  const showEditBtn = !isEditMode && canEditShelter;
+
   return (
     <div className="px-6 flex-col flex-1 pb-48">
       <Form className="flex-1">
         <Form.Header
           title="BA Private"
-          onEditClick={!isEditMode ? () => setEditMode(true) : undefined}
+          onEditClick={showEditBtn ? () => setEditMode(true) : undefined}
           className="pl-5"
         />
 

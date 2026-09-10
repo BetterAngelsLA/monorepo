@@ -3,7 +3,10 @@ import {
   OperationMessageKind,
 } from '../../__generated__/types';
 import type { FieldError } from '../types';
-import { filterRecoverableOperationMessages } from './filterRecoverableOperationMessages';
+import {
+  filterRecoverableOperationMessages,
+  type IndexedField,
+} from './filterRecoverableOperationMessages';
 
 function msg(overrides: Partial<OperationMessage> = {}): OperationMessage {
   return {
@@ -20,7 +23,7 @@ const FIELDS = ['name', 'email'];
 type TestCase = {
   name: string;
   messages: OperationMessage[];
-  allowedFields: string[];
+  allowedFields: (string | IndexedField)[];
   recoverable: FieldError[];
   unrecoverable: OperationMessage[];
 };
@@ -156,6 +159,155 @@ const testCases: TestCase[] = [
     unrecoverable: [
       msg({ kind: OperationMessageKind.Validation, field: 'name' }),
     ],
+  },
+  {
+    name: 'IndexedField matches <parentKey>.<index>.<child> → recoverable',
+    messages: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.0.contactEmail',
+        message: 'Invalid',
+      }),
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.12.contactEmail',
+        message: 'Invalid',
+      }),
+    ],
+    allowedFields: [
+      { parentKey: 'additionalContacts', children: ['contactEmail'] },
+    ],
+    recoverable: [
+      { field: 'additionalContacts.0.contactEmail', message: 'Invalid' },
+      { field: 'additionalContacts.12.contactEmail', message: 'Invalid' },
+    ],
+    unrecoverable: [],
+  },
+  {
+    name: 'IndexedField: child not listed → unrecoverable',
+    messages: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.0.contactTitle',
+        message: 'Too long',
+      }),
+    ],
+    allowedFields: [
+      { parentKey: 'additionalContacts', children: ['contactEmail'] },
+    ],
+    recoverable: [],
+    unrecoverable: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.0.contactTitle',
+        message: 'Too long',
+      }),
+    ],
+  },
+  {
+    name: 'IndexedField: row-level <parentKey>.<index> → unrecoverable',
+    messages: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.0',
+        message: 'Invalid additional contact.',
+      }),
+    ],
+    allowedFields: [
+      { parentKey: 'additionalContacts', children: ['contactEmail'] },
+    ],
+    recoverable: [],
+    unrecoverable: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.0',
+        message: 'Invalid additional contact.',
+      }),
+    ],
+  },
+  {
+    name: 'IndexedField: deeper path beneath a child → unrecoverable',
+    messages: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.0.contactEmail.extra',
+        message: 'Nested',
+      }),
+    ],
+    allowedFields: [
+      { parentKey: 'additionalContacts', children: ['contactEmail'] },
+    ],
+    recoverable: [],
+    unrecoverable: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.0.contactEmail.extra',
+        message: 'Nested',
+      }),
+    ],
+  },
+  {
+    name: 'IndexedField: non-numeric index → unrecoverable',
+    messages: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.x.contactEmail',
+        message: 'Invalid',
+      }),
+    ],
+    allowedFields: [
+      { parentKey: 'additionalContacts', children: ['contactEmail'] },
+    ],
+    recoverable: [],
+    unrecoverable: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.x.contactEmail',
+        message: 'Invalid',
+      }),
+    ],
+  },
+  {
+    name: 'mixed plain name + IndexedField entries → both recoverable',
+    messages: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'name',
+        message: 'Required',
+      }),
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.3.contactName',
+        message: 'Required',
+      }),
+    ],
+    allowedFields: [
+      'name',
+      { parentKey: 'additionalContacts', children: ['contactName'] },
+    ],
+    recoverable: [
+      { field: 'name', message: 'Required' },
+      { field: 'additionalContacts.3.contactName', message: 'Required' },
+    ],
+    unrecoverable: [],
+  },
+  {
+    name: 'plain parent key: still matches any descendant (legacy behavior)',
+    messages: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'additionalContacts.0.id',
+        message: 'Unknown additional contact id.',
+      }),
+    ],
+    allowedFields: ['additionalContacts'],
+    recoverable: [
+      {
+        field: 'additionalContacts.0.id',
+        message: 'Unknown additional contact id.',
+      },
+    ],
+    unrecoverable: [],
   },
 ];
 

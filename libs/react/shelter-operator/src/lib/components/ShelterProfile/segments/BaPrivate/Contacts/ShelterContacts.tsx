@@ -66,10 +66,11 @@ export function ShelterContacts(props: TProps) {
               key={field._rhfId}
               name={`additionalContacts.${index}`}
               control={control}
-              render={({ field: { value, onChange } }) => (
+              render={({ field: { value, onChange, onBlur } }) => (
                 <ShelterContactForm
                   entry={value}
                   onChange={(patch) => onChange({ ...value, ...patch })}
+                  onBlur={onBlur}
                   onRemove={() => onRemove(index)}
                   errors={contactErrors}
                   isViewMode={isViewMode}

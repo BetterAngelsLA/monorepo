@@ -10,19 +10,22 @@ export type ContactFormErrors = {
   contactName?: { message?: string };
   contactNumber?: { message?: string };
   contactEmail?: { message?: string };
+  contactTitle?: { message?: string };
 };
 
 type TProps = {
   entry: ContactFormData;
   onChange: (patch: Partial<ContactFormData>) => void;
   onRemove: () => void;
+  onBlur: () => void;
   errors?: ContactFormErrors;
   isViewMode?: boolean;
   className?: string;
 };
 
 export function ShelterContactForm(props: TProps) {
-  const { entry, onChange, onRemove, errors, isViewMode, className } = props;
+  const { entry, onChange, onRemove, onBlur, errors, isViewMode, className } =
+    props;
 
   return (
     <div
@@ -48,6 +51,7 @@ export function ShelterContactForm(props: TProps) {
           dataType="string"
           value={entry.contactName}
           onChange={(e) => onChange({ contactName: e.target.value })}
+          onBlur={onBlur}
           required
           isViewMode={isViewMode}
           error={errors?.contactName?.message}
@@ -58,6 +62,7 @@ export function ShelterContactForm(props: TProps) {
           dataType="phone-number"
           value={entry.contactNumber}
           onChange={(e) => onChange({ contactNumber: e.target.value })}
+          onBlur={onBlur}
           required
           isViewMode={isViewMode}
           error={errors?.contactNumber?.message}
@@ -68,16 +73,20 @@ export function ShelterContactForm(props: TProps) {
           dataType="email"
           value={entry.contactEmail}
           onChange={(e) => onChange({ contactEmail: e.target.value })}
+          onBlur={onBlur}
           isViewMode={isViewMode}
           error={errors?.contactEmail?.message}
         />
 
         <Input
           label="Title"
+          maxLength={255}
           dataType="string"
           value={entry.contactTitle}
           onChange={(e) => onChange({ contactTitle: e.target.value })}
+          onBlur={onBlur}
           isViewMode={isViewMode}
+          error={errors?.contactTitle?.message}
         />
       </Form.Block>
 
