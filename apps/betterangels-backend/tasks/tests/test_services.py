@@ -1,6 +1,6 @@
 """Tests for task services — what the API rejects before it reaches Postgres."""
 
-from accounts.models import PermissionGroup, User
+from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -15,13 +15,10 @@ class TaskCreateValidationTestCase(TestCase):
 
     def setUp(self) -> None:
         self.organization = organization_recipe.make()
-        self.permission_group = PermissionGroup.objects.create(
-            organization=self.organization, label="task-service-group"
-        )
         self.user = baker.make(User)
 
     def _create(self, **item: object) -> list[Task]:
-        return task_create(user=self.user, permission_group=self.permission_group, data=[{**item}])
+        return task_create(user=self.user, organization=self.organization, data=[{**item}])
 
     def test_a_summary_over_the_field_length_is_rejected(self) -> None:
         """Unvalidated this reached Postgres as a DataError — a 500 rather than a message."""

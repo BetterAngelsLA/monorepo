@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional
 
-from accounts.models import PermissionGroup, User
+from accounts.models import User
 from clients.models import ClientProfile
-from common.permissions.utils import assign_object_permissions
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from hmis.models import HmisClientProfile, HmisNote
 from notes.models import Note
+from organizations.models import Organization
 from tasks.models import Task
 
 # ---------------------------------------------------------------------------
@@ -17,14 +17,19 @@ from tasks.models import Task
 def task_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    organization: Organization,
     data: List[Dict[str, Any]],
     note: Optional[Note] = None,
     hmis_note: Optional[HmisNote] = None,
     client_profile: Optional[ClientProfile] = None,
     hmis_client_profile: Optional[HmisClientProfile] = None,
 ) -> List[Task]:
-    """Create one or more Tasks and assign object-level permissions."""
+    """Create one or more Tasks.
+
+    Authority is the caller's to check (``require_can`` at *organization*,
+    RFC 0003); CHANGE/DELETE ride the org role's ``can_obj`` arm instead of
+    guardian rows — none are written here.
+    """
     created: List[Task] = []
 
     for item in data:
@@ -38,7 +43,7 @@ def task_create(
             client_profile=client_profile,
             hmis_client_profile=hmis_client_profile,
             created_by=user,
-            organization=permission_group.organization,
+            organization=organization,
         )
         task.full_clean()
 
@@ -48,15 +53,6 @@ def task_create(
             # full_clean checks the constraints first, so reaching this means
             # a concurrent write landed between the check and the insert.
             raise ValidationError(str(e)) from e
-
-        assign_object_permissions(
-            permission_group,
-            task,
-            [
-                Task.perms.CHANGE,
-                Task.perms.DELETE,
-            ],
-        )
 
         created.append(task)
 

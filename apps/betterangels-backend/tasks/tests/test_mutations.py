@@ -26,7 +26,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        expected_query_count = 34
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             variables = {
                 "clientProfile": str(client_profile.pk),
@@ -41,8 +41,9 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         created_task = response["data"]["createTask"]
         expected_task = {
-            # teamId is input-only — the response exposes the team object.
-            **{k: v for k, v in variables.items() if k != "teamId"},
+            # teamId and organizationId are input-only — the response exposes
+            # the team object and the org under ``organization``.
+            **{k: v for k, v in variables.items() if k not in ("teamId", "organizationId")},
             "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "id": ANY,
             "clientProfile": {
@@ -81,7 +82,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "teamId": str(self.org_1_team_1.pk),
         }
 
-        expected_query_count = 17
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_task_fixture(variables)
 
@@ -138,7 +139,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_delete_task_mutation(self) -> None:
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
 
-        expected_query_count = 4
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.delete_task_fixture(task_id)
 

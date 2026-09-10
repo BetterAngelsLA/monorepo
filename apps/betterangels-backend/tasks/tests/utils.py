@@ -41,6 +41,10 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
     def _create_or_update_task_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
 
+        if operation == "create":
+            # The acting org (RFC 0003): authority is ``require_can`` at this org.
+            variables.setdefault("organizationId", str(self.org_1.pk))
+
         mutation: str = f"""
             mutation {operation.capitalize()}Task($data: {operation.capitalize()}TaskInput!) {{ # noqa: B950
                 {operation}Task(data: $data) {{

@@ -211,8 +211,9 @@ def invalidate_scope_cache(user: "User") -> None:
     instance never serves the stale decision (a cached ``ALL`` sentinel is the
     hard-stale case).  The same request-scope staleness applies to the newer
     global-tier and effective-report memos (``global_permissions`` /
-    ``organization_effective_permissions``) and the client list-read holder
-    memo (``_visible_client_rows_cache``), so they are dropped here too.
+    ``organization_effective_permissions``) and the list-read holder
+    memos (``_visible_client_rows_cache`` / ``_visible_task_rows_cache``),
+    so they are dropped here too.
     Org→org delegation rows have no single user principal, and the selectors
     are consumed per request on fresh user instances, so those flows need no
     per-user invalidation here.
@@ -221,6 +222,7 @@ def invalidate_scope_cache(user: "User") -> None:
     user.__dict__.pop("_global_permissions", None)
     user.__dict__.pop("_org_effective_permissions", None)
     user.__dict__.pop("_visible_client_rows_cache", None)
+    user.__dict__.pop("_visible_task_rows_cache", None)
 
 
 def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":

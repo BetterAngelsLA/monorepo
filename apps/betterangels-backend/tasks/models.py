@@ -1,6 +1,6 @@
 import pghistory
 from accounts.models import User
-from common.models import BaseModel
+from common.models import BaseModel, OrgScoped
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -17,7 +17,13 @@ from .managers import TaskManager
     pghistory.UpdateEvent("task.update"),
     pghistory.DeleteEvent("task.remove"),
 )
-class Task(BaseModel):
+class Task(OrgScoped, BaseModel):
+    """Org-anchored through its own ``organization`` FK (RFC 0003 slice 1).
+
+    Writes resolve through the org-scoped ``can_obj`` arm; reads stay SHARED —
+    any ``tasks.view_task`` holder sees every task (RFC 0003 § Read tiers).
+    """
+
     class Status(models.IntegerChoices):
         TO_DO = 0, "To Do"
         IN_PROGRESS = 1, "In Progress"
