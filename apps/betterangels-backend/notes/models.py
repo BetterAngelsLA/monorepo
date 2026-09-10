@@ -14,7 +14,7 @@ from organizations.models import Organization
 
 from accounts.models import User
 from betterangels_backend import settings
-from common.models import Attachment, BaseModel, Location
+from common.models import Attachment, BaseModel, Location, OrgScoped
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from notes.permissions import PrivateDetailsPermissions
 from teams.models import Team
@@ -142,7 +142,13 @@ class ServiceRequest(BaseModel):
     pghistory.UpdateEvent("note.update"),
     pghistory.DeleteEvent("note.remove"),
 )
-class Note(BaseModel):
+class Note(OrgScoped, BaseModel):
+    """Org-anchored through its own ``organization`` FK (RFC 0003 slice 2).
+
+    Writes resolve through the org-scoped ``can_obj`` arm; reads stay SHARED —
+    any ``notes.view_note`` holder sees every note (RFC 0003 § Read tiers).
+    """
+
     attachments = GenericRelation(Attachment)
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_notes"
