@@ -1076,7 +1076,6 @@ class UserAdminGroupGrantMirrorTestCase(TestCase):
         )
         self.member = User.objects.get(email="userpage_stable@example.com")
 
-        # POST the current groups unchanged — nothing added, nothing removed.
         response = self._post_groups([self.group.pk])
 
         self.assertRedirects(response, self._changelist_url())

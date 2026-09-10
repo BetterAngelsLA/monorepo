@@ -164,9 +164,8 @@ def mirror_group_membership_grants(
 ) -> None:
     """Keep role-backed ``PermissionGroup`` memberships and Grants in step.
 
-    Wired to ``User.groups.through`` so every writer keeps the invariant —
-    ``OrgRoleManager``, the user admin's group picker, scripts, the shell — no
-    code path can bypass it by not calling the manager.  Reverse writes
+    Wired to ``User.groups.through``, so every writer keeps the invariant —
+    the manager, the user admin, scripts, the shell — and reverse writes
     (``permission_group.user_set.add/remove/clear``) are handled too.
 
     A cascading delete of a ``PermissionGroup`` (teardown retiring a legacy
@@ -192,6 +191,8 @@ def mirror_group_membership_grants(
         return
 
     if action not in {"post_add", "post_remove", "post_clear"}:
+        return
+    if action != "post_clear" and not pk_set:
         return
 
     if reverse:

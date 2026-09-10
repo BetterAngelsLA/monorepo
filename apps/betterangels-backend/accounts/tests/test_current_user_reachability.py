@@ -491,8 +491,8 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # Provision the Role rows so OrgRoleManager mirrors Grants for
-        # ORG_ADMIN memberships (the grant arm the report reads teams from).
+        # Provision the Role rows so ORG_ADMIN memberships mirror Grants at the
+        # m2m edge (the grant arm the report reads teams from).
         sync_roles()
         # Presets create the ORG_ADMIN PermissionGroup on the org.
         self.org = organization_recipe.make(name="Legacy Admin Org")

@@ -89,9 +89,9 @@ class TeamGraphQLBaseTestCase(TeamGraphQLUtilsMixin):
     def setUp(self) -> None:
         super().setUp()
 
-        # Provision the code-owned Role rows so OrgRoleManager mirrors Grants
-        # for ORG_ADMIN memberships — the grant authority the team mutations
-        # read (grant-only cutover).
+        # Provision the code-owned Role rows so memberships mirror Grants at
+        # the m2m edge (accounts.signals) — the authority the teams surface
+        # reads (grant-only cutover).
         sync_roles()
 
         self.org_1_admin = self._make_org_admin(org=self.org_1)

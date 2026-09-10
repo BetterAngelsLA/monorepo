@@ -35,16 +35,14 @@ ORG_SUPERUSER = TemplateConfig(
 # codenames (``organizations.*``) and ``reports.view_reports`` resolve to no
 # concrete model, so a RoleDef carrying them fails ``sync_roles``' phantom-
 # ContentType guard; those surfaces stay legacy until their own cutover.
-ORG_ADMIN_ROLE_PERMISSIONS = [
-    Team.perms.ADD,
-    Team.perms.CHANGE,
-    Team.perms.DELETE,
-    Team.perms.VIEW,
-]
-
 ORG_ADMIN_ROLE = RoleDef(
     name=ORG_ADMIN.name,
-    permissions=list(ORG_ADMIN_ROLE_PERMISSIONS),
+    permissions=[
+        Team.perms.ADD,
+        Team.perms.CHANGE,
+        Team.perms.DELETE,
+        Team.perms.VIEW,
+    ],
     is_invitable=ORG_ADMIN.is_invitable,
 )
 

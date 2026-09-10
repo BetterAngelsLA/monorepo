@@ -40,39 +40,20 @@ def scoped_roles_for_groups(permission_groups: Iterable[PermissionGroup]) -> dic
     return {pk: roles[name] for pk, name in names_by_group.items() if name in roles}
 
 
-def scoped_role_for_group(permission_group: PermissionGroup) -> Role | None:
-    """The scoped ``Role`` backing *permission_group*, if it is role-backed.
-
-    A convenience for callers holding a single group (the admin's delete view);
-    batch work should use :func:`scoped_roles_for_groups`.
-    """
-    return scoped_roles_for_groups([permission_group]).get(permission_group.pk)
-
-
-def mirror_membership_grants(
-    user: User, permission_groups: Iterable[PermissionGroup], *, organization: Organization | None = None
-) -> None:
+def mirror_membership_grants(user: User, permission_groups: Iterable[PermissionGroup]) -> None:
     """Dual-write role-backed memberships as ``Grant`` rows (ADR 0001 §4 phase 2).
 
-    Scoped by each group's own organization; a caller that already holds it
-    (``OrgRoleManager``) passes *organization* to skip an FK fetch per group.
-    Idempotent — ``get_or_create``.
+    Scoped by each group's own organization.  Idempotent — ``get_or_create``.
     """
     groups = list(permission_groups)
     roles = scoped_roles_for_groups(groups)
     for group in groups:
         role = roles.get(group.pk)
         if role is not None:
-            Grant.objects.get_or_create(
-                principal_user=user,
-                role=role,
-                scope_org=group.organization if organization is None else organization,
-            )
+            Grant.objects.get_or_create(principal_user=user, role=role, scope_org=group.organization)
 
 
-def unmirror_membership_grants(
-    user: User, permission_groups: Iterable[PermissionGroup], *, organization: Organization | None = None
-) -> None:
+def unmirror_membership_grants(user: User, permission_groups: Iterable[PermissionGroup]) -> None:
     """Drop the ``Grant`` mirrors of role-backed memberships.
 
     Only the rows mirroring these memberships are deleted; a ``Grant`` for the
@@ -84,11 +65,7 @@ def unmirror_membership_grants(
     for group in groups:
         role = roles.get(group.pk)
         if role is not None:
-            Grant.objects.filter(
-                principal_user=user,
-                role=role,
-                scope_org=group.organization if organization is None else organization,
-            ).delete()
+            Grant.objects.filter(principal_user=user, role=role, scope_org=group.organization).delete()
 
 
 class OrgRoleManager:

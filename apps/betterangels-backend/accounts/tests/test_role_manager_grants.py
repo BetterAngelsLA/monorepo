@@ -154,6 +154,13 @@ class MembershipEdgeMirrorTestCase(TestCase):
 
         self.assertFalse(self._mirrors().exists())
 
+    def test_a_reverse_clear_unmirrors_every_member(self) -> None:
+        self.group.user_set.add(self.user)
+
+        self.group.user_set.clear()
+
+        self.assertFalse(self._mirrors().exists())
+
     def test_a_label_only_group_mirrors_nothing(self) -> None:
         hand_made = PermissionGroup.objects.create(organization=self.org, label="Hand-made role")
         self.user.groups.add(hand_made)

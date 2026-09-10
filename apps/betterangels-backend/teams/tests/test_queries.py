@@ -11,7 +11,6 @@ from typing import Any, Dict
 
 from accounts.groups import ORG_ADMIN
 from accounts.role_manager import OrgRoleManager
-from accounts.services import sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.permissions.utils import PERMISSION_DENIED_MESSAGE
 from model_bakery import baker
@@ -23,9 +22,6 @@ from .utils import TeamGraphQLBaseTestCase, TeamGraphQLUtilsMixin
 class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
     def setUp(self) -> None:
         super().setUp()
-        # Provision the Role rows so the recipe's owner gets mirrored Grants —
-        # the teams read is grant-only (teams.view_team).
-        sync_roles()
         self.org = organization_recipe.make()
         self.org_user = self.org.users.first()
         self.team = baker.make(Team, name="team 1", organization=self.org)
@@ -91,7 +87,7 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
 
 
 class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
-    def _assert_denied(self, response: Dict[str, Any], message: str | None = None) -> None:
+    def _assert_denied(self, response: Dict[str, Any], message: str) -> None:
         """Assert the request was refused for the *expected* reason.
 
         The message check matters: an unhandled ``ValueError`` from a malformed
@@ -101,8 +97,7 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         errors = response.get("errors") or []
         self.assertTrue(errors)
         self.assertIsNone((response.get("data") or {}).get("teams"))
-        if message is not None:
-            self.assertEqual(errors[0]["message"], message)
+        self.assertEqual(errors[0]["message"], message)
 
     def test_returns_only_the_active_orgs_teams(self) -> None:
         response = self.execute_graphql(self.get_teams_query())

@@ -601,7 +601,7 @@ def _backfill_role_grants(role_defs: tuple[RoleDef, ...] | list[RoleDef]) -> Non
 
     for role_def in role_defs:
         role = Role.objects.get(name=role_def.name)
-        groups = PermissionGroup.objects.filter(template__name=role_def.name)
+        groups = PermissionGroup.objects.filter(template__name=role_def.name).select_related("organization")
         for group in groups.prefetch_related("user_set"):
             for user in group.user_set.all():
                 grant, created = Grant.objects.get_or_create(

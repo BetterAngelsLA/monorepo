@@ -41,7 +41,7 @@ from .models import (
     Role,
     User,
 )
-from .role_manager import scoped_role_for_group
+from .role_manager import scoped_roles_for_groups
 from .selectors import member_role_names, role_names_by_organization
 from .services import (
     invitation_role,
@@ -130,6 +130,7 @@ class PermissionGroupAdmin(admin.ModelAdmin):
         """
         deletable, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
 
+        role_backed = set(scoped_roles_for_groups(objs))
         losses = []
         for permission_group in objs:
             holders = permission_group.user_set.count()
@@ -139,12 +140,11 @@ class PermissionGroupAdmin(admin.ModelAdmin):
                     permission_group.label,
                     holders,
                     "" if holders == 1 else "s",
-                    # Role-backed memberships are mirrored to Grants, and a
-                    # cascading delete deliberately leaves them (the successor
-                    # authority) — say so, or this reads as revoking the
-                    # teams/shelters capability too.
+                    # Mirrored Grants deliberately survive the delete (they are
+                    # the successor authority, and teardown retires the legacy
+                    # row) — say so, or this reads as revoking the capability.
                     " (mirrored Grants are NOT revoked — remove them from Grants directly)"
-                    if scoped_role_for_group(permission_group) is not None
+                    if permission_group.pk in role_backed
                     else "",
                 )
             )
@@ -1090,8 +1090,8 @@ class UserAdmin(BaseUserAdmin):
             # PermissionGroup rows of the same name, and picking it would make a
             # scoped role global.  Global Roles stay — the Django admin is the
             # sanctioned surface for granting those (ADR 0001 §3).  Membership
-            # changes made here still mirror their Grants: the mirror is
-            # enforced at the User.groups m2m edge (accounts.signals).
+            # edits here still mirror Grants (``User.groups`` m2m edge,
+            # ``accounts.signals``).
             groups_field.queryset = _groups_without_scoped_roles()
         return form
 

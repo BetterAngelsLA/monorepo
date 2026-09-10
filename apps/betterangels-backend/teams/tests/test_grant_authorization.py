@@ -3,7 +3,7 @@
 The three team mutations authorize through ``require_can`` (``can()``) since
 ``ORG_ADMIN`` / ``ORG_SUPERUSER`` are role-backed with backfilled Grants; the
 ``teams`` read is grant-only too (role-backed ``CASEWORKER`` with
-``teams.view_team``).  Each test below pins one facet of the contract.
+``teams.view_team``).
 """
 
 from typing import Any
@@ -17,8 +17,6 @@ from model_bakery import baker
 from teams.models import Team
 
 from .utils import TeamGraphQLUtilsMixin
-
-PERMISSION_DENIED = PERMISSION_DENIED_MESSAGE
 
 
 class TeamGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
@@ -112,15 +110,15 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         initial_count = Team.objects.count()
 
         response = self.create_team_fixture({"name": "should not appear", "organizationId": self.org_1.pk})
-        self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertEqual(Team.objects.count(), initial_count)
 
         # update/delete are denied too.
         team = baker.make(Team, name="existing", organization=self.org_1)
         response = self.update_team_fixture({"id": team.pk, "name": "nope"})
-        self.assertGraphQLOperationInfo(response, "updateTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(response, "updateTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         response = self.delete_team_fixture(team.pk)
-        self.assertGraphQLOperationInfo(response, "deleteTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(response, "deleteTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
     def test_grant_holder_with_only_add_cannot_update_or_delete(self) -> None:
         """Mutations thread the exact permission: CHANGE/DELETE, not just ADD."""
@@ -135,10 +133,10 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self.assertIsNone(create_response.get("errors"))
 
         update_response = self.update_team_fixture({"id": team.pk, "name": "nope"})
-        self.assertGraphQLOperationInfo(update_response, "updateTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(update_response, "updateTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
         delete_response = self.delete_team_fixture(team.pk)
-        self.assertGraphQLOperationInfo(delete_response, "deleteTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(delete_response, "deleteTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
     def test_member_with_no_authority_is_denied(self) -> None:
         member = baker.make(User)
@@ -147,7 +145,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
 
         initial_count = Team.objects.count()
         response = self.create_team_fixture({"name": "should not appear", "organizationId": self.org_1.pk})
-        self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertEqual(Team.objects.count(), initial_count)
 
     def test_grant_at_org_a_does_not_authorize_org_b(self) -> None:
@@ -158,7 +156,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
 
         self._login(admin, self.org_2)
         response = self.create_team_fixture({"name": "wrong org", "organizationId": self.org_2.pk})
-        self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
     def test_create_team_with_an_unknown_organization_is_denied(self) -> None:
         """``_org_or_deny`` on the payload org fails closed — unknown is not found.
@@ -217,10 +215,10 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         missing_delete = self.delete_team_fixture(999999)
         foreign_delete = self.delete_team_fixture(foreign_team.pk)
 
-        self.assertGraphQLOperationInfo(missing_update, "updateTeam", PERMISSION_DENIED, kind="PERMISSION")
-        self.assertGraphQLOperationInfo(foreign_update, "updateTeam", PERMISSION_DENIED, kind="PERMISSION")
-        self.assertGraphQLOperationInfo(missing_delete, "deleteTeam", PERMISSION_DENIED, kind="PERMISSION")
-        self.assertGraphQLOperationInfo(foreign_delete, "deleteTeam", PERMISSION_DENIED, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(missing_update, "updateTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(foreign_update, "updateTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(missing_delete, "deleteTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
+        self.assertGraphQLOperationInfo(foreign_delete, "deleteTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
 
 class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):

@@ -263,9 +263,8 @@ def active_org(info: Info) -> str | None:
     return getattr(info.context.request, "organization_id", None)
 
 
-#: The standard refusal for org-scoped authority checks.  One string so a
-#: caller cannot tell which arm refused them, and FE error matching has a
-#: single known value to compare against.
+#: The standard refusal for org-scoped authority checks — one string, so every
+#: refusal reads the same.
 PERMISSION_DENIED_MESSAGE = "You do not have permission to perform this action in this organization."
 
 

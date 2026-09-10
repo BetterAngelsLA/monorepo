@@ -36,13 +36,9 @@ class Query:
         """List an organization's teams — grant-only (ADR 0001 §5.3).
 
         The org comes from the ``organizationId`` filter when provided; the
-        ``X-Organization-ID`` header remains a deprecated fallback while
-        clients migrate to the filter.  Only betterangels-admin's ``TeamsPage``
-        passes ``filters.organizationId`` today — the mobile ``useOrgTeams``
-        hook (NoteForm, TaskForm, FilterTeamsOptions,
-        UserTeamPreferenceSelect) sends only ``{ isActive }`` and is entirely
-        header-dependent, so it must migrate to the filter before the header
-        is stripped.
+        ``X-Organization-ID`` header remains a deprecated fallback while the
+        mobile team pickers migrate (see ``_resolve_read_org`` for which send
+        only it, and the ADR §5.3 note for the strip checklist).
         """
         user = cast(AccountUser, get_current_user(info))
         org = _resolve_read_org(info, filters)
@@ -104,10 +100,9 @@ class Mutation:
     def update_team(self, info: Info, data: UpdateTeamInput) -> TeamType:
         team = team_get(pk=data.id)
         if team is None:
-            # Same refusal as require_can's below: a caller must not be able to
-            # tell a missing team from one they may not touch.
+            # One refusal for missing and forbidden rows — no existence oracle.
             raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
-        # The row names its org — authorize there, no header needed.
+        # Authorize at the row's org — no header involved.
         require_can(get_current_user(info), Team.perms.CHANGE, org=team.organization_id)
 
         return cast(
@@ -123,10 +118,9 @@ class Mutation:
     def delete_team(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         team = team_get(pk=data.id)
         if team is None:
-            # Same refusal as require_can's below: a caller must not be able to
-            # tell a missing team from one they may not touch.
+            # One refusal for missing and forbidden rows — no existence oracle.
             raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
-        # The row names its org — authorize there, no header needed.
+        # Authorize at the row's org — no header involved.
         require_can(get_current_user(info), Team.perms.DELETE, org=team.organization_id)
         deleted_id = team.pk
         team_delete(team=team)
