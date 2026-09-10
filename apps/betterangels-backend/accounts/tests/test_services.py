@@ -4,7 +4,14 @@ Integration tests for ``accounts.services`` and ``accounts.selectors``.
 
 import pytest
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import (
+    Grant,
+    OrganizationProfile,
+    PermissionGroup,
+    PermissionGroupTemplate,
+    Role,
+    User,
+)
 from accounts.selectors import permission_group_for_user
 from accounts.services import (
     create_organization_service,
@@ -577,6 +584,37 @@ class TestMemberRolesReplace:
         member_roles_replace(organization=org, user_id=member.pk, permission_templates=())
 
         assert _role_names(org, member) == {ORG_ADMIN.name}
+
+    def test_an_independent_scoped_grant_survives_a_role_change(self) -> None:
+        """Role edits revoke only what they replace, never independently granted roles.
+
+        Regression for the review flag that member-role management might delete
+        every scoped Grant at the org (``clear_roles`` semantics).  The edit is
+        add + scoped remove, so a grant-only role assigned independently after
+        the cutover (a scoped Role with no ``PermissionGroup`` — e.g. a Team
+        Admin granted on the org page) must survive a demotion that revokes the
+        member's invitable roles.
+        """
+        owner = baker.make(User)
+        org = create_organization_with_presets("Grant Holder Org", ["outreach"], owner=owner)
+
+        member = member_add(
+            email="grant_holder@example.com",
+            first_name="Grant",
+            last_name="Holder",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER,),
+        )
+        team_admin = Role.objects.create(name="Team Admin", is_global=False)
+        Grant.objects.create(principal_user=member, role=team_admin, scope_org=org)
+        assert Grant.objects.filter(principal_user=member, scope_org=org).count() == 2
+
+        member_roles_replace(organization=org, user_id=member.pk, permission_templates=())
+
+        # The caseworker grant is revoked with its group; the independent grant is not.
+        assert not Grant.objects.filter(principal_user=member, role__name=CASEWORKER.name).exists()
+        assert Grant.objects.filter(principal_user=member, role=team_admin, scope_org=org).exists()
 
     def test_raises_when_the_user_is_not_a_member(self) -> None:
         owner = baker.make(User)
