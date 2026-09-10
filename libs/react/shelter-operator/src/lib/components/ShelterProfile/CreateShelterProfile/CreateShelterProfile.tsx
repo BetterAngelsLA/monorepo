@@ -4,19 +4,22 @@ import {
   getFieldErrorsOrThrow,
   useActiveOrg,
 } from '@monorepo/ba-platform';
+import { ShelterPermissions } from '@monorepo/ba-platform/permissions';
 import { applyFieldErrors } from '@monorepo/react/shared';
 import {
   CreateShelterDocument,
+  useUser,
   type CreateShelterInput,
   type CreateShelterMutation,
   type CreateShelterMutationVariables,
 } from '@monorepo/react/shelter';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { useShelterOrganizations } from '../../../hooks';
 import {
-  shelterProfileRoute,
   profileRouteConfig,
+  shelterProfileRoute,
 } from '../../../routing/routePaths';
 import { useToast } from '../../base-ui/toast/state/useToast';
 import {
@@ -50,6 +53,10 @@ export function CreateShelterProfile(props: TProps) {
   const { className } = props;
 
   const { activeOrg } = useActiveOrg();
+  const { hasGlobalPermission } = useUser();
+  const isGlobalOperator = hasGlobalPermission(ShelterPermissions.Add);
+  const { organizations, loading: organizationsLoading } =
+    useShelterOrganizations({ skip: !isGlobalOperator });
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [disabled, setDisabled] = useState(false);
@@ -59,17 +66,35 @@ export function CreateShelterProfile(props: TProps) {
     CreateShelterMutationVariables
   >(CreateShelterDocument);
 
+  const organizationOptions = useMemo(
+    () => organizations.map((org) => ({ label: org.name, value: org.id })),
+    [organizations],
+  );
+
   async function handleSubmit(
     formData: BasicInfoFormData,
     setError: UseFormSetError<BasicInfoFormData>,
   ) {
-    if (!activeOrg?.id) {
+    if (isGlobalOperator && !formData.organizationId) {
+      setError('organizationId', {
+        type: 'manual',
+        message: 'Organization is required',
+      });
+
+      return;
+    }
+
+    const organizationId = isGlobalOperator
+      ? formData.organizationId
+      : activeOrg?.id;
+
+    if (!organizationId) {
       return;
     }
 
     setDisabled(true);
 
-    const data = toCreateInput(formData, activeOrg.id);
+    const data = toCreateInput(formData, organizationId);
 
     try {
       const response = await createShelter({ variables: { data } });
@@ -125,6 +150,11 @@ export function CreateShelterProfile(props: TProps) {
       onSubmit={handleSubmit}
       disabled={disabled}
       className={className}
+      organizationField={
+        isGlobalOperator
+          ? { options: organizationOptions, isLoading: organizationsLoading }
+          : undefined
+      }
     />
   );
 }

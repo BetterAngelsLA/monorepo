@@ -109,7 +109,9 @@ describe('permission-gated routes', () => {
     resolve();
 
     // The route that was asked for, not whichever one Home would forward to.
-    await waitFor(() => expect(screen.getByText('teams stand-in')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText('teams stand-in')).toBeTruthy(),
+    );
     expect(screen.queryByText('home stand-in')).toBeNull();
   });
 });
