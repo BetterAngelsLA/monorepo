@@ -69,7 +69,10 @@ class RoleDef:
         return cls(
             name=template.name,
             # Copy so a future in-place mutation of one list never aliases the
-            # other definition (the dataclass is frozen, the list is not).
+            # other definition (the dataclass is frozen, the list is not).  The
+            # legacy templates stay referenced after role-backing (reconcile,
+            # org_types.REGISTRY, invite signals), so the Role rows and the
+            # templates must not silently share a mutable list.
             permissions=list(template.permissions),
             is_global=is_global,
             is_invitable=template.is_invitable,
