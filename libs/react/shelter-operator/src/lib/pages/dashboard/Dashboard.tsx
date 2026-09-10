@@ -188,9 +188,12 @@ export function Dashboard() {
           shelterPrograms: selectedFilters.shelterPrograms.length
             ? (selectedFilters.shelterPrograms as ShelterProgramChoices[])
             : undefined,
+          // No default org scope: the backend bounds `operatorShelters` to the
+          // viewer's shelter reach, and `filters.organizations` only narrows it.
+          // Pass orgs only when the user selects them in the filter panel.
           organizations: selectedFilters.organizations.length
             ? selectedFilters.organizations
-            : [selectedOrganizationId],
+            : undefined,
           spa: selectedFilters.spa.length ? selectedFilters.spa : undefined,
           spasServed: selectedFilters.spasServed.length
             ? selectedFilters.spasServed
