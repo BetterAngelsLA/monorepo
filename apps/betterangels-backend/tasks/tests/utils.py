@@ -43,18 +43,16 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
         """
         return self.execute_graphql(query, {"id": task_id})
 
-    def create_task_fixture(self, variables: Dict[str, Any], *, include_organization: bool = True) -> Dict[str, Any]:
-        return self._create_or_update_task_fixture("create", variables, include_organization=include_organization)
+    def create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_task_fixture("create", variables)
 
     def update_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("update", variables)
 
-    def _create_or_update_task_fixture(
-        self, operation: str, variables: Dict[str, Any], *, include_organization: bool = True
-    ) -> Dict[str, Any]:
+    def _create_or_update_task_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
 
-        if operation == "create" and include_organization:
+        if operation == "create":
             # The acting org (RFC 0003): authority is ``require_can`` at this org.
             # ``org_1`` comes from ``GraphQLBaseTestCase``; this mixin's protocol
             # cannot see it, hence the ignore.
