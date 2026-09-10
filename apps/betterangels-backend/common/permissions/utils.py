@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from functools import lru_cache, reduce
-from operator import or_
-from typing import Any, Sequence, Tuple, Type, TypeVar
+from functools import lru_cache
+from typing import Any, Sequence, Tuple, Type
 
 import strawberry
-from django.contrib.auth.models import AbstractBaseUser, Group
+from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
-from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
+from django.db.models import Model, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
-from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
@@ -222,26 +220,12 @@ class IsAuthenticated(strawberry.BasePermission):
         return True
 
 
-def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__permissions") -> Q:
-    """Return a Q object matching a specific Django permission.
-
-    The default *prefix* ``permission_groups__permissions``
-    resolves from ``Organization`` through ``PermissionGroup`` →
-    ``Group`` → ``Permission`` → ``ContentType``.
-    """
-    return Q(
-        **{f"{prefix}__content_type__app_label": app_label},
-        **{f"{prefix}__codename": codename},
-    )
-
-
-def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_groups__permissions") -> Q:
-    """Public alias for ``_perm_q`` — Q for a single permission."""
-    return _perm_q(app_label, codename, prefix=prefix)
-
-
 def get_current_organization(info: Info) -> str:
     """Return the organization ID from the ``X-Organization-ID`` header.
+
+    Kept only until mobile migrates its teams reads to the ``organizationId``
+    filter (DEV-2566) — every other org-scoped surface is header-free.  See the
+    ADR 0001 §5.3 strip checklist.
 
     Raises ``PermissionDenied`` if the header is absent, or ``AttributeError``
     if ``OrganizationMiddleware`` is not installed.
@@ -252,15 +236,6 @@ def get_current_organization(info: Info) -> str:
         raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
 
     return str(org_id)
-
-
-def active_org(info: Info) -> str | None:
-    """Return the organization ID from the header, or ``None`` when absent.
-
-    The authority never requires the header (ADR 0001 §2.6) — the header only
-    confines the view when the caller has finite scopes.
-    """
-    return getattr(info.context.request, "organization_id", None)
 
 
 #: The standard refusal for org-scoped authority checks — one string, so every
@@ -280,111 +255,6 @@ def require_can(user: Any, perm: str, *, org: Any) -> None:
 
     if not can(user, perm, org=org):
         raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
-
-
-_T = TypeVar("_T", bound=Model)
-
-
-def _org_perm_exists_across_fields(
-    user: AbstractBaseUser,
-    app_label: str,
-    codename: str,
-    fields: list[str],
-) -> Q:
-    """Return a ``Q`` checking the user holds a permission on any of the org fields.
-
-    Both conditions — that *user* is in the group, and that the group carries
-    the permission — MUST stay inside a single ``.filter()`` call.
-    ``Organization.permission_groups`` is multi-valued, so chaining them as two
-    ``.filter()`` calls builds two independent joins and lets them be satisfied
-    by *different* permission groups: "user is in some group of this org, and
-    some group of this org has the permission". Every organization is
-    provisioned with every template, so that reads as "any member holds every
-    permission any template in their org has".
-    """
-    return reduce(
-        or_,
-        (
-            Q(
-                Exists(
-                    Organization.objects.filter(pk=OuterRef(f)).filter(
-                        Q(permission_groups__user=user) & _perm_q(app_label, codename)
-                    )
-                )
-            )
-            for f in fields
-        ),
-    )
-
-
-def permissioned_queryset(
-    queryset: "QuerySet[_T]",
-    *,
-    user: AbstractBaseUser,
-    organization_id: str,
-    perms: Sequence[str] | None = None,
-    any_perm: bool = True,
-    organization_field: str = "organization_id",
-    organization_fields: list[str] | None = None,
-) -> "QuerySet[_T]":
-    """Scope *queryset* to records in *organization_id* where *user* belongs to the org.
-
-    When *perms* is provided, further restricts to records where the
-    user holds the specified permission(s).  The org-membership check is
-    implicit — ``permission_groups__user`` proves both.
-
-    Parameters
-    ----------
-    queryset : QuerySet
-        The base queryset to filter (e.g. ``Shelter.objects.all()``).
-    user : User
-        The authenticated user.
-    organization_id : str
-        The active organization ID.
-    perms : Sequence[str] | None
-        Optional permission(s) in ``"app_label.codename"`` format.
-        If ``None``, only org membership is checked.
-    any_perm : bool
-        If ``True`` (default), user must hold at least one permission.
-        If ``False``, user must hold **all** permissions.  Ignored
-        when *perms* is ``None``.
-    organization_field : str
-        The Django field lookup path to the owning organization.
-        Default ``"organization_id"`` works for models with a direct FK.
-        Use ``"shelter__organization_id"`` for indirect (Bed, Room).
-        Ignored when *organization_fields* is provided.
-    organization_fields : list[str] | None
-        Multiple field paths (OR'd together). Use when a model reaches
-        its organization through more than one path (e.g. Reservation
-        via ``bed__shelter__organization_id`` or
-        ``room__shelter__organization_id``). Takes precedence over
-        *organization_field*. Default ``None``.
-
-    Returns
-    -------
-    QuerySet
-        The filtered queryset.
-    """
-    fields = organization_fields or [organization_field]
-
-    queryset = queryset.filter(reduce(or_, (Q(**{f: organization_id}) for f in fields)))
-
-    if perms is None:
-        queryset = queryset.filter(
-            reduce(or_, (Q(Exists(Organization.objects.filter(pk=OuterRef(f), users=user))) for f in fields))
-        )
-    elif any_perm:
-        q = Q()
-        for perm_str in perms:
-            app_label, codename = perm_str.split(".", 1)
-            q |= _org_perm_exists_across_fields(user, app_label, codename, fields)
-        queryset = queryset.filter(q)
-    else:
-        for perm_str in perms:
-            app_label, codename = perm_str.split(".", 1)
-            queryset = queryset.filter(_org_perm_exists_across_fields(user, app_label, codename, fields))
-
-    return queryset
 
 
 def assign_object_permissions(

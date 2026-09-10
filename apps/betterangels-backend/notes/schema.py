@@ -120,11 +120,13 @@ class Query:
 @strawberry.type
 class Mutation:
     # TODO(org-scoping): Migrate from resolve_permission_group() (first-match org)
-    # + PermissionedQuerySet to HasOrgPerm + get_current_organization(info),
-    # matching shelters/schema.py.  Affects create_note, update_note,
-    # update_note_location, revert_note, delete_note, create_note_service_request,
-    # and import_note.  The new note attachment mutations are already safe —
-    # their service layer passes organization_id=note.organization_id.
+    # to the notes grant cutover (ADR 0001 §5): org-scoped writes on the
+    # CASEWORKER Role via require_can at the payload org — the same shape as the
+    # teams/reports/member-management cutovers.  Affects create_note,
+    # update_note, update_note_location, revert_note, delete_note,
+    # create_note_service_request, and import_note.  The new note attachment
+    # mutations are already safe — their service layer passes
+    # organization_id=note.organization_id.
     # Defer to a dedicated PR — touches 7 mutations + their tests.
 
     # Notes

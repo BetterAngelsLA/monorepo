@@ -1,15 +1,8 @@
 from __future__ import annotations
 
-from typing import Optional, Union
-
-from common.permissions.utils import perm_filter, register_permission
-from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
+from common.permissions.utils import register_permission
 from django.db import models
-from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
-from organizations.models import Organization
-
-UserLike = Union[AbstractBaseUser, AnonymousUser]
 
 
 # ── Permission enums ──────────────────────────────────────────────────────────
@@ -38,33 +31,3 @@ class OrganizationAdminPermissions(models.TextChoices):
     CHANGE_ORGANIZATION = "organizations.change_organization", _("Can change organization")
     VIEW_ORGANIZATION = "organizations.view_organization", _("Can view organization")
     VIEW_ORGANIZATION_USER = "organizations.view_organizationuser", _("Can view organization user")
-
-
-# ── Organization permission check ─────────────────────────────────────────────
-
-
-def get_user_permitted_org(
-    user: UserLike,
-    org_id: str,
-    permission: str | TextChoices,
-) -> Optional[Organization]:
-    """Return an organization filtered by org_id, user membership in a
-    permission group, and the given permission.
-
-    *permission* should be a ``TextChoices`` enum member whose value is
-    ``"app_label.codename"`` (e.g. ``ReportPermissions.VIEW_REPORTS``), or
-    a plain ``"app_label.codename"`` string.
-
-    Returns ``None`` when the user does not belong to the organization
-    or does not hold the required permission.
-    """
-    perm_value = permission.value if isinstance(permission, TextChoices) else permission
-    app_label, codename = perm_value.split(".", 1)
-    return (
-        Organization.objects.filter(
-            pk=org_id,
-            permission_groups__user=user,
-        )
-        .filter(perm_filter(app_label, codename))
-        .first()
-    )

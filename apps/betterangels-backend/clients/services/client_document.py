@@ -54,9 +54,8 @@ def resolve_upload(
     permission group so the uploader can manage the resulting attachments.
     """
     # TODO(org-scoping): Migrate from resolve_permission_group (first-match org)
-    # to the X-Organization-ID header pattern (HasOrgPerm + get_current_organization)
-    # used by shelters/schema.py.  The client mutations in clients/schema.py already
-    # have a similar TODO about this migration.
+    # to the clients grant cutover (ADR 0001 §5.1 / RFC 0002): object-grant
+    # ownership on ClientProfile rows rather than an org-level header.
     permission_group = resolve_permission_group(user, template=CASEWORKER)
 
     with transaction.atomic():
