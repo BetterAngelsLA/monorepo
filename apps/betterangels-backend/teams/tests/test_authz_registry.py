@@ -1,7 +1,7 @@
 """Registry canary — every teams Query/Mutation field is protected (ADR 0001 §5.3).
 
 The teams cutover made authorization behavioral: each resolver authorizes
-through ``require_can`` (``_org_or_deny`` at the payload org for creates, the
+through ``require_can`` (``resolve_org_or_deny`` at the payload org for creates, the
 row's org for update/delete) and no transport permission extension guards the
 fields, so a future author could add an unguarded field and nothing would
 statically complain.
@@ -21,12 +21,12 @@ from teams.schema import Mutation, Query
 
 # field -> where authorization happens for that read.
 QUERY_AUTHZ_ROUTES: dict[str, str] = {
-    "teams": "resolver -> _org_or_deny(organizationId) + require_can(VIEW, org)",
+    "teams": "resolver -> resolve_org_or_deny(organizationId) + require_can(VIEW, org)",
 }
 
 # mutation -> where authorization happens for that write.
 MUTATION_AUTHZ_ROUTES: dict[str, str] = {
-    "create_team": "resolver -> _org_or_deny(organizationId) + require_can(ADD, org)",
+    "create_team": "resolver -> resolve_org_or_deny(organizationId) + require_can(ADD, org)",
     "update_team": "resolver -> team_get + require_can(CHANGE, row org)",
     "delete_team": "resolver -> team_get + require_can(DELETE, row org)",
 }

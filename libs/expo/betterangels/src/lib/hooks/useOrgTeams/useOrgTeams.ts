@@ -1,7 +1,6 @@
 import { useQuery } from '@apollo/client/react';
-import { getActiveOrgId, subscribeActiveOrgId } from '@monorepo/ba-platform';
 import type { OffsetPaginationInput } from '@monorepo/ba-platform/types';
-import { useSyncExternalStore } from 'react';
+import { useActiveOrgId } from '../useActiveOrgId/useActiveOrgId';
 import {
   TeamsDocument,
   TeamsQuery,
@@ -28,11 +27,7 @@ type UseOrgTeamsOptions = {
  */
 export function useOrgTeams(options: UseOrgTeamsOptions = {}) {
   const { limit = 10000, offset = 0, isActive } = options;
-  const activeOrgId = useSyncExternalStore(
-    subscribeActiveOrgId,
-    getActiveOrgId,
-    getActiveOrgId,
-  );
+  const activeOrgId = useActiveOrgId();
 
   const pagination: OffsetPaginationInput = { limit, offset };
   const variables: TeamsQueryVariables = {

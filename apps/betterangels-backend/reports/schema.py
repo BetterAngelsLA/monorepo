@@ -4,31 +4,14 @@ from typing import List, Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User as AccountUser
+from common.graphql.org import resolve_org_or_deny
 from common.permissions.utils import IsAuthenticated, require_can
-from django.core.exceptions import PermissionDenied
-from organizations.models import Organization
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
 from .permissions import ReportPermissions
 from .selectors import report_default_date_range, report_summary
-
-
-def _org_or_deny(org_id: object) -> Organization:
-    """Resolve an org id from client input, failing closed.
-
-    A missing/unknown/non-numeric org is a permission problem
-    (``PermissionDenied``), never a ``DoesNotExist`` crash or a ``ValueError``.
-    Module-level because strawberry-django resolvers are invoked unbound.
-    """
-    try:
-        org = Organization.objects.filter(pk=org_id).first()
-    except TypeError, ValueError:
-        org = None
-    if org is None:
-        raise PermissionDenied("You do not have access to this organization.")
-    return org
 
 
 @strawberry.type
@@ -76,7 +59,7 @@ class Query:
         closed; an unknown org id fails closed.
         """
         user = cast(AccountUser, get_current_user(info))
-        org = _org_or_deny(organization_id)
+        org = resolve_org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
         if start_date is None or end_date is None:

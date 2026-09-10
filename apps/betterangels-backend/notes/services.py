@@ -122,7 +122,7 @@ def note_update(
             if tasks_data:
                 task_create(
                     user=user,
-                    permission_group=permission_group,
+                    organization=note.organization,
                     data=tasks_data,
                     note=note,
                     client_profile=note.client_profile,
@@ -303,7 +303,7 @@ def note_create(
     if tasks:
         task_create(
             user=user,
-            permission_group=permission_group,
+            organization=note.organization,
             data=tasks,
             note=note,
             client_profile=note.client_profile,

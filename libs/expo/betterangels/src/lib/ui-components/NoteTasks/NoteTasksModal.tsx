@@ -1,6 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
-import { useSnackbar } from '../../hooks';
+import { useActiveOrgId, useSnackbar } from '../../hooks';
 
 // 1. Import Mutations
 import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
@@ -38,6 +38,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
   } = props;
 
   const { showSnackbar } = useSnackbar();
+  const activeOrgId = useActiveOrgId();
 
   const [createTask] = useMutation(CreateTaskDocument);
   const [updateTask] = useMutation(UpdateTaskDocument);
@@ -90,6 +91,8 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           },
         });
       } else {
+        if (!activeOrgId) return;
+
         await createTask({
           variables: {
             data: {
@@ -104,6 +107,8 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
 
               note: noteId ?? undefined,
               hmisNote: hmisNoteId ?? undefined,
+
+              organizationId: activeOrgId,
             },
           },
         });

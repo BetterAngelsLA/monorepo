@@ -156,7 +156,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
     def test_create_team_with_an_unknown_organization_is_denied(self) -> None:
-        """``_org_or_deny`` on the payload org fails closed — unknown is not found.
+        """``resolve_org_or_deny`` on the payload org fails closed — unknown is not found.
 
         The read side of the shared resolver is pinned in the read suite; the
         mutation path (create carries the org in the payload, with no row to

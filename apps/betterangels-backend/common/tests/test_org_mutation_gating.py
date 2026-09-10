@@ -25,7 +25,14 @@ import pytest
 
 # Apps whose org-scoped mutations are grant-gated (ADR 0001).  A domain joins
 # this list the moment it cuts over — see the readiness matrix in the ADR §4.1.
-GRANT_GATED_MODULES = ("accounts.schema", "clients.schema", "reports.schema", "shelters.schema", "teams.schema")
+GRANT_GATED_MODULES = (
+    "accounts.schema",
+    "clients.schema",
+    "reports.schema",
+    "shelters.schema",
+    "tasks.schema",
+    "teams.schema",
+)
 
 # ``permission=`` counts because the scoped selectors (``*_get``/``*_queryset``)
 # take the permission and scope by the caller's grants — the ADR §2.6 write
