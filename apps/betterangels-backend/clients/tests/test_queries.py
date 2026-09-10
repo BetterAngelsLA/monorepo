@@ -161,7 +161,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     )
     @override_switch(IMGPROXY_SWITCH, active=True)
     def test_client_profiles_query_with_processed_photo(self) -> None:
-        self._update_client_profile_photo_fixture(self.client_profile_2["id"])
+        self._set_client_profile_photo(self.client_profile_2["id"])
 
         query = f"""
             query ($offset: Int, $limit: Int) {{

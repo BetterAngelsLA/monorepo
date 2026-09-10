@@ -474,36 +474,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertIsNotNone(response["data"]["deleteClientProfile"])
         self.assertFalse(ClientProfile.objects.filter(id=client_profile["id"]).exists())
 
-    def test_update_client_profile_photo(self) -> None:
-        client_profile_id = self.client_profile_1["id"]
-        photo_content = (
-            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
-            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
-        )
-        photo_name = "profile_photo.jpg"
-
-        expected_query_count = 8
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_client_profile_photo_fixture(
-                client_profile_id,
-                photo_content,
-                photo_name,
-            )
-
-        photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["url"]
-        client_profile = ClientProfile.objects.get(id=client_profile_id)
-        self.assertIn(photo_name, client_profile.profile_photo.url)
-
-        response = self._update_client_profile_photo_fixture(
-            client_profile_id,
-            photo_content,
-            photo_name,
-        )
-
-        updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["url"]
-        client_profile.refresh_from_db()
-        self.assertIn(updated_photo_name, client_profile.profile_photo.url)
-
     def test_generate_client_profile_photo_upload(self) -> None:
         with (
             patch(
@@ -581,16 +551,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def test_delete_client_profile_photo(self) -> None:
         client_profile_id = self.client_profile_1["id"]
 
-        # First, set a profile photo via the existing upload fixture.
-        photo_content = (
-            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
-            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
-        )
-        self._update_client_profile_photo_fixture(
-            client_profile_id,
-            photo_content,
-            "profile_photo.jpg",
-        )
+        self._set_client_profile_photo(client_profile_id)
 
         client_profile = ClientProfile.objects.get(id=client_profile_id)
         self.assertIsNotNone(client_profile.profile_photo)
