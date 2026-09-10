@@ -1,22 +1,19 @@
 /**
  * The active organization id, held outside React.
  *
- * The ``X-Organization-ID`` header comes from a fetch interceptor, which is not
- * a component and cannot read React state. Mirroring React state into storage
- * gave it a copy that lagged the UI, so requests went out header-less while an
- * organization was already on screen.
+ * One value, derived on every read from two inputs — the id the user chose (or
+ * the one remembered from last launch) and the organizations they belong to — so
+ * the UI and the org a request carries cannot disagree, and nothing has to be
+ * written during render.
  *
- * The id is *derived* on every read from two inputs — the id the user chose (or
- * the one remembered from last launch) and the organizations the user belongs to
- * — so the UI and the header cannot disagree, and nothing has to be written
- * during render. React reads it via ``useSyncExternalStore``; the interceptor via
- * :func:`getActiveOrgId`. Persistence is a write-behind detail, not a channel
- * between the two.
+ * React reads it through :func:`useActiveOrgId` (``useSyncExternalStore``);
+ * non-component callers use :func:`getActiveOrgId`. Persistence is a
+ * write-behind detail, not a channel between the two.
  *
  * Scope: per JavaScript context. Two browser tabs each keep their own active
  * organization and do not follow each other, which is deliberate — a tab's UI and
- * its request headers agree with each other. Add a ``storage`` event listener here
- * if cross-tab following is ever wanted.
+ * the org its requests carry agree with each other. Add a ``storage`` event
+ * listener here if cross-tab following is ever wanted.
  */
 
 /**

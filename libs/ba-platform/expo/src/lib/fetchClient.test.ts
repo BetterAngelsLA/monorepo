@@ -67,30 +67,6 @@ describe('createExpoFetchClient', () => {
     Object.keys(mockMmkv).forEach((k) => delete mockMmkv[k]);
   });
 
-  it('injects X-Organization-ID header from the active-org store', async () => {
-    mockMmkv['betterangels_active_org_id'] = 'org-expo';
-
-    const fetchClient = createExpoFetchClient('https://api.example.com');
-    await fetchClient('/graphql', { method: 'POST' });
-
-    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
-    const [, init] = fetchMock.mock.lastCall as [string, RequestInit];
-    const headers = new Headers(init.headers);
-
-    expect(headers.get('X-Organization-ID')).toBe('org-expo');
-  });
-
-  it('omits X-Organization-ID header when there is no active org', async () => {
-    const fetchClient = createExpoFetchClient('https://api.example.com');
-    await fetchClient('/graphql', { method: 'GET' });
-
-    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
-    const [, init] = fetchMock.mock.lastCall as [string, RequestInit];
-    const headers = new Headers(init.headers);
-
-    expect(headers.get('X-Organization-ID')).toBeNull();
-  });
-
   it('appends extra interceptors after platform defaults', async () => {
     const extraInterceptor: FetchInterceptor = async (_input, init, next) => {
       const headers = new Headers(init.headers);
