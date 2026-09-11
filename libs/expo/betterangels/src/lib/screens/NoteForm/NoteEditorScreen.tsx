@@ -10,7 +10,7 @@ import {
   UpdateNoteDocument,
   ViewNoteDocument,
 } from '../../apollo';
-import { useSnackbar } from '../../hooks';
+import { useActiveOrgId, useSnackbar } from '../../hooks';
 import { useUserTeamPreference } from '../../state';
 import { CreateNoteDocument } from '../../ui-components/CreateClientInteraction';
 import { InteractionsDocument } from '../../ui-components/InteractionList';
@@ -45,6 +45,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
   const navigation = useNavigation();
   const apolloClient = useApolloClient();
   const { showSnackbar } = useSnackbar();
+  const activeOrgId = useActiveOrgId();
 
   const isCreateMode = mode === 'create';
 
@@ -130,10 +131,14 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
     try {
       if (isCreateMode) {
+        // No active org to anchor the create to (none remembered / none to join).
+        if (!activeOrgId) return;
+
         const result = await createNote({
           variables: {
             data: {
               clientProfile: clientProfileId,
+              organizationId: activeOrgId,
               ...payload,
             },
           },
