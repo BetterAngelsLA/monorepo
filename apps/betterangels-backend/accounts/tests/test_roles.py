@@ -91,10 +91,12 @@ class SyncRolesTestCase(TestCase):
     def test_every_provisioned_permission_binds_a_real_model(self) -> None:
         """No RoleDef codename may bind to a phantom ContentType.
 
-        ``_resolve_permissions`` derives the ContentType model from the codename's
-        last ``_`` token, so a custom codename whose final token is not its model
-        (e.g. ``change_shelter_is_reviewed`` -> ``"reviewed"``) would be silently
-        skipped by E005 and unrunnable at runtime.  ``sync_roles`` refuses them.
+        ``_resolve_permissions`` binds each RoleDef permission to a real model's
+        ContentType — the model that declares it in ``Meta.permissions``, or
+        (for codenames ending in their model name) the synthesized model — and
+        only falls back to a phantom ContentType for portal codenames no model
+        declares.  ``sync_roles`` refuses those (see the phantom test below),
+        so no provisioned Role can hold an unrunnable permission.
         """
         sync_roles()
 

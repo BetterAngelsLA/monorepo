@@ -259,7 +259,7 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     GLOBAL_TIER_ORG_APPS`): only grant-only (and, later, dual) domains treat the
     global tier as enforceable at any org (``can()``/``scopes()`` return ALL), so
     only their global permissions fold into an org entry.  Legacy-only domains
-    (member management, reports, teams) are enforced per org by ``HasOrgPerm``
+    (member management) are enforced per org by ``HasOrgPerm``
     → org ``PermissionGroup`` rows, which never consult the global tier —
     folding their global permissions in would advertise controls the backend
     refuses (e.g. a superuser with no group at that org, or a ``user_permission``
