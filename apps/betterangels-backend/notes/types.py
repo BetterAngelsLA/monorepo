@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import strawberry
 import strawberry_django
@@ -28,9 +28,8 @@ from django.db.models import (
     When,
 )
 from notes.enums import ServiceRequestTypeEnum
-from notes.permissions import NotePermissions, PrivateDetailsPermissions
+from notes.permissions import NotePermissions
 from strawberry import ID, Info, Maybe, auto
-from strawberry_django.utils.query import filter_for_user
 from tasks.types import TaskType
 from teams.types import TeamType
 
@@ -160,6 +159,43 @@ def _visible_note_rows(queryset: QuerySet, info: Info, perm: str) -> QuerySet:
     return visible_rows_for_holder(queryset, info, perm=perm, cache_key="_visible_note_rows_cache")
 
 
+def _perm_org_ids(info: Info, perm: str) -> Optional[list[int]]:
+    """Org ids where *info*'s user holds *perm*; ``None`` for the global tier (all)."""
+    from common.permissions.selectors import ALL, scopes
+
+    s = scopes(info.context.request.user, perm)
+    if s is ALL:
+        return None
+    return list(s.values_list("pk", flat=True))
+
+
+def _can_edit_case(info: Info) -> Any:
+    """Org-scoped edit flag: CHANGE where the caller's role holds it (RFC 0003 slice 2).
+
+    Replaces the guardian prefilter (``filter_for_user``) — the org-scoped arm
+    is the single authority; the object arm joins when the sharing edge ships.
+    """
+    org_ids = _perm_org_ids(info, NotePermissions.CHANGE)
+    if org_ids is None:
+        return Value(True)
+    return Case(
+        When(organization_id__in=org_ids, then=Value(True)),
+        default=Value(False),
+        output_field=BooleanField(),
+    )
+
+
+def _private_details_case(info: Info) -> Any:
+    """Private details are readable at the note's org (was: the creating group's guardian row)."""
+    org_ids = _perm_org_ids(info, NotePermissions.CHANGE)
+    if org_ids is None:
+        return F("private_details")
+    return Case(
+        When(organization_id__in=org_ids, then=F("private_details")),
+        default=Value(None),
+    )
+
+
 @strawberry_django.type(
     models.Note,
     pagination=True,
@@ -193,20 +229,7 @@ class NoteType:
 
     @strawberry_django.field(
         annotate={
-            "_can_edit": lambda info: Case(
-                When(
-                    Exists(
-                        filter_for_user(
-                            models.Note.objects.all(),
-                            info.context.request.user,
-                            [NotePermissions.CHANGE],
-                        ).filter(pk=OuterRef("pk"))
-                    ),
-                    then=Value(True),
-                ),
-                default=Value(False),
-                output_field=BooleanField(),
-            ),
+            "_can_edit": lambda info: _can_edit_case(info),
         }
     )
     def user_can_edit(self, root: models.Note) -> bool:
@@ -214,19 +237,7 @@ class NoteType:
 
     @strawberry_django.field(
         annotate={
-            "_private_details": lambda info: Case(
-                When(
-                    Exists(
-                        filter_for_user(
-                            models.Note.objects.all(),
-                            info.context.request.user,
-                            [PrivateDetailsPermissions.VIEW],
-                        )
-                    ),
-                    then=F("private_details"),
-                ),
-                default=Value(None),
-            ),
+            "_private_details": lambda info: _private_details_case(info),
         }
     )
     def private_details(self, root: models.Note) -> Optional[str]:
@@ -306,6 +317,13 @@ class CreateNoteInput:
     client_profile: Optional[ID] = None
     is_submitted: Optional[bool] = False
     interacted_at: Optional[datetime] = None
+
+    # The acting org (ADR 0001 §5, RFC 0003 slice 2): authority is
+    # ``require_can`` at this org and the created row's ``organization``.
+    # Optional during the compat window — a build that predates the payload
+    # org falls back to the legacy caseworker group; the strict flip makes it
+    # required again.
+    organization_id: Optional[ID] = None
 
     # Nested relations
     location: Optional[LocationInput] = None

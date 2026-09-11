@@ -86,6 +86,15 @@ class OrganizationService(BaseModel):
     pghistory.DeleteEvent("service_request.remove"),
 )
 class ServiceRequest(BaseModel):
+    """Service requests ride their note's org (RFC 0003 slice 2).
+
+    Deliberately *not* ``OrgScoped`` in this slice: an SR's only org reach is
+    the ``service`` hop, and ``OrganizationService`` does not declare
+    ``OrgScoped`` yet (that lands with the service-catalog cutover).  Writes
+    gate through the owning note's org — ``delete_service_request`` checks
+    ``NotePermissions.CHANGE`` on the note carrying the SR.
+    """
+
     service = models.ForeignKey(
         OrganizationService, on_delete=models.PROTECT, related_name="service_requests", null=True, blank=True
     )

@@ -14,15 +14,18 @@ from teams.models import Team
 CASEWORKER = TemplateConfig(
     name="Caseworker",
     permissions=[
-        # Note: ADD + VIEW.  CHANGE/DELETE are deliberately NOT here yet: the
-        # still-legacy write paths (guardian ``filter_for_user``) treat a
-        # model-level perm as "all rows", so granting them before the write
-        # cutover over-permits (RFC 0003 §Option A).  They move with the write
-        # cutover; the Role below already carries the grant-side bundle.
+        # Note: ADD + VIEW + CHANGE + DELETE.  The write cutover (RFC 0003
+        # slice 2) removed the guardian write paths, so the model-level
+        # CHANGE/DELETE perms can no longer over-permit through
+        # ``filter_for_user`` — they now mirror the Role bundle.
         Note.perms.ADD,
         Note.perms.VIEW,
-        # ServiceRequest: ADD only (VIEW, CHANGE, DELETE ride the Role grants;
-        # the legacy model-level perms move with the write cutover).
+        Note.perms.CHANGE,
+        Note.perms.DELETE,
+        # ServiceRequest: ADD only.  SR writes gate through the owning note's
+        # org (SR is not org-scoped yet — its ``service`` hop cannot resolve);
+        # the model-level VIEW/CHANGE/DELETE perms move with the
+        # service-catalog cutover, mirroring the Role bundle.
         ServiceRequest.perms.ADD,
         # Client models: full CRUD
         ClientProfile.perms.ADD,
@@ -80,18 +83,18 @@ CASEWORKER_ROLE = RoleDef(
         Task.perms.CHANGE,
         Task.perms.DELETE,
         # Note slice — RFC 0003 slice 2: org-scoped writes via ``can_obj``,
-        # reads SHARED.  Attachments ride the note gate; the attachment perms
-        # keep the upload checks passing for grant-only holders.
+        # reads SHARED.  Attachments ride the note gate (the upload mutations
+        # gate on Note CHANGE), so the scoped role carries no Attachment perms
+        # — E005 rejects them (Attachment declares no org scoping).
         Note.perms.ADD,
         Note.perms.VIEW,
         Note.perms.CHANGE,
         Note.perms.DELETE,
-        ServiceRequest.perms.ADD,
-        ServiceRequest.perms.VIEW,
-        ServiceRequest.perms.CHANGE,
-        ServiceRequest.perms.DELETE,
-        Attachment.perms.ADD,
-        Attachment.perms.VIEW,
+        # ServiceRequest: deliberately absent from the scoped role — SR is not
+        # org-scoped in this slice (its ``service`` hop cannot resolve until
+        # OrganizationService is org-scoped), and E005 forbids a scoped Role
+        # carrying perms on an undeclared model.  The SR gates ride the owning
+        # note's org instead; the perms return with the service-catalog cutover.
         # Client family — the RFC 0002 cutover bundle.
         ClientProfile.perms.ADD,
         ClientProfile.perms.CHANGE,
