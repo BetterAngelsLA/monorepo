@@ -21,6 +21,27 @@ as the API layer instead of Django REST Framework.
 - **Permissions** — `ModelPermissionSet` inner classes on models (via
   `common/permissions/utils.py`) replace the old per-file `permissions.py` pattern.
   See the `@monorepo/ba-platform/permissions` package for the matching frontend permission enums.
+
+  Domain-authority decisions go through the selectors (`common/permissions/selectors.py`),
+  never `user.has_perm` or guardian `filter_for_user`:
+  - **Reads** — `visible(qs, user, perm)` (list hooks via `visible_rows_for_holder`;
+    single fields via the `*_checker` predicates). Never reuse a read filter for a write.
+  - **Writes** — `writable(qs, user, perm)` is `can_obj` as a queryset filter. Mutation
+    gates fetch through `get_writable_or_deny(qs, pk, user, perm)` — the fetch *is* the
+    check (unfetchable means unwritable) — or compose on `writable` directly. Never fetch
+    a write target from a raw manager.
+  - **Creates** — `require_can(user, perm, org=…)` at the payload organization
+    (`can`/`can_anywhere`). The org is the *target*, never the authority source — grant
+    topology (direct, delegated, global) resolves inside `scopes()`.
+  - **Platform-only fields/actions** — gate on the global tier (`holds_globally`): the one
+    check a scoped Grant can never satisfy. Never reach for `can_anywhere` here — it admits
+    scoped holders. A declarative `GLOBAL` access tier is a planned vocabulary extension;
+    until it lands, every surface that touches a platform-only asset carries the tier check.
+  - **Refusals** — selectors answer, utils refuse: selectors never raise; `require_can`/
+    `get_writable_or_deny` raise `PermissionDenied` with `PERMISSION_DENIED_MESSAGE`.
+  - Cut-over domains register in `GRANT_GATED_MODULES`
+    (`common/tests/test_org_mutation_gating.py`); the tripwire rejects mutations without a
+    gate marker and raw fetches in mutation bodies (exceptions carry a reason).
 - **Models** — inherit `BaseModel` (from `common/models.py`) which provides
   `created_at`/`updated_at` and a `PermissionSet` hook. Keep models lean — push
   logic to services, queries to selectors, and see Validation below for what

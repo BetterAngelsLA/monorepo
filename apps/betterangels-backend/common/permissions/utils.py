@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Any, Sequence, Tuple, Type, TypeVar
 
 import strawberry
 from django.contrib.auth.models import Group
@@ -12,6 +12,10 @@ from guardian.shortcuts import assign_perm
 from strawberry_django.auth.utils import get_current_user
 
 from common.errors import UnauthenticatedGQLError
+from common.utils import get_or_none
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 
 # ── Permission enum registry (frontend codegen) ───────────────────────────────
@@ -236,6 +240,34 @@ def require_can(user: Any, perm: str, *, org: Any) -> None:
 
     if not can(user, perm, org=org):
         raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
+
+
+T = TypeVar("T", bound=Model)
+
+
+def get_writable_or_deny(
+    qs: "QuerySet[T]",
+    pk: Any,
+    user: Any,
+    perm: str,
+    *,
+    message: str = PERMISSION_DENIED_MESSAGE,
+) -> "T":
+    """Fetch a write target through the write-scoped filter, or deny.
+
+    The canonical mutation gate (RFC 0002 §Precondition): the fetch *is* the
+    authorization check — a forbidden row is unfetchable, and the missing-row
+    and forbidden-row refusals share one message (no existence oracle).
+    Fetch through this, never from the raw manager and never fetch-then-check
+    (which invites forgetting the check); ``writable``/``can_obj`` stay the
+    primitives for non-pk shapes (related-row exists, object-in-hand checks).
+    """
+    from common.permissions.selectors import writable
+
+    obj = get_or_none(writable(qs, user, perm), pk)
+    if obj is None:
+        raise PermissionDenied(message)
+    return obj
 
 
 def assign_object_permissions(

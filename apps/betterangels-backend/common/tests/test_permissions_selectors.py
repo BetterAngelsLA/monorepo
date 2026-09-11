@@ -1,9 +1,9 @@
 """Tests for the read-side authorization selectors (ADR 0001 §2.4, §2.10)."""
 
 from accounts.models import Role, User
-from accounts.services import grant_create, role_assign, sync_roles
+from accounts.services import grant_create, grant_delegate, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
-from common.permissions.selectors import ALL, can, can_anywhere, can_obj, scopes, visible
+from common.permissions.selectors import ALL, can, can_anywhere, can_obj, scopes, visible, writable
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
@@ -132,12 +132,74 @@ class GrantSelectorsTestCase(TestCase):
         self.assertFalse(can(alice, Shelter.perms.VIEW, org=self.org_b))
         self.assertTrue(can(gso, Shelter.perms.VIEW, org=self.org_b))
 
+    def test_delegated_authority_answers_with_only_the_target(self) -> None:
+        """Org A delegates to C: can(org=C) is true with only the target passed.
+
+        The authority *sources* — membership at the acting org, the direct grant
+        there, the delegation row itself — resolve inside ``scopes()``; callers
+        never name the topology (ADR 0001 §2.4).  And delegation never amplifies:
+        a grant at the principal org without membership does not inherit.
+        """
+        org_c = organization_recipe.make(name="Selectors Org C")
+        shelter_c = shelter_recipe.make(organization=org_c)
+        grant_delegate(principal_org=self.org_a, role=self.shelter_role, scope_org=org_c)
+
+        actor = baker.make(User)
+        self.org_a.add_user(actor)
+        grant_create(user=actor, role=self.shelter_role, scope_org=self.org_a)
+
+        self.assertTrue(can(actor, Shelter.perms.VIEW, org=org_c))
+        self.assertIn(
+            shelter_c.pk,
+            set(visible(Shelter.objects.all(), actor, Shelter.perms.VIEW).values_list("pk", flat=True)),
+        )
+
+        outsider = baker.make(User)  # grant at A, not a member of A
+        grant_create(user=outsider, role=self.shelter_role, scope_org=self.org_a)
+
+        self.assertFalse(can(outsider, Shelter.perms.VIEW, org=org_c))
+
     def test_can_obj_is_the_row_filter_on_one_row(self) -> None:
         alice = baker.make(User)
         grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
 
         self.assertTrue(can_obj(alice, Shelter.perms.VIEW, self.shelter_a))
         self.assertFalse(can_obj(alice, Shelter.perms.VIEW, self.shelter_b))
+
+    def test_writable_is_can_obj_as_a_queryset(self) -> None:
+        """writable() admits exactly the rows can_obj() admits (one predicate).
+
+        Mutation gates fetch through writable() so the fetch is the gate;
+        can_obj() delegates to it, so the fetch-of-one and the check-of-one
+        can never disagree.
+        """
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+
+        admitted = set(writable(Shelter.objects.all(), alice, Shelter.perms.VIEW).values_list("pk", flat=True))
+
+        self.assertEqual(admitted, {self.shelter_a.pk})
+        for shelter in (self.shelter_a, self.shelter_b):
+            self.assertEqual(can_obj(alice, Shelter.perms.VIEW, shelter), shelter.pk in admitted)
+
+    def test_writable_shared_tier_is_all_or_none(self) -> None:
+        """WRITE_SHARED: every row fetchable iff the perm is held somewhere."""
+        from clients.models import ClientProfile
+
+        editor = baker.make(User)
+        client_role = Role.objects.create(name="Writable Shared Editor", is_global=False)
+        perm = Permission.objects.get(
+            codename=ClientProfile.perms.CHANGE.split(".")[1], content_type__app_label="clients"
+        )
+        client_role.permissions.add(perm)
+        grant_create(user=editor, role=client_role, scope_org=self.org_a)
+        stranger = baker.make(User)
+
+        self.assertEqual(
+            writable(ClientProfile.objects.all(), editor, ClientProfile.perms.CHANGE).count(),
+            ClientProfile.objects.count(),
+        )
+        self.assertFalse(writable(ClientProfile.objects.all(), stranger, ClientProfile.perms.CHANGE).exists())
 
     def test_can_obj_shared_tier_is_any_holder_anywhere(self) -> None:
         """ClientProfile declares WRITE_SHARED (RFC 0002 #1): can_obj == can_anywhere."""
@@ -158,12 +220,14 @@ class GrantSelectorsTestCase(TestCase):
         self.assertFalse(can_obj(stranger, ClientProfile.perms.CHANGE, client))
         self.assertTrue(can_obj(admin, ClientProfile.perms.CHANGE, client))
 
-    def test_can_obj_fails_closed_for_undeclared_platform_shared(self) -> None:
-        """A platform-shared OrgScoped model with no write_tier: only the global tier acts.
+    def test_writable_fails_closed_for_undeclared_platform_shared(self) -> None:
+        """A platform-shared OrgScoped model with no write_tier: only the global tier.
 
         RFC 0002 §Precondition — the read rule never feeds an undeclared write
-        (finding C1): a finite org-scoped holder is denied; an anywhere/global
-        holder (scopes is ALL) still acts.
+        (finding C1): a finite org-scoped holder gets the empty queryset (no
+        rows, no row-table access — the model is hypothetical); the global
+        tier (``scopes`` is ALL) gets the model's rows.  Rows without identity
+        (unsaved) are never writable — creates have no row and use ``can``.
         """
         from common.models import OrgScoped
 
@@ -174,14 +238,17 @@ class GrantSelectorsTestCase(TestCase):
                 app_label = "common"
                 managed = False
 
-        row = UndeclaredShared()  # no DB access in the fail-closed branch
         scoped = baker.make(User)
         grant_create(user=scoped, role=self.shelter_role, scope_org=self.org_a)
         gso = baker.make(User)
         role_assign(user=gso, role=self.gso_role)
 
-        self.assertFalse(can_obj(scoped, Shelter.perms.VIEW, row))
-        self.assertTrue(can_obj(gso, Shelter.perms.VIEW, row))
+        denied = writable(UndeclaredShared.objects.all(), scoped, Shelter.perms.VIEW)
+        admitted = writable(UndeclaredShared.objects.all(), gso, Shelter.perms.VIEW)
+
+        self.assertTrue(denied.query.is_empty())
+        self.assertFalse(admitted.query.is_empty())
+        self.assertFalse(can_obj(scoped, Shelter.perms.VIEW, UndeclaredShared()))
 
     def test_can_anywhere_holds_for_platform_shared_creates(self) -> None:
         from clients.models import ClientProfile
