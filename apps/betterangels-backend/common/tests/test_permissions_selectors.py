@@ -12,7 +12,8 @@ from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 from shelters.models import ContactInfo, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
 
-from common.permissions.selectors import ALL, can, can_anywhere, can_globally, can_obj, scopes, visible
+from common.models import ACCESS_GLOBAL
+from common.permissions.selectors import ALL, can, can_anywhere, can_globally, can_model, can_obj, scopes, visible
 
 
 class GrantSelectorsTestCase(TestCase):
@@ -149,6 +150,74 @@ class GrantSelectorsTestCase(TestCase):
 
         self.assertTrue(can_anywhere(alice, ClientProfile.perms.VIEW))
         self.assertFalse(can_anywhere(stranger, ClientProfile.perms.VIEW))
+
+
+class AccessClassTestCase(TestCase):
+    """A model's declared ``access`` slot outranks org reach (ADR 0004 sketch).
+
+    ``ContactInfo`` declares the ``ACCESS_GLOBAL`` class: the global tier sees
+    every row, and a scoped holder of the very same permission sees none — for
+    the row filter (:func:`visible`), the single-row check (:func:`can_obj`),
+    and the rowless gate (:func:`can_model`) alike.
+    """
+
+    def setUp(self) -> None:
+        sync_roles()
+        self.org = organization_recipe.make(name="Access Class Org")
+        self.shelter = shelter_recipe.make(organization=self.org)
+        self.contact = baker.make(ContactInfo, shelter=self.shelter, contact_number="+12135551234")
+        self.shelter_role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        self.gso_role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
+
+    def _scoped_contact_reader(self) -> User:
+        """A scoped Grant holder that DOES carry the ContactInfo perm."""
+        alice = baker.make(User)
+        role = Role.objects.create(name="Scoped Contact Reader")
+        perm, _ = Permission.objects.get_or_create(
+            content_type=ContentType.objects.get_for_model(ContactInfo),
+            codename=ContactInfo.perms.VIEW.split(".")[1],
+            defaults={"name": "Can view contact info"},
+        )
+        role.permissions.add(perm)
+        grant_create(user=alice, role=role, scope_org=self.org)
+        return alice
+
+    def test_declaration_is_on_the_model(self) -> None:
+        self.assertEqual(ContactInfo.access.read, ACCESS_GLOBAL)
+        self.assertEqual(ContactInfo.access.write, ACCESS_GLOBAL)
+        self.assertIsNone(Shelter.access.read)
+        self.assertIsNone(Shelter.access.write)
+
+    def test_global_class_visible_is_global_tier_only(self) -> None:
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+        scoped = self._scoped_contact_reader()
+
+        self.assertTrue(visible(ContactInfo.objects.all(), gso, ContactInfo.perms.VIEW).exists())
+        self.assertFalse(visible(ContactInfo.objects.all(), scoped, ContactInfo.perms.VIEW).exists())
+
+    def test_global_class_can_obj_is_global_tier_only(self) -> None:
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+        scoped = self._scoped_contact_reader()
+
+        self.assertTrue(can_obj(gso, ContactInfo.perms.VIEW, self.contact))
+        self.assertFalse(can_obj(scoped, ContactInfo.perms.VIEW, self.contact))
+
+    def test_can_model_reads_the_declaration(self) -> None:
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+        scoped = self._scoped_contact_reader()
+        stranger = baker.make(User)
+        bob = baker.make(User)
+        grant_create(user=bob, role=self.shelter_role, scope_org=self.org)
+
+        self.assertTrue(can_model(gso, ContactInfo.perms.CHANGE, ContactInfo))
+        # The scoped reader HOLDS VIEW in its scope — the class still refuses it.
+        self.assertFalse(can_model(scoped, ContactInfo.perms.VIEW, ContactInfo))
+        self.assertFalse(can_model(stranger, ContactInfo.perms.VIEW, ContactInfo))
+        # Non-GLOBAL models keep today's can_anywhere semantics.
+        self.assertTrue(can_model(bob, Shelter.perms.VIEW, Shelter))
 
 
 class CanGloballyTestCase(TestCase):

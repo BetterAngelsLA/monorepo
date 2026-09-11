@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from typing import Any, ClassVar, Dict, Iterator, Optional, cast
 
 from common.enums import AttachmentType
@@ -27,6 +28,24 @@ class BaseModel(models.Model):
         abstract = True
 
 
+# ``Access.read`` / ``Access.write`` value: only the global tier passes — org scopes never widen it.
+ACCESS_GLOBAL = "global"
+
+
+@dataclass(frozen=True)
+class Access:
+    """Authority classes for a model's rows, per direction (sketch, ADR 0004).
+
+    ``None`` leaves the org rules in charge (reach-driven reads; the model's
+    write tier for writes).  ``ACCESS_GLOBAL`` means only the global tier ever
+    passes.  The write-tier values (SHARED, OBJECT) and PARENT fold in from
+    the write-tiers work — one declaration slot, no new attributes.
+    """
+
+    read: str | None = None
+    write: str | None = None
+
+
 class OrgScoped(models.Model):
     """Declares how a model reaches the organizations that scope it (ADR 0001).
 
@@ -40,9 +59,15 @@ class OrgScoped(models.Model):
 
     Object-grant ancestors are derived from the same graph, so this one
     declaration drives both the org filter and the object-grant cascade.
+
+    ``access`` (sketch, ADR 0004) optionally names the authority classes that
+    take precedence over org reach — per direction (``read`` / ``write``).
+    ``ACCESS_GLOBAL`` means only the global tier ever passes; the default
+    (``None``) leaves the org rules in charge.
     """
 
     org_via: ClassVar[tuple[str, ...] | None] = ()
+    access: ClassVar[Access] = Access()
     _org_paths: ClassVar[tuple[str, ...] | None] = None
 
     class Meta:
