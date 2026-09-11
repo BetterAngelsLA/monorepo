@@ -234,7 +234,9 @@ def retire_superseded_phantom_permissions() -> None:
     # are MTI subclasses of Group, so their throughs are the same
     # ``auth_group_permissions`` table; dedupe so it is never processed twice.
     # If another M2M to Permission is added later, it must join this list.
-    permission_m2m_throughs = tuple(
+    # ``type[Any]``: django-stubs types ``.through`` as ``type[Model]``, which
+    # has no ``.objects``; only the manager column is used below.
+    permission_m2m_throughs: tuple[type[Any], ...] = tuple(
         dict.fromkeys(
             (
                 user_cls.user_permissions.through,
