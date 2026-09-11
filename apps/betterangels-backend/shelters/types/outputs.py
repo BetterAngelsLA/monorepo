@@ -11,7 +11,7 @@ from clients.types import ClientProfileType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
-from common.permissions.selectors import can_globally
+from common.permissions.selectors import visible
 from django.db.models import Prefetch, QuerySet
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
@@ -284,10 +284,18 @@ class ShelterType(ShelterTypeMixin):
 class OperatorShelterType(ShelterTypeMixin):
     @strawberry_django.field(prefetch_related=["additional_contacts"])
     def additional_contacts(self, root: models.Shelter, info: Info) -> List[ShelterContactInfoType]:
-        """BA-only contacts — global-tier gate: only the Global Shelter Operator sees them (ADR 0001 §2.4)."""
+        """BA-only contacts — declared ``ACCESS_GLOBAL`` class: the rows themselves answer.
+
+        :func:`visible` reads ContactInfo's access class, so the Global Shelter
+        Operator sees the rows and every org-scoped holder sees none — no
+        call-site tier check (ADR 0001 §2.4 / ADR 0004 sketch).
+        """
         user = cast(User, get_current_user(info))
-        if user and user.is_authenticated and can_globally(user, models.ContactInfo.perms.VIEW):
-            return cast(List[ShelterContactInfoType], list(root.additional_contacts.all()))
+        if user and user.is_authenticated:
+            return cast(
+                List[ShelterContactInfoType],
+                list(visible(root.additional_contacts.all(), user, models.ContactInfo.perms.VIEW)),
+            )
         return []
 
     @classmethod

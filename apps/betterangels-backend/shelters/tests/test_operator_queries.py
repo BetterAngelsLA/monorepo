@@ -817,7 +817,7 @@ class OperatorShelterPermissionTestCase(GraphQLBaseTestCase):
 class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
     """additionalContacts on operatorShelter is a global-tier (GSO-only) field.
 
-    The field reads the global tier only (``can_globally``): a scoped shelter
+    The field reads the declared ``ACCESS_GLOBAL`` class: a scoped shelter
     operator — even with a VIEW grant — gets an empty list, while a Global
     Shelter Operator (whose global Role carries the ContactInfo perms) sees it.
     """

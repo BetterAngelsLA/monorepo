@@ -224,6 +224,8 @@ def invalidate_scope_cache(user: "User") -> None:
 def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":
     """The rows of *qs* on which *user* may exercise *perm*.
 
+    * ``access.read = ACCESS_GLOBAL`` — all rows for the global tier, none for
+      anyone else (org scopes never widen it).
     * ``ALL`` (global tier) — the queryset, unconfined.
     * platform-shared model (``org_via = None``) — all rows when *user* holds
       *perm* anywhere, none otherwise.
@@ -233,13 +235,19 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
     *in_org* confines the view to one organization, and only for finite scopes —
     a global holder is never org-confined by a stale header (ADR 0001 §2.4).
     """
-    from common.models import OrgScoped
+    from common.models import ACCESS_GLOBAL, OrgScoped
 
     if not issubclass(qs.model, OrgScoped):
         return qs.none()
 
-    paths = qs.model.org_paths()
     s = scopes(user, perm)
+
+    if qs.model.access.read == ACCESS_GLOBAL:
+        # GLOBAL read class: only the global tier passes; org reach
+        # (including a scoped holder of the perm) never widens the rows.
+        return qs if s is ALL else qs.none()
+
+    paths = qs.model.org_paths()
 
     if s is ALL:
         qs = qs
@@ -282,6 +290,36 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
 def can_anywhere(user: "User", perm: str) -> bool:
     """Authority anywhere — the check for creates on platform-shared models."""
     s = scopes(user, perm)
+    return s is ALL or s.exists()
+
+
+def _access_class(model: "type[Model]", perm: str) -> str | None:
+    """The declared authority class for *perm* on *model* (sketch, ADR 0004).
+
+    Reads resolve through ``Access.read``; everything else through
+    ``Access.write`` — the split follows Django's codename convention.
+    """
+    access = getattr(model, "access", None)
+    if access is None:
+        return None
+    codename = perm.rsplit(".", 1)[-1]
+    return access.read if codename.startswith("view_") else access.write
+
+
+def can_model(user: "User", perm: str, model: "type[Model]") -> bool:
+    """Rowless authority on a *model's* declared access class.
+
+    The gate for payload fields whose rows do not exist yet (nested creates,
+    fields on a parent mutation), where :func:`visible` cannot be applied.
+    A GLOBAL-class model answers at the global tier only — a scoped Grant
+    holding the perm anywhere still fails; other models keep today's
+    :func:`can_anywhere` semantics until ADR 0004 defines the full matrix.
+    """
+    from common.models import ACCESS_GLOBAL
+
+    s = scopes(user, perm)
+    if _access_class(model, perm) == ACCESS_GLOBAL:
+        return s is ALL
     return s is ALL or s.exists()
 
 
