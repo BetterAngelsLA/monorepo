@@ -1,9 +1,30 @@
-"""Read-side authorization selectors (ADR 0001 §2.4, §2.10).
+"""Authorization selectors (ADR 0001 §2.4, §2.10, RFC 0002 §Precondition).
 
-Pull-only: given a user, a permission, and a queryset, return the rows the user
-may exercise that permission on.  Follows the repo's service/selector pattern
+Pull-only: given a user, a permission, and (usually) a queryset, answer what
+authority the user holds.  This module is the single place the org-scope and
+write-tier rules live; it follows the repo's service/selector pattern
 (docs/styleguides/python.md): no side effects; memoized per request on the user
 instance, mirroring ``ModelBackend._perm_cache``.
+
+Layers, scope math to mutation gate:
+
+* ``scopes`` / ``global_permissions`` — the raw material: the org set (or
+  ``ALL``) in which the user holds *perm*.
+* ``visible`` / ``writable`` — the **queryset** layer: scope a queryset to the
+  rows the user may exercise *perm* on, for reads / writes respectively.
+  Callers compose freely on the result (``get``, ``first``,
+  ``filter(…).exists()``) — or take the whole row set for a list.
+* ``can`` / ``can_obj`` / ``can_anywhere`` — verdicts: authority at an org
+  (creates), on one row (``can_obj`` is ``writable`` applied to a row), or
+  anywhere.
+* ``get_writable_or_deny`` (``common.permissions.utils``) — the mutation
+  leaf: fetch a write target through ``writable``, or deny.  Mutation gates
+  fetch through it (or through ``writable`` directly for non-pk shapes) —
+  never from a raw manager.
+
+Read scope and write scope are chosen independently (RFC 0002 §Precondition):
+``visible`` answers the read rule, ``writable`` the write rule — one is never
+reused for the other (a SHARED-read model still writes org-scoped).
 
 The global tier is read explicitly (superuser, global Role in ``user.groups``,
 ``user_permissions``) — NOT ``user.has_perm`` — until the legacy
@@ -212,7 +233,7 @@ def invalidate_scope_cache(user: "User") -> None:
     hard-stale case).  The same request-scope staleness applies to the newer
     global-tier and effective-report memos (``global_permissions`` /
     ``organization_effective_permissions``) and the list-read holder
-    memos (``_visible_client_rows_cache`` / ``_visible_task_rows_cache``),
+    memos (``_visible_client_rows_cache`` / ``_visible_task_rows_cache`` / ``_visible_note_rows_cache``),
     so they are dropped here too.
     Org→org delegation rows have no single user principal, and the selectors
     are consumed per request on fresh user instances, so those flows need no
@@ -223,6 +244,7 @@ def invalidate_scope_cache(user: "User") -> None:
     user.__dict__.pop("_org_effective_permissions", None)
     user.__dict__.pop("_visible_client_rows_cache", None)
     user.__dict__.pop("_visible_task_rows_cache", None)
+    user.__dict__.pop("_visible_note_rows_cache", None)
 
 
 def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":
@@ -260,6 +282,36 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
     return qs
 
 
+def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
+    """The rows of *qs* on which *user* may exercise *perm* **for writes**.
+
+    ``can_obj`` as a queryset filter (RFC 0002 §Precondition — write scope is
+    chosen independently of read scope).  Mutation gates fetch through this
+    instead of fetching unfiltered and checking ``can_obj`` afterwards: the
+    fetch itself is the gate (a forbidden row is simply unfetchable), and one
+    query does the work of two.  The org arm reuses :func:`visible` *with the
+    write perm* — literally the predicate ``can_obj`` resolves for a row.
+
+    Tiers (kept in lockstep with :func:`can_obj`, which delegates here):
+
+    * **ORG** (org-anchored, ``org_via`` not ``None``) — ``visible(qs, …)``.
+    * **SHARED** (``write_tier = WRITE_SHARED``) — all rows iff the user holds
+      *perm* anywhere, none otherwise.
+    * **Fail-closed default** — all rows only for the global tier (``scopes``
+      is ALL); ``WRITE_OBJECT`` sits here until the object arm wires grants.
+    """
+    from common.models import OrgScoped, WRITE_SHARED
+
+    model = qs.model
+    if not issubclass(model, OrgScoped):
+        return qs.none()
+    if model.org_via is not None:
+        return visible(qs, user, perm)
+    if model.write_tier == WRITE_SHARED:
+        return qs if can_anywhere(user, perm) else qs.none()
+    return qs if scopes(user, perm) is ALL else qs.none()
+
+
 def can(user: "User", perm: str, *, org: Any) -> bool:
     """Authority in an organization — the check for creates, which have no row yet."""
     from accounts.models import Grant
@@ -271,32 +323,15 @@ def can(user: "User", perm: str, *, org: Any) -> bool:
 
 
 def can_obj(user: "User", perm: str, obj: "Model") -> bool:
-    """The single-row write check — the row filter applied to one row.
+    """The single-row write check — :func:`writable` applied to one row.
 
-    Write scope is chosen independently of read scope (RFC 0002 §Precondition):
-
-    * **ORG** (derived default for an org-anchored model, ``org_via`` not
-      ``None``) — the row must sit in an org the user can exercise *perm* in.
-      Unchanged from the pre-tier contract.
-    * **SHARED** (declared ``write_tier = WRITE_SHARED`` on a platform-shared
-      model) — any holder of *perm* anywhere may act (``can_anywhere``).
-      ``ClientProfile`` declares this to match ``main`` (RFC 0002 decision #1).
-    * **Fail-closed default** for a platform-shared model with no declared tier
-      (finding C1 / RFC 0002): the read rule never feeds an undeclared write —
-      only the global tier (``scopes`` is ALL) may act, until an object grant
-      covers the row once the object arm is wired at the clients cutover.
+    Kept for callers that already hold a row (services, ``explain``); mutation
+    gates should instead fetch *through* :func:`writable` so the fetch itself
+    is the gate.  The write tiers live in :func:`writable`'s docstring
+    (RFC 0002 §Precondition); this delegates so the two can never drift.
     """
-    from common.models import OrgScoped, WRITE_SHARED
-
     model = obj.__class__
-    if not issubclass(model, OrgScoped):
-        return False
-    if model.org_via is not None:
-        return visible(model._base_manager.filter(pk=obj.pk), user, perm).exists()
-    if model.write_tier == WRITE_SHARED:
-        return can_anywhere(user, perm)
-    s = scopes(user, perm)
-    return s is ALL
+    return writable(model._base_manager.all(), user, perm).filter(pk=obj.pk).exists()
 
 
 def can_anywhere(user: "User", perm: str) -> bool:

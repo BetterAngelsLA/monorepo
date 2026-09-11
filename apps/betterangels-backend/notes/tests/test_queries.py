@@ -68,7 +68,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 10
+        expected_query_count = 21
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -136,7 +136,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 }}
             }}
         """
-        expected_query_count = 11
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
@@ -188,7 +188,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         """
 
-        with self.assertNumQueriesWithoutCache(4):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
@@ -237,7 +237,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         """
 
-        with self.assertNumQueriesWithoutCache(4):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
@@ -318,7 +318,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         """
 
-        with self.assertNumQueriesWithoutCache(4):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
@@ -371,7 +371,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         filters: dict[str, Any] = {"search": search_terms}
 
-        expected_query_count = 4
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
@@ -414,7 +414,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
 
         # Test descending order
-        expected_query_count = 3
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"ordering": [{"interactedAt": "DESC"}]})
 
@@ -465,7 +465,7 @@ class OrganizationServiceQueryTestCase(GraphQLBaseTestCase):
             "subOrdering": [{"priority": "ASC"}],
         }
 
-        expected_query_count = 6
+        expected_query_count = 7
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -506,7 +506,7 @@ class OrganizationServiceCategoryQueryTestCase(GraphQLBaseTestCase):
         """
         variables = {"ordering": [{"priority": "ASC"}]}
 
-        expected_query_count = 5
+        expected_query_count = 6
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)

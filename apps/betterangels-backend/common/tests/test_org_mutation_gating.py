@@ -28,6 +28,7 @@ import pytest
 GRANT_GATED_MODULES = (
     "accounts.schema",
     "clients.schema",
+    "notes.schema",
     "reports.schema",
     "shelters.schema",
     "tasks.schema",
@@ -44,6 +45,8 @@ GATE_MARKERS = (
     "can_anywhere(",
     "can_obj(",
     "visible(",
+    "writable(",
+    "get_writable_or_deny(",
     "permission=",
     "can_anywhere_checker",
 )
@@ -75,6 +78,24 @@ GATE_EXEMPT = {
     ),
     ("clients.schema", "import_client_profile"): (
         "import surfaces remain legacy until a role carries the import-record perms"
+    ),
+    ("notes.schema", "create_note_data_import"): (
+        "import surfaces remain legacy until a role carries the import-record perms"
+    ),
+    ("notes.schema", "import_note"): ("import surfaces remain legacy until a role carries the import-record perms"),
+}
+
+#: Raw ``get_or_none(<Model>.objects.all(), …)`` fetches allowed inside a gated
+#: module's ``Mutation`` bodies, each with the reason.  Everything else must
+#: fetch its write target through ``writable(``/``get_writable_or_deny(`` —
+#: the fetch is the gate (RFC 0002 §Precondition), one query instead of
+#: fetch-then-check, and unfetchable means unwritable.
+RAW_FETCH_EXEMPT = {
+    ("notes.schema", "sr = get_or_none(ServiceRequest.objects.all(), data.id)"): (
+        "SR row load is un-scoped by design; the owning note's writable filter is the gate"
+    ),
+    ("tasks.schema", "task = get_or_none(Task.objects.all(), data.id)"): (
+        "two-step can_obj gate converts to the write-scoped fetch in the follow-up PR"
     ),
 }
 
@@ -191,3 +212,34 @@ def test_exemptions_name_real_mutations_and_carry_a_reason() -> None:
 def test_configured_modules_still_exist(module_name: str) -> None:
     """A renamed/moved module must fail loudly, not silently leave the net open."""
     assert (_app_dir(module_name.split(".", 1)[0]) / "schema.py").exists()
+
+
+@pytest.mark.parametrize("module_name", GRANT_GATED_MODULES)
+def test_write_targets_fetch_through_the_write_scoped_selector(module_name: str) -> None:
+    """Raw ``get_or_none(objects.all(), pk)`` fetches must not creep into mutations.
+
+    Fetching through ``writable()``/``get_writable_or_deny()`` makes the fetch
+    itself the gate; a bare fetch (even one followed by ``can_obj``) costs a
+    second query and invites forgetting the check.  Exceptions carry a reason.
+    """
+    app = module_name.split(".", 1)[0]
+    source = (_app_dir(app) / "schema.py").read_text()
+    offenders: list[str] = []
+    for node in ast.walk(ast.parse(source)):
+        if not isinstance(node, ast.ClassDef) or node.name != "Mutation":
+            continue
+        for item in node.body:
+            if not isinstance(item, ast.FunctionDef):
+                continue
+            segment = ast.get_source_segment(source, item) or ""
+            for line in segment.splitlines():
+                snippet = line.strip()
+                if "get_or_none(" not in snippet or ".objects.all()" not in snippet or "writable" in snippet:
+                    continue
+                if (module_name, snippet) in RAW_FETCH_EXEMPT:
+                    continue
+                offenders.append(f"{module_name}.{item.name}: {snippet}")
+    assert not offenders, (
+        "write targets must fetch through writable(...)/get_writable_or_deny(...) "
+        "or be exempted with a reason in RAW_FETCH_EXEMPT:\n" + "\n".join(offenders)
+    )

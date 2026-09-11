@@ -628,6 +628,7 @@ input CreateNoteInput {
   clientProfile: ID = null
   isSubmitted: Boolean = false
   interactedAt: DateTime = null
+  organizationId: ID = null
   location: LocationInput = null
   providedServices: [CreateNoteServiceInput!] = null
   requestedServices: [CreateNoteServiceInput!] = null
@@ -1560,17 +1561,17 @@ type Mutation {
   updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload! @hmisDirective @isHmisAuthenticated
   createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
   removeHmisNoteServiceRequest(data: RemoveHmisNoteServiceRequestInput!): RemoveHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
-  createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_note"}], any: true)
-  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
+  createNote(data: CreateNoteInput!): CreateNotePayload!
+  updateNote(data: UpdateNoteInput!): UpdateNotePayload!
+  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload!
+  revertNote(data: RevertNoteInput!): RevertNotePayload!
+  deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload!
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload!
+  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
-  generateNoteFileUploads(data: GenerateNoteAttachmentUploadsInput!): GenerateNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  resolveNoteFileUploads(data: ResolveNoteAttachmentUploadsInput!): ResolveNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  generateNoteFileUploads(data: GenerateNoteAttachmentUploadsInput!): GenerateNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  resolveNoteFileUploads(data: ResolveNoteAttachmentUploadsInput!): ResolveNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload!
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload!
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
@@ -2124,8 +2125,8 @@ type Query {
   hmisClientProfile(id: ID!): HmisClientProfileType! @hmisDirective @isHmisAuthenticated
   hmisNote(id: ID!): HmisNoteType! @hmisDirective @isHmisAuthenticated
   hmisClientPrograms(clientId: ID!): [HmisClientProgramType!]! @hmisDirective @isHmisAuthenticated
-  note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(pagination: OffsetPaginationInput, filters: NoteFilter, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  note(pk: ID!): NoteType! @hasPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notes(pagination: OffsetPaginationInput, filters: NoteFilter, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated!
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
