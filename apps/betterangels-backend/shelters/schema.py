@@ -6,7 +6,7 @@ import strawberry_django
 from accounts.models import Organization, User
 from accounts.types import OrganizationType
 from common.graphql.types import AuthorizedPresignedS3UploadsType, BulkDeleteInput, BulkDeleteResult, DeletedObjectType
-from common.permissions.selectors import holds_globally
+from common.permissions.selectors import can_globally
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max, QuerySet
@@ -142,7 +142,7 @@ class Mutation:
         # BA-only field: gate on the global tier only — a scoped Grant must
         # never pass (ADR 0001 §2.4).  Only global Roles carrying the
         # ContactInfo perms (the Global Shelter Operator) satisfy this.
-        if data.additional_contacts is not UNSET and not holds_globally(user, ContactInfo.perms.CHANGE):
+        if data.additional_contacts is not UNSET and not can_globally(user, ContactInfo.perms.CHANGE):
             raise PermissionDenied("Editing additional contacts requires the Global Shelter Operator role.")
 
         clean = strawberry.asdict(data)

@@ -817,7 +817,7 @@ class OperatorShelterPermissionTestCase(GraphQLBaseTestCase):
 class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
     """additionalContacts on operatorShelter is a global-tier (GSO-only) field.
 
-    The field reads the global tier only (``holds_globally``): a scoped shelter
+    The field reads the global tier only (``can_globally``): a scoped shelter
     operator — even with a VIEW grant — gets an empty list, while a Global
     Shelter Operator (whose global Role carries the ContactInfo perms) sees it.
     """
@@ -857,6 +857,24 @@ class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
 
     def test_additional_contacts_hidden_for_scoped_operator(self) -> None:
         response = self._query()
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["operatorShelter"]["additionalContacts"], [])
+
+    def test_additional_contacts_hidden_for_granted_scoped_contactinfo_role(self) -> None:
+        """A scoped role carrying the ContactInfo perms plus a Grant still fails.
+
+        Adversarial on purpose: ``can_anywhere`` would admit this user, so only
+        a global-tier check keeps the gate closed (SDB-277).
+        """
+        self._grant_permission(
+            self.org_1_case_manager_1,
+            ContactInfo.perms.VIEW,
+            self.org_1,
+            role_name="Scoped Contact Viewer",
+        )
+
+        response = self._query()
+
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["operatorShelter"]["additionalContacts"], [])
 

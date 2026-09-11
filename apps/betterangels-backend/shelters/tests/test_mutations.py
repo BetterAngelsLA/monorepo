@@ -7,7 +7,7 @@ from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase
 
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-from shelters.models import SPA, City, Service, ServiceCategory, Shelter
+from shelters.models import SPA, City, ContactInfo, Service, ServiceCategory, Shelter
 from shelters.tests.utils import ShelterTestCase
 
 
@@ -1051,6 +1051,39 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
 
     def test_update_shelter_additional_contacts_denied_for_scoped_operator(self) -> None:
         """A scoped operator (no global ContactInfo perms) may not submit the field."""
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "additionalContacts": [{"contactName": "Ada", "contactNumber": "2125550100"}],
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(
+            response,
+            "updateShelter",
+            "Global Shelter Operator",
+            kind="PERMISSION",
+        )
+        self.assertEqual(self.shelter.additional_contacts.count(), 0)
+
+    def test_update_shelter_additional_contacts_denied_for_granted_scoped_contactinfo_role(self) -> None:
+        """A scoped role carrying the ContactInfo perms plus a Grant still fails.
+
+        Adversarial on purpose: ``can_anywhere`` would admit this user, so only
+        a global-tier check keeps the gate closed (SDB-277).
+        """
+        self._grant_permission(
+            self.operator,
+            ContactInfo.perms.CHANGE,
+            self.org,
+            role_name="Scoped Contact Editor",
+        )
         self.graphql_client.force_login(self.operator)
 
         response = self.execute_graphql(

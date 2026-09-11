@@ -285,12 +285,17 @@ def can_anywhere(user: "User", perm: str) -> bool:
     return s is ALL or s.exists()
 
 
-def holds_globally(user: "User", perm: str) -> bool:
+def can_globally(user: "User", perm: str) -> bool:
     """Whether *user* holds *perm* at the global tier — never through a Grant.
 
     The global arm of :func:`scopes`: superuser, a global Role carrying *perm*
     in ``user.groups``, or a direct ``user_permissions`` row.  Scoped Grant
     reach never satisfies this, so it is the check for gates that must stay
     global (e.g. BA-only fields only the GSO role may exercise).
+
+    Sibling of :func:`can_anywhere`, which admits scoped Grant reach
+    (``ALL or s.exists()``) — use this predicate only when scoped authority
+    must never satisfy the gate.  The two diverge the moment a scoped Role
+    carries *perm* and is granted.
     """
     return scopes(user, perm) is ALL

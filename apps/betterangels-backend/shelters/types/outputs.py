@@ -11,7 +11,7 @@ from clients.types import ClientProfileType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
-from common.permissions.selectors import holds_globally
+from common.permissions.selectors import can_globally
 from django.db.models import Prefetch, QuerySet
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
@@ -286,7 +286,7 @@ class OperatorShelterType(ShelterTypeMixin):
     def additional_contacts(self, root: models.Shelter, info: Info) -> List[ShelterContactInfoType]:
         """BA-only contacts — global-tier gate: only the Global Shelter Operator sees them (ADR 0001 §2.4)."""
         user = cast(User, get_current_user(info))
-        if user and user.is_authenticated and holds_globally(user, models.ContactInfo.perms.VIEW):
+        if user and user.is_authenticated and can_globally(user, models.ContactInfo.perms.VIEW):
             return cast(List[ShelterContactInfoType], list(root.additional_contacts.all()))
         return []
 
