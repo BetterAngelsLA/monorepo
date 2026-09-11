@@ -1,15 +1,33 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.extensions import HasOrgPerm
-from common.permissions.utils import IsAuthenticated, get_current_organization
+from accounts.models import User as AccountUser
+from common.permissions.utils import IsAuthenticated, require_can
+from common.utils import get_or_none
+from django.core.exceptions import PermissionDenied
 from organizations.models import Organization
+from strawberry import ID
 from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
 
 from .permissions import ReportPermissions
 from .selectors import report_default_date_range, report_summary
+
+
+def _org_or_deny(org_id: object) -> Organization:
+    """Resolve an org id from client input, failing closed.
+
+    A missing/unknown/non-numeric org is a permission problem
+    (``PermissionDenied``), never a ``DoesNotExist`` crash or a ``ValueError``
+    — ``get_or_none`` is the house guard (``common.utils``).  Module-level
+    because strawberry-django resolvers are invoked unbound.
+    """
+    org = get_or_none(Organization.objects.all(), org_id)
+    if org is None:
+        raise PermissionDenied("You do not have access to this organization.")
+    return org
 
 
 @strawberry.type
@@ -40,18 +58,25 @@ class ReportSummaryType:
 
 @strawberry.type
 class Query:
-    @strawberry_django.field(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(ReportPermissions.VIEW_REPORTS)],
-    )
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
     def report_summary(
         self,
         info: Info,
+        organization_id: ID,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
     ) -> ReportSummaryType:
-        org_id = get_current_organization(info)
-        org = Organization.objects.get(pk=org_id)
+        """Report summary for an organization — grant-only, header-free (ADR 0001 §5.3).
+
+        The org is carried in the payload (``organizationId`` — no header is
+        read); authority is ``require_can``/``can(reports.view_reports)`` at
+        that org — role-backed ORG_ADMIN/ORG_SUPERUSER backfilled Grants, or the
+        global tier.  Membership is not consulted; a legacy-only holder fails
+        closed; an unknown org id fails closed.
+        """
+        user = cast(AccountUser, get_current_user(info))
+        org = _org_or_deny(organization_id)
+        require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
         if start_date is None or end_date is None:
             default_start, default_end = report_default_date_range()

@@ -734,7 +734,7 @@ still needs at its cutover:
 | **Tasks** | `Task.organization` | `()` | legacy template + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
 | **Referrals** | `Referral.organization` (+ shelter) | `()` — but "own org **or** via shelter" is inexpressible today (§4.1 note) | legacy + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
 | **Teams** | `Team.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — no scoped `Role` row yet | **Cut over (§5.3)** — no guardian rows; org reads/writes via `can()`/`can_obj` on the role-backed admin roles | None (after §5.3) |
-| **Reports** | report row `.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — no scoped `Role` row yet | **Cut over (§5.3)** — DRF + GraphQL reads authorize through the grant predicate | None (after §5.3) |
+| **Reports** | report row `.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — role-backed as of §5.3 | **Cut over (§5.3)** — DRF + GraphQL reads authorize through the grant predicate | None (after §5.3) |
 | **Notes** | `Note.organization` | `()` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
 | **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy model-level perms on CASEWORKER (no per-record rows) | parity-first: SHARED write via `can_anywhere` (RFC 0002); owner-tier (`created_by_org`) parked | §5.1 / RFC 0002 |
 | **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
@@ -990,11 +990,11 @@ regenerated at each step.
 
 **Status on main — teams landed first, on the grant-only model (2026-09-09).**
 Main's machinery evolved past the stack this section sketched: the seam is the
-per-domain `can()`/`require_can` (shelters cut over that way in §4.1/#2412), and
-two of the four org-admin consumers cannot ride a scoped `Role` today — the
-`organizations.*` member-management codenames and `reports.view_reports` resolve
-to no concrete model, so `sync_roles` refuses them on a RoleDef (phantom
-ContentType). The teams cutover therefore landed *teams alone*:
+per-domain `can()`/`require_can` (shelters cut over that way in §4.1/#2412).  At
+the teams landing, the `organizations.*` member-management codenames and
+`reports.view_reports` could not ride a scoped `Role` — they resolved to no
+concrete model, so `sync_roles` refused them on a RoleDef (phantom
+ContentType).  The teams cutover therefore landed *teams alone*:
 
 - `ORG_ADMIN`/`ORG_SUPERUSER` are role-backed with a scoped `Role` carrying
   **`teams.*` only**; `backfill_org_admin_grants()` converts every existing
@@ -1042,6 +1042,53 @@ ContentType). The teams cutover therefore landed *teams alone*:
   (``get_or_none``'s pk guard) instead of reaching the DB as an unhandled
   ``ValueError``, and answer missing-vs-forbidden rows with one refusal, so
   neither is a crash nor an existence oracle.
+
+**Status on main — reports joined (2026-09-09).** ``_resolve_permissions`` now
+binds a RoleDef permission to the model that *declares* it in
+``Meta.permissions`` (resolved from the app registry), so a custom codename
+whose last token is not its model — ``reports.view_reports`` on
+``ScheduledReport`` — rides a scoped Role instead of tripping the
+phantom-ContentType guard.  The reports slice then mirrors teams:
+
+- ``ORG_ADMIN``/``ORG_SUPERUSER`` Roles add ``reports.view_reports``; the
+  existing backfilled org-admin Grants inherit it from the Role row on the next
+  ``sync_roles`` (no re-backfill).
+- ``reportSummary`` (GraphQL) and the DRF interaction-data export authorize via
+  ``require_can``/``can`` at the target org — membership no longer consulted, a
+  legacy-only holder fails closed.  ``reports`` joins ``LEGACY_INERT_APPS``;
+  ``ScheduledReport`` declares ``OrgScoped`` (permissions.E005).
+- **Header-free.** Reports is a web feature (the admin portal), so it cut over
+  in one step instead of keeping the ``X-Organization-ID`` header as a
+  deprecated fallback: ``reportSummary`` now carries the org in the payload
+  (a required ``organizationId`` argument) and the DRF export already took the
+  ``org_id`` query param.  No reports surface reads the header.
+- Phantom Permission/ContentType rows synthesized by the old last-token
+  resolution and superseded by real-model binding are retired idempotently at
+  ``post_migrate`` (``retire_superseded_phantom_permissions``).
+- Only **member management** (`organizations.*` portal codenames — registered on
+  no model) still cannot ride a scoped Role; it is the last legacy-only domain
+  and keeps the ORG_ADMIN legacy ``PermissionGroup`` rows meaningful until its
+  own cutover.
+
+**Cutover audit — hand-defined roles.** The backfills and the membership mirror
+only convert code-owned templates whose name maps to a scoped `Role`
+(`ORG_ADMIN`/`ORG_SUPERUSER` here); a `PermissionGroupTemplate` created in the
+admin that carries a cut-over permission (e.g. `reports.view_reports`) gets no
+scoped `Role` and therefore no `Grant` — its members lose that domain's
+authority when the surface flips to grant-only (the same exposure every domain
+cutover carries).  Audit before deploying a cutover and re-grant via a
+role-backed template if the query below returns holders; otherwise the
+revocation is accepted:
+
+```python
+PermissionGroupTemplate.objects.filter(
+    permissions__content_type__app_label="reports", permissions__codename="view_reports"
+).exclude(name__in=list(REGISTRY.template_names()))
+# template-less groups: PermissionGroup.objects.filter(
+#     permissions__content_type__app_label="reports", permissions__codename="view_reports",
+#     template__isnull=True,
+# )
+```
 
 ## 6. References
 

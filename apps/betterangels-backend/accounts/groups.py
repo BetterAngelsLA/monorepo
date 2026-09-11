@@ -30,14 +30,20 @@ ORG_SUPERUSER = TemplateConfig(
 
 
 # ── Role definitions (ADR 0001 §2.2 — org-admin cutover) ─────────────────
-# Role-backing ORG_ADMIN / ORG_SUPERUSER lets the team mutations authorize via
-# Grants (``can()``).  The Role carries only ``teams.*``: the member-management
-# codenames (``organizations.*``) and ``reports.view_reports`` resolve to no
-# concrete model, so a RoleDef carrying them fails ``sync_roles``' phantom-
-# ContentType guard; those surfaces stay legacy until their own cutover.
+# Role-backing ORG_ADMIN / ORG_SUPERUSER lets the teams and reports surfaces
+# read authority from Grants (``can()``) instead of legacy ``PermissionGroup``
+# rows.  The scoped Role carries ``teams.*`` + ``reports.view_reports`` —
+# codenames that resolve to a real model (``_resolve_permissions`` binds
+# ``reports.view_reports`` to ``ScheduledReport``'s ContentType).  The
+# member-management codenames (``organizations.*``) are portal actions
+# registered on no concrete model, so they cannot ride a RoleDef and stay
+# legacy until their own cutover; the legacy ``PermissionGroup`` rows are kept
+# (dual write) until the org-admin teardown retires them (``reconcile`` only
+# drops stale derived groups, and ORG_ADMIN is still a preset until then).
 ORG_ADMIN_ROLE = RoleDef(
     name=ORG_ADMIN.name,
     permissions=[
+        ReportPermissions.VIEW_REPORTS,
         Team.perms.ADD,
         Team.perms.CHANGE,
         Team.perms.DELETE,
@@ -48,9 +54,10 @@ ORG_ADMIN_ROLE = RoleDef(
 
 ORG_SUPERUSER_ROLE = RoleDef(
     name=ORG_SUPERUSER.name,
-    # Same bundle as ORG_ADMIN while teams is the only scoped permission either
-    # role can carry (the phantom-ContentType guard keeps the rest legacy).
-    # Derived so the two cannot drift apart until that changes.
+    # Same bundle as ORG_ADMIN while teams + reports are the only scoped
+    # permissions either role can carry (the phantom-ContentType guard keeps
+    # member management legacy).  Derived so the two cannot drift apart until
+    # that changes.
     permissions=list(ORG_ADMIN_ROLE.permissions),
     is_invitable=ORG_SUPERUSER.is_invitable,
 )
