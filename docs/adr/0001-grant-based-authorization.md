@@ -202,11 +202,28 @@ GLOBAL_SHELTER_OPERATOR = RoleDef(
 )
 ```
 
-A `sync_roles` command `get_or_create`s the `Role` rows and sets their permissions from
+A `sync_roles` command provisions the `Role` rows and sets their permissions from
 the `RoleDef`s (replacing `sync_group_permissions` for role-backed domains; legacy
 templates keep their own sync during transition). `is_global` is **code-owned** — the
 admin may not flip it (see E002). Invite/welcome email metadata lives on the `RoleDef`,
 not on a per-org row.
+
+**A role name is an `auth.Group` name, and that namespace is shared.** `Role` and
+`PermissionGroup` are MTI subclasses of `auth.Group`, so all three draw from the same
+unique `auth_group.name`. A plain `get_or_create` therefore inserts the parent row
+first, and a *bare* `Group` carrying a RoleDef's name (no `Role`/`PermissionGroup`
+child — a pre-cutover leftover) aborts the whole provisioning transaction on
+`auth_group_name_key`, rolling back every Role, every grant backfill and the phantom
+retire for that deploy (2026-09-11 incident: a bare `Caseworker` group cost one
+deploy's entire conversion). Provisioning resolves the name-holder deterministically:
+an existing `Role` is reused; a **memberless** bare `Group` is adopted as the Role's
+group row (the `accounts_role` child is written with the same pk, keeping the row's
+identity); a bare `Group` **with members** is renamed to `"<name> (legacy group <pk>)"`
+and a fresh `Role` created — a scoped `Role` must never sit in `user.groups` (E001), so
+those memberships stay on the renamed group; a `PermissionGroup` is never adopted or
+renamed — an exact match there is a hand-made row and fails with an actionable error.
+Idempotent: once the name is held by the `Role`, later runs take the reuse branch and
+touch nothing.
 
 **Global roles compose and may be narrower than full CRUD.** Authority at the global
 tier is the per-permission union of every global `Role` a user holds in `user.groups`
@@ -717,7 +734,7 @@ authorization, which is the service→selector pattern the guide prescribes.
 | Phase | Ships |
 |---|---|
 | **0** | This ADR; §7 decision log (items resolved; §7.2 open) |
-| **1** | `Role` + `Grant` models, constraints, checks, provisioning + backfill. **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** Provisioning (`sync_roles`) and backfill (`backfill_shelter_grants` / `backfill_global_role_members`) are idempotent `post_migrate` syncs + a `manage.py sync_roles` command, per the repo's "replaces RunPython data migrations" convention — not RunPython migrations. **Transition caveat: the phase-1 backfill is add-only and runs only at `migrate`** — a membership removed after the last backfill leaves a stale `Grant`, and a brand-new org gets none until the next migrate. Phase 2's dual-write must therefore treat backfilled rows as a bootstrapping snapshot: write `Grant`s synchronously on membership change (assign/invite/remove, org creation) and make the `reconcile` command *revoke* stale rows, not just backfill. |
+| **1** | `Role` + `Grant` models, constraints, checks, provisioning + backfill. **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** Provisioning (`sync_roles`) and backfill (`backfill_shelter_grants` / `backfill_global_role_members`) are idempotent `post_migrate` syncs + a `manage.py sync_roles` command, per the repo's "replaces RunPython data migrations" convention — not RunPython migrations. (`sync_roles` is one transaction: any failure inside it — e.g. an `auth_group.name` collision — skips the whole conversion chain that follows; name-holders are resolved per §2.2, so leftover `Group` rows cannot abort it.) **Transition caveat: the phase-1 backfill is add-only and runs only at `migrate`** — a membership removed after the last backfill leaves a stale `Grant`, and a brand-new org gets none until the next migrate. Phase 2's dual-write must therefore treat backfilled rows as a bootstrapping snapshot: write `Grant`s synchronously on membership change (assign/invite/remove, org creation) and make the `reconcile` command *revoke* stale rows, not just backfill. |
 | **2** | `scopes()`/`visible()`/`can()` wired to **shelter** selectors/mutations (global + user + delegation arms); mutation-surface convention; org→org delegation admin inline; assign/invite service dual-writes `Grant` (authoritative for shelters) + legacy `PermissionGroup` (authoritative for everything else) with a `reconcile` command + test. **Covers org creation and owner-role seeding** (finding F22) — new orgs born during transition get `Grant`s for shelter roles, not legacy groups. |
 | **3** | Frontend (both apps): grants-based FINITE org list (never every org — no "All" mode), header optional, effective per-org permission entries, `currentUser.permissions` global list as the shared contract (finding F24). |
 | **4** | Clients/notes cutover: wire the object arm + whitelist + cleanup signals; client-sharing data edge; **notes/guardian migration per §5 / clients per §5.1**; guardian teardown per domain. |
