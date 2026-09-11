@@ -34,6 +34,7 @@ import pytest
 GRANT_GATED_MODULES = (
     "accounts.schema",
     "clients.schema",
+    "notes.schema",
     "reports.schema",
     "shelters.schema",
     "tasks.schema",
@@ -84,10 +85,10 @@ GATE_EXEMPT = {
     ("clients.schema", "import_client_profile"): (
         "import surfaces remain legacy until a role carries the import-record perms"
     ),
-    # No entries for ``notes.schema``: it is not in ``GRANT_GATED_MODULES`` until
-    # its own cutover lands, so an exemption for it would never be consulted — a
-    # reason that reads as coverage while providing none.
-    # ``test_exemptions_name_gated_modules`` enforces this.
+    ("notes.schema", "create_note_data_import"): (
+        "import surfaces remain legacy until a role carries the import-record perms"
+    ),
+    ("notes.schema", "import_note"): ("import surfaces remain legacy until a role carries the import-record perms"),
 }
 
 #: Raw ``get_or_none(<Model>.objects.all(), …)`` fetches allowed inside a gated
@@ -99,10 +100,13 @@ GATE_EXEMPT = {
 #: Same rule as ``GATE_EXEMPT``: only modules in ``GRANT_GATED_MODULES``, because
 #: this dict is only consulted for those.
 RAW_FETCH_EXEMPT: dict[tuple[str, str], str] = {
+    ("notes.schema", "sr = get_or_none(ServiceRequest.objects.all(), data.id)"): (
+        "SR row load is un-scoped by design; the owning note's writable filter is the gate"
+    ),
     ("tasks.schema", "task = get_or_none(Task.objects.all(), data.id)"): (
         "one refusal for missing and forbidden rows — the unfiltered load plus "
-        "``can_obj`` is deliberate (no existence oracle); ``writable()`` would "
-        "raise on a missing row and reintroduce the oracle"
+        "``can_obj`` is deliberate (no existence oracle); converting it to the "
+        "write-scoped fetch is a follow-up"
     ),
 }
 
