@@ -2,6 +2,7 @@ from typing import Optional
 
 from unittest_parametrize import parametrize
 
+from common.permissions.utils import PERMISSION_DENIED_MESSAGE
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
 
@@ -41,8 +42,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                     response["data"]["createNote"]["messages"][0],
                     {
                         "kind": "PERMISSION",
-                        "field": "createNote",
-                        "message": "You don't have permission to access this app.",
+                        "field": None,
+                        "message": PERMISSION_DENIED_MESSAGE,
                     },
                 )
 
@@ -338,7 +339,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
                     {
                         "kind": "PERMISSION",
                         "field": None,
-                        "message": "You do not have permission to perform this action.",
+                        "message": PERMISSION_DENIED_MESSAGE,
                     },
                 )
             elif user_label is None:
@@ -348,7 +349,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
                     response["data"]["createNoteServiceRequest"]["messages"][0],
                     {
                         "kind": "PERMISSION",
-                        "field": "createNoteServiceRequest",
-                        "message": "You don't have permission to access this app.",
+                        "field": None,
+                        "message": PERMISSION_DENIED_MESSAGE,
                     },
                 )
