@@ -1067,7 +1067,7 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
         self.assertGraphQLOperationInfo(
             response,
             "updateShelter",
-            "Global Shelter Operator",
+            "Editing additional contacts is not allowed with this role.",
             kind="PERMISSION",
         )
         self.assertEqual(self.shelter.additional_contacts.count(), 0)
@@ -1100,7 +1100,7 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
         self.assertGraphQLOperationInfo(
             response,
             "updateShelter",
-            "Global Shelter Operator",
+            "Editing additional contacts is not allowed with this role.",
             kind="PERMISSION",
         )
         self.assertEqual(self.shelter.additional_contacts.count(), 0)
