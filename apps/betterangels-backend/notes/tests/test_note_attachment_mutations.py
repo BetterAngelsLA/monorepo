@@ -5,6 +5,7 @@ from unittest_parametrize import parametrize
 from accounts.tests.baker_recipes import permission_group_recipe
 from common.enums import AttachmentType
 from common.models import Attachment
+from common.permissions.utils import PERMISSION_DENIED_MESSAGE
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
@@ -140,7 +141,7 @@ class GenerateNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertGraphQLOperationInfo(
             response,
             "generateNoteFileUploads",
-            "You do not have permission to perform this action.",
+            PERMISSION_DENIED_MESSAGE,
             kind="PERMISSION",
         )
 
@@ -163,7 +164,7 @@ class GenerateNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertGraphQLOperationInfo(
             response,
             "generateNoteFileUploads",
-            "You do not have permission to perform this action.",
+            PERMISSION_DENIED_MESSAGE,
             kind="PERMISSION",
         )
 
@@ -435,7 +436,7 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertGraphQLOperationInfo(
             response,
             "resolveNoteFileUploads",
-            "You do not have permission to perform this action.",
+            PERMISSION_DENIED_MESSAGE,
             kind="PERMISSION",
         )
 
@@ -464,7 +465,7 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertGraphQLOperationInfo(
             response,
             "resolveNoteFileUploads",
-            "You do not have permission to perform this action.",
+            PERMISSION_DENIED_MESSAGE,
             kind="PERMISSION",
         )
 

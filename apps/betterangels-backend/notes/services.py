@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, cast
 
 import pghistory
 from django.conf import settings
@@ -27,6 +27,7 @@ from notes.permissions import (
     PrivateDetailsPermissions,
     ServiceRequestPermissions,
 )
+from organizations.models import Organization
 from tasks.models import Task
 from tasks.services import task_create
 
@@ -65,6 +66,7 @@ def note_update(
     data: Dict[str, Any],
     user: Optional[User] = None,
     permission_group: Optional[PermissionGroup] = None,
+    organization: Optional[Organization] = None,
 ) -> Note:
     """
     Update a Note, including nested relations.
@@ -95,31 +97,33 @@ def note_update(
         note.save()
 
         # --- Provided services (replace-all) ---
-        if provided_services_data is not None and user and permission_group:
+        if provided_services_data is not None and user and (permission_group or organization):
             note.provided_services.all().delete()
             if provided_services_data:
                 note_service_request_create(
                     user=user,
                     permission_group=permission_group,
+                    organization=organization,
                     note=note,
                     data=provided_services_data,
                     sr_type=ServiceRequestTypeEnum.PROVIDED,
                 )
 
         # --- Requested services (replace-all) ---
-        if requested_services_data is not None and user and permission_group:
+        if requested_services_data is not None and user and (permission_group or organization):
             note.requested_services.all().delete()
             if requested_services_data:
                 note_service_request_create(
                     user=user,
                     permission_group=permission_group,
+                    organization=organization,
                     note=note,
                     data=requested_services_data,
                     sr_type=ServiceRequestTypeEnum.REQUESTED,
                 )
 
         # --- Tasks (replace-all) ---
-        if tasks_data is not None and user and permission_group:
+        if tasks_data is not None and user and (permission_group or organization):
             # A task is a task whatever path it arrives on.  Replace-all is a
             # delete followed by a create, so it asks for exactly the authority
             # the flat ``deleteTask``/``createTask`` mutations ask for — the
@@ -169,30 +173,39 @@ def note_update_location(
 def service_request_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    permission_group: Optional[PermissionGroup] = None,
+    organization: Optional[Organization] = None,
     data: List[Dict[str, Any]],
     status: ServiceRequestStatusEnum,
     client_profile: Optional[ClientProfile] = None,
 ) -> List[ServiceRequest]:
-    """Create one or more ServiceRequests and assign object-level permissions."""
+    """Create one or more ServiceRequests.
+
+    The org comes from *organization* (grant path) or the legacy
+    ``permission_group``; guardian rows are assigned only on the legacy path
+    (RFC 0003 slice 2).
+    """
+    org = organization if organization is not None else cast("PermissionGroup", permission_group).organization
+
     created: List[ServiceRequest] = []
     for item in data:
         sr = ServiceRequest.objects.create(
-            service=_resolve_service(item, permission_group.organization),
+            service=_resolve_service(item, org),
             status=status,
             client_profile=client_profile,
             created_by=user,
         )
 
-        assign_object_permissions(
-            permission_group,
-            sr,
-            [
-                ServiceRequestPermissions.VIEW,
-                ServiceRequestPermissions.CHANGE,
-                ServiceRequestPermissions.DELETE,
-            ],
-        )
+        if permission_group is not None:
+            assign_object_permissions(
+                permission_group,
+                sr,
+                [
+                    ServiceRequestPermissions.VIEW,
+                    ServiceRequestPermissions.CHANGE,
+                    ServiceRequestPermissions.DELETE,
+                ],
+            )
         created.append(sr)
 
     return created
@@ -217,7 +230,8 @@ def _status_for_sr_type(sr_type: ServiceRequestTypeEnum) -> ServiceRequestStatus
 def note_service_request_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    permission_group: Optional[PermissionGroup] = None,
+    organization: Optional[Organization] = None,
     note: Note,
     data: List[Dict[str, Any]],
     sr_type: ServiceRequestTypeEnum,
@@ -227,6 +241,7 @@ def note_service_request_create(
         service_requests = service_request_create(
             user=user,
             permission_group=permission_group,
+            organization=organization,
             data=data,
             status=_status_for_sr_type(sr_type),
             client_profile=note.client_profile,
@@ -244,7 +259,8 @@ def note_service_request_create(
 def note_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    permission_group: Optional[PermissionGroup] = None,
+    organization: Optional[Organization] = None,
     purpose: Optional[str] = None,
     team_id: Optional[str] = None,
     public_details: str = "",
@@ -268,6 +284,8 @@ def note_create(
     if location_data:
         location = Location.get_or_create_location(location_data)
 
+    org = organization if organization is not None else cast("PermissionGroup", permission_group).organization
+
     note = Note(
         purpose=purpose,
         team_id=team_id,
@@ -278,25 +296,27 @@ def note_create(
         interacted_at=interacted_at or timezone.now(),
         location=location,
         created_by=user,
-        organization=permission_group.organization,
+        organization=org,
     )
     note.full_clean()
     note.save()
 
-    assign_object_permissions(
-        permission_group,
-        note,
-        [
-            NotePermissions.CHANGE,
-            NotePermissions.DELETE,
-            PrivateDetailsPermissions.VIEW,
-        ],
-    )
+    if permission_group is not None:
+        assign_object_permissions(
+            permission_group,
+            note,
+            [
+                NotePermissions.CHANGE,
+                NotePermissions.DELETE,
+                PrivateDetailsPermissions.VIEW,
+            ],
+        )
 
     if provided_services:
         note_service_request_create(
             user=user,
             permission_group=permission_group,
+            organization=organization,
             note=note,
             data=provided_services,
             sr_type=ServiceRequestTypeEnum.PROVIDED,
@@ -306,6 +326,7 @@ def note_create(
         note_service_request_create(
             user=user,
             permission_group=permission_group,
+            organization=organization,
             note=note,
             data=requested_services,
             sr_type=ServiceRequestTypeEnum.REQUESTED,
