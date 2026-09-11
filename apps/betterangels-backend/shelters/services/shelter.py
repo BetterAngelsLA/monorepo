@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
+from common.permissions.selectors import can_globally
 from common.permissions.utils import require_can
-from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils.text import slugify
 from organizations.models import Organization
@@ -273,11 +274,16 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     Only fields present in *data* (i.e. not ``UNSET``) are modified.
     Schedules, services, and additional contacts use full-replacement semantics
-    when provided.
+    when provided.  ``additional_contacts`` is a BA-only field: gated on the
+    global tier (``can_globally``) so a scoped Grant can never write it
+    (ADR 0001 §2.4).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no shelter matches the given ID
         or the user lacks permission.
+        ``django.core.exceptions.PermissionDenied`` when *data* carries
+        ``additional_contacts`` and the user lacks the global ContactInfo
+        ``change`` permission.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = {k: v for k, v in data.items() if v is not UNSET}
@@ -286,6 +292,14 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     cities_served_ids = data.pop("cities_served_ids", None)
     spas_served_ids = data.pop("spas_served_ids", None)
+
+    # BA-only field: gate on the global tier only — a scoped Grant must never
+    # pass (ADR 0001 §2.4).  Only global Roles carrying the ContactInfo perms
+    # (the Global Shelter Operator) satisfy this.  Checked before the shelter
+    # lookup so an unauthorized caller gets the same refusal whether or not
+    # the shelter exists or is visible.
+    if "additional_contacts" in data and not can_globally(user, ContactInfo.perms.CHANGE):
+        raise PermissionDenied("Editing additional contacts is not allowed with this role.")
 
     shelter = shelter_get(
         user=user,

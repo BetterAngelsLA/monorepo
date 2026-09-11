@@ -6,6 +6,7 @@ from common.permissions.config import RoleDef, TemplateConfig
 
 from shelters.models.availability import ShelterAvailability
 from shelters.models.lookups import (
+    SPA,
     Accessibility,
     City,
     Demographic,
@@ -18,18 +19,11 @@ from shelters.models.lookups import (
     RoomStyle,
     ShelterProgram,
     ShelterType,
-    SPA,
     SpecialSituationRestriction,
     Storage,
     VaccinationRequirement,
 )
-from shelters.models.media import (
-    ExteriorShelterPhoto,
-    InteriorShelterPhoto,
-    MediaLink,
-    ShelterPhoto,
-    Video,
-)
+from shelters.models.media import ExteriorShelterPhoto, InteriorShelterPhoto, MediaLink, ShelterPhoto, Video
 from shelters.models.reservation import Reservation
 from shelters.models.schedule import Schedule
 from shelters.models.service import Service, ServiceCategory
@@ -60,6 +54,8 @@ SHELTER_OPERATOR = TemplateConfig(
         # sees their org's private shelters through the org-scoped visible()
         # path instead (ADR 0001 §2.4).
         ClientProfile.perms.VIEW,
+        # ContactInfo deliberately NOT on the scoped role as it is
+        # currenty used for internal BA users only.
     ],
     invite_html="account/email/shelter_operator_invite.html",
     invite_txt="account/messages/shelter_operator_invite.txt",
@@ -191,6 +187,9 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
         Video.perms.DELETE,
         Video.perms.VIEW,
         # ── shelters misc ──
+        # ContactInfo perms are the global-tier gate for the BA-only
+        # additional-contacts field (``update_shelter`` / ``additionalContacts``);
+        # the scoped SHELTER_OPERATOR role deliberately carries none (ADR 0001 §2.4).
         ContactInfo.perms.ADD,
         ContactInfo.perms.CHANGE,
         ContactInfo.perms.DELETE,
