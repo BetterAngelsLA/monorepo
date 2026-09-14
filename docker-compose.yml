@@ -26,7 +26,8 @@ services:
     image: valkey/valkey:8.0.2
 
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    # MinIO no longer publishes to Docker Hub; quay.io is the official registry.
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     ports:
       - '127.0.0.1:9000:9000' # S3 API: IPv4-only so Android Emulator's adb reverse works
       - '127.0.0.1:9001:9001' # Admin console
@@ -43,7 +44,8 @@ services:
       retries: 5
 
   minio-setup:
-    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    # MinIO no longer publishes to Docker Hub; quay.io is the official registry.
+    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
     depends_on:
       minio:
         condition: service_healthy
