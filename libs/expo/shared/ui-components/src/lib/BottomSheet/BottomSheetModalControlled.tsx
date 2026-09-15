@@ -39,6 +39,11 @@ export function BottomSheetModalControlled(props: TProps) {
   const closeSheetRef = useRef<(() => void) | null>(null);
   const closingFromStateRef = useRef(false);
   const isOpenRef = useRef(isOpen);
+  const didQueueCloseRef = useRef(false);
+
+  // Id of the sheet this component currently considers "open". Lets each
+  // per-sheet onClose verify it belongs to the active sheet.
+  const activeSheetIdRef = useRef<string | null>(null);
 
   // Mutable ref container to stabilize sheet inputs by render + lifecycle callbacks
   const stableInputsRef = useRef({
@@ -59,26 +64,44 @@ export function BottomSheetModalControlled(props: TProps) {
     if (!isOpen) {
       if (closeSheetRef.current) {
         closingFromStateRef.current = true;
+        // Dying renders of this sheet must not re-queue a close.
+        didQueueCloseRef.current = true;
         closeSheetRef.current();
         closeSheetRef.current = null;
       }
 
+      // No active sheet while closed, so a reopen during the dismiss
+      // animation starts a fresh presentation.
+      activeSheetIdRef.current = null;
+
       return;
     }
 
-    if (closeSheetRef.current) {
+    // Only one active sheet per open-cycle.
+    if (activeSheetIdRef.current) {
       return;
     }
+
+    closingFromStateRef.current = false;
+    didQueueCloseRef.current = false;
 
     showBottomSheet({
-      render: ({ closeSheet }) => {
-        closeSheetRef.current = closeSheet;
+      render: ({ closeSheet, id }) => {
+        if (isOpenRef.current) {
+          // Normal open render — claim this sheet.
+          activeSheetIdRef.current = id;
+          closeSheetRef.current = closeSheet;
+          return stableInputsRef.current.children;
+        }
 
-        // The sheet can mount after `isOpen` has already flipped back to
-        // false (e.g. a selection closed the picker while the sheet was still
-        // presenting). Dismiss it right away so it never lingers open.
-        if (!isOpenRef.current) {
+        // Component is closed but this sheet mounted: either a mount-race
+        // (presented right as isOpen flipped false) or a dying sheet. Only
+        // the race queues a close, once.
+        if (!didQueueCloseRef.current) {
+          didQueueCloseRef.current = true;
           closingFromStateRef.current = true;
+          activeSheetIdRef.current = id;
+          closeSheetRef.current = closeSheet;
           queueMicrotask(() => closeSheetRef.current?.());
         }
 
@@ -86,8 +109,17 @@ export function BottomSheetModalControlled(props: TProps) {
       },
       options: {
         ...(stableInputsRef.current.options ?? {}),
-        onClose: () => {
+        onClose: (closingId: string) => {
+          // A dismissal from a sheet that is no longer the active one (e.g. a
+          // superseded sheet whose dismissal finished after a new one opened)
+          // must not touch the shared refs or notify the parent.
+          if (closingId !== activeSheetIdRef.current) {
+            return;
+          }
+
+          activeSheetIdRef.current = null;
           closeSheetRef.current = null;
+          didQueueCloseRef.current = false;
 
           // only notify parent if sheet initiated the close
           if (!closingFromStateRef.current) {
