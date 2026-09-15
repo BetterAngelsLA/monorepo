@@ -294,10 +294,11 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     spas_served_ids = data.pop("spas_served_ids", None)
 
     # BA-only field: gate on the global tier only — a scoped Grant must never
-    # pass (ADR 0001 §2.4).  Only global Roles carrying the ContactInfo perms
-    # (the Global Shelter Operator) satisfy this.  Checked before the shelter
-    # lookup so an unauthorized caller gets the same refusal whether or not
-    # the shelter exists or is visible.
+    # pass (ADR 0001 §2.4).  ``can_globally`` admits superusers, global Roles
+    # carrying the ContactInfo perms (today only the Global Shelter Operator
+    # role does), and direct ``user_permissions`` holders.  Checked before the
+    # shelter lookup so an unauthorized caller gets the same refusal whether or
+    # not the shelter exists or is visible.
     if "additional_contacts" in data and not can_globally(user, ContactInfo.perms.CHANGE):
         raise PermissionDenied("Editing additional contacts is not allowed with this role.")
 

@@ -291,7 +291,7 @@ def can_globally(user: "User", perm: str) -> bool:
     The global arm of :func:`scopes`: superuser, a global Role carrying *perm*
     in ``user.groups``, or a direct ``user_permissions`` row.  Scoped Grant
     reach never satisfies this, so it is the check for gates that must stay
-    global (e.g. BA-only fields only the GSO role may exercise).
+    global (e.g. the BA-only additional-contacts field).
 
     Sibling of :func:`can_anywhere`, which admits scoped Grant reach
     (``ALL or s.exists()``) — use this predicate only when scoped authority
