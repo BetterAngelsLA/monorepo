@@ -67,7 +67,7 @@ export function groupResources(resources: TResource[]): TCategoryResources[] {
   );
 
   const categoryResources: TCategoryResources[] = Object.entries(grouped).map(
-    ([slug, entries]) => ({
+    ([, entries]) => ({
       category: entries[0].category,
       resources: uniqueBy(
         entries.map((entry) => entry.resource),

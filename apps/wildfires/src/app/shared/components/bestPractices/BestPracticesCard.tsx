@@ -17,12 +17,14 @@ export default function BestPracticesCard(props: IBestPracticesCardProps) {
 
   useEffect(() => {
     if (isPrinting) {
-      wasExpandedBeforePrintRef.current = expand;
-      setExpand(true);
+      setExpand((currentExpand) => {
+        wasExpandedBeforePrintRef.current = currentExpand;
+        return true;
+      });
     } else {
       setExpand(wasExpandedBeforePrintRef.current);
     }
-  }, [isPrinting]); // ✅ Removed expand from dependencies to prevent race conditions
+  }, [isPrinting]);
 
   return (
     <div
