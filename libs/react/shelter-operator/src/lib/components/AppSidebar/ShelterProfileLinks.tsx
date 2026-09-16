@@ -24,7 +24,7 @@ export function ShelterProfileLinks(props: IProps) {
       label="Shelter Profile"
       isActive={false} // style only child links as active/inactive
       collapsed={!isOpen}
-      defaultExpanded={true}
+      defaultExpanded={isShelterProfileRoute(pathname)}
     >
       <Sidebar.Content>
         <Sidebar.Link
