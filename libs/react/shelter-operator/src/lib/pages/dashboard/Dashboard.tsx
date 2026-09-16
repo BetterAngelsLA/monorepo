@@ -42,7 +42,7 @@ import {
   OperatorSheltersQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import { useShelterPermissions } from '../../hooks';
-import { paths } from '../../routing';
+import { paths, profileRouteConfig, shelterProfileRoute } from '../../routing';
 import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -380,7 +380,12 @@ export function Dashboard() {
           label: 'Continue',
           onClick: () => {
             if (!pendingShelter) return;
-            navigate(`shelter/${pendingShelter.id}/manage`);
+            navigate(
+              shelterProfileRoute(
+                pendingShelter.id,
+                profileRouteConfig.children.basic,
+              ),
+            );
             setPendingShelter(null);
           },
         }}
