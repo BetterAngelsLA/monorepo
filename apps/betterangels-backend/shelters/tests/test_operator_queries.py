@@ -1,13 +1,13 @@
 import datetime
 from typing import Any, Optional, cast
 
+from accounts.models import Role
+from accounts.services import role_assign
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
-from waffle.testutils import override_flag
 
-from shelters.constants import BA_ADMIN_ONLY_FIELDS_FLAG
 from shelters.enums import (
     DemographicChoices,
     PetChoices,
@@ -16,7 +16,7 @@ from shelters.enums import (
     StatusChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.groups import SHELTER_OPERATOR
+from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR
 from shelters.models import (
     Bed,
     ContactInfo,
@@ -815,7 +815,12 @@ class OperatorShelterPermissionTestCase(GraphQLBaseTestCase):
 
 
 class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
-    """additionalContacts on operatorShelter is gated by ffShelterOperatorBaOnlyFields."""
+    """additionalContacts on operatorShelter is a global-tier (GSO-only) field.
+
+    The field reads the global tier only (``can_globally``): a scoped shelter
+    operator — even with a VIEW grant — gets an empty list, while a Global
+    Shelter Operator (whose global Role carries the ContactInfo perms) sees it.
+    """
 
     ADDITIONAL_CONTACTS_QUERY = """
         query OperatorShelter($pk: ID!) {
@@ -850,14 +855,35 @@ class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
     def _query(self) -> dict:
         return self.execute_graphql(self.ADDITIONAL_CONTACTS_QUERY, {"pk": str(self.shelter.pk)})
 
-    @override_flag(BA_ADMIN_ONLY_FIELDS_FLAG, active=False)
-    def test_additional_contacts_hidden_when_flag_off(self) -> None:
+    def test_additional_contacts_hidden_for_scoped_operator(self) -> None:
         response = self._query()
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["operatorShelter"]["additionalContacts"], [])
 
-    @override_flag(BA_ADMIN_ONLY_FIELDS_FLAG, active=True)
-    def test_additional_contacts_visible_when_flag_on(self) -> None:
+    def test_additional_contacts_hidden_for_granted_scoped_contactinfo_role(self) -> None:
+        """A scoped role carrying the ContactInfo perms plus a Grant still fails.
+
+        Adversarial on purpose: ``can_anywhere`` would admit this user, so only
+        a global-tier check keeps the gate closed (SDB-277).
+        """
+        self._grant_permission(
+            self.org_1_case_manager_1,
+            ContactInfo.perms.VIEW,
+            self.org_1,
+            role_name="Scoped Contact Viewer",
+        )
+
+        response = self._query()
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["operatorShelter"]["additionalContacts"], [])
+
+    def test_additional_contacts_visible_for_global_shelter_operator(self) -> None:
+        role_assign(
+            user=self.org_1_case_manager_1,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
+
         response = self._query()
 
         self.assertIsNone(response.get("errors"))
