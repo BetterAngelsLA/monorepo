@@ -1,13 +1,13 @@
 from accounts.models import Role, User
 from accounts.role_manager import OrgRoleManager
-from accounts.services import grant_create
+from accounts.services import grant_create, role_assign
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.test import TestCase
 from model_bakery import baker
 
-from shelters.groups import SHELTER_OPERATOR
+from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR
 from shelters.models import ContactInfo, Shelter
 from shelters.services.shelter import shelter_create, shelter_delete, shelter_update
 
@@ -149,11 +149,34 @@ class ShelterUpdateOrganizationImmutableTestCase(TestCase):
 
 
 class ShelterUpdateAdditionalContactsTestCase(ShelterServiceTestCase):
-    """shelter_update applies full-replacement semantics to additional contacts."""
+    """shelter_update applies full-replacement semantics to additional contacts.
+
+    Contacts are a BA-only field gated on the global tier (``can_globally``),
+    so the shared scoped operator is promoted to a Global Shelter Operator —
+    the service-level counterpart of the GraphQL gate tests.
+    """
 
     def setUp(self) -> None:
         super().setUp()
+        role_assign(user=self.user, role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name))
         self.shelter = Shelter.objects.create(name="Contacts Shelter", organization=self.org)
+
+    def test_contacts_update_denied_without_global_perm(self) -> None:
+        """A scoped operator (CHANGE on the shelter, no global ContactInfo perms) is refused."""
+        scoped = baker.make(User)
+        self.org.users.add(scoped)
+        OrgRoleManager(self.org).add_roles(scoped, SHELTER_OPERATOR)
+
+        with self.assertRaises(PermissionDenied):
+            shelter_update(
+                user=scoped,
+                data={
+                    "id": self.shelter.pk,
+                    "additional_contacts": [{"contact_name": "Ada", "contact_number": "2125550100"}],
+                },
+            )
+
+        self.assertEqual(self.shelter.additional_contacts.count(), 0)
 
     def _update(self, contacts: list[dict]) -> Shelter:
         return shelter_update(
