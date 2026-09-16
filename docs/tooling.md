@@ -26,3 +26,9 @@ yarn nx start betterangels-admin
 # Shelter Web
 yarn nx test shelter-web
 ```
+
+## Agent Browser Testing (Playwright MCP)
+
+Workspace MCP configuration for agent-driven browser checks lives in
+`.vscode/mcp.json`. See [`docs/agent_browser_testing/`](agent_browser_testing/README.md)
+for setup, usage, and the approaches review.
