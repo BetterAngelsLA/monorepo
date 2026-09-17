@@ -244,7 +244,7 @@ state caveats. Never fix code as part of a check run.
 - `.vscode/mcp.json` — committed server configuration
 - `apps/shelter-web/src/assets/styles/global.css` — breakpoints (`sm` 375 / `md` 768 / `lg` 1152)
 - `apps/betterangels-admin-e2e/playwright.config.ts` — CI pattern (`BASE_URL` override)
-- `apps/shelter-e2e/` — scaffold for scripted `shelter-web` specs
+- `apps/shelter-e2e/` — scripted `shelter-web` specs (wired; first sign-in spec landed)
 - `libs/react/shelter/src/lib/components/SignIn/SignIn.tsx` — `@example.com` password mode
 - `apps/betterangels-backend/accounts/signals.py` — local dev seeded accounts
 - Playwright MCP — https://github.com/microsoft/playwright-mcp

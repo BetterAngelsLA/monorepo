@@ -125,6 +125,51 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       zip \
       libpq5 \
       gdal-bin
+
+# Playwright (Chromium) runtime dependencies — lets devs run the Playwright e2e
+# suites and agent browser checks locally.
+# Provenance: snapshot of playwright-core 1.62's `debian13-x64` deps (tools +
+# chromium) — not an executed version pin. Browsers come from yarn.lock via
+# post-create.sh; after a Playwright upgrade, re-sync this list if a launch
+# reports a missing shared library. See docs/agent_browser_testing/ and
+# apps/shelter-e2e/README.md.
+RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && apt-get update \
+    # Install Playwright (Chromium) system dependencies
+    && apt-get install -y --no-install-recommends \
+      xvfb \
+      fonts-noto-color-emoji \
+      fonts-unifont \
+      libfontconfig1 \
+      libfreetype6 \
+      xfonts-scalable \
+      fonts-liberation \
+      fonts-ipafont-gothic \
+      fonts-wqy-zenhei \
+      fonts-tlwg-loma-otf \
+      fonts-freefont-ttf \
+      libasound2t64 \
+      libatk-bridge2.0-0t64 \
+      libatk1.0-0t64 \
+      libatspi2.0-0t64 \
+      libcairo2 \
+      libcups2t64 \
+      libdbus-1-3 \
+      libdrm2 \
+      libgbm1 \
+      libglib2.0-0t64 \
+      libnspr4 \
+      libnss3 \
+      libpango-1.0-0 \
+      libx11-6 \
+      libxcb1 \
+      libxcomposite1 \
+      libxdamage1 \
+      libxext6 \
+      libxfixes3 \
+      libxkbcommon0 \
+      libxrandr2
 ENV PATH=/workspace/.venv/bin:$PATH:/home/betterangels/.local/bin
 RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betterangels \
     && chown -R betterangels:betterangels /workspace /home/betterangels

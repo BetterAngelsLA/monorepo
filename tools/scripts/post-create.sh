@@ -7,6 +7,9 @@ set -euo pipefail
 echo "=== postCreate: Installing Node dependencies ==="
 yarn install
 
+echo "=== postCreate: Installing Playwright browsers (shelter-e2e) ==="
+yarn playwright install chromium
+
 echo "=== postCreate: Installing Python dependencies ==="
 uv sync
 

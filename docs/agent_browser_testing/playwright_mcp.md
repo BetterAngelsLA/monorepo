@@ -87,12 +87,12 @@ Useful optional flags (full list in the
 
 ### Troubleshooting
 
-| Symptom                          | Fix                                                                                             |
-| -------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Server fails to start            | `MCP: List Servers` → Show Output. Common cause: the initial `npx` fetch had no network access. |
-| Chromium fails to launch         | `npx playwright install chromium` (add `--with-deps` if system libraries are missing).          |
-| Sandbox errors in the container  | Add `--no-sandbox` to the args (container-only; prefer fixing deps first).                      |
-| Stale tools after editing config | Restart the server from `MCP: List Servers`, or enable `chat.mcp.autostart`.                    |
+| Symptom                          | Fix                                                                                                                                                                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Server fails to start            | `MCP: List Servers` → Show Output. Common cause: the initial `npx` fetch had no network access.                                                                                                                                            |
+| Chromium fails to launch         | The dev container image ships Chromium's system libraries and postCreate installs the browser; if you see missing-library errors, Rebuild the container. (`npx playwright install --with-deps chromium` works where sudo exists, e.g. CI.) |
+| Sandbox errors in the container  | Add `--no-sandbox` to the args (container-only; prefer fixing deps first).                                                                                                                                                                 |
+| Stale tools after editing config | Restart the server from `MCP: List Servers`, or enable `chat.mcp.autostart`.                                                                                                                                                               |
 
 ## Viewport playbook
 
@@ -166,8 +166,10 @@ feeds — the scripted suite:
 
 - `apps/betterangels-admin-e2e/` shows the pattern for scripted tests with a
   `BASE_URL` override (deploy preview → tests → PR feedback).
-- `apps/shelter-e2e/` is the (currently empty) scaffold for the same, aimed at
-  `shelter-web`.
+- `apps/shelter-e2e/` wires the same pattern for `shelter-web`, with a first
+  spec covering the sign-in form's client-side behaviour. Run it locally with
+  `yarn nx run shelter-e2e:e2e` (which starts `shelter-web:preview`
+  automatically), or point it at a deployed environment via `BASE_URL`.
 - Typical flow: a check that proves valuable as an agent walkthrough gets
   graduated into a spec, which then runs deterministically per PR in CI.
 

@@ -25,6 +25,9 @@ yarn nx start betterangels-admin
 
 # Shelter Web
 yarn nx test shelter-web
+
+# Shelter E2E (Playwright) — see apps/shelter-e2e/README.md
+yarn nx run shelter-e2e:e2e
 ```
 
 ## Agent Browser Testing (Playwright MCP)
