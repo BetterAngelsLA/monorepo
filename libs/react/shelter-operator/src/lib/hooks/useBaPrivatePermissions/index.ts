@@ -1,0 +1,1 @@
+export { useBaPrivatePermissions } from './useBaPrivatePermissions';

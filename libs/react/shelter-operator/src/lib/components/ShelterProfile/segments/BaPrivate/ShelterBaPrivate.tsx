@@ -6,6 +6,7 @@ import type { UseFormSetError } from 'react-hook-form';
 import { useFieldArray, useForm } from 'react-hook-form';
 import {
   updateShelterProfileMeta,
+  useBaPrivatePermissions,
   useShelterOperatorProfile,
   useShelterPermissions,
   useUpdateShelterProfile,
@@ -52,6 +53,7 @@ export function ShelterBaPrivate(props: TProps) {
 
   const { shelter } = useShelterOperatorProfile(shelterId);
   const { canEditShelter } = useShelterPermissions();
+  const { additionalContactsPermissions } = useBaPrivatePermissions();
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
 
@@ -137,7 +139,10 @@ export function ShelterBaPrivate(props: TProps) {
     return null;
   }
 
-  const showEditBtn = !isEditMode && canEditShelter;
+  // Editing contacts also needs the global ContactInfo `change` permission —
+  // the backend refuses `additionalContacts` writes without it.
+  const showEditBtn =
+    !isEditMode && canEditShelter && additionalContactsPermissions.canEdit;
 
   return (
     <div className="px-6 flex-col flex-1 pb-48">

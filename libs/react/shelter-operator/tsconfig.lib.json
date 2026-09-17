@@ -2,6 +2,19 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
+    // Kept for the editor's project graph: `tsconfig.json` references this
+    // config, and a referenced project must be composite (TS6306 otherwise) —
+    // same pair as the other libs/react libs.
+    //
+    // Composite requires every file in the program to be matched by
+    // `files`/`include`. `@monorepo/react/shelter` is a `paths` alias to
+    // shelter's source barrel, so importing it pulls shelter's whole source
+    // graph into this program — every such file would fail with TS6307.
+    // That's why the `typecheck` target runs with `--composite false
+    // --declaration false`: the same files are still checked, minus the
+    // file-list requirement.
+    "declaration": true,
+    "composite": true,
     "types": ["node", "vite/client", "google.maps"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
