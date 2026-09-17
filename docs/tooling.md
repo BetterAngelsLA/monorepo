@@ -30,6 +30,13 @@ yarn nx test shelter-web
 yarn nx run shelter-e2e:e2e
 ```
 
+### Test file naming
+
+Repo convention (the runners accept both patterns — this is about consistency):
+
+- Unit tests: `*.test.ts` / `*.test.tsx`
+- E2E specs: `*.spec.ts` (see [`apps/shelter-e2e/README.md`](../apps/shelter-e2e/README.md))
+
 ## Agent Browser Testing (Playwright MCP)
 
 Workspace MCP configuration for agent-driven browser checks lives in

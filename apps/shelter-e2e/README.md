@@ -57,8 +57,27 @@ Notes:
 
 ## Scope
 
-Anonymous, client-side flows so far (sign-in form enable/disable logic). Specs
-must not create data or submit forms unless the flow explicitly requires it.
+Anonymous, client-side flows so far:
+
+- Home page smoke coverage (`src/home.spec.ts`), in two viewport sections:
+  - desktop (1280x720): header nav, sign-in banner (+ dismiss), Google map
+    render, search affordances, results panel patterns, header → sign-in
+    navigation.
+  - mobile (375x812): hamburger replaces the inline nav; flyout open/close
+    (close button, mask tap, navigation) and its links.
+- Sign-in form enable/disable logic (`src/sign-in.spec.ts`).
+
+Specs must not create data or submit forms unless the flow explicitly requires it.
+
+Environment notes for the home specs:
+
+- The map needs `VITE_SHELTER_GOOGLE_MAPS_API_KEY`; the results panel talks to
+  `VITE_SHELTER_API_URL` (see `apps/shelter-web/.env.local`). With the local
+  backend not running the panel stays in its pre-search state — the specs
+  tolerate both states.
+- The exact empty-results copy ("0 of 0 locations" / "No results" / "Try
+  searching for something else.") depends on the environment's data, so it is
+  only asserted against deployed environments (`BASE_URL`, e.g. a PR preview).
 
 ## Troubleshooting
 
