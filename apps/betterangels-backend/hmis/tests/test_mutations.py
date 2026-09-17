@@ -29,9 +29,11 @@ from hmis.enums import (
 )
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
+from hmis.utils import HMIS_PROD_DEMO_SWITCH
 from model_bakery import baker
 from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
+from waffle.testutils import override_switch
 
 LOGIN_MUTATION = """
     mutation ($email: String!, $password: String!) {
@@ -647,3 +649,62 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         )
         self.assertEqual(len(resp["errors"]), 1)
         self.assertIn("Login Failed: Invalid credentials.", resp["errors"][0]["message"])
+
+
+DEFAULT_ENDPOINT = "https://betterangels-sandbox.example.com"
+LA_ENDPOINT = "https://la-clarity.example.com"
+
+
+class HmisLoginEndpointRoutingTestCase(GraphQLBaseTestCase, TestCase):
+    """hmis_login authenticates against the endpoint get_clarity_endpoint resolves."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.existing_user = baker.make(get_user_model(), _fill_optional=["email"])
+
+    @override_settings(
+        AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
+        HMIS_HOST="example.com",
+        HMIS_REST_URL=DEFAULT_ENDPOINT,
+        LA_CLARITY_REST_URL=LA_ENDPOINT,
+    )
+    @override_switch(HMIS_PROD_DEMO_SWITCH, active=True)
+    def test_allowlisted_email_logs_into_la_clarity_endpoint(self) -> None:
+        with (
+            override_settings(LA_HMIS_PROD_ALLOWED_EMAILS=[self.existing_user.email]),
+            patch("hmis.api_bridge.HmisApiBridge.login", autospec=True) as mock_login,
+        ):
+            resp = self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": self.existing_user.email, "password": "anything"},
+            )
+
+        self.assertIsNone(resp.get("errors"))
+        self.assertEqual(resp["data"]["hmisLogin"]["__typename"], "HmisLoginSuccess")
+
+        mock_login.assert_called_once()
+        bridge = mock_login.call_args_list[0].args[0]
+        self.assertEqual(bridge.endpoint, LA_ENDPOINT)
+        self.assertEqual(mock_login.call_args_list[0].args[1], self.existing_user.email)
+
+    @override_settings(
+        AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
+        HMIS_HOST="example.com",
+        HMIS_REST_URL=DEFAULT_ENDPOINT,
+        LA_CLARITY_REST_URL=LA_ENDPOINT,
+        LA_HMIS_PROD_ALLOWED_EMAILS=[],
+    )
+    @override_switch(HMIS_PROD_DEMO_SWITCH, active=True)
+    def test_email_outside_allowlist_logs_into_default_endpoint(self) -> None:
+        with patch("hmis.api_bridge.HmisApiBridge.login", autospec=True) as mock_login:
+            resp = self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": self.existing_user.email, "password": "anything"},
+            )
+
+        self.assertIsNone(resp.get("errors"))
+        self.assertEqual(resp["data"]["hmisLogin"]["__typename"], "HmisLoginSuccess")
+
+        mock_login.assert_called_once()
+        bridge = mock_login.call_args_list[0].args[0]
+        self.assertEqual(bridge.endpoint, DEFAULT_ENDPOINT)

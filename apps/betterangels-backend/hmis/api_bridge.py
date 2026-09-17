@@ -13,20 +13,11 @@ from common.errors import NotFoundGQLError, UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
-from graphql import (
-    FieldNode,
-    FragmentSpreadNode,
-    GraphQLError,
-    InlineFragmentNode,
-    SelectionSetNode,
-)
-from hmis.types import (
-    CreateHmisClientProfileInput,
-    CreateHmisNoteInput,
-    UpdateHmisNoteInput,
-)
+from graphql import FieldNode, FragmentSpreadNode, GraphQLError, InlineFragmentNode, SelectionSetNode
 from strawberry import UNSET, Info
 from strawberry.utils.str_converters import to_snake_case
+
+from hmis.types import CreateHmisClientProfileInput, CreateHmisNoteInput, UpdateHmisNoteInput
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 LOS_ANGELES_TZ = "America/Los_Angeles"
@@ -92,10 +83,16 @@ BA_NOTE_FIELDS = {"hmisId", "createdBy", "hmisClientProfile"}
 class HmisApiBridge:
     """Utility class for interfacing with HMIS REST API."""
 
-    def __init__(self, info: strawberry.Info) -> None:
+    def __init__(
+        self,
+        info: strawberry.Info,
+        clarity_endpoint: Optional[str] = None,
+    ) -> None:
         self.info = info
         request = self.info.context["request"]
-        hmis_rest_endpoint = getattr(settings, "HMIS_REST_URL", None)
+
+        # Optional endpoint override (e.g. LA Clarity for prod-demo users).
+        hmis_rest_endpoint = clarity_endpoint or getattr(settings, "HMIS_REST_URL", None)
         hmis_host = getattr(settings, "HMIS_HOST", None)
         if not all([hmis_rest_endpoint, hmis_host]):
             raise Exception("HMIS_REST_URL and HMIS_HOST must be configured in settings")
@@ -353,6 +350,10 @@ class HmisApiBridge:
             response.raise_for_status()
 
             html = response.text
+
+            # print("login html")
+            # print(html)
+            # print("")
 
             param_match = re.search(r'meta name="csrf-param" content="([^"]+)"', html)
             token_match = re.search(r'meta name="csrf-token" content="([^"]+)"', html)

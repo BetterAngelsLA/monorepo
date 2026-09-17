@@ -7,9 +7,7 @@ from accounts.types import CurrentUserType
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
-from common.graphql.decorators import (
-    apply_schema_directives_and_permissions_to_all_fields,
-)
+from common.graphql.decorators import apply_schema_directives_and_permissions_to_all_fields
 from common.graphql.types import DeletedObjectType
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
@@ -18,7 +16,6 @@ from django.contrib.auth import login as django_login
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
-from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.groups import CASEWORKER
 from notes.models import ServiceRequest
@@ -32,6 +29,8 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
+
+from hmis.models import HmisClientProfile, HmisNote
 
 from .api_bridge import HmisApiBridge
 from .types import (
@@ -51,6 +50,7 @@ from .types import (
     UpdateHmisNoteInput,
     UpdateHmisNoteLocationInput,
 )
+from .utils import get_clarity_endpoint
 
 User = get_user_model()
 
@@ -185,8 +185,13 @@ class Mutation:
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
-        # Authenticate with HMIS (cookies are automatically set via bridge)
-        hmis_api_bridge = HmisApiBridge(info=info)
+        # Authenticate with HMIS (cookies are automatically set via bridge).
+        # Allowlisted users log in against the LA Clarity endpoint while the
+        # prod-demo switch is active.
+        hmis_api_bridge = HmisApiBridge(
+            info=info,
+            clarity_endpoint=get_clarity_endpoint(email),
+        )
         hmis_api_bridge.login(email, password)
 
         # Create Django session
