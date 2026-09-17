@@ -20,6 +20,7 @@ export { default as CloseButton } from './CloseButton';
 export { BaseContainer } from './Container';
 export { default as ControlledInput } from './ControlledInput';
 export { default as Copy } from './Copy';
+export * from './CopyButton';
 export { default as CTAButton } from './CTAButton';
 export { DataTable, TDataTable, TDataTableItem } from './DataTable';
 export { default as DatePicker } from './DatePicker';

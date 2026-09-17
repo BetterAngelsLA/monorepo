@@ -13,6 +13,15 @@
   },
   "files": [],
   "include": ["codegen.ts"],
+  // NOTE: lib/spec configs set `composite: true` only so these references are
+  // valid to TypeScript (silences TS6306 in the editor). This lib imports other
+  // monorepo libs via `paths` aliases, so composite project builds aren't
+  // usable as-is — the typecheck target compensates with
+  // `--composite false --declaration false` (the shelter-operator workaround).
+  // TODO: revisit in a repo-wide project-references cleanup (same latent TS6306
+  // exists in libs/apollo, other libs/expo/*, libs/shared/*,
+  // apps/betterangels/tsconfig.app.json) — either standardize composite +
+  // overrides, or drop references where they add no value.
   "references": [
     {
       "path": "./tsconfig.lib.json"
