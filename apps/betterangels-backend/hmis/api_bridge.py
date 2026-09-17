@@ -351,10 +351,6 @@ class HmisApiBridge:
 
             html = response.text
 
-            # print("login html")
-            # print(html)
-            # print("")
-
             param_match = re.search(r'meta name="csrf-param" content="([^"]+)"', html)
             token_match = re.search(r'meta name="csrf-token" content="([^"]+)"', html)
 
