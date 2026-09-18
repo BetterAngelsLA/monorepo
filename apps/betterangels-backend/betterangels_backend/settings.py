@@ -56,6 +56,7 @@ env = environ.Env(
     HMIS_REST_URL=(str, ""),
     HMIS_TOKEN_KEY=(str, ""),
     IS_LOCAL_DEV=(bool, False),
+    LA_HMIS_PROD_ALLOWED_EMAILS=(list, []),
     LANGUAGE_COOKIE_SECURE=(bool, True),
     MEDIA_URL=(str, "/media/"),
     POST_OFFICE_EMAIL_BACKEND=(str, ""),
@@ -466,6 +467,10 @@ HMIS_API_KEY = env("HMIS_API_KEY")
 HMIS_TOKEN_KEY = env("HMIS_TOKEN_KEY")
 HMIS_HOST = env("HMIS_HOST")
 HMIS_REST_URL = env("HMIS_REST_URL")
+
+# HMIS login gate — where set, only these emails may log in while the
+# hmis_prod_demo_enabled waffle switch is active.
+LA_HMIS_PROD_ALLOWED_EMAILS = env("LA_HMIS_PROD_ALLOWED_EMAILS")
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html

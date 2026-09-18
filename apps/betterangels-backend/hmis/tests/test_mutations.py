@@ -18,6 +18,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.test import TestCase, override_settings
+from model_bakery import baker
+from notes.models import OrganizationService, ServiceRequest
+from test_utils.vcr_config import scrubbed_vcr
+from waffle.testutils import override_switch
+
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -29,9 +34,7 @@ from hmis.enums import (
 )
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
-from model_bakery import baker
-from notes.models import OrganizationService, ServiceRequest
-from test_utils.vcr_config import scrubbed_vcr
+from hmis.utils import HMIS_PROD_DEMO_SWITCH
 
 LOGIN_MUTATION = """
     mutation ($email: String!, $password: String!) {
@@ -647,3 +650,80 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         )
         self.assertEqual(len(resp["errors"]), 1)
         self.assertIn("Login Failed: Invalid credentials.", resp["errors"][0]["message"])
+
+
+@override_settings(
+    AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
+    HMIS_HOST="example.com",
+    HMIS_REST_URL="https://example.com",
+)
+class HmisLoginGateTestCase(GraphQLBaseTestCase, TestCase):
+    """hmis_login is gated by the prod-demo switch and allowlist where configured."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.existing_user = baker.make(get_user_model(), _fill_optional=["email"])
+
+    def test_allowlisted_email_logs_in_while_switch_is_active(self) -> None:
+        with (
+            override_settings(LA_HMIS_PROD_ALLOWED_EMAILS=[self.existing_user.email]),
+            override_switch(HMIS_PROD_DEMO_SWITCH, active=True),
+            patch("hmis.api_bridge.HmisApiBridge.login", autospec=True) as mock_login,
+        ):
+            resp = self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": self.existing_user.email, "password": "anything"},
+            )
+
+        self.assertIsNone(resp.get("errors"))
+        self.assertEqual(resp["data"]["hmisLogin"]["__typename"], "HmisLoginSuccess")
+
+        mock_login.assert_called_once()
+        self.assertEqual(mock_login.call_args_list[0].args[1], self.existing_user.email)
+
+    def test_email_outside_allowlist_cannot_log_in(self) -> None:
+        with (
+            override_settings(LA_HMIS_PROD_ALLOWED_EMAILS=["someone-else@example.com"]),
+            override_switch(HMIS_PROD_DEMO_SWITCH, active=True),
+            patch("hmis.api_bridge.HmisApiBridge.login", autospec=True) as mock_login,
+        ):
+            resp = self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": self.existing_user.email, "password": "anything"},
+            )
+
+        self.assertIsNone(resp.get("errors"))
+        payload = resp["data"]["hmisLogin"]
+        self.assertEqual(payload["__typename"], "HmisLoginError")
+        self.assertEqual(payload["message"], "HMIS login is not enabled for this account.")
+        mock_login.assert_not_called()
+
+    def test_switch_off_blocks_logins_where_allowlist_configured(self) -> None:
+        with (
+            override_settings(LA_HMIS_PROD_ALLOWED_EMAILS=[self.existing_user.email]),
+            override_switch(HMIS_PROD_DEMO_SWITCH, active=False),
+            patch("hmis.api_bridge.HmisApiBridge.login", autospec=True) as mock_login,
+        ):
+            resp = self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": self.existing_user.email, "password": "anything"},
+            )
+
+        self.assertIsNone(resp.get("errors"))
+        self.assertEqual(resp["data"]["hmisLogin"]["__typename"], "HmisLoginError")
+        mock_login.assert_not_called()
+
+    def test_unconfigured_allowlist_is_unrestricted(self) -> None:
+        with (
+            override_settings(LA_HMIS_PROD_ALLOWED_EMAILS=[]),
+            override_switch(HMIS_PROD_DEMO_SWITCH, active=False),
+            patch("hmis.api_bridge.HmisApiBridge.login", autospec=True) as mock_login,
+        ):
+            resp = self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": self.existing_user.email, "password": "anything"},
+            )
+
+        self.assertIsNone(resp.get("errors"))
+        self.assertEqual(resp["data"]["hmisLogin"]["__typename"], "HmisLoginSuccess")
+        mock_login.assert_called_once()

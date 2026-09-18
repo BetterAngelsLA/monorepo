@@ -7,9 +7,7 @@ from accounts.types import CurrentUserType
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
-from common.graphql.decorators import (
-    apply_schema_directives_and_permissions_to_all_fields,
-)
+from common.graphql.decorators import apply_schema_directives_and_permissions_to_all_fields
 from common.graphql.types import DeletedObjectType
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
@@ -18,7 +16,6 @@ from django.contrib.auth import login as django_login
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
-from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.groups import CASEWORKER
 from notes.models import ServiceRequest
@@ -32,6 +29,8 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
+
+from hmis.models import HmisClientProfile, HmisNote
 
 from .api_bridge import HmisApiBridge
 from .types import (
@@ -51,6 +50,7 @@ from .types import (
     UpdateHmisNoteInput,
     UpdateHmisNoteLocationInput,
 )
+from .utils import is_hmis_login_allowed
 
 User = get_user_model()
 
@@ -185,7 +185,13 @@ class Mutation:
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
-        # Authenticate with HMIS (cookies are automatically set via bridge)
+        # Prod gate: where an allowlist is configured, only allowlisted emails
+        # may attempt a login while the prod-demo switch is active. Checked
+        # after the user lookup so unknown emails keep the generic response.
+        if not is_hmis_login_allowed(email):
+            return HmisLoginError(message="HMIS login is not enabled for this account.")
+
+        # Authenticate with HMIS (cookies are automatically set via bridge).
         hmis_api_bridge = HmisApiBridge(info=info)
         hmis_api_bridge.login(email, password)
 
