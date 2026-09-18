@@ -56,7 +56,6 @@ env = environ.Env(
     HMIS_REST_URL=(str, ""),
     HMIS_TOKEN_KEY=(str, ""),
     IS_LOCAL_DEV=(bool, False),
-    LA_CLARITY_REST_URL=(str, ""),
     LA_HMIS_PROD_ALLOWED_EMAILS=(list, []),
     LANGUAGE_COOKIE_SECURE=(bool, True),
     MEDIA_URL=(str, "/media/"),
@@ -469,9 +468,8 @@ HMIS_TOKEN_KEY = env("HMIS_TOKEN_KEY")
 HMIS_HOST = env("HMIS_HOST")
 HMIS_REST_URL = env("HMIS_REST_URL")
 
-# LA Clarity (prod HMIS) — allowlisted users log in against this endpoint
-# when the hmis_prod_demo_enabled waffle switch is active.
-LA_CLARITY_REST_URL = env("LA_CLARITY_REST_URL")
+# HMIS login gate — where set, only these emails may log in while the
+# hmis_prod_demo_enabled waffle switch is active.
 LA_HMIS_PROD_ALLOWED_EMAILS = env("LA_HMIS_PROD_ALLOWED_EMAILS")
 
 # Logging Configuration

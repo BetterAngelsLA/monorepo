@@ -50,7 +50,7 @@ from .types import (
     UpdateHmisNoteInput,
     UpdateHmisNoteLocationInput,
 )
-from .utils import get_clarity_endpoint
+from .utils import is_hmis_login_allowed
 
 User = get_user_model()
 
@@ -185,13 +185,14 @@ class Mutation:
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
+        # Prod gate: where an allowlist is configured, only allowlisted emails
+        # may attempt a login while the prod-demo switch is active. Checked
+        # after the user lookup so unknown emails keep the generic response.
+        if not is_hmis_login_allowed(email):
+            return HmisLoginError(message="HMIS login is not enabled for this account.")
+
         # Authenticate with HMIS (cookies are automatically set via bridge).
-        # Allowlisted users log in against the LA Clarity endpoint while the
-        # prod-demo switch is active.
-        hmis_api_bridge = HmisApiBridge(
-            info=info,
-            clarity_endpoint=get_clarity_endpoint(email),
-        )
+        hmis_api_bridge = HmisApiBridge(info=info)
         hmis_api_bridge.login(email, password)
 
         # Create Django session

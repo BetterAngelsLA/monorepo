@@ -1,7 +1,5 @@
 """HMIS utilities."""
 
-from typing import Optional, cast
-
 import waffle
 from django.conf import settings
 
@@ -9,22 +7,20 @@ from django.conf import settings
 HMIS_PROD_DEMO_SWITCH = "hmis_prod_demo_enabled"
 
 
-def get_clarity_endpoint(email: str) -> Optional[str]:
-    """Return the HMIS REST endpoint this email should authenticate against.
+def is_hmis_login_allowed(email: str) -> bool:
+    """Return whether this email may attempt an HMIS login.
 
-    Allowlisted emails log in against ``LA_CLARITY_REST_URL`` while the
-    ``hmis_prod_demo_enabled`` waffle switch is active. Everyone else uses the
-    default ``HMIS_REST_URL``.
+    Environments without the allowlist configured (dev, local) are
+    unrestricted. Where it is configured, logins are allowed only while the
+    ``hmis_prod_demo_enabled`` waffle switch is active and the email is
+    allowlisted.
     """
+    allowed_emails = {e.strip().lower() for e in settings.LA_HMIS_PROD_ALLOWED_EMAILS}
 
-    default_endpoint: Optional[str] = getattr(settings, "HMIS_REST_URL", None)
+    if not allowed_emails:
+        return True
 
-    if waffle.switch_is_active(HMIS_PROD_DEMO_SWITCH):
-        allowed_emails = {e.strip().lower() for e in settings.LA_HMIS_PROD_ALLOWED_EMAILS}
-        email_allowed = email.strip().lower() in allowed_emails
+    if not waffle.switch_is_active(HMIS_PROD_DEMO_SWITCH):
+        return False
 
-        # TODO: should raise if email_allowed and LA_CLARITY_REST_URL missing
-        if settings.LA_CLARITY_REST_URL and email_allowed:
-            return cast(str, settings.LA_CLARITY_REST_URL)
-
-    return default_endpoint
+    return email.strip().lower() in allowed_emails

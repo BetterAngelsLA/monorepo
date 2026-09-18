@@ -86,13 +86,11 @@ class HmisApiBridge:
     def __init__(
         self,
         info: strawberry.Info,
-        clarity_endpoint: Optional[str] = None,
     ) -> None:
         self.info = info
         request = self.info.context["request"]
 
-        # Optional endpoint override (e.g. LA Clarity for prod-demo users).
-        hmis_rest_endpoint = clarity_endpoint or getattr(settings, "HMIS_REST_URL", None)
+        hmis_rest_endpoint = getattr(settings, "HMIS_REST_URL", None)
         hmis_host = getattr(settings, "HMIS_HOST", None)
         if not all([hmis_rest_endpoint, hmis_host]):
             raise Exception("HMIS_REST_URL and HMIS_HOST must be configured in settings")
