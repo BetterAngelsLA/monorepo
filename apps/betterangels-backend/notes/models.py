@@ -156,7 +156,7 @@ class Note(BaseModel):
     public_details = models.TextField(blank=True)
     purpose = models.CharField(max_length=100, null=True, blank=True)
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
-    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL, db_index=True)
+    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.RESTRICT, db_index=True)
 
     objects = models.Manager()
 
@@ -169,11 +169,7 @@ class Note(BaseModel):
         return self.purpose or str(self.id)
 
     def clean(self) -> None:
-        """Reject a team from another organization.
-
-        The services' explicit call is the duplicate to delete once #2335 adds
-        ``full_clean()``.
-        """
+        """Reject a team from another organization."""
         super().clean()
 
         try:

@@ -1,14 +1,15 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type CreateNoteHmisMutationVariables = Types.Exact<{
   data: Types.CreateHmisNoteInput;
 }>;
 
 
-export type CreateNoteHmisMutation = { __typename?: 'Mutation', createHmisNote:
-    | { __typename?: 'HmisNoteType', id: string, addedDate?: any | null, lastUpdated?: any | null, title?: string | null, note: string, date?: any | null, refClientProgram?: string | null, providedServices?: Array<{ __typename?: 'ServiceRequestType', service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null }> | null, requestedServices?: Array<{ __typename?: 'ServiceRequestType', service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null }> | null, hmisClientProfile: { __typename?: 'HmisClientProfileType', id: string, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CreateNoteHmisMutation = { __typename: 'Mutation', createHmisNote:
+    | { __typename: 'HmisNoteType', id: string, addedDate?: DateTimeString | null, lastUpdated?: DateTimeString | null, title?: string | null, note: string, date?: DateString | null, refClientProgram?: string | null, providedServices?: Array<{ __typename: 'ServiceRequestType', service?: { __typename: 'OrganizationServiceType', id: string, label: string } | null }> | null, requestedServices?: Array<{ __typename: 'ServiceRequestType', service?: { __typename: 'OrganizationServiceType', id: string, label: string } | null }> | null, hmisClientProfile: { __typename: 'HmisClientProfileType', id: string, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

@@ -5,49 +5,6 @@ Read-only queries live in :mod:`accounts.selectors`.
 """
 
 import waffle
-from django.apps.registry import Apps
-
-# ── Migration utilities ───────────────────────────────────────────────────
-
-
-def create_missing_groups_for_org(
-    apps: Apps,
-    current_perm_group_templates: list[str],
-    new_perm_group_templates: list[str],
-) -> None:
-    """Creates Groups and PermissionGroups for organizations.
-
-    Use when creating new permission group templates.
-
-    Args:
-      apps: django app registry (django.apps)
-      current_perm_group_templates: List of template name strings. Organizations
-        belonging to any matching permission group will be updated.
-      new_perm_group_templates: List of template name strings. A Group and
-        PermissionGroup will be created for all provided templates.
-    """
-
-    Organization = apps.get_model("organizations", "Organization")
-    Group = apps.get_model("auth", "Group")
-    PermissionGroup = apps.get_model("accounts", "PermissionGroup")
-    PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
-
-    for template in new_perm_group_templates:
-        perm_group_template = PermissionGroupTemplate.objects.get(name=template)
-        # Can't use `permissions.set(perm_group_template.permissions.all())` in a migration,
-        # so we pass permission ids
-        perm_ids = perm_group_template.permissions.values_list("id", flat=True)
-
-        orgs = Organization.objects.filter(permission_groups__template__name__in=current_perm_group_templates)
-
-        for org in orgs:
-            group_name = f"{org.name}_{perm_group_template.name}"
-            group, _ = Group.objects.get_or_create(name=group_name)
-            group.permissions.set(perm_ids)
-            PermissionGroup.objects.get_or_create(
-                organization=org, template=perm_group_template, group=group, name=template
-            )
-
 
 # ---------------------------------------------------------------------------
 # Demo-environment email helpers

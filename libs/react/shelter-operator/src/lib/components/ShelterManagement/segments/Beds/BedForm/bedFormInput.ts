@@ -50,5 +50,10 @@ export const buildCreateBedInput = (
   ...buildBedFieldInput(formData),
 });
 
-export const buildUpdateBedInput = (formData: BedFormData): UpdateBedInput =>
-  buildBedFieldInput(formData);
+export const buildUpdateBedInput = (
+  formData: BedFormData,
+  id: string,
+): UpdateBedInput => ({
+  id,
+  ...buildBedFieldInput(formData),
+});

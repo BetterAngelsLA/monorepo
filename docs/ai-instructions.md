@@ -40,6 +40,13 @@ This is the BetterAngels monorepo:
 - **You are running INSIDE the dev container.** Do NOT use `docker compose` or `docker` commands.
 - **Always use the NX wrapper for Python commands.** The backend uses `uv` with a shared venv at `/workspace/.venv`. Use `yarn nx run betterangels-backend:<command>` or `yarn nx test betterangels-backend`. If you MUST run raw Python, use `uv run python ...` — uv handles venv activation automatically.
 - See `docs/tooling.md` for the full command reference.
+- **One test database is shared by every checkout.** Use it by default. When you
+  are in a git worktree or alongside another agent session, pass
+  `POSTGRES_TEST_NAME` on the test command for that run — otherwise
+  `pytest --create-db` destroys the database another session is using, and you
+  will chase failures that are not in your code. Do not set it in `.env`; the
+  shared database stays the default. See the Testing section of
+  `docs/styleguides/python.md`.
 
 ## Before Committing Code
 

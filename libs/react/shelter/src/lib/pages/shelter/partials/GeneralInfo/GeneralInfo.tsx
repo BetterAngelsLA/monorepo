@@ -11,12 +11,13 @@ import {
   InstagramIcon,
   LocationIcon,
 } from '@monorepo/react/icons';
-import parsePhoneNumber from 'libphonenumber-js';
+import { toPhoneParts } from '@monorepo/shared/scalars';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
 
 function renderLabel(
   label?: string | null,
   key?: string | null,
+  href?: string,
 ): React.ReactNode {
   if (!label) return 'Not Available';
 
@@ -38,10 +39,10 @@ function renderLabel(
     );
   }
 
-  if (key === 'phone') {
+  if (key === 'phone' && href) {
     return (
       <a
-        href={`tel:${label}`}
+        href={`tel:${href}`}
         className="
   underline
   rounded-lg
@@ -57,10 +58,10 @@ function renderLabel(
   }
 
   if (isValidURL(label)) {
-    const href = toValidWebURL(label);
+    const webHref = toValidWebURL(label);
     return (
       <a
-        href={href}
+        href={webHref}
         target="_blank"
         rel="noopener noreferrer"
         className="
@@ -85,7 +86,14 @@ export function GeneralInfo({
 }: {
   shelter: ViewShelterQuery['shelter'];
 }) {
-  const contactInfo = [
+  const phone = toPhoneParts(shelter?.phone);
+
+  const contactInfo: {
+    label?: string | null;
+    href?: string;
+    key: string;
+    icon: React.ReactNode;
+  }[] = [
     {
       label: shelter?.website,
       key: 'website',
@@ -97,7 +105,8 @@ export function GeneralInfo({
       icon: <InstagramIcon className="h-6 w-6 fill-primary-20" />,
     },
     {
-      label: parsePhoneNumber(shelter?.phone ?? '', 'US')?.formatNational(),
+      label: phone.display,
+      href: phone.dial,
       key: 'phone',
       icon: <CallIcon className="h-6 w-6 fill-primary-20" />,
     },
@@ -122,7 +131,7 @@ export function GeneralInfo({
             key={info.key}
             className="border-b border-neutral-90 last:border-b-0 flex items-center justify-between px-6 py-4 gap-1"
           >
-            {renderLabel(info.label, info.key)}
+            {renderLabel(info.label, info.key, info.href)}
             {info.icon}
           </div>
         ))}

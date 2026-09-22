@@ -1,13 +1,15 @@
 import datetime
 
+from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from clients.models import ClientProfile
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.test import TestCase
 from model_bakery import baker
 
 from shelters.enums import ReservationStatusChoices
+from shelters.groups import SHELTER_OPERATOR
 from shelters.models import Bed, Reservation, ReservationClient, Room
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.tests.baker_recipes import shelter_recipe
@@ -16,10 +18,12 @@ from shelters.tests.baker_recipes import shelter_recipe
 class ReservationServiceTestCase(TestCase):
     def setUp(self) -> None:
         User = get_user_model()
-        self.org = organization_recipe.make()
+        self.org = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.other_org = organization_recipe.make()
         self.user = User.objects.create_user(username="reservation-service-user", password="pw")
         self.org.users.add(self.user)
+        # Reservation services authorize through a Grant (ADR 0001 §2.4).
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
         self.shelter = shelter_recipe.make(organization=self.org)
         self.room_1 = baker.make(Room, shelter=self.shelter, name="Room-101")
         self.room_2 = baker.make(Room, shelter=self.shelter, name="Room-202")
@@ -33,7 +37,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
     def test_creates_reservation_with_bed(self) -> None:
         reservation = reservation_create(
             user=self.user,
-            organization_id=self.org.pk,
             data={"bed_id": self.bed_1.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
         )
         assert reservation.bed
@@ -46,7 +49,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
     def test_creates_room_only_reservation(self) -> None:
         reservation = reservation_create(
             user=self.user,
-            organization_id=self.org.pk,
             data={"room_id": self.room_2.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
         )
 
@@ -59,9 +61,7 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
 
     def test_requires_bed_or_room(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            reservation_create(
-                user=self.user, organization_id=self.org.pk, data={"clients": [{"client_profile_id": self.client_1.pk}]}
-            )
+            reservation_create(user=self.user, data={"clients": [{"client_profile_id": self.client_1.pk}]})
         self.assertIn("A bed or room must be provided", str(ctx.exception))
 
     def test_bed_maintenance_flag_rejected(self) -> None:
@@ -71,7 +71,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ValidationError) as ctx:
             reservation_create(
                 user=self.user,
-                organization_id=self.org.pk,
                 data={"bed_id": self.bed_1.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
             )
         self.assertIn("bed", ctx.exception.message_dict)
@@ -89,7 +88,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ValidationError) as ctx:
             reservation_create(
                 user=self.user,
-                organization_id=self.org.pk,
                 data={"bed_id": self.bed_1.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
             )
         self.assertIn("bed", ctx.exception.message_dict)
@@ -101,7 +99,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ValidationError) as ctx:
             reservation_create(
                 user=self.user,
-                organization_id=self.org.pk,
                 data={"room_id": self.room_2.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
             )
         self.assertIn("room", ctx.exception.message_dict)
@@ -119,7 +116,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ValidationError) as ctx:
             reservation_create(
                 user=self.user,
-                organization_id=self.org.pk,
                 data={"room_id": self.room_2.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
             )
         self.assertIn("room", ctx.exception.message_dict)
@@ -134,7 +130,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ValidationError):
             reservation_create(
                 user=self.user,
-                organization_id=self.org.pk,
                 data={"bed_id": self.bed_1.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
             )
 
@@ -149,7 +144,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ValidationError):
             reservation_create(
                 user=self.user,
-                organization_id=self.org.pk,
                 data={"room_id": self.room_2.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
             )
 
@@ -160,14 +154,12 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ObjectDoesNotExist):
             reservation_create(
                 user=self.user,
-                organization_id=self.org.pk,
                 data={"bed_id": other_bed.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
             )
 
     def test_creates_reservation_with_clients(self) -> None:
         reservation = reservation_create(
             user=self.user,
-            organization_id=self.org.pk,
             data={
                 "bed_id": self.bed_1.pk,
                 "clients": [
@@ -187,7 +179,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ValidationError) as ctx:
             reservation_create(
                 user=self.user,
-                organization_id=self.org.pk,
                 data={"bed_id": self.bed_1.pk},
             )
         self.assertIn("At least one client must be associated", str(ctx.exception))
@@ -196,7 +187,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ValidationError) as ctx:
             reservation_create(
                 user=self.user,
-                organization_id=self.org.pk,
                 data={
                     "bed_id": self.bed_1.pk,
                     "clients": [
@@ -222,9 +212,8 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
     def test_updates_scalar_fields(self) -> None:
         updated = reservation_update(
             user=self.user,
-            organization_id=self.org.pk,
-            reservation_id=self.reservation.pk,
             data={
+                "id": self.reservation.pk,
                 "status": ReservationStatusChoices.CHECKED_IN,
                 "notes": "Updated notes",
                 "duration": 14,
@@ -244,9 +233,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
 
         updated = reservation_update(
             user=self.user,
-            organization_id=self.org.pk,
-            reservation_id=self.reservation.pk,
-            data={"status": ReservationStatusChoices.COMPLETED},
+            data={"id": self.reservation.pk, "status": ReservationStatusChoices.COMPLETED},
         )
 
         self.assertIsNotNone(updated.checked_out_at)
@@ -258,9 +245,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
 
         updated = reservation_update(
             user=self.user,
-            organization_id=self.org.pk,
-            reservation_id=self.reservation.pk,
-            data={"status": ReservationStatusChoices.CHECKED_IN},
+            data={"id": self.reservation.pk, "status": ReservationStatusChoices.CHECKED_IN},
         )
 
         self.assertIsNotNone(updated.checked_in_at)
@@ -270,9 +255,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
     def test_none_scalar_values_skipped(self) -> None:
         reservation_update(
             user=self.user,
-            organization_id=self.org.pk,
-            reservation_id=self.reservation.pk,
-            data={"notes": "New notes"},
+            data={"id": self.reservation.pk, "notes": "New notes"},
         )
 
         self.reservation.refresh_from_db()
@@ -282,9 +265,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
 
     def test_reservation_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            reservation_update(
-                user=self.user, organization_id=self.org.pk, reservation_id=999999, data={"notes": "Missing"}
-            )
+            reservation_update(user=self.user, data={"id": 999999, "notes": "Missing"})
         self.assertIn("Reservation matching ID 999999 could not be found.", str(ctx.exception))
 
     def test_user_without_org_access_raises_does_not_exist(self) -> None:
@@ -293,10 +274,46 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
             outsider = User.objects.create_user(username="outsider", password="pw")
             reservation_update(
                 user=outsider,
-                organization_id=self.org.pk,
-                reservation_id=self.reservation.pk,
-                data={"notes": "Blocked"},
+                data={"id": self.reservation.pk, "notes": "Blocked"},
             )
+
+    def _org_with_shelter_and_bed(self, name: str) -> tuple:
+        org_b = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        shelter_b = shelter_recipe.make(organization=org_b)
+        bed_b = baker.make(Bed, shelter=shelter_b, name=name)
+        return org_b, shelter_b, bed_b
+
+    def test_move_to_another_orgs_bed_allowed_with_change_there(self) -> None:
+        """Writes are identity-wide: holding CHANGE at the destination org authorizes
+        a cross-org reparent (ADR 0001 §2.6 / §7 item 7)."""
+        org_b, _shelter_b, bed_b = self._org_with_shelter_and_bed("Bed-B")
+        org_b.users.add(self.user)
+        OrgRoleManager(org_b).add_roles(self.user, SHELTER_OPERATOR)
+
+        updated = reservation_update(
+            user=self.user,
+            data={"id": self.reservation.pk, "bed_id": bed_b.pk},
+        )
+
+        self.assertEqual(updated.bed_id, bed_b.pk)
+        shelter = updated.shelter
+        assert shelter is not None
+        self.assertEqual(shelter.organization_id, org_b.pk)
+
+    def test_move_to_another_orgs_bed_denied_without_change_there(self) -> None:
+        """A cross-org reparent must fail closed when the user cannot act at the
+        destination org — reach at the reservation's *current* org is not enough."""
+        User = get_user_model()
+        mover = User.objects.create_user(username="cross-org-mover", password="pw")
+        self.org.users.add(mover)
+        OrgRoleManager(self.org).add_roles(mover, SHELTER_OPERATOR)
+        _org_b, _shelter_b, bed_b = self._org_with_shelter_and_bed("Bed-B-Foreign")
+
+        with self.assertRaises(PermissionDenied):
+            reservation_update(user=mover, data={"id": self.reservation.pk, "bed_id": bed_b.pk})
+
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.bed_id, self.bed_1.pk)
 
     def test_update_replaces_clients(self) -> None:
         client_1 = baker.make(ClientProfile)
@@ -306,9 +323,8 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
         # First, attach client_1 and client_2
         reservation_update(
             user=self.user,
-            organization_id=self.org.pk,
-            reservation_id=self.reservation.pk,
             data={
+                "id": self.reservation.pk,
                 "clients": [
                     {"client_profile_id": client_1.pk, "is_primary": True},
                     {"client_profile_id": client_2.pk, "is_primary": False},
@@ -324,9 +340,8 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
         # Replace entirely: remove client_1/2, add client_3 as primary
         reservation_update(
             user=self.user,
-            organization_id=self.org.pk,
-            reservation_id=self.reservation.pk,
             data={
+                "id": self.reservation.pk,
                 "clients": [
                     {"client_profile_id": client_3.pk, "is_primary": True},
                 ],
@@ -348,7 +363,7 @@ class ReservationDeleteTestCase(ReservationServiceTestCase):
         to_delete = baker.make(Reservation, bed=self.bed_1, status=ReservationStatusChoices.CONFIRMED)
         other = baker.make(Reservation, bed=self.bed_2, status=ReservationStatusChoices.CONFIRMED)
 
-        deleted = reservation_delete(user=self.user, organization_id=self.org.pk, reservation_ids=[to_delete.pk])
+        deleted = reservation_delete(user=self.user, reservation_ids=[to_delete.pk])
 
         self.assertEqual(len(deleted), 1)
         self.assertEqual(deleted[0], to_delete.pk)
@@ -360,9 +375,7 @@ class ReservationDeleteTestCase(ReservationServiceTestCase):
         to_delete_2 = baker.make(Reservation, bed=self.bed_2, status=ReservationStatusChoices.CONFIRMED)
         other = baker.make(Reservation, room=self.room_2, bed=None, status=ReservationStatusChoices.CONFIRMED)
 
-        deleted = reservation_delete(
-            user=self.user, organization_id=self.org.pk, reservation_ids=[to_delete_1.pk, to_delete_2.pk]
-        )
+        deleted = reservation_delete(user=self.user, reservation_ids=[to_delete_1.pk, to_delete_2.pk])
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Reservation.objects.filter(pk__in=[to_delete_1.pk, to_delete_2.pk]).exists())
@@ -370,4 +383,4 @@ class ReservationDeleteTestCase(ReservationServiceTestCase):
 
     def test_empty_list_raises(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
-            reservation_delete(user=self.user, organization_id=self.org.pk, reservation_ids=[])
+            reservation_delete(user=self.user, reservation_ids=[])

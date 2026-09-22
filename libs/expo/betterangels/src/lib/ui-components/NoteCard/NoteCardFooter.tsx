@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 import { View } from 'react-native';
 
 interface INoteCardFooterProps {
@@ -20,7 +20,7 @@ export default function NoteCardFooter(props: INoteCardFooterProps) {
     >
       <View style={{ flex: 1 }}>
         <TextRegular size="xsm" color={Colors.NEUTRAL_DARK}>
-          {format(new Date(interactedAt), 'MM/dd/yyyy')}
+          {formatScalarDate(interactedAt, 'MM/dd/yyyy')}
         </TextRegular>
       </View>
       {!isSubmitted && (

@@ -4,7 +4,9 @@ import type { DeleteBedsMutation } from './useDeleteBeds.generated';
 
 export const deleteBedsOperationKey: keyof Omit<DeleteBedsMutation, '__typename'> = 'deleteBeds';
 export const deleteBedsSuccessTypename: Extract<
-  NonNullable<DeleteBedsMutation['deleteBeds']>,
+  NonNullable<DeleteBedsMutation['deleteBeds']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteBedsMutation['deleteBeds']>,
   { __typename: 'BulkDeleteResult' }
 >['__typename'] = 'BulkDeleteResult';
 

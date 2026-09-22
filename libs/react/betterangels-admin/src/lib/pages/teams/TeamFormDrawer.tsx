@@ -1,4 +1,5 @@
 import { useMutation } from '@apollo/client/react';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { TeamType } from '@monorepo/ba-platform/types';
 import {
   AppDrawer,
@@ -6,7 +7,7 @@ import {
   useAlert,
   useAppDrawer,
 } from '@monorepo/react/components';
-import { Dropdown, Input, mergeCss } from '@monorepo/react/shared';
+import { Dropdown, Input, mergeCss, toError } from '@monorepo/react/shared';
 import { KeyboardEvent, useState } from 'react';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import {
@@ -25,6 +26,7 @@ export function TeamFormDrawer(props: TProps) {
   const isEditing = !!team;
   const { closeDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
+  const { activeOrg } = useActiveOrg();
   const [name, setName] = useState(team?.name ?? '');
   const [isActive, setIsActive] = useState<boolean>(team?.isActive !== false);
   const [disabled, setDisabled] = useState(false);
@@ -35,32 +37,50 @@ export function TeamFormDrawer(props: TProps) {
   const handleSubmit = async () => {
     if (!name.trim()) return;
     setDisabled(true);
+    let rejection: string | null;
+
     try {
       if (isEditing) {
         const response = await updateTeam({
           variables: { data: { id: team.id, name: name.trim(), isActive } },
         });
-        const error = extractOperationInfoMessage(response, 'updateTeam');
-        if (error) throw new Error(error);
-        showAlert({
-          type: 'success',
-          content: `Team "${name.trim()}" updated.`,
-        });
+        rejection = extractOperationInfoMessage(response, 'updateTeam');
       } else {
+        // Only create carries the org in the payload; update/delete derive it
+        // from the team row. Fail loudly if it is missing anyway.
+        const organizationId = activeOrg?.id;
+        if (!organizationId) {
+          showAlert({
+            type: 'error',
+            content: 'No active organization selected.',
+          });
+          return;
+        }
         const response = await createTeam({
-          variables: { data: { name: name.trim() } },
+          variables: {
+            data: { name: name.trim(), organizationId },
+          },
         });
-        const error = extractOperationInfoMessage(response, 'createTeam');
-        if (error) throw new Error(error);
-        showAlert({
-          type: 'success',
-          content: `Team "${name.trim()}" created.`,
-        });
+        rejection = extractOperationInfoMessage(response, 'createTeam');
       }
+
+      if (rejection) {
+        showAlert({ type: 'error', content: rejection });
+
+        return;
+      }
+
+      showAlert({
+        type: 'success',
+        content: `Team "${name.trim()}" ${isEditing ? 'updated' : 'created'}.`,
+      });
       closeDrawer();
       onSuccess();
     } catch (err) {
-      console.error(err);
+      console.error(
+        `[${isEditing ? 'updateTeam' : 'createTeam'} error]: ${toError(err).message}`,
+      );
+
       showAlert({
         type: 'error',
         content: 'Sorry, something went wrong. Please try again.',

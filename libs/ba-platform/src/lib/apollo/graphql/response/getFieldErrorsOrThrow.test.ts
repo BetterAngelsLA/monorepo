@@ -155,6 +155,26 @@ describe('getFieldErrorsOrThrow', () => {
               { field: 'name', message: 'server msg' },
             ],
           },
+          {
+            name: 'IndexedField entries present: plain names still match',
+            response: responseWithErrors({
+              extensions: {
+                errors: [{ field: 'email', errorCode: 'EMAIL_INVALID' }],
+              },
+            }),
+            params: {
+              fields: [
+                'email',
+                {
+                  parentKey: 'additionalContacts',
+                  children: ['contactEmail'],
+                },
+              ],
+            },
+            returns: [
+              { field: 'email', message: 'Enter a valid email address' },
+            ],
+          },
         ];
 
         runScenarios(testCases);
@@ -184,6 +204,52 @@ describe('getFieldErrorsOrThrow', () => {
             returns: [
               { field: 'name', message: 'Required' },
               { field: 'email', message: 'Invalid' },
+            ],
+          },
+          {
+            name: 'IndexedField: matches <parentKey>.<index>.<child>',
+            response: responseWithOpInfo({
+              kind: 'VALIDATION',
+              field: 'additionalContacts.0.contactEmail',
+              message: 'Invalid',
+            }),
+            params: {
+              fields: [
+                {
+                  parentKey: 'additionalContacts',
+                  children: ['contactEmail'],
+                },
+              ],
+            },
+            returns: [
+              {
+                field: 'additionalContacts.0.contactEmail',
+                message: 'Invalid',
+              },
+            ],
+          },
+          {
+            name: 'IndexedField + plain name: both filters participate',
+            response: responseWithOpInfo(
+              { kind: 'VALIDATION', field: 'name', message: 'Required' },
+              {
+                kind: 'VALIDATION',
+                field: 'additionalContacts.2.contactName',
+                message: 'Required',
+              },
+            ),
+            params: {
+              fields: [
+                'name',
+                { parentKey: 'additionalContacts', children: ['contactName'] },
+              ],
+            },
+            returns: [
+              { field: 'name', message: 'Required' },
+              {
+                field: 'additionalContacts.2.contactName',
+                message: 'Required',
+              },
             ],
           },
         ];
@@ -411,6 +477,33 @@ describe('getFieldErrorsOrThrow', () => {
               { kind: 'VALIDATION', field: 'phone', message: 'Required' },
             ),
             params: { fields: ['unmatchedField'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+          {
+            name: 'IndexedField: unlisted child makes response generic',
+            response: responseWithOpInfo(
+              {
+                kind: 'VALIDATION',
+                field: 'additionalContacts.0.contactEmail',
+                message: 'Invalid',
+              },
+              {
+                kind: 'VALIDATION',
+                field: 'additionalContacts.0.id',
+                message: 'Unknown additional contact id.',
+              },
+            ),
+            params: {
+              fields: [
+                {
+                  parentKey: 'additionalContacts',
+                  children: ['contactEmail'],
+                },
+              ],
+            },
             throws: {
               type: Error,
               message: 'An unexpected error occurred.',

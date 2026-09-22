@@ -8,12 +8,14 @@ export default function MainContainer({
   pt = 'md',
   px = 'sm',
   pb = 80,
+  testId,
 }: {
   children: ReactNode;
   bg?: string;
   pt?: 'sm' | 'md' | 'lg' | 0;
   px?: 'sm' | 'md' | 0;
   pb?: 0 | 80;
+  testId?: string;
 }) {
   return (
     <KeyboardAvoidingView
@@ -21,6 +23,7 @@ export default function MainContainer({
       style={{ flex: 1 }}
     >
       <View
+        testID={testId}
         style={{
           flex: 1,
           backgroundColor: bg || Colors.WHITE,

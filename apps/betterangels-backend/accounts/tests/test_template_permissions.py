@@ -11,7 +11,7 @@ from functools import reduce
 
 import pytest
 from common.org_types import REGISTRY
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
 from django.db.models import Q
 
 
@@ -59,3 +59,63 @@ def test_all_template_permissions_resolve() -> None:
             "to use the correct app_label.codename."
         )
         pytest.fail("\n".join(lines))
+
+
+@pytest.mark.django_db
+def test_retire_superseded_phantom_permissions() -> None:
+    """Phantom rows with a real-model twin are retired; portal phantoms are kept.
+
+    Simulates a DB seeded before real-model binding: a synthesized
+    ``(reports, reports)`` phantom ContentType + ``view_reports`` Permission that
+    now has a real twin on ``ScheduledReport``.  Retiring must drop the phantom
+    (and its ContentType) but keep the real row — and the member-management
+    portal phantoms (``organizations.*``), which still have no real twin.
+    """
+    from accounts.seed import retire_superseded_phantom_permissions
+    from django.contrib.auth import get_user_model
+    from django.contrib.contenttypes.models import ContentType
+
+    # A real twin exists: reports.view_reports on ScheduledReport (model Meta).
+    real = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
+    assert real.content_type.model_class() is not None
+
+    # Simulate the old synthesized phantom.
+    phantom_ct, _ = ContentType.objects.get_or_create(app_label="reports", model="reports")
+    phantom, _ = Permission.objects.get_or_create(
+        content_type=phantom_ct, codename="view_reports", defaults={"name": "Can view reports"}
+    )
+
+    # A user granted the phantom directly (pre-cutover admin grant) — retiring
+    # must RE-POINT this onto the real row, never silently revoke it.
+    holder = get_user_model().objects.create(username="reports-holder")
+    holder.user_permissions.add(phantom)
+
+    # Holders referencing BOTH rows (a DB that lived through the transition):
+    # the re-point must drop the phantom reference first instead of colliding
+    # with the through-table unique constraint and aborting post_migrate.
+    both_user = get_user_model().objects.create(username="both-rows-holder")
+    both_user.user_permissions.add(phantom, real)
+    both_group = Group.objects.create(name="both-rows-group")
+    both_group.permissions.add(phantom, real)
+
+    # A portal phantom with no real twin (member management is still legacy).
+    portal_ct, _ = ContentType.objects.get_or_create(app_label="organizations", model="member")
+    portal_phantom, _ = Permission.objects.get_or_create(
+        content_type=portal_ct, codename="add_org_member", defaults={"name": "Can Add Org Member"}
+    )
+
+    retire_superseded_phantom_permissions()
+
+    assert not Permission.objects.filter(pk=phantom.pk).exists()
+    assert Permission.objects.filter(pk=real.pk).exists()
+    # The user's grant survived, now on the real row.
+    assert holder.user_permissions.filter(pk=real.pk).exists()
+    # Both-rows holders kept the real reference and lost the phantom one.
+    assert not both_user.user_permissions.filter(pk=phantom.pk).exists()
+    assert both_user.user_permissions.filter(pk=real.pk).exists()
+    assert not both_group.permissions.filter(pk=phantom.pk).exists()
+    assert both_group.permissions.filter(pk=real.pk).exists()
+    # Portal phantom has no real twin → kept.
+    assert Permission.objects.filter(pk=portal_phantom.pk).exists()
+    # Phantom ContentType dropped once its rows are gone.
+    assert not ContentType.objects.filter(app_label="reports", model="reports").exists()

@@ -1,12 +1,13 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type DeleteCurrentUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type DeleteCurrentUserMutation = { __typename?: 'Mutation', deleteCurrentUser:
-    | { __typename?: 'DeletedObjectType', id: number }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteCurrentUserMutation = { __typename: 'Mutation', deleteCurrentUser:
+    | { __typename: 'DeletedObjectType', id: number }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type UpdateNoteMutationVariables = Types.Exact<{
@@ -14,9 +15,9 @@ export type UpdateNoteMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote:
-    | { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, team?: { __typename?: 'TeamType', id: string, name: string } | null, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service?: { __typename?: 'OrganizationServiceType', id: string, label: string, category?: { __typename?: 'OrganizationServiceCategoryType', id: string } | null } | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service?: { __typename?: 'OrganizationServiceType', id: string, label: string, category?: { __typename?: 'OrganizationServiceCategoryType', id: string } | null } | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy?: { __typename?: 'UserType', id: string, username?: string | null, email?: string | null } | null }
-    | { __typename?: 'OperationInfo' }
+export type UpdateNoteMutation = { __typename: 'Mutation', updateNote:
+    | { __typename: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: DateTimeString, createdAt: DateTimeString, team?: { __typename: 'TeamType', id: string, name: string } | null, location?: { __typename: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, providedServices: Array<{ __typename: 'ServiceRequestType', id: string, service?: { __typename: 'OrganizationServiceType', id: string, label: string, category?: { __typename: 'OrganizationServiceCategoryType', id: string } | null } | null }>, requestedServices: Array<{ __typename: 'ServiceRequestType', id: string, service?: { __typename: 'OrganizationServiceType', id: string, label: string, category?: { __typename: 'OrganizationServiceCategoryType', id: string } | null } | null }>, clientProfile?: { __typename: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy?: { __typename: 'UserType', id: string, username?: string | null, email?: string | null } | null }
+    | { __typename: 'OperationInfo' }
    };
 
 export type DeleteNoteMutationVariables = Types.Exact<{
@@ -24,9 +25,9 @@ export type DeleteNoteMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteNoteMutation = { __typename?: 'Mutation', deleteNote:
-    | { __typename?: 'NoteType', id: string }
-    | { __typename?: 'OperationInfo' }
+export type DeleteNoteMutation = { __typename: 'Mutation', deleteNote:
+    | { __typename: 'NoteType', id: string }
+    | { __typename: 'OperationInfo' }
    };
 
 export type CreateNoteServiceRequestMutationVariables = Types.Exact<{
@@ -34,9 +35,9 @@ export type CreateNoteServiceRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateNoteServiceRequestMutation = { __typename?: 'Mutation', createNoteServiceRequest:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'ServiceRequestType', id: string, service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null }
+export type CreateNoteServiceRequestMutation = { __typename: 'Mutation', createNoteServiceRequest:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'ServiceRequestType', id: string, service?: { __typename: 'OrganizationServiceType', id: string, label: string } | null }
    };
 
 export type DeleteServiceRequestMutationVariables = Types.Exact<{
@@ -44,9 +45,9 @@ export type DeleteServiceRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteServiceRequestMutation = { __typename?: 'Mutation', deleteServiceRequest:
-    | { __typename?: 'DeletedObjectType', id: number }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteServiceRequestMutation = { __typename: 'Mutation', deleteServiceRequest:
+    | { __typename: 'DeletedObjectType', id: number }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type UpdateNoteLocationMutationVariables = Types.Exact<{
@@ -54,9 +55,9 @@ export type UpdateNoteLocationMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateNoteLocationMutation = { __typename?: 'Mutation', updateNoteLocation:
-    | { __typename?: 'NoteType', id: string, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateNoteLocationMutation = { __typename: 'Mutation', updateNoteLocation:
+    | { __typename: 'NoteType', id: string, location?: { __typename: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

@@ -8,17 +8,27 @@ import {
   Dropdown,
   DropdownChip,
   toDropdownValue,
+  type DropdownOption,
 } from '../../../base-ui/dropdown';
 import { Input } from '../../../base-ui/input';
 import { RichTextEditor } from '../../../base-ui/richTextEditor';
 import { Switch } from '../../../base-ui/switch';
 import { Form } from '../../../form/Form';
-import { STATUS_COLOR_MAP, STATUS_OPTIONS } from '../../constants';
+import {
+  SEARCHABLE_DROPDOWN_MIN,
+  STATUS_COLOR_MAP,
+  STATUS_OPTIONS,
+} from '../../constants';
 import {
   defaultFormValues,
   formSchema,
   type BasicInfoFormData,
 } from './formSchema';
+
+type OrganizationField = {
+  options: readonly DropdownOption<string>[];
+  isLoading?: boolean;
+};
 
 type TProps = {
   values?: Partial<BasicInfoFormData>;
@@ -31,6 +41,9 @@ type TProps = {
   onCancel?: () => void;
   disabled?: boolean;
   className?: string;
+  /** When provided, renders an Organization dropdown (create form, global
+   * operators only). */
+  organizationField?: OrganizationField;
 };
 
 export function ShelterBasicInfoForm(props: TProps) {
@@ -42,6 +55,7 @@ export function ShelterBasicInfoForm(props: TProps) {
     onCancel,
     disabled = false,
     className,
+    organizationField,
   } = props;
 
   const initialValues = useMemo(
@@ -140,6 +154,37 @@ export function ShelterBasicInfoForm(props: TProps) {
               />
             </div>
           </Form.Block>
+          {organizationField && (
+            <Form.Block columns={2}>
+              <Controller
+                name="organizationId"
+                control={control}
+                render={({ field }) => (
+                  <Dropdown
+                    label="Organization"
+                    placeholder="Select an organization"
+                    options={organizationField.options}
+                    value={
+                      organizationField.options.find(
+                        (option) => option.value === field.value,
+                      ) ?? null
+                    }
+                    onChange={(option) => {
+                      if (option && !Array.isArray(option)) {
+                        field.onChange(option.value);
+                      }
+                    }}
+                    isSearchable={
+                      organizationField.options.length > SEARCHABLE_DROPDOWN_MIN
+                    }
+                    disabled={disabled || organizationField.isLoading}
+                    required={true}
+                    error={errors.organizationId?.message}
+                  />
+                )}
+              />
+            </Form.Block>
+          )}
 
           <Controller
             name="description"

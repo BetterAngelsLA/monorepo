@@ -1,14 +1,15 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type UpdateHmisProfileMutationVariables = Types.Exact<{
   data: Types.HmisProfileInput;
 }>;
 
 
-export type UpdateHmisProfileMutation = { __typename?: 'Mutation', updateHmisProfile:
-    | { __typename?: 'HmisProfileType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateHmisProfileMutation = { __typename: 'Mutation', updateHmisProfile:
+    | { __typename: 'HmisProfileType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type CreateHmisProfileMutationVariables = Types.Exact<{
@@ -16,9 +17,9 @@ export type CreateHmisProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateHmisProfileMutation = { __typename?: 'Mutation', createHmisProfile:
-    | { __typename?: 'HmisProfileType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CreateHmisProfileMutation = { __typename: 'Mutation', createHmisProfile:
+    | { __typename: 'HmisProfileType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

@@ -10,6 +10,8 @@ class CommonConfig(AppConfig):
     name = "common"
 
     def ready(self) -> None:
+        from common.permissions import checks as _permission_checks  # noqa: F401
+
         from .signals import enable_imgproxy_switch
 
         self._register_imgproxy_image_type()

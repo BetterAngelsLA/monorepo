@@ -2,12 +2,12 @@ import { useActiveOrg } from '@monorepo/ba-platform';
 import { Dropdown as MenuDropdown } from '@monorepo/react/components';
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
-import { operatorPath, useSignOut } from '@monorepo/react/shelter';
-import { Plus, UserCog } from 'lucide-react';
+import { operatorPath, useSignOut, useUser } from '@monorepo/react/shelter';
+import { Plus, User, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useShelterOperatorProfile } from '../hooks';
+import { useShelterOperatorProfile, useShelterPermissions } from '../hooks';
 import { isShelterRoute, paths } from '../routing';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
@@ -23,6 +23,15 @@ function NavBarActions({
   children?: ReactNode;
   onSignOut: () => void;
 }) {
+  const { user } = useUser();
+  const { activeOrg } = useActiveOrg();
+
+  const userName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+    user?.username ||
+    user?.email ||
+    '';
+
   const handleAccountSelect = (option: AccountOption) => {
     if (option === AccountOption.SignOut) {
       onSignOut();
@@ -33,12 +42,37 @@ function NavBarActions({
     <div className="flex items-center gap-3">
       {children}
       <MenuDropdown
+        sheetClassname="p-4"
         title={
           <div
             aria-label="Account settings"
             className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1"
           >
             <UserCog size={20} />
+          </div>
+        }
+        header={
+          <div className="flex flex-col gap-1 bg-[#FAFAFA] p-4 rounded-lg mb-4">
+            <div className="flex flex-row items-center gap-4">
+              <User size={24} />
+              <div className="flex flex-col gap-1">
+                {!!userName && (
+                  <p className="truncate text-sm font-medium text-[#3E4652]">
+                    {userName}
+                  </p>
+                )}
+                {!!user?.email && (
+                  <p className="truncate text-xs text-[#7A818A]">
+                    {user.email}
+                  </p>
+                )}
+                {activeOrg?.name && (
+                  <p className="truncate text-xs text-[#7A818A] mt-1">
+                    {activeOrg.name}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         }
         options={[AccountOption.SignOut]}
@@ -66,9 +100,11 @@ export function NavBar(props: TNavProps) {
     location.pathname === operatorPath ||
     location.pathname === `${operatorPath}/`;
 
-  const showCreateButton = isDashboardPage;
+  const { canCreateShelter } = useShelterPermissions();
+  const showCreateButton = isDashboardPage && canCreateShelter;
 
-  const orgName =
+  // assumes user belongs to 1 organization only
+  const currentUserOrgName =
     organizations.length === 1 ? organizations[0].name : 'Admin Dashboard';
 
   // ── Shelter name ─────────────────────────────────────────────────────────
@@ -78,7 +114,10 @@ export function NavBar(props: TNavProps) {
     shelterId ?? '',
   );
   const shelterName = operatorShelter?.name;
-  const showShelterName = isShelterRoute(location.pathname) && !!shelterName;
+  const shelterOrg = operatorShelter?.organization;
+  const shelterOrgName = shelterOrg?.name || '';
+  const isShelterView = isShelterRoute(location.pathname);
+  const showShelterName = isShelterView && !!shelterName;
 
   const selectedOption = useMemo(() => {
     const org = organizations.find((o) => o.id === selectedOrganizationId);
@@ -107,7 +146,7 @@ export function NavBar(props: TNavProps) {
             <BetterAngelsLogoIcon fill="#1E3342" className="h-9 w-auto" />
           </Link>
           <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
-            {orgName}
+            {isShelterView ? shelterOrgName : currentUserOrgName}
           </p>
 
           {showShelterName && (

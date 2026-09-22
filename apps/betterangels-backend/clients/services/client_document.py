@@ -69,7 +69,7 @@ def resolve_upload(
 
         for att in attached:
             assign_object_permissions(
-                permission_group.group,
+                permission_group,
                 att,
                 [Attachment.perms.DELETE, Attachment.perms.CHANGE],
             )

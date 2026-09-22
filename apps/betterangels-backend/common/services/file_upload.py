@@ -14,6 +14,7 @@ authorization (permission checks, permission assignment) themselves.
 from typing import Any, Iterable
 
 from accounts.models import User
+from common.files.utils import canonicalise_filename, infer_attachment_type
 from common.models import Attachment
 from common.services.exceptions import (
     InvalidContentTypeError,
@@ -188,14 +189,15 @@ def create_attachment_records(
             attachment = Attachment(
                 file=item.file_path,
                 mime_type=item.mime_type,
-                original_filename=item.filename,
+                attachment_type=infer_attachment_type(item.mime_type),
+                original_filename=canonicalise_filename(item.mime_type, item.filename),
                 namespace=item.namespace,
                 content_type=content_type,
                 object_id=content_object.id,
                 uploaded_by=user,
             )
 
-            attachment.save(direct_upload=True)
+            attachment.save()
             attached.append(attachment)
 
     return attached

@@ -25,6 +25,7 @@ interface IAccordionProps {
   mr?: TSpacing;
   expanded: string | undefined | null;
   setExpanded: () => void;
+  testId?: string;
   scrollRef?: RefObject<ScrollView | null>;
   bg?: string;
   borderWidth?: number;
@@ -45,6 +46,7 @@ export function Accordion(props: IAccordionProps) {
     mx,
     expanded,
     setExpanded,
+    testId,
     scrollRef,
     bg = Colors.NEUTRAL_EXTRA_LIGHT,
     borderWidth,
@@ -84,6 +86,7 @@ export function Accordion(props: IAccordionProps) {
         onPress={() => {
           setExpanded();
         }}
+        testID={testId}
         accessible
         accessibilityRole="button"
         accessibilityHint={`expands ${title} field`}

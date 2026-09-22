@@ -32,7 +32,7 @@ function getDefaultRange(): [Dayjs, Dayjs] {
   return [start, end];
 }
 
-function formatDate(d: Dayjs): string {
+function formatScalarDate(d: Dayjs): string {
   return d.format('YYYY-MM-DD');
 }
 
@@ -48,11 +48,14 @@ export default function Reports({ className = '' }: IProps) {
   const { download, isDownloading, error, clearError } = useCSVDownload();
 
   const [startDate, endDate] = dateRange;
-  const startStr = formatDate(startDate);
-  const endStr = formatDate(endDate);
+  const startStr = formatScalarDate(startDate);
+  const endStr = formatScalarDate(endDate);
 
   const { data, loading } = useQuery(ReportSummaryDocument, {
     variables: {
+      // reportSummary carries its org in the payload; '' is never sent because
+      // the query is skipped without an active org.
+      organizationId: activeOrg ? activeOrg.id : '',
       startDate: startStr,
       endDate: endStr,
     },

@@ -11,6 +11,17 @@ from accounts.models import Organization, User
 logger = logging.getLogger(__name__)
 
 
+def base_url_for(template_config: TemplateConfig) -> str:
+    """Base URL of the frontend app a holder of *template_config* signs in to.
+
+    Read from the Django setting named by ``base_url_setting`` — env-driven, so it
+    is right per environment, and it carries its own scheme.  Every email that
+    sends someone to their app resolves the host this way, so a welcome message
+    and the invitation that preceded it cannot point at different places.
+    """
+    return str(getattr(settings, template_config.base_url_setting, ""))
+
+
 def send_welcome_email(user: User, organization: Organization, template_config: TemplateConfig) -> None:
     """Send a welcome email using the given template config.
 
@@ -28,7 +39,7 @@ def send_welcome_email(user: User, organization: Organization, template_config: 
         logger.warning(f"No welcome email templates for '{template_config.name}' — skipping.")
         return
 
-    base_url = getattr(settings, template_config.base_url_setting, "")
+    base_url = base_url_for(template_config)
 
     context = {
         "user_email": user.email,

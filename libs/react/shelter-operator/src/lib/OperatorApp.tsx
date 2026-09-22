@@ -1,8 +1,19 @@
 import { ActiveOrgProvider } from '@monorepo/ba-platform';
-import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import { useUser } from '@monorepo/react/shelter';
+import {
+  BedPermissions,
+  ReservationPermissions,
+  RoomPermissions,
+  ShelterPermissions,
+  type PermissionEnum,
+} from '@monorepo/ba-platform/permissions';
+import { operatorPath, useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
+import {
+  BaPrivateGate,
+  MgmtActionGate,
+  PermissionGate,
+} from './components/guards/PermissionGate';
 import { OperatorLayout } from './components/layout/OperatorLayout';
 import {
   BedsPage,
@@ -20,7 +31,9 @@ import {
 } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
+import { ShelterReportPage } from './pages/report/ShelterReportPage';
 import {
+  BaPrivatePage,
   ShelterBasicInfoPage,
   ShelterDetailsPage,
   ShelterEcosystemPage,
@@ -61,7 +74,14 @@ export function OperatorApp() {
             <Route path={routePath(paths.users)} element={<UsersPage />} />
             <Route
               path={routePath(paths.shelterCreate)}
-              element={<CreateShelterProfile />}
+              element={
+                <PermissionGate
+                  permission={ShelterPermissions.Add}
+                  fallbackPath={operatorPath}
+                >
+                  <CreateShelterProfile />
+                </PermissionGate>
+              }
             />
             <Route path={routePath(profileRouteConfig.root)}>
               <Route
@@ -98,7 +118,19 @@ export function OperatorApp() {
                 path={profileRouteConfig.children.media}
                 element={<ShelterMediaPage />}
               />
+              <Route
+                path={profileRouteConfig.children.baPrivate}
+                element={
+                  <BaPrivateGate>
+                    <BaPrivatePage />
+                  </BaPrivateGate>
+                }
+              />
             </Route>
+            <Route
+              path={routePath(paths.shelterReport)}
+              element={<ShelterReportPage />}
+            />
             <Route path={routePath(mgmtRouteConfig.root)}>
               <Route
                 index
@@ -112,11 +144,25 @@ export function OperatorApp() {
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`}
-                element={<CreateBedPage />}
+                element={
+                  <MgmtActionGate
+                    resource="bed"
+                    permission={BedPermissions.Add}
+                  >
+                    <CreateBedPage />
+                  </MgmtActionGate>
+                }
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.edit}`}
-                element={<EditBedPage />}
+                element={
+                  <MgmtActionGate
+                    resource="bed"
+                    permission={BedPermissions.Change}
+                  >
+                    <EditBedPage />
+                  </MgmtActionGate>
+                }
               />
               <Route
                 path={mgmtRouteConfig.children.rooms}
@@ -124,11 +170,25 @@ export function OperatorApp() {
               />
               <Route
                 path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.create}`}
-                element={<CreateRoomPage />}
+                element={
+                  <MgmtActionGate
+                    resource="room"
+                    permission={RoomPermissions.Add}
+                  >
+                    <CreateRoomPage />
+                  </MgmtActionGate>
+                }
               />
               <Route
                 path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.edit}`}
-                element={<EditRoomPage />}
+                element={
+                  <MgmtActionGate
+                    resource="room"
+                    permission={RoomPermissions.Change}
+                  >
+                    <EditRoomPage />
+                  </MgmtActionGate>
+                }
               />
               <Route
                 path={mgmtRouteConfig.children.reservations}
@@ -136,11 +196,25 @@ export function OperatorApp() {
               />
               <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
-                element={<CreateReservationPage />}
+                element={
+                  <MgmtActionGate
+                    resource="reservation"
+                    permission={ReservationPermissions.Add}
+                  >
+                    <CreateReservationPage />
+                  </MgmtActionGate>
+                }
               />
               <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.edit}`}
-                element={<EditReservationPage />}
+                element={
+                  <MgmtActionGate
+                    resource="reservation"
+                    permission={ReservationPermissions.Change}
+                  >
+                    <EditReservationPage />
+                  </MgmtActionGate>
+                }
               />
               <Route
                 path={mgmtRouteConfig.children.occupants}

@@ -154,7 +154,8 @@ export function useTableSortFilter<TItem>({
   }, [rows, filters, columns]);
 
   const visibleRows = useMemo(() => {
-    if (!sortColumn || !sortDirection) {
+    // Controlled sort means the server (or parent) owns row order — do not re-sort.
+    if (isSortControlled || !sortColumn || !sortDirection) {
       return filteredRows;
     }
 
@@ -170,7 +171,7 @@ export function useTableSortFilter<TItem>({
       const valB = sortFn(b);
       return compareValues(valA, valB, sortDirection);
     });
-  }, [filteredRows, sortColumn, sortDirection, columns]);
+  }, [filteredRows, sortColumn, sortDirection, columns, isSortControlled]);
 
   return {
     visibleRows,

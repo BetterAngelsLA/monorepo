@@ -1,0 +1,11 @@
+import type * as Types from '@monorepo/ba-platform/types';
+
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+export type ShelterOrganizationsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type ShelterOrganizationsQuery = { __typename: 'Query', shelterOrganizations: { __typename: 'OrganizationTypeOffsetPaginated', results: Array<{ __typename: 'OrganizationType', id: string, name: string }> } };
+
+
+export const ShelterOrganizationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ShelterOrganizations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"shelterOrganizations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pagination"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1000"}}]}},{"kind":"Argument","name":{"kind":"Name","value":"ordering"},"value":{"kind":"ListValue","values":[{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"name"},"value":{"kind":"EnumValue","value":"ASC"}}]}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"results"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<ShelterOrganizationsQuery, ShelterOrganizationsQueryVariables>;

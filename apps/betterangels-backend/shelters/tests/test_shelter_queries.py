@@ -6,8 +6,9 @@ from accounts.tests.baker_recipes import organization_recipe
 from common.imgproxy import IMGPROXY_SWITCH
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import override_settings
-from model_bakery.recipe import seq
 from places import Places
+from waffle.testutils import override_switch
+
 from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,
@@ -46,9 +47,8 @@ from shelters.models import (
     SpecialSituationRestriction,
     Storage,
 )
-from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
+from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
-from waffle.testutils import override_switch
 
 
 @override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
@@ -126,8 +126,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             room_styles=[RoomStyle.objects.get_or_create(name=RoomStyleChoices.CONGREGATE)[0]],
             shelter_programs=[ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.BRIDGE_HOME)[0]],
             shelter_types=[ShelterType.objects.get_or_create(name=ShelterChoices.BUILDING)[0]],
-            spa=SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")[0],
-            spas_served=[SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")[0]],
+            spa=SPA.objects.get(short_name="1"),
+            spas_served=[SPA.objects.get(short_name="1")],
             special_situation_restrictions=[
                 SpecialSituationRestriction.objects.get_or_create(
                     name=SpecialSituationRestrictionChoices.NONE,
@@ -137,13 +137,6 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         )
 
         shelter = Shelter.objects.get(pk=new_shelter.pk)
-
-        shelter_contacts = shelter_contact_recipe.make(
-            contact_number=seq("212555121"),  # type: ignore
-            shelter=shelter,
-            _quantity=2,
-        )
-        shelter.additional_contacts.set(shelter_contacts)
 
         exterior_photo = ShelterPhoto.objects.create(
             shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR
@@ -169,7 +162,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 19
+        expected_query_count = 18
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -234,10 +227,6 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             "specialSituationRestrictions": [{"name": SpecialSituationRestrictionChoices.NONE.name}],
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
             "visitorsAllowed": True,
-            "additionalContacts": [
-                {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
-                {"id": ANY, "contactName": "shelter contact 2", "contactNumber": "2125551212"},
-            ],
             "photos": [
                 {
                     "id": str(exterior_photo.pk),
@@ -361,7 +350,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             }}
         """
 
-        expected_query_count = 20
+        expected_query_count = 19
 
         variables = {"ordering": {"name": "ASC"}}
 
@@ -405,6 +394,23 @@ class PublicShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase
 
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["shelter"]["id"], str(self.shelter.pk))
+
+    def test_an_anonymous_caller_can_read_the_organization_name(self) -> None:
+        """Organization names are public for any org owning an approved shelter.
+
+        Load-bearing rather than incidental: it is what makes the exact-name
+        lookups on Organization reachable by an outsider, so anything that starts
+        keying behaviour on a name being secret is wrong. Kept as a test so the
+        assumption is checked rather than remembered.
+        """
+        organization = organization_recipe.make(name="Publicly Named Org")
+        self.shelter.organization = organization
+        self.shelter.save()
+
+        response = self.execute_graphql("{ shelters { results { organization { name } } } }")
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["shelters"]["results"], [{"organization": {"name": "Publicly Named Org"}}])
 
 
 class ShelterMaxStayQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):

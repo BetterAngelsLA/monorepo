@@ -1,14 +1,15 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type UpdateUserProfileMutationVariables = Types.Exact<{
   data: Types.UpdateUserProfileInput;
 }>;
 
 
-export type UpdateUserProfileMutation = { __typename?: 'Mutation', updateUserProfile:
-    | { __typename?: 'CurrentUserType', id: string, firstName?: string | null, lastName?: string | null }
-    | { __typename?: 'OperationInfo' }
+export type UpdateUserProfileMutation = { __typename: 'Mutation', updateUserProfile:
+    | { __typename: 'CurrentUserType', id: string, firstName?: string | null, lastName?: string | null }
+    | { __typename: 'OperationInfo' }
    };
 
 

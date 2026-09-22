@@ -13,6 +13,7 @@ interface ITextButtonProps {
   title: string;
   onPress?: () => void;
   color?: string;
+  pressedBackgroundColor?: string;
   disabled?: boolean;
   style?: ViewStyle;
   mb?: TSpacing;
@@ -33,6 +34,7 @@ export function TextButton(props: ITextButtonProps) {
     onPress,
     title,
     color = Colors.PRIMARY_EXTRA_DARK,
+    pressedBackgroundColor = Colors.GRAY_PRESSED,
     disabled,
     style,
     fontSize = 'md',
@@ -65,7 +67,7 @@ export function TextButton(props: ITextButtonProps) {
           marginRight: mr && Spacings[mr],
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
-          backgroundColor: pressed ? Colors.GRAY_PRESSED : 'transparent',
+          backgroundColor: pressed ? pressedBackgroundColor : 'transparent',
         },
       ]}
       onPress={onPress}

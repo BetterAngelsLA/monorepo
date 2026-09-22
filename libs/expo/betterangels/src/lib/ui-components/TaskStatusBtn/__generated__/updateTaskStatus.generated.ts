@@ -1,14 +1,15 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type UpdateTaskStatusMutationVariables = Types.Exact<{
   data: Types.UpdateTaskInput;
 }>;
 
 
-export type UpdateTaskStatusMutation = { __typename?: 'Mutation', updateTask:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'TaskType', id: string, status?: Types.TaskStatusEnum | null, updatedAt: any }
+export type UpdateTaskStatusMutation = { __typename: 'Mutation', updateTask:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'TaskType', id: string, status?: Types.TaskStatusEnum | null, updatedAt: DateTimeString }
    };
 
 

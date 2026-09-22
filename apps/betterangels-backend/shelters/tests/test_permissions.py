@@ -75,6 +75,6 @@ class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
         ct = ContentType.objects.get_for_model(Shelter)
         perm = Permission.objects.get(codename="view_private_shelter", content_type=ct)
         # Use the first PermissionGroup for this user
-        pg = PermissionGroup.objects.filter(group__user=user).first()
+        pg = PermissionGroup.objects.filter(user=user).first()
         if pg:
-            pg.group.permissions.add(perm)
+            pg.permissions.add(perm)

@@ -4,7 +4,9 @@ import type { UpdateShelterPhotoMutation } from './useUpdateShelterPhoto.generat
 
 export const updateShelterPhotoOperationKey: keyof Omit<UpdateShelterPhotoMutation, '__typename'> = 'updateShelterPhoto';
 export const updateShelterPhotoSuccessTypename: Extract<
-  NonNullable<UpdateShelterPhotoMutation['updateShelterPhoto']>,
+  NonNullable<UpdateShelterPhotoMutation['updateShelterPhoto']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateShelterPhotoMutation['updateShelterPhoto']>,
   { __typename: 'ShelterPhotoType' }
 >['__typename'] = 'ShelterPhotoType';
 

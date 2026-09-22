@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactElement, cloneElement, useEffect, useState } from 'react';
+import { ReactElement, cloneElement, useEffect, useRef, useState } from 'react';
 import type { ButtonProps, GestureResponderEvent } from 'react-native';
 import { View } from 'react-native';
 import BasicModal from '../BasicModal';
@@ -31,13 +31,27 @@ export default function DeleteModal(props: TProps) {
 
   const [visible, setVisible] = useState(isVisible);
 
+  // A delete-initiated close must not re-run onCancel, which races with the
+  // caller unmounting the modal and can briefly re-present the underlying
+  // sheet (e.g. DocumentModal's MainModal).
+  const deletingRef = useRef(false);
+
   useEffect(() => {
     setVisible(isVisible);
   }, [isVisible]);
 
   const handleClose = () => {
     setVisible(false);
-    onCancel?.();
+
+    if (!deletingRef.current) {
+      onCancel?.();
+    }
+  };
+
+  const handleDelete = () => {
+    deletingRef.current = true;
+    onDelete();
+    setVisible(false);
   };
 
   const clonedButton =
@@ -92,10 +106,7 @@ export default function DeleteModal(props: TProps) {
               variant="primary"
               size="full"
               fontSize="sm"
-              onPress={() => {
-                onDelete();
-                setVisible(false);
-              }}
+              onPress={handleDelete}
             />
           </View>
         </View>

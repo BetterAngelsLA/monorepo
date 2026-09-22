@@ -21,7 +21,7 @@ export function FilterSection({
           <button
             type="button"
             onClick={onClear}
-            className="inline-flex items-center gap-0.5 text-[10px] text-neutral-warm-70 cursor-pointer"
+            className="inline-flex items-center gap-0.5 text-[12px] text-neutral-warm-70 cursor-pointer"
           >
             Clear
           </button>

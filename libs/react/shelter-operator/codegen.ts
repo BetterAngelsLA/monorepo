@@ -1,4 +1,8 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
+import {
+  SCALAR_IMPORT_PLUGIN,
+  SHARED_SCALAR_CONFIG,
+} from '../../../tools/codegen/scalars';
 
 const config: CodegenConfig = {
   overwrite: true,
@@ -12,15 +16,14 @@ const config: CodegenConfig = {
     'src/': {
       preset: 'near-operation-file',
       plugins: [
+        SCALAR_IMPORT_PLUGIN,
         'typescript-operations',
         'typed-document-node',
         '../../../tools/codegen/plugins/operation-meta-plugin.cjs',
       ],
       config: {
         nonOptionalTypename: true,
-        scalars: {
-          NonBlankString: 'string',
-        },
+        ...SHARED_SCALAR_CONFIG,
         useTypeImports: true,
       },
       presetConfig: {

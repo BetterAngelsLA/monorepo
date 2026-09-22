@@ -4,7 +4,9 @@ import type { DeleteShelterPhotosMutation } from './useDeleteShelterPhotos.gener
 
 export const deleteShelterPhotosOperationKey: keyof Omit<DeleteShelterPhotosMutation, '__typename'> = 'deleteShelterPhotos';
 export const deleteShelterPhotosSuccessTypename: Extract<
-  NonNullable<DeleteShelterPhotosMutation['deleteShelterPhotos']>,
+  NonNullable<DeleteShelterPhotosMutation['deleteShelterPhotos']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteShelterPhotosMutation['deleteShelterPhotos']>,
   { __typename: 'BulkDeleteResult' }
 >['__typename'] = 'BulkDeleteResult';
 

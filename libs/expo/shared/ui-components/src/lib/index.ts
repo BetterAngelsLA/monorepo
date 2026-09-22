@@ -22,12 +22,6 @@ export { default as ControlledInput } from './ControlledInput';
 export { default as Copy } from './Copy';
 export { default as CTAButton } from './CTAButton';
 export { DataTable, TDataTable, TDataTableItem } from './DataTable';
-export {
-  DateLocal,
-  formatDateLocal,
-  formatDateStatic,
-  parseToDate,
-} from './Date';
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
 export { default as DirectionsPopup } from './DirectionsPopup';

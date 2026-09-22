@@ -4,7 +4,9 @@ import type { UpdateRoomMutation } from './useUpdateRoom.generated';
 
 export const updateRoomOperationKey: keyof Omit<UpdateRoomMutation, '__typename'> = 'updateRoom';
 export const updateRoomSuccessTypename: Extract<
-  NonNullable<UpdateRoomMutation['updateRoom']>,
+  NonNullable<UpdateRoomMutation['updateRoom']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateRoomMutation['updateRoom']>,
   { __typename: 'RoomType' }
 >['__typename'] = 'RoomType';
 

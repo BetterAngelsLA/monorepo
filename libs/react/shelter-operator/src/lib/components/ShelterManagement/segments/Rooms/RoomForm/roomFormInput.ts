@@ -45,5 +45,10 @@ export const buildCreateRoomInput = (
   name: toInputString(formData.name) ?? '',
 });
 
-export const buildUpdateRoomInput = (formData: RoomFormData): UpdateRoomInput =>
-  buildRoomFieldInput(formData);
+export const buildUpdateRoomInput = (
+  formData: RoomFormData,
+  id: string,
+): UpdateRoomInput => ({
+  id,
+  ...buildRoomFieldInput(formData),
+});

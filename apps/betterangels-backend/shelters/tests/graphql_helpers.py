@@ -63,11 +63,6 @@ SHELTER_FIELDS = """
     spasServed { id name shortName}
     specialSituationRestrictions {name}
     storage {name}
-    additionalContacts {
-        id
-        contactName
-        contactNumber
-    }
     location {
         latitude
         longitude

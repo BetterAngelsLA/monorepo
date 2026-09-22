@@ -4,7 +4,9 @@ import type { ShelterSpasQuery } from './useShelterSpas.generated';
 
 export const shelterSpasOperationKey: keyof Omit<ShelterSpasQuery, '__typename'> = 'shelterSpas';
 export const shelterSpasSuccessTypename: Extract<
-  NonNullable<ShelterSpasQuery['shelterSpas']>,
+  NonNullable<ShelterSpasQuery['shelterSpas']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ShelterSpasQuery['shelterSpas']>,
   { __typename: 'SPATypeOffsetPaginated' }
 >['__typename'] = 'SPATypeOffsetPaginated';
 

@@ -9,9 +9,9 @@ import {
   shelterSearchTriggerAtom,
 } from '../../atoms';
 import {
-  ViewSheltersDocument,
-  ViewSheltersQuery,
-  ViewSheltersQueryVariables,
+  PublicSheltersDocument,
+  PublicSheltersQuery,
+  PublicSheltersQueryVariables,
 } from '../../pages';
 import { TLatLng, TMapBounds } from '../Map';
 import { ShelterCard, TShelter } from '../ShelterCard';
@@ -19,9 +19,9 @@ import { UNKNOWN_FILTER_VALUE } from '../ShelterFilters/config';
 import { ResultsSource } from './ResultsSource';
 import { TShelterPropertyFilters } from './types';
 
-type TViewShelter = ViewSheltersQuery['shelters']['results'][number];
+type TPublicShelter = PublicSheltersQuery['shelters']['results'][number];
 
-function viewShelterToCardShelter(shelter: TViewShelter): TShelter {
+function publicShelterToCardShelter(shelter: TPublicShelter): TShelter {
   return {
     id: shelter.id,
     name: shelter.name,
@@ -53,8 +53,10 @@ export function SheltersDisplay(props: TProps) {
   const [searchTrigger] = useAtom(shelterSearchTriggerAtom);
   const nameSearch = useAtomValue(shelterNameSearchAtom);
 
-  const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
-    let vars: ViewSheltersQueryVariables | undefined;
+  const queryVariables = useMemo<
+    PublicSheltersQueryVariables | undefined
+  >(() => {
+    let vars: PublicSheltersQueryVariables | undefined;
 
     if (mapBoundsFilter) {
       vars = vars || {};
@@ -64,13 +66,21 @@ export function SheltersDisplay(props: TProps) {
     }
 
     if (propertyFilters) {
-      const { openNowFor, isAccessCenter, maxStay, ...propertyOnlyFilters } =
-        propertyFilters;
+      const {
+        openNow,
+        openNowIncludeUnknown,
+        isAccessCenter,
+        maxStay,
+        ...propertyOnlyFilters
+      } = propertyFilters;
 
-      if (openNowFor && openNowFor.length > 0) {
+      if (openNow && openNow.length > 0) {
         vars = vars || {};
         vars.filters = vars.filters || {};
-        vars.filters.openNowFor = openNowFor;
+        vars.filters.openNow = {
+          scheduleType: openNow,
+          includeUnknown: openNowIncludeUnknown ?? false,
+        };
       }
 
       if (isAccessCenter) {
@@ -109,7 +119,7 @@ export function SheltersDisplay(props: TProps) {
   // intermediate filter-state updates (e.g. name search set before the map
   // settles) never fire a premature query.
   const lastTriggerRef = useRef(-1);
-  const activeVarsRef = useRef<ViewSheltersQueryVariables | undefined>(
+  const activeVarsRef = useRef<PublicSheltersQueryVariables | undefined>(
     undefined,
   );
 
@@ -119,9 +129,9 @@ export function SheltersDisplay(props: TProps) {
   }
 
   const { data, loading, error } = useQuery<
-    ViewSheltersQuery,
-    ViewSheltersQueryVariables
-  >(ViewSheltersDocument, {
+    PublicSheltersQuery,
+    PublicSheltersQueryVariables
+  >(PublicSheltersDocument, {
     variables: {
       ...activeVarsRef.current,
       pagination: { limit: 5000, offset: 0 },
@@ -131,7 +141,7 @@ export function SheltersDisplay(props: TProps) {
 
   const shelters = useMemo(() => data?.shelters.results ?? [], [data]);
   const sheltersForList = useMemo(
-    () => shelters.map(viewShelterToCardShelter),
+    () => shelters.map(publicShelterToCardShelter),
     [shelters],
   );
   const total = data?.shelters.totalCount;
@@ -203,7 +213,7 @@ export function SheltersDisplay(props: TProps) {
           <ResultsSource
             nameFilter={nameSearch}
             mapBoundsFilter={mapBoundsFilter}
-            openNowForFilter={propertyFilters?.openNowFor}
+            openNowFilter={propertyFilters?.openNow}
             propertyFilters={pruneFilters(propertyFilters)}
           />
         </div>
@@ -295,7 +305,7 @@ const INCLUDE_NULL_KEY_MAP: Record<string, keyof ShelterPropertyInput> = {
 function propertyFiltersToGraphQLInput(
   filters: Omit<
     TShelterPropertyFilters,
-    'openNowFor' | 'isAccessCenter' | 'maxStay'
+    'openNow' | 'isAccessCenter' | 'maxStay'
   >,
 ): ShelterPropertyInput | null {
   const result: ShelterPropertyInput = {};

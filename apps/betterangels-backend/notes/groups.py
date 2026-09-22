@@ -6,9 +6,10 @@ from clients.models import (
     SocialMediaProfile,
 )
 from common.models import Attachment
-from common.permissions.config import TemplateConfig
+from common.permissions.config import RoleDef, TemplateConfig
 from notes.models import Note, ServiceRequest
 from tasks.models import Task
+from teams.models import Team
 
 CASEWORKER = TemplateConfig(
     name="Caseworker",
@@ -45,7 +46,21 @@ CASEWORKER = TemplateConfig(
         # Attachment: ADD + VIEW
         Attachment.perms.ADD,
         Attachment.perms.VIEW,
+        # Teams: VIEW only (role-backed below).
+        Team.perms.VIEW,
     ],
     invite_html="account/email/email_invite_organization.html",
     invite_txt="account/messages/email_invite_organization.txt",
+)
+
+
+# ── Role definition (ADR 0001 §2.2 — caseworker teams-read slice) ────────
+# RFC 0003 first step: a scoped ``Caseworker`` Role carrying
+# ``teams.view_team`` lets the ``teams`` read authorize via ``can()`` (pure
+# grant) instead of org membership.  Only the teams permission rides the Role
+# today; the rest of the caseworker bundle stays legacy until RFC 0003.
+CASEWORKER_ROLE = RoleDef(
+    name=CASEWORKER.name,
+    permissions=[Team.perms.VIEW],
+    is_invitable=CASEWORKER.is_invitable,
 )

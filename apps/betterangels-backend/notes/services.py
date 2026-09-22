@@ -27,7 +27,6 @@ from notes.permissions import (
     ServiceRequestPermissions,
 )
 from tasks.services import task_create
-from teams.validators import validate_team_in_org
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -78,9 +77,6 @@ def note_update(
     requested_services_data = data.pop("requested_services", None)
     tasks_data = data.pop("tasks", None)
 
-    if "team_id" in data:
-        validate_team_in_org(team_id=data["team_id"], organization_id=note.organization_id)
-
     with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_update"):
         for field, value in data.items():
             if field == "id":
@@ -93,6 +89,7 @@ def note_update(
             note.location = location
 
         # Single save for core fields + location to produce one pghistory event.
+        note.full_clean()
         note.save()
 
         # --- Provided services (replace-all) ---
@@ -177,7 +174,7 @@ def service_request_create(
         )
 
         assign_object_permissions(
-            permission_group.group,
+            permission_group,
             sr,
             [
                 ServiceRequestPermissions.VIEW,
@@ -238,7 +235,7 @@ def note_create(
     user: User,
     permission_group: PermissionGroup,
     purpose: Optional[str] = None,
-    team_id: Optional[int] = None,
+    team_id: Optional[str] = None,
     public_details: str = "",
     private_details: str = "",
     client_profile_id: Optional[str] = None,
@@ -256,13 +253,11 @@ def note_create(
     making this backward-compatible with callers that only send core fields.
     """
 
-    validate_team_in_org(team_id=team_id, organization_id=permission_group.organization_id)
-
     location = None
     if location_data:
         location = Location.get_or_create_location(location_data)
 
-    note = Note.objects.create(
+    note = Note(
         purpose=purpose,
         team_id=team_id,
         public_details=public_details or "",
@@ -274,9 +269,11 @@ def note_create(
         created_by=user,
         organization=permission_group.organization,
     )
+    note.full_clean()
+    note.save()
 
     assign_object_permissions(
-        permission_group.group,
+        permission_group,
         note,
         [
             NotePermissions.CHANGE,
@@ -364,7 +361,7 @@ def resolve_note_file_uploads(
 
         for att in attached:
             assign_object_permissions(
-                permission_group.group,
+                permission_group,
                 att,
                 [
                     Attachment.perms.DELETE,

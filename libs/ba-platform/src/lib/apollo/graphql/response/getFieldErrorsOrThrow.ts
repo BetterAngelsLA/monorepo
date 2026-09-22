@@ -11,14 +11,17 @@ import { isUnauthenticatedError } from './isUnauthenticatedError';
 import type { FieldError, GraphQLResponse } from './types';
 import { composeErrorMessage } from './utils/composeErrorMessage';
 import { filterExtensionErrors } from './utils/filterExtensionErrors';
-import { filterRecoverableOperationMessages } from './utils/filterRecoverableOperationMessages';
+import {
+  filterRecoverableOperationMessages,
+  type IndexedField,
+} from './utils/filterRecoverableOperationMessages';
 import { getExtensionErrors } from './utils/getExtensionErrors';
 
 type GetFieldErrorsOrThrowParams = {
   response: GraphQLResponse;
   operationKey: string;
   successTypename: string;
-  fields: string[];
+  fields: (string | IndexedField)[];
 };
 
 /**
@@ -30,7 +33,11 @@ type GetFieldErrorsOrThrowParams = {
  *   (e.g. `"createClientProfile"`).
  * @param successTypename - Expected `__typename` on success (e.g.
  *   `"ClientProfileType"`). Anything else is treated as an error payload.
- * @param fields - Form field names to filter errors by. Must be non-empty.
+ * @param fields - Paths this form can surface, to filter errors by: plain
+ *   field names (matched on their first dotted segment) or {@link IndexedField}
+ *   entries for field-array items, e.g.
+ *   `{ parentKey: 'additionalContacts', children: ['contactEmail', 'id'] }`.
+ *   Must be non-empty.
  * @returns `FieldError[]` for recoverable field-level errors; `[]` on success.
  * @throws `BaPermissionError` for auth/permission failures.
  * @throws `Error` for unrecoverable or unexpected errors.
@@ -61,10 +68,14 @@ export function getFieldErrorsOrThrow(
   const extensionErrors = getExtensionErrors(response);
 
   if (extensionErrors.length) {
+    // Structured `IndexedField` entries can't match extension errors (exact
+    // string match on `field`) — only plain names participate here.
     const matchedExtensionErrors = filterExtensionErrors({
       errors: extensionErrors,
       key: 'field',
-      filters: fields,
+      filters: fields.filter(
+        (field): field is string => typeof field === 'string',
+      ),
     });
 
     // Some extension errors didn't match (no field, or field not in filter)

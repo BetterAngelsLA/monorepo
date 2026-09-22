@@ -1,7 +1,7 @@
 from django.http import QueryDict
 from django.test import TestCase
-from shelters.admin import GroupedServiceWidget, ShelterForm
-from shelters.models import Service, ServiceCategory, Shelter
+from shelters.admin import GroupedServiceWidget, ShelterForm, ShelterResource
+from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
 
 
 class GroupedServiceWidgetTestCase(TestCase):
@@ -86,3 +86,46 @@ class ShelterFormPendingServicesTestCase(TestCase):
         self.assertEqual(Service.objects.filter(category=self.category, display_name__iexact="Showers").count(), 1)
         self.assertEqual(Service.objects.filter(category=self.category, name="showers", is_other=True).count(), 1)
         self.assertEqual(self.shelter.services.count(), 2)
+
+
+class ShelterResourceContactImportTestCase(TestCase):
+    """``ShelterResource.after_save_instance`` persists ``additional_contacts`` rows."""
+
+    def test_additional_contacts_are_saved_with_email_and_title(self) -> None:
+        shelter = Shelter.objects.create(name="Contact Import Shelter")
+
+        ShelterResource().after_save_instance(
+            shelter,
+            {"additional_contacts": [("Ada", "2125550100", "ada@example.org", "Director")]},
+            dry_run=False,
+        )
+
+        contact = ContactInfo.objects.get(shelter=shelter)
+        self.assertEqual(contact.contact_name, "Ada")
+        self.assertEqual(contact.contact_number, "2125550100")
+        self.assertEqual(contact.contact_email, "ada@example.org")
+        self.assertEqual(contact.contact_title, "Director")
+
+    def test_blank_email_and_title_are_stored_as_null(self) -> None:
+        shelter = Shelter.objects.create(name="Sparse Contact Shelter")
+
+        ShelterResource().after_save_instance(
+            shelter,
+            {"additional_contacts": [("Grace", "2125550101", "", "")]},
+            dry_run=False,
+        )
+
+        contact = ContactInfo.objects.get(shelter=shelter)
+        self.assertIsNone(contact.contact_email)
+        self.assertIsNone(contact.contact_title)
+
+    def test_dry_run_creates_nothing(self) -> None:
+        shelter = Shelter.objects.create(name="Dry Run Shelter")
+
+        ShelterResource().after_save_instance(
+            shelter,
+            {"additional_contacts": [("Ada", "2125550100", "ada@example.org", "Director")]},
+            dry_run=True,
+        )
+
+        self.assertFalse(ContactInfo.objects.filter(shelter=shelter).exists())
