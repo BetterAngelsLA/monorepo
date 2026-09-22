@@ -51,6 +51,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
   const [fileView, setFileView] = useState<TFileView | null>(null);
   const { data } = useQuery(ClientDocumentDocument, {
     variables: { id },
+    fetchPolicy: 'cache-and-network',
   });
   const [filename, setFilename] = useState('');
   const [updateClientDocument, { loading }] = useMutation(
@@ -59,9 +60,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
       refetchQueries: [
         {
           query: ClientProfileDocument,
-          variables: {
-            id: clientId,
-          },
+          variables: { id: clientId },
         },
       ],
     },
@@ -154,7 +153,9 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
               accessibilityHint="view pdf file"
               onPress={() =>
                 setFileView({
-                  content: <PdfViewer url={file.url} cache={true} />,
+                  content: (
+                    <PdfViewer url={file.url} cache={true} cacheKey={id} />
+                  ),
                   title: originalFilename || '',
                 })
               }
