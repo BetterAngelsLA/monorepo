@@ -51,7 +51,11 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
   const [fileView, setFileView] = useState<TFileView | null>(null);
   const { data } = useQuery(ClientDocumentDocument, {
     variables: { id },
+    // Cached results can carry an expired signed `file.url`, which the
+    // thumbnail and PDF viewer cannot load. Refresh in the background, then
+    // serve cache so the refresh does not repeat on every re-render.
     fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
   });
   const [filename, setFilename] = useState('');
   const [updateClientDocument, { loading }] = useMutation(
@@ -60,7 +64,9 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
       refetchQueries: [
         {
           query: ClientProfileDocument,
-          variables: { id: clientId },
+          variables: {
+            id: clientId,
+          },
         },
       ],
     },
