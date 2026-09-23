@@ -27,9 +27,6 @@ export function CopyButton(props: ICopyButtonProps) {
   const feedbackIconTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const feedbackFlashTimeout = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
 
   const isDisabled = !textToCopy?.trim();
   const Icon = copied ? CheckIcon : CopyIcon;
@@ -59,10 +56,6 @@ export function CopyButton(props: ICopyButtonProps) {
 
       if (feedbackIconTimeout.current) {
         clearTimeout(feedbackIconTimeout.current);
-      }
-
-      if (feedbackFlashTimeout.current) {
-        clearTimeout(feedbackFlashTimeout.current);
       }
 
       feedbackIconTimeout.current = setTimeout(() => {
