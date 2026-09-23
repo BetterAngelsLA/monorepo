@@ -1,5 +1,4 @@
 import {
-  ErrorHmis,
   getAuthHeadersHmis,
   HEADER_NAMES,
   HEADER_VALUES,
@@ -9,7 +8,10 @@ import {
   HMIS_PROD_CLIENT_SEARCH_FIELDS,
   HMIS_PROD_CLIENTS_LONG_PATH,
 } from './constants';
+import { ErrorHmisProd } from './errorHmisProd';
 import type {
+  HmisProdRequestDebugInfo,
+  HmisProdRequestResult,
   SearchClientsPayloadHmisProd,
   SearchClientsResponseHmisProd,
 } from './types';
@@ -25,6 +27,9 @@ import type {
  * `auth_token` cookie from the native jar captured at HMIS login, so whichever
  * environment the user logged into (sandbox / LA prod) is the one we talk to.
  *
+ * Every request captures a debug payload (full URL + raw response body) on
+ * success and failure alike — see `HmisProdRequestDebugInfo`.
+ *
  * TODO: replace once Clarity ships their new REST API.
  */
 
@@ -36,6 +41,30 @@ const DEFAULT_SEARCH_PAYLOAD = {
   fields: HMIS_PROD_CLIENT_SEARCH_FIELDS,
 } as const;
 
+/**
+ * HMIS occasionally returns JSON with a wrong/missing Content-Type or a
+ * double-encoded JSON string — parse defensively (same as `clientHmis`).
+ */
+const parseHmisProdBody = (text: string | null): unknown => {
+  if (!text) return text;
+
+  try {
+    const parsed: unknown = JSON.parse(text);
+
+    if (typeof parsed === 'string') {
+      try {
+        return JSON.parse(parsed);
+      } catch {
+        return parsed;
+      }
+    }
+
+    return parsed;
+  } catch {
+    return text;
+  }
+};
+
 class ClientHmisProd {
   constructor(private readonly baseUrl: string) {}
 
@@ -46,14 +75,18 @@ class ClientHmisProd {
    */
   searchClients(
     payload: SearchClientsPayloadHmisProd,
-  ): Promise<SearchClientsResponseHmisProd> {
+  ): Promise<HmisProdRequestResult<SearchClientsResponseHmisProd>> {
     return this.post<SearchClientsResponseHmisProd>(
       HMIS_PROD_CLIENTS_LONG_PATH,
       { ...DEFAULT_SEARCH_PAYLOAD, ...payload },
     );
   }
 
-  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  private async request<T>(
+    path: string,
+    init: RequestInit = {},
+  ): Promise<HmisProdRequestResult<T>> {
+    const url = `${this.baseUrl}${path}`;
     const headers = new Headers(init.headers);
 
     Object.entries(await getAuthHeadersHmis()).forEach(([key, value]) => {
@@ -61,39 +94,56 @@ class ClientHmisProd {
     });
     headers.set(HEADER_NAMES.USER_AGENT, MODERN_BROWSER_USER_AGENT);
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...init,
+    const { response, responseText } = await this.fetchWithBody(
+      url,
+      init,
       headers,
-      credentials: 'include',
-    });
+    );
+    const debugInfo: HmisProdRequestDebugInfo = { url, response: responseText };
 
     if (!response.ok) {
-      await this.throwApiError(response);
+      throw this.buildApiError(response, responseText, debugInfo);
     }
 
-    // HMIS occasionally returns JSON with a wrong/missing Content-Type or a
-    // double-encoded JSON string — parse defensively (same as `clientHmis`).
-    const text = await response.text();
-    if (!text) return text as unknown as T;
+    return {
+      data: parseHmisProdBody(responseText) as T,
+      debugInfo,
+    };
+  }
 
+  /**
+   * Fetches `url` and always reads the raw body — success or error — so it can
+   * be included in the debug payload. Throws `ErrorHmisProd` (with the url,
+   * but no response) when the request never receives an HTTP response.
+   */
+  private async fetchWithBody(
+    url: string,
+    init: RequestInit,
+    headers: Headers,
+  ) {
     try {
-      const parsed = JSON.parse(text);
+      const response = await fetch(url, {
+        ...init,
+        headers,
+        credentials: 'include',
+      });
 
-      if (typeof parsed === 'string') {
-        try {
-          return JSON.parse(parsed);
-        } catch {
-          return parsed as unknown as T;
-        }
-      }
+      return { response, responseText: await response.text() };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
 
-      return parsed;
-    } catch {
-      return text as unknown as T;
+      throw new ErrorHmisProd(message, 0, {
+        url,
+        response: null,
+        requestError: message,
+      });
     }
   }
 
-  private post<T>(path: string, body: unknown): Promise<T> {
+  private post<T>(
+    path: string,
+    body: unknown,
+  ): Promise<HmisProdRequestResult<T>> {
     return this.request<T>(path, {
       method: 'POST',
       headers: {
@@ -103,27 +153,35 @@ class ClientHmisProd {
     });
   }
 
-  private async throwApiError(response: Response): Promise<never> {
-    const contentType = response.headers.get('content-type');
-    const data = await (contentType?.includes('application/json')
-      ? response.json().catch(() => null)
-      : response.text().catch(() => null));
+  private buildApiError(
+    response: Response,
+    responseText: string | null,
+    debugInfo: HmisProdRequestDebugInfo,
+  ): ErrorHmisProd {
+    const data = responseText ? parseHmisProdBody(responseText) : null;
 
     switch (response.status) {
       case 401:
-        throw new ErrorHmis(
+        return new ErrorHmisProd(
           'Unauthorized - please log in to HMIS with prod credentials',
           401,
+          debugInfo,
           data,
         );
       case 403:
-        throw new ErrorHmis('Forbidden - insufficient permissions', 403, data);
+        return new ErrorHmisProd(
+          'Forbidden - insufficient permissions',
+          403,
+          debugInfo,
+          data,
+        );
       case 404:
-        throw new ErrorHmis('Resource not found', 404, data);
+        return new ErrorHmisProd('Resource not found', 404, debugInfo, data);
       default:
-        throw new ErrorHmis(
+        return new ErrorHmisProd(
           `HTTP ${response.status}: ${response.statusText}`,
           response.status,
+          debugInfo,
           data,
         );
     }
