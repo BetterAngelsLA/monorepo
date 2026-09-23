@@ -122,7 +122,7 @@ export default function DocumentModal({
     try {
       const cacheDest = new File(new Directory(Paths.cache), originalFilename);
       const downloaded = await File.downloadFileAsync(url, cacheDest, {
-        idempotent: true,
+        idempotent: true, // prevents existing destination file from causing error on re-download
       });
 
       if (Platform.OS === 'android') {

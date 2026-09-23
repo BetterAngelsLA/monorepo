@@ -18,7 +18,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { formatScalarDate } from '@monorepo/shared/scalars';
 import { router, useNavigation } from 'expo-router';
-import { ReactNode, useEffect, useLayoutEffect, useState } from 'react';
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
 import useSnackbar from '../../hooks/snackbar/useSnackbar';
@@ -58,6 +58,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
     nextFetchPolicy: 'cache-first',
   });
   const [filename, setFilename] = useState('');
+  const hasFilename = useRef(false);
   const [updateClientDocument, { loading }] = useMutation(
     UpdateClientDocumentDocument,
     {
@@ -102,10 +103,11 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
   }, [data, navigation]);
 
   useEffect(() => {
-    if (!data?.clientDocument.originalFilename) {
+    if (hasFilename.current || !data?.clientDocument.originalFilename) {
       return;
     }
-    setFilename(data?.clientDocument.originalFilename);
+    hasFilename.current = true;
+    setFilename(data.clientDocument.originalFilename);
   }, [data]);
 
   if (!data) {
