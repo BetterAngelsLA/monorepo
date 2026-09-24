@@ -2,14 +2,17 @@ import {
   getAuthHeadersHmis,
   HEADER_NAMES,
   HEADER_VALUES,
+  HMIS_AUTH_DOMAIN_STORAGE_KEY,
   MODERN_BROWSER_USER_AGENT,
 } from '@monorepo/expo/shared/clients';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   HMIS_PROD_CLIENT_SEARCH_FIELDS,
   HMIS_PROD_CLIENTS_LONG_PATH,
 } from './constants';
-import { ErrorHmisProd } from './errorHmisProd';
+import { ErrorHmisProd } from './errors';
 import type {
+  HmisProdRequestContext,
   HmisProdRequestDebugInfo,
   HmisProdRequestResult,
   SearchClientsPayloadHmisProd,
@@ -27,8 +30,9 @@ import type {
  * `auth_token` cookie from the native jar captured at HMIS login, so whichever
  * environment the user logged into (sandbox / LA prod) is the one we talk to.
  *
- * Every request captures a debug payload (full URL + raw response body) on
- * success and failure alike — see `HmisProdRequestDebugInfo`.
+ * Every request captures a debug payload (full URL, status, auth context and
+ * the raw response body) on success and failure alike — see
+ * `HmisProdRequestDebugInfo`.
  *
  * TODO: replace once Clarity ships their new REST API.
  */
@@ -65,6 +69,24 @@ const parseHmisProdBody = (text: string | null): unknown => {
   }
 };
 
+/**
+ * Host the HMIS token was stored under (`hmis_auth_domain`) — included in the
+ * debug payload so a token/environment mismatch (e.g. an LA token sent to the
+ * sandbox host) is visible in what testers copy.
+ */
+const getHmisAuthDomainHost = async (): Promise<string | null> => {
+  try {
+    const stored = await AsyncStorage.getItem(HMIS_AUTH_DOMAIN_STORAGE_KEY);
+
+    return stored ? new URL(stored).host : null;
+  } catch {
+    return null;
+  }
+};
+
+/** Clarity answers unauthenticated web-style POSTs with its Yii CSRF guard. */
+const CSRF_MISMATCH_PATTERN = /csrf token mismatch/i;
+
 class ClientHmisProd {
   constructor(private readonly baseUrl: string) {}
 
@@ -89,17 +111,45 @@ class ClientHmisProd {
     const url = `${this.baseUrl}${path}`;
     const headers = new Headers(init.headers);
 
-    Object.entries(await getAuthHeadersHmis()).forEach(([key, value]) => {
+    const authHeaders = await getAuthHeadersHmis();
+
+    Object.entries(authHeaders).forEach(([key, value]) => {
       headers.set(key, value);
     });
     headers.set(HEADER_NAMES.USER_AGENT, MODERN_BROWSER_USER_AGENT);
+
+    const requestContext: HmisProdRequestContext = {
+      url,
+      hasAuthToken: !!authHeaders['Authorization'],
+      authDomain: await getHmisAuthDomainHost(),
+    };
+
+    // Fail fast with an actionable message instead of letting Clarity reject
+    // the unauthenticated POST with its opaque CSRF error.
+    if (!requestContext.hasAuthToken) {
+      throw new ErrorHmisProd(
+        'Not logged in to HMIS - please log in with your HMIS credentials',
+        401,
+        {
+          ...requestContext,
+          response: null,
+          requestError: 'No HMIS auth token found',
+        },
+      );
+    }
 
     const { response, responseText } = await this.fetchWithBody(
       url,
       init,
       headers,
+      requestContext,
     );
-    const debugInfo: HmisProdRequestDebugInfo = { url, response: responseText };
+
+    const debugInfo: HmisProdRequestDebugInfo = {
+      ...requestContext,
+      status: response.status,
+      response: responseText,
+    };
 
     if (!response.ok) {
       throw this.buildApiError(response, responseText, debugInfo);
@@ -120,6 +170,7 @@ class ClientHmisProd {
     url: string,
     init: RequestInit,
     headers: Headers,
+    requestContext: HmisProdRequestContext,
   ) {
     try {
       const response = await fetch(url, {
@@ -133,7 +184,7 @@ class ClientHmisProd {
       const message = error instanceof Error ? error.message : String(error);
 
       throw new ErrorHmisProd(message, 0, {
-        url,
+        ...requestContext,
         response: null,
         requestError: message,
       });
@@ -163,12 +214,24 @@ class ClientHmisProd {
     switch (response.status) {
       case 401:
         return new ErrorHmisProd(
-          'Unauthorized - please log in to HMIS with prod credentials',
+          'Unauthorized - please log in again.',
           401,
           debugInfo,
           data,
         );
       case 403:
+        // Clarity's CSRF guard rejects unauthenticated web-style POSTs with
+        // this message — in practice it means the HMIS session is missing,
+        // expired, or doesn't match the target host.
+        if (CSRF_MISMATCH_PATTERN.test(responseText ?? '')) {
+          return new ErrorHmisProd(
+            'HMIS session expired or invalid - please log in again',
+            403,
+            debugInfo,
+            data,
+          );
+        }
+
         return new ErrorHmisProd(
           'Forbidden - insufficient permissions',
           403,

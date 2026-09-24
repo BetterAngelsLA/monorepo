@@ -38,13 +38,29 @@ export interface SearchClientsResponseHmisProd {
 }
 
 /**
- * Debug payload captured for every request — full URL and the raw response
- * body (success or error alike, unparsed). Copied from the debug UI
- * (`FeatureFlags.HMIS_PROD_DEMO_DEBUG_MODE`) and untangled manually.
+ * Request context captured before the request — the debug payload fields
+ * known up front; request-level failures (no HTTP response) also carry it.
  */
-export interface HmisProdRequestDebugInfo {
+export interface HmisProdRequestContext {
   /** Full URL the request was sent to. */
   url: string;
+  /** Whether an HMIS `Authorization` token was attached to the request. */
+  hasAuthToken: boolean;
+  /**
+   * Host the HMIS token was read from (`hmis_auth_domain`); `null` if unknown.
+   */
+  authDomain: string | null;
+}
+
+/**
+ * Debug payload captured for every request — full URL, status, auth context
+ * and the raw response body (success or error alike, unparsed). Copied from
+ * the debug UI (`FeatureFlags.HMIS_PROD_DEMO_DEBUG_MODE`) and untangled
+ * manually.
+ */
+export interface HmisProdRequestDebugInfo extends HmisProdRequestContext {
+  /** HTTP status of the response; absent when no response was received. */
+  status?: number;
   /** Raw response body text; `null` when no response was received. */
   response: string | null;
   /** Failure message when the request never received an HTTP response. */

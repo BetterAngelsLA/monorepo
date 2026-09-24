@@ -28,8 +28,9 @@ export const getSearchClientsHmisProdQueryKey = (
  *   `resolveHmisProdBaseUrl`.
  *
  * Returns the query result with `data` unwrapped to the parsed response, plus
- * `debugInfo` (full URL + raw response body) for the latest result or error —
- * used by the debug copy button; `null` until there is something to report.
+ * `debugInfo` (full URL, status, auth context and raw response body) for the
+ * latest result or error — used by the debug copy button; `null` until there
+ * is something to report.
  */
 export function useSearchClientsHmisProd(search: string) {
   const { apiUrl: baEnvApiUrl } = useApiConfig();
@@ -45,6 +46,11 @@ export function useSearchClientsHmisProd(search: string) {
         search: debouncedSearch,
       }),
     enabled: debouncedSearch.length > 1,
+    // Default retry (3x, ~7s backoff) only delays what are deterministic
+    // failures here — a missing/expired HMIS session or Clarity's CSRF guard —
+    // and sends repeat failed POSTs to Clarity. To retry, pull-to-refresh or
+    // change the search term (both create a fresh request).
+    retry: false,
   });
 
   // Prefer the error payload over any stale success data, so a failed
