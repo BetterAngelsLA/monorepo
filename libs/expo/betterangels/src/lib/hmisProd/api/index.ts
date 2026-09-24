@@ -9,3 +9,4 @@ export * from './constants';
 export * from './errors';
 export * from './resolveHmisProdBaseUrl';
 export * from './types';
+export * from './utils';

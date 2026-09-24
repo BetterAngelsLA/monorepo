@@ -16,7 +16,7 @@ import {
   HorizontalContainer,
 } from '../../ui-components';
 import { clientSearchItemToHmisClientProfileType } from '../adapters';
-import { isAuthErrorHmisProd } from '../api';
+import { getDebugCopyTextHmisProd, isAuthErrorHmisProd } from '../api';
 import { useSearchClientsHmisProd } from '../hooks';
 import { ClientScreenHmisProdError } from './ClientScreenHmisProdError';
 
@@ -30,9 +30,11 @@ const SEARCH_ERROR_TITLE = 'HMIS search failed';
  *
  * Searches clients directly against HMIS (`/api1/clients/long`) via
  * `useSearchClientsHmisProd`. With `HMIS_PROD_DEMO_DEBUG_MODE` on, a
- * "Debug Info" row offers the request URL, auth context, and raw response
- * for copy/paste. Auth failures (401/403) additionally offer a "Log in
- * again" action that signs out cleanly so the user can re-authenticate.
+ * "Debug Info" row offers the request URL, status, and auth context for
+ * copy/paste — the raw response body is included only for failures, since
+ * successful search responses contain client data. Auth failures (401/403)
+ * additionally offer a "Log in again" action that signs out cleanly so the
+ * user can re-authenticate.
  */
 
 export function ClientScreenHmisProd({ Logo }: { Logo: ElementType }) {
@@ -78,7 +80,7 @@ export function ClientScreenHmisProd({ Logo }: { Logo: ElementType }) {
               Debug Info
             </TextRegular>
             <CopyButton
-              textToCopy={debugInfo ? JSON.stringify(debugInfo, null, 2) : null}
+              textToCopy={getDebugCopyTextHmisProd(debugInfo)}
               testID="hmis-prod-copy-debug-info"
             />
           </View>
