@@ -12,12 +12,12 @@ from storages.utils import clean_name
 class LocalS3Storage(S3Storage):
     """
     S3 storage inheriting from S3Storage for local dev.
-    Overrides `url` to sign local dev read URLs with the public MinIO endpoint.
+    Overrides `url` to sign local dev read URLs with the public S3 endpoint.
 
     In production S3Storage is used as-is because as the server is on AWS
     and the public/internal hostnames are the same (CloudFront/S3 endpoint).
     The override is only needed locally because the Django container uses the
-    Docker network name minio while the client browser/device uses localhost.
+    Docker network name (s3) while the client browser/device uses localhost.
     """
 
     _local_public_client: S3Client | None = None
@@ -43,7 +43,7 @@ class LocalS3Storage(S3Storage):
     def get_external_client(self) -> S3Client:
         """
         Return a boto3 S3 client configured with the public (browser-reachable)
-        MinIO endpoint instead of the Docker-internal one.
+        S3 endpoint instead of the Docker-internal one.
         """
         return self._get_local_public_client()
 
