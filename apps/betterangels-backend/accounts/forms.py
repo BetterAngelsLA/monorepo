@@ -3,11 +3,12 @@ from typing import Any, cast
 from common.org_types import REGISTRY
 from django import forms
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
+from django.core.exceptions import ValidationError
 from organizations.models import Organization
 
 from common.permissions.config import TemplateConfig
 
-from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, User
+from .models import Grant, OrganizationProfile, OrgTypeChoices, PermissionGroup, Role, User
 
 # isort: off
 # We ignore this type check because there's an issue with django-stubs not recognizing
@@ -200,3 +201,55 @@ class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
         # unlike on the invite form where it would send a pointless invitation.
         self.fields["permission_templates"].required = False
         self.fields["permission_templates"].initial = [name for name in held if name in offered]
+
+
+class GrantForm(forms.ModelForm):
+    """Admin form for :class:`Grant` — mirrors the write-service rules in the UI.
+
+    * ``permissions.E002`` — only scoped Roles can sit in a Grant; a global Role
+      lives in ``user.groups``, never in a Grant row, so the role choices never
+      offer one.
+    * ``permissions.E003`` — a *new* object grant may only target a whitelisted
+      model (ADR 0001 §2.5).  While the ``object_grants_enabled`` waffle switch
+      is off the whitelist is empty and every object grant is refused here,
+      before a row exists — the same gate ``grant_obj`` applies to service
+      writes, so the admin cannot mint grants the predicate will not honor.
+    """
+
+    class Meta:
+        model = Grant
+        fields = (
+            "principal_user",
+            "principal_org",
+            "role",
+            "scope_org",
+            "scope_object_type",
+            "scope_object_id",
+        )
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        # E002 up front: never offer a global Role in the grant form.
+        cast(forms.ModelChoiceField, self.fields["role"]).queryset = Role.objects.filter(is_global=False)
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean() or {}
+        scope_object_type = cleaned.get("scope_object_type")
+        if scope_object_type is not None and self.instance.pk is None:
+            # New object grants only — an existing object-grant row stays
+            # editable once the feature is disabled (E003 still flags it at
+            # deploy time rather than silently dropping it).
+            from common.permissions.object_grants import object_grant_whitelist
+
+            target = scope_object_type.model_class()
+            if target is None or not any(issubclass(target, cls) for cls in object_grant_whitelist()):
+                raise ValidationError(
+                    {
+                        "scope_object_type": (
+                            f"{scope_object_type} is not object-grantable: the object-grant "
+                            "feature is off or the model is not whitelisted (ADR 0001 §2.5, "
+                            "permissions.E003)."
+                        )
+                    }
+                )
+        return cleaned

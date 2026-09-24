@@ -4,9 +4,34 @@ from typing import Any
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
+from django.db.models import Model
 from organizations.models import Organization
 
 from .models import User
+
+
+def cleanup_orphan_object_grants(sender: object, instance: Model, **kwargs: object) -> None:
+    """Finding F3 — a deleted row's object grants are orphans; drop them.
+
+    Connected in ``AppConfig.ready`` to every object-grant candidate model
+    (ADR 0001 §2.5).  Runtime-gated on ``object_grant_whitelist``, which is
+    itself gated by the ``object_grants_enabled`` waffle switch: while the
+    feature is off the handler returns before issuing any SQL, so deleting a
+    row costs no extra query.
+    """
+    from common.permissions.object_grants import object_grant_whitelist
+
+    model = type(instance)
+    if not any(issubclass(model, cls) for cls in object_grant_whitelist()):
+        return
+
+    from django.contrib.contenttypes.models import ContentType
+
+    from .models import Grant
+
+    ct = ContentType.objects.get_for_model(model)
+    Grant.objects.filter(scope_object_type=ct, scope_object_id=instance.pk).delete()  # type: ignore[attr-defined]
+
 
 logger = logging.getLogger(__name__)
 
