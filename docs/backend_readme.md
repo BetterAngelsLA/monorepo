@@ -207,6 +207,13 @@ We use [SeaweedFS](https://github.com/seaweedfs/seaweedfs) as a local S3-compati
 - When `IS_LOCAL_DEV=True` (set in `.compose/local.shared.env`), Django uses the `LocalS3Storage` backend (`common/storage.py`) instead of the production `S3Storage`. This backend signs read URLs with the public endpoint (`localhost:9000`) so your browser/device can access files, while Django itself talks to SeaweedFS over the Docker network (`s3:8333`).
 - The `betterangels-local` bucket is created automatically on startup via the `S3_BUCKET` environment variable.
 
+#### Browser UIs
+
+SeaweedFS exposes local-only management UIs (IPv4 localhost):
+
+- **Filer UI** (browse buckets/files): [http://localhost:8888](http://localhost:8888)
+- **Admin UI** (cluster/ops): [http://localhost:23646](http://localhost:23646)
+
 #### Environment Variables
 
 All local S3-related environment variables are committed in `.compose/local.shared.env` and applied automatically:

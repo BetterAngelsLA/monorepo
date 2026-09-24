@@ -32,6 +32,8 @@ services:
     command: mini
     ports:
       - '127.0.0.1:9000:8333' # S3 API: IPv4-only so Android Emulator's adb reverse works
+      - '127.0.0.1:8888:8888' # Filer UI — browse buckets/files
+      - '127.0.0.1:23646:23646' # Admin UI — cluster/ops
     environment:
       - AWS_ACCESS_KEY_ID=admin
       - AWS_SECRET_ACCESS_KEY=password
