@@ -41,6 +41,12 @@ type BottomSheetBackdropWrapperProps = BottomSheetBackdropProps & {
    * If provided, it fully replaces the default implementation.
    */
   component?: ComponentType<BottomSheetBackdropProps>;
+
+  /**
+   * App-level dismiss request (dismissSheetById → modal dismiss/forceClose).
+   * A tap routes through here as the single dismissal path.
+   */
+  onRequestClose?: () => void;
 };
 
 export function BottomSheetBackdrop(
@@ -50,6 +56,7 @@ export function BottomSheetBackdrop(
     disableBackdrop,
     opacity = 0.5,
     component: CustomComponent,
+    onRequestClose,
     ...rest
   } = props;
 
@@ -67,7 +74,13 @@ export function BottomSheetBackdrop(
       appearsOnIndex={0}
       disappearsOnIndex={-1}
       opacity={opacity}
-      pressBehavior="close"
+      // Keep the tap gesture attached (onPress fires only when pressBehavior
+      // is not 'none'), but make Gorhom's own action a no-op: sheets here open
+      // at index 0, so snapping to 0 does nothing. Dismissal happens through
+      // onRequestClose — NOT Gorhom's internal close() — to avoid a double
+      // dismissal when the provider force-closes.
+      pressBehavior={0}
+      onPress={onRequestClose}
     />
   );
 }

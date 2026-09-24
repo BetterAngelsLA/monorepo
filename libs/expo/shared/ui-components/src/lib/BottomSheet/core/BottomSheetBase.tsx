@@ -112,7 +112,11 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
 
     if (!disableBackdrop) {
       backdropComponent = (backdropProps) => (
-        <BottomSheetBackdrop {...backdropProps} opacity={backdropOpacity} />
+        <BottomSheetBackdrop
+          {...backdropProps}
+          opacity={backdropOpacity}
+          onRequestClose={onRequestClose}
+        />
       );
     }
 
