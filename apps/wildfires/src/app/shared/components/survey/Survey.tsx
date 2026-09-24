@@ -74,7 +74,7 @@ export function Survey(props: IProps) {
 
   useEffect(() => {
     onChange && onChange(answers);
-  }, [answers]);
+  }, [answers, onChange]);
 
   const parentCss = ['pt-8', className];
 

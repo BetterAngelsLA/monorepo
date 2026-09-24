@@ -11,6 +11,11 @@ import GeneratePDF from '../../shared/components/GeneratePDF';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
+import {
+  TAnswer,
+  TOption,
+  TSurveyResults,
+} from '../../shared/components/survey/types';
 import { getAllQuestions } from '../../shared/components/survey/utils/validateConfig';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 import useSurveySubmission from '../../shared/hooks/useSurveySubmission';
@@ -23,31 +28,37 @@ function findQuestionById(id: string) {
   return allQuestions.find((q) => q.id === id);
 }
 
-function getAnswerTags(answer: any, answerOptions: any[]): string[] {
+function getAnswerTags(answer: TAnswer, answerOptions: TOption[]): string[] {
   const answerTags: string[] = [];
-  let results = answer.result;
-  if (typeof results === 'string') {
-    results = [results];
-  }
+  const results = Array.isArray(answer.result)
+    ? answer.result
+    : [answer.result];
+
   for (const result of results) {
     const resultOption = answerOptions.find((o) => o.optionId === result);
     if (!resultOption) continue;
+
     const optionTags = resultOption.tags || [];
+
     for (const tag of optionTags) {
       answerTags.push(tag);
     }
   }
+
   return answerTags;
 }
 
-function getTags(answers: any[]): string[] {
+function getTags(answers: TSurveyResults['answers']): string[] {
   const tags: string[] = [];
+
   for (const answer of answers) {
     const questionAnswered = findQuestionById(answer.questionId);
     if (!questionAnswered?.options) continue;
+
     const answerTags = getAnswerTags(answer, questionAnswered.options);
     tags.push(...answerTags);
   }
+
   return tags;
 }
 
