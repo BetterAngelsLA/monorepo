@@ -184,7 +184,7 @@ netsh interface portproxy delete v4tov4 listenport=8083 listenaddress=0.0.0.0
    ```
 
    - `tcp:8000` — Django backend API
-   - `tcp:9000` — MinIO S3 API (local file storage)
+   - `tcp:9000` — Local S3 API / SeaweedFS (file storage)
    - `tcp:8080` — imgproxy (image processing)
 
    Note: This might require you to install adb (Android Debug Bridge) [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
