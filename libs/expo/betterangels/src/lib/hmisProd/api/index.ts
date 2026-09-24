@@ -6,6 +6,6 @@
  */
 export * from './clientHmisProd';
 export * from './constants';
-export * from './errorHmisProd';
+export * from './errors';
 export * from './resolveHmisProdBaseUrl';
 export * from './types';

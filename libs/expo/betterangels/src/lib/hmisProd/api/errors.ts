@@ -20,3 +20,14 @@ export class ErrorHmisProd extends ErrorHmis {
     this.debugInfo = debugInfo;
   }
 }
+
+/**
+ * Whether the error means the HMIS session is missing or invalid — i.e. the
+ * remedy is logging in to HMIS again. Covers server 401s, our no-token
+ * fast-fail, and Clarity's CSRF-guard rejections (403).
+ */
+export const isAuthErrorHmisProd = (error: unknown): boolean =>
+  error instanceof ErrorHmisProd &&
+  (error.status === 401 ||
+    error.status === 403 ||
+    error.debugInfo.hasAuthToken === false);

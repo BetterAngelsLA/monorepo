@@ -8,10 +8,19 @@ import {
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { ElementType, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { FeatureFlags, pagePaddingHorizontal } from '../static';
-import { ClientCardHmis, Header, HorizontalContainer } from '../ui-components';
-import { clientSearchItemToHmisClientProfileType } from './adapters';
-import { useSearchClientsHmisProd } from './hooks';
+import { useSignOut } from '../../hooks';
+import { FeatureFlags, pagePaddingHorizontal } from '../../static';
+import {
+  ClientCardHmis,
+  Header,
+  HorizontalContainer,
+} from '../../ui-components';
+import { clientSearchItemToHmisClientProfileType } from '../adapters';
+import { isAuthErrorHmisProd } from '../api';
+import { useSearchClientsHmisProd } from '../hooks';
+import { ClientScreenHmisProdError } from './ClientScreenHmisProdError';
+
+const SEARCH_ERROR_TITLE = 'HMIS search failed';
 
 /**
  * Entry screen for the HMIS prod feature (experimental).
@@ -21,11 +30,15 @@ import { useSearchClientsHmisProd } from './hooks';
  *
  * Searches clients directly against HMIS (`/api1/clients/long`) via
  * `useSearchClientsHmisProd`. With `HMIS_PROD_DEMO_DEBUG_MODE` on, a
- * "Debug Info" row offers the full request URL + raw response for copy/paste.
+ * "Debug Info" row offers the request URL, auth context, and raw response
+ * for copy/paste. Auth failures (401/403) additionally offer a "Log in
+ * again" action that signs out cleanly so the user can re-authenticate.
  */
 
 export function ClientScreenHmisProd({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState('');
+
+  const { signOut } = useSignOut();
 
   const debugModeEnabled = useFeatureFlagActive(
     FeatureFlags.HMIS_PROD_DEMO_DEBUG_MODE,
@@ -33,6 +46,9 @@ export function ClientScreenHmisProd({ Logo }: { Logo: ElementType }) {
 
   const { data, debugInfo, error, isFetching, isError, isRefetching, refetch } =
     useSearchClientsHmisProd(search);
+
+  const errorMessage = error instanceof Error ? error.message : undefined;
+  const isAuthError = isAuthErrorHmisProd(error);
 
   const clients = useMemo(
     () => (data?.items ?? []).map(clientSearchItemToHmisClientProfileType),
@@ -76,8 +92,17 @@ export function ClientScreenHmisProd({ Logo }: { Logo: ElementType }) {
           renderItem={(client) => <ClientCardHmis client={client} />}
           loading={isFetching}
           error={isError}
-          errorTitle="HMIS search failed"
-          errorMessage={error instanceof Error ? error.message : undefined}
+          errorTitle={SEARCH_ERROR_TITLE}
+          errorMessage={errorMessage}
+          ErrorViewComponent={
+            isAuthError ? (
+              <ClientScreenHmisProdError
+                title={SEARCH_ERROR_TITLE}
+                bodyText={errorMessage}
+                onLogInAgain={signOut}
+              />
+            ) : null
+          }
           refreshing={isRefetching}
           onRefresh={refetch}
           hasMore={false}
