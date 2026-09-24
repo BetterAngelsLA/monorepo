@@ -1,139 +1,149 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import { ShelterReportPrint } from './ShelterReportPrint';
-import type { ShelterReportData } from './types';
+import type { ReservationMetrics } from '../../hooks/useShelterOccupancyMetrics';
+import { ShelterReportPrint, type ExportMetric } from './ShelterReportPrint';
 
-function makeReport(
-  overrides: Partial<ShelterReportData> = {},
-): ShelterReportData {
+// @ant-design/plots needs real layout/canvas APIs jsdom doesn't reliably
+// provide; this file is about section inclusion and pagination, not chart
+// internals, so the chart components are stubbed to a recognizable marker.
+vi.mock('../../components/reports/ReportCharts', () => ({
+  BedStatusChart: () => <div data-testid="bed-status-chart" />,
+  DailyOccupancyChart: () => <div data-testid="daily-occupancy-chart" />,
+}));
+
+const RANGE = { from: new Date(2026, 6, 1), to: new Date(2026, 6, 7) };
+const GENERATED_AT = new Date(2026, 6, 8, 9, 30);
+
+const METRICS: ReservationMetrics = {
+  checkedIn: 8,
+  checkInOverdueToCheckedIn: 1,
+  cancelled: 7,
+  checkInOverdue: 12,
+};
+
+const ALL_METRICS: ExportMetric[] = [
+  'avg_days_to_occupancy',
+  'reservation_metrics',
+  'daily_bed_status_metrics',
+  'daily_occupancy_metrics',
+];
+
+function baseProps(includedMetrics: ExportMetric[]) {
   return {
-    id: '1',
-    name: 'Downtown Emergency Shelter',
-    organization: { id: '1', name: 'Test Organization' },
-    location: { place: '1234 S Main St, Los Angeles, CA 90015' },
-    bedCounts: {
-      total: 185,
-      available: 42,
-      occupied: 118,
-      reserved: 13,
-      inTurnaround: 7,
-      outOfService: 5,
-    },
-    roomCounts: {
-      total: 47,
-      available: 9,
-      occupied: 31,
-      reserved: 4,
-      inTurnaround: 2,
-      outOfService: 1,
-    },
-    ...overrides,
-  } as ShelterReportData;
+    shelterName: 'Downtown Emergency Shelter',
+    shelterAddress: '1234 S Main St, Los Angeles, CA 90015',
+    range: RANGE,
+    generatedAt: GENERATED_AT,
+    includedMetrics,
+    metrics: METRICS,
+    avgDaysToOccupancy: 10,
+    dailyBedStatus: [],
+    dailyOccupancy: [],
+  };
 }
 
-/** Reads a section's label/value pairs in render order. */
-function rowsOf(title: string): Array<[string, string]> {
-  const heading = screen.getByRole('heading', { name: title });
-  const section = heading.closest('section');
-  if (!section) throw new Error(`no section for "${title}"`);
-
-  return [...section.querySelectorAll('div.justify-between')].map((row) => {
-    const [label, value] = [...row.querySelectorAll('span')];
-    return [label.textContent ?? '', value.textContent ?? ''];
-  });
+function pageFooters() {
+  return screen.getAllByText(/\d+ of \d+/).map((el) => el.textContent);
 }
 
 describe('ShelterReportPrint', () => {
-  it('titles the report with the shelter name', () => {
-    render(<ShelterReportPrint data={makeReport()} />);
+  it('renders a single page with the Operational Summary header and stats when only stats are included', () => {
+    render(
+      <ShelterReportPrint
+        {...baseProps(['avg_days_to_occupancy', 'reservation_metrics'])}
+      />,
+    );
 
+    expect(screen.getByText('Operational Summary')).toBeTruthy();
     expect(
-      within(screen.getByRole('banner')).getByText(
-        'Downtown Emergency Shelter',
+      screen.getByText(
+        'Downtown Emergency Shelter [1234 S Main St, Los Angeles, CA 90015]',
       ),
     ).toBeTruthy();
+    expect(screen.getByText('Newly Checked In')).toBeTruthy();
+    expect(screen.getByText('Avg. days to occupancy')).toBeTruthy();
+    expect(screen.queryByTestId('bed-status-chart')).toBeNull();
+    expect(screen.queryByTestId('daily-occupancy-chart')).toBeNull();
+    expect(pageFooters()).toEqual(['1 of 1']);
   });
 
-  it('renders the shelter summary', () => {
-    render(<ShelterReportPrint data={makeReport()} />);
+  it('puts Bed Status on page 1 and Daily Occupancy on its own page 2', () => {
+    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
 
-    expect(rowsOf('Shelter Summary')).toEqual([
-      ['Name', 'Downtown Emergency Shelter'],
-      ['Organization', 'Test Organization'],
-      ['Address', '1234 S Main St, Los Angeles, CA 90015'],
-    ]);
+    expect(screen.getByTestId('bed-status-chart')).toBeTruthy();
+    expect(screen.getByTestId('daily-occupancy-chart')).toBeTruthy();
+    expect(pageFooters()).toEqual(['1 of 2', '2 of 2']);
   });
 
-  it('renders bed counts in a fixed order', () => {
-    render(<ShelterReportPrint data={makeReport()} />);
+  it('uses a compact header (no "Operational Summary" title, no "Reporting Period" label) on page 2', () => {
+    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
 
-    expect(rowsOf('Bed Summary')).toEqual([
-      ['Total', '185'],
-      ['Available', '42'],
-      ['Occupied', '118'],
-      ['Reserved', '13'],
-      ['In Turnaround', '7'],
-      ['Out of Service', '5'],
-    ]);
-  });
+    expect(screen.getAllByText('Operational Summary')).toHaveLength(1);
+    expect(screen.queryByText(/Reporting Period/)).toBeTruthy();
 
-  it('renders room counts from the room totals, not the bed totals', () => {
-    render(<ShelterReportPrint data={makeReport()} />);
-
-    expect(rowsOf('Room Summary')).toEqual([
-      ['Total', '47'],
-      ['Available', '9'],
-      ['Occupied', '31'],
-      ['Reserved', '4'],
-      ['In Turnaround', '2'],
-      ['Out of Service', '1'],
-    ]);
-  });
-
-  it('renders zero counts rather than blanks', () => {
-    const zeroed = makeReport({
-      bedCounts: {
-        total: 0,
-        available: 0,
-        occupied: 0,
-        reserved: 0,
-        inTurnaround: 0,
-        outOfService: 0,
-      } as ShelterReportData['bedCounts'],
+    // Page 2's header repeats the shelter name as its own heading.
+    const nameOccurrences = screen.getAllByText('Downtown Emergency Shelter', {
+      exact: false,
     });
-
-    render(<ShelterReportPrint data={zeroed} />);
-
-    expect(rowsOf('Bed Summary').map(([, value]) => value)).toEqual([
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-    ]);
+    expect(nameOccurrences.length).toBeGreaterThanOrEqual(2);
   });
 
-  // organization and location are both nullable on the query.
-  it('falls back to an em dash when the organization is missing', () => {
-    render(<ShelterReportPrint data={makeReport({ organization: null })} />);
+  it('collapses to a single page when only Bed Status is included', () => {
+    render(<ShelterReportPrint {...baseProps(['daily_bed_status_metrics'])} />);
 
-    expect(rowsOf('Shelter Summary')).toContainEqual(['Organization', '—']);
+    expect(screen.getByTestId('bed-status-chart')).toBeTruthy();
+    expect(screen.queryByTestId('daily-occupancy-chart')).toBeNull();
+    expect(pageFooters()).toEqual(['1 of 1']);
   });
 
-  it('falls back to an em dash when the location is missing', () => {
-    render(<ShelterReportPrint data={makeReport({ location: null })} />);
+  it('moves Daily Occupancy up to page 1 when Bed Status is not included, instead of giving it its own page', () => {
+    render(
+      <ShelterReportPrint
+        {...baseProps(['reservation_metrics', 'daily_occupancy_metrics'])}
+      />,
+    );
 
-    expect(rowsOf('Shelter Summary')).toContainEqual(['Address', '—']);
+    expect(screen.queryByTestId('bed-status-chart')).toBeNull();
+    expect(screen.getByTestId('daily-occupancy-chart')).toBeTruthy();
+    expect(pageFooters()).toEqual(['1 of 1']);
   });
 
-  // useExportPdf captures whatever this ref points at, so the wiring matters.
+  it('renders nothing when no metrics are included', () => {
+    const { container } = render(<ShelterReportPrint {...baseProps([])} />);
+
+    expect(
+      container.querySelectorAll('[data-report-page="true"]'),
+    ).toHaveLength(0);
+  });
+
+  it('shows the "Previously Overdue" pill when reservation_metrics is included', () => {
+    render(<ShelterReportPrint {...baseProps(['reservation_metrics'])} />);
+
+    expect(screen.getByText('Previously Overdue')).toBeTruthy();
+    expect(screen.getByText('1 / 8')).toBeTruthy();
+  });
+
+  it('shows a dash instead of a 0/0 ratio when nobody has checked in', () => {
+    render(
+      <ShelterReportPrint
+        {...baseProps(['reservation_metrics'])}
+        metrics={{ ...METRICS, checkedIn: 0, checkInOverdueToCheckedIn: 0 }}
+      />,
+    );
+
+    expect(screen.getByText('Previously Overdue')).toBeTruthy();
+    expect(screen.queryByText('0 / 0')).toBeNull();
+    expect(screen.getByText('—')).toBeTruthy();
+  });
+
   it('forwards its ref to the printable root', () => {
     const ref = createRef<HTMLDivElement>();
 
-    render(<ShelterReportPrint data={makeReport()} ref={ref} />);
+    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} ref={ref} />);
 
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
-    expect(ref.current?.classList.contains('shelter-report-print')).toBe(true);
+    expect(
+      ref.current?.querySelectorAll('[data-report-page="true"]'),
+    ).toHaveLength(2);
   });
 });

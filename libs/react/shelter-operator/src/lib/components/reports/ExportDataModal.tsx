@@ -10,7 +10,16 @@ import {
   type ExportMetric,
 } from './useShelterMetricsExport';
 
-const FORMAT_LABELS: Record<ExportFormat, string> = {
+/**
+ * PDF is rendered client-side (see useExportPdf.ts) rather than through the
+ * `ShelterMetricsExportApi` the other three formats hit, but it shares the
+ * same file-type picker and metric checkboxes.
+ */
+export type ModalExportFormat = ExportFormat | 'pdf';
+const MODAL_FORMATS: ModalExportFormat[] = ['pdf', ...EXPORT_FORMATS];
+
+const FORMAT_LABELS: Record<ModalExportFormat, string> = {
+  pdf: 'PDF',
   csv: 'CSV',
   xlsx: 'XLSX',
   json: 'JSON',
@@ -28,20 +37,30 @@ const ALL_METRICS = [...EXPORT_METRICS];
 type ExportDataModalProps = {
   isOpen: boolean;
   isExporting: boolean;
+  /**
+   * True while data the export depends on (e.g. the off-screen PDF render's
+   * queries) is still loading or failed to load — keeps Export disabled so
+   * it can't capture a report with fallback names, missing stats, or empty
+   * charts.
+   */
+  disableExport?: boolean;
   /** Human-readable range, so the modal states what it will export. */
   rangeLabel: string;
   onClose: () => void;
-  onExport: (format: ExportFormat, metrics: ExportMetric[]) => void;
+  onExport: (format: ModalExportFormat, metrics: ExportMetric[]) => void;
 };
 
 export function ExportDataModal({
   isOpen,
   isExporting,
+  disableExport = false,
   rangeLabel,
   onClose,
   onExport,
 }: ExportDataModalProps) {
-  const [format, setFormat] = useState<ExportFormat>('csv');
+  // Keeps CSV as the default selection — matches the existing export tests'
+  // expectations, PDF is just added as another option in the picker.
+  const [format, setFormat] = useState<ModalExportFormat>('csv');
   const [metrics, setMetrics] = useState<ExportMetric[]>([...ALL_METRICS]);
 
   function toggleMetric(metric: ExportMetric) {
@@ -80,7 +99,7 @@ export function ExportDataModal({
               role="radiogroup"
               aria-label="Export file type"
             >
-              {EXPORT_FORMATS.map((option) => (
+              {MODAL_FORMATS.map((option) => (
                 <button
                   key={option}
                   type="button"
@@ -145,7 +164,7 @@ export function ExportDataModal({
           variant="primary"
           color="blue"
           rightIcon={false}
-          disabled={isExporting || metrics.length === 0}
+          disabled={isExporting || metrics.length === 0 || disableExport}
           onClick={() => onExport(format, metrics)}
         >
           {isExporting ? 'Exporting…' : 'Export'}
