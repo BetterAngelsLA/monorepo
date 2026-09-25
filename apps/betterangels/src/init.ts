@@ -19,10 +19,6 @@ import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
 // ---- Compile-time constants ----
 export const isDevEnv = process.env['NODE_ENV'] === 'development';
 
-export const isGqlDebug =
-  process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true' &&
-  process.env['NODE_ENV'] !== 'production';
-
 // ---- One-time side effects ----
 
 // Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients

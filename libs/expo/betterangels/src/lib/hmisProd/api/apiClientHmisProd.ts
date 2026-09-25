@@ -22,6 +22,11 @@ import type {
   SearchClientsPayloadHmisProd,
   SearchClientsResponseHmisProd,
 } from './types';
+import {
+  logHmisProdError,
+  logHmisProdRequest,
+  logHmisProdResponse,
+} from './utils';
 
 /**
  * Direct HMIS ("prod") REST client — experimental, gated by
@@ -175,6 +180,8 @@ class ApiClientHmisProd {
     // Fail fast with an actionable message instead of letting Clarity reject
     // the unauthenticated POST with its opaque CSRF error.
     if (!requestContext.hasAuthToken) {
+      logHmisProdError(url, 'No HMIS auth token found');
+
       throw new ErrorHmisProd(
         'Not logged in to HMIS - please log in with your HMIS credentials',
         401,
@@ -186,6 +193,9 @@ class ApiClientHmisProd {
       );
     }
 
+    logHmisProdRequest(init.method ?? 'GET', url, init.body);
+
+    const startedAt = Date.now();
     const { response, responseText } = await this.fetchWithBody(
       url,
       init,
@@ -200,13 +210,19 @@ class ApiClientHmisProd {
     };
 
     if (!response.ok) {
+      logHmisProdError(url, {
+        status: response.status,
+        body: parseHmisProdBody(responseText),
+      });
+
       throw this.buildApiError(response, responseText, debugInfo);
     }
 
-    return {
-      data: parseHmisProdBody(responseText) as T,
-      debugInfo,
-    };
+    const data = parseHmisProdBody(responseText) as T;
+
+    logHmisProdResponse(url, response.status, Date.now() - startedAt, data);
+
+    return { data, debugInfo };
   }
 
   /**
@@ -230,6 +246,8 @@ class ApiClientHmisProd {
       return { response, responseText: await response.text() };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+
+      logHmisProdError(url, message);
 
       throw new ErrorHmisProd(message, 0, {
         ...requestContext,
