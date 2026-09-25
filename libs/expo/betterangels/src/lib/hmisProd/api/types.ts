@@ -8,7 +8,13 @@ export interface SearchClientsPayloadHmisProd {
   page?: number;
   per_page?: number | string;
   sort?: string;
-  fields?: string;
+  /** Overrides `CLIENT_SEARCH_FIELDS_DEFAULT`*/
+  fields?: string[];
+}
+
+export interface GetClientPayloadHmisProd {
+  /** Overrides `CLIENT_DETAIL_FIELDS_DEFAULT` */
+  fields?: string[];
 }
 
 /**
@@ -35,6 +41,54 @@ export interface SearchClientsResponseHmisProd {
     page_count?: number;
   };
   _links?: Record<string, unknown>;
+}
+
+/**
+ * Sub-fields requested via `screenValues.*` — Clarity nests them under a
+ * `screenValues` object in the detail response.
+ *
+ * Enum-ish values (`gender`, `race_ethnicity`, `veteran`, `name_suffix`) come
+ * back as the ordinal codes from the HMIS data model, not labels — see
+ * `enumOrdinalMapsHmisProd` in the adapters.
+ */
+export interface HmisProdClientScreenValues {
+  age?: number | null;
+  gender?: number[] | null;
+  gender_identity_text?: string | null;
+  name_middle?: string | null;
+  name_suffix?: number | null;
+  race_ethnicity?: number[] | null;
+  additional_race_ethnicity_detail?: string | null;
+  veteran?: number | null;
+}
+
+/**
+ * Single client payload from Clarity's client endpoint
+ * (`GET /api1/clients/{id}`) — keys mirror the requested `fields`
+ * (snake_case).
+ *
+ * Sub-fields are read from `screenValues` first, but a few can also land
+ * top-level (e.g. `gender`), so both are typed here; the adapter checks both.
+ */
+export interface HmisProdClientDetail {
+  id: number | string;
+  personal_id?: string | null;
+  unique_identifier?: string | null;
+  alias?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  birth_date?: string | null;
+  dob_quality?: number | null;
+  name_quality?: number | null;
+  age?: number | null;
+  gender?: number[] | null;
+  gender_identity_text?: string | null;
+  name_middle?: string | null;
+  name_suffix?: number | null;
+  race_ethnicity?: number[] | null;
+  additional_race_ethnicity_detail?: string | null;
+  veteran?: number | null;
+  screenValues?: HmisProdClientScreenValues | null;
 }
 
 /**

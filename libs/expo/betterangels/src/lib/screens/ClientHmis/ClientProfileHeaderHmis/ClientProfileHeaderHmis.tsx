@@ -21,10 +21,16 @@ import { ProfilePhotoUploaderHmis } from './ProfilePhotoUploaderHmis';
 
 interface IClientHeaderProps {
   client?: HmisClientProfileType;
+  /**
+   * When false, renders a read-only avatar instead of the photo uploader
+   * (used by the hmisProd demo screens, which have no Apollo client profile
+   * to refetch after an upload).
+   */
+  allowPhotoUpload?: boolean;
 }
 
 export function ClientProfileHeaderHmis(props: IClientHeaderProps) {
-  const { client } = props;
+  const { client, allowPhotoUpload = true } = props;
 
   const {
     firstName,
@@ -58,7 +64,7 @@ export function ClientProfileHeaderHmis(props: IClientHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        {clientId ? (
+        {clientId && allowPhotoUpload ? (
           <ProfilePhotoUploaderHmis
             clientId={clientId}
             imageUrl={thumbnailUri}

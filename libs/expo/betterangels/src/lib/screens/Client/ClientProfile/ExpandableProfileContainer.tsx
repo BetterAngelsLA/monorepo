@@ -16,7 +16,11 @@ type TProps = {
   openCard: ClientProfileSectionEnum | null;
   children: ReactElement;
   onOpenCloseClick: (card: ClientProfileSectionEnum) => void;
-  onEditClick: (card: ClientProfileSectionEnum) => void;
+  /**
+   * Optional — without it the section renders read-only (no edit button),
+   * e.g. for the hmisProd demo screens.
+   */
+  onEditClick?: (card: ClientProfileSectionEnum) => void;
 };
 
 export function ExpandableProfileContainer(props: TProps) {
@@ -29,7 +33,7 @@ export function ExpandableProfileContainer(props: TProps) {
       card={card}
       isOpen={isOpen}
       onOpenCloseClick={() => onOpenCloseClick(card)}
-      onEditClick={() => onEditClick(card)}
+      onEditClick={onEditClick ? () => onEditClick(card) : undefined}
     />
   );
 
@@ -44,7 +48,7 @@ type THeader = {
   card: ClientProfileSectionEnum;
   isOpen?: boolean;
   onOpenCloseClick: () => void;
-  onEditClick: () => void;
+  onEditClick?: () => void;
 };
 
 function Header(props: THeader) {
@@ -64,7 +68,7 @@ function Header(props: THeader) {
         {title}
       </TextRegular>
 
-      {isOpen && (
+      {isOpen && onEditClick && (
         <EditButton
           onClick={onEditClick}
           testId={toTestId(['edit', title])}

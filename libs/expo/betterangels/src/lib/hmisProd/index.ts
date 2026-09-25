@@ -5,4 +5,5 @@
  * Internal screens/components/api/hooks added under this folder should stay
  * unexported unless deliberately made public.
  */
+export { ClientHmisProd } from './ClientHmisProd';
 export { ClientScreenHmisProd } from './ClientScreenHmisProd';

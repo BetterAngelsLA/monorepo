@@ -7,11 +7,15 @@ import {
 } from '@monorepo/expo/shared/clients';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  HMIS_PROD_CLIENT_SEARCH_FIELDS,
+  CLIENT_DETAIL_FIELDS_DEFAULT,
+  CLIENT_SEARCH_FIELDS_DEFAULT,
   HMIS_PROD_CLIENTS_LONG_PATH,
+  HMIS_PROD_CLIENTS_PATH,
 } from './constants';
 import { ErrorHmisProd } from './errors';
 import type {
+  GetClientPayloadHmisProd,
+  HmisProdClientDetail,
   HmisProdRequestContext,
   HmisProdRequestDebugInfo,
   HmisProdRequestResult,
@@ -40,9 +44,8 @@ import type {
 const DEFAULT_SEARCH_PAYLOAD = {
   expand: 'userCreated,userUpdated',
   page: 1,
-  per_page: 10,
+  per_page: 50, // pagination not implemented, so setting this high
   sort: '-last_updated',
-  fields: HMIS_PROD_CLIENT_SEARCH_FIELDS,
 } as const;
 
 /**
@@ -94,14 +97,58 @@ class ClientHmisProd {
    * Search clients via Clarity's "long" endpoint.
    *
    * POST /api1/clients/long
+   *
+   * `payload.fields` overrides `CLIENT_SEARCH_FIELDS_DEFAULT`; the client
+   * joins it into Clarity's comma-separated `fields` value.
    */
   searchClients(
     payload: SearchClientsPayloadHmisProd,
   ): Promise<HmisProdRequestResult<SearchClientsResponseHmisProd>> {
+    const { fields = CLIENT_SEARCH_FIELDS_DEFAULT, ...rest } = payload;
+
     return this.post<SearchClientsResponseHmisProd>(
       HMIS_PROD_CLIENTS_LONG_PATH,
-      { ...DEFAULT_SEARCH_PAYLOAD, ...payload },
+      {
+        ...DEFAULT_SEARCH_PAYLOAD,
+        ...rest,
+        fields: fields.join(','),
+      },
     );
+  }
+
+  /**
+   * Fetch a single client via Clarity's client endpoint.
+   *
+   * GET /api1/clients/{id}?fields=...&as_array=1
+   *
+   * Defaults to the fields the Profile tab renders (see
+   * `CLIENT_DETAIL_FIELDS_DEFAULT`) — pass `payload.fields` to override;
+   * the client joins it into Clarity's comma-separated `fields` value.
+   * Sub-fields are requested through `screenValues.*` and read back from the
+   * nested `screenValues` object.
+   */
+  async getClient(
+    id: string,
+    payload?: GetClientPayloadHmisProd,
+  ): Promise<HmisProdRequestResult<HmisProdClientDetail>> {
+    const fields = payload?.fields ?? CLIENT_DETAIL_FIELDS_DEFAULT;
+
+    const { data, debugInfo } = await this.get<
+      HmisProdClientDetail | HmisProdClientDetail[]
+    >(`${HMIS_PROD_CLIENTS_PATH}/${encodeURIComponent(id)}`, {
+      fields: fields.join(','),
+      as_array: '1',
+    });
+
+    // `as_array=1` mirrors the request the Clarity web app sends; unwrap
+    // defensively in case the response comes back as a one-item list.
+    const client = Array.isArray(data) ? data[0] : data;
+
+    if (!client) {
+      throw new ErrorHmisProd('Resource not found', 404, debugInfo);
+    }
+
+    return { data: client, debugInfo };
   }
 
   private async request<T>(
@@ -189,6 +236,15 @@ class ClientHmisProd {
         requestError: message,
       });
     }
+  }
+
+  private get<T>(
+    path: string,
+    params: Record<string, string>,
+  ): Promise<HmisProdRequestResult<T>> {
+    const query = new URLSearchParams(params).toString();
+
+    return this.request<T>(`${path}?${query}`);
   }
 
   private post<T>(
