@@ -2,7 +2,7 @@ import { useApiConfig } from '@monorepo/ba-platform';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import {
-  createClientHmisProd,
+  createApiClientHmisProd,
   ErrorHmisProd,
   resolveHmisProdBaseUrl,
   type HmisProdRequestDebugInfo,
@@ -29,7 +29,7 @@ export function useClientHmisProd(id: string) {
   const { apiUrl: baEnvApiUrl } = useApiConfig();
   const baseUrl = resolveHmisProdBaseUrl(baEnvApiUrl);
 
-  const apiClient = useMemo(() => createClientHmisProd(baseUrl), [baseUrl]);
+  const apiClient = useMemo(() => createApiClientHmisProd(baseUrl), [baseUrl]);
 
   const query = useQuery({
     queryKey: getClientHmisProdQueryKey(baseUrl, id),

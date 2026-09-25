@@ -3,7 +3,7 @@ import { useDebounce } from '@monorepo/react/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import {
-  createClientHmisProd,
+  createApiClientHmisProd,
   ErrorHmisProd,
   resolveHmisProdBaseUrl,
   type HmisProdRequestDebugInfo,
@@ -37,12 +37,12 @@ export function useSearchClientsHmisProd(search: string) {
   const baseUrl = resolveHmisProdBaseUrl(baEnvApiUrl);
   const debouncedSearch = useDebounce(search.trim(), SEARCH_DEBOUNCE_MS);
 
-  const client = useMemo(() => createClientHmisProd(baseUrl), [baseUrl]);
+  const apiClient = useMemo(() => createApiClientHmisProd(baseUrl), [baseUrl]);
 
   const query = useQuery({
     queryKey: getSearchClientsHmisProdQueryKey(baseUrl, debouncedSearch),
     queryFn: () =>
-      client.searchClients({
+      apiClient.searchClients({
         search: debouncedSearch,
       }),
     enabled: debouncedSearch.length > 1,

@@ -25,7 +25,8 @@ import type {
 
 /**
  * Direct HMIS ("prod") REST client — experimental, gated by
- * `FeatureFlags.HMIS_PROD_DEMO`.
+ * `FeatureFlags.HMIS_PROD_DEMO`. Named `Api…` so the transport class isn't
+ * confused with an HMIS client (person) record.
  *
  * Feature-private: not exported from the `lib/hmisProd` barrel, so it can't
  * leak into other screens and goes away with the feature.
@@ -90,7 +91,7 @@ const getHmisAuthDomainHost = async (): Promise<string | null> => {
 /** Clarity answers unauthenticated web-style POSTs with its Yii CSRF guard. */
 const CSRF_MISMATCH_PATTERN = /csrf token mismatch/i;
 
-class ClientHmisProd {
+class ApiClientHmisProd {
   constructor(private readonly baseUrl: string) {}
 
   /**
@@ -307,8 +308,8 @@ class ClientHmisProd {
   }
 }
 
-// Factory function to create ClientHmisProd
-export const createClientHmisProd = (baseUrl: string) =>
-  new ClientHmisProd(baseUrl);
+// Factory function to create ApiClientHmisProd
+export const createApiClientHmisProd = (baseUrl: string) =>
+  new ApiClientHmisProd(baseUrl);
 
-export { ClientHmisProd };
+export { ApiClientHmisProd };
