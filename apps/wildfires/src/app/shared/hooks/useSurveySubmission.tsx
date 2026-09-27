@@ -12,6 +12,16 @@ interface StoredSurveyData {
 
 type SubmissionStatus = 'idle' | 'loading' | 'success' | 'error';
 
+function readStoredSurveyData(): StoredSurveyData | null {
+  try {
+    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error('Failed to read stored survey submission:', error);
+    return null;
+  }
+}
+
 /**
  * Custom hook to handle survey submission with retry logic and localStorage persistence.
  *
@@ -25,10 +35,9 @@ const useSurveySubmission = (
   maxRetries = 3,
   retryDelay = 1000,
 ): SubmissionStatus => {
-  const [storedData, setStoredData] = useState<StoredSurveyData | null>(() => {
-    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return data ? JSON.parse(data) : null;
-  });
+  const [storedData, setStoredData] = useState<StoredSurveyData | null>(
+    readStoredSurveyData,
+  );
 
   const [status, setStatus] = useState<SubmissionStatus>('idle');
 
@@ -69,10 +78,17 @@ const useSurveySubmission = (
           };
 
           setStoredData(newStoredData);
-          localStorage.setItem(
-            LOCAL_STORAGE_KEY,
-            JSON.stringify(newStoredData),
-          );
+
+          try {
+            localStorage.setItem(
+              LOCAL_STORAGE_KEY,
+              JSON.stringify(newStoredData),
+            );
+          } catch (storageError) {
+            // The POST succeeded; a local storage failure must not retry it.
+            console.error('Failed to persist survey submission:', storageError);
+          }
+
           setStatus('success');
           console.log('Survey submitted successfully:', surveyID);
         } catch (error) {
