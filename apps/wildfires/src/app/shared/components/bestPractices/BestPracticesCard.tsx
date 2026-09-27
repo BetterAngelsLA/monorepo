@@ -23,8 +23,8 @@ export default function BestPracticesCard(props: IBestPracticesCardProps) {
           isOpen ? 'rotate-90' : '-rotate-90'
         }`}
       />
-      <div className="min-w-[50px] h-[50px] md:min-w-[100px] md:h-[100px] rounded-full bg-white flex items-center justify-center">
-        <Icon className="h-[40px] w-[40px] lg:h-[60px] lg:w-[60px] text-brand-dark-blue" />
+      <div className="min-w-12.5 h-12.5 md:min-w-25 md:h-25 rounded-full bg-white flex items-center justify-center">
+        <Icon className="h-10 w-10 lg:h-15 lg:w-15 text-brand-dark-blue" />
       </div>
       <div>
         <h3 className="text-xl md:text-[32px] md:leading-[1.2] font-bold mb-4 pr-6 md:pr-0">
