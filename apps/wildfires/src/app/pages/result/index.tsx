@@ -11,11 +11,7 @@ import GeneratePDF from '../../shared/components/GeneratePDF';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
-import {
-  TAnswer,
-  TOption,
-  TSurveyResults,
-} from '../../shared/components/survey/types';
+import { TAnswer, TOption } from '../../shared/components/survey/types';
 import { getAllQuestions } from '../../shared/components/survey/utils/validateConfig';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 import useSurveySubmission from '../../shared/hooks/useSurveySubmission';
@@ -48,7 +44,7 @@ function getAnswerTags(answer: TAnswer, answerOptions: TOption[]): string[] {
   return answerTags;
 }
 
-function getTags(answers: TSurveyResults['answers']): string[] {
+function getTags(answers: TAnswer[]): string[] {
   const tags: string[] = [];
 
   for (const answer of answers) {
