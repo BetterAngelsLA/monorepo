@@ -118,6 +118,7 @@ class ApiClientHmisProd {
         ...DEFAULT_SEARCH_PAYLOAD,
         ...rest,
         fields: fields.join(','),
+        as_array: '1',
       },
     );
   }
@@ -125,7 +126,7 @@ class ApiClientHmisProd {
   /**
    * Fetch a single client via Clarity's client endpoint.
    *
-   * GET /api1/clients/{id}?fields=...&as_array=1
+   * GET /api1/clients/{id}?fields=...
    *
    * Defaults to the fields the Profile tab renders (see
    * `CLIENT_DETAIL_FIELDS_DEFAULT`) — pass `payload.fields` to override;
@@ -142,12 +143,11 @@ class ApiClientHmisProd {
     const { data, debugInfo } = await this.get<
       HmisProdClientDetail | HmisProdClientDetail[]
     >(`${HMIS_PROD_CLIENTS_PATH}/${encodeURIComponent(id)}`, {
+      // Deliberately no `as_array` param
       fields: fields.join(','),
-      as_array: '1',
     });
 
-    // `as_array=1` mirrors the request the Clarity web app sends; unwrap
-    // defensively in case the response comes back as a one-item list.
+    // Unwrap defensively in case the response comes back as a one-item list.
     const client = Array.isArray(data) ? data[0] : data;
 
     if (!client) {

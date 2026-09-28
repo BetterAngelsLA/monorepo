@@ -31,9 +31,8 @@ export const CLIENT_SEARCH_FIELDS_DEFAULT = [
 
 /**
  * Default response field selection for the single-client call — joined into
- * Clarity's `fields` value by the client. Trimmed to what the Profile tab
- * renders today — extend it as more of the profile is wired up, or override
- * it via the `fields` payload option.
+ * Clarity's `fields` value by the client. Override it via the `fields`
+ * payload option as more of the profile is wired up.
  *
  * Sub-fields (age, gender, race, veteran, name parts) are requested through
  * `screenValues.*` — Clarity nests them under a `screenValues` object in the

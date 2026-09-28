@@ -19,11 +19,6 @@ type TProps = {
 export function DemographicInfoCardHmisProd(props: TProps) {
   const { client } = props;
 
-  console.log();
-  console.log('| -------------  DemographicInfoCardHmisProd  ------------- |');
-  console.log(JSON.stringify(client, null, 2));
-  console.log();
-
   const {
     gender,
     raceEthnicity,
