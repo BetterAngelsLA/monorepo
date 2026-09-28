@@ -8,7 +8,7 @@ circular import with the model layer.
 from typing import TYPE_CHECKING
 
 from accounts.models import OrgTypeChoices
-from common.permissions.selectors import visible
+from common.permissions.selectors import can_globally, visible
 from common.utils import get_by_pk_or_not_found
 from django.db.models import QuerySet
 from organizations.models import Organization
@@ -31,12 +31,16 @@ def shelter_list(
 ) -> "QuerySet[Shelter]":
     """Filter to shelters approved for public display.
 
-    If the user has ``view_private_shelter``, private shelters are included.
+    If the user holds ``view_private_shelter`` at the **global tier** (superuser,
+    global Role, or direct ``user_permissions`` — :func:`can_globally`), private
+    shelters are included: the public directory is platform data, not an
+    org-scoped resource, so a scoped Grant never widens it (ADR 0001 §2.4).
+    Legacy ``PermissionGroup`` rows grant nothing here.
     """
     from shelters.models import Shelter
 
     queryset = queryset.filter(status=StatusChoices.APPROVED)
-    if user and user.is_authenticated and hasattr(user, "has_perm") and user.has_perm(Shelter.perms.VIEW_PRIVATE):
+    if user and user.is_authenticated and can_globally(user, Shelter.perms.VIEW_PRIVATE):
         return queryset
     return queryset.filter(is_private=False)
 

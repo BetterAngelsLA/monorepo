@@ -7,7 +7,7 @@ from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment, Location
-from common.permissions.utils import assign_object_permissions
+from common.permissions.gates import assign_object_permissions
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,

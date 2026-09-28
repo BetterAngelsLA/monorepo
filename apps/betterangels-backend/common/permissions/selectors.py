@@ -23,7 +23,7 @@ Layers, scope math to mutation gate:
   ``Access(write=…)``; the selectors branch on the declaration, so a
   GLOBAL-class model answers at the global tier only — org reach never widens
   it (``ContactInfo``'s ``ACCESS_GLOBAL`` / ``WRITE_GLOBAL`` is the reference).
-* ``get_writable_or_deny`` (``common.permissions.utils``) — the mutation
+* ``get_writable_or_deny`` (``common.permissions.gates``) — the mutation
   leaf: fetch a write target through ``writable``, or deny.  Mutation gates
   fetch through it (or through ``writable`` directly for non-pk shapes) —
   never from a raw manager.
@@ -40,6 +40,7 @@ The global tier is read explicitly (superuser, global Role in ``user.groups``,
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from functools import reduce
 from operator import or_
 from typing import TYPE_CHECKING, Any, Optional, TypeVar, cast
@@ -63,14 +64,47 @@ def _perm_parts(perm: str) -> tuple[str, str]:
     return app_label, codename
 
 
-def _global_role_holds(user: "User", perm: str) -> bool:
-    """Whether *user* holds *perm* at the global tier through a global Role."""
+@dataclass(frozen=True)
+class GlobalProbe:
+    """The global tier walked arm by arm — one traversal, every global question.
+
+    ``scopes`` collapses it to a verdict (``holds``); ``explain`` renders the
+    arms, so the two can never disagree about *why* the global tier holds.
+    Nothing here consults ``has_perm``: legacy ``PermissionGroup`` rows pollute
+    it until teardown (module docstring).
+    """
+
+    superuser: bool
+    roles: tuple[str, ...]
+    """Names of the user's global Roles carrying the permission."""
+    direct: bool
+    """``user_permissions`` carries the permission."""
+
+    @property
+    def holds(self) -> bool:
+        return self.superuser or bool(self.roles) or self.direct
+
+
+def global_probe(user: "User", perm: str) -> GlobalProbe:
+    """Walk the global tier for *perm*: superuser, global Roles, ``user_permissions``.
+
+    The one traversal behind both the verdict (``scopes``) and its explanation
+    (``explain._global_arm``) — a user's direct and role-held global grants are
+    read exactly the way the verdict read them.
+    """
     app_label, codename = _perm_parts(perm)
-    return user.groups.filter(
-        role__is_global=True,
-        role__permissions__content_type__app_label=app_label,
-        role__permissions__codename=codename,
-    ).exists()
+    roles = tuple(
+        sorted(
+            user.groups.filter(
+                role__is_global=True,
+                role__permissions__content_type__app_label=app_label,
+                role__permissions__codename=codename,
+            )
+            .values_list("name", flat=True)
+            .distinct()
+        )
+    )
+    return GlobalProbe(superuser=bool(user.is_superuser), roles=roles, direct=_user_permission_holds(user, perm))
 
 
 def _user_permission_holds(user: "User", perm: str) -> bool:
@@ -109,7 +143,7 @@ def global_permissions(user: "User") -> list[str]:
     if cached is not None:
         return cached
 
-    from common.permissions.utils import modeled_permission_strings
+    from common.permissions.registry import modeled_permission_strings
 
     modeled = modeled_permission_strings()
     if user.is_superuser:
@@ -193,11 +227,11 @@ def scopes(user: "User", perm: str) -> Any:
     write services invalidate it via :func:`invalidate_scope_cache` when they
     change the user's grants.
     """
-    from accounts.models import Grant, Organization
+    from accounts.models import Grant
 
     cache = user.__dict__.setdefault("_scope_cache", {})
     if perm not in cache:
-        if user.is_superuser or _global_role_holds(user, perm) or _user_permission_holds(user, perm):
+        if global_probe(user, perm).holds:
             # The ALL verdict is memoized like the finite ones: the global probes
             # are queries, and every checker/selector path asks for the same
             # (user, perm) repeatedly.  ``invalidate_scope_cache`` — which the
@@ -215,12 +249,7 @@ def scopes(user: "User", perm: str) -> Any:
             # and a weak-role holder at B is not amplified to B's stronger delegated
             # roles at C).  Correlated EXISTS per delegation row, so there is no
             # org-list subquery to materialize and no DISTINCT to dedupe one.
-            acts_at = Organization.objects.filter(
-                users=user,
-                grants__principal_user=user,
-                grants__role__in=Subquery(roles),
-                pk=OuterRef("principal_org_id"),
-            )
+            acts_at = acting_org_ids_q(user, perm).filter(pk=OuterRef("principal_org_id"))
             # Delegations only (org-principal), org-scope arm only — object grants
             # and user-principal grants never feed the org filter.
             inherited = Grant.objects.filter(
@@ -232,6 +261,30 @@ def scopes(user: "User", perm: str) -> Any:
 
             cache[perm] = mine.union(inherited)
     return cache[perm]
+
+
+def acting_org_ids_q(user: "User", perm: str) -> "QuerySet[Organization]":
+    """Orgs where *user* acts **at** *perm*: member AND a direct grant carrying it.
+
+    The "acts at B" precondition delegations hang off (:func:`scopes`): a
+    delegation B→C is inheritable only from an org where the user is a member
+    *and* holds the permission directly with a carrying role bundle —
+    permission-matched, no amplification.  An ``Organization`` queryset so
+    callers can iterate it, ``values_list('pk')`` it, or correlate it via
+    ``OuterRef``/``Subquery``.
+    """
+    from accounts.models import Organization
+
+    return Organization.objects.filter(
+        users=user,
+        grants__principal_user=user,
+        grants__role__in=Subquery(_roles_carrying_perm(perm)),
+    )
+
+
+def acting_org_ids(user: "User", perm: str) -> set[int]:
+    """Materialized :func:`acting_org_ids_q` — ``explain``'s arm walker."""
+    return set(acting_org_ids_q(user, perm).values_list("pk", flat=True))
 
 
 def invalidate_scope_cache(user: "User") -> None:
@@ -247,6 +300,7 @@ def invalidate_scope_cache(user: "User") -> None:
     global-tier and effective-report memos (``global_permissions`` /
     ``organization_effective_permissions``) and the list-read holder
     memos (``_visible_client_rows_cache`` / ``_visible_task_rows_cache`` / ``_visible_note_rows_cache``),
+    plus the per-perm org-id memo ``notes/types.py`` keeps (``_perm_org_ids``),
     so they are dropped here too.
     Org→org delegation rows have no single user principal, and the selectors
     are consumed per request on fresh user instances, so those flows need no
@@ -258,6 +312,7 @@ def invalidate_scope_cache(user: "User") -> None:
     user.__dict__.pop("_visible_client_rows_cache", None)
     user.__dict__.pop("_visible_task_rows_cache", None)
     user.__dict__.pop("_visible_note_rows_cache", None)
+    user.__dict__.pop("_perm_org_ids", None)
 
 
 def visible(qs: "QuerySet[T]", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet[T]":

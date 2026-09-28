@@ -9,7 +9,7 @@ from common.graphql.org import resolve_org_or_deny
 from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.selectors import can_obj
-from common.permissions.utils import IsAuthenticated, PERMISSION_DENIED_MESSAGE, require_can
+from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, require_can
 from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from hmis.models import HmisClientProfile, HmisNote

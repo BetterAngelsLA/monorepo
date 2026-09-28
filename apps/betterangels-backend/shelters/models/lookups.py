@@ -5,7 +5,7 @@ Each wraps a TextChoicesField / IntegerChoicesField with ``unique=True``.
 """
 
 from common.models import BaseModel
-from common.permissions.utils import PermissionSet
+from common.permissions.registry import PermissionSet
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower

@@ -6,7 +6,7 @@ import pghistory
 from accounts.models import User
 from betterangels_backend import settings
 from common.models import Attachment, BaseModel, Location, ScopedResource
-from common.permissions.utils import permission_enums_to_django_meta_permissions
+from common.permissions.registry import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models

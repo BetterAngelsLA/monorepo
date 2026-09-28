@@ -5,7 +5,7 @@ from typing import Any
 
 from accounts.models import Organization
 from common.models import ScopedResource
-from common.permissions.utils import permission_enums_to_django_meta_permissions
+from common.permissions.registry import permission_enums_to_django_meta_permissions
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, MaxValueValidator, MinValueValidator

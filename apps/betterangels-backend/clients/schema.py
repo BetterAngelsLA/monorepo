@@ -28,7 +28,7 @@ from common.graphql.types import (
 )
 from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment, PhoneNumber
-from common.permissions.utils import IsAuthenticated, get_writable_or_deny
+from common.permissions.gates import IsAuthenticated, get_writable_or_deny
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
