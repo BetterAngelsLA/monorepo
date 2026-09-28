@@ -2,16 +2,16 @@
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import Attachment, OrgScoped, WRITE_OBJECT, WRITE_SHARED
+from common.models import Access, Attachment, OrgScoped, WRITE_OBJECT, WRITE_SHARED
 from common.permissions.checks import (
     _org_via_errors_for_model,
+    check_access_declarations,
     check_grant_never_references_global_role,
     check_object_grant_principal_is_a_user,
     check_object_grant_targets_whitelisted_model,
     check_org_via_hops_are_single_valued,
     check_role_permissions_models_declare_org_scoping,
     check_scoped_role_never_in_user_groups,
-    check_write_tier_declarations,
 )
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -172,33 +172,56 @@ class GrantSystemChecksTestCase(TestCase):
         )
 
 
-class WriteTierChecksTestCase(TestCase):
-    """E007 — ``write_tier`` declarations must be legal (RFC 0002 §Precondition)."""
+class AccessDeclarationChecksTestCase(TestCase):
+    """E007 — ``access`` declarations must be legal (ADR 0004, RFC 0002 §Precondition)."""
 
     def test_e007_is_quiet_for_clientprofile_shared_declaration(self) -> None:
         from clients.models import ClientProfile
 
-        self.assertEqual(ClientProfile.write_tier, WRITE_SHARED)  # guard against a vacuous pass
-        self.assertEqual(_errors_with(check_write_tier_declarations(None), "permissions.E007"), [])
+        self.assertEqual(ClientProfile.access.write, WRITE_SHARED)  # guard against a vacuous pass
+        self.assertEqual(_errors_with(check_access_declarations(None), "permissions.E007"), [])
 
-    def test_e007_fires_when_an_org_anchored_model_declares_a_tier(self) -> None:
+    def test_e007_fires_when_an_org_anchored_model_declares_a_write_class(self) -> None:
         from unittest.mock import patch
 
         from shelters.models import Shelter
 
-        with patch.object(Shelter, "write_tier", WRITE_SHARED):
-            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+        with patch.object(Shelter, "access", Access(write=WRITE_SHARED)):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
         self.assertIn("org-anchored", errors[0].msg)
 
-    def test_e007_fires_when_the_object_tier_is_declared_before_the_arm(self) -> None:
+    def test_e007_fires_when_the_object_class_is_declared_before_the_arm(self) -> None:
         from unittest.mock import patch
 
         from clients.models import ClientProfile
 
-        with patch.object(ClientProfile, "write_tier", WRITE_OBJECT):
-            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+        with patch.object(ClientProfile, "access", Access(write=WRITE_OBJECT)):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("reserved", errors[0].msg)
+
+    def test_e007_fires_on_an_unknown_write_class(self) -> None:
+        """A typo must not silently fall back to the derived default (ADR 0004)."""
+        from unittest.mock import patch
+
+        from clients.models import ClientProfile
+
+        with patch.object(ClientProfile, "access", Access(write="sharred")):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("not a known class", errors[0].msg)
+
+    def test_e007_fires_when_a_read_class_is_declared_before_the_slice(self) -> None:
+        from unittest.mock import patch
+
+        from clients.models import ClientProfile
+
+        with patch.object(ClientProfile, "access", Access(read="global")):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
         self.assertIn("reserved", errors[0].msg)

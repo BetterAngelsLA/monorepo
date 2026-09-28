@@ -292,11 +292,11 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
     query does the work of two.  The org arm reuses :func:`visible` *with the
     write perm* — literally the predicate ``can_obj`` resolves for a row.
 
-    Tiers (kept in lockstep with :func:`can_obj`, which delegates here):
+    Classes (kept in lockstep with :func:`can_obj`, which delegates here):
 
     * **ORG** (org-anchored, ``org_via`` not ``None``) — ``visible(qs, …)``.
-    * **SHARED** (``write_tier = WRITE_SHARED``) — all rows iff the user holds
-      *perm* anywhere, none otherwise.
+    * **SHARED** (``access.write = WRITE_SHARED``) — all rows iff the user
+      holds *perm* anywhere, none otherwise.
     * **Fail-closed default** — all rows only for the global tier (``scopes``
       is ALL); ``WRITE_OBJECT`` sits here until the object arm wires grants.
     """
@@ -307,7 +307,7 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
         return qs.none()
     if model.org_via is not None:
         return visible(qs, user, perm)
-    if model.write_tier == WRITE_SHARED:
+    if model.access.write == WRITE_SHARED:
         return qs if can_anywhere(user, perm) else qs.none()
     return qs if scopes(user, perm) is ALL else qs.none()
 
@@ -327,7 +327,7 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
 
     Kept for callers that already hold a row (services, ``explain``); mutation
     gates should instead fetch *through* :func:`writable` so the fetch itself
-    is the gate.  The write tiers live in :func:`writable`'s docstring
+    is the gate.  The write classes live in :func:`writable`'s docstring
     (RFC 0002 §Precondition); this delegates so the two can never drift.
     """
     model = obj.__class__
