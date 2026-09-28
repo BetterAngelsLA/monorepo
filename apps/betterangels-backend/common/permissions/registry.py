@@ -121,7 +121,6 @@ class PermissionSet:
     CHANGE: str
     DELETE: str
     VIEW: str
-    _perm_labels: dict[str, str]
 
     @classmethod
     def contribute_to_class(cls, model: type[Model], name: str) -> None:
@@ -132,14 +131,10 @@ class PermissionSet:
         app = model._meta.app_label
         model_name = model._meta.model_name
 
-        # Labels mapping: codename -> human-readable name (used by migration utilities)
-        labels: dict[str, str] = {}
-
         # Set standard CRUD permissions
         for action in model._meta.default_permissions:
             codename = f"{action}_{model_name}"
             setattr(cls, action.upper(), f"{app}.{codename}")
-            labels[codename] = f"Can {action} {model._meta.verbose_name}"
 
         # Process custom permissions declared via perm()
         custom_perms: list[tuple[str, str]] = []
@@ -149,7 +144,6 @@ class PermissionSet:
                 codename, description = value
                 setattr(cls, attr_name, f"{app}.{codename}")
                 custom_perms.append((codename, description))
-                labels[codename] = description
 
         # Register custom permissions in Meta so Django creates them in the DB
         if custom_perms:
@@ -157,7 +151,6 @@ class PermissionSet:
             existing.extend(custom_perms)
             model._meta.permissions = existing
 
-        cls._perm_labels = labels
         setattr(model, name, cls)
 
 

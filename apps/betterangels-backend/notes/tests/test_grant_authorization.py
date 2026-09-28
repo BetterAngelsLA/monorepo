@@ -266,7 +266,7 @@ class NoteGrantAuthorityDeniedTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCas
         )
 
     def test_create_note_with_an_unknown_organization_is_denied(self) -> None:
-        """``resolve_org_or_deny`` on the payload org fails closed — unknown is not found."""
+        """``org_or_deny`` on the payload org fails closed — unknown is not found."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         initial_count = Note.objects.count()
 

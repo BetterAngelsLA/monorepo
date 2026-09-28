@@ -106,7 +106,5 @@ class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
         shelter_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
         self.assertNotIn(str(self.private_shelter.pk), shelter_ids)
 
-        response = self.execute_graphql(
-            "query ($id: ID!) { shelter(pk: $id) { id } }", {"id": self.private_shelter.pk}
-        )
+        response = self.execute_graphql("query ($id: ID!) { shelter(pk: $id) { id } }", {"id": self.private_shelter.pk})
         self.assertIsNotNone(response.get("errors"))

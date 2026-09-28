@@ -137,7 +137,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_delete_client_profile_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         mutation = """
