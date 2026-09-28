@@ -245,57 +245,83 @@ def check_object_grant_principal_is_a_user(app_configs: Any, **kwargs: Any) -> l
 
 
 @register(Tags.models)
-def check_write_tier_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E007 — ``write_tier`` declarations must be legal (RFC 0002 §Precondition).
+def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
+    """E007 — ``access`` declarations must be legal (ADR 0004, RFC 0002 §Precondition).
 
-    ``write_tier`` is consulted by ``can_obj`` independently of ``org_via``:
+    ``access.write`` is consulted by :func:`common.permissions.selectors.writable`
+    independently of ``org_via``:
 
-    * only a platform-shared model (``org_via = None``) may declare a tier —
-      org-anchored models derive the ORG write tier from their org anchor;
+    * only a platform-shared model (``org_via = None``) may declare a write
+      class — org-anchored models derive the ORG write scope from their org
+      anchor;
     * ``WRITE_OBJECT`` stays reserved until the object arm turns on with the
       clients cutover (ADR 0001 §2.5) — declaring it today would silently route
       writes to an object-grant predicate nothing can satisfy;
-    * a declared value must be a tier constant — an unrecognized string would
-      otherwise fall through to ``can_obj``'s fail-closed default and silently
-      drop scoped-grant writes.
+    * an unknown value is an error, not a silent fall back — a typo must not
+      enforce nothing like what it claims (ADR 0004 layer 1);
+    * ``access.read`` is reserved until the access-classes slice lands.
     """
     from django.apps import apps
 
-    from common.models import OrgScoped, WRITE_OBJECT, WRITE_SHARED
+    from common.models import Access, OrgScoped, WRITE_OBJECT, WRITE_SHARED
 
     errors: list[Error] = []
+    valid_write = {WRITE_SHARED, WRITE_OBJECT}
     for model in apps.get_models():
         if not issubclass(model, OrgScoped):
             continue
-        tier = model.__dict__.get("write_tier")
-        if tier is None:
+        access = model.__dict__.get("access")
+        if access is None:
+            continue
+        if not isinstance(access, Access):
+            errors.append(
+                Error(
+                    f"{model.__name__}.access = {access!r} is not an Access declaration.",
+                    hint="Declare access = Access(...) — a bare value would silently enforce nothing.",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+            continue
+        if access.read is not None:
+            errors.append(
+                Error(
+                    f"{model.__name__}.access.read = {access.read!r} is reserved.",
+                    hint="Read classes land with the access-classes slice (ADR 0004); "
+                    "declare only access.write for now.",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        write = access.write
+        if write is None:
             continue
         if model.org_via is not None:
             errors.append(
                 Error(
-                    f"{model.__name__}.write_tier = {tier!r} on an org-anchored model.",
-                    hint="Org-anchored models derive the ORG write tier from org_via; "
-                    "only a platform-shared model (org_via = None) declares a tier.",
+                    f"{model.__name__}.access.write = {write!r} on an org-anchored model.",
+                    hint="Org-anchored models derive the ORG write scope from org_via; "
+                    "only a platform-shared model (org_via = None) declares a write class.",
                     obj=model,
                     id="permissions.E007",
                 )
             )
-        elif tier == WRITE_OBJECT:
+        elif write not in valid_write:
             errors.append(
                 Error(
-                    f"{model.__name__}.write_tier = {tier!r} is reserved.",
+                    f"{model.__name__}.access.write = {write!r} is not a known class.",
+                    hint=f"Legal values: None, WRITE_SHARED ({WRITE_SHARED!r}), "
+                    f"WRITE_OBJECT ({WRITE_OBJECT!r}, reserved).",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        elif write == WRITE_OBJECT:
+            errors.append(
+                Error(
+                    f"{model.__name__}.access.write = {write!r} is reserved.",
                     hint="The object-grant arm (WRITE_OBJECT) turns on with the clients "
                     "cutover (ADR 0001 §2.5) — do not declare it before then.",
-                    obj=model,
-                    id="permissions.E007",
-                )
-            )
-        elif tier != WRITE_SHARED:
-            errors.append(
-                Error(
-                    f"{model.__name__}.write_tier = {tier!r} is not a recognized tier.",
-                    hint=f"Recognized tiers are WRITE_SHARED ({WRITE_SHARED!r}) and "
-                    f"WRITE_OBJECT ({WRITE_OBJECT!r}, reserved until the clients cutover).",
                     obj=model,
                     id="permissions.E007",
                 )

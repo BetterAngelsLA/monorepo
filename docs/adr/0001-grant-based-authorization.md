@@ -410,15 +410,17 @@ subquery, not a re-derivation.
   a stated convention for every child-create service, not per-site.
 - The arm is `OBJECT_ARM_ENABLED = False` until the clients cutover ships (finding F9);
   it is turned on with its first consumer, not before.
-- **Write tiers are in (RFC 0002 §Precondition, 2026-09-09).** `OrgScoped.write_tier`
-  lets a model declare its write scope independently of `org_via` (its read scope):
-  `can_obj` uses the ORG filter for org-anchored models (derived default), a declared
-  SHARED tier for platform-shared models whose writes are shared-by-role-anywhere
-  (`ClientProfile` today — matches `main`), and fails closed for an undeclared
-  platform-shared model (finding C1 default — only the global tier acts until the model
-  declares a tier or an object grant covers the row). `permissions.E007` guards the
-  declarations; the OBJECT tier and the object-grant predicate stay off until the
-  clients cutover turns the arm on with its first consumer.
+- **Write classes are in (RFC 0002 §Precondition, 2026-09-09; folded into
+  `Access.write`, ADR 0004).** `OrgScoped.access.write` lets a model declare its write
+  scope independently of `org_via` (its read scope): `writable()`/`can_obj` use the ORG
+  filter for org-anchored models (derived default), a declared SHARED class for
+  platform-shared models whose writes are shared-by-role-anywhere (`ClientProfile`
+  today — matches `main`), and fail closed for an undeclared platform-shared model
+  (finding C1 default — only the global tier acts until the model declares a class or
+  an object grant covers the row). `permissions.E007` guards the declarations
+  (illegal values are errors, never silent fall-backs); the OBJECT class and the
+  object-grant predicate stay off until the clients cutover turns the arm on with its
+  first consumer.
 - **Object grants are user-principal only (decision).** Sharing is person-granular:
   `Grant(principal_user, role, scope_object)` — authority attaches to a person you can
   audit and revoke. Org-principal object grants (`principal_org` + `scope_object`) are

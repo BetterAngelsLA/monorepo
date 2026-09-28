@@ -244,7 +244,7 @@ def _legacy_arm(
     return Arm("legacy rows", holds, detail)
 
 
-def _write_tier_note(obj: "Model") -> str:
+def _write_access_note(obj: "Model") -> str:
     from common.models import OrgScoped, WRITE_OBJECT, WRITE_SHARED
 
     model = type(obj)
@@ -252,12 +252,12 @@ def _write_tier_note(obj: "Model") -> str:
         return "write scope: the model does not declare OrgScoped — can_obj() fails closed (no one may write)"
     if model.org_via is not None:
         return "write scope ORG — the row must sit in an org the user holds this permission in (scopes())"
-    tier = model.__dict__.get("write_tier")
-    if tier == WRITE_SHARED:
+    write = model.access.write
+    if write == WRITE_SHARED:
         return "write scope SHARED — any holder of the permission may act (can_anywhere)"
-    if tier == WRITE_OBJECT:
+    if write == WRITE_OBJECT:
         return "write scope OBJECT — per-record object grants"
-    return "write scope fail-closed — platform-shared model with no declared write tier: only the global tier may act"
+    return "write scope fail-closed — platform-shared model with no declared write class: only the global tier may act"
 
 
 def _notes(
@@ -296,7 +296,7 @@ def _notes(
             notes.append(f"also holds this permission at {len(other_ids)} other org(s): {_names(names)}")
 
     if obj is not None:
-        notes.append(_write_tier_note(obj))
+        notes.append(_write_access_note(obj))
     return notes
 
 
