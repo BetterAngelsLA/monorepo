@@ -18,7 +18,7 @@ import { clientSearchItemToHmisClientProfileType } from '../adapters';
 import { isAuthErrorHmisProd } from '../api';
 import { DebugRow } from '../components';
 import { useSearchClientsHmisProd } from '../hooks';
-import { ClientScreenHmisProdError } from './ClientScreenHmisProdError';
+import { ClientsScreenHmisProdError } from './ClientsScreenHmisProdError';
 
 const SEARCH_ERROR_TITLE = 'HMIS search failed';
 
@@ -38,7 +38,7 @@ const SEARCH_ERROR_TITLE = 'HMIS search failed';
  * user can re-authenticate.
  */
 
-export function ClientScreenHmisProd({ Logo }: { Logo: ElementType }) {
+export function ClientsScreenHmisProd({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState('');
 
   const router = useRouter();
@@ -122,7 +122,7 @@ export function ClientScreenHmisProd({ Logo }: { Logo: ElementType }) {
             errorMessage={errorMessage}
             ErrorViewComponent={
               isAuthError ? (
-                <ClientScreenHmisProdError
+                <ClientsScreenHmisProdError
                   title={SEARCH_ERROR_TITLE}
                   bodyText={errorMessage}
                   onLogInAgain={signOut}

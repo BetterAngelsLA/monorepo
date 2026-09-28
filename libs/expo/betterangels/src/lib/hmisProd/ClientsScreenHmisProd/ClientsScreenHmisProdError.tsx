@@ -9,11 +9,11 @@ type TProps = {
 };
 
 /**
- * Error view for `ClientScreenHmisProd` — shown for missing/expired HMIS
+ * Error view for `ClientsScreenHmisProd` — shown for missing/expired HMIS
  * sessions. Offers a "Log in again" action (`signOut`) so the user can
  * re-authenticate cleanly.
  */
-export function ClientScreenHmisProdError({
+export function ClientsScreenHmisProdError({
   title,
   bodyText,
   onLogInAgain,

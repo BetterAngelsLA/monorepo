@@ -6,4 +6,4 @@
  * unexported unless deliberately made public.
  */
 export { ClientHmisProd } from './ClientHmisProd';
-export { ClientScreenHmisProd } from './ClientScreenHmisProd';
+export { ClientsScreenHmisProd } from './ClientsScreenHmisProd';

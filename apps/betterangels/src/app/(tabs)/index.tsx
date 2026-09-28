@@ -2,7 +2,7 @@ import {
   Clients,
   ClientsAddInteraction,
   ClientsAddNoteHmis,
-  ClientScreenHmisProd,
+  ClientsScreenHmisProd,
   FeatureFlags,
   useUser,
 } from '@monorepo/expo/betterangels';
@@ -17,7 +17,7 @@ export default function HomeScreen() {
 
   // HMIS Prod demo test: short-circuit all else
   if (hmisProdDemoEnabled) {
-    return <ClientScreenHmisProd Logo={Logo} />;
+    return <ClientsScreenHmisProd Logo={Logo} />;
   }
 
   if (createInteraction) {
