@@ -43,7 +43,6 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
-from strawberry_django.utils.query import filter_for_user
 
 from .enums import RelationshipTypeEnum
 from .types import (
@@ -669,7 +668,10 @@ class Mutation:
 
             return cast(ClientProfileType, client_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(perms=[ClientProfile.perms.CHANGE], perm_checker=can_anywhere_checker)],
+    )
     def generate_client_document_uploads(
         self,
         info: Info,
@@ -677,11 +679,16 @@ class Mutation:
     ) -> AuthorizedPresignedS3UploadsType:
         user = cast(User, get_current_user(info))
 
-        _ = filter_for_user(
+        # The fetch is the gate (RFC 0002 §Precondition) — the photo shape.  The
+        # upload internals still ride the legacy document service until the
+        # CREATOR/UPLOADER attachment cutover (RFC 0002): gate swap only, so a
+        # refusal is the canonical denial rather than ClientProfile.DoesNotExist.
+        get_writable_or_deny(
             ClientProfile.objects.all(),
+            data.client_profile_id,
             user,
-            [ClientProfile.perms.CHANGE],
-        ).get(id=data.client_profile_id)
+            ClientProfile.perms.CHANGE,
+        )
 
         uploads = [
             UploadRequest(
@@ -695,17 +702,24 @@ class Mutation:
 
         return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(perms=[ClientProfile.perms.CHANGE], perm_checker=can_anywhere_checker)],
+    )
     def resolve_client_document_uploads(
         self, info: Info, data: ResolveClientDocumentUploadsInput
     ) -> ClientDocumentUploadsType:
         user = cast(User, get_current_user(info))
 
-        client_profile = filter_for_user(
+        # Same gate shape as the photo resolve; the attachment internals still
+        # ride the legacy document service until the CREATOR/UPLOADER cutover
+        # (RFC 0002).
+        client_profile = get_writable_or_deny(
             ClientProfile.objects.all(),
+            data.client_profile_id,
             user,
-            [ClientProfile.perms.CHANGE],
-        ).get(id=data.client_profile_id)
+            ClientProfile.perms.CHANGE,
+        )
 
         documents = [
             UploadConfirmation(

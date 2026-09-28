@@ -1048,7 +1048,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             ),
             patch("common.services.file_upload.create_upload_token", side_effect=["token-1", "token-2"]),
         ):
-            expected_query_count = 5
+            expected_query_count = 6
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._generate_client_document_uploads_fixture(
                     self.client_profile_1["id"],
@@ -1095,7 +1095,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
-            expected_query_count = 37
+            expected_query_count = 39
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],
@@ -1132,7 +1132,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with patch("common.services.file_upload.validate_upload_token", return_value=False):
-            expected_query_count = 9
+            expected_query_count = 10
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],

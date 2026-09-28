@@ -17,6 +17,7 @@ from common.permissions.selectors import writable
 from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, get_writable_or_deny, require_can
 from common.utils import get_or_none
 from common.services.types import UploadRequest, UploadConfirmation
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Q, QuerySet
@@ -159,10 +160,15 @@ class Mutation:
             require_can(user, NotePermissions.ADD, org=organization)
             note = note_create(organization=organization, **note_kwargs)
         else:
+            if not settings.NOTES_ORGLESS_CREATE_COMPAT:
+                # Strict mode — the payload org is required (ADR 0001 §5); the
+                # compat window is closed (``NOTES_ORGLESS_CREATE_COMPAT=False``
+                # once the build sending ``organizationId`` is deployed) and an
+                # orgless create refuses like any other missing authority.
+                raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
             # Compat window: a build that predates the payload org creates
             # through its legacy ``CASEWORKER`` group — the org comes from the
-            # group, as before the cutover.  Dropped by the strict flip once
-            # the build sending ``organizationId`` is deployed.
+            # group, as before the cutover.
             try:
                 permission_group = resolve_permission_group(user, template=CASEWORKER)
             except PermissionError:
@@ -331,6 +337,11 @@ class Mutation:
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
         user = cast(User, get_current_user(info))
         permission_group = resolve_permission_group(user, template=CASEWORKER)
+        # Explicit grant gate: the mutation extension gates the *import perm*,
+        # not note creation at the org — require ``note.add`` at the group's org
+        # (the import surface stays legacy until a role carries the
+        # import-record perms; see GATE_EXEMPT).
+        require_can(user, NotePermissions.ADD, org=permission_group.organization)
         try:
             with transaction.atomic():
                 note = note_create(
@@ -362,6 +373,10 @@ class Mutation:
                     raw_data=data.raw_data,
                     success=True,
                 )
+        except PermissionDenied:
+            # A structured denial is a verdict, not an import failure — surface
+            # it; never record it as a note-import error.
+            raise
         except Exception as e:
             record = NoteImportRecord.objects.create(
                 import_job=import_job,
