@@ -575,7 +575,7 @@ class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTes
     def setUp(self) -> None:
         super().setUp()
 
-        # HasOrgPerm checks org-scoped permissions, not global Django perms.
+        # The selectors check grant-scoped permissions, not global Django perms.
         # Grant view_shelter via a Role+Grant (ADR 0001).
         self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
 
@@ -817,7 +817,7 @@ class OperatorShelterPermissionTestCase(GraphQLBaseTestCase):
 class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
     """additionalContacts on operatorShelter is a global-tier (GSO-only) field.
 
-    The field reads the global tier only (``can_globally``): a scoped shelter
+    The field reads ContactInfo's declared GLOBAL class (``visible``): a scoped shelter
     operator — even with a VIEW grant — gets an empty list, while a Global
     Shelter Operator (whose global Role carries the ContactInfo perms) sees it.
     """

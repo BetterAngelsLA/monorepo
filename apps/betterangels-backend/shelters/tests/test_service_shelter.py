@@ -151,8 +151,8 @@ class ShelterUpdateOrganizationImmutableTestCase(TestCase):
 class ShelterUpdateAdditionalContactsTestCase(ShelterServiceTestCase):
     """shelter_update applies full-replacement semantics to additional contacts.
 
-    Contacts are a BA-only field gated on the global tier (``can_globally``),
-    so the shared scoped operator is promoted to a Global Shelter Operator —
+    Contacts are a BA-only field gated by ContactInfo's declared GLOBAL class
+    (``can_model``), so the shared scoped operator is promoted to a Global Shelter Operator —
     the service-level counterpart of the GraphQL gate tests.
     """
 

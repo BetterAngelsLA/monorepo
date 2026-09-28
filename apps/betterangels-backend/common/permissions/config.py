@@ -56,7 +56,8 @@ class RoleDef:
     """Code-owned definition of a ``Role`` (ADR 0001 §2.2).
 
     ``is_global=True`` roles are held directly in ``user.groups`` — the global
-    tier, read through Django's ``has_perm``.  ``is_global=False`` roles are
+    tier, read by the selectors' global arm (NOT Django's ``has_perm`` while legacy
+    ``PermissionGroup`` rows still pollute it).  ``is_global=False`` roles are
     granted through ``Grant`` rows and are always scoped to an organization.
 
     Provisioned by :func:`accounts.services.sync_roles`; the flag is never

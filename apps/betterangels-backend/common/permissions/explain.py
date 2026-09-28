@@ -12,8 +12,8 @@ that fed it are then walked one by one:
 * **legacy rows** — ``PermissionGroup`` membership, with the domain's live/inert
   posture (``common.permissions.domain``).
 
-Legacy-only domains (notes/clients) have not cut over: enforcement today rides
-the legacy arm, and the verdict here is what the grant model would answer — the
+Domains that have not cut over (outside ``LEGACY_INERT_APPS``) still ride the
+legacy arm, and the verdict here is what the grant model would answer — the
 difference between the two is exactly the cutover's remaining surface.
 """
 

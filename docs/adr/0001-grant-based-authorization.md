@@ -333,7 +333,7 @@ def visible(qs, user, perm, *, in_org=None):
 
     # object arm — schema-live, predicate-lazy: wired when per-record sharing has a
     # consumer (clients cutover). See §2.5.
-    if OBJECT_ARM_ENABLED:
+    if OBJECT_GRANT_WHITELIST:
         qs = qs.filter(Q(pk__in=qs.values("pk")) | _object_grant_q(qs.model, user, perm))
 
     # header confines the view only for finite scopes (finding F13) —
@@ -408,7 +408,8 @@ subquery, not a re-derivation.
 - **Creates under an object grant** resolve the parent object and check
   `can_obj(parent, child_ADD)` (finding F17) — ADD-on-child ≈ CHANGE-on-parent. This is
   a stated convention for every child-create service, not per-site.
-- The arm is `OBJECT_ARM_ENABLED = False` until the clients cutover ships (finding F9);
+- The arm stays closed by the empty `OBJECT_GRANT_WHITELIST` until its first real
+  consumer ships (finding F9; `permissions.E003` / `Grant.clean` enforce it);
   it is turned on with its first consumer, not before.
 - **Write classes are in (RFC 0002 §Precondition, 2026-09-09; folded into
   `Access.write`, ADR 0004).** `ScopedResource.access.write` lets a model declare its write
@@ -492,6 +493,11 @@ The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
   the check fires the moment a scoped role needs one of those models).
 - **E006** – a `Grant` grants an *object* to an organization (`principal_org` +
   `scope_object`); object grants are user-principal only (§2.5).
+- **E007** – an `access` declaration uses an unknown or reserved value (ADR 0004):
+  `WRITE_OBJECT` before the object arm, `WRITE_SHARED` on an org-anchored model, or a
+  typo in either slot.
+- **E008** – a *scoped* Role carries an ability whose model declares a GLOBAL access
+  class (ADR 0004 admittance; mirrored at write time by `Grant.clean`).
 
 ### 2.8 Requirements coverage
 
