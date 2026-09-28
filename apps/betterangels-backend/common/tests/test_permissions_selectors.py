@@ -1,7 +1,10 @@
 """Tests for the read-side authorization selectors (ADR 0001 §2.4, §2.10)."""
 
+from typing import Any
+
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.db import models
 from django.test import TestCase
 from model_bakery import baker
 
@@ -340,6 +343,7 @@ class GrantSelectorsTestCase(TestCase):
 
         class UndeclaredShared(OrgScoped):
             org_via = None
+            objects: Any = models.Manager()
 
             class Meta:
                 app_label = "common"
