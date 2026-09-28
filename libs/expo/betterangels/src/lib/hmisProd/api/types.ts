@@ -92,6 +92,14 @@ export interface HmisProdClientDetail {
 }
 
 /**
+ * Minimal `GET /api1/current-user` response — only `id` is requested by the
+ * session probe (the payload is discarded, not rendered).
+ */
+export interface HmisProdCurrentUser {
+  id: number | string;
+}
+
+/**
  * Request context captured before the request — the debug payload fields
  * known up front; request-level failures (no HTTP response) also carry it.
  */

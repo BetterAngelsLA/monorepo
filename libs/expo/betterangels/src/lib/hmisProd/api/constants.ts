@@ -13,6 +13,14 @@ export const HMIS_PROD_CLIENTS_PATH = '/api1/clients';
 export const HMIS_PROD_CLIENTS_LONG_PATH = `${HMIS_PROD_CLIENTS_PATH}/long`;
 
 /**
+ * Authenticated "who am I" probe served by the web host (like the rest of
+ * `/api1/*`). Used by `useHmisProdSessionWatch` — Clarity answers `401` when
+ * the stored HMIS token is missing or expired (verified against sandbox), so
+ * a successful response means the session can still reach Clarity.
+ */
+export const HMIS_PROD_CURRENT_USER_PATH = '/api1/current-user';
+
+/**
  * Default response field selection for the client search call — joined into
  * Clarity's `fields` value by the client. Trimmed to what the client card
  * renders; callers can override it via the `fields` payload option.

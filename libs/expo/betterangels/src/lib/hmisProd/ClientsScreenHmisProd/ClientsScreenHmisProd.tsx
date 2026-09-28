@@ -17,6 +17,7 @@ import {
 import { clientSearchItemToHmisClientProfileType } from '../adapters';
 import { isAuthErrorHmisProd } from '../api';
 import { DebugRow } from '../components';
+import { HmisProdSessionWatcher } from '../HmisProdSessionWatcher';
 import { useSearchClientsHmisProd } from '../hooks';
 import { ClientsScreenHmisProdError } from './ClientsScreenHmisProdError';
 
@@ -35,7 +36,9 @@ const SEARCH_ERROR_TITLE = 'HMIS search failed';
  * copy/paste — the raw response body is included only for failures, since
  * successful search responses contain client data. Auth failures (401/403)
  * additionally offer a "Log in again" action that signs out cleanly so the
- * user can re-authenticate.
+ * user can re-authenticate. The screen also mounts `HmisProdSessionWatcher`,
+ * which proactively checks the HMIS session whenever the app returns to the
+ * foreground while the feature is live.
  */
 
 export function ClientsScreenHmisProd({ Logo }: { Logo: ElementType }) {
@@ -78,6 +81,8 @@ export function ClientsScreenHmisProd({ Logo }: { Logo: ElementType }) {
 
   return (
     <View style={styles.container} testID="hmis-prod-clients-screen">
+      {/* Force-signs out if the HMIS session dies while the feature is mounted. */}
+      <HmisProdSessionWatcher />
       <Header title="HMIS Clients" Logo={Logo} />
 
       <View style={styles.content}>

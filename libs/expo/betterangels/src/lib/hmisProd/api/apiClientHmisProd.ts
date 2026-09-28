@@ -11,11 +11,13 @@ import {
   CLIENT_SEARCH_FIELDS_DEFAULT,
   HMIS_PROD_CLIENTS_LONG_PATH,
   HMIS_PROD_CLIENTS_PATH,
+  HMIS_PROD_CURRENT_USER_PATH,
 } from './constants';
 import { ErrorHmisProd } from './errors';
 import type {
   GetClientPayloadHmisProd,
   HmisProdClientDetail,
+  HmisProdCurrentUser,
   HmisProdRequestContext,
   HmisProdRequestDebugInfo,
   HmisProdRequestResult,
@@ -155,6 +157,21 @@ class ApiClientHmisProd {
     }
 
     return { data: client, debugInfo };
+  }
+
+  /**
+   * Lightweight authenticated probe — `GET /api1/current-user?fields=id`.
+   *
+   * Used by `useHmisProdSessionWatch` when the app returns to the foreground:
+   * it succeeds while the stored HMIS token still works, and throws
+   * `ErrorHmisProd` (our no-token fast-fail, or a 401/403 from Clarity) when
+   * the session is gone, so callers can force a clean sign-out. The payload
+   * is intentionally discarded; only the request outcome matters.
+   */
+  getCurrentUser(): Promise<HmisProdRequestResult<HmisProdCurrentUser>> {
+    return this.get<HmisProdCurrentUser>(HMIS_PROD_CURRENT_USER_PATH, {
+      fields: 'id',
+    });
   }
 
   private async request<T>(
