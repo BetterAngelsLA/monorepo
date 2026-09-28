@@ -97,7 +97,7 @@ class Access:
     write: str | None = None
 
 
-class OrgScoped(models.Model):
+class ScopedResource(models.Model):
     """Declares how a model reaches the organizations that scope it (ADR 0001).
 
     ``org_via`` names *relations*, not lookup paths, and is resolved by
@@ -142,7 +142,7 @@ class OrgScoped(models.Model):
         for a reservation.
 
         Cached per model — ``cls.__dict__``, not ``getattr``, so a subclass never
-        inherits its parent's paths.  A multi-valued or non-``OrgScoped`` hop
+        inherits its parent's paths.  A multi-valued or non-``ScopedResource`` hop
         raises ``TypeError``; ``permissions.E004`` surfaces the same condition as
         a deploy-time error.
         """
@@ -175,9 +175,9 @@ class OrgScoped(models.Model):
             target = field.related_model
             if target is None:
                 raise TypeError(f"{cls.__name__}.org_via hop {hop!r} has no related model.")
-            if not issubclass(target, OrgScoped):
+            if not issubclass(target, ScopedResource):
                 raise TypeError(
-                    f"{cls.__name__}.org_via hop {hop!r} targets {target.__name__}, which does not declare OrgScoped."
+                    f"{cls.__name__}.org_via hop {hop!r} targets {target.__name__}, which does not declare ScopedResource."
                 )
             for sub in target.org_paths():
                 yield f"{hop}__{sub}"

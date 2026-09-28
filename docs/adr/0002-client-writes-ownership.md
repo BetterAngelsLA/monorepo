@@ -103,7 +103,7 @@ the read narrowing (SHARED → ORG)**, which needs explicit product sign-off.
 
 ## Why the current machinery cannot express this
 
-`OrgScoped.org_via` is a single knob that drives **both** `visible()` (read) and
+`ScopedResource.org_via` is a single knob that drives **both** `visible()` (read) and
 `can_obj()` (write):
 
 - `org_via = ()` → ORG read **and** ORG write — the future `Task` cell. Expressible.

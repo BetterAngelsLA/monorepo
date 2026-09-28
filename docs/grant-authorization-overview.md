@@ -33,7 +33,7 @@ We are replacing both with a **grant-based model** (ADR 0001):
      (plus org→org delegation, one hop, no amplification).
    - **Object** — a `Grant` on a single record (the object arm) → per-record sharing.
 4. **Shared subject matter is a property of the data.** Each model declares its org
-   reach via `OrgScoped.org_via` (`()` = own `organization` FK; hop tuples; `None` =
+   reach via `ScopedResource.org_via` (`()` = own `organization` FK; hop tuples; `None` =
    platform-shared). Per-record *writes* fail closed (`can_obj`), never fall back to
    the read rule (finding C1).
 
@@ -58,7 +58,7 @@ Roles are declared as code-owned `RoleDef`s per domain (e.g.
 global — the modern GSO; `accounts/groups.py`: `ORG_ADMIN_ROLE` /
 `ORG_SUPERUSER_ROLE` scoped). Which roles an org type offers lives in
 `common/org_types.py` `REGISTRY`. Per-model scope is declared on the model
-(`OrgScoped.org_via`). The per-model **read/write tier matrix** (which actions are
+(`ScopedResource.org_via`). The per-model **read/write tier matrix** (which actions are
 SHARED vs org-owned vs per-record, per model) is designed in RFC 0002
 (`docs/adr/0002-client-writes-ownership.md`).
 
@@ -92,8 +92,8 @@ Review and merge **bottom-up**. What each PR delivers:
 
 | # | Branch | Delivers |
 |---|---|---|
-| 2409 | `grant-redesign` | **This PR.** ADR 0001 + `Role`/`Grant`/`OrgScoped` models, constraints (partial uniques, `NULLS NOT DISTINCT`), E001–E005 checks, migrations. Schema-only — nothing reads it yet. |
-| 2410 | `grant-roles` | `RoleDef` provisioning (`sync_roles`), grant backfills, `OrgScoped` declared on shelter-scoped models. Idempotency + `is_global` ownership rule. |
+| 2409 | `grant-redesign` | **This PR.** ADR 0001 + `Role`/`Grant`/`ScopedResource` models, constraints (partial uniques, `NULLS NOT DISTINCT`), E001–E005 checks, migrations. Schema-only — nothing reads it yet. |
+| 2410 | `grant-roles` | `RoleDef` provisioning (`sync_roles`), grant backfills, `ScopedResource` declared on shelter-scoped models. Idempotency + `is_global` ownership rule. |
 | 2411 | `grant-predicate` | `common/permissions/selectors.py` — the whole predicate (`scopes`/`visible`/`can`/`can_obj`/`can_anywhere`) + write services. The security core. |
 | 2412 | `grant-cutover` | Shelter domain flipped to grants. Every mutation/service checks `visible`/`can` (no fail-open); `active_org` header optional (removed for the shelter domain in #2440). |
 | 2413 | `grant-delegation` | Org→org delegation: inherited `scopes()` arm, one hop, no amplification, `grant_delegate`, admin inlines. |

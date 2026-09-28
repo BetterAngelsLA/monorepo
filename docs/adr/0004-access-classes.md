@@ -32,7 +32,7 @@ That is an open-ended keyword surface, and its failure mode is silent.
 One **authority slot** per model, next to reach:
 
 ```python
-class ContactInfo(OrgScoped):
+class ContactInfo(ScopedResource):
     org_via = ("shelter",)                       # reach (unchanged)
     access = Access(read=ACCESS_GLOBAL,          # authority classes
                     write=WRITE_GLOBAL)
@@ -113,9 +113,11 @@ The class is enforced at three times; each catches what the others cannot:
    resolver). Behavior-preserving: same refusals, same messages.
 3. **Validation** — `permissions.E007` covers both slots (definition time);
    `Grant.clean` + `permissions.E008` cover admittance (write / deploy time).
-4. **Follow-ups** — `WRITE_OBJECT` activation with the object arm (ADR 0001
-   §2.5); `PARENT`-class children if a real case lands; `OrgScoped` →
-   `ScopedResource` rename (mechanical, separate).
+4. **Mixin rename** — `OrgScoped` → `ScopedResource` (mechanical; landed with
+   the completion: the mixin names *reach*, and `org_via = None` declares a
+   platform-shared resource, so "org-scoped" undersold the contract).
+5. **Follow-ups** — `WRITE_OBJECT` activation with the object arm (ADR 0001
+   §2.5); `PARENT`-class children if a real case lands.
 
 ## Open questions
 

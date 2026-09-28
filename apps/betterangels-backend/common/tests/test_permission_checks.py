@@ -2,7 +2,7 @@
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import ACCESS_GLOBAL, Access, Attachment, OrgScoped, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
+from common.models import ACCESS_GLOBAL, Access, Attachment, ScopedResource, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
 from common.permissions.checks import (
     _org_via_errors_for_model,
     check_access_declarations,
@@ -91,7 +91,7 @@ class GrantSystemChecksTestCase(TestCase):
         self.assertEqual(_errors_with(check_object_grant_principal_is_a_user(None), "permissions.E006"), [])
 
     def test_e004_fires_for_a_multi_valued_hop(self) -> None:
-        class MultiValued(OrgScoped):
+        class MultiValued(ScopedResource):
             org_via = ("teams",)
             teams = django_models.ManyToManyField("auth.Group")
 

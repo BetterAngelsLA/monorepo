@@ -77,7 +77,7 @@ class SyncRolesTestCase(TestCase):
         self.assertTrue(gso.is_global)
 
     def test_e005_is_quiet_for_seeded_scoped_roles(self) -> None:
-        """Every model the scoped Shelter Operator role grants is OrgScoped."""
+        """Every model the scoped Shelter Operator role grants is ScopedResource."""
         sync_roles()
 
         errors = [e for e in check_role_permissions_models_declare_org_scoping(None) if e.id == "permissions.E005"]

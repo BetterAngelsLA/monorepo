@@ -121,7 +121,7 @@ class GrantSelectorsTestCase(TestCase):
         self.assertEqual(visible(ClientProfile.objects.all(), alice, ClientProfile.perms.VIEW).count(), 2)
 
     def test_unscoped_model_fails_closed(self) -> None:
-        """A model not yet declared OrgScoped is reachable by no one through visible()."""
+        """A model not yet declared ScopedResource is reachable by no one through visible()."""
         gso = baker.make(User)
         role_assign(user=gso, role=self.gso_role)
 
@@ -271,7 +271,7 @@ class GrantSelectorsTestCase(TestCase):
             )
 
     def test_writable_fails_closed_for_undeclared_platform_shared(self) -> None:
-        """A platform-shared OrgScoped model with no declared write class: only the global tier.
+        """A platform-shared ScopedResource model with no declared write class: only the global tier.
 
         RFC 0002 §Precondition — the read rule never feeds an undeclared write
         (finding C1): a finite org-scoped holder gets the empty queryset (no
@@ -279,9 +279,9 @@ class GrantSelectorsTestCase(TestCase):
         tier (``scopes`` is ALL) gets the model's rows.  Rows without identity
         (unsaved) are never writable — creates have no row and use ``can``.
         """
-        from common.models import OrgScoped
+        from common.models import ScopedResource
 
-        class UndeclaredShared(OrgScoped):
+        class UndeclaredShared(ScopedResource):
             org_via = None
             objects: Any = models.Manager()
 

@@ -108,7 +108,7 @@ def check_object_grant_targets_whitelisted_model(app_configs: Any, **kwargs: Any
 
 
 def _org_via_errors_for_model(model: Any) -> list[Error]:
-    """E004 errors for one ``OrgScoped`` model — extracted for direct testing."""
+    """E004 errors for one ``ScopedResource`` model — extracted for direct testing."""
     errors: list[Error] = []
     for name in model.org_via or ():
         field = model._meta.get_field(name)
@@ -127,25 +127,25 @@ def _org_via_errors_for_model(model: Any) -> list[Error]:
 
 @register(Tags.models)
 def check_org_via_hops_are_single_valued(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E004 — OrgScoped.org_via hops must be single-valued.
+    """E004 — ScopedResource.org_via hops must be single-valued.
 
     A reverse-FK or M2M hop in an org path would duplicate rows in the scope
     filter (the bug class recorded at notes/types.py).  Runs without a database.
     """
     from django.apps import apps
 
-    from common.models import OrgScoped
+    from common.models import ScopedResource
 
     errors: list[Error] = []
     for model in apps.get_models():
-        if model._meta.abstract or not issubclass(model, OrgScoped):
+        if model._meta.abstract or not issubclass(model, ScopedResource):
             continue
         errors.extend(_org_via_errors_for_model(model))
     return errors
 
 
 #: The member-management portal codenames bound to the org-root Organization
-#: model — the only scoped-Role permissions exempt from E005's OrgScoped demand
+#: model — the only scoped-Role permissions exempt from E005's ScopedResource demand
 #: (a scoped Grant on the root scopes to the very org the action is on).  Any
 #: other permission a scoped Role binds to Organization must declare real org
 #: scoping; this allowlist is what keeps that a loud error, not a silent skip.
@@ -156,7 +156,7 @@ ORG_ROOT_PORTAL_CODENAMES = frozenset(
 
 @register(Tags.models)
 def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E005 — every model a *scoped* Role grants a permission on must declare OrgScoped.
+    """E005 — every model a *scoped* Role grants a permission on must declare ScopedResource.
 
     A scoped Role's permission is exercised through the org filter, so the model
     must declare how it reaches an organization — or declare itself platform-shared
@@ -172,7 +172,7 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
     from django.apps import apps
     from django.db.utils import DatabaseError
 
-    from common.models import OrgScoped
+    from common.models import ScopedResource
 
     try:
         Role = apps.get_model("accounts", "Role")
@@ -193,12 +193,12 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
                     # scoping instead of hiding on the exempted root.
                     if permission.codename in ORG_ROOT_PORTAL_CODENAMES:
                         continue
-                if not issubclass(model, OrgScoped):
+                if not issubclass(model, ScopedResource):
                     errors.append(
                         Error(
                             f"Role {role.name!r} grants {permission.codename} on {model.__name__}, "
                             "which does not declare org scoping.",
-                            hint="Add OrgScoped to the model and set org_via (or org_via = None for "
+                            hint="Add ScopedResource to the model and set org_via (or org_via = None for "
                             "platform-shared data).",
                             obj=model,
                             id="permissions.E005",
@@ -265,13 +265,13 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
     """
     from django.apps import apps
 
-    from common.models import ACCESS_GLOBAL, Access, OrgScoped, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
+    from common.models import ACCESS_GLOBAL, Access, ScopedResource, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
 
     errors: list[Error] = []
     valid_read = {ACCESS_GLOBAL}
     valid_write = {WRITE_SHARED, WRITE_GLOBAL, WRITE_OBJECT}
     for model in apps.get_models():
-        if not issubclass(model, OrgScoped):
+        if not issubclass(model, ScopedResource):
             continue
         access = model.__dict__.get("access")
         if access is None:
