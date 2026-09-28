@@ -33,7 +33,7 @@ The org always travels in the **payload**: query filters and mutation inputs car
 - `scopes(user, perm)` — the orgs where the user holds it (finite list).
 - `visible(qs, perm, …)` / `can_obj(user, perm, obj)` — the object arm: filter/check rows by grant (guardian fallback while domains migrate).
 - `writable(qs, user, perm)` / `can_model(user, perm, model)` — the write and rowless verdicts; mutation gates fetch through `writable` (`get_writable_or_deny`), nested-write payload fields ask `can_model`.
-- **Access classes** (ADR 0004): a model may declare `Access(read=…, write=…)` next to `org_via`; the selectors branch on it, so e.g. `ContactInfo`'s `ACCESS_GLOBAL` / `WRITE_GLOBAL` makes every surface answer "global tier only" from one declaration instead of a call-site check.  `permissions.E007` validates the declared values.
+- **Access classes** (ADR 0004): a model may declare `Access(read=…, write=…)` next to `org_via`; the selectors branch on it, so e.g. `ContactInfo`'s `ACCESS_GLOBAL` / `WRITE_GLOBAL` makes every surface answer "global tier only" from one declaration instead of a call-site check.  `permissions.E007` validates the declared values; `permissions.E008` (and the write-time `Grant.clean` rule) refuses scoped roles that carry GLOBAL-class abilities.
 - `switchable_orgs(user)` — the finite org set the frontend may switch into.
 
 `common/permissions/utils.py`:

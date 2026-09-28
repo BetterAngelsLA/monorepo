@@ -367,6 +367,10 @@ class Grant(models.Model):
         * A global Role is held in ``user.groups`` (the global tier), never in a
           Grant — a row referencing one is inert at best and confusing at worst
           (mirrors ``permissions.E002``).
+        * A scoped Role carrying a GLOBAL-class ability can never pass the
+          evaluators — the class answers at the global tier only — so the grant
+          must not admit it: the grant table never holds an ability the model
+          forbids (ADR 0004 layer 2; mirrors ``permissions.E008``).
         * Object grants are user-principal only and may only target whitelisted
           models (ADR 0001 §2.5): an org-principal object grant would make
           per-record authority org-granular — the guardian shape this model
@@ -391,6 +395,23 @@ class Grant(models.Model):
                     )
                 }
             )
+        if self.role is not None and not self.role.is_global:
+            from common.permissions.selectors import is_global_class
+
+            for permission in self.role.permissions.select_related("content_type"):
+                model = permission.content_type.model_class()
+                if model is None or model._meta.abstract:
+                    continue
+                if is_global_class(model, permission.codename):
+                    raise ValidationError(
+                        {
+                            "role": (
+                                f"Role {self.role.name!r} carries GLOBAL-class ability "
+                                f"{permission.codename!r} on {model.__name__}; a scoped Grant "
+                                "cannot hold it (ADR 0004, permissions.E008)."
+                            )
+                        }
+                    )
         if self.scope_object_type is not None:
             from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
 

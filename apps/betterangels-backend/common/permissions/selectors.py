@@ -267,7 +267,7 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
     *in_org* confines the view to one organization, and only for finite scopes —
     a global holder is never org-confined by a stale header (ADR 0001 §2.4).
     """
-    from common.models import ACCESS_GLOBAL, OrgScoped, WRITE_GLOBAL
+    from common.models import OrgScoped
 
     if not issubclass(qs.model, OrgScoped):
         return qs.none()
@@ -275,7 +275,7 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
     paths = qs.model.org_paths()
     s = scopes(user, perm)
 
-    if _access_class(qs.model, perm) in (ACCESS_GLOBAL, WRITE_GLOBAL):
+    if is_global_class(qs.model, perm):
         # GLOBAL class: only the global tier passes — org reach (including a
         # scoped holder of the very same perm) never widens the rows.
         return qs if s is ALL else qs.none()
@@ -370,6 +370,18 @@ def _access_class(model: "type[Model]", perm: str) -> str | None:
     return access.read if codename.startswith("view_") else access.write
 
 
+def is_global_class(model: "type[Model]", perm: str) -> bool:
+    """Whether *perm* on *model* resolves to a declared GLOBAL class (ADR 0004).
+
+    The predicate behind the selectors' declaration branch and the admittance
+    rule (``permissions.E008`` / ``Grant.clean``): GLOBAL-class abilities
+    answer at the global tier only, so no scoped Grant can ever exercise them.
+    """
+    from common.models import ACCESS_GLOBAL, WRITE_GLOBAL
+
+    return _access_class(model, perm) in (ACCESS_GLOBAL, WRITE_GLOBAL)
+
+
 def can_model(user: "User", perm: str, model: "type[Model]") -> bool:
     """Rowless authority on a *model's* declared access class (ADR 0004).
 
@@ -379,10 +391,8 @@ def can_model(user: "User", perm: str, model: "type[Model]") -> bool:
     holding the perm anywhere still fails; other models keep today's
     :func:`can_anywhere` semantics until ADR 0004 defines the full matrix.
     """
-    from common.models import ACCESS_GLOBAL, WRITE_GLOBAL
-
     s = scopes(user, perm)
-    if _access_class(model, perm) in (ACCESS_GLOBAL, WRITE_GLOBAL):
+    if is_global_class(model, perm):
         return s is ALL
     return s is ALL or s.exists()
 

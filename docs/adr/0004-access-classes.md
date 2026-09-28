@@ -2,7 +2,8 @@
 
 **Status:** Accepted (2026-09-28). Implemented: write tiers folded in #2477
 (the `write_tier` → `Access.write` fold), read side completed in #2477,
-which absorbs the #2463 sketch.
+which absorbs the #2463 sketch, and the admittance layer (`Grant.clean` +
+`permissions.E008`) included.
 **Date:** 2026-09-28
 **Scope:** How authority is declared on org-scoped models and enforced; the
 single-slot replacement for `write_tier` / ad-hoc call-site tier predicates.
@@ -62,13 +63,13 @@ The class is enforced at three times; each catches what the others cannot:
 1. **Definition time — `permissions.E007`.** Declared values must be legal;
    a typo is an error, not a silent fall back to the derived rules. Unknown
    values and reserved classes (`WRITE_OBJECT`) fail the deploy.
-2. **Binding time — admittance.** Role seeding (`sync_roles`) and
-   `grant_create` should refuse *scoped* bindings of GLOBAL-class abilities:
-   grants are the only way authority enters the system, so constraining
-   admittance means the grant table can never hold an ability the model
-   forbids. **Not yet mechanized** — today this is enforced by review plus
-   the reference model's role wiring (only the global GSO role carries the
-   ContactInfo perms); tracked as a follow-up check.
+2. **Binding time — admittance.** **Implemented:** the `Grant.clean` rule
+   refuses a scoped grant whose Role carries a GLOBAL-class ability — the
+   grant services and the admin form both run it through `full_clean` — and
+   `permissions.E008` is the deploy-time backstop over already-seeded scoped
+   Roles. Grants are the only way authority enters the system, so
+   constraining admittance means the grant table can never hold an ability
+   the model forbids.
 3. **Evaluation time — selectors branch on the declaration.** Kept even when
    (1) and (2) hold: checks are dev-time and drift happens (manual rows,
    migrations, future code paths); evaluation is the only layer that fails
@@ -111,10 +112,10 @@ The class is enforced at three times; each catches what the others cannot:
    end-to-end (`shelter_update` service gate + the `additional_contacts`
    resolver). Behavior-preserving: same refusals, same messages.
 3. **Validation** — `permissions.E007` covers both slots (definition time);
-   the binding-time admittance rule is the remaining layer.
-4. **Follow-ups** — binding-time admittance rule; `WRITE_OBJECT` activation
-   with the object arm (ADR 0001 §2.5); `PARENT`-class children if a real
-   case lands; `OrgScoped` → `ScopedResource` rename (mechanical, separate).
+   `Grant.clean` + `permissions.E008` cover admittance (write / deploy time).
+4. **Follow-ups** — `WRITE_OBJECT` activation with the object arm (ADR 0001
+   §2.5); `PARENT`-class children if a real case lands; `OrgScoped` →
+   `ScopedResource` rename (mechanical, separate).
 
 ## Open questions
 

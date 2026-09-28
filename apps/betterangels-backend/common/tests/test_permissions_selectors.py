@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from accounts.models import Role, User
+from accounts.models import Grant, Role, User
 from accounts.services import grant_create, grant_delegate, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth.models import Permission
@@ -339,7 +339,10 @@ class AccessClassTestCase(TestCase):
             defaults={"name": "Can view contact info"},
         )
         role.permissions.add(perm)
-        grant_create(user=alice, role=role, scope_org=self.org)
+        # Created directly, not via ``grant_create``: admittance now refuses
+        # this binding (Grant.clean / permissions.E008), so a hand-made row is
+        # exactly the drift the evaluation layer must still refuse.
+        Grant.objects.create(principal_user=alice, role=role, scope_org=self.org)
         return alice
 
     def test_declaration_is_on_the_model(self) -> None:
