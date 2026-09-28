@@ -362,7 +362,7 @@ class Grant(models.Model):
         ]
 
     def clean(self) -> None:
-        """A Grant must hold a scoped Role and, when object-scoped, be writable (E002/E003/E006).
+        """A Grant must hold a scoped Role and, when object-scoped, be writable (E002/E003/E006/E008).
 
         * A global Role is held in ``user.groups`` (the global tier), never in a
           Grant — a row referencing one is inert at best and confusing at worst
@@ -396,22 +396,20 @@ class Grant(models.Model):
                 }
             )
         if self.role is not None and not self.role.is_global:
-            from common.permissions.selectors import is_global_class
+            from common.permissions.access import global_class_abilities
 
-            for permission in self.role.permissions.select_related("content_type"):
-                model = permission.content_type.model_class()
-                if model is None or model._meta.abstract:
-                    continue
-                if is_global_class(model, permission.codename):
-                    raise ValidationError(
-                        {
-                            "role": (
-                                f"Role {self.role.name!r} carries GLOBAL-class ability "
-                                f"{permission.codename!r} on {model.__name__}; a scoped Grant "
-                                "cannot hold it (ADR 0004, permissions.E008)."
-                            )
-                        }
-                    )
+            offender = next(global_class_abilities(self.role.permissions.select_related("content_type")), None)
+            if offender is not None:
+                permission, model = offender
+                raise ValidationError(
+                    {
+                        "role": (
+                            f"Role {self.role.name!r} carries GLOBAL-class ability "
+                            f"{permission.codename!r} on {model.__name__}; a scoped Grant "
+                            "cannot hold it (ADR 0004, permissions.E008)."
+                        )
+                    }
+                )
         if self.scope_object_type is not None:
             from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
 

@@ -917,6 +917,11 @@ def role_assign(*, user: UserModel, role: Role) -> None:
         raise ValidationError(f"Role {role.name!r} is scoped; grant it via grant_create, not user.groups.")
     user.groups.add(role)
 
+    # A same-request re-read of authority for this user must see the new tier.
+    from common.permissions.selectors import invalidate_scope_cache
+
+    invalidate_scope_cache(user)
+
 
 def role_remove(*, user: UserModel, role: Role) -> None:
     """Revoke a *global* Role from *user* — the mirror of :func:`role_assign`.
@@ -926,3 +931,8 @@ def role_remove(*, user: UserModel, role: Role) -> None:
     so removing one here is a no-op rather than an error.
     """
     user.groups.remove(role)
+
+    # A same-request re-read of authority must not serve the revoked tier.
+    from common.permissions.selectors import invalidate_scope_cache
+
+    invalidate_scope_cache(user)

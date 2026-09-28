@@ -1,8 +1,8 @@
 """Authorization selectors (ADR 0001 §2.4, §2.10, RFC 0002 §Precondition).
 
 Pull-only: given a user, a permission, and (usually) a queryset, answer what
-authority the user holds.  This module is the single place the org-scope and
-write-tier rules live; it follows the repo's service/selector pattern
+authority the user holds.  This module is the single place the org-scope,
+access-class and write rules live; it follows the repo's service/selector pattern
 (docs/styleguides/python.md): no side effects; memoized per request on the user
 instance, mirroring ``ModelBackend._perm_cache``.
 
@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import or_
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, cast
 
 from django.db.models import Exists, OuterRef, Q, Subquery
 
@@ -50,6 +50,9 @@ if TYPE_CHECKING:
     from accounts.models import User
     from django.db.models import Model, QuerySet
     from organizations.models import Organization
+
+T = TypeVar("T", bound="Model")
+"""A ``QuerySet``'s model type — keeps ``visible``/``writable`` typed through."""
 
 ALL = object()
 """Sentinel for the global tier — row-invariant, so ``visible`` hoists it."""
@@ -190,40 +193,44 @@ def scopes(user: "User", perm: str) -> Any:
     write services invalidate it via :func:`invalidate_scope_cache` when they
     change the user's grants.
     """
-    if user.is_superuser or _global_role_holds(user, perm) or _user_permission_holds(user, perm):
-        return ALL
-
     from accounts.models import Grant, Organization
 
     cache = user.__dict__.setdefault("_scope_cache", {})
     if perm not in cache:
-        roles = _roles_carrying_perm(perm)
-        mine = Grant.objects.filter(principal_user=user, role__in=Subquery(roles), scope_org__isnull=False).values(
-            "scope_org"
-        )
+        if user.is_superuser or _global_role_holds(user, perm) or _user_permission_holds(user, perm):
+            # The ALL verdict is memoized like the finite ones: the global probes
+            # are queries, and every checker/selector path asks for the same
+            # (user, perm) repeatedly.  ``invalidate_scope_cache`` — which the
+            # authority write services call — is what drops it.
+            cache[perm] = ALL
+        else:
+            roles = _roles_carrying_perm(perm)
+            mine = Grant.objects.filter(principal_user=user, role__in=Subquery(roles), scope_org__isnull=False).values(
+                "scope_org"
+            )
 
-        # Delegation: delegations whose principal org is one where the user acts
-        # (member AND holds a direct Grant there carrying *this* permission's
-        # role — permission-matched: the delegated role's bundle is the ceiling,
-        # and a weak-role holder at B is not amplified to B's stronger delegated
-        # roles at C).  Correlated EXISTS per delegation row, so there is no
-        # org-list subquery to materialize and no DISTINCT to dedupe one.
-        acts_at = Organization.objects.filter(
-            users=user,
-            grants__principal_user=user,
-            grants__role__in=Subquery(roles),
-            pk=OuterRef("principal_org_id"),
-        )
-        # Delegations only (org-principal), org-scope arm only — object grants
-        # and user-principal grants never feed the org filter.
-        inherited = Grant.objects.filter(
-            Exists(acts_at),
-            principal_org__isnull=False,
-            role__in=Subquery(roles),
-            scope_org__isnull=False,
-        ).values("scope_org")
+            # Delegation: delegations whose principal org is one where the user acts
+            # (member AND holds a direct Grant there carrying *this* permission's
+            # role — permission-matched: the delegated role's bundle is the ceiling,
+            # and a weak-role holder at B is not amplified to B's stronger delegated
+            # roles at C).  Correlated EXISTS per delegation row, so there is no
+            # org-list subquery to materialize and no DISTINCT to dedupe one.
+            acts_at = Organization.objects.filter(
+                users=user,
+                grants__principal_user=user,
+                grants__role__in=Subquery(roles),
+                pk=OuterRef("principal_org_id"),
+            )
+            # Delegations only (org-principal), org-scope arm only — object grants
+            # and user-principal grants never feed the org filter.
+            inherited = Grant.objects.filter(
+                Exists(acts_at),
+                principal_org__isnull=False,
+                role__in=Subquery(roles),
+                scope_org__isnull=False,
+            ).values("scope_org")
 
-        cache[perm] = mine.union(inherited)
+            cache[perm] = mine.union(inherited)
     return cache[perm]
 
 
@@ -253,7 +260,7 @@ def invalidate_scope_cache(user: "User") -> None:
     user.__dict__.pop("_visible_note_rows_cache", None)
 
 
-def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":
+def visible(qs: "QuerySet[T]", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet[T]":
     """The rows of *qs* on which *user* may exercise *perm*.
 
     * declared GLOBAL class (``access.read`` / ``access.write`` for the perm's
@@ -268,6 +275,7 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
     a global holder is never org-confined by a stale header (ADR 0001 §2.4).
     """
     from common.models import ScopedResource
+    from common.permissions.access import is_global_class
 
     if not issubclass(qs.model, ScopedResource):
         return qs.none()
@@ -280,22 +288,21 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
         # scoped holder of the very same perm) never widens the rows.
         return qs if s is ALL else qs.none()
 
-    if s is ALL:
-        qs = qs
-    elif not paths:
-        # platform-shared: perm held anywhere (finite s) ⇒ all rows
-        qs = qs if s.exists() else qs.none()
-    elif s:
-        qs = qs.filter(reduce(or_, (Q(**{f"{p}__in": s}) for p in paths)))
-    else:
-        qs = qs.none()
+    if s is not ALL:
+        if not paths:
+            # platform-shared: perm held anywhere (finite s) ⇒ all rows
+            qs = qs if s.exists() else qs.none()
+        elif s:
+            qs = qs.filter(reduce(or_, (Q(**{f"{p}__in": s}) for p in paths)))
+        else:
+            qs = qs.none()
 
     if in_org is not None and s is not ALL and paths:
         qs = qs.filter(reduce(or_, (Q(**{p: in_org}) for p in paths)))
     return qs
 
 
-def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
+def writable(qs: "QuerySet[T]", user: "User", perm: str) -> "QuerySet[T]":
     """The rows of *qs* on which *user* may exercise *perm* **for writes**.
 
     ``can_obj`` as a queryset filter (RFC 0002 §Precondition — write scope is
@@ -314,13 +321,18 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
     * **ORG** (org-anchored, ``org_via`` not ``None``) — ``visible(qs, …)``.
     * **SHARED** (``access.write = WRITE_SHARED``) — all rows iff the user
       holds *perm* anywhere, none otherwise.
+    * **OBJECT** (``access.write = WRITE_OBJECT``) — no rows: the class stays
+      reserved until the object arm wires grants; E007 refuses the declaration,
+      and this branch is defense in depth.
     * **Fail-closed default** — all rows only for the global tier (``scopes``
-      is ALL); ``WRITE_OBJECT`` sits here until the object arm wires grants.
+      is ALL).
     """
-    from common.models import ScopedResource, WRITE_SHARED
+    from common.models import ScopedResource, WRITE_OBJECT, WRITE_SHARED
 
     model = qs.model
     if not issubclass(model, ScopedResource):
+        return qs.none()
+    if model.access.write == WRITE_OBJECT:
         return qs.none()
     if model.org_via is not None:
         return visible(qs, user, perm)
@@ -357,40 +369,22 @@ def can_anywhere(user: "User", perm: str) -> bool:
     return s is ALL or s.exists()
 
 
-def _access_class(model: "type[Model]", perm: str) -> str | None:
-    """The declared authority class for *perm* on *model* (ADR 0004).
-
-    Reads resolve through ``Access.read``; everything else through
-    ``Access.write`` — the split follows Django's codename convention.
-    """
-    access = getattr(model, "access", None)
-    if access is None:
-        return None
-    codename = perm.rsplit(".", 1)[-1]
-    return access.read if codename.startswith("view_") else access.write
-
-
-def is_global_class(model: "type[Model]", perm: str) -> bool:
-    """Whether *perm* on *model* resolves to a declared GLOBAL class (ADR 0004).
-
-    The predicate behind the selectors' declaration branch and the admittance
-    rule (``permissions.E008`` / ``Grant.clean``): GLOBAL-class abilities
-    answer at the global tier only, so no scoped Grant can ever exercise them.
-    """
-    from common.models import ACCESS_GLOBAL, WRITE_GLOBAL
-
-    return _access_class(model, perm) in (ACCESS_GLOBAL, WRITE_GLOBAL)
-
-
 def can_model(user: "User", perm: str, model: "type[Model]") -> bool:
     """Rowless authority on a *model's* declared access class (ADR 0004).
 
     The gate for payload fields whose rows do not exist yet (nested creates,
     fields on a parent mutation), where :func:`visible` cannot be applied.
     A GLOBAL-class model answers at the global tier only — a scoped Grant
-    holding the perm anywhere still fails; other models keep today's
+    holding the perm anywhere still fails; other declared models keep today's
     :func:`can_anywhere` semantics until ADR 0004 defines the full matrix.
+    A model that does not declare ``ScopedResource`` fails closed, mirroring
+    the row gates.
     """
+    from common.models import ScopedResource
+    from common.permissions.access import is_global_class
+
+    if not issubclass(model, ScopedResource):
+        return False
     s = scopes(user, perm)
     if is_global_class(model, perm):
         return s is ALL
@@ -403,7 +397,9 @@ def can_globally(user: "User", perm: str) -> bool:
     The global arm of :func:`scopes`: superuser, a global Role carrying *perm*
     in ``user.groups``, or a direct ``user_permissions`` row.  Scoped Grant
     reach never satisfies this, so it is the check for gates that must stay
-    global (e.g. the BA-only additional-contacts field).
+    global.  (The BA-only additional-contacts field now answers through
+    :func:`can_model` on its declared GLOBAL class; this helper has no product
+    caller today and remains the unscoped global-arm primitive.)
 
     Sibling of :func:`can_anywhere`, which admits scoped Grant reach
     (``ALL or s.exists()``) — use this predicate only when scoped authority
