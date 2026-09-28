@@ -28,10 +28,11 @@ from common.graphql.types import (
 )
 from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment, PhoneNumber
-from common.permissions.gates import IsAuthenticated, get_writable_or_deny
+from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, get_writable_or_deny
+from common.permissions.selectors import can_anywhere
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch, QuerySet
 from graphql import GraphQLError
@@ -835,6 +836,14 @@ class Mutation:
                 f"Source ID {data.source_id} with source name '{data.source_name}' has already been imported successfully."
             )
 
+        user = cast(User, get_current_user(info))
+        # Explicit grant gate: the mutation extension gates the *import perm*,
+        # and the nested ``create_client_profile`` call below never runs its
+        # extension — require ``client_profile.add`` here (ADR 0001 §5; the
+        # import *record* perms stay legacy, see GATE_EXEMPT).
+        if not can_anywhere(user, ClientProfile.perms.ADD):
+            raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
+
         import_job = ClientProfileDataImport.objects.get(id=data.import_job_id)
         try:
             with transaction.atomic():
@@ -847,6 +856,10 @@ class Mutation:
                     raw_data=data.raw_data,
                     success=True,
                 )
+        except PermissionDenied:
+            # A structured denial is a verdict, not an import failure — surface
+            # it; never record it as a client-import error.
+            raise
         except Exception as e:
             record = ClientProfileImportRecord.objects.create(
                 import_job=import_job,
