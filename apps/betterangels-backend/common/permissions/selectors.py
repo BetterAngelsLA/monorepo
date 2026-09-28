@@ -336,13 +336,13 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
     query does the work of two.  The org arm reuses :func:`visible` *with the
     write perm* — literally the predicate ``can_obj`` resolves for a row.
 
-    Tiers (kept in lockstep with :func:`can_obj` — the row check is the
+    Classes (kept in lockstep with :func:`can_obj` — the row check is the
     cheaper of the two, so it keeps its own implementation and an equivalence
     test pins them):
 
     * **ORG** (org-anchored, ``org_via`` not ``None``) — ``visible(qs, …)``.
-    * **SHARED** (``write_tier = WRITE_SHARED``) — all rows iff the user holds
-      *perm* anywhere, none otherwise.
+    * **SHARED** (``access.write = WRITE_SHARED``) — all rows iff the user
+      holds *perm* anywhere, none otherwise.
     * **Fail-closed default** — all rows only for the global tier (``scopes``
       is ALL); ``WRITE_OBJECT`` sits here until the object arm wires grants.
     """
@@ -353,7 +353,7 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
         return qs.none()
     if model.org_via is not None:
         return visible(qs, user, perm)
-    if model.write_tier == WRITE_SHARED:
+    if model.access.write == WRITE_SHARED:
         return qs if can_anywhere(user, perm) else qs.none()
     return qs if scopes(user, perm) is ALL else qs.none()
 
@@ -374,18 +374,24 @@ def can(user: "User", perm: str, *, org: Any) -> bool:
 def can_obj(user: "User", perm: str, obj: "Model") -> bool:
     """The single-row write check — the row filter applied to one row.
 
-    Write scope is chosen independently of read scope (RFC 0002 §Precondition):
+    Write scope is chosen independently of read scope (RFC 0002 §Precondition),
+    and the class comes from the model's ``access.write`` declaration:
 
     * **ORG** (derived default for an org-anchored model, ``org_via`` not
       ``None``) — the row must sit in an org the user can exercise *perm* in.
       Unchanged from the pre-tier contract.
-    * **SHARED** (declared ``write_tier = WRITE_SHARED`` on a platform-shared
-      model) — any holder of *perm* anywhere may act (``can_anywhere``).
+    * **SHARED** (``access.write = WRITE_SHARED`` on a platform-shared model) —
+      any holder of *perm* anywhere may act (``can_anywhere``).
       ``ClientProfile`` declares this to match ``main`` (RFC 0002 decision #1).
-    * **Fail-closed default** for a platform-shared model with no declared tier
+    * **Fail-closed default** for a platform-shared model with no declared class
       (finding C1 / RFC 0002): the read rule never feeds an undeclared write —
       only the global tier (``scopes`` is ALL) may act, until an object grant
       covers the row once the object arm is wired at the clients cutover.
+
+    Kept for callers that already hold a row (services, ``explain``); mutation
+    gates should instead fetch *through* :func:`writable` so the fetch itself
+    is the gate.  The classes live in :func:`writable`'s docstring; an
+    equivalence test pins the two so they cannot drift.
     """
     from common.models import WRITE_SHARED, OrgScoped
 
@@ -414,7 +420,7 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
         if row is None:
             return False
         return any(value in s for value in row if value is not None)
-    if model.write_tier == WRITE_SHARED:
+    if model.access.write == WRITE_SHARED:
         return can_anywhere(user, perm)
     s = scopes(user, perm)
     return s is ALL

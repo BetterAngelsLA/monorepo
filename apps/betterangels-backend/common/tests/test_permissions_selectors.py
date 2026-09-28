@@ -332,7 +332,7 @@ class GrantSelectorsTestCase(TestCase):
         self.assertTrue(can_obj(admin, ClientProfile.perms.CHANGE, client))
 
     def test_writable_fails_closed_for_undeclared_platform_shared(self) -> None:
-        """A platform-shared OrgScoped model with no write_tier: only the global tier.
+        """A platform-shared OrgScoped model with no declared write class: only the global tier.
 
         RFC 0002 §Precondition — the read rule never feeds an undeclared write
         (finding C1): a finite org-scoped holder gets the empty queryset (no
