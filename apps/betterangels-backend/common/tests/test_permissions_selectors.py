@@ -224,8 +224,43 @@ class GrantSelectorsTestCase(TestCase):
         self.assertFalse(can_obj(stranger, ClientProfile.perms.CHANGE, client))
         self.assertTrue(can_obj(admin, ClientProfile.perms.CHANGE, client))
 
+    def test_shared_write_paths_agree_with_the_read_rule(self) -> None:
+        """Pin the equivalence the declarative checkers rely on (consolidation guard).
+
+        For a WRITE_SHARED platform-shared model, ``writable`` and ``visible``
+        must admit the same rows for every principal — the ``can_anywhere``
+        checkers and the ``visible_rows_for_holder`` list hooks are only correct
+        while this equivalence holds (RFC 0002 SHARED class).
+        """
+        from clients.models import ClientProfile
+
+        client = baker.make(ClientProfile)
+        editor = baker.make(User)
+        client_role = Role.objects.create(name="Equivalence Editor", is_global=False)
+        perm = Permission.objects.get(
+            codename=ClientProfile.perms.CHANGE.split(".")[1], content_type__app_label="clients"
+        )
+        client_role.permissions.add(perm)
+        grant_create(user=editor, role=client_role, scope_org=self.org_a)
+
+        stranger = baker.make(User)
+        admin = baker.make(User, is_superuser=True)
+
+        qs = ClientProfile.objects.all()
+        for user in (editor, stranger, admin):
+            self.assertEqual(
+                set(writable(qs, user, ClientProfile.perms.CHANGE).values_list("pk", flat=True)),
+                set(visible(qs, user, ClientProfile.perms.CHANGE).values_list("pk", flat=True)),
+                f"writable()/visible() diverged for {user}",
+            )
+            self.assertEqual(
+                can_obj(user, ClientProfile.perms.CHANGE, client),
+                can_anywhere(user, ClientProfile.perms.CHANGE),
+                f"can_obj()/can_anywhere() diverged for {user}",
+            )
+
     def test_writable_fails_closed_for_undeclared_platform_shared(self) -> None:
-        """A platform-shared OrgScoped model with no write_tier: only the global tier.
+        """A platform-shared OrgScoped model with no declared write class: only the global tier.
 
         RFC 0002 §Precondition — the read rule never feeds an undeclared write
         (finding C1): a finite org-scoped holder gets the empty queryset (no
