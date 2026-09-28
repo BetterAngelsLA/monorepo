@@ -72,9 +72,6 @@ GATE_EXEMPT = {
     ("clients.schema", "create_client_profile_data_import"): (
         "import surfaces remain legacy until a role carries the import-record perms"
     ),
-    ("clients.schema", "import_client_profile"): (
-        "import surfaces remain legacy until a role carries the import-record perms"
-    ),
     ("notes.schema", "create_note_data_import"): (
         "import surfaces remain legacy until a role carries the import-record perms"
     ),
