@@ -262,14 +262,14 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
     * platform-shared model (``org_via = None``) — all rows when *user* holds
       *perm* anywhere, none otherwise.
     * org-scoped model — rows whose org is in *user*'s scopes.
-    * model not declared ``OrgScoped`` — fails closed (no rows).
+    * model not declared ``ScopedResource`` — fails closed (no rows).
 
     *in_org* confines the view to one organization, and only for finite scopes —
     a global holder is never org-confined by a stale header (ADR 0001 §2.4).
     """
-    from common.models import OrgScoped
+    from common.models import ScopedResource
 
-    if not issubclass(qs.model, OrgScoped):
+    if not issubclass(qs.model, ScopedResource):
         return qs.none()
 
     paths = qs.model.org_paths()
@@ -317,10 +317,10 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
     * **Fail-closed default** — all rows only for the global tier (``scopes``
       is ALL); ``WRITE_OBJECT`` sits here until the object arm wires grants.
     """
-    from common.models import OrgScoped, WRITE_SHARED
+    from common.models import ScopedResource, WRITE_SHARED
 
     model = qs.model
-    if not issubclass(model, OrgScoped):
+    if not issubclass(model, ScopedResource):
         return qs.none()
     if model.org_via is not None:
         return visible(qs, user, perm)

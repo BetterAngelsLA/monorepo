@@ -245,20 +245,20 @@ def _legacy_arm(
 
 
 def _read_access_note(obj: "Model") -> str | None:
-    from common.models import ACCESS_GLOBAL, OrgScoped
+    from common.models import ACCESS_GLOBAL, ScopedResource
 
     model = type(obj)
-    if issubclass(model, OrgScoped) and model.access.read == ACCESS_GLOBAL:
+    if issubclass(model, ScopedResource) and model.access.read == ACCESS_GLOBAL:
         return "read class GLOBAL — only the global tier passes; org scopes never widen it"
     return None
 
 
 def _write_access_note(obj: "Model") -> str:
-    from common.models import OrgScoped, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
+    from common.models import ScopedResource, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
 
     model = type(obj)
-    if not issubclass(model, OrgScoped):
-        return "write scope: the model does not declare OrgScoped — can_obj() fails closed (no one may write)"
+    if not issubclass(model, ScopedResource):
+        return "write scope: the model does not declare ScopedResource — can_obj() fails closed (no one may write)"
     write = model.access.write
     if write == WRITE_GLOBAL:
         return "write scope GLOBAL — only the global tier may act (a scoped Grant never passes)"

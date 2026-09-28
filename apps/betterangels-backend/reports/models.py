@@ -4,7 +4,7 @@ import re
 from typing import Any
 
 from accounts.models import Organization
-from common.models import OrgScoped
+from common.models import ScopedResource
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
@@ -34,10 +34,10 @@ def validate_email_list(value: str) -> None:
             raise ValidationError(f"Invalid email address: {email}")
 
 
-class ScheduledReport(OrgScoped, models.Model):
+class ScheduledReport(ScopedResource, models.Model):
     """Model for scheduled reports that send data via email on a regular schedule.
 
-    ``OrgScoped`` with the default ``org_via = ()`` (ADR 0001 §5.3): the model
+    ``ScopedResource`` with the default ``org_via = ()`` (ADR 0001 §5.3): the model
     owns its ``organization`` FK, so ``reports.view_reports`` — which rides the
     scoped ORG_ADMIN/ORG_SUPERUSER Roles — is org-reachable (permissions.E005).
     """

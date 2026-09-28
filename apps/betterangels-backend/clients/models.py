@@ -22,7 +22,7 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
-from common.models import Access, Attachment, BaseModel, OrgScoped, PhoneNumber, WRITE_SHARED
+from common.models import Access, Attachment, BaseModel, ScopedResource, PhoneNumber, WRITE_SHARED
 from common.permissions.utils import PermissionSet
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
@@ -84,7 +84,7 @@ def get_client_profile_photo_file_path(instance: Model, filename: str) -> str:
     pghistory.UpdateEvent("hmis_profile.update"),
     pghistory.DeleteEvent("hmis_profile.remove"),
 )
-class HmisProfile(OrgScoped, BaseModel):
+class HmisProfile(ScopedResource, BaseModel):
     # The client family rides ClientProfile's write class (RFC 0002):
     # platform-shared for reads, SHARED for writes — any holder of the
     # permission may act.
@@ -172,7 +172,7 @@ class ClientProfileManager(models.Manager.from_queryset(ClientProfileQuerySet)["
     pghistory.UpdateEvent("client_profile.update"),
     pghistory.DeleteEvent("client_profile.remove"),
 )
-class ClientProfile(OrgScoped, AbstractClientProfile):
+class ClientProfile(ScopedResource, AbstractClientProfile):
     org_via = None  # platform-shared by product decision (ADR 0001 §2.3)
     # SHARED write class (RFC 0002 decision #1): client CHANGE/DELETE today come
     # from model-level perms on the CASEWORKER group (global-tier behavior in
@@ -279,7 +279,7 @@ class ClientDocument(Attachment):
     pghistory.UpdateEvent("social_media_profile.update"),
     pghistory.DeleteEvent("social_media_profile.remove"),
 )
-class SocialMediaProfile(OrgScoped, BaseModel):
+class SocialMediaProfile(ScopedResource, BaseModel):
     # Client family — ClientProfile's write class (RFC 0002), see HmisProfile.
     org_via = None
     access = Access(write=WRITE_SHARED)
@@ -294,7 +294,7 @@ class SocialMediaProfile(OrgScoped, BaseModel):
     pghistory.UpdateEvent("client_contact.update"),
     pghistory.DeleteEvent("client_contact.remove"),
 )
-class ClientContact(OrgScoped, BaseModel):
+class ClientContact(ScopedResource, BaseModel):
     # Client family — ClientProfile's write class (RFC 0002), see HmisProfile.
     org_via = None
     access = Access(write=WRITE_SHARED)
@@ -313,7 +313,7 @@ class ClientContact(OrgScoped, BaseModel):
     pghistory.UpdateEvent("client_household_member.update"),
     pghistory.DeleteEvent("client_household_member.remove"),
 )
-class ClientHouseholdMember(OrgScoped, BaseModel):
+class ClientHouseholdMember(ScopedResource, BaseModel):
     # Client family — ClientProfile's write class (RFC 0002), see HmisProfile.
     org_via = None
     access = Access(write=WRITE_SHARED)
