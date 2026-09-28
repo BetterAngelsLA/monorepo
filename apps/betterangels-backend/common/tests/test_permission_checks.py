@@ -2,7 +2,7 @@
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import Access, Attachment, OrgScoped, WRITE_OBJECT, WRITE_SHARED
+from common.models import ACCESS_GLOBAL, Access, Attachment, OrgScoped, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
 from common.permissions.checks import (
     _org_via_errors_for_model,
     check_access_declarations,
@@ -215,25 +215,33 @@ class AccessDeclarationChecksTestCase(TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("not a known class", errors[0].msg)
 
-    def test_e007_fires_when_a_read_class_is_declared_before_the_slice(self) -> None:
+    def test_e007_is_quiet_for_contactinfo_global_classes(self) -> None:
+        from shelters.models import ContactInfo
+
+        # Guard against a vacuous pass: the reference GLOBAL declaration is live.
+        self.assertEqual(ContactInfo.access.read, ACCESS_GLOBAL)
+        self.assertEqual(ContactInfo.access.write, WRITE_GLOBAL)
+        self.assertEqual(_errors_with(check_access_declarations(None), "permissions.E007"), [])
+
+    def test_e007_allows_write_global_on_an_org_anchored_model(self) -> None:
+        """WRITE_GLOBAL *narrows* an org-anchored model — legal (ADR 0004)."""
+        from unittest.mock import patch
+
+        from shelters.models import Shelter
+
+        with patch.object(Shelter, "access", Access(write=WRITE_GLOBAL)):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(errors, [])
+
+    def test_e007_fires_on_an_unknown_read_class(self) -> None:
+        """A read typo must not silently fall back to the reach rules (ADR 0004)."""
         from unittest.mock import patch
 
         from clients.models import ClientProfile
 
-        with patch.object(ClientProfile, "access", Access(read="global")):
+        with patch.object(ClientProfile, "access", Access(read="globbal")):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
-        self.assertIn("reserved", errors[0].msg)
-
-    def test_e007_fires_when_the_tier_is_an_unrecognized_string(self) -> None:
-        from unittest.mock import patch
-
-        from clients.models import ClientProfile
-
-        # The constant's *name* as a literal — the hand-edit E007 must catch.
-        with patch.object(ClientProfile, "write_tier", "WRITE_SHARED"):
-            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
-
-        self.assertEqual(len(errors), 1)
-        self.assertIn("not a recognized tier", errors[0].msg)
+        self.assertIn("not a known class", errors[0].msg)

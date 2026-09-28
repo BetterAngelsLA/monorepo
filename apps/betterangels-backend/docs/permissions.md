@@ -32,6 +32,8 @@ The org always travels in the **payload**: query filters and mutation inputs car
 - `can(user, perm, org=…)` — does the user hold the permission at the org?
 - `scopes(user, perm)` — the orgs where the user holds it (finite list).
 - `visible(qs, perm, …)` / `can_obj(user, perm, obj)` — the object arm: filter/check rows by grant (guardian fallback while domains migrate).
+- `writable(qs, user, perm)` / `can_model(user, perm, model)` — the write and rowless verdicts; mutation gates fetch through `writable` (`get_writable_or_deny`), nested-write payload fields ask `can_model`.
+- **Access classes** (ADR 0004): a model may declare `Access(read=…, write=…)` next to `org_via`; the selectors branch on it, so e.g. `ContactInfo`'s `ACCESS_GLOBAL` / `WRITE_GLOBAL` makes every surface answer "global tier only" from one declaration instead of a call-site check.  `permissions.E007` validates the declared values.
 - `switchable_orgs(user)` — the finite org set the frontend may switch into.
 
 `common/permissions/utils.py`:
@@ -43,7 +45,7 @@ The old `HasOrgPerm` extension and the `permissioned_queryset()` / `perm_filter(
 
 ### Debugging authority
 
-`manage.py explain_permission` answers "why can/can't this user do P at org O / on object R?".  It re-asks the canonical predicate (`can` / `can_obj` / `can_anywhere`) so it can never disagree with enforcement, then lists the arms behind the answer: global tier, direct grant, delegated grant, object grant (not wired yet), and the legacy `PermissionGroup` rows with the domain's live/inert posture.  Exits 0 on ALLOWED and 1 on DENIED — script-friendly.
+`manage.py explain_permission` answers "why can/can't this user do P at org O / on object R?".  It re-asks the canonical predicate (`can` / `can_obj` / `can_anywhere` / `can_model`) so it can never disagree with enforcement, then lists the arms behind the answer: global tier, direct grant, delegated grant, object grant (not wired yet), and the legacy `PermissionGroup` rows with the domain's live/inert posture.  Exits 0 on ALLOWED and 1 on DENIED — script-friendly.
 
 ```shell
 python manage.py explain_permission --user jane@example.org --perm shelters.change_shelter --org 7

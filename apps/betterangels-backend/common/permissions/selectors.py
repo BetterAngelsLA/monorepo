@@ -17,6 +17,12 @@ Layers, scope math to mutation gate:
 * ``can`` / ``can_obj`` / ``can_anywhere`` — verdicts: authority at an org
   (creates), on one row (``can_obj`` is ``writable`` applied to a row), or
   anywhere.
+* ``can_model`` — the **rowless** verdict: authority on a model's *declared*
+  access class when no row exists yet (nested creates, parent-scoped fields).
+* Access classes (ADR 0004): a model may declare ``Access(read=…)`` /
+  ``Access(write=…)``; the selectors branch on the declaration, so a
+  GLOBAL-class model answers at the global tier only — org reach never widens
+  it (``ContactInfo``'s ``ACCESS_GLOBAL`` / ``WRITE_GLOBAL`` is the reference).
 * ``get_writable_or_deny`` (``common.permissions.utils``) — the mutation
   leaf: fetch a write target through ``writable``, or deny.  Mutation gates
   fetch through it (or through ``writable`` directly for non-pk shapes) —
@@ -250,6 +256,8 @@ def invalidate_scope_cache(user: "User") -> None:
 def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":
     """The rows of *qs* on which *user* may exercise *perm*.
 
+    * declared GLOBAL class (``access.read`` / ``access.write`` for the perm's
+      direction) — all rows for the global tier, none for anyone else.
     * ``ALL`` (global tier) — the queryset, unconfined.
     * platform-shared model (``org_via = None``) — all rows when *user* holds
       *perm* anywhere, none otherwise.
@@ -259,13 +267,18 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
     *in_org* confines the view to one organization, and only for finite scopes —
     a global holder is never org-confined by a stale header (ADR 0001 §2.4).
     """
-    from common.models import OrgScoped
+    from common.models import ACCESS_GLOBAL, OrgScoped, WRITE_GLOBAL
 
     if not issubclass(qs.model, OrgScoped):
         return qs.none()
 
     paths = qs.model.org_paths()
     s = scopes(user, perm)
+
+    if _access_class(qs.model, perm) in (ACCESS_GLOBAL, WRITE_GLOBAL):
+        # GLOBAL class: only the global tier passes — org reach (including a
+        # scoped holder of the very same perm) never widens the rows.
+        return qs if s is ALL else qs.none()
 
     if s is ALL:
         qs = qs
@@ -294,6 +307,10 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
 
     Classes (kept in lockstep with :func:`can_obj`, which delegates here):
 
+    * **GLOBAL** (``access.write = WRITE_GLOBAL``) — all rows for the global
+      tier, none for anyone else.  Org-anchored models route through
+      ``visible`` (which reads the same declaration); platform-shared ones land
+      on the fail-closed default.
     * **ORG** (org-anchored, ``org_via`` not ``None``) — ``visible(qs, …)``.
     * **SHARED** (``access.write = WRITE_SHARED``) — all rows iff the user
       holds *perm* anywhere, none otherwise.
@@ -337,6 +354,36 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
 def can_anywhere(user: "User", perm: str) -> bool:
     """Authority anywhere — the check for creates on platform-shared models."""
     s = scopes(user, perm)
+    return s is ALL or s.exists()
+
+
+def _access_class(model: "type[Model]", perm: str) -> str | None:
+    """The declared authority class for *perm* on *model* (ADR 0004).
+
+    Reads resolve through ``Access.read``; everything else through
+    ``Access.write`` — the split follows Django's codename convention.
+    """
+    access = getattr(model, "access", None)
+    if access is None:
+        return None
+    codename = perm.rsplit(".", 1)[-1]
+    return access.read if codename.startswith("view_") else access.write
+
+
+def can_model(user: "User", perm: str, model: "type[Model]") -> bool:
+    """Rowless authority on a *model's* declared access class (ADR 0004).
+
+    The gate for payload fields whose rows do not exist yet (nested creates,
+    fields on a parent mutation), where :func:`visible` cannot be applied.
+    A GLOBAL-class model answers at the global tier only — a scoped Grant
+    holding the perm anywhere still fails; other models keep today's
+    :func:`can_anywhere` semantics until ADR 0004 defines the full matrix.
+    """
+    from common.models import ACCESS_GLOBAL, WRITE_GLOBAL
+
+    s = scopes(user, perm)
+    if _access_class(model, perm) in (ACCESS_GLOBAL, WRITE_GLOBAL):
+        return s is ALL
     return s is ALL or s.exists()
 
 

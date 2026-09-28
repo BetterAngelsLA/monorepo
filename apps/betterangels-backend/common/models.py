@@ -29,11 +29,12 @@ class BaseModel(models.Model):
 
 
 # Access classes (ADR 0004; RFC 0002 §Precondition / ADR 0001 §2.5).
-# ``writable``/``can_obj`` consult a model's write scope independently of
-# ``org_via`` (its read scope).  ORG is the derived default for any org-anchored
-# model (``org_via`` not ``None``) and needs no declaration; these constants are
-# the explicit values a model names when the derived default is not what its
-# writes need.
+# ``visible``/``writable``/``can_obj``/``can_model`` consult a model's declared
+# classes independently of ``org_via`` (its reach).  ORG is the derived default
+# for any org-anchored model (``org_via`` not ``None``) and needs no
+# declaration; these constants are the explicit values a model names when a
+# derived default is not what its rows need.  One slot per model, per direction,
+# so every surface answers from the same fact.
 WRITE_SHARED = "shared"
 """Platform-shared write class: any holder of the permission anywhere may act."""
 
@@ -44,6 +45,24 @@ Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
 ``permissions.E007`` refuses it until then.
 """
 
+ACCESS_GLOBAL = "global"
+"""GLOBAL read class: only the global tier passes — org reach never widens it.
+
+Declared in ``Access.read`` for models whose rows are platform-staff-only in
+authority even though their reach is org-anchored (``org_via`` not ``None``):
+the org graph exists for scoping and object-grant cascades, never to widen who
+may read.  A scoped Grant holding the very same permission still sees nothing.
+"""
+
+WRITE_GLOBAL = "global"
+"""GLOBAL write class: only the global tier may act.
+
+The write-side counterpart of :data:`ACCESS_GLOBAL`, declared in
+``Access.write`` for org-anchored models whose writes are platform-staff-only
+(e.g. BA-only fields).  Scoped Grants lose the ability entirely — a policy the
+model declares once, instead of a call-site tier check per surface.
+"""
+
 
 @dataclass(frozen=True)
 class Access:
@@ -51,8 +70,16 @@ class Access:
 
     One declaration slot, separate from reach (``org_via``): ``None`` leaves the
     derived rules in charge, explicit values name the class the selectors
-    enforce.  The ``read`` side is reserved — read classes land with the
-    access-classes slice (ADR 0004).
+    enforce.  The direction resolves by codename convention (``view_*`` →
+    ``read``, everything else → ``write``), in one helper in
+    ``common.permissions.selectors``.
+
+    ``read`` values:
+
+    * ``None`` — derive by reach: org-scoped rows for an org-anchored model;
+      all-or-none for a platform-shared model.
+    * :data:`ACCESS_GLOBAL` — only the global tier passes; org scopes never
+      widen it.
 
     ``write`` values:
 
@@ -60,6 +87,8 @@ class Access:
       ``None``); fail closed for a platform-shared model (only the global tier
       may act) — the safe default (finding C1).
     * :data:`WRITE_SHARED` — any holder of the permission anywhere may act.
+    * :data:`WRITE_GLOBAL` — only the global tier may act (the org-anchored
+      narrowing; a scoped Grant loses the ability).
     * :data:`WRITE_OBJECT` — reserved until the object arm wires its first
       consumer.
     """
@@ -89,11 +118,16 @@ class OrgScoped(models.Model):
     access: ClassVar[Access] = Access()
     """Authority classes for this model's rows (ADR 0004).
 
-    ``access.write`` is consulted by :func:`common.permissions.selectors.writable`
-    (:func:`~common.permissions.selectors.can_obj`) for a platform-shared model
-    (``org_via = None``); org-anchored models derive the ORG write scope from
-    their org anchor and must not declare one (``permissions.E007``).
-    ``access.read`` is reserved until the access-classes slice lands.
+    Read by the selectors — ``visible`` / ``writable`` / ``can_obj`` /
+    ``can_model`` — so authority is declared once and every surface answers
+    from the same fact:
+
+    * ``access.read = ACCESS_GLOBAL`` — platform-staff-only rows: only the
+      global tier passes; a scoped Grant holding the perm sees none.
+    * ``access.write`` — platform-shared models choose SHARED or the
+      fail-closed default; org-anchored models may narrow to ``WRITE_GLOBAL``.
+    * ``permissions.E007`` validates the values — a typo fails the deploy
+      rather than silently enforcing nothing.
     """
 
     class Meta:
