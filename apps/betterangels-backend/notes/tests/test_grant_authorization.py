@@ -38,6 +38,11 @@ DELETE_SR_DENIED_MESSAGE = "You do not have permission to delete this service re
 class _NoteGrantHelpers:
     """Grant + payload builders shared by the authority test cases."""
 
+    # Provided by the host TestCase the mixin is combined with.
+    _grant_permission: Any
+    client_profile_1: Any
+    org_1: Any
+
     def _grant(self, user: User, org: Organization, role_name: str, perms: Tuple[str, ...]) -> None:
         for perm in perms:
             self._grant_permission(user, perm, org, role_name=role_name)
@@ -335,8 +340,8 @@ class NoteGrantAuthorityDeniedTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCas
 
         missing_update = self._update_note_fixture({"id": 999999, "purpose": "nope"})
         foreign_update = self._update_note_fixture({"id": foreign_note.pk, "purpose": "nope"})
-        missing_delete = self._delete_note_fixture(999999)
-        foreign_delete = self._delete_note_fixture(foreign_note.pk)
+        missing_delete = self._delete_note_fixture("999999")
+        foreign_delete = self._delete_note_fixture(str(foreign_note.pk))
 
         self.assertGraphQLOperationInfo(missing_update, "updateNote", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertGraphQLOperationInfo(foreign_update, "updateNote", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")

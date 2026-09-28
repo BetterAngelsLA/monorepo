@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -138,7 +138,7 @@ class Mutation:
 
         team_id = data.team_id.value if data.team_id else None
 
-        note_kwargs = dict(
+        note_kwargs: Dict[str, Any] = dict(
             user=user,
             purpose=data.purpose,
             team_id=team_id,
