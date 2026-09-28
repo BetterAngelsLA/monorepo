@@ -17,7 +17,7 @@ class UserManager(BaseUserManager["User"]):
             raise ValueError("The given username must be set")
 
         email = self.normalize_email(email) if email else None
-        user = self.model(username=username, email=email, **extra_fields)
+        user: "User" = self.model(username=username, email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -47,7 +47,8 @@ class UserManager(BaseUserManager["User"]):
 
     def find_by_email(self, email: str) -> Optional["User"]:
         try:
-            return self.get(email__iexact=email)
+            user: Optional["User"] = self.get(email__iexact=email)
+            return user
 
         except self.model.DoesNotExist:
             return None

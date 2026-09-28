@@ -59,10 +59,8 @@ def org_or_none(org_id: object) -> "Organization | None":
 def org_or_deny(org_id: object) -> "Organization":
     """Resolve an org id, denying anything unresolvable (ADR 0001 §5).
 
-    The one guard for payload/filter orgs on the resolver side — same message
-    and failure mode everywhere (``resolve_org_or_deny`` in
-    ``common.graphql.org`` is the resolver-facing alias; services import this
-    directly).
+    The one guard for payload/filter orgs — resolvers and services alike; one
+    message, one failure mode, no alias between them.
     """
     org = org_or_none(org_id)
     if org is None:
@@ -76,8 +74,7 @@ def require_can(user: Any, perm: str, *, org: Any) -> None:
     The create gate: creates carry an explicit target organization and are
     authorized by ``can`` — never by the read rule.  ``can`` never implies the
     organization exists (finding F7), so callers that take an org from client
-    input must resolve it first (:func:`org_or_deny`, or the resolver-facing
-    ``resolve_org_or_deny``).
+    input must resolve it first (:func:`org_or_deny`).
     """
     from common.permissions.selectors import can
 

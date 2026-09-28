@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import random
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, cast
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -334,7 +334,7 @@ class Command(BaseCommand):
                 "is_staff": True,
             },
         )
-        return user
+        return cast("User", user)
 
     def _clear_existing(self) -> None:
         """Delete all test profiles (identified by @example.com email or merge test user)."""

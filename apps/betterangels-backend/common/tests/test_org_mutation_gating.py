@@ -66,8 +66,7 @@ GATE_EXEMPT = {
         "attachment internals cut over with the CREATOR/UPLOADER tier (RFC 0002)"
     ),
     ("clients.schema", "update_client_document"): (
-        "attachment-domain gate — the attachment internals cut over with the "
-        "CREATOR/UPLOADER tier (RFC 0002)"
+        "attachment-domain gate — the attachment internals cut over with the CREATOR/UPLOADER tier (RFC 0002)"
     ),
     ("clients.schema", "create_client_profile_data_import"): (
         "import surfaces remain legacy until a role carries the import-record perms"

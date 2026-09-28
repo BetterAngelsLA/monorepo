@@ -3,10 +3,9 @@ from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
-from common.graphql.org import resolve_org_or_deny
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
-from common.permissions.gates import IsAuthenticated, require_can
+from common.permissions.gates import IsAuthenticated, org_or_deny, require_can
 from django.contrib import auth
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
@@ -72,7 +71,7 @@ class Query:
         unknown org id fails closed.
         """
         current_user = cast(User, get_current_user(info))
-        org = resolve_org_or_deny(organization_id)
+        org = org_or_deny(organization_id)
         require_can(current_user, UserOrganizationPermissions.VIEW_ORG_MEMBERS, org=org)
 
         user: User = (
@@ -110,7 +109,7 @@ class Query:
         org id fails closed.
         """
         current_user = cast(User, get_current_user(info))
-        org = resolve_org_or_deny(organization_id)
+        org = org_or_deny(organization_id)
         require_can(current_user, UserOrganizationPermissions.VIEW_ORG_MEMBERS, org=org)
 
         queryset: QuerySet[User] = org.users.all()
@@ -223,7 +222,7 @@ class Mutation:
         no header is read.
         """
         current_user = cast(User, get_current_user(info))
-        organization = resolve_org_or_deny(data.organization_id)
+        organization = org_or_deny(data.organization_id)
         require_can(current_user, UserOrganizationPermissions.ADD_ORG_MEMBER, org=organization)
 
         template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]

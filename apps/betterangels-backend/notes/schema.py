@@ -6,7 +6,6 @@ from accounts.models import User
 from accounts.selectors import resolve_permission_group
 from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
 from clients.models import ClientProfileImportRecord
-from common.graphql.org import resolve_org_or_deny
 from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
@@ -14,7 +13,13 @@ from common.graphql.types import (
     DeletedObjectType,
 )
 from common.permissions.selectors import writable
-from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, get_writable_or_deny, require_can
+from common.permissions.gates import (
+    IsAuthenticated,
+    PERMISSION_DENIED_MESSAGE,
+    get_writable_or_deny,
+    org_or_deny,
+    require_can,
+)
 from common.utils import get_or_none
 from common.services.types import UploadRequest, UploadConfirmation
 from django.conf import settings
@@ -156,7 +161,7 @@ class Mutation:
 
         if data.organization_id is not None and data.organization_id is not UNSET:
             # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 2).
-            organization = resolve_org_or_deny(data.organization_id)
+            organization = org_or_deny(data.organization_id)
             require_can(user, NotePermissions.ADD, org=organization)
             note = note_create(organization=organization, **note_kwargs)
         else:

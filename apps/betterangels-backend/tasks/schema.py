@@ -5,11 +5,10 @@ import strawberry_django
 from accounts.models import User
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
-from common.graphql.org import resolve_org_or_deny
 from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.selectors import can_obj
-from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, require_can
+from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, org_or_deny, require_can
 from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from hmis.models import HmisClientProfile, HmisNote
@@ -46,7 +45,7 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
-        org = resolve_org_or_deny(data.organization_id)
+        org = org_or_deny(data.organization_id)
         require_can(current_user, Task.perms.ADD, org=org)
 
         task_data = asdict(data)

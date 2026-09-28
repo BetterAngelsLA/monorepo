@@ -176,7 +176,7 @@ to pin denial tests and frontend handling against:
 
 | Mechanism | A non-holder receives | Pinned by |
 | --------- | --------------------- | --------- |
-| **Resolver guard** — `require_can(user, perm, org=…)` at the payload org (resolved with `resolve_org_or_deny`, `common/graphql/org.py`) or `can_obj(user, perm, row)` after the row load | `data.<field> = null` + `messages[0] = {kind: "PERMISSION", field: null, message: "You do not have permission to perform this action in this organization."}` (the mutation's union carries the `OperationInfo`) | `tasks/tests/test_permissions.py` (create/update/delete), `teams/tests/test_grant_authorization.py` |
+| **Resolver guard** — `require_can(user, perm, org=…)` at the payload org (resolved with `org_or_deny`, `common/graphql/org.py`) or `can_obj(user, perm, row)` after the row load | `data.<field> = null` + `messages[0] = {kind: "PERMISSION", field: null, message: "You do not have permission to perform this action in this organization."}` (the mutation's union carries the `OperationInfo`) | `tasks/tests/test_permissions.py` (create/update/delete), `teams/tests/test_grant_authorization.py` |
 | **Declarative extension on a create payload** — `HasPerm(…, perm_checker=can_anywhere_checker)`, default `fail_silently=True` | `messages[0] = {kind: "PERMISSION", field: "<fieldName>", message: "You don't have permission to access this app."}` | `clients/tests/test_permissions.py` (`createClientProfile`) |
 | **Same extension with `fail_silently=False`** — single-row reads/writes | Top-level `errors[0].message = "You don't have permission to access this app."`; no payload item | `clients/tests/test_permissions.py` (`test_view_client_profile_permission`, update) |
 | **A failing extension on a non-optional field with nowhere to put an `OperationInfo`** | `handle_no_permission()` falls through its final `raise PermissionDenied` → top-level `errors[]` | `tasks/tests/test_permissions.py` (`test_view_task_permission`) |
@@ -374,7 +374,7 @@ The `_handle_error_response` method maps upstream HTTP status codes to exception
 | `strawberry_django/permissions.py`                       | `DjangoPermissionExtension.handle_no_permission()`, `HasPerm`, `HasRetvalPerm`, `IsAuthenticated` |
 | `apps/betterangels-backend/common/permissions/selectors.py` | `can()` / `scopes()` / `visible()` — grant authority                                                                    |
 | `apps/betterangels-backend/common/permissions/gates.py`   | `require_can()`, `IsAuthenticated` (override), `PERMISSION_DENIED_MESSAGE`                        |
-| `apps/betterangels-backend/common/graphql/org.py`         | `resolve_org_or_deny()` — payload/filter org resolution, fail-closed                              |
+| `apps/betterangels-backend/common/graphql/org.py`         | `org_or_deny()` — payload/filter org resolution, fail-closed                              |
 | `apps/betterangels-backend/common/graphql/permission_checkers.py` | `can_anywhere_checker` (declarative fields) + `visible_rows_for_holder` (list-read gate)   |
 | `apps/betterangels-backend/common/graphql/extensions.py` | `PermissionedQuerySet` — injects permission-filtered querysets                                    |
 | `apps/betterangels-backend/common/errors.py`             | `UnauthenticatedGQLError`, `NotFoundGQLError` — reusable `GraphQLError` subclasses                |

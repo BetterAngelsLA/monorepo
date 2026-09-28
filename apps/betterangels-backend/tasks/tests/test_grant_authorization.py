@@ -238,7 +238,7 @@ class TaskGrantAuthorityDeniedTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixi
         self.assertEqual(refreshed.summary, "existing task")
 
     def test_create_task_with_an_unknown_organization_is_denied(self) -> None:
-        """``resolve_org_or_deny`` on the payload org fails closed — unknown is not found."""
+        """``org_or_deny`` on the payload org fails closed — unknown is not found."""
         self._login(self.org_1_case_manager_1)
         initial_count = Task.objects.count()
 
