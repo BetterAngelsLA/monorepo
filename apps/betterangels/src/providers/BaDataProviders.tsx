@@ -12,7 +12,6 @@ import {
 import {
   BaFeatureControlProvider,
   BlockingScreenProvider,
-  isApiDebug,
   KeyboardToolbarProvider,
   ModalScreenProvider,
   SnackbarProvider,
@@ -20,7 +19,11 @@ import {
   UploadResume,
   UserProvider,
 } from '@monorepo/expo/betterangels';
-import { createErrorLink, loggerLink } from '@monorepo/expo/shared/clients';
+import {
+  createErrorLink,
+  isApiDebug,
+  loggerLink,
+} from '@monorepo/expo/shared/clients';
 
 import { baTypePolicies, reactQueryClient } from '../init';
 
