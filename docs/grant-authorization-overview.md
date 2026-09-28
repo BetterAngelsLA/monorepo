@@ -2,8 +2,8 @@
 
 This is the **intent and roadmap** doc for the grant-based authorization migration.
 Read this first; ADR 0001 (`docs/adr/0001-grant-based-authorization.md`) is the full
-design source of truth, and the practical review/merge guide
-(`docs/grant-migration-merge-guide.md`) is written as the stack matures.
+design source of truth; the practical review/merge notes live in the PR stack's
+descriptions (rebuilt on main — see the status note below).
 
 ## What we are building
 
@@ -89,6 +89,11 @@ Review and merge **bottom-up**. What each PR delivers:
 > main — teams cut over as #2443 on the grant-only model, not through the
 > `#2427`–`#2434` branches below. See ADR 0001 §5.3 "Status on main" for what
 > actually shipped.
+>
+> **Also superseded (2026-09-28):** the read/write tier vocabulary
+> (`SHARED`/`ORG`/`CREATOR`/`UPLOADER`) is replaced by **ADR 0004 access classes**
+> (`ACCESS_GLOBAL`/`WRITE_SHARED`/`WRITE_GLOBAL`/`WRITE_OBJECT`) on
+> `ScopedResource`; the RFC 0002/0003 cutovers landed in #2455–#2477.
 
 | # | Branch | Delivers |
 |---|---|---|
@@ -132,6 +137,6 @@ deleted, not merged as separate PRs.
 2. `docs/adr/0001-grant-based-authorization.md` — design, rules, migration plan.
    New reader: start at **§2.9 worked examples** (roles/grants/delegation resolved
    for real people and orgs), then read §2 for the formal mechanics.
-3. `docs/grant-migration-merge-guide.md` — per-PR review focus (written as the stack
-   matures; later PRs carry the current version).
+3. The PR stack's descriptions/checks — per-PR review focus (the rebuilt-on-main stack
+   carries the current contracts).
 4. RFC 0002 / RFC 0003 (`docs/adr/0002-…`, `0003-…`) — the gated cutovers.

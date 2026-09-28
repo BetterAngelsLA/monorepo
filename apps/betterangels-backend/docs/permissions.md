@@ -7,7 +7,7 @@ BetterAngels uses a **two-layer permission model** — org-scoped authority gate
 | Layer            | Mechanism                                                        | Scope                                               | Used for                                            |
 | ---------------- | ---------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
 | **Org-scoped**   | Grants: `can()` / `require_can()` / `scopes()` / `visible()`     | "Can this user perform action X in organization Y?" | Teams, reports, member management, shelters, operator queries |
-| **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm in progress) | "Can this user access this specific object?"        | Notes, tasks, referrals, client documents           |
+| **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm reserved — empty whitelist, `WRITE_OBJECT` refused) | "Can this user access this specific object?"        | Notes, tasks, referrals, client documents           |
 
 Both layers sit on Django's permission primitives, but they ask different questions and are checked independently.  **ADR 0001 is the source of truth** for the target model — this page describes the current backend wiring.
 
@@ -31,7 +31,7 @@ The org always travels in the **payload**: query filters and mutation inputs car
 
 - `can(user, perm, org=…)` — does the user hold the permission at the org?
 - `scopes(user, perm)` — the orgs where the user holds it (finite list).
-- `visible(qs, perm, …)` / `can_obj(user, perm, obj)` — the object arm: filter/check rows by grant (guardian fallback while domains migrate).
+- `visible(qs, user, perm, …)` / `can_obj(user, perm, obj)` — row scoping by grant; non-`ScopedResource` models fail closed (legacy domains stay on their own `PermissionedQuerySet` transport).
 - `writable(qs, user, perm)` / `can_model(user, perm, model)` — the write and rowless verdicts; mutation gates fetch through `writable` (`get_writable_or_deny`), nested-write payload fields ask `can_model`.
 - **Access classes** (ADR 0004): a model may declare `Access(read=…, write=…)` next to `org_via`; the selectors branch on it, so e.g. `ContactInfo`'s `ACCESS_GLOBAL` / `WRITE_GLOBAL` makes every surface answer "global tier only" from one declaration instead of a call-site check.  `permissions.E007` validates the declared values; `permissions.E008` (and the write-time `Grant.clean` rule) refuses scoped roles that carry GLOBAL-class abilities.
 - `switchable_orgs(user)` — the finite org set the frontend may switch into.
@@ -45,7 +45,7 @@ The old `HasOrgPerm` extension and the `permissioned_queryset()` / `perm_filter(
 
 ### Debugging authority
 
-`manage.py explain_permission` answers "why can/can't this user do P at org O / on object R?".  It re-asks the canonical predicate (`can` / `can_obj` / `can_anywhere` / `can_model`) so it can never disagree with enforcement, then lists the arms behind the answer: global tier, direct grant, delegated grant, object grant (not wired yet), and the legacy `PermissionGroup` rows with the domain's live/inert posture.  Exits 0 on ALLOWED and 1 on DENIED — script-friendly.
+`manage.py explain_permission` answers "why can/can't this user do P at org O / on object R?".  It re-asks the canonical predicate (`can` / `can_obj` / `can_anywhere`) so it can never disagree with enforcement, then lists the arms behind the answer: global tier, direct grant, delegated grant, object grant (not wired yet), and the legacy `PermissionGroup` rows with the domain's live/inert posture.  Exits 0 on ALLOWED and 1 on DENIED — script-friendly.
 
 ```shell
 python manage.py explain_permission --user jane@example.org --perm shelters.change_shelter --org 7
@@ -185,5 +185,5 @@ The frontend `hasPermission()` helper checks across all domains with O(1) lookup
 
 - `accounts/group_names.py` contains `GroupTemplateNames` — a registry of template name strings. This enum is intentionally thin and may eventually be replaced by each app registering its own names independently, removing the need for `accounts` to know about downstream apps.
 - `shelters/permissions.py` is a 3-line bridge that delegates to `Shelter.perms.as_text_choices()` for GraphQL schema generation — `model.perms` is the single source of truth.
-- The old `AdminShelterManager`/`AdminShelterQuerySet` and `Shelter.admin_objects` manager were removed — org-scoping now lives in the per-domain selectors (`visible()` / `can()` on the grant arm, with guardian fallback while domains migrate) and `require_can()` at the write boundary.
+- The old `AdminShelterManager`/`AdminShelterQuerySet` and `Shelter.admin_objects` manager were removed — org-scoping now lives in the per-domain selectors (`visible()` / `can()` on the grant arm; legacy domains keep their own transport until cutover) and `require_can()` at the write boundary.
 - The `adminShelters`/`adminShelter` GraphQL queries have been renamed to `operatorShelters`/`operatorShelter` and `AdminShelterType` → `OperatorShelterType` to reflect their role as operator-facing endpoints.

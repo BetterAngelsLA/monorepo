@@ -33,10 +33,11 @@ as the API layer instead of Django REST Framework.
   - **Creates** — `require_can(user, perm, org=…)` at the payload organization
     (`can`/`can_anywhere`). The org is the *target*, never the authority source — grant
     topology (direct, delegated, global) resolves inside `scopes()`.
-  - **Platform-only fields/actions** — gate on the global tier (`holds_globally`): the one
-    check a scoped Grant can never satisfy. Never reach for `can_anywhere` here — it admits
-    scoped holders. A declarative `GLOBAL` access tier is a planned vocabulary extension;
-    until it lands, every surface that touches a platform-only asset carries the tier check.
+  - **Platform-only fields/actions** — declare it: a GLOBAL-class model
+    (`Access(read=ACCESS_GLOBAL, write=WRITE_GLOBAL)`, ADR 0004) answers "global tier only"
+    for rows (`visible`/`writable`) and for rowless payload fields (`can_model`). Never reach for
+    `can_anywhere` here — it admits scoped holders; `can_globally` remains the unscoped
+    global-arm primitive.
   - **Refusals** — selectors answer, utils refuse: selectors never raise; `require_can`/
     `get_writable_or_deny` raise `PermissionDenied` with `PERMISSION_DENIED_MESSAGE`.
   - Cut-over domains register in `GRANT_GATED_MODULES`

@@ -631,7 +631,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertCountEqual(demographic_names, ["FAMILIES", "SINGLE_MEN"])
 
     def test_update_shelter_wrong_org_rejected(self) -> None:
-        """A user cannot update a shelter owned by a different organization — scoped by HasOrgPerm.
+        """A user cannot update a shelter owned by a different organization — reach-scoped by the grant selectors.
 
         The shelter_get call raises ObjectDoesNotExist which is caught by
         MUTATIONS_DEFAULT_HANDLE_ERRORS and returned as OperationInfo.
