@@ -80,6 +80,7 @@ env = environ.Env(
     IMGPROXY_LOCAL_MEDIA_URL=(str, "http://better-angels:8000/media/"),
     SHELTER_PHOTO_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),  # 50 MiB
     NOTE_ATTACHMENT_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
+    NOTES_ORGLESS_CREATE_COMPAT=(bool, True),
     CLIENT_DOCUMENT_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
     S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
     S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS=(int, 300),
@@ -113,6 +114,10 @@ S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS = env("S3_DEFAULT_PRESIGNED_UPLOA
 SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")
 NOTE_ATTACHMENT_MAX_FILE_SIZE = env("NOTE_ATTACHMENT_MAX_FILE_SIZE")
 CLIENT_DOCUMENT_MAX_FILE_SIZE = env("CLIENT_DOCUMENT_MAX_FILE_SIZE")
+#: Orgless note creates (the pre-payload build's compat window) — ``False``
+#: closes the window (ADR 0001 §5; review item 6).  Flip once the app build
+#: sending ``organizationId`` is deployed everywhere.
+NOTES_ORGLESS_CREATE_COMPAT = env("NOTES_ORGLESS_CREATE_COMPAT")
 
 
 # Quick-start development settings - unsuitable for production

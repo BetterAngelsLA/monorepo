@@ -52,10 +52,16 @@ class Mutation:
         task_data = asdict(data)
         organization_id = task_data.pop("organization_id", None)
 
-        # Resolve FK references
+        # Resolve FK references.  The Note is a scoped row: fetch it in the
+        # acting org — a foreign or missing note refuses alike (no existence
+        # oracle).  HmisNote / ClientProfile / HmisClientProfile are
+        # platform-shared rows (no org column to scope by): the create gate
+        # above is their authority.
         note = None
         if note_id := task_data.pop("note", None):
-            note = Note.objects.get(pk=str(note_id))
+            note = get_or_none(Note.objects.filter(organization=org), str(note_id))
+            if note is None:
+                raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 
         hmis_note = None
         if hmis_note_id := task_data.pop("hmis_note", None):

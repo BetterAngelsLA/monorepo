@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING, Any
 
 from common.org_types import REGISTRY
 from common.permissions.config import RoleDef, TemplateConfig
+from common.permissions.gates import require_can
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
@@ -397,6 +398,28 @@ def _refresh_group_names(org: Organization) -> None:
 
 
 @transaction.atomic
+def membership_or_deny(
+    *,
+    membership_id: object,
+    user: UserModel,
+    perm: str,
+    deny_message: str,
+) -> OrganizationUser:
+    """Fetch a membership by id, or deny — then require *perm* at its org.
+
+    The row-keyed gate for member mutations (ADR 0001 §5): a missing and a
+    forbidden membership refuse with the same *deny_message* (no existence
+    oracle), and the membership's org authorizes — never a header.  Lives in
+    the service layer so the schema modules delegate rather than raw-fetch
+    (the schema tripwire walks both).
+    """
+    membership = OrganizationUser.objects.select_related("organization", "user").filter(pk=membership_id).first()
+    if membership is None:
+        raise PermissionDenied(deny_message)
+    require_can(user, perm, org=membership.organization)
+    return membership
+
+
 def organization_remove_member(
     *,
     organization: Organization,
