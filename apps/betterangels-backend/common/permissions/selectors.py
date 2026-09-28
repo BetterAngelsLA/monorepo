@@ -275,10 +275,13 @@ def acting_org_ids_q(user: "User", perm: str) -> "QuerySet[Organization]":
     """
     from accounts.models import Organization
 
-    return Organization.objects.filter(
-        users=user,
-        grants__principal_user=user,
-        grants__role__in=Subquery(_roles_carrying_perm(perm)),
+    return cast(
+        "QuerySet[Organization]",
+        Organization.objects.filter(
+            users=user,
+            grants__principal_user=user,
+            grants__role__in=Subquery(_roles_carrying_perm(perm)),
+        ),
     )
 
 

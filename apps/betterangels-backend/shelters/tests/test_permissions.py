@@ -96,7 +96,9 @@ class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
         user = self.org_1_case_manager_1
         ct = ContentType.objects.get_for_model(Shelter)
         perm = Permission.objects.get(codename="view_private_shelter", content_type=ct)
-        PermissionGroup.objects.filter(user=user).first().permissions.add(perm)
+        permission_group = PermissionGroup.objects.filter(user=user).first()
+        assert permission_group is not None
+        permission_group.permissions.add(perm)
 
         self._handle_user_login("org_1_case_manager_1")
         response = self.execute_graphql("query { shelters { totalCount results { id } } }")
