@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Sequence, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Sequence, Tuple, Type, TypeVar, cast
 
 import strawberry
 from django.contrib.auth.models import Group
@@ -267,7 +267,7 @@ def get_writable_or_deny(
     obj = get_or_none(writable(qs, user, perm), pk)
     if obj is None:
         raise PermissionDenied(message)
-    return obj
+    return cast("T", obj)
 
 
 def assign_object_permissions(
