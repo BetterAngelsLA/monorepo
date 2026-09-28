@@ -248,25 +248,28 @@ def check_object_grant_principal_is_a_user(app_configs: Any, **kwargs: Any) -> l
 def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
     """E007 — ``access`` declarations must be legal (ADR 0004, RFC 0002 §Precondition).
 
-    ``access.write`` is consulted by :func:`common.permissions.selectors.writable`
-    independently of ``org_via``:
+    The selectors consult ``access.read`` / ``access.write`` independently of
+    ``org_via`` (reach), so a declaration must say what it means:
 
-    * only a platform-shared model (``org_via = None``) may declare a write
-      class — org-anchored models derive the ORG write scope from their org
-      anchor;
+    * ``access.read`` takes only :data:`ACCESS_GLOBAL` — org scopes never widen
+      a GLOBAL row, and an unknown value is an error, not a silent fall back;
+    * ``access.write`` takes :data:`WRITE_SHARED` (platform-shared models
+      only — it widens every perm-holder to every row), :data:`WRITE_GLOBAL`
+      (platform-staff-only writes; legal on org-anchored models as a
+      narrowing) or :data:`WRITE_OBJECT`;
     * ``WRITE_OBJECT`` stays reserved until the object arm turns on with the
-      clients cutover (ADR 0001 §2.5) — declaring it today would silently route
-      writes to an object-grant predicate nothing can satisfy;
-    * an unknown value is an error, not a silent fall back — a typo must not
-      enforce nothing like what it claims (ADR 0004 layer 1);
-    * ``access.read`` is reserved until the access-classes slice lands.
+      clients cutover (ADR 0001 §2.5) — declaring it today would silently
+      route writes to an object-grant predicate nothing can satisfy;
+    * an unknown value in either slot is an error — a typo must not enforce
+      nothing like what it claims (ADR 0004 layer 1).
     """
     from django.apps import apps
 
-    from common.models import Access, OrgScoped, WRITE_OBJECT, WRITE_SHARED
+    from common.models import ACCESS_GLOBAL, Access, OrgScoped, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
 
     errors: list[Error] = []
-    valid_write = {WRITE_SHARED, WRITE_OBJECT}
+    valid_read = {ACCESS_GLOBAL}
+    valid_write = {WRITE_SHARED, WRITE_GLOBAL, WRITE_OBJECT}
     for model in apps.get_models():
         if not issubclass(model, OrgScoped):
             continue
@@ -283,12 +286,11 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
                 )
             )
             continue
-        if access.read is not None:
+        if access.read is not None and access.read not in valid_read:
             errors.append(
                 Error(
-                    f"{model.__name__}.access.read = {access.read!r} is reserved.",
-                    hint="Read classes land with the access-classes slice (ADR 0004); "
-                    "declare only access.write for now.",
+                    f"{model.__name__}.access.read = {access.read!r} is not a known class.",
+                    hint=f"Legal read values: None, ACCESS_GLOBAL ({ACCESS_GLOBAL!r}).",
                     obj=model,
                     id="permissions.E007",
                 )
@@ -296,22 +298,12 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
         write = access.write
         if write is None:
             continue
-        if model.org_via is not None:
-            errors.append(
-                Error(
-                    f"{model.__name__}.access.write = {write!r} on an org-anchored model.",
-                    hint="Org-anchored models derive the ORG write scope from org_via; "
-                    "only a platform-shared model (org_via = None) declares a write class.",
-                    obj=model,
-                    id="permissions.E007",
-                )
-            )
-        elif write not in valid_write:
+        if write not in valid_write:
             errors.append(
                 Error(
                     f"{model.__name__}.access.write = {write!r} is not a known class.",
-                    hint=f"Legal values: None, WRITE_SHARED ({WRITE_SHARED!r}), "
-                    f"WRITE_OBJECT ({WRITE_OBJECT!r}, reserved).",
+                    hint=f"Legal write values: None, WRITE_SHARED ({WRITE_SHARED!r}), "
+                    f"WRITE_GLOBAL ({WRITE_GLOBAL!r}), WRITE_OBJECT ({WRITE_OBJECT!r}, reserved).",
                     obj=model,
                     id="permissions.E007",
                 )
@@ -322,6 +314,17 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
                     f"{model.__name__}.access.write = {write!r} is reserved.",
                     hint="The object-grant arm (WRITE_OBJECT) turns on with the clients "
                     "cutover (ADR 0001 §2.5) — do not declare it before then.",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        elif write == WRITE_SHARED and model.org_via is not None:
+            errors.append(
+                Error(
+                    f"{model.__name__}.access.write = {write!r} on an org-anchored model.",
+                    hint="WRITE_SHARED widens every permission holder to every row, but an "
+                    "org-anchored model's reach already scopes rows — drop the declaration, "
+                    "or declare WRITE_GLOBAL to narrow writes to the global tier.",
                     obj=model,
                     id="permissions.E007",
                 )

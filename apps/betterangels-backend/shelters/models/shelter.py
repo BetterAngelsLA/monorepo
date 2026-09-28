@@ -5,7 +5,7 @@ from functools import cache
 from typing import Any
 
 import pghistory
-from common.models import BaseModel, OrgScoped
+from common.models import ACCESS_GLOBAL, WRITE_GLOBAL, Access, BaseModel, OrgScoped
 from common.permissions.utils import PermissionSet, perm
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
@@ -373,6 +373,11 @@ class Room(CloneMixin, OrgScoped, BaseModel):
 )
 class ContactInfo(OrgScoped):
     org_via = ("shelter",)
+    # BA-only: platform staff (the Global Shelter Operator role) manage these —
+    # the org reach above exists for the object graph, never for authority.
+    # The declared classes make every surface answer the same way (ADR 0004):
+    # global tier only, for reads and writes alike.
+    access = Access(read=ACCESS_GLOBAL, write=WRITE_GLOBAL)
 
     class perms(PermissionSet):
         pass
