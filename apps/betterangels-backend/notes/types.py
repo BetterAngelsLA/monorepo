@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -172,7 +172,7 @@ def _perm_org_ids(info: Info, perm: str) -> Optional[list[int]]:
 
     from common.permissions.selectors import ALL, scopes
 
-    user = get_current_user(info)
+    user = cast("User", get_current_user(info))
     memo: dict[str, Optional[list[int]]] = user.__dict__.setdefault("_perm_org_ids", {})
     if perm not in memo:
         s = scopes(user, perm)

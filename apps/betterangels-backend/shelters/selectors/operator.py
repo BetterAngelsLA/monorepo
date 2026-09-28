@@ -5,7 +5,7 @@ All org-scoped functions live here.  None are imported by
 circular import with the model layer.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from accounts.models import OrgTypeChoices
 from common.permissions.selectors import can_globally, visible
@@ -40,7 +40,7 @@ def shelter_list(
     from shelters.models import Shelter
 
     queryset = queryset.filter(status=StatusChoices.APPROVED)
-    if user and user.is_authenticated and can_globally(user, Shelter.perms.VIEW_PRIVATE):
+    if user and user.is_authenticated and can_globally(cast("User", user), Shelter.perms.VIEW_PRIVATE):
         return queryset
     return queryset.filter(is_private=False)
 
