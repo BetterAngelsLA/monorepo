@@ -6,7 +6,7 @@ from typing import Any
 
 import pghistory
 from common.models import ACCESS_GLOBAL, WRITE_GLOBAL, Access, BaseModel, ScopedResource
-from common.permissions.utils import PermissionSet, perm
+from common.permissions.registry import PermissionSet, perm
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError

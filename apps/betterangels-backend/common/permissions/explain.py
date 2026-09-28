@@ -87,23 +87,15 @@ def _names(names: list[str]) -> str:
 
 
 def _global_arm(user: "User", app_label: str, codename: str) -> Arm:
-    superuser = bool(user.is_superuser)
-    roles = sorted(
-        user.groups.filter(
-            role__is_global=True,
-            role__permissions__content_type__app_label=app_label,
-            role__permissions__codename=codename,
-        )
-        .values_list("name", flat=True)
-        .distinct()
-    )
-    direct = user.user_permissions.filter(content_type__app_label=app_label, codename=codename).exists()
+    from common.permissions.selectors import global_probe
+
+    probe = global_probe(user, f"{app_label}.{codename}")
     detail = (
-        f"superuser: {'yes' if superuser else 'no'}; "
-        f"global roles: {_names(roles) if roles else 'none'}; "
-        f"user_permissions: {'yes' if direct else 'no'}"
+        f"superuser: {'yes' if probe.superuser else 'no'}; "
+        f"global roles: {_names(list(probe.roles)) if probe.roles else 'none'}; "
+        f"user_permissions: {'yes' if probe.direct else 'no'}"
     )
-    return Arm("global tier", superuser or bool(roles) or direct, detail)
+    return Arm("global tier", probe.holds, detail)
 
 
 def _direct_arm(user: "User", app_label: str, codename: str, *, org: Optional["Organization"]) -> Arm:
@@ -132,18 +124,12 @@ def _acting_org_ids(user: "User", app_label: str, codename: str) -> set[int]:
     """Orgs where *user* is a member AND holds a direct grant carrying the permission.
 
     The "acts at B" rule ``scopes()`` requires before a delegation B→C is
-    inheritable (permission-matched — no amplification).
+    inheritable (permission-matched — no amplification).  Delegates so the
+    explanation and the verdict share one definition.
     """
-    from organizations.models import Organization
+    from common.permissions.selectors import acting_org_ids
 
-    return set(
-        Organization.objects.filter(
-            users=user,
-            grants__principal_user=user,
-            grants__role__permissions__content_type__app_label=app_label,
-            grants__role__permissions__codename=codename,
-        ).values_list("pk", flat=True)
-    )
+    return acting_org_ids(user, f"{app_label}.{codename}")
 
 
 def _delegated_arm(user: "User", app_label: str, codename: str, *, org: Optional["Organization"]) -> Arm:

@@ -66,15 +66,45 @@ class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
         self.assertEqual(response.get("errors") is not None, expect_error)
 
     def _grant_view_private_shelter(self, user: Any) -> None:
-        """Grant view_private_shelter permission to a user via their PermissionGroup."""
-        from accounts.models import PermissionGroup
+        """Grant view_private_shelter at the global tier via ``user_permissions``.
+
+        The gate reads the global tier (:func:`can_globally`), so a direct
+        ``user_permissions`` row is the truthy path; legacy ``PermissionGroup``
+        rows do not feed it (see the regression test below).
+        """
         from django.contrib.auth.models import Permission
         from django.contrib.contenttypes.models import ContentType
         from shelters.models import Shelter
 
         ct = ContentType.objects.get_for_model(Shelter)
         perm = Permission.objects.get(codename="view_private_shelter", content_type=ct)
-        # Use the first PermissionGroup for this user
-        pg = PermissionGroup.objects.filter(user=user).first()
-        if pg:
-            pg.permissions.add(perm)
+        user.user_permissions.add(perm)
+
+    def test_legacy_permission_group_grant_does_not_reveal_private_shelters(self) -> None:
+        """A legacy PermissionGroup holder is denied — the gate reads the global tier only.
+
+        ``PermissionGroup`` rows still pollute ``has_perm`` until teardown
+        (ADR 0001 §2.4); the privacy gate must not be fed by them (that was the
+        only production consumer of the legacy tier here — item 5 of the
+        consolidation review).
+        """
+        from accounts.models import PermissionGroup
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+        from shelters.models import Shelter
+
+        user = self.org_1_case_manager_1
+        ct = ContentType.objects.get_for_model(Shelter)
+        perm = Permission.objects.get(codename="view_private_shelter", content_type=ct)
+        PermissionGroup.objects.filter(user=user).first().permissions.add(perm)
+
+        self._handle_user_login("org_1_case_manager_1")
+        response = self.execute_graphql("query { shelters { totalCount results { id } } }")
+        self.assertIsNone(response.get("errors"))
+        shelter_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
+        self.assertNotIn(str(self.private_shelter.pk), shelter_ids)
+
+        response = self.execute_graphql(
+            "query ($id: ID!) { shelter(pk: $id) { id } }", {"id": self.private_shelter.pk}
+        )
+        self.assertIsNotNone(response.get("errors"))

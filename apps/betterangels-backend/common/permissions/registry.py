@@ -1,22 +1,19 @@
+"""Permission registry — the codegen-facing catalog of product permissions.
+
+Everything here answers "which permission strings exist for the product?": the
+``@register_permission`` decorator, model ``PermissionSet`` discovery, and the
+``TextChoices`` → Django ``Meta.permissions`` bridge.  The refusal gates live
+next door in :mod:`common.permissions.gates`; the selectors consult this module
+only for the modeled-catalog bound.
+"""
+
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Sequence, Tuple, Type, TypeVar, cast
+from typing import Any, Sequence, Tuple, Type
 
-import strawberry
-from django.contrib.auth.models import Group
-from django.core.exceptions import PermissionDenied
 from django.db.models import Model, TextChoices
 from django.utils.encoding import force_str
-from guardian.shortcuts import assign_perm
-from strawberry_django.auth.utils import get_current_user
-
-from common.errors import UnauthenticatedGQLError
-from common.utils import get_or_none
-
-if TYPE_CHECKING:
-    from django.db.models import QuerySet
-
 
 # ── Permission enum registry (frontend codegen) ───────────────────────────────
 
@@ -212,74 +209,3 @@ def permission_enums_to_django_meta_permissions(
     for permission_enum in permission_enums:
         permissions.extend((str(perm).rsplit(".", 1)[-1], force_str(perm.label)) for perm in permission_enum)
     return tuple(permissions)
-
-
-class IsAuthenticated(strawberry.BasePermission):
-    def has_permission(self, source: Any, info: strawberry.Info, **kwargs: Any) -> bool:
-        user = get_current_user(info)
-        if user is None or not user.is_authenticated or not user.is_active:
-            raise UnauthenticatedGQLError()
-
-        return True
-
-
-#: The standard refusal for org-scoped authority checks — one string, so every
-#: refusal reads the same.
-PERMISSION_DENIED_MESSAGE = "You do not have permission to perform this action in this organization."
-
-
-def require_can(user: Any, perm: str, *, org: Any) -> None:
-    """PermissionDenied unless *user* can exercise *perm* at *org* (ADR 0001 §2.6).
-
-    The create gate: creates carry an explicit target organization and are
-    authorized by ``can`` — never by the read rule.  ``can`` never implies the
-    organization exists (finding F7), so callers that take an org from client
-    input must check existence separately (see ``shelter_create``).
-    """
-    from common.permissions.selectors import can
-
-    if not can(user, perm, org=org):
-        raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
-
-
-T = TypeVar("T", bound=Model)
-
-
-def get_writable_or_deny(
-    qs: "QuerySet[T]",
-    pk: Any,
-    user: Any,
-    perm: str,
-    *,
-    message: str = PERMISSION_DENIED_MESSAGE,
-) -> "T":
-    """Fetch a write target through the write-scoped filter, or deny.
-
-    The canonical mutation gate (RFC 0002 §Precondition): the fetch *is* the
-    authorization check — a forbidden row is unfetchable, and the missing-row
-    and forbidden-row refusals share one message (no existence oracle).
-    Fetch through this, never from the raw manager and never fetch-then-check
-    (which invites forgetting the check); ``writable``/``can_obj`` stay the
-    primitives for non-pk shapes (related-row exists, object-in-hand checks).
-    """
-    from common.permissions.selectors import writable
-
-    obj = get_or_none(writable(qs, user, perm), pk)
-    if obj is None:
-        raise PermissionDenied(message)
-    return cast("T", obj)
-
-
-def assign_object_permissions(
-    group: Group,
-    obj: Model,
-    permissions: Sequence[str],
-) -> None:
-    """Assign a list of object-level permissions on ``obj`` to ``group``.
-
-    This is a thin wrapper around ``guardian.shortcuts.assign_perm`` that
-    eliminates the repeated ``for perm in perms: assign_perm(…)`` loop
-    scattered across mutations and services.
-    """
-    for perm in permissions:
-        assign_perm(perm, group, obj)

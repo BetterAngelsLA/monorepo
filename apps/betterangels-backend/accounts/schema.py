@@ -6,7 +6,7 @@ import strawberry_django
 from common.graphql.org import resolve_org_or_deny
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
-from common.permissions.utils import IsAuthenticated, require_can
+from common.permissions.gates import IsAuthenticated, require_can
 from django.contrib import auth
 from django.core.exceptions import PermissionDenied
 from django.db import transaction

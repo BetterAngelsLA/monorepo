@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from common.permissions.utils import register_permission
+from common.permissions.registry import register_permission
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 

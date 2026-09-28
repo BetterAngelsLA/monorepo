@@ -23,7 +23,7 @@ from clients.enums import (
 )
 from common.constants import CALIFORNIA_ID_REGEX
 from common.models import Access, Attachment, BaseModel, ScopedResource, PhoneNumber, WRITE_SHARED
-from common.permissions.utils import PermissionSet
+from common.permissions.registry import PermissionSet
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField

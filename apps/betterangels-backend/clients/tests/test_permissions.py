@@ -11,7 +11,7 @@ from clients.tests.utils import (
     SocialMediaProfileBaseTestCase,
 )
 from common.models import Attachment
-from common.permissions.utils import PERMISSION_DENIED_MESSAGE
+from common.permissions.gates import PERMISSION_DENIED_MESSAGE
 from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
 from unittest_parametrize import parametrize
 

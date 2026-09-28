@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Dict, Iterator, Optional, cast
 
 from common.enums import AttachmentType
 from common.files.utils import get_unique_file_path
-from common.permissions.utils import PermissionSet
+from common.permissions.registry import PermissionSet
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField

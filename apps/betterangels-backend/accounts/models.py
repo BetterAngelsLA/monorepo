@@ -151,7 +151,7 @@ class PermissionGroup(Group):
 
     It *is* the group rather than pointing at one, so the group cannot outlive
     it.  That matters because object-level permissions are assigned to the group
-    (:func:`common.permissions.utils.assign_object_permissions`) and
+    (:func:`common.permissions.gates.assign_object_permissions`) and
     ``BigGroupObjectPermission`` cascades from it — an orphaned group would keep
     granting them with no row left to revoke through.  Inheritance makes the
     teardown a cascade Django's own collector performs, on a direct delete, a

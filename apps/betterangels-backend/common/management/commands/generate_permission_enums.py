@@ -4,10 +4,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
 
-from common.permissions.utils import (
-    get_registered_permission_enums,
-    register_model_permissions,
-)
+from common.permissions.registry import get_registered_permission_enums, register_model_permissions
 from django.core.management.base import BaseCommand
 
 HEADER = """\

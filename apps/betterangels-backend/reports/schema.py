@@ -5,7 +5,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User as AccountUser
 from common.graphql.org import resolve_org_or_deny
-from common.permissions.utils import IsAuthenticated, require_can
+from common.permissions.gates import IsAuthenticated, require_can
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user

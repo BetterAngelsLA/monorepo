@@ -7,11 +7,7 @@ import strawberry_django
 from accounts.models import User as AccountUser
 from common.graphql.org import resolve_org_or_deny
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.permissions.utils import (
-    PERMISSION_DENIED_MESSAGE,
-    IsAuthenticated,
-    require_can,
-)
+from common.permissions.gates import PERMISSION_DENIED_MESSAGE, IsAuthenticated, require_can
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from strawberry.types import Info
@@ -47,7 +43,7 @@ class Query:
 class Mutation:
     """Team mutations — grant-only authority (ADR 0001 §5.3).
 
-    Each authorizes via :func:`common.permissions.utils.require_can` at the org
+    Each authorizes via :func:`common.permissions.gates.require_can` at the org
     resolved from the payload: ``createTeam`` carries ``organizationId`` (no
     row exists to scope by yet); update/delete use the team row's org.  The
     legacy ``PermissionGroup`` arm is not consulted.

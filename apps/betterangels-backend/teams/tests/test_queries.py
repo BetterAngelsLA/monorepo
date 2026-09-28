@@ -13,7 +13,7 @@ from accounts.groups import ORG_ADMIN
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from accounts.tests.baker_recipes import organization_recipe
-from common.permissions.utils import PERMISSION_DENIED_MESSAGE
+from common.permissions.gates import PERMISSION_DENIED_MESSAGE
 from model_bakery import baker
 from teams.models import Team
 

@@ -14,7 +14,7 @@ from common.graphql.types import (
     DeletedObjectType,
 )
 from common.permissions.selectors import writable
-from common.permissions.utils import IsAuthenticated, PERMISSION_DENIED_MESSAGE, get_writable_or_deny, require_can
+from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, get_writable_or_deny, require_can
 from common.utils import get_or_none
 from common.services.types import UploadRequest, UploadConfirmation
 from django.core.exceptions import PermissionDenied
