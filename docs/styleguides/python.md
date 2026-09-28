@@ -19,11 +19,13 @@ as the API layer instead of Django REST Framework.
   inputs and delegate to services/selectors. `schema.py` defines queries and
   mutations; `types.py` defines Strawberry types for input/output.
 - **Permissions** — `ModelPermissionSet` inner classes on models (via
-  `common/permissions/utils.py`) replace the old per-file `permissions.py` pattern.
+  `common/permissions/registry.py`) replace the old per-file `permissions.py` pattern.
   See the `@monorepo/ba-platform/permissions` package for the matching frontend permission enums.
 
   Domain-authority decisions go through the selectors (`common/permissions/selectors.py`),
-  never `user.has_perm` or guardian `filter_for_user`:
+  never `user.has_perm` or guardian `filter_for_user`.  The refusals live next door in
+  `common/permissions/gates.py` (`require_can`, `org_or_deny`/`org_or_none`,
+  `get_writable_or_deny`, `IsAuthenticated`):
   - **Reads** — `visible(qs, user, perm)` (list hooks via `visible_rows_for_holder`;
     single fields via the `*_checker` predicates). Never reuse a read filter for a write.
   - **Writes** — `writable(qs, user, perm)` is `can_obj` as a queryset filter. Mutation

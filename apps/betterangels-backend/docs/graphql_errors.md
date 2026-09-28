@@ -160,11 +160,11 @@ In addition to the mutation-level `_handle_exception`, Strawberry's permission e
 
 | Extension         | Defined in                                 | Used for                                                   | `fail_silently` default   |
 | ----------------- | ------------------------------------------ | ---------------------------------------------------------- | ------------------------- |
-| `require_can()`   | `common/permissions/utils.py` (not an extension — a resolver guard) | Org-scoped writes (teams, reports, member management, shelters) | n/a — raises `PermissionDenied` |
+| `require_can()`   | `common/permissions/gates.py` (not an extension — a resolver guard) | Org-scoped writes (teams, reports, member management, shelters) | n/a — raises `PermissionDenied` |
 | `HasRetvalPerm`   | `strawberry_django` (built-in)             | Object-level mutations (notes, referrals)                  | `True` (built-in default) |
 | `HasPerm`         | `strawberry_django` (built-in)             | Create mutations + single-row reads (clients, documents, tasks) — `perm_checker=can_anywhere_checker` swaps guardian for the grant model | `True`; single-row reads pass `fail_silently=False` |
 | type-level `get_queryset` hook | `common/graphql/permission_checkers.py` (`visible_rows_for_holder`) | List reads (clients, tasks) — not an extension; filters the queryset | n/a — non-holders answer `totalCount: 0` |
-| `IsAuthenticated` | `common/permissions/utils.py` (BetterAngels override) | All mutations; raises `UnauthenticatedGQLError` when anonymous | n/a                       |
+| `IsAuthenticated` | `common/permissions/gates.py` (BetterAngels override) | All mutations; raises `UnauthenticatedGQLError` when anonymous | n/a                       |
 
 ---
 
@@ -191,7 +191,7 @@ to pin denial tests and frontend handling against:
 | Message | Source | Emitted by |
 | ------- | ------ | ---------- |
 | `You don't have permission to access this app.` | strawberry-django `DEFAULT_ERROR_MESSAGE` | Declarative extension denials, both `fail_silently` modes |
-| `You do not have permission to perform this action in this organization.` | `PERMISSION_DENIED_MESSAGE` (`common/permissions/utils.py`) | Org-scoped resolver guards (`require_can`, `can_obj`) |
+| `You do not have permission to perform this action in this organization.` | `PERMISSION_DENIED_MESSAGE` (`common/permissions/gates.py`) | Org-scoped resolver guards (`require_can`, `can_obj`) |
 | `You do not have permission to perform this action.` | legacy guards | Pre-cutover resolver guards (notes, referrals) |
 | `You must be logged in to perform this action.` | `UnauthenticatedGQLError` (`common/errors.py`) | `IsAuthenticated` for anonymous callers |
 
@@ -291,7 +291,7 @@ class NotFoundGQLError(GraphQLError):
 
 Used in:
 
-- `common/permissions/utils.py` — `IsAuthenticated.has_permission()` raises `UnauthenticatedGQLError` when the user is not logged in
+- `common/permissions/gates.py` — `IsAuthenticated.has_permission()` raises `UnauthenticatedGQLError` when the user is not logged in
 - `hmis/api_bridge.py` — `_handle_error_response()` raises `UnauthenticatedGQLError` for HMIS 401 responses and `NotFoundGQLError` for HMIS 404 responses
 
 #### `hmis/api_bridge.py` — HMIS proxy validation errors
@@ -344,7 +344,7 @@ Every exception type used in the BetterAngels backend, the error path each takes
 | `PermissionDenied`        | `django.core.exceptions`                    | `accounts/schema.py`, `referrals/schema.py`, `tasks/schema.py`, `hmis/api_bridge.py`, `common/graphql/utils.py` | ✅ Yes (→ `OperationInfo`, `kind: PERMISSION`) | Contains `OperationInfo`                        | —                                                                       |
 | `DjangoNoPermission`      | `strawberry_django.permissions`             | Permission extensions (`HasPerm`, `HasRetvalPerm`, `IsAuthenticated`)                                          | ❌ No — caught by `handle_no_permission()`     | Contains `OperationInfo` (if union supports it) | —                                                                       |
 | `GraphQLError`            | `graphql-core`                              | `clients/schema.py`, `hmis/api_bridge.py`                                                                       | ❌ No                                          | `null`                                          | `{message, extensions: {errors: [...]}}`                                |
-| `UnauthenticatedGQLError` | `common/errors.py` (extends `GraphQLError`) | `common/permissions/utils.py` (`IsAuthenticated`), `hmis/api_bridge.py` (401)                                   | ❌ No                                          | `null`                                          | `{message, extensions: {code: "UNAUTHENTICATED", http: {status: 401}}}` |
+| `UnauthenticatedGQLError` | `common/errors.py` (extends `GraphQLError`) | `common/permissions/gates.py` (`IsAuthenticated`), `hmis/api_bridge.py` (401)                                   | ❌ No                                          | `null`                                          | `{message, extensions: {code: "UNAUTHENTICATED", http: {status: 401}}}` |
 | `NotFoundGQLError`        | `common/errors.py` (extends `GraphQLError`) | `hmis/api_bridge.py` only (404)                                                                                 | ❌ No                                          | `null`                                          | `{message, extensions: {code: "NOT_FOUND", http: {status: 404}}}`       |
 | `PermissionError`         | Python `builtins` (OS-level)                | `accounts/schema.py`, `accounts/selectors.py`, `clients/schema.py`, `hmis/schema.py`                            | ❌ No                                          | `null`                                          | `{message: "..."}` (plain, no extensions)                               |
 | `ValueError`              | Python `builtins`                           | `clients/services/` (upload token validation, file not found)                                                   | ❌ No                                          | `null`                                          | `{message: "..."}` (plain, no extensions)                               |
@@ -373,7 +373,7 @@ The `_handle_error_response` method maps upstream HTTP status codes to exception
 | `strawberry_django/mutations/fields.py`                  | `_get_validation_errors()`, `_handle_exception()`, `DjangoMutationBase.get_result()`              |
 | `strawberry_django/permissions.py`                       | `DjangoPermissionExtension.handle_no_permission()`, `HasPerm`, `HasRetvalPerm`, `IsAuthenticated` |
 | `apps/betterangels-backend/common/permissions/selectors.py` | `can()` / `scopes()` / `visible()` — grant authority                                                                    |
-| `apps/betterangels-backend/common/permissions/utils.py`   | `require_can()`, `IsAuthenticated` (override), `PERMISSION_DENIED_MESSAGE`                        |
+| `apps/betterangels-backend/common/permissions/gates.py`   | `require_can()`, `IsAuthenticated` (override), `PERMISSION_DENIED_MESSAGE`                        |
 | `apps/betterangels-backend/common/graphql/org.py`         | `resolve_org_or_deny()` — payload/filter org resolution, fail-closed                              |
 | `apps/betterangels-backend/common/graphql/permission_checkers.py` | `can_anywhere_checker` (declarative fields) + `visible_rows_for_holder` (list-read gate)   |
 | `apps/betterangels-backend/common/graphql/extensions.py` | `PermissionedQuerySet` — injects permission-filtered querysets                                    |
