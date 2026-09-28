@@ -11,6 +11,7 @@ from clients.tests.utils import (
     SocialMediaProfileBaseTestCase,
 )
 from common.models import Attachment
+from common.permissions.utils import PERMISSION_DENIED_MESSAGE
 from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
 from unittest_parametrize import parametrize
 
@@ -161,7 +162,15 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
         if should_succeed:
             self.assertIsNotNone(response["data"])
         else:
-            self.assertIsNotNone(response["errors"])
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertGraphQLOperationInfo(
+                    response,
+                    "deleteClientProfile",
+                    PERMISSION_DENIED_MESSAGE,
+                    kind="PERMISSION",
+                )
 
     @parametrize(
         "user_label, expected_client_count",

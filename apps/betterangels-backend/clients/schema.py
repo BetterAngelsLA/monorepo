@@ -28,8 +28,7 @@ from common.graphql.types import (
 )
 from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment, PhoneNumber
-from common.permissions.selectors import visible
-from common.permissions.utils import IsAuthenticated
+from common.permissions.utils import IsAuthenticated, get_writable_or_deny
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -435,11 +434,13 @@ class Mutation:
     """Client mutations — grant authority via the checkers (ADR 0001 §5.1).
 
     Creates evaluate ``can_anywhere`` (the platform-shared create rule) and
-    row-scoped writes evaluate ``can_obj`` on the resolved row — SHARED tier on
-    the client family (RFC 0002): any holder of the permission may act, exactly
-    what the legacy model-level CASEWORKER permissions did.  The profile
-    fetch/edit bodies load through ``visible()``.  Document and import surfaces
-    intentionally remain on their legacy gates until their own cutovers.
+    row-scoped writes fetch through ``get_writable_or_deny`` — SHARED write
+    class on the client family (RFC 0002): any holder of the permission may
+    act, exactly what the legacy model-level CASEWORKER permissions did.  The
+    fetch *is* the gate: the row filter reads ``ClientProfile.access.write``,
+    so changing the declaration cannot silently leave enforcement behind.
+    Document and import surfaces intentionally remain on their legacy gates
+    until their own cutovers.
     """
 
     @strawberry_django.mutation(
@@ -480,14 +481,12 @@ class Mutation:
     def update_client_profile(self, info: Info, data: UpdateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
-            try:
-                client_profile = visible(
-                    ClientProfile.objects.all(),
-                    user,
-                    ClientProfile.perms.CHANGE,
-                ).get(id=data.id)
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
+            client_profile = get_writable_or_deny(
+                ClientProfile.objects.all(),
+                data.id,
+                user,
+                ClientProfile.perms.CHANGE,
+            )
 
             client_profile_data: dict = strawberry.asdict(data)
 
@@ -525,19 +524,14 @@ class Mutation:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
-            try:
-                client_profile = visible(
-                    ClientProfile.objects.all(),
-                    user,
-                    ClientProfile.perms.DELETE,
-                ).get(id=data.id)
-
-                client_profile_id = client_profile.pk
-
-                client_profile.delete()
-
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("No profile deleted; profile may not exist or lacks proper permissions")
+            client_profile = get_writable_or_deny(
+                ClientProfile.objects.all(),
+                data.id,
+                user,
+                ClientProfile.perms.DELETE,
+            )
+            client_profile_id = client_profile.pk
+            client_profile.delete()
 
             return DeletedObjectType(id=client_profile_id)
 
@@ -638,17 +632,14 @@ class Mutation:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
-            try:
-                client_profile = visible(
-                    ClientProfile.objects.all(),
-                    user,
-                    ClientProfile.perms.CHANGE,
-                ).get(id=data.client_profile)
-
-                client_profile.profile_photo = data.photo
-                client_profile.save(update_fields=["profile_photo"])
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
+            client_profile = get_writable_or_deny(
+                ClientProfile.objects.all(),
+                data.client_profile,
+                user,
+                ClientProfile.perms.CHANGE,
+            )
+            client_profile.profile_photo = data.photo
+            client_profile.save(update_fields=["profile_photo"])
 
             return cast(ClientProfileType, client_profile)
 
@@ -663,15 +654,12 @@ class Mutation:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
-            try:
-                client_profile = visible(
-                    ClientProfile.objects.all(),
-                    user,
-                    ClientProfile.perms.CHANGE,
-                ).get(id=client_profile_id)
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
-
+            client_profile = get_writable_or_deny(
+                ClientProfile.objects.all(),
+                client_profile_id,
+                user,
+                ClientProfile.perms.CHANGE,
+            )
             client_profile.profile_photo = None
             client_profile.save(update_fields=["profile_photo"])
 
@@ -744,11 +732,12 @@ class Mutation:
     ) -> AuthorizedPresignedS3UploadType:
         user = cast(User, get_current_user(info))
 
-        _ = visible(
+        get_writable_or_deny(
             ClientProfile.objects.all(),
+            data.client_profile_id,
             user,
             ClientProfile.perms.CHANGE,
-        ).get(id=data.client_profile_id)
+        )
 
         result = client_profile_photo.create_presigned_upload(
             user=user,
@@ -779,11 +768,12 @@ class Mutation:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
-            client_profile = visible(
+            client_profile = get_writable_or_deny(
                 ClientProfile.objects.all(),
+                data.client_profile_id,
                 user,
                 ClientProfile.perms.CHANGE,
-            ).get(id=data.client_profile_id)
+            )
 
             client_profile = client_profile_photo.resolve_upload(
                 user=user,
