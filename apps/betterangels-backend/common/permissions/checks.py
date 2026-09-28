@@ -1,6 +1,6 @@
 """System checks for the grant-based authorization model (ADR 0001).
 
-IDs: ``permissions.E001``–``permissions.E007``.
+IDs: ``permissions.E001``–``permissions.E008``.
 
 The data-reading checks return ``[]`` on any ``DatabaseError`` — unreachable
 database, or tables not migrated yet — so ``manage.py check``, ``makemigrations``
@@ -330,3 +330,46 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
                 )
             )
     return errors
+
+
+@register(Tags.models)
+def check_scoped_roles_avoid_global_class_abilities(app_configs: Any, **kwargs: Any) -> list[Error]:
+    """E008 — a *scoped* Role must not carry GLOBAL-class abilities (ADR 0004 layer 2).
+
+    A scoped Role reaches people through ``Grant`` rows, and every Grant is
+    org-scoped; an ability whose model declares a GLOBAL class (``ACCESS_GLOBAL``
+    / ``WRITE_GLOBAL``) answers at the global tier only, so the evaluators can
+    never let such a grant exercise it.  Admitting the binding anyway would be
+    dead weight at best and a hazard at worst — ``Grant.clean`` refuses it at
+    write time, and this is the deploy-time backstop over already-seeded Roles
+    (mirrors E002/E006: write-time rule in ``clean``, deploy-time check here).
+    """
+    from django.apps import apps
+    from django.db.utils import DatabaseError
+
+    from common.permissions.selectors import is_global_class
+
+    try:
+        Role = apps.get_model("accounts", "Role")
+
+        errors: list[Error] = []
+        for role in Role.objects.filter(is_global=False).prefetch_related("permissions__content_type"):
+            for permission in role.permissions.all():
+                model = permission.content_type.model_class()
+                if model is None or model._meta.abstract:
+                    continue
+                if is_global_class(model, permission.codename):
+                    errors.append(
+                        Error(
+                            f"Scoped Role {role.name!r} carries {permission.codename} on {model.__name__}, "
+                            "whose access declaration makes it GLOBAL-class.",
+                            hint="GLOBAL-class abilities answer at the global tier only: hold them on a "
+                            "global Role (user.groups), never on a scoped Role that reaches users "
+                            "through Grants (ADR 0004).",
+                            obj=role,
+                            id="permissions.E008",
+                        )
+                    )
+        return errors
+    except DatabaseError:
+        return []

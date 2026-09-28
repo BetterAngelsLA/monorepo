@@ -1,4 +1,4 @@
-"""Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E007)."""
+"""Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E008)."""
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
@@ -12,6 +12,7 @@ from common.permissions.checks import (
     check_org_via_hops_are_single_valued,
     check_role_permissions_models_declare_org_scoping,
     check_scoped_role_never_in_user_groups,
+    check_scoped_roles_avoid_global_class_abilities,
 )
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -245,3 +246,48 @@ class AccessDeclarationChecksTestCase(TestCase):
 
         self.assertEqual(len(errors), 1)
         self.assertIn("not a known class", errors[0].msg)
+
+
+class ScopedRoleGlobalClassChecksTestCase(TestCase):
+    """E008 — scoped roles never carry GLOBAL-class abilities (ADR 0004 layer 2)."""
+
+    def _scoped_role_with(self, name: str, perm: str, model: type) -> Role:
+        role = Role.objects.create(name=name, is_global=False)
+        content_type = ContentType.objects.get_for_model(model)
+        codename = perm.split(".")[-1]
+        permission, _ = Permission.objects.get_or_create(
+            content_type=content_type,
+            codename=codename,
+            defaults={"name": f"Can {codename.replace('_', ' ')}"},
+        )
+        role.permissions.add(permission)
+        return role
+
+    def test_e008_fires_when_a_scoped_role_carries_a_global_class_ability(self) -> None:
+        from shelters.models import ContactInfo
+
+        self._scoped_role_with("Scoped Contact Editor", ContactInfo.perms.CHANGE, ContactInfo)
+
+        errors = _errors_with(check_scoped_roles_avoid_global_class_abilities(None), "permissions.E008")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("GLOBAL-class", errors[0].msg)
+
+    def test_e008_is_quiet_for_a_global_role_with_the_same_ability(self) -> None:
+        from shelters.models import ContactInfo
+
+        role = Role.objects.create(name="GSO Twin", is_global=True)
+        content_type = ContentType.objects.get_for_model(ContactInfo)
+        permission, _ = Permission.objects.get_or_create(
+            content_type=content_type,
+            codename="view_contactinfo",
+            defaults={"name": "Can view contact info"},
+        )
+        role.permissions.add(permission)
+
+        self.assertEqual(_errors_with(check_scoped_roles_avoid_global_class_abilities(None), "permissions.E008"), [])
+
+    def test_e008_is_quiet_for_reach_scoped_abilities(self) -> None:
+        self._scoped_role_with("Scoped Shelter Ops", Shelter.perms.VIEW, Shelter)
+
+        self.assertEqual(_errors_with(check_scoped_roles_avoid_global_class_abilities(None), "permissions.E008"), [])

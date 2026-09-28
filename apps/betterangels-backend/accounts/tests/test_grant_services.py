@@ -48,6 +48,42 @@ class GrantServiceTestCase(TestCase):
 
         self.assertFalse(Grant.objects.filter(principal_user=self.user).exists())
 
+    def test_grant_create_refuses_a_global_class_ability(self) -> None:
+        """A scoped role cannot carry a GLOBAL-class ability — admittance refuses (ADR 0004)."""
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+
+        from shelters.models import ContactInfo
+
+        role = Role.objects.create(name="Scoped Contact Editor")
+        content_type = ContentType.objects.get_for_model(ContactInfo)
+        permission, _ = Permission.objects.get_or_create(
+            content_type=content_type, codename="view_contactinfo", defaults={"name": "Can view contact info"}
+        )
+        role.permissions.add(permission)
+
+        with self.assertRaises(ValidationError):
+            grant_create(user=self.user, role=role, scope_org=self.org)
+
+        self.assertFalse(Grant.objects.filter(principal_user=self.user, role=role).exists())
+
+    def test_grant_delegate_refuses_a_global_class_ability(self) -> None:
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+
+        from shelters.models import ContactInfo
+
+        role = Role.objects.create(name="Scoped Contact Editor")
+        content_type = ContentType.objects.get_for_model(ContactInfo)
+        permission, _ = Permission.objects.get_or_create(
+            content_type=content_type, codename="change_contactinfo", defaults={"name": "Can change contact info"}
+        )
+        role.permissions.add(permission)
+        principal_org = organization_recipe.make(name="Delegating Org")
+
+        with self.assertRaises(ValidationError):
+            grant_delegate(principal_org=principal_org, role=role, scope_org=self.org)
+
     def test_grant_delegate_creates_an_org_principal_grant(self) -> None:
         other_org = organization_recipe.make(name="Delegatee Org")
 
