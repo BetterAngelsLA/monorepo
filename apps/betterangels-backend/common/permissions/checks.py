@@ -273,7 +273,7 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
     for model in apps.get_models():
         if not issubclass(model, ScopedResource):
             continue
-        access = model.__dict__.get("access")
+        access = getattr(model, "access", None)
         if access is None:
             continue
         if not isinstance(access, Access):
@@ -347,29 +347,25 @@ def check_scoped_roles_avoid_global_class_abilities(app_configs: Any, **kwargs: 
     from django.apps import apps
     from django.db.utils import DatabaseError
 
-    from common.permissions.selectors import is_global_class
+    from common.permissions.access import global_class_abilities
 
     try:
         Role = apps.get_model("accounts", "Role")
 
         errors: list[Error] = []
         for role in Role.objects.filter(is_global=False).prefetch_related("permissions__content_type"):
-            for permission in role.permissions.all():
-                model = permission.content_type.model_class()
-                if model is None or model._meta.abstract:
-                    continue
-                if is_global_class(model, permission.codename):
-                    errors.append(
-                        Error(
-                            f"Scoped Role {role.name!r} carries {permission.codename} on {model.__name__}, "
-                            "whose access declaration makes it GLOBAL-class.",
-                            hint="GLOBAL-class abilities answer at the global tier only: hold them on a "
-                            "global Role (user.groups), never on a scoped Role that reaches users "
-                            "through Grants (ADR 0004).",
-                            obj=role,
-                            id="permissions.E008",
-                        )
+            for permission, model in global_class_abilities(role.permissions.all()):
+                errors.append(
+                    Error(
+                        f"Scoped Role {role.name!r} carries {permission.codename} on {model.__name__}, "
+                        "whose access declaration makes it GLOBAL-class.",
+                        hint="GLOBAL-class abilities answer at the global tier only: hold them on a "
+                        "global Role (user.groups), never on a scoped Role that reaches users "
+                        "through Grants (ADR 0004).",
+                        obj=role,
+                        id="permissions.E008",
                     )
+                )
         return errors
     except DatabaseError:
         return []

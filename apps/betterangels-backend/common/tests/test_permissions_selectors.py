@@ -382,6 +382,38 @@ class AccessClassTestCase(TestCase):
         # Non-GLOBAL models keep today's can_anywhere semantics.
         self.assertTrue(can_model(bob, Shelter.perms.VIEW, Shelter))
 
+    def test_global_tier_verdict_is_memoized_and_invalidated(self) -> None:
+        from common.permissions.selectors import ALL, invalidate_scope_cache, scopes
+
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+
+        self.assertIs(scopes(gso, Shelter.perms.VIEW), ALL)
+        self.assertIn(Shelter.perms.VIEW, gso.__dict__["_scope_cache"])
+        invalidate_scope_cache(gso)
+        self.assertNotIn("_scope_cache", gso.__dict__)
+
+    def test_object_write_class_fails_closed_even_on_an_org_anchored_model(self) -> None:
+        from unittest.mock import patch
+
+        from common.models import Access, WRITE_OBJECT
+        from common.permissions.selectors import writable
+
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+
+        with patch.object(Shelter, "access", Access(write=WRITE_OBJECT)):
+            self.assertFalse(writable(Shelter.objects.all(), gso, Shelter.perms.CHANGE).exists())
+
+    def test_can_model_fails_closed_for_an_undeclared_model(self) -> None:
+        from common.models import Attachment
+        from common.permissions.selectors import can_model
+
+        admin = baker.make(User, is_superuser=True)
+
+        self.assertFalse(can_model(admin, "common.view_attachment", Attachment))
+        self.assertTrue(can_model(admin, ContactInfo.perms.VIEW, ContactInfo))
+
 
 class CanGloballyTestCase(TestCase):
     """can_globally is the global arm of scopes — Grant reach never satisfies it."""

@@ -98,7 +98,7 @@ class RoomQueryTestCase(RoomQueriesTestCase):
                 }
             }
         """
-        expected_query_count = 12
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"id": str(self.room.pk)})
 
