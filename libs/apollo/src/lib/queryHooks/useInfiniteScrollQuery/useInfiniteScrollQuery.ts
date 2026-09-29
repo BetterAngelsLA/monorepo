@@ -227,6 +227,7 @@ export function useInfiniteScrollQuery<
   useEffect(() => {
     lastVariablesRef.current = initialVariables;
     isFetchMoreInFlightRef.current = false;
+    fetchMoreErrorRef.current = null; // any error belongs to the previous variable set
   }, [initialVariables]);
 
   // Loading statuses (Apollo + intent)
@@ -265,11 +266,13 @@ export function useInfiniteScrollQuery<
 
     isFetchMoreInFlightRef.current = true;
 
+    const baseVariables = lastVariablesRef.current;
+
     const { paginationMode, paginationPerPagePath, paginationLimitPath } =
       queryPolicyConfig;
 
     const nextPageSize = getPageSizeFromVars({
-      baseVariables: lastVariablesRef.current,
+      baseVariables,
       paginationMode,
       paginationPerPagePath,
       paginationLimitPath,
@@ -277,19 +280,30 @@ export function useInfiniteScrollQuery<
     });
 
     const nextVariables = buildVariablesForPage<TVars>({
-      previousVariables: lastVariablesRef.current,
+      previousVariables: baseVariables,
       incrementBy: nextPageSize,
       ...queryPolicyConfig,
     });
 
     fetchMore({ variables: nextVariables })
       .then(() => {
+        // Ignore responses whose variables changed while the request was in
+        // flight — the variables-change effect already reset the pagination
+        // base to the current page-1 variables.
+        if (lastVariablesRef.current !== baseVariables) {
+          return;
+        }
+
         lastVariablesRef.current = nextVariables;
       })
       .catch((err) => {
         console.error('[useInfiniteScrollQuery] fetchMore failed:', err);
-        fetchMoreErrorRef.current = toErrorLike(err);
 
+        if (lastVariablesRef.current !== baseVariables) {
+          return;
+        }
+
+        fetchMoreErrorRef.current = toErrorLike(err);
         isFetchMoreInFlightRef.current = false;
       });
   }, [hasMore, isAnyLoading, queryPolicyConfig, pageSize, fetchMore]);
