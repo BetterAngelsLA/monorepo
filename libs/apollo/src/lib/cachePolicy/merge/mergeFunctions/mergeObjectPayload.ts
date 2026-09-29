@@ -137,9 +137,8 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
       mergedItems[offset + i] = newItem;
     }
 
-    // Path-set instead of clone-and-mutate: `withValueAtPath` copies only the
-    // containers along the written path and never mutates the (possibly
-    // frozen) incoming object.
+    // `withValueAtPath` copies only the containers along the written path and
+    // never mutates the (possibly frozen) incoming object.
     let result = withValueAtPath(incomingObject, itemsPath, mergedItems);
 
     if (result === incomingObject) {

@@ -194,7 +194,6 @@ export function useInfiniteScrollQuery<
     nextFetchPolicy,
   });
 
-  // Validate structure in DEV env only
   if (isDevEnv && data) {
     assertValueAtPath({
       source: (data as Record<string, unknown>)[queryFieldName],
@@ -227,7 +226,7 @@ export function useInfiniteScrollQuery<
     // past the overwritten (page-1-only) cache, and the next loadMore skips
     // a page — leaving `undefined` holes that make the field unreadable.
     lastVariablesRef.current = { ...initialVariables } as TVars;
-    fetchMoreErrorRef.current = undefined; // 👈 reset error state
+    fetchMoreErrorRef.current = undefined;
 
     try {
       await refetch(initialVariables as Partial<TVars>);
@@ -332,8 +331,6 @@ export function useInfiniteScrollQuery<
     hasMore,
     loadMore,
     reload: reloadManual,
-    // No query error and no fetchMore error → the ref's empty state
-    // (`undefined`), matching the documented `error?: ErrorLike` contract.
     error: queryError ?? fetchMoreErrorRef.current,
   };
 }
