@@ -7,21 +7,32 @@ import {
 } from '@monorepo/expo/shared/clients';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  HMIS_PROD_CLIENT_SEARCH_FIELDS,
+  CLIENT_DETAIL_FIELDS_DEFAULT,
+  CLIENT_SEARCH_FIELDS_DEFAULT,
   HMIS_PROD_CLIENTS_LONG_PATH,
+  HMIS_PROD_CLIENTS_PATH,
+  HMIS_PROD_CURRENT_USER_PATH,
 } from './constants';
 import { ErrorHmisProd } from './errors';
 import type {
+  GetClientPayloadHmisProd,
+  HmisProdClientDetail,
   HmisProdRequestContext,
   HmisProdRequestDebugInfo,
   HmisProdRequestResult,
   SearchClientsPayloadHmisProd,
   SearchClientsResponseHmisProd,
 } from './types';
+import {
+  logHmisProdError,
+  logHmisProdRequest,
+  logHmisProdResponse,
+} from './utils';
 
 /**
  * Direct HMIS ("prod") REST client — experimental, gated by
- * `FeatureFlags.HMIS_PROD_DEMO`.
+ * `FeatureFlags.HMIS_PROD_DEMO`. Named `Api…` so the transport class isn't
+ * confused with an HMIS client (person) record.
  *
  * Feature-private: not exported from the `lib/hmisProd` barrel, so it can't
  * leak into other screens and goes away with the feature.
@@ -40,9 +51,8 @@ import type {
 const DEFAULT_SEARCH_PAYLOAD = {
   expand: 'userCreated,userUpdated',
   page: 1,
-  per_page: 10,
+  per_page: 50, // pagination not implemented, so setting this high
   sort: '-last_updated',
-  fields: HMIS_PROD_CLIENT_SEARCH_FIELDS,
 } as const;
 
 /**
@@ -87,20 +97,86 @@ const getHmisAuthDomainHost = async (): Promise<string | null> => {
 /** Clarity answers unauthenticated web-style POSTs with its Yii CSRF guard. */
 const CSRF_MISMATCH_PATTERN = /csrf token mismatch/i;
 
-class ClientHmisProd {
+class ApiClientHmisProd {
   constructor(private readonly baseUrl: string) {}
 
   /**
    * Search clients via Clarity's "long" endpoint.
    *
    * POST /api1/clients/long
+   *
+   * `payload.fields` overrides `CLIENT_SEARCH_FIELDS_DEFAULT`; the client
+   * joins it into Clarity's comma-separated `fields` value.
    */
   searchClients(
     payload: SearchClientsPayloadHmisProd,
   ): Promise<HmisProdRequestResult<SearchClientsResponseHmisProd>> {
+    const { fields = CLIENT_SEARCH_FIELDS_DEFAULT, ...rest } = payload;
+
     return this.post<SearchClientsResponseHmisProd>(
       HMIS_PROD_CLIENTS_LONG_PATH,
-      { ...DEFAULT_SEARCH_PAYLOAD, ...payload },
+      {
+        ...DEFAULT_SEARCH_PAYLOAD,
+        ...rest,
+        fields: fields.join(','),
+        as_array: '1',
+      },
+    );
+  }
+
+  /**
+   * Fetch a single client via Clarity's client endpoint.
+   *
+   * GET /api1/clients/{id}?fields=...
+   *
+   * Defaults to the fields the Profile tab renders (see
+   * `CLIENT_DETAIL_FIELDS_DEFAULT`) — pass `payload.fields` to override;
+   * the client joins it into Clarity's comma-separated `fields` value.
+   * Sub-fields are requested through `screenValues.*` and read back from the
+   * nested `screenValues` object.
+   */
+  async getClient(
+    id: string,
+    payload?: GetClientPayloadHmisProd,
+  ): Promise<HmisProdRequestResult<HmisProdClientDetail>> {
+    const fields = payload?.fields ?? CLIENT_DETAIL_FIELDS_DEFAULT;
+
+    const { data, debugInfo } = await this.get<
+      HmisProdClientDetail | HmisProdClientDetail[]
+    >(`${HMIS_PROD_CLIENTS_PATH}/${encodeURIComponent(id)}`, {
+      // Deliberately no `as_array` param
+      fields: fields.join(','),
+    });
+
+    // Unwrap defensively in case the response comes back as a one-item list.
+    const client = Array.isArray(data) ? data[0] : data;
+
+    if (!client) {
+      throw new ErrorHmisProd('Resource not found', 404, debugInfo);
+    }
+
+    return { data: client, debugInfo };
+  }
+
+  /**
+   * Lightweight authenticated session check — `GET /api1/current-user?fields=id`.
+   *
+   * Used by `useHmisProdSessionWatch` when the app returns to the foreground:
+   * it resolves while the stored HMIS token still works, and throws
+   * `ErrorHmisProd` (our no-token fast-fail, or a 401/403 from Clarity) when
+   * the session is gone, so callers can force a clean sign-out. The response
+   * is intentionally discarded — this endpoint is simply the cheapest
+   * authenticated call; a dedicated session endpoint would only change this
+   * method.
+   *
+   * Accepts an optional `AbortSignal` so callers can bound how long the check
+   * may take — a request that never settles must not wedge its caller.
+   */
+  async checkSession(options?: { signal?: AbortSignal }): Promise<void> {
+    await this.get<unknown>(
+      HMIS_PROD_CURRENT_USER_PATH,
+      { fields: 'id' },
+      options,
     );
   }
 
@@ -127,6 +203,8 @@ class ClientHmisProd {
     // Fail fast with an actionable message instead of letting Clarity reject
     // the unauthenticated POST with its opaque CSRF error.
     if (!requestContext.hasAuthToken) {
+      logHmisProdError(url, 'No HMIS auth token found');
+
       throw new ErrorHmisProd(
         'Not logged in to HMIS - please log in with your HMIS credentials',
         401,
@@ -138,6 +216,9 @@ class ClientHmisProd {
       );
     }
 
+    logHmisProdRequest(init.method ?? 'GET', url, init.body);
+
+    const startedAt = Date.now();
     const { response, responseText } = await this.fetchWithBody(
       url,
       init,
@@ -152,13 +233,19 @@ class ClientHmisProd {
     };
 
     if (!response.ok) {
+      logHmisProdError(url, {
+        status: response.status,
+        body: parseHmisProdBody(responseText),
+      });
+
       throw this.buildApiError(response, responseText, debugInfo);
     }
 
-    return {
-      data: parseHmisProdBody(responseText) as T,
-      debugInfo,
-    };
+    const data = parseHmisProdBody(responseText) as T;
+
+    logHmisProdResponse(url, response.status, Date.now() - startedAt, data);
+
+    return { data, debugInfo };
   }
 
   /**
@@ -183,12 +270,24 @@ class ClientHmisProd {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
+      logHmisProdError(url, message);
+
       throw new ErrorHmisProd(message, 0, {
         ...requestContext,
         response: null,
         requestError: message,
       });
     }
+  }
+
+  private get<T>(
+    path: string,
+    params: Record<string, string>,
+    options?: { signal?: AbortSignal },
+  ): Promise<HmisProdRequestResult<T>> {
+    const query = new URLSearchParams(params).toString();
+
+    return this.request<T>(`${path}?${query}`, options);
   }
 
   private post<T>(
@@ -251,8 +350,8 @@ class ClientHmisProd {
   }
 }
 
-// Factory function to create ClientHmisProd
-export const createClientHmisProd = (baseUrl: string) =>
-  new ClientHmisProd(baseUrl);
+// Factory function to create ApiClientHmisProd
+export const createApiClientHmisProd = (baseUrl: string) =>
+  new ApiClientHmisProd(baseUrl);
 
-export { ClientHmisProd };
+export { ApiClientHmisProd };

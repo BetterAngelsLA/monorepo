@@ -1,13 +1,18 @@
 import { ApolloLink, Observable } from '@apollo/client';
+import { formatDataForLog, formatResponseForLog } from '../../common/apiDebug';
 
 export const loggerLink = new ApolloLink(
   (operation: ApolloLink.Operation, forward) => {
+    const operationName = operation.operationName || '(anonymous)';
+
     console.log(
       '[GraphQL req]',
-      operation.operationName || '(anonymous)',
-      operation.variables && Object.keys(operation.variables).length > 0
-        ? operation.variables
-        : '',
+      operationName,
+      formatDataForLog(
+        operation.variables && Object.keys(operation.variables).length > 0
+          ? operation.variables
+          : '',
+      ),
     );
 
     // If there’s no next link, just return an empty observable
@@ -22,16 +27,16 @@ export const loggerLink = new ApolloLink(
         next: (result) => {
           console.log(
             '[GraphQL resp]',
-            operation.operationName || '(anonymous)',
-            result,
+            operationName,
+            formatResponseForLog(result),
           );
           observer.next(result);
         },
         error: (error) => {
           console.error(
             '[GraphQL error]',
-            operation.operationName || '(anonymous)',
-            error,
+            operationName,
+            formatDataForLog(error),
           );
           observer.error(error);
         },
