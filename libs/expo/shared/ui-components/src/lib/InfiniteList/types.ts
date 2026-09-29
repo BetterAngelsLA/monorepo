@@ -37,9 +37,9 @@ type InfiniteListBaseProps<T> = {
   ErrorViewComponent?: ComponentType<unknown> | ReactElement | null;
   /**
    * When this value changes the list scrolls back to the top.
-   * Pass a string representing the query inputs (filters, search, ordering)
-   * so a shorter result set can never leave the viewport scrolled past its
-   * content (blank list).
+   * Pass the stable identity of the data source — typically the `queryKey`
+   * returned by `useInfiniteScrollQuery` — so a shorter result set can never
+   * leave the viewport scrolled past its content (blank list).
    */
   scrollResetKey?: string;
 };

@@ -50,17 +50,26 @@ export function ClientProfileList({
   style,
   horizontalPadding = pagePaddingHorizontal,
 }: TProps) {
-  const { items, total, loading, reloading, loadMore, reload, hasMore, error } =
-    useInfiniteScrollQuery<
-      TClientProfile,
-      ClientProfilesQuery,
-      ClientProfilesQueryVariables
-    >({
-      document: ClientProfilesDocument,
-      queryFieldName: 'clientProfiles',
-      variables: { filters, ordering: ordering || undefined },
-      pageSize: paginationLimit,
-    });
+  const {
+    items,
+    total,
+    loading,
+    reloading,
+    loadMore,
+    reload,
+    hasMore,
+    error,
+    queryKey,
+  } = useInfiniteScrollQuery<
+    TClientProfile,
+    ClientProfilesQuery,
+    ClientProfilesQueryVariables
+  >({
+    document: ClientProfilesDocument,
+    queryFieldName: 'clientProfiles',
+    variables: { filters, ordering: ordering || undefined },
+    pageSize: paginationLimit,
+  });
 
   if (error) console.error(error);
 
@@ -68,13 +77,6 @@ export function ClientProfileList({
     (item: TClientProfile) => renderItem(item),
     [renderItem],
   );
-
-  // Reset the list's scroll position whenever the query inputs change so a
-  // shorter result set can never leave the viewport scrolled past its content.
-  const scrollResetKey = JSON.stringify({
-    filters: filters ?? null,
-    ordering: ordering || null,
-  });
 
   return (
     <View style={[styles.container, style]}>
@@ -88,7 +90,7 @@ export function ClientProfileList({
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="client"
-        scrollResetKey={scrollResetKey}
+        scrollResetKey={queryKey}
         renderResultsHeader={(visible, totalItems) => (
           <View
             style={[

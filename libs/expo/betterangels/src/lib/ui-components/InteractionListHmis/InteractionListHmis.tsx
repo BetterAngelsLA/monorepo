@@ -53,6 +53,7 @@ export function InteractionListHmis(props: TProps) {
     reload,
     hasMore,
     error,
+    queryKey,
   } = useInfiniteScrollQuery<
     HmisNoteType,
     InteractionListHmisQuery,
@@ -71,13 +72,6 @@ export function InteractionListHmis(props: TProps) {
     (item: HmisNoteType) => renderItem(item),
     [renderItem],
   );
-
-  // Reset the list's scroll position whenever the query inputs change so a
-  // shorter result set can never leave the viewport scrolled past its content.
-  const scrollResetKey = JSON.stringify({
-    filters: filters ?? null,
-    order: order ?? null,
-  });
 
   if (error) {
     console.error(error);
@@ -102,7 +96,7 @@ export function InteractionListHmis(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="note"
-        scrollResetKey={scrollResetKey}
+        scrollResetKey={queryKey}
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}

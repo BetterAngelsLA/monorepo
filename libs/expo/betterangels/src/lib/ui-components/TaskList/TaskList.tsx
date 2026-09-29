@@ -42,28 +42,30 @@ export function TaskList(props: TProps) {
     style,
   } = props;
 
-  const { items, total, loading, loadMore, reload, reloading, hasMore, error } =
-    useInfiniteScrollQuery<TaskType, TasksQuery, TasksQueryVariables>({
-      document: TasksDocument,
-      queryFieldName: 'tasks',
-      variables: {
-        filters,
-        ordering: order || undefined,
-      },
-      pageSize: paginationLimit,
-    });
+  const {
+    items,
+    total,
+    loading,
+    loadMore,
+    reload,
+    reloading,
+    hasMore,
+    error,
+    queryKey,
+  } = useInfiniteScrollQuery<TaskType, TasksQuery, TasksQueryVariables>({
+    document: TasksDocument,
+    queryFieldName: 'tasks',
+    variables: {
+      filters,
+      ordering: order || undefined,
+    },
+    pageSize: paginationLimit,
+  });
 
   const renderItemFn = useCallback(
     (item: TaskType) => renderItem(item),
     [renderItem],
   );
-
-  // Reset the list's scroll position whenever the query inputs change so a
-  // shorter result set can never leave the viewport scrolled past its content.
-  const scrollResetKey = JSON.stringify({
-    filters: filters ?? null,
-    order: order ?? null,
-  });
 
   if (error) {
     console.error(error);
@@ -87,7 +89,7 @@ export function TaskList(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="task"
-        scrollResetKey={scrollResetKey}
+        scrollResetKey={queryKey}
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}

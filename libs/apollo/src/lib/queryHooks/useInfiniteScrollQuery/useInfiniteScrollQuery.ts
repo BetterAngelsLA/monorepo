@@ -66,6 +66,7 @@
  *   loadMore:    () => void,   // fetches next page
  *   reload:      () => void,   // refetches initial page (manual)
  *   error?:      ApolloError,  // query or network error or fetchMore error.
+ *   queryKey:    string,       // stable identity of the query inputs (same key ⇒ same dataset)
  * }
  *
  * ---------------------------------------------------------------------------
@@ -91,6 +92,7 @@ import {
   type WatchQueryFetchPolicy,
 } from '@apollo/client';
 import { useApolloClient, useQuery } from '@apollo/client/react';
+import { canonicalStringify } from '@apollo/client/utilities';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDeepCompareMemoize } from 'use-deep-compare-effect';
 import { DEFAULT_QUERY_PAGE_SIZE } from '../../cachePolicy/constants';
@@ -166,6 +168,16 @@ export function useInfiniteScrollQuery<
       ...queryPolicyConfig,
     });
   }, [memoizedVariables, pageSize, queryPolicyConfig]);
+
+  // Stable identity of the query inputs (variables + page size), built with
+  // Apollo's canonical serializer. Unlike the items array, it only changes
+  // when the query is replaced — loading another page does not touch it — so
+  // consumers can use it to reset UI state (e.g. list scroll position) when
+  // the dataset changes.
+  const queryKey = useMemo(
+    () => canonicalStringify(initialVariables),
+    [initialVariables],
+  );
 
   const lastVariablesRef = useRef<TVars>(initialVariables);
 
@@ -311,6 +323,7 @@ export function useInfiniteScrollQuery<
   return {
     items: stableItems,
     total,
+    queryKey,
     loading: isLoading,
     loadingMore: isLoadingMore,
     reloading: isManualReloading,

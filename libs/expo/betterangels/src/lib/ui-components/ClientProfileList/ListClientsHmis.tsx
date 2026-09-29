@@ -41,19 +41,28 @@ export function ListClientsHmis(props: TProps) {
     renderItem,
     style,
   } = props;
-  const { items, total, loading, reloading, hasMore, loadMore, reload, error } =
-    useInfiniteScrollQuery<
-      TClientProfileResultHmis,
-      ClientProfilesHmisQuery,
-      ClientProfilesHmisQueryVariables
-    >({
-      document: ClientProfilesHmisDocument,
-      queryFieldName: 'hmisClientProfiles',
-      pageSize: paginationLimit,
-      variables: { filters },
-      fetchPolicy: 'cache-and-network',
-      nextFetchPolicy: 'cache-first',
-    });
+  const {
+    items,
+    total,
+    loading,
+    reloading,
+    hasMore,
+    loadMore,
+    reload,
+    error,
+    queryKey,
+  } = useInfiniteScrollQuery<
+    TClientProfileResultHmis,
+    ClientProfilesHmisQuery,
+    ClientProfilesHmisQueryVariables
+  >({
+    document: ClientProfilesHmisDocument,
+    queryFieldName: 'hmisClientProfiles',
+    pageSize: paginationLimit,
+    variables: { filters },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
+  });
 
   if (error) {
     console.error(error);
@@ -66,10 +75,6 @@ export function ListClientsHmis(props: TProps) {
     [renderItem],
   );
 
-  // Reset the list's scroll position whenever the query inputs change so a
-  // shorter result set can never leave the viewport scrolled past its content.
-  const scrollResetKey = JSON.stringify({ filters: filters ?? null });
-
   if (items.length === 0 && loading) {
     return <ListLoadingView fullScreen />;
   }
@@ -78,7 +83,7 @@ export function ListClientsHmis(props: TProps) {
     <View style={[styles.container, style]}>
       <InfiniteList<HmisClientProfileType>
         modelName="client"
-        scrollResetKey={scrollResetKey}
+        scrollResetKey={queryKey}
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
