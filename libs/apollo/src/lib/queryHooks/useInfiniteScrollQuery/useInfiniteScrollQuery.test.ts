@@ -422,4 +422,53 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
       pagination: { offset: 0, limit: 3 },
     });
   });
+
+  it('returns a stable queryKey that only changes when the query inputs change', async () => {
+    const fetchMore = vi.fn().mockResolvedValue(undefined);
+
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        data: {
+          tasks: { results: [{ id: 1 }, { id: 2 }, { id: 3 }], totalCount: 6 },
+        },
+        variables: { pagination: { offset: 0, limit: 3 } },
+        fetchMore: fetchMore as unknown as MockUseQueryResult<
+          TasksData,
+          TasksVars
+        >['fetchMore'],
+        networkStatus: NetworkStatus.ready,
+      }),
+    );
+
+    let search = 'a';
+
+    const { result, rerender } = renderHookWithApollo(() =>
+      useInfiniteScrollQuery<{ id: number }, TasksData, TasksVars>({
+        document: TasksDocument,
+        queryFieldName: 'tasks',
+        variables: {
+          filters: { q: search },
+          pagination: { offset: 0, limit: 3 },
+        },
+        pageSize: 3,
+      }),
+    );
+
+    const initialKey = result.current.queryKey;
+
+    // re-rendering with deep-equal variables keeps the same key
+    rerender();
+    expect(result.current.queryKey).toBe(initialKey);
+
+    // loading another page must not change the key
+    await act(async () => {
+      result.current.loadMore();
+    });
+    expect(result.current.queryKey).toBe(initialKey);
+
+    // changing the query inputs produces a new key
+    search = 'b';
+    rerender();
+    expect(result.current.queryKey).not.toBe(initialKey);
+  });
 });
