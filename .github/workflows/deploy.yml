@@ -1,0 +1,285 @@
+# 🚀 Deploy — privileged lane (see docs/ci-contract.md).
+#
+# Everything here needs a capability (AWS OIDC, ECR, EXPO_TOKEN, write
+# GITHUB_TOKEN), so it only runs for provenance that PR code cannot emit:
+#   - push to main
+#   - pull_request from this repository (head.repo.fork == false)
+#
+# merge_group is intentionally NOT included: queue runs must stay
+# secret-free. Deploys happen after merge, from main.
+name: 🚀 Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  AWS_REGION: us-west-2
+  AWS_ACCOUNT_ID: 174477281453
+  ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+  ECR_REGISTRY: 174477281453.dkr.ecr.us-west-2.amazonaws.com
+  COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
+
+concurrency:
+  group: deploy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    name: Deploy (preview)
+    if: >-
+      github.event_name == 'push'
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+    runs-on: ubuntu-latest
+    environment: preview
+    timeout-minutes: 90
+    permissions:
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
+      id-token: write # Required for requesting the JWT
+      pull-requests: write # Required to post PR comments
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
+
+      # This line is needed for nx affected to work when CI is running on a PR
+      - name: 🔀 Track main if PR
+        if: github.event_name == 'pull_request'
+        run: git branch --track main origin/main
+
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: 🔧 Set Environment Variables
+        run: |
+          RAW_BRANCH_NAME=${{ github.head_ref || github.ref_name }}
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
+
+          # Sanitize branch name by replacing '/' with '-' and removing any other invalid characters
+          BRANCH_NAME=$(echo $RAW_BRANCH_NAME | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+
+          if [ "$BRANCH_NAME" == "main" ]; then
+            IMAGE_TAG_PREFIX="main"
+          else
+            IMAGE_TAG_PREFIX="dev-$BRANCH_NAME"
+          fi
+
+          DOCKER_TAG="$IMAGE_TAG_PREFIX-$SHORT_SHA"
+
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
+          echo "CACHE_IMAGE=${{ env.ECR_REGISTRY }}/monorepo:buildcache" >> $GITHUB_ENV
+          echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-${BRANCH_NAME}" >> $GITHUB_ENV
+
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build Monorepo Image with ECR layer caching
+      # - Pull from main cache (shared) + branch cache for incremental builds.
+      #   On main these are the same ref, which is harmless for cache imports.
+      # - Push to main cache on main pushes, branch cache otherwise.
+      - name: 🏗️ Build Monorepo Docker image
+        uses: docker/build-push-action@v7
+        with:
+          file: Dockerfile
+          load: true
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main
+            type=registry,ref=${{ env.BRANCH_CACHE }}
+          cache-to: |
+            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || format('type=registry,ref={0},mode=max', env.BRANCH_CACHE) }}
+
+      - name: 🔑 Prep Container Permissions
+        run: |
+          sudo chown -R 1000:1000 $GITHUB_WORKSPACE
+          sudo setfacl --modify user:1000:rw /var/run/docker.sock
+          sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
+
+      - name: Spin up monorepo environment
+        run: |
+          docker compose up -d
+
+      - name: 🛠️ Build and Push Artifacts
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t build --configuration preview
+          EOF
+        env:
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+
+      - name: 💬 Post preview link to PR
+        if: github.event_name == 'pull_request'
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t post-pr-preview
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+
+      - name: 🚀 Deploy Changes
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t deploy --configuration preview
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⏹️ Spin down monorepo environment
+        if: always()
+        run: |
+          docker compose down
+          sudo chown -R 1001:1001 $GITHUB_WORKSPACE
+
+  production:
+    name: Deploy (production)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 90
+    permissions:
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
+      id-token: write # Required for requesting the JWT
+      pull-requests: write # Parity with the preview job (shared scripts may post comments)
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
+
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: 🔧 Set Environment Variables
+        run: |
+          RAW_BRANCH_NAME=${{ github.head_ref || github.ref_name }}
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
+
+          # Sanitize branch name by replacing '/' with '-' and removing any other invalid characters
+          BRANCH_NAME=$(echo $RAW_BRANCH_NAME | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+
+          if [ "$BRANCH_NAME" == "main" ]; then
+            IMAGE_TAG_PREFIX="main"
+          else
+            IMAGE_TAG_PREFIX="dev-$BRANCH_NAME"
+          fi
+
+          DOCKER_TAG="$IMAGE_TAG_PREFIX-$SHORT_SHA"
+
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
+          echo "CACHE_IMAGE=${{ env.ECR_REGISTRY }}/monorepo:buildcache" >> $GITHUB_ENV
+          echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-${BRANCH_NAME}" >> $GITHUB_ENV
+
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build Monorepo Image with ECR layer caching
+      # - Pull from main cache (shared) + branch cache for incremental builds.
+      #   On main these are the same ref, which is harmless for cache imports.
+      # - Push to main cache on main pushes, branch cache otherwise.
+      - name: 🏗️ Build Monorepo Docker image
+        uses: docker/build-push-action@v7
+        with:
+          file: Dockerfile
+          load: true
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main
+            type=registry,ref=${{ env.BRANCH_CACHE }}
+          cache-to: |
+            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || format('type=registry,ref={0},mode=max', env.BRANCH_CACHE) }}
+
+      - name: 🔑 Prep Container Permissions
+        run: |
+          sudo chown -R 1000:1000 $GITHUB_WORKSPACE
+          sudo setfacl --modify user:1000:rw /var/run/docker.sock
+          sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
+
+      - name: Spin up monorepo environment
+        run: |
+          docker compose up -d
+
+      - name: 🛠️ Build and Push Artifacts
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t build --configuration production
+          EOF
+        env:
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+
+      - name: 🏗️ Push Monorepo Docker image
+        run: |
+          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+
+      - name: 🚀 Deploy Changes
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t deploy --configuration production
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⏹️ Spin down monorepo environment
+        if: always()
+        run: |
+          docker compose down
+          sudo chown -R 1001:1001 $GITHUB_WORKSPACE
