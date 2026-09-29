@@ -1,7 +1,7 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TaskType, toTaskFilter } from '../../apollo';
 import { useUser } from '../../hooks';
@@ -9,13 +9,17 @@ import { useUserTeamPreference } from '../../state';
 import { pagePaddingHorizontal } from '../../static';
 import {
   ModelFilters,
+  SortButton,
   TClientProfileKind,
   TModelFilters,
+  TSortDirection,
   TaskCard,
   TaskList,
+  TaskListHeader,
   toModelFilterValues,
 } from '../../ui-components';
 import { getInitialTaskFilters } from './getInitialTaskFilters';
+import { getTaskOrder } from './getTaskOrder';
 
 export default function Tasks() {
   const { user } = useUser();
@@ -25,6 +29,16 @@ export default function Tasks() {
     getInitialTaskFilters({ teamId: teamPreference }),
   );
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
+  const [sortDirection, setSortDirection] =
+    useState<TSortDirection>('newestFirst');
+
+  const taskOrder = useMemo(() => getTaskOrder(sortDirection), [sortDirection]);
+
+  const toggleSortDirection = useCallback(() => {
+    setSortDirection((prev) =>
+      prev === 'newestFirst' ? 'oldestFirst' : 'newestFirst',
+    );
+  }, []);
 
   const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
@@ -102,7 +116,23 @@ export default function Tasks() {
         ]}
       />
 
-      <TaskList filters={serverFilters} renderItem={renderTaskItem} />
+      <TaskList
+        filters={serverFilters}
+        order={taskOrder}
+        renderItem={renderTaskItem}
+        renderHeader={(visible, total) => (
+          <TaskListHeader
+            visibleTasks={visible}
+            totalTasks={total ?? 0}
+            actionItem={
+              <SortButton
+                direction={sortDirection}
+                onPress={toggleSortDirection}
+              />
+            }
+          />
+        )}
+      />
     </View>
   );
 }
