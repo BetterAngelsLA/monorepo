@@ -26,7 +26,7 @@ vi.mock('@apollo/client/react', async () => {
 });
 
 // Mock policy reader
-vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
+vi.mock('../../cacheStore/utils/queryPolicyConfigRegistry', () => {
   return {
     getQueryPolicyConfigFromCache: (_cache: unknown, fieldName: string) => {
       if (fieldName === 'tasks') {

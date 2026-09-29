@@ -96,7 +96,7 @@ import { canonicalStringify } from '@apollo/client/utilities';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDeepCompareMemoize } from 'use-deep-compare-effect';
 import { DEFAULT_QUERY_PAGE_SIZE } from '../../cachePolicy/constants';
-import { getQueryPolicyConfigFromCache } from '../../cacheStore/utils/getQueryPolicyConfigFromCache';
+import { getQueryPolicyConfigFromCache } from '../../cacheStore/utils/queryPolicyConfigRegistry';
 import { toErrorLike } from '../../errors';
 import { getApolloRuntimeConfig } from '../../runtime';
 import {
@@ -195,12 +195,12 @@ export function useInfiniteScrollQuery<
     nextFetchPolicy,
   });
 
-  // Validate structure in DEV env
-  if (data) {
+  // Validate structure in DEV env only
+  if (isDevEnv && data) {
     assertValueAtPath({
       source: (data as Record<string, unknown>)[queryFieldName],
       path: queryPolicyConfig.itemsPath,
-      shouldThrow: isDevEnv,
+      shouldThrow: true,
     });
   }
 
