@@ -24,7 +24,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<TaskFilter>;
-  order?: TaskOrder | null;
+  order?: TaskOrder | TaskOrder[] | null;
   paginationLimit?: number;
   headerStyle?: ViewStyle;
   renderHeader?: TRenderListResultsHeader;
