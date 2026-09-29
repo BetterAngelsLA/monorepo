@@ -1,5 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { LoadingView } from '@monorepo/expo/shared/ui-components';
+import { router } from 'expo-router';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer, TaskStatusBtn } from '../../ui-components';
 
@@ -25,6 +27,16 @@ export default function Task({
   });
 
   const task = data?.task;
+  const clientProfileId = task?.clientProfile?.id;
+
+  const handleClientPress = useCallback(() => {
+    if (!clientProfileId) return;
+
+    router.navigate({
+      pathname: `/client/${clientProfileId}`,
+      params: { arrivedFrom: `/task/${id}` },
+    });
+  }, [clientProfileId, id]);
 
   if (loading) {
     return <LoadingView />;
@@ -40,7 +52,10 @@ export default function Task({
         <TaskUpdatedAt updatedAt={task.updatedAt} />
         <View>
           {task.clientProfile && (
-            <TaskClient clientProfile={task.clientProfile} />
+            <TaskClient
+              clientProfile={task.clientProfile}
+              onPress={handleClientPress}
+            />
           )}
           <TaskCreatedBy
             organization={task.organization}

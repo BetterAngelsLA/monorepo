@@ -12,11 +12,13 @@ type TaskCardVariant = 'default' | 'withoutClient';
 type TaskCardProps = {
   task: TaskType;
   onPress?: (task: TaskType) => void;
+  onClientPress?: (clientProfileId: string) => void;
   variant?: TaskCardVariant;
 };
 
 export function TaskCard(props: TaskCardProps) {
-  const { task, onPress, variant = 'default' } = props;
+  const { task, onPress, onClientPress, variant = 'default' } = props;
+  const { clientProfile, hmisClientProfile } = task;
 
   return (
     <View style={styles.container}>
@@ -29,19 +31,27 @@ export function TaskCard(props: TaskCardProps) {
           {task.summary}
         </TextBold>
 
-        {variant !== 'withoutClient' && task.clientProfile && (
+        {variant !== 'withoutClient' && clientProfile && (
           <TaskCardClient
-            firstName={task.clientProfile.firstName}
-            lastName={task.clientProfile.lastName}
-            profilePhotoUrl={task.clientProfile.profilePhoto?.url}
+            firstName={clientProfile.firstName}
+            lastName={clientProfile.lastName}
+            profilePhotoUrl={clientProfile.profilePhoto?.url}
+            onPress={
+              onClientPress ? () => onClientPress(clientProfile.id) : undefined
+            }
           />
         )}
 
-        {variant !== 'withoutClient' && task.hmisClientProfile && (
+        {variant !== 'withoutClient' && hmisClientProfile && (
           <TaskCardClient
-            firstName={task.hmisClientProfile.firstName}
-            lastName={task.hmisClientProfile.lastName}
-            profilePhotoUrl={task.hmisClientProfile.profilePhoto?.url}
+            firstName={hmisClientProfile.firstName}
+            lastName={hmisClientProfile.lastName}
+            profilePhotoUrl={hmisClientProfile.profilePhoto?.url}
+            onPress={
+              onClientPress
+                ? () => onClientPress(hmisClientProfile.id)
+                : undefined
+            }
           />
         )}
 

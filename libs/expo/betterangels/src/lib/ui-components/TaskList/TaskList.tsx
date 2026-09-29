@@ -24,7 +24,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<TaskFilter>;
-  order?: TaskOrder | null;
+  order?: TaskOrder | TaskOrder[] | null;
   paginationLimit?: number;
   headerStyle?: ViewStyle;
   renderHeader?: TRenderListResultsHeader;
@@ -58,6 +58,13 @@ export function TaskList(props: TProps) {
     [renderItem],
   );
 
+  // Reset the list's scroll position whenever the query inputs change so a
+  // shorter result set can never leave the viewport scrolled past its content.
+  const scrollResetKey = JSON.stringify({
+    filters: filters ?? null,
+    order: order ?? null,
+  });
+
   if (error) {
     console.error(error);
 
@@ -80,6 +87,7 @@ export function TaskList(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="task"
+        scrollResetKey={scrollResetKey}
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}

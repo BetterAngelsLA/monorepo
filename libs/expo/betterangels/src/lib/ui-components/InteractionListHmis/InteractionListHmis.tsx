@@ -72,6 +72,13 @@ export function InteractionListHmis(props: TProps) {
     [renderItem],
   );
 
+  // Reset the list's scroll position whenever the query inputs change so a
+  // shorter result set can never leave the viewport scrolled past its content.
+  const scrollResetKey = JSON.stringify({
+    filters: filters ?? null,
+    order: order ?? null,
+  });
+
   if (error) {
     console.error(error);
 
@@ -95,6 +102,7 @@ export function InteractionListHmis(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="note"
+        scrollResetKey={scrollResetKey}
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}

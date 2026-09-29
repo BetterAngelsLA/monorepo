@@ -66,6 +66,10 @@ export function ListClientsHmis(props: TProps) {
     [renderItem],
   );
 
+  // Reset the list's scroll position whenever the query inputs change so a
+  // shorter result set can never leave the viewport scrolled past its content.
+  const scrollResetKey = JSON.stringify({ filters: filters ?? null });
+
   if (items.length === 0 && loading) {
     return <ListLoadingView fullScreen />;
   }
@@ -74,6 +78,7 @@ export function ListClientsHmis(props: TProps) {
     <View style={[styles.container, style]}>
       <InfiniteList<HmisClientProfileType>
         modelName="client"
+        scrollResetKey={scrollResetKey}
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}

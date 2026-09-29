@@ -69,6 +69,13 @@ export function ClientProfileList({
     [renderItem],
   );
 
+  // Reset the list's scroll position whenever the query inputs change so a
+  // shorter result set can never leave the viewport scrolled past its content.
+  const scrollResetKey = JSON.stringify({
+    filters: filters ?? null,
+    ordering: ordering || null,
+  });
+
   return (
     <View style={[styles.container, style]}>
       <InfiniteList<TClientProfile>
@@ -81,6 +88,7 @@ export function ClientProfileList({
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="client"
+        scrollResetKey={scrollResetKey}
         renderResultsHeader={(visible, totalItems) => (
           <View
             style={[

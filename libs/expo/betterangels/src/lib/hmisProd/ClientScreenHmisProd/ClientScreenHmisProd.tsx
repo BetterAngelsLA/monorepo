@@ -90,6 +90,7 @@ export function ClientScreenHmisProd({ Logo }: { Logo: ElementType }) {
           modelName="client"
           data={clients}
           keyExtractor={(client) => client.id}
+          scrollResetKey={search}
           totalItems={data?._meta?.total_count ?? clients.length}
           renderItem={(client) => <ClientCardHmis client={client} />}
           loading={isFetching}
