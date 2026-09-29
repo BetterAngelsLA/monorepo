@@ -1,6 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { FlashList } from '@shopify/flash-list';
-import { useCallback, useMemo } from 'react';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyListView } from './EmptyListView';
 import { ErrorListView } from './ErrorListView';
@@ -38,10 +38,23 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     ItemSeparatorComponent,
     ErrorViewComponent,
     onRefresh,
+    scrollResetKey,
     ...rest
   } = props;
 
   const isAnyLoading = loading || loadingMore || refreshing;
+
+  const listRef = useRef<FlashListRef<T> | null>(null);
+
+  // When the query inputs change (filters, search, ordering) the result set is
+  // replaced and may be shorter than before. Without this the list can keep a
+  // stale scroll offset from the previous result set, leaving the viewport on
+  // blank space with no visible cards (BACS-123).
+  useEffect(() => {
+    if (scrollResetKey === undefined) return;
+
+    listRef.current?.scrollToTop({ animated: false });
+  }, [scrollResetKey]);
 
   const renderItemStable = useCallback(
     ({ item }: { item: T }) => renderItem(item),
@@ -121,6 +134,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
       )}
 
       <FlashList<T>
+        ref={listRef}
         data={data}
         renderItem={renderItemStable}
         onEndReached={onEndReached}
