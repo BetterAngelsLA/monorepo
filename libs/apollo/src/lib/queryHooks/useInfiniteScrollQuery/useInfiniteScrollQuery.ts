@@ -222,7 +222,12 @@ export function useInfiniteScrollQuery<
   const reloadManual = useCallback(async () => {
     isManualReloadRef.current = true;
 
-    lastVariablesRef.current = initialVariables;
+    // Fresh identity invalidates in-flight fetchMore requests: the guards
+    // below compare `lastVariablesRef.current` by reference. Without this, a
+    // page-2 response arriving after the reload advances the pagination base
+    // past the overwritten (page-1-only) cache, and the next loadMore skips
+    // a page — leaving `undefined` holes that make the field unreadable.
+    lastVariablesRef.current = { ...initialVariables } as TVars;
     fetchMoreErrorRef.current = undefined; // 👈 reset error state
 
     try {
@@ -309,12 +314,13 @@ export function useInfiniteScrollQuery<
         lastVariablesRef.current = nextVariables;
       })
       .catch((err) => {
-        console.error('[useInfiniteScrollQuery] fetchMore failed:', err);
-
+        // Ignore failures from a superseded request (variables changed or a
+        // manual reload happened while it was in flight).
         if (lastVariablesRef.current !== baseVariables) {
           return;
         }
 
+        console.error('[useInfiniteScrollQuery] fetchMore failed:', err);
         fetchMoreErrorRef.current = toErrorLike(err);
         isFetchMoreInFlightRef.current = false;
       });
