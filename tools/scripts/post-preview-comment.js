@@ -74,9 +74,13 @@ async function main() {
 
   // Get the event payload safely
   const event = getEventPayload(GITHUB_EVENT_PATH);
-  const prNumber = event.pull_request?.number;
+  // Fall back to PR_NUMBER for runs that are not pull_request events
+  // (e.g. the maintainer-triggered `/run-full` bridge).
+  const prNumber =
+    event.pull_request?.number ??
+    (process.env.PR_NUMBER ? Number(process.env.PR_NUMBER) : undefined);
   if (!prNumber) {
-    throw new Error('Not a pull_request event.');
+    throw new Error('Not a pull_request event and PR_NUMBER is not set.');
   }
   const [owner, repo] = GITHUB_REPOSITORY.split('/');
 

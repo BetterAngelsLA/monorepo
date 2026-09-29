@@ -1,0 +1,328 @@
+# 🚀 Full Run — maintainer-triggered full pipeline for FORK pull requests.
+#
+# Why: fork PRs cannot run the privileged pipeline (no secrets on
+# `pull_request` events) — previously the only option was mirroring the branch
+# into this repository. A maintainer can now comment `/run-full` on the PR (or
+# dispatch this workflow with a PR number).
+#
+# Security model:
+#   - For `issue_comment`, this workflow file is resolved from the DEFAULT
+#     BRANCH, so the PR cannot modify the gate.
+#   - Runs only for comments from OWNER / MEMBER / COLLABORATOR on OPEN fork PRs.
+#   - Approval applies to one revision: after new pushes, comment again.
+#   - Review the diff (especially `.github/**`, `tools/**`, `Dockerfile`,
+#     `.env.deploy*`) before approving — fork code runs with preview credentials.
+#   - Preview artifacts are namespaced by PR number (`pr-<number>`), never by
+#     the contributor's branch name (which could be `main`).
+#   - Preview scope only: no production deploys, no Slack, minimal secret exposure.
+name: 🚀 Full Run (fork PRs)
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Fork PR number to run the full pipeline for'
+        required: true
+        type: number
+
+env:
+  AWS_REGION: us-west-2
+  AWS_ACCOUNT_ID: 174477281453
+  ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+  ECR_REGISTRY: 174477281453.dkr.ecr.us-west-2.amazonaws.com
+  COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
+
+concurrency:
+  group: pr-full-run-${{ github.event.issue.number || github.event.inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (
+        github.event.issue.pull_request
+        && startsWith(github.event.comment.body, '/run-full')
+        && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      eligible: ${{ steps.pr.outputs.eligible }}
+      number: ${{ steps.pr.outputs.number }}
+      sha: ${{ steps.pr.outputs.sha }}
+      base_ref: ${{ steps.pr.outputs.base_ref }}
+      nx_base: ${{ steps.nx.outputs.nx_base }}
+    steps:
+      - name: 🔍 Resolve PR
+        id: pr
+        uses: actions/github-script@v7
+        env:
+          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number || '0' }}
+        with:
+          script: |
+            const prNumber = context.eventName === 'issue_comment'
+              ? context.issue.number
+              : Number(process.env.INPUT_PR_NUMBER);
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            const eligible = pr.state === 'open' && pr.head.repo.fork === true;
+            core.setOutput('number', String(pr.number));
+            core.setOutput('sha', pr.head.sha);
+            core.setOutput('base_ref', pr.base.ref);
+            core.setOutput('eligible', String(eligible));
+
+            if (!eligible) {
+              const msg = pr.state !== 'open'
+                ? 'Skipping `/run-full`: the pull request is not open.'
+                : 'Skipping `/run-full`: this PR is from this repository, so the full pipeline already runs automatically. Use “Re-run failed jobs” in the Actions tab if you need to retry.';
+              if (context.eventName === 'issue_comment') {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: msg,
+                });
+              } else {
+                core.notice(msg);
+              }
+            }
+
+      - name: 🚀 Acknowledge approval
+        if: steps.pr.outputs.eligible == 'true' && github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket',
+            });
+            const sha = '${{ steps.pr.outputs.sha }}';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `🚀 **Full pipeline approved** for commit \`${sha}\` by @${context.payload.comment.user.login} — [view run](${runUrl}).\n\nWeb and EAS previews will be posted as comments when ready. Approval covers this revision only: push new commits, then comment \`/run-full\` again.`,
+            });
+
+      - name: 🏗 Check out PR revision
+        if: steps.pr.outputs.eligible == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: 📐 Compute NX base (merge-base with target branch)
+        id: nx
+        if: steps.pr.outputs.eligible == 'true'
+        run: |
+          NX_BASE=$(git merge-base "origin/${{ steps.pr.outputs.base_ref }}" "${{ steps.pr.outputs.sha }}")
+          echo "nx_base=$NX_BASE" >> "$GITHUB_OUTPUT"
+
+  full-run:
+    needs: resolve
+    if: needs.resolve.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    environment: preview
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: 🏗 Check out PR revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: 🔧 Set Environment Variables
+        env:
+          TARGET_SHA: ${{ needs.resolve.outputs.sha }}
+          NX_BASE_SHA: ${{ needs.resolve.outputs.nx_base }}
+          PR_NUMBER: ${{ needs.resolve.outputs.number }}
+        run: |
+          SHORT_SHA=$(echo "$TARGET_SHA" | cut -c 1-7)
+          # Namespace every preview artifact by PR number, never by the
+          # contributor's branch name (which could be "main").
+          BRANCH_NAME="pr-$PR_NUMBER"
+
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "IMAGE_TAG_PREFIX=dev-$BRANCH_NAME" >> $GITHUB_ENV
+          echo "DOCKER_TAG=dev-$BRANCH_NAME-$SHORT_SHA" >> $GITHUB_ENV
+          echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
+          echo "CACHE_IMAGE=${{ env.ECR_REGISTRY }}/monorepo:buildcache" >> $GITHUB_ENV
+          echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-$BRANCH_NAME" >> $GITHUB_ENV
+          echo "NX_BASE=$NX_BASE_SHA" >> $GITHUB_ENV
+          echo "NX_HEAD=$TARGET_SHA" >> $GITHUB_ENV
+
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Read the shared main cache; write ONLY to the PR-scoped cache.
+      - name: 🏗️ Build Monorepo Docker image
+        uses: docker/build-push-action@v7
+        with:
+          file: Dockerfile
+          load: true
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main
+            type=registry,ref=${{ env.BRANCH_CACHE }}
+          cache-to: |
+            type=registry,ref=${{ env.BRANCH_CACHE }},mode=max
+
+      - name: 🔑 Prep Container Permissions
+        run: |
+          sudo chown -R 1000:1000 $GITHUB_WORKSPACE
+          sudo setfacl --modify user:1000:rw /var/run/docker.sock
+          sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
+
+      - name: Spin up monorepo environment
+        run: |
+          docker compose up -d
+
+      - name: 🔒 Check uv.lock is in sync
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          uv lock --check
+          EOF
+
+      - name: 🧹 Lint
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t lint
+          EOF
+
+      - name: 🩺 Expo Doctor
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t expo-doctor
+          EOF
+
+      - name: 🕵️ Check for missing Django migrations
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t check-migrations
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "Error: Missing Django migrations! Make sure you have run 'python manage.py makemigrations <app_name>' locally and committed the changes."
+            exit 1
+          else
+            echo "Success: No missing Django migrations!"
+          fi
+          EOF
+
+      - name: 📝 Make sure GraphQL Schema is up to date
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t validate-graphql-schema
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx run-many -t generate-graphql-schema' locally and committed the changes."
+            exit 1
+          else
+            echo "Success: The GraphQL schemas match!"
+          fi
+
+          yarn nx affected -t generate-graphql-types
+          TYPE_GEN_STATUS=$?
+          git diff --exit-code;
+          DIFF_STATUS=$?
+          if [ $TYPE_GEN_STATUS -ne 0 ] || [ $DIFF_STATUS -ne 0 ]; then
+            echo "Error: The GraphQL types do not match or generation failed! Make sure you have run 'yarn nx run-many -t generate-graphql-types' locally and committed the changes."
+            exit 1
+          else
+            echo "Success: The GraphQL types match!"
+          fi
+          EOF
+
+      - name: 🕵🏻‍♂️ GraphQL breaking check (token-free)
+        env:
+          NX_BASE_SHA: ${{ needs.resolve.outputs.nx_base }}
+        run: |
+          git show "$NX_BASE_SHA:apps/betterangels-backend/schema.graphql" > /tmp/base-schema.graphql
+          npx --yes @graphql-inspector/cli diff /tmp/base-schema.graphql apps/betterangels-backend/schema.graphql
+
+      - name: 🔬 Typecheck
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t typecheck
+          EOF
+
+      - name: 🧪 Test
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          yarn nx affected -t test
+          EOF
+
+      - name: 🛠️ Build Artifacts (EAS + web)
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t build --configuration preview
+          EOF
+        env:
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          # Report as pull_request so the EAS script comments on the PR.
+          GITHUB_EVENT_NAME: pull_request
+          GITHUB_SHA: ${{ needs.resolve.outputs.sha }}
+          PR_NUMBER: ${{ needs.resolve.outputs.number }}
+          EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+
+      - name: 💬 Post preview links to PR
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t post-pr-preview
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          PR_NUMBER: ${{ needs.resolve.outputs.number }}
+
+      - name: 🚀 Deploy preview
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t deploy --configuration preview
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⏹️ Spin down monorepo environment
+        if: always()
+        run: |
+          docker compose down
+          sudo chown -R 1001:1001 $GITHUB_WORKSPACE

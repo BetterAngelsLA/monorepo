@@ -10,6 +10,7 @@ editing workflows.
 | --- | --- | --- | --- | --- |
 | ✅ Checks | `.github/workflows/checks.yml` | every `pull_request` (incl. forks), `merge_group`, `push main` | none: no secrets, no OIDC, no registry auth, no write effects | **Required** status check (`checks`) |
 | 🚀 Deploy | `.github/workflows/deploy.yml` | `push main`; `pull_request` from this repository only (`fork == false`) | AWS OIDC, ECR, `EXPO_TOKEN`, write `GITHUB_TOKEN` | not gating |
+| 🚀 Full Run | `.github/workflows/pr-full-run.yml` | maintainer comment `/run-full` on a fork PR, or manual dispatch | AWS OIDC, ECR, `EXPO_TOKEN`, write `GITHUB_TOKEN` (preview scope) | not gating |
 
 ## Invariants
 
@@ -36,18 +37,29 @@ capabilities; deploys happen after merge, from `main`.
 ## Fork PRs
 
 - Fork PRs get ✅ Checks (after a maintainer approves the workflow run).
-- No hosted previews or EAS builds for fork PRs. Previews are maintainer-run:
-  mirror the branch into this repository and open/keep the PR from there
+- A maintainer can run the full pipeline (checks + web previews + EAS preview)
+  on a fork PR revision by commenting `/run-full`. The gate lives in
+  `pr-full-run.yml` on the default branch, so the PR cannot edit it; only
+  comments from OWNER / MEMBER / COLLABORATOR count, and approval applies to a
+  single revision (comment again after new pushes).
+- Previews created by the bridge are namespaced `pr-<number>` (web paths
+  `/branches/pr-<n>`, EAS update branches `pr-<n>`) and their EAS branches are
+  cleaned up when the PR closes.
+- Mirroring the branch into this repository remains available when a bridge
+  run is not desired:
   (`git fetch origin pull/<n>/head && git push origin FETCH_HEAD:ci/pr-<n>`).
-- Contributors can run the stack locally with the dev container. Mobile
-  previews for external contributors are label-triggered from the Expo GitHub
-  App (`eas-build-<platform>:<profile>`), never from repository CI tokens.
+- Contributors can run the stack locally with the dev container. Mobile-only
+  previews can also be label-triggered from the Expo GitHub App
+  (`eas-build-<platform>:<profile>`), never from repository CI tokens.
 
 ## Changing this contract
 
 - Required checks live in branch protection (admin). If a check name changes,
   coordinate the flip in a quiet window (`enforce_admins` is on).
-- Add capabilities only to `deploy.yml` (or a new trusted-trigger workflow),
-  never to `checks.yml`.
+- Add capabilities only to `deploy.yml`, `pr-full-run.yml` (or a new
+  trusted-trigger workflow), never to `checks.yml`.
+- The bridge (`pr-full-run.yml`) must keep its gate on the default branch,
+  must only run for open fork PRs, and must keep preview artifacts namespaced
+  by PR number.
 - `require_code_owner_reviews` must stay enabled; CODEOWNERS covers
   `/.github/`, deploy tooling, `Dockerfile`, and compose files.
