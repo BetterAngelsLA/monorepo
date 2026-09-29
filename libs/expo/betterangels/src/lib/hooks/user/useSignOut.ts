@@ -35,19 +35,36 @@ export default function useSignOut() {
     } catch (err) {
       console.error(err);
     }
-    // Clears the HMIS `auth_token` cookie along with everything else.
-    await CookieManager.clearAll();
+
+    try {
+      // Clears the HMIS `auth_token` cookie along with everything else.
+      await CookieManager.clearAll();
+    } catch (err) {
+      console.error(err);
+    }
+
     // The HMIS session pointers live in AsyncStorage, not the cookie jar —
     // without removing them the next login could inherit a stale HMIS host
     // mapping (e.g. an old sandbox domain).
-    await Promise.all([
-      AsyncStorage.removeItem(HMIS_API_URL_STORAGE_KEY),
-      AsyncStorage.removeItem(HMIS_AUTH_DOMAIN_STORAGE_KEY),
-    ]);
-    await client.clearStore();
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem(HMIS_API_URL_STORAGE_KEY),
+        AsyncStorage.removeItem(HMIS_AUTH_DOMAIN_STORAGE_KEY),
+      ]);
+    } catch (err) {
+      console.error(err);
+    }
+
+    try {
+      await client.clearStore();
+    } catch (err) {
+      console.error(err);
+    }
+
     // Cached query data (e.g. direct-HMIS client search/detail responses)
     // would otherwise surface for the next user on this device.
     queryClient.clear();
+
     // The next user must not inherit this one's organization.
     clearActiveOrgId();
     setUser(undefined);
