@@ -13,6 +13,18 @@ query ClientReferrals($clientId: ID!) {
       shelter {
         id
         name
+        location {
+          place
+        }
+        pets {
+          name
+        }
+        demographics {
+          name
+        }
+        accessibility {
+          name
+        }
       }
     }
     totalCount

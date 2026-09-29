@@ -115,13 +115,17 @@ export default function Client({
     throw new Error(`Something went wrong. Please try again. ${error}`);
   }
 
-  const showHeader = tab === ClientViewTabEnum.Profile;
-  const screenTitle =
+  // Locations stays headerless so the map keeps full height (DEV-1737).
+  const showHeader = tab !== ClientViewTabEnum.Locations;
+  const clientName =
     data?.clientProfile.firstName || data?.clientProfile.lastName
       ? `${data?.clientProfile.firstName ?? ''} ${
           data?.clientProfile.lastName ?? ''
         }`.trim()
       : 'Client';
+  // the client's name appears exactly once: in the rich header when shown,
+  // otherwise in the navbar (per wireframe, navbar reads "Client")
+  const screenTitle = showHeader ? 'Client' : clientName;
 
   return (
     <>

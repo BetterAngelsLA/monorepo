@@ -1,31 +1,73 @@
 import { useMutation, useQuery } from '@apollo/client/react';
-import { PlusIcon } from '@monorepo/expo/shared/icons';
+import { useRouter } from 'expo-router';
+import { InfoIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  Avatar,
   IconButton,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import {
+  OperationMessageKind,
+  extractOperationInfoMessages,
+} from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { pagePaddingHorizontal } from '../../../static';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import { ReferralForm } from './ReferralForm';
+import { ClientViewTabEnum } from '../ClientTabs';
+import { ReferralCreateFlow } from './ReferralCreateFlow';
+import {
+  ReferralDraftProvider,
+  useReferralDraft,
+} from './ReferralDraftProvider';
+import { ReferralsHelp } from './ReferralsHelp';
+import { needLabelsFromIntake } from './clientNeeds';
+import type { ReferralDraftStore } from './referralDraft';
+import { getPersistentReferralDraft } from './referralDraftStorage';
+import { decodeReferralNotes, summarizeIntake } from './referralIntakeSidecar';
+import { ShelterCard, TagRow, shelterAttributeLabels } from './ShelterCard';
 import {
   ClientReferralsDocument,
   ClientReferralsQuery,
   CreateReferralDocument,
 } from './__generated__/Referrals.generated';
 
+// Client needs now come from the intake form, in the shelter's own vocabulary —
+// see clientNeeds.ts. The picker reads the in-progress draft; a saved referral
+// reads the answers stored on that referral, so a card always reflects the needs
+// as they were recorded at the time rather than whatever is on screen now.
+
 type TProps = {
   client: ClientProfileQuery | undefined;
+  draftStore?: ReferralDraftStore;
 };
 
-export function ReferralsTab({ client }: TProps) {
+export function ReferralsTab({ client, draftStore }: TProps) {
+  return (
+    <ReferralDraftProvider store={draftStore ?? getPersistentReferralDraft()}>
+      <ReferralsContent client={client} />
+    </ReferralDraftProvider>
+  );
+}
+
+function ReferralsContent({ client }: Pick<TProps, 'client'>) {
+  const { draft, store } = useReferralDraft();
   const clientId = client?.clientProfile.id;
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
+  const [helpVisible, setHelpVisible] = useState(false);
+  const router = useRouter();
 
   const { data, loading, error, refetch } = useQuery<ClientReferralsQuery>(
     ClientReferralsDocument,
@@ -41,6 +83,7 @@ export function ReferralsTab({ client }: TProps) {
     throw new Error('Something went wrong. Please try again.');
   }
 
+  const hasDraft = draft?.clientId === clientId;
   const referrals = data?.referrals.results ?? [];
   const totalCount = data?.referrals.totalCount ?? 0;
 
@@ -48,7 +91,7 @@ export function ReferralsTab({ client }: TProps) {
     shelterId: string,
     notes: string | undefined,
     closeForm: () => void,
-  ) => {
+  ): Promise<boolean> => {
     try {
       const result = await createReferral({
         variables: {
@@ -60,12 +103,35 @@ export function ReferralsTab({ client }: TProps) {
         },
       });
 
-      if (result.data?.createReferral.__typename === 'OperationInfo') {
+      const referral = result.data?.createReferral;
+      if (referral?.__typename === 'OperationInfo') {
+        const operationErrors = extractOperationInfoMessages(
+          result,
+          'createReferral',
+          [
+            OperationMessageKind.Error,
+            OperationMessageKind.Validation,
+            OperationMessageKind.Permission,
+          ],
+        );
+
+        showSnackbar({
+          message: operationErrors?.length
+            ? operationErrors.map((e) => e.message).join(', ')
+            : 'Error creating referral. Please try again.',
+          type: 'error',
+        });
+        return false;
+      }
+
+      // A missing payload does not confirm creation. Keep the draft available
+      // until the server returns an identifiable referral.
+      if (referral?.__typename !== 'ReferralType' || !referral.id) {
         showSnackbar({
           message: 'Error creating referral. Please try again.',
           type: 'error',
         });
-        return;
+        return false;
       }
 
       showSnackbar({
@@ -73,53 +139,125 @@ export function ReferralsTab({ client }: TProps) {
         type: 'success',
       });
 
+      store.clear();
       closeForm();
       refetch();
+      return true;
     } catch (e) {
       showSnackbar({
-        message: 'Error creating referral.',
+        message: 'Error creating referral. Please try again.',
         type: 'error',
       });
       console.error(e);
+      return false;
     }
   };
 
-  function openReferralForm() {
+  const openReferralForm = () => {
     showModalScreen({
       presentation: 'fullScreenModal',
+      // in-form Cancel / Pause row is the single, consistent set of exits —
+      // drop the redundant header "x" (keeps the "Refer to Shelter" title bar)
+      header: { mode: 'custom', buttonRight: null },
       renderContent: ({ close }) => (
-        <ReferralForm
-          onCancel={close}
-          onSubmit={(shelterId, notes) => onSubmit(shelterId, notes, close)}
-        />
+        <ReferralDraftProvider store={store}>
+          <ReferralCreateFlow
+            clientId={clientId}
+            onCancel={() => {
+              store.clear();
+              close();
+            }}
+            onPause={close}
+            onSubmit={(shelterId, notes) => onSubmit(shelterId, notes, close)}
+            profile={client?.clientProfile}
+            onEditProfile={() => {
+              // Open the full profile VIEW (Profile tab) so any section is editable,
+              // not just Personal Info. The draft is saved on-device and returns as
+              // a resumable card in the referral list.
+              close();
+              router.navigate({
+                pathname: `/client/${clientId}`,
+                params: { newTab: ClientViewTabEnum.Profile },
+              });
+            }}
+          />
+        </ReferralDraftProvider>
       ),
       title: 'Refer to Shelter',
     });
-  }
+  };
+
+  const startNewReferral = () => {
+    store.startNew(clientId);
+    openReferralForm();
+  };
+
+  const confirmDiscardDraft = () => {
+    Alert.alert(
+      'Discard draft?',
+      'This deletes the in-progress referral and cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: () => store.clear(),
+        },
+      ],
+    );
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="referrals-screen">
       {/* Header row */}
       <View style={styles.headerRow}>
-        <TextRegular size="sm">
-          {loading
-            ? 'Loading...'
-            : `Displaying ${referrals.length} of ${totalCount} referrals`}
-        </TextRegular>
-        <IconButton
-          variant="secondary"
-          borderColor={Colors.WHITE}
-          accessibilityLabel="create new referral"
-          accessibilityHint="opens referral form"
-          onPress={openReferralForm}
-        >
-          <PlusIcon />
-        </IconButton>
+        <View style={styles.headerCount}>
+          <TextRegular size="sm">
+            {loading
+              ? 'Loading...'
+              : `Displaying ${referrals.length} of ${totalCount} referrals`}
+          </TextRegular>
+          <Pressable
+            testID="referrals-help-btn"
+            onPress={() => setHelpVisible(true)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="about this list"
+            accessibilityHint="explains the list and what the attribute tag colors mean"
+          >
+            <InfoIcon size="md" color={Colors.PRIMARY} />
+          </Pressable>
+        </View>
+        {hasDraft ? (
+          <Pressable
+            testID="resume-referral-btn"
+            onPress={openReferralForm}
+            style={styles.resumeBtn}
+            accessibilityRole="button"
+            accessibilityLabel="resume referral draft"
+            accessibilityHint="reopens your in-progress referral"
+          >
+            <TextBold size="sm" color={Colors.PRIMARY}>
+              Resume
+            </TextBold>
+          </Pressable>
+        ) : (
+          <IconButton
+            testID="create-referral-btn"
+            variant="secondary"
+            borderColor={Colors.WHITE}
+            accessibilityLabel="create new referral"
+            accessibilityHint="opens referral form"
+            onPress={startNewReferral}
+          >
+            <PlusIcon />
+          </IconButton>
+        )}
       </View>
 
       {/* Loading state */}
       {loading && (
-        <View style={styles.centered}>
+        <View style={styles.centered} testID="referrals-loading">
           <ActivityIndicator size="large" color={Colors.PRIMARY} />
         </View>
       )}
@@ -134,7 +272,7 @@ export function ReferralsTab({ client }: TProps) {
       )}
 
       {/* Empty state */}
-      {!loading && !error && referrals.length === 0 && (
+      {!loading && !error && referrals.length === 0 && !hasDraft && (
         <View style={styles.emptyState}>
           <TextBold size="sm" color={Colors.NEUTRAL_DARK}>
             No referrals yet
@@ -145,15 +283,109 @@ export function ReferralsTab({ client }: TProps) {
         </View>
       )}
 
-      {/* Referral list */}
-      {!loading && referrals.length > 0 && (
+      {/* Referral list — the draft rides at the top of the list (not pinned) so
+          it scrolls away and doesn't eat the history's vertical space. The
+          header's Resume button stays pinned, so resuming is always one tap. */}
+      {!loading && (hasDraft || referrals.length > 0) && (
         <ScrollView showsVerticalScrollIndicator={false}>
+          {hasDraft && (
+            <DraftCard
+              updatedAt={draft?.updatedAt}
+              onResume={openReferralForm}
+              onDiscard={confirmDiscardDraft}
+            />
+          )}
           {referrals.map((referral) => (
             <ReferralCard key={referral.id} referral={referral} />
           ))}
         </ScrollView>
       )}
+
+      <ReferralsHelp
+        visible={helpVisible}
+        onClose={() => setHelpVisible(false)}
+      />
     </View>
+  );
+}
+
+// Compact "edited" suffix: time for today's draft, date for older ones.
+function formatEdited(updatedAt?: number): string {
+  if (!updatedAt) return '';
+  const d = new Date(updatedAt);
+  const isToday = d.toDateString() === new Date().toDateString();
+  return ` · ${
+    isToday
+      ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+      : d.toLocaleDateString()
+  }`;
+}
+
+// ── Draft card ─────────────────────────────────────────────────────────────
+// The in-progress local draft, made visible in the list (tap to resume). Styled
+// unmistakably as a not-yet-submitted, on-device draft — dashed edge + badge.
+function DraftCard({
+  updatedAt,
+  onResume,
+  onDiscard,
+}: {
+  updatedAt?: number;
+  onResume: () => void;
+  onDiscard: () => void;
+}) {
+  return (
+    <Pressable
+      testID="referral-draft-card"
+      style={styles.draftCard}
+      onPress={onResume}
+      accessibilityRole="button"
+      accessibilityLabel="resume referral draft"
+      accessibilityHint="reopens your in-progress referral"
+    >
+      {/* Row 1: badge + title + resume affordance */}
+      <View style={styles.draftRow}>
+        <View style={styles.draftBadge}>
+          <TextRegular size="xs" color={Colors.PRIMARY}>
+            DRAFT
+          </TextRegular>
+        </View>
+        <TextBold
+          size="sm"
+          color={Colors.NEUTRAL_DARK}
+          numberOfLines={1}
+          style={styles.draftGrow}
+        >
+          Referral in progress
+        </TextBold>
+        <TextBold size="sm" color={Colors.PRIMARY}>
+          Resume ›
+        </TextBold>
+      </View>
+
+      {/* Row 2: provenance + discard */}
+      <View style={styles.draftRow}>
+        <TextRegular
+          size="xs"
+          color={Colors.NEUTRAL}
+          numberOfLines={1}
+          style={styles.draftGrow}
+        >
+          On this device · not submitted{formatEdited(updatedAt)}
+        </TextRegular>
+        <Pressable
+          testID="draft-discard-btn"
+          onPress={onDiscard}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="discard referral draft"
+          accessibilityHint="permanently deletes this in-progress referral"
+        >
+          <TextRegular size="xs" color={Colors.ERROR}>
+            Discard
+          </TextRegular>
+        </Pressable>
+      </View>
+    </Pressable>
   );
 }
 
@@ -180,30 +412,60 @@ function ReferralCard({ referral }: ReferralCardProps) {
         ? Colors.ERROR
         : Colors.WARNING;
 
+  // TEMPORARY: split the human notes from the intake sidecar for display.
+  const { humanNotes, intake } = decodeReferralNotes(referral.notes);
+  const intakeSummary = summarizeIntake(intake); // PII masked
+
   return (
-    <View style={styles.card}>
-      <View style={styles.cardRow}>
-        <TextBold size="sm">
-          {referral.shelter?.name ?? 'Unknown Shelter'}
-        </TextBold>
-        <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-          <TextRegular size="xs" color={Colors.WHITE}>
-            {referral.status ?? 'PENDING'}
-          </TextRegular>
+    <View style={styles.card} testID={`referral-card-${referral.id}`}>
+      {/* date + status tags */}
+      <View style={styles.cardTopRow}>
+        <TextRegular size="sm" color={Colors.NEUTRAL}>
+          {dateStr}
+        </TextRegular>
+        <TagRow
+          tags={[{ label: referral.status ?? 'PENDING', color: statusColor }]}
+        />
+      </View>
+
+      {/* shelter block, shared with the picker */}
+      {referral.shelter ? (
+        <ShelterCard
+          id={referral.shelter.id}
+          name={referral.shelter.name}
+          place={referral.shelter.location?.place}
+          attributes={shelterAttributeLabels(referral.shelter)}
+          // The needs recorded on THIS referral, not the current draft's.
+          desiredAttributes={needLabelsFromIntake(intake)}
+        />
+      ) : (
+        <TextBold size="sm">Unknown Shelter</TextBold>
+      )}
+
+      {/* referrer + notes */}
+      <View style={styles.referrerRow}>
+        <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
+          Referrer:
+        </TextRegular>
+        {/* link to a worker/volunteer profile once such a screen exists */}
+        <View style={styles.userChip}>
+          <Avatar
+            size="sm"
+            accessibilityLabel={`${referrerName} profile photo`}
+            accessibilityHint="referrer profile photo"
+          />
+          <TextRegular size="sm">{referrerName}</TextRegular>
         </View>
       </View>
 
-      <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
-        Referred by: {referrerName}
-      </TextRegular>
-
-      <TextRegular size="sm" color={Colors.NEUTRAL}>
-        {dateStr}
-      </TextRegular>
-
-      {referral.notes ? (
+      {humanNotes ? (
         <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
-          Notes: {referral.notes}
+          Notes: {humanNotes}
+        </TextRegular>
+      ) : null}
+      {intakeSummary ? (
+        <TextRegular size="xs" color={Colors.NEUTRAL}>
+          Intake (temporary): {intakeSummary}
         </TextRegular>
       ) : null}
     </View>
@@ -222,6 +484,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacings.xs,
+  },
+  headerCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.xs,
   },
   centered: {
     flex: 1,
@@ -247,14 +514,58 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  cardRow: {
+  cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  statusBadge: {
-    paddingHorizontal: Spacings.xs,
+  referrerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.xs,
+  },
+  userChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.xxs,
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+    borderRadius: 100,
     paddingVertical: 2,
-    borderRadius: 4,
+    paddingLeft: Spacings.xxs,
+    paddingRight: Spacings.xs,
+  },
+  resumeBtn: {
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
+    borderRadius: 8,
+    paddingHorizontal: Spacings.sm,
+    paddingVertical: Spacings.xxs,
+  },
+  draftCard: {
+    backgroundColor: Colors.WHITE,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
+    borderStyle: 'dashed',
+    paddingHorizontal: Spacings.md,
+    paddingVertical: Spacings.sm,
+    marginBottom: Spacings.sm,
+    gap: Spacings.xxs,
+  },
+  draftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.xs,
+  },
+  draftGrow: {
+    flex: 1,
+    flexShrink: 1,
+  },
+  draftBadge: {
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
+    borderRadius: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
   },
 });

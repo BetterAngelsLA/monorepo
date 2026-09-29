@@ -1,0 +1,25 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Ensures a clean slate on the Referrals tab.
+#
+# The referral draft is persisted on-device (MMKV), so it deliberately survives
+# app restarts — which means it also survives across test runs. A flow that
+# aborts midway leaves a draft behind, and the next run finds "Resume" where it
+# expected "+". Discard any existing draft first so flows are idempotent.
+#
+# Assumes the Referrals tab is already open.
+
+- runFlow:
+    when:
+      visible:
+        id: referral-draft-card
+    commands:
+      - tapOn:
+          id: draft-discard-btn
+      - assertVisible: 'Discard draft?'
+      - tapOn: 'DISCARD'
+      - assertNotVisible:
+          id: referral-draft-card
+
+- assertVisible:
+    id: create-referral-btn

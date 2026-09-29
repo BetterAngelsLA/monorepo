@@ -1,0 +1,91 @@
+appId: ${MAESTRO_APP_ID}
+---
+# FE-36-form — the on-device draft: pause, resume with values intact, discard.
+#
+# Nothing is sent to the server in this flow; it exercises local persistence and
+# the visible draft affordance. Unit tests cover the store, this covers the fact
+# that the store is actually wired to the screen.
+#
+# Preconditions: at least one client; `ffReferrals` enabled.
+
+- runFlow: ../lib/framework/start_test.yml
+
+- runFlow: ../steps/referrals/open_referrals_tab.yml
+
+- runFlow: ../steps/referrals/clear_any_draft.yml
+
+# ── Start a draft and answer one field ──────────────────────────────────────
+- tapOn:
+    id: create-referral-btn
+
+# Allow multiple scrolls to settle on a physical device.
+- scrollUntilVisible:
+    element:
+      id: storage-AMNESTY_LOCKERS-btn
+    direction: DOWN
+    timeout: 30000
+
+- tapOn:
+    id: storage-AMNESTY_LOCKERS-btn
+
+# ── Pause → the draft becomes visible in the list ───────────────────────────
+- tapOn:
+    id: intake-pause-btn
+
+- assertVisible:
+    id: referral-draft-card
+
+- assertVisible: 'Referral in progress'
+
+# it must be unmistakable that this is local and unsent.
+# regex: the line also carries a timestamp ("… · 10:24 AM")
+- assertVisible: '.*not submitted.*'
+
+# the create button is replaced by Resume while a draft exists
+- assertVisible:
+    id: resume-referral-btn
+
+- assertNotVisible:
+    id: create-referral-btn
+
+# ── Resume → the answered value is still selected ───────────────────────────
+# Restart first to prove persistence beyond the current JavaScript session.
+- stopApp
+- runFlow: ../lib/framework/start_test.yml
+- runFlow: ../steps/referrals/open_referrals_tab.yml
+
+- assertVisible:
+    id: referral-draft-card
+
+- tapOn:
+    id: referral-draft-card
+
+- assertVisible:
+    id: referral-intake-screen
+
+- scrollUntilVisible:
+    element:
+      id: storage-AMNESTY_LOCKERS-btn
+    direction: DOWN
+    timeout: 30000
+
+- assertVisible:
+    id: storage-AMNESTY_LOCKERS-btn
+    checked: true
+
+# ── Discard → confirm, and the draft is gone ────────────────────────────────
+- tapOn:
+    id: intake-pause-btn
+
+- tapOn:
+    id: draft-discard-btn
+
+- assertVisible: 'Discard draft?'
+
+- tapOn: 'DISCARD'
+
+- assertNotVisible:
+    id: referral-draft-card
+
+- assertVisible:
+    id: create-referral-btn
