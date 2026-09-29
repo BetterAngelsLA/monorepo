@@ -3,11 +3,18 @@ name: 🧹 EAS Update Branch Cleanup
 on:
   pull_request:
     types: [closed]
+  # Fork PRs cannot access secrets on `pull_request`, so their namespaced
+  # `pr-<number>` EAS branches are cleaned up via pull_request_target.
+  pull_request_target:
+    types: [closed]
 
 jobs:
   cleanup:
-    # Fork PRs cannot access EXPO_TOKEN and have no EAS branches of ours to clean up.
-    if: github.event.pull_request.head.repo.fork == false
+    # Same-repo PRs clean up via pull_request; fork PRs via pull_request_target
+    # (the only event that has a token for fork PRs).
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+      || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork)
     runs-on: ubuntu-latest
     permissions:
       actions: read # Required to find the last successful workflow run
@@ -47,13 +54,19 @@ jobs:
             echo "EXPO_TOKEN is not configured; nothing to clean up."
             exit 0
           fi
-          BRANCH_NAME='${{ github.head_ref || github.ref_name }}'
-          affected=$(yarn nx show projects --affected --withTarget eas-update)
-          if [ -z "$affected" ]; then
-            echo "No affected projects with eas-update target"
+          if [ "${{ github.event.pull_request.head.repo.fork }}" = "true" ]; then
+            # Bridge runs (/run-full) namespace fork previews under pr-<number>.
+            BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
+          else
+            BRANCH_NAME='${{ github.head_ref || github.ref_name }}'
+          fi
+          # All projects with an eas-update target; missing branches are skipped below.
+          projects=$(yarn nx show projects --withTarget eas-update)
+          if [ -z "$projects" ]; then
+            echo "No projects with eas-update target"
             exit 0
           fi
-          for project in $affected; do
+          for project in $projects; do
             echo "Deleting EAS branch for project: $project"
             pushd apps/$project > /dev/null
             output=$(eas branch:delete --non-interactive "$BRANCH_NAME" 2>&1) || {
