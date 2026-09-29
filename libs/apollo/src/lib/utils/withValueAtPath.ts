@@ -3,7 +3,7 @@ import { toPathArray } from './toPathArray';
 /**
  * withValueAtPath
  *
- * Immutable counterpart of `writeAtPath` (structural sharing / path copying).
+ * Immutable path-set with structural sharing (copy-on-write along the path).
  * Returns a **new** object with `value` set at `path`, copying only the
  * containers (objects/arrays) along that path and sharing every other
  * sub-tree with the input by reference.
@@ -12,7 +12,7 @@ import { toPathArray } from './toPathArray';
  * • the input is never mutated (safe for frozen or shared objects)
  * • missing (undefined/null) intermediate containers are created
  * • if a path segment resolves to a non-object scalar, no write happens and
- *   the input is returned unchanged (mirrors `writeAtPath` returning false)
+ *   the input is returned unchanged
  * • array containers along the path are copied with `slice`, not mutated
  *
  * Example:
@@ -36,7 +36,7 @@ export function withValueAtPath<T>(
     return target;
   }
 
-  // Mirror writeAtPath's bail-out: if any intermediate segment holds a
+  // Bail out without writing: if any intermediate segment holds a
   // scalar (neither nullish nor an object), the path is invalid → no write.
   let cursor: unknown = target;
 

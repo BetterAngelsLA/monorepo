@@ -190,7 +190,6 @@ describe('getQueryPolicyFactory', () => {
       {
         itemsPath: ['data', 'items'],
         totalCountPath: ['data', 'total'],
-        itemIdPath: ['data', 'items', 'clientId'],
       },
     );
 

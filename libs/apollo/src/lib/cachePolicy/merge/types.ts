@@ -28,9 +28,6 @@ export type ResolveMergePagination<TVars> = (
 export type ObjectMergeMode = {
   mode?: MergeModeEnum.Object;
 
-  /** where the item has its id, e.g. "personalId" */
-  itemIdPath?: string | ReadonlyArray<string>;
-
   /** where the server puts the array, e.g. "items" or ["data", "items"] */
   itemsPath?: string | ReadonlyArray<string>;
 

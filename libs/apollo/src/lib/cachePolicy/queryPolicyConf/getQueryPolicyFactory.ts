@@ -14,7 +14,7 @@
  *  - runs `generateQueryPolicyConfig(...)` to produce a *strict* QueryPolicyConfig
  *    (fills in default paths, normalizes strings to arrays, respects paginationMode
  *    and paginationVariables)
- *  - runs `getMergeOptions(...)` to prepare merge-time paths (items, totalCount, id)
+ *  - runs `getMergeOptions(...)` to prepare merge-time paths (items, totalCount)
  *  - runs `generateFieldPolicy(...)` to create the actual Apollo field policy,
  *    passing the normalized QueryPolicyConfig down to the merge layer
  *  - derives `keyFields` from `itemIdPath` when `entityIdFields` isn’t provided
@@ -184,7 +184,6 @@ export function getQueryPolicyFactory<
   const resolvedMergeOptions = getMergeOptions(mergeOpts, {
     itemsPath,
     totalCountPath,
-    itemIdPath,
   });
 
   const queryPolicyConfig = generateQueryPolicyConfig({

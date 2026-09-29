@@ -24,7 +24,7 @@ export function buildInitialVariables<TVars extends OperationVariables>(
 ): TVars {
   const {
     baseVariables,
-    paginationMode = PaginationModeEnum.PerPage,
+    paginationMode = PaginationModeEnum.Offset,
     pageSize,
     paginationOffsetPath = DEFAULT_PAGINATION_OFFSET_PATH,
     paginationLimitPath = DEFAULT_PAGINATION_LIMIT_PATH,
@@ -39,15 +39,13 @@ export function buildInitialVariables<TVars extends OperationVariables>(
     ? (baseVariables as Record<string, unknown>)
     : {};
 
+  // Always start from the first page: the merge layer places items at their
+  // server offsets, so a non-zero starting page/offset would leave
+  // `undefined` holes — and a hole makes the cache field unreadable.
+  // Any caller-provided starting page/offset is ignored.
+
   // page/perPage shape
   if (paginationMode === PaginationModeEnum.PerPage) {
-    const pageToUse = readNumberAtPathOr({
-      source: variables,
-      path: paginationPagePath,
-      fallback: 1,
-      min: 1,
-    });
-
     const perPageToUse = readNumberAtPathOr({
       source: variables,
       path: paginationPerPagePath,
@@ -55,20 +53,13 @@ export function buildInitialVariables<TVars extends OperationVariables>(
       min: 1,
     });
 
-    variables = withValueAtPath(variables, paginationPagePath, pageToUse);
+    variables = withValueAtPath(variables, paginationPagePath, 1);
     variables = withValueAtPath(variables, paginationPerPagePath, perPageToUse);
 
     return variables as TVars;
   }
 
   // offset/limit (default)
-  const offsetToUse = readNumberAtPathOr({
-    source: variables,
-    path: paginationOffsetPath,
-    fallback: 0,
-    min: 0,
-  });
-
   const limitToUse = readNumberAtPathOr({
     source: variables,
     path: paginationLimitPath,
@@ -76,7 +67,7 @@ export function buildInitialVariables<TVars extends OperationVariables>(
     min: 1,
   });
 
-  variables = withValueAtPath(variables, paginationOffsetPath, offsetToUse);
+  variables = withValueAtPath(variables, paginationOffsetPath, 0);
   variables = withValueAtPath(variables, paginationLimitPath, limitToUse);
 
   return variables as TVars;
