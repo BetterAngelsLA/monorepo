@@ -32,9 +32,22 @@ export default function Tasks() {
     });
   }, []);
 
+  const handleClientPress = useCallback((clientProfileId: string) => {
+    router.navigate({
+      pathname: `/client/${clientProfileId}`,
+      params: { arrivedFrom: '/tasks' },
+    });
+  }, []);
+
   const renderTaskItem = useCallback(
-    (task: TaskType) => <TaskCard task={task} onPress={handleTaskPress} />,
-    [handleTaskPress],
+    (task: TaskType) => (
+      <TaskCard
+        task={task}
+        onPress={handleTaskPress}
+        onClientPress={handleClientPress}
+      />
+    ),
+    [handleTaskPress, handleClientPress],
   );
 
   function onFilterChange(selectedFilters: TModelFilters) {
