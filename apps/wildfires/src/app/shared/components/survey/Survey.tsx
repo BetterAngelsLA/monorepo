@@ -1,5 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useEffectEvent } from 'react';
 import { QuestionsBlock } from './QuestionsBlock';
 import { Results } from './Results';
 import { SurveyNav } from './SurveyNav';
@@ -72,8 +72,13 @@ export function Survey(props: IProps) {
     }
   }
 
+  const emitChange = useEffectEvent((results: TAnswer[]) => {
+    onChange?.(results);
+  });
+
+  // Notify when answers change, using the latest onChange without reacting to it.
   useEffect(() => {
-    onChange && onChange(answers);
+    emitChange(answers);
   }, [answers]);
 
   const parentCss = ['pt-8', className];
