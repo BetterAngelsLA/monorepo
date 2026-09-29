@@ -39,16 +39,6 @@ vi.mock('../../cacheStore/utils/queryPolicyConfigRegistry', () => {
         } as const;
       }
 
-      if (fieldName === 'records') {
-        return {
-          paginationMode: PaginationModeEnum.PerPage,
-          itemsPath: ['results'],
-          totalCountPath: ['totalCount'],
-          paginationPagePath: ['pagination', 'page'],
-          paginationPerPagePath: ['pagination', 'perPage'],
-        } as const;
-      }
-
       throw new Error(
         `[test] no queryPolicyConfig mock for Query.${fieldName}`,
       );
@@ -65,15 +55,6 @@ type TasksVars = {
   pagination?: { offset?: number; limit?: number };
 };
 const TasksDocument = {} as unknown as TypedDocumentNode<TasksData, TasksVars>;
-
-type RecordsData = {
-  records: { results: Array<{ id: number }>; totalCount: number };
-};
-type RecordsVars = { pagination?: { page?: number; perPage?: number } };
-const RecordsDocument = {} as unknown as TypedDocumentNode<
-  RecordsData,
-  RecordsVars
->;
 
 describe('useInfiniteScrollQuery (Apollo v4)', () => {
   beforeEach(() => {
@@ -168,35 +149,6 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
     expect(result.current.items).toEqual([{ id: 1 }]);
     expect(result.current.total).toBe(2);
     expect(result.current.hasMore).toBe(true);
-  });
-
-  it('respects page/perPage and fetches the next page with same perPage', async () => {
-    const fetchMore = vi.fn().mockResolvedValue(undefined);
-
-    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
-      createUseQueryReturn<RecordsData, RecordsVars>({
-        data: { records: { results: [{ id: 1 }, { id: 2 }], totalCount: 4 } },
-        variables: { pagination: { page: 1, perPage: 2 } },
-        fetchMore,
-        networkStatus: NetworkStatus.ready,
-      }),
-    );
-
-    const { result } = renderHookWithApollo(() =>
-      useInfiniteScrollQuery<{ id: number }, RecordsData, RecordsVars>({
-        document: RecordsDocument,
-        queryFieldName: 'records',
-        variables: { pagination: { page: 1, perPage: 2 } },
-      }),
-    );
-
-    await act(async () => {
-      result.current.loadMore();
-    });
-
-    expect(fetchMore).toHaveBeenCalledWith({
-      variables: { pagination: { page: 2, perPage: 2 } },
-    });
   });
 
   it('sets loadingMore=true when Apollo networkStatus is fetchMore', () => {

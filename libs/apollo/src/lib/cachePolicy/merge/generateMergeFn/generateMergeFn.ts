@@ -28,7 +28,7 @@
  *
  * @param {TPaginationVariables} [paginationVariables]
  *   Normalized pagination metadata describing how to extract pagination
- *   variables (offset/limit or page/perPage) from query arguments.
+ *   variables (offset/limit) from query arguments.
  *   Usually generated via `toPaginationVariables()` in `generateFieldPolicy`.
  *
  * ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { OffsetPaginationVariables, PerPagePaginationVariables } from './types';
+import { OffsetPaginationVariables } from './types';
 
 export const DEFAULT_QUERY_PAGE_SIZE = 25;
 
@@ -14,7 +14,6 @@ export enum MergeModeEnum {
 
 // pagination
 export enum PaginationModeEnum {
-  PerPage = 'PER_PAGE',
   Offset = 'OFFSET',
 }
 
@@ -22,8 +21,6 @@ export enum PaginationModeEnum {
 export const DEFAULT_PAGINATION_PARENT_KEY = 'pagination' as const;
 export const DEFAULT_PAGINATION_OFFSET_KEY = 'offset' as const;
 export const DEFAULT_PAGINATION_LIMIT_KEY = 'limit' as const;
-export const DEFAULT_PAGINATION_PAGE_KEY = 'page' as const;
-export const DEFAULT_PAGINATION_PER_PAGE_KEY = 'perPage' as const;
 
 // pagination: paths
 export const DEFAULT_PAGINATION_OFFSET_PATH = [
@@ -34,24 +31,10 @@ export const DEFAULT_PAGINATION_LIMIT_PATH = [
   DEFAULT_PAGINATION_PARENT_KEY,
   DEFAULT_PAGINATION_LIMIT_KEY,
 ] as const;
-export const DEFAULT_PAGINATION_PAGE_PATH = [
-  DEFAULT_PAGINATION_PARENT_KEY,
-  DEFAULT_PAGINATION_PAGE_KEY,
-] as const;
-export const DEFAULT_PAGINATION_PER_PAGE_PATH = [
-  DEFAULT_PAGINATION_PARENT_KEY,
-  DEFAULT_PAGINATION_PER_PAGE_KEY,
-] as const;
 
 // pagination: vars
 export const DEFAULT_OFFSET_PAGINATION_VARS: OffsetPaginationVariables = {
   mode: PaginationModeEnum.Offset,
   offsetPath: DEFAULT_PAGINATION_OFFSET_PATH,
   limitPath: DEFAULT_PAGINATION_LIMIT_PATH,
-};
-
-export const DEFAULT_PER_PAGE_PAGINATION_VARS: PerPagePaginationVariables = {
-  mode: PaginationModeEnum.PerPage,
-  pagePath: DEFAULT_PAGINATION_PAGE_PATH,
-  perPagePath: DEFAULT_PAGINATION_PER_PAGE_PATH,
 };

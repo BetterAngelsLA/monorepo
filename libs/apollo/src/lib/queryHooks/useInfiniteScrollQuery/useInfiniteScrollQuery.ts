@@ -11,7 +11,7 @@
  * • Reads the `QueryPolicyConfig` for the target field from Apollo's cache
  *   via `getQueryPolicyConfigFromCache`.
  * • Builds normalized initial variables based on the configured pagination mode
- *   (Offset/Limit or Page/PerPage).
+ *   (Offset/Limit).
  * • Executes the provided `TypedDocumentNode` query with Apollo’s `useQuery`.
  * • Derives the items array and total count from the result using the configured
  *   `itemsPath` and `totalCountPath`.
@@ -40,7 +40,7 @@
  * • Uses the `QueryPolicyConfig` to determine:
  *   - how to read items (`itemsPath`)
  *   - how to read total (`totalCountPath`)
- *   - which pagination shape to use (`Offset` vs `PerPage`)
+ *   - which pagination variable paths to use (`paginationOffsetPath`, `paginationLimitPath`)
  * • When `loadMore()` is called:
  *   - computes the next page’s variables using `buildVariablesForPage`
  *   - calls Apollo’s `fetchMore` with those variables
@@ -74,8 +74,7 @@
  * ---------------------------------------------------------------------------
  * • Requires that a `QueryPolicyConfig` be registered for the target field
  *   (via your cache policy setup).
- * • The hook is pagination-mode agnostic — works with both Offset/Limit
- *   and Page/PerPage queries.
+ * • Works with Offset/Limit paginated queries.
  * • If the policy config is missing, the hook throws an explicit error.
  * • Compatible with Apollo Client v4 and `TypedDocumentNode` queries.
  * • With `fetchPolicy: 'cache-and-network'`, variable changes may keep showing
@@ -285,13 +284,10 @@ export function useInfiniteScrollQuery<
 
     const baseVariables = lastVariablesRef.current;
 
-    const { paginationMode, paginationPerPagePath, paginationLimitPath } =
-      queryPolicyConfig;
+    const { paginationLimitPath } = queryPolicyConfig;
 
     const nextPageSize = getPageSizeFromVars({
       baseVariables,
-      paginationMode,
-      paginationPerPagePath,
       paginationLimitPath,
       fallback: pageSize,
     });

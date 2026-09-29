@@ -44,11 +44,11 @@
  * >({
  *   key: 'hmisListClients',
  *   entityTypename: 'HmisClientType',
- *   cacheKeyVariables: ['filter', ['pagination', 'perPage']] as const,
+ *   cacheKeyVariables: ['filters'] as const,
  *   itemsPath: 'items',
  *   totalCountPath: ['meta', 'totalCount'],
  *   itemIdPath: 'personalId',
- *   paginationMode: PaginationModeEnum.PerPage,
+ *   paginationMode: PaginationModeEnum.Offset,
  *   // optional: paginationVariables can further override paths
  * });
  *
@@ -63,11 +63,11 @@
  *     fieldPolicy: { ...apolloFieldPolicy },
  *     // <- strict, normalized config the hook / runtime can read later
  *     queryPolicyConfig: {
- *       paginationMode: 'PER_PAGE',
+ *       paginationMode: 'OFFSET',
  *       itemsPath: ['items'],
  *       totalCountPath: ['meta', 'totalCount'],
- *       paginationPagePath: ['pagination', 'page'],
- *       paginationPerPagePath: ['pagination', 'perPage'],
+ *       paginationOffsetPath: ['pagination', 'offset'],
+ *       paginationLimitPath: ['pagination', 'limit'],
  *     },
  *   }),
  * }

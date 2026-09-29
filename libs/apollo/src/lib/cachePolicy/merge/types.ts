@@ -7,14 +7,6 @@ export type OffsetPaginationVars = {
   limit: number;
 };
 
-export type PerPagePaginationVars = {
-  mode: PaginationModeEnum.PerPage;
-  page: number;
-  perPage: number;
-};
-
-export type PaginationVars = PerPagePaginationVars | OffsetPaginationVars;
-
 export type MergePaginationArgs = { offset: number; limit: number };
 
 /** Read variables and return the effective { offset, limit } for merging. */

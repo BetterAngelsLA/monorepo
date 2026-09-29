@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { PaginationModeEnum } from '../../../cachePolicy';
 import { buildVariablesForPage } from './buildVariablesForPage';
 
 describe('buildVariablesForPage', () => {
@@ -11,7 +10,6 @@ describe('buildVariablesForPage', () => {
 
     const next = buildVariablesForPage({
       previousVariables: previous,
-      paginationMode: PaginationModeEnum.Offset,
       paginationOffsetPath: ['pagination', 'offset'],
       paginationLimitPath: ['pagination', 'limit'],
       incrementBy: 20,
@@ -31,24 +29,6 @@ describe('buildVariablesForPage', () => {
     expect(next.filters).toBe(previous.filters);
   });
 
-  it('builds the next page/perPage page without mutating the previous variables', () => {
-    const previous = {
-      pagination: { page: 1, perPage: 10 },
-    };
-
-    const next = buildVariablesForPage({
-      previousVariables: previous,
-      paginationMode: PaginationModeEnum.PerPage,
-      paginationPagePath: ['pagination', 'page'],
-      paginationPerPagePath: ['pagination', 'perPage'],
-      incrementBy: 10,
-    });
-
-    expect(next).toEqual({ pagination: { page: 2, perPage: 10 } });
-    expect(previous).toEqual({ pagination: { page: 1, perPage: 10 } });
-    expect(next.pagination).not.toBe(previous.pagination);
-  });
-
   it('builds next page variables from a deeply frozen previous variables object', () => {
     const previous = Object.freeze({
       filters: Object.freeze({ q: 'x' }),
@@ -57,7 +37,6 @@ describe('buildVariablesForPage', () => {
 
     const next = buildVariablesForPage({
       previousVariables: previous,
-      paginationMode: PaginationModeEnum.Offset,
       paginationOffsetPath: ['pagination', 'offset'],
       paginationLimitPath: ['pagination', 'limit'],
       incrementBy: 20,
@@ -73,7 +52,6 @@ describe('buildVariablesForPage', () => {
   it('falls back to empty variables when nothing has been paginated yet', () => {
     const next = buildVariablesForPage<Record<string, unknown>>({
       previousVariables: undefined,
-      paginationMode: PaginationModeEnum.Offset,
       paginationOffsetPath: ['pagination', 'offset'],
       paginationLimitPath: ['pagination', 'limit'],
       incrementBy: 20,

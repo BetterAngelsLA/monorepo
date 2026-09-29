@@ -168,11 +168,11 @@ describe('getQueryPolicyFactory', () => {
       totalCountPath: ['data', 'total'],
       itemIdPath: ['data', 'items', 'clientId'],
       mergeOpts: { mode: MergeModeEnum.Object },
-      paginationMode: PaginationModeEnum.PerPage,
+      paginationMode: PaginationModeEnum.Offset,
       paginationVariables: {
-        mode: PaginationModeEnum.PerPage,
-        pagePath: ['pagination', 'page'],
-        perPagePath: ['pagination', 'pageSize'],
+        mode: PaginationModeEnum.Offset,
+        offsetPath: ['pagination', 'offset'],
+        limitPath: ['pagination', 'pageSize'],
       },
     });
 
@@ -198,11 +198,11 @@ describe('getQueryPolicyFactory', () => {
       expect.objectContaining({
         itemsPath: ['data', 'items'],
         totalCountPath: ['data', 'total'],
-        paginationMode: PaginationModeEnum.PerPage,
+        paginationMode: PaginationModeEnum.Offset,
         paginationVariables: {
-          mode: PaginationModeEnum.PerPage,
-          pagePath: ['pagination', 'page'],
-          perPagePath: ['pagination', 'pageSize'],
+          mode: PaginationModeEnum.Offset,
+          offsetPath: ['pagination', 'offset'],
+          limitPath: ['pagination', 'pageSize'],
         },
       }),
     );
@@ -211,11 +211,11 @@ describe('getQueryPolicyFactory', () => {
     expect(generateFieldPolicy).toHaveBeenCalledWith(
       expect.objectContaining({
         queryPolicyConfig: expect.objectContaining({
-          paginationMode: PaginationModeEnum.PerPage,
+          paginationMode: PaginationModeEnum.Offset,
           itemsPath: ['data', 'items'],
           totalCountPath: ['data', 'total'],
-          paginationPagePath: ['pagination', 'page'],
-          paginationPerPagePath: ['pagination', 'pageSize'],
+          paginationOffsetPath: ['pagination', 'offset'],
+          paginationLimitPath: ['pagination', 'pageSize'],
         }),
         mergeOpts: expect.objectContaining({
           mode: MergeModeEnum.Object,
