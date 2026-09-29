@@ -6,7 +6,7 @@ import {
   DEFAULT_PAGINATION_PER_PAGE_PATH,
   PaginationModeEnum,
 } from '../../../cachePolicy';
-import { writeAtPath } from '../../../utils';
+import { withValueAtPath } from '../../../utils';
 import { readNumberAtPathOr } from '../../../utils/readNumberAtPathOr';
 
 type TProps<TVars> = {
@@ -32,9 +32,11 @@ export function buildInitialVariables<TVars extends OperationVariables>(
     paginationPerPagePath = DEFAULT_PAGINATION_PER_PAGE_PATH,
   } = args;
 
-  // clone incoming vars
-  const variables: Record<string, unknown> = baseVariables
-    ? { ...baseVariables }
+  // Normalize pagination fields without mutating the caller's variables:
+  // `withValueAtPath` returns a new object and only copies the containers
+  // along the written path (everything else keeps its identity).
+  let variables: Record<string, unknown> = baseVariables
+    ? (baseVariables as Record<string, unknown>)
     : {};
 
   // page/perPage shape
@@ -53,8 +55,8 @@ export function buildInitialVariables<TVars extends OperationVariables>(
       min: 1,
     });
 
-    writeAtPath(variables, paginationPagePath, pageToUse);
-    writeAtPath(variables, paginationPerPagePath, perPageToUse);
+    variables = withValueAtPath(variables, paginationPagePath, pageToUse);
+    variables = withValueAtPath(variables, paginationPerPagePath, perPageToUse);
 
     return variables as TVars;
   }
@@ -74,8 +76,8 @@ export function buildInitialVariables<TVars extends OperationVariables>(
     min: 1,
   });
 
-  writeAtPath(variables, paginationOffsetPath, offsetToUse);
-  writeAtPath(variables, paginationLimitPath, limitToUse);
+  variables = withValueAtPath(variables, paginationOffsetPath, offsetToUse);
+  variables = withValueAtPath(variables, paginationLimitPath, limitToUse);
 
   return variables as TVars;
 }

@@ -1,6 +1,6 @@
 import type { OperationVariables } from '@apollo/client';
 import { PaginationModeEnum } from '../../../cachePolicy';
-import { deepCloneWeak, writeAtPath } from '../../../utils';
+import { withValueAtPath } from '../../../utils';
 import { readNumberAtPathOr } from '../../../utils/readNumberAtPathOr';
 
 type TNextPageOffset<TVars> = {
@@ -27,11 +27,12 @@ export function buildVariablesForPage<TVars extends OperationVariables>(
 ): TVars {
   const { previousVariables, paginationMode, incrementBy } = args;
 
-  // Deep clone: pagination writes must never mutate nested objects shared
-  // with the previous variables (e.g. the hook's page-1 variables used by
-  // reload()). A shallow copy would alias `pagination` and corrupt refresh.
-  const nextVars: Record<string, unknown> = previousVariables
-    ? (deepCloneWeak(previousVariables) as Record<string, unknown>)
+  // `withValueAtPath` returns a new variables object and copies only the
+  // containers along the written path, so nested objects shared with the
+  // previous variables (e.g. the hook's page-1 variables used by reload())
+  // are never mutated.
+  let nextVars: Record<string, unknown> = previousVariables
+    ? (previousVariables as Record<string, unknown>)
     : {};
 
   // offset/limit
@@ -45,8 +46,12 @@ export function buildVariablesForPage<TVars extends OperationVariables>(
       min: 0,
     });
 
-    writeAtPath(nextVars, paginationOffsetPath, prevOffset + incrementBy);
-    writeAtPath(nextVars, paginationLimitPath, incrementBy);
+    nextVars = withValueAtPath(
+      nextVars,
+      paginationOffsetPath,
+      prevOffset + incrementBy,
+    );
+    nextVars = withValueAtPath(nextVars, paginationLimitPath, incrementBy);
 
     return nextVars as TVars;
   }
@@ -62,8 +67,8 @@ export function buildVariablesForPage<TVars extends OperationVariables>(
     min: 1,
   });
 
-  writeAtPath(nextVars, paginationPerPagePath, incrementBy);
-  writeAtPath(nextVars, paginationPagePath, currentPage + 1); // next page
+  nextVars = withValueAtPath(nextVars, paginationPerPagePath, incrementBy);
+  nextVars = withValueAtPath(nextVars, paginationPagePath, currentPage + 1);
 
   return nextVars as TVars;
 }
