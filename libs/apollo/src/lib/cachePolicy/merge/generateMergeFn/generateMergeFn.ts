@@ -24,7 +24,6 @@
  *   - `mode`: either `MergeModeEnum.Array` or `MergeModeEnum.Object`.
  *   - `itemsPath`: JSON path to the array of results within the response.
  *   - `totalCountPath`: JSON path to the total count field.
- *   - `itemIdPath`: optional path to identify unique items.
  *   If omitted, defaults to `{ mode: MergeModeEnum.Object }`.
  *
  * @param {TPaginationVariables} [paginationVariables]
@@ -104,11 +103,10 @@ export function generateMergeFn<TItem = unknown, TVars = unknown>(
     >;
   }
 
-  const { itemIdPath, totalCountPath, itemsPath } = resolvedMergeOpts;
+  const { totalCountPath, itemsPath } = resolvedMergeOpts;
 
   return mergeObjectPayload<TItem, TVars>({
     resolvePaginationFn,
-    itemIdPath,
     itemsPath,
     totalCountPath,
   });
