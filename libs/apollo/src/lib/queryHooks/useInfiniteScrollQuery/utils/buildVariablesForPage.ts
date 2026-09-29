@@ -1,7 +1,7 @@
 import type { OperationVariables } from '@apollo/client';
 import { PaginationModeEnum } from '../../../cachePolicy';
+import { deepCloneWeak, writeAtPath } from '../../../utils';
 import { readNumberAtPathOr } from '../../../utils/readNumberAtPathOr';
-import { writeAtPath } from '../../../utils/writeAtPath';
 
 type TNextPageOffset<TVars> = {
   previousVariables: TVars | undefined;
@@ -27,8 +27,11 @@ export function buildVariablesForPage<TVars extends OperationVariables>(
 ): TVars {
   const { previousVariables, paginationMode, incrementBy } = args;
 
+  // Deep clone: pagination writes must never mutate nested objects shared
+  // with the previous variables (e.g. the hook's page-1 variables used by
+  // reload()). A shallow copy would alias `pagination` and corrupt refresh.
   const nextVars: Record<string, unknown> = previousVariables
-    ? { ...previousVariables }
+    ? (deepCloneWeak(previousVariables) as Record<string, unknown>)
     : {};
 
   // offset/limit
