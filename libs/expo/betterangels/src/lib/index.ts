@@ -2,6 +2,7 @@ export * from './apollo';
 export * from './constants';
 export * from './errors';
 export * from './helpers';
+export * from './hmisProd';
 export * from './hooks';
 export * from './maps';
 export * from './navigation';

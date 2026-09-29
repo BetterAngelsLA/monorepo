@@ -12,6 +12,7 @@ export type Shelter = {
   address: string | null;
   bedCounts: BedCounts;
   name: string | null;
+  organization: { id: string; name: string } | null;
   status: string;
   tags: string[] | null;
   totalBeds: number | null;

@@ -12,6 +12,7 @@ from typing import Any, Dict
 from accounts.groups import ORG_ADMIN
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
+from common.permissions.utils import PERMISSION_DENIED_MESSAGE
 from model_bakery import baker
 from teams.models import Team
 
@@ -28,7 +29,9 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
         self._set_active_org(self.org)
 
     def test_teams_query(self) -> None:
-        expected_query_count = 4
+        # require_can (→ can → scopes) adds grant-arm queries over the old
+        # membership-only read.
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_teams_query())
 
@@ -53,9 +56,10 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
         self.assertIn(str(self.team.pk), [team["id"] for team in teams])
         self.assertNotIn(str(other_org_team.pk), [team["id"] for team in teams])
 
-        # change active org and requery
+        # change active org and requery — a role at the new org grants the read
         assert self.org_user is not None
         other_org.add_user(self.org_user)
+        OrgRoleManager(other_org).add_roles(self.org_user, ORG_ADMIN)
         self._set_active_org(other_org)
 
         response = self.execute_graphql(self.get_teams_query())
@@ -83,9 +87,17 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
 
 
 class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
-    def _assert_denied(self, response: Dict[str, Any]) -> None:
-        self.assertIsNotNone(response.get("errors"))
+    def _assert_denied(self, response: Dict[str, Any], message: str) -> None:
+        """Assert the request was refused for the *expected* reason.
+
+        The message check matters: an unhandled ``ValueError`` from a malformed
+        id also has ``errors`` and no data, so asserting only that would pass
+        while the API crashed instead of denying.
+        """
+        errors = response.get("errors") or []
+        self.assertTrue(errors)
         self.assertIsNone((response.get("data") or {}).get("teams"))
+        self.assertEqual(errors[0]["message"], message)
 
     def test_returns_only_the_active_orgs_teams(self) -> None:
         response = self.execute_graphql(self.get_teams_query())
@@ -115,7 +127,10 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         self.assertEqual(self.org_1_admin.organizations_organization.count(), 1)
         del self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"]
 
-        self._assert_denied(self.execute_graphql(self.get_teams_query()))
+        self._assert_denied(
+            self.execute_graphql(self.get_teams_query()),
+            "Organization ID (X-Organization-ID header) is required.",
+        )
 
     def test_denies_an_org_the_user_does_not_belong_to(self) -> None:
         """The header names the org; it does not grant access to it.
@@ -129,9 +144,34 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         self.assertFalse(self.org_2.users.filter(pk=self.org_1_case_manager_1.pk).exists())
         self._set_active_org(self.org_2)
 
-        self._assert_denied(self.execute_graphql(self.get_teams_query()))
+        self._assert_denied(
+            self.execute_graphql(self.get_teams_query()),
+            PERMISSION_DENIED_MESSAGE,
+        )
 
     def test_denies_a_malformed_header(self) -> None:
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "not-an-id"
 
-        self._assert_denied(self.execute_graphql(self.get_teams_query()))
+        self._assert_denied(
+            self.execute_graphql(self.get_teams_query()),
+            "You do not have access to this organization.",
+        )
+
+    def test_a_non_numeric_organization_id_filter_denies(self) -> None:
+        """Garbage in the org filter denies like an unknown org, not a crash."""
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": "not-an-id"}})
+        self._assert_denied(response, "You do not have access to this organization.")
+
+    def test_an_empty_organization_id_filter_denies(self) -> None:
+        """A present-but-blank org id denies — it must not fall back to the header."""
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": ""}})
+        self._assert_denied(response, "You do not have access to this organization.")
+
+    def test_an_explicitly_null_organization_id_keeps_the_header_fallback(self) -> None:
+        """Only a *missing* org id falls back to the header; null reads as missing."""
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": None}})
+
+        self.assertIsNone(response.get("errors"))
+        returned = {int(row["id"]) for row in response["data"]["teams"]["results"]}
+        expected = set(Team.objects.filter(organization=self.org_1).values_list("pk", flat=True))
+        self.assertEqual(returned, expected)

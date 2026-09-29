@@ -361,6 +361,60 @@ class Grant(models.Model):
             ),
         ]
 
+    def clean(self) -> None:
+        """A Grant must hold a scoped Role and, when object-scoped, be writable (E002/E003/E006).
+
+        * A global Role is held in ``user.groups`` (the global tier), never in a
+          Grant — a row referencing one is inert at best and confusing at worst
+          (mirrors ``permissions.E002``).
+        * Object grants are user-principal only and may only target whitelisted
+          models (ADR 0001 §2.5): an org-principal object grant would make
+          per-record authority org-granular — the guardian shape this model
+          deletes (mirrors ``permissions.E006``) — and nothing outside the
+          object-grant whitelist is object-grantable until the arm is wired
+          (mirrors ``permissions.E003``).
+
+        Enforced here so every ``full_clean`` writer shares the rules: the grant
+        services (which call ``full_clean`` before ``save``) and the admin
+        ModelForm.  The ``permissions.E00x`` checks remain the deploy-time
+        backstop for writers that skip ``clean()`` (e.g. ``loaddata``, the shell)
+        — these cannot be database constraints because ``Role.is_global`` and the
+        whitelist live on other tables/config.
+        """
+        super().clean()
+        if self.role is not None and self.role.is_global:
+            raise ValidationError(
+                {
+                    "role": (
+                        "Global roles are held in user.groups, never in a Grant "
+                        f"({self.role.name!r} — permissions.E002)."
+                    )
+                }
+            )
+        if self.scope_object_type is not None:
+            from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
+
+            if self.principal_org is not None:
+                raise ValidationError(
+                    {
+                        "scope_object_type": (
+                            "Object grants are user-principal only — an organization "
+                            "cannot be granted an object (ADR 0001 §2.5, "
+                            "permissions.E006)."
+                        )
+                    }
+                )
+            if content_type_key(self.scope_object_type) not in OBJECT_GRANT_WHITELIST:
+                raise ValidationError(
+                    {
+                        "scope_object_type": (
+                            f"{self.scope_object_type} is not on the object-grant "
+                            "whitelist (permissions.E003) — object grants are not "
+                            "wired yet."
+                        )
+                    }
+                )
+
     def __str__(self) -> str:
         principal = self.principal_user or self.principal_org
         scope = self.scope_org or self.scope_object_type

@@ -26,7 +26,6 @@ query ViewShelter($id: ID!) {
     otherServices
     addNotesShelterDetails
     addNotesSleepingDetails
-    overallRating
     phone
     programFees
     roomStylesOther
@@ -48,10 +47,6 @@ query ViewShelter($id: ID!) {
     }
     accessibility {
       name
-    }
-    additionalContacts {
-      contactName
-      contactNumber
     }
     city {
       id

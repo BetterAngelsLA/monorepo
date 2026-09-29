@@ -14,12 +14,13 @@ admin.  Either way it is written onto the ``auth.Group`` that actually grants it
 """
 
 from logging import getLogger
-from typing import cast
+from typing import Any, cast
 
 from common.org_types import REGISTRY
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Exists, ForeignKey, OuterRef
 from organizations.models import Organization
 
 from accounts.models import PermissionGroup, PermissionGroupTemplate
@@ -34,36 +35,93 @@ def _resolve_permissions(permission_strings: list[str]) -> list[int]:
     Returns IDs in the same order as *permission_strings* so callers
     can compare against existing sets.  No Permission objects are
     instantiated — pure ID-based.
+
+    Each codename binds to a ContentType, in preference order:
+
+    1. an existing Permission row bound to a **real** model's ContentType;
+    2. the model in *app_label* that **declares** the codename in its
+       ``Meta.permissions`` (custom codenames like ``reports.view_reports`` on
+       ``ScheduledReport``) — resolved from the app registry so provisioning
+       never depends on ``create_permissions`` having run for that app yet
+       (``post_migrate`` fires per-app, and roles are synced from the accounts
+       handler);
+    3. a ContentType synthesized from the codename's last ``_`` token — the
+       member-management portal codenames (``organizations.add_org_member``,
+       …), which no model declares, keep this fallback for legacy provisioning.
+
+    Binding a scoped ``Role`` permission to a real model (1–2) is what lets it
+    past ``sync_roles``' phantom-ContentType guard
+    (``_raise_on_phantom_role_permissions``).
     """
+    from django.apps import apps as django_apps
+
     parsed = [(ps.split(".", 1)[0], ps.split(".", 1)[1]) for ps in permission_strings]
     app_labels = {a for a, _ in parsed}
     codenames = {c for _, c in parsed}
-    model_of: dict[tuple[str, str], str] = {(a, c): c.rsplit("_", 1)[-1] for a, c in parsed}
 
-    ContentType.objects.bulk_create(
-        [ContentType(app_label=a, model=m) for a, m in {(a, model_of[(a, c)]) for a, c in parsed}],
-        ignore_conflicts=True,
+    # (1) Existing Permission rows bound to a real model's ContentType.
+    ct_by_key: dict[tuple[str, str], ContentType] = {}
+    for perm in Permission.objects.filter(
+        content_type__app_label__in=app_labels, codename__in=codenames
+    ).select_related("content_type"):
+        if perm.content_type.model_class() is not None:
+            ct_by_key.setdefault((perm.content_type.app_label, perm.codename), perm.content_type)
+
+    # (2) The model that declares the codename in Meta.permissions.
+    for app_label in app_labels:
+        try:
+            app_config = django_apps.get_app_config(app_label)
+        except LookupError:
+            continue
+        for model in app_config.get_models():
+            for codename, _label in getattr(model._meta, "permissions", ()):
+                if codename in codenames:
+                    ct_by_key.setdefault((app_label, codename), ContentType.objects.get_for_model(model))
+
+    # (3) Fallback: synthesize a ContentType from the codename's last ``_``
+    # token for the codenames no real model declares (member-management).
+    missing = [(a, c) for a, c in parsed if (a, c) not in ct_by_key]
+    if missing:
+        # ``missing`` items are (app_label, codename) pairs — index, don't
+        # unpack, so the key stays the full pair.
+        model_of = {pair: pair[1].rsplit("_", 1)[-1] for pair in missing}
+        ContentType.objects.bulk_create(
+            [ContentType(app_label=a, model=m) for (a, _c), m in model_of.items()],
+            ignore_conflicts=True,
+        )
+        ct_lookup = {
+            (ct.app_label, ct.model): ct
+            for ct in ContentType.objects.filter(app_label__in=app_labels, model__in=set(model_of.values()))
+        }
+        for pair in missing:
+            ct_by_key[pair] = ct_lookup[pair[0], model_of[pair]]
+
+    # Ensure a Permission row exists bound to each resolved ContentType.
+    existing = set(
+        Permission.objects.filter(content_type__in=set(ct_by_key.values())).values_list(
+            "content_type__app_label", "codename"
+        )
     )
-
-    ct_lookup = {
-        (ct.app_label, ct.model): ct
-        for ct in ContentType.objects.filter(app_label__in=app_labels, model__in=set(model_of.values()))
-    }
-
     Permission.objects.bulk_create(
         [
-            Permission(codename=c, content_type=ct_lookup[(a, model_of[(a, c)])], name=c.replace("_", " ").title())
+            Permission(codename=c, content_type=ct_by_key[(a, c)], name=c.replace("_", " ").title())
             for a, c in parsed
+            if (a, c) not in existing
         ],
         ignore_conflicts=True,
     )
 
-    id_lookup: dict[tuple[str, str], int] = {
-        (a, c): pk
-        for a, c, pk in Permission.objects.filter(
-            content_type__app_label__in=app_labels, codename__in=codenames
-        ).values_list("content_type__app_label", "codename", "pk")
-    }
+    # Re-read now that everything exists, preferring the row bound to the
+    # ContentType we provisioned against (a real row when one exists — and
+    # deterministic if two real rows ever share an (app_label, codename)).
+    id_lookup: dict[tuple[str, str], int] = {}
+    for perm in Permission.objects.filter(
+        content_type__app_label__in=app_labels, codename__in=codenames
+    ).select_related("content_type"):
+        key = (perm.content_type.app_label, perm.codename)
+        bound = ct_by_key.get(key)
+        if key not in id_lookup or (bound is not None and perm.content_type_id == bound.pk):
+            id_lookup[key] = perm.pk
     return [id_lookup[(a, c)] for a, c in parsed]
 
 
@@ -125,3 +183,107 @@ def sync_group_permissions(*, organization: Organization | None = None) -> None:
             if {p.pk for p in permission_group.permissions.all()} != wanted:
                 permission_group.permissions.set(wanted)
                 logger.info("Synced permissions for group %s (%d perms)", permission_group.name, len(wanted))
+
+
+def _permission_through_holder_field(through: type[Any]) -> Any:
+    """The through table's non-``Permission`` FK — the M2M holder column."""
+    return next(
+        field
+        for field in through._meta.fields
+        if isinstance(field, ForeignKey) and field.remote_field.model is not Permission
+    )
+
+
+def retire_superseded_phantom_permissions() -> None:
+    """Delete phantom Permission rows superseded by a real model's row.
+
+    ``_resolve_permissions`` used to synthesize a ContentType from a custom
+    codename's last ``_`` token, so DBs seeded before real-model binding carry a
+    phantom ``(reports, reports)`` ContentType + ``view_reports`` Permission row
+    (roles/legacy groups may reference them).  Once a codename binds to a real
+    model (e.g. ``reports.view_reports`` on ``ScheduledReport``), the phantom
+    twin is dead weight — authority never consults it (lookups match
+    app+codename against the real row), but it makes
+    ``Permission.objects.get(app_label + codename)`` ambiguous and pollutes the
+    Django admin.
+
+    Deletes every phantom Permission (model-less ContentType) whose codename
+    also exists on a real ContentType in the same app, then drops the phantom
+    ContentTypes those retirements emptied.  Member-management portal codenames
+    (``organizations.*``) have no real twin, so their phantom rows are kept —
+    they are still the only rows those codenames live on.  Idempotent; runs at
+    ``post_migrate`` once roles/groups have converged onto the real rows.
+
+    References held through the enumerated M2M throughs (user, group, role,
+    template) are re-pointed onto the real twin before the phantom is deleted —
+    deleting a referenced phantom would otherwise silently revoke the holder
+    (nothing else re-points ``user_permissions``).  Other direct FKs to
+    ``Permission`` (e.g. the guardian object-permission tables) are not
+    re-pointed and still cascade; extend ``permission_m2m_throughs`` if a
+    domain that uses them gains a retirable phantom.
+    """
+    from accounts.models import PermissionGroup, Role
+
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.models import Group, Permission
+
+    user_cls = get_user_model()
+
+    # Every model that has an M2M to ``auth.Permission`` in this codebase —
+    # re-point each before the phantom row is deleted.  Role and PermissionGroup
+    # are MTI subclasses of Group, so their throughs are the same
+    # ``auth_group_permissions`` table; dedupe so it is never processed twice.
+    # If another M2M to Permission is added later, it must join this list.
+    # ``type[Any]``: django-stubs types ``.through`` as ``type[Model]``, which
+    # has no ``.objects``; only the manager column is used below.
+    permission_m2m_throughs: tuple[type[Any], ...] = tuple(
+        dict.fromkeys(
+            (
+                user_cls.user_permissions.through,
+                Group.permissions.through,
+                Role.permissions.through,
+                PermissionGroup.permissions.through,
+                PermissionGroupTemplate.permissions.through,
+            )
+        )
+    )
+
+    with transaction.atomic():
+        phantom_cts = [ct for ct in ContentType.objects.all() if ct.model_class() is None]
+        if not phantom_cts:
+            return
+        phantom_ct_ids = {ct.pk for ct in phantom_cts}
+
+        phantom_perms = list(Permission.objects.filter(content_type_id__in=phantom_ct_ids))
+        real_by_key: dict[tuple[str, str], Permission] = {
+            (p.content_type.app_label, p.codename): p
+            for p in Permission.objects.exclude(content_type_id__in=phantom_ct_ids).select_related("content_type")
+        }
+        doomed = [p for p in phantom_perms if (p.content_type.app_label, p.codename) in real_by_key]
+        if doomed:
+            for phantom in doomed:
+                real = real_by_key[(phantom.content_type.app_label, phantom.codename)]
+                for through in permission_m2m_throughs:
+                    holder = _permission_through_holder_field(through)
+                    # A holder may already reference both rows (a DB that lived
+                    # through the transition): drop the phantom reference first
+                    # so the re-point cannot collide with the through table's
+                    # unique constraint and abort post_migrate.
+                    already_real = through.objects.filter(permission_id=real.pk, **{holder.name: OuterRef(holder.name)})
+                    through.objects.filter(permission_id=phantom.pk).filter(Exists(already_real)).delete()
+                    through.objects.filter(permission_id=phantom.pk).update(permission_id=real.pk)
+            Permission.objects.filter(pk__in=[p.pk for p in doomed]).delete()
+            logger.info("Retired %d phantom permissions superseded by real model rows", len(doomed))
+
+        remaining = set(
+            Permission.objects.filter(content_type_id__in=phantom_ct_ids).values_list("content_type_id", flat=True)
+        )
+        # Only the ContentTypes this retire actually emptied — never every
+        # model-less CT that happens to have no permissions (stale CTs from
+        # uninstalled apps would otherwise be swept, cascading into FK holders
+        # like the admin log).
+        retired_ct_ids = {p.content_type_id for p in doomed}
+        orphaned = [ct.pk for ct in phantom_cts if ct.pk in retired_ct_ids and ct.pk not in remaining]
+        if orphaned:
+            ContentType.objects.filter(pk__in=orphaned).delete()
+            logger.info("Retired %d phantom ContentTypes", len(orphaned))

@@ -45,7 +45,12 @@ class OrgPermSameGroupTestCase(GraphQLBaseTestCase):
         self._set_active_org(self.org_1)
 
     def _create_team(self, name: str) -> dict:
-        return self.execute_graphql(CREATE_TEAM, {"data": {"name": name}})
+        # Teams is grant-only now: create carries its org in the payload (the
+        # header is not consulted for team mutations).
+        return self.execute_graphql(
+            CREATE_TEAM,
+            {"data": {"name": name, "organizationId": str(self.org_1.pk)}},
+        )
 
     def test_org_admin_can_create_a_team(self) -> None:
         """The permission still works for the group that actually holds it."""

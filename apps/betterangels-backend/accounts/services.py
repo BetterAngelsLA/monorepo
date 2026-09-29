@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 from common.org_types import REGISTRY
 from common.permissions.config import RoleDef, TemplateConfig
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from organizations.backends import invitation_backend
@@ -526,14 +527,16 @@ def create_organization_service(
 def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[int]) -> None:
     """Fail loudly when a RoleDef permission binds to a phantom ContentType.
 
-    :func:`accounts.seed._resolve_permissions` derives each permission's
-    ContentType model from the codename's last ``_`` token, so a custom codename
-    whose final token is not the model it belongs to (e.g.
-    ``change_shelter_is_reviewed`` → ``"reviewed"``) binds to a ContentType with
-    no model class.  ``permissions.E005`` silently skips those (``model_class()``
-    → ``None``) and no runtime path can exercise them, so provisioning must
-    refuse to create them.  Runs inside :func:`sync_roles`' transaction, so the
-    phantom rows are rolled back with the error.
+    :func:`accounts.seed._resolve_permissions` binds a RoleDef permission to a
+    real model when one declares it (e.g. ``reports.view_reports`` on
+    ``ScheduledReport``) and only falls back to synthesizing a ContentType from
+    the codename's last ``_`` token for portal codenames no model declares (e.g.
+    ``organizations.add_org_member``).  A codename that ends up on a ContentType
+    with no model class (``change_shelter_is_reviewed`` → ``"reviewed"``) is a
+    typo'd custom codename: ``permissions.E005`` silently skips those
+    (``model_class()`` → ``None``) and no runtime path can exercise them, so
+    provisioning must refuse to create them.  Runs inside :func:`sync_roles`'
+    transaction, so the phantom rows are rolled back with the error.
     """
     from django.contrib.auth.models import Permission
 
@@ -545,24 +548,139 @@ def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[in
     if phantoms:
         raise RuntimeError(
             f"RoleDef {role_def.name!r} permissions {', '.join(phantoms)} resolve to a "
-            "ContentType with no model class.  Custom permission codenames must end in the "
-            "model name they belong to (e.g. 'view_private_shelter')."
+            "ContentType with no model class.  Custom permission codenames must be "
+            "declared in the owning model's Meta.permissions (e.g. 'view_reports' on "
+            "ScheduledReport) — a codename no model declares is a typo."
         )
+
+
+def _all_role_defs() -> tuple[RoleDef, ...]:
+    """Every code-owned ``RoleDef`` — the one list :func:`sync_roles` provisions.
+
+    Kept here (lazy imports) rather than in any one domain module: the role
+    bundles span shelters, accounts and notes.  The backfills below stay
+    domain-specific on purpose — each converts its own template slice at its
+    own cutover.
+    """
+    from shelters.groups import ROLES
+
+    from accounts.groups import ORG_ADMIN_ROLES
+    from notes.groups import CASEWORKER_ROLE
+
+    return (*ROLES, *ORG_ADMIN_ROLES, CASEWORKER_ROLE)
+
+
+def _rename_legacy_group(group: Group) -> str:
+    """Rename a staffed legacy ``auth.Group`` out of a ``RoleDef``'s name.
+
+    ``auth.Group.name`` is unique and at most 150 characters, so the candidate
+    is ``"<name> (legacy group <pk>)"`` — pk-suffixed, hence stable across
+    runs — with a ``-<n>`` counter for the pathological case in which even that
+    candidate is taken.  The renamed row keeps its pk, members and permissions;
+    only the name moves.  Returns the new name.
+    """
+    max_length: int = Group._meta.get_field("name").max_length or 150
+    suffix = f" (legacy group {group.pk})"
+    candidate = f"{group.name[: max(max_length - len(suffix), 0)]}{suffix}"
+    n = 1
+    while Group.objects.filter(name=candidate).exclude(pk=group.pk).exists():
+        marker = f"-{n}"
+        candidate = f"{group.name[: max(max_length - len(suffix) - len(marker), 0)]}{suffix}{marker}"
+        n += 1
+    group.name = candidate
+    group.save(update_fields=["name"])
+    return candidate
+
+
+def _adopt_bare_group_as_role(group: Group, role_def: RoleDef) -> Role:
+    """Write the MTI ``accounts_role`` child row for an existing bare ``Group``.
+
+    ``Role(group_ptr=group, ...)`` keeps the group's primary key: the pk is set,
+    so Django updates the existing ``auth_group`` row (the name is written
+    unchanged) and inserts only the child — the group *becomes* the role,
+    keeping its pk, name and any references (admin log rows, guardian object
+    permissions) instead of being orphaned or duplicated.  ``name`` is passed
+    explicitly: it is a concrete ``Group`` field, and the parent update would
+    otherwise blank it.
+    """
+    role = Role(group_ptr=group, name=group.name, is_global=role_def.is_global)
+    role.save()
+    return role
+
+
+def _provision_role(role_def: RoleDef) -> tuple[Role, bool]:
+    """Return ``(role, created)`` for *role_def*, resolving name collisions.
+
+    ``Role`` and ``PermissionGroup`` are MTI subclasses of ``auth.Group``, so
+    all three share the ``auth_group`` name namespace.  A plain
+    ``get_or_create`` inserts the parent row first, which means a legacy *bare*
+    ``Group`` holding a ``RoleDef``'s name — no ``Role``/``PermissionGroup``
+    child, so it grants no org-scoped authority — aborts the whole
+    ``sync_roles`` transaction on ``auth_group_name_key`` (2026-09-11 incident:
+    a bare ``Caseworker`` group rolled back Role provisioning, every grant
+    backfill and the phantom retire, denying reports/teams to legacy holders).
+
+    The row actually holding the name decides the policy:
+
+    * an existing ``Role`` is returned as-is (no behavior change);
+    * a **memberless** bare ``Group`` is adopted — see
+      :func:`_adopt_bare_group_as_role`;
+    * a bare ``Group`` **with members** cannot be adopted: a scoped ``Role`` in
+      ``user.groups`` is a ``permissions.E001`` error, so it is renamed (see
+      :func:`_rename_legacy_group`) and a fresh ``Role`` created.  The members
+      stay on the renamed group, untouched;
+    * a ``PermissionGroup`` is never touched — its names are generated
+      (``"<organization> [<pk>] · <template>"``), so an exact match is a
+      hand-made row a human must resolve; the error names it.
+
+    Idempotent: after the first run the name is held by a ``Role``, so later
+    runs take the first branch and touch nothing.
+    """
+    role = Role.objects.filter(name=role_def.name).first()
+    if role is not None:
+        return role, False
+
+    group = Group.objects.filter(name=role_def.name).first()
+    if group is None:
+        return Role.objects.create(name=role_def.name), True
+
+    if PermissionGroup.objects.filter(pk=group.pk).exists():
+        raise RuntimeError(
+            f"auth.Group name {role_def.name!r} is held by a PermissionGroup.  Roles are "
+            "code-owned and never adopt or rename one; PermissionGroup names are generated "
+            '("<organization> [<pk>] · <template>"), so this is a hand-made row — rename it '
+            "before roles can be provisioned."
+        )
+
+    if group.user_set.exists():
+        renamed = _rename_legacy_group(group)
+        logger.warning(
+            "Renamed legacy group %r to %r before provisioning Role %r (a group with "
+            "members cannot be adopted as a scoped Role — permissions.E001)",
+            role_def.name,
+            renamed,
+            role_def.name,
+        )
+        return Role.objects.create(name=role_def.name), True
+
+    adopted = _adopt_bare_group_as_role(group, role_def)
+    logger.info("Adopted legacy group %r as Role %s", role_def.name, role_def.name)
+    return adopted, True
 
 
 def sync_roles() -> None:
     """Create or refresh the code-owned ``Role`` rows (ADR 0001 §2.2).
 
     One row per :class:`~common.permissions.config.RoleDef` — global roles are
-    provisioned once, never per organization.  Idempotent: get_or_create each
-    ``Role``, then reconcile ``permissions`` and ``is_global`` from the RoleDef.
+    provisioned once, never per organization.  Idempotent: provision each
+    ``Role`` (a pre-existing ``auth.Group`` holding the name is resolved by
+    :func:`_provision_role` — ``Role`` is an MTI subclass of ``Group``, so the
+    unique name is shared with every ``auth.Group`` row), then reconcile
+    ``permissions`` and ``is_global`` from the RoleDef.
     """
-    from accounts.models import Role
-    from shelters.groups import ROLES
-
     with transaction.atomic():
-        for role_def in ROLES:
-            role, created = Role.objects.get_or_create(name=role_def.name)
+        for role_def in _all_role_defs():
+            role, created = _provision_role(role_def)
             wanted = set(_resolve_permissions(role_def.permissions))
             _raise_on_phantom_role_permissions(role_def, wanted)
             perms_changed = {p.pk for p in role.permissions.all()} != wanted
@@ -576,24 +694,51 @@ def sync_roles() -> None:
                 logger.info("Synced Role %s (%d perms, global=%s)", role.name, len(wanted), role.is_global)
 
 
+def _backfill_role_grants(role_defs: tuple[RoleDef, ...] | list[RoleDef]) -> None:
+    """Backfill ``Grant`` rows from legacy memberships of the given templates.
+
+    One ``Grant(user, role=<template role>, scope=org)`` per member of an org's
+    ``PermissionGroup`` for each template.  Idempotent (``get_or_create``).
+    Runs after :func:`sync_roles` so the Role rows exist, and before any
+    reconcile that would retire the legacy groups.
+    """
+    from accounts.models import Grant, PermissionGroup, Role
+
+    for role_def in role_defs:
+        role = Role.objects.get(name=role_def.name)
+        groups = PermissionGroup.objects.filter(template__name=role_def.name).select_related("organization")
+        for group in groups.prefetch_related("user_set"):
+            for user in group.user_set.all():
+                grant, created = Grant.objects.get_or_create(
+                    principal_user=user, role=role, scope_org=group.organization
+                )
+                if created:
+                    logger.info("Backfilled Grant %s", grant)
+
+
 def backfill_shelter_grants() -> None:
     """Backfill ``Grant`` rows from legacy Shelter Operator memberships.
 
-    One ``Grant(user, role=Shelter Operator, scope=org)`` per member of an org's
-    Shelter Operator ``PermissionGroup``.  Idempotent (``get_or_create``).  Only
-    the scoped shelter role is converted here — every other role keeps its
+    Only the scoped shelter role is converted here — every other role keeps its
     ``PermissionGroup`` until its domain cutover (ADR 0001 §4).
     """
-    from accounts.models import Grant, PermissionGroup, Role
     from shelters.groups import SHELTER_OPERATOR_ROLE
 
-    role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
-    groups = PermissionGroup.objects.filter(template__name=SHELTER_OPERATOR_ROLE.name)
-    for group in groups.prefetch_related("user_set"):
-        for user in group.user_set.all():
-            grant, created = Grant.objects.get_or_create(principal_user=user, role=role, scope_org=group.organization)
-            if created:
-                logger.info("Backfilled Grant %s", grant)
+    _backfill_role_grants((SHELTER_OPERATOR_ROLE,))
+
+
+def backfill_org_admin_grants() -> None:
+    """Backfill ``Grant`` rows from legacy ORG_ADMIN / ORG_SUPERUSER memberships."""
+    from accounts.groups import ORG_ADMIN_ROLES
+
+    _backfill_role_grants(ORG_ADMIN_ROLES)
+
+
+def backfill_caseworker_grants() -> None:
+    """Backfill ``Grant`` rows from legacy CASEWORKER memberships."""
+    from notes.groups import CASEWORKER_ROLE
+
+    _backfill_role_grants((CASEWORKER_ROLE,))
 
 
 def backfill_global_role_members() -> None:
@@ -603,8 +748,9 @@ def backfill_global_role_members() -> None:
     belong on the global Role's group, which is the global tier (ADR 0001 §2.1).
     Idempotent (``user.groups.add``).
     """
-    from accounts.models import PermissionGroup, Role
     from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
+
+    from accounts.models import PermissionGroup, Role
 
     role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
     groups = PermissionGroup.objects.filter(template__name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
@@ -619,18 +765,84 @@ def backfill_global_role_members() -> None:
 def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Grant:
     """Grant *user* the scoped *role* at *scope_org* (ADR 0001 §2.2).
 
-    Validates via ``full_clean`` (which checks the model constraints since
-    Django 4.1) before saving, per the repo styleguide.
+    ``full_clean`` validates before saving (per the repo styleguide) — the
+    model constraints and :meth:`Grant.clean`, which holds the rule that a
+    global Role can never sit in a Grant (mirrors ``permissions.E002``).
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when *role* is global (via
+        ``Grant.clean`` through ``full_clean``) or when *user* already holds
+        *role* at *scope_org* (checked here — Django's unique checks skip the
+        NULL scope-object columns, so ``full_clean`` cannot see the duplicate).
+        The DB constraint ``unique_user_grant`` remains the backstop for a
+        concurrent double-write.
     """
+    from accounts.models import Grant
+
     grant = Grant(principal_user=user, role=role, scope_org=scope_org)
     grant.full_clean()
+    if Grant.objects.filter(
+        principal_user=user,
+        role=role,
+        scope_org=scope_org,
+        scope_object_type__isnull=True,
+        scope_object_id__isnull=True,
+    ).exists():
+        raise ValidationError(f"{user} already holds {role.name!r} at {scope_org}.")
+    grant.save()
+
+    # A same-request re-read of authority for this user must see the new grant.
+    from common.permissions.selectors import invalidate_scope_cache
+
+    invalidate_scope_cache(user)
+    return grant
+
+
+def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organization) -> Grant:
+    """Org *principal_org* delegates *role* to *scope_org* (ADR 0001 §2.2, §2.4).
+
+    The delegation is inherited by the principal org's people — those who are
+    members of *principal_org* AND hold a direct Grant there ("acting at" the
+    org).  The org cannot delegate a role to itself (model constraint
+    ``grant_org_principal_is_not_scope``) and a global Role can never be
+    delegated (:meth:`Grant.clean` via ``full_clean``, mirroring
+    ``permissions.E002``).
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when *role* is global (via
+        ``Grant.clean`` through ``full_clean``) or when *principal_org* already
+        delegates *role* to *scope_org* (checked here — Django's unique checks
+        skip the NULL scope-object columns, so ``full_clean`` cannot see the
+        duplicate).  The DB constraint ``unique_org_grant`` remains the backstop
+        for a concurrent double-write.
+    """
+    from accounts.models import Grant
+
+    grant = Grant(principal_org=principal_org, role=role, scope_org=scope_org)
+    grant.full_clean()
+    if Grant.objects.filter(
+        principal_org=principal_org,
+        role=role,
+        scope_org=scope_org,
+        scope_object_type__isnull=True,
+        scope_object_id__isnull=True,
+    ).exists():
+        raise ValidationError(f"{principal_org} already delegates {role.name!r} to {scope_org}.")
     grant.save()
     return grant
 
 
 def grant_delete(*, grant: Grant) -> None:
-    """Revoke a scoped grant — the audit trail is pghistory's, not a flag."""
+    """Revoke a scoped grant — the audit trail is pghistory's, not a flag.
+
+    For a user-principal grant, invalidate the user's memoized ``scopes``
+    decision so a same-request re-read never serves the revoked authority.
+    """
     grant.delete()
+    if grant.principal_user is not None:
+        from common.permissions.selectors import invalidate_scope_cache
+
+        invalidate_scope_cache(grant.principal_user)
 
 
 def role_assign(*, user: UserModel, role: Role) -> None:

@@ -160,7 +160,7 @@ In addition to the mutation-level `_handle_exception`, Strawberry's permission e
 
 | Extension         | Defined in                     | Used for                                                   | `fail_silently` default   |
 | ----------------- | ------------------------------ | ---------------------------------------------------------- | ------------------------- |
-| `HasOrgPerm`      | `accounts/extensions.py`       | Org-scoped mutations (shelters, beds, rooms, reservations) | `False`                   |
+| `HasOrgPerm`      | `accounts/extensions.py`       | Org-scoped mutations (teams, reports, org member management) | `False`                   |
 | `HasRetvalPerm`   | `strawberry_django` (built-in) | Object-level mutations (notes, tasks, referrals)           | `True` (built-in default) |
 | `HasPerm`         | `strawberry_django` (built-in) | Create mutations (clients, documents)                      | `True` (built-in default) |
 | `IsAuthenticated` | `strawberry_django` (built-in) | All mutations                                              | `True` (built-in default) |

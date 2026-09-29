@@ -1,5 +1,6 @@
 import {
   ConsentModal,
+  FeatureFlags,
   MainPlusModal,
   useUser,
 } from '@monorepo/expo/betterangels';
@@ -11,6 +12,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Redirect, Tabs, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ColorValue, Pressable, StyleSheet, View } from 'react-native';
@@ -46,10 +48,11 @@ const TabIcon = ({
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [tosModalIsOpen, setTosModalIsOpen] = useState(false);
   const router = useRouter();
   const { user, isLoading } = useUser();
+  const hmisProdDemoEnabled = useFeatureFlagActive(FeatureFlags.HMIS_PROD_DEMO);
 
   useEffect(() => {
     if (!user) return;
@@ -111,7 +114,7 @@ export default function TabLayout() {
                 color={color}
                 Icon={UsersSolidIcon}
                 InactiveIcon={UsersLineIcon}
-                label="Clients"
+                label={hmisProdDemoEnabled ? 'HMIS Clients' : 'Clients'}
               />
             ),
           }}
@@ -122,10 +125,11 @@ export default function TabLayout() {
           listeners={{
             tabPress: (e) => {
               e.preventDefault();
-              setModalVisible(true);
+              setIsModalVisible(true);
             },
           }}
           options={{
+            href: hmisProdDemoEnabled ? null : undefined,
             title: '',
             tabBarIcon: () => (
               <View style={styles.plusButtonWrapper}>
@@ -133,7 +137,7 @@ export default function TabLayout() {
                   testID="main-plus-tab-btn"
                   accessibilityRole="button"
                   accessibilityHint="Opening homepage main modal"
-                  onPress={() => setModalVisible(true)}
+                  onPress={() => setIsModalVisible(true)}
                   style={({ pressed }) => [
                     styles.plusButton,
                     pressed && styles.plusButtonPressed,
@@ -148,6 +152,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="interactions"
           options={{
+            href: hmisProdDemoEnabled ? null : undefined,
             title: '',
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
@@ -163,7 +168,7 @@ export default function TabLayout() {
       </Tabs>
 
       <MainPlusModal
-        closeModal={() => setModalVisible(false)}
+        closeModal={() => setIsModalVisible(false)}
         isModalVisible={isModalVisible}
       />
       <ConsentModal

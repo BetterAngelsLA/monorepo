@@ -8,6 +8,7 @@ org-scoped and object-scoped rows.
 from accounts.models import Grant, Role, User
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from model_bakery import baker
@@ -134,3 +135,45 @@ class GrantTestCase(TestCase):
 
         self.assertIsNotNone(grant.principal_org)
         self.assertIsNone(grant.scope_org)
+
+
+class GrantCleanTestCase(TestCase):
+    """Write-time rules in :meth:`Grant.clean` — shared by every ``full_clean`` writer.
+
+    The DB-level tests above pin what the *schema* permits (rows written through
+    ``objects.create``); ``full_clean`` writers — the grant services and the admin
+    forms — must refuse the same rows up front (E002/E003/E006), not write rows
+    that only a deploy-time check would flag.
+    """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make(name="Clean Org")
+        self.user = baker.make(User)
+        self.role = Role.objects.create(name="Test Clean Role")
+
+    def test_clean_refuses_an_object_grant_outside_the_whitelist(self) -> None:
+        grant = Grant(
+            principal_user=self.user,
+            role=self.role,
+            scope_object_type=ContentType.objects.get_for_model(Shelter),
+            scope_object_id=1,
+        )
+
+        with self.assertRaises(ValidationError):
+            grant.full_clean()
+
+    def test_clean_refuses_an_org_principal_object_grant(self) -> None:
+        grant = Grant(
+            principal_org=self.org,
+            role=self.role,
+            scope_object_type=ContentType.objects.get_for_model(Shelter),
+            scope_object_id=1,
+        )
+
+        with self.assertRaises(ValidationError):
+            grant.full_clean()
+
+    def test_clean_allows_a_user_principal_org_scope_grant(self) -> None:
+        grant = Grant(principal_user=self.user, role=self.role, scope_org=self.org)
+
+        grant.full_clean()  # does not raise

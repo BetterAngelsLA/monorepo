@@ -72,7 +72,7 @@ SHARED vs org-owned vs per-record, per model) is designed in RFC 0002
 | **global tier** | a global `Role` held directly in `user.groups` (never a `Grant`); reach = every row of every permitted model (`ALL`) | ADR §2.1/§2.4 |
 | **org tier** | a `Grant` at an organization; reach = rows whose org is in `scopes()` | ADR §2.4 |
 | **object arm** | a `Grant` on a single record; per-record sharing, user-principal only, whitelist-gated | ADR §2.5 |
-| **delegation** | an org-principal `Grant`: org A holds role R *at* org B, so A's members who hold R at A act at B (one hop, role-keyed, no amplification) | ADR §2.2/§3, §2.9 Ex. 4 |
+| **delegation** | an org-principal `Grant`: org A holds role R *at* org B, so A's members who hold R at A act at B (one hop, permission-matched, no amplification) | ADR §2.2/§3, §2.9 Ex. 4 |
 | **`scopes()`** | the function that answers "where does this user hold this permission": `ALL` or a set of org ids | ADR §2.4 |
 | **`org_via`** | the per-model declaration of how a row reaches an org (`()` = own FK; hop tuples; `None` = platform-shared) | ADR §2.3 |
 | **read/write tier** | the per-model choice of read scope (`SHARED`/`ORG`) and write scope (`SHARED`/`ORG`/`CREATOR`/`UPLOADER`/`OBJECT`) | RFC 0002 |
@@ -85,12 +85,17 @@ roles, cross-org caseworkers, delegation, object grant — are in **ADR §2.9 wo
 Every PR is based on the previous branch (a linear stack; `#2409` bases `main`).
 Review and merge **bottom-up**. What each PR delivers:
 
+> **Superseded in part (2026-09-10):** as the stack landed it was rebuilt onto
+> main — teams cut over as #2443 on the grant-only model, not through the
+> `#2427`–`#2434` branches below. See ADR 0001 §5.3 "Status on main" for what
+> actually shipped.
+
 | # | Branch | Delivers |
 |---|---|---|
 | 2409 | `grant-redesign` | **This PR.** ADR 0001 + `Role`/`Grant`/`OrgScoped` models, constraints (partial uniques, `NULLS NOT DISTINCT`), E001–E005 checks, migrations. Schema-only — nothing reads it yet. |
 | 2410 | `grant-roles` | `RoleDef` provisioning (`sync_roles`), grant backfills, `OrgScoped` declared on shelter-scoped models. Idempotency + `is_global` ownership rule. |
 | 2411 | `grant-predicate` | `common/permissions/selectors.py` — the whole predicate (`scopes`/`visible`/`can`/`can_obj`/`can_anywhere`) + write services. The security core. |
-| 2412 | `grant-cutover` | Shelter domain flipped to grants. Every mutation/service checks `visible`/`can` (no fail-open); `active_org` header optional. |
+| 2412 | `grant-cutover` | Shelter domain flipped to grants. Every mutation/service checks `visible`/`can` (no fail-open); `active_org` header optional (removed for the shelter domain in #2440). |
 | 2413 | `grant-delegation` | Org→org delegation: inherited `scopes()` arm, one hop, no amplification, `grant_delegate`, admin inlines. |
 | 2414 | `grant-reachability` | FE capability contract: `currentUser.permissions` (global), grants-based org list, per-org permissions. |
 | 2415 | `grant-object-arm` | Object-grant arm: whitelist, `_object_grant_q`, `grant_obj`, orphan cleanup. **C1** — `can_obj` fails closed on per-record writes. |
