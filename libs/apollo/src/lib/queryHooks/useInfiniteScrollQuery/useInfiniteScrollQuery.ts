@@ -137,7 +137,7 @@ export function useInfiniteScrollQuery<
 
   const apolloClient = useApolloClient();
 
-  const fetchMoreErrorRef = useRef<ErrorLike | null>(null);
+  const fetchMoreErrorRef = useRef<ErrorLike | undefined>(undefined);
 
   // Deep-memoize incoming variables to avoid unnecessary refetches
   const memoizedVariables = useDeepCompareMemoize(
@@ -223,7 +223,7 @@ export function useInfiniteScrollQuery<
     isManualReloadRef.current = true;
 
     lastVariablesRef.current = initialVariables;
-    fetchMoreErrorRef.current = null; // 👈 reset error state
+    fetchMoreErrorRef.current = undefined; // 👈 reset error state
 
     try {
       await refetch(initialVariables as Partial<TVars>);
@@ -239,7 +239,7 @@ export function useInfiniteScrollQuery<
   useEffect(() => {
     lastVariablesRef.current = initialVariables;
     isFetchMoreInFlightRef.current = false;
-    fetchMoreErrorRef.current = null; // any error belongs to the previous variable set
+    fetchMoreErrorRef.current = undefined; // any error belongs to the previous variable set
   }, [initialVariables]);
 
   // Loading statuses (Apollo + intent)
@@ -330,6 +330,8 @@ export function useInfiniteScrollQuery<
     hasMore,
     loadMore,
     reload: reloadManual,
+    // No query error and no fetchMore error → the ref's empty state
+    // (`undefined`), matching the documented `error?: ErrorLike` contract.
     error: queryError ?? fetchMoreErrorRef.current,
   };
 }
