@@ -68,7 +68,7 @@ const setStoredToken = (token: string | null) => {
   vi.mocked(AsyncStorage.getItem).mockResolvedValue(BASE_URL);
 };
 
-describe('ApiClientHmisProd.getCurrentUser (session probe)', () => {
+describe('ApiClientHmisProd.checkSession (session probe)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', fetchMock);
@@ -80,10 +80,9 @@ describe('ApiClientHmisProd.getCurrentUser (session probe)', () => {
     fetchMock.mockResolvedValueOnce(responseWith(200, '{"id":42}'));
 
     const client = createApiClientHmisProd(BASE_URL);
-    const result = await client.getCurrentUser();
 
-    expect(result.data.id).toBe(42);
-    expect(result.debugInfo.hasAuthToken).toBe(true);
+    await expect(client.checkSession()).resolves.toBeUndefined();
+
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const [url, init] = fetchMock.mock.calls[0];
@@ -93,13 +92,25 @@ describe('ApiClientHmisProd.getCurrentUser (session probe)', () => {
     );
   });
 
+  it('forwards an AbortSignal to fetch so callers can bound the probe', async () => {
+    setStoredToken('token-1');
+    fetchMock.mockResolvedValueOnce(responseWith(200, '{"id":42}'));
+    const controller = new AbortController();
+
+    const client = createApiClientHmisProd(BASE_URL);
+    await client.checkSession({ signal: controller.signal });
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect((init as RequestInit).signal).toBe(controller.signal);
+  });
+
   it('classifies a 401 (expired token) as an auth error', async () => {
     setStoredToken('expired-token');
     fetchMock.mockResolvedValueOnce(responseWith(401, '{"status":401}'));
 
     const client = createApiClientHmisProd(BASE_URL);
 
-    const error = await client.getCurrentUser().catch((err) => err);
+    const error = await client.checkSession().catch((err) => err);
 
     expect(error).toBeInstanceOf(ErrorHmisProd);
     expect(isAuthErrorHmisProd(error)).toBe(true);
@@ -110,7 +121,7 @@ describe('ApiClientHmisProd.getCurrentUser (session probe)', () => {
 
     const client = createApiClientHmisProd(BASE_URL);
 
-    const error = await client.getCurrentUser().catch((err) => err);
+    const error = await client.checkSession().catch((err) => err);
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(error).toBeInstanceOf(ErrorHmisProd);
@@ -123,7 +134,7 @@ describe('ApiClientHmisProd.getCurrentUser (session probe)', () => {
 
     const client = createApiClientHmisProd(BASE_URL);
 
-    const error = await client.getCurrentUser().catch((err) => err);
+    const error = await client.checkSession().catch((err) => err);
 
     expect(error).toBeInstanceOf(ErrorHmisProd);
     expect(isAuthErrorHmisProd(error)).toBe(false);
@@ -135,7 +146,7 @@ describe('ApiClientHmisProd.getCurrentUser (session probe)', () => {
 
     const client = createApiClientHmisProd(BASE_URL);
 
-    const error = await client.getCurrentUser().catch((err) => err);
+    const error = await client.checkSession().catch((err) => err);
 
     expect(error).toBeInstanceOf(ErrorHmisProd);
     expect(isAuthErrorHmisProd(error)).toBe(false);

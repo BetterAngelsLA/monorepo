@@ -17,7 +17,6 @@ import { ErrorHmisProd } from './errors';
 import type {
   GetClientPayloadHmisProd,
   HmisProdClientDetail,
-  HmisProdCurrentUser,
   HmisProdRequestContext,
   HmisProdRequestDebugInfo,
   HmisProdRequestResult,
@@ -160,18 +159,25 @@ class ApiClientHmisProd {
   }
 
   /**
-   * Lightweight authenticated probe — `GET /api1/current-user?fields=id`.
+   * Lightweight authenticated session check — `GET /api1/current-user?fields=id`.
    *
    * Used by `useHmisProdSessionWatch` when the app returns to the foreground:
-   * it succeeds while the stored HMIS token still works, and throws
+   * it resolves while the stored HMIS token still works, and throws
    * `ErrorHmisProd` (our no-token fast-fail, or a 401/403 from Clarity) when
-   * the session is gone, so callers can force a clean sign-out. The payload
-   * is intentionally discarded; only the request outcome matters.
+   * the session is gone, so callers can force a clean sign-out. The response
+   * is intentionally discarded — this endpoint is simply the cheapest
+   * authenticated call; a dedicated session endpoint would only change this
+   * method.
+   *
+   * Accepts an optional `AbortSignal` so callers can bound how long the check
+   * may take — a request that never settles must not wedge its caller.
    */
-  getCurrentUser(): Promise<HmisProdRequestResult<HmisProdCurrentUser>> {
-    return this.get<HmisProdCurrentUser>(HMIS_PROD_CURRENT_USER_PATH, {
-      fields: 'id',
-    });
+  async checkSession(options?: { signal?: AbortSignal }): Promise<void> {
+    await this.get<unknown>(
+      HMIS_PROD_CURRENT_USER_PATH,
+      { fields: 'id' },
+      options,
+    );
   }
 
   private async request<T>(
@@ -277,10 +283,11 @@ class ApiClientHmisProd {
   private get<T>(
     path: string,
     params: Record<string, string>,
+    options?: { signal?: AbortSignal },
   ): Promise<HmisProdRequestResult<T>> {
     const query = new URLSearchParams(params).toString();
 
-    return this.request<T>(`${path}?${query}`);
+    return this.request<T>(`${path}?${query}`, options);
   }
 
   private post<T>(

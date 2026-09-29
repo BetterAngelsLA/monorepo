@@ -20,6 +20,13 @@ import {
 const SESSION_CHECK_COOLDOWN_MS = 30 * 1000;
 
 /**
+ * Upper bound for one probe. Without it, a request that never settles (a
+ * stalled connection, DNS/TLS hang) would hold the in-flight guard — and
+ * with it the whole watcher — open indefinitely.
+ */
+const SESSION_CHECK_TIMEOUT_MS = 10 * 1000;
+
+/**
  * Proactively validates the HMIS session whenever the app comes to the
  * foreground (and once as soon as the watcher becomes active — cold start or
  * login), force-signing the user out when Clarity no longer accepts the
@@ -29,9 +36,9 @@ const SESSION_CHECK_COOLDOWN_MS = 30 * 1000;
  * HMIS (`isHmisUser`), since only those sessions carry a direct-HMIS token.
  *
  * Only definite session failures trigger the forced sign-out (missing token,
- * 401, 403 — `isAuthErrorHmisProd`); offline / 5xx outcomes are ignored so a
- * flaky network can't log anyone out. See `HmisProdSessionWatcher` for the
- * mount point (the HMIS clients screen).
+ * 401, 403 — `isAuthErrorHmisProd`); offline, timeout and 5xx outcomes are
+ * ignored so a flaky network can't log anyone out. See
+ * `HmisProdSessionWatcher` for the mount point (the HMIS clients screen).
  */
 export function useHmisProdSessionWatch(): void {
   const { user } = useUser();
@@ -70,9 +77,16 @@ export function useHmisProdSessionWatch(): void {
     lastCheckAtRef.current = now;
 
     const checkedUserId = latestUserIdRef.current;
+    // Abort the probe after a bounded delay so a stalled request can't hold
+    // the in-flight guard open (see `SESSION_CHECK_TIMEOUT_MS`).
+    const abortController = new AbortController();
+    const abortTimeoutId = setTimeout(
+      () => abortController.abort(),
+      SESSION_CHECK_TIMEOUT_MS,
+    );
 
     try {
-      await apiClient.getCurrentUser();
+      await apiClient.checkSession({ signal: abortController.signal });
     } catch (error) {
       // A slow failure must not sign out a different user than the one this
       // check started for (e.g. arriving after a manual sign-out + re-login).
@@ -91,6 +105,8 @@ export function useHmisProdSessionWatch(): void {
         router.replace('/auth');
       }
     } finally {
+      clearTimeout(abortTimeoutId);
+
       checkInFlightRef.current = false;
     }
   }, [enabled, apiClient, signOut]);

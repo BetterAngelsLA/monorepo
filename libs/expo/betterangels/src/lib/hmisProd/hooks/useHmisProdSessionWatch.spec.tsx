@@ -24,7 +24,7 @@ const mocks = vi.hoisted(() => {
     flagEnabled: true,
     appBecameActive: false,
     signOut: vi.fn(() => Promise.resolve()),
-    getCurrentUser: vi.fn(),
+    checkSession: vi.fn(),
     routerReplace: vi.fn(),
   };
 });
@@ -85,7 +85,7 @@ vi.mock('../api', async (importOriginal) => {
 
   return {
     ...actual,
-    createApiClientHmisProd: () => ({ getCurrentUser: mocks.getCurrentUser }),
+    createApiClientHmisProd: () => ({ checkSession: mocks.checkSession }),
   };
 });
 
@@ -109,13 +109,13 @@ describe('useHmisProdSessionWatch', () => {
     mocks.user = { id: 'user-1', isHmisUser: true };
     mocks.flagEnabled = true;
     mocks.appBecameActive = false;
-    mocks.getCurrentUser.mockResolvedValue({ data: { id: 1 } });
+    mocks.checkSession.mockResolvedValue(undefined);
   });
 
   it('probes once when it becomes active and leaves a live session alone', async () => {
     renderHook(() => useHmisProdSessionWatch());
 
-    await waitFor(() => expect(mocks.getCurrentUser).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(1));
 
     await flushAsyncWork();
     expect(mocks.signOut).not.toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe('useHmisProdSessionWatch', () => {
   });
 
   it('force-signs out and routes to /auth when the token is missing', async () => {
-    mocks.getCurrentUser.mockRejectedValue(
+    mocks.checkSession.mockRejectedValue(
       new ErrorHmisProd(
         'Not logged in to HMIS - please log in with your HMIS credentials',
         401,
@@ -138,7 +138,7 @@ describe('useHmisProdSessionWatch', () => {
   });
 
   it('force-signs out on a 401 for an expired token', async () => {
-    mocks.getCurrentUser.mockRejectedValue(
+    mocks.checkSession.mockRejectedValue(
       new ErrorHmisProd(
         'Unauthorized - please log in again.',
         401,
@@ -153,7 +153,7 @@ describe('useHmisProdSessionWatch', () => {
   });
 
   it('does not sign out on a transient 500', async () => {
-    mocks.getCurrentUser.mockRejectedValue(
+    mocks.checkSession.mockRejectedValue(
       new ErrorHmisProd(
         'HTTP 500: Server Error',
         500,
@@ -163,7 +163,7 @@ describe('useHmisProdSessionWatch', () => {
 
     renderHook(() => useHmisProdSessionWatch());
 
-    await waitFor(() => expect(mocks.getCurrentUser).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(1));
 
     await flushAsyncWork();
     expect(mocks.signOut).not.toHaveBeenCalled();
@@ -175,7 +175,7 @@ describe('useHmisProdSessionWatch', () => {
     renderHook(() => useHmisProdSessionWatch());
 
     await flushAsyncWork();
-    expect(mocks.getCurrentUser).not.toHaveBeenCalled();
+    expect(mocks.checkSession).not.toHaveBeenCalled();
   });
 
   it('does not probe when the user did not log in via HMIS', async () => {
@@ -184,7 +184,7 @@ describe('useHmisProdSessionWatch', () => {
     renderHook(() => useHmisProdSessionWatch());
 
     await flushAsyncWork();
-    expect(mocks.getCurrentUser).not.toHaveBeenCalled();
+    expect(mocks.checkSession).not.toHaveBeenCalled();
   });
 
   it('dedupes rapid foreground flips but checks again after the cooldown', async () => {
@@ -194,15 +194,13 @@ describe('useHmisProdSessionWatch', () => {
     try {
       const { rerender } = renderHook(() => useHmisProdSessionWatch());
 
-      await waitFor(() =>
-        expect(mocks.getCurrentUser).toHaveBeenCalledTimes(1),
-      );
+      await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(1));
 
       // Foreground flip inside the cooldown → no second probe.
       mocks.appBecameActive = true;
       rerender(undefined);
       await flushAsyncWork();
-      expect(mocks.getCurrentUser).toHaveBeenCalledTimes(1);
+      expect(mocks.checkSession).toHaveBeenCalledTimes(1);
 
       // After the cooldown, the next flip checks again.
       nowSpy.mockReturnValue(start + 31_000);
@@ -211,11 +209,50 @@ describe('useHmisProdSessionWatch', () => {
       mocks.appBecameActive = true;
       rerender(undefined);
 
-      await waitFor(() =>
-        expect(mocks.getCurrentUser).toHaveBeenCalledTimes(2),
-      );
+      await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(2));
     } finally {
       nowSpy.mockRestore();
+    }
+  });
+
+  it('releases the in-flight guard when a probe stalls (timeout)', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_700_000_000_000);
+
+    try {
+      // A stalled request that only settles when its signal aborts.
+      mocks.checkSession.mockImplementation(
+        ({ signal }: { signal?: AbortSignal } = {}) =>
+          new Promise((_resolve, reject) => {
+            const onAbort = () => reject(new Error('Aborted'));
+
+            if (signal?.aborted) {
+              onAbort();
+            } else {
+              signal?.addEventListener('abort', onAbort);
+            }
+          }),
+      );
+
+      const { rerender } = renderHook(() => useHmisProdSessionWatch());
+
+      expect(mocks.checkSession).toHaveBeenCalledTimes(1);
+
+      // The probe timeout fires; a timeout is not an auth failure.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000);
+      });
+      expect(mocks.signOut).not.toHaveBeenCalled();
+
+      // Past the cooldown, the next foreground flip probes again — proving
+      // the in-flight guard was released.
+      vi.setSystemTime(1_700_000_000_000 + 31_000);
+      mocks.appBecameActive = true;
+      rerender(undefined);
+
+      expect(mocks.checkSession).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
     }
   });
 });
