@@ -275,7 +275,7 @@ describe('getQueryPolicyFactory', () => {
     );
   });
 
-  it('uses defaults for itemIdPath, itemsPath, totalCountPath when not provided', async () => {
+  it('uses default itemsPath and totalCountPath when not provided', async () => {
     type TasksQuery = {
       tasks: {
         results: Array<{ __typename: 'TaskType'; id: string }>;
@@ -301,7 +301,6 @@ describe('getQueryPolicyFactory', () => {
       {
         itemsPath: [DEFAULT_QUERY_RESULTS_KEY],
         totalCountPath: [DEFAULT_QUERY_TOTAL_COUNT_KEY],
-        itemIdPath: [DEFAULT_QUERY_ID_KEY],
       },
     );
   });
