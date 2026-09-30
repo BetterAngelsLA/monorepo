@@ -95,3 +95,52 @@ export const CLIENT_HISTORY_DEFAULT_QUERY = {
   page: '1',
   per_page: '50', // no pagination yet, so setting to large number for now.
 } as const;
+
+/**
+ * Default response field selection for the client programs call — joined into
+ * Clarity's `fields` value by the client. Mirrors the Clarity web app's
+ * client-programs call except `groupAllProgramMembers.*` (household members),
+ * which isn't surfaced yet — add it via the `fields` payload option when it
+ * is.
+ */
+export const CLIENT_PROGRAMS_FIELDS_DEFAULT = [
+  'agency.name',
+  'agencySearch',
+  'end_date',
+  'homeAgency.name',
+  'id',
+  'private',
+  'program.agency.name',
+  'program.category.value_name',
+  'program.name',
+  'programSearch',
+  'referralNotDeleted.activeOccupancy.bed.name',
+  'referralNotDeleted.activeOccupancy.unit.name',
+  'referralNotDeleted.agency.name',
+  'referralNotDeleted.date',
+  'referralNotDeleted.endDate',
+  'referralNotDeleted.id',
+  'referralNotDeleted.is_upcoming',
+  'referralNotDeleted.status',
+  'referralNotDeleted.user.first_name',
+  'referralNotDeleted.user.last_name',
+  'start_date',
+  'type',
+  'user.agency.name',
+  'user.first_name',
+  'user.last_name',
+];
+
+/**
+ * Default query for the client programs call
+ * (`GET /api1/clients/{id}/client-programs`) — mirrors the request the Clarity
+ * web app makes for a client's programs: newest first, deleted entries
+ * excluded. Overridable via `GetClientProgramsPayloadHmisProd`; pagination
+ * isn't wired to the UI yet.
+ */
+export const CLIENT_PROGRAMS_DEFAULT_QUERY = {
+  deleted: '0',
+  sort: '-start_date',
+  page: '1',
+  per_page: '50', // no pagination yet, so setting to large number for now.
+} as const;

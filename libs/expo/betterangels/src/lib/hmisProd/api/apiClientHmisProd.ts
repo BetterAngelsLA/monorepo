@@ -7,6 +7,8 @@ import {
 import {
   CLIENT_DETAIL_FIELDS_DEFAULT,
   CLIENT_HISTORY_DEFAULT_QUERY,
+  CLIENT_PROGRAMS_DEFAULT_QUERY,
+  CLIENT_PROGRAMS_FIELDS_DEFAULT,
   CLIENT_SEARCH_FIELDS_DEFAULT,
   CSRF_MISMATCH_PATTERN,
   DEFAULT_SEARCH_PAYLOAD,
@@ -19,6 +21,8 @@ import type {
   GetClientHistoryPayloadHmisProd,
   GetClientHistoryResponseHmisProd,
   GetClientPayloadHmisProd,
+  GetClientProgramsPayloadHmisProd,
+  GetClientProgramsResponseHmisProd,
   HmisProdClientDetail,
   HmisProdRequestContext,
   HmisProdRequestDebugInfo,
@@ -159,6 +163,41 @@ class ApiClientHmisProd {
     return this.get<GetClientHistoryResponseHmisProd>(
       `${HMIS_PROD_CLIENTS_PATH}/${encodeURIComponent(id)}/history`,
       { ...CLIENT_HISTORY_DEFAULT_QUERY, ...overrides },
+    );
+  }
+
+  /**
+   * Fetch a client's program enrollments via Clarity's client-programs
+   * endpoint.
+   *
+   * GET /api1/clients/{id}/client-programs
+   *
+   * Defaults to the query the Clarity web app makes for a client's programs
+   * (see `CLIENT_PROGRAMS_DEFAULT_QUERY` + `CLIENT_PROGRAMS_FIELDS_DEFAULT`)
+   * — pass `payload` to move through pages; pagination isn't wired to the UI
+   * yet.
+   *
+   * Query entries explicitly set to `undefined` are treated as absent, so the
+   * default for that key still applies instead of being clobbered.
+   */
+  getClientPrograms(
+    id: string,
+    payload?: GetClientProgramsPayloadHmisProd,
+  ): Promise<HmisProdRequestResult<GetClientProgramsResponseHmisProd>> {
+    const { fields = CLIENT_PROGRAMS_FIELDS_DEFAULT, ...queryOverrides } =
+      payload ?? {};
+
+    const definedOverrides = Object.fromEntries(
+      Object.entries(queryOverrides).filter(([, value]) => value !== undefined),
+    );
+
+    return this.get<GetClientProgramsResponseHmisProd>(
+      `${HMIS_PROD_CLIENTS_PATH}/${encodeURIComponent(id)}/client-programs`,
+      {
+        ...CLIENT_PROGRAMS_DEFAULT_QUERY,
+        ...definedOverrides,
+        fields: fields.join(','),
+      },
     );
   }
 
