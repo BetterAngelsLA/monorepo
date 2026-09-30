@@ -4,12 +4,18 @@
 can add, rename, and reorder entries without a code deploy.
 """
 
+import pghistory
 from common.models import BaseModel
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower
 
 
+@pghistory.track(
+    pghistory.InsertEvent("service_category.add"),
+    pghistory.UpdateEvent("service_category.update"),
+    pghistory.DeleteEvent("service_category.remove"),
+)
 class ServiceCategory(BaseModel):
     """A grouping for services (e.g. "Immediate Needs", "Health Services")."""
 
@@ -25,6 +31,11 @@ class ServiceCategory(BaseModel):
         return self.display_name
 
 
+@pghistory.track(
+    pghistory.InsertEvent("service.add"),
+    pghistory.UpdateEvent("service.update"),
+    pghistory.DeleteEvent("service.remove"),
+)
 class Service(BaseModel):
     """A service a shelter can offer, organized by category."""
 

@@ -299,6 +299,11 @@ class Bed(CloneMixin, OrgScoped, BaseModel):
         )
 
 
+@pghistory.track(
+    pghistory.InsertEvent("room.add"),
+    pghistory.UpdateEvent("room.update"),
+    pghistory.DeleteEvent("room.remove"),
+)
 class Room(CloneMixin, OrgScoped, BaseModel):
     org_via = ("shelter",)
 

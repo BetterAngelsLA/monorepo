@@ -91,6 +91,11 @@ class Reservation(OrgScoped, BaseModel):
         return f"Reservation #{self.pk} at {shelter} ({self.status})"
 
 
+@pghistory.track(
+    pghistory.InsertEvent("reservation_client.add"),
+    pghistory.UpdateEvent("reservation_client.update"),
+    pghistory.DeleteEvent("reservation_client.remove"),
+)
 class ReservationClient(BaseModel):
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="reservation_clients")
     client_profile = models.ForeignKey(
