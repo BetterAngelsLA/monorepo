@@ -4,6 +4,7 @@ import { ElementType, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { NoteType, toNoteFilter } from '../../apollo';
 import { TUser, useUser } from '../../providers/user/UserProvider';
+import { useSortDirection } from '../../state';
 import {
   Header,
   HorizontalContainer,
@@ -12,7 +13,6 @@ import {
   NoteCard,
   SortButton,
   TModelFilters,
-  TSortDirection,
   toModelFilterValues,
 } from '../../ui-components';
 import { getInteractionOrder } from './getInteractionOrder';
@@ -32,19 +32,13 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
     getInitialFilterValues(user),
   );
-  const [sortDirection, setSortDirection] =
-    useState<TSortDirection>('newestFirst');
+  const { direction: sortDirection, toggle: toggleSortDirection } =
+    useSortDirection();
 
   const interactionOrder = useMemo(
     () => getInteractionOrder(sortDirection),
     [sortDirection],
   );
-
-  const toggleSortDirection = useCallback(() => {
-    setSortDirection((prev) =>
-      prev === 'newestFirst' ? 'oldestFirst' : 'newestFirst',
-    );
-  }, []);
 
   function onFilterChange(selectedFilters: TModelFilters) {
     setCurrentFilters(selectedFilters);
