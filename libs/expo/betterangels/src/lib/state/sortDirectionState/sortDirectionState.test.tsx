@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import { Provider, createStore } from 'jotai';
 import type { ReactNode } from 'react';
 import { createMMKV } from 'react-native-mmkv';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_SORT_DIRECTION,
   SORT_DIRECTION_STORAGE_KEY,
@@ -25,6 +25,12 @@ const fakeMmkv = {
 
 const mockedCreateMMKV = vi.mocked(createMMKV);
 
+beforeEach(() => {
+  mockedCreateMMKV.mockImplementation(
+    () => fakeMmkv as unknown as ReturnType<typeof createMMKV>,
+  );
+});
+
 function renderSortDirection() {
   const store = createStore();
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -35,16 +41,19 @@ function renderSortDirection() {
 }
 
 describe('sortDirectionState', () => {
-  it('does not create the MMKV handle just by being imported', () => {
-    // runs first: nothing has read the atom yet, and the store is lazy
-    expect(mockedCreateMMKV).not.toHaveBeenCalled();
+  it('does not create the MMKV handle just by being imported', async () => {
+    // Import a fresh copy of the module graph, so the assertion cannot depend
+    // on test execution order: the store must stay lazy at import time.
+    vi.resetModules();
+
+    const freshMmkv = await import('react-native-mmkv');
+
+    await import('./sortDirectionState');
+
+    expect(vi.mocked(freshMmkv.createMMKV)).not.toHaveBeenCalled();
   });
 
   it('defaults to newest-first and uses the app-wide MMKV instance', () => {
-    mockedCreateMMKV.mockImplementation(
-      () => fakeMmkv as unknown as ReturnType<typeof createMMKV>,
-    );
-
     delete mmkvData[SORT_DIRECTION_STORAGE_KEY];
 
     const { result } = renderSortDirection();
