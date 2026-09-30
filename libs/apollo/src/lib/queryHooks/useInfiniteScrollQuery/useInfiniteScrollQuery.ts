@@ -243,11 +243,7 @@ export function useInfiniteScrollQuery<
   // the manual-reload flag (an older reload finishing first must not).
   const reloadSequenceRef = useRef(0);
 
-  // Bumped whenever the query is reset — a manual reload or a variables
-  // change. In-flight page requests capture the generation they started in
-  // and drop their result once it has moved on (the standard stale-response
-  // guard; it replaces the old object-identity comparison on the pagination
-  // base).
+  // Bumped on every query reset; failures from an older generation are ignored.
   const generationRef = useRef(0);
 
   const reloadManual = useCallback(async () => {
@@ -263,8 +259,6 @@ export function useInfiniteScrollQuery<
     } catch (err) {
       console.error('[useInfiniteScrollQuery] Refetch failed:', err);
     } finally {
-      // Only the latest reload clears the flag: when reloads overlap, the
-      // newest one still owns the manual-reload state.
       if (sequence === reloadSequenceRef.current) {
         isManualReloadRef.current = false;
       }

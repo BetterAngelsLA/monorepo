@@ -21,10 +21,8 @@ export function buildVariablesForPage<TVars extends OperationVariables>(
 ): TVars {
   const { baseVariables, offset, paginationOffsetPath } = args;
 
-  // `withValueAtPath` returns a new variables object and copies only the
-  // containers along the written path, so nested objects shared with the
-  // base variables (e.g. the page-1 variables used by reload()) are never
-  // mutated.
+  // `withValueAtPath` copies only the containers along the path; the base is
+  // never mutated.
   return withValueAtPath(
     baseVariables as Record<string, unknown>,
     paginationOffsetPath,
