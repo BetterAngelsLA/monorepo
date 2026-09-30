@@ -9,10 +9,12 @@ import TaskCardCreatedBy from './TaskCardCreatedBy';
 
 type TaskCardVariant = 'default' | 'withoutClient';
 
+export type TClientProfileKind = 'clientProfile' | 'hmisClientProfile';
+
 type TaskCardProps = {
   task: TaskType;
   onPress?: (task: TaskType) => void;
-  onClientPress?: (clientProfileId: string) => void;
+  onClientPress?: (clientProfileId: string, kind: TClientProfileKind) => void;
   variant?: TaskCardVariant;
 };
 
@@ -37,7 +39,9 @@ export function TaskCard(props: TaskCardProps) {
             lastName={clientProfile.lastName}
             profilePhotoUrl={clientProfile.profilePhoto?.url}
             onPress={
-              onClientPress ? () => onClientPress(clientProfile.id) : undefined
+              onClientPress
+                ? () => onClientPress(clientProfile.id, 'clientProfile')
+                : undefined
             }
           />
         )}
@@ -49,7 +53,7 @@ export function TaskCard(props: TaskCardProps) {
             profilePhotoUrl={hmisClientProfile.profilePhoto?.url}
             onPress={
               onClientPress
-                ? () => onClientPress(hmisClientProfile.id)
+                ? () => onClientPress(hmisClientProfile.id, 'hmisClientProfile')
                 : undefined
             }
           />

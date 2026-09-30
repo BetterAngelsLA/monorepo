@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer, TaskStatusBtn } from '../../ui-components';
+import { useUser } from '../../hooks';
 
 import { useQuery } from '@apollo/client/react';
 import TaskBody from './TaskBody';
@@ -26,17 +27,20 @@ export default function Task({
     nextFetchPolicy: 'cache-first',
   });
 
+  const { user } = useUser();
   const task = data?.task;
   const clientProfileId = task?.clientProfile?.id;
 
   const handleClientPress = useCallback(() => {
-    if (!clientProfileId) return;
+    // `/client/[id]` resolves to the HMIS client screen for HMIS users; this
+    // row is a BACS client, so only navigate for non-HMIS users.
+    if (!clientProfileId || user?.isHmisUser) return;
 
     router.navigate({
       pathname: `/client/${clientProfileId}`,
       params: { arrivedFrom: `/task/${id}` },
     });
-  }, [clientProfileId, id]);
+  }, [clientProfileId, id, user?.isHmisUser]);
 
   if (loading) {
     return <LoadingView />;
