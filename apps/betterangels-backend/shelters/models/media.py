@@ -2,6 +2,7 @@
 
 from typing import Any, Optional
 
+import pghistory
 from admin_async_upload.models import AsyncFileField
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
@@ -31,6 +32,11 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     return default_storage.get_available_name(file_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("shelter_photo.add"),
+    pghistory.UpdateEvent("shelter_photo.update"),
+    pghistory.DeleteEvent("shelter_photo.remove"),
+)
 class ShelterPhoto(OrgScoped, BaseModel):
     org_via = ("shelter",)
 
@@ -78,6 +84,11 @@ class ExteriorShelterPhoto(ShelterPhoto):
         super().save(*args, **kwargs)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("video.add"),
+    pghistory.UpdateEvent("video.update"),
+    pghistory.DeleteEvent("video.remove"),
+)
 class Video(OrgScoped, BaseModel):
     org_via = ("shelter",)
 
@@ -95,6 +106,11 @@ MEDIA_TYPE_VALIDATORS: dict[str, RegexValidator] = {
 }
 
 
+@pghistory.track(
+    pghistory.InsertEvent("media_link.add"),
+    pghistory.UpdateEvent("media_link.update"),
+    pghistory.DeleteEvent("media_link.remove"),
+)
 class MediaLink(OrgScoped, BaseModel):
     org_via = ("shelter",)
 
