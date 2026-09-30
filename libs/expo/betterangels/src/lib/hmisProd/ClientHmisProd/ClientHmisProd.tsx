@@ -7,17 +7,28 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useSnackbar } from '../../hooks';
-import { ClientViewTabEnum } from '../../screens/Client/ClientTabs';
 import { ClientProfileHeaderHmis } from '../../screens/ClientHmis/ClientProfileHeaderHmis';
 import { MainContainer } from '../../ui-components';
 import { clientDetailToHmisClientProfileType } from '../adapters';
 import { ErrorHmisProd } from '../api';
 import { DebugRow } from '../components';
 import { useClientHmisProd } from '../hooks';
-import { ClientProfileViewHmisProd } from './ClientProfileViewHmisProd';
+import { ClientHistoryViewHmisProd, ClientProfileViewHmisProd } from './tabs';
 
-// v1: Profile only — more tabs land here once prod equivalents exist.
-const tabsHmisProd: ClientViewTabEnum[] = [ClientViewTabEnum.Profile];
+// Feature-local tabs: the shared `ClientViewTabEnum` renders through
+// exhaustive maps in the GraphQL client screens and has no equivalents for
+// prod-only tabs like History.
+enum ClientHmisProdTabEnum {
+  Profile = 'Profile',
+  History = 'History',
+}
+
+// v1: Profile + History — Programs and other prod tabs land here as their
+// data sources are built.
+const tabsHmisProd: ClientHmisProdTabEnum[] = [
+  ClientHmisProdTabEnum.Profile,
+  ClientHmisProdTabEnum.History,
+];
 
 type TProps = {
   id: string;
@@ -37,14 +48,19 @@ type TProps = {
  * the hmisProd demo flow navigates to.
  */
 export function ClientHmisProd(props: TProps) {
-  const { id, arrivedFrom } = props;
+  const { id: hmisClientId, arrivedFrom } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const { data: detail, debugInfo, isLoading, error } = useClientHmisProd(id);
+  const {
+    data: detail,
+    debugInfo,
+    isLoading,
+    error,
+  } = useClientHmisProd(hmisClientId);
 
-  const [currentTab, setCurrentTab] = useState(ClientViewTabEnum.Profile);
+  const [currentTab, setCurrentTab] = useState(ClientHmisProdTabEnum.Profile);
 
   // Note: useEffect for showSnackbar and router to avoid render side effects
   // (same pattern as ClientHmis).
@@ -69,7 +85,10 @@ export function ClientHmisProd(props: TProps) {
   }
 
   if (error) {
-    console.error(`[ClientHmisProd] error for client id [${id}]:`, error);
+    console.error(
+      `[ClientHmisProd] error for client id [${hmisClientId}]:`,
+      error,
+    );
 
     return null;
   }
@@ -84,6 +103,8 @@ export function ClientHmisProd(props: TProps) {
     client.firstName || client.lastName
       ? `${client.firstName ?? ''} ${client.lastName ?? ''}`.trim()
       : 'Client';
+
+  const renderDebug = false;
 
   return (
     <>
@@ -110,13 +131,22 @@ export function ClientHmisProd(props: TProps) {
           onTabPress={setCurrentTab}
         />
 
-        <DebugRow
-          debugInfo={debugInfo}
-          testID="hmis-prod-client-copy-debug-info"
-        />
+        {currentTab === ClientHmisProdTabEnum.Profile && (
+          <>
+            {renderDebug && (
+              <DebugRow
+                debugInfo={debugInfo}
+                testID="hmis-prod-client-copy-debug-info"
+                label="client debug info"
+              />
+            )}
 
-        {currentTab === ClientViewTabEnum.Profile && (
-          <ClientProfileViewHmisProd client={client} />
+            <ClientProfileViewHmisProd client={client} />
+          </>
+        )}
+
+        {currentTab === ClientHmisProdTabEnum.History && (
+          <ClientHistoryViewHmisProd hmisClientId={hmisClientId} />
         )}
       </MainContainer>
     </>

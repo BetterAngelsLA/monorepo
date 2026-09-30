@@ -9,32 +9,32 @@ import {
   type HmisProdRequestDebugInfo,
 } from '../api';
 
-export const getClientHmisProdQueryKey = (baseUrl: string, id: string) =>
-  [HMIS_PROD_QUERY_KEY_ROOT, 'client', baseUrl, id] as const;
+export const getClientHistoryHmisProdQueryKey = (baseUrl: string, id: string) =>
+  [HMIS_PROD_QUERY_KEY_ROOT, 'clientHistory', baseUrl, id] as const;
 
 /**
- * Fetch a single HMIS client directly against Clarity
- * (`GET /api1/clients/{id}`).
+ * Fetch a client's history directly against Clarity
+ * (`GET /api1/clients/{id}/history`).
  *
- * Same conventions as `useSearchClientsHmisProd`:
+ * Same conventions as `useClientHmisProd`:
  *
  * - Picks the HMIS host from the BA backend the app is actually talking to
  *   (`useApiConfig().apiUrl`); see `resolveHmisProdBaseUrl`.
  * - No retries — failures here are deterministic (missing/expired HMIS
  *   session, missing client) and retrying only repeats failed requests.
- * - Returns the query result with `data` unwrapped to the parsed client, plus
- *   `debugInfo` (full URL, status, auth context and raw response body) for
- *   the debug copy button.
+ * - Returns the query result with `data` unwrapped to the parsed response,
+ *   plus `debugInfo` (full URL, status, auth context and raw response body)
+ *   for the debug copy button.
  */
-export function useClientHmisProd(id: string) {
+export function useClientHistoryHmisProd(id: string) {
   const { apiUrl: baEnvApiUrl } = useApiConfig();
   const baseUrl = resolveHmisProdBaseUrl(baEnvApiUrl);
 
   const apiClient = useMemo(() => createApiClientHmisProd(baseUrl), [baseUrl]);
 
   const query = useQuery({
-    queryKey: getClientHmisProdQueryKey(baseUrl, id),
-    queryFn: () => apiClient.getClient(id),
+    queryKey: getClientHistoryHmisProdQueryKey(baseUrl, id),
+    queryFn: () => apiClient.getClientHistory(id),
     enabled: !!id,
     retry: false,
   });

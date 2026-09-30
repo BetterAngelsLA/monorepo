@@ -18,6 +18,19 @@ export interface GetClientPayloadHmisProd {
 }
 
 /**
+ * Query values for the client history call — strings, since they go straight
+ * into the query string. Defaults live in `CLIENT_HISTORY_DEFAULT_QUERY`.
+ */
+export interface GetClientHistoryPayloadHmisProd {
+  /** Include deleted entries (`'0'` = exclude, the default). */
+  deleted?: string;
+  /** Page number (default `'1'`). */
+  page?: string;
+  /** Items per page (default `'10'`). */
+  per_page?: string;
+}
+
+/**
  * Client search result item — keys mirror the requested `fields` (snake_case).
  */
 export interface HmisProdClientSearchItem {
@@ -32,14 +45,48 @@ export interface HmisProdClientSearchItem {
   unique_identifier?: string | null;
 }
 
+/** Pagination envelope Clarity sends with list responses (`_meta`). */
+export interface HmisProdPaginationMeta {
+  current_page?: number;
+  per_page?: number;
+  total_count?: number;
+  page_count?: number;
+}
+
 export interface SearchClientsResponseHmisProd {
   items: HmisProdClientSearchItem[];
-  _meta?: {
-    current_page?: number;
-    per_page?: number;
-    total_count?: number;
-    page_count?: number;
-  };
+  _meta?: HmisProdPaginationMeta;
+  _links?: Record<string, unknown>;
+}
+
+/** Fields the History tab renders from a history entry's `data` object. */
+export interface HmisProdHistoryItemData {
+  name?: string | null;
+  agency?: string | null;
+  agency_message?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  added_date?: string | null;
+}
+
+/**
+ * Single client history entry — `type` is the entry kind (`demographic`,
+ * `service`, `program`, …); `data` carries the fields the History tab needs
+ * (Clarity includes more per type, which we ignore for now).
+ */
+export interface HmisProdClientHistoryItem {
+  id: number | string;
+  type: string;
+  data: HmisProdHistoryItemData;
+}
+
+/**
+ * Response from `GET /api1/clients/{id}/history` — `items` is the flat list
+ * across all entry types (`source` repeats it grouped by type; unused).
+ */
+export interface GetClientHistoryResponseHmisProd {
+  items: HmisProdClientHistoryItem[];
+  _meta?: HmisProdPaginationMeta;
   _links?: Record<string, unknown>;
 }
 
