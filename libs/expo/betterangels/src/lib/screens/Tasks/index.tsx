@@ -126,10 +126,12 @@ export default function Tasks() {
             visibleTasks={visible}
             totalTasks={total ?? 0}
             actionItem={
-              <SortButton
-                direction={sortDirection}
-                onPress={toggleSortDirection}
-              />
+              (total ?? 0) > 1 ? (
+                <SortButton
+                  direction={sortDirection}
+                  onPress={toggleSortDirection}
+                />
+              ) : null
             }
           />
         )}
