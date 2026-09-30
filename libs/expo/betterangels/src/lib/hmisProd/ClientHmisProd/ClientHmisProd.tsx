@@ -104,8 +104,6 @@ export function ClientHmisProd(props: TProps) {
       ? `${client.firstName ?? ''} ${client.lastName ?? ''}`.trim()
       : 'Client';
 
-  const renderDebug = false;
-
   return (
     <>
       <Stack.Screen
@@ -133,13 +131,11 @@ export function ClientHmisProd(props: TProps) {
 
         {currentTab === ClientHmisProdTabEnum.Profile && (
           <>
-            {renderDebug && (
-              <DebugRow
-                debugInfo={debugInfo}
-                testID="hmis-prod-client-copy-debug-info"
-                label="client debug info"
-              />
-            )}
+            <DebugRow
+              debugInfo={debugInfo}
+              testID="hmis-prod-client-copy-debug-info"
+              label="client debug info"
+            />
 
             <ClientProfileViewHmisProd client={client} />
           </>
