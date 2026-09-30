@@ -420,9 +420,7 @@ class DailyOccupancyTestCase(TestCase):
         # the window: if the interval walk read every label they would open a
         # spurious checked-in interval on 2026-01-13.
         bed = self._make_bed()
-        reservation = self._stay(
-            bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 11))]
-        )
+        reservation = self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 11))])
         _pin_reservation_updates(
             reservation,
             {
@@ -449,6 +447,37 @@ class DailyOccupancyTestCase(TestCase):
         self.assertEqual(rows["2026-01-10"].occupied_count, 1)
         self.assertEqual(rows["2026-01-11"].occupied_count, 1)
         self.assertEqual(rows["2026-01-12"].occupied_count, 1)
+
+    def test_reparent_without_status_change_pins_current_behaviour(self) -> None:
+        """Pins a known mis-attribution when an active reservation moves beds.
+
+        A ``reservation.update`` that changes ``bed_id`` without changing
+        ``status`` carries the *new* bed in its snapshot, but the interval walk
+        is scoped to ``reservation.add``/``reservation.status_change`` (ADR 0004
+        §2), so the move is invisible to reporting: the interval stays open on
+        the **old** bed and never opens on the new one. Latent and pre-existing;
+        asserted here so a future refactor of ``_reservation_status_intervals``
+        renders the change visible instead of silently altering a wrong path.
+        """
+        from shelters.selectors.reports import _reservation_status_intervals
+
+        bed_a = self._make_bed(name="A")
+        bed_b = self._make_bed(name="B")
+        reservation = self._stay(bed_a, events=[(self.CI, self._utc(2026, 1, 10))])
+
+        reservation.bed = bed_b
+        reservation.save()
+        _pin_reservation_updates(reservation, {self.CI: self._utc(2026, 1, 15)})
+
+        intervals = _reservation_status_intervals(
+            bed_ids={bed_a.pk, bed_b.pk},
+            before=self._utc(2026, 1, 20),
+            target_statuses=frozenset({"checked_in"}),
+        )
+
+        self.assertEqual(len(intervals.get(bed_a.pk, [])), 1)
+        self.assertIsNone(intervals[bed_a.pk][0].freed)
+        self.assertNotIn(bed_b.pk, intervals)
 
     def test_total_beds_reflects_add_and_remove(self) -> None:
         self._make_bed(name="A")
@@ -900,9 +929,7 @@ class BedStatusCountsTestCase(TestCase):
         would mark the bed OCCUPIED on 2026-01-13.
         """
         bed = self._make_bed(added_at=self._utc(2025, 12, 1))
-        reservation = self._stay(
-            bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 11))]
-        )
+        reservation = self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 11))])
         _pin_reservation_updates(
             reservation,
             {
