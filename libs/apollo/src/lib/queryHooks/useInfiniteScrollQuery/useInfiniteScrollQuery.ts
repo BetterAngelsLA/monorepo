@@ -21,6 +21,8 @@
  * • Bumps a generation counter when the variables change or a manual reload
  *   starts: page requests from an older generation are dropped, so a reset can
  *   neither be corrupted by, nor corrupt, concurrent pagination.
+ * • A superseded page response may still merge into the cache (contiguously) —
+ *   the store-derived cursor keeps later pages aligned regardless.
  *
  * ---------------------------------------------------------------------------
  * Usage Example
@@ -266,6 +268,10 @@ export function useInfiniteScrollQuery<
   const currentItemCount = stableItems.length;
   const hasMore = currentItemCount < total;
 
+  // `currentItemCount` is the pagination cursor, not just a display count: the
+  // merged list is the single source of truth, so it is load-bearing in
+  // `loadMore`'s dependencies below.
+
   // reset network states
   useEffect(() => {
     if (networkStatus !== NetworkStatus.fetchMore) {
@@ -274,7 +280,7 @@ export function useInfiniteScrollQuery<
   }, [networkStatus]);
 
   // Load more handler
-  const loadMore = useCallback(async () => {
+  const loadMore = useCallback(() => {
     // `isManualReloadRef` is set synchronously when a reload starts, while
     // the derived `isAnyLoading` state lags a frame. Without the synchronous
     // gate, a scroll event in that window (Android fires onEndReached
@@ -305,9 +311,9 @@ export function useInfiniteScrollQuery<
     // list) or a dropped response can never leave us requesting a page past
     // its end.
     const nextVariables = buildVariablesForPage<TVars>({
-      previousVariables: initialVariables,
-      nextOffset: stableItems.length,
-      incrementBy: nextPageSize,
+      baseVariables: initialVariables,
+      offset: currentItemCount,
+      pageSize: nextPageSize,
       ...queryPolicyConfig,
     });
 
@@ -329,7 +335,7 @@ export function useInfiniteScrollQuery<
     pageSize,
     fetchMore,
     initialVariables,
-    stableItems,
+    currentItemCount,
   ]);
 
   return {

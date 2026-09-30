@@ -2,61 +2,78 @@ import { describe, expect, it } from 'vitest';
 import { buildVariablesForPage } from './buildVariablesForPage';
 
 describe('buildVariablesForPage', () => {
-  it('builds the next offset page without mutating the previous variables', () => {
-    const previous = {
+  it('builds the requested page without mutating the base variables', () => {
+    const base = {
       filters: { q: 'x' },
       pagination: { offset: 0, limit: 20 },
     };
 
     const next = buildVariablesForPage({
-      previousVariables: previous,
+      baseVariables: base,
+      offset: 40,
+      pageSize: 20,
       paginationOffsetPath: ['pagination', 'offset'],
       paginationLimitPath: ['pagination', 'limit'],
-      incrementBy: 20,
     });
 
     expect(next).toEqual({
       filters: { q: 'x' },
-      pagination: { offset: 20, limit: 20 },
+      pagination: { offset: 40, limit: 20 },
     });
 
     // nested pagination is copied; untouched siblings keep their identity
-    expect(previous).toEqual({
+    expect(base).toEqual({
       filters: { q: 'x' },
       pagination: { offset: 0, limit: 20 },
     });
-    expect(next.pagination).not.toBe(previous.pagination);
-    expect(next.filters).toBe(previous.filters);
+    expect(next.pagination).not.toBe(base.pagination);
+    expect(next.filters).toBe(base.filters);
   });
 
-  it('builds next page variables from a deeply frozen previous variables object', () => {
-    const previous = Object.freeze({
+  it('builds page variables from a deeply frozen base object', () => {
+    const base = Object.freeze({
       filters: Object.freeze({ q: 'x' }),
       pagination: Object.freeze({ offset: 0, limit: 20 }),
     });
 
     const next = buildVariablesForPage({
-      previousVariables: previous,
+      baseVariables: base,
+      offset: 20,
+      pageSize: 20,
       paginationOffsetPath: ['pagination', 'offset'],
       paginationLimitPath: ['pagination', 'limit'],
-      incrementBy: 20,
     });
 
     expect(next).toEqual({
       filters: { q: 'x' },
       pagination: { offset: 20, limit: 20 },
     });
-    expect(next.filters).toBe(previous.filters);
+    expect(next.filters).toBe(base.filters);
   });
 
-  it('falls back to empty variables when nothing has been paginated yet', () => {
+  it('falls back to empty variables when there is no base yet', () => {
     const next = buildVariablesForPage<Record<string, unknown>>({
-      previousVariables: undefined,
+      baseVariables: undefined,
+      offset: 0,
+      pageSize: 20,
       paginationOffsetPath: ['pagination', 'offset'],
       paginationLimitPath: ['pagination', 'limit'],
-      incrementBy: 20,
     });
 
-    expect(next).toEqual({ pagination: { offset: 20, limit: 20 } });
+    expect(next).toEqual({ pagination: { offset: 0, limit: 20 } });
+  });
+
+  it('uses the explicit cursor even when the base still points elsewhere', () => {
+    // The cursor comes from the item count, not from the previous request
+    // window — a reset that shrank the list must not be skipped over.
+    const next = buildVariablesForPage({
+      baseVariables: { pagination: { offset: 40, limit: 20 } },
+      offset: 10,
+      pageSize: 20,
+      paginationOffsetPath: ['pagination', 'offset'],
+      paginationLimitPath: ['pagination', 'limit'],
+    });
+
+    expect(next).toEqual({ pagination: { offset: 10, limit: 20 } });
   });
 });
