@@ -46,10 +46,8 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
 
   const listRef = useRef<FlashListRef<T> | null>(null);
 
-  // When the query inputs change (filters, search, ordering) the result set is
-  // replaced and may be shorter than before. Without this the list can keep a
-  // stale scroll offset from the previous result set, leaving the viewport on
-  // blank space with no visible cards (BACS-123).
+  // Reset to the top so a shorter result set never leaves the viewport past
+  // its content (BACS-123).
   useEffect(() => {
     if (scrollResetKey === undefined) return;
 
