@@ -3,7 +3,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { HmisProdClientHistoryItem } from '../../../../api';
-import { presentDateHmisProd } from '../../../../utils';
+import { hasStartedHmisProd, presentDateHmisProd } from '../../../../utils';
 
 const TYPE_LABELS: Record<string, string> = {
   demographic: 'Demographic',
@@ -27,9 +27,10 @@ export function HistoryCard(props: TProps) {
   const { type, data } = item;
 
   const typeLabel = type ? (TYPE_LABELS[type] ?? type) : null;
-  const isActive = !data.end_date;
+  const isActive = !data.end_date && hasStartedHmisProd(data.start_date);
   const startLabel = data.start_date ? formatHistoryDate(data.start_date) : '—';
   const endLabel = data.end_date ? formatHistoryDate(data.end_date) : null;
+  const endDateText = endLabel ?? (isActive ? 'active' : '—');
 
   return (
     <View style={styles.container}>
@@ -74,15 +75,15 @@ export function HistoryCard(props: TProps) {
           {`Start: ${startLabel}`}
         </TextRegular>
 
-        {endLabel ? (
-          <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-            {`End: ${endLabel}`}
+        <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+          {'End: '}
+          <TextRegular
+            size="xs"
+            color={isActive ? Colors.SUCCESS_DARK : Colors.NEUTRAL_DARK}
+          >
+            {endDateText}
           </TextRegular>
-        ) : (
-          <TextRegular size="xs" color={Colors.SUCCESS_DARK}>
-            active
-          </TextRegular>
-        )}
+        </TextRegular>
       </View>
     </View>
   );

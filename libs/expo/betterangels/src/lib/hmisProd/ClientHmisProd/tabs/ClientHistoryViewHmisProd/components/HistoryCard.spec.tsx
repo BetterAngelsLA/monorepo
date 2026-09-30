@@ -32,8 +32,8 @@ describe('HistoryCard', () => {
     vi.useRealTimers();
   });
 
-  it('renders an active entry with the dot, start date and "active" instead of an end date', () => {
-    const { getByLabelText, getByText, queryByText } = renderCard({
+  it('renders an active entry with the dot, start date and "End: active"', () => {
+    const { getByLabelText, getByText } = renderCard({
       id: 1,
       type: 'service',
       data: {
@@ -50,9 +50,60 @@ describe('HistoryCard', () => {
     expect(getByText('Agency: Agency A')).toBeTruthy();
     expect(getByText('Check-in')).toBeTruthy();
     expect(getByText('Start: 09/28/2026 (2 days ago)')).toBeTruthy();
-    expect(getByText('active')).toBeTruthy();
+    expect(getByText('End: active')).toBeTruthy();
     expect(getByLabelText('Currently active')).toBeTruthy();
-    expect(queryByText(/^End:/)).toBeNull();
+  });
+
+  it('marks an entry starting today as active', () => {
+    const { getByLabelText, getByText } = renderCard({
+      id: 4,
+      type: 'service',
+      data: {
+        name: 'Same-day Service',
+        start_date: '2026-09-30',
+        end_date: null,
+      },
+    });
+
+    expect(getByText('Start: 09/30/2026 (today)')).toBeTruthy();
+    expect(getByText('End: active')).toBeTruthy();
+    expect(getByLabelText('Currently active')).toBeTruthy();
+  });
+
+  it('does not mark an entry active until its start date is reached', () => {
+    const { getByText, queryByLabelText, queryByText } = renderCard({
+      id: 5,
+      type: 'service',
+      data: {
+        name: 'Upcoming Service',
+        start_date: '2026-10-05',
+        end_date: null,
+      },
+    });
+
+    // The humanizer clamps future dates to `today`; only the active state is
+    // gated on the start date having been reached.
+    expect(getByText('Start: 10/05/2026 (today)')).toBeTruthy();
+    expect(getByText('End: —')).toBeTruthy();
+    expect(queryByText('End: active')).toBeNull();
+    expect(queryByLabelText('Currently active')).toBeNull();
+  });
+
+  it('does not mark an entry active when there is no start date', () => {
+    const { getByText, queryByLabelText, queryByText } = renderCard({
+      id: 6,
+      type: 'demographic',
+      data: {
+        name: 'No Dates',
+        start_date: null,
+        end_date: null,
+      },
+    });
+
+    expect(getByText('Start: —')).toBeTruthy();
+    expect(getByText('End: —')).toBeTruthy();
+    expect(queryByText('End: active')).toBeNull();
+    expect(queryByLabelText('Currently active')).toBeNull();
   });
 
   it('renders a completed entry with its end date and no active indicators', () => {
@@ -69,7 +120,7 @@ describe('HistoryCard', () => {
     expect(getByText('Program')).toBeTruthy();
     expect(getByText('Start: 09/01/2026 (4 weeks ago)')).toBeTruthy();
     expect(getByText('End: 09/29/2026 (yesterday)')).toBeTruthy();
-    expect(queryByText('active')).toBeNull();
+    expect(queryByText('End: active')).toBeNull();
     expect(queryByLabelText('Currently active')).toBeNull();
   });
 
