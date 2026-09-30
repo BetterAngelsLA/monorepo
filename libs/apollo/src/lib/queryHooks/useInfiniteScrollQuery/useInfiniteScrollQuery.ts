@@ -49,10 +49,13 @@
  *     deriving the cursor from the items already merged into the list
  *   - calls Apollo’s `fetchMore` with those variables
  * • When `reload()` is called:
- *   - resets the internal pagination reference back to the initial variables
- *   - calls Apollo’s `refetch` using the initial variables
+ *   - calls Apollo’s `refetch` with the initial variables; the page-1 response
+ *     overwrites the cached list (`refetchWritePolicy: 'overwrite'`), so the
+ *     list — and the store-derived cursor — reset to the first page
  * • Determines `hasMore` by comparing `items.length` to `total`.
- * • Skips redundant `fetchMore` calls via an internal in-flight guard.
+ * • Skips redundant `fetchMore` calls via an internal in-flight guard plus a
+ *   synchronous manual-reload gate (scroll events can fire in the same frame a
+ *   reload starts, before the derived loading state catches up).
  * • Variable changes are tracked via `NetworkStatus.setVariables` and are treated
  *   as a "loading" state (distinct from manual `reload()`).
  *
@@ -68,7 +71,7 @@
  *   hasMore:     boolean,      // true if more results remain
  *   loadMore:    () => void,   // fetches next page
  *   reload:      () => void,   // refetches initial page (manual)
- *   error?:      ApolloError,  // query or network error or fetchMore error.
+ *   error?:      ErrorLike,    // query or network error or fetchMore error.
  *   queryKey:    string,       // stable identity of the query inputs (same key ⇒ same dataset)
  * }
  *
@@ -77,7 +80,8 @@
  * ---------------------------------------------------------------------------
  * • Requires that a `QueryPolicyConfig` be registered for the target field
  *   (via your cache policy setup).
- * • Works with Offset/Limit paginated queries.
+ * • Works with Offset/Limit paginated queries only; other pagination modes
+ *   throw at mount.
  * • If the policy config is missing, the hook throws an explicit error.
  * • Compatible with Apollo Client v4 and `TypedDocumentNode` queries.
  * • With `fetchPolicy: 'cache-and-network'`, variable changes may keep showing
@@ -95,9 +99,12 @@ import {
 } from '@apollo/client';
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import { canonicalStringify } from '@apollo/client/utilities';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDeepCompareMemoize } from 'use-deep-compare-effect';
-import { DEFAULT_QUERY_PAGE_SIZE } from '../../cachePolicy/constants';
+import {
+  DEFAULT_QUERY_PAGE_SIZE,
+  PaginationModeEnum,
+} from '../../cachePolicy/constants';
 import { getQueryPolicyConfigFromCache } from '../../cacheStore/utils/queryPolicyConfigRegistry';
 import { toErrorLike } from '../../errors';
 import { getApolloRuntimeConfig } from '../../runtime';
@@ -139,7 +146,9 @@ export function useInfiniteScrollQuery<
 
   const apolloClient = useApolloClient();
 
-  const fetchMoreErrorRef = useRef<ErrorLike | undefined>(undefined);
+  const [fetchMoreError, setFetchMoreError] = useState<ErrorLike | undefined>(
+    undefined,
+  );
 
   // Deep-memoize incoming variables to avoid unnecessary refetches
   const memoizedVariables = useDeepCompareMemoize(
@@ -156,6 +165,12 @@ export function useInfiniteScrollQuery<
     if (!cfg) {
       throw new Error(
         `[useInfiniteScrollQuery] No queryPolicyConfig found for Query.${queryFieldName}. Ensure this field is registered via getQueryPolicyFactory and attached to the cache.`,
+      );
+    }
+
+    if (cfg.paginationMode !== PaginationModeEnum.Offset) {
+      throw new Error(
+        `[useInfiniteScrollQuery] Query.${queryFieldName} uses "${cfg.paginationMode}" pagination; only Offset/Limit is supported.`,
       );
     }
 
@@ -193,6 +208,11 @@ export function useInfiniteScrollQuery<
     notifyOnNetworkStatusChange: true,
     fetchPolicy,
     nextFetchPolicy,
+    // Pinned deliberately: reload() relies on the refetched page-1 response
+    // overwriting the cached list instead of merging into it — the
+    // store-derived cursor assumes the list shrinks back to page one (see
+    // reloadManual).
+    refetchWritePolicy: 'overwrite',
   });
 
   if (isDevEnv && data) {
@@ -218,6 +238,10 @@ export function useInfiniteScrollQuery<
   // Reload on manual request
   const isManualReloadRef = useRef(false);
 
+  // Distinguishes overlapping manual reloads: only the latest one may clear
+  // the manual-reload flag (an older reload finishing first must not).
+  const reloadSequenceRef = useRef(0);
+
   // Bumped whenever the query is reset — a manual reload or a variables
   // change. In-flight page requests capture the generation they started in
   // and drop their result once it has moved on (the standard stale-response
@@ -227,15 +251,22 @@ export function useInfiniteScrollQuery<
 
   const reloadManual = useCallback(async () => {
     isManualReloadRef.current = true;
+    reloadSequenceRef.current += 1;
+    const sequence = reloadSequenceRef.current;
+
     generationRef.current += 1; // supersede any in-flight page fetch
-    fetchMoreErrorRef.current = undefined;
+    setFetchMoreError(undefined);
 
     try {
       await refetch(initialVariables as Partial<TVars>);
     } catch (err) {
       console.error('[useInfiniteScrollQuery] Refetch failed:', err);
     } finally {
-      isManualReloadRef.current = false;
+      // Only the latest reload clears the flag: when reloads overlap, the
+      // newest one still owns the manual-reload state.
+      if (sequence === reloadSequenceRef.current) {
+        isManualReloadRef.current = false;
+      }
     }
   }, [initialVariables, refetch]);
 
@@ -244,7 +275,7 @@ export function useInfiniteScrollQuery<
   useEffect(() => {
     generationRef.current += 1; // a new variable set supersedes older pages
     isFetchMoreInFlightRef.current = false;
-    fetchMoreErrorRef.current = undefined; // any error belongs to the previous variable set
+    setFetchMoreError(undefined); // any error belongs to the previous variable set
   }, [initialVariables]);
 
   // Loading statuses (Apollo + intent)
@@ -325,7 +356,7 @@ export function useInfiniteScrollQuery<
       }
 
       console.error('[useInfiniteScrollQuery] fetchMore failed:', err);
-      fetchMoreErrorRef.current = toErrorLike(err);
+      setFetchMoreError(toErrorLike(err));
       isFetchMoreInFlightRef.current = false;
     });
   }, [
@@ -348,6 +379,6 @@ export function useInfiniteScrollQuery<
     hasMore,
     loadMore,
     reload: reloadManual,
-    error: queryError ?? fetchMoreErrorRef.current,
+    error: queryError ?? fetchMoreError,
   };
 }

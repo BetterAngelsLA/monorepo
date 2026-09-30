@@ -13,6 +13,7 @@ import {
   InMemoryCache,
   Observable,
   gql,
+  type TypePolicies,
   type TypedDocumentNode,
 } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
@@ -23,6 +24,7 @@ import { generateCachePolicies } from '../../cachePolicy/generateCachePolicies';
 import { getQueryPolicyFactory } from '../../cachePolicy/queryPolicyConf/getQueryPolicyFactory';
 import { assemblePolicyRegistry } from '../../cachePolicy/queryPolicyConf/utils/assemblePolicyRegistry';
 import { createApolloCache } from '../../cacheStore/createApolloCache';
+import { registerQueryPolicyConfigs } from '../../cacheStore/utils/queryPolicyConfigRegistry';
 import { useInfiniteScrollQuery } from './useInfiniteScrollQuery';
 
 type TaskItem = { __typename?: 'TaskType'; id: string; title?: string };
@@ -382,6 +384,46 @@ describe('useInfiniteScrollQuery – end to end', () => {
         }),
       ),
     ).toThrow(/No queryPolicyConfig found/);
+
+    errorSpy.mockRestore();
+  });
+
+  it('throws an explicit error for non-Offset pagination modes', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn());
+
+    const cache = new InMemoryCache();
+    const client = new ApolloClient({ link: makeLink([]), cache });
+
+    // Register a config whose pagination mode the hook cannot page through
+    // (PerPage exists on newer versions of the policy lib). The hook must
+    // fail fast instead of writing offset/limit variables the server won't
+    // use.
+    registerQueryPolicyConfigs(cache, {
+      Query: {
+        fields: {
+          tasks: {
+            __queryPolicyConfig: {
+              paginationMode: 'PER_PAGE',
+              itemsPath: ['results'],
+              totalCountPath: ['totalCount'],
+              paginationPagePath: ['pagination', 'page'],
+              paginationPerPagePath: ['pagination', 'perPage'],
+            },
+          },
+        },
+      },
+    } as unknown as TypePolicies);
+
+    expect(() =>
+      renderWithClient(client, () =>
+        useInfiniteScrollQuery<TaskItem, TasksData, TasksVars>({
+          document: TASKS_DOCUMENT,
+          queryFieldName: 'tasks',
+          variables: {},
+          pageSize: PAGE_SIZE,
+        }),
+      ),
+    ).toThrow(/only Offset\/Limit is supported/);
 
     errorSpy.mockRestore();
   });
