@@ -3,13 +3,16 @@ import {
   HmisClientProfileType,
   HmisDobQualityEnum,
   HmisVeteranStatusEnum,
-} from '../../../apollo';
-import { enumDobQualityHmis, enumVeteranStatusHmis } from '../../../static';
+} from '../../../../../apollo';
+import {
+  enumDobQualityHmis,
+  enumVeteranStatusHmis,
+} from '../../../../../static';
 import {
   ClientProfileCard,
   ClientProfileCardContainer,
   TClientProfileCardItem,
-} from '../../../ui-components';
+} from '../../../../../ui-components';
 
 type TProps = {
   client?: HmisClientProfileType;

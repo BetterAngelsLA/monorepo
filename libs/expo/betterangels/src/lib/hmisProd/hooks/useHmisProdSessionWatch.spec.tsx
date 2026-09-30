@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ErrorHmisProd, type HmisProdRequestDebugInfo } from '../api';
 import { useHmisProdSessionWatch } from './useHmisProdSessionWatch';
@@ -103,6 +105,25 @@ const debugInfo = (
 /** Lets pending effects and promise callbacks run before asserting. */
 const flushAsyncWork = () => act(async () => undefined);
 
+/**
+ * Each test gets its own React Query client (the hook reads the query cache
+ * to react to failed feature queries) that the test can also drive queries
+ * through.
+ */
+const renderWatch = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
+  const result = renderHook(() => useHmisProdSessionWatch(), { wrapper });
+
+  return { ...result, queryClient };
+};
+
 describe('useHmisProdSessionWatch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -113,7 +134,7 @@ describe('useHmisProdSessionWatch', () => {
   });
 
   it('probes once when it becomes active and leaves a live session alone', async () => {
-    renderHook(() => useHmisProdSessionWatch());
+    renderWatch();
 
     await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(1));
 
@@ -131,7 +152,7 @@ describe('useHmisProdSessionWatch', () => {
       ),
     );
 
-    renderHook(() => useHmisProdSessionWatch());
+    renderWatch();
 
     await waitFor(() => expect(mocks.signOut).toHaveBeenCalledTimes(1));
     expect(mocks.routerReplace).toHaveBeenCalledWith('/auth');
@@ -146,7 +167,7 @@ describe('useHmisProdSessionWatch', () => {
       ),
     );
 
-    renderHook(() => useHmisProdSessionWatch());
+    renderWatch();
 
     await waitFor(() => expect(mocks.signOut).toHaveBeenCalledTimes(1));
     expect(mocks.routerReplace).toHaveBeenCalledWith('/auth');
@@ -161,7 +182,7 @@ describe('useHmisProdSessionWatch', () => {
       ),
     );
 
-    renderHook(() => useHmisProdSessionWatch());
+    renderWatch();
 
     await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(1));
 
@@ -172,7 +193,7 @@ describe('useHmisProdSessionWatch', () => {
   it('does not probe when the feature flag is off', async () => {
     mocks.flagEnabled = false;
 
-    renderHook(() => useHmisProdSessionWatch());
+    renderWatch();
 
     await flushAsyncWork();
     expect(mocks.checkSession).not.toHaveBeenCalled();
@@ -181,7 +202,7 @@ describe('useHmisProdSessionWatch', () => {
   it('does not probe when the user did not log in via HMIS', async () => {
     mocks.user = { id: 'user-1', isHmisUser: false };
 
-    renderHook(() => useHmisProdSessionWatch());
+    renderWatch();
 
     await flushAsyncWork();
     expect(mocks.checkSession).not.toHaveBeenCalled();
@@ -192,7 +213,7 @@ describe('useHmisProdSessionWatch', () => {
     const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(start);
 
     try {
-      const { rerender } = renderHook(() => useHmisProdSessionWatch());
+      const { rerender } = renderWatch();
 
       await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(1));
 
@@ -234,7 +255,7 @@ describe('useHmisProdSessionWatch', () => {
           }),
       );
 
-      const { rerender } = renderHook(() => useHmisProdSessionWatch());
+      const { rerender } = renderWatch();
 
       expect(mocks.checkSession).toHaveBeenCalledTimes(1);
 
@@ -254,5 +275,83 @@ describe('useHmisProdSessionWatch', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('force-signs out when a feature query fails with a session error', async () => {
+    const { queryClient } = renderWatch();
+
+    await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      await queryClient
+        .fetchQuery({
+          queryKey: ['hmisProd', 'clientHistory', 'test-client'],
+          queryFn: () =>
+            Promise.reject(
+              new ErrorHmisProd(
+                'Unauthorized - please log in again.',
+                401,
+                debugInfo(),
+              ),
+            ),
+          retry: false,
+        })
+        .catch(() => undefined);
+    });
+
+    await waitFor(() => expect(mocks.signOut).toHaveBeenCalledTimes(1));
+    expect(mocks.routerReplace).toHaveBeenCalledWith('/auth');
+  });
+
+  it('does not sign out on a transient feature-query failure', async () => {
+    const { queryClient } = renderWatch();
+
+    await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      await queryClient
+        .fetchQuery({
+          queryKey: ['hmisProd', 'clientHistory', 'test-client'],
+          queryFn: () =>
+            Promise.reject(
+              new ErrorHmisProd(
+                'HTTP 500: Server Error',
+                500,
+                debugInfo({ status: 500 }),
+              ),
+            ),
+          retry: false,
+        })
+        .catch(() => undefined);
+    });
+
+    await flushAsyncWork();
+    expect(mocks.signOut).not.toHaveBeenCalled();
+  });
+
+  it('ignores session errors from queries outside the feature', async () => {
+    const { queryClient } = renderWatch();
+
+    await waitFor(() => expect(mocks.checkSession).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      await queryClient
+        .fetchQuery({
+          queryKey: ['someOtherFeature'],
+          queryFn: () =>
+            Promise.reject(
+              new ErrorHmisProd(
+                'Unauthorized - please log in again.',
+                401,
+                debugInfo(),
+              ),
+            ),
+          retry: false,
+        })
+        .catch(() => undefined);
+    });
+
+    await flushAsyncWork();
+    expect(mocks.signOut).not.toHaveBeenCalled();
   });
 });

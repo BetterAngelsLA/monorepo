@@ -10,6 +10,7 @@ import {
 
 type TProps = {
   debugInfo: HmisProdRequestDebugInfo | null;
+  label?: string;
   testID?: string;
 };
 
@@ -22,7 +23,11 @@ type TProps = {
  * when the flag is off.
  */
 export function DebugRow(props: TProps) {
-  const { debugInfo, testID = 'hmis-prod-copy-debug-info' } = props;
+  const {
+    debugInfo,
+    label = 'Debug Info',
+    testID = 'hmis-prod-copy-debug-info',
+  } = props;
 
   const debugModeEnabled = useFeatureFlagActive(
     FeatureFlags.HMIS_PROD_DEMO_DEBUG_MODE,
@@ -35,7 +40,7 @@ export function DebugRow(props: TProps) {
   return (
     <View style={styles.container}>
       <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-        Debug Info
+        {label}
       </TextRegular>
       <CopyButton
         textToCopy={getDebugCopyTextHmisProd(debugInfo)}
@@ -51,6 +56,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacings.xs,
     paddingHorizontal: pagePaddingHorizontal,
+    marginTop: Spacings.xs,
     marginBottom: Spacings.xs,
   },
 });

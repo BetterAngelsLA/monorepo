@@ -98,7 +98,7 @@ export function ClientsScreenHmisProd({ Logo }: { Logo: ElementType }) {
           />
         </HorizontalContainer>
 
-        <DebugRow debugInfo={debugInfo} />
+        <DebugRow debugInfo={debugInfo} label="client search debug info" />
 
         {!hasSearched && (
           <View style={styles.searchHint}>

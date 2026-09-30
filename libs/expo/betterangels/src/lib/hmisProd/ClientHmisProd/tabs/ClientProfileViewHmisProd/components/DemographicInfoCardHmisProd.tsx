@@ -1,10 +1,10 @@
-import { HmisClientProfileType } from '../../../apollo';
-import { enumGenderHmis, enumRaceHmis } from '../../../static';
+import { HmisClientProfileType } from '../../../../../apollo';
+import { enumGenderHmis, enumRaceHmis } from '../../../../../static';
 import {
   ClientProfileCard,
   ClientProfileCardContainer,
   TClientProfileCardItem,
-} from '../../../ui-components';
+} from '../../../../../ui-components';
 
 type TProps = {
   client?: HmisClientProfileType;

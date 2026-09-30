@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import {
   createApiClientHmisProd,
   ErrorHmisProd,
+  HMIS_PROD_QUERY_KEY_ROOT,
   resolveHmisProdBaseUrl,
   type HmisProdRequestDebugInfo,
 } from '../api';
@@ -14,7 +15,7 @@ const SEARCH_DEBOUNCE_MS = 200;
 export const getSearchClientsHmisProdQueryKey = (
   baseUrl: string,
   search: string,
-) => ['hmisProd', 'searchClients', baseUrl, search] as const;
+) => [HMIS_PROD_QUERY_KEY_ROOT, 'searchClients', baseUrl, search] as const;
 
 /**
  * Search clients directly against HMIS (Clarity `/api1/clients/long`).

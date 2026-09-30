@@ -1,15 +1,15 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
-import { HmisClientProfileType } from '../../apollo';
-import { ClientProfileSectionEnum } from '../../screenRouting';
-import { ExpandableProfileContainer } from '../../screens/Client/ClientProfile/ExpandableProfileContainer';
-import { FullNameCardHmis } from '../../screens/ClientHmis/tabs/ClientProfileViewHmis/ClientCardsHmis';
-import { MainScrollContainer } from '../../ui-components';
+import { HmisClientProfileType } from '../../../../apollo';
+import { ClientProfileSectionEnum } from '../../../../screenRouting';
+import { ExpandableProfileContainer } from '../../../../screens/Client/ClientProfile/ExpandableProfileContainer';
+import { FullNameCardHmis } from '../../../../screens/ClientHmis/tabs/ClientProfileViewHmis/ClientCardsHmis';
+import { MainScrollContainer } from '../../../../ui-components';
 import {
   DemographicInfoCardHmisProd,
   PersonalInfoCardHmisProd,
-} from './ClientCardsHmisProd';
+} from './components';
 
 type TProps = {
   client?: HmisClientProfileType;
