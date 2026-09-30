@@ -14,9 +14,9 @@ import {
 
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
+const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
 
 export default defineConfig(({ mode }) => {
-  const isDev = mode === 'development';
   const basePath = getBranchBasePath();
   return {
     base: basePath,
@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: SERVER_PORT,
       host: 'localhost',
+      fs: { allow: [WORKSPACE_ROOT] },
     },
 
     preview: {

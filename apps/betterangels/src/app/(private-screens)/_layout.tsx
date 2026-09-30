@@ -77,6 +77,17 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
+        name="hmis-prod-client/[id]"
+        options={{
+          title: 'Client',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => <HeaderLeftButton />,
+        }}
+      />
+      <Stack.Screen
         name="public-note"
         options={{
           title: 'Note',
