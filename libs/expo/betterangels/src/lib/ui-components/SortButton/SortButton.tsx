@@ -28,9 +28,9 @@ export function SortButton(props: TProps) {
         <ArrowUpIcon size="sm" mr="xs" />
       )}
       <View>
-        {/* Invisible sizer: renders every label so the control always has the
-            width of the widest one. Without it, the arrow and text shift
-            sideways whenever the label swaps. */}
+        {/* Invisible sizer: keeps the control as wide as the widest label so
+            the arrow never moves, and gives the label a fixed box to anchor
+            its trailing edge inside. */}
         <View
           style={styles.sizer}
           accessible={false}
@@ -77,6 +77,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    left: 0,
+    // Both labels end with "st first", so pinning the trailing edge keeps the
+    // end of the label still and leaves only the leading word to change when
+    // the direction flips.
+    right: 0,
   },
 });
