@@ -1,8 +1,9 @@
 import { ArrowDownIcon, ArrowUpIcon } from '@monorepo/expo/shared/icons';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet } from 'react-native';
+import type { TSortDirection } from '../../state';
 
-export type TSortDirection = 'newestFirst' | 'oldestFirst';
+export type { TSortDirection };
 
 type TProps = {
   direction: TSortDirection;

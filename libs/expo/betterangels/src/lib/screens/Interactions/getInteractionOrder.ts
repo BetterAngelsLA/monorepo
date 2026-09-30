@@ -1,5 +1,5 @@
 import { Ordering } from '@monorepo/ba-platform/types';
-import type { TSortDirection } from '../../ui-components';
+import type { TSortDirection } from '../../state';
 
 export function getInteractionOrder(direction: TSortDirection) {
   if (direction === 'oldestFirst') {

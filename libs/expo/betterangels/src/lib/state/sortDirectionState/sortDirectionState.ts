@@ -1,7 +1,8 @@
 import { createPersistentSynchronousStorage } from '@monorepo/expo/shared/utils';
 import { atomWithStorage } from 'jotai/utils';
 import type { SyncStorage } from 'jotai/vanilla/utils/atomWithStorage';
-import type { TSortDirection } from '../../ui-components';
+
+export type TSortDirection = 'newestFirst' | 'oldestFirst';
 
 export const SORT_DIRECTION_STORAGE_KEY = 'sortDirection';
 export const DEFAULT_SORT_DIRECTION: TSortDirection = 'newestFirst';
@@ -15,9 +16,20 @@ const isSortDirection = (value: unknown): value is TSortDirection =>
 let store: ReturnType<typeof createPersistentSynchronousStorage> | undefined;
 const getStore = () => (store ??= createPersistentSynchronousStorage());
 
+// A lazy, validating variant of `adaptToJotaiStorage`: the store must not be
+// created at import time, and a value written by an older app version (or a
+// corrupted blob) must not break the first read.
+const readStoredDirection = (key: string): unknown => {
+  try {
+    return getStore().get(key);
+  } catch {
+    return null;
+  }
+};
+
 const storage: SyncStorage<TSortDirection> = {
   getItem(key, initialValue) {
-    const stored = getStore().get<TSortDirection>(key);
+    const stored = readStoredDirection(key);
 
     return isSortDirection(stored) ? stored : initialValue;
   },
