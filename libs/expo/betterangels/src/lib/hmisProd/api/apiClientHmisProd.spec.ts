@@ -152,3 +152,43 @@ describe('ApiClientHmisProd.checkSession (session probe)', () => {
     expect(isAuthErrorHmisProd(error)).toBe(false);
   });
 });
+
+describe('ApiClientHmisProd.getClientHistory (client history)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchMock);
+    mocks.hmisToken = 'token-1';
+  });
+
+  it('treats explicitly-undefined payload entries as absent, keeping the defaults', async () => {
+    setStoredToken('token-1');
+    fetchMock.mockResolvedValueOnce(responseWith(200, '{"items":[]}'));
+
+    const client = createApiClientHmisProd(BASE_URL);
+
+    await client.getClientHistory('123', {
+      deleted: undefined,
+      page: undefined,
+      per_page: undefined,
+    });
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      `${BASE_URL}/api1/clients/123/history?deleted=0&page=1&per_page=50`,
+    );
+  });
+
+  it('overlays defined payload entries on the defaults', async () => {
+    setStoredToken('token-1');
+    fetchMock.mockResolvedValueOnce(responseWith(200, '{"items":[]}'));
+
+    const client = createApiClientHmisProd(BASE_URL);
+
+    await client.getClientHistory('123', { page: '2', per_page: undefined });
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      `${BASE_URL}/api1/clients/123/history?deleted=0&page=2&per_page=50`,
+    );
+  });
+});

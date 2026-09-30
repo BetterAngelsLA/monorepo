@@ -26,7 +26,7 @@ export interface GetClientHistoryPayloadHmisProd {
   deleted?: string;
   /** Page number (default `'1'`). */
   page?: string;
-  /** Items per page (default `'10'`). */
+  /** Items per page. */
   per_page?: string;
 }
 

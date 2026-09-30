@@ -144,14 +144,21 @@ class ApiClientHmisProd {
    * Defaults to the first page the Clarity web app requests (see
    * `CLIENT_HISTORY_DEFAULT_QUERY`) — pass `payload` to move through pages;
    * pagination isn't wired to the UI yet.
+   *
+   * Entries explicitly set to `undefined` are treated as absent, so the
+   * default for that key still applies instead of being clobbered.
    */
   getClientHistory(
     id: string,
     payload?: GetClientHistoryPayloadHmisProd,
   ): Promise<HmisProdRequestResult<GetClientHistoryResponseHmisProd>> {
+    const overrides = Object.fromEntries(
+      Object.entries(payload ?? {}).filter(([, value]) => value !== undefined),
+    );
+
     return this.get<GetClientHistoryResponseHmisProd>(
       `${HMIS_PROD_CLIENTS_PATH}/${encodeURIComponent(id)}/history`,
-      { ...CLIENT_HISTORY_DEFAULT_QUERY, ...payload },
+      { ...CLIENT_HISTORY_DEFAULT_QUERY, ...overrides },
     );
   }
 
@@ -255,12 +262,20 @@ class ApiClientHmisProd {
     }
   }
 
+  /**
+   * Builds the query string from `params`, dropping `undefined` values —
+   * `URLSearchParams` would otherwise serialize them as the literal string
+   * `"undefined"` (`page=undefined`).
+   */
   private get<T>(
     path: string,
-    params: Record<string, string>,
+    params: Record<string, string | undefined>,
     options?: { signal?: AbortSignal },
   ): Promise<HmisProdRequestResult<T>> {
-    const query = new URLSearchParams(params).toString();
+    const definedEntries = Object.entries(params).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined,
+    );
+    const query = new URLSearchParams(definedEntries).toString();
 
     return this.request<T>(`${path}?${query}`, options);
   }
