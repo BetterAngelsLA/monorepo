@@ -1,6 +1,6 @@
 import { ArrowDownIcon, ArrowUpIcon } from '@monorepo/expo/shared/icons';
-import { TextButton } from '@monorepo/expo/shared/ui-components';
-import { StyleSheet, View } from 'react-native';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Pressable, StyleSheet } from 'react-native';
 
 export type TSortDirection = 'newestFirst' | 'oldestFirst';
 
@@ -18,21 +18,21 @@ export function SortButton(props: TProps) {
     direction === 'newestFirst' ? 'newest first' : 'oldest first';
 
   return (
-    <View style={styles.container}>
-      <TextButton
-        title={LABEL}
-        onPress={onPress}
-        fontSize="sm"
-        regular
-        accessibilityLabel={`Sort by date: ${directionLabel}`}
-        accessibilityHint="Switches the list between newest first and oldest first"
-      />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Sort by date: ${directionLabel}`}
+      accessibilityHint="Switches the list between newest first and oldest first"
+      hitSlop={8}
+      onPress={onPress}
+      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+    >
+      <TextRegular size="sm">{LABEL}</TextRegular>
       {direction === 'newestFirst' ? (
         <ArrowDownIcon size="sm" ml="xs" />
       ) : (
         <ArrowUpIcon size="sm" ml="xs" />
       )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -40,5 +40,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });
