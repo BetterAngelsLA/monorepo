@@ -1,11 +1,10 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
-import { Spacings } from '@monorepo/expo/shared/static';
 import {
   InfiniteList,
   TRenderListResultsHeader,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, ReactNode, useCallback } from 'react';
+import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, NoteFilter, NoteOrder, NoteType } from '../../apollo';
 import {
@@ -26,9 +25,7 @@ type TProps = {
   filters?: InputMaybe<NoteFilter>;
   order?: NoteOrder | NoteOrder[] | null;
   paginationLimit?: number;
-  headerStyle?: ViewStyle;
   renderHeader?: TRenderListResultsHeader;
-  actionItem?: ReactNode;
 };
 
 export function InteractionList(props: TProps) {
@@ -105,8 +102,5 @@ export function InteractionList(props: TProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    marginBottom: Spacings.xs,
   },
 });

@@ -1,11 +1,10 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
-import { Spacings } from '@monorepo/expo/shared/static';
 import {
   InfiniteList,
   TRenderListResultsHeader,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, ReactNode, useCallback } from 'react';
+import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, TaskFilter, TaskOrder, TaskType } from '../../apollo';
 import {
@@ -26,9 +25,7 @@ type TProps = {
   filters?: InputMaybe<TaskFilter>;
   order?: TaskOrder | TaskOrder[] | null;
   paginationLimit?: number;
-  headerStyle?: ViewStyle;
   renderHeader?: TRenderListResultsHeader;
-  actionItem?: ReactNode;
 };
 
 export function TaskList(props: TProps) {
@@ -91,8 +88,5 @@ export function TaskList(props: TProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    marginBottom: Spacings.xs,
   },
 });
