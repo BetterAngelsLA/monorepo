@@ -1,4 +1,4 @@
-import { SortSolidIcon } from '@monorepo/expo/shared/icons';
+import { ArrowDownIcon, ArrowUpIcon } from '@monorepo/expo/shared/icons';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
@@ -16,7 +16,11 @@ export function SortButton(props: TProps) {
 
   return (
     <View style={styles.container}>
-      <SortSolidIcon size="sm" mr="xs" />
+      {direction === 'newestFirst' ? (
+        <ArrowDownIcon size="sm" mr="xs" />
+      ) : (
+        <ArrowUpIcon size="sm" mr="xs" />
+      )}
       <TextButton
         title={label}
         onPress={onPress}
