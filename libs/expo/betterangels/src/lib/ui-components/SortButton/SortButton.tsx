@@ -22,7 +22,7 @@ export function SortButton(props: TProps) {
       accessibilityRole="button"
       accessibilityLabel={`Sort by date: ${directionLabel}`}
       accessibilityHint="Switches the list between newest first and oldest first"
-      hitSlop={8}
+      hitSlop={12}
       onPress={onPress}
       style={({ pressed }) => [styles.container, pressed && styles.pressed]}
     >

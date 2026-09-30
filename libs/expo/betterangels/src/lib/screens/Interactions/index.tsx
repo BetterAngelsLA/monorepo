@@ -110,10 +110,12 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
               <TextMedium size="sm">
                 Displaying {visible} of {total ?? 0} interactions
               </TextMedium>
-              <SortButton
-                direction={sortDirection}
-                onPress={toggleSortDirection}
-              />
+              {(total ?? 0) > 1 && (
+                <SortButton
+                  direction={sortDirection}
+                  onPress={toggleSortDirection}
+                />
+              )}
             </View>
           )}
         />
