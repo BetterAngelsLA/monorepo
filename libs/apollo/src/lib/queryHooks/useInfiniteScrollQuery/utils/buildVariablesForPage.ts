@@ -5,6 +5,8 @@ import { readNumberAtPathOr } from '../../../utils/readNumberAtPathOr';
 type TNextPageProps<TVars> = {
   previousVariables: TVars | undefined;
   incrementBy: number; // how many we want to fetch next
+  /** Explicit cursor for the next page. Defaults to previous offset + incrementBy. */
+  nextOffset?: number;
   paginationOffsetPath: string | readonly string[];
   paginationLimitPath: string | readonly string[];
 };
@@ -15,6 +17,7 @@ export function buildVariablesForPage<TVars extends OperationVariables>(
   const {
     previousVariables,
     incrementBy,
+    nextOffset,
     paginationOffsetPath,
     paginationLimitPath,
   } = args;
@@ -37,7 +40,7 @@ export function buildVariablesForPage<TVars extends OperationVariables>(
   nextVars = withValueAtPath(
     nextVars,
     paginationOffsetPath,
-    prevOffset + incrementBy,
+    nextOffset ?? prevOffset + incrementBy,
   );
   nextVars = withValueAtPath(nextVars, paginationLimitPath, incrementBy);
 

@@ -18,8 +18,9 @@
  * • Exposes a `loadMore()` function for fetching the next page of results.
  * • Exposes a `reload()` function for manually refetching the initial page.
  * • Tracks loading state and prevents overlapping `fetchMore` calls.
- * • Resets pagination state when variables change so subsequent `loadMore()` calls
- *   continue from the correct starting page/offset.
+ * • Bumps a generation counter when the variables change or a manual reload
+ *   starts: page requests from an older generation are dropped, so a reset can
+ *   neither be corrupted by, nor corrupt, concurrent pagination.
  *
  * ---------------------------------------------------------------------------
  * Usage Example
@@ -42,9 +43,9 @@
  *   - how to read total (`totalCountPath`)
  *   - which pagination variable paths to use (`paginationOffsetPath`, `paginationLimitPath`)
  * • When `loadMore()` is called:
- *   - computes the next page’s variables using `buildVariablesForPage`
+ *   - computes the next page’s variables using `buildVariablesForPage`,
+ *     deriving the cursor from the items already merged into the list
  *   - calls Apollo’s `fetchMore` with those variables
- *   - updates the internal reference to track the new offset/page
  * • When `reload()` is called:
  *   - resets the internal pagination reference back to the initial variables
  *   - calls Apollo’s `refetch` using the initial variables
@@ -178,8 +179,6 @@ export function useInfiniteScrollQuery<
     [initialVariables],
   );
 
-  const lastVariablesRef = useRef<TVars>(initialVariables);
-
   // Execute the query
   const {
     data,
@@ -217,15 +216,16 @@ export function useInfiniteScrollQuery<
   // Reload on manual request
   const isManualReloadRef = useRef(false);
 
+  // Bumped whenever the query is reset — a manual reload or a variables
+  // change. In-flight page requests capture the generation they started in
+  // and drop their result once it has moved on (the standard stale-response
+  // guard; it replaces the old object-identity comparison on the pagination
+  // base).
+  const generationRef = useRef(0);
+
   const reloadManual = useCallback(async () => {
     isManualReloadRef.current = true;
-
-    // Fresh identity invalidates in-flight fetchMore requests: the guards
-    // below compare `lastVariablesRef.current` by reference. Without this, a
-    // page-2 response arriving after the reload advances the pagination base
-    // past the overwritten (page-1-only) cache, and the next loadMore skips
-    // a page — leaving `undefined` holes that make the field unreadable.
-    lastVariablesRef.current = { ...initialVariables } as TVars;
+    generationRef.current += 1; // supersede any in-flight page fetch
     fetchMoreErrorRef.current = undefined;
 
     try {
@@ -240,7 +240,7 @@ export function useInfiniteScrollQuery<
   const isFetchMoreInFlightRef = useRef(false);
 
   useEffect(() => {
-    lastVariablesRef.current = initialVariables;
+    generationRef.current += 1; // a new variable set supersedes older pages
     isFetchMoreInFlightRef.current = false;
     fetchMoreErrorRef.current = undefined; // any error belongs to the previous variable set
   }, [initialVariables]);
@@ -275,51 +275,62 @@ export function useInfiniteScrollQuery<
 
   // Load more handler
   const loadMore = useCallback(async () => {
-    if (!hasMore || isAnyLoading || isFetchMoreInFlightRef.current) {
+    // `isManualReloadRef` is set synchronously when a reload starts, while
+    // the derived `isAnyLoading` state lags a frame. Without the synchronous
+    // gate, a scroll event in that window (Android fires onEndReached
+    // eagerly) starts a page fetch that the reset then discards.
+    if (
+      !hasMore ||
+      isAnyLoading ||
+      isManualReloadRef.current ||
+      isFetchMoreInFlightRef.current
+    ) {
       return;
     }
 
     isFetchMoreInFlightRef.current = true;
 
-    const baseVariables = lastVariablesRef.current;
+    const generation = generationRef.current;
 
     const { paginationLimitPath } = queryPolicyConfig;
 
     const nextPageSize = getPageSizeFromVars({
-      baseVariables,
+      baseVariables: initialVariables,
       paginationLimitPath,
       fallback: pageSize,
     });
 
+    // The cursor is the number of items already merged into the list: the
+    // store is the single source of truth, so a reset (which shrinks the
+    // list) or a dropped response can never leave us requesting a page past
+    // its end.
     const nextVariables = buildVariablesForPage<TVars>({
-      previousVariables: baseVariables,
+      previousVariables: initialVariables,
+      nextOffset: stableItems.length,
       incrementBy: nextPageSize,
       ...queryPolicyConfig,
     });
 
-    fetchMore({ variables: nextVariables })
-      .then(() => {
-        // Ignore responses whose variables changed while the request was in
-        // flight — the variables-change effect already reset the pagination
-        // base to the current page-1 variables.
-        if (lastVariablesRef.current !== baseVariables) {
-          return;
-        }
+    fetchMore({ variables: nextVariables }).catch((err) => {
+      // Ignore failures from a superseded request (variables changed or a
+      // manual reload happened while it was in flight).
+      if (generation !== generationRef.current) {
+        return;
+      }
 
-        lastVariablesRef.current = nextVariables;
-      })
-      .catch((err) => {
-        // Ignore failures from a superseded request (variables changed or a
-        // manual reload happened while it was in flight).
-        if (lastVariablesRef.current !== baseVariables) {
-          return;
-        }
-
-        console.error('[useInfiniteScrollQuery] fetchMore failed:', err);
-        fetchMoreErrorRef.current = toErrorLike(err);
-        isFetchMoreInFlightRef.current = false;
-      });
-  }, [hasMore, isAnyLoading, queryPolicyConfig, pageSize, fetchMore]);
+      console.error('[useInfiniteScrollQuery] fetchMore failed:', err);
+      fetchMoreErrorRef.current = toErrorLike(err);
+      isFetchMoreInFlightRef.current = false;
+    });
+  }, [
+    hasMore,
+    isAnyLoading,
+    queryPolicyConfig,
+    pageSize,
+    fetchMore,
+    initialVariables,
+    stableItems,
+  ]);
 
   return {
     items: stableItems,
