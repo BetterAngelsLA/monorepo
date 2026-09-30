@@ -19,8 +19,9 @@
  * • Exposes a `reload()` function for manually refetching the initial page.
  * • Tracks loading state and prevents overlapping `fetchMore` calls.
  * • Bumps a generation counter when the variables change or a manual reload
- *   starts: page requests from an older generation are dropped, so a reset can
- *   neither be corrupted by, nor corrupt, concurrent pagination.
+ *   starts: a request from an older generation can no longer surface its
+ *   failure, and a reset can be neither corrupted by, nor corrupt, concurrent
+ *   pagination.
  * • A superseded page response may still merge into the cache (contiguously) —
  *   the store-derived cursor keeps later pages aligned regardless.
  *
@@ -46,7 +47,8 @@
  *   - which pagination variable paths to use (`paginationOffsetPath`, `paginationLimitPath`)
  * • When `loadMore()` is called:
  *   - computes the next page’s variables using `buildVariablesForPage`,
- *     deriving the cursor from the items already merged into the list
+ *     deriving the cursor from the items already merged into the list (the
+ *     page limit is carried over from the initial variables)
  *   - calls Apollo’s `fetchMore` with those variables
  * • When `reload()` is called:
  *   - calls Apollo’s `refetch` with the initial variables; the page-1 response
@@ -112,7 +114,6 @@ import {
   buildInitialVariables,
   buildVariablesForPage,
   extractItemsAndTotalFromData,
-  getPageSizeFromVars,
 } from './utils';
 import { assertValueAtPath } from './utils/assertValueAtPath';
 
@@ -329,22 +330,14 @@ export function useInfiniteScrollQuery<
 
     const generation = generationRef.current;
 
-    const { paginationLimitPath } = queryPolicyConfig;
-
-    const nextPageSize = getPageSizeFromVars({
-      baseVariables: initialVariables,
-      paginationLimitPath,
-      fallback: pageSize,
-    });
-
     // The cursor is the number of items already merged into the list: the
     // store is the single source of truth, so a reset (which shrinks the
     // list) or a dropped response can never leave us requesting a page past
-    // its end.
+    // its end. The page limit was resolved once by `buildInitialVariables`,
+    // and every page carries it over.
     const nextVariables = buildVariablesForPage<TVars>({
       baseVariables: initialVariables,
       offset: currentItemCount,
-      pageSize: nextPageSize,
       ...queryPolicyConfig,
     });
 
@@ -363,7 +356,6 @@ export function useInfiniteScrollQuery<
     hasMore,
     isAnyLoading,
     queryPolicyConfig,
-    pageSize,
     fetchMore,
     initialVariables,
     currentItemCount,
