@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     pghistory.InsertEvent("reservation.add"),
     pghistory.DeleteEvent("reservation.remove"),
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
+    pghistory.UpdateEvent("reservation.update"),
 )
 class Reservation(OrgScoped, BaseModel):
     org_via = ("bed", "room")

@@ -24,6 +24,24 @@ def _aware(y: int, m: int, d: int, hh: int = 12, mm: int = 0) -> datetime.dateti
     return datetime.datetime(y, m, d, hh, mm, tzinfo=ZoneInfo("America/Los_Angeles"))
 
 
+def _pin_reservation_updates(
+    reservation: Reservation, when_by_status: dict[ReservationStatusChoices, datetime.datetime]
+) -> None:
+    """Pin a reservation's unconditional ``reservation.update`` events.
+
+    Every ``Reservation.save()`` also fires a ``reservation.update`` event
+    (ADR 0004 §2) whose snapshot duplicates the ``reservation.status_change``
+    snapshot but is written under a separate trigger. Test fixtures that pin
+    the ``status_change`` timestamps leave these at ``NOW()``; pinning them
+    here lets a test place them *inside* the report window so the interval
+    walk is forced to exercise the replay path.
+    """
+    for status, when in when_by_status.items():
+        ReservationEvent.objects.filter(
+            pgh_obj_id=reservation.pk, pgh_label="reservation.update", status=status
+        ).update(pgh_created_at=when)
+
+
 class ReservationStatusChangeCountsTestCase(TestCase):
     """Tests for ``reservation_status_change_counts``.
 
@@ -394,6 +412,43 @@ class DailyOccupancyTestCase(TestCase):
 
         self.assertEqual(rows["2026-01-10"].occupied_count, 1)
         self.assertEqual(rows["2026-01-11"].occupied_count, 1)
+
+    def test_trailing_update_events_do_not_change_occupancy(self) -> None:
+        # A non-status write also fires an unconditional ``reservation.update``
+        # event whose snapshot replays the preceding transitions under a
+        # separate label (ADR 0004 §2). Pin those replayed snapshots *inside*
+        # the window: if the interval walk read every label they would open a
+        # spurious checked-in interval on 2026-01-13.
+        bed = self._make_bed()
+        reservation = self._stay(
+            bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 11))]
+        )
+        _pin_reservation_updates(
+            reservation,
+            {
+                self.CI: self._utc(2026, 1, 13),
+                self.DONE: self._utc(2026, 1, 14),
+            },
+        )
+
+        s, e = self._dt_range(2026, 1, 10, 15)
+        rows = self._occupancy(s, e)
+
+        self.assertEqual([rows[d].occupied_count for d in sorted(rows)], [1, 0, 0, 0, 0, 0])
+
+    def test_created_as_checked_in_stays_occupied_with_trailing_update(self) -> None:
+        # The add snapshot opens the interval; a later non-status update is
+        # deduped against it because it snapshots the same bed/status.
+        bed = self._make_bed()
+        reservation = self._stay(bed, events=[], created_as=self.CI, created_at=self._utc(2026, 1, 10))
+        _pin_reservation_updates(reservation, {self.CI: self._utc(2026, 1, 12)})
+
+        s, e = self._dt_range(2026, 1, 10, 12)
+        rows = self._occupancy(s, e)
+
+        self.assertEqual(rows["2026-01-10"].occupied_count, 1)
+        self.assertEqual(rows["2026-01-11"].occupied_count, 1)
+        self.assertEqual(rows["2026-01-12"].occupied_count, 1)
 
     def test_total_beds_reflects_add_and_remove(self) -> None:
         self._make_bed(name="A")
@@ -835,6 +890,31 @@ class BedStatusCountsTestCase(TestCase):
         self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
         self.assertEqual(counts[datetime.date(2026, 1, 11)].occupied, 1)
         self.assertEqual(counts[datetime.date(2026, 1, 12)].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].available, 1)
+
+    def test_trailing_update_events_do_not_change_status_counts(self) -> None:
+        """A non-status write's ``reservation.update`` events must not register.
+
+        The replayed snapshots are pinned inside the window; without the
+        label filter in ``_reservation_status_intervals`` (ADR 0004 §2) they
+        would mark the bed OCCUPIED on 2026-01-13.
+        """
+        bed = self._make_bed(added_at=self._utc(2025, 12, 1))
+        reservation = self._stay(
+            bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 11))]
+        )
+        _pin_reservation_updates(
+            reservation,
+            {
+                self.CI: self._utc(2026, 1, 13),
+                self.DONE: self._utc(2026, 1, 14),
+            },
+        )
+
+        counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 14))
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].occupied, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].occupied, 0)
         self.assertEqual(counts[datetime.date(2026, 1, 13)].available, 1)
 
     def test_out_of_service_overrides_occupied(self) -> None:
