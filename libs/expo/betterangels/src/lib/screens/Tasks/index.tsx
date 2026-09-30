@@ -9,6 +9,7 @@ import { useUserTeamPreference } from '../../state';
 import { pagePaddingHorizontal } from '../../static';
 import {
   ModelFilters,
+  TClientProfileKind,
   TModelFilters,
   TaskCard,
   TaskList,
@@ -32,9 +33,29 @@ export default function Tasks() {
     });
   }, []);
 
+  const handleClientPress = useCallback(
+    (clientProfileId: string, kind: TClientProfileKind) => {
+      // `/client/[id]` resolves to the HMIS client screen for HMIS users, so
+      // only navigate when the row's client kind matches the user's mode.
+      if ((kind === 'hmisClientProfile') !== Boolean(user?.isHmisUser)) return;
+
+      router.navigate({
+        pathname: `/client/${clientProfileId}`,
+        params: { arrivedFrom: '/tasks' },
+      });
+    },
+    [user?.isHmisUser],
+  );
+
   const renderTaskItem = useCallback(
-    (task: TaskType) => <TaskCard task={task} onPress={handleTaskPress} />,
-    [handleTaskPress],
+    (task: TaskType) => (
+      <TaskCard
+        task={task}
+        onPress={handleTaskPress}
+        onClientPress={handleClientPress}
+      />
+    ),
+    [handleTaskPress, handleClientPress],
   );
 
   function onFilterChange(selectedFilters: TModelFilters) {
