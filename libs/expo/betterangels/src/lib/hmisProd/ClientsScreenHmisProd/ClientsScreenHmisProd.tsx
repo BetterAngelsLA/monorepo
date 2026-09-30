@@ -113,7 +113,6 @@ export function ClientsScreenHmisProd({ Logo }: { Logo: ElementType }) {
             modelName="client"
             data={clients}
             keyExtractor={(client) => client.id}
-            // Trimmed like the query term, so whitespace-only edits do not reset the list.
             scrollResetKey={search.trim()}
             totalItems={data?._meta?.total_count ?? clients.length}
             renderResultsHeader={clients.length > 0 ? undefined : null}
