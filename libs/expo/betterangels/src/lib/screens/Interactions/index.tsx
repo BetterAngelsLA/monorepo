@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { SearchBar, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { SearchBar, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { ElementType, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { NoteType, toNoteFilter } from '../../apollo';
@@ -107,9 +107,9 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
           paginationLimit={paginationLimit}
           renderHeader={(visible, total) => (
             <View style={styles.listHeader}>
-              <TextRegular size="sm">
+              <TextMedium size="sm">
                 Displaying {visible} of {total ?? 0} interactions
-              </TextRegular>
+              </TextMedium>
               <SortButton
                 direction={sortDirection}
                 onPress={toggleSortDirection}
