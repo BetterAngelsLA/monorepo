@@ -122,6 +122,7 @@ export default function Tasks() {
         renderItem={renderTaskItem}
         renderHeader={(visible, total) => (
           <TaskListHeader
+            style={styles.listHeader}
             visibleTasks={visible}
             totalTasks={total ?? 0}
             actionItem={
@@ -149,6 +150,9 @@ const styles = StyleSheet.create({
   },
   filters: {
     marginBottom: Spacings.sm,
+  },
+  listHeader: {
+    marginBottom: Spacings.xs,
   },
   resultsHeader: {
     marginVertical: Spacings.sm,
