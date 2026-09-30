@@ -1,4 +1,4 @@
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -127,9 +127,5 @@ const styles = StyleSheet.create({
   },
   listHeader: {
     marginBottom: Spacings.xs,
-  },
-  resultsHeader: {
-    marginVertical: Spacings.sm,
-    ...FontSizes.md,
   },
 });
