@@ -1,0 +1,73 @@
+"""GraphQL types for the object audit log (ADR 0004 §17)."""
+
+import enum
+from datetime import datetime
+from typing import Any, List
+
+import strawberry
+from strawberry.scalars import JSON
+
+
+@strawberry.enum
+class AuditEventKind(enum.Enum):
+    """The write operation a single event row represents (§13)."""
+
+    INSERT = "INSERT"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+
+
+@strawberry.enum
+class AuditTargetType(enum.Enum):
+    """The object kind an ``objectAuditLog`` query is anchored on (§18)."""
+
+    SHELTER = "SHELTER"
+    ROOM = "ROOM"
+    BED = "BED"
+    RESERVATION = "RESERVATION"
+
+
+@strawberry.type
+class AuditEventType:
+    """A single pghistory write event, normalized across tracked models."""
+
+    timestamp: datetime
+    actor: str
+    kind: AuditEventKind
+    action: str
+    target_type: AuditTargetType
+    target_id: strawberry.ID
+    field_changes: JSON
+
+
+@strawberry.type
+class AuditActionType:
+    """A group of events written under one context (one "action", §12)."""
+
+    timestamp: datetime
+    actor: str
+    summary: str
+    events: List[AuditEventType]
+    field_changes: JSON
+
+
+def to_event_type(event: Any) -> AuditEventType:
+    return AuditEventType(
+        timestamp=event.timestamp,
+        actor=event.actor,
+        kind=AuditEventKind(event.kind),
+        action=event.action,
+        target_type=AuditTargetType(event.target_type),
+        target_id=strawberry.ID(event.target_id),
+        field_changes=event.field_changes,
+    )
+
+
+def to_action_type(action: Any) -> AuditActionType:
+    return AuditActionType(
+        timestamp=action.timestamp,
+        actor=action.actor,
+        summary=action.summary,
+        events=[to_event_type(event) for event in action.events],
+        field_changes=action.field_changes,
+    )
