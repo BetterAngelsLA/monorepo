@@ -120,7 +120,6 @@ class CreateShelterInput:
     phone: Optional[PhoneNumberScalar] = None  # PhoneNumberField
     website: auto = None
     instagram: auto = None
-    instagram_handle: auto = None
     status: auto = None
     demographics_other: auto = None
     shelter_types_other: auto = None
@@ -161,7 +160,6 @@ class UpdateShelterInput:
     email: Maybe[Optional[str]] = UNSET
     website: Maybe[Optional[str]] = UNSET
     instagram: Maybe[Optional[str]] = UNSET
-    instagram_handle: Maybe[Optional[str]] = UNSET
     is_private: Maybe[bool] = UNSET
     hero_image_id: Maybe[ID | None] = UNSET
     city_id: Maybe[ID | None] = UNSET

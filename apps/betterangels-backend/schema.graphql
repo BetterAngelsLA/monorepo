@@ -744,7 +744,6 @@ input CreateShelterInput {
   phone: PhoneNumber = null
   website: String = null
   instagram: String = null
-  instagramHandle: String = null
   status: StatusChoices = null
   demographicsOther: String = null
   shelterTypesOther: String = null
@@ -1811,7 +1810,6 @@ type OperatorShelterType {
   funders: [FunderType!]!
   fundersOther: String
   instagram: String
-  instagramHandle: String
   location: ShelterLocationType
   maxStay: Int
   name: String!
@@ -2737,7 +2735,6 @@ type ShelterType {
   funders: [FunderType!]!
   fundersOther: String
   instagram: String
-  instagramHandle: String
   location: ShelterLocationType
   maxStay: Int
   name: String!
@@ -3182,7 +3179,6 @@ input UpdateShelterInput {
   email: String
   website: String
   instagram: String
-  instagramHandle: String
   isPrivate: Boolean
   heroImageId: ID
   cityId: ID

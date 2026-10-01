@@ -82,8 +82,7 @@ class Shelter(OrgScoped, BaseModel):
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-    instagram = models.URLField(blank=True, null=True)
-    instagram_handle = models.CharField(max_length=255, blank=True, null=True)
+    instagram = models.CharField(max_length=255, blank=True, null=True)
 
     # Hero Image (explicit pick from this shelter's gallery photos)
     hero_image = models.ForeignKey(

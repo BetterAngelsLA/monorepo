@@ -159,7 +159,6 @@ class ShelterTypeMixin:
     funders: List[FunderType]
     funders_other: auto
     instagram: auto
-    instagram_handle: auto
     location: Optional[ShelterLocationType]
     max_stay: auto
     name: auto

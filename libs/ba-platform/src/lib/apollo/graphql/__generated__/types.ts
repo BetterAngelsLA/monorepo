@@ -741,7 +741,6 @@ export type CreateShelterInput = {
   funders?: InputMaybe<Array<FunderChoices>>;
   fundersOther?: InputMaybe<Scalars['String']['input']>;
   instagram?: InputMaybe<Scalars['String']['input']>;
-  instagramHandle?: InputMaybe<Scalars['String']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;
@@ -2254,7 +2253,6 @@ export type OperatorShelterType = {
   heroImage?: Maybe<ShelterHeroImageType>;
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
-  instagramHandle?: Maybe<Scalars['String']['output']>;
   isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
@@ -3502,7 +3500,6 @@ export type ShelterType = {
   heroImage?: Maybe<ShelterHeroImageType>;
   id: Scalars['ID']['output'];
   instagram?: Maybe<Scalars['String']['output']>;
-  instagramHandle?: Maybe<Scalars['String']['output']>;
   isPrivate: Scalars['Boolean']['output'];
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
@@ -3962,7 +3959,6 @@ export type UpdateShelterInput = {
   heroImageId?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
   instagram?: InputMaybe<Scalars['String']['input']>;
-  instagramHandle?: InputMaybe<Scalars['String']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;
