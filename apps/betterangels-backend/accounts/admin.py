@@ -12,7 +12,7 @@ from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User as DefaultUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import Field, Model, QuerySet
+from django.db.models import Field, Model, Prefetch, QuerySet
 from django.forms import Field as FormField
 from django.forms import ModelMultipleChoiceField
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
@@ -262,7 +262,15 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
             super()
             .get_queryset(request)
             .select_related("user", "organization", "organizationowner")
-            .prefetch_related("user__groups__permissiongroup")
+            .prefetch_related(
+                "user__groups__permissiongroup",
+                # The grant arm: ORG_ADMIN/ORG_SUPERUSER are grant-only (ADR 0001
+                # teardown) — no ``PermissionGroup`` row exists for them, so the
+                # role column would otherwise omit them.  Prefetched unfiltered:
+                # ``get_queryset`` has no reliable parent object, and the display
+                # scopes by ``scope_org_id`` anyway.
+                Prefetch("user__grants", queryset=Grant.objects.select_related("role")),
+            )
         )
 
     # Django renders a blank row for this formset — its ``empty_form``, and any
@@ -284,17 +292,26 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
         The change forms use that selector, but they read one object; this renders a
         row per member, so a per-row query would be an N+1 — production has an
         organization with 90 members.
+
+        Both arms are read, matching ``member_role_names``: the dual-write
+        ``PermissionGroup`` membership and the grant-only scoped ``Role`` ``Grant``
+        (ORG_ADMIN/ORG_SUPERUSER have no row — ADR 0001 teardown).  The names are
+        de-duplicated because a dual-write role has a membership *and* its mirrored
+        grant, so both arms return it.
         """
         if obj.user_id is None:
             return ""
-        names = []
+        names = set()
         for group in obj.user.groups.all():
             try:
                 permission_group = group.permissiongroup
             except ObjectDoesNotExist:
                 continue
             if permission_group.organization_id == obj.organization_id:
-                names.append(permission_group.label)
+                names.add(permission_group.label)
+        for grant in obj.user.grants.all():
+            if grant.scope_org_id == obj.organization_id:
+                names.add(grant.role.name)
         return ", ".join(sorted(names)) or "—"
 
     @admin.display(description="Owner", boolean=True)
