@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { syncTimezoneCookie } from './timezoneCookie';
+import { cookieDomainFor, syncTimezoneCookie } from './timezoneCookie';
 
 const mockResolvedTimeZone = (timeZone: string | undefined) => {
   vi.spyOn(Intl, 'DateTimeFormat').mockReturnValue({
@@ -27,5 +27,22 @@ describe('syncTimezoneCookie', () => {
     syncTimezoneCookie();
 
     expect(document.cookie).not.toContain('django_timezone=');
+  });
+});
+
+describe('cookieDomainFor', () => {
+  it('scopes to the parent domain the API also lives under', () => {
+    expect(cookieDomainFor('admin.dev.betterangels.la')).toBe(
+      'dev.betterangels.la',
+    );
+    expect(cookieDomainFor('admin.prod.betterangels.la')).toBe(
+      'prod.betterangels.la',
+    );
+  });
+
+  it('stays host-only for hosts it cannot scope', () => {
+    expect(cookieDomainFor('localhost')).toBeUndefined();
+    expect(cookieDomainFor('127.0.0.1')).toBeUndefined();
+    expect(cookieDomainFor('betterangels.la')).toBeUndefined();
   });
 });
