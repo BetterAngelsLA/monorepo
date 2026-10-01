@@ -9,9 +9,10 @@ not just ``OrgRoleManager``.
 
 from typing import Any
 
-from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
+from accounts.models import Grant, PermissionGroup, Role, User
 from accounts.role_manager import OrgRoleManager
 from common.permissions.config import TemplateConfig
+from common.tests.utils import make_permission_group
 from django.test import TestCase
 from model_bakery import baker
 from notes.groups import CASEWORKER
@@ -36,8 +37,7 @@ class OrgRoleManagerDualWriteTestCase(TestCase):
 
     def _ensure_not_role_backed_group(self) -> None:
         """Create a PermissionGroup for the test-only template."""
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=NOT_ROLE_BACKED.name)
-        PermissionGroup.objects.get_or_create(organization=self.org, template=template)
+        make_permission_group(organization=self.org, template_name=NOT_ROLE_BACKED.name)
 
     def _shelter_operator_role(self) -> Role:
         return Role.objects.get(name=SHELTER_OPERATOR.name, is_global=False)

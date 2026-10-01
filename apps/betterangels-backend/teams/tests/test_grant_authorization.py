@@ -9,10 +9,11 @@ The three team mutations authorize through ``require_can`` (``can()``) since
 from typing import Any
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.permissions.utils import PERMISSION_DENIED_MESSAGE
+from common.tests.utils import make_legacy_only_holder
 from model_bakery import baker
 from teams.models import Team
 
@@ -97,14 +98,9 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         Reconcile retires org-admin rows (ADR 0001 teardown) — this simulates a
         stale leftover row; even if one exists it confers no team authority.
         """
-        legacy_admin = baker.make(User)
-        self.org_1.add_user(legacy_admin)
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=ORG_ADMIN.name)
-        group, _ = PermissionGroup.objects.get_or_create(organization=self.org_1, template=template)
-        group.user_set.add(legacy_admin)
-        # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
-        # legacy-only holder has none — drop the mirror to model that state.
-        Grant.objects.filter(principal_user=legacy_admin).delete()
+        legacy_admin = make_legacy_only_holder(
+            user=baker.make(User), organization=self.org_1, template_name=ORG_ADMIN.name
+        )
         self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
 
         self._login(legacy_admin)
