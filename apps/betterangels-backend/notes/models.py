@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import pghistory
 from accounts.models import User
 from betterangels_backend import settings
-from common.models import Attachment, BaseModel, Location, OrgScoped
-from common.permissions.utils import permission_enums_to_django_meta_permissions
+from common.models import Attachment, BaseModel, Location, ScopedResource
+from common.permissions.registry import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -88,9 +88,9 @@ class OrganizationService(BaseModel):
 class ServiceRequest(BaseModel):
     """Service requests ride their note's org (RFC 0003 slice 2).
 
-    Deliberately *not* ``OrgScoped`` in this slice: an SR's only org reach is
+    Deliberately *not* ``ScopedResource`` in this slice: an SR's only org reach is
     the ``service`` hop, and ``OrganizationService`` does not declare
-    ``OrgScoped`` yet (that lands with the service-catalog cutover).  Writes
+    ``ScopedResource`` yet (that lands with the service-catalog cutover).  Writes
     gate through the owning note's org — ``delete_service_request`` checks
     ``NotePermissions.CHANGE`` on the note carrying the SR.
     """
@@ -150,7 +150,7 @@ class ServiceRequest(BaseModel):
     pghistory.UpdateEvent("note.update"),
     pghistory.DeleteEvent("note.remove"),
 )
-class Note(OrgScoped, BaseModel):
+class Note(ScopedResource, BaseModel):
     """Org-anchored through its own ``organization`` FK (RFC 0003 slice 2).
 
     Writes resolve through the org-scoped ``can_obj`` arm; reads stay SHARED —

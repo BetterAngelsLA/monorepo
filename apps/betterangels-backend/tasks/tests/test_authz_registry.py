@@ -3,7 +3,7 @@
 The tasks cutover made authorization behavioral: the single read rides the
 shared grant checker (``HasPerm`` + ``can_anywhere_checker``), the list rides
 the type-level ``get_queryset`` hook (``visible_rows_for_holder``), and the
-mutations authorize through ``resolve_org_or_deny`` + ``require_can`` /
+mutations authorize through ``org_or_deny`` + ``require_can`` /
 ``can_obj`` — none of them inherits a transport default that would let an
 unguarded field through.
 
@@ -28,7 +28,7 @@ QUERY_AUTHZ_ROUTES: dict[str, str] = {
 
 # mutation -> where authorization happens for that write.
 MUTATION_AUTHZ_ROUTES: dict[str, str] = {
-    "create_task": "resolver -> resolve_org_or_deny(organizationId) + require_can(ADD, org)",
+    "create_task": "resolver -> org_or_deny(organizationId) + require_can(ADD, org)",
     "update_task": "resolver -> get_or_none + can_obj(CHANGE, row)",
     "delete_task": "resolver -> get_or_none + can_obj(DELETE, row)",
 }

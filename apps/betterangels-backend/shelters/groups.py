@@ -49,10 +49,10 @@ SHELTER_OPERATOR = TemplateConfig(
         Reservation.perms.DELETE,
         Reservation.perms.VIEW,
         # view_private_shelter deliberately NOT on the scoped role: private
-        # shelters in the public directory are a global-tier gate (the only
-        # consumer reads has_perm, which Grants don't feed); a shelter operator
-        # sees their org's private shelters through the org-scoped visible()
-        # path instead (ADR 0001 §2.4).
+        # shelters in the public directory are a global-tier gate
+        # (``can_globally`` — superuser / global role / direct user_permissions);
+        # a shelter operator sees their org's private shelters through the
+        # org-scoped visible() path instead (ADR 0001 §2.4).
         ClientProfile.perms.VIEW,
         # ContactInfo deliberately NOT on the scoped role as it is
         # currently used for internal BA users only.

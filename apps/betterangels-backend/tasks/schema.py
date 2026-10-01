@@ -5,11 +5,10 @@ import strawberry_django
 from accounts.models import User
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
-from common.graphql.org import resolve_org_or_deny
 from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.selectors import can_obj
-from common.permissions.utils import IsAuthenticated, PERMISSION_DENIED_MESSAGE, require_can
+from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, org_or_deny, require_can
 from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from hmis.models import HmisClientProfile, HmisNote
@@ -46,16 +45,22 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
-        org = resolve_org_or_deny(data.organization_id)
+        org = org_or_deny(data.organization_id)
         require_can(current_user, Task.perms.ADD, org=org)
 
         task_data = asdict(data)
         task_data.pop("organization_id", None)
 
-        # Resolve FK references
+        # Resolve FK references.  The Note is a scoped row: fetch it in the
+        # acting org — a foreign or missing note refuses alike (no existence
+        # oracle).  HmisNote / ClientProfile / HmisClientProfile are
+        # platform-shared rows (no org column to scope by): the create gate
+        # above is their authority.
         note = None
         if note_id := task_data.pop("note", None):
-            note = Note.objects.get(pk=str(note_id))
+            note = get_or_none(Note.objects.filter(organization=org), str(note_id))
+            if note is None:
+                raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 
         hmis_note = None
         if hmis_note_id := task_data.pop("hmis_note", None):

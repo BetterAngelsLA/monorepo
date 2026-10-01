@@ -1,6 +1,6 @@
 """System checks for the grant-based authorization model (ADR 0001).
 
-IDs: ``permissions.E001``–``permissions.E007``.
+IDs: ``permissions.E001``–``permissions.E008``.
 
 The data-reading checks return ``[]`` on any ``DatabaseError`` — unreachable
 database, or tables not migrated yet — so ``manage.py check``, ``makemigrations``
@@ -108,7 +108,7 @@ def check_object_grant_targets_whitelisted_model(app_configs: Any, **kwargs: Any
 
 
 def _org_via_errors_for_model(model: Any) -> list[Error]:
-    """E004 errors for one ``OrgScoped`` model — extracted for direct testing."""
+    """E004 errors for one ``ScopedResource`` model — extracted for direct testing."""
     errors: list[Error] = []
     for name in model.org_via or ():
         field = model._meta.get_field(name)
@@ -127,25 +127,25 @@ def _org_via_errors_for_model(model: Any) -> list[Error]:
 
 @register(Tags.models)
 def check_org_via_hops_are_single_valued(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E004 — OrgScoped.org_via hops must be single-valued.
+    """E004 — ScopedResource.org_via hops must be single-valued.
 
     A reverse-FK or M2M hop in an org path would duplicate rows in the scope
     filter (the bug class recorded at notes/types.py).  Runs without a database.
     """
     from django.apps import apps
 
-    from common.models import OrgScoped
+    from common.models import ScopedResource
 
     errors: list[Error] = []
     for model in apps.get_models():
-        if model._meta.abstract or not issubclass(model, OrgScoped):
+        if model._meta.abstract or not issubclass(model, ScopedResource):
             continue
         errors.extend(_org_via_errors_for_model(model))
     return errors
 
 
 #: The member-management portal codenames bound to the org-root Organization
-#: model — the only scoped-Role permissions exempt from E005's OrgScoped demand
+#: model — the only scoped-Role permissions exempt from E005's ScopedResource demand
 #: (a scoped Grant on the root scopes to the very org the action is on).  Any
 #: other permission a scoped Role binds to Organization must declare real org
 #: scoping; this allowlist is what keeps that a loud error, not a silent skip.
@@ -156,7 +156,7 @@ ORG_ROOT_PORTAL_CODENAMES = frozenset(
 
 @register(Tags.models)
 def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E005 — every model a *scoped* Role grants a permission on must declare OrgScoped.
+    """E005 — every model a *scoped* Role grants a permission on must declare ScopedResource.
 
     A scoped Role's permission is exercised through the org filter, so the model
     must declare how it reaches an organization — or declare itself platform-shared
@@ -172,7 +172,7 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
     from django.apps import apps
     from django.db.utils import DatabaseError
 
-    from common.models import OrgScoped
+    from common.models import ScopedResource
 
     try:
         Role = apps.get_model("accounts", "Role")
@@ -193,12 +193,12 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
                     # scoping instead of hiding on the exempted root.
                     if permission.codename in ORG_ROOT_PORTAL_CODENAMES:
                         continue
-                if not issubclass(model, OrgScoped):
+                if not issubclass(model, ScopedResource):
                     errors.append(
                         Error(
                             f"Role {role.name!r} grants {permission.codename} on {model.__name__}, "
                             "which does not declare org scoping.",
-                            hint="Add OrgScoped to the model and set org_via (or org_via = None for "
+                            hint="Add ScopedResource to the model and set org_via (or org_via = None for "
                             "platform-shared data).",
                             obj=model,
                             id="permissions.E005",
@@ -245,59 +245,127 @@ def check_object_grant_principal_is_a_user(app_configs: Any, **kwargs: Any) -> l
 
 
 @register(Tags.models)
-def check_write_tier_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E007 — ``write_tier`` declarations must be legal (RFC 0002 §Precondition).
+def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
+    """E007 — ``access`` declarations must be legal (ADR 0004, RFC 0002 §Precondition).
 
-    ``write_tier`` is consulted by ``can_obj`` independently of ``org_via``:
+    The selectors consult ``access.read`` / ``access.write`` independently of
+    ``org_via`` (reach), so a declaration must say what it means:
 
-    * only a platform-shared model (``org_via = None``) may declare a tier —
-      org-anchored models derive the ORG write tier from their org anchor;
+    * ``access.read`` takes only :data:`ACCESS_GLOBAL` — org scopes never widen
+      a GLOBAL row, and an unknown value is an error, not a silent fall back;
+    * ``access.write`` takes :data:`WRITE_SHARED` (platform-shared models
+      only — it widens every perm-holder to every row), :data:`WRITE_GLOBAL`
+      (platform-staff-only writes; legal on org-anchored models as a
+      narrowing) or :data:`WRITE_OBJECT`;
     * ``WRITE_OBJECT`` stays reserved until the object arm turns on with the
-      clients cutover (ADR 0001 §2.5) — declaring it today would silently route
-      writes to an object-grant predicate nothing can satisfy;
-    * a declared value must be a tier constant — an unrecognized string would
-      otherwise fall through to ``can_obj``'s fail-closed default and silently
-      drop scoped-grant writes.
+      clients cutover (ADR 0001 §2.5) — declaring it today would silently
+      route writes to an object-grant predicate nothing can satisfy;
+    * an unknown value in either slot is an error — a typo must not enforce
+      nothing like what it claims (ADR 0004 layer 1).
     """
     from django.apps import apps
 
-    from common.models import OrgScoped, WRITE_OBJECT, WRITE_SHARED
+    from common.models import ACCESS_GLOBAL, Access, ScopedResource, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
 
     errors: list[Error] = []
+    valid_read = {ACCESS_GLOBAL}
+    valid_write = {WRITE_SHARED, WRITE_GLOBAL, WRITE_OBJECT}
     for model in apps.get_models():
-        if not issubclass(model, OrgScoped):
+        if not issubclass(model, ScopedResource):
             continue
-        tier = model.__dict__.get("write_tier")
-        if tier is None:
+        access = getattr(model, "access", None)
+        if access is None:
             continue
-        if model.org_via is not None:
+        if not isinstance(access, Access):
             errors.append(
                 Error(
-                    f"{model.__name__}.write_tier = {tier!r} on an org-anchored model.",
-                    hint="Org-anchored models derive the ORG write tier from org_via; "
-                    "only a platform-shared model (org_via = None) declares a tier.",
+                    f"{model.__name__}.access = {access!r} is not an Access declaration.",
+                    hint="Declare access = Access(...) — a bare value would silently enforce nothing.",
                     obj=model,
                     id="permissions.E007",
                 )
             )
-        elif tier == WRITE_OBJECT:
+            continue
+        if access.read is not None and access.read not in valid_read:
             errors.append(
                 Error(
-                    f"{model.__name__}.write_tier = {tier!r} is reserved.",
+                    f"{model.__name__}.access.read = {access.read!r} is not a known class.",
+                    hint=f"Legal read values: None, ACCESS_GLOBAL ({ACCESS_GLOBAL!r}).",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        write = access.write
+        if write is None:
+            continue
+        if write not in valid_write:
+            errors.append(
+                Error(
+                    f"{model.__name__}.access.write = {write!r} is not a known class.",
+                    hint=f"Legal write values: None, WRITE_SHARED ({WRITE_SHARED!r}), "
+                    f"WRITE_GLOBAL ({WRITE_GLOBAL!r}), WRITE_OBJECT ({WRITE_OBJECT!r}, reserved).",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        elif write == WRITE_OBJECT:
+            errors.append(
+                Error(
+                    f"{model.__name__}.access.write = {write!r} is reserved.",
                     hint="The object-grant arm (WRITE_OBJECT) turns on with the clients "
                     "cutover (ADR 0001 §2.5) — do not declare it before then.",
                     obj=model,
                     id="permissions.E007",
                 )
             )
-        elif tier != WRITE_SHARED:
+        elif write == WRITE_SHARED and model.org_via is not None:
             errors.append(
                 Error(
-                    f"{model.__name__}.write_tier = {tier!r} is not a recognized tier.",
-                    hint=f"Recognized tiers are WRITE_SHARED ({WRITE_SHARED!r}) and "
-                    f"WRITE_OBJECT ({WRITE_OBJECT!r}, reserved until the clients cutover).",
+                    f"{model.__name__}.access.write = {write!r} on an org-anchored model.",
+                    hint="WRITE_SHARED widens every permission holder to every row, but an "
+                    "org-anchored model's reach already scopes rows — drop the declaration, "
+                    "or declare WRITE_GLOBAL to narrow writes to the global tier.",
                     obj=model,
                     id="permissions.E007",
                 )
             )
     return errors
+
+
+@register(Tags.models)
+def check_scoped_roles_avoid_global_class_abilities(app_configs: Any, **kwargs: Any) -> list[Error]:
+    """E008 — a *scoped* Role must not carry GLOBAL-class abilities (ADR 0004 layer 2).
+
+    A scoped Role reaches people through ``Grant`` rows, and every Grant is
+    org-scoped; an ability whose model declares a GLOBAL class (``ACCESS_GLOBAL``
+    / ``WRITE_GLOBAL``) answers at the global tier only, so the evaluators can
+    never let such a grant exercise it.  Admitting the binding anyway would be
+    dead weight at best and a hazard at worst — ``Grant.clean`` refuses it at
+    write time, and this is the deploy-time backstop over already-seeded Roles
+    (mirrors E002/E006: write-time rule in ``clean``, deploy-time check here).
+    """
+    from django.apps import apps
+    from django.db.utils import DatabaseError
+
+    from common.permissions.access import global_class_abilities
+
+    try:
+        Role = apps.get_model("accounts", "Role")
+
+        errors: list[Error] = []
+        for role in Role.objects.filter(is_global=False).prefetch_related("permissions__content_type"):
+            for permission, model in global_class_abilities(role.permissions.all()):
+                errors.append(
+                    Error(
+                        f"Scoped Role {role.name!r} carries {permission.codename} on {model.__name__}, "
+                        "whose access declaration makes it GLOBAL-class.",
+                        hint="GLOBAL-class abilities answer at the global tier only: hold them on a "
+                        "global Role (user.groups), never on a scoped Role that reaches users "
+                        "through Grants (ADR 0004).",
+                        obj=role,
+                        id="permissions.E008",
+                    )
+                )
+        return errors
+    except DatabaseError:
+        return []

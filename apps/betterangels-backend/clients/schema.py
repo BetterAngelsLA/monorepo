@@ -28,11 +28,11 @@ from common.graphql.types import (
 )
 from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment, PhoneNumber
-from common.permissions.selectors import visible
-from common.permissions.utils import IsAuthenticated
+from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, get_writable_or_deny
+from common.permissions.selectors import can_anywhere
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch, QuerySet
 from graphql import GraphQLError
@@ -44,7 +44,6 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
-from strawberry_django.utils.query import filter_for_user
 
 from .enums import RelationshipTypeEnum
 from .types import (
@@ -293,7 +292,6 @@ def upsert_or_delete_client_related_object(
 
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
-    items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys())
     args: dict[str, Any]
 
     if isinstance(related_cls.remote_field, ForeignKey):
@@ -304,6 +302,11 @@ def upsert_or_delete_client_related_object(
             "content_type": ContentType.objects.get_for_model(ClientProfile),
             "object_id": client_profile.pk,
         }
+
+    # Scope the update fetch to THIS profile's rows — the fetch is the isolation
+    # boundary, mirroring the delete below: a payload id belonging to another
+    # client must never update that client's contact/phone/child row.
+    items_to_update = model_cls.objects.filter(**args, id__in=item_updates_by_id.keys())
 
     model_cls.objects.filter(**args).exclude(id__in=item_updates_by_id).delete()
 
@@ -435,11 +438,13 @@ class Mutation:
     """Client mutations — grant authority via the checkers (ADR 0001 §5.1).
 
     Creates evaluate ``can_anywhere`` (the platform-shared create rule) and
-    row-scoped writes evaluate ``can_obj`` on the resolved row — SHARED tier on
-    the client family (RFC 0002): any holder of the permission may act, exactly
-    what the legacy model-level CASEWORKER permissions did.  The profile
-    fetch/edit bodies load through ``visible()``.  Document and import surfaces
-    intentionally remain on their legacy gates until their own cutovers.
+    row-scoped writes fetch through ``get_writable_or_deny`` — SHARED write
+    class on the client family (RFC 0002): any holder of the permission may
+    act, exactly what the legacy model-level CASEWORKER permissions did.  The
+    fetch *is* the gate: the row filter reads ``ClientProfile.access.write``,
+    so changing the declaration cannot silently leave enforcement behind.
+    Document and import surfaces intentionally remain on their legacy gates
+    until their own cutovers.
     """
 
     @strawberry_django.mutation(
@@ -480,14 +485,12 @@ class Mutation:
     def update_client_profile(self, info: Info, data: UpdateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
-            try:
-                client_profile = visible(
-                    ClientProfile.objects.all(),
-                    user,
-                    ClientProfile.perms.CHANGE,
-                ).get(id=data.id)
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
+            client_profile = get_writable_or_deny(
+                ClientProfile.objects.all(),
+                data.id,
+                user,
+                ClientProfile.perms.CHANGE,
+            )
 
             client_profile_data: dict = strawberry.asdict(data)
 
@@ -525,19 +528,14 @@ class Mutation:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
-            try:
-                client_profile = visible(
-                    ClientProfile.objects.all(),
-                    user,
-                    ClientProfile.perms.DELETE,
-                ).get(id=data.id)
-
-                client_profile_id = client_profile.pk
-
-                client_profile.delete()
-
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("No profile deleted; profile may not exist or lacks proper permissions")
+            client_profile = get_writable_or_deny(
+                ClientProfile.objects.all(),
+                data.id,
+                user,
+                ClientProfile.perms.DELETE,
+            )
+            client_profile_id = client_profile.pk
+            client_profile.delete()
 
             return DeletedObjectType(id=client_profile_id)
 
@@ -638,17 +636,14 @@ class Mutation:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
-            try:
-                client_profile = visible(
-                    ClientProfile.objects.all(),
-                    user,
-                    ClientProfile.perms.CHANGE,
-                ).get(id=data.client_profile)
-
-                client_profile.profile_photo = data.photo
-                client_profile.save(update_fields=["profile_photo"])
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
+            client_profile = get_writable_or_deny(
+                ClientProfile.objects.all(),
+                data.client_profile,
+                user,
+                ClientProfile.perms.CHANGE,
+            )
+            client_profile.profile_photo = data.photo
+            client_profile.save(update_fields=["profile_photo"])
 
             return cast(ClientProfileType, client_profile)
 
@@ -663,21 +658,21 @@ class Mutation:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
-            try:
-                client_profile = visible(
-                    ClientProfile.objects.all(),
-                    user,
-                    ClientProfile.perms.CHANGE,
-                ).get(id=client_profile_id)
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
-
+            client_profile = get_writable_or_deny(
+                ClientProfile.objects.all(),
+                client_profile_id,
+                user,
+                ClientProfile.perms.CHANGE,
+            )
             client_profile.profile_photo = None
             client_profile.save(update_fields=["profile_photo"])
 
             return cast(ClientProfileType, client_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(perms=[ClientProfile.perms.CHANGE], perm_checker=can_anywhere_checker)],
+    )
     def generate_client_document_uploads(
         self,
         info: Info,
@@ -685,11 +680,16 @@ class Mutation:
     ) -> AuthorizedPresignedS3UploadsType:
         user = cast(User, get_current_user(info))
 
-        _ = filter_for_user(
+        # The fetch is the gate (RFC 0002 §Precondition) — the photo shape.  The
+        # upload internals still ride the legacy document service until the
+        # CREATOR/UPLOADER attachment cutover (RFC 0002): gate swap only, so a
+        # refusal is the canonical denial rather than ClientProfile.DoesNotExist.
+        get_writable_or_deny(
             ClientProfile.objects.all(),
+            data.client_profile_id,
             user,
-            [ClientProfile.perms.CHANGE],
-        ).get(id=data.client_profile_id)
+            ClientProfile.perms.CHANGE,
+        )
 
         uploads = [
             UploadRequest(
@@ -703,17 +703,24 @@ class Mutation:
 
         return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(perms=[ClientProfile.perms.CHANGE], perm_checker=can_anywhere_checker)],
+    )
     def resolve_client_document_uploads(
         self, info: Info, data: ResolveClientDocumentUploadsInput
     ) -> ClientDocumentUploadsType:
         user = cast(User, get_current_user(info))
 
-        client_profile = filter_for_user(
+        # Same gate shape as the photo resolve; the attachment internals still
+        # ride the legacy document service until the CREATOR/UPLOADER cutover
+        # (RFC 0002).
+        client_profile = get_writable_or_deny(
             ClientProfile.objects.all(),
+            data.client_profile_id,
             user,
-            [ClientProfile.perms.CHANGE],
-        ).get(id=data.client_profile_id)
+            ClientProfile.perms.CHANGE,
+        )
 
         documents = [
             UploadConfirmation(
@@ -744,11 +751,12 @@ class Mutation:
     ) -> AuthorizedPresignedS3UploadType:
         user = cast(User, get_current_user(info))
 
-        _ = visible(
+        get_writable_or_deny(
             ClientProfile.objects.all(),
+            data.client_profile_id,
             user,
             ClientProfile.perms.CHANGE,
-        ).get(id=data.client_profile_id)
+        )
 
         result = client_profile_photo.create_presigned_upload(
             user=user,
@@ -779,11 +787,12 @@ class Mutation:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
-            client_profile = visible(
+            client_profile = get_writable_or_deny(
                 ClientProfile.objects.all(),
+                data.client_profile_id,
                 user,
                 ClientProfile.perms.CHANGE,
-            ).get(id=data.client_profile_id)
+            )
 
             client_profile = client_profile_photo.resolve_upload(
                 user=user,
@@ -827,6 +836,14 @@ class Mutation:
                 f"Source ID {data.source_id} with source name '{data.source_name}' has already been imported successfully."
             )
 
+        user = cast(User, get_current_user(info))
+        # Explicit grant gate: the mutation extension gates the *import perm*,
+        # and the nested ``create_client_profile`` call below never runs its
+        # extension — require ``client_profile.add`` here (ADR 0001 §5; the
+        # import *record* perms stay legacy, see GATE_EXEMPT).
+        if not can_anywhere(user, ClientProfile.perms.ADD):
+            raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
+
         import_job = ClientProfileDataImport.objects.get(id=data.import_job_id)
         try:
             with transaction.atomic():
@@ -839,6 +856,10 @@ class Mutation:
                     raw_data=data.raw_data,
                     success=True,
                 )
+        except PermissionDenied:
+            # A structured denial is a verdict, not an import failure — surface
+            # it; never record it as a client-import error.
+            raise
         except Exception as e:
             record = ClientProfileImportRecord.objects.create(
                 import_job=import_job,

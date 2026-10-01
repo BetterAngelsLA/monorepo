@@ -2,8 +2,8 @@
 
 This is the **intent and roadmap** doc for the grant-based authorization migration.
 Read this first; ADR 0001 (`docs/adr/0001-grant-based-authorization.md`) is the full
-design source of truth, and the practical review/merge guide
-(`docs/grant-migration-merge-guide.md`) is written as the stack matures.
+design source of truth; the practical review/merge notes live in the PR stack's
+descriptions (rebuilt on main — see the status note below).
 
 ## What we are building
 
@@ -33,7 +33,7 @@ We are replacing both with a **grant-based model** (ADR 0001):
      (plus org→org delegation, one hop, no amplification).
    - **Object** — a `Grant` on a single record (the object arm) → per-record sharing.
 4. **Shared subject matter is a property of the data.** Each model declares its org
-   reach via `OrgScoped.org_via` (`()` = own `organization` FK; hop tuples; `None` =
+   reach via `ScopedResource.org_via` (`()` = own `organization` FK; hop tuples; `None` =
    platform-shared). Per-record *writes* fail closed (`can_obj`), never fall back to
    the read rule (finding C1).
 
@@ -58,7 +58,7 @@ Roles are declared as code-owned `RoleDef`s per domain (e.g.
 global — the modern GSO; `accounts/groups.py`: `ORG_ADMIN_ROLE` /
 `ORG_SUPERUSER_ROLE` scoped). Which roles an org type offers lives in
 `common/org_types.py` `REGISTRY`. Per-model scope is declared on the model
-(`OrgScoped.org_via`). The per-model **read/write tier matrix** (which actions are
+(`ScopedResource.org_via`). The per-model **read/write tier matrix** (which actions are
 SHARED vs org-owned vs per-record, per model) is designed in RFC 0002
 (`docs/adr/0002-client-writes-ownership.md`).
 
@@ -89,11 +89,16 @@ Review and merge **bottom-up**. What each PR delivers:
 > main — teams cut over as #2443 on the grant-only model, not through the
 > `#2427`–`#2434` branches below. See ADR 0001 §5.3 "Status on main" for what
 > actually shipped.
+>
+> **Also superseded (2026-09-28):** the read/write tier vocabulary
+> (`SHARED`/`ORG`/`CREATOR`/`UPLOADER`) is replaced by **ADR 0004 access classes**
+> (`ACCESS_GLOBAL`/`WRITE_SHARED`/`WRITE_GLOBAL`/`WRITE_OBJECT`) on
+> `ScopedResource`; the RFC 0002/0003 cutovers landed in #2455–#2477.
 
 | # | Branch | Delivers |
 |---|---|---|
-| 2409 | `grant-redesign` | **This PR.** ADR 0001 + `Role`/`Grant`/`OrgScoped` models, constraints (partial uniques, `NULLS NOT DISTINCT`), E001–E005 checks, migrations. Schema-only — nothing reads it yet. |
-| 2410 | `grant-roles` | `RoleDef` provisioning (`sync_roles`), grant backfills, `OrgScoped` declared on shelter-scoped models. Idempotency + `is_global` ownership rule. |
+| 2409 | `grant-redesign` | **This PR.** ADR 0001 + `Role`/`Grant`/`ScopedResource` models, constraints (partial uniques, `NULLS NOT DISTINCT`), E001–E005 checks, migrations. Schema-only — nothing reads it yet. |
+| 2410 | `grant-roles` | `RoleDef` provisioning (`sync_roles`), grant backfills, `ScopedResource` declared on shelter-scoped models. Idempotency + `is_global` ownership rule. |
 | 2411 | `grant-predicate` | `common/permissions/selectors.py` — the whole predicate (`scopes`/`visible`/`can`/`can_obj`/`can_anywhere`) + write services. The security core. |
 | 2412 | `grant-cutover` | Shelter domain flipped to grants. Every mutation/service checks `visible`/`can` (no fail-open); `active_org` header optional (removed for the shelter domain in #2440). |
 | 2413 | `grant-delegation` | Org→org delegation: inherited `scopes()` arm, one hop, no amplification, `grant_delegate`, admin inlines. |
@@ -132,6 +137,6 @@ deleted, not merged as separate PRs.
 2. `docs/adr/0001-grant-based-authorization.md` — design, rules, migration plan.
    New reader: start at **§2.9 worked examples** (roles/grants/delegation resolved
    for real people and orgs), then read §2 for the formal mechanics.
-3. `docs/grant-migration-merge-guide.md` — per-PR review focus (written as the stack
-   matures; later PRs carry the current version).
+3. The PR stack's descriptions/checks — per-PR review focus (the rebuilt-on-main stack
+   carries the current contracts).
 4. RFC 0002 / RFC 0003 (`docs/adr/0002-…`, `0003-…`) — the gated cutovers.

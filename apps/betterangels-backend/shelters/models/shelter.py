@@ -5,8 +5,8 @@ from functools import cache
 from typing import Any
 
 import pghistory
-from common.models import BaseModel, OrgScoped
-from common.permissions.utils import PermissionSet, perm
+from common.models import ACCESS_GLOBAL, WRITE_GLOBAL, Access, BaseModel, ScopedResource
+from common.permissions.registry import PermissionSet, perm
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
@@ -67,7 +67,7 @@ ACTIVE_RESERVATION_STATUSES = (
     pghistory.UpdateEvent("shelter.update"),
     pghistory.DeleteEvent("shelter.remove"),
 )
-class Shelter(OrgScoped, BaseModel):
+class Shelter(ScopedResource, BaseModel):
     class perms(PermissionSet):
         CHANGE_IS_REVIEWED = perm("change_shelter_is_reviewed", "Can change shelter is reviewed")
         VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
@@ -223,7 +223,7 @@ class Shelter(OrgScoped, BaseModel):
     pghistory.DeleteEvent("bed.remove"),
     pghistory.UpdateEvent("bed.update"),
 )
-class Bed(CloneMixin, OrgScoped, BaseModel):
+class Bed(CloneMixin, ScopedResource, BaseModel):
     org_via = ("shelter",)
 
     objects = BedManager()
@@ -299,7 +299,7 @@ class Bed(CloneMixin, OrgScoped, BaseModel):
         )
 
 
-class Room(CloneMixin, OrgScoped, BaseModel):
+class Room(CloneMixin, ScopedResource, BaseModel):
     org_via = ("shelter",)
 
     objects = RoomManager()
@@ -371,8 +371,13 @@ class Room(CloneMixin, OrgScoped, BaseModel):
     pghistory.UpdateEvent("shelter.contact_info.update"),
     pghistory.DeleteEvent("shelter.contact_info.remove"),
 )
-class ContactInfo(OrgScoped):
+class ContactInfo(ScopedResource):
     org_via = ("shelter",)
+    # BA-only: platform staff (the Global Shelter Operator role) manage these —
+    # the org reach above exists for the object graph, never for authority.
+    # The declared classes make every surface answer the same way (ADR 0004):
+    # global tier only, for reads and writes alike.
+    access = Access(read=ACCESS_GLOBAL, write=WRITE_GLOBAL)
 
     class perms(PermissionSet):
         pass

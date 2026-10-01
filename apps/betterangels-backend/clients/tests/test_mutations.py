@@ -377,6 +377,38 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile_2.hmis_profiles.count(), 1)
         self.assertEqual(client_profile_2.phone_numbers.count(), 1)
 
+    def test_update_client_profile_related_id_cannot_hijack_another_profile(self) -> None:
+        """A related id belonging to another profile stays untouched — the fetch is scoped."""
+        profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
+        foreign_contact = ClientContact.objects.create(
+            client_profile=profile_2,
+            name="Harry",
+            email="hrry@example.co",
+            phone_number="2125551212",
+            mailing_address="1235 Main St",
+            relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER,
+        )
+
+        variables = {
+            "id": self.client_profile_1["id"],
+            "contacts": [
+                {
+                    "id": foreign_contact.pk,
+                    "name": "Hijacked",
+                    "email": "hijacked@example.co",
+                    "phoneNumber": "2125551212",
+                    "mailingAddress": "1235 Main St",
+                    "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+                    "relationshipToClientOther": None,
+                }
+            ],
+        }
+        self._update_client_profile_fixture(variables)
+
+        foreign_contact.refresh_from_db()
+        self.assertEqual(foreign_contact.name, "Harry")
+        self.assertFalse(profile_2.contacts.filter(name="Hijacked").exists())
+
     def test_partial_update_client_profile_mutation(self) -> None:
         # Manually update profile photo because it's created after the client profile fixture.
         self.client_profile_1["profilePhoto"] = {"url": self.client_profile_1_photo_url}
@@ -482,7 +514,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         )
         photo_name = "profile_photo.jpg"
 
-        expected_query_count = 11
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_client_profile_photo_fixture(
                 client_profile_id,
@@ -524,7 +556,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 return_value="photo-token-1",
             ),
         ):
-            expected_query_count = 8
+            expected_query_count = 6
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._generate_client_profile_photo_upload_fixture(
                     client_profile_id=self.client_profile_1["id"],
@@ -549,7 +581,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
-            expected_query_count = 11
+            expected_query_count = 9
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
                     client_profile_id=self.client_profile_1["id"],
@@ -568,7 +600,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_resolve_client_profile_photo_upload_invalid_token(self) -> None:
         with patch("common.services.file_upload.validate_upload_token", return_value=False):
-            expected_query_count = 11
+            expected_query_count = 9
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
                     client_profile_id=self.client_profile_1["id"],
@@ -597,7 +629,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertTrue(client_profile.profile_photo.name)
 
         # Now delete the photo.
-        expected_query_count = 11
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_client_profile_photo_fixture(client_profile_id)
 
@@ -619,7 +651,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         db_profile = ClientProfile.objects.get(id=client_profile_id)
         self.assertEqual(db_profile.profile_photo.name, "")
 
-        expected_query_count = 11
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_client_profile_photo_fixture(client_profile_id)
 
@@ -1016,7 +1048,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             ),
             patch("common.services.file_upload.create_upload_token", side_effect=["token-1", "token-2"]),
         ):
-            expected_query_count = 5
+            expected_query_count = 6
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._generate_client_document_uploads_fixture(
                     self.client_profile_1["id"],
@@ -1063,7 +1095,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
-            expected_query_count = 37
+            expected_query_count = 39
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],
@@ -1100,7 +1132,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with patch("common.services.file_upload.validate_upload_token", return_value=False):
-            expected_query_count = 9
+            expected_query_count = 10
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],

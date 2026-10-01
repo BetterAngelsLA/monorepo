@@ -2,7 +2,7 @@ from typing import Optional
 
 from unittest_parametrize import parametrize
 
-from common.permissions.utils import PERMISSION_DENIED_MESSAGE
+from common.permissions.gates import PERMISSION_DENIED_MESSAGE
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
 

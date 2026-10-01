@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING, Any
 
 from common.org_types import REGISTRY
 from common.permissions.config import RoleDef, TemplateConfig
+from common.permissions.gates import require_can
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
@@ -397,6 +398,28 @@ def _refresh_group_names(org: Organization) -> None:
 
 
 @transaction.atomic
+def membership_or_deny(
+    *,
+    membership_id: object,
+    user: UserModel,
+    perm: str,
+    deny_message: str,
+) -> OrganizationUser:
+    """Fetch a membership by id, or deny — then require *perm* at its org.
+
+    The row-keyed gate for member mutations (ADR 0001 §5): a missing and a
+    forbidden membership refuse with the same *deny_message* (no existence
+    oracle), and the membership's org authorizes — never a header.  Lives in
+    the service layer so the schema modules delegate rather than raw-fetch
+    (the schema tripwire walks both).
+    """
+    membership = OrganizationUser.objects.select_related("organization", "user").filter(pk=membership_id).first()
+    if membership is None:
+        raise PermissionDenied(deny_message)
+    require_can(user, perm, org=membership.organization)
+    return membership
+
+
 def organization_remove_member(
     *,
     organization: Organization,
@@ -917,6 +940,11 @@ def role_assign(*, user: UserModel, role: Role) -> None:
         raise ValidationError(f"Role {role.name!r} is scoped; grant it via grant_create, not user.groups.")
     user.groups.add(role)
 
+    # A same-request re-read of authority for this user must see the new tier.
+    from common.permissions.selectors import invalidate_scope_cache
+
+    invalidate_scope_cache(user)
+
 
 def role_remove(*, user: UserModel, role: Role) -> None:
     """Revoke a *global* Role from *user* — the mirror of :func:`role_assign`.
@@ -926,3 +954,8 @@ def role_remove(*, user: UserModel, role: Role) -> None:
     so removing one here is a no-op rather than an error.
     """
     user.groups.remove(role)
+
+    # A same-request re-read of authority must not serve the revoked tier.
+    from common.permissions.selectors import invalidate_scope_cache
+
+    invalidate_scope_cache(user)

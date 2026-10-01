@@ -26,7 +26,7 @@ a **grant-based model**:
   hop.
 - **Three tiers compose per check:** global (reach everything), org (rows whose org is
   in `scopes()`), object (per-record sharing). Each model declares its org reach
-  (`OrgScoped.org_via`) and its read/write tier (RFC 0002).
+  (`ScopedResource.org_via`) and its read/write tier (RFC 0002).
 - **One predicate answers everything:** `scopes` / `visible` / `can` / `can_obj` /
   `can_anywhere`.
 - Migration is a bottom-up PR stack from **#2409** (shelters first); **RFC 0002/0003**
@@ -76,7 +76,7 @@ sharing across orgs is a future requirement we must not block.
 
 ## 2. Decision
 
-> **How to read §2.** §2.2–2.3 (models, `OrgScoped`) are **built in this PR (#2409)**.
+> **How to read §2.** §2.2–2.3 (models, `ScopedResource`) are **built in this PR (#2409)**.
 > §2.4 (the predicate) is **design** — the code ships with the selectors (#2411) and
 > evolves through #2416. §2.5–2.6 (object arm, mutation conventions) are **designed
 > now, wired at each domain's cutover**. §2.9 is the **target end-state** the stack
@@ -239,7 +239,7 @@ role; each check resolves through the union.
 ### 2.3 Model declarations — one graph, not two
 
 ```python
-class OrgScoped(models.Model):
+class ScopedResource(models.Model):
     """Declares how a model reaches organizations.
 
     ``()``    my own ``organization`` FK
@@ -257,16 +257,16 @@ are derived from `org_via`** (the same relations, reversed) — a single declara
 the org filter and the object-grant cascade cannot drift (finding F18).
 
 ```python
-class Shelter(OrgScoped, BaseModel):       ...              # owns organization
-class Bed(OrgScoped, BaseModel):          org_via = ("shelter",)
-class Room(OrgScoped, BaseModel):         org_via = ("shelter",)
-class Reservation(OrgScoped, BaseModel):  org_via = ("bed", "room")
-class ShelterPhoto(OrgScoped, BaseModel): org_via = ("shelter",)
+class Shelter(ScopedResource, BaseModel):       ...              # owns organization
+class Bed(ScopedResource, BaseModel):          org_via = ("shelter",)
+class Room(ScopedResource, BaseModel):         org_via = ("shelter",)
+class Reservation(ScopedResource, BaseModel):  org_via = ("bed", "room")
+class ShelterPhoto(ScopedResource, BaseModel): org_via = ("shelter",)
 # outreach (future cutovers) — these declare org_via = () because each owns its
 # own ``organization`` FK; ``org_via`` hops *from* a model that lacks one:
-class Note(OrgScoped, BaseModel):         org_via = ()          # owns organization
-class Referral(OrgScoped, BaseModel):     org_via = ()          # owns organization (see §4.1 for the shelter-OR gap)
-class ClientProfile(OrgScoped, BaseModel): org_via = None   # platform-shared by decision
+class Note(ScopedResource, BaseModel):         org_via = ()          # owns organization
+class Referral(ScopedResource, BaseModel):     org_via = ()          # owns organization (see §4.1 for the shelter-OR gap)
+class ClientProfile(ScopedResource, BaseModel): org_via = None   # platform-shared by decision
 ```
 
 **Reference-data note:** most of GSO's permissions are for *global reference data*
@@ -275,7 +275,7 @@ data is not what the global role is for: reference lookups are open to any
 authenticated user. What sits on the global role is the **write/admin surface**
 (add/change/delete) for it — and those perms must live on the global tier because the
 **data is global**: no org-scoped role can carry them (the models don't declare
-`OrgScoped`, so E005 would fire), and an org-context write to global data would be
+`ScopedResource`, so E005 would fire), and an org-context write to global data would be
 meaningless. A future role needing only org-scoped shelter data carries only the
 shelter-data perms and is granted via `Grant`.
 
@@ -333,7 +333,7 @@ def visible(qs, user, perm, *, in_org=None):
 
     # object arm — schema-live, predicate-lazy: wired when per-record sharing has a
     # consumer (clients cutover). See §2.5.
-    if OBJECT_ARM_ENABLED:
+    if OBJECT_GRANT_WHITELIST:
         qs = qs.filter(Q(pk__in=qs.values("pk")) | _object_grant_q(qs.model, user, perm))
 
     # header confines the view only for finite scopes (finding F13) —
@@ -408,17 +408,20 @@ subquery, not a re-derivation.
 - **Creates under an object grant** resolve the parent object and check
   `can_obj(parent, child_ADD)` (finding F17) — ADD-on-child ≈ CHANGE-on-parent. This is
   a stated convention for every child-create service, not per-site.
-- The arm is `OBJECT_ARM_ENABLED = False` until the clients cutover ships (finding F9);
+- The arm stays closed by the empty `OBJECT_GRANT_WHITELIST` until its first real
+  consumer ships (finding F9; `permissions.E003` / `Grant.clean` enforce it);
   it is turned on with its first consumer, not before.
-- **Write tiers are in (RFC 0002 §Precondition, 2026-09-09).** `OrgScoped.write_tier`
-  lets a model declare its write scope independently of `org_via` (its read scope):
-  `can_obj` uses the ORG filter for org-anchored models (derived default), a declared
-  SHARED tier for platform-shared models whose writes are shared-by-role-anywhere
-  (`ClientProfile` today — matches `main`), and fails closed for an undeclared
-  platform-shared model (finding C1 default — only the global tier acts until the model
-  declares a tier or an object grant covers the row). `permissions.E007` guards the
-  declarations; the OBJECT tier and the object-grant predicate stay off until the
-  clients cutover turns the arm on with its first consumer.
+- **Write classes are in (RFC 0002 §Precondition, 2026-09-09; folded into
+  `Access.write`, ADR 0004).** `ScopedResource.access.write` lets a model declare its write
+  scope independently of `org_via` (its read scope): `writable()`/`can_obj` use the ORG
+  filter for org-anchored models (derived default), a declared SHARED class for
+  platform-shared models whose writes are shared-by-role-anywhere (`ClientProfile`
+  today — matches `main`), and fail closed for an undeclared platform-shared model
+  (finding C1 default — only the global tier acts until the model declares a class or
+  an object grant covers the row). `permissions.E007` guards the declarations
+  (illegal values are errors, never silent fall-backs); the OBJECT class and the
+  object-grant predicate stay off until the clients cutover turns the arm on with its
+  first consumer.
 - **Object grants are user-principal only (decision).** Sharing is person-granular:
   `Grant(principal_user, role, scope_object)` — authority attaches to a person you can
   audit and revoke. Org-principal object grants (`principal_org` + `scope_object`) are
@@ -486,10 +489,15 @@ The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
   model; findings F5, F16).
 - **E004** – an `org_via` hop is multi-valued (duplicate-row bug class).
 - **E005** – a *scoped* role grants a permission on a model that doesn't declare
-  `OrgScoped` (global roles are exempt — their permissions are never org-confined;
+  `ScopedResource` (global roles are exempt — their permissions are never org-confined;
   the check fires the moment a scoped role needs one of those models).
 - **E006** – a `Grant` grants an *object* to an organization (`principal_org` +
   `scope_object`); object grants are user-principal only (§2.5).
+- **E007** – an `access` declaration uses an unknown or reserved value (ADR 0004):
+  `WRITE_OBJECT` before the object arm, `WRITE_SHARED` on an org-anchored model, or a
+  typo in either slot.
+- **E008** – a *scoped* Role carries an ability whose model declares a GLOBAL access
+  class (ADR 0004 admittance; mirrored at write time by `Grant.clean`).
 
 ### 2.8 Requirements coverage
 
@@ -697,7 +705,7 @@ authorization, which is the service→selector pattern the guide prescribes.
 
 **Deliberate judgment calls** (documented so reviewers know they are intentional):
 
-- `OrgScoped.org_paths()` lives on the model as *declarative metadata* — the
+- `ScopedResource.org_paths()` lives on the model as *declarative metadata* — the
   `org_via` declaration must travel with the model it describes, and resolution is
   introspection, not a query or business logic. A selector would split the
   declaration from its model.
@@ -766,10 +774,10 @@ still needs at its cutover:
 > **`org_via` cells are `()` for every org-owning domain.** A model with its own
 > `organization` FK declares `org_via = ()`; the `("organization",)` form hops
 > *through* a relation to a model that owns one and would raise `TypeError` at import
-> (`hop 'organization' targets Organization, which does not declare OrgScoped`) — the
+> (`hop 'organization' targets Organization, which does not declare ScopedResource`) — the
 > earlier matrix and §2.3 examples were wrong. **Referral is additionally
 > inexpressible:** `_resolve_org_paths` treats `()` and a hop tuple as mutually
-> exclusive, so "own org **or** via shelter" has no declaration. `OrgScoped` needs an
+> exclusive, so "own org **or** via shelter" has no declaration. `ScopedResource` needs an
 > `own_org_or=("shelter",)` form (or similar) before Referral can cut over.
 
 "Mechanical" here means the *domain path* is clean: org-scoped with no guardian rows
@@ -788,7 +796,7 @@ Two distinct gates still block a cutover:
   (shelter *and* outreach). They land atomically inside the §5.3 milestone, not as
   standalone cutovers.
 
-The shelter playbook (declare `OrgScoped`, add `RoleDef`s, wire `visible()`/`can()` in
+The shelter playbook (declare `ScopedResource`, add `RoleDef`s, wire `visible()`/`can()` in
 services/schema, drop legacy directives, regenerate schema + FE types) applies once a
 domain's authority template is role-backed. The non-mechanical / blocked domains
 (notes §5, clients §5.1, tasks/referrals §5, teams/reports §5.3) are the phase-4
@@ -955,9 +963,9 @@ them all atomically:
    the legacy rows.
 3. **Authority conversion in the same change set** (each domain's path is otherwise
    clean and follows the shelter playbook):
-   - **Teams** — `Team` declares `OrgScoped` with `org_via = ()` (it owns its
+   - **Teams** — `Team` declares `ScopedResource` with `org_via = ()` (it owns its
      `organization` FK; the earlier `("organization",)` form was wrong — that hops
-     *to* `Organization`, which is not `OrgScoped` and raises at import);
+     *to* `Organization`, which is not `ScopedResource` and raises at import);
      `teams/selectors.py` and `teams/schema.py` move from `team_list(organization)`
      + `HasOrgPerm` to `visible()`/`can()` on the payload org, with per-row
      `can_obj`-style checks on update/delete; drop the legacy directives.
@@ -1075,7 +1083,7 @@ phantom-ContentType guard.  The reports slice then mirrors teams:
 - ``reportSummary`` (GraphQL) and the DRF interaction-data export authorize via
   ``require_can``/``can`` at the target org — membership no longer consulted, a
   legacy-only holder fails closed.  ``reports`` joins ``LEGACY_INERT_APPS``;
-  ``ScheduledReport`` declares ``OrgScoped`` (permissions.E005).
+  ``ScheduledReport`` declares ``ScopedResource`` (permissions.E005).
 - **Header-free.** Reports is a web feature (the admin portal), so it cut over
   in one step instead of keeping the ``X-Organization-ID`` header as a
   deprecated fallback: ``reportSummary`` now carries the org in the payload

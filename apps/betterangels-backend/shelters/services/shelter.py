@@ -1,11 +1,10 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from common.permissions.selectors import can_globally
-from common.permissions.utils import require_can
+from common.permissions.gates import org_or_deny, require_can
+from common.permissions.selectors import can_model
 from django.core.exceptions import NON_FIELD_ERRORS, PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils.text import slugify
-from organizations.models import Organization
 from strawberry import UNSET
 
 from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
@@ -235,18 +234,19 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     ``strawberry.asdict(data)`` with ``UNSET`` keys already removed).
 
     Raises:
-        ``django.core.exceptions.ValidationError`` when no target organization is
-        given, it does not exist, or the data is invalid.
+        ``django.core.exceptions.ValidationError`` when no target organization
+        is given or the data is invalid.
         ``django.core.exceptions.PermissionDenied`` when the user may not add
-        shelters in the target organization.
+        shelters in the target organization, or when the given organization id
+        resolves to nothing (a missing and an unknown organization deny alike —
+        one refusal shape, no existence oracle).
     """
     data = dict(data)
     organization_id = data.get("organization_id")
     if not organization_id:
         raise ValidationError({"organization_id": "An organization is required to create a shelter."})
-    if not Organization.objects.filter(pk=organization_id).exists():
-        raise ValidationError(f"Organization with id {organization_id} not found.")
-    require_can(user, Shelter.perms.ADD, org=organization_id)
+    organization = org_or_deny(organization_id)
+    require_can(user, Shelter.perms.ADD, org=organization)
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
@@ -274,9 +274,9 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     Only fields present in *data* (i.e. not ``UNSET``) are modified.
     Schedules, services, and additional contacts use full-replacement semantics
-    when provided.  ``additional_contacts`` is a BA-only field: gated on the
-    global tier (``can_globally``) so a scoped Grant can never write it
-    (ADR 0001 §2.4).
+    when provided.  ``additional_contacts`` is a BA-only field: gated by
+    ContactInfo's declared ``WRITE_GLOBAL`` class (``can_model``) so a scoped
+    Grant can never write it (ADR 0001 §2.4 / ADR 0004).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no shelter matches the given ID
@@ -293,13 +293,14 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     cities_served_ids = data.pop("cities_served_ids", None)
     spas_served_ids = data.pop("spas_served_ids", None)
 
-    # BA-only field: gate on the global tier only — a scoped Grant must never
-    # pass (ADR 0001 §2.4).  ``can_globally`` admits superusers, global Roles
+    # BA-only field: gated by ContactInfo's declared ``WRITE_GLOBAL`` class
+    # (``can_model``) — only the global tier passes: superusers, global Roles
     # carrying the ContactInfo perms (today only the Global Shelter Operator
-    # role does), and direct ``user_permissions`` holders.  Checked before the
-    # shelter lookup so an unauthorized caller gets the same refusal whether or
-    # not the shelter exists or is visible.
-    if "additional_contacts" in data and not can_globally(user, ContactInfo.perms.CHANGE):
+    # role does), and direct ``user_permissions`` holders.  A scoped Grant can
+    # never pass (ADR 0001 §2.4 / ADR 0004).  Checked before the shelter lookup
+    # so an unauthorized caller gets the same refusal whether or not the
+    # shelter exists or is visible.
+    if "additional_contacts" in data and not can_model(user, ContactInfo.perms.CHANGE, ContactInfo):
         raise PermissionDenied("Editing additional contacts is not allowed with this role.")
 
     shelter = shelter_get(

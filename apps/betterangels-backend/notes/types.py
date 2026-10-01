@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -160,13 +160,24 @@ def _visible_note_rows(queryset: QuerySet, info: Info, perm: str) -> QuerySet:
 
 
 def _perm_org_ids(info: Info, perm: str) -> Optional[list[int]]:
-    """Org ids where *info*'s user holds *perm*; ``None`` for the global tier (all)."""
+    """Org ids where *info*'s user holds *perm*; ``None`` for the global tier (all).
+
+    Memoized per request on the user instance, keyed by permission: the
+    computed flags (``_can_edit_case`` / ``_can_delete_case`` …) each ask for
+    the same org ids, and materializing ``scopes`` per column would re-run the
+    same queries.  ``invalidate_scope_cache`` drops the memo when grants change
+    mid-request.
+    """
+    from strawberry_django.auth.utils import get_current_user
+
     from common.permissions.selectors import ALL, scopes
 
-    s = scopes(info.context.request.user, perm)
-    if s is ALL:
-        return None
-    return list(s.values_list("pk", flat=True))
+    user = cast("User", get_current_user(info))
+    memo: dict[str, Optional[list[int]]] = user.__dict__.setdefault("_perm_org_ids", {})
+    if perm not in memo:
+        s = scopes(user, perm)
+        memo[perm] = None if s is ALL else list(s.values_list("pk", flat=True))
+    return memo[perm]
 
 
 def _can_edit_case(info: Info) -> Any:

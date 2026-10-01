@@ -1,7 +1,7 @@
 """ShelterAvailability model — tracks bed availability for shelters."""
 
 import pghistory
-from common.models import BaseModel, OrgScoped
+from common.models import BaseModel, ScopedResource
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -13,7 +13,7 @@ from .shelter import Shelter
     pghistory.UpdateEvent("shelter.availability.update"),
     pghistory.DeleteEvent("shelter.availability.remove"),
 )
-class ShelterAvailability(OrgScoped, BaseModel):
+class ShelterAvailability(ScopedResource, BaseModel):
     org_via = ("shelter",)
 
     objects: models.Manager["ShelterAvailability"] = models.Manager()

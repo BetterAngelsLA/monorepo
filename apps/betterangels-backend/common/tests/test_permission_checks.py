@@ -1,17 +1,18 @@
-"""Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E007)."""
+"""Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E008)."""
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import Attachment, OrgScoped, WRITE_OBJECT, WRITE_SHARED
+from common.models import ACCESS_GLOBAL, Access, Attachment, ScopedResource, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
 from common.permissions.checks import (
     _org_via_errors_for_model,
+    check_access_declarations,
     check_grant_never_references_global_role,
     check_object_grant_principal_is_a_user,
     check_object_grant_targets_whitelisted_model,
     check_org_via_hops_are_single_valued,
     check_role_permissions_models_declare_org_scoping,
     check_scoped_role_never_in_user_groups,
-    check_write_tier_declarations,
+    check_scoped_roles_avoid_global_class_abilities,
 )
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -90,7 +91,7 @@ class GrantSystemChecksTestCase(TestCase):
         self.assertEqual(_errors_with(check_object_grant_principal_is_a_user(None), "permissions.E006"), [])
 
     def test_e004_fires_for_a_multi_valued_hop(self) -> None:
-        class MultiValued(OrgScoped):
+        class MultiValued(ScopedResource):
             org_via = ("teams",)
             teams = django_models.ManyToManyField("auth.Group")
 
@@ -172,45 +173,121 @@ class GrantSystemChecksTestCase(TestCase):
         )
 
 
-class WriteTierChecksTestCase(TestCase):
-    """E007 — ``write_tier`` declarations must be legal (RFC 0002 §Precondition)."""
+class AccessDeclarationChecksTestCase(TestCase):
+    """E007 — ``access`` declarations must be legal (ADR 0004, RFC 0002 §Precondition)."""
 
     def test_e007_is_quiet_for_clientprofile_shared_declaration(self) -> None:
         from clients.models import ClientProfile
 
-        self.assertEqual(ClientProfile.write_tier, WRITE_SHARED)  # guard against a vacuous pass
-        self.assertEqual(_errors_with(check_write_tier_declarations(None), "permissions.E007"), [])
+        self.assertEqual(ClientProfile.access.write, WRITE_SHARED)  # guard against a vacuous pass
+        self.assertEqual(_errors_with(check_access_declarations(None), "permissions.E007"), [])
 
-    def test_e007_fires_when_an_org_anchored_model_declares_a_tier(self) -> None:
+    def test_e007_fires_when_an_org_anchored_model_declares_a_write_class(self) -> None:
         from unittest.mock import patch
 
         from shelters.models import Shelter
 
-        with patch.object(Shelter, "write_tier", WRITE_SHARED):
-            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+        with patch.object(Shelter, "access", Access(write=WRITE_SHARED)):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
         self.assertIn("org-anchored", errors[0].msg)
 
-    def test_e007_fires_when_the_object_tier_is_declared_before_the_arm(self) -> None:
+    def test_e007_fires_when_the_object_class_is_declared_before_the_arm(self) -> None:
         from unittest.mock import patch
 
         from clients.models import ClientProfile
 
-        with patch.object(ClientProfile, "write_tier", WRITE_OBJECT):
-            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+        with patch.object(ClientProfile, "access", Access(write=WRITE_OBJECT)):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
         self.assertIn("reserved", errors[0].msg)
 
-    def test_e007_fires_when_the_tier_is_an_unrecognized_string(self) -> None:
+    def test_e007_fires_on_an_unknown_write_class(self) -> None:
+        """A typo must not silently fall back to the derived default (ADR 0004)."""
         from unittest.mock import patch
 
         from clients.models import ClientProfile
 
-        # The constant's *name* as a literal — the hand-edit E007 must catch.
-        with patch.object(ClientProfile, "write_tier", "WRITE_SHARED"):
-            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+        with patch.object(ClientProfile, "access", Access(write="sharred")):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
-        self.assertIn("not a recognized tier", errors[0].msg)
+        self.assertIn("not a known class", errors[0].msg)
+
+    def test_e007_is_quiet_for_contactinfo_global_classes(self) -> None:
+        from shelters.models import ContactInfo
+
+        # Guard against a vacuous pass: the reference GLOBAL declaration is live.
+        self.assertEqual(ContactInfo.access.read, ACCESS_GLOBAL)
+        self.assertEqual(ContactInfo.access.write, WRITE_GLOBAL)
+        self.assertEqual(_errors_with(check_access_declarations(None), "permissions.E007"), [])
+
+    def test_e007_allows_write_global_on_an_org_anchored_model(self) -> None:
+        """WRITE_GLOBAL *narrows* an org-anchored model — legal (ADR 0004)."""
+        from unittest.mock import patch
+
+        from shelters.models import Shelter
+
+        with patch.object(Shelter, "access", Access(write=WRITE_GLOBAL)):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(errors, [])
+
+    def test_e007_fires_on_an_unknown_read_class(self) -> None:
+        """A read typo must not silently fall back to the reach rules (ADR 0004)."""
+        from unittest.mock import patch
+
+        from clients.models import ClientProfile
+
+        with patch.object(ClientProfile, "access", Access(read="globbal")):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("not a known class", errors[0].msg)
+
+
+class ScopedRoleGlobalClassChecksTestCase(TestCase):
+    """E008 — scoped roles never carry GLOBAL-class abilities (ADR 0004 layer 2)."""
+
+    def _scoped_role_with(self, name: str, perm: str, model: type) -> Role:
+        role = Role.objects.create(name=name, is_global=False)
+        content_type = ContentType.objects.get_for_model(model)
+        codename = perm.split(".")[-1]
+        permission, _ = Permission.objects.get_or_create(
+            content_type=content_type,
+            codename=codename,
+            defaults={"name": f"Can {codename.replace('_', ' ')}"},
+        )
+        role.permissions.add(permission)
+        return role
+
+    def test_e008_fires_when_a_scoped_role_carries_a_global_class_ability(self) -> None:
+        from shelters.models import ContactInfo
+
+        self._scoped_role_with("Scoped Contact Editor", ContactInfo.perms.CHANGE, ContactInfo)
+
+        errors = _errors_with(check_scoped_roles_avoid_global_class_abilities(None), "permissions.E008")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("GLOBAL-class", errors[0].msg)
+
+    def test_e008_is_quiet_for_a_global_role_with_the_same_ability(self) -> None:
+        from shelters.models import ContactInfo
+
+        role = Role.objects.create(name="GSO Twin", is_global=True)
+        content_type = ContentType.objects.get_for_model(ContactInfo)
+        permission, _ = Permission.objects.get_or_create(
+            content_type=content_type,
+            codename="view_contactinfo",
+            defaults={"name": "Can view contact info"},
+        )
+        role.permissions.add(permission)
+
+        self.assertEqual(_errors_with(check_scoped_roles_avoid_global_class_abilities(None), "permissions.E008"), [])
+
+    def test_e008_is_quiet_for_reach_scoped_abilities(self) -> None:
+        self._scoped_role_with("Scoped Shelter Ops", Shelter.perms.VIEW, Shelter)
+
+        self.assertEqual(_errors_with(check_scoped_roles_avoid_global_class_abilities(None), "permissions.E008"), [])

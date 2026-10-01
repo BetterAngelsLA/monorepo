@@ -1,6 +1,6 @@
 import pghistory
 from accounts.models import User
-from common.models import BaseModel, OrgScoped
+from common.models import BaseModel, ScopedResource
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -17,7 +17,7 @@ from .managers import TaskManager
     pghistory.UpdateEvent("task.update"),
     pghistory.DeleteEvent("task.remove"),
 )
-class Task(OrgScoped, BaseModel):
+class Task(ScopedResource, BaseModel):
     """Org-anchored through its own ``organization`` FK (RFC 0003 slice 1).
 
     Writes resolve through the org-scoped ``can_obj`` arm; reads stay SHARED —

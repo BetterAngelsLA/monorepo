@@ -7,7 +7,7 @@ from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment, Location
-from common.permissions.utils import assign_object_permissions
+from common.permissions.gates import PERMISSION_DENIED_MESSAGE, assign_object_permissions
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,
@@ -15,8 +15,11 @@ from common.services.file_upload import (
     UploadConfirmation,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
+from common.utils import get_or_none
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.groups import CASEWORKER
@@ -38,9 +41,24 @@ def _resolve_service(
     item: Dict[str, Any],
     organization: Any,
 ) -> Optional[OrganizationService]:
-    """Resolve a service FK from either an ID or a free-text label."""
+    """Resolve a service FK from either an ID or a free-text label.
+
+    The id arm accepts the note's own org's rows plus the shared platform
+    catalog (seeded under ``notes.seed.DEFAULT_ORG_NAME`` — every org's notes
+    attach those rows); a foreign org's custom row refuses like a missing one
+    — no existence oracle.  The free-text arm get_or_creates within the org,
+    as before.
+    """
+    from notes.seed import DEFAULT_ORG_NAME
+
     if service_id := item.get("service_id"):
-        return OrganizationService.objects.get(pk=service_id)
+        attachable = OrganizationService.objects.filter(
+            Q(organization=organization) | Q(organization__name=DEFAULT_ORG_NAME)
+        )
+        service = get_or_none(attachable, service_id)
+        if service is None:
+            raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
+        return service
 
     if service_other := item.get("service_other"):
         svc, _ = OrganizationService.objects.get_or_create(

@@ -1,9 +1,10 @@
 import json
+from dataclasses import dataclass
 from typing import Any, ClassVar, Dict, Iterator, Optional, cast
 
 from common.enums import AttachmentType
 from common.files.utils import get_unique_file_path
-from common.permissions.utils import PermissionSet
+from common.permissions.registry import PermissionSet
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -27,25 +28,76 @@ class BaseModel(models.Model):
         abstract = True
 
 
-# Write tiers (RFC 0002 §Precondition / ADR 0001 §2.5).  ``can_obj`` consults a
-# model's write scope independently of ``org_via`` (its read scope).  ORG is the
-# derived default for any org-anchored model (``org_via`` not ``None``) and
-# needs no declaration; these constants are the explicit declarations a model
-# makes when the derived default is not what its writes need.
+# Access classes (ADR 0004; RFC 0002 §Precondition / ADR 0001 §2.5).
+# ``visible``/``writable``/``can_obj``/``can_model`` consult a model's declared
+# classes independently of ``org_via`` (its reach).  ORG is the derived default
+# for any org-anchored model (``org_via`` not ``None``) and needs no
+# declaration; these constants are the explicit values a model names when a
+# derived default is not what its rows need.  One slot per model, per direction,
+# so every surface answers from the same fact.
 WRITE_SHARED = "shared"
-"""Platform-shared write tier: any holder of the permission anywhere may act.
-
-"""
+"""Platform-shared write class: any holder of the permission anywhere may act."""
 
 WRITE_OBJECT = "object"
-"""Object-grant write tier: only an object ``Grant`` (or the global tier) may act.
+"""Object-grant write class: only an object ``Grant`` (or the global tier) may act.
 
 Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
 ``permissions.E007`` refuses it until then.
 """
 
+ACCESS_GLOBAL = "global"
+"""GLOBAL read class: only the global tier passes — org reach never widens it.
 
-class OrgScoped(models.Model):
+Declared in ``Access.read`` for models whose rows are platform-staff-only in
+authority even though their reach is org-anchored (``org_via`` not ``None``):
+the org graph exists for scoping and object-grant cascades, never to widen who
+may read.  A scoped Grant holding the very same permission still sees nothing.
+"""
+
+WRITE_GLOBAL = "global"
+"""GLOBAL write class: only the global tier may act.
+
+The write-side counterpart of :data:`ACCESS_GLOBAL`, declared in
+``Access.write`` for org-anchored models whose writes are platform-staff-only
+(e.g. BA-only fields).  Scoped Grants lose the ability entirely — a policy the
+model declares once, instead of a call-site tier check per surface.
+"""
+
+
+@dataclass(frozen=True)
+class Access:
+    """Authority classes for a model's rows, per direction (ADR 0004).
+
+    One declaration slot, separate from reach (``org_via``): ``None`` leaves the
+    derived rules in charge, explicit values name the class the selectors
+    enforce.  The direction resolves by codename convention (``view_*`` →
+    ``read``, everything else → ``write``), in one helper in
+    ``common.permissions.selectors``.
+
+    ``read`` values:
+
+    * ``None`` — derive by reach: org-scoped rows for an org-anchored model;
+      all-or-none for a platform-shared model.
+    * :data:`ACCESS_GLOBAL` — only the global tier passes; org scopes never
+      widen it.
+
+    ``write`` values:
+
+    * ``None`` — derive: ORG for an org-anchored model (``org_via`` not
+      ``None``); fail closed for a platform-shared model (only the global tier
+      may act) — the safe default (finding C1).
+    * :data:`WRITE_SHARED` — any holder of the permission anywhere may act.
+    * :data:`WRITE_GLOBAL` — only the global tier may act (the org-anchored
+      narrowing; a scoped Grant loses the ability).
+    * :data:`WRITE_OBJECT` — reserved until the object arm wires its first
+      consumer.
+    """
+
+    read: str | None = None
+    write: str | None = None
+
+
+class ScopedResource(models.Model):
     """Declares how a model reaches the organizations that scope it (ADR 0001).
 
     ``org_via`` names *relations*, not lookup paths, and is resolved by
@@ -63,15 +115,19 @@ class OrgScoped(models.Model):
     org_via: ClassVar[tuple[str, ...] | None] = ()
     _org_paths: ClassVar[tuple[str, ...] | None] = None
 
-    write_tier: ClassVar[str | None] = None
-    """Write scope for :func:`common.permissions.selectors.can_obj` (RFC 0002).
+    access: ClassVar[Access] = Access()
+    """Authority classes for this model's rows (ADR 0004).
 
-    ``None`` derives the safe default: ORG for an org-anchored model (the org
-    filter, unchanged from the pre-tier contract) and fail-closed for a
-    platform-shared model (``org_via = None``) — only the global tier may act
-    until the model declares a tier.  Declare :data:`WRITE_SHARED` on a
-    platform-shared model whose writes are shared-by-role-anywhere
-    (``ClientProfile`` today).
+    Read by the selectors — ``visible`` / ``writable`` / ``can_obj`` /
+    ``can_model`` — so authority is declared once and every surface answers
+    from the same fact:
+
+    * ``access.read = ACCESS_GLOBAL`` — platform-staff-only rows: only the
+      global tier passes; a scoped Grant holding the perm sees none.
+    * ``access.write`` — platform-shared models choose SHARED or the
+      fail-closed default; org-anchored models may narrow to ``WRITE_GLOBAL``.
+    * ``permissions.E007`` validates the values — a typo fails the deploy
+      rather than silently enforcing nothing.
     """
 
     class Meta:
@@ -86,7 +142,7 @@ class OrgScoped(models.Model):
         for a reservation.
 
         Cached per model — ``cls.__dict__``, not ``getattr``, so a subclass never
-        inherits its parent's paths.  A multi-valued or non-``OrgScoped`` hop
+        inherits its parent's paths.  A multi-valued or non-``ScopedResource`` hop
         raises ``TypeError``; ``permissions.E004`` surfaces the same condition as
         a deploy-time error.
         """
@@ -119,9 +175,9 @@ class OrgScoped(models.Model):
             target = field.related_model
             if target is None:
                 raise TypeError(f"{cls.__name__}.org_via hop {hop!r} has no related model.")
-            if not issubclass(target, OrgScoped):
+            if not issubclass(target, ScopedResource):
                 raise TypeError(
-                    f"{cls.__name__}.org_via hop {hop!r} targets {target.__name__}, which does not declare OrgScoped."
+                    f"{cls.__name__}.org_via hop {hop!r} targets {target.__name__}, which does not declare ScopedResource."
                 )
             for sub in target.org_paths():
                 yield f"{hop}__{sub}"

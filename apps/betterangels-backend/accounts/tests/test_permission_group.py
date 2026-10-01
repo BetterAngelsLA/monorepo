@@ -1,7 +1,7 @@
 from accounts.models import BigGroupObjectPermission, PermissionGroup, PermissionGroupTemplate
 from accounts.seed import sync_group_permissions
 from accounts.services import reconcile_org_groups
-from common.permissions.utils import assign_object_permissions
+from common.permissions.gates import assign_object_permissions
 from common.tests.utils import make_permission_group
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError

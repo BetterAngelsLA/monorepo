@@ -4,7 +4,7 @@ from typing import Any, Iterable, Set, TypeVar
 import requests
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Field, Model, QuerySet
-from strawberry.utils.str_converters import to_camel_case, to_snake_case
+from strawberry.utils.str_converters import to_snake_case
 
 _M = TypeVar("_M", bound=Model)
 
@@ -63,11 +63,6 @@ def get_fargate_task_ips() -> Set[str]:
                 for network in container.get("Networks", []):
                     ips.update(network.get("IPv4Addresses", []))
     return ips
-
-
-def dict_keys_to_camel(d: dict[str, Any]) -> dict[str, Any]:
-    """Return a new dict with camelCase keys."""
-    return {to_camel_case(k): v for k, v in d.items()}
 
 
 def dict_keys_to_snake(d: dict[str, Any]) -> dict[str, Any]:
