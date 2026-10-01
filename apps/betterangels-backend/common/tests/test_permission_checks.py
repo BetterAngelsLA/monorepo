@@ -203,3 +203,15 @@ class WriteTierChecksTestCase(TestCase):
 
         self.assertEqual(len(errors), 1)
         self.assertIn("reserved", errors[0].msg)
+
+    def test_e007_fires_when_the_tier_is_an_unrecognized_string(self) -> None:
+        from unittest.mock import patch
+
+        from clients.models import ClientProfile
+
+        # The constant's *name* as a literal — the hand-edit E007 must catch.
+        with patch.object(ClientProfile, "write_tier", "WRITE_SHARED"):
+            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("not a recognized tier", errors[0].msg)

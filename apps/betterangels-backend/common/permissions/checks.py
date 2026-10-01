@@ -254,11 +254,14 @@ def check_write_tier_declarations(app_configs: Any, **kwargs: Any) -> list[Error
       org-anchored models derive the ORG write tier from their org anchor;
     * ``WRITE_OBJECT`` stays reserved until the object arm turns on with the
       clients cutover (ADR 0001 §2.5) — declaring it today would silently route
-      writes to an object-grant predicate nothing can satisfy.
+      writes to an object-grant predicate nothing can satisfy;
+    * a declared value must be a tier constant — an unrecognized string would
+      otherwise fall through to ``can_obj``'s fail-closed default and silently
+      drop scoped-grant writes.
     """
     from django.apps import apps
 
-    from common.models import OrgScoped, WRITE_OBJECT
+    from common.models import OrgScoped, WRITE_OBJECT, WRITE_SHARED
 
     errors: list[Error] = []
     for model in apps.get_models():
@@ -283,6 +286,16 @@ def check_write_tier_declarations(app_configs: Any, **kwargs: Any) -> list[Error
                     f"{model.__name__}.write_tier = {tier!r} is reserved.",
                     hint="The object-grant arm (WRITE_OBJECT) turns on with the clients "
                     "cutover (ADR 0001 §2.5) — do not declare it before then.",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        elif tier != WRITE_SHARED:
+            errors.append(
+                Error(
+                    f"{model.__name__}.write_tier = {tier!r} is not a recognized tier.",
+                    hint=f"Recognized tiers are WRITE_SHARED ({WRITE_SHARED!r}) and "
+                    f"WRITE_OBJECT ({WRITE_OBJECT!r}, reserved until the clients cutover).",
                     obj=model,
                     id="permissions.E007",
                 )
