@@ -22,10 +22,11 @@ leaves the added profiles and types in place.
 
 from django.db import migrations
 
+# Frozen value of OrgTypeChoices.SHELTER — migrations must not import live model code.
+SHELTER = "shelter"
+
 
 def backfill_org_profiles(apps, schema_editor):
-    from accounts.models import OrgTypeChoices
-
     Organization = apps.get_model("organizations", "Organization")
     OrganizationProfile = apps.get_model("accounts", "OrganizationProfile")
     Shelter = apps.get_model("shelters", "Shelter")
@@ -42,10 +43,10 @@ def backfill_org_profiles(apps, schema_editor):
         profile = profiles.get(organization.pk)
         if profile is None:
             to_create.append(
-                OrganizationProfile(organization=organization, org_types=[OrgTypeChoices.SHELTER])
+                OrganizationProfile(organization=organization, org_types=[SHELTER])
             )
-        elif OrgTypeChoices.SHELTER not in profile.org_types:
-            profile.org_types = [*profile.org_types, OrgTypeChoices.SHELTER]
+        elif SHELTER not in profile.org_types:
+            profile.org_types = [*profile.org_types, SHELTER]
             profile.save(update_fields=["org_types"])
             updated += 1
 
