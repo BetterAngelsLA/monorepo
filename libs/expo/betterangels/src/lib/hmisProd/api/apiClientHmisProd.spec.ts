@@ -192,3 +192,89 @@ describe('ApiClientHmisProd.getClientHistory (client history)', () => {
     );
   });
 });
+
+describe('ApiClientHmisProd.getClientPrograms (client programs)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchMock);
+    mocks.hmisToken = 'token-1';
+  });
+
+  it('requests the client-programs endpoint with the default query and fields', async () => {
+    setStoredToken('token-1');
+    fetchMock.mockResolvedValueOnce(responseWith(200, '{"items":[]}'));
+
+    const client = createApiClientHmisProd(BASE_URL);
+
+    await client.getClientPrograms('123');
+
+    const [url] = fetchMock.mock.calls[0];
+    const [path, queryString] = url.split('?');
+    const query = new URLSearchParams(queryString);
+
+    expect(path).toBe(`${BASE_URL}/api1/clients/123/client-programs`);
+    expect(query.get('deleted')).toBe('0');
+    expect(query.get('sort')).toBe('-start_date');
+    expect(query.get('page')).toBe('1');
+    expect(query.get('per_page')).toBe('50');
+
+    const fields = query.get('fields')?.split(',') ?? [];
+    expect(fields).toContain('program.name');
+    expect(fields).toContain('referralNotDeleted.status');
+    // Household members are deliberately not requested yet.
+    expect(
+      fields.some((field) => field.startsWith('groupAllProgramMembers')),
+    ).toBe(false);
+  });
+
+  it('treats explicitly-undefined payload entries as absent, keeping the defaults', async () => {
+    setStoredToken('token-1');
+    fetchMock.mockResolvedValueOnce(responseWith(200, '{"items":[]}'));
+
+    const client = createApiClientHmisProd(BASE_URL);
+
+    await client.getClientPrograms('123', {
+      deleted: undefined,
+      sort: undefined,
+      page: undefined,
+      per_page: undefined,
+    });
+
+    const [url] = fetchMock.mock.calls[0];
+    const query = new URLSearchParams(url.split('?')[1]);
+
+    expect(query.get('deleted')).toBe('0');
+    expect(query.get('sort')).toBe('-start_date');
+    expect(query.get('page')).toBe('1');
+    expect(query.get('per_page')).toBe('50');
+  });
+
+  it('overlays defined payload entries on the defaults', async () => {
+    setStoredToken('token-1');
+    fetchMock.mockResolvedValueOnce(responseWith(200, '{"items":[]}'));
+
+    const client = createApiClientHmisProd(BASE_URL);
+
+    await client.getClientPrograms('123', { page: '2', per_page: undefined });
+
+    const [url] = fetchMock.mock.calls[0];
+    const query = new URLSearchParams(url.split('?')[1]);
+
+    expect(query.get('page')).toBe('2');
+    expect(query.get('per_page')).toBe('50');
+  });
+
+  it('joins the `fields` payload override into the query', async () => {
+    setStoredToken('token-1');
+    fetchMock.mockResolvedValueOnce(responseWith(200, '{"items":[]}'));
+
+    const client = createApiClientHmisProd(BASE_URL);
+
+    await client.getClientPrograms('123', { fields: ['id', 'program.name'] });
+
+    const [url] = fetchMock.mock.calls[0];
+    const query = new URLSearchParams(url.split('?')[1]);
+
+    expect(query.get('fields')).toBe('id,program.name');
+  });
+});

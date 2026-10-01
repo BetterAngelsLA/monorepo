@@ -13,7 +13,11 @@ import { clientDetailToHmisClientProfileType } from '../adapters';
 import { ErrorHmisProd } from '../api';
 import { DebugRow } from '../components';
 import { useClientHmisProd } from '../hooks';
-import { ClientHistoryViewHmisProd, ClientProfileViewHmisProd } from './tabs';
+import {
+  ClientHistoryViewHmisProd,
+  ClientProfileViewHmisProd,
+  ClientProgramsViewHmisProd,
+} from './tabs';
 
 // Feature-local tabs: the shared `ClientViewTabEnum` renders through
 // exhaustive maps in the GraphQL client screens and has no equivalents for
@@ -21,13 +25,15 @@ import { ClientHistoryViewHmisProd, ClientProfileViewHmisProd } from './tabs';
 enum ClientHmisProdTabEnum {
   Profile = 'Profile',
   History = 'History',
+  Programs = 'Programs',
 }
 
-// v1: Profile + History — Programs and other prod tabs land here as their
-// data sources are built.
+// Profile + History + Programs — more prod tabs land here as their data
+// sources are built.
 const tabsHmisProd: ClientHmisProdTabEnum[] = [
   ClientHmisProdTabEnum.Profile,
   ClientHmisProdTabEnum.History,
+  ClientHmisProdTabEnum.Programs,
 ];
 
 type TProps = {
@@ -143,6 +149,10 @@ export function ClientHmisProd(props: TProps) {
 
         {currentTab === ClientHmisProdTabEnum.History && (
           <ClientHistoryViewHmisProd hmisClientId={hmisClientId} />
+        )}
+
+        {currentTab === ClientHmisProdTabEnum.Programs && (
+          <ClientProgramsViewHmisProd hmisClientId={hmisClientId} />
         )}
       </MainContainer>
     </>

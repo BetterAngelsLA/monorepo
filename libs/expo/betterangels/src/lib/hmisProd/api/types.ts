@@ -31,6 +31,23 @@ export interface GetClientHistoryPayloadHmisProd {
 }
 
 /**
+ * Query values for the client programs call — strings, since they go straight
+ * into the query string. Defaults live in `CLIENT_PROGRAMS_DEFAULT_QUERY`.
+ */
+export interface GetClientProgramsPayloadHmisProd {
+  /** Include deleted entries (`'0'` = exclude, the default). */
+  deleted?: string;
+  /** Sort expression (default `'-start_date'` — newest first). */
+  sort?: string;
+  /** Page number (default `'1'`). */
+  page?: string;
+  /** Items per page. */
+  per_page?: string;
+  /** Overrides `CLIENT_PROGRAMS_FIELDS_DEFAULT`. */
+  fields?: string[];
+}
+
+/**
  * Client search result item — keys mirror the requested `fields` (snake_case).
  */
 export interface HmisProdClientSearchItem {
@@ -86,6 +103,85 @@ export interface HmisProdClientHistoryItem {
  */
 export interface GetClientHistoryResponseHmisProd {
   items: HmisProdClientHistoryItem[];
+  _meta?: HmisProdPaginationMeta;
+  _links?: Record<string, unknown>;
+}
+
+/** Name-only reference Clarity nests for dot-path fields (`agency.name`). */
+export interface HmisProdNameRef {
+  name?: string | null;
+}
+
+/**
+ * `program.category` — Clarity exposes the program category as its
+ * `value_name`.
+ */
+export interface HmisProdClientProgramCategory {
+  value_name?: string | null;
+}
+
+/** `program` block of a client program entry. */
+export interface HmisProdClientProgramInfo {
+  name?: string | null;
+  agency?: HmisProdNameRef | null;
+  category?: HmisProdClientProgramCategory | null;
+}
+
+/** Person name fields (`first_name` / `last_name`). */
+export interface HmisProdPersonName {
+  first_name?: string | null;
+  last_name?: string | null;
+}
+
+/** `user` block — the staff member the enrollment is attributed to. */
+export interface HmisProdClientProgramUser extends HmisProdPersonName {
+  agency?: HmisProdNameRef | null;
+}
+
+/** `referralNotDeleted.activeOccupancy` (unit/bed names only for now). */
+export interface HmisProdReferralActiveOccupancy {
+  bed?: HmisProdNameRef | null;
+  unit?: HmisProdNameRef | null;
+}
+
+/**
+ * `referralNotDeleted` — the enrollment's (non-deleted) referral; `null` when
+ * the enrollment has none (e.g. walk-ins).
+ */
+export interface HmisProdClientProgramReferral {
+  id?: number | string | null;
+  date?: string | null;
+  endDate?: string | null;
+  is_upcoming?: number | boolean | null;
+  status?: number | string | null;
+  agency?: HmisProdNameRef | null;
+  activeOccupancy?: HmisProdReferralActiveOccupancy | null;
+  user?: HmisProdPersonName | null;
+}
+
+/**
+ * Single client program entry from `GET /api1/clients/{id}/client-programs`
+ * — keys mirror the requested `fields` (snake_case).
+ */
+export interface HmisProdClientProgramItem {
+  id: number | string;
+  start_date?: string | null;
+  end_date?: string | null;
+  type?: number | null;
+  private?: number | null;
+  program?: HmisProdClientProgramInfo | null;
+  user?: HmisProdClientProgramUser | null;
+  agency?: HmisProdNameRef | null;
+  homeAgency?: HmisProdNameRef | null;
+  referralNotDeleted?: HmisProdClientProgramReferral | null;
+}
+
+/**
+ * Response from `GET /api1/clients/{id}/client-programs` — `items` is the
+ * client's program enrollments.
+ */
+export interface GetClientProgramsResponseHmisProd {
+  items: HmisProdClientProgramItem[];
   _meta?: HmisProdPaginationMeta;
   _links?: Record<string, unknown>;
 }

@@ -3,19 +3,15 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { HmisProdClientHistoryItem } from '../../../../api';
-import { hasStartedHmisProd, presentDateHmisProd } from '../../../../utils';
+import {
+  formatDateWithRelativeHmisProd,
+  hasStartedHmisProd,
+} from '../../../../utils';
 
 const TYPE_LABELS: Record<string, string> = {
   demographic: 'Demographic',
   program: 'Program',
   service: 'Service',
-};
-
-/** `09/28/2026 (today)`, or the raw value when it isn't a parseable date. */
-const formatHistoryDate = (value: string): string => {
-  const { date, relative } = presentDateHmisProd(value);
-
-  return relative ? `${date} (${relative})` : date;
 };
 
 type TProps = {
@@ -28,8 +24,12 @@ export function HistoryCard(props: TProps) {
 
   const typeLabel = type ? (TYPE_LABELS[type] ?? type) : null;
   const isActive = !data.end_date && hasStartedHmisProd(data.start_date);
-  const startLabel = data.start_date ? formatHistoryDate(data.start_date) : '—';
-  const endLabel = data.end_date ? formatHistoryDate(data.end_date) : null;
+  const startLabel = data.start_date
+    ? formatDateWithRelativeHmisProd(data.start_date)
+    : '—';
+  const endLabel = data.end_date
+    ? formatDateWithRelativeHmisProd(data.end_date)
+    : null;
   const endDateText = endLabel ?? (isActive ? 'active' : '—');
 
   return (
