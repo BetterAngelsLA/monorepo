@@ -41,6 +41,15 @@ The org always travels in the **payload**: query filters and mutation inputs car
 
 The old `HasOrgPerm` extension and the `permissioned_queryset()` / `perm_filter()` / `_perm_q()` helpers are **deleted** — org-scoped surfaces authorize through the selectors above.
 
+### Debugging authority
+
+`manage.py explain_permission` answers "why can/can't this user do P at org O / on object R?".  It re-asks the canonical predicate (`can` / `can_obj` / `can_anywhere`) so it can never disagree with enforcement, then lists the arms behind the answer: global tier, direct grant, delegated grant, object grant (not wired yet), and the legacy `PermissionGroup` rows with the domain's live/inert posture.  Exits 0 on ALLOWED and 1 on DENIED — script-friendly.
+
+```shell
+python manage.py explain_permission --user jane@example.org --perm shelters.change_shelter --org 7
+python manage.py explain_permission --user 42 --perm shelters.view_shelter --object shelters.shelter:12
+```
+
 ## Overview
 
 Permission group templates define a **set of Django permissions** that can be assigned to users within an organization. A user's effective authority is the **union of the roles/Grants** they hold at that org — the template defines the bundle (mirrored by `RoleDef.from_template()`), and cut-over domains read the `Grant` arm while legacy-only domains (notes/clients) still read the template-backed `PermissionGroup` rows.
@@ -128,6 +137,8 @@ Each `groups.py` imports `TemplateConfig` and defines one or more template confi
 | `common/permissions/utils.py`       | `require_can()`, `IsAuthenticated`, `register_permission()`, `PERMISSION_DENIED_MESSAGE`              |
 | `common/permissions/config.py`      | `TemplateConfig`, `RoleDef` (incl. `from_template()`)                                                 |
 | `common/permissions/domain.py`      | `LEGACY_INERT_APPS` / `GLOBAL_TIER_ORG_APPS` — which domains are grant-only                           |
+| `common/permissions/explain.py`     | `explain()` — arm-by-arm explanation of a verdict; backs `explain_permission`                          |
+| `common/management/commands/explain_permission.py` | `manage.py explain_permission` — the authority debugger                              |
 | `accounts/groups.py`                | `ORG_ADMIN` / `ORG_SUPERUSER` templates + role definitions                                            |
 | `accounts/role_manager.py`          | `OrgRoleManager` — add/remove/clear/replace org roles; grant-only mirroring for `legacy_inert` roles  |
 | `accounts/signals.py`               | `User.groups` m2m edge — mirrors dual-write memberships to `Grant` rows                               |
