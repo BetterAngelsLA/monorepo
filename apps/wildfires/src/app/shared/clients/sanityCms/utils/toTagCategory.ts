@@ -1,13 +1,27 @@
 import { TTagCategory } from '../types';
 
-export function toTagCategory(item: any): TTagCategory | undefined {
-  if (!item?.slug || !item.name) {
+export function toTagCategory(item: unknown): TTagCategory | undefined {
+  if (!item || typeof item !== 'object') {
+    return undefined;
+  }
+
+  const category = item as Record<string, unknown>;
+
+  if (typeof category.slug !== 'string') {
+    return undefined;
+  }
+
+  if (typeof category.name !== 'string') {
     return undefined;
   }
 
   return {
-    slug: item.slug,
-    name: item.name,
-    priority: Number.isInteger(item.priority) ? item.priority : undefined,
+    slug: category.slug,
+    name: category.name,
+    priority:
+      typeof category.priority === 'number' &&
+      Number.isInteger(category.priority)
+        ? category.priority
+        : undefined,
   };
 }

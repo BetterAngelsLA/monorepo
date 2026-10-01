@@ -52,7 +52,12 @@ export default function TabLayout() {
   const [tosModalIsOpen, setTosModalIsOpen] = useState(false);
   const router = useRouter();
   const { user, isLoading } = useUser();
-  const hmisProdDemoEnabled = useFeatureFlagActive(FeatureFlags.HMIS_PROD_DEMO);
+  // Same gate as `useHmisProdSessionWatch`: the HMIS shell and its screens
+  // only make sense for sessions authenticated via HMIS — the flag alone can
+  // be active for a BA-credential login, which must keep the regular tabs.
+  const hmisProdDemoEnabled =
+    useFeatureFlagActive(FeatureFlags.HMIS_PROD_DEMO) &&
+    user?.isHmisUser === true;
 
   useEffect(() => {
     if (!user) return;

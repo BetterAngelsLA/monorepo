@@ -72,10 +72,11 @@ def test_retire_superseded_phantom_permissions() -> None:
     both phantoms (and their ContentTypes), re-point references onto the real
     rows, and keep phantoms that still have no real twin.
     """
-    from accounts.seed import retire_superseded_phantom_permissions
     from django.contrib.auth import get_user_model
     from django.contrib.contenttypes.models import ContentType
     from organizations.models import Organization
+
+    from accounts.seed import retire_superseded_phantom_permissions
 
     # Real twins exist: reports.view_reports on ScheduledReport and the portal
     # codenames on the Organization ContentType (seeded at post_migrate).
@@ -143,9 +144,10 @@ def test_retire_superseded_phantom_permissions_holder_with_both_rows() -> None:
     instead of colliding with the through table's unique constraint, which
     would abort ``post_migrate``.
     """
-    from accounts.seed import retire_superseded_phantom_permissions
     from django.contrib.auth import get_user_model
     from django.contrib.contenttypes.models import ContentType
+
+    from accounts.seed import retire_superseded_phantom_permissions
 
     real = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
 

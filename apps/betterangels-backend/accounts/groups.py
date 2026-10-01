@@ -1,7 +1,8 @@
-from accounts.permissions import UserOrganizationPermissions
 from common.permissions.config import RoleDef, TemplateConfig
 from reports.permissions import ReportPermissions
 from teams.models import Team
+
+from accounts.permissions import UserOrganizationPermissions
 
 ORG_ADMIN = TemplateConfig(
     name="Organization Admin",

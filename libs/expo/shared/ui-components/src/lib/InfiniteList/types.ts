@@ -35,6 +35,13 @@ type InfiniteListBaseProps<T> = {
   errorTitle?: string;
   errorMessage?: string;
   ErrorViewComponent?: ComponentType<unknown> | ReactElement | null;
+  /**
+   * When this value changes the list scrolls back to the top.
+   * Pass the stable identity of the data source — typically the `queryKey`
+   * returned by `useInfiniteScrollQuery` — so a shorter result set can never
+   * leave the viewport scrolled past its content (blank list).
+   */
+  scrollResetKey?: string;
 };
 
 export type TInfiniteListProps<T> = InfiniteListBaseProps<T> &

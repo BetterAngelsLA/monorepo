@@ -154,21 +154,23 @@ def role_names_by_organization(*, user_id: int) -> dict[str, list[str]]:
     """Roles *user_id* holds, grouped by organization name and sorted within each.
 
     Merges the legacy ``PermissionGroup`` arm with the grant-only scoped ``Role``
-    arm (see :func:`member_role_names`).
+    arm (see :func:`member_role_names`).  Collected in sets because a dual-write
+    role has a membership *and* its mirrored ``Grant``, so both arms report it
+    and a list would name it twice.
     """
-    by_organization: dict[str, list[str]] = {}
+    by_organization: dict[str, set[str]] = {}
     for organization_name, role_name in (
         PermissionGroup.objects.filter(user=user_id)
         .select_related("organization")
         .values_list("organization__name", "label")
     ):
-        by_organization.setdefault(organization_name, []).append(role_name)
+        by_organization.setdefault(organization_name, set()).add(role_name)
     for organization_name, role_name in (
         Grant.objects.filter(principal_user_id=user_id)
         .select_related("scope_org")
         .values_list("scope_org__name", "role__name")
     ):
-        by_organization.setdefault(organization_name, []).append(role_name)
+        by_organization.setdefault(organization_name, set()).add(role_name)
     return {name: sorted(roles) for name, roles in sorted(by_organization.items())}
 
 

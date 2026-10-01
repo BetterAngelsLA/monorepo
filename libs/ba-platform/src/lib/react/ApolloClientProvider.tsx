@@ -31,6 +31,8 @@ export const ApolloClientProvider = ({
       new ApolloClient({
         link,
         cache: resolvedCache,
+        // Default off; list pagination (useInfiniteScrollQuery) opts back in
+        // per query because it tracks NetworkStatus transitions.
         defaultOptions: { watchQuery: { notifyOnNetworkStatusChange: false } },
       }),
     [link, resolvedCache],

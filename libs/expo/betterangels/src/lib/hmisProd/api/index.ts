@@ -4,7 +4,7 @@
  * Not re-exported from the `lib/hmisProd` barrel — feature-private by design;
  * delete alongside the feature.
  */
-export * from './clientHmisProd';
+export * from './apiClientHmisProd';
 export * from './constants';
 export * from './errors';
 export * from './resolveHmisProdBaseUrl';
