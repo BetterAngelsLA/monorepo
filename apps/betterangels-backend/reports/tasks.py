@@ -51,8 +51,11 @@ def send_scheduled_report(self: Task, report_id: int, recipient_override: str | 
 
     # The period comes from the run being serviced, not from the clock — a job that
     # runs late or on a retry must still report the month its due date fell after.
+    # A schedule has no viewer, so the due date is read on the site's calendar even
+    # if a request activated the caller's.
     due_at = report.next_run_at or timezone.now()
-    start_date, end_date = get_previous_month_range(as_of=timezone.localdate(due_at))
+    due_date = due_at.astimezone(timezone.get_default_timezone()).date()
+    start_date, end_date = get_previous_month_range(as_of=due_date)
     month_str = start_date.strftime("%m")
     year_str = start_date.strftime("%Y")
 
