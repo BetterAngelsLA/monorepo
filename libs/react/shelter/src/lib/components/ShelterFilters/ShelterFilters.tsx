@@ -4,7 +4,6 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useEffect, useState } from 'react';
 import { ScheduleTypeChoices } from '../../apollo';
 import { TShelterPropertyFilters } from '../ShelterSearch';
-import { FilterSelector } from './FilterSelector';
 import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
 import {
   demographicFilter,
@@ -17,6 +16,8 @@ import {
   specialSituationFilter,
   TFilterConfig,
 } from './config';
+import { FilterSelector } from './FilterSelector';
+import { ShowMoreToggle } from './ShowMoreToggle';
 
 type IProps = {
   className?: string;
@@ -28,11 +29,28 @@ const OPEN_NOW_OPTIONS: {
   key: ScheduleTypeChoices;
   label: string;
 }[] = [
-  { key: ScheduleTypeChoices.Operating, label: 'Operating Hours' },
   { key: ScheduleTypeChoices.Intake, label: 'Intake' },
   { key: ScheduleTypeChoices.MealService, label: 'Meal Services' },
-  { key: ScheduleTypeChoices.StaffAvailability, label: 'Staff Availability' },
+  { key: ScheduleTypeChoices.Operating, label: 'Operating Hours' },
+  {
+    key: ScheduleTypeChoices.StaffAvailability,
+    label: 'Staff Availability',
+  },
 ];
+
+const HIGH_PRIORITY_FILTERS_BEFORE_OPEN_NOW = [
+  demographicFilter,
+  entryRequirementFilter,
+];
+
+const HIGH_PRIORITY_FILTERS_AFTER_OPEN_NOW = [
+  parkingFilter,
+  petsFilter,
+  referralRequirementFilter,
+  roomStyleFilter,
+];
+
+const LOW_PRIORITY_FILTERS = [shelterTypeFilter, specialSituationFilter];
 
 export function ShelterFilters(props: IProps) {
   const { className, filters, onFiltersChange } = props;
@@ -43,6 +61,8 @@ export function ShelterFilters(props: IProps) {
   const initialOpenNowTypes = filters.openNow ?? [];
   const [openNowTypes, setOpenNowTypes] =
     useState<ScheduleTypeChoices[]>(initialOpenNowTypes);
+
+  const [showMoreCategories, setShowMoreCategories] = useState(false);
 
   useEffect(() => {
     setOpenNowTypes(filters.openNow ?? []);
@@ -74,7 +94,7 @@ export function ShelterFilters(props: IProps) {
   ) {
     const newTypes = checked
       ? [...openNowTypes, scheduleType]
-      : openNowTypes.filter((t) => t !== scheduleType);
+      : openNowTypes.filter((type) => type !== scheduleType);
 
     const hasTypes = newTypes.length > 0;
 
@@ -119,7 +139,7 @@ export function ShelterFilters(props: IProps) {
     onFiltersChange({
       ...filters,
       maxStay: {
-        days: isNaN(parsed) ? 0 : parsed,
+        days: Number.isNaN(parsed) ? 0 : parsed,
         includeNull: filters.maxStay?.includeNull ?? false,
       },
     });
@@ -135,14 +155,28 @@ export function ShelterFilters(props: IProps) {
     });
   }
 
+  function renderFilterSelector(filter: TFilterConfig) {
+    return (
+      <FilterSelector
+        key={filter.name}
+        className="mt-8"
+        onChange={onFilterChange}
+        values={filters[filter.name]}
+        {...filter}
+      />
+    );
+  }
+
   return (
     <div className={mergeCss(parentCss)}>
       <div>
         <div className="text-xl font-semibold">Filter</div>
-        <div className="text-sm mt-1 pr-8">
+
+        <div className="mt-1 pr-8 text-sm">
           Select the categories below to filter shelters
         </div>
       </div>
+
       <div>
         <div className="mt-8">
           <ExpandableContainer header="Access Center">
@@ -153,6 +187,9 @@ export function ShelterFilters(props: IProps) {
             />
           </ExpandableContainer>
         </div>
+
+        {HIGH_PRIORITY_FILTERS_BEFORE_OPEN_NOW.map(renderFilterSelector)}
+
         <div className="mt-8">
           <ExpandableContainer header="Open Now">
             <div className="flex flex-col gap-2">
@@ -176,73 +213,40 @@ export function ShelterFilters(props: IProps) {
           </ExpandableContainer>
         </div>
 
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[demographicFilter.name]}
-          {...demographicFilter}
-        />
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[entryRequirementFilter.name]}
-          {...entryRequirementFilter}
-        />
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[parkingFilter.name]}
-          {...parkingFilter}
-        />
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[petsFilter.name]}
-          {...petsFilter}
-        />
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[referralRequirementFilter.name]}
-          {...referralRequirementFilter}
-        />
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[roomStyleFilter.name]}
-          {...roomStyleFilter}
-        />
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[specialSituationFilter.name]}
-          {...specialSituationFilter}
-        />
-        <FilterSelector
-          className="mt-8"
-          onChange={onFilterChange}
-          values={filters[shelterTypeFilter.name]}
-          {...shelterTypeFilter}
+        {HIGH_PRIORITY_FILTERS_AFTER_OPEN_NOW.map(renderFilterSelector)}
+
+        <div id="low-priority-shelter-filters">
+          {showMoreCategories && LOW_PRIORITY_FILTERS.map(renderFilterSelector)}
+        </div>
+
+        <ShowMoreToggle
+          expanded={showMoreCategories}
+          moreLabel="Show More Categories"
+          lessLabel="Show Less Categories"
+          controls="low-priority-shelter-filters"
+          onClick={() => setShowMoreCategories((current) => !current)}
         />
 
         <div className="mt-8">
-          <div className="flex justify-between items-center">Max Stay</div>
+          <div className="flex items-center justify-between">Max Stay</div>
+
           <div className="mt-6 flex flex-col gap-2">
             <input
               type="number"
               min={1}
               max={maxStayMax}
               value={filters.maxStay?.days || ''}
-              onChange={(e) => onMaxStayDaysChange(e.target.value)}
+              onChange={(event) => onMaxStayDaysChange(event.target.value)}
               placeholder={
                 maxStayMax
                   ? `Enter number between 1 and ${maxStayMax}`
                   : 'Enter number'
               }
-              className="w-full border border-neutral-90 rounded-lg px-3 py-2 text-sm bg-white"
+              className="w-full rounded-lg border border-neutral-90 bg-white px-3 py-2 text-sm"
             />
+
             <Checkbox
-              className="w-full flex flex-row justify-end items-center gap-2 border-0 bg-white"
+              className="flex w-full flex-row items-center justify-end gap-2 border-0 bg-white"
               label="Include unknown"
               disabled={!filters.maxStay?.days}
               checked={
