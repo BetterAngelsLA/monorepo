@@ -1,10 +1,12 @@
 import datetime
 import random
+import string
 from typing import Any
 
 from accounts.tests.baker_recipes import organization_recipe
 from model_bakery.recipe import Recipe, foreign_key, related, seq
 from places import Places
+
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
@@ -19,14 +21,12 @@ from shelters.enums import (
     ReferralRequirementChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
-)
-from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import (
     ShelterProgramChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
 )
+from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.models import (
     SPA,
     Accessibility,
@@ -67,6 +67,14 @@ def get_random_shelter_location() -> Places:
 
 def get_random_phone_number() -> str:
     return f"212555{random.randint(1000, 9999)}"
+
+
+def get_random_instagram_handle() -> str | None:
+    """Return a random handle (5-12 chars, optionally ``@``-prefixed) or ``None``."""
+    handle_length = random.randint(5, 12)
+    handle = "".join(random.choices(string.ascii_lowercase + string.digits, k=handle_length))
+
+    return random.choice([handle, f"@{handle}", None])
 
 
 class related_m2m_unique(related):
@@ -159,6 +167,7 @@ shelter_recipe = Recipe(
     emergency_surge=random.choice([True, False, None]),
     declined_ba_visit=random.choice([True, False]),
     instagram=lambda: random.choice(["https://instagram.com/shelter_example", None]),
+    instagram_handle=get_random_instagram_handle,
     other_rules=seq("other rules "),  # type: ignore
     other_services=seq("other services "),  # type: ignore
     overall_rating=lambda: random.randint(1, 5),

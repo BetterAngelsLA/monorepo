@@ -971,6 +971,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "phone",
                     "website",
                     "instagram",
+                    "instagram_handle",
                 ),
             },
         ),
