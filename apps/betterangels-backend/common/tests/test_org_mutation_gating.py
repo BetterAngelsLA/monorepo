@@ -3,11 +3,12 @@
 ADR 0001 makes the grant predicates the authority for cut-over domains.  A new
 or edited mutation that forgets its gate fails silently in one of two ways: it
 serves an unauthorized caller, or it refuses a legitimate one.  This tripwire
-walks the cut-over schema modules and fails unless each mutation resolver:
+walks the cut-over schema modules and fails unless each mutation:
 
 1. gates in its own body — ``require_can(`` / ``can_anywhere(`` / ``can_obj(`` /
    ``visible(`` or a scoped load (``permission=`` — ADR §2.6: the scoped
-   ``*_get``/``*_queryset`` load *is* the write check), or
+   ``*_get``/``*_queryset`` load *is* the write check), or a declarative
+   field's grant checker (``can_anywhere_checker`` / ``can_obj_checker``), or
 2. delegates to a service/selector function in its own app that does, or
 3. is listed in ``GATE_EXEMPT`` — deliberately, with the reason.
 
@@ -24,12 +25,21 @@ import pytest
 
 # Apps whose org-scoped mutations are grant-gated (ADR 0001).  A domain joins
 # this list the moment it cuts over — see the readiness matrix in the ADR §4.1.
-GRANT_GATED_MODULES = ("accounts.schema", "reports.schema", "shelters.schema", "teams.schema")
+GRANT_GATED_MODULES = ("accounts.schema", "clients.schema", "reports.schema", "shelters.schema", "teams.schema")
 
 # ``permission=`` counts because the scoped selectors (``*_get``/``*_queryset``)
 # take the permission and scope by the caller's grants — the ADR §2.6 write
-# check for update/delete.
-GATE_MARKERS = ("require_can(", "can_anywhere(", "can_obj(", "visible(", "permission=")
+# check for update/delete.  The ``*_checker`` names count because declarative
+# strawberry fields (auto mutations, payload-typed fields) flip enforcement by
+# swapping the predicate to the grant model rather than rewriting the field.
+GATE_MARKERS = (
+    "require_can(",
+    "can_anywhere(",
+    "can_obj(",
+    "visible(",
+    "permission=",
+    "can_anywhere_checker",
+)
 
 # Mutations allowed to skip a grant gate, each with the reason it needs none.
 GATE_EXEMPT = {
@@ -41,6 +51,24 @@ GATE_EXEMPT = {
     ("accounts.schema", "create_organization"): (
         "org creation itself — no org authority exists yet; eligibility lives in create_organization_service"
     ),
+    ("clients.schema", "delete_client_document"): (
+        "attachment-domain gate (PermissionedQuerySet) — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "update_client_document"): (
+        "attachment-domain gate — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "generate_client_document_uploads"): (
+        "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "resolve_client_document_uploads"): (
+        "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "create_client_profile_data_import"): (
+        "import surfaces remain legacy until a role carries the import-record perms"
+    ),
+    ("clients.schema", "import_client_profile"): (
+        "import surfaces remain legacy until a role carries the import-record perms"
+    ),
 }
 
 
@@ -49,7 +77,13 @@ def _app_dir(app: str) -> Path:
 
 
 def _mutation_resolvers(app: str) -> list[tuple[str, str]]:
-    """(name, source) for every ``@mutation``-decorated def in ``class Mutation``."""
+    """(name, source) for every mutation surface in ``class Mutation``.
+
+    Two shapes: ``@mutation``-decorated defs, and annotated assignments whose
+    value is a declarative ``mutations.*`` factory (auto-generated create /
+    update / delete fields — payload typed, so their enforcement flips via the
+    grant checkers rather than a rewritten body).
+    """
     src = (_app_dir(app) / "schema.py").read_text()
     tree = ast.parse(src)
     resolvers: list[tuple[str, str]] = []
@@ -57,11 +91,22 @@ def _mutation_resolvers(app: str) -> list[tuple[str, str]]:
         if not isinstance(node, ast.ClassDef) or node.name != "Mutation":
             continue
         for item in node.body:
-            if not isinstance(item, ast.FunctionDef):
-                continue
-            if not any("mutation" in ast.unparse(decorator) for decorator in item.decorator_list):
-                continue
-            resolvers.append((item.name, ast.get_source_segment(src, item) or ""))
+            if isinstance(item, ast.FunctionDef):
+                if not any("mutation" in ast.unparse(decorator) for decorator in item.decorator_list):
+                    continue
+                # ``get_source_segment`` on a FunctionDef excludes its decorators;
+                # include them — gates like ``perm_checker=can_anywhere_checker``
+                # live there.
+                decorators = "\n".join(
+                    ast.get_source_segment(src, decorator) or "" for decorator in item.decorator_list
+                )
+                segment = f"{decorators}\n{ast.get_source_segment(src, item) or ''}"
+                resolvers.append((item.name, segment))
+            elif isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+                segment = ast.get_source_segment(src, item) or ""
+                if "mutations." not in segment:
+                    continue
+                resolvers.append((item.target.id, segment))
     return resolvers
 
 
