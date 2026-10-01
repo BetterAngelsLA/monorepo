@@ -8,7 +8,26 @@ export interface SearchClientsPayloadHmisProd {
   page?: number;
   per_page?: number | string;
   sort?: string;
-  fields?: string;
+  /** Overrides `CLIENT_SEARCH_FIELDS_DEFAULT`*/
+  fields?: string[];
+}
+
+export interface GetClientPayloadHmisProd {
+  /** Overrides `CLIENT_DETAIL_FIELDS_DEFAULT` */
+  fields?: string[];
+}
+
+/**
+ * Query values for the client history call — strings, since they go straight
+ * into the query string. Defaults live in `CLIENT_HISTORY_DEFAULT_QUERY`.
+ */
+export interface GetClientHistoryPayloadHmisProd {
+  /** Include deleted entries (`'0'` = exclude, the default). */
+  deleted?: string;
+  /** Page number (default `'1'`). */
+  page?: string;
+  /** Items per page. */
+  per_page?: string;
 }
 
 /**
@@ -26,15 +45,97 @@ export interface HmisProdClientSearchItem {
   unique_identifier?: string | null;
 }
 
+/** Pagination envelope Clarity sends with list responses (`_meta`). */
+export interface HmisProdPaginationMeta {
+  current_page?: number;
+  per_page?: number;
+  total_count?: number;
+  page_count?: number;
+}
+
 export interface SearchClientsResponseHmisProd {
   items: HmisProdClientSearchItem[];
-  _meta?: {
-    current_page?: number;
-    per_page?: number;
-    total_count?: number;
-    page_count?: number;
-  };
+  _meta?: HmisProdPaginationMeta;
   _links?: Record<string, unknown>;
+}
+
+/** Fields the History tab renders from a history entry's `data` object. */
+export interface HmisProdHistoryItemData {
+  name?: string | null;
+  agency?: string | null;
+  agency_message?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  added_date?: string | null;
+}
+
+/**
+ * Single client history entry — `type` is the entry kind (`demographic`,
+ * `service`, `program`, …); `data` carries the fields the History tab needs
+ * (Clarity includes more per type, which we ignore for now).
+ */
+export interface HmisProdClientHistoryItem {
+  id: number | string;
+  type: string;
+  data: HmisProdHistoryItemData;
+}
+
+/**
+ * Response from `GET /api1/clients/{id}/history` — `items` is the flat list
+ * across all entry types (`source` repeats it grouped by type; unused).
+ */
+export interface GetClientHistoryResponseHmisProd {
+  items: HmisProdClientHistoryItem[];
+  _meta?: HmisProdPaginationMeta;
+  _links?: Record<string, unknown>;
+}
+
+/**
+ * Sub-fields requested via `screenValues.*` — Clarity nests them under a
+ * `screenValues` object in the detail response.
+ *
+ * Enum-ish values (`gender`, `race_ethnicity`, `veteran`, `name_suffix`) come
+ * back as the ordinal codes from the HMIS data model, not labels — see
+ * `enumOrdinalMapsHmisProd` in the adapters.
+ */
+export interface HmisProdClientScreenValues {
+  age?: number | null;
+  gender?: number[] | null;
+  gender_identity_text?: string | null;
+  name_middle?: string | null;
+  name_suffix?: number | null;
+  race_ethnicity?: number[] | null;
+  additional_race_ethnicity_detail?: string | null;
+  veteran?: number | null;
+}
+
+/**
+ * Single client payload from Clarity's client endpoint
+ * (`GET /api1/clients/{id}`) — keys mirror the requested `fields`
+ * (snake_case).
+ *
+ * Sub-fields are read from `screenValues` first, but a few can also land
+ * top-level (e.g. `gender`), so both are typed here; the adapter checks both.
+ */
+export interface HmisProdClientDetail {
+  id: number | string;
+  personal_id?: string | null;
+  unique_identifier?: string | null;
+  alias?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  birth_date?: string | null;
+  dob_quality?: number | null;
+  name_quality?: number | null;
+  age?: number | null;
+  gender?: number[] | null;
+  gender_identity_text?: string | null;
+  name_middle?: string | null;
+  name_suffix?: number | null;
+  race_ethnicity?: number[] | null;
+  additional_race_ethnicity_detail?: string | null;
+  veteran?: number | null;
+  screenValues?: HmisProdClientScreenValues | null;
 }
 
 /**

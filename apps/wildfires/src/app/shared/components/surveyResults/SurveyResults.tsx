@@ -8,7 +8,7 @@ type IProps = {
   resources: TResource[]; // the fetched resources
   isLoading: boolean;
   isError: boolean;
-  error: any;
+  error: Error | null;
 };
 
 export function SurveyResults({

@@ -6,8 +6,17 @@
  *   • an array of items (e.g., `results`, `items`, etc.)
  *   • metadata such as `totalCount` or `meta.totalCount`.
  *
- * This function merges the existing and incoming results
- * into a single normalized list within Apollo’s cache while preserving order.
+ * This function places each incoming page's items at their target offsets
+ * (the robust offset-merge pattern from the Apollo docs):
+ *
+ *     merged[offset + i] = incoming[i]
+ *
+ * Note: offset pagination degrades when items move between pages while
+ * paginating (an insert/delete shifts the window, so pages can overlap or
+ * skip). This merge intentionally does not sift items around to reconcile
+ * that: leaving `undefined` holes behind makes Apollo unable to read the
+ * field (readQuery returns null → blank list). Use cursor/Relay pagination
+ * (`relayStylePagination`) if a list needs move-proof pagination.
  *
  * ---------------------------------------------------------------------------
  * Responsibilities
@@ -15,18 +24,15 @@
  * • Reads the existing cached data and the newly fetched page.
  * • Computes the correct target index for each incoming item based on the
  *   pagination offset or page number (via `resolvePaginationFn`).
- * • Uses each item’s stable ID to avoid duplication and replace outdated entries.
- * • Updates the total count (if available) and writes the merged result back
- *   into a deep-cloned copy of the incoming object.
+ * • Places each incoming item at `offset + i`, replacing stale entries in place.
+ * • Updates the total count (if available) and returns a new merged object,
+ *   copying only the containers along the written paths (the possibly frozen
+ *   incoming data is never mutated).
  *
  * ---------------------------------------------------------------------------
  * Arguments
  * ---------------------------------------------------------------------------
  * @param {Object} args
- * @param {string | string[]} [args.itemIdPath]
- *   Path to the unique identifier within each item (e.g., `"id"` or `"personalId"`).
- *   Defaults to `["id"]` via `DEFAULT_QUERY_ID_KEY`.
- *
  * @param {string | string[]} [args.itemsPath]
  *   Path to the array of items in the server response (e.g., `"items"` or `["data", "results"]`).
  *   Defaults to `["results"]` via `DEFAULT_QUERY_RESULTS_KEY`.
@@ -60,38 +66,26 @@
  * ---------------------------------------------------------------------------
  * 1. Read existing and incoming items via `getItemsFromPathFn`.
  * 2. Compute the offset (or start index) using `resolvePaginationFn`.
- * 3. Build a map of existing items by ID for quick lookup.
- * 4. For each incoming item:
- *    • Determine its new target index (`offset + i`).
- *    • If another copy of that item exists elsewhere, remove it.
- *    • Insert the new item at the correct position.
- * 5. Deep-clone the incoming object (Apollo may freeze objects in cache).
- * 6. Write the merged items back to `itemsPath`.
- * 7. Extract and reapply `totalCount` to the merged result.
- * 8. Return the fully merged object to Apollo.
+ * 3. Place each incoming item at `offset + i`.
+ * 4. Path-set the merged items into a new object (`withValueAtPath` copies
+ *    only the containers along the written path; the incoming object is
+ *    never mutated, so frozen cache data is fine).
+ * 5. Extract and reapply `totalCount` the same way.
+ * 6. Return the fully merged object to Apollo.
  */
 
 import type { FieldMergeFunction } from '@apollo/client';
 import type { FieldMergeFunctionOptions } from '@apollo/client/cache';
-import { deepCloneWeak, writeAtPath } from '../../../utils';
+import { withValueAtPath } from '../../../utils';
 import {
-  DEFAULT_QUERY_ID_KEY,
   DEFAULT_QUERY_RESULTS_KEY,
   DEFAULT_QUERY_TOTAL_COUNT_KEY,
 } from '../../constants';
-import { defaultGetItemId, defaultGetItems } from '../../utils';
+import { defaultGetItems } from '../../utils';
 import type { ResolveMergePagination } from '../types';
-import {
-  buildPositionByIdMap,
-  extractTotalCount,
-  getItemIdFromPathFn,
-  getItemsFromPathFn,
-} from './utils';
+import { extractTotalCount, getItemsFromPathFn } from './utils';
 
 type TMergeObjectPayloadArgs<TVars> = {
-  /** where the item has its id, e.g. "personalId" */
-  itemIdPath?: string | ReadonlyArray<string>;
-
   /** where the server puts the array, e.g. "items" or ["data", "items"] */
   itemsPath?: string | ReadonlyArray<string>;
 
@@ -110,20 +104,18 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
 > {
   const {
     resolvePaginationFn,
-    itemIdPath = [DEFAULT_QUERY_ID_KEY],
     itemsPath = [DEFAULT_QUERY_RESULTS_KEY],
     totalCountPath = [DEFAULT_QUERY_TOTAL_COUNT_KEY],
   } = args;
 
   const readItems = getItemsFromPathFn<TItem>(itemsPath) ?? defaultGetItems;
-  const readItemId = getItemIdFromPathFn<TItem>(itemIdPath) ?? defaultGetItemId;
 
   return function mergeObject(
     existingValue,
     incomingValue,
     fieldOptions,
   ): Record<string, unknown> {
-    const { readField, args } = fieldOptions;
+    const { args } = fieldOptions;
 
     const { offset } = resolvePaginationFn(args as TVars);
 
@@ -135,45 +127,24 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
 
     const mergedItems = existingItems.slice() as (TItem | undefined)[];
 
-    const positionById = buildPositionByIdMap(
-      mergedItems,
-      readItemId,
-      readField,
-    );
-
     for (let i = 0; i < newItems.length; i = i + 1) {
       const newItem = newItems[i] as TItem;
+
       if (newItem === undefined) {
         continue;
       }
 
-      const targetIndex = offset + i;
-      const id = readItemId(newItem, readField);
-
-      if (id !== null && id !== undefined) {
-        const existingAt = positionById.get(id);
-
-        if (existingAt !== undefined && existingAt !== targetIndex) {
-          mergedItems[existingAt] = undefined;
-        }
-
-        positionById.set(id, targetIndex);
-      }
-
-      mergedItems[targetIndex] = newItem;
+      mergedItems[offset + i] = newItem;
     }
 
-    // make a deep, writable copy as incomingObject can be Frozen by Apollo
-    const result = deepCloneWeak(incomingObject);
+    // `withValueAtPath` copies only the containers along the written path and
+    // never mutates the (possibly frozen) incoming object.
+    let result = withValueAtPath(incomingObject, itemsPath, mergedItems);
 
-    // write merged items back where they came from
-    const writeItemsResult = writeAtPath(result, itemsPath, mergedItems);
-
-    if (!writeItemsResult) {
+    if (result === incomingObject) {
       console.error(
         '[mergeObjectPayload] failed to write items at path',
         itemsPath,
-        writeItemsResult,
       );
     }
 
@@ -191,14 +162,19 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
     }
 
     if (totalCount !== undefined) {
-      const writeTotalResult = writeAtPath(result, totalCountPath, totalCount);
+      const withTotalCount = withValueAtPath(
+        result,
+        totalCountPath,
+        totalCount,
+      );
 
-      if (!writeTotalResult) {
+      if (withTotalCount === result) {
         console.error(
           '[mergeObjectPayload] failed to write totalCount at path',
           totalCountPath,
-          writeTotalResult,
         );
+      } else {
+        result = withTotalCount;
       }
     }
 
