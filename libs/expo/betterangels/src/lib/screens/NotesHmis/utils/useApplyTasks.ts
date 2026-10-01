@@ -1,5 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
+import { useActiveOrgId } from '../../../hooks';
 import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../../../ui-components/TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../../../ui-components/TaskForm/__generated__/updateTask.generated';
@@ -10,6 +11,7 @@ export function useApplyTasks() {
   const [createTask] = useMutation(CreateTaskDocument);
   const [updateTask] = useMutation(UpdateTaskDocument);
   const [deleteTask] = useMutation(DeleteTaskDocument);
+  const activeOrgId = useActiveOrgId();
 
   const applyTasks = useCallback(
     async (
@@ -18,6 +20,9 @@ export function useApplyTasks() {
       hmisClientProfileId: string,
     ) => {
       const { toCreateTask, toUpdateTask, toDeleteTask } = splitTasks(tasks);
+
+      // No active org to anchor creates to (none remembered / none to join).
+      if (!activeOrgId) return;
 
       for (const s of toCreateTask) {
         await createTask({
@@ -29,6 +34,7 @@ export function useApplyTasks() {
               status: s.status,
               hmisClientProfile: hmisClientProfileId,
               hmisNote: hmisNoteId,
+              organizationId: activeOrgId,
             },
           },
         });
@@ -56,7 +62,7 @@ export function useApplyTasks() {
         });
       }
     },
-    [createTask, deleteTask, updateTask],
+    [activeOrgId, createTask, deleteTask, updateTask],
   );
 
   return { applyTasks };

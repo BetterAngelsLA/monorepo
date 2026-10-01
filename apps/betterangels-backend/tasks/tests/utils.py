@@ -32,14 +32,33 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
             }}
         """
 
-    def create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        return self._create_or_update_task_fixture("create", variables)
+    def task_query(self, task_id: Any) -> Dict[str, Any]:
+        query = """
+            query ($id: ID!) {
+                task(pk: $id) {
+                    id
+                    summary
+                }
+            }
+        """
+        return self.execute_graphql(query, {"id": task_id})
+
+    def create_task_fixture(self, variables: Dict[str, Any], *, include_organization: bool = True) -> Dict[str, Any]:
+        return self._create_or_update_task_fixture("create", variables, include_organization=include_organization)
 
     def update_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("update", variables)
 
-    def _create_or_update_task_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_or_update_task_fixture(
+        self, operation: str, variables: Dict[str, Any], *, include_organization: bool = True
+    ) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
+
+        if operation == "create" and include_organization:
+            # The acting org (RFC 0003): authority is ``require_can`` at this org.
+            # ``org_1`` comes from ``GraphQLBaseTestCase``; this mixin's protocol
+            # cannot see it, hence the ignore.
+            variables.setdefault("organizationId", str(self.org_1.pk))  # type: ignore[attr-defined]
 
         mutation: str = f"""
             mutation {operation.capitalize()}Task($data: {operation.capitalize()}TaskInput!) {{ # noqa: B950
@@ -59,7 +78,7 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def delete_task_fixture(self, task_id: str) -> Dict[str, Any]:
+    def delete_task_fixture(self, task_id: str | int) -> Dict[str, Any]:
         mutation: str = """
             mutation ($id: ID!) {
                 deleteTask(data: { id: $id }) {
