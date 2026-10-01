@@ -631,6 +631,7 @@ export type CreateNoteInput = {
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<LocationInput>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   providedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
@@ -784,7 +785,7 @@ export type CreateTaskInput = {
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
   hmisNote?: InputMaybe<Scalars['ID']['input']>;
   note?: InputMaybe<Scalars['ID']['input']>;
-  organizationId?: InputMaybe<Scalars['ID']['input']>;
+  organizationId: Scalars['ID']['input'];
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
   teamId?: InputMaybe<Scalars['ID']['input']>;
