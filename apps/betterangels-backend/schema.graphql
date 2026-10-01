@@ -3172,6 +3172,7 @@ input UpdateShelterInput {
   description: String
   email: String
   website: String
+  instagram: String
   isPrivate: Boolean
   heroImageId: ID
   cityId: ID

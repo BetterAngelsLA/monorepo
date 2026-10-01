@@ -3957,6 +3957,7 @@ export type UpdateShelterInput = {
   fundersOther?: InputMaybe<Scalars['String']['input']>;
   heroImageId?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
+  instagram?: InputMaybe<Scalars['String']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;

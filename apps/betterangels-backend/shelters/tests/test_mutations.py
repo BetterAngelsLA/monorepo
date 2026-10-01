@@ -70,6 +70,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                         email
                         phone
                         website
+                        instagram
                         totalBeds
                         maxStay
                         onSiteSecurity
@@ -88,6 +89,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                 "email": "info@shelter.org",
                 "phone": "+13105551234",
                 "website": "https://www.shelter.org",
+                "instagram": "@helloInstaHandle",
                 "totalBeds": 50,
                 "maxStay": 90,
                 "onSiteSecurity": True,
@@ -106,6 +108,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         # FIX: Check for either format (with or without +1)
         self.assertIn(shelter["phone"], ["+13105551234", "3105551234"])  # ← Changed this line
         self.assertEqual(shelter["website"], "https://www.shelter.org")
+        self.assertEqual(shelter["instagram"], "@helloInstaHandle")
         self.assertEqual(shelter["totalBeds"], 50)
         self.assertEqual(shelter["maxStay"], 90)
         self.assertTrue(shelter["onSiteSecurity"])
@@ -525,6 +528,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                         email
                         phone
                         website
+                        instagram
                         isPrivate
                     }
                 }
@@ -539,6 +543,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                 "email": "contact@shelter.org",
                 "phone": "+13105551234",
                 "website": "https://shelter.org",
+                "instagram": "@helloInstaHandle",
                 "isPrivate": True,
             }
         }
@@ -553,6 +558,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(result["email"], "contact@shelter.org")
         self.assertIn(result["phone"], ["+13105551234", "3105551234"])
         self.assertEqual(result["website"], "https://shelter.org")
+        self.assertEqual(result["instagram"], "@helloInstaHandle")
         self.assertTrue(result["isPrivate"])
 
     def test_update_shelter_patch_semantics(self) -> None:
