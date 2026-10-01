@@ -191,7 +191,6 @@ MIDDLEWARE = [
     "pghistory.middleware.HistoryMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
-    "common.middleware.organization.OrganizationMiddleware",
 ]
 
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"

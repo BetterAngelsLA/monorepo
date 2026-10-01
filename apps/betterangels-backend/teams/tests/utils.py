@@ -98,7 +98,6 @@ class TeamGraphQLBaseTestCase(TeamGraphQLUtilsMixin):
         self.org_2_admin = self._make_org_admin(org=self.org_2)
 
         self.graphql_client.force_login(self.org_1_admin)
-        self._set_active_org(self.org_1)
 
     def _make_org_admin(self, *, org: Any) -> User:
         user = baker.make(User)

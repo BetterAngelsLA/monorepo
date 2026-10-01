@@ -123,8 +123,6 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         """Same user, different org in the filter — the payload decides."""
         self.org_2.add_user(self.org_1_admin)
         OrgRoleManager(self.org_2).add_roles(self.org_1_admin, ORG_ADMIN)
-        # A stale header naming org_1 is ignored once the filter names org_2.
-        self._set_active_org(self.org_1)
 
         results = self._list(self.org_2)["data"]["teams"]["results"]
 
@@ -132,101 +130,28 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         org_2_ids = set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
         self.assertEqual(returned_ids, org_2_ids)
 
-    def test_reads_with_the_filter_and_no_header(self) -> None:
-        """A payload org is enough — the header is not required (mobile migration prep)."""
-        del self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"]
-
-        results = self._list(self.org_1)["data"]["teams"]["results"]
-
-        returned_ids = {int(row["id"]) for row in results}
-        org_1_ids = set(Team.objects.filter(organization=self.org_1).values_list("pk", flat=True))
-        org_2_ids = set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
-        self.assertEqual(returned_ids, org_1_ids)
-        self.assertEqual(returned_ids & org_2_ids, set())
-
-    def test_reads_fall_back_to_the_header_without_a_filter(self) -> None:
-        """The deprecated fallback: no filter means the header names the org.
-
-        Mobile's ``useOrgTeams`` callers still send only ``{ isActive }``; this
-        pin comes out when they pass ``organizationId`` (DEV-2566).
-        """
+    def test_requires_an_organization_id(self) -> None:
+        """A caller who names no org anywhere in the payload is denied."""
         response = self.execute_graphql(self.get_teams_query())
 
-        results = response["data"]["teams"]["results"]
-        returned_ids = {int(row["id"]) for row in results}
-        org_1_ids = set(Team.objects.filter(organization=self.org_1).values_list("pk", flat=True))
-        org_2_ids = set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
+        self._assert_denied(response, "You do not have access to this organization.")
 
-        self.assertEqual(returned_ids, org_1_ids)
-        self.assertEqual(returned_ids & org_2_ids, set())
+    def test_denies_with_filters_that_omit_the_org(self) -> None:
+        """Filters of any other kind never imply an org — omitted means denied."""
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"isActive": True}})
 
-    def test_follows_the_active_org_header(self) -> None:
-        """Same user, different org in the header — the fallback decides."""
-        self.org_2.add_user(self.org_1_admin)
-        OrgRoleManager(self.org_2).add_roles(self.org_1_admin, ORG_ADMIN)
-        self._set_active_org(self.org_2)
-
-        results = self.execute_graphql(self.get_teams_query())["data"]["teams"]["results"]
-
-        returned_ids = {int(row["id"]) for row in results}
-        org_2_ids = set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
-        self.assertEqual(returned_ids, org_2_ids)
-
-    def test_an_explicitly_null_organization_id_keeps_the_header_fallback(self) -> None:
-        """Only a *missing* org id falls back to the header; null reads as missing."""
-        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": None}})
-
-        self.assertIsNone(response.get("errors"))
-        returned = {int(row["id"]) for row in response["data"]["teams"]["results"]}
-        expected = set(Team.objects.filter(organization=self.org_1).values_list("pk", flat=True))
-        self.assertEqual(returned, expected)
-
-    def test_requires_an_org_in_the_filter_or_header(self) -> None:
-        """No payload org and no header — the read is denied."""
-        self.assertEqual(self.org_1_admin.organizations_organization.count(), 1)
-        del self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"]
-
-        self._assert_denied(
-            self.execute_graphql(self.get_teams_query()),
-            "Organization ID (X-Organization-ID header) is required.",
-        )
-
-    def test_denies_an_org_the_user_does_not_belong_to(self) -> None:
-        """The header names the org; it does not grant access to it.
-
-        Regression: the query trusted the header outright, so any authenticated
-        user could read any organization's teams by setting it. Every other
-        test here sets the header to an org the user belongs to, which is why
-        it went unnoticed.
-        """
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.assertFalse(self.org_2.users.filter(pk=self.org_1_case_manager_1.pk).exists())
-        self._set_active_org(self.org_2)
-
-        self._assert_denied(
-            self.execute_graphql(self.get_teams_query()),
-            PERMISSION_DENIED_MESSAGE,
-        )
+        self._assert_denied(response, "You do not have access to this organization.")
 
     def test_denies_an_org_the_user_has_no_grant_in(self) -> None:
         """The filter names the org; it does not grant access to it.
 
         A caseworker holds CASEWORKER at org_1 (no org_2 authority), so naming
-        org_2 in the filter is denied even though the header names org_1.
+        org_2 in the filter is denied.
         """
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.assertFalse(self.org_2.users.filter(pk=self.org_1_case_manager_1.pk).exists())
-        self._set_active_org(self.org_1)
 
         self._assert_denied(self._list(self.org_2), PERMISSION_DENIED_MESSAGE)
-
-    def test_denies_a_malformed_header(self) -> None:
-        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "not-an-id"
-
-        self._assert_denied(
-            self.execute_graphql(self.get_teams_query()),
-            "You do not have access to this organization.",
-        )
 
     def test_denies_an_unknown_filter_org(self) -> None:
         response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": "999999999"}})
@@ -239,6 +164,11 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         self._assert_denied(response, "You do not have access to this organization.")
 
     def test_an_empty_organization_id_filter_denies(self) -> None:
-        """A present-but-blank org id denies — it must not fall back to the header."""
+        """A present-but-blank org id denies — it names no org."""
         response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": ""}})
+        self._assert_denied(response, "You do not have access to this organization.")
+
+    def test_an_explicitly_null_organization_id_denies(self) -> None:
+        """An explicit null names no org — it denies like a missing one."""
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": None}})
         self._assert_denied(response, "You do not have access to this organization.")

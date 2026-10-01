@@ -10,8 +10,6 @@ import {
   configureActiveOrgStorage,
   createCsrfInterceptor,
   createCsrfTokenRefresher,
-  createOrgInterceptor,
-  getActiveOrgId,
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
   CSRF_LOGIN_PATH,
@@ -25,10 +23,9 @@ import { createNativeTokenReader } from './csrfTokenProvider';
  * Pre-composed Expo / React Native fetch client.
  *
  * Chains (in order):
- * 1. Org-ID injection (from the active-org store)
- * 2. Proactive CSRF header injection (via ``CookieManager``)
- * 3. Body serialisation
- * 4. Credentials include
+ * 1. Proactive CSRF header injection (via ``CookieManager``)
+ * 2. Body serialisation
+ * 3. Credentials include
  *
  * App-specific interceptors (HMIS auth, user-agent, etc.) can be passed
  * via ``extraInterceptors`` — they are appended after the platform defaults.
@@ -48,7 +45,6 @@ export const createExpoFetchClient = (
   configureActiveOrgStorage(expoActiveOrgStorage);
 
   return composeFetchInterceptors(
-    createOrgInterceptor(getActiveOrgId),
     createCsrfInterceptor(
       createNativeTokenReader(apiUrl),
       createCsrfTokenRefresher((header) =>
