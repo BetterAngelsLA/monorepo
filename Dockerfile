@@ -104,7 +104,7 @@ RUN --mount=type=cache,target=/var/cache/nodejs \
   && rm -rf /tmp/*
 
 # Install EAS CLI globally
-RUN npm install -g eas-cli@20.5.1
+RUN npm install -g eas-cli@24.8.0
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
