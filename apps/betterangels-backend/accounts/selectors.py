@@ -281,22 +281,24 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     (house pattern: ``scopes``).
 
     The global fold is DOMAIN-AWARE (:data:`common.permissions.domain.
-    GLOBAL_TIER_ORG_APPS`): only grant-only (and, later, dual) domains treat the
-    global tier as enforceable at any org (``can()``/``scopes()`` return ALL), so
+    GLOBAL_TIER_ORG_APPS`, the grant-only set): only grant-only domains treat
+    the global tier as enforceable at any org (``can()``/``scopes()`` return
+    ALL), so
     only their global permissions fold into an org entry.  Every org-admin
     domain has cut over grant-only (member management ``organizations.*`` on the
     org root, teams, reports, shelters — all in ``LEGACY_INERT_APPS``), so the
     fold carries the full ORG_ADMIN bundle and the caseworker/client domains
     (notes/clients) still enforced per org by legacy ``PermissionGroup`` rows
     (strawberry ``HasPerm`` at an org the user holds a template group in).
-    Those legacy-only domains never consult the global tier — folding their
-    global permissions in would advertise controls the backend refuses
-    (e.g. a superuser with no group at that org, or a ``user_permission`` on a
-    legacy-only perm).  Their permissions reach an entry only through the
-    org-scoped legacy arm (``organization_permissions``).
+    Those legacy-only domains never consult the
+    global tier — folding their global permissions in would advertise controls
+    the backend refuses (e.g. a superuser with no group at that org, or a
+    ``user_permission`` on a legacy-only perm).  Their permissions reach an
+    entry only through the org-scoped legacy arm
+    (``organization_permissions``).
 
     The superuser case is therefore NOT short-circuited: a superuser's global
-    list carries every product-modeled permission, but only the grant-only/dual
+    list carries every product-modeled permission, but only the grant-only
     subset folds, and their org-group (legacy) permissions still come from the
     scoped report — so an entry can only claim what ``can()`` or the legacy
     ``organization_permissions`` arm would honor at that org.

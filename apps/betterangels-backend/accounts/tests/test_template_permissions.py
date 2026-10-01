@@ -72,10 +72,11 @@ def test_retire_superseded_phantom_permissions() -> None:
     both phantoms (and their ContentTypes), re-point references onto the real
     rows, and keep phantoms that still have no real twin.
     """
-    from accounts.seed import retire_superseded_phantom_permissions
     from django.contrib.auth import get_user_model
     from django.contrib.contenttypes.models import ContentType
     from organizations.models import Organization
+
+    from accounts.seed import retire_superseded_phantom_permissions
 
     # Real twins exist: reports.view_reports on ScheduledReport and the portal
     # codenames on the Organization ContentType (seeded at post_migrate).
@@ -143,9 +144,10 @@ def test_retire_superseded_phantom_permissions_holder_with_both_rows() -> None:
     instead of colliding with the through table's unique constraint, which
     would abort ``post_migrate``.
     """
-    from accounts.seed import retire_superseded_phantom_permissions
     from django.contrib.auth import get_user_model
     from django.contrib.contenttypes.models import ContentType
+
+    from accounts.seed import retire_superseded_phantom_permissions
 
     real = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
 
@@ -164,3 +166,24 @@ def test_retire_superseded_phantom_permissions_holder_with_both_rows() -> None:
     assert not Permission.objects.filter(pk=phantom.pk).exists()
     # Exactly one reference survives, on the real row — no duplicate, no revoke.
     assert list(holder.user_permissions.values_list("pk", flat=True)) == [real.pk]
+
+
+@pytest.mark.django_db
+def test_org_admin_role_bundle_is_the_template_bundle() -> None:
+    """ORG_ADMIN/ORG_SUPERUSER RoleDefs are built from their TemplateConfigs.
+
+    The grant-side bundle is the SAME source as the legacy template (single
+    source of truth, ``RoleDef.from_template``) — a mirrored Grant can never
+    drift from, or amplify beyond, the legacy bundle.  This pins that property
+    so a future hand-edit of one side without the other fails here.
+    """
+    from accounts.groups import ORG_ADMIN, ORG_ADMIN_ROLE, ORG_SUPERUSER, ORG_SUPERUSER_ROLE
+
+    assert list(ORG_ADMIN_ROLE.permissions) == list(ORG_ADMIN.permissions)
+    assert list(ORG_SUPERUSER_ROLE.permissions) == list(ORG_SUPERUSER.permissions)
+    assert ORG_ADMIN_ROLE.name == ORG_ADMIN.name
+    assert ORG_SUPERUSER_ROLE.name == ORG_SUPERUSER.name
+    assert ORG_ADMIN_ROLE.is_global is False
+    assert ORG_SUPERUSER_ROLE.is_global is False
+    assert ORG_ADMIN_ROLE.is_invitable == ORG_ADMIN.is_invitable
+    assert ORG_SUPERUSER_ROLE.is_invitable == ORG_SUPERUSER.is_invitable
