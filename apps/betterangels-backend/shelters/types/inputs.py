@@ -159,6 +159,7 @@ class UpdateShelterInput:
     description: Maybe[str] = UNSET
     email: Maybe[Optional[str]] = UNSET
     website: Maybe[Optional[str]] = UNSET
+    instagram: Maybe[Optional[str]] = UNSET
     is_private: Maybe[bool] = UNSET
     hero_image_id: Maybe[ID | None] = UNSET
     city_id: Maybe[ID | None] = UNSET

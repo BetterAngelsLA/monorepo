@@ -33,7 +33,7 @@ class Query:
         permission_classes=[IsAuthenticated],
     )
     def teams(self, info: Info, filters: Optional[TeamFilter] = None) -> QuerySet[Team]:
-        """List an organization's teams — grant-only (ADR 0001 §5.3).
+        """List an organization's teams — grant-only at the payload org.
 
         The org comes from the ``organizationId`` filter when provided; the
         ``X-Organization-ID`` header remains a deprecated fallback while the
