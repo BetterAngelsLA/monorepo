@@ -289,12 +289,11 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     fold carries the full ORG_ADMIN bundle and the caseworker/client domains
     (notes/clients) still enforced per org by legacy ``PermissionGroup`` rows
     (strawberry ``HasPerm`` at an org the user holds a template group in).
-    Those legacy-only domains never consult the
-    global tier — folding their global permissions in would advertise controls
-    the backend refuses (e.g. a superuser with no group at that org, or a
-    ``user_permission`` on a legacy-only perm).  Their permissions reach an
-    entry only through the org-scoped legacy arm
-    (``organization_permissions``).
+    Those legacy-only domains never consult the global tier — folding their
+    global permissions in would advertise controls the backend refuses
+    (e.g. a superuser with no group at that org, or a ``user_permission`` on a
+    legacy-only perm).  Their permissions reach an entry only through the
+    org-scoped legacy arm (``organization_permissions``).
 
     The superuser case is therefore NOT short-circuited: a superuser's global
     list carries every product-modeled permission, but only the grant-only/dual
