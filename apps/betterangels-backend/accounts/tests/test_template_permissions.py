@@ -181,5 +181,9 @@ def test_org_admin_role_bundle_is_the_template_bundle() -> None:
 
     assert list(ORG_ADMIN_ROLE.permissions) == list(ORG_ADMIN.permissions)
     assert list(ORG_SUPERUSER_ROLE.permissions) == list(ORG_SUPERUSER.permissions)
+    assert ORG_ADMIN_ROLE.name == ORG_ADMIN.name
+    assert ORG_SUPERUSER_ROLE.name == ORG_SUPERUSER.name
+    assert ORG_ADMIN_ROLE.is_global is False
+    assert ORG_SUPERUSER_ROLE.is_global is False
     assert ORG_ADMIN_ROLE.is_invitable == ORG_ADMIN.is_invitable
     assert ORG_SUPERUSER_ROLE.is_invitable == ORG_SUPERUSER.is_invitable
