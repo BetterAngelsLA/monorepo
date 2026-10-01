@@ -17,6 +17,7 @@ ORG_ADMIN = TemplateConfig(
         Team.perms.VIEW,
     ],
     is_invitable=False,
+    legacy_inert=True,
 )
 
 ORG_SUPERUSER = TemplateConfig(
@@ -26,6 +27,7 @@ ORG_SUPERUSER = TemplateConfig(
         UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE,
     ],
     is_invitable=False,
+    legacy_inert=True,
 )
 
 

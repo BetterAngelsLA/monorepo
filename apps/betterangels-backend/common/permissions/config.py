@@ -15,6 +15,16 @@ class TemplateConfig:
     """Whether a user can be invited directly into this role.
 
     Set ``False`` for promotion-only roles (e.g. Org Admin, Org Superuser)."""
+    legacy_inert: bool = False
+    """Whether this template's legacy ``PermissionGroup`` rows are inert (ADR 0001 teardown).
+
+    ``True`` for templates whose domains have fully cut over grant-only: no
+    ``PermissionGroup`` row is created or assigned for them (``reconcile_org_groups``
+    skips and retires them; ``OrgRoleManager`` mirrors only the scoped ``Grant``),
+    and authority + reporting read the grant arm only.  Set when every app a
+    template's permissions span is in ``LEGACY_INERT_APPS`` — today, the
+    ORG_ADMIN/ORG_SUPERUSER org-portal roles.  ``False`` (dual-write) until a
+    member-level template's domains cut over."""
     invite_html: str | None = None
     """Path to the HTML invitation email template.
 

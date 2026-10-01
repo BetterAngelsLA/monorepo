@@ -142,9 +142,10 @@ class OrganizationAdminTestCase(TestCase):
 
         organization = Organization.objects.get(name="Outreach Org")
         self.assertEqual([t.value for t in organization.profile.org_types], ["outreach"])
+        # ORG_ADMIN/ORG_SUPERUSER are grant-only (no PermissionGroup rows).
         self.assertSetEqual(
             set(PermissionGroup.objects.filter(organization=organization).values_list("template__name", flat=True)),
-            {t.name for t in (CASEWORKER,)} | {"Organization Admin", "Organization Superuser"},
+            {t.name for t in (CASEWORKER,)},
         )
 
     def test_form_hides_is_active(self) -> None:
@@ -573,11 +574,15 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         self.organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
 
     def _roles_of(self, member: User) -> set[str]:
-        return set(
+        """Role names at *self.organization*: dual-write PermissionGroup rows merged
+        with grant-only scoped Role Grants (ORG_ADMIN/ORG_SUPERUSER have no rows)."""
+        legacy = set(
             PermissionGroup.objects.filter(organization=self.organization, user=member).values_list(
                 "template__name", flat=True
             )
         )
+        granted = set(member.grants.filter(scope_org=self.organization).values_list("role__name", flat=True))
+        return legacy | granted
 
     def test_inviting_with_two_roles_grants_both(self) -> None:
         with self.captureOnCommitCallbacks(execute=True):
@@ -995,6 +1000,86 @@ class OrganizationMemberInlineQueryCountTestCase(TestCase):
         self.assertEqual(len(many) - len(few), 0)
 
 
+class OrganizationMemberInlineRoleDisplayTestCase(TestCase):
+    """The Members inline names every role, grant-only org-admin roles included.
+
+    ORG_ADMIN/ORG_SUPERUSER are grant-only after the teardown (ADR 0001): their
+    ``PermissionGroup`` rows are retired and the authority lives in a scoped
+    ``Grant``.  The inline reads the prefetch rather than
+    ``accounts.selectors.member_role_names`` — it renders a row per member — so it
+    has to read both arms.  Reading only the legacy arm showed a caseworker who is
+    also an org admin as just "Caseworker", and an admin-only member as "—".
+    """
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_inline_roles_tests",
+            email="admin_inline_roles_tests@example.com",
+            password="password",
+        )
+        self.client.force_login(self.superuser)
+
+    def _role_cell(self, organization: Organization, email: str) -> str:
+        """The Roles cell of *email*'s row in the org change page's Members inline."""
+        url = reverse("admin:organizations_organization_change", args=[organization.pk])
+        page = self.client.get(url).content.decode()
+        marker = page.index(email)
+        row = page[page.rindex("<tr", 0, marker) : page.index("</tr>", marker)]
+        cell_start = row.index("field-roles")
+        return row[cell_start : row.index("</td>", cell_start)]
+
+    def test_reports_org_admin_alongside_a_caseworker(self) -> None:
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        member_add(
+            email="admin_caseworker@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=organization,
+            permission_templates=(CASEWORKER, ORG_ADMIN),
+        )
+
+        cell = self._role_cell(organization, "admin_caseworker@example.com")
+
+        self.assertIn(CASEWORKER.name, cell)
+        self.assertIn(ORG_ADMIN.name, cell)
+
+    def test_reports_org_admin_alongside_a_shelter_operator(self) -> None:
+        organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
+        member_add(
+            email="admin_operator@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=organization,
+            permission_templates=(SHELTER_OPERATOR, ORG_ADMIN),
+        )
+
+        cell = self._role_cell(organization, "admin_operator@example.com")
+
+        self.assertIn(SHELTER_OPERATOR.name, cell)
+        self.assertIn(ORG_ADMIN.name, cell)
+
+    def test_reports_the_org_admin_left_after_the_editor_clears_the_member_role(self) -> None:
+        """ORG_ADMIN has no checkbox, so the editor can leave an admin-only member."""
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        member = member_add(
+            email="admin_only@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=organization,
+            permission_templates=(CASEWORKER, ORG_ADMIN),
+        )
+        editor_url = reverse("admin:organizations_organization_change_member_roles", args=[organization.pk, member.pk])
+        self.client.post(editor_url, {"permission_templates": []})
+
+        cell = self._role_cell(organization, "admin_only@example.com")
+
+        self.assertIn(ORG_ADMIN.name, cell)
+        self.assertNotIn(CASEWORKER.name, cell)
+
+
 class UserAdminGroupGrantMirrorTestCase(TestCase):
     """Group edits on the user page must keep group and Grant in step.
 
@@ -1354,19 +1439,23 @@ class PermissionGroupTemplateAdminTestCase(TestCase):
     def test_deleting_a_code_owned_role_breaks_the_next_reconcile(self) -> None:
         """Why the guard is a refusal rather than a warning.
 
-        The delete itself succeeds quietly -- ``SET_NULL`` leaves each row with
-        its label and members and no template, so reconciliation stops seeing it
-        as derived.  ``post_migrate`` re-seeds the template, and the next
-        reconcile collides with the orphan on ``auth_group.name``.  Reached here
-        by deleting directly, which is what the admin guard now prevents.
+        ORG_ADMIN/ORG_SUPERUSER are grant-only (ADR 0001 teardown) — reconcile no
+        longer creates their rows, so this guards a *dual-write* code-owned role
+        (CASEWORKER), which reconcile still provisions per org.  The delete
+        itself succeeds quietly -- ``SET_NULL`` leaves each row with its label and
+        members and no template, so reconciliation stops seeing it as derived.
+        ``post_migrate`` re-seeds the template, and the next reconcile collides
+        with the orphan on ``auth_group.name``.  Reached here by deleting
+        directly, which is what the admin guard now prevents.
         """
-        row = PermissionGroup.objects.get(organization=self.organization, template=self.code_owned)
+        template = PermissionGroupTemplate.objects.get(name=CASEWORKER.name)
+        row = PermissionGroup.objects.get(organization=self.organization, template=template)
 
-        self.code_owned.delete()
+        template.delete()
 
         row.refresh_from_db()
         self.assertIsNone(row.template_id)
-        self.assertEqual(row.label, ORG_ADMIN.name)
+        self.assertEqual(row.label, CASEWORKER.name)
 
         seed_permission_templates()
         with self.assertRaises(IntegrityError), transaction.atomic():

@@ -5,22 +5,29 @@ from accounts.enums import OrgRoleEnum
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from common.org_types import REGISTRY
 
-from .models import PermissionGroup
+from .models import Grant, PermissionGroup
 
 
 def annotate_member_role(org_id: str) -> Case:
+    """The member's role at *org_id* — grant-only (ADR 0001 teardown).
+
+    The ORG_ADMIN/ORG_SUPERUSER org-portal roles are read from their scoped
+    ``Role`` ``Grant``s: their legacy ``PermissionGroup`` rows are retired, so a
+    legacy membership can no longer report (or confer) admin.  A holder with no
+    grant at the org reports MEMBER — matching what the backend enforces.
+    """
     is_superuser = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template__name=ORG_SUPERUSER.name,
-            user=OuterRef("pk"),
+        Grant.objects.filter(
+            scope_org_id=org_id,
+            role__name=ORG_SUPERUSER.name,
+            principal_user=OuterRef("pk"),
         )
     )
     is_admin = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template__name=ORG_ADMIN.name,
-            user=OuterRef("pk"),
+        Grant.objects.filter(
+            scope_org_id=org_id,
+            role__name=ORG_ADMIN.name,
+            principal_user=OuterRef("pk"),
         )
     )
 
