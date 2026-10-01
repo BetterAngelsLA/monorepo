@@ -88,6 +88,37 @@ enum AttachmentType {
   UNKNOWN
 }
 
+type AuditActionType {
+  timestamp: DateTime!
+  actor: String!
+  summary: String!
+  events: [AuditEventType!]!
+  fieldChanges: JSON!
+}
+
+enum AuditEventKind {
+  INSERT
+  UPDATE
+  DELETE
+}
+
+type AuditEventType {
+  timestamp: DateTime!
+  actor: String!
+  kind: AuditEventKind!
+  action: String!
+  targetType: AuditTargetType!
+  targetId: ID!
+  fieldChanges: JSON!
+}
+
+enum AuditTargetType {
+  SHELTER
+  ROOM
+  BED
+  RESERVATION
+}
+
 type AuthResponse {
   status_code: String!
 }
@@ -2104,6 +2135,7 @@ type Query {
   currentUser: CurrentUserType!
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
+  objectAuditLog(targetType: AuditTargetType!, objectId: ID!, limit: Int! = 50, offset: Int! = 0): [AuditActionType!]!
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
