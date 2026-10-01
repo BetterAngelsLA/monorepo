@@ -9,8 +9,9 @@ not just ``OrgRoleManager``.
 
 from typing import Any
 
-from accounts.models import Grant, PermissionGroup, Role, User
+from accounts.models import Grant, OrganizationProfile, PermissionGroup, Role, User
 from accounts.role_manager import OrgRoleManager
+from accounts.services import reconcile_org_groups
 from common.permissions.config import TemplateConfig
 from common.tests.utils import make_permission_group
 from django.test import TestCase
@@ -181,3 +182,34 @@ class MembershipEdgeMirrorTestCase(TestCase):
         PermissionGroup.objects.filter(pk=self.group.pk).delete()
 
         self.assertTrue(self._mirrors().exists())
+
+    def test_reconcile_of_a_stale_group_unmirrors_the_grant(self) -> None:
+        """Config cleanup REVOKES the mirrored authority (finding F1 on #2443).
+
+        A type change that drops a role must lose its Grant — reconcile knows
+        the row is stale, so it unmirrors before the delete.  That is the
+        counterpart to the teardown delete above, which deliberately does not.
+        """
+        self.user.groups.add(self.group)
+        self.assertTrue(self._mirrors().exists())
+
+        OrganizationProfile.objects.filter(organization=self.org).update(org_types=["shelter"])
+        reconcile_org_groups(self.org)
+
+        self.assertFalse(PermissionGroup.objects.filter(pk=self.group.pk).exists())
+        self.assertFalse(self._mirrors().exists())
+
+    def test_removing_a_membership_revokes_a_same_row_direct_grant(self) -> None:
+        """A direct Grant of the same role/org IS the mirrored row (finding F3).
+
+        The unique constraint makes them indistinguishable, so removing the
+        membership deletes the directly-created row too — pinned here, and
+        flagged in the ``GrantAdmin`` form description.
+        """
+        Grant.objects.create(principal_user=self.user, role=self.role, scope_org=self.org)
+        self.user.groups.add(self.group)
+        self.assertEqual(self._mirrors().count(), 1)  # add found the same row
+
+        self.user.groups.remove(self.group)
+
+        self.assertFalse(self._mirrors().exists())
