@@ -1082,10 +1082,39 @@ phantom-ContentType guard.  The reports slice then mirrors teams:
 - Phantom Permission/ContentType rows synthesized by the old last-token
   resolution and superseded by real-model binding are retired idempotently at
   ``post_migrate`` (``retire_superseded_phantom_permissions``).
-- Only **member management** (`organizations.*` portal codenames — registered on
-  no model) still cannot ride a scoped Role; it is the last legacy-only domain
-  and keeps the ORG_ADMIN legacy ``PermissionGroup`` rows meaningful until its
-  own cutover.
+**Status on main — member management joined (2026-09-09).** The last
+legacy-only org-admin domain flips grant-only.  The org-root bind from the
+seed migration gives the ``organizations.*`` portal codenames a real model —
+the org-root ``Organization`` ContentType — so they can ride scoped Roles:
+
+- ``ORG_ADMIN``/``ORG_SUPERUSER`` Roles bundle the member-management codenames
+  (``organizations.access_org_portal``, ``add_org_member``,
+  ``remove_org_member``, ``view_org_member``, and — superuser only —
+  ``change_org_member_role``); backfilled org-admin Grants inherit them from the
+  Role row on the next ``sync_roles`` (no re-backfill).
+- ``seed_org_portal_permissions`` binds the five codenames to the real org-root
+  ``Organization`` model at ``post_migrate`` (after ``sync_roles``), replacing
+  the phantom rows the old last-token resolution synthesized; superseded phantom
+  rows are retired idempotently (references re-pointed first) by
+  ``retire_superseded_phantom_permissions``.
+- The org-root permissions guard is identity-scoped (permissions.E005): a
+  permission registered on ``Organization`` itself is a capability on the org,
+  not an org-wide capability-gate — the org's own rows never trip the
+  cross-object guard.
+- ``organizationMember``/``organizationMembers`` and the add mutation authorize
+  via ``require_can`` at the org in the payload;
+  ``removeOrganizationMember``/``changeOrganizationMemberRole`` are keyed on the
+  ``OrganizationUser`` membership row and authorize at the row's org (mirroring
+  teams' row-keyed update/delete); ``organizations`` joins ``LEGACY_INERT_APPS``.
+- **Header-free.** Member management is a web feature (the admin portal), so it
+  cut over in one step instead of keeping the ``X-Organization-ID`` header as a
+  deprecated fallback: add/read carry ``organizationId`` in the payload, and
+  remove/change-role carry the membership row id (``membershipId``).  No
+  member-management surface reads the header.
+- Every ORG_ADMIN/ORG_SUPERUSER template permission is now grant-backed.  The
+  org-admin legacy ``PermissionGroup`` rows are fully inert (redundant with the
+  backfilled Grants) — retained only as an inert remainder until the post-cutover
+  teardown (see §5.3).
 
 **Cutover audit — hand-defined roles.** The backfills and the membership mirror
 only convert code-owned templates whose name maps to a scoped `Role`
@@ -1106,6 +1135,40 @@ PermissionGroupTemplate.objects.filter(
 #     template__isnull=True,
 # )
 ```
+
+**Status on main — org-admin teardown (2026-09-09).** The inert org-admin rows
+are gone; the org-admin legacy *machinery* is removed:
+
+- ``TemplateConfig.legacy_inert`` marks a template whose ``PermissionGroup`` rows
+  are grant-only — set on ORG_ADMIN/ORG_SUPERUSER (every app their permissions
+  span is in ``LEGACY_INERT_APPS``).
+- ``OrgRoleManager`` mirrors only the scoped ``Role`` ``Grant`` for a
+  ``legacy_inert`` template — no org ``PermissionGroup`` membership is created or
+  removed (``clear_roles`` still drops every grant at the org).
+- ``reconcile_org_groups`` excludes ``legacy_inert`` templates from the expected
+  set and retires any leftover row unconditionally (``_retire_legacy_inert_rows``)
+  — orgs migrated from before the cutover lose their inert org-admin rows on the
+  next reconcile, cascading their ``auth.Group`` and memberships away.
+- Member-role reporting reads the grant arm: ``annotate_member_role``
+  (``memberRole`` on the admin member page) derives SUPERUSER/ADMIN from the
+  scoped ORG_ADMIN/ORG_SUPERUSER ``Grant`` rows, and the Django-admin role labels
+  (``member_role_names`` / ``role_names_by_organization`` / the role form's
+  ``locked_role_names``) merge the grant arm with the surviving dual-write rows.
+  A stale legacy-only holder (no Grant) reports MEMBER — matching enforcement.
+- Dead machinery removed: the ``HasOrgPerm`` strawberry extension,
+  ``get_user_permitted_org``, ``active_org``, and the ``permissioned_queryset`` /
+  ``perm_filter`` legacy predicates had no consumers once member management cut
+  over.  The ``X-Organization-ID`` header read is **kept only as the teams
+  list-read fallback**: mobile's ``useOrgTeams`` callers still send just
+  ``{ isActive }``, so the filter-first read retains the deprecated header
+  fallback (blank/malformed ids deny, never fall back) until mobile passes
+  ``organizationId`` — DEV-2566.  ``OrganizationMiddleware`` /
+  ``get_current_organization`` stay only with it; the teams mutations and every
+  other cut-over surface take their org from the payload/row.
+- Kept (not grant-only): CASEWORKER, SHELTER_OPERATOR and every member-level /
+  unscoped template still dual-write their ``PermissionGroup`` rows until the
+  notes/clients (and shelter-operator) domains cut over.  ``PermissionGroup``
+  rows with no template and hand-managed rows are untouched.
 
 ## 6. References
 

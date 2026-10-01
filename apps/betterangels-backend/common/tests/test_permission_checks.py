@@ -133,6 +133,28 @@ class GrantSystemChecksTestCase(TestCase):
             [],
         )
 
+    def test_e005_is_quiet_for_an_org_root_permission_on_a_scoped_role(self) -> None:
+        """The org-root Organization model is identity-scoped (ADR 0001 §5.3).
+
+        A scoped Grant scopes to an organization, so a permission bound to the
+        Organization model (member-management ``organizations.*``) is an org-level
+        action on the very row the grant scopes to — no ``org_via`` hop exists.
+        """
+        from organizations.models import Organization
+
+        role = Role.objects.create(name="Scoped Role")
+        permission, _ = Permission.objects.get_or_create(
+            content_type=ContentType.objects.get_for_model(Organization),
+            codename="add_org_member",
+            defaults={"name": "Can add organization member"},
+        )
+        role.permissions.add(permission)
+
+        self.assertEqual(
+            _errors_with(check_role_permissions_models_declare_org_scoping(None), "permissions.E005"),
+            [],
+        )
+
     def test_e005_is_quiet_for_global_roles_on_unscoped_models(self) -> None:
         """Global roles are never org-filtered, so their models need no declaration yet."""
         role = Role.objects.create(name="Global Ops", is_global=True)

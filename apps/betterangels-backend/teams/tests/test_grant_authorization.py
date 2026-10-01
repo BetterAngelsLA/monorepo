@@ -9,7 +9,7 @@ The three team mutations authorize through ``require_can`` (``can()``) since
 from typing import Any
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import Grant, PermissionGroup, User
+from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.permissions.utils import PERMISSION_DENIED_MESSAGE
@@ -96,10 +96,15 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self._set_active_org(org)
 
     def test_legacy_only_org_admin_is_denied(self) -> None:
-        """A legacy PermissionGroup ORG_ADMIN with no Grant no longer manages teams."""
+        """A legacy PermissionGroup ORG_ADMIN with no Grant no longer manages teams.
+
+        Reconcile retires org-admin rows (ADR 0001 teardown) — this simulates a
+        stale leftover row; even if one exists it confers no team authority.
+        """
         legacy_admin = baker.make(User)
         self.org_1.add_user(legacy_admin)
-        group = PermissionGroup.objects.get(organization=self.org_1, template__name=ORG_ADMIN.name)
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=ORG_ADMIN.name)
+        group, _ = PermissionGroup.objects.get_or_create(organization=self.org_1, template=template)
         group.user_set.add(legacy_admin)
         # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
         # legacy-only holder has none — drop the mirror to model that state.
@@ -238,8 +243,8 @@ class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
 
     def _list_org_2(self, user: User) -> dict[str, Any]:
         self.graphql_client.force_login(user)
-        self._set_active_org(self.org_2)
-        return self.execute_graphql(self.get_teams_query())
+        # Header-free read: the org travels in the filter payload (no header).
+        return self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": str(self.org_2.pk)}})
 
     def _ids(self, response: dict[str, Any]) -> set[int]:
         self.assertIsNone(response.get("errors"))
