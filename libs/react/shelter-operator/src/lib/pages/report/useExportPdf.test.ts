@@ -3,14 +3,16 @@ import { createRef } from 'react';
 import { useExportPdf } from './useExportPdf';
 
 // jsPDF and html2canvas-pro both need a real browser to do anything useful, so
-// the seams are mocked and the assertions are about the geometry the hook asks
-// for rather than the bytes that come back.
+// the seams are mocked and the assertions are about the geometry/ordering the
+// hook asks for rather than the bytes that come back.
 const mocks = vi.hoisted(() => ({
-  save: vi.fn(),
   addPage: vi.fn(),
   addImage: vi.fn(),
+  output: vi.fn(),
   html2canvas: vi.fn(),
 }));
+
+const STUB_BLOB = new Blob(['stub'], { type: 'application/pdf' });
 
 // `new jsPDF()` needs a constructible mock, so this has to be a `function`.
 vi.mock('jspdf', () => ({
@@ -21,78 +23,99 @@ vi.mock('jspdf', () => ({
       },
       addPage: mocks.addPage,
       addImage: mocks.addImage,
-      save: mocks.save,
+      output: mocks.output,
     };
   }),
 }));
 
 vi.mock('html2canvas-pro', () => ({ default: mocks.html2canvas }));
 
-// US Letter at 72dpi, less the hook's 24pt margin on each side.
-const MARGIN = 24;
-const USABLE_WIDTH = 612 - MARGIN * 2; // 564
-const USABLE_HEIGHT = 792 - MARGIN * 2; // 744
-
 const IMG_DATA = 'data:image/png;base64,stub';
 
-/** A canvas of `height`px captured from an 800px-wide report at scale 2. */
-function canvasOfHeight(height: number) {
-  return {
-    width: 1600,
-    height,
-    toDataURL: () => IMG_DATA,
-  };
+function stubCanvas() {
+  return { toDataURL: () => IMG_DATA };
 }
 
-function renderExport(filename = 'report.pdf') {
+/** Builds a root node with `count` `[data-report-page="true"]` children under it. */
+function reportRoot(count: number) {
+  const root = document.createElement('div');
+  for (let i = 0; i < count; i++) {
+    const page = document.createElement('div');
+    page.setAttribute('data-report-page', 'true');
+    root.appendChild(page);
+  }
+  return root;
+}
+
+function renderExport(root: HTMLElement | null) {
   const ref = createRef<HTMLElement>();
-  // renderHook mounts into jsdom, so a detached div is enough of a target.
-  (ref as { current: HTMLElement | null }).current =
-    document.createElement('div');
+  (ref as { current: HTMLElement | null }).current = root;
 
-  const view = renderHook(() => useExportPdf(ref, filename));
-
-  return { ...view, ref };
+  return { ...renderHook(() => useExportPdf(ref)), ref };
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // The real report is 800x921 CSS px, captured at scale 2.
-  mocks.html2canvas.mockResolvedValue(canvasOfHeight(1842));
+  mocks.html2canvas.mockResolvedValue(stubCanvas());
+  mocks.output.mockReturnValue(STUB_BLOB);
 });
 
 describe('useExportPdf', () => {
-  it('does nothing when the target ref is empty', async () => {
-    const ref = createRef<HTMLElement>();
-    const { result } = renderHook(() => useExportPdf(ref, 'report.pdf'));
+  it('throws when the target ref is empty', async () => {
+    const { result } = renderExport(null);
 
     await act(async () => {
-      await result.current.exportPdf();
+      await expect(result.current.exportPdf('report.pdf')).rejects.toThrow(
+        'Nothing to export',
+      );
     });
 
     expect(mocks.html2canvas).not.toHaveBeenCalled();
-    expect(mocks.save).not.toHaveBeenCalled();
     expect(result.current.isExporting).toBe(false);
   });
 
-  it('saves under the filename it was given', async () => {
-    const { result } = renderExport('shelter-report-5.pdf');
+  it('throws when the target has no report-page nodes', async () => {
+    const { result } = renderExport(reportRoot(0));
 
     await act(async () => {
-      await result.current.exportPdf();
+      await expect(result.current.exportPdf('report.pdf')).rejects.toThrow(
+        'Nothing to export',
+      );
     });
 
-    expect(mocks.save).toHaveBeenCalledWith('shelter-report-5.pdf');
+    expect(mocks.html2canvas).not.toHaveBeenCalled();
   });
 
-  it('captures at scale 2 on a white background', async () => {
-    const { result, ref } = renderExport();
+  it('resolves with the blob and filename it was given', async () => {
+    const { result } = renderExport(reportRoot(1));
 
+    let resolved: { blob: Blob; filename: string } | undefined;
     await act(async () => {
-      await result.current.exportPdf();
+      resolved = await result.current.exportPdf('shelter-5-report.pdf');
     });
 
-    expect(mocks.html2canvas).toHaveBeenCalledWith(ref.current, {
+    expect(resolved).toEqual({
+      blob: STUB_BLOB,
+      filename: 'shelter-5-report.pdf',
+    });
+  });
+
+  it('captures each page node at scale 2 on a white background', async () => {
+    const root = reportRoot(2);
+    const { result } = renderExport(root);
+
+    await act(async () => {
+      await result.current.exportPdf('report.pdf');
+    });
+
+    const pageNodes = root.querySelectorAll('[data-report-page="true"]');
+    expect(mocks.html2canvas).toHaveBeenCalledTimes(2);
+    expect(mocks.html2canvas).toHaveBeenNthCalledWith(1, pageNodes[0], {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+    });
+    expect(mocks.html2canvas).toHaveBeenNthCalledWith(2, pageNodes[1], {
       scale: 2,
       backgroundColor: '#ffffff',
       useCORS: true,
@@ -107,18 +130,18 @@ describe('useExportPdf', () => {
       }),
     );
 
-    const { result } = renderExport();
+    const { result } = renderExport(reportRoot(1));
     expect(result.current.isExporting).toBe(false);
 
-    let pending: Promise<void>;
+    let pending: Promise<unknown>;
     act(() => {
-      pending = result.current.exportPdf();
+      pending = result.current.exportPdf('report.pdf');
     });
 
     await waitFor(() => expect(result.current.isExporting).toBe(true));
 
     await act(async () => {
-      release(canvasOfHeight(1842));
+      release(stubCanvas());
       await pending;
     });
 
@@ -128,25 +151,24 @@ describe('useExportPdf', () => {
   it('clears isExporting when the capture throws', async () => {
     mocks.html2canvas.mockRejectedValue(new Error('canvas exploded'));
 
-    const { result } = renderExport();
+    const { result } = renderExport(reportRoot(1));
 
     await act(async () => {
-      await expect(result.current.exportPdf()).rejects.toThrow(
+      await expect(result.current.exportPdf('report.pdf')).rejects.toThrow(
         'canvas exploded',
       );
     });
 
     expect(result.current.isExporting).toBe(false);
-    expect(mocks.save).not.toHaveBeenCalled();
+    expect(mocks.output).not.toHaveBeenCalled();
   });
 
   describe('pagination', () => {
-    it('emits a single page for a report that fits', async () => {
-      // 1842px at 1600px wide scales to 649pt tall — inside the 744pt page.
-      const { result } = renderExport();
+    it('draws a single page 1:1 onto the full PDF page for one report-page node', async () => {
+      const { result } = renderExport(reportRoot(1));
 
       await act(async () => {
-        await result.current.exportPdf();
+        await result.current.exportPdf('report.pdf');
       });
 
       expect(mocks.addPage).not.toHaveBeenCalled();
@@ -154,69 +176,34 @@ describe('useExportPdf', () => {
       expect(mocks.addImage).toHaveBeenCalledWith(
         IMG_DATA,
         'PNG',
-        MARGIN,
-        MARGIN,
-        USABLE_WIDTH,
-        (1842 * USABLE_WIDTH) / 1600,
+        0,
+        0,
+        612,
+        792,
       );
     });
 
-    it('adds a page per overflowing slice and shifts the image up each time', async () => {
-      // 8000px scales to 2820pt tall — four 744pt pages.
-      mocks.html2canvas.mockResolvedValue(canvasOfHeight(8000));
-      const imgHeight = (8000 * USABLE_WIDTH) / 1600;
-
-      const { result } = renderExport();
+    it('adds one PDF page per report-page node, one fewer addPage than nodes', async () => {
+      const { result } = renderExport(reportRoot(3));
 
       await act(async () => {
-        await result.current.exportPdf();
+        await result.current.exportPdf('report.pdf');
       });
 
-      expect(mocks.addImage).toHaveBeenCalledTimes(4);
-      // One fewer addPage than pages: the first page already exists.
-      expect(mocks.addPage).toHaveBeenCalledTimes(3);
+      expect(mocks.addImage).toHaveBeenCalledTimes(3);
+      expect(mocks.addPage).toHaveBeenCalledTimes(2);
 
-      for (let page = 0; page < 4; page++) {
+      for (let i = 0; i < 3; i++) {
         expect(mocks.addImage).toHaveBeenNthCalledWith(
-          page + 1,
+          i + 1,
           IMG_DATA,
           'PNG',
-          MARGIN,
-          MARGIN - page * USABLE_HEIGHT,
-          USABLE_WIDTH,
-          imgHeight,
+          0,
+          0,
+          612,
+          792,
         );
       }
-    });
-
-    it('still emits one page when the capture comes back empty', async () => {
-      mocks.html2canvas.mockResolvedValue(canvasOfHeight(0));
-
-      const { result } = renderExport();
-
-      await act(async () => {
-        await result.current.exportPdf();
-      });
-
-      expect(mocks.addImage).toHaveBeenCalledTimes(1);
-      expect(mocks.addPage).not.toHaveBeenCalled();
-      expect(mocks.save).toHaveBeenCalled();
-    });
-
-    it('does not add a trailing blank page when the report lands exactly on the page boundary', async () => {
-      // Exactly 744pt tall: 744 * 1600 / 564 = 2110.6... px, so pick the
-      // canvas height that divides evenly.
-      const exact = (USABLE_HEIGHT * 1600) / USABLE_WIDTH;
-      mocks.html2canvas.mockResolvedValue(canvasOfHeight(exact));
-
-      const { result } = renderExport();
-
-      await act(async () => {
-        await result.current.exportPdf();
-      });
-
-      expect(mocks.addImage).toHaveBeenCalledTimes(1);
-      expect(mocks.addPage).not.toHaveBeenCalled();
     });
   });
 });
