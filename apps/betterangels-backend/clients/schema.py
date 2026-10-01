@@ -7,6 +7,7 @@ from accounts.models import User
 from clients.enums import ErrorCodeEnum
 from clients.models import (
     ClientContact,
+    ClientDocument,
     ClientHouseholdMember,
     ClientProfile,
     ClientProfileDataImport,
@@ -594,11 +595,11 @@ class Mutation:
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[
-            PermissionedQuerySet(model=Attachment, perms=[Attachment.perms.DELETE]),
+            PermissionedQuerySet(model=ClientDocument, perms=[Attachment.perms.DELETE]),
         ],
     )
     def delete_client_document(self, info: Info, data: DeleteDjangoObjectInput) -> ClientDocumentType:
-        qs: QuerySet[Attachment] = info.context.qs
+        qs: QuerySet[ClientDocument] = info.context.qs
         client_document = get_object_or_permission_error(
             qs, data.id, error_message="You do not have permission to delete this document."
         )
