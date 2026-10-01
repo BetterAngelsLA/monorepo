@@ -32,7 +32,7 @@ from organizations.models import Organization, OrganizationUser
 from test_utils.mixins import HasGraphQLProtocol
 
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from accounts.types import PermissionTemplateEnum
