@@ -29,6 +29,7 @@ function toUpdateInput(
     email: data.email || null,
     phone: data.phone || null,
     website: data.website || null,
+    instagram: data.instagram || null,
     isPrivate: data.isPrivate,
     location: data.location
       ? {
@@ -116,6 +117,7 @@ export function ShelterBasicInfo(props: TProps) {
       isViewMode={!isEditMode}
       onEditClick={canEditShelter ? () => setEditMode(true) : undefined}
       onCancel={onCancel}
+      updatedAt={shelter.updatedAt}
     />
   );
 }
