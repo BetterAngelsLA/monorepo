@@ -96,7 +96,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
     );
   });
 
-  it('loadMore uses fetchMore with next offset based on previous request vars', async () => {
+  it('loadMore fetches the page that starts where the current list ends', async () => {
     const fetchMore = vi.fn().mockResolvedValue(undefined);
 
     (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
@@ -125,6 +125,39 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
 
     expect(fetchMore).toHaveBeenCalledWith({
       variables: { pagination: { offset: 3, limit: 3 } },
+    });
+  });
+
+  it('derives the next offset from the list, not from the previous request window', async () => {
+    const fetchMore = vi.fn().mockResolvedValue(undefined);
+
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        // only two of the three requested items made it into the list
+        data: { tasks: { results: [{ id: 1 }, { id: 2 }], totalCount: 6 } },
+        variables: { pagination: { offset: 0, limit: 3 } },
+        fetchMore,
+        networkStatus: NetworkStatus.ready,
+      }),
+    );
+
+    const { result } = renderHookWithApollo(() =>
+      useInfiniteScrollQuery<{ id: number }, TasksData, TasksVars>({
+        document: TasksDocument,
+        queryFieldName: 'tasks',
+        variables: { pagination: { offset: 0, limit: 3 } },
+        pageSize: 3,
+      }),
+    );
+
+    await act(async () => {
+      result.current.loadMore();
+    });
+
+    // offset 2 continues the list; offset 3 would skip whatever the server
+    // did not return for the first window
+    expect(fetchMore).toHaveBeenCalledWith({
+      variables: { pagination: { offset: 2, limit: 3 } },
     });
   });
 
@@ -270,6 +303,62 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
     });
   });
 
+  it('continues from the new list after the variables change', async () => {
+    const fetchMore = vi.fn().mockResolvedValue(undefined);
+
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        data: {
+          tasks: { results: [{ id: 1 }, { id: 2 }, { id: 3 }], totalCount: 8 },
+        },
+        variables: { filters: { q: 'a' }, pagination: { offset: 0, limit: 3 } },
+        fetchMore,
+        networkStatus: NetworkStatus.ready,
+      }),
+    );
+
+    let search = 'a';
+
+    const { result, rerender } = renderHookWithApollo(() =>
+      useInfiniteScrollQuery<{ id: number }, TasksData, TasksVars>({
+        document: TasksDocument,
+        queryFieldName: 'tasks',
+        variables: {
+          filters: { q: search },
+          pagination: { offset: 0, limit: 3 },
+        },
+        pageSize: 3,
+      }),
+    );
+
+    // the query inputs change and the new list arrives shorter
+    search = 'b';
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        data: {
+          tasks: { results: [{ id: 7 }, { id: 8 }], totalCount: 8 },
+        },
+        variables: { filters: { q: 'b' }, pagination: { offset: 0, limit: 3 } },
+        fetchMore,
+        networkStatus: NetworkStatus.ready,
+      }),
+    );
+    rerender();
+
+    await act(async () => {
+      result.current.loadMore();
+    });
+
+    // the cursor comes from the new list (two items) and the new variables —
+    // never from the old request window, which would skip items
+    expect(fetchMore).toHaveBeenCalledWith({
+      variables: {
+        filters: { q: 'b' },
+        pagination: { offset: 2, limit: 3 },
+      },
+    });
+  });
+
   it('ignores a fetchMore rejection from a previous variable set', async () => {
     let rejectFetchMore: ((err: unknown) => void) | undefined;
     const fetchMore = vi.fn(
@@ -326,7 +415,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
     expect(result.current.error).toBeUndefined();
   });
 
-  it('keeps the pagination base when a fetchMore resolves after a manual reload', async () => {
+  it('does not skip a page when a fetchMore resolves after a manual reload', async () => {
     let resolveFetchMore: (() => void) | undefined;
     let fetchMoreCalls = 0;
     const fetchMore = vi.fn(() => {
@@ -402,8 +491,8 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
     mockResult.networkStatus = NetworkStatus.ready;
     rerender();
 
-    // the next page must continue from page 1 (offset 3) — not offset 6,
-    // which would skip a page and leave unreadable holes in the cache
+    // the next page must continue from where the list ends (offset 3) — not
+    // offset 6, which would skip a page
     await act(async () => {
       result.current.loadMore();
     });
@@ -415,6 +504,65 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
       },
     });
     expect(result.current.error).toBeUndefined();
+  });
+
+  it('does not start a page fetch while a manual reload is in flight', async () => {
+    let resolveRefetch: (() => void) | undefined;
+    const refetch = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveRefetch = () => resolve({ data: undefined });
+        }),
+    );
+    const fetchMore = vi.fn().mockResolvedValue(undefined);
+
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        data: {
+          tasks: { results: [{ id: 1 }, { id: 2 }, { id: 3 }], totalCount: 9 },
+        },
+        variables: { pagination: { offset: 0, limit: 3 } },
+        refetch: refetch as unknown as MockUseQueryResult<
+          TasksData,
+          TasksVars
+        >['refetch'],
+        fetchMore: fetchMore as unknown as MockUseQueryResult<
+          TasksData,
+          TasksVars
+        >['fetchMore'],
+        networkStatus: NetworkStatus.ready,
+      }),
+    );
+
+    const { result } = renderHookWithApollo(() =>
+      useInfiniteScrollQuery<{ id: number }, TasksData, TasksVars>({
+        document: TasksDocument,
+        queryFieldName: 'tasks',
+        variables: { pagination: { offset: 0, limit: 3 } },
+        pageSize: 3,
+      }),
+    );
+
+    // pull to refresh and a scroll event land in the same frame; the page
+    // fetch must be dropped before it starts
+    await act(async () => {
+      const reloadPromise = result.current.reload();
+      result.current.loadMore();
+      resolveRefetch?.();
+      await reloadPromise;
+    });
+
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(fetchMore).not.toHaveBeenCalled();
+
+    // once the reload settled, pagination continues from the list again
+    await act(async () => {
+      result.current.loadMore();
+    });
+
+    expect(fetchMore).toHaveBeenCalledWith({
+      variables: { pagination: { offset: 3, limit: 3 } },
+    });
   });
 
   it('ignores a fetchMore rejection that arrives after a manual reload', async () => {
