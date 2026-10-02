@@ -8,6 +8,7 @@ from common.celery import single_instance
 from django.utils import timezone
 
 from .models import ScheduledReport
+
 from .services import generate_report_data, get_previous_month_range, send_report_email
 
 logger = logging.getLogger(__name__)
@@ -48,8 +49,13 @@ def send_scheduled_report(self: Task, report_id: int, recipient_override: str | 
     except ScheduledReport.DoesNotExist:
         return {"status": "error", "message": f"ScheduledReport {report_id} not found"}
 
-    # Calculate the date range for the previous month
-    start_date, end_date = get_previous_month_range()
+    # The period comes from the run being serviced, not from the clock — a job that
+    # runs late or on a retry must still report the month its due date fell after.
+    # A schedule has no viewer, so the due date is read on the site's calendar even
+    # if a request activated the caller's.
+    due_at = report.next_run_at or timezone.now()
+    due_date = due_at.astimezone(timezone.get_default_timezone()).date()
+    start_date, end_date = get_previous_month_range(as_of=due_date)
     month_str = start_date.strftime("%m")
     year_str = start_date.strftime("%Y")
 
