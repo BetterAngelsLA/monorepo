@@ -1,0 +1,10 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Smoke test: the Referrals tab loads for a client.
+# Mirrors clients_page.yml / tasks_page.yml.
+
+- runFlow: ../lib/framework/start_test.yml
+
+- runFlow: ../steps/referrals/open_referrals_tab.yml
+
+- assertVisible: 'Referrals'

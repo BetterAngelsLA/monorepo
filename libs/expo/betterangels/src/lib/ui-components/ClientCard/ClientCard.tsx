@@ -20,10 +20,14 @@ export interface IClientCardProps extends TMarginProps {
   arrivedFrom?: string;
   type?: 'modal' | 'card';
   onMenuPress?: (client: TClientProfile) => void;
+  // parent-defined tap action; the clients list passes navigation to the
+  // client view. If omitted, falls back to the legacy Profile Summary modal
+  // (no active caller relies on that default — kept for OUT-203).
+  onPress?: () => void;
 }
 
 function ClientCardRaw(props: IClientCardProps) {
-  const { client, arrivedFrom, type = 'modal' } = props;
+  const { client, arrivedFrom, type = 'modal', onPress } = props;
 
   const { showModalScreen } = useModalScreen();
 
@@ -33,19 +37,21 @@ function ClientCardRaw(props: IClientCardProps) {
 
   const wrapperStyle = [styles.container, getMarginStyles(props)];
 
-  if (type === 'modal') {
+  if (onPress || type === 'modal') {
     return (
       <Pressable
         accessibilityRole="button"
         testID={toTestId(['client-card', client.firstName])}
-        onPress={() =>
-          showModalScreen({
-            presentation: 'modal',
-            title: 'Profile Summary',
-            renderContent: () => (
-              <ClientSummary arrivedFrom={arrivedFrom} client={client} />
-            ),
-          })
+        onPress={
+          onPress ??
+          (() =>
+            showModalScreen({
+              presentation: 'modal',
+              title: 'Profile Summary',
+              renderContent: () => (
+                <ClientSummary arrivedFrom={arrivedFrom} client={client} />
+              ),
+            }))
         }
         style={({ pressed }) => [
           wrapperStyle,

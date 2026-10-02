@@ -1,0 +1,110 @@
+appId: ${MAESTRO_APP_ID}
+---
+# FE-28-test — the full Create Referral flow, end to end through the real API.
+#
+# Submits via the real API and checks the values on the newly created card.
+# A unique observation prevents earlier test records from satisfying the checks.
+#
+# Preconditions:
+#   - at least one client, and at least one APPROVED shelter
+#   - `ffReferrals` enabled
+
+- runFlow: ../lib/framework/start_test.yml
+
+- runFlow: ../steps/referrals/open_referrals_tab.yml
+
+- runFlow: ../steps/referrals/clear_any_draft.yml
+
+- evalScript: ${output.referralMarker = "referral-e2e-" + Date.now() + "-" + Math.floor(Math.random() * 1000000)}
+
+# ── Start a new referral ────────────────────────────────────────────────────
+- tapOn:
+    id: create-referral-btn
+
+- assertVisible:
+    id: referral-intake-screen
+
+- assertVisible: 'Required Information for Referral'
+
+- assertVisible: '.*Saved to a dedicated field.*'
+
+# ── Answer intake fields ────────────────────────────────────────────────────
+# Storage's requirement is pending; the test supplies it to verify persistence.
+# Allow multiple scrolls to settle on a physical device.
+- scrollUntilVisible:
+    element:
+      id: storage-AMNESTY_LOCKERS-btn
+    direction: DOWN
+    timeout: 30000
+
+- tapOn:
+    id: storage-AMNESTY_LOCKERS-btn
+
+- scrollUntilVisible:
+    element:
+      id: transportation-AUTOMOBILE-btn
+    direction: DOWN
+    timeout: 30000
+
+- tapOn:
+    id: transportation-AUTOMOBILE-btn
+
+- scrollUntilVisible:
+    element:
+      id: intake-notes-input
+    direction: DOWN
+    timeout: 30000
+
+- tapOn:
+    id: intake-notes-input
+- inputText: ${output.referralMarker}
+- hideKeyboard
+
+# ── Pick a shelter ──────────────────────────────────────────────────────────
+- tapOn:
+    id: intake-next-btn
+
+- assertVisible:
+    id: shelter-picker-screen
+
+- assertVisible: 'Select a Shelter'
+
+# tap the radio, not the row — the row also contains the "View in Shelter
+# Directory" link, and a centre-tap on the row opens the browser instead
+- tapOn:
+    id: shelter-option-radio
+    index: 0
+
+- tapOn:
+    id: submit-referral-btn
+
+# ── Submitted: back on the list, values round-tripped from the server ───────
+- assertVisible: 'Referral submitted successfully!'
+
+- assertVisible:
+    id: referrals-screen
+
+# the draft is consumed on success, so the create button returns
+- assertVisible:
+    id: create-referral-btn
+
+- assertNotVisible:
+    id: referral-draft-card
+
+# All three values must belong to the same newly created referral card.
+- scrollUntilVisible:
+    element:
+      id: 'referral-card-.*'
+      containsDescendants:
+        - text: '${"Notes: " + output.referralMarker}'
+        - text: '.*storage: AMNESTY_LOCKERS.*'
+        - text: '.*transportation: AUTOMOBILE.*'
+    direction: DOWN
+    timeout: 30000
+
+- assertVisible:
+    id: 'referral-card-.*'
+    containsDescendants:
+      - text: '${"Notes: " + output.referralMarker}'
+      - text: '.*storage: AMNESTY_LOCKERS.*'
+      - text: '.*transportation: AUTOMOBILE.*'

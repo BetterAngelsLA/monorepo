@@ -1,10 +1,10 @@
-# Visits the fixture client's Profile Summary screen, creating the client if needed.
+# Visits the fixture client's Profile screen, creating the client if needed.
 # Precondition: on the clients screen.
 # Input env vars:
 #   FIXTURE_CLIENT_NAME — name to search/create (default: "e2e-test-client")
 # Output:
 #   output.fixtureClientName — the client name
-# Side effects: navigates from the clients list to the client's Profile Summary screen.
+# Side effects: navigates from the clients list to the client's Profile screen.
 
 appId: ${MAESTRO_APP_ID}
 ---
@@ -64,6 +64,7 @@ appId: ${MAESTRO_APP_ID}
           env:
             CLIENT_NAME: ${output.fixtureClientName}
 
-# Assert we're on the correct profile summary screen
-- assertVisible: 'Profile Summary'
+# Selecting a client now opens the profile directly.
+- assertVisible:
+    id: client-tab-profile
 - assertVisible: ${output.fixtureClientName}

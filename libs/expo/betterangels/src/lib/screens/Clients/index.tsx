@@ -35,23 +35,28 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     }, []),
   );
 
-  const renderClientItem = useCallback(
-    (client: TClientProfile) => (
-      <ClientCard
-        arrivedFrom="/"
-        client={client}
-        onMenuPress={setCurrentClient}
-      />
-    ),
-    [setCurrentClient],
-  );
-
+  // Declared before renderClientItem because it appears in that callback's
+  // dependency array — referencing it earlier would hit the const's TDZ.
   const handleClientPress = useCallback((id: string) => {
     router.navigate({
       pathname: `/client/${id}`,
       params: { arrivedFrom: '/' },
     });
   }, []);
+
+  const renderClientItem = useCallback(
+    (client: TClientProfile) => (
+      <ClientCard
+        arrivedFrom="/"
+        client={client}
+        onMenuPress={setCurrentClient}
+        // Tapping a card opens the client view directly, skipping the profile
+        // summary modal that used to sit in between.
+        onPress={() => handleClientPress(client.id)}
+      />
+    ),
+    [setCurrentClient, handleClientPress],
+  );
 
   const renderClientItemHmis = useCallback(
     (client: TClientProfileHmis) => {

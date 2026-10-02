@@ -8,8 +8,16 @@ query Shelters {
         latitude
         longitude
       }
+      pets {
+        name
+      }
+      demographics {
+        name
+      }
+      accessibility {
+        name
+      }
       phone
-      status
     }
     totalCount
   }

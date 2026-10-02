@@ -15,6 +15,10 @@ export default defineConfig({
         ),
       },
       {
+        find: /^expo-image(?:\/.*)?$/,
+        replacement: path.resolve(__dirname, 'src/__mocks__/expo-image.tsx'),
+      },
+      {
         find: /^expo-modules-core(?:\/.*)?$/,
         replacement: path.resolve(
           __dirname,
