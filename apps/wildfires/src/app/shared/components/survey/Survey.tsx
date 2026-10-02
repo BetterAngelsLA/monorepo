@@ -14,6 +14,7 @@ type IProps = {
   onChange?: (results: TAnswer[]) => void;
 };
 
+
 export function Survey(props: IProps) {
   const { className, onChange } = props;
 
