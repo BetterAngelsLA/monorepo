@@ -115,17 +115,28 @@ export default function Client({
     throw new Error(`Something went wrong. Please try again. ${error}`);
   }
 
-  // Locations stays headerless so the map keeps full height (DEV-1737).
-  const showHeader = tab !== ClientViewTabEnum.Locations;
+  // A stale or deep-linked Referrals tab must not render the referral screen
+  // once the flag is off; derive the active tab so no frame shows it.
+  const activeTab =
+    tab === ClientViewTabEnum.Referrals && !referralsEnabled
+      ? ClientViewTabEnum.Profile
+      : tab;
+
+  // Referral work changed the header/navbar layout; keep the pre-referral look
+  // while the flag is off so production users see no change. With the flag, the
+  // header shows on all tabs except Locations (the map keeps full height,
+  // DEV-1737) and the client's name appears exactly once — rich header when
+  // shown, otherwise in the navbar (per wireframe, navbar reads "Client").
+  const showHeader = referralsEnabled
+    ? activeTab !== ClientViewTabEnum.Locations
+    : activeTab === ClientViewTabEnum.Profile;
   const clientName =
     data?.clientProfile.firstName || data?.clientProfile.lastName
       ? `${data?.clientProfile.firstName ?? ''} ${
           data?.clientProfile.lastName ?? ''
         }`.trim()
       : 'Client';
-  // the client's name appears exactly once: in the rich header when shown,
-  // otherwise in the navbar (per wireframe, navbar reads "Client")
-  const screenTitle = showHeader ? 'Client' : clientName;
+  const screenTitle = referralsEnabled && showHeader ? 'Client' : clientName;
 
   return (
     <>
@@ -171,8 +182,8 @@ export default function Client({
       >
         {showHeader && <ClientHeader client={data?.clientProfile} />}
         <UploadProgressBar />
-        <ClientTabs selectedTab={tab} setTab={setTab} />
-        {getTabComponent(tab, data, openCard)}
+        <ClientTabs selectedTab={activeTab} setTab={setTab} />
+        {getTabComponent(activeTab, data, openCard)}
       </MainContainer>
     </>
   );
