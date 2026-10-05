@@ -1,10 +1,13 @@
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useMutation } from '@apollo/client/react';
+import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { useRouter } from 'expo-router';
 import { InfoIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Avatar,
+  DiscardModal,
   IconButton,
+  InfiniteList,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -13,7 +16,6 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -36,10 +38,13 @@ import { needLabelsFromIntake } from './clientNeeds';
 import type { ReferralDraftStore } from './referralDraft';
 import { getPersistentReferralDraft } from './referralDraftStorage';
 import { decodeReferralNotes, summarizeIntake } from './referralIntakeSidecar';
-import { ShelterCard, TagRow, shelterAttributeLabels } from './ShelterCard';
+import { ShelterCard, TagRow } from './ShelterCard';
+import { shelterAttributeLabels } from './shelterAttributes';
+import { REFERRALS_PAGE_SIZE } from './constants';
 import {
   ClientReferralsDocument,
   ClientReferralsQuery,
+  ClientReferralsQueryVariables,
   CreateReferralDocument,
 } from './__generated__/Referrals.generated';
 
@@ -54,38 +59,54 @@ type TProps = {
 };
 
 export function ReferralsTab({ client, draftStore }: TProps) {
+  const clientId = client?.clientProfile.id;
+  if (!clientId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
   return (
     <ReferralDraftProvider store={draftStore ?? getPersistentReferralDraft()}>
-      <ReferralsContent client={client} />
+      <ReferralsContent client={client} clientId={clientId} />
     </ReferralDraftProvider>
   );
 }
 
-function ReferralsContent({ client }: Pick<TProps, 'client'>) {
+type TContentProps = {
+  client: ClientProfileQuery | undefined;
+  clientId: string;
+};
+
+function ReferralsContent({ client, clientId }: TContentProps) {
   const { draft, store } = useReferralDraft();
-  const clientId = client?.clientProfile.id;
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
   const [helpVisible, setHelpVisible] = useState(false);
   const router = useRouter();
 
-  const { data, loading, error, refetch } = useQuery<ClientReferralsQuery>(
-    ClientReferralsDocument,
-    {
-      variables: { clientId },
-      skip: !clientId,
-    },
-  );
+  const {
+    items: referrals,
+    total,
+    loading,
+    loadingMore,
+    hasMore,
+    error,
+    loadMore,
+    reload,
+  } = useInfiniteScrollQuery<
+    ClientReferralsQuery['referrals']['results'][number],
+    ClientReferralsQuery,
+    ClientReferralsQueryVariables
+  >({
+    document: ClientReferralsDocument,
+    queryFieldName: 'referrals',
+    variables: { filters: { clientProfile: clientId } },
+    pageSize: REFERRALS_PAGE_SIZE,
+  });
 
   const [createReferral] = useMutation(CreateReferralDocument);
 
-  if (!clientId) {
-    throw new Error('Something went wrong. Please try again.');
-  }
-
   const hasDraft = draft?.clientId === clientId;
-  const referrals = data?.referrals.results ?? [];
-  const totalCount = data?.referrals.totalCount ?? 0;
+  const totalCount = total ?? 0;
 
   const onSubmit = async (
     shelterId: string,
@@ -141,7 +162,7 @@ function ReferralsContent({ client }: Pick<TProps, 'client'>) {
 
       store.clear();
       closeForm();
-      refetch();
+      reload();
       return true;
     } catch (e) {
       showSnackbar({
@@ -187,24 +208,28 @@ function ReferralsContent({ client }: Pick<TProps, 'client'>) {
     });
   };
 
-  const startNewReferral = () => {
+  const beginNewReferral = () => {
     store.startNew(clientId);
     openReferralForm();
   };
 
-  const confirmDiscardDraft = () => {
-    Alert.alert(
-      'Discard draft?',
-      'This deletes the in-progress referral and cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Discard',
-          style: 'destructive',
-          onPress: () => store.clear(),
-        },
-      ],
-    );
+  const startNewReferral = () => {
+    // The device keeps a single draft. Starting a new one for another client
+    // silently replaced the old draft before, so confirm first.
+    const current = store.getSnapshot();
+    if (current && current.clientId !== clientId) {
+      Alert.alert(
+        'Replace the in-progress referral?',
+        'You have an unsent referral for another client. Starting a new one will replace it.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Replace', style: 'destructive', onPress: beginNewReferral },
+        ],
+      );
+      return;
+    }
+
+    beginNewReferral();
   };
 
   return (
@@ -263,7 +288,7 @@ function ReferralsContent({ client }: Pick<TProps, 'client'>) {
       )}
 
       {/* Error state */}
-      {error && (
+      {error && referrals.length === 0 && (
         <View style={styles.centered}>
           <TextRegular color={Colors.ERROR}>
             Error loading referrals. Please try again.
@@ -287,18 +312,28 @@ function ReferralsContent({ client }: Pick<TProps, 'client'>) {
           it scrolls away and doesn't eat the history's vertical space. The
           header's Resume button stays pinned, so resuming is always one tap. */}
       {!loading && (hasDraft || referrals.length > 0) && (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {hasDraft && (
-            <DraftCard
-              updatedAt={draft?.updatedAt}
-              onResume={openReferralForm}
-              onDiscard={confirmDiscardDraft}
-            />
-          )}
-          {referrals.map((referral) => (
-            <ReferralCard key={referral.id} referral={referral} />
-          ))}
-        </ScrollView>
+        <InfiniteList<ClientReferralsQuery['referrals']['results'][number]>
+          data={referrals}
+          keyExtractor={(referral) => referral.id}
+          renderItem={(referral) => <ReferralCard referral={referral} />}
+          totalItems={totalCount}
+          renderResultsHeader={null}
+          loadMore={loadMore}
+          hasMore={hasMore}
+          loadingMore={loadingMore}
+          itemGap={0}
+          ListHeaderComponent={
+            hasDraft ? (
+              <DraftCard
+                updatedAt={draft?.updatedAt}
+                onResume={openReferralForm}
+                onDiscard={() => store.clear()}
+              />
+            ) : null
+          }
+          // The draft card already explains the state when only a draft exists.
+          ListEmptyComponent={hasDraft ? NoListItems : undefined}
+        />
       )}
 
       <ReferralsHelp
@@ -320,6 +355,10 @@ function formatEdited(updatedAt?: number): string {
       : d.toLocaleDateString()
   }`;
 }
+
+// When only a draft exists the draft card above already explains the state, so
+// the list itself renders nothing.
+const NoListItems = () => null;
 
 // ── Draft card ─────────────────────────────────────────────────────────────
 // The in-progress local draft, made visible in the list (tap to resume). Styled
@@ -372,18 +411,24 @@ function DraftCard({
         >
           On this device · not submitted{formatEdited(updatedAt)}
         </TextRegular>
-        <Pressable
-          testID="draft-discard-btn"
-          onPress={onDiscard}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="discard referral draft"
-          accessibilityHint="permanently deletes this in-progress referral"
-        >
-          <TextRegular size="xs" color={Colors.ERROR}>
-            Discard
-          </TextRegular>
-        </Pressable>
+        <DiscardModal
+          title="Discard draft?"
+          body="This deletes the in-progress referral and cannot be undone."
+          onDiscard={onDiscard}
+          button={
+            <Pressable
+              testID="draft-discard-btn"
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="discard referral draft"
+              accessibilityHint="permanently deletes this in-progress referral"
+            >
+              <TextRegular size="xs" color={Colors.ERROR}>
+                Discard
+              </TextRegular>
+            </Pressable>
+          }
+        />
       </View>
     </Pressable>
   );

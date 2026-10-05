@@ -10,9 +10,12 @@
 import '@testing-library/react-native/build/matchers/extend-expect';
 import { Colors } from '@monorepo/expo/shared/static';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { openBrowserAsync } from 'expo-web-browser';
 import { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ShelterCard } from './ShelterCard';
+
+afterEach(() => vi.unstubAllEnvs());
 
 // The shared barrels re-export every native-backed component (maps, PDF,
 // pickers), so importing even TextBold loads chains whose native halves don't
@@ -91,10 +94,31 @@ describe('ShelterCard', () => {
     expect(screen.queryByText('1946 Venice Blvd')).not.toBeOnTheScreen();
   });
 
-  it('always offers the shelter directory link', () => {
+  it('offers the shelter directory link when a directory URL is configured', () => {
+    vi.stubEnv('EXPO_PUBLIC_SHELTER_WEB_URL', 'https://shelter.example');
     render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
 
     expect(screen.getByText('View in Shelter Directory')).toBeOnTheScreen();
+  });
+
+  it('opens the directory detail route for the specific shelter', () => {
+    // trailing slash must not double up before the route
+    vi.stubEnv('EXPO_PUBLIC_SHELTER_WEB_URL', 'https://shelter.example/');
+    render(<ShelterCard id="s-42" name="Jackson Foundation Haven" />);
+
+    fireEvent.press(screen.getByText('View in Shelter Directory'));
+
+    expect(openBrowserAsync).toHaveBeenCalledWith(
+      'https://shelter.example/shelter/s-42',
+    );
+  });
+
+  it('hides the link when no directory URL is configured', () => {
+    render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
+
+    expect(
+      screen.queryByText('View in Shelter Directory'),
+    ).not.toBeOnTheScreen();
   });
 
   it('renders each attribute as a tag', () => {

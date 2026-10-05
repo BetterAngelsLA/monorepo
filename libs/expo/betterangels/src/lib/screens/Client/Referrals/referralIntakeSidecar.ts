@@ -73,7 +73,9 @@ export function decodeReferralNotes(
   definitions: readonly IntakeFieldDefinition[] = INTAKE_FIELDS,
 ): { humanNotes: string; intake: Intake } {
   const text = raw ?? '';
-  const startIdx = text.indexOf(START);
+  // Human notes are stored before the payload; take the last marker so a literal
+  // marker typed into the notes cannot shadow the real payload.
+  const startIdx = text.lastIndexOf(START);
   if (startIdx === -1) return { humanNotes: text.trim(), intake: {} };
   const before = text.slice(0, startIdx).trim();
   const endIdx = text.indexOf(END, startIdx);

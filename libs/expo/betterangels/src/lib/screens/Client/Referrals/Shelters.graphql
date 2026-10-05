@@ -1,5 +1,5 @@
-query Shelters {
-  shelters(pagination: { offset: 0, limit: 100 }) {
+query Shelters($pagination: OffsetPaginationInput) {
+  shelters(pagination: $pagination) {
     results {
       id
       name

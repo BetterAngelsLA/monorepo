@@ -2,6 +2,7 @@ import '@testing-library/react-native/build/matchers/extend-expect';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
+import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { PetChoices } from '../../../apollo';
 import { ReferralCreateFlow } from './ReferralCreateFlow';
@@ -9,6 +10,7 @@ import {
   ReferralDraftProvider,
   useReferralDraft,
 } from './ReferralDraftProvider';
+import { SHELTERS_PAGE_SIZE } from './constants';
 import { createReferralDraftStore } from './referralDraft';
 import { decodeReferralNotes } from './referralIntakeSidecar';
 import { SheltersDocument } from './__generated__/Shelters.generated';
@@ -61,7 +63,10 @@ it('updates all subscribers to one store while keeping another provider independ
 
 const mocks = [
   {
-    request: { query: SheltersDocument },
+    request: {
+      query: SheltersDocument,
+      variables: { pagination: { offset: 0, limit: SHELTERS_PAGE_SIZE } },
+    },
     result: {
       data: {
         shelters: {
@@ -101,7 +106,7 @@ describe('shared create-flow state', () => {
     store.startNew('client-1');
     const onSubmit = vi.fn().mockResolvedValue(true);
     render(
-      <MockedProvider mocks={mocks}>
+      <MockedProvider cache={createTestApolloCache()} mocks={mocks}>
         <ReferralDraftProvider store={store}>
           <ReferralCreateFlow
             clientId="client-1"

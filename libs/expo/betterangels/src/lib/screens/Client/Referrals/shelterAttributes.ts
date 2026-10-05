@@ -1,8 +1,6 @@
 /**
  * Pure shelter-attribute logic, deliberately free of React Native imports so it
  * can be unit-tested without the native/UI dependency chain.
- *
- * Re-exported from ShelterCard for existing call sites.
  */
 import { Colors } from '@monorepo/expo/shared/static';
 import {
