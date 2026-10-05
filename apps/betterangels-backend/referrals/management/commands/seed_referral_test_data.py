@@ -20,6 +20,9 @@ Usage (identical locally and against the shared dev instance):
     python manage.py seed_referral_test_data
     python manage.py seed_referral_test_data --clear     # remove owned, unreferenced fixtures
 
+Development tooling: fixture construction reuses the shared test recipes, so the
+command needs the dev dependency group (``model-bakery``) installed.
+
 Client needs are entered per referral on the intake form, as multi-selects over
 these same shelter enums (see clientNeeds.ts). The expectations printed below
 assume Answer Set A from betterangels-notes/referral-test-brief.md:
@@ -45,7 +48,6 @@ from shelters.enums import (
     StatusChoices,
 )
 from shelters.models import Shelter
-from shelters.tests.baker_recipes import make_complete_shelters
 
 # Display only. Ownership and cleanup use the registry, never this prefix.
 NAME_PREFIX = "Shelter "
@@ -163,6 +165,17 @@ class Command(BaseCommand):
         )
 
     def _build(self, scenario: dict[str, Any]) -> Shelter:
+        # Dev-only tooling: the factory lives with the test recipes and imports
+        # model-bakery (dev dependency group). Import it lazily so a deployment
+        # without dev dependencies fails with a clear message instead of an
+        # import error, and so this module never hard-depends on test code.
+        try:
+            from shelters.tests.baker_recipes import make_complete_shelters
+        except ImportError as exc:  # pragma: no cover - exercised only without dev deps
+            raise CommandError(
+                "seed_referral_test_data requires the dev dependency group (model-bakery). "
+                "Run it from a development environment where dev dependencies are installed."
+            ) from exc
         # Reuse the tested recipe so every required field, photo and schedule is
         # populated the same way as the randomised seed, then override only the
         # three attribute categories the match rule reads.
