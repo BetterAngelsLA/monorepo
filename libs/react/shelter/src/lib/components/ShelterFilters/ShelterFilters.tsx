@@ -38,19 +38,16 @@ const OPEN_NOW_OPTIONS: {
   },
 ];
 
-const HIGH_PRIORITY_FILTERS_BEFORE_OPEN_NOW = [
+const ALWAYS_VISIBLE_FILTERS = [
   demographicFilter,
   entryRequirementFilter,
-];
-
-const HIGH_PRIORITY_FILTERS_AFTER_OPEN_NOW = [
   parkingFilter,
   petsFilter,
   referralRequirementFilter,
   roomStyleFilter,
 ];
 
-const LOW_PRIORITY_FILTERS = [shelterTypeFilter, specialSituationFilter];
+const TOGGLEABLE_FILTERS = [shelterTypeFilter, specialSituationFilter];
 
 export function ShelterFilters(props: IProps) {
   const { className, filters, onFiltersChange } = props;
@@ -188,8 +185,6 @@ export function ShelterFilters(props: IProps) {
           </ExpandableContainer>
         </div>
 
-        {HIGH_PRIORITY_FILTERS_BEFORE_OPEN_NOW.map(renderFilterSelector)}
-
         <div className="mt-8">
           <ExpandableContainer header="Open Now">
             <div className="flex flex-col gap-2">
@@ -213,17 +208,17 @@ export function ShelterFilters(props: IProps) {
           </ExpandableContainer>
         </div>
 
-        {HIGH_PRIORITY_FILTERS_AFTER_OPEN_NOW.map(renderFilterSelector)}
+        {ALWAYS_VISIBLE_FILTERS.map(renderFilterSelector)}
 
-        <div id="low-priority-shelter-filters">
-          {showMoreCategories && LOW_PRIORITY_FILTERS.map(renderFilterSelector)}
+        <div id="toggleable-shelter-filters">
+          {showMoreCategories && TOGGLEABLE_FILTERS.map(renderFilterSelector)}
         </div>
 
         <ShowMoreToggle
           expanded={showMoreCategories}
           moreLabel="Show More Categories"
           lessLabel="Show Less Categories"
-          controls="low-priority-shelter-filters"
+          controls="toggleable-shelter-filters"
           onClick={() => setShowMoreCategories((current) => !current)}
         />
 
