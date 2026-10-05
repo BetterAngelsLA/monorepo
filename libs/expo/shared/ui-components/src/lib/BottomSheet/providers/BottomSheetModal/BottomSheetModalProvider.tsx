@@ -70,6 +70,7 @@ import {
   Fragment,
   ReactNode,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -144,6 +145,59 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
   const sheetRefs = useRef<Map<string, BottomSheetModal>>(new Map());
 
   /**
+   * Sheet ids for which a dismiss has already been requested.
+   *
+   * Gorhom's modal status machine (5.2.11+) wedges when `dismiss()` lands on a
+   * modal that is not currently dismissible (INITIAL / already DISMISSING or
+   * DISMISSED): the status latches to DISMISSING and every later `present()`
+   * silently no-ops (gorhom/react-native-bottom-sheet#2669). A close racing a
+   * stack 'replace' does exactly this, so dismissal is made idempotent here.
+   */
+  const dismissingIdsRef = useRef<Set<string>>(new Set());
+
+  /**
+   * Drop all bookkeeping for a sheet id.
+   *
+   * Idempotent — safe to call from both `onDismiss` and the prune effect. A
+   * sheet removed by stack behavior ('replace'/'switch') or popTopSheet can
+   * unmount before Gorhom's onDismiss fires, so onDismiss alone would leak.
+   */
+  const releaseSheet = useCallback((id: string) => {
+    sheetRefs.current.delete(id);
+    presentedIdsRef.current.delete(id);
+    closeNotifiedIdsRef.current.delete(id);
+    dismissingIdsRef.current.delete(id);
+  }, []);
+
+  /**
+   * Prune bookkeeping for sheets that are no longer live.
+   *
+   * Guarantees the id sets never grow unbounded and that unmounted modal
+   * instances are released, regardless of whether onDismiss fired.
+   */
+  useEffect(() => {
+    const liveIds = new Set(sheets.map((sheet) => sheet.id));
+
+    for (const id of presentedIdsRef.current) {
+      if (!liveIds.has(id)) {
+        releaseSheet(id);
+      }
+    }
+
+    for (const id of closeNotifiedIdsRef.current) {
+      if (!liveIds.has(id)) {
+        releaseSheet(id);
+      }
+    }
+
+    for (const id of sheetRefs.current.keys()) {
+      if (!liveIds.has(id)) {
+        releaseSheet(id);
+      }
+    }
+  }, [sheets, releaseSheet]);
+
+  /**
    * Imperatively dismiss a sheet by id.
    * Safe no-op if instance not found.
    */
@@ -153,6 +207,14 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     if (!instance) {
       return;
     }
+
+    // Idempotent: a second dismiss on a modal that is already dismissing /
+    // dismissed wedges Gorhom's status machine (see dismissingIdsRef).
+    if (dismissingIdsRef.current.has(id)) {
+      return;
+    }
+
+    dismissingIdsRef.current.add(id);
 
     setClosingSheetIds((prev) => {
       if (prev.has(id)) {
@@ -164,6 +226,29 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
     instance.dismiss();
   }, []);
+
+  /**
+   * Attach (or detach) a sheet's imperative instance.
+   *
+   * Extracted from the `ref` callback so bookkeeping runs in commit phase
+   * rather than during render, and so `present()` fires exactly once per id
+   * (React re-invokes ref callbacks on every provider render).
+   */
+  const registerSheet = useCallback(
+    (id: string, instance: BottomSheetModal | null) => {
+      if (!instance) {
+        return;
+      }
+
+      sheetRefs.current.set(id, instance);
+
+      if (!presentedIdsRef.current.has(id)) {
+        presentedIdsRef.current.add(id);
+        instance.present();
+      }
+    },
+    [],
+  );
 
   /**
    * Invoke a sheet's options.onClose exactly once per sheet.
@@ -187,7 +272,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
   );
 
   const { addSheet } = useBottomSheetStack({
-    sheetRefs,
+    dismissSheet: dismissSheetById,
     setSheets,
   });
 
@@ -238,15 +323,11 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
       }
 
       const top = prev[prev.length - 1];
-      const instance = sheetRefs.current.get(top.id);
-
-      if (instance) {
-        instance.dismiss();
-      }
+      dismissSheetById(top.id);
 
       return prev.slice(0, -1);
     });
-  }, []);
+  }, [dismissSheetById]);
 
   /**
    * Memoized context value.
@@ -279,23 +360,16 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
           {sharedBackdrop.render()}
 
-          {/* eslint-disable react-hooks/refs */}
+          {/*
+            registerSheet only ever runs from the ref callback (commit phase),
+            but the compiler lint can't distinguish that from a render-phase ref
+            access and flags the map expression below.
+          */}
+          {/* eslint-disable-next-line react-hooks/refs */}
           {sheets.map(({ id, render, options }) => (
             <BottomSheetBase
               key={id}
-              ref={(instance) => {
-                if (!instance) {
-                  return;
-                }
-
-                sheetRefs.current.set(id, instance);
-
-                if (!presentedIdsRef.current.has(id)) {
-                  presentedIdsRef.current.add(id);
-
-                  instance.present();
-                }
-              }}
+              ref={(instance) => registerSheet(id, instance)}
               options={options}
               keyboardBlurBehavior="restore"
               keyboardBehavior="interactive"
@@ -306,9 +380,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
               onDismiss={() => {
                 notifyClose(id, options);
 
-                sheetRefs.current.delete(id);
-                presentedIdsRef.current.delete(id);
-                closeNotifiedIdsRef.current.delete(id);
+                releaseSheet(id);
 
                 setClosingSheetIds((prev) => {
                   // already closing → no new Set → no re-render

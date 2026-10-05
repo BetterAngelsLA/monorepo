@@ -100,8 +100,16 @@ export type BottomSheetProviderOptions = {
   stackBehavior?: StackBehavior;
 
   /**
-   * Invoked when the sheet is dismissed. Receives the dismissed sheet's id so
-   * callers can distinguish a current dismissal from a superseded one.
+   * Invoked when a sheet is dismissed, with the dismissed sheet's id.
+   *
+   * Timing:
+   * - user-initiated closes (backdrop tap / header X) fire at dismissal
+   *   REQUEST time, so controlled sheets can flip `isOpen` immediately and be
+   *   reopened during the dismiss animation;
+   * - gorhom-initiated closes (e.g. pan-down) fire when dismissal ENDS.
+   *
+   * Fires at most once per sheet. The id lets callers distinguish a current
+   * dismissal from a superseded one.
    */
   onClose?: (id: string) => void;
 };

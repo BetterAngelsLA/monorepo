@@ -102,7 +102,18 @@ export function BottomSheetModalControlled(props: TProps) {
           closingFromStateRef.current = true;
           activeSheetIdRef.current = id;
           closeSheetRef.current = closeSheet;
-          queueMicrotask(() => closeSheetRef.current?.());
+
+          // Capture this specific sheet: if a reopen lands before the
+          // microtask runs, closeSheetRef would point at the NEW sheet and
+          // the stale request would close it.
+          const sheetId = id;
+          const requestClose = closeSheet;
+
+          queueMicrotask(() => {
+            if (activeSheetIdRef.current === sheetId) {
+              requestClose();
+            }
+          });
         }
 
         return stableInputsRef.current.children;

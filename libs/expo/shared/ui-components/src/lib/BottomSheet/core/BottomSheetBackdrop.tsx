@@ -74,11 +74,16 @@ export function BottomSheetBackdrop(
       appearsOnIndex={0}
       disappearsOnIndex={-1}
       opacity={opacity}
-      // Keep the tap gesture attached (onPress fires only when pressBehavior
-      // is not 'none'), but make Gorhom's own action a no-op: sheets here open
-      // at index 0, so snapping to 0 does nothing. Dismissal happens through
-      // onRequestClose — NOT Gorhom's internal close() — to avoid a double
-      // dismissal when the provider force-closes.
+      // Gorhom only attaches the backdrop tap when pressBehavior !== 'none',
+      // and it invokes onPress BEFORE applying the behavior. We want the tap
+      // (so onPress can route dismissal through onRequestClose) but must NOT
+      // let Gorhom close/collapse — that would double-dismiss alongside the
+      // provider's dismiss. numeric 0 → snapToIndex(0), a no-op for every
+      // sheet here because they all present at index 0 (dynamic sizing, or a
+      // single '100%' snap point).
+      //
+      // CONSTRAINT: a future multi-snap sheet that presents at index > 0 would
+      // visibly snap to index 0 on tap. If that's ever needed, revisit this.
       pressBehavior={0}
       onPress={onRequestClose}
     />

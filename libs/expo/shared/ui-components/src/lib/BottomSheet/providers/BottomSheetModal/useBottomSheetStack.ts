@@ -9,7 +9,7 @@
  * - 'switch'  → dismiss top sheet, replace it
  * - 'replace' → dismiss all sheets, keep only new one
  *
- * Dismissals are performed imperatively via Gorhom refs.
+ * Dismissals are delegated to the provider's idempotent `dismissSheet`.
  *
  * This hook does not render anything — it only mutates
  * the sheet list state.
@@ -19,18 +19,21 @@
  * - Behavior configured via `BottomSheetOptions.stackBehavior`
  */
 
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Dispatch, RefObject, useCallback } from 'react';
+import { Dispatch, useCallback } from 'react';
 import { StackBehavior } from '../../types';
 import { TBottomSheetInstance } from './types.internal';
 
 type TParams = {
-  sheetRefs: RefObject<Map<string, BottomSheetModal>>;
+  /**
+   * Idempotent, imperative dismissal of a sheet by id.
+   * Supplied by the provider so this hook never touches Gorhom refs directly.
+   */
+  dismissSheet: (id: string) => void;
   setSheets: Dispatch<React.SetStateAction<TBottomSheetInstance[]>>;
 };
 
 export function useBottomSheetStack(params: TParams) {
-  const { sheetRefs, setSheets } = params;
+  const { dismissSheet, setSheets } = params;
 
   const addSheet = useCallback(
     (instance: TBottomSheetInstance, stackBehavior: StackBehavior) => {
@@ -44,29 +47,20 @@ export function useBottomSheetStack(params: TParams) {
         if (stackBehavior === 'switch') {
           if (previousSheets.length > 0) {
             const top = previousSheets[previousSheets.length - 1];
-            const topInstance = sheetRefs.current.get(top.id);
 
-            if (topInstance) {
-              topInstance.dismiss();
-            }
+            dismissSheet(top.id);
           }
 
           return [...previousSheets.slice(0, -1), instance];
         }
 
         // Replace: dismiss all existing sheets (default)
-        previousSheets.forEach((sheet) => {
-          const existing = sheetRefs.current.get(sheet.id);
-
-          if (existing) {
-            existing.dismiss();
-          }
-        });
+        previousSheets.forEach((sheet) => dismissSheet(sheet.id));
 
         return [instance];
       });
     },
-    [setSheets, sheetRefs],
+    [setSheets, dismissSheet],
   );
 
   return {
