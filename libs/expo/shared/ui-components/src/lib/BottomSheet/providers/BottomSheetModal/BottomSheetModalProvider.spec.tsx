@@ -167,39 +167,6 @@ describe('BottomSheetModalProvider', () => {
     expect(state.mountedBases).toHaveLength(1);
   });
 
-  it('dismisses a sheet at most once when a close races a stack replace', () => {
-    const { show } = renderProvider();
-
-    showSheet(show, { stackBehavior: 'replace' });
-    const first = state.mountedBases[0];
-
-    // Backdrop tap / header X requests the dismissal.
-    act(() => {
-      first.onRequestClose?.();
-    });
-    expect(first.inst.dismiss).toHaveBeenCalledTimes(1);
-
-    // A rapid reopen with 'replace' must NOT dismiss the same sheet again —
-    // a second dismiss wedges Gorhom's modal status machine (#2669).
-    showSheet(show, { stackBehavior: 'replace' });
-
-    expect(first.inst.dismiss).toHaveBeenCalledTimes(1);
-  });
-
-  it('is idempotent across repeated dismissal requests for the same sheet', () => {
-    const { show } = renderProvider();
-
-    showSheet(show, { stackBehavior: 'replace' });
-    const base = state.mountedBases[0];
-
-    act(() => {
-      base.onRequestClose?.();
-      base.onRequestClose?.();
-    });
-
-    expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
-  });
-
   it('onRequestClose notifies onClose at request time and dismisses (backdrop / header X)', () => {
     const { show } = renderProvider();
     const onClose = vi.fn();

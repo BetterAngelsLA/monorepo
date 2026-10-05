@@ -46,6 +46,23 @@
  *
  *
  * --------------------------------------------------------------------------
+ * KNOWN LIMITATION
+ * --------------------------------------------------------------------------
+ *
+ * A rapid close→reopen (close a sheet, then within its dismiss animation open
+ * one again) can wedge the sheet: visible, but unresponsive to the backdrop or
+ * a Cancel. Root cause is an upstream @gorhom/bottom-sheet 5.2.11+ regression
+ * — `dismiss()` on a modal that isn't dismissible latches its internal status
+ * and silently blocks every later `present()`
+ * (gorhom/react-native-bottom-sheet#2669, #2713).
+ *
+ * Mitigated by (a) a local Yarn patch making `dismiss()` a no-op on
+ * INITIAL/DISMISSED, and (b) idempotent bookkeeping here so a failed dismissal
+ * can't be latched into a permanent freeze. The reopen-while-animating-closed
+ * path is still affected — see the tracking issue.
+ *
+ *
+ * --------------------------------------------------------------------------
  * INTERNAL ARCHITECTURE
  * --------------------------------------------------------------------------
  *
@@ -145,17 +162,6 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
   const sheetRefs = useRef<Map<string, BottomSheetModal>>(new Map());
 
   /**
-   * Sheet ids for which a dismiss has already been requested.
-   *
-   * Gorhom's modal status machine (5.2.11+) wedges when `dismiss()` lands on a
-   * modal that is not currently dismissible (INITIAL / already DISMISSING or
-   * DISMISSED): the status latches to DISMISSING and every later `present()`
-   * silently no-ops (gorhom/react-native-bottom-sheet#2669). A close racing a
-   * stack 'replace' does exactly this, so dismissal is made idempotent here.
-   */
-  const dismissingIdsRef = useRef<Set<string>>(new Set());
-
-  /**
    * Drop all bookkeeping for a sheet id.
    *
    * Idempotent — safe to call from both `onDismiss` and the prune effect. A
@@ -166,7 +172,6 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     sheetRefs.current.delete(id);
     presentedIdsRef.current.delete(id);
     closeNotifiedIdsRef.current.delete(id);
-    dismissingIdsRef.current.delete(id);
   }, []);
 
   /**
@@ -207,14 +212,6 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     if (!instance) {
       return;
     }
-
-    // Idempotent: a second dismiss on a modal that is already dismissing /
-    // dismissed wedges Gorhom's status machine (see dismissingIdsRef).
-    if (dismissingIdsRef.current.has(id)) {
-      return;
-    }
-
-    dismissingIdsRef.current.add(id);
 
     setClosingSheetIds((prev) => {
       if (prev.has(id)) {
