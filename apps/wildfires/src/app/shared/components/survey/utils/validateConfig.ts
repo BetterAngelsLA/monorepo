@@ -16,15 +16,7 @@ function findDuplicates(arr: string[]): string[] {
 }
 
 export function getAllQuestions(forms: TSurveyForm[]): TQuestion[] {
-  const questions: TQuestion[] = [];
-
-  forms.forEach((form) => {
-    form.questions.forEach((q) => {
-      questions.push(q);
-    });
-  });
-
-  return questions;
+  return forms.flatMap((form) => form.questions);
 }
 
 function validateQuestions(questions: TQuestion[]): string[] {
@@ -144,6 +136,31 @@ export function validateConfig(forms: TSurveyForm[]): string[] {
 
   if (conditionErrors.length) {
     return [`survey config errors: [${conditionErrors.join(', ')}]`];
+  }
+
+  for (const question of allQuestions) {
+    const optionIds = question.options.map((option) => option.optionId);
+    if (
+      !optionIds.length ||
+      optionIds.some((id) => !id) ||
+      findDuplicates(optionIds).length
+    ) {
+      return [
+        `survey config errors: invalid option IDs for question ${question.id}`,
+      ];
+    }
+  }
+
+  for (const start of forms) {
+    const visited = new Set<string>();
+    let form: TSurveyForm | undefined = start;
+    while (form) {
+      if (visited.has(form.id))
+        return [`survey config errors: cycle at form ${form.id}`];
+      visited.add(form.id);
+      const nextId: string | null = form.nextFormId;
+      form = forms.find((candidate) => candidate.id === nextId);
+    }
   }
 
   return [];
