@@ -13,7 +13,7 @@
  * Lives under src/__mocks__/ because tsconfig.lib.json already excludes that
  * directory from the library build.
  */
-import { ReactNode } from 'react';
+import { cloneElement, ReactNode, ReactElement } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 type Props = Record<string, unknown> & { children?: ReactNode };
@@ -26,6 +26,24 @@ const asPressable = ({ children, ...rest }: Props) => (
   <Pressable {...rest}>{children}</Pressable>
 );
 
+// The confirmation step is the modal's own behavior and is not under test; the
+// trigger performs the action directly so specs can exercise discard paths.
+const asDiscardTrigger = ({
+  button,
+  onDiscard,
+}: {
+  button?: ReactElement<{ onPress?: () => void }>;
+  onDiscard?: () => void;
+}) =>
+  button
+    ? cloneElement(button, {
+        onPress: () => {
+          button.props.onPress?.();
+          onDiscard?.();
+        },
+      })
+    : null;
+
 export const uiComponents = () => ({
   TextBold: asText,
   TextRegular: asText,
@@ -35,8 +53,7 @@ export const uiComponents = () => ({
   Avatar: () => <View />,
   Loading: () => <View />,
   InfiniteList: InfiniteListStub,
-  // The confirmation modal itself is not under test; render the trigger only.
-  DiscardModal: ({ button }: { button?: ReactNode }) => <>{button}</>,
+  DiscardModal: asDiscardTrigger,
 });
 
 // Renders items synchronously; virtualization itself is FlashList's job and is
