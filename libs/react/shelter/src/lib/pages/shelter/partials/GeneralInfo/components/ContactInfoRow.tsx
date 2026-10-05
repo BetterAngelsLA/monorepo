@@ -1,7 +1,7 @@
 import {
   AddressLink,
   InstagramLink,
-  Link,
+  TextLink,
   TLinkType,
 } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
@@ -23,7 +23,7 @@ function hasTarget(props: TContactInfoRow): boolean {
   return Boolean(props.href);
 }
 
-function ContactInfoValue(props: TContactInfoRow) {
+function ContactInfoLink(props: TContactInfoRow) {
   if (props.type === 'instagram') {
     return (
       <InstagramLink
@@ -47,7 +47,7 @@ function ContactInfoValue(props: TContactInfoRow) {
   }
 
   return (
-    <Link
+    <TextLink
       type={linkTypeMap[props.type]}
       href={props.href ?? ''}
       label={props.label}
@@ -78,7 +78,7 @@ export function ContactInfoRow(props: TContactInfoRow) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <ContactInfoValue {...props} />
+      <ContactInfoLink {...props} />
       {icon}
     </div>
   );

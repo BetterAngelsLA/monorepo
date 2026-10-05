@@ -1,6 +1,6 @@
 import { toInstagramUrl } from '@monorepo/react/shared';
 import { ReactNode } from 'react';
-import { Link } from './Link';
+import { TextLink } from './TextLink';
 import { TLink } from './types';
 
 export type TInstagramLink = Omit<TLink, 'href' | 'type'> & {
@@ -25,5 +25,5 @@ export function InstagramLink(props: TInstagramLink) {
     return <>{fallback}</>;
   }
 
-  return <Link {...linkProps} href={href} />;
+  return <TextLink {...linkProps} href={href} />;
 }

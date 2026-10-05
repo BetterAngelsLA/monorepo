@@ -1,18 +1,18 @@
 import { GlobeIcon } from '@monorepo/react/icons';
 import { disableControls } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
-import { Link } from './Link';
+import { TextLink } from './TextLink';
 import { TLink } from './types';
 
-const meta: Meta<typeof Link> = {
-  title: 'Links/Link',
-  component: Link,
+const meta: Meta<typeof TextLink> = {
+  title: 'Links/TextLink',
+  component: TextLink,
   argTypes: disableControls(['icon']),
 };
 
 export default meta;
 
-type Story = StoryObj<typeof Link>;
+type Story = StoryObj<typeof TextLink>;
 
 const defaultArgs: TLink = {
   href: 'https://betterangels.org',
@@ -24,31 +24,31 @@ const canvasClassName = 'flex-col items-start';
 export const DefaultLink: Story = {
   args: { ...defaultArgs },
   parameters: { customLayout: { canvasClassName } },
-  render: (args) => <Link {...args} />,
+  render: (args) => <TextLink {...args} />,
 };
 
 export const WithoutLabel: Story = {
   args: { ...defaultArgs, label: null },
   parameters: { customLayout: { canvasClassName } },
-  render: (args) => <Link {...args} />,
+  render: (args) => <TextLink {...args} />,
 };
 
 export const WithDefaultIcon: Story = {
   args: { ...defaultArgs, icon: true },
   parameters: { customLayout: { canvasClassName } },
-  render: (args) => <Link {...args} />,
+  render: (args) => <TextLink {...args} />,
 };
 
 export const IconBefore: Story = {
   args: { ...defaultArgs, icon: true, iconPosition: 'before' },
   parameters: { customLayout: { canvasClassName } },
-  render: (args) => <Link {...args} />,
+  render: (args) => <TextLink {...args} />,
 };
 
 export const External: Story = {
   args: { ...defaultArgs, icon: true, openExternal: true },
   parameters: { customLayout: { canvasClassName } },
-  render: (args) => <Link {...args} />,
+  render: (args) => <TextLink {...args} />,
 };
 
 export const Email: Story = {
@@ -60,7 +60,7 @@ export const Email: Story = {
     icon: true,
   },
   parameters: { customLayout: { canvasClassName } },
-  render: (args) => <Link {...args} />,
+  render: (args) => <TextLink {...args} />,
 };
 
 export const Phone: Story = {
@@ -72,7 +72,7 @@ export const Phone: Story = {
     icon: true,
   },
   parameters: { customLayout: { canvasClassName } },
-  render: (args) => <Link {...args} />,
+  render: (args) => <TextLink {...args} />,
 };
 
 export const CustomIcon: Story = {
@@ -82,7 +82,7 @@ export const CustomIcon: Story = {
     icon: <GlobeIcon className="h-3 w-3" />,
   },
   parameters: { customLayout: { canvasClassName } },
-  render: (args) => <Link {...args} />,
+  render: (args) => <TextLink {...args} />,
 };
 
 export const States: Story = {
@@ -90,9 +90,9 @@ export const States: Story = {
   parameters: { customLayout: { canvasClassName } },
   render: (args) => (
     <>
-      <Link {...args} />
-      <Link {...args} className="pseudo-hover" />
-      <Link {...args} className="pseudo-active" />
+      <TextLink {...args} />
+      <TextLink {...args} className="pseudo-hover" />
+      <TextLink {...args} className="pseudo-active" />
     </>
   ),
 };

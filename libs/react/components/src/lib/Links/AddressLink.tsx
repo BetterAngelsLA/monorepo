@@ -1,6 +1,6 @@
 import { TMapsProvider, toMapsUrl } from '@monorepo/react/shared';
 import { ReactNode } from 'react';
-import { Link } from './Link';
+import { TextLink } from './TextLink';
 import { TLink } from './types';
 
 export type TAddressLink = Omit<TLink, 'href' | 'type'> & {
@@ -15,7 +15,7 @@ export type TAddressLink = Omit<TLink, 'href' | 'type'> & {
 };
 
 /**
- * Renders a `Link` that opens an address in Google Maps.
+ * Renders a `TextLink` that opens an address in Google Maps.
  *
  * `address` doubles as the default `label`.
  */
@@ -36,5 +36,5 @@ export function AddressLink(props: TAddressLink) {
     return <>{fallback}</>;
   }
 
-  return <Link {...linkProps} href={href} label={label ?? address} />;
+  return <TextLink {...linkProps} href={href} label={label ?? address} />;
 }

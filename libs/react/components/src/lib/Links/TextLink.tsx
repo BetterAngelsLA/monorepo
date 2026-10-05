@@ -3,7 +3,7 @@ import { ResolvedIcon } from './components';
 import { TLink } from './types';
 import { toTypedHref } from './utils/toTypedHref';
 
-export function Link(props: TLink) {
+export function TextLink(props: TLink) {
   const {
     href,
     type = 'link',

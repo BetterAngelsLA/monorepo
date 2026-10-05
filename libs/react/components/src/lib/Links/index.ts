@@ -1,4 +1,4 @@
 export { AddressLink } from './AddressLink';
 export { InstagramLink } from './InstagramLink';
-export { Link } from './Link';
+export { TextLink } from './TextLink';
 export * from './types';
