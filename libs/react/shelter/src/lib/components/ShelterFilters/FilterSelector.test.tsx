@@ -38,9 +38,9 @@ describe('FilterSelector', () => {
       'Couples',
       'Families',
       'LGBTQ+',
-      'Others',
       'Seniors',
       'Single Men',
+      'Single Moms',
     ];
     const selected: TFilterOptionType[] = [];
 
@@ -203,7 +203,7 @@ describe('FilterSelector', () => {
 
     expect(
       screen.getByRole('button', {
-        name: 'Others',
+        name: 'Single Moms',
       }),
     ).toBeDefined();
 
@@ -221,7 +221,7 @@ describe('FilterSelector', () => {
 
     expect(
       screen.queryByRole('button', {
-        name: 'Single Moms',
+        name: 'Others',
       }),
     ).toBeNull();
 

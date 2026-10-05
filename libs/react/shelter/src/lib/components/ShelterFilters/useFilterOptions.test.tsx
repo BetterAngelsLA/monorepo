@@ -6,7 +6,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   demographicFilter,
+  parkingFilter,
+  petsFilter,
   roomStyleFilter,
+  shelterTypeFilter,
+  specialSituationFilter,
   UNKNOWN_FILTER_VALUE,
 } from './config';
 import { useFilterOptions } from './useFilterOptions';
@@ -59,20 +63,37 @@ describe('useFilterOptions', () => {
     expect(labels.at(-1)).toBe('Include Unknown');
   });
 
-  it('keeps Other above Include Unknown at the bottom', () => {
-    const { result } = renderHook(() =>
-      useFilterOptions(roomStyleFilter.options, []),
-    );
+  it.each([
+    { filter: demographicFilter, label: 'Others' },
+    { filter: roomStyleFilter, label: 'Other' },
+    { filter: shelterTypeFilter, label: 'Other' },
+    { filter: parkingFilter, label: 'No Parking' },
+    { filter: petsFilter, label: 'No Pets Allowed' },
+    { filter: specialSituationFilter, label: 'None' },
+  ])(
+    'pins $label above Include Unknown for $filter.name',
+    ({ filter, label }) => {
+      const { result } = renderHook(() => useFilterOptions(filter.options, []));
 
-    act(() => {
-      result.current.setShowMoreOptions(true);
-    });
+      act(() => {
+        result.current.setShowMoreOptions(true);
+      });
 
-    const labels = result.current.visibleOptions.map((option) => option.label);
+      const labels = result.current.visibleOptions.map(
+        (option) => option.label,
+      );
 
-    expect(labels.at(-2)).toBe('Other');
-    expect(labels.at(-1)).toBe('Include Unknown');
-  });
+      expect(labels.at(-2)).toBe(label);
+      expect(labels.at(-1)).toBe('Include Unknown');
+      const regularLabels = labels.slice(0, -2);
+      expect(regularLabels).toEqual(
+        [...regularLabels].sort((first, second) =>
+          first.localeCompare(second, undefined, { sensitivity: 'base' }),
+        ),
+      );
+      expect(result.current.visibleOptions).toHaveLength(filter.options.length);
+    },
+  );
 
   it('passes only selected visible values through visibleValues', () => {
     const { result: initialResult } = renderHook(() =>
@@ -92,15 +113,18 @@ describe('useFilterOptions', () => {
     );
 
     expect(hiddenOption).toBeDefined();
+    if (!hiddenOption) {
+      throw new Error('Expected a hidden demographic option');
+    }
 
     const { result } = renderHook(() =>
-      useFilterOptions(options, [firstVisibleValue, hiddenOption!.value]),
+      useFilterOptions(options, [firstVisibleValue, hiddenOption.value]),
     );
 
     expect(result.current.visibleValues).toContain(String(firstVisibleValue));
 
     expect(result.current.visibleValues).not.toContain(
-      String(hiddenOption!.value),
+      String(hiddenOption.value),
     );
   });
 

@@ -1,11 +1,29 @@
 import { useMemo, useState } from 'react';
 import {
+  DemographicChoices,
+  ParkingChoices,
+  PetChoices,
+  RoomStyleChoices,
+  ShelterChoices,
+  SpecialSituationRestrictionChoices,
+} from '../../apollo';
+import {
   TFilterOptionType,
   TShelterFilterOption,
   UNKNOWN_FILTER_VALUE,
 } from './config';
 
 const VISIBLE_OPTION_COUNT = 6;
+
+// Match stable values, since labels vary (for example, Other and Others).
+const BOTTOM_OPTION_VALUES = new Set<TFilterOptionType>([
+  DemographicChoices.Other,
+  RoomStyleChoices.Other,
+  ShelterChoices.Other,
+  ParkingChoices.NoParking,
+  PetChoices.NoPetsAllowed,
+  SpecialSituationRestrictionChoices.None,
+]);
 
 export function useFilterOptions(
   options: TShelterFilterOption[],
@@ -19,10 +37,13 @@ export function useFilterOptions(
   const sortedOptions = useMemo(() => {
     const regularOptions = options.filter(
       (option) =>
-        option.label !== 'Other' && option.value !== UNKNOWN_FILTER_VALUE,
+        !BOTTOM_OPTION_VALUES.has(option.value) &&
+        option.value !== UNKNOWN_FILTER_VALUE,
     );
 
-    const otherOptions = options.filter((option) => option.label === 'Other');
+    const bottomOptions = options.filter((option) =>
+      BOTTOM_OPTION_VALUES.has(option.value),
+    );
 
     const unknownOptions = options.filter(
       (option) => option.value === UNKNOWN_FILTER_VALUE,
@@ -34,7 +55,7 @@ export function useFilterOptions(
       }),
     );
 
-    return [...regularOptions, ...otherOptions, ...unknownOptions];
+    return [...regularOptions, ...bottomOptions, ...unknownOptions];
   }, [options]);
 
   const hasAdditionalOptions = sortedOptions.length > visibleOptionCount;
