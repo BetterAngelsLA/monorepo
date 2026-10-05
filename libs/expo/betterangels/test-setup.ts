@@ -32,18 +32,21 @@ vi.mock('@react-native-async-storage/async-storage', () => ({
   },
 }));
 
+// Basic no-op react-native-mmkv v4 surface: `remove` (not the v2/v3 `delete`)
+// is what createPersistentSynchronousStorage calls. Suites that assert on
+// persistence supply their own stateful factory.
 vi.mock('react-native-mmkv', () => ({
   MMKV: vi.fn(() => ({
     getString: vi.fn(),
     set: vi.fn(),
-    delete: vi.fn(),
+    remove: vi.fn(),
     clearAll: vi.fn(),
     getAllKeys: vi.fn(() => []),
   })),
   createMMKV: vi.fn(() => ({
     getString: vi.fn(),
     set: vi.fn(),
-    delete: vi.fn(),
+    remove: vi.fn(),
     clearAll: vi.fn(),
     getAllKeys: vi.fn(() => []),
   })),
@@ -51,4 +54,3 @@ vi.mock('react-native-mmkv', () => ({
 
 // Mock native modules that crash in Jest Node.js environment
 vi.mock('@preeternal/react-native-cookie-manager');
-vi.mock('react-native-mmkv');

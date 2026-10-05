@@ -34,7 +34,44 @@ export const uiComponents = () => ({
   Button: asPressable,
   Avatar: () => <View />,
   Loading: () => <View />,
+  InfiniteList: InfiniteListStub,
+  // The confirmation modal itself is not under test; render the trigger only.
+  DiscardModal: ({ button }: { button?: ReactNode }) => <>{button}</>,
 });
+
+// Renders items synchronously; virtualization itself is FlashList's job and is
+// not under test here. Keeps header/empty/footer rendering observable.
+type InfiniteListStubProps = {
+  data?: readonly unknown[];
+  renderItem?: (item: never) => ReactNode;
+  keyExtractor?: (item: never) => string;
+  ListHeaderComponent?: ReactNode;
+  ListEmptyComponent?: ReactNode | (() => ReactNode);
+  ListFooterComponent?: ReactNode;
+};
+
+const InfiniteListStub = ({
+  data = [],
+  renderItem,
+  keyExtractor,
+  ListHeaderComponent,
+  ListEmptyComponent,
+  ListFooterComponent,
+}: InfiniteListStubProps) => (
+  <View>
+    {ListHeaderComponent}
+    {data.length === 0
+      ? typeof ListEmptyComponent === 'function'
+        ? ListEmptyComponent()
+        : ListEmptyComponent
+      : data.map((item, index) => (
+          <View key={keyExtractor?.(item as never) ?? index}>
+            {renderItem?.(item as never)}
+          </View>
+        ))}
+    {ListFooterComponent}
+  </View>
+);
 
 // Listed explicitly rather than proxied: Vitest validates a mock's exports
 // statically, so a Proxy's `get` trap is not enough — it reports the export as
@@ -48,33 +85,6 @@ export const icons = () => ({
   ArrowLeftIcon: stubIcon,
   ChevronLeftIcon: stubIcon,
   CloseIcon: stubIcon,
-});
-
-/**
- * Stateful in-memory MMKV, keyed by scopeId.
- *
- * The shared test-setup.ts registers a react-native-mmkv factory and then calls
- * `vi.mock('react-native-mmkv')` again with no factory, which replaces it with an
- * automock whose `createMMKV()` returns undefined. Anything touching the draft
- * store therefore fails on `undefined.getString`. It also models the v2/v3 API
- * (`delete`) while MMKV v4 — the version in package.json — uses `remove()`.
- *
- * Tests that exercise persistence supply this instead.
- */
-export const mmkv = (stores: Map<string, Map<string, string>>) => () => ({
-  MMKV: vi.fn(),
-  createMMKV: vi.fn((config?: { id?: string }) => {
-    const id = config?.id ?? 'default';
-    if (!stores.has(id)) stores.set(id, new Map<string, string>());
-    const store = stores.get(id) as Map<string, string>;
-    return {
-      getString: (k: string) => store.get(k),
-      set: (k: string, v: string) => void store.set(k, v),
-      remove: (k: string) => void store.delete(k),
-      clearAll: () => store.clear(),
-      getAllKeys: () => Array.from(store.keys()),
-    };
-  }),
 });
 
 export const svg = () => ({
