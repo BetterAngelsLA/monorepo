@@ -35,30 +35,13 @@ export function FilterSelector(props: IProps) {
   } = useFilterOptions(options, values);
 
   function handleOptionsChange(selectedVisible: string[]) {
-    const allVisibleWereSelected =
-      visibleValues.length === visibleOptions.length;
-
-    const allVisibleAreNowSelected =
-      selectedVisible.length === visibleOptions.length;
-
-    const clearedAllVisible =
-      allVisibleWereSelected && selectedVisible.length === 0;
-
-    const selectedAllVisible =
-      !allVisibleWereSelected && allVisibleAreNowSelected;
-
-    if (selectedAllVisible) {
-      onChange(name, allOptionValues);
-      return;
-    }
-
-    if (clearedAllVisible) {
-      onChange(name, []);
-      return;
-    }
-
     onChange(name, getMergedSelection(selectedVisible));
   }
+
+  const selectedValues = new Set((values ?? []).map(String));
+  const allOptionsSelected =
+    allOptionValues.length > 0 &&
+    allOptionValues.every((value) => selectedValues.has(value));
 
   return (
     <div className={className}>
@@ -69,6 +52,10 @@ export function FilterSelector(props: IProps) {
             values={visibleValues}
             onChange={handleOptionsChange}
             selectAll="Select All"
+            selectAllChecked={allOptionsSelected}
+            onSelectAllChange={(checked) =>
+              onChange(name, checked ? allOptionValues : [])
+            }
           />
         </div>
 

@@ -4,11 +4,83 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { demographicFilter, UNKNOWN_FILTER_VALUE } from './config';
+import {
+  demographicFilter,
+  TFilterOptionType,
+  UNKNOWN_FILTER_VALUE,
+} from './config';
 import { FilterSelector } from './FilterSelector';
 
 describe('FilterSelector', () => {
   const options = demographicFilter.options;
+
+  function getOptionValue(label: string): TFilterOptionType {
+    const option = options.find((option) => option.label === label);
+
+    if (!option) {
+      throw new Error(`Missing demographic option: ${label}`);
+    }
+
+    return option.value;
+  }
+
+  it('keeps hidden options unselected when checking every visible option individually', () => {
+    const onChange = vi.fn();
+    const props = {
+      header: 'Demographic',
+      name: demographicFilter.name,
+      options,
+      expanded: true,
+      onChange,
+    };
+    const { rerender } = render(<FilterSelector {...props} values={[]} />);
+    const labels = [
+      'Couples',
+      'Families',
+      'LGBTQ+',
+      'Others',
+      'Seniors',
+      'Single Men',
+    ];
+    const selected: TFilterOptionType[] = [];
+
+    labels.forEach((label) => {
+      fireEvent.click(screen.getByRole('button', { name: label }));
+      selected.push(getOptionValue(label));
+      expect(onChange).toHaveBeenLastCalledWith(demographicFilter.name, [
+        ...selected,
+      ]);
+      rerender(<FilterSelector {...props} values={[...selected]} />);
+    });
+
+    // Even with all visible options selected, Select All still selects hidden ones.
+    fireEvent.click(screen.getByRole('button', { name: 'Select All' }));
+    expect(onChange).toHaveBeenLastCalledWith(
+      demographicFilter.name,
+      expect.arrayContaining(options.map((option) => String(option.value))),
+    );
+    expect(onChange.mock.lastCall?.[1]).toHaveLength(options.length);
+  });
+
+  it('preserves hidden selections when unchecking the last selected visible option', () => {
+    const onChange = vi.fn();
+    const singleOptionValue = getOptionValue('Couples');
+    render(
+      <FilterSelector
+        header="Demographic"
+        name={demographicFilter.name}
+        options={options}
+        values={[singleOptionValue, UNKNOWN_FILTER_VALUE]}
+        expanded
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Couples' }));
+    expect(onChange).toHaveBeenCalledWith(demographicFilter.name, [
+      UNKNOWN_FILTER_VALUE,
+    ]);
+  });
 
   it('preserves hidden selections when toggling a visible option', () => {
     const onChange = vi.fn();
@@ -35,9 +107,7 @@ describe('FilterSelector', () => {
     const [, selectedValues] = onChange.mock.calls[0];
 
     expect(selectedValues).toContain(UNKNOWN_FILTER_VALUE);
-    expect(selectedValues).toContain(
-      String(options.find((option) => option.label === 'Couples')!.value),
-    );
+    expect(selectedValues).toContain(getOptionValue('Couples'));
   });
 
   it('selects all options when Select All is clicked while collapsed', () => {
