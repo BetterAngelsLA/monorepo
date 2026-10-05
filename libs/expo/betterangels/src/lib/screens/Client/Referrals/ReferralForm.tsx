@@ -27,6 +27,15 @@ type TProps = {
   onSelectShelter: (shelterId: string | null) => void;
 };
 
+type ShelterResult = SheltersQuery['shelters']['results'][number];
+
+// A resumed selection can sit on a page that is not loaded yet, so the name is
+// only known once its card has been rendered.
+function selectionLabel(selectedShelter: ShelterResult | undefined): string {
+  if (!selectedShelter) return '✓ Shelter selected';
+  return `✓ Selected: ${selectedShelter.name}`;
+}
+
 export function ReferralForm({
   onCancel,
   onPause,
@@ -46,7 +55,7 @@ export function ReferralForm({
     error,
     loadMore,
   } = useInfiniteScrollQuery<
-    SheltersQuery['shelters']['results'][number],
+    ShelterResult,
     SheltersQuery,
     SheltersQueryVariables
   >({
@@ -154,7 +163,7 @@ export function ReferralForm({
         )}
 
         {!loading && shelters.length > 0 && (
-          <InfiniteList<SheltersQuery['shelters']['results'][number]>
+          <InfiniteList<ShelterResult>
             data={shelters}
             keyExtractor={(shelter) => shelter.id}
             totalItems={total}
@@ -219,10 +228,10 @@ export function ReferralForm({
                     <ActivityIndicator size="small" color={Colors.PRIMARY} />
                   </View>
                 )}
-                {selectedShelter && (
+                {selectedShelterId && (
                   <View style={styles.confirmationBox}>
                     <TextBold size="sm" color={Colors.SUCCESS}>
-                      ✓ Selected: {selectedShelter.name}
+                      {selectionLabel(selectedShelter)}
                     </TextBold>
                   </View>
                 )}
