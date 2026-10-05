@@ -30,12 +30,3 @@ export function needLabelsFromIntake(
   }
   return labels;
 }
-
-export {
-  AccessibilityChoices,
-  DemographicChoices,
-  ParkingChoices,
-  PetChoices,
-  SpecialSituationRestrictionChoices,
-  StorageChoices,
-} from '../../../apollo';

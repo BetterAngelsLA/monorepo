@@ -16,8 +16,8 @@ import {
   render as renderNative,
   screen,
 } from '@testing-library/react-native';
+import { PetChoices } from '../../../apollo';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
-import { PetChoices } from './clientNeeds';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,

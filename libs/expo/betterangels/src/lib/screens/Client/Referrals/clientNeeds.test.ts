@@ -12,11 +12,10 @@
 import {
   AccessibilityChoices,
   DemographicChoices,
-  MATCHED_INTAKE_KEYS,
   PetChoices,
   StorageChoices,
-  needLabelsFromIntake,
-} from './clientNeeds';
+} from '../../../apollo';
+import { MATCHED_INTAKE_KEYS, needLabelsFromIntake } from './clientNeeds';
 import { matchTags } from './shelterAttributes';
 
 describe('needLabelsFromIntake', () => {
