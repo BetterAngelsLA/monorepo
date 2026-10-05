@@ -98,7 +98,7 @@ export function ClientsScreenHmisProd({ Logo }: { Logo: ElementType }) {
           />
         </HorizontalContainer>
 
-        <DebugRow debugInfo={debugInfo} />
+        <DebugRow debugInfo={debugInfo} label="client search debug info" />
 
         {!hasSearched && (
           <View style={styles.searchHint}>
@@ -113,6 +113,7 @@ export function ClientsScreenHmisProd({ Logo }: { Logo: ElementType }) {
             modelName="client"
             data={clients}
             keyExtractor={(client) => client.id}
+            scrollResetKey={search.trim()}
             totalItems={data?._meta?.total_count ?? clients.length}
             renderResultsHeader={clients.length > 0 ? undefined : null}
             renderItem={(client) => (

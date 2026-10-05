@@ -1,16 +1,17 @@
 import { useApiConfig } from '@monorepo/ba-platform';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
-import { router } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import useAppState from '../../hooks/appState/useAppState';
-import useSignOut from '../../hooks/user/useSignOut';
 import { useUser } from '../../providers/user/UserProvider';
 import { FeatureFlags } from '../../static';
 import {
   createApiClientHmisProd,
+  HMIS_PROD_QUERY_KEY_ROOT,
   isAuthErrorHmisProd,
   resolveHmisProdBaseUrl,
 } from '../api';
+import { useHmisProdSignOut } from './useHmisProdSignOut';
 
 /**
  * Minimum gap between two proactive checks. `AppState` flips to `active` for
@@ -32,6 +33,11 @@ const SESSION_CHECK_TIMEOUT_MS = 10 * 1000;
  * login), force-signing the user out when Clarity no longer accepts the
  * stored `auth_token`.
  *
+ * Also reacts to the feature's own requests: any direct-HMIS query (rooted
+ * at `HMIS_PROD_QUERY_KEY_ROOT`) that fails with a definite session error
+ * funnels into the same forced sign-out, so views never handle a dead
+ * session themselves.
+ *
  * Gated to HMIS prod demo users — feature flag on AND the user logged in via
  * HMIS (`isHmisUser`), since only those sessions carry a direct-HMIS token.
  *
@@ -42,7 +48,8 @@ const SESSION_CHECK_TIMEOUT_MS = 10 * 1000;
  */
 export function useHmisProdSessionWatch(): void {
   const { user } = useUser();
-  const { signOut } = useSignOut();
+  const forceSignOut = useHmisProdSignOut();
+  const queryClient = useQueryClient();
   const hmisProdDemoEnabled = useFeatureFlagActive(FeatureFlags.HMIS_PROD_DEMO);
   const { appBecameActive } = useAppState();
   const { apiUrl: baEnvApiUrl } = useApiConfig();
@@ -57,10 +64,27 @@ export function useHmisProdSessionWatch(): void {
   const checkInFlightRef = useRef(false);
   const lastCheckAtRef = useRef(0);
   const latestUserIdRef = useRef(user?.id);
+  const signOutInFlightRef = useRef(false);
 
   useEffect(() => {
     latestUserIdRef.current = user?.id;
   }, [user?.id]);
+
+  // Both discovery paths — the foreground probe and failed feature requests —
+  // funnel into one sign-out, so concurrent failures can't sign out twice.
+  const forceSignOutOnce = useCallback(async () => {
+    if (signOutInFlightRef.current) {
+      return;
+    }
+
+    signOutInFlightRef.current = true;
+
+    try {
+      await forceSignOut();
+    } finally {
+      signOutInFlightRef.current = false;
+    }
+  }, [forceSignOut]);
 
   const checkSession = useCallback(async () => {
     if (!enabled || checkInFlightRef.current) {
@@ -93,23 +117,14 @@ export function useHmisProdSessionWatch(): void {
       const userIsUnchanged = latestUserIdRef.current === checkedUserId;
 
       if (userIsUnchanged && isAuthErrorHmisProd(error)) {
-        await signOut();
-
-        // The guarded layouts also redirect to /auth once the user is null;
-        // route explicitly as well so the forced logout lands on the sign-in
-        // screen from any stack position.
-        if (router.canGoBack?.()) {
-          router.dismissAll?.();
-        }
-
-        router.replace('/auth');
+        await forceSignOutOnce();
       }
     } finally {
       clearTimeout(abortTimeoutId);
 
       checkInFlightRef.current = false;
     }
-  }, [enabled, apiClient, signOut]);
+  }, [enabled, apiClient, forceSignOutOnce]);
 
   // Foreground transitions...
   useEffect(() => {
@@ -124,4 +139,30 @@ export function useHmisProdSessionWatch(): void {
       void checkSession();
     }
   }, [enabled, checkSession]);
+
+  // Reactive half of the same policy: a normal feature request can prove the
+  // session dead before the next foreground probe does (e.g. the history tab
+  // loading with an expired token), so auth failures on this feature's
+  // queries funnel into the same forced sign-out.
+  useEffect(() => {
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type !== 'updated') {
+        return;
+      }
+
+      const { query } = event;
+
+      if (query.queryKey[0] !== HMIS_PROD_QUERY_KEY_ROOT) {
+        return;
+      }
+
+      if (!enabled || !isAuthErrorHmisProd(query.state.error)) {
+        return;
+      }
+
+      void forceSignOutOnce();
+    });
+
+    return () => unsubscribe();
+  }, [queryClient, enabled, forceSignOutOnce]);
 }

@@ -2,20 +2,27 @@ import {
   getAuthHeadersHmis,
   HEADER_NAMES,
   HEADER_VALUES,
-  HMIS_AUTH_DOMAIN_STORAGE_KEY,
   MODERN_BROWSER_USER_AGENT,
 } from '@monorepo/expo/shared/clients';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   CLIENT_DETAIL_FIELDS_DEFAULT,
+  CLIENT_HISTORY_DEFAULT_QUERY,
+  CLIENT_PROGRAMS_DEFAULT_QUERY,
+  CLIENT_PROGRAMS_FIELDS_DEFAULT,
   CLIENT_SEARCH_FIELDS_DEFAULT,
+  CSRF_MISMATCH_PATTERN,
+  DEFAULT_SEARCH_PAYLOAD,
   HMIS_PROD_CLIENTS_LONG_PATH,
   HMIS_PROD_CLIENTS_PATH,
   HMIS_PROD_CURRENT_USER_PATH,
 } from './constants';
 import { ErrorHmisProd } from './errors';
 import type {
+  GetClientHistoryPayloadHmisProd,
+  GetClientHistoryResponseHmisProd,
   GetClientPayloadHmisProd,
+  GetClientProgramsPayloadHmisProd,
+  GetClientProgramsResponseHmisProd,
   HmisProdClientDetail,
   HmisProdRequestContext,
   HmisProdRequestDebugInfo,
@@ -28,6 +35,8 @@ import {
   logHmisProdRequest,
   logHmisProdResponse,
 } from './utils';
+import { getHmisAuthDomainHost } from './utils/getHmisAuthDomainHost';
+import { parseHmisProdBody } from './utils/parseHmisProdBody';
 
 /**
  * Direct HMIS ("prod") REST client — experimental, gated by
@@ -47,55 +56,6 @@ import {
  *
  * TODO: replace once Clarity ships their new REST API.
  */
-
-const DEFAULT_SEARCH_PAYLOAD = {
-  expand: 'userCreated,userUpdated',
-  page: 1,
-  per_page: 50, // pagination not implemented, so setting this high
-  sort: '-last_updated',
-} as const;
-
-/**
- * HMIS occasionally returns JSON with a wrong/missing Content-Type or a
- * double-encoded JSON string — parse defensively (same as `clientHmis`).
- */
-const parseHmisProdBody = (text: string | null): unknown => {
-  if (!text) return text;
-
-  try {
-    const parsed: unknown = JSON.parse(text);
-
-    if (typeof parsed === 'string') {
-      try {
-        return JSON.parse(parsed);
-      } catch {
-        return parsed;
-      }
-    }
-
-    return parsed;
-  } catch {
-    return text;
-  }
-};
-
-/**
- * Host the HMIS token was stored under (`hmis_auth_domain`) — included in the
- * debug payload so a token/environment mismatch (e.g. an LA token sent to the
- * sandbox host) is visible in what testers copy.
- */
-const getHmisAuthDomainHost = async (): Promise<string | null> => {
-  try {
-    const stored = await AsyncStorage.getItem(HMIS_AUTH_DOMAIN_STORAGE_KEY);
-
-    return stored ? new URL(stored).host : null;
-  } catch {
-    return null;
-  }
-};
-
-/** Clarity answers unauthenticated web-style POSTs with its Yii CSRF guard. */
-const CSRF_MISMATCH_PATTERN = /csrf token mismatch/i;
 
 class ApiClientHmisProd {
   constructor(private readonly baseUrl: string) {}
@@ -177,6 +137,67 @@ class ApiClientHmisProd {
       HMIS_PROD_CURRENT_USER_PATH,
       { fields: 'id' },
       options,
+    );
+  }
+
+  /**
+   * Fetch a client's history entries via Clarity's history endpoint.
+   *
+   * GET /api1/clients/{id}/history
+   *
+   * Defaults to the first page the Clarity web app requests (see
+   * `CLIENT_HISTORY_DEFAULT_QUERY`) — pass `payload` to move through pages;
+   * pagination isn't wired to the UI yet.
+   *
+   * Entries explicitly set to `undefined` are treated as absent, so the
+   * default for that key still applies instead of being clobbered.
+   */
+  getClientHistory(
+    id: string,
+    payload?: GetClientHistoryPayloadHmisProd,
+  ): Promise<HmisProdRequestResult<GetClientHistoryResponseHmisProd>> {
+    const overrides = Object.fromEntries(
+      Object.entries(payload ?? {}).filter(([, value]) => value !== undefined),
+    );
+
+    return this.get<GetClientHistoryResponseHmisProd>(
+      `${HMIS_PROD_CLIENTS_PATH}/${encodeURIComponent(id)}/history`,
+      { ...CLIENT_HISTORY_DEFAULT_QUERY, ...overrides },
+    );
+  }
+
+  /**
+   * Fetch a client's program enrollments via Clarity's client-programs
+   * endpoint.
+   *
+   * GET /api1/clients/{id}/client-programs
+   *
+   * Defaults to the query the Clarity web app makes for a client's programs
+   * (see `CLIENT_PROGRAMS_DEFAULT_QUERY` + `CLIENT_PROGRAMS_FIELDS_DEFAULT`)
+   * — pass `payload` to move through pages; pagination isn't wired to the UI
+   * yet.
+   *
+   * Query entries explicitly set to `undefined` are treated as absent, so the
+   * default for that key still applies instead of being clobbered.
+   */
+  getClientPrograms(
+    id: string,
+    payload?: GetClientProgramsPayloadHmisProd,
+  ): Promise<HmisProdRequestResult<GetClientProgramsResponseHmisProd>> {
+    const { fields = CLIENT_PROGRAMS_FIELDS_DEFAULT, ...queryOverrides } =
+      payload ?? {};
+
+    const definedOverrides = Object.fromEntries(
+      Object.entries(queryOverrides).filter(([, value]) => value !== undefined),
+    );
+
+    return this.get<GetClientProgramsResponseHmisProd>(
+      `${HMIS_PROD_CLIENTS_PATH}/${encodeURIComponent(id)}/client-programs`,
+      {
+        ...CLIENT_PROGRAMS_DEFAULT_QUERY,
+        ...definedOverrides,
+        fields: fields.join(','),
+      },
     );
   }
 
@@ -280,12 +301,20 @@ class ApiClientHmisProd {
     }
   }
 
+  /**
+   * Builds the query string from `params`, dropping `undefined` values —
+   * `URLSearchParams` would otherwise serialize them as the literal string
+   * `"undefined"` (`page=undefined`).
+   */
   private get<T>(
     path: string,
-    params: Record<string, string>,
+    params: Record<string, string | undefined>,
     options?: { signal?: AbortSignal },
   ): Promise<HmisProdRequestResult<T>> {
-    const query = new URLSearchParams(params).toString();
+    const definedEntries = Object.entries(params).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined,
+    );
+    const query = new URLSearchParams(definedEntries).toString();
 
     return this.request<T>(`${path}?${query}`, options);
   }

@@ -4,12 +4,13 @@ import { useMemo } from 'react';
 import {
   createApiClientHmisProd,
   ErrorHmisProd,
+  HMIS_PROD_QUERY_KEY_ROOT,
   resolveHmisProdBaseUrl,
   type HmisProdRequestDebugInfo,
 } from '../api';
 
 export const getClientHmisProdQueryKey = (baseUrl: string, id: string) =>
-  ['hmisProd', 'client', baseUrl, id] as const;
+  [HMIS_PROD_QUERY_KEY_ROOT, 'client', baseUrl, id] as const;
 
 /**
  * Fetch a single HMIS client directly against Clarity

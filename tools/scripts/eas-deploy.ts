@@ -54,10 +54,10 @@ import {
 
 interface BuildInfo {
   id: string;
-  project: { slug: string; id: string };
+  app: { slug: string; id: string };
   distribution: string;
   buildProfile: string;
-  runtimeVersion: string;
+  runtime: { version: string };
   appVersion: string;
   gitCommitHash: string;
 }
@@ -156,8 +156,8 @@ function checkOrTriggerBuild(
     }
 
     const info = buildData[0];
-    slug = info.project.slug;
-    projectId = info.project.id;
+    slug = info.app.slug;
+    projectId = info.app.id;
     builds[platform] = toBuildResult(info, slug);
   }
 
@@ -170,7 +170,7 @@ function toBuildResult(info: BuildInfo, slug: string): PlatformBuildResult {
     buildLink: `https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${slug}/builds/${info.id}`,
     distribution: info.distribution,
     buildProfile: info.buildProfile,
-    runtimeVersion: info.runtimeVersion,
+    runtimeVersion: info.runtime.version,
     appVersion: info.appVersion,
     gitCommit: info.gitCommitHash,
   };

@@ -190,9 +190,11 @@ class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
 
     def __init__(self, *args: Any, organization: Organization, member: User, **kwargs: Any) -> None:
         super().__init__(*args, organization=organization, **kwargs)
-        held = sorted(
-            PermissionGroup.objects.filter(organization=organization, user=member).values_list("label", flat=True)
-        )
+        # Post-teardown (ADR 0001) the org-admin roles are grant-only — no
+        # PermissionGroup row exists — so merge the legacy + grant arms.
+        from .selectors import member_role_names
+
+        held = sorted(member_role_names(user_id=member.pk, organization_id=organization.pk))
         offered = set(self.role_names)
         self.locked_role_names = [name for name in held if name not in offered]
         # Clearing every role is a real state — it is what a member starts as

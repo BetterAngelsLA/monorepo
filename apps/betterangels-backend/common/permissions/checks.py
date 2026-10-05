@@ -1,6 +1,6 @@
 """System checks for the grant-based authorization model (ADR 0001).
 
-IDs: ``permissions.E001``–``permissions.E006``.
+IDs: ``permissions.E001``–``permissions.E007``.
 
 The data-reading checks return ``[]`` on any ``DatabaseError`` — unreachable
 database, or tables not migrated yet — so ``manage.py check``, ``makemigrations``
@@ -144,6 +144,16 @@ def check_org_via_hops_are_single_valued(app_configs: Any, **kwargs: Any) -> lis
     return errors
 
 
+#: The member-management portal codenames bound to the org-root Organization
+#: model — the only scoped-Role permissions exempt from E005's OrgScoped demand
+#: (a scoped Grant on the root scopes to the very org the action is on).  Any
+#: other permission a scoped Role binds to Organization must declare real org
+#: scoping; this allowlist is what keeps that a loud error, not a silent skip.
+ORG_ROOT_PORTAL_CODENAMES = frozenset(
+    {"access_org_portal", "add_org_member", "change_org_member_role", "remove_org_member", "view_org_members"}
+)
+
+
 @register(Tags.models)
 def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs: Any) -> list[Error]:
     """E005 — every model a *scoped* Role grants a permission on must declare OrgScoped.
@@ -152,6 +162,12 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
     must declare how it reaches an organization — or declare itself platform-shared
     via ``org_via = None``.  Global Roles are exempt: their permissions are never
     org-confined, so no declaration is required until a scoped Role holds them.
+
+    The org-root ``Organization`` model is exempt as **identity-scoped**: a scoped
+    Grant scopes to an organization, so a permission bound to ``Organization`` is
+    an org-level action on the very row the grant scopes to — there is no
+    ``org_via`` hop to resolve.  This is where the member-management
+    ``organizations.*`` portal codenames live (ADR 0001 §5.3).
     """
     from django.apps import apps
     from django.db.utils import DatabaseError
@@ -167,6 +183,16 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
                 model = permission.content_type.model_class()
                 if model is None or model._meta.abstract:
                     continue
+                if model._meta.label_lower == "organizations.organization":
+                    # Org-root is identity-scoped: a scoped Grant scopes TO an
+                    # organization, so the member-management portal codenames on
+                    # the root are org-level actions on the very row the grant
+                    # scopes to — no org_via hop to resolve.  The exemption is
+                    # the portal allowlist only: any other Organization-bound
+                    # permission a scoped Role grants must declare real org
+                    # scoping instead of hiding on the exempted root.
+                    if permission.codename in ORG_ROOT_PORTAL_CODENAMES:
+                        continue
                 if not issubclass(model, OrgScoped):
                     errors.append(
                         Error(
@@ -216,3 +242,62 @@ def check_object_grant_principal_is_a_user(app_configs: Any, **kwargs: Any) -> l
         return errors
     except DatabaseError:
         return []
+
+
+@register(Tags.models)
+def check_write_tier_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
+    """E007 — ``write_tier`` declarations must be legal (RFC 0002 §Precondition).
+
+    ``write_tier`` is consulted by ``can_obj`` independently of ``org_via``:
+
+    * only a platform-shared model (``org_via = None``) may declare a tier —
+      org-anchored models derive the ORG write tier from their org anchor;
+    * ``WRITE_OBJECT`` stays reserved until the object arm turns on with the
+      clients cutover (ADR 0001 §2.5) — declaring it today would silently route
+      writes to an object-grant predicate nothing can satisfy;
+    * a declared value must be a tier constant — an unrecognized string would
+      otherwise fall through to ``can_obj``'s fail-closed default and silently
+      drop scoped-grant writes.
+    """
+    from django.apps import apps
+
+    from common.models import OrgScoped, WRITE_OBJECT, WRITE_SHARED
+
+    errors: list[Error] = []
+    for model in apps.get_models():
+        if not issubclass(model, OrgScoped):
+            continue
+        tier = model.__dict__.get("write_tier")
+        if tier is None:
+            continue
+        if model.org_via is not None:
+            errors.append(
+                Error(
+                    f"{model.__name__}.write_tier = {tier!r} on an org-anchored model.",
+                    hint="Org-anchored models derive the ORG write tier from org_via; "
+                    "only a platform-shared model (org_via = None) declares a tier.",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        elif tier == WRITE_OBJECT:
+            errors.append(
+                Error(
+                    f"{model.__name__}.write_tier = {tier!r} is reserved.",
+                    hint="The object-grant arm (WRITE_OBJECT) turns on with the clients "
+                    "cutover (ADR 0001 §2.5) — do not declare it before then.",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        elif tier != WRITE_SHARED:
+            errors.append(
+                Error(
+                    f"{model.__name__}.write_tier = {tier!r} is not a recognized tier.",
+                    hint=f"Recognized tiers are WRITE_SHARED ({WRITE_SHARED!r}) and "
+                    f"WRITE_OBJECT ({WRITE_OBJECT!r}, reserved until the clients cutover).",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+    return errors

@@ -267,16 +267,32 @@ def can(user: "User", perm: str, *, org: Any) -> bool:
 
 
 def can_obj(user: "User", perm: str, obj: "Model") -> bool:
-    """The single-row check *is* the row filter, applied to one row.
+    """The single-row write check — the row filter applied to one row.
 
-    WARNING (finding C1): on a platform-shared model (``org_via = None``)
-    ``visible`` applies the read rule — "holds the perm anywhere ⇒ all rows" —
-    so ``can_obj`` currently returns True for *every* row to any perm-holder.
-    Do not route platform-shared single-row *writes* through this until the C1
-    fix (object arm + fail-closed ``can_obj``) lands; until then it is the
-    org-scoped row filter only.
+    Write scope is chosen independently of read scope (RFC 0002 §Precondition):
+
+    * **ORG** (derived default for an org-anchored model, ``org_via`` not
+      ``None``) — the row must sit in an org the user can exercise *perm* in.
+      Unchanged from the pre-tier contract.
+    * **SHARED** (declared ``write_tier = WRITE_SHARED`` on a platform-shared
+      model) — any holder of *perm* anywhere may act (``can_anywhere``).
+      ``ClientProfile`` declares this to match ``main`` (RFC 0002 decision #1).
+    * **Fail-closed default** for a platform-shared model with no declared tier
+      (finding C1 / RFC 0002): the read rule never feeds an undeclared write —
+      only the global tier (``scopes`` is ALL) may act, until an object grant
+      covers the row once the object arm is wired at the clients cutover.
     """
-    return visible(obj.__class__._base_manager.filter(pk=obj.pk), user, perm).exists()
+    from common.models import OrgScoped, WRITE_SHARED
+
+    model = obj.__class__
+    if not issubclass(model, OrgScoped):
+        return False
+    if model.org_via is not None:
+        return visible(model._base_manager.filter(pk=obj.pk), user, perm).exists()
+    if model.write_tier == WRITE_SHARED:
+        return can_anywhere(user, perm)
+    s = scopes(user, perm)
+    return s is ALL
 
 
 def can_anywhere(user: "User", perm: str) -> bool:
