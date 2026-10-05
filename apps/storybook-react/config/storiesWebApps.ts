@@ -11,6 +11,14 @@ export const SHELTER_OPR_APP_DIR =
 
 export const REACT_APP_LIB_STORIES: StoriesSpecifier[] = [
   {
+    directory: join(
+      __dirname,
+      '../../../apps/wildfires/src/app/shared/components/survey',
+    ),
+    files: storyFileTypes,
+    titlePrefix: 'Web/Apps/Wildfires',
+  },
+  {
     directory: join(__dirname, SHELTER_APP_LIB_DIR),
     files: storyFileTypes,
     titlePrefix: 'Web/Apps/Shelter',

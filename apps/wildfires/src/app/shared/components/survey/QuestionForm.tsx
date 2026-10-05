@@ -1,101 +1,66 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { useContext } from 'react';
+import { useId } from 'react';
 import { SurveyRadio } from '../../../pages/introduction/firesSurvey/components/SurveyRadio';
 import { CheckboxGroup } from '../form/CheckboxGroup';
-import { SurveyContext } from './provider/SurveyContext';
-import { TAnswer, TOption, TQuestion } from './types';
+import { useSurvey } from './provider/SurveyContext';
+import { TAnswer, TQuestion } from './types';
 
-type IProps = {
+type Props = {
   className?: string;
   question: TQuestion;
-  answer?: string | string[];
+  answer?: TAnswer['result'];
   onAnswer: (answer: TAnswer) => void;
 };
 
-export function QuestionForm(props: IProps) {
-  const { className, question, answer, onAnswer } = props;
+export function QuestionForm({ className, question, answer, onAnswer }: Props) {
+  const { ui } = useSurvey();
+  const groupId = useId();
+  const groupCss = mergeCss([
+    'flex flex-wrap gap-x-4 gap-y-4 md:gap-y-8 justify-center',
+    className,
+  ]);
+  const optionCss = 'md:min-w-60 md:w-[300px] md:min-h-24';
 
-  const context = useContext(SurveyContext);
-
-  if (!context) {
-    throw new Error('SurveyContext must be used within a SurveyProvider');
+  function answerRadio(result: TAnswer<'radio'>['result']) {
+    onAnswer({ questionId: question.id, result });
   }
 
-  const { ui = {} } = context;
-  const { Checkbox } = ui;
-
-  const parentCss = [className];
-
-  function optionSelected(option: TOption) {
-    return answer === option.optionId;
+  function answerCheckbox(result: TAnswer<'checkbox'>['result']) {
+    onAnswer({ questionId: question.id, result });
   }
-
-  function onCheckboxChange(selected: string[]) {
-    onAnswer({
-      questionId: question.id,
-      result: selected,
-    });
-  }
-
-  const optionContainerCss = [
-    'flex',
-    'flex-wrap',
-    'gap-x-4',
-    'gap-y-4',
-    'md:gap-y-8',
-  ];
-
-  const optionCss = ['md:min-w-60', 'md:w-[300px]', 'md:min-h-24'];
-
-  const radioGroupCss = [optionContainerCss, 'justify-center', parentCss];
-
-  const checkboxGroupCss = [optionContainerCss, 'justify-center', parentCss];
 
   switch (question.type) {
     case 'radio':
       return (
-        <div className={mergeCss(radioGroupCss)}>
-          {question.options.map((option) => {
-            const selected = optionSelected(option);
-
-            return (
-              <SurveyRadio
-                className={mergeCss(optionCss)}
-                key={option.optionId}
-                name={option.optionId}
-                label={option.label}
-                selected={selected}
-                onChange={() => {
-                  onAnswer({
-                    questionId: question.id,
-                    result: option.optionId,
-                  });
-                }}
-              />
-            );
-          })}
+        <div role="radiogroup" aria-label={question.title} className={groupCss}>
+          {question.options.map((option) => (
+            <SurveyRadio
+              key={option.optionId}
+              className={optionCss}
+              name={groupId}
+              value={option.optionId}
+              label={option.label}
+              selected={answer === option.optionId}
+              onChange={answerRadio}
+            />
+          ))}
         </div>
       );
-    case 'checkbox': {
-      const options = question.options.map((option) => {
-        return {
-          label: option.label,
-          value: option.optionId,
-        };
-      });
-
+    case 'checkbox':
       return (
-        <CheckboxGroup
-          className={mergeCss(checkboxGroupCss)}
-          options={options}
-          values={answer as string[]}
-          onChange={onCheckboxChange}
-          CheckboxComponent={Checkbox}
-          checkboxCss={mergeCss(optionCss)}
-        />
+        <div role="group" aria-label={question.title}>
+          <CheckboxGroup
+            className={groupCss}
+            options={question.options.map((option) => ({
+              label: option.label,
+              value: option.optionId,
+            }))}
+            values={Array.isArray(answer) ? answer : []}
+            onChange={answerCheckbox}
+            CheckboxComponent={ui?.Checkbox}
+            checkboxCss={optionCss}
+          />
+        </div>
       );
-    }
-
-    default:
   }
 }
