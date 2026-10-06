@@ -1,3 +1,4 @@
+import { isNonNullish, unique } from 'remeda';
 import {
   INTAKE_FIELDS,
   type IntakeFieldDefinition,
@@ -15,18 +16,14 @@ export function needLabelsFromIntake(
 ): string[] {
   if (!intake) return [];
 
-  const labels: string[] = [];
-  for (const field of definitions) {
-    if (field.control !== 'multiselect' || !field.matching) continue;
-    const answer = intake[field.key];
-    if (!Array.isArray(answer)) continue;
-
-    for (const value of answer) {
-      const label = field.options.find(
-        (option) => option.value === value,
-      )?.label;
-      if (label && !labels.includes(label)) labels.push(label);
-    }
-  }
-  return labels;
+  return unique(
+    definitions.flatMap((field) => {
+      if (field.control !== 'multiselect' || !field.matching) return [];
+      const answer = intake[field.key];
+      if (!Array.isArray(answer)) return [];
+      return answer
+        .map((value) => field.options.find((o) => o.value === value)?.label)
+        .filter(isNonNullish);
+    }),
+  );
 }

@@ -1,3 +1,4 @@
+import { mapKeys } from 'remeda';
 import {
   INTAKE_FIELDS,
   getIntakeField,
@@ -93,15 +94,15 @@ export function decodeReferralNotes(
     const pii = parsed.PII ?? {};
     if (!isRecord(fields) || !isRecord(pii)) return { humanNotes, intake: {} };
 
-    const intake: Intake = {};
-    for (const [payloadKey, value] of Object.entries({ ...fields, ...pii })) {
-      const definition = definitions.find(
-        (field) =>
-          field.backend.mode === 'notesSidecar' &&
-          field.backend.payloadKey === payloadKey,
-      );
-      intake[definition?.key ?? payloadKey] = value;
-    }
+    const intake: Intake = mapKeys(
+      { ...fields, ...pii },
+      (payloadKey) =>
+        definitions.find(
+          (field) =>
+            field.backend.mode === 'notesSidecar' &&
+            field.backend.payloadKey === payloadKey,
+        )?.key ?? payloadKey,
+    );
     return { humanNotes, intake };
   } catch {
     // Do not expose malformed payloads. The original stored string is untouched.

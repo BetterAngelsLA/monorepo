@@ -1,3 +1,4 @@
+import { mapValues } from 'remeda';
 import {
   getIntakeField,
   isIntakeFieldValue,
@@ -46,14 +47,7 @@ function immutableValue(value: unknown): unknown {
 function immutableRecord(
   values: Readonly<StoredIntake>,
 ): Readonly<StoredIntake> {
-  return Object.freeze(
-    Object.fromEntries(
-      Object.entries(values).map(([key, value]) => [
-        key,
-        immutableValue(value),
-      ]),
-    ),
-  );
+  return Object.freeze(mapValues(values, immutableValue));
 }
 
 function readPersistedDraft(value: unknown): ReferralDraft | null {

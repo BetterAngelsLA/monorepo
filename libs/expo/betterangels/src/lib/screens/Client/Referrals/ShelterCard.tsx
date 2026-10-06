@@ -4,6 +4,7 @@ import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { partition } from 'remeda';
 import { matchTags, type TTag } from './shelterAttributes';
 
 // Reusable shelter sub-elements shared by the shelter picker and the
@@ -146,12 +147,9 @@ export function ShelterCard({
   // shelter offers that nobody asked about, a second-level consideration.
   // Without needs there is nothing to compare against and everything is
   // `other`, so collapsing would empty the row — show it as-is.
-  const relevant = hasNeeds
-    ? attributeTags.filter((tag) => tag.kind !== 'other')
-    : attributeTags;
-  const other = hasNeeds
-    ? attributeTags.filter((tag) => tag.kind === 'other')
-    : [];
+  const [relevant, other]: [TTag[], TTag[]] = hasNeeds
+    ? partition(attributeTags, (tag) => tag.kind !== 'other')
+    : [attributeTags, []];
   const visible = showOther ? [...relevant, ...other] : relevant;
 
   return (
