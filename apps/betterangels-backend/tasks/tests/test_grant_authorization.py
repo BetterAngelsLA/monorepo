@@ -20,7 +20,7 @@ from typing import Tuple
 from accounts.models import User
 from accounts.services import sync_roles
 from clients.models import ClientProfile
-from common.permissions.utils import PERMISSION_DENIED_MESSAGE
+from common.permissions.gates import PERMISSION_DENIED_MESSAGE
 from common.tests.utils import GraphQLBaseTestCase, make_legacy_only_holder
 from model_bakery import baker
 from notes.groups import CASEWORKER
@@ -238,7 +238,7 @@ class TaskGrantAuthorityDeniedTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixi
         self.assertEqual(refreshed.summary, "existing task")
 
     def test_create_task_with_an_unknown_organization_is_denied(self) -> None:
-        """``resolve_org_or_deny`` on the payload org fails closed — unknown is not found."""
+        """``org_or_deny`` on the payload org fails closed — unknown is not found."""
         self._login(self.org_1_case_manager_1)
         initial_count = Task.objects.count()
 
@@ -310,5 +310,8 @@ class TaskCreateCompatWindowTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
 
         task_count = Task.objects.count()
         response = self.create_task_fixture({"summary": "should not appear"}, include_organization=False)
-        self.assertIn("errors", response)
+        # The legacy arm runs the same resolver guard as the payload path, so it
+        # refuses with the same structured OperationInfo — not a bare
+        # ``PermissionError`` escaping as a top-level error.
+        self.assertGraphQLOperationInfo(response, "createTask", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertEqual(Task.objects.count(), task_count)

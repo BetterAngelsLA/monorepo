@@ -4,8 +4,7 @@ from typing import List, Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User as AccountUser
-from common.graphql.org import resolve_org_or_deny
-from common.permissions.utils import IsAuthenticated, require_can
+from common.permissions.gates import IsAuthenticated, org_or_deny, require_can
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -59,7 +58,7 @@ class Query:
         closed; an unknown org id fails closed.
         """
         user = cast(AccountUser, get_current_user(info))
-        org = resolve_org_or_deny(organization_id)
+        org = org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
         if start_date is None or end_date is None:

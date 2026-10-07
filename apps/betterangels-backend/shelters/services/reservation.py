@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict
 
-from common.permissions.utils import require_can
+from common.permissions.gates import require_can
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.utils import timezone

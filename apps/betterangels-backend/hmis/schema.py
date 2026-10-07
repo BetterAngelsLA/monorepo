@@ -12,7 +12,7 @@ from common.graphql.decorators import (
 )
 from common.graphql.types import DeletedObjectType
 from common.models import Location, PhoneNumber
-from common.permissions.utils import IsAuthenticated
+from common.permissions.gates import IsAuthenticated
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
 from django.contrib.contenttypes.models import ContentType

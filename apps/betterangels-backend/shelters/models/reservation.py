@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pghistory
-from common.models import BaseModel, OrgScoped
+from common.models import BaseModel, ScopedResource
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     pghistory.DeleteEvent("reservation.remove"),
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
 )
-class Reservation(OrgScoped, BaseModel):
+class Reservation(ScopedResource, BaseModel):
     org_via = ("bed", "room")
 
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")

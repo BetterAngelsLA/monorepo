@@ -12,7 +12,7 @@ from accounts.groups import ORG_ADMIN
 from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
-from common.permissions.utils import PERMISSION_DENIED_MESSAGE
+from common.permissions.gates import PERMISSION_DENIED_MESSAGE
 from common.tests.utils import make_legacy_only_holder
 from model_bakery import baker
 from teams.models import Team
@@ -156,7 +156,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
     def test_create_team_with_an_unknown_organization_is_denied(self) -> None:
-        """``resolve_org_or_deny`` on the payload org fails closed — unknown is not found.
+        """``org_or_deny`` on the payload org fails closed — unknown is not found.
 
         The read side of the shared resolver is pinned in the read suite; the
         mutation path (create carries the org in the payload, with no row to

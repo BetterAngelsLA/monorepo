@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from accounts.models import PermissionGroup, User
 from clients.models import ClientProfile
-from common.permissions.utils import assign_object_permissions
+from common.permissions.gates import assign_object_permissions
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from hmis.models import HmisClientProfile, HmisNote

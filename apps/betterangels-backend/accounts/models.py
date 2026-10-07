@@ -151,7 +151,7 @@ class PermissionGroup(Group):
 
     It *is* the group rather than pointing at one, so the group cannot outlive
     it.  That matters because object-level permissions are assigned to the group
-    (:func:`common.permissions.utils.assign_object_permissions`) and
+    (:func:`common.permissions.gates.assign_object_permissions`) and
     ``BigGroupObjectPermission`` cascades from it — an orphaned group would keep
     granting them with no row left to revoke through.  Inheritance makes the
     teardown a cascade Django's own collector performs, on a direct delete, a
@@ -362,11 +362,15 @@ class Grant(models.Model):
         ]
 
     def clean(self) -> None:
-        """A Grant must hold a scoped Role and, when object-scoped, be writable (E002/E003/E006).
+        """A Grant must hold a scoped Role and, when object-scoped, be writable (E002/E003/E006/E008).
 
         * A global Role is held in ``user.groups`` (the global tier), never in a
           Grant — a row referencing one is inert at best and confusing at worst
           (mirrors ``permissions.E002``).
+        * A scoped Role carrying a GLOBAL-class ability can never pass the
+          evaluators — the class answers at the global tier only — so the grant
+          must not admit it: the grant table never holds an ability the model
+          forbids (ADR 0004 layer 2; mirrors ``permissions.E008``).
         * Object grants are user-principal only and may only target whitelisted
           models (ADR 0001 §2.5): an org-principal object grant would make
           per-record authority org-granular — the guardian shape this model
@@ -391,6 +395,21 @@ class Grant(models.Model):
                     )
                 }
             )
+        if self.role is not None and not self.role.is_global:
+            from common.permissions.access import global_class_abilities
+
+            offender = next(global_class_abilities(self.role.permissions.select_related("content_type")), None)
+            if offender is not None:
+                permission, model = offender
+                raise ValidationError(
+                    {
+                        "role": (
+                            f"Role {self.role.name!r} carries GLOBAL-class ability "
+                            f"{permission.codename!r} on {model.__name__}; a scoped Grant "
+                            "cannot hold it (ADR 0004, permissions.E008)."
+                        )
+                    }
+                )
         if self.scope_object_type is not None:
             from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
 

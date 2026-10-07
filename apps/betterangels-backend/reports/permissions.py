@@ -4,12 +4,11 @@ Reports app DRF permissions.
 Reference: https://github.com/HackSoftware/Django-Styleguide#apis--serializers
 """
 
+from common.permissions.gates import org_or_none
+from common.permissions.registry import register_permission
 from common.permissions.selectors import can
-from common.permissions.utils import register_permission
-from common.utils import get_or_none
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from organizations.models import Organization
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -44,10 +43,10 @@ class HasReportAccess(BasePermission):
         if not org_id:
             return False
 
-        # Fail closed on an unknown or non-numeric org id (no DoesNotExist /
-        # ValueError — ``get_or_none`` is the house guard), then require the
-        # grant at that org.
-        org = get_or_none(Organization.objects.all(), org_id)
+        # Resolve the org id, failing closed on an unknown or malformed one
+        # (``org_or_none`` is the resolver-side house guard), then require
+        # the grant at that org.
+        org = org_or_none(org_id)
         if org is None:
             return False
 

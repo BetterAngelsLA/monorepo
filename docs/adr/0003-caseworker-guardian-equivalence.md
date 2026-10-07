@@ -32,8 +32,8 @@ record-creation time" — and the reason these cutovers are **not mechanical**
 
 The same class of problem applies to tasks and referrals; referrals add a second
 non-mechanical wrinkle (ADR §4.1): its "own org **or** via shelter" reach is
-inexpressible in today's `OrgScoped` (`org_via` is either `()` or a hop tuple,
-never both), so `OrgScoped` needs an `own_org_or` form before Referral can cut
+inexpressible in today's `ScopedResource` (`org_via` is either `()` or a hop tuple,
+never both), so `ScopedResource` needs an `own_org_or` form before Referral can cut
 over at all.
 
 ## Target model
@@ -44,7 +44,7 @@ scenario — caseworkers in orgs A and B read everyone's notes but write only th
 org's — is **ADR 0001 §2.9 Example 3**:
 
 1. **Org-owned rows** — CHANGE/DELETE ride the org role, org-scoped. The row's
-   own `organization` FK is the anchor (`org_via = ()`, `OrgScoped`): a
+   own `organization` FK is the anchor (`org_via = ()`, `ScopedResource`): a
    `can_obj(CHANGE, row)` resolves to the org-scoped `visible()` filter, so a
    caseworker only mutates rows whose org is the org they are acting as.
 2. **Shared / foreign rows** — per-record control via the **object arm**
@@ -132,7 +132,7 @@ org-scoped … Shared/foreign notes: per-record control via the object arm").
    org-level *data edge* remains future (ADR §7.4) — never an org-principal `Grant`
    (ADR §2.5).
 3. **Referral `own_org_or`** — **[open — prerequisite design, before Referral can cut
-   over]** `OrgScoped` needs an `own_org_or=("shelter",)`
+   over]** `ScopedResource` needs an `own_org_or=("shelter",)`
    declaration form before Referral cuts over (ADR §4.1). This RFC does not
    design the multi-path form; it is called out as a prerequisite. Note that
    `Referral.organization` **and** `Referral.shelter` are both nullable

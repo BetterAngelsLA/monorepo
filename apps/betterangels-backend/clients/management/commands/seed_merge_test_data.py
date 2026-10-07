@@ -327,6 +327,7 @@ class Command(BaseCommand):
         return team
 
     def _get_or_create_user(self) -> User:
+        user: User
         user, _ = User.objects.get_or_create(
             username="merge_test_user",
             defaults={

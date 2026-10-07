@@ -9,7 +9,6 @@ from typing import Optional, Union
 from common.permissions.config import TemplateConfig
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
 from organizations.models import Organization
 
 from .models import Grant, PermissionGroup, User
@@ -58,12 +57,6 @@ def permission_group_for_user(user: User, org_id: str, template_name: str) -> Pe
         raise ValidationError(
             f"Permission group for template '{template_name}' not found in organization with id '{org_id}'."
         )
-
-
-def get_permission_groups_for_org(org: Organization) -> QuerySet[PermissionGroup]:
-    """Return all :class:`~accounts.models.PermissionGroup` rows belonging to
-    *org*."""
-    return PermissionGroup.objects.filter(organization=org)
 
 
 def get_permission_group_for_org(

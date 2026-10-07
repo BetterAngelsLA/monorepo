@@ -22,8 +22,8 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
-from common.models import Attachment, BaseModel, OrgScoped, PhoneNumber, WRITE_SHARED
-from common.permissions.utils import PermissionSet
+from common.models import Access, Attachment, BaseModel, ScopedResource, PhoneNumber, WRITE_SHARED
+from common.permissions.registry import PermissionSet
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField
@@ -84,11 +84,12 @@ def get_client_profile_photo_file_path(instance: Model, filename: str) -> str:
     pghistory.UpdateEvent("hmis_profile.update"),
     pghistory.DeleteEvent("hmis_profile.remove"),
 )
-class HmisProfile(OrgScoped, BaseModel):
-    # The client family rides ClientProfile's tier (RFC 0002): platform-shared
-    # for reads, SHARED for writes — any holder of the permission may act.
+class HmisProfile(ScopedResource, BaseModel):
+    # The client family rides ClientProfile's write class (RFC 0002):
+    # platform-shared for reads, SHARED for writes — any holder of the
+    # permission may act.
     org_via = None
-    write_tier = WRITE_SHARED
+    access = Access(write=WRITE_SHARED)
 
     client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profiles")
     hmis_id = models.CharField(max_length=50)
@@ -171,13 +172,13 @@ class ClientProfileManager(models.Manager.from_queryset(ClientProfileQuerySet)["
     pghistory.UpdateEvent("client_profile.update"),
     pghistory.DeleteEvent("client_profile.remove"),
 )
-class ClientProfile(OrgScoped, AbstractClientProfile):
+class ClientProfile(ScopedResource, AbstractClientProfile):
     org_via = None  # platform-shared by product decision (ADR 0001 §2.3)
-    # SHARED write tier (RFC 0002 decision #1): client CHANGE/DELETE today come
+    # SHARED write class (RFC 0002 decision #1): client CHANGE/DELETE today come
     # from model-level perms on the CASEWORKER group (global-tier behavior in
     # disguise), so the cutover preserves that as "holds the permission
     # anywhere" — can_obj(user, clients.change_clientprofile, row) == can_anywhere.
-    write_tier = WRITE_SHARED
+    access = Access(write=WRITE_SHARED)
 
     objects = ClientProfileManager()  # hides merged profiles by default
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
@@ -278,10 +279,10 @@ class ClientDocument(Attachment):
     pghistory.UpdateEvent("social_media_profile.update"),
     pghistory.DeleteEvent("social_media_profile.remove"),
 )
-class SocialMediaProfile(OrgScoped, BaseModel):
-    # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
+class SocialMediaProfile(ScopedResource, BaseModel):
+    # Client family — ClientProfile's write class (RFC 0002), see HmisProfile.
     org_via = None
-    write_tier = WRITE_SHARED
+    access = Access(write=WRITE_SHARED)
 
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="social_media_profiles")
     platform = TextChoicesField(choices_enum=SocialMediaEnum)
@@ -293,10 +294,10 @@ class SocialMediaProfile(OrgScoped, BaseModel):
     pghistory.UpdateEvent("client_contact.update"),
     pghistory.DeleteEvent("client_contact.remove"),
 )
-class ClientContact(OrgScoped, BaseModel):
-    # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
+class ClientContact(ScopedResource, BaseModel):
+    # Client family — ClientProfile's write class (RFC 0002), see HmisProfile.
     org_via = None
-    write_tier = WRITE_SHARED
+    access = Access(write=WRITE_SHARED)
 
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
     name = models.CharField(max_length=100, null=True, blank=True)
@@ -312,10 +313,10 @@ class ClientContact(OrgScoped, BaseModel):
     pghistory.UpdateEvent("client_household_member.update"),
     pghistory.DeleteEvent("client_household_member.remove"),
 )
-class ClientHouseholdMember(OrgScoped, BaseModel):
-    # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
+class ClientHouseholdMember(ScopedResource, BaseModel):
+    # Client family — ClientProfile's write class (RFC 0002), see HmisProfile.
     org_via = None
-    write_tier = WRITE_SHARED
+    access = Access(write=WRITE_SHARED)
 
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="household_members")
     name = models.CharField(max_length=100, null=True, blank=True)

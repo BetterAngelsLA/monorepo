@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from accounts.models import Role, User
+from accounts.models import Grant, Role, User
 from accounts.services import grant_create, grant_delegate, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth.models import Permission
@@ -15,7 +15,18 @@ from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 from shelters.models import ContactInfo, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
 
-from common.permissions.selectors import ALL, can, can_anywhere, can_globally, can_obj, scopes, visible, writable
+from common.models import ACCESS_GLOBAL, WRITE_GLOBAL
+from common.permissions.selectors import (
+    ALL,
+    can,
+    can_anywhere,
+    can_globally,
+    can_model,
+    can_obj,
+    scopes,
+    visible,
+    writable,
+)
 
 
 class GrantSelectorsTestCase(TestCase):
@@ -110,7 +121,7 @@ class GrantSelectorsTestCase(TestCase):
         self.assertEqual(visible(ClientProfile.objects.all(), alice, ClientProfile.perms.VIEW).count(), 2)
 
     def test_unscoped_model_fails_closed(self) -> None:
-        """A model not yet declared OrgScoped is reachable by no one through visible()."""
+        """A model not yet declared ScopedResource is reachable by no one through visible()."""
         gso = baker.make(User)
         role_assign(user=gso, role=self.gso_role)
 
@@ -224,8 +235,43 @@ class GrantSelectorsTestCase(TestCase):
         self.assertFalse(can_obj(stranger, ClientProfile.perms.CHANGE, client))
         self.assertTrue(can_obj(admin, ClientProfile.perms.CHANGE, client))
 
+    def test_shared_write_paths_agree_with_the_read_rule(self) -> None:
+        """Pin the equivalence the declarative checkers rely on (consolidation guard).
+
+        For a WRITE_SHARED platform-shared model, ``writable`` and ``visible``
+        must admit the same rows for every principal — the ``can_anywhere``
+        checkers and the ``visible_rows_for_holder`` list hooks are only correct
+        while this equivalence holds (RFC 0002 SHARED class).
+        """
+        from clients.models import ClientProfile
+
+        client = baker.make(ClientProfile)
+        editor = baker.make(User)
+        client_role = Role.objects.create(name="Equivalence Editor", is_global=False)
+        perm = Permission.objects.get(
+            codename=ClientProfile.perms.CHANGE.split(".")[1], content_type__app_label="clients"
+        )
+        client_role.permissions.add(perm)
+        grant_create(user=editor, role=client_role, scope_org=self.org_a)
+
+        stranger = baker.make(User)
+        admin = baker.make(User, is_superuser=True)
+
+        qs = ClientProfile.objects.all()
+        for user in (editor, stranger, admin):
+            self.assertEqual(
+                set(writable(qs, user, ClientProfile.perms.CHANGE).values_list("pk", flat=True)),
+                set(visible(qs, user, ClientProfile.perms.CHANGE).values_list("pk", flat=True)),
+                f"writable()/visible() diverged for {user}",
+            )
+            self.assertEqual(
+                can_obj(user, ClientProfile.perms.CHANGE, client),
+                can_anywhere(user, ClientProfile.perms.CHANGE),
+                f"can_obj()/can_anywhere() diverged for {user}",
+            )
+
     def test_writable_fails_closed_for_undeclared_platform_shared(self) -> None:
-        """A platform-shared OrgScoped model with no write_tier: only the global tier.
+        """A platform-shared ScopedResource model with no declared write class: only the global tier.
 
         RFC 0002 §Precondition — the read rule never feeds an undeclared write
         (finding C1): a finite org-scoped holder gets the empty queryset (no
@@ -233,9 +279,9 @@ class GrantSelectorsTestCase(TestCase):
         tier (``scopes`` is ALL) gets the model's rows.  Rows without identity
         (unsaved) are never writable — creates have no row and use ``can``.
         """
-        from common.models import OrgScoped
+        from common.models import ScopedResource
 
-        class UndeclaredShared(OrgScoped):
+        class UndeclaredShared(ScopedResource):
             org_via = None
             objects: Any = models.Manager()
 
@@ -264,6 +310,109 @@ class GrantSelectorsTestCase(TestCase):
 
         self.assertTrue(can_anywhere(alice, ClientProfile.perms.VIEW))
         self.assertFalse(can_anywhere(stranger, ClientProfile.perms.VIEW))
+
+
+class AccessClassTestCase(TestCase):
+    """A model's declared ``access`` slot outranks org reach (ADR 0004).
+
+    ``ContactInfo`` declares the GLOBAL classes: the global tier sees every
+    row and a scoped holder of the very same permission sees none — for the
+    row filter (:func:`visible`), the single-row check (:func:`can_obj`), and
+    the rowless gate (:func:`can_model`) alike.
+    """
+
+    def setUp(self) -> None:
+        sync_roles()
+        self.org = organization_recipe.make(name="Access Class Org")
+        self.shelter = shelter_recipe.make(organization=self.org)
+        self.contact = baker.make(ContactInfo, shelter=self.shelter, contact_number="+12135551234")
+        self.shelter_role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        self.gso_role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
+
+    def _scoped_contact_reader(self) -> User:
+        """A scoped Grant holder that DOES carry the ContactInfo perm."""
+        alice = baker.make(User)
+        role = Role.objects.create(name="Scoped Contact Reader")
+        perm, _ = Permission.objects.get_or_create(
+            content_type=ContentType.objects.get_for_model(ContactInfo),
+            codename=ContactInfo.perms.VIEW.split(".")[1],
+            defaults={"name": "Can view contact info"},
+        )
+        role.permissions.add(perm)
+        # Created directly, not via ``grant_create``: admittance now refuses
+        # this binding (Grant.clean / permissions.E008), so a hand-made row is
+        # exactly the drift the evaluation layer must still refuse.
+        Grant.objects.create(principal_user=alice, role=role, scope_org=self.org)
+        return alice
+
+    def test_declaration_is_on_the_model(self) -> None:
+        self.assertEqual(ContactInfo.access.read, ACCESS_GLOBAL)
+        self.assertEqual(ContactInfo.access.write, WRITE_GLOBAL)
+        self.assertIsNone(Shelter.access.read)
+        self.assertIsNone(Shelter.access.write)
+
+    def test_global_class_visible_is_global_tier_only(self) -> None:
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+        scoped = self._scoped_contact_reader()
+
+        self.assertTrue(visible(ContactInfo.objects.all(), gso, ContactInfo.perms.VIEW).exists())
+        self.assertFalse(visible(ContactInfo.objects.all(), scoped, ContactInfo.perms.VIEW).exists())
+
+    def test_global_class_can_obj_is_global_tier_only(self) -> None:
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+        scoped = self._scoped_contact_reader()
+
+        self.assertTrue(can_obj(gso, ContactInfo.perms.VIEW, self.contact))
+        self.assertFalse(can_obj(scoped, ContactInfo.perms.VIEW, self.contact))
+
+    def test_can_model_reads_the_declaration(self) -> None:
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+        scoped = self._scoped_contact_reader()
+        stranger = baker.make(User)
+        bob = baker.make(User)
+        grant_create(user=bob, role=self.shelter_role, scope_org=self.org)
+
+        self.assertTrue(can_model(gso, ContactInfo.perms.CHANGE, ContactInfo))
+        # The scoped reader HOLDS view in its scope — the class still refuses it.
+        self.assertFalse(can_model(scoped, ContactInfo.perms.VIEW, ContactInfo))
+        self.assertFalse(can_model(stranger, ContactInfo.perms.VIEW, ContactInfo))
+        # Non-GLOBAL models keep today's can_anywhere semantics.
+        self.assertTrue(can_model(bob, Shelter.perms.VIEW, Shelter))
+
+    def test_global_tier_verdict_is_memoized_and_invalidated(self) -> None:
+        from common.permissions.selectors import ALL, invalidate_scope_cache, scopes
+
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+
+        self.assertIs(scopes(gso, Shelter.perms.VIEW), ALL)
+        self.assertIn(Shelter.perms.VIEW, gso.__dict__["_scope_cache"])
+        invalidate_scope_cache(gso)
+        self.assertNotIn("_scope_cache", gso.__dict__)
+
+    def test_object_write_class_fails_closed_even_on_an_org_anchored_model(self) -> None:
+        from unittest.mock import patch
+
+        from common.models import Access, WRITE_OBJECT
+        from common.permissions.selectors import writable
+
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+
+        with patch.object(Shelter, "access", Access(write=WRITE_OBJECT)):
+            self.assertFalse(writable(Shelter.objects.all(), gso, Shelter.perms.CHANGE).exists())
+
+    def test_can_model_fails_closed_for_an_undeclared_model(self) -> None:
+        from common.models import Attachment
+        from common.permissions.selectors import can_model
+
+        admin = baker.make(User, is_superuser=True)
+
+        self.assertFalse(can_model(admin, "common.view_attachment", Attachment))
+        self.assertTrue(can_model(admin, ContactInfo.perms.VIEW, ContactInfo))
 
 
 class CanGloballyTestCase(TestCase):

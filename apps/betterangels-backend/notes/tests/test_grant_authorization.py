@@ -22,8 +22,9 @@ from typing import Any, Dict, Tuple
 
 from accounts.models import User
 from accounts.services import sync_roles
-from common.permissions.utils import PERMISSION_DENIED_MESSAGE
+from common.permissions.gates import PERMISSION_DENIED_MESSAGE
 from common.tests.utils import make_legacy_only_holder
+from django.test import override_settings
 from model_bakery import baker
 from notes.groups import CASEWORKER
 from notes.models import Note, ServiceRequest
@@ -265,7 +266,7 @@ class NoteGrantAuthorityDeniedTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCas
         )
 
     def test_create_note_with_an_unknown_organization_is_denied(self) -> None:
-        """``resolve_org_or_deny`` on the payload org fails closed — unknown is not found."""
+        """``org_or_deny`` on the payload org fails closed — unknown is not found."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         initial_count = Note.objects.count()
 
@@ -381,5 +382,19 @@ class NoteCreateCompatWindowTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase)
 
         note_count = Note.objects.count()
         response = self._create_note_fixture({"purpose": "should not appear"})
+        self.assertGraphQLOperationInfo(response, "createNote", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
+        self.assertEqual(Note.objects.count(), note_count)
+
+    @override_settings(NOTES_ORGLESS_CREATE_COMPAT=False)
+    def test_strict_flip_refuses_orgless_creates(self) -> None:
+        """``NOTES_ORGLESS_CREATE_COMPAT=False`` closes the window.
+
+        An orgless payload then refuses like any other missing authority —
+        even for a caller holding the legacy group (ADR 0001 §5).
+        """
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        note_count = Note.objects.count()
+        response = self._create_note_fixture({"purpose": "no org"})
         self.assertGraphQLOperationInfo(response, "createNote", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertEqual(Note.objects.count(), note_count)

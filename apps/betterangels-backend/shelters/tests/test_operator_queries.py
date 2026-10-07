@@ -575,7 +575,7 @@ class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTes
     def setUp(self) -> None:
         super().setUp()
 
-        # HasOrgPerm checks org-scoped permissions, not global Django perms.
+        # The selectors check grant-scoped permissions, not global Django perms.
         # Grant view_shelter via a Role+Grant (ADR 0001).
         self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
 
@@ -817,7 +817,7 @@ class OperatorShelterPermissionTestCase(GraphQLBaseTestCase):
 class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
     """additionalContacts on operatorShelter is a global-tier (GSO-only) field.
 
-    The field reads the global tier only (``can_globally``): a scoped shelter
+    The field reads ContactInfo's declared GLOBAL class (``visible``): a scoped shelter
     operator — even with a VIEW grant — gets an empty list, while a Global
     Shelter Operator (whose global Role carries the ContactInfo perms) sees it.
     """
@@ -893,3 +893,38 @@ class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
         self.assertEqual(contacts[0]["contactEmail"], "ada@example.org")
         self.assertEqual(contacts[0]["contactTitle"], "Director")
         self.assertTrue(contacts[0]["isClaimant"])
+
+    def test_resolver_fallback_stays_closed_without_the_prefetch(self) -> None:
+        """Regression: the gate must not depend on the prefetch having run.
+
+        The field normally serves rows the ``prefetch_related`` hook already
+        filtered, so the gate is only as reliable as every resolution path
+        remembering the decorator — and a type-level prefetch is a query-plan
+        hint, not an enforced precondition.  Two things are pinned here: the
+        fallback filter hides the BA-only rows on an unprefetched parent, and
+        the resolver still routes through that filter rather than falling back
+        to the unfiltered manager.
+        """
+        import inspect
+
+        from shelters.types.outputs import OperatorShelterType, _visible_contacts
+
+        # The rule itself, on a parent that never went through the prefetch.
+        unprefetched = Shelter.objects.get(pk=self.shelter.pk)
+        self.assertEqual(list(_visible_contacts(unprefetched, self.org_1_case_manager_1)), [])
+        self.assertEqual(list(_visible_contacts(unprefetched, None)), [])
+
+        # Not a blanket deny: the global tier keeps the row.
+        role_assign(
+            user=self.org_1_case_manager_1,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
+        self.org_1_case_manager_1.refresh_from_db()
+        self.assertEqual(len(list(_visible_contacts(unprefetched, self.org_1_case_manager_1))), 1)
+
+        # The resolver must call it — a bare ``root.additional_contacts.all()``
+        # in the fallback is the regression this guards.
+        field = OperatorShelterType.__strawberry_definition__.get_field("additional_contacts")
+        resolver_src = inspect.getsource(field.base_resolver._unbound_wrapped_func)  # type: ignore[union-attr]
+        self.assertIn("_visible_contacts(", resolver_src)
+        self.assertNotIn("root.additional_contacts.all()", resolver_src)

@@ -6,7 +6,7 @@ import strawberry_django
 from accounts.models import Organization, User
 from accounts.types import OrganizationType
 from common.graphql.types import AuthorizedPresignedS3UploadsType, BulkDeleteInput, BulkDeleteResult, DeletedObjectType
-from common.permissions.utils import IsAuthenticated
+from common.permissions.gates import IsAuthenticated
 from django.db.models import Max, QuerySet
 from strawberry import ID
 from strawberry.types import Info

@@ -1,7 +1,7 @@
 import re
 from typing import TYPE_CHECKING, Any, Dict, cast
 
-from common.permissions.utils import require_can
+from common.permissions.gates import require_can
 from common.utils import get_by_pk_or_not_found
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction

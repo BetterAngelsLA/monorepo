@@ -3,7 +3,7 @@
 from typing import Any, Optional
 
 from admin_async_upload.models import AsyncFileField
-from common.models import BaseModel, OrgScoped
+from common.models import BaseModel, ScopedResource
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import RegexValidator
@@ -30,7 +30,7 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     return default_storage.get_available_name(file_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
 
 
-class ShelterPhoto(OrgScoped, BaseModel):
+class ShelterPhoto(ScopedResource, BaseModel):
     org_via = ("shelter",)
 
     file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
@@ -77,7 +77,7 @@ class ExteriorShelterPhoto(ShelterPhoto):
         super().save(*args, **kwargs)
 
 
-class Video(OrgScoped, BaseModel):
+class Video(ScopedResource, BaseModel):
     org_via = ("shelter",)
 
     file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
@@ -94,7 +94,7 @@ MEDIA_TYPE_VALIDATORS: dict[str, RegexValidator] = {
 }
 
 
-class MediaLink(OrgScoped, BaseModel):
+class MediaLink(ScopedResource, BaseModel):
     org_via = ("shelter",)
 
     url = models.URLField(max_length=255)

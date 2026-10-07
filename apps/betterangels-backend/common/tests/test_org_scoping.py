@@ -1,11 +1,11 @@
-"""Tests for ``OrgScoped.org_paths()`` (ADR 0001 §2.3).
+"""Tests for ``ScopedResource.org_paths()`` (ADR 0001 §2.3).
 
 Pins the lookup-path resolution against the real shelter models, plus the two
 declaration errors a model can make: a multi-valued hop and a hop onto a model
-that does not declare ``OrgScoped``.
+that does not declare ``ScopedResource``.
 """
 
-from common.models import OrgScoped
+from common.models import ScopedResource
 from django.db import models
 from django.test import TestCase
 from shelters.models import Bed, Reservation, Room, Shelter, ShelterPhoto
@@ -49,7 +49,7 @@ class OrgPathsTestCase(TestCase):
         self.assertEqual(ClientProfile.org_paths(), ())
 
     def test_a_multi_valued_hop_raises(self) -> None:
-        class MultiValued(OrgScoped):
+        class MultiValued(ScopedResource):
             org_via = ("teams",)
             teams = models.ManyToManyField("auth.Group")
 
@@ -61,7 +61,7 @@ class OrgPathsTestCase(TestCase):
             MultiValued.org_paths()
 
     def test_a_hop_to_an_unscoped_model_raises(self) -> None:
-        class PointsAtThing(OrgScoped):
+        class PointsAtThing(ScopedResource):
             org_via = ("thing",)
             thing = models.ForeignKey("auth.Group", on_delete=models.CASCADE)
 

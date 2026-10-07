@@ -6,11 +6,10 @@ from accounts.models import User
 from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
-from common.graphql.org import resolve_org_or_deny
 from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.selectors import can_obj
-from common.permissions.utils import IsAuthenticated, PERMISSION_DENIED_MESSAGE, require_can
+from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, org_or_deny, require_can
 from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from hmis.models import HmisClientProfile, HmisNote
@@ -52,10 +51,35 @@ class Mutation:
         task_data = asdict(data)
         organization_id = task_data.pop("organization_id", None)
 
-        # Resolve FK references
+        legacy_create = organization_id is None or organization_id is UNSET
+        if legacy_create:
+            # Compat window: a build that predates the payload org creates
+            # through its legacy ``CASEWORKER`` group — the org comes from the
+            # group, as before the cutover.  Dropped by the strict flip once
+            # the build sending ``organizationId`` is deployed.
+            try:
+                permission_group = resolve_permission_group(current_user, template=CASEWORKER)
+            except PermissionError:
+                # Same structured denial the removed ``HasPerm`` extension
+                # produced (the builtin ``PermissionError`` would escape as an
+                # unhandled error).
+                raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
+            org = permission_group.organization
+        else:
+            # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 1).
+            org = org_or_deny(organization_id)
+            require_can(current_user, Task.perms.ADD, org=org)
+
+        # Resolve FK references.  The Note is a scoped row: fetch it in the
+        # acting org — a foreign or missing note refuses alike (no existence
+        # oracle).  HmisNote / ClientProfile / HmisClientProfile are
+        # platform-shared rows (no org column to scope by): the create gate
+        # above is their authority.
         note = None
         if note_id := task_data.pop("note", None):
-            note = Note.objects.get(pk=str(note_id))
+            note = get_or_none(Note.objects.filter(organization=org), str(note_id))
+            if note is None:
+                raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 
         hmis_note = None
         if hmis_note_id := task_data.pop("hmis_note", None):
@@ -69,14 +93,10 @@ class Mutation:
         if hmis_client_profile_id := task_data.pop("hmis_client_profile", None):
             hmis_client_profile = HmisClientProfile.objects.get(pk=str(hmis_client_profile_id))
 
-        if organization_id is not None and organization_id is not UNSET:
-            # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 1).
-            organization = resolve_org_or_deny(organization_id)
-            require_can(current_user, Task.perms.ADD, org=organization)
-
-            tasks = task_create(
+        if legacy_create:
+            tasks = task_create_legacy(
                 user=current_user,
-                organization=organization,
+                permission_group=permission_group,
                 data=[task_data],
                 note=note,
                 hmis_note=hmis_note,
@@ -84,15 +104,9 @@ class Mutation:
                 hmis_client_profile=hmis_client_profile,
             )
         else:
-            # Compat window: a build that predates the payload org creates
-            # through its legacy ``CASEWORKER`` group — the org comes from the
-            # group, as before the cutover.  Dropped by the strict flip once
-            # the build sending ``organizationId`` is deployed.
-            permission_group = resolve_permission_group(current_user, template=CASEWORKER)
-
-            tasks = task_create_legacy(
+            tasks = task_create(
                 user=current_user,
-                permission_group=permission_group,
+                organization=org,
                 data=[task_data],
                 note=note,
                 hmis_note=hmis_note,
