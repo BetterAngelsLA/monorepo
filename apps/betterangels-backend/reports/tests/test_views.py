@@ -373,7 +373,7 @@ REPORT_SUMMARY_QUERY = """
 class TestExportIgnoresTheRequestTimeZone:
     """``django_timezone`` is a display signal; it must not move a report boundary.
 
-    A report is an organisation record.  If the cookie could shift the range, the
+    A report is an organization record.  If the cookie could shift the range, the
     same month would contain different rows for different viewers, and a download
     would disagree with the scheduled email covering the same period.
     """

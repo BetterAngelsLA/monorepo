@@ -153,7 +153,7 @@ class TestExportedCalendarIsVerifiable:
             "Notes",
         ]
 
-    def test_the_named_zone_matches_the_day_the_row_was_labelled_with(self) -> None:
+    def test_the_named_zone_matches_the_day_the_row_was_labeled_with(self) -> None:
         """The zone column names the calendar the label is actually written on."""
         row = self._rows(SITE_TZ)[0]
 
@@ -163,7 +163,7 @@ class TestExportedCalendarIsVerifiable:
         # so the label above is only correct because the zone says which one it is.
         assert self._rows(ZoneInfo("Asia/Tokyo"))[0]["Interacted At"] == "02/01/2025"
 
-    def test_the_utc_column_reproduces_the_labelled_day(self) -> None:
+    def test_the_utc_column_reproduces_the_labeled_day(self) -> None:
         """Invariant between the two renderings of one instant.
 
         Two dehydrate methods produce these columns, so nothing structurally stops
