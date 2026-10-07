@@ -34,8 +34,6 @@ class NoteResource(resources.ModelResource):
 
     client_id = fields.Field(column_name="Client ID")
     interacted_at = fields.Field(column_name="Interacted At")
-    interacted_at_utc = fields.Field(column_name="Interacted At (UTC)")
-    interacted_at_time_zone = fields.Field(column_name="Interacted At Time Zone")
     purpose = fields.Field(column_name="Purpose")
     requested_services = fields.Field(column_name="Requested Services")
     provided_services = fields.Field(column_name="Provided Services")
@@ -48,6 +46,12 @@ class NoteResource(resources.ModelResource):
         widget=ForeignKeyWidget(Organization, field="name"),
     )
     notes = fields.Field(column_name="Notes")
+
+    # Declared last to match where ``Meta.fields`` puts them.  The export order
+    # follows that tuple, not this one, so the two are kept in step rather than
+    # letting a reader assume the new columns sit beside ``interacted_at``.
+    interacted_at_utc = fields.Field(column_name="Interacted At (UTC)")
+    interacted_at_time_zone = fields.Field(column_name="Interacted At Time Zone")
 
     class Meta:
         model = Note
