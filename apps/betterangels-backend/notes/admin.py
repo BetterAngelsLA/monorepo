@@ -1,4 +1,6 @@
-from typing import Optional
+from datetime import UTC
+from typing import Any, Optional
+from zoneinfo import ZoneInfo
 
 from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
 from common.admin import AttachmentAdminMixin
@@ -23,8 +25,17 @@ from .models import (
 
 
 class NoteResource(resources.ModelResource):
+    """Notes as a CSV, for the admin export, the API download and the emailed report.
+
+    The calendar that decides which day a row falls on is the resource's
+    ``time_zone``, not whichever zone a request happened to activate: the same
+    month has to contain the same rows whether it was downloaded or emailed.
+    """
+
     client_id = fields.Field(column_name="Client ID")
     interacted_at = fields.Field(column_name="Interacted At")
+    interacted_at_utc = fields.Field(column_name="Interacted At (UTC)")
+    interacted_at_time_zone = fields.Field(column_name="Interacted At Time Zone")
     purpose = fields.Field(column_name="Purpose")
     requested_services = fields.Field(column_name="Requested Services")
     provided_services = fields.Field(column_name="Provided Services")
@@ -51,7 +62,30 @@ class NoteResource(resources.ModelResource):
             "team",
             "organization",
             "notes",
+            # Appended rather than placed beside ``interacted_at``: this resource
+            # is a contract for three callers, and a consumer reading by position
+            # is the only way adding a column can break one.
+            "interacted_at_utc",
+            "interacted_at_time_zone",
         )
+
+    def __init__(self, *args: Any, time_zone: ZoneInfo | None = None, **kwargs: Any) -> None:
+        """``time_zone`` names the calendar the rows are dated on.
+
+        Optional so that the Django admin, which instantiates this resource with no
+        kwargs, keeps working; it falls back to the site's zone, which is what the
+        admin's own requests already resolve to.
+        """
+        self._requested_time_zone = time_zone
+        self._time_zone: ZoneInfo | None = None
+        super().__init__(*args, **kwargs)
+
+    @property
+    def time_zone(self) -> ZoneInfo:
+        """The calendar in use, read once so every column agrees on it."""
+        if self._time_zone is None:
+            self._time_zone = self._requested_time_zone or timezone.get_default_timezone()
+        return self._time_zone
 
     def dehydrate_client_id(self, note: Note) -> int | str:
         if client_profile := note.client_profile:
@@ -60,7 +94,7 @@ class NoteResource(resources.ModelResource):
             return "MISSING CLIENT ID"
 
     def dehydrate_interacted_at(self, note: Note) -> Optional[str]:
-        """The row's calendar day on the site's clock.
+        """The row's calendar day on the resource's clock.
 
         Localised to the zone a request activated, this date moves with whoever
         ran the export — out of step with the range the rows were filtered on, and
@@ -68,7 +102,23 @@ class NoteResource(resources.ModelResource):
         """
         if not note.interacted_at:
             return None
-        return timezone.localtime(note.interacted_at, timezone.get_default_timezone()).strftime("%m/%d/%Y")
+        return timezone.localtime(note.interacted_at, self.time_zone).strftime("%m/%d/%Y")
+
+    def dehydrate_interacted_at_utc(self, note: Note) -> Optional[str]:
+        """The same instant, unambiguously, for anything that has to reprocess it.
+
+        ``Interacted At`` states a calendar without naming it.  This column lets a
+        consumer check which one it was rather than assume — and it is the only
+        column from which a different calendar could be derived, since the date
+        alone has no time to convert.
+        """
+        if not note.interacted_at:
+            return None
+        return note.interacted_at.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    def dehydrate_interacted_at_time_zone(self, note: Note) -> str:
+        """The IANA name of the calendar ``Interacted At`` was written on."""
+        return str(self.time_zone)
 
     def dehydrate_purpose(self, note: Note) -> Optional[str]:
         return note.purpose or None

@@ -43,7 +43,10 @@ def generate_report_data(report: ScheduledReport, start_date: date, end_date: da
             "interacted_at"
         )
 
-        resource = NoteResource()
+        # The report's rows are labelled on the same calendar they were selected
+        # on — see ``note_list_for_org``.  Naming it explicitly keeps the two from
+        # drifting apart if the resource's default ever changes.
+        resource = NoteResource(time_zone=timezone.get_default_timezone())
         dataset = resource.export(queryset=notes)
         filename = f"interaction_data_{month_str}_{year_str}.csv"
         return filename, dataset.csv, {"notes_count": notes.count()}
