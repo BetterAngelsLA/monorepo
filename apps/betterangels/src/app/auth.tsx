@@ -1,4 +1,8 @@
-import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
+import {
+  AuthContainer,
+  clearPersistedReferralDraft,
+  useUser,
+} from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import CookieManager from '@preeternal/react-native-cookie-manager';
@@ -29,6 +33,10 @@ export default function Auth() {
   useEffect(() => {
     setUser(undefined);
     CookieManager.clearAll();
+    // This screen is where an expired/401 session lands, which bypasses
+    // useSignOut. The referral draft can hold sensitive answers, so it is
+    // wiped on every session teardown, not only on an explicit sign-out.
+    clearPersistedReferralDraft();
   }, [setUser]);
 
   return (

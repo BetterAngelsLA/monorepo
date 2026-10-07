@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import CookieManager from '@preeternal/react-native-cookie-manager';
 import { cancelAllUploadRunners } from '../../providers/uploadProgress/uploadRunnerRegistry';
 import { useUser } from '../../providers/user/UserProvider';
-import { getPersistentReferralDraft } from '../../screens/Client/Referrals/referralDraftStorage';
+import { clearPersistedReferralDraft } from '../../screens/Client/Referrals/referralDraftStorage';
 
 export const LOGOUT_MUTATION = gql`
   mutation Logout {
@@ -24,19 +24,26 @@ export default function useSignOut() {
     // record this session no longer has any business touching.
     cancelAllUploadRunners();
 
+    // The referral draft is a single on-device record that can hold sensitive
+    // answers; it must not survive into another user's session. Clear it first,
+    // before any await that can reject, so a failed cookie/store cleanup cannot
+    // skip it.
+    clearPersistedReferralDraft();
+
     try {
       await logout();
     } catch (err) {
       console.error(err);
     }
-    await CookieManager.clearAll();
-    await client.clearStore();
-    // The next user must not inherit this one's organization.
-    clearActiveOrgId();
-    // The referral draft is a single on-device record that can hold sensitive
-    // answers; it must not survive into another user's session.
-    getPersistentReferralDraft().clear();
-    setUser(undefined);
+    try {
+      await CookieManager.clearAll();
+      await client.clearStore();
+    } finally {
+      // The next user must not inherit this one's organization, and the local
+      // session must end even if cleanup failed.
+      clearActiveOrgId();
+      setUser(undefined);
+    }
   }, [logout, setUser, client]);
 
   return { signOut, loading, error };

@@ -22,3 +22,19 @@ export function getPersistentReferralDraft(): ReferralDraftStore {
   }
   return store;
 }
+
+/**
+ * Best-effort wipe of the on-device draft, safe to call when none exists.
+ *
+ * Every session teardown must use this rather than `getPersistentReferralDraft()
+ * .clear()` directly: the draft holds unencrypted sensitive answers, and a
+ * throw from MMKV (or from anything that runs before it) must never leave it on
+ * a device the next user can sign in to.
+ */
+export function clearPersistedReferralDraft(): void {
+  try {
+    getPersistentReferralDraft().clear();
+  } catch (error) {
+    console.error('[referralDraftStorage] failed to clear the draft', error);
+  }
+}
