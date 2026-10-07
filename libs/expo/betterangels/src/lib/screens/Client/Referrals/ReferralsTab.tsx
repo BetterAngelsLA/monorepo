@@ -1,4 +1,4 @@
-import { useMutation } from '@apollo/client/react';
+import { useApolloClient, useMutation } from '@apollo/client/react';
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { useRouter } from 'expo-router';
 import { InfoIcon, PlusIcon } from '@monorepo/expo/shared/icons';
@@ -73,6 +73,7 @@ function ReferralsContent({ client, clientId }: TContentProps) {
   const { showModalScreen } = useModalScreen();
   const [helpVisible, setHelpVisible] = useState(false);
   const router = useRouter();
+  const apolloClient = useApolloClient();
 
   const {
     items: referrals,
@@ -83,6 +84,7 @@ function ReferralsContent({ client, clientId }: TContentProps) {
     error,
     loadMore,
     reload,
+    reloading,
   } = useInfiniteScrollQuery<
     ClientReferralsQuery['referrals']['results'][number],
     ClientReferralsQuery,
@@ -117,14 +119,13 @@ function ReferralsContent({ client, clientId }: TContentProps) {
 
       const referral = result.data?.createReferral;
       if (referral?.__typename === 'OperationInfo') {
+        // Only validation/permission messages are user-facing (see
+        // apps/betterangels-backend/docs/graphql_errors.md). `Error` is the
+        // catch-all kind and can carry raw exception text, so it is not shown.
         const operationErrors = extractOperationInfoMessages(
           result,
           'createReferral',
-          [
-            OperationMessageKind.Error,
-            OperationMessageKind.Validation,
-            OperationMessageKind.Permission,
-          ],
+          [OperationMessageKind.Validation, OperationMessageKind.Permission],
         );
 
         showSnackbar({
@@ -153,6 +154,14 @@ function ReferralsContent({ client, clientId }: TContentProps) {
 
       store.clear();
       closeForm();
+      // The referrals field is offset-merged, so refetching offset 0 after the
+      // new referral prepends itself rewrites every position. The shared merge
+      // (libs/apollo mergeObjectPayload) clears the slot it just wrote when ids
+      // move, which leaves `undefined` holes and drops the new row. Evicting
+      // first makes reload() rebuild the list instead of merging into a
+      // shifted one. Remove once the merge compacts shifted pages.
+      apolloClient.cache.evict({ fieldName: 'referrals' });
+      apolloClient.cache.gc();
       reload();
       return true;
     } catch (e) {
@@ -312,6 +321,8 @@ function ReferralsContent({ client, clientId }: TContentProps) {
           loadMore={loadMore}
           hasMore={hasMore}
           loadingMore={loadingMore}
+          onRefresh={reload}
+          refreshing={reloading}
           itemGap={0}
           ListHeaderComponent={
             hasDraft ? (

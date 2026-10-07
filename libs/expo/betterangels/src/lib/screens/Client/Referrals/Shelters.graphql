@@ -1,5 +1,9 @@
 query Shelters($pagination: OffsetPaginationInput) {
-  shelters(pagination: $pagination) {
+  # Explicit ordering: `shelters` has no model-level default ordering, and an
+  # unordered result set makes offset pages repeat or skip rows when the table
+  # changes (the picker pages 20 at a time). Newest first, matching the
+  # referrals list.
+  shelters(pagination: $pagination, ordering: [{ createdAt: DESC }]) {
     results {
       id
       name

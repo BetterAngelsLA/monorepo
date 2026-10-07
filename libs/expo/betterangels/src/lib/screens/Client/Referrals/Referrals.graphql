@@ -36,19 +36,10 @@ query ClientReferrals(
 
 mutation CreateReferral($data: CreateReferralInput!) {
   createReferral(data: $data) {
+    # The consumer only checks the payload type and the returned id (the list is
+    # refetched), so nothing else is requested.
     ... on ReferralType {
       id
-      status
-      createdAt
-      shelter {
-        id
-        name
-      }
-      createdBy {
-        id
-        firstName
-        lastName
-      }
     }
     ... on OperationInfo {
       messages {

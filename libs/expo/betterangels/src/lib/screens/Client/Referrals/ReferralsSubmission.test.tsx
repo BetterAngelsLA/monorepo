@@ -82,10 +82,6 @@ const created: CreateReferralMutation = {
   createReferral: {
     __typename: 'ReferralType',
     id: 'new-referral',
-    status: ReferralStatusEnum.Pending,
-    createdAt: '2026-09-07T12:00:00Z',
-    shelter,
-    createdBy: null,
   },
 };
 const newReferral: ClientReferralsQuery['referrals']['results'][number] = {
@@ -277,9 +273,13 @@ it('submits current answers once, consumes the draft only on success, and displa
   await act(async () => request.succeed({ data: created }));
   const card = await screen.findByTestId('referral-card-new-referral');
   expect(within(card).getByText(`Notes: ${answers.notes}`)).toBeOnTheScreen();
-  expect(within(card).getByText(/substances: ••••/)).toBeOnTheScreen();
-  expect(within(card).getByText(/selfcare: No/)).toBeOnTheScreen();
-  expect(within(card).getByText(/consent: true/)).toBeOnTheScreen();
+  expect(within(card).getByText(/Substances: ••••/)).toBeOnTheScreen();
+  expect(
+    within(card).getByText(/Able to practice self-care: No/),
+  ).toBeOnTheScreen();
+  expect(
+    within(card).getByText(/DHS data-sharing consent: Yes/),
+  ).toBeOnTheScreen();
   expect(screen.queryByText(new RegExp(answers.substances))).toBeNull();
   expect(store.getSnapshot()).toBeNull();
   expect(screen.queryByTestId('shelter-picker-screen')).toBeNull();
@@ -293,15 +293,57 @@ it('submits current answers once, consumes the draft only on success, and displa
   });
 });
 
-it.each([
-  OperationMessageKind.Permission,
-  OperationMessageKind.Validation,
-  OperationMessageKind.Error,
-])('preserves the draft and allows retry after a %s response', async (kind) => {
-  const { store, requests, refreshed, close } = setup();
+it.each([OperationMessageKind.Permission, OperationMessageKind.Validation])(
+  'preserves the draft and allows retry after a %s response',
+  async (kind) => {
+    const { store, requests, refreshed, close } = setup();
+    await openPicker();
+    const before = store.getSnapshot();
+    const request = await submit(requests);
+    await act(async () =>
+      request.succeed({
+        data: {
+          __typename: 'Mutation',
+          createReferral: {
+            __typename: 'OperationInfo',
+            messages: [
+              {
+                __typename: 'OperationMessage',
+                kind,
+                field: 'shelter',
+                message: 'Unable to submit this referral.',
+              },
+            ],
+          },
+        },
+      }),
+    );
+    expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
+      message: 'Unable to submit this referral.',
+      type: 'error',
+    });
+    expect(store.getSnapshot()).toBe(before);
+    expect(close).not.toHaveBeenCalled();
+    expect(refreshed).not.toHaveBeenCalled();
+    expect(screen.getByText('✓ Selected: Alpha House')).toBeOnTheScreen();
+    expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
+    const retry = await submit(requests, 2);
+    expect(retry.variables).toEqual(request.variables);
+    await act(async () => retry.succeed({ data: created }));
+    await screen.findByTestId('referral-card-new-referral');
+    expect(store.getSnapshot()).toBeNull();
+    expect(close).toHaveBeenCalledOnce();
+  },
+);
+
+it('does not surface an ERROR-kind OperationInfo message', async () => {
+  // `Error` is strawberry-django's catch-all kind and its message can be raw
+  // exception text, so only validation/permission messages reach the user.
+  const { store, requests } = setup();
   await openPicker();
   const before = store.getSnapshot();
   const request = await submit(requests);
+
   await act(async () =>
     request.succeed({
       data: {
@@ -311,30 +353,22 @@ it.each([
           messages: [
             {
               __typename: 'OperationMessage',
-              kind,
-              field: 'shelter',
-              message: 'Unable to submit this referral.',
+              kind: OperationMessageKind.Error,
+              field: null,
+              message: 'duplicate key value violates unique constraint',
             },
           ],
         },
       },
     }),
   );
+
   expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-    message: 'Unable to submit this referral.',
+    message: 'Error creating referral. Please try again.',
     type: 'error',
   });
   expect(store.getSnapshot()).toBe(before);
-  expect(close).not.toHaveBeenCalled();
-  expect(refreshed).not.toHaveBeenCalled();
-  expect(screen.getByText('✓ Selected: Alpha House')).toBeOnTheScreen();
   expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
-  const retry = await submit(requests, 2);
-  expect(retry.variables).toEqual(request.variables);
-  await act(async () => retry.succeed({ data: created }));
-  await screen.findByTestId('referral-card-new-referral');
-  expect(store.getSnapshot()).toBeNull();
-  expect(close).toHaveBeenCalledOnce();
 });
 
 it('keeps the draft after a network error and submits current answers when retried', async () => {
@@ -400,7 +434,6 @@ it.each<ApolloLink.Result<CreateReferralMutation>>([
       createReferral: {
         __typename: 'ReferralType',
         id: '',
-        createdAt: '2026-09-07T12:00:00Z',
       },
     },
   },
@@ -435,9 +468,7 @@ it("asks before replacing another client's draft and only replaces on confirm", 
   act(() => {
     store.startNew('another-client');
   });
-  const alertSpy = vi
-    .spyOn(Alert, 'alert')
-    .mockImplementation(() => undefined);
+  const alertSpy = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
 
   try {
     fireEvent.press(screen.getByTestId('create-referral-btn'));
