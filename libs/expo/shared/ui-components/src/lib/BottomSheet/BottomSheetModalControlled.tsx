@@ -112,8 +112,14 @@ export function BottomSheetModalControlled(props: TProps) {
   // Dismiss the sheet if this component unmounts while it is still open. The
   // provider owns the sheet lifecycle, so without this the sheet would linger
   // after its host component is gone (e.g. a per-item menu that unmounts).
+  //
+  // The ref isn't populated until the provider runs the sheet's render
+  // callback, so a host that unmounts before then leaves
+  // `dismissSheetFromState()` with nothing to dismiss. Clearing `isOpenRef`
+  // makes the render callback's staleness guard dismiss it if it runs later.
   useEffect(() => {
     return () => {
+      isOpenRef.current = false;
       dismissSheetFromState();
     };
   }, [dismissSheetFromState]);

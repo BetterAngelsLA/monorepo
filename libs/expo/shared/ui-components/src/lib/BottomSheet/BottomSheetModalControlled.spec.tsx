@@ -92,4 +92,25 @@ describe('BottomSheetModalControlled', () => {
 
     expect(closeSheet).toHaveBeenCalled();
   });
+
+  it('dismisses the sheet when unmounted before its render callback runs', async () => {
+    const { rerender, unmount } = render(<Controlled isOpen={false} />);
+    rerender(<Controlled isOpen={true} />);
+
+    // The host goes away BEFORE the provider renders (invokes) the sheet, so
+    // there is no `closeSheet` to call yet.
+    unmount();
+
+    const closeSheet = vi.fn();
+    act(() => {
+      mountSheetRender()({ closeSheet });
+    });
+
+    // The render callback's staleness guard defers the dismiss to a microtask.
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(closeSheet).toHaveBeenCalled();
+  });
 });
