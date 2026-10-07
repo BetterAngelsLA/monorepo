@@ -1,7 +1,7 @@
 """Output types for shelter queries and mutations."""
 
 from datetime import date, datetime
-from typing import List, Optional, cast
+from typing import Any, List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -293,11 +293,24 @@ class OperatorShelterType(ShelterTypeMixin):
 
         The field prefetches through :func:`_additional_contacts_prefetch`
         (``visible`` reads ContactInfo's access class), so the global tier sees
-        the rows and every org-scoped holder sees none — no call-site tier
-        check, no per-row refilter (ADR 0004).  Field-level (not
-        ``get_queryset``) so the probes run only when the field is selected.
+        the rows and every org-scoped holder sees none — the probes run once for
+        the whole page, and normally no per-row refilter is needed.  Field-level
+        (not ``get_queryset``) so the probes run only when the field is selected.
+
+        The prefetch is a query-plan hint, which makes the gate only as reliable
+        as every path that resolves this type remembering the decorator.  The
+        fallback below is what makes the field fail closed instead: when the
+        parent did not come through the prefetch, the visibility filter is
+        applied here rather than exposing the unfiltered manager.  A deliberate
+        ADR 0004-style trade — this field is BA-only, so a miss must not be able
+        to reveal contacts; the cost is one query on a path that should not
+        exist.
         """
-        return cast(List[ShelterContactInfoType], list(root.additional_contacts.all()))
+        user = get_current_user(info)
+        cached = getattr(root, "_prefetched_objects_cache", {}).get("additional_contacts")
+        if cached is not None:
+            return cast(List[ShelterContactInfoType], list(cached))
+        return cast(List[ShelterContactInfoType], list(_visible_contacts(root, user)))
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
@@ -325,13 +338,27 @@ def _reservation_clients_prefetch(info: Info) -> Prefetch:
     )
 
 
+def _visible_contacts(shelter: models.Shelter, user: Any) -> QuerySet[models.ContactInfo]:
+    """The contact rows *user* may see on *shelter* — the one place the rule lives.
+
+    ``visible`` reads ContactInfo's declared ``ACCESS_GLOBAL`` class, so the
+    global tier keeps the rows and every org-scoped holder (even one holding a
+    VIEW grant, which ``can_anywhere`` would admit) gets none.  Shared by the
+    field's prefetch and its resolver fallback so the two cannot disagree.
+    """
+    contact_qs: QuerySet[models.ContactInfo] = models.ContactInfo.objects.filter(shelter=shelter)
+    if user is None or not user.is_authenticated:
+        return contact_qs.none()
+    return visible(contact_qs, cast(User, user), models.ContactInfo.perms.VIEW)
+
+
 def _additional_contacts_prefetch(info: Info) -> Prefetch:
     """Prefetch additional contacts through their declared access class (ADR 0004).
 
     ``visible`` reads ContactInfo's ``ACCESS_GLOBAL`` declaration, so the
     prefetched rows are exactly what the field may show — the global tier's
     rows for the global tier, none for org-scoped holders — in one query for
-    the whole page, and the resolver never refilters.
+    the whole page.
     """
     user = get_current_user(info)
     contact_qs: QuerySet[models.ContactInfo] = models.ContactInfo.objects.all()
