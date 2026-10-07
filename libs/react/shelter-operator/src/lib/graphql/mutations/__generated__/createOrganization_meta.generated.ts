@@ -4,7 +4,9 @@ import type { CreateOrganizationMutation } from './createOrganization.generated'
 
 export const createOrganizationOperationKey: keyof Omit<CreateOrganizationMutation, '__typename'> = 'createOrganization';
 export const createOrganizationSuccessTypename: Extract<
-  NonNullable<CreateOrganizationMutation['createOrganization']>,
+  NonNullable<CreateOrganizationMutation['createOrganization']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateOrganizationMutation['createOrganization']>,
   { __typename: 'CreateOrganizationResponse' }
 >['__typename'] = 'CreateOrganizationResponse';
 

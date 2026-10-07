@@ -72,7 +72,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
             purpose="Test Note",
         )
         self.permission_group = MagicMock()
-        self.permission_group.group = MagicMock()
+        self.permission_group = MagicMock()
 
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
@@ -176,12 +176,12 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
 
         self.assertEqual(mock_assign.call_count, 2)
         mock_assign.assert_any_call(
-            self.permission_group.group,
+            self.permission_group,
             att1,
             [Attachment.perms.DELETE, Attachment.perms.CHANGE],
         )
         mock_assign.assert_any_call(
-            self.permission_group.group,
+            self.permission_group,
             att2,
             [Attachment.perms.DELETE, Attachment.perms.CHANGE],
         )

@@ -8,16 +8,16 @@ export type AdminTeamsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AdminTeamsQuery = { __typename?: 'Query', teams: { __typename?: 'TeamTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: DateTimeString }> } };
+export type AdminTeamsQuery = { __typename: 'Query', teams: { __typename: 'TeamTypeOffsetPaginated', totalCount: number, results: Array<{ __typename: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: DateTimeString }> } };
 
 export type CreateTeamMutationVariables = Types.Exact<{
   data: Types.CreateTeamInput;
 }>;
 
 
-export type CreateTeamMutation = { __typename?: 'Mutation', createTeam:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: DateTimeString }
+export type CreateTeamMutation = { __typename: 'Mutation', createTeam:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: DateTimeString }
    };
 
 export type UpdateTeamMutationVariables = Types.Exact<{
@@ -25,9 +25,9 @@ export type UpdateTeamMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateTeamMutation = { __typename?: 'Mutation', updateTeam:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: DateTimeString }
+export type UpdateTeamMutation = { __typename: 'Mutation', updateTeam:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: DateTimeString }
    };
 
 export type DeleteTeamMutationVariables = Types.Exact<{
@@ -35,9 +35,9 @@ export type DeleteTeamMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteTeamMutation = { __typename?: 'Mutation', deleteTeam:
-    | { __typename?: 'DeletedObjectType' }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteTeamMutation = { __typename: 'Mutation', deleteTeam:
+    | { __typename: 'DeletedObjectType' }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.selectors import resolve_permission_group
 from clients.enums import ErrorCodeEnum
 from clients.models import (
     ClientContact,
@@ -19,21 +18,22 @@ from clients.models import (
 from clients.services import client_document, client_profile_photo
 from common.services.types import UploadRequest, UploadConfirmation
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
+from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
     AuthorizedPresignedS3UploadType,
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
+from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment, PhoneNumber
-from common.permissions.utils import IsAuthenticated, assign_object_permissions
+from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import ForeignKey, Prefetch
+from django.db.models import ForeignKey, Prefetch, QuerySet
 from graphql import GraphQLError
-from notes.groups import CASEWORKER
 from phonenumber_field.validators import validate_international_phonenumber
 from strawberry.scalars import JSON
 from strawberry.types import Info
@@ -57,7 +57,6 @@ from .types import (
     ClientProfileImportRecordType,
     ClientProfilePhotoInput,
     ClientProfileType,
-    CreateClientDocumentInput,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
     GenerateClientDocumentUploadsInput,
@@ -592,42 +591,19 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=SocialMediaProfile.perms.DELETE)],
     )
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
-    def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
-        with transaction.atomic():
-            user = cast(User, get_current_user(info))
-            client_profile = filter_for_user(
-                ClientProfile.objects.all(),
-                user,
-                [ClientProfile.perms.CHANGE],
-            ).get(id=data.client_profile)
-
-            permission_group = resolve_permission_group(user, template=CASEWORKER)
-
-            content_type = ContentType.objects.get_for_model(ClientProfile)
-            client_document = Attachment.objects.create(
-                file=data.file,
-                namespace=data.namespace,
-                content_type=content_type,
-                object_id=client_profile.id,
-                uploaded_by=user,
-            )
-
-            permissions = [
-                Attachment.perms.DELETE,
-                Attachment.perms.CHANGE,
-            ]
-            assign_object_permissions(permission_group.group, client_document, permissions)
-
-            return cast(ClientDocumentType, client_document)
-
-    delete_client_document: ClientDocumentType = mutations.delete(
-        DeleteDjangoObjectInput,
+    @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[
-            HasRetvalPerm(perms=Attachment.perms.DELETE),
+            PermissionedQuerySet(model=Attachment, perms=[Attachment.perms.DELETE]),
         ],
     )
+    def delete_client_document(self, info: Info, data: DeleteDjangoObjectInput) -> ClientDocumentType:
+        qs: QuerySet[Attachment] = info.context.qs
+        client_document = get_object_or_permission_error(
+            qs, data.id, error_message="You do not have permission to delete this document."
+        )
+
+        return cast(ClientDocumentType, resolvers.delete(info, client_document))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],

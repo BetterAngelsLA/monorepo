@@ -36,7 +36,7 @@ export function ReportsView({ shelterId }: { shelterId?: string }) {
 
   return (
     <div className="mt-6 flex flex-col gap-6 px-6 pb-10">
-      <ReportFilterBar />
+      <ReportFilterBar shelterId={shelterId} />
 
       <ReservationStatusChanges
         metrics={metrics?.reservationMetrics}

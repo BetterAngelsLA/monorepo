@@ -7,9 +7,9 @@ export type DeleteTaskMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteTaskMutation = { __typename?: 'Mutation', deleteTask:
-    | { __typename?: 'DeletedObjectType', id: number }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteTaskMutation = { __typename: 'Mutation', deleteTask:
+    | { __typename: 'DeletedObjectType', id: number }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

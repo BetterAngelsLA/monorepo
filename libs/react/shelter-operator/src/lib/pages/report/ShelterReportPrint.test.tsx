@@ -4,7 +4,7 @@ import { ShelterReportPrint } from './ShelterReportPrint';
 import type { ShelterReportData } from './types';
 
 function makeReport(
-  overrides: Partial<ShelterReportData> = {}
+  overrides: Partial<ShelterReportData> = {},
 ): ShelterReportData {
   return {
     id: '1',
@@ -48,7 +48,9 @@ describe('ShelterReportPrint', () => {
     render(<ShelterReportPrint data={makeReport()} />);
 
     expect(
-      within(screen.getByRole('banner')).getByText('Downtown Emergency Shelter')
+      within(screen.getByRole('banner')).getByText(
+        'Downtown Emergency Shelter',
+      ),
     ).toBeTruthy();
   });
 

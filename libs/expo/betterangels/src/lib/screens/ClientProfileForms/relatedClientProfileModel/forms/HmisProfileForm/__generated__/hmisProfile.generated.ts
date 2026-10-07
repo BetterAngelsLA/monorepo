@@ -7,9 +7,9 @@ export type UpdateHmisProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateHmisProfileMutation = { __typename?: 'Mutation', updateHmisProfile:
-    | { __typename?: 'HmisProfileType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateHmisProfileMutation = { __typename: 'Mutation', updateHmisProfile:
+    | { __typename: 'HmisProfileType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type CreateHmisProfileMutationVariables = Types.Exact<{
@@ -17,9 +17,9 @@ export type CreateHmisProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateHmisProfileMutation = { __typename?: 'Mutation', createHmisProfile:
-    | { __typename?: 'HmisProfileType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CreateHmisProfileMutation = { __typename: 'Mutation', createHmisProfile:
+    | { __typename: 'HmisProfileType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

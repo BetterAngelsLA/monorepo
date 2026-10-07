@@ -9,8 +9,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model
 from django.http import HttpRequest
 from django.urls import reverse
-from django.utils.html import format_html
-from django.utils.safestring import SafeString
+from django.utils.html import format_html_join
+from django.utils.safestring import SafeString, mark_safe
 
 
 class AttachmentAdminMixin:
@@ -19,14 +19,14 @@ class AttachmentAdminMixin:
             content_type=ContentType.objects.get_for_model(obj),
             object_id=obj.pk,
         )
-        attachment_links = [
-            '<a href="{}">{}</a>'.format(
-                reverse("admin:common_attachment_change", args=(attachment.id,)),
-                f"Attachment {attachment.id}: {attachment}",
-            )
-            for attachment in attachments
-        ]
-        return format_html("<br>".join(attachment_links))
+        return format_html_join(
+            mark_safe("<br>"),
+            '<a href="{}">Attachment {}: {}</a>',
+            (
+                (reverse("admin:common_attachment_change", args=(attachment.id,)), attachment.id, attachment)
+                for attachment in attachments
+            ),
+        )
 
 
 class LocationNoteAdminMixin:
@@ -34,29 +34,23 @@ class LocationNoteAdminMixin:
         Note = apps.get_model("notes", "Note")
         notes = list(Note.objects.filter(location=obj))
 
-        note_links = [
-            '<a href="{}">{}</a>'.format(
-                reverse("admin:notes_note_change", args=(note.id,)),
-                f"Note {note.id}: {note}",
-            )
-            for note in notes
-        ]
-        return format_html("<br>".join(note_links))
+        return format_html_join(
+            mark_safe("<br>"),
+            '<a href="{}">Note {}: {}</a>',
+            ((reverse("admin:notes_note_change", args=(note.id,)), note.id, note) for note in notes),
+        )
 
 
 class LocationTaskAdminMixin:
     def tasks(self, obj: Location) -> SafeString:
-        Task = apps.get_model("notes", "Task")
-        tasks = list(Task.objects.filter(location=obj))
+        Task = apps.get_model("tasks", "Task")
+        tasks = list(Task.objects.filter(note__location=obj))
 
-        task_links = [
-            '<a href="{}">{}</a>'.format(
-                reverse("admin:notes_task_change", args=(task.id,)),
-                f"Task {task.id}: {task}",
-            )
-            for task in tasks
-        ]
-        return format_html("<br>".join(task_links))
+        return format_html_join(
+            mark_safe("<br>"),
+            '<a href="{}">Task {}: {}</a>',
+            ((reverse("admin:tasks_task_change", args=(task.id,)), task.id, task) for task in tasks),
+        )
 
 
 @admin.register(Attachment)

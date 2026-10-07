@@ -3,6 +3,7 @@ import { ReactElement } from 'react';
 
 type IProps = {
   name: string;
+  value: string;
   label?: string;
   selected?: boolean;
   onChange: (value: string) => void;
@@ -10,7 +11,7 @@ type IProps = {
 };
 
 export function SurveyRadio(props: IProps): ReactElement {
-  const { name, label, onChange, selected, className } = props;
+  const { name, value, label, onChange, selected, className } = props;
 
   const parentCss = [
     'flex',
@@ -47,15 +48,20 @@ export function SurveyRadio(props: IProps): ReactElement {
       <input
         type="radio"
         name={name}
-        value={name}
+        value={value}
         checked={selected}
         onChange={(e) => onChange(e.target.value)}
-        className="hidden"
+        className="sr-only peer"
       />
-      <div className={mergeCss(circleCss)}>
+      <div
+        className={mergeCss([
+          circleCss,
+          'peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2',
+        ])}
+      >
         <div className={mergeCss(circleInnerCss)}></div>
       </div>
-      <div className={mergeCss(labelCss)}>{label || name}</div>
+      <div className={mergeCss(labelCss)}>{label || value}</div>
     </label>
   );
 }

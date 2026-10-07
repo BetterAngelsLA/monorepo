@@ -1,11 +1,16 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from accounts.models import Role
+from accounts.role_manager import OrgRoleManager
+from accounts.services import grant_create
 from accounts.tests.baker_recipes import organization_recipe
+from django.contrib.auth.models import Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import ShelterPhotoTypeChoices
+from shelters.groups import SHELTER_OPERATOR
 from shelters.models import ShelterPhoto
 from shelters.services.shelter_photo import (
     SHELTER_PHOTO_CONFIG,
@@ -47,9 +52,11 @@ class ValidateContentTypeTest(TestCase):
 class CreatePresignedUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
-        self.org: Any = organization_recipe.make()
+        self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.org.users.add(self.user)
+        # Photo services authorize through a Grant (ADR 0001 §2.4).
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
     @patch("common.services.file_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_shelter_photo_config(self, mock_generic: MagicMock) -> None:
@@ -58,7 +65,6 @@ class CreatePresignedUploadsTest(TestCase):
 
         create_presigned_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=uploads,
         )
@@ -86,7 +92,6 @@ class CreatePresignedUploadsTest(TestCase):
 
         result = create_presigned_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[UploadRequest(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")],
         )
@@ -105,7 +110,6 @@ class CreatePresignedUploadsTest(TestCase):
 
         result = create_presigned_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[
                 UploadRequest(ref_id="ref-1", filename="a.jpg", mime_type="image/jpeg"),
@@ -124,9 +128,11 @@ class CreatePresignedUploadsTest(TestCase):
 class ResolveUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
-        self.org: Any = organization_recipe.make()
+        self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.org.users.add(self.user)
+        # Photo services authorize through a Grant (ADR 0001 §2.4).
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
     @patch("shelters.services.shelter_photo.validate_upload_batch")
     def test_creates_shelter_photo_record(self, mock_validate: MagicMock) -> None:
@@ -141,7 +147,6 @@ class ResolveUploadsTest(TestCase):
 
         result = resolve_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[
                 ShelterPhotoResolveItem(
@@ -163,7 +168,6 @@ class ResolveUploadsTest(TestCase):
 
         result = resolve_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[
                 ShelterPhotoResolveItem(
@@ -187,7 +191,6 @@ class ResolveUploadsTest(TestCase):
 
         result = resolve_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[
                 ShelterPhotoResolveItem(
@@ -213,7 +216,6 @@ class ResolveUploadsTest(TestCase):
 
         resolve_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[
                 ShelterPhotoResolveItem(
@@ -242,7 +244,6 @@ class ResolveUploadsTest(TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid or expired upload signature for 'bad.jpg'"):
             resolve_uploads(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 shelter_id=self.shelter.pk,
                 photos=[
                     ShelterPhotoResolveItem(
@@ -264,15 +265,17 @@ class ResolveUploadsTest(TestCase):
 class DeleteShelterPhotosTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
-        self.org: Any = organization_recipe.make()
+        self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.org.users.add(self.user)
+        # Photo services authorize through a Grant (ADR 0001 §2.4).
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
     def test_deletes_single_photo(self) -> None:
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
         other = baker.make(ShelterPhoto, shelter=self.shelter)
 
-        result = delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo.pk])
+        result = delete_shelter_photos(user=self.user, ids=[photo.pk])
 
         self.assertEqual(result, [photo.pk])
         self.assertFalse(ShelterPhoto.objects.filter(pk=photo.pk).exists())
@@ -283,7 +286,7 @@ class DeleteShelterPhotosTest(TestCase):
         photo2 = baker.make(ShelterPhoto, shelter=self.shelter)
         other = baker.make(ShelterPhoto, shelter=self.shelter)
 
-        result = delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo1.pk, photo2.pk])
+        result = delete_shelter_photos(user=self.user, ids=[photo1.pk, photo2.pk])
 
         self.assertCountEqual(result, [photo1.pk, photo2.pk])
         self.assertFalse(ShelterPhoto.objects.filter(pk__in=[photo1.pk, photo2.pk]).exists())
@@ -293,7 +296,7 @@ class DeleteShelterPhotosTest(TestCase):
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
 
         with self.assertRaisesRegex(Exception, "999999"):
-            delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo.pk, 999999])
+            delete_shelter_photos(user=self.user, ids=[photo.pk, 999999])
 
     def test_raises_for_unauthorized_photo(self) -> None:
         other_org: Any = organization_recipe.make()
@@ -304,7 +307,6 @@ class DeleteShelterPhotosTest(TestCase):
         with self.assertRaisesRegex(Exception, str(unauthorized.pk)):
             delete_shelter_photos(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 ids=[authorized.pk, unauthorized.pk],
             )
 
@@ -313,7 +315,7 @@ class DeleteShelterPhotosTest(TestCase):
         initial_count = ShelterPhoto.objects.count()
 
         with self.assertRaisesRegex(ObjectDoesNotExist, "999999"):
-            delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo.pk, 999999])
+            delete_shelter_photos(user=self.user, ids=[photo.pk, 999999])
 
         self.assertEqual(ShelterPhoto.objects.count(), initial_count)
 
@@ -327,7 +329,6 @@ class DeleteShelterPhotosTest(TestCase):
         with self.assertRaisesRegex(ObjectDoesNotExist, str(unauthorized.pk)):
             delete_shelter_photos(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 ids=[authorized.pk, unauthorized.pk],
             )
 
@@ -341,10 +342,12 @@ class DeleteShelterPhotosTest(TestCase):
 
 class UpdateShelterPhotoTest(TestCase):
     def setUp(self) -> None:
-        self.org: Any = organization_recipe.make()
+        self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.user: Any = baker.make("accounts.User")
         self.user.organizations_organization.add(self.org)
         self.shelter: Any = shelter_recipe.make(organization=self.org)
+        # Photo services authorize through a Grant (ADR 0001 §2.4).
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
     def _input(self, photo_id: int, photo_type: ShelterPhotoTypeChoices) -> UpdateShelterPhotoInput:
         return UpdateShelterPhotoInput(id=ID(str(photo_id)), photo_type=photo_type)
@@ -354,7 +357,6 @@ class UpdateShelterPhotoTest(TestCase):
 
         result = update_shelter_photo(
             user=self.user,
-            organization_id=str(self.org.pk),
             data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR),
         )
 
@@ -366,7 +368,6 @@ class UpdateShelterPhotoTest(TestCase):
         with self.assertRaisesRegex(Exception, "999999"):
             update_shelter_photo(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 data=self._input(999999, ShelterPhotoTypeChoices.EXTERIOR),
             )
 
@@ -378,8 +379,75 @@ class UpdateShelterPhotoTest(TestCase):
         with self.assertRaisesRegex(Exception, str(photo.pk)):
             update_shelter_photo(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR),
+            )
+
+        photo.refresh_from_db()
+        self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)
+
+
+# ---------------------------------------------------------------------------
+# Permission gating (Shelter.perms.CHANGE required)
+# ---------------------------------------------------------------------------
+
+
+class ShelterPhotoServicePermissionTestCase(TestCase):
+    """Photo services are gated on Shelter.perms.CHANGE.
+
+    A read-only viewer (VIEW grant only, no CHANGE) is indistinguishable from
+    a missing shelter on every photo write path (ADR 0001 §2.6): all four
+    operations raise ``ObjectDoesNotExist`` and nothing is created or deleted.
+    """
+
+    def setUp(self) -> None:
+        self.user: Any = baker.make("accounts.User")
+        self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        self.shelter: Any = shelter_recipe.make(organization=self.org)
+        self.org.users.add(self.user)
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
+
+        self.viewer: Any = baker.make("accounts.User")
+        self.org.users.add(self.viewer)
+        role, _ = Role.objects.get_or_create(name="Test Photo Viewer", is_global=False)
+        role.permissions.add(Permission.objects.get(codename="view_shelter", content_type__app_label="shelters"))
+        grant_create(user=self.viewer, role=role, scope_org=self.org)
+
+    def test_create_presigned_uploads_denied_without_change_permission(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist):
+            create_presigned_uploads(
+                user=self.viewer,
+                shelter_id=str(self.shelter.pk),
+                uploads=[UploadRequest(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")],
+            )
+
+    @patch("shelters.services.shelter_photo.validate_upload_batch")
+    def test_resolve_uploads_denied_without_change_permission(self, mock_validate: MagicMock) -> None:
+        mock_validate.return_value = []
+
+        with self.assertRaises(ObjectDoesNotExist):
+            resolve_uploads(
+                user=self.viewer,
+                shelter_id=str(self.shelter.pk),
+                photos=[],
+            )
+
+        self.assertEqual(ShelterPhoto.objects.count(), 0)
+
+    def test_delete_photos_denied_without_change_permission(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter)
+
+        with self.assertRaises(ObjectDoesNotExist):
+            delete_shelter_photos(user=self.viewer, ids=[photo.pk])
+
+        self.assertTrue(ShelterPhoto.objects.filter(pk=photo.pk).exists())
+
+    def test_update_photo_denied_without_change_permission(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter, type=ShelterPhotoTypeChoices.INTERIOR)
+
+        with self.assertRaises(ObjectDoesNotExist):
+            update_shelter_photo(
+                user=self.viewer,
+                data=UpdateShelterPhotoInput(id=ID(str(photo.pk)), photo_type=ShelterPhotoTypeChoices.EXTERIOR),
             )
 
         photo.refresh_from_db()

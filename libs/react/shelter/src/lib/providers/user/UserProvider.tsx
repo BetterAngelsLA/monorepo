@@ -1,8 +1,9 @@
-import { createUserProvider } from '@monorepo/ba-platform';
 import {
+  createUserProvider,
   CurrentOrgUserDocument,
   type CurrentOrgUserQuery,
 } from '@monorepo/ba-platform';
+import { isPermission } from '@monorepo/ba-platform/permissions';
 import type { TUser } from './UserContext';
 
 const { UserProvider, useUser } = createUserProvider({
@@ -18,6 +19,11 @@ const { UserProvider, useUser } = createUserProvider({
       email: user.email,
       organization: user.organizations?.[0] ?? undefined,
       organizations: user.organizations ?? null,
+      // Backend permission strings are ``app.codename``; keep only the ones
+      // the frontend models (PermissionEnum), as ba-platform's
+      // currentUserProvider does, so an unknown backend permission can never
+      // be gated on.
+      permissions: user.permissions.filter(isPermission),
     };
   },
   isUnauthenticated: (errors) =>

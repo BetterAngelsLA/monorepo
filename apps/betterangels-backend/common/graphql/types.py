@@ -1,14 +1,9 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional, Tuple, cast
+from typing import Any, Mapping, NewType, Optional, cast
 
 import strawberry
 import strawberry_django
-from common.constants import PHONE_NUMBER_REGEX
-from common.enums import ImagePresetEnum
-from common.images import build_img_url
-from common.models import Address, Attachment, Location, PhoneNumber
-from common.services.types import AuthorizedPresignedUploadBatch
 from django.db.models import Q, QuerySet, Subquery
 from django.db.models.fields.files import FieldFile
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
@@ -18,16 +13,26 @@ from strawberry.scalars import JSON
 from strawberry.types.field import StrawberryField
 from strawberry.types.scalar import ScalarDefinition
 
+from common.constants import PHONE_NUMBER_REGEX
+from common.enums import ImagePresetEnum
+from common.images import build_img_url
+from common.models import Address, Attachment, Location, PhoneNumber
+from common.services.types import AuthorizedPresignedUploadBatch
+from common.utils import matchable_values
+
 
 def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
+    """Filter rows whose ``field_name`` is in the given values."""
+
     @strawberry_django.filter_field
-    def _filter(info: Info, value: Optional[list[value_type]], prefix: str) -> Q:
+    def _filter(queryset: QuerySet[Any], value: Optional[list[value_type]], prefix: str) -> Q:
         if not value:
             return Q()
 
         normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
+        field = queryset.model._meta.get_field(field_name)
 
-        return Q(**{f"{prefix}{field_name}__in": normalized_value})
+        return Q(**{f"{prefix}{field_name}__in": matchable_values(field=field, values=normalized_value)})
 
     return _filter
 
@@ -47,16 +52,15 @@ def make_m2m_in_filter(related_object: str, field_name: str, value_type: Any) ->
     """Filter rows whose M2M ``related_object`` relates to any lookup row with ``field_name`` in the given values."""
 
     @strawberry_django.filter_field
-    def _filter(
-        self: Any, queryset: QuerySet[Any], value: Optional[list[value_type]], prefix: str
-    ) -> Tuple[QuerySet[Any], Q]:
+    def _filter(self: Any, queryset: QuerySet[Any], value: Optional[list[value_type]], prefix: str) -> Q:
         if not value:
-            return queryset, Q()
+            return Q()
 
         normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
         lookup = f"{prefix}{related_object}__{field_name}__in"
-        matching_pks = queryset.filter(**{lookup: normalized_value}).values("pk")
-        return queryset.filter(pk__in=Subquery(matching_pks)), Q()
+        matching_pks = queryset.model._default_manager.filter(**{lookup: normalized_value}).values("pk")
+
+        return Q(**{f"{prefix}pk__in": Subquery(matching_pks)})
 
     return _filter
 
@@ -83,6 +87,11 @@ def _parse_phone_number(v: str) -> DjangoPhoneNumber:
 
 
 def _serialize_phone_number(v: DjangoPhoneNumber) -> str:
+    # national_number is None when phonenumbers could not parse the stored
+    # value, and str() would then put the literal "None" on the wire.
+    if not v.national_number:
+        return ""
+
     if v.extension:
         return f"{v.national_number}x{v.extension}"
 

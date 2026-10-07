@@ -4,7 +4,7 @@ import {
   DEFAULT_PAGINATION_OFFSET_PATH,
   PaginationModeEnum,
 } from '../../constants';
-import { PaginationVars } from '../../merge/types';
+import { OffsetPaginationVars } from '../../merge/types';
 
 type TExtractOffsetPagination = {
   variables: unknown;
@@ -14,7 +14,7 @@ type TExtractOffsetPagination = {
 
 export function extractOffsetPagination(
   opts: TExtractOffsetPagination,
-): PaginationVars | undefined {
+): OffsetPaginationVars | undefined {
   const { variables, offsetPath, limitPath } = opts;
 
   const offset = readAtPath(

@@ -1,15 +1,20 @@
 import logging
+from typing import Any
 
 from django.conf import settings
-from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import DatabaseError
 from organizations.models import Organization
 
-from .models import PermissionGroupTemplate, User
+from .models import User
 
 logger = logging.getLogger(__name__)
 
+
 # ── Local dev data setup ──────────────────────────────────────────────
 # Connected via AppConfig.ready() with sender=self — fires once, not per-app.
+
+TEST_ORG_NAME = "test_org"
 
 
 def setup_local_dev_data(sender: object, **kwargs: object) -> None:
@@ -72,12 +77,16 @@ def _ensure_test_org() -> None:
     """
     from accounts.services import create_organization_with_presets
 
-    admin = User.objects.get(username="admin")
+    # The idempotency this seeding relies on lives here, not in the service:
+    # create_organization_with_presets always creates, so that naming an existing
+    # organization cannot join it.
+    if Organization.objects.filter(name=TEST_ORG_NAME).exists():
+        return
 
     create_organization_with_presets(
-        name="test_org",
+        name=TEST_ORG_NAME,
         preset_names=["shelter", "outreach"],
-        owner=admin,
+        owner=User.objects.get(username="admin"),
         owner_roles=(),  # roles assigned by sync_all_org_permission_groups
     )
 
@@ -96,15 +105,18 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
     from notes.groups import CASEWORKER
     from shelters.groups import SHELTER_OPERATOR
 
-    # The accounts app tables may not be ready when this fires for other
-    # apps; skip gracefully until the final post_migrate run.
+    # The accounts app tables may not be ready when this fires for other apps;
+    # skip gracefully until the final post_migrate run.  Scoped to DatabaseError
+    # so a logic error surfaces instead of silently abandoning reconciliation for
+    # every remaining organization.
     try:
-        for org in Organization.objects.all():
-            reconcile(org)
-    except Exception:
+        organizations = list(Organization.objects.all())
+    except DatabaseError:
+        logger.warning("Skipping org permission sync — accounts tables not ready yet.", exc_info=True)
         return
 
-    _sync_template_permissions()
+    for org in organizations:
+        reconcile(org)
 
     if not settings.IS_LOCAL_DEV:
         return
@@ -112,7 +124,7 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
     try:
         from accounts.groups import ORG_ADMIN
 
-        test_org = Organization.objects.get(name="test_org")
+        test_org = Organization.objects.get(name=TEST_ORG_NAME)
         admin = User.objects.get(username="admin")
         agent = User.objects.get(username="agent")
 
@@ -132,75 +144,76 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
             organization=test_org,
             permission_templates=(SHELTER_OPERATOR, CASEWORKER),
         )
-    except Exception:
-        pass
+    except ObjectDoesNotExist, DatabaseError:
+        # The test org, its users, or its permission groups may not exist yet on an
+        # early post_migrate run.  Scoped like the reconcile guard above so a logic
+        # error here surfaces instead of leaving the dev fixtures silently roleless.
+        logger.warning("Skipping local dev role assignment — test org or users not ready yet.", exc_info=True)
 
 
-def _sync_template_permissions() -> None:
-    """Sync Django Group.permissions for every PermissionGroupTemplate.
+# ── Membership ↔ Grant mirror (ADR 0001 §4 phase 2) ─────────────────────
 
-    Templates registered in the ``REGISTRY`` are refreshed from their
-    ``TemplateConfig.permissions`` definition.  Non-registry templates
-    (e.g. ``Global Shelter Operator``) are refreshed from the
-    ``ALL_TEMPLATES`` list in ``accounts.seed`` — so that permission
-    changes to ANY template are picked up on the next ``post_migrate``.
+
+def mirror_group_membership_grants(
+    sender: object,
+    instance: Any,
+    action: str,
+    reverse: bool,
+    pk_set: Any,
+    **kwargs: object,
+) -> None:
+    """Keep role-backed ``PermissionGroup`` memberships and Grants in step.
+
+    Wired to ``User.groups.through``, so every writer keeps the invariant —
+    the manager, the user admin, scripts, the shell — and reverse writes
+    (``permission_group.user_set.add/remove/clear``) are handled too.
+
+    A cascading delete of a ``PermissionGroup`` (teardown retiring a legacy
+    row) does **not** emit ``m2m_changed`` — Django fast-deletes the through
+    rows — so the Grants, the successor authority, outlive the legacy row.
+    That asymmetry is deliberate: membership edges revoke, teardown does not.
     """
-    from common.org_types import REGISTRY
-    from django.contrib.auth.models import Permission
+    from accounts.models import PermissionGroup, User
+    from accounts.role_manager import mirror_membership_grants, unmirror_membership_grants
 
-    from accounts.seed import ALL_TEMPLATES
-
-    configs: dict[str, list[tuple[str, str]]] = {}
-    app_labels: set[str] = set()
-    codenames: set[str] = set()
-
-    def _add(name: str, perms: list[str]) -> None:
-        parsed = [(ps.split(".", 1)[0], ps.split(".", 1)[1]) for ps in perms]
-        configs[name] = parsed
-        for a, c in parsed:
-            app_labels.add(a)
-            codenames.add(c)
-
-    for name in REGISTRY.template_names():
-        if cfg := REGISTRY.template(name):
-            _add(name, cfg.permissions or [])
-    for tc in ALL_TEMPLATES:
-        if tc.name not in configs:
-            _add(tc.name, tc.permissions or [])
-
-    if not app_labels:
+    if action == "pre_clear":
+        # post_clear carries no pk_set; remember what is about to be cleared so
+        # the mirror is dropped for exactly those rows.
+        if reverse:
+            instance.__dict__["_grant_mirror_pre_clear_users"] = list(instance.user_set.all())
+        else:
+            # ``User.groups`` yields ``Group`` rows, not the ``PermissionGroup``
+            # children — resolve the role-backed subset explicitly.
+            group_ids = list(instance.groups.values_list("pk", flat=True))
+            instance.__dict__["_grant_mirror_pre_clear_groups"] = list(
+                PermissionGroup.objects.filter(pk__in=group_ids).select_related("template", "organization")
+            )
         return
 
-    # ── Resolve all permissions in one query (no object instantiation) ──
-    all_perm_ids: dict[tuple[str, str], int] = {
-        (a, c): pk
-        for a, c, pk in Permission.objects.filter(
-            content_type__app_label__in=app_labels, codename__in=codenames
-        ).values_list("content_type__app_label", "codename", "pk")
-    }
+    if action not in {"post_add", "post_remove", "post_clear"}:
+        return
+    if action != "post_clear" and not pk_set:
+        return
 
-    # ── Pre-compute wanted IDs per template ──
-    wanted_by_template: dict[str, set[int]] = {
-        name: {all_perm_ids[k] for k in perms if k in all_perm_ids} for name, perms in configs.items()
-    }
+    if reverse:
+        if not isinstance(instance, PermissionGroup):
+            return
+        if action == "post_clear":
+            users = instance.__dict__.pop("_grant_mirror_pre_clear_users", [])
+        else:
+            users = list(User.objects.filter(pk__in=pk_set or []))
+        groups = [instance]
+    else:
+        users = [instance]
+        if action == "post_clear":
+            groups = instance.__dict__.pop("_grant_mirror_pre_clear_groups", [])
+        else:
+            groups = list(
+                PermissionGroup.objects.filter(pk__in=pk_set or []).select_related("template", "organization")
+            )
 
-    with transaction.atomic():
-        # Prefetch permissions so .all() calls hit the cache, not the DB.
-        templates = PermissionGroupTemplate.objects.prefetch_related(
-            "permissions", "permissiongroup_set__group__permissions"
-        )
-
-        for template_db in templates:
-            # Compute existing IDs once (uses prefetch).
-            existing_ids = {p.pk for p in template_db.permissions.all()}
-
-            # Sync template perms from config.
-            if (wanted := wanted_by_template.get(template_db.name)) is not None and wanted != existing_ids:
-                template_db.permissions.set(wanted)
-                existing_ids = wanted
-
-            # Sync group perms from template.  All prefetched — no queries.
-            for pgt in template_db.permissiongroup_set.all():
-                group_ids = {p.pk for p in pgt.group.permissions.all()}
-                if existing_ids != group_ids:
-                    pgt.group.permissions.set(existing_ids)
+    for user in users:
+        if action == "post_add":
+            mirror_membership_grants(user, groups)
+        else:
+            unmirror_membership_grants(user, groups)

@@ -7,9 +7,9 @@ export type UpdateClientHouseholdMemberMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateClientHouseholdMemberMutation = { __typename?: 'Mutation', updateClientHouseholdMember:
-    | { __typename?: 'ClientHouseholdMemberType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateClientHouseholdMemberMutation = { __typename: 'Mutation', updateClientHouseholdMember:
+    | { __typename: 'ClientHouseholdMemberType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type CreateClientHouseholdMemberMutationVariables = Types.Exact<{
@@ -17,9 +17,9 @@ export type CreateClientHouseholdMemberMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateClientHouseholdMemberMutation = { __typename?: 'Mutation', createClientHouseholdMember:
-    | { __typename?: 'ClientHouseholdMemberType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CreateClientHouseholdMemberMutation = { __typename: 'Mutation', createClientHouseholdMember:
+    | { __typename: 'ClientHouseholdMemberType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

@@ -7,9 +7,9 @@ export type UpdateUserProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateUserProfileMutation = { __typename?: 'Mutation', updateUserProfile:
-    | { __typename?: 'CurrentUserType', id: string, firstName?: string | null, lastName?: string | null }
-    | { __typename?: 'OperationInfo' }
+export type UpdateUserProfileMutation = { __typename: 'Mutation', updateUserProfile:
+    | { __typename: 'CurrentUserType', id: string, firstName?: string | null, lastName?: string | null }
+    | { __typename: 'OperationInfo' }
    };
 
 

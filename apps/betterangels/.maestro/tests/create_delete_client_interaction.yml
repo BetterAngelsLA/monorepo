@@ -1,5 +1,7 @@
 appId: ${MAESTRO_APP_ID}
 ---
+# Requires working Google Maps/Places development credentials to resolve the
+# fixed GPS location to the street address asserted below.
 - runFlow: ../lib/framework/start_test.yml
 
 - assertVisible:
@@ -9,14 +11,11 @@ appId: ${MAESTRO_APP_ID}
 
 # Ensure fixture client exists and open its profile
 - runFlow:
-    file: ../lib/screens/clients/visit_fixture_client_profile_summary.yml
+    file: ../lib/screens/clients/visit_fixture_client_profile.yml
 
 # #############################
 # Go to Profile Screen ########
 # #############################
-
-# Go to actual profile screen
-- tapOn: 'See Details'
 
 - assertVisible: 'Profile'
 - assertVisible: 'Back'

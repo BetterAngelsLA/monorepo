@@ -17,6 +17,15 @@
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
       "cache": true
     },
+    "typecheck": {
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/tsconfig.base.json",
+        "{workspaceRoot}/yarn.lock"
+      ],
+      "cache": true
+    },
     "build-storybook": {
       "inputs": [
         "default",
@@ -102,6 +111,7 @@
         "apps/betterangels/**/*",
         "apps/betterangels-admin/**/*",
         "apps/shelter-web/**/*",
+        "apps/wildfires/**/*",
         "libs/apollo/**/*",
         "libs/ba-platform/permissions/**/*",
         "libs/ba-platform/**/*",

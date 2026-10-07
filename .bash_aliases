@@ -1,7 +1,7 @@
 alias rebash="source .bash_aliases" # run this if you change this file
 
 # precommit
-alias ynx-precommit="ynx-lint && ynx-typecheck && ynx-validate-schema && ynx-check-migrations"
+alias ynx-precommit="ynx-lint && ynx-typecheck && ynx-validate-schema && ynx-check-migrations && ynx-pretty"
 
 # migrations
 alias ynx-check-migrations="yarn nx affected -t check-migrations"
@@ -22,6 +22,12 @@ alias ynx-lint-fe="yarn nx lint betterangels"
 alias ynx-lint="yarn nx affected -t lint"
 alias ynx-lint-all="yarn nx run-many -t lint"
 alias ynx-typecheck="yarn nx affected -t typecheck"
+
+# prettier formatting
+alias ynx-pretty="yarn nx format:check --verbose"
+alias ynx-pretty-fix="yarn nx format:write"
+alias ynx-pretty-all="yarn nx format:check --all --verbose"
+alias ynx-pretty-all-fix="yarn nx format:write --all"
 
 # db
 alias ynx-reset-db="yarn nx run betterangels-backend:reset_db"
