@@ -12,7 +12,6 @@ import {
 } from '@monorepo/ba-platform';
 import { webActiveOrgStorage } from './activeOrgStorage';
 import { readCsrfToken } from './csrfTokenProvider';
-import { syncTimezoneCookie } from './timezoneCookie';
 
 /**
  * Pre-composed web fetch client.
@@ -28,7 +27,6 @@ export const createWebFetchClient = () => {
   // reach localStorage itself, so this is where the browser-backed
   // implementation goes in — alongside readCsrfToken, for the same reason.
   configureActiveOrgStorage(webActiveOrgStorage);
-  syncTimezoneCookie();
 
   return composeFetchInterceptors(
     createOrgInterceptor(getActiveOrgId),
