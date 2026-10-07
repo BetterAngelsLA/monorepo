@@ -1,5 +1,5 @@
-query ViewShelters(
-  $filters: ShelterFilter
+query PublicShelters(
+  $filters: PublicShelterFilter
   $pagination: OffsetPaginationInput
   $ordering: [ShelterOrder!]! = []
 ) {

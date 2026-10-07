@@ -1,5 +1,5 @@
-mutation UpdateReservation($id: ID!, $data: UpdateReservationInput!) {
-  updateReservation(id: $id, data: $data) {
+mutation UpdateReservation($data: UpdateReservationInput!) {
+  updateReservation(data: $data) {
     ... on ReservationType {
       id
       status

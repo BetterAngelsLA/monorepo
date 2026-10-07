@@ -11,7 +11,7 @@
  * • Reads the `QueryPolicyConfig` for the target field from Apollo's cache
  *   via `getQueryPolicyConfigFromCache`.
  * • Builds normalized initial variables based on the configured pagination mode
- *   (Offset/Limit or Page/PerPage).
+ *   (Offset/Limit).
  * • Executes the provided `TypedDocumentNode` query with Apollo’s `useQuery`.
  * • Derives the items array and total count from the result using the configured
  *   `itemsPath` and `totalCountPath`.
@@ -40,7 +40,7 @@
  * • Uses the `QueryPolicyConfig` to determine:
  *   - how to read items (`itemsPath`)
  *   - how to read total (`totalCountPath`)
- *   - which pagination shape to use (`Offset` vs `PerPage`)
+ *   - which pagination variable paths to use (`paginationOffsetPath`, `paginationLimitPath`)
  * • When `loadMore()` is called:
  *   - computes the next page’s variables using `buildVariablesForPage`
  *   - calls Apollo’s `fetchMore` with those variables
@@ -66,6 +66,7 @@
  *   loadMore:    () => void,   // fetches next page
  *   reload:      () => void,   // refetches initial page (manual)
  *   error?:      ApolloError,  // query or network error or fetchMore error.
+ *   queryKey:    string,       // stable identity of the query inputs (same key ⇒ same dataset)
  * }
  *
  * ---------------------------------------------------------------------------
@@ -73,8 +74,7 @@
  * ---------------------------------------------------------------------------
  * • Requires that a `QueryPolicyConfig` be registered for the target field
  *   (via your cache policy setup).
- * • The hook is pagination-mode agnostic — works with both Offset/Limit
- *   and Page/PerPage queries.
+ * • Works with Offset/Limit paginated queries.
  * • If the policy config is missing, the hook throws an explicit error.
  * • Compatible with Apollo Client v4 and `TypedDocumentNode` queries.
  * • With `fetchPolicy: 'cache-and-network'`, variable changes may keep showing
@@ -91,10 +91,11 @@ import {
   type WatchQueryFetchPolicy,
 } from '@apollo/client';
 import { useApolloClient, useQuery } from '@apollo/client/react';
+import { canonicalStringify } from '@apollo/client/utilities';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDeepCompareMemoize } from 'use-deep-compare-effect';
 import { DEFAULT_QUERY_PAGE_SIZE } from '../../cachePolicy/constants';
-import { getQueryPolicyConfigFromCache } from '../../cacheStore/utils/getQueryPolicyConfigFromCache';
+import { getQueryPolicyConfigFromCache } from '../../cacheStore/utils/queryPolicyConfigRegistry';
 import { toErrorLike } from '../../errors';
 import { getApolloRuntimeConfig } from '../../runtime';
 import {
@@ -135,7 +136,7 @@ export function useInfiniteScrollQuery<
 
   const apolloClient = useApolloClient();
 
-  const fetchMoreErrorRef = useRef<ErrorLike | null>(null);
+  const fetchMoreErrorRef = useRef<ErrorLike | undefined>(undefined);
 
   // Deep-memoize incoming variables to avoid unnecessary refetches
   const memoizedVariables = useDeepCompareMemoize(
@@ -167,6 +168,16 @@ export function useInfiniteScrollQuery<
     });
   }, [memoizedVariables, pageSize, queryPolicyConfig]);
 
+  // Stable identity of the query inputs (variables + page size), built with
+  // Apollo's canonical serializer. Unlike the items array, it only changes
+  // when the query is replaced — loading another page does not touch it — so
+  // consumers can use it to reset UI state (e.g. list scroll position) when
+  // the dataset changes.
+  const queryKey = useMemo(
+    () => canonicalStringify(initialVariables),
+    [initialVariables],
+  );
+
   const lastVariablesRef = useRef<TVars>(initialVariables);
 
   // Execute the query
@@ -183,12 +194,11 @@ export function useInfiniteScrollQuery<
     nextFetchPolicy,
   });
 
-  // Validate structure in DEV env
-  if (data) {
+  if (isDevEnv && data) {
     assertValueAtPath({
       source: (data as Record<string, unknown>)[queryFieldName],
       path: queryPolicyConfig.itemsPath,
-      shouldThrow: isDevEnv,
+      shouldThrow: true,
     });
   }
 
@@ -210,8 +220,13 @@ export function useInfiniteScrollQuery<
   const reloadManual = useCallback(async () => {
     isManualReloadRef.current = true;
 
-    lastVariablesRef.current = initialVariables;
-    fetchMoreErrorRef.current = null; // 👈 reset error state
+    // Fresh identity invalidates in-flight fetchMore requests: the guards
+    // below compare `lastVariablesRef.current` by reference. Without this, a
+    // page-2 response arriving after the reload advances the pagination base
+    // past the overwritten (page-1-only) cache, and the next loadMore skips
+    // a page — leaving `undefined` holes that make the field unreadable.
+    lastVariablesRef.current = { ...initialVariables } as TVars;
+    fetchMoreErrorRef.current = undefined;
 
     try {
       await refetch(initialVariables as Partial<TVars>);
@@ -227,6 +242,7 @@ export function useInfiniteScrollQuery<
   useEffect(() => {
     lastVariablesRef.current = initialVariables;
     isFetchMoreInFlightRef.current = false;
+    fetchMoreErrorRef.current = undefined; // any error belongs to the previous variable set
   }, [initialVariables]);
 
   // Loading statuses (Apollo + intent)
@@ -265,31 +281,42 @@ export function useInfiniteScrollQuery<
 
     isFetchMoreInFlightRef.current = true;
 
-    const { paginationMode, paginationPerPagePath, paginationLimitPath } =
-      queryPolicyConfig;
+    const baseVariables = lastVariablesRef.current;
+
+    const { paginationLimitPath } = queryPolicyConfig;
 
     const nextPageSize = getPageSizeFromVars({
-      baseVariables: lastVariablesRef.current,
-      paginationMode,
-      paginationPerPagePath,
+      baseVariables,
       paginationLimitPath,
       fallback: pageSize,
     });
 
     const nextVariables = buildVariablesForPage<TVars>({
-      previousVariables: lastVariablesRef.current,
+      previousVariables: baseVariables,
       incrementBy: nextPageSize,
       ...queryPolicyConfig,
     });
 
     fetchMore({ variables: nextVariables })
       .then(() => {
+        // Ignore responses whose variables changed while the request was in
+        // flight — the variables-change effect already reset the pagination
+        // base to the current page-1 variables.
+        if (lastVariablesRef.current !== baseVariables) {
+          return;
+        }
+
         lastVariablesRef.current = nextVariables;
       })
       .catch((err) => {
+        // Ignore failures from a superseded request (variables changed or a
+        // manual reload happened while it was in flight).
+        if (lastVariablesRef.current !== baseVariables) {
+          return;
+        }
+
         console.error('[useInfiniteScrollQuery] fetchMore failed:', err);
         fetchMoreErrorRef.current = toErrorLike(err);
-
         isFetchMoreInFlightRef.current = false;
       });
   }, [hasMore, isAnyLoading, queryPolicyConfig, pageSize, fetchMore]);
@@ -297,6 +324,7 @@ export function useInfiniteScrollQuery<
   return {
     items: stableItems,
     total,
+    queryKey,
     loading: isLoading,
     loadingMore: isLoadingMore,
     reloading: isManualReloading,

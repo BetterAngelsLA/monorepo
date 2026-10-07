@@ -5,7 +5,7 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from common.graphql.types import PhoneNumberScalar
+from common.graphql.types import NonBlankString, NonEmptyString, PhoneNumberScalar
 from strawberry import ID, UNSET, Maybe, auto
 
 from shelters import models
@@ -63,11 +63,33 @@ class ServiceInput:
     display_name: Optional[str] = None
 
 
+@strawberry.input
+class ShelterContactInfoInput:
+    """A single additional contact for a shelter.
+
+    Full PUT payload: when ``id`` is provided this entry replaces the matching
+    contact row, so submit every field you want to persist. Omitted optional
+    fields (``contact_email``, ``contact_title``, ``is_claimant``) are stored
+    as ``None``/``False``.
+    """
+
+    id: Optional[ID] = None
+    contact_name: NonEmptyString
+    contact_number: PhoneNumberScalar
+    contact_email: Optional[NonBlankString] = None
+    contact_title: Optional[NonBlankString] = None
+    is_claimant: Optional[bool] = None
+
+
 @strawberry_django.input(models.Shelter)
 class CreateShelterInput:
     # Required scalars — derived from model via auto
     name: auto
     description: Optional[str] = None  # CKEditor5Field not supported by auto
+
+    # Target organization for global-tier holders (ADR 0001 §2.6). Ordinary
+    # users create in their header org; a global holder names a target.
+    organization_id: Optional[strawberry.ID] = None
 
     # M2M enum fields — explicit types because we accept enum values directly
     # (get_or_create by name), not PKs as strawberry-django's ManyToManyInput expects.
@@ -137,6 +159,7 @@ class UpdateShelterInput:
     description: Maybe[str] = UNSET
     email: Maybe[Optional[str]] = UNSET
     website: Maybe[Optional[str]] = UNSET
+    instagram: Maybe[Optional[str]] = UNSET
     is_private: Maybe[bool] = UNSET
     hero_image_id: Maybe[ID | None] = UNSET
     city_id: Maybe[ID | None] = UNSET
@@ -181,6 +204,7 @@ class UpdateShelterInput:
     location: Maybe[Optional[ShelterLocationInput]] = UNSET
     schedules: Maybe[Optional[List[ScheduleInput]]] = UNSET
     services: Maybe[Optional[List[ServiceInput]]] = UNSET
+    additional_contacts: Maybe[Optional[List[ShelterContactInfoInput]]] = UNSET
 
 
 @strawberry.input
@@ -205,6 +229,7 @@ class CreateBedInput:
 
 @strawberry.input
 class UpdateBedInput:
+    id: ID
     room_id: Maybe[ID | None]
     accessibility: Maybe[List[AccessibilityChoices] | None]
     b7: Maybe[bool]
@@ -242,6 +267,7 @@ class CreateRoomInput:
 
 @strawberry.input
 class UpdateRoomInput:
+    id: ID
     accessibility: Maybe[List[AccessibilityChoices] | None]
     amenities: Maybe[str | None]
     demographics: Maybe[List[DemographicChoices] | None]
@@ -279,6 +305,7 @@ class CreateReservationInput:
 
 @strawberry.input
 class UpdateReservationInput:
+    id: ID
     room_id: Maybe[ID | None]
     bed_id: Maybe[ID | None]
     checked_in_at: Maybe[datetime | None]

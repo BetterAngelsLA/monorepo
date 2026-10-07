@@ -17,9 +17,11 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         self._set_active_org(self.org)
 
     def test_create_team_mutation(self) -> None:
-        variables = {"name": "team 1"}
+        variables = {"name": "team 1", "organizationId": self.org.pk}
 
-        expected_query_count = 7
+        # Grant-only authority adds grant-arm scope queries; the org comes
+        # from the payload.
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.create_team_fixture(variables)
 
@@ -32,7 +34,9 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         team = baker.make(Team, name="old name", organization=self.org)
         variables = {"id": team.pk, "name": "new name", "isActive": False}
 
-        expected_query_count = 11
+        # Grant-only authority adds grant-arm scope queries; the org comes
+        # from the row.
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_team_fixture(variables)
 
@@ -87,7 +91,9 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
     def test_delete_team_mutation(self) -> None:
         team = baker.make(Team, name="team", organization=self.org)
 
-        expected_query_count = 7
+        # Grant-only authority adds grant-arm scope queries; the org comes
+        # from the row.
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.delete_team_fixture(team.pk)
 

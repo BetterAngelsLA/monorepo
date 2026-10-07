@@ -1,6 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { FlashList } from '@shopify/flash-list';
-import { useCallback, useMemo } from 'react';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyListView } from './EmptyListView';
 import { ErrorListView } from './ErrorListView';
@@ -38,10 +38,21 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     ItemSeparatorComponent,
     ErrorViewComponent,
     onRefresh,
+    scrollResetKey,
     ...rest
   } = props;
 
   const isAnyLoading = loading || loadingMore || refreshing;
+
+  const listRef = useRef<FlashListRef<T> | null>(null);
+
+  // Reset to the top so a shorter result set never leaves the viewport past
+  // its content (BACS-123).
+  useEffect(() => {
+    if (scrollResetKey === undefined) return;
+
+    listRef.current?.scrollToTop({ animated: false });
+  }, [scrollResetKey]);
 
   const renderItemStable = useCallback(
     ({ item }: { item: T }) => renderItem(item),
@@ -121,6 +132,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
       )}
 
       <FlashList<T>
+        ref={listRef}
         data={data}
         renderItem={renderItemStable}
         onEndReached={onEndReached}

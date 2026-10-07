@@ -52,7 +52,7 @@ const COLUMNS: {
 
 export function TeamsPage(props: IProps) {
   const { className } = props;
-  const { hasPermission } = useActiveOrg();
+  const { activeOrg, hasPermission } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
@@ -70,11 +70,24 @@ export function TeamsPage(props: IProps) {
     openMenuRowId !== null,
   );
 
+  // The teams read is org-scoped: pass the active org as the ``organizationId``
+  // filter so switching orgs re-runs the query for the new org.
+  const canView = hasPermission(TeamPermissions.View);
+  const canAdd = hasPermission(TeamPermissions.Add);
+  const canEdit = hasPermission(TeamPermissions.Change);
+  const canDelete = hasPermission(TeamPermissions.Delete);
+
   const { data, loading, previousData, refetch } = useQuery(
     AdminTeamsDocument,
     {
-      variables: { pagination: { limit: ALL_TEAMS_LIMIT, offset: 0 } },
+      variables: {
+        pagination: { limit: ALL_TEAMS_LIMIT, offset: 0 },
+        ...(activeOrg ? { filters: { organizationId: activeOrg.id } } : {}),
+      },
       fetchPolicy: 'cache-and-network',
+      // Without the view permission the server refuses; don't issue a doomed
+      // request just to render the "no permission" notice.
+      skip: !canView,
     },
   );
 
@@ -222,7 +235,7 @@ export function TeamsPage(props: IProps) {
             Show inactive teams
           </label>
         </div>
-        {hasPermission(TeamPermissions.Add) && (
+        {canAdd && (
           <button
             onClick={() =>
               showDrawer({
@@ -243,13 +256,13 @@ export function TeamsPage(props: IProps) {
         )}
       </div>
 
-      {!hasPermission(TeamPermissions.View) && (
+      {!canView && (
         <div className="text-center py-10 text-neutral-60">
           You do not have permission to view teams.
         </div>
       )}
 
-      {hasPermission(TeamPermissions.View) && displayTeams.length === 0 && (
+      {canView && displayTeams.length === 0 && (
         <div className="text-center py-10 text-neutral-60">
           {search
             ? 'No teams match your search.'
@@ -259,7 +272,7 @@ export function TeamsPage(props: IProps) {
         </div>
       )}
 
-      {hasPermission(TeamPermissions.View) && displayTeams.length > 0 && (
+      {canView && displayTeams.length > 0 && (
         <>
           <>
             {/* ── Mobile: card layout (shown < lg, i.e. < 1024px) ── */}
@@ -281,15 +294,19 @@ export function TeamsPage(props: IProps) {
                         Created {formatCreatedDate(team.createdAt)}
                       </div>
                     </div>
-                    <ThreeDotMenu
-                      team={team}
-                      openMenuRowId={openMenuRowId}
-                      setOpenMenuRowId={setOpenMenuRowId}
-                      menuRef={menuRef}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      deleting={deleting}
-                    />
+                    {(canEdit || canDelete) && (
+                      <ThreeDotMenu
+                        team={team}
+                        openMenuRowId={openMenuRowId}
+                        setOpenMenuRowId={setOpenMenuRowId}
+                        menuRef={menuRef}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        deleting={deleting}
+                        canEdit={canEdit}
+                        canDelete={canDelete}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
@@ -298,17 +315,23 @@ export function TeamsPage(props: IProps) {
             {/* ── Desktop: table layout (shown ≥ lg, i.e. ≥ 1024px) ── */}
             <div className={mergeCss(['hidden lg:flex', parentCss])}>
               <Table<TeamType>
-                action={(row) => (
-                  <ThreeDotMenu
-                    team={row}
-                    openMenuRowId={openMenuRowId}
-                    setOpenMenuRowId={setOpenMenuRowId}
-                    menuRef={menuRef}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    deleting={deleting}
-                  />
-                )}
+                action={
+                  canEdit || canDelete
+                    ? (row) => (
+                        <ThreeDotMenu
+                          team={row}
+                          openMenuRowId={openMenuRowId}
+                          setOpenMenuRowId={setOpenMenuRowId}
+                          menuRef={menuRef}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          deleting={deleting}
+                          canEdit={canEdit}
+                          canDelete={canDelete}
+                        />
+                      )
+                    : undefined
+                }
                 data={displayTeams}
                 header={headerButtons}
                 renderCell={(row, colIndex) => COLUMNS[colIndex].render(row)}
