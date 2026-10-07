@@ -233,3 +233,15 @@ export const enumDisplayTaskStatus: {
   [TaskStatusEnum.InProgress]: 'In Progress',
   [TaskStatusEnum.Completed]: 'Completed',
 };
+
+// Shelter attribute labels are shared with shelter-web through
+// @monorepo/ba-platform so the two surfaces cannot drift; re-exported here for
+// the `static` barrel and the intake field definitions.
+export {
+  enumDisplayAccessibilityChoices,
+  enumDisplayDemographics,
+  enumDisplayParkingChoices,
+  enumDisplayPetChoices,
+  enumDisplaySpecialSituationRestrictionChoices,
+  enumDisplayStorageChoices,
+} from '@monorepo/ba-platform';
