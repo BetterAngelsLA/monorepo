@@ -616,6 +616,30 @@ def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[in
         )
 
 
+def _raise_on_scoped_role_global_class_abilities(role_def: RoleDef, permission_ids: set[int]) -> None:
+    """Refuse a scoped RoleDef that carries a GLOBAL-class ability (ADR 0004).
+
+    ``Grant.clean`` refuses to *admit* such a binding and ``permissions.E008``
+    reports it at deploy time — but ``sync_roles`` is the writer that provisions
+    the binding in the first place, and it assigns permissions directly
+    (``role.permissions.set``), which runs no model ``clean()``.  System checks
+    also run *before* ``migrate`` while this runs at ``post_migrate``, so without
+    this guard a bad RoleDef is written by a deploy that passes and only trips
+    E008 on the *next* one.  Fail inside the provisioning transaction instead.
+    """
+    from django.contrib.auth.models import Permission
+
+    from common.permissions.access import scoped_role_global_class_error
+
+    if role_def.is_global:
+        return
+
+    permission_objects = Permission.objects.filter(pk__in=permission_ids).select_related("content_type")
+    error = scoped_role_global_class_error(role_def.name, permission_objects)
+    if error is not None:
+        raise RuntimeError(f"RoleDef {role_def.name!r}: {error}")
+
+
 def _all_role_defs() -> tuple[RoleDef, ...]:
     """Every code-owned ``RoleDef`` — the one list :func:`sync_roles` provisions.
 
@@ -745,6 +769,7 @@ def sync_roles() -> None:
             role, created = _provision_role(role_def)
             wanted = set(_resolve_permissions(role_def.permissions))
             _raise_on_phantom_role_permissions(role_def, wanted)
+            _raise_on_scoped_role_global_class_abilities(role_def, wanted)
             perms_changed = {p.pk for p in role.permissions.all()} != wanted
             global_changed = role.is_global != role_def.is_global
             if perms_changed:

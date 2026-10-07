@@ -57,3 +57,28 @@ def global_class_abilities(permissions: Iterable["Permission"]) -> Iterator[tupl
             continue
         if is_global_class(model, permission.codename):
             yield permission, model
+
+
+def scoped_role_global_class_error(role_name: str, permissions: Iterable["Permission"]) -> Optional[str]:
+    """Why ``role_name`` may not hold *permissions* as a scoped Role, or ``None``.
+
+    Returns the refusal message for the first GLOBAL-class ability found, so the
+    rule is stated once and every caller reports it the same way.  Two writers
+    own the rule's outcome today:
+
+    * the admittance check (``Grant.clean``), which refuses a Grant whose scoped
+      Role carries such an ability, and
+    * ``accounts.services.sync_roles``, which *provisions* those Roles — a Role
+      definition with a GLOBAL-class ability would otherwise be written by a
+      deploy that passes, with ``permissions.E008`` only firing on the next
+      ``check``/``migrate``.
+    """
+    offender = next(global_class_abilities(permissions), None)
+    if offender is None:
+        return None
+    permission, model = offender
+    return (
+        f"Role {role_name!r} carries GLOBAL-class ability {permission.codename!r} on "
+        f"{model.__name__}; a scoped Role reaches users through Grants and cannot hold it "
+        "(ADR 0004, permissions.E008)."
+    )

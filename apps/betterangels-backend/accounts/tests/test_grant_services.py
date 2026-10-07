@@ -146,3 +146,47 @@ class GrantServiceTestCase(TestCase):
         role_remove(user=self.user, role=self.gso_role)
 
         self.assertFalse(self.user.groups.filter(role__is_global=True).exists())
+
+
+class SyncRolesGlobalClassGuardTestCase(TestCase):
+    """``sync_roles`` refuses a scoped RoleDef carrying a GLOBAL-class ability.
+
+    ``Grant.clean`` guards the admittance side and ``permissions.E008`` reports
+    existing bindings, but the provisioner writes ``role.permissions.set(...)``
+    directly — no model ``clean()`` — and runs at ``post_migrate``, *after* the
+    system checks.  Without this guard the bad binding would be written by a
+    deploy that passes and only surface on the next one.
+    """
+
+    def test_scoped_role_def_with_a_global_class_ability_is_refused(self) -> None:
+        from unittest.mock import patch
+
+        from common.permissions.config import RoleDef
+
+        bad_def = RoleDef(name="Scoped Contact Editor", permissions=["shelters.view_contactinfo"])
+        with patch("accounts.services._all_role_defs", return_value=(bad_def,)):
+            with self.assertRaises(RuntimeError) as ctx:
+                sync_roles()
+
+        self.assertIn("GLOBAL-class", str(ctx.exception))
+        self.assertIn("Scoped Contact Editor", str(ctx.exception))
+        # The failure rolls back with the provisioning transaction.
+        self.assertFalse(Role.objects.filter(name="Scoped Contact Editor").exists())
+
+    def test_global_role_def_may_carry_a_global_class_ability(self) -> None:
+        """The rule is about *scope*: a global Role holds these by design."""
+        from unittest.mock import patch
+
+        from common.permissions.config import RoleDef
+
+        global_def = RoleDef(
+            name="Global Contact Editor",
+            permissions=["shelters.view_contactinfo"],
+            is_global=True,
+        )
+        with patch("accounts.services._all_role_defs", return_value=(global_def,)):
+            sync_roles()
+
+        role = Role.objects.get(name="Global Contact Editor")
+        self.assertTrue(role.is_global)
+        self.assertTrue(role.permissions.filter(codename="view_contactinfo").exists())
