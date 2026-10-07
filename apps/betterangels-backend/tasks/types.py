@@ -4,8 +4,9 @@ import strawberry
 import strawberry_django
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
+from common.graphql.permission_checkers import visible_rows_for_holder
 from common.graphql.types import make_in_filter
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from strawberry import ID, UNSET, Info, Maybe, auto
 from tasks.enums import TaskStatusEnum
 from teams.types import TeamType
@@ -14,6 +15,16 @@ from . import models
 
 if TYPE_CHECKING:
     from hmis.types import HmisClientProfileType
+
+
+def _visible_task_rows(queryset: QuerySet, info: Info, perm: str) -> QuerySet:
+    """List-read gate for tasks (ADR 0001 §5, RFC 0003 slice 1).
+
+    SHARED read: a holder sees every task, a non-holder sees none — see
+    ``visible_rows_for_holder`` for the shape, the per-request memo, and the
+    anonymous fail-closed.
+    """
+    return visible_rows_for_holder(queryset, info, perm=perm, cache_key="_visible_task_rows_cache")
 
 
 @strawberry_django.filter_type(models.Task, lookups=True)
@@ -118,6 +129,10 @@ class TaskType:
     current_team: Optional[TeamType] = strawberry_django.field(field_name="team", deprecation_reason="Use team instead")
     updated_at: auto
 
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:
+        return _visible_task_rows(queryset, info, models.Task.perms.VIEW)
+
 
 @strawberry_django.input(models.Task, partial=True)
 class CreateTaskInput:
@@ -129,6 +144,12 @@ class CreateTaskInput:
     summary: str
     team_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]
+    # The acting org (ADR 0001 §5, RFC 0003): authority is ``require_can`` at
+    # this org and the created row's ``organization``.  The nested note-tasks
+    # input derives it from the parent note instead.  Optional during the
+    # compat window — a build that predates the payload org falls back to the
+    # legacy caseworker group; the strict flip makes it required again.
+    organization_id: Optional[ID]
 
 
 @strawberry_django.input(models.Task, partial=True)

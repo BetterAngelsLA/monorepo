@@ -3,6 +3,7 @@ from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
+from common.graphql.org import resolve_org_or_deny
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
 from common.permissions.utils import IsAuthenticated, require_can
@@ -25,7 +26,7 @@ from .annotations import (
     annotate_membership_id,
     annotate_permission_templates,
 )
-from .models import Organization, OrganizationUser, PermissionGroup, User
+from .models import OrganizationUser, PermissionGroup, User
 from .services import (
     create_organization_service,
     member_add,
@@ -55,22 +56,6 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 
-def _org_or_deny(org_id: object) -> Organization:
-    """Resolve an org id from client input, failing closed.
-
-    A missing/unknown/non-numeric org is a permission problem
-    (``PermissionDenied``), never a ``DoesNotExist`` crash or a ``ValueError``.
-    Module-level because strawberry-django resolvers are invoked unbound.
-    """
-    try:
-        org = Organization.objects.filter(pk=org_id).first()
-    except TypeError, ValueError:
-        org = None
-    if org is None:
-        raise PermissionDenied("You do not have access to this organization.")
-    return org
-
-
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
@@ -87,7 +72,7 @@ class Query:
         unknown org id fails closed.
         """
         current_user = cast(User, get_current_user(info))
-        org = _org_or_deny(organization_id)
+        org = resolve_org_or_deny(organization_id)
         require_can(current_user, UserOrganizationPermissions.VIEW_ORG_MEMBERS, org=org)
 
         user: User = (
@@ -125,7 +110,7 @@ class Query:
         org id fails closed.
         """
         current_user = cast(User, get_current_user(info))
-        org = _org_or_deny(organization_id)
+        org = resolve_org_or_deny(organization_id)
         require_can(current_user, UserOrganizationPermissions.VIEW_ORG_MEMBERS, org=org)
 
         queryset: QuerySet[User] = org.users.all()
@@ -238,7 +223,7 @@ class Mutation:
         no header is read.
         """
         current_user = cast(User, get_current_user(info))
-        organization = _org_or_deny(data.organization_id)
+        organization = resolve_org_or_deny(data.organization_id)
         require_can(current_user, UserOrganizationPermissions.ADD_ORG_MEMBER, org=organization)
 
         template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
