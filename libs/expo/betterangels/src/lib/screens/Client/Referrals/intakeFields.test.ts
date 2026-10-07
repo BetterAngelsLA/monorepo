@@ -145,10 +145,10 @@ describe('definition-driven consumers', () => {
     const encoded = encodeReferralNotes('', { bar: ['b'] }, [sensitive]);
     expect(encoded).toContain('"fields":{},"PII":{"backend_bar":["b"]}');
     expect(summarizeIntake({ bar: ['b'] }, undefined, [sensitive])).toBe(
-      'bar: ••••',
+      'Example choices: ••••',
     );
     expect(summarizeIntake({ bar: ['b'] }, undefined, [choices])).toBe(
-      'bar: b',
+      'Example choices: Choice B',
     );
   });
 

@@ -18,6 +18,7 @@ import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { render, screen } from '@testing-library/react-native';
+import { AdaAccommodationEnum, VeteranStatusEnum } from '../../../apollo';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { ReferralsTab } from './ReferralsTab';
 import { REFERRALS_PAGE_SIZE } from './constants';
@@ -160,7 +161,7 @@ describe('sparse client profile in the intake form', () => {
   it('marks every absent field "Not on file" rather than leaving it blank', () => {
     renderIntake({});
 
-    // Name, Gender, Age (DOB), Mobility, Veteran — five of the six rows.
+    // Name, Gender, Age, Accommodations, Veteran — five of the six rows.
     expect(screen.getAllByText('Not on file')).toHaveLength(5);
   });
 
@@ -190,12 +191,15 @@ describe('sparse client profile in the intake form', () => {
     renderIntake({
       firstName: 'Client',
       lastName: 'One',
-      veteranStatus: 'Confirmed veteran',
+      veteranStatus: VeteranStatusEnum.PreferNotToSay,
+      adaAccommodation: [AdaAccommodationEnum.Mobility],
     });
 
     expect(screen.getByText('Client One')).toBeOnTheScreen();
-    expect(screen.getByText('Confirmed veteran')).toBeOnTheScreen();
-    // Gender, DOB and Mobility are still absent.
-    expect(screen.getAllByText('Not on file')).toHaveLength(3);
+    // Enum values render as their display labels, not the wire names.
+    expect(screen.getByText('Prefer not to say')).toBeOnTheScreen();
+    expect(screen.getByText('Mobility')).toBeOnTheScreen();
+    // Gender and Age are still absent.
+    expect(screen.getAllByText('Not on file')).toHaveLength(2);
   });
 });

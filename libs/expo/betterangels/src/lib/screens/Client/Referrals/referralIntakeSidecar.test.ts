@@ -18,6 +18,9 @@ import {
 } from './referralIntakeSidecar';
 
 const HUMAN = 'Prefers westside; needs bottom bunk';
+// Mirrors the private sentinels in referralIntakeSidecar.ts.
+const START = '\n\n<<<referral-intake:v1>>>\n';
+const END = '\n<<<end-referral-intake>>>';
 
 describe('encodeReferralNotes', () => {
   it('leaves notes untouched when there is nothing to stash', () => {
@@ -112,8 +115,10 @@ describe('decodeReferralNotes', () => {
     expect(intake).toEqual({});
   });
 
-  it('is not fooled by a marker typed into the human notes', () => {
-    const typedMarker = `${HUMAN} <<<referral-intake:v1>>> not a real payload`;
+  it('is not fooled by the marker typed into the human notes', () => {
+    // The real sentinel (`\n\n<<<referral-intake:v1>>>\n`), not a look-alike:
+    // a typed marker must not shadow the sidecar encode() appends after it.
+    const typedMarker = `${HUMAN}\n\n${START}\nnot a real payload`;
 
     const { humanNotes, intake } = decodeReferralNotes(
       encodeReferralNotes(typedMarker, { pets: ['CATS'] }),
@@ -121,6 +126,29 @@ describe('decodeReferralNotes', () => {
 
     expect(intake).toEqual({ pets: ['CATS'] });
     expect(humanNotes).toBe(typedMarker);
+  });
+
+  it('keeps typed notes that look like a marker when no sidecar was written', () => {
+    // Regression: with no structured answers encode() appends nothing, so the
+    // typed sentinel is the only marker. Everything after it is still notes and
+    // must not be discarded.
+    const typed = `${HUMAN}\n\n${START}\nworld`;
+
+    const { humanNotes, intake } = decodeReferralNotes(
+      encodeReferralNotes(typed, {}),
+    );
+
+    expect(humanNotes).toBe(typed);
+    expect(intake).toEqual({});
+  });
+
+  it('does not let a payload key become the decoded object prototype', () => {
+    const malicious = `${HUMAN}\n\n${START}\n{"v":1,"fields":{"__proto__":{"polluted":"yes"}},"PII":{}}${END}`;
+
+    const { intake } = decodeReferralNotes(malicious);
+
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(Object.getPrototypeOf(intake)).toBe(Object.prototype);
   });
 });
 
@@ -141,9 +169,15 @@ describe('summarizeIntake', () => {
   it('masks PII values by default', () => {
     const summary = summarizeIntake({ storage: 'Yes', substances: '30 days' });
 
-    expect(summary).toContain('storage: Yes');
-    expect(summary).toContain('substances: ••••');
+    expect(summary).toContain('Storage needed: Yes');
+    expect(summary).toContain('Substances: ••••');
     expect(summary).not.toContain('30 days');
+  });
+
+  it('shows the form vocabulary rather than raw wire values', () => {
+    const summary = summarizeIntake({ storage: ['AMNESTY_LOCKERS'] });
+
+    expect(summary).toBe('Storage needed: Amnesty Lockers');
   });
 
   it('reveals PII only when explicitly asked', () => {
@@ -152,18 +186,20 @@ describe('summarizeIntake', () => {
       { maskPII: false },
     );
 
-    expect(summary).toContain('substances: 30 days');
+    expect(summary).toContain('Substances: 30 days');
   });
 
   it('does NOT mask consent — a yes/no acknowledgement is not identifying', () => {
     // GAP-21: consent was removed from PII_KEYS.
     expect(PII_KEYS).not.toContain('consent');
-    expect(summarizeIntake({ consent: true })).toBe('consent: true');
+    expect(summarizeIntake({ consent: true })).toBe(
+      'DHS data-sharing consent: Yes',
+    );
   });
 
   it('omits empty values from the summary', () => {
     expect(summarizeIntake({ storage: 'Yes', pets: '', consent: false })).toBe(
-      'storage: Yes',
+      'Storage needed: Yes',
     );
   });
 

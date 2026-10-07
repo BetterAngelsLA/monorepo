@@ -1,6 +1,15 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { isNonNullish } from 'remeda';
 import { Pressable, View } from 'react-native';
+import {
+  type AdaAccommodationEnum,
+  type VeteranStatusEnum,
+} from '../../../apollo';
+import {
+  enumDisplayAdaAccommodationEnum,
+  enumDisplayVeteranStatus,
+} from '../../../static';
 import { MemoryIcon, PiiTag } from './IntakeFieldMarkers';
 import { GREEN, styles } from './intakeFormStyles';
 
@@ -9,9 +18,9 @@ export type ProfileCardData = {
   lastName?: string | null;
   nickname?: string | null;
   displayGender?: string | null;
-  dateOfBirth?: string | null;
-  veteranStatus?: string | null;
-  adaAccommodation?: readonly (string | null)[] | null;
+  age?: number | null;
+  veteranStatus?: VeteranStatusEnum | null;
+  adaAccommodation?: readonly (AdaAccommodationEnum | null)[] | null;
   householdMembers?: readonly unknown[] | null;
 };
 
@@ -27,6 +36,12 @@ export function ProfileCard({
   const name =
     [p.firstName, p.lastName].filter(Boolean).join(' ') +
     (p.nickname ? ` (${p.nickname})` : '');
+  // Profile answers are enum values; show the same labels the rest of the app
+  // uses rather than the raw wire names.
+  const accommodations = (p.adaAccommodation ?? [])
+    .filter(isNonNullish)
+    .map((value) => enumDisplayAdaAccommodationEnum[value])
+    .join(', ');
   const rows: {
     label: string;
     value: string;
@@ -35,12 +50,14 @@ export function ProfileCard({
   }[] = [
     { label: 'Name', value: name || 'Not on file', pii: true },
     { label: 'Gender', value: p.displayGender || 'Not on file', pii: true },
-    { label: 'Age (DOB)', value: p.dateOfBirth || 'Not on file', pii: true },
     {
-      label: 'Mobility',
-      value: p.adaAccommodation?.length
-        ? p.adaAccommodation.filter(Boolean).join(', ')
-        : 'Not on file',
+      label: 'Age',
+      value: p.age != null ? String(p.age) : 'Not on file',
+      pii: true,
+    },
+    {
+      label: 'Accommodations',
+      value: accommodations || 'Not on file',
       sensitive: true,
     },
     {
@@ -49,7 +66,12 @@ export function ProfileCard({
         ? `${p.householdMembers.length} on file`
         : 'None on file',
     },
-    { label: 'Veteran', value: p.veteranStatus || 'Not on file' },
+    {
+      label: 'Veteran',
+      value: p.veteranStatus
+        ? enumDisplayVeteranStatus[p.veteranStatus]
+        : 'Not on file',
+    },
   ];
 
   return (

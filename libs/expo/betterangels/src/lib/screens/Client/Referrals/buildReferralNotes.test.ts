@@ -132,8 +132,8 @@ describe('buildReferralNotes', () => {
 
     const summary = summarizeIntake(decodeReferralNotes(notes).intake);
 
-    expect(summary).toContain('storage: Yes');
-    expect(summary).toContain('substances: ••••');
+    expect(summary).toContain('Storage needed: Yes');
+    expect(summary).toContain('Substances: ••••');
     expect(summary).not.toContain('30 days');
   });
 });

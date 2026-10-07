@@ -1,4 +1,3 @@
-import { mapValues } from 'remeda';
 import {
   getIntakeField,
   isIntakeFieldValue,
@@ -47,7 +46,17 @@ function immutableValue(value: unknown): unknown {
 function immutableRecord(
   values: Readonly<StoredIntake>,
 ): Readonly<StoredIntake> {
-  return Object.freeze(mapValues(values, immutableValue));
+  // Object.fromEntries, not remeda's `mapValues`: persisted records can carry
+  // legacy/foreign keys, and mapValues drops an own `__proto__` key and replaces
+  // the result's prototype instead of preserving the key as data.
+  return Object.freeze(
+    Object.fromEntries(
+      Object.entries(values).map(([key, value]) => [
+        key,
+        immutableValue(value),
+      ]),
+    ),
+  );
 }
 
 function readPersistedDraft(value: unknown): ReferralDraft | null {
