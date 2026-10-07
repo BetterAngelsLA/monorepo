@@ -192,7 +192,7 @@ class TestReportTimeZoneBoundaries:
 
         assert meta["notes_count"] == 0
 
-    def test_csv_row_is_labelled_with_the_date_it_was_filtered_on(self) -> None:
+    def test_csv_row_is_labeled_with_the_date_it_was_filtered_on(self) -> None:
         """The exported date must match the boundary the note was filtered on."""
         org = baker.make(Organization)
         report = baker.make(ScheduledReport, organization=org)
