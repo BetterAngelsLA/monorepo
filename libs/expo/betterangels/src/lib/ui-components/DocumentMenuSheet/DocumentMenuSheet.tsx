@@ -24,7 +24,7 @@ import { getFileTypeLabel } from './utils';
 type ModalStep = 'menuOpen' | 'confirmDelete' | 'closed';
 
 interface IDocumentMenuSheetProps {
-  closeModal: () => void;
+  onClose: () => void;
   document: ClientDocumentType;
   clientId: string;
   onDeleteStateChange?: (documentId: string, isDeleting: boolean) => void;
@@ -36,7 +36,7 @@ interface IDocumentMenuSheetProps {
  * side effects (navigation, download, delete).
  */
 export function DocumentMenuSheet({
-  closeModal,
+  onClose,
   document,
   clientId,
   onDeleteStateChange,
@@ -59,7 +59,8 @@ export function DocumentMenuSheet({
     onDeleteStateChange?.(document.id, true);
     // Dismiss the confirm dialog without unmounting this component. We stay
     // mounted until the mutation settles so we never tear down a presented
-    // native modal mid-flight (the old closeModal() here did exactly that).
+    // native modal mid-flight (we used to call onClose() here, which did
+    // exactly that).
     setStep('closed');
 
     try {
@@ -108,7 +109,7 @@ export function DocumentMenuSheet({
       });
     } finally {
       onDeleteStateChange?.(document.id, false);
-      closeModal();
+      onClose();
     }
   };
 
@@ -154,7 +155,7 @@ export function DocumentMenuSheet({
         });
       }
 
-      closeModal();
+      onClose();
     } catch (err) {
       console.error('Download failed', err);
       Alert.alert(
@@ -165,12 +166,12 @@ export function DocumentMenuSheet({
   };
 
   const handleViewPress = () => {
-    closeModal();
+    onClose();
     router.navigate({ pathname: '/file/[id]', params: { id: document.id } });
   };
 
   const handleEditPress = () => {
-    closeModal();
+    onClose();
     router.navigate({
       pathname: '/file/[id]',
       params: { id: document.id, editing: 'true', clientId },
@@ -181,7 +182,7 @@ export function DocumentMenuSheet({
     <>
       <DocumentMenu
         isOpen={step === 'menuOpen'}
-        onClose={closeModal}
+        onClose={onClose}
         fileTypeLabel={fileTypeLabel}
         onView={handleViewPress}
         onEdit={handleEditPress}

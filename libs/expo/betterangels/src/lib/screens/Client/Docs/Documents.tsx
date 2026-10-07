@@ -81,7 +81,7 @@ export default function Documents(props: IDocumentsProps) {
         <DocumentMenuSheet
           key={selectedDocument.id}
           clientId={clientId}
-          closeModal={() => setSelectedDocument(undefined)}
+          onClose={() => setSelectedDocument(undefined)}
           document={selectedDocument}
           onDeleteStateChange={(documentId, isDeleting) =>
             setDeletingIds((prev) => {
