@@ -159,7 +159,11 @@ def _strip_docstrings(tree: ast.Module) -> ast.Module:
         body[:] = [
             statement
             for statement in body
-            if not (isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Constant) and isinstance(statement.value.value, str))
+            if not (
+                isinstance(statement, ast.Expr)
+                and isinstance(statement.value, ast.Constant)
+                and isinstance(statement.value.value, str)
+            )
         ]
     return tree
 
