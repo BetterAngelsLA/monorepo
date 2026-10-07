@@ -24,17 +24,27 @@ A module that starts using either transport must join
 from __future__ import annotations
 
 import ast
+import textwrap
 from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
 from typing import Any, Optional
 
 import pytest
+from common.graphql.permission_checkers import can_anywhere_checker, visible_rows_for_holder
 from common.models import WRITE_SHARED
 from django.apps import apps
+from strawberry_django.permissions import HasPerm
 
+#: The transports are recognised by **identity**, not by name.  A module is free
+#: to alias or qualify them (``from ... import can_anywhere_checker as checker``,
+#: ``permission_checkers.can_anywhere_checker``) — name matching would then miss
+#: the gate while a raw-text coverage scan still reported the module as covered,
+#: leaving the gate unregistered and unaudited.
 CAN_ANYWHERE_CHECKER = "can_anywhere_checker"
 LIST_HOOK = "visible_rows_for_holder"
+CAN_ANYWHERE_CHECKER_OBJ = can_anywhere_checker
+LIST_HOOK_OBJ = visible_rows_for_holder
 
 #: Modules scanned for row-invariant gates.  The coverage test below fails when
 #: any other module starts using one of the transports.
@@ -68,11 +78,21 @@ ROW_INVARIANT_REVIEW = {
 
 
 class _GateCollector(ast.NodeVisitor):
-    """Collect gate call sites with their enclosing ``Class.member`` path."""
+    """Collect gate call sites with their enclosing ``Class.member`` path.
 
-    def __init__(self) -> None:
+    Transports are recognised by resolving the callee to its object and comparing
+    identity against the canonical transport, so aliased and module-qualified
+    spellings are collected exactly like the plain ones.  A call that *looks* like
+    a transport by name but cannot be resolved is recorded in ``unresolved``
+    rather than dropped, so the coverage test can fail loudly instead of leaving
+    an unaudited gate behind.
+    """
+
+    def __init__(self, ns: dict[str, Any]) -> None:
+        self.ns = ns
         self.stack: list[str] = []
         self.sites: list[tuple[str, str, Optional[ast.expr]]] = []
+        self.unresolved: list[str] = []
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self.stack.append(node.name)
@@ -98,19 +118,31 @@ class _GateCollector(ast.NodeVisitor):
         else:
             self.generic_visit(node)
 
+    def _enter(self) -> str:
+        return ".".join(self.stack)
+
     def visit_Call(self, node: ast.Call) -> None:
+        callee = _resolve_object(node.func, self.ns)
         name = _call_name(node)
-        if name in {"HasPerm", "HasRetvalPerm"}:
+        if callee is LIST_HOOK_OBJ:
+            # Name the site after the wrapper when the hook is called from a
+            # module-level helper (``_visible_note_rows``) — that helper is the
+            # unit ROW_INVARIANT_REVIEW registers and the one worth reviewing.
+            site = self.stack[0] if len(self.stack) == 1 else f"{self._enter()}.{_call_name(node)}"
+            keywords = {kw.arg: kw.value for kw in node.keywords}
+            self.sites.append(("list_hook", site, keywords.get("perm")))
+        elif name == LIST_HOOK and callee is not LIST_HOOK_OBJ:
+            # Spelled like the transport but not resolvable to it — never silently
+            # pass an unaudited gate off as a scanned one.
+            self.unresolved.append(f"{self._enter()} (unresolved {name})")
+        elif callee is not None and getattr(callee, "__name__", None) in {"HasPerm", "HasRetvalPerm"}:
             keywords = {kw.arg: kw.value for kw in node.keywords}
             checker = keywords.get("perm_checker")
-            if isinstance(checker, ast.Name) and checker.id == CAN_ANYWHERE_CHECKER:
+            if _resolve_object(checker, self.ns) is CAN_ANYWHERE_CHECKER_OBJ:
                 perms = keywords.get("perms")
                 if perms is None and node.args:
                     perms = node.args[0]
-                self.sites.append(("checker", ".".join(self.stack), perms))
-        elif name == LIST_HOOK:
-            keywords = {kw.arg: kw.value for kw in node.keywords}
-            self.sites.append(("list_hook", ".".join(self.stack), keywords.get("perm")))
+                self.sites.append(("checker", self._enter(), perms))
         self.generic_visit(node)
 
 
@@ -120,6 +152,23 @@ def _call_name(node: ast.Call) -> Optional[str]:
         return func.id
     if isinstance(func, ast.Attribute):
         return func.attr
+    return None
+
+
+def _resolve_object(node: Optional[ast.expr], ns: dict[str, Any]) -> Any:
+    """The object an expression refers to, via *ns* — or ``None``.
+
+    Walks ``ast.Name`` and ``ast.Attribute`` chains only, and uses ``getattr``, so
+    an alias (``from ... import can_anywhere_checker as checker``) and a
+    module-qualified spelling (``permission_checkers.can_anywhere_checker``) both
+    resolve to the same function object.  Never evaluates a call or any other
+    expression, so it cannot run project code.
+    """
+    if isinstance(node, ast.Name):
+        return ns.get(node.id)
+    if isinstance(node, ast.Attribute):
+        base = _resolve_object(node.value, ns)
+        return getattr(base, node.attr, None) if base is not None else None
     return None
 
 
@@ -207,7 +256,7 @@ def _resolve_hook_wrapper(tree: ast.Module, site: str, ns: dict[str, Any]) -> Op
     return sorted(set(resolved)) if found_call else None
 
 
-def _scan_module(module_name: str) -> list[tuple[str, str, Optional[list[str]]]]:
+def _scan_module(module_name: str) -> tuple[list[tuple[str, str, Optional[list[str]]]], list[str]]:
     module = import_module(module_name)
     module_file = module.__file__
     assert module_file is not None  # imported project modules always have a file
@@ -215,7 +264,7 @@ def _scan_module(module_name: str) -> list[tuple[str, str, Optional[list[str]]]]
     tree = ast.parse(source)
     ns = vars(module)
 
-    collector = _GateCollector()
+    collector = _GateCollector(ns)
     collector.visit(tree)
 
     results: list[tuple[str, str, Optional[list[str]]]] = []
@@ -224,7 +273,7 @@ def _scan_module(module_name: str) -> list[tuple[str, str, Optional[list[str]]]]
         if perms is None and kind == "list_hook":
             perms = _resolve_hook_wrapper(tree, site, ns)
         results.append((kind, site, perms))
-    return results
+    return results, collector.unresolved
 
 
 def _all_platform_shared(perms: list[str]) -> bool:
@@ -242,7 +291,13 @@ def _all_platform_shared(perms: list[str]) -> bool:
 def test_row_invariant_gates_are_declared_or_registered(module_name: str) -> None:
     violations: list[str] = []
     unregistered: list[str] = []
-    for _kind, site, perms in _scan_module(module_name):
+    sites, unresolved = _scan_module(module_name)
+    assert not unresolved, (
+        f"{module_name}: row-invariant transport(s) that could not be resolved to "
+        "can_anywhere_checker/visible_rows_for_holder, so their gates cannot be audited. "
+        "Import the transport directly (aliasing is fine) so the scan can see it:\n" + "\n".join(unresolved)
+    )
+    for _kind, site, perms in sites:
         key = (module_name, site)
         if perms and _all_platform_shared(perms):
             for perm in perms:
@@ -274,15 +329,59 @@ def test_registry_entries_match_real_sites() -> None:
     scanned = {
         (module_name, site)
         for module_name in ROW_INVARIANT_MODULES
-        for _kind, site, _perms in _scan_module(module_name)
+        for _kind, site, _perms in _scan_module(module_name)[0]
     }
     stale = sorted(key for key in ROW_INVARIANT_REVIEW if key not in scanned)
     assert not stale, f"stale ROW_INVARIANT_REVIEW entries: {stale}"
 
 
+def test_aliased_transports_are_collected_like_plain_ones() -> None:
+    """Regression: an alias must not hide a gate from the registry.
+
+    The coverage scan uses raw text, so a module that aliases the checker still
+    looked "covered" while the collector — matching ``checker.id`` against the
+    literal name — recorded no site at all.  The gate was then neither declared
+    nor registered, and nothing failed.  Resolving by identity closes that.
+    """
+    aliased = textwrap.dedent(
+        """
+        from common.graphql.permission_checkers import can_anywhere_checker as checker
+        from common.graphql.permission_checkers import visible_rows_for_holder as hook
+
+        class Query:
+            thing: str = strawberry.field(
+                extensions=[HasPerm(perms=["notes.view_note"], perm_checker=checker)]
+            )
+
+        def _rows(queryset, info):
+            return hook(queryset, info, perm="notes.view_note", cache_key="rows")
+        """
+    )
+    ns = {"HasPerm": HasPerm, "checker": CAN_ANYWHERE_CHECKER_OBJ, "hook": LIST_HOOK_OBJ}
+    collector = _GateCollector(ns)
+    collector.visit(ast.parse(aliased))
+
+    kinds = {kind for kind, _site, _perms in collector.sites}
+    assert kinds == {"checker", "list_hook"}, f"alias hid a gate: sites={collector.sites}"
+    assert not collector.unresolved
+
+    # And a transport spelled by name but never imported stays loud, not silent.
+    ghost = _GateCollector({})
+    ghost.visit(ast.parse("def f():\n    return visible_rows_for_holder(qs, info, perm='x', cache_key='y')\n"))
+    assert ghost.sites == []
+    assert ghost.unresolved, "an unresolvable transport must be reported, not dropped"
+
+
 def test_every_module_using_a_row_invariant_transport_is_scanned() -> None:
+    """No module may use a transport without being scanned.
+
+    Coverage is decided by the same identity resolution the collector uses, so a
+    module cannot hide a gate behind an alias, a qualified name, or any other
+    spelling that a raw-text search would catch while the AST scan missed it.
+    """
     allowed = set(ROW_INVARIANT_MODULES) | {"common.graphql.permission_checkers"}
     found: set[str] = set()
+    unresolved: set[str] = set()
     for app_config in apps.get_app_configs():
         root = Path(app_config.path)
         for path in root.rglob("*.py"):
@@ -292,9 +391,26 @@ def test_every_module_using_a_row_invariant_transport_is_scanned() -> None:
             if CAN_ANYWHERE_CHECKER not in text and LIST_HOOK not in text:
                 continue
             module = ".".join((app_config.label, *path.relative_to(root).with_suffix("").parts))
-            found.add(module.removesuffix(".__init__"))
+            module = module.removesuffix(".__init__")
+            found.add(module)
+            if module not in allowed:
+                continue
+            try:
+                tree = ast.parse(text)
+                ns = vars(import_module(module))
+            except (ImportError, SyntaxError):  # pragma: no cover — a broken module fails elsewhere first
+                continue
+            collector = _GateCollector(ns)
+            collector.visit(tree)
+            if collector.unresolved:
+                unresolved.update(f"{module}: {entry}" for entry in collector.unresolved)
+
     unexpected = sorted(found - allowed)
     assert not unexpected, (
         "module(s) use can_anywhere_checker/visible_rows_for_holder but are not scanned — "
         "add them to ROW_INVARIANT_MODULES and register their org-anchored sites: " + ", ".join(unexpected)
+    )
+    assert not unresolved, (
+        "row-invariant transport(s) could not be resolved by the AST scan, so their gates are "
+        "unregistered and unaudited:\n" + "\n".join(sorted(unresolved))
     )
