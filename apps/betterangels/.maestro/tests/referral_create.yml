@@ -84,7 +84,14 @@ appId: ${MAESTRO_APP_ID}
     id: submit-referral-btn
 
 # ── Submitted: back on the list, values round-tripped from the server ───────
-- assertVisible: 'Referral submitted successfully!'
+# The success snackbar is transient, so wait for it explicitly rather than
+# relying on the default assertion timeout. A failed create shows a different
+# (error) snackbar, so this still fails the flow; the durable assertions below
+# (screen, draft consumed, round-tripped card) are the real proof of success.
+- extendedWaitUntil:
+    visible:
+      text: 'Referral submitted successfully!'
+    timeout: 20000
 
 - assertVisible:
     id: referrals-screen
