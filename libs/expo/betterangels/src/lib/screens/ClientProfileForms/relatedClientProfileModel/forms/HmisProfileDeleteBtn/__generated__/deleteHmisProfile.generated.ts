@@ -7,9 +7,9 @@ export type DeleteHmisProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteHmisProfileMutation = { __typename?: 'Mutation', deleteHmisProfile:
-    | { __typename?: 'HmisProfileType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteHmisProfileMutation = { __typename: 'Mutation', deleteHmisProfile:
+    | { __typename: 'HmisProfileType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

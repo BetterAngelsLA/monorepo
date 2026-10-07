@@ -1,7 +1,9 @@
+import type { StatusChoices } from '@monorepo/ba-platform/types';
+import { enumStatusChoices } from '@monorepo/react/shelter';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import type { Shelter } from '../types/shelter';
-import { Table, type TableColumn } from './base-ui/table';
+import { Table, type SortDirection, type TableColumn } from './base-ui/table';
 
 export type ShelterRowObject = {
   id: string;
@@ -24,6 +26,15 @@ type ShelterTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
+  /** Controlled sort column key (matches a sortable column's `key`). */
+  sortColumn?: string | null;
+  /** Controlled sort direction. */
+  sortDirection?: SortDirection;
+  /** Called when the user clicks a sortable column header. */
+  onSortChange?: (
+    column: string | null,
+    direction: SortDirection | null,
+  ) => void;
 };
 
 function getUnavailableBeds(shelter: Shelter) {
@@ -43,6 +54,9 @@ export function ShelterTable({
   tableStyle,
   headerStyle,
   rowStyle,
+  sortColumn,
+  sortDirection,
+  onSortChange,
 }: ShelterTableProps) {
   const columns: TableColumn<Shelter>[] = useMemo(
     () => [
@@ -62,7 +76,6 @@ export function ShelterTable({
         cellClassName:
           'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
         render: (shelter) => shelter.address ?? 'No address listed',
-        sortValue: (shelter) => shelter.address ?? '',
       },
       {
         key: 'capacity',
@@ -99,14 +112,22 @@ export function ShelterTable({
         sortValue: (shelter) => shelter.bedCounts.total,
       },
       {
+        key: 'organization',
+        label: 'Organization',
+        width: '1fr',
+        cellClassName:
+          'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) => shelter.organization?.name ?? '—',
+        sortValue: (shelter) => shelter.organization?.name ?? '',
+      },
+      {
         key: 'status',
         label: 'Status',
         width: '0.8fr',
         cellClassName: 'text-gray-600',
-        render: (shelter) => shelter.status,
+        render: (shelter) =>
+          enumStatusChoices[shelter.status as StatusChoices] ?? shelter.status,
         sortValue: (shelter) => shelter.status,
-        filterValue: (shelter) => shelter.status,
-        autoFilterOptions: true,
       },
     ],
     [],
@@ -132,6 +153,9 @@ export function ShelterTable({
       loading={loading}
       loadingState={loadingState}
       emptyState={emptyState}
+      sortColumn={sortColumn}
+      sortDirection={sortDirection}
+      onSortChange={onSortChange}
       wrapperClassName={wrapperClassName}
       headerClassName={headerClassName}
       rowClassName={rowClassName}

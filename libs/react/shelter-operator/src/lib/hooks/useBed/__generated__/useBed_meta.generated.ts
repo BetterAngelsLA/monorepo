@@ -4,7 +4,9 @@ import type { BedQuery } from './useBed.generated';
 
 export const bedOperationKey: keyof Omit<BedQuery, '__typename'> = 'bed';
 export const bedSuccessTypename: Extract<
-  NonNullable<BedQuery['bed']>,
+  NonNullable<BedQuery['bed']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<BedQuery['bed']>,
   { __typename: 'BedType' }
 >['__typename'] = 'BedType';
 

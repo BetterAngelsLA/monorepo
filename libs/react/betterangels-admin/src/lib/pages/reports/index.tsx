@@ -53,6 +53,9 @@ export default function Reports({ className = '' }: IProps) {
 
   const { data, loading } = useQuery(ReportSummaryDocument, {
     variables: {
+      // reportSummary carries its org in the payload; '' is never sent because
+      // the query is skipped without an active org.
+      organizationId: activeOrg ? activeOrg.id : '',
       startDate: startStr,
       endDate: endStr,
     },

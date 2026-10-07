@@ -40,12 +40,18 @@ export default function LoginFormHmis() {
       const cleanedEmail = email.replace('+demo@', '@').toLowerCase().trim();
       const { data, error } = await hmisLogin({
         variables: { email: cleanedEmail, password },
+      }).catch((mutationError) => {
+        console.error(mutationError);
+        // Rejected mutations (today: a bad HMIS password arrives as a raw
+        // "An error occurred: [...]" GraphQL error) must show the same
+        // generic failure as every other path — never the server text.
+        throw new Error('Sorry, login failed.');
       });
 
       const res = data?.hmisLogin;
       if (!res) {
         console.error('No response from server');
-        return;
+        throw new Error('Sorry, login failed.');
       }
       if (error) {
         console.error(error.message);

@@ -4,7 +4,9 @@ import type { RoomQuery } from './useRoom.generated';
 
 export const roomOperationKey: keyof Omit<RoomQuery, '__typename'> = 'room';
 export const roomSuccessTypename: Extract<
-  NonNullable<RoomQuery['room']>,
+  NonNullable<RoomQuery['room']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<RoomQuery['room']>,
   { __typename: 'RoomType' }
 >['__typename'] = 'RoomType';
 

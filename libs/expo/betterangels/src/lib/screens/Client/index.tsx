@@ -98,6 +98,7 @@ export default function Client({
   if (loading) {
     return (
       <View
+        testID="client-screen-loading"
         style={{
           flex: 1,
           alignItems: 'center',
@@ -114,13 +115,28 @@ export default function Client({
     throw new Error(`Something went wrong. Please try again. ${error}`);
   }
 
-  const showHeader = tab === ClientViewTabEnum.Profile;
-  const screenTitle =
+  // A stale or deep-linked Referrals tab must not render the referral screen
+  // once the flag is off; derive the active tab so no frame shows it.
+  const activeTab =
+    tab === ClientViewTabEnum.Referrals && !referralsEnabled
+      ? ClientViewTabEnum.Profile
+      : tab;
+
+  // Referral work changed the header/navbar layout; keep the pre-referral look
+  // while the flag is off so production users see no change. With the flag, the
+  // header shows on all tabs except Locations (the map keeps full height,
+  // DEV-1737) and the client's name appears exactly once — rich header when
+  // shown, otherwise in the navbar (per wireframe, navbar reads "Client").
+  const showHeader = referralsEnabled
+    ? activeTab !== ClientViewTabEnum.Locations
+    : activeTab === ClientViewTabEnum.Profile;
+  const clientName =
     data?.clientProfile.firstName || data?.clientProfile.lastName
       ? `${data?.clientProfile.firstName ?? ''} ${
           data?.clientProfile.lastName ?? ''
         }`.trim()
       : 'Client';
+  const screenTitle = referralsEnabled && showHeader ? 'Client' : clientName;
 
   return (
     <>
@@ -157,11 +173,17 @@ export default function Client({
           ),
         }}
       />
-      <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
+      <MainContainer
+        testId="client-screen"
+        pt={0}
+        pb={0}
+        bg={Colors.NEUTRAL_EXTRA_LIGHT}
+        px={0}
+      >
         {showHeader && <ClientHeader client={data?.clientProfile} />}
         <UploadProgressBar />
-        <ClientTabs selectedTab={tab} setTab={setTab} />
-        {getTabComponent(tab, data, openCard)}
+        <ClientTabs selectedTab={activeTab} setTab={setTab} />
+        {getTabComponent(activeTab, data, openCard)}
       </MainContainer>
     </>
   );

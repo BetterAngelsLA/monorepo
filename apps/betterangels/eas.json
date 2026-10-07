@@ -8,6 +8,7 @@
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_APP_ENV": "development",
         "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
+        "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.dev.betterangels.la",
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO"
       },
       "channel": "development",
@@ -24,6 +25,7 @@
         "EXPO_PUBLIC_APP_ENV": "development",
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
+        "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.dev.betterangels.la",
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO"
       },
       "node": "22.21.1"
@@ -38,7 +40,8 @@
         "EXPO_PUBLIC_APP_ENV": "production",
         "EXPO_PUBLIC_API_URL": "https://api.prod.betterangels.la",
         "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
-        "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "WARN"
+        "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "WARN",
+        "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.betterangels.la"
       },
       "channel": "production",
       "node": "22.21.1"

@@ -5,10 +5,8 @@ import strawberry
 import strawberry_django
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
-from common.permissions.utils import IsAuthenticated, get_current_organization
-from django.conf import settings
+from common.permissions.utils import IsAuthenticated, require_can
 from django.contrib import auth
-from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
@@ -17,18 +15,21 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm
 
-from accounts.emails import send_welcome_emails_for_org
-from accounts.extensions import HasOrgPerm
-from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
-from accounts.role_manager import OrgRoleManager
+from accounts.emails import base_url_for, send_welcome_emails_for_org
+from accounts.permissions import UserOrganizationPermissions
 
-from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
-from .models import Organization, PermissionGroup, User
+from .annotations import (
+    annotate_is_org_owner,
+    annotate_member_role,
+    annotate_membership_id,
+    annotate_permission_templates,
+)
+from .models import Organization, OrganizationUser, PermissionGroup, User
 from .services import (
     create_organization_service,
     member_add,
+    member_roles_replace,
     organization_remove_member,
 )
 from .types import (
@@ -54,39 +55,48 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 
+def _org_or_deny(org_id: object) -> Organization:
+    """Resolve an org id from client input, failing closed.
+
+    A missing/unknown/non-numeric org is a permission problem
+    (``PermissionDenied``), never a ``DoesNotExist`` crash or a ``ValueError``.
+    Module-level because strawberry-django resolvers are invoked unbound.
+    """
+    try:
+        org = Organization.objects.filter(pk=org_id).first()
+    except TypeError, ValueError:
+        org = None
+    if org is None:
+        raise PermissionDenied("You do not have access to this organization.")
+    return org
+
+
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
 
-    # TODO(SDB-178): Migrate to HasOrgPerm — drop ``organization_id`` argument,
-    # read org from ``X-Organization-ID`` header.  These queries are consumed by
-    # ``betterangels-admin`` (user management page) and the mobile app.  The
-    # migration is a breaking change: clients must send the header instead of the
-    # argument.  Once migrated, the ``_member_role`` / ``_is_org_owner``
-    # annotations can be moved to ``OrganizationMemberType.get_queryset()`` so
-    # they're applied automatically and not duplicated in every resolver.
-    @strawberry_django.field(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
-    )
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
+        """A single org member — grant-only at the payload org (ADR 0001 §5.3).
+
+        The org is carried as an argument (no header); authority is
+        ``require_can(organizations.view_org_members)`` at that org — role-backed
+        ORG_ADMIN/ORG_SUPERUSER backfilled Grants, or the global tier.  An
+        unknown org id fails closed.
+        """
         current_user = cast(User, get_current_user(info))
-        organization = get_user_permitted_org(
-            current_user,
-            org_id=organization_id,
-            permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
-        )
-        if organization is None:
-            raise PermissionError("You do not have permission to view this organization's members.")
+        org = _org_or_deny(organization_id)
+        require_can(current_user, UserOrganizationPermissions.VIEW_ORG_MEMBERS, org=org)
 
         user: User = (
-            organization.users.filter(id=user_id)
+            org.users.filter(id=user_id)
             .annotate(
                 _member_role=annotate_member_role(organization_id),
                 _is_org_owner=annotate_is_org_owner(organization_id),
                 _permission_templates=annotate_permission_templates(organization_id),
+                _membership_id=annotate_membership_id(organization_id),
             )
             .first()
         )
@@ -95,11 +105,9 @@ class Query:
 
         return cast(OrganizationMemberType, user)
 
-    # TODO(SDB-178): same migration as ``organization_member`` above.
     @strawberry_django.offset_paginated(
         OffsetPaginated[OrganizationMemberType],
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_members(
         self,
@@ -110,16 +118,17 @@ class Query:
         org_type: Optional[OrgTypeEnum] = None,
         permission_template: Optional[PermissionTemplateEnum] = None,
     ) -> QuerySet[User]:
-        current_user = cast(User, get_current_user(info))
-        organization = get_user_permitted_org(
-            current_user,
-            org_id=organization_id,
-            permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
-        )
-        if organization is None:
-            raise PermissionError("You do not have permission to view this organization's members.")
+        """List an organization's members — grant-only at the payload org (ADR 0001 §5.3).
 
-        queryset: QuerySet[User] = organization.users.all()
+        The org is carried as an argument (no header); authority is
+        ``require_can(organizations.view_org_members)`` at that org.  An unknown
+        org id fails closed.
+        """
+        current_user = cast(User, get_current_user(info))
+        org = _org_or_deny(organization_id)
+        require_can(current_user, UserOrganizationPermissions.VIEW_ORG_MEMBERS, org=org)
+
+        queryset: QuerySet[User] = org.users.all()
 
         # When an org_type is provided, filter to members who have
         # at least one permission template from that org type's template set.
@@ -134,7 +143,7 @@ class Query:
                     PermissionGroup.objects.filter(
                         organization_id=organization_id,
                         template__name__in=template_names,
-                        group__user=OuterRef("pk"),
+                        user=OuterRef("pk"),
                     )
                 )
                 queryset = queryset.filter(has_org_type_template)
@@ -146,7 +155,7 @@ class Query:
                 PermissionGroup.objects.filter(
                     organization_id=organization_id,
                     template__name=permission_template.value,
-                    group__user=OuterRef("pk"),
+                    user=OuterRef("pk"),
                 )
             )
             queryset = queryset.filter(has_template)
@@ -155,6 +164,7 @@ class Query:
             _member_role=annotate_member_role(organization_id),
             _is_org_owner=annotate_is_org_owner(organization_id),
             _permission_templates=annotate_permission_templates(organization_id),
+            _membership_id=annotate_membership_id(organization_id),
         )
 
 
@@ -220,14 +230,16 @@ class Mutation:
 
         return DeletedObjectType(id=user_id)
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
-        current_user = get_current_user(info)
-        org_id = get_current_organization(info)
-        organization = Organization.objects.get(pk=org_id)
+        """Invite a member — grant-only at the payload org (ADR 0001 §5.3).
+
+        ``require_can(organizations.add_org_member)`` at ``data.organizationId``;
+        no header is read.
+        """
+        current_user = cast(User, get_current_user(info))
+        organization = _org_or_deny(data.organization_id)
+        require_can(current_user, UserOrganizationPermissions.ADD_ORG_MEMBER, org=organization)
 
         template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
@@ -244,33 +256,41 @@ class Mutation:
             organization=organization, invited_by_user=current_user, invitee_user=user
         )
 
-        site = Site.objects.get(pk=settings.SITE_ID)
         invitation_backend().send_invitation(
             user=user,
             sender=current_user,
             organization=organization,
-            domain=site,
+            base_url=base_url_for(template),
             role_template=template,
         )
 
         return cast(OrganizationMemberType, user)
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def remove_organization_member(
         self,
         info: Info,
         data: RemoveOrganizationMemberInput,
     ) -> DeletedObjectType:
+        """Remove a member — row-keyed, grant-only at the membership's org.
+
+        ``data.membershipId`` names the ``OrganizationUser`` row; the row's org
+        authorizes (``require_can(organizations.remove_org_member)`` there) —
+        mirrors teams' row-keyed delete.  A missing/unknown membership fails
+        closed; no header is read.
+        """
         current_user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        organization = Organization.objects.get(pk=org_id)
+        membership = (
+            OrganizationUser.objects.select_related("organization", "user").filter(pk=data.membership_id).first()
+        )
+        if membership is None:
+            raise PermissionDenied("You do not have permission to remove this member.")
+
+        require_can(current_user, UserOrganizationPermissions.REMOVE_ORG_MEMBER, org=membership.organization)
 
         removed_id = organization_remove_member(
-            organization=organization,
-            user_id=int(data.id),
+            organization=membership.organization,
+            user_id=membership.user_id,
             removed_by=current_user,
         )
 
@@ -299,33 +319,43 @@ class Mutation:
 
     # ── Role Change ────────────────────────────────────────────────
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def change_organization_member_role(
         self, info: Info, data: ChangeOrganizationMemberRoleInput
     ) -> OrganizationMemberType:
-        """Promote or demote a member within an organization.
+        """Set which of the organization's invitable roles a member holds.
 
-        Replaces all of the member's current org-scoped roles with the
-        single requested template.  Requires the ``CHANGE_ORG_MEMBER_ROLE``
-        permission.
+        Row-keyed, grant-only at the membership's org (ADR 0001 §5.3):
+        ``data.membershipId`` names the ``OrganizationUser`` row and its org
+        authorizes ``require_can(organizations.change_org_member_role)``.  A
+        missing/unknown membership fails closed; no header is read.
+
+        The member ends up holding the single requested template and no other
+        role the organization grants by invitation.  Roles it does not —
+        ``Organization Admin``, ``Organization Superuser``, and anything granted
+        by hand — are left alone; ``PermissionTemplateEnum`` cannot name them, so
+        replacing every group would have demoted an org admin on any call.
         """
-        org_id = get_current_organization(info)
-        organization = Organization.objects.get(pk=org_id)
+        current_user = cast(User, get_current_user(info))
+        membership = (
+            OrganizationUser.objects.select_related("organization", "user").filter(pk=data.membership_id).first()
+        )
+        if membership is None:
+            raise PermissionDenied("You do not have permission to change this member's role.")
+
+        organization = membership.organization
+        require_can(current_user, UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE, org=organization)
 
         template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
-        target_user = User.objects.filter(
-            id=data.user_id,
-            organizations_organization=organization,
-        ).first()
-        if not target_user:
-            raise PermissionDenied("Target user is not a member of this organization.")
+        member_roles_replace(
+            organization=organization,
+            user_id=membership.user_id,
+            permission_templates=(template,),
+        )
 
-        OrgRoleManager(organization).replace_roles(target_user, template)
-
+        target_user = membership.user
+        target_user._membership_id = membership.pk
         if hasattr(target_user, "_member_role"):
             object.__delattr__(target_user, "_member_role")
         return cast(OrganizationMemberType, target_user)

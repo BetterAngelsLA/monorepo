@@ -5,4 +5,5 @@ import type { GetShelterOperatorOverviewQuery } from '../../components/overview/
  * returned by GetShelterOperatorOverview. Derived from codegen so the report
  * follows the query rather than drifting from it.
  */
-export type ShelterReportData = GetShelterOperatorOverviewQuery['operatorShelter'];
+export type ShelterReportData =
+  GetShelterOperatorOverviewQuery['operatorShelter'];

@@ -1,8 +1,10 @@
 import type { ColumnConfig } from '@ant-design/plots';
 import { Column } from '@ant-design/plots';
-import clsx from 'clsx';
-import { useLayoutEffect, useRef, useState } from 'react';
-import { mergeDeep } from 'remeda';
+import { mergeCss } from '@monorepo/react/shared';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { mergeDeep, unique } from 'remeda';
+import { bucketData } from './bucketData';
+
 const FONT_FAMILY = "'Poppins', ui-sans-serif, system-ui, sans-serif";
 const RESIZE_DEBOUNCE_MS = 150;
 function darkenHex(hex: string, amount = 0.18): string {
@@ -29,6 +31,8 @@ export type BarChartProps = ColumnConfig & {
   chartTitle?: string;
   showViewToggle?: boolean;
   onViewChange?: (mode: ViewMode) => Partial<ColumnConfig>;
+  maxBars?: number;
+  chartHeight?: number;
 };
 
 export function BarChart({
@@ -36,6 +40,8 @@ export function BarChart({
   chartTitle,
   showViewToggle,
   onViewChange,
+  maxBars,
+  chartHeight,
   ...config
 }: BarChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('count');
@@ -133,12 +139,29 @@ export function BarChart({
   const range = colorScale.range ?? [];
   const domain =
     colorScale.domain ??
-    (colorField
-      ? Array.from(new Set(data.map((d) => String(d[colorField]))))
-      : []);
+    (colorField ? unique(data.map((d) => String(d[colorField]))) : []);
   const singleFill =
     ((cfg['style'] as { fill?: string } | undefined)?.fill as string) ??
     '#3B82F6';
+
+  // Bucket the display data (already count or percentage based on viewMode)
+  // down to at most `maxBars` bars by averaging consecutive values. Callers
+  // that omit `maxBars` get their data drawn as passed.
+  const xField = cfg['xField'] as string | undefined;
+  const yField = cfg['yField'] as string | undefined;
+  const normalizedMaxBars =
+    maxBars === undefined ? undefined : Math.max(1, Math.floor(maxBars));
+  const displayData =
+    ((displayConfig as Record<string, unknown>)['data'] as
+      | Record<string, unknown>[]
+      | undefined) ?? [];
+  const finalData = useMemo(
+    () =>
+      normalizedMaxBars !== undefined && xField && yField
+        ? bucketData(displayData, xField, yField, colorField, normalizedMaxBars)
+        : displayData,
+    [displayData, xField, yField, colorField, normalizedMaxBars],
+  );
 
   const activeFill = (datum: Record<string, unknown>): string => {
     if (colorField && range.length) {
@@ -152,6 +175,7 @@ export function BarChart({
 
   const withState = {
     ...displayConfig,
+    data: finalData,
     ...(!colorField
       ? {
           tooltip: {
@@ -192,7 +216,7 @@ export function BarChart({
       : [];
 
   return (
-    <div className={clsx('flex flex-col w-full', className)}>
+    <div className={mergeCss(['flex flex-col w-full', className])}>
       {hasHeader && (
         <div className="flex flex-col flex-shrink-0 mb-[30px] pl-10">
           <div className="flex items-center justify-between">
@@ -213,12 +237,12 @@ export function BarChart({
                     key={mode}
                     type="button"
                     onClick={() => setViewMode(mode)}
-                    className={clsx(
+                    className={mergeCss([
                       'text-sm font-medium px-4 py-1.5 rounded-full border-none cursor-pointer transition-all',
                       viewMode === mode
                         ? 'bg-white text-gray-900 shadow-sm'
                         : 'bg-transparent text-gray-500',
-                    )}
+                    ])}
                     style={{ fontFamily: FONT_FAMILY }}
                   >
                     {mode === 'count' ? 'Count' : 'Percentage'}
@@ -227,25 +251,29 @@ export function BarChart({
               </div>
             )}
           </div>
-          {legendItems.length > 0 && (
-            <div
-              className="flex flex-wrap mt-5 text-xs gap-x-6 gap-y-1"
-              style={{ color: '#747A82', fontFamily: FONT_FAMILY }}
-            >
-              {legendItems.map(({ label, color }) => (
-                <span key={label} className="flex items-center gap-1.5">
-                  <span
-                    className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                    style={{ background: color }}
-                  />
-                  {label}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Always rendered so charts without a legend keep the same
+              title-to-plot gap as charts that have one. */}
+          <div
+            className="flex flex-wrap mt-5 text-xs gap-x-6 gap-y-1 min-h-[20px]"
+            style={{ color: '#747A82', fontFamily: FONT_FAMILY }}
+          >
+            {legendItems.map(({ label, color }) => (
+              <span key={label} className="flex items-center gap-1.5">
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                  style={{ background: color }}
+                />
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
       )}
-      <div ref={chartContainerRef} className="flex-1 min-h-0">
+      <div
+        ref={chartContainerRef}
+        className={chartHeight ? undefined : 'flex-1 min-h-0'}
+        style={chartHeight ? { height: chartHeight } : undefined}
+      >
         {/* Remount only when viewMode changes; rely on autoFit for resize instead of resizeKey */}
         <Column key={viewMode} {...withState} />
       </div>

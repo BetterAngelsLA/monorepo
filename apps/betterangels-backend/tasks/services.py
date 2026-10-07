@@ -50,7 +50,7 @@ def task_create(
             raise ValidationError(str(e)) from e
 
         assign_object_permissions(
-            permission_group.group,
+            permission_group,
             task,
             [
                 Task.perms.CHANGE,

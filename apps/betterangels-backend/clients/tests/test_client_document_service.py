@@ -98,7 +98,7 @@ class ResolveUploadTest(TestCase):
         self.user: Any = baker.make("accounts.User")
         self.client_profile: Any = baker.make("clients.ClientProfile")
         self.permission_group = MagicMock()
-        self.permission_group.group = MagicMock()
+        self.permission_group = MagicMock()
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
@@ -173,12 +173,12 @@ class ResolveUploadTest(TestCase):
 
         self.assertEqual(mock_assign.call_count, 2)
         mock_assign.assert_any_call(
-            self.permission_group.group,
+            self.permission_group,
             att1,
             [Attachment.perms.DELETE, Attachment.perms.CHANGE],
         )
         mock_assign.assert_any_call(
-            self.permission_group.group,
+            self.permission_group,
             att2,
             [Attachment.perms.DELETE, Attachment.perms.CHANGE],
         )

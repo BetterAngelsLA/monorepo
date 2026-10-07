@@ -1,14 +1,7 @@
 import { ChevronUpIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
-import {
-  PropsWithChildren,
-  ReactElement,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import { usePrint } from '../../../providers/PrintProvider';
+import { PropsWithChildren, ReactElement, useId } from 'react';
+import { usePrintExpansion } from '../../../hooks/usePrintExpansion';
 
 interface IProps extends PropsWithChildren {
   className?: string;
@@ -26,9 +19,8 @@ export function ResourceCallout(props: IProps) {
     title = 'Useful Tips',
   } = props;
 
-  const [show, setShow] = useState(false);
-  const wasExpandedBeforePrintRef = useRef(false);
-  const { isPrinting } = usePrint();
+  const { isOpen, handleToggle } = usePrintExpansion();
+  const contentId = useId();
 
   const parentCss = [
     'items-start',
@@ -37,19 +29,6 @@ export function ResourceCallout(props: IProps) {
     type === 'alert' ? 'bg-neutral-99' : 'bg-white',
     className,
   ];
-
-  useEffect(() => {
-    if (isPrinting) {
-      wasExpandedBeforePrintRef.current = show;
-      setShow(true);
-    } else {
-      setShow(wasExpandedBeforePrintRef.current);
-    }
-  }, [isPrinting]); // ✅ Removed show from dependencies to prevent race conditions
-
-  const handleToggle = useCallback(() => {
-    setShow((prev) => !prev);
-  }, []);
 
   return (
     <div className={mergeCss(parentCss)}>
@@ -66,21 +45,21 @@ export function ResourceCallout(props: IProps) {
               handleToggle();
             }
           }}
-          aria-expanded={show}
-          aria-controls="resource-callout-content"
+          aria-expanded={isOpen}
+          aria-controls={contentId}
         >
           <div className="font-bold h-8 flex items-center text-xl">{title}</div>
           <ChevronUpIcon
             className={`h-4 w-4 transition-transform ${
-              show ? 'rotate-0' : 'rotate-180'
+              isOpen ? 'rotate-0' : 'rotate-180'
             }`}
             aria-hidden="true"
           />
         </div>
       </div>
       <div
-        id="resource-callout-content"
-        className={`mt-4 ${show ? 'block' : 'hidden'}`}
+        id={contentId}
+        className={`mt-4 ${isOpen ? 'block' : 'hidden'}`}
       >
         {children}
       </div>

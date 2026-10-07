@@ -1,3 +1,4 @@
+export * from './useBaPrivatePermissions';
 export * from './useBed';
 export * from './useBeds';
 export * from './useCloneBed';
@@ -18,6 +19,8 @@ export * from './useSearchClient';
 export * from './useShelterCities';
 export * from './useShelterOccupancyMetrics';
 export * from './useShelterOperatorProfile';
+export * from './useShelterOrganizations';
+export * from './useShelterPermissions';
 export * from './useShelterSpas';
 export * from './useUpdateBed';
 export * from './useUpdateReservation';

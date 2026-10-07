@@ -2,21 +2,15 @@ import type { OperationVariables } from '@apollo/client';
 import {
   DEFAULT_PAGINATION_LIMIT_PATH,
   DEFAULT_PAGINATION_OFFSET_PATH,
-  DEFAULT_PAGINATION_PAGE_PATH,
-  DEFAULT_PAGINATION_PER_PAGE_PATH,
-  PaginationModeEnum,
 } from '../../../cachePolicy';
-import { writeAtPath } from '../../../utils';
+import { withValueAtPath } from '../../../utils';
 import { readNumberAtPathOr } from '../../../utils/readNumberAtPathOr';
 
 type TProps<TVars> = {
   baseVariables: TVars | undefined;
-  paginationMode: PaginationModeEnum | undefined;
   pageSize: number;
   paginationOffsetPath?: string | readonly string[];
   paginationLimitPath?: string | readonly string[];
-  paginationPagePath?: string | readonly string[];
-  paginationPerPagePath?: string | readonly string[];
 };
 
 export function buildInitialVariables<TVars extends OperationVariables>(
@@ -24,49 +18,22 @@ export function buildInitialVariables<TVars extends OperationVariables>(
 ): TVars {
   const {
     baseVariables,
-    paginationMode = PaginationModeEnum.PerPage,
     pageSize,
     paginationOffsetPath = DEFAULT_PAGINATION_OFFSET_PATH,
     paginationLimitPath = DEFAULT_PAGINATION_LIMIT_PATH,
-    paginationPagePath = DEFAULT_PAGINATION_PAGE_PATH,
-    paginationPerPagePath = DEFAULT_PAGINATION_PER_PAGE_PATH,
   } = args;
 
-  // clone incoming vars
-  const variables: Record<string, unknown> = baseVariables
-    ? { ...baseVariables }
+  // Normalize pagination fields without mutating the caller's variables:
+  // `withValueAtPath` returns a new object and only copies the containers
+  // along the written path (everything else keeps its identity).
+  let variables: Record<string, unknown> = baseVariables
+    ? (baseVariables as Record<string, unknown>)
     : {};
 
-  // page/perPage shape
-  if (paginationMode === PaginationModeEnum.PerPage) {
-    const pageToUse = readNumberAtPathOr({
-      source: variables,
-      path: paginationPagePath,
-      fallback: 1,
-      min: 1,
-    });
-
-    const perPageToUse = readNumberAtPathOr({
-      source: variables,
-      path: paginationPerPagePath,
-      fallback: pageSize,
-      min: 1,
-    });
-
-    writeAtPath(variables, paginationPagePath, pageToUse);
-    writeAtPath(variables, paginationPerPagePath, perPageToUse);
-
-    return variables as TVars;
-  }
-
-  // offset/limit (default)
-  const offsetToUse = readNumberAtPathOr({
-    source: variables,
-    path: paginationOffsetPath,
-    fallback: 0,
-    min: 0,
-  });
-
+  // Always start from the first page: the merge layer places items at their
+  // server offsets, so a non-zero starting offset would leave `undefined`
+  // holes — and a hole makes the cache field unreadable. Any caller-provided
+  // starting offset is ignored.
   const limitToUse = readNumberAtPathOr({
     source: variables,
     path: paginationLimitPath,
@@ -74,8 +41,8 @@ export function buildInitialVariables<TVars extends OperationVariables>(
     min: 1,
   });
 
-  writeAtPath(variables, paginationOffsetPath, offsetToUse);
-  writeAtPath(variables, paginationLimitPath, limitToUse);
+  variables = withValueAtPath(variables, paginationOffsetPath, 0);
+  variables = withValueAtPath(variables, paginationLimitPath, limitToUse);
 
   return variables as TVars;
 }

@@ -4,7 +4,9 @@ import type { ReservationQuery } from './useReservation.generated';
 
 export const reservationOperationKey: keyof Omit<ReservationQuery, '__typename'> = 'reservation';
 export const reservationSuccessTypename: Extract<
-  NonNullable<ReservationQuery['reservation']>,
+  NonNullable<ReservationQuery['reservation']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ReservationQuery['reservation']>,
   { __typename: 'ReservationType' }
 >['__typename'] = 'ReservationType';
 

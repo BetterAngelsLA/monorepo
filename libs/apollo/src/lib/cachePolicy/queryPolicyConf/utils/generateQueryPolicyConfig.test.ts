@@ -1,7 +1,4 @@
-/**
- * @vitest-environment jsdom
- */
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_QUERY_RESULTS_KEY,
   DEFAULT_QUERY_TOTAL_COUNT_KEY,
@@ -9,31 +6,8 @@ import {
 } from '../../constants';
 import { generateQueryPolicyConfig } from './generateQueryPolicyConfig';
 
-// we want to test OUR logic here, not the pagination util’s logic,
-// so we can mock getPaginationVarsPerMode to return predictable shapes
-vi.mock('./getPaginationVarsPerMode', () => ({
-  getPaginationVarsPerMode: vi.fn(
-    (mode: PaginationModeEnum, vars: Record<string, unknown>) => {
-      // emulate the real behavior enough for tests
-      if (mode === PaginationModeEnum.Offset) {
-        return {
-          mode,
-          offsetPath: vars?.['offsetPath'] ?? ['pagination', 'offset'],
-          limitPath: vars?.['limitPath'] ?? ['pagination', 'limit'],
-        };
-      }
-
-      return {
-        mode,
-        pagePath: vars?.['pagePath'] ?? ['pagination', 'page'],
-        perPagePath: vars?.['perPagePath'] ?? ['pagination', 'perPage'],
-      };
-    },
-  ),
-}));
-
 describe('generateQueryPolicyConfig', () => {
-  it('returns offset-based config by default', async () => {
+  it('returns offset-based config by default', () => {
     const cfg = generateQueryPolicyConfig({});
 
     expect(cfg).toEqual({
@@ -45,39 +19,24 @@ describe('generateQueryPolicyConfig', () => {
     });
   });
 
-  it('supports per-page mode and returns page/perPage paths', () => {
-    const cfg = generateQueryPolicyConfig({
-      paginationMode: PaginationModeEnum.PerPage,
-    });
-
-    expect(cfg).toEqual({
-      paginationMode: PaginationModeEnum.PerPage,
-      itemsPath: [DEFAULT_QUERY_RESULTS_KEY],
-      totalCountPath: [DEFAULT_QUERY_TOTAL_COUNT_KEY],
-      paginationPagePath: ['pagination', 'page'],
-      paginationPerPagePath: ['pagination', 'perPage'],
-    });
-  });
-
   it('normalizes string paths to arrays', () => {
     const cfg = generateQueryPolicyConfig({
       itemsPath: 'data.items',
       totalCountPath: 'data.total',
-      paginationMode: PaginationModeEnum.PerPage,
       paginationVariables: {
-        mode: PaginationModeEnum.PerPage,
-        pagePath: 'pagination.page',
-        perPagePath: 'pagination.pageSize',
+        mode: PaginationModeEnum.Offset,
+        offsetPath: 'pagination.page',
+        limitPath: 'pagination.pageSize',
       },
     });
 
     expect(cfg.itemsPath).toEqual(['data', 'items']);
     expect(cfg.totalCountPath).toEqual(['data', 'total']);
-    expect(cfg.paginationPagePath).toEqual(['pagination', 'page']);
-    expect(cfg.paginationPerPagePath).toEqual(['pagination', 'pageSize']);
+    expect(cfg.paginationOffsetPath).toEqual(['pagination', 'page']);
+    expect(cfg.paginationLimitPath).toEqual(['pagination', 'pageSize']);
   });
 
-  it('respects incoming paginationVariables for offset mode', () => {
+  it('respects incoming paginationVariables paths', () => {
     const cfg = generateQueryPolicyConfig({
       paginationMode: PaginationModeEnum.Offset,
       paginationVariables: {

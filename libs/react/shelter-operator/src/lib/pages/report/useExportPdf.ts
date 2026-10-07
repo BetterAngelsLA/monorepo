@@ -6,7 +6,7 @@ import { RefObject, useCallback, useState } from 'react';
  */
 export function useExportPdf(
   targetRef: RefObject<HTMLElement | null>,
-  filename: string
+  filename: string,
 ) {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -53,7 +53,7 @@ export function useExportPdf(
           margin,
           margin - page * usablePageHeight,
           usableWidth,
-          imgHeight
+          imgHeight,
         );
       }
 

@@ -6,7 +6,7 @@ type TProps = {
   className?: string;
   nameFilter?: string;
   mapBoundsFilter?: TMapBounds | null;
-  openNowForFilter?: ScheduleTypeChoices[] | null;
+  openNowFilter?: ScheduleTypeChoices[] | null;
   propertyFilters?: TShelterPropertyFilters | null;
 };
 
@@ -17,7 +17,7 @@ function propertyFiltersAffectQuery(
     return false;
   }
 
-  const { openNowFor, ...propertyOnly } = propertyFilters;
+  const { openNow, openNowIncludeUnknown, ...propertyOnly } = propertyFilters;
 
   return Object.keys(propertyOnly).length > 0;
 }
@@ -38,7 +38,7 @@ export function ResultsSource(props: TProps) {
   const {
     nameFilter,
     mapBoundsFilter,
-    openNowForFilter,
+    openNowFilter,
     propertyFilters,
     className = '',
   } = props;
@@ -49,7 +49,7 @@ export function ResultsSource(props: TProps) {
     resultSourceParts.push('map area');
   }
   if (
-    (openNowForFilter && openNowForFilter.length > 0) ||
+    (openNowFilter && openNowFilter.length > 0) ||
     propertyFiltersAffectQuery(propertyFilters)
   ) {
     resultSourceParts.push('filters');

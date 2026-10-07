@@ -13,13 +13,16 @@ export function ShelterReportPage() {
   const targetRef = useRef<HTMLDivElement>(null);
   const { exportPdf, isExporting } = useExportPdf(
     targetRef,
-    `shelter-report-${shelterId ?? 'unknown'}.pdf`
+    `shelter-report-${shelterId ?? 'unknown'}.pdf`,
   );
 
-  const { data, loading, error } = useQuery(GetShelterOperatorOverviewDocument, {
-    variables: { shelterId: shelterId ?? '' },
-    skip: !shelterId,
-  });
+  const { data, loading, error } = useQuery(
+    GetShelterOperatorOverviewDocument,
+    {
+      variables: { shelterId: shelterId ?? '' },
+      skip: !shelterId,
+    },
+  );
 
   const report = data?.operatorShelter;
 

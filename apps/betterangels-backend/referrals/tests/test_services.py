@@ -1,6 +1,10 @@
+from unittest.mock import patch
+
 from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from model_bakery import baker
 from notes.groups import CASEWORKER
 from referrals.models import Referral
@@ -51,6 +55,27 @@ class ReferralCreateTests(GraphQLBaseTestCase):
 
         self.assertTrue(self.org_1_case_manager_1.has_perm("referrals.change_referral", referral))
         self.assertTrue(self.org_1_case_manager_1.has_perm("referrals.delete_referral", referral))
+
+    def test_integrity_error_is_logged_and_returns_a_generic_message(self) -> None:
+        db_error = 'duplicate key value violates unique constraint "referrals_referral_pkey"'
+
+        with self.assertLogs("referrals.services", level="ERROR") as captured:
+            with patch.object(Referral, "save", side_effect=IntegrityError(db_error)):
+                with self.assertRaises(ValidationError) as raised:
+                    referral_create(
+                        user=self.org_1_case_manager_1,
+                        permission_group=self.permission_group,
+                        client_profile=self.client_profile,
+                        shelter=self.shelter,
+                    )
+
+        message = "Unable to create this referral. Please check the details and try again."
+        self.assertEqual(raised.exception.messages, [message])
+        # The raw database text must never reach the client.
+        self.assertNotIn("duplicate key", str(raised.exception))
+        self.assertNotIn("referrals_referral_pkey", str(raised.exception))
+        # The real error is still available to operators via the logs.
+        self.assertIn(db_error, "\n".join(captured.output))
 
 
 class ReferralUpdateTests(GraphQLBaseTestCase):

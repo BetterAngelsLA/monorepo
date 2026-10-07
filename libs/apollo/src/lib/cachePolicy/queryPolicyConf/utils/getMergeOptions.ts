@@ -3,16 +3,13 @@ import type { ObjectMergeMode, TCacheMergeOpts } from '../../merge/types';
 
 /**
  * Normalize user-provided merge options by injecting standard
- * paths for items, totalCount, and itemId when in OBJECT merge mode.
+ * paths for items and totalCount when in OBJECT merge mode.
  * - array mode: returned as-is
  * - object mode: we merge in the discovered paths, but user values win
  */
 export function getMergeOptions(
   mergeOpts: TCacheMergeOpts | undefined,
-  paths: Pick<
-    ObjectMergeMode,
-    'itemIdPath' | 'itemsPath' | 'totalCountPath'
-  > = {},
+  paths: Pick<ObjectMergeMode, 'itemsPath' | 'totalCountPath'> = {},
 ): TCacheMergeOpts {
   const opts = mergeOpts ?? { mode: MergeModeEnum.Object };
 

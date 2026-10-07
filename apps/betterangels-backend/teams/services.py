@@ -2,6 +2,8 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import RestrictedError
+from django.template.defaultfilters import pluralize
 from organizations.models import Organization
 
 from .models import Team
@@ -52,7 +54,10 @@ def team_update(
     """Update a Team's name and/or active flag."""
     if name is not None:
         name = name.strip()
-        _validate_name_is_unique(name=name, organization=team.organization, exclude_pk=team.pk)
+        # The manual check exists for its message; a name that does not change
+        # cannot introduce a duplicate, so skip its lookup.
+        if name.lower() != team.name.lower():
+            _validate_name_is_unique(name=name, organization=team.organization, exclude_pk=team.pk)
         team.name = name
 
     if is_active is not None:
@@ -63,10 +68,21 @@ def team_update(
     return team
 
 
-@transaction.atomic
 def team_delete(
     *,
     team: Team,
 ) -> None:
-    """Hard-delete a Team. FK references are SET_NULL by the database."""
-    team.delete()
+    """Delete a Team. Deletion of Teams associated with a Note or Task is restricted by the model."""
+    try:
+        team.delete()
+    except RestrictedError:
+        references = [
+            f"{count} {noun}{pluralize(count)}"
+            for count, noun in ((team.note_set.count(), "note"), (team.task_set.count(), "task"))
+            if count
+        ]
+
+        raise ValidationError(
+            f'Cannot delete "{team.name}": it is used by {" and ".join(references)}. '
+            "Deactivate it instead — an inactive team is hidden in the app but keeps its history."
+        )

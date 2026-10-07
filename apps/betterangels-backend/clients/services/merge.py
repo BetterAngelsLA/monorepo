@@ -266,9 +266,10 @@ def merge_execute(
         # ---- Copy profile_photo ----
         if not target.profile_photo:
             for source in sources:
-                if source.profile_photo:
+                photo_name = source.profile_photo.name
+                if photo_name:
                     target.profile_photo.save(
-                        source.profile_photo.name.split("/")[-1],
+                        photo_name.split("/")[-1],
                         source.profile_photo.file,
                         save=False,
                     )

@@ -7,9 +7,9 @@ export type CreateServiceRequestHmisMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateServiceRequestHmisMutation = { __typename?: 'Mutation', createHmisNoteServiceRequest:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'ServiceRequestType', id: string, status: Types.ServiceRequestStatusEnum, dueBy?: DateTimeString | null, completedOn?: DateTimeString | null, createdAt: DateTimeString, service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } }
+export type CreateServiceRequestHmisMutation = { __typename: 'Mutation', createHmisNoteServiceRequest:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'ServiceRequestType', id: string, status: Types.ServiceRequestStatusEnum, dueBy?: DateTimeString | null, completedOn?: DateTimeString | null, createdAt: DateTimeString, service?: { __typename: 'OrganizationServiceType', id: string, label: string } | null, clientProfile?: { __typename: 'ClientProfileType', id: string } | null, createdBy: { __typename: 'UserType', id: string } }
    };
 
 export type RemoveServiceRequestHmisMutationVariables = Types.Exact<{
@@ -17,9 +17,9 @@ export type RemoveServiceRequestHmisMutationVariables = Types.Exact<{
 }>;
 
 
-export type RemoveServiceRequestHmisMutation = { __typename?: 'Mutation', removeHmisNoteServiceRequest:
-    | { __typename?: 'HmisNoteType', id: string, requestedServices?: Array<{ __typename?: 'ServiceRequestType', id: string }> | null, providedServices?: Array<{ __typename?: 'ServiceRequestType', id: string }> | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type RemoveServiceRequestHmisMutation = { __typename: 'Mutation', removeHmisNoteServiceRequest:
+    | { __typename: 'HmisNoteType', id: string, requestedServices?: Array<{ __typename: 'ServiceRequestType', id: string }> | null, providedServices?: Array<{ __typename: 'ServiceRequestType', id: string }> | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 
