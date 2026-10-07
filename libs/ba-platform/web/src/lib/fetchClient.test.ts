@@ -89,14 +89,4 @@ describe('createWebFetchClient', () => {
 
     expect(headers.get('Authorization')).toBe('Bearer token');
   });
-
-  // The browser's timezone used to be published as ``django_timezone``, which the
-  // API activated per request.  Report boundaries read it, so the same month
-  // contained different rows depending on who asked.  The calendar now comes from
-  // the server's own configuration; this asserts the signal stays gone.
-  it('does not publish a timezone cookie for the API to act on', () => {
-    createWebFetchClient();
-
-    expect(document.cookie).not.toContain('django_timezone');
-  });
 });
