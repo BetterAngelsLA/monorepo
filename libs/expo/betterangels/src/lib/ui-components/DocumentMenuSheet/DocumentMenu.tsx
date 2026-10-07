@@ -11,8 +11,7 @@ import { MainModalActionBtn } from '../MainModal';
 interface IDocumentMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  /** e.g. "file" or "image", used to label the actions. */
-  fileTypeLabel: string;
+  fileTypeLabel: string; // e.g. "file" or "image"
   onView: () => void;
   onEdit: () => void;
   onDownload: () => void;
@@ -26,16 +25,18 @@ interface IDocumentMenuProps {
  * Purely renders the sheet; all behaviour (navigation, download, delete) is
  * supplied by the caller so this stays free of data/mutation concerns.
  */
-export function DocumentMenu({
-  isOpen,
-  onClose,
-  fileTypeLabel,
-  onView,
-  onEdit,
-  onDownload,
-  onDelete,
-  style,
-}: IDocumentMenuProps) {
+export function DocumentMenu(props: IDocumentMenuProps) {
+  const {
+    isOpen,
+    onClose,
+    fileTypeLabel,
+    onView,
+    onEdit,
+    onDownload,
+    onDelete,
+    style,
+  } = props;
+
   return (
     <BottomSheetModalControlled
       isOpen={isOpen}
