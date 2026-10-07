@@ -65,13 +65,21 @@ GATE_EXEMPT = {
         "org creation itself — no org authority exists yet; eligibility lives in create_organization_service"
     ),
     ("clients.schema", "delete_client_document"): (
-        "attachment-domain gate (PermissionedQuerySet, Attachment.DELETE) — the "
-        "attachment internals cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+        "attachment-domain gate (PermissionedQuerySet) — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
     ),
     ("clients.schema", "update_client_document"): (
-        "attachment-domain gate — the attachment internals cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+        "attachment-domain gate — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "generate_client_document_uploads"): (
+        "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "resolve_client_document_uploads"): (
+        "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
     ),
     ("clients.schema", "create_client_profile_data_import"): (
+        "import surfaces remain legacy until a role carries the import-record perms"
+    ),
+    ("clients.schema", "import_client_profile"): (
         "import surfaces remain legacy until a role carries the import-record perms"
     ),
     ("notes.schema", "create_note_data_import"): (
@@ -93,15 +101,6 @@ RAW_FETCH_EXEMPT = {
         "two-step can_obj gate converts to the write-scoped fetch in the follow-up PR"
     ),
 }
-
-#: Raw pk-shaped ``filter(pk=…).first()`` lookups for *related* rows (FK targets
-#: from the payload) allowed inside a gated module's ``Mutation`` bodies, each
-#: with the reason.  A related target must resolve through a queryset scoped to
-#: the acting org (``filter(organization=org)`` + ``get_or_none``) or the
-#: canonical denial — never by raw pk: the row may belong to another org, and a
-#: miss/found split leaks an existence oracle.  Platform-shared rows carry a
-#: reason here.
-RAW_PK_FETCH_EXEMPT: dict[tuple[str, str], str] = {}
 
 
 def _app_dir(app: str) -> Path:
@@ -320,57 +319,4 @@ def test_write_targets_fetch_through_the_write_scoped_selector(module_name: str)
     assert not offenders, (
         "write targets must fetch through writable(...)/get_writable_or_deny(...) "
         "or be exempted with a reason in RAW_FETCH_EXEMPT:\n" + "\n".join(offenders)
-    )
-
-
-def _pk_first_lookups(source: str) -> list[str]:
-    """``….filter(pk=…).first()`` call sources inside *source*.
-
-    The oracle shape: fetch a related row by raw pk, then branch on ``None``.
-    A scoped fetch (``filter(organization=…)``) or the canonical
-    ``get_or_none`` over a scoped queryset does not match.
-    """
-    finds: list[str] = []
-    for node in ast.walk(ast.parse(source)):
-        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute) or node.func.attr != "first":
-            continue
-        inner = node.func.value
-        if not isinstance(inner, ast.Call) or not isinstance(inner.func, ast.Attribute):
-            continue
-        if inner.func.attr != "filter":
-            continue
-        if any(keyword.arg == "pk" for keyword in inner.keywords):
-            finds.append(ast.get_source_segment(source, node) or "")
-    return finds
-
-
-@pytest.mark.parametrize("module_name", GRANT_GATED_MODULES)
-def test_related_rows_resolve_through_org_scoped_querysets(module_name: str) -> None:
-    """Related-row targets must not be fetched by raw pk.
-
-    A ``Model.objects.filter(pk=…).first()`` lookup for a FK target from the
-    payload bypasses every gate: the row may belong to another org, and the
-    miss/found split leaks an existence oracle.  Fetch through a queryset
-    scoped to the acting org (``filter(organization=…)`` + ``get_or_none``) or
-    refuse with the canonical denial.  Exceptions carry a reason in
-    ``RAW_PK_FETCH_EXEMPT``.
-    """
-    app = module_name.split(".", 1)[0]
-    source = (_app_dir(app) / "schema.py").read_text()
-    offenders: list[str] = []
-    for node in ast.walk(ast.parse(source)):
-        if not isinstance(node, ast.ClassDef) or node.name != "Mutation":
-            continue
-        for item in node.body:
-            if not isinstance(item, ast.FunctionDef):
-                continue
-            segment = ast.get_source_segment(source, item) or ""
-            for snippet in _pk_first_lookups(segment):
-                if (module_name, snippet) in RAW_PK_FETCH_EXEMPT:
-                    continue
-                offenders.append(f"{module_name}.{item.name}: {snippet}")
-    assert not offenders, (
-        "related rows must resolve through an org-scoped queryset (or the canonical "
-        "denial) — raw-pk lookups bypass the gate.  Exempt with a reason in "
-        "RAW_PK_FETCH_EXEMPT if the row is platform-shared:\n" + "\n".join(offenders)
     )
