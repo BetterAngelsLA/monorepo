@@ -1398,7 +1398,7 @@ dev = [
     { name = "pytest-django", specifier = ">=4.11.1,<5" },
     { name = "ruff", specifier = ">=0.15.0,<1.0.0" },
     { name = "time-machine", specifier = ">=3.2.0,<4" },
-    { name = "types-gevent", specifier = ">=25.4.0.20250801,<27" },
+    { name = "types-gevent", specifier = ">=26.8.0.20260811,<27" },
     { name = "types-openpyxl", specifier = ">=3.1.5.20260518,<4" },
     { name = "types-python-dateutil", specifier = ">=2.9.0.20260124,<3" },
     { name = "types-requests", specifier = ">=2.32.0,<3" },
@@ -2132,15 +2132,15 @@ wheels = [
 
 [[package]]
 name = "types-gevent"
-version = "25.9.0.20260408"
+version = "26.9.0.20261006"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "types-greenlet" },
     { name = "types-psutil" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fa/a4/ac1022a60e614808ff88dbf71eda999c7f47cb86a28235bac3603ac6ba3a/types_gevent-25.9.0.20260408.tar.gz", hash = "sha256:4afb2ee38026530657655713f92373af0b01f34b03dfd1a089184be360a0fcc9", size = 38311, upload-time = "2026-04-08T04:35:56.91Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/77/7e/25c1b33d5f41812f02ece5e2271129dea1c55cdb62fcba9838e618e8d3e6/types_gevent-26.9.0.20261006.tar.gz", hash = "sha256:82aad7baa8e2bb8a1a41a90321cd1761ccb4d9cb1f9f6c875d9daacba7f1578f", size = 39173, upload-time = "2026-10-06T08:16:04.336Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/8c/0a5fd62e4b4e7c129a34bc2aaea9d7cda242eae8e694c858860246d2e351/types_gevent-25.9.0.20260408-py3-none-any.whl", hash = "sha256:86593208e86afd30feceacb13b38f7154798e155d21302df4942c2d2674846a7", size = 55493, upload-time = "2026-04-08T04:35:55.763Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/39/d3c2e562640eff826840bbbe524a62347c88addb47c0b59c99a95120b33b/types_gevent-26.9.0.20261006-py3-none-any.whl", hash = "sha256:3c63cd5f812651a0a4e7c021ca99150a55da3fc25e227119f3893dcc0ea98304", size = 55541, upload-time = "2026-10-06T08:16:03.178Z" },
 ]
 
 [[package]]
