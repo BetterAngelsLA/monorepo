@@ -12,10 +12,6 @@ vi.mock('expo-router', () => ({
   useRouter: () => ({ back: mocks.back }),
 }));
 
-vi.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 47, bottom: 0, left: 0, right: 0 }),
-}));
-
 // The shared ui-components barrel drags in native modules (expo-image,
 // expo-modules-core) that cannot initialise in this environment. Stub it to the
 // pieces the header actually uses.

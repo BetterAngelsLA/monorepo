@@ -6,8 +6,7 @@
 // image loading — they assert on text and tag styling — so a plain View stands
 // in for the component and the observer entry points are no-ops.
 //
-// Wired in via a resolve alias in vite.config.mts, matching how
-// expo-file-system and expo-modules-core are already handled.
+// Wired in via the resolve alias in vite.config.mts, like expo-file-system.
 import { Ref } from 'react';
 import { View, ViewProps } from 'react-native';
 
