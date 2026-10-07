@@ -1,7 +1,8 @@
 """Reports app Celery tasks."""
 
 import logging
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Any
 
 from celery import Task, shared_task
@@ -39,6 +40,18 @@ def process_scheduled_reports(self: Task) -> str:
     return f"Queued {len(reports_due)} reports for processing"
 
 
+@dataclass(frozen=True)
+class _PreparedReport:
+    """A generated report, ready to email."""
+
+    filename: str
+    content: str
+    month: str
+    year: str
+    subject: str
+    meta: dict[str, Any]
+
+
 @shared_task(bind=True)
 def send_scheduled_report(
     self: Task,
@@ -49,6 +62,9 @@ def send_scheduled_report(
 ) -> dict[str, Any]:
     """
     Send a scheduled report via email.
+
+    A run is serviced at most once: the schedule is advanced with a conditional
+    update, and whichever caller loses that race skips rather than sending again.
 
     Args:
         report_id: The ID of the ScheduledReport to send.
@@ -67,55 +83,71 @@ def send_scheduled_report(
     # on a retry, or twice must still report the month its own due date fell after.
     due_at = due_at or report.next_run_at
     if due_at is None:
-        return {"status": "error", "message": f"ScheduledReport {report_id} has no due date"}
-
-    # Another dispatch for this same period already advanced the schedule, so this
-    # one is a duplicate. Discard it rather than emailing the month after.
-    if report.next_run_at is not None and report.next_run_at > due_at:
-        logger.warning(
-            "Discarding stale dispatch for report %s: due %s, schedule already at %s",
-            report_id,
-            due_at,
-            report.next_run_at,
-        )
-        return {"status": "skipped", "message": "Schedule already advanced for this period"}
+        logger.warning("ScheduledReport %s has no run to service", report_id)
+        return {"status": "skipped", "message": "ScheduledReport has no due date"}
 
     start_date, end_date = period_for_due_instant(due_at=due_at, org=report.organization)
-    month_str = start_date.strftime("%m")
-    year_str = start_date.strftime("%Y")
 
-    # Generate content
+    # Build the period before touching the schedule, so a report that cannot be
+    # built leaves the run unclaimed and the dispatcher retries it.  The claim below
+    # still happens before the send, as it always has: state first means a failed
+    # send costs one lost report rather than emailing every hour forever.
     try:
-        filename, csv_content, meta = generate_report_data(report, start_date, end_date)
+        prepared = _prepare_report(report, start_date, end_date)
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
-    if not csv_content:
-        return {"status": "error", "message": "No content generated"}
+    if recipient_override is None:
+        # Claim the run by advancing the schedule in one conditional UPDATE. Two
+        # workers handed the same due instant both reach here — `@shared_task` holds
+        # no lock — and only the one whose UPDATE still matches a row sitting at
+        # `due_at` advances it.  The loser is a duplicate and must not email.
+        claimed = ScheduledReport.objects.filter(pk=report.pk, next_run_at=due_at).update(
+            last_sent_at=timezone.now(),
+            next_run_at=report.next_run_after(due_at),
+        )
+        if not claimed:
+            logger.info("Skipping report %s: schedule no longer sits at due %s", report_id, due_at)
+            return {"status": "skipped", "message": "Schedule already advanced for this period"}
 
-    # Calculate subject for email and return value
-    subject = report.subject_template.format(month=month_str, year=year_str)
-
-    if not recipient_override:
-        # Update state
-        # We update the state *before* sending the email so that if sending fails,
-        # we don't end up in an infinite retry loop every hour. (At-most-once delivery)
-        report.last_sent_at = timezone.now()
-        report.set_next_run()  # Calculate for next month
-        report.save(update_fields=["last_sent_at", "next_run_at"])
-
-    # Send Email
     recipients = [recipient_override] if recipient_override else report.get_recipient_list()
-    send_report_email(report, filename, csv_content, month_str, year_str, subject=subject, recipients=recipients)
+    send_report_email(
+        report,
+        prepared.filename,
+        prepared.content,
+        prepared.month,
+        prepared.year,
+        subject=prepared.subject,
+        recipients=recipients,
+    )
 
     return {
         "status": "success",
-        "report_id": report_id,
+        "report_id": report.pk,
         "report_name": report.name,
         "recipients": recipients,
-        "month": month_str,
+        "month": prepared.month,
         "test_run": bool(recipient_override),
-        "year": year_str,
-        "subject": subject,
-        **meta,
+        "year": prepared.year,
+        "subject": prepared.subject,
+        **prepared.meta,
     }
+
+
+def _prepare_report(report: ScheduledReport, start_date: date, end_date: date) -> _PreparedReport:
+    """Build a period's report. Raises ``ValueError`` when there is nothing to send."""
+    month_str = start_date.strftime("%m")
+    year_str = start_date.strftime("%Y")
+
+    filename, csv_content, meta = generate_report_data(report, start_date, end_date)
+    if not csv_content:
+        raise ValueError("No content generated")
+
+    return _PreparedReport(
+        filename=filename,
+        content=csv_content,
+        month=month_str,
+        year=year_str,
+        subject=report.subject_template.format(month=month_str, year=year_str),
+        meta=meta,
+    )

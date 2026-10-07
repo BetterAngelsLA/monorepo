@@ -291,3 +291,45 @@ class TestCalendarBelongsToTheOrganization:
 
         with time_machine.travel("2026-08-31 06:00:00", tick=False):
             assert report_default_date_range(org=org) == (date(2026, 8, 1), date(2026, 8, 31))
+
+    def test_an_unusable_stored_zone_falls_back_instead_of_raising(self, settings: SettingsWrapper) -> None:
+        """A bad value cannot be stored through the admin, but can through the ORM.
+
+        ``validate_iana_time_zone`` runs only via ``full_clean``, so a data import or
+        raw SQL can leave a name ``zoneinfo`` cannot resolve.  Raising here would 500
+        the summary, the export and the scheduled email for that org every time.
+        """
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+        profile = baker.make(
+            OrganizationProfile,
+            organization=org,
+            org_types=[OrgTypeChoices.OUTREACH],
+            time_zone="America/Los_Angeles",
+        )
+        # Bypasses the validator, which is the only way this reaches the database.
+        OrganizationProfile.objects.filter(pk=profile.pk).update(time_zone="Not/AZone")
+        # The org instance still holds the pre-update profile; drop it so the
+        # resolver actually re-reads the row.
+        org._state.fields_cache.clear()
+
+        assert report_calendar_time_zone(org) == ZoneInfo("America/Los_Angeles")
+
+    def test_an_unusable_stored_zone_does_not_break_a_report(self, settings: SettingsWrapper) -> None:
+        """The fallback has to reach the report itself, not just the resolver."""
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+        profile = baker.make(
+            OrganizationProfile,
+            organization=org,
+            org_types=[OrgTypeChoices.OUTREACH],
+            time_zone="America/Los_Angeles",
+        )
+        OrganizationProfile.objects.filter(pk=profile.pk).update(time_zone="Not/AZone")
+        org._state.fields_cache.clear()
+        report = baker.make(ScheduledReport, organization=org)
+        baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 1, 0, tzinfo=UTC))
+
+        _, _, meta = generate_report_data(report, date(2025, 1, 1), date(2025, 1, 31))
+
+        assert meta["notes_count"] == 1

@@ -210,6 +210,67 @@ class TestSendScheduledReportTask:
         assert result["subject"] == "Subject 08/2026"
         assert mock_gen.call_args.args[1:] == (date(2026, 8, 1), date(2026, 8, 31))
 
+        # Rescheduled from the run just serviced, not from "now".  Anchored on the
+        # clock it would jump to November, and September's run — due 1 October —
+        # would never be dispatched at all.
+        report.refresh_from_db()
+        assert report.next_run_at == datetime(2026, 10, 1, 7, 0, tzinfo=UTC)
+
+    def test_a_run_that_fails_to_generate_does_not_lose_the_period(self) -> None:
+        """Content errors return before the claim, so the dispatcher retries.
+
+        The claim is the only thing that marks a period serviced; if it ran before
+        generation, a transient generation failure would burn the month silently.
+        """
+        report = baker.make(
+            ScheduledReport,
+            organization=baker.make(Organization),
+            recipients="test@example.com",
+            is_active=True,
+            next_run_at=datetime(2026, 9, 1, 7, 0, tzinfo=UTC),
+        )
+
+        with patch("reports.tasks.generate_report_data", side_effect=ValueError("bad config")):
+            result = send_scheduled_report.apply(args=(report.pk,)).get()
+
+        assert result["status"] == "error"
+        report.refresh_from_db()
+        assert report.next_run_at == datetime(2026, 9, 1, 7, 0, tzinfo=UTC)
+        assert report.last_sent_at is None
+
+    def test_a_duplicate_dispatch_does_not_advance_the_schedule_twice(self) -> None:
+        """The claim is conditional on the row still sitting at the due instant.
+
+        Sequential dispatches exercise the guard; this asserts the *basis* of it —
+        that the second claim matches no row once the first has moved it, which is
+        what makes the advance safe between workers rather than just between calls.
+        """
+        report = baker.make(
+            ScheduledReport,
+            organization=baker.make(Organization),
+            recipients="test@example.com",
+            subject_template="Subject {month}/{year}",
+            is_active=True,
+            next_run_at=datetime(2026, 9, 1, 7, 0, tzinfo=UTC),
+        )
+        due_at = report.next_run_at
+        assert due_at is not None
+
+        with (
+            patch("reports.tasks.generate_report_data") as mock_gen,
+            patch("reports.tasks.send_report_email") as mock_send_email,
+        ):
+            mock_gen.return_value = ("a.csv", "data", {})
+            first = send_scheduled_report.apply(args=(report.pk,), kwargs={"due_at": due_at}).get()
+            second = send_scheduled_report.apply(args=(report.pk,), kwargs={"due_at": due_at}).get()
+
+        assert first["status"] == "success"
+        assert second["status"] == "skipped"
+        assert mock_send_email.call_count == 1
+        report.refresh_from_db()
+        # Advanced by exactly one period, not two.
+        assert report.next_run_at == datetime(2026, 10, 1, 7, 0, tzinfo=UTC)
+
     def test_send_report_templates(self) -> None:
         """Test subject and email body template formatting."""
         org = baker.make(Organization)
@@ -297,15 +358,18 @@ class TestSendScheduledReportTask:
 
         with (
             patch("reports.tasks.generate_report_data") as mock_gen,
-            patch("reports.tasks.send_report_email"),
+            patch("reports.tasks.send_report_email") as mock_send_email,
         ):
             mock_gen.return_value = ("a.csv", "data", {})
 
             result = send_scheduled_report.apply(args=(report.pk,), kwargs={"due_at": due_at}).get()
 
+        # The claim is what skips, and it sits after generation but before the send.
         assert result["status"] == "skipped"
-        mock_gen.assert_not_called()
+        mock_send_email.assert_not_called()
         assert Email.objects.count() == 0
+        report.refresh_from_db()
+        assert report.next_run_at == datetime(2026, 10, 1, 7, 0, tzinfo=UTC)
 
     def test_a_send_uses_the_organizations_calendar_not_the_sites(self, settings) -> None:  # type: ignore[no-untyped-def]
         """One due instant is a different period for an org that runs a day ahead.
@@ -341,3 +405,8 @@ class TestSendScheduledReportTask:
         # August, because on the org's calendar the run was due on 31 August.
         assert result["subject"] == "Subject 08/2026"
         assert mock_gen.call_args.args[1:] == (date(2026, 8, 1), date(2026, 8, 31))
+
+        # Rescheduled from the run just serviced, on the org's calendar: the next
+        # Tokyo midnight on the 1st, which is 30 September UTC.
+        report.refresh_from_db()
+        assert report.next_run_at == datetime(2026, 9, 30, 15, 0, tzinfo=UTC)
