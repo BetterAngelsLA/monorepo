@@ -57,10 +57,13 @@ export function ShelterDetailsRow({ shelterId }: { shelterId: string }) {
 }
 
 /**
- * shelter-web's detail route is `/shelter/:id`; its public hostname differs per
- * environment and is not settled for production yet (tracking doc C3). Without
- * a configured base URL there is no correct destination, so the link is hidden
- * rather than pointing somewhere wrong.
+ * shelter-web's detail route is `/shelter/:id`. Its public host differs per
+ * environment — `https://shelter.dev.betterangels.la` for dev and preview,
+ * `https://shelter.betterangels.la` for production, both set in the app's
+ * eas.json — so it is read from `EXPO_PUBLIC_SHELTER_WEB_URL` rather than
+ * hardcoded here. When it is unset (a local run that skipped .env.local.sample)
+ * there is no correct destination, so the link is hidden rather than pointing
+ * somewhere wrong.
  */
 export function shelterDirectoryUrl(shelterId: string): string | null {
   const baseUrl = process.env['EXPO_PUBLIC_SHELTER_WEB_URL'];
