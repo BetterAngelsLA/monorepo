@@ -1,10 +1,9 @@
 /**
  * Pure shelter-attribute logic, deliberately free of React Native imports so it
  * can be unit-tested without the native/UI dependency chain.
- *
- * Re-exported from ShelterCard for existing call sites.
  */
 import { Colors } from '@monorepo/expo/shared/static';
+import { isNonNullish } from 'remeda';
 import {
   AccessibilityChoices,
   DemographicChoices,
@@ -88,14 +87,13 @@ export function shelterAttributeLabels(
 ): string[] {
   return definitions.flatMap((field) => {
     if (field.control !== 'multiselect' || !field.matching) return [];
-    return (shelter[field.matching.shelterAttribute] ?? []).flatMap(
-      (attribute) => {
-        const option = field.options.find(
-          (candidate) => candidate.value === attribute.name,
-        );
-        return option ? [option.label] : [];
-      },
-    );
+    return (shelter[field.matching.shelterAttribute] ?? [])
+      .map(
+        (attribute) =>
+          field.options.find((candidate) => candidate.value === attribute.name)
+            ?.label,
+      )
+      .filter(isNonNullish);
   });
 }
 
@@ -118,9 +116,7 @@ export function matchTags(
   // available". No extra plumbing needed — the flattened list already carries
   // this, because the label sets are disjoint per category.
   const reportedCategories = new Set(
-    attributes
-      .map(attributeCategoryOf)
-      .filter((category): category is TAttributeCategory => !!category),
+    attributes.map(attributeCategoryOf).filter(isNonNullish),
   );
 
   // An unmet need is only a confirmed gap if the shelter reported that

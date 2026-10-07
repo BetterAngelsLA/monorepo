@@ -11,6 +11,7 @@
  * Delete this file (and its card in ReferralIntakeForm) once the field set is
  * ratified in requirements V.2.
  */
+import { sumBy } from 'remeda';
 
 export const DEFERRED_SMARTSHEET_FIELDS: {
   section: string;
@@ -172,7 +173,7 @@ export const DEFERRED_SMARTSHEET_FIELDS: {
   },
 ];
 
-export const DEFERRED_FIELD_COUNT = DEFERRED_SMARTSHEET_FIELDS.reduce(
-  (n, g) => n + g.fields.length,
-  0,
+export const DEFERRED_FIELD_COUNT = sumBy(
+  DEFERRED_SMARTSHEET_FIELDS,
+  (group) => group.fields.length,
 );

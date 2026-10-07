@@ -111,6 +111,17 @@ describe('decodeReferralNotes', () => {
     expect(humanNotes).toBe(HUMAN);
     expect(intake).toEqual({});
   });
+
+  it('is not fooled by a marker typed into the human notes', () => {
+    const typedMarker = `${HUMAN} <<<referral-intake:v1>>> not a real payload`;
+
+    const { humanNotes, intake } = decodeReferralNotes(
+      encodeReferralNotes(typedMarker, { pets: ['CATS'] }),
+    );
+
+    expect(intake).toEqual({ pets: ['CATS'] });
+    expect(humanNotes).toBe(typedMarker);
+  });
 });
 
 describe('stripSidecar', () => {

@@ -1,10 +1,11 @@
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useMutation } from '@apollo/client/react';
+import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { useRouter } from 'expo-router';
 import { InfoIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Avatar,
   IconButton,
+  InfiniteList,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -13,7 +14,6 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -26,27 +26,23 @@ import { useModalScreen } from '../../../providers';
 import { pagePaddingHorizontal } from '../../../static';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ClientViewTabEnum } from '../ClientTabs';
+import { DraftCard } from './DraftCard';
+import { ReferralCard } from './ReferralCard';
 import { ReferralCreateFlow } from './ReferralCreateFlow';
 import {
   ReferralDraftProvider,
   useReferralDraft,
 } from './ReferralDraftProvider';
 import { ReferralsHelp } from './ReferralsHelp';
-import { needLabelsFromIntake } from './clientNeeds';
 import type { ReferralDraftStore } from './referralDraft';
 import { getPersistentReferralDraft } from './referralDraftStorage';
-import { decodeReferralNotes, summarizeIntake } from './referralIntakeSidecar';
-import { ShelterCard, TagRow, shelterAttributeLabels } from './ShelterCard';
+import { REFERRALS_PAGE_SIZE } from './constants';
 import {
   ClientReferralsDocument,
   ClientReferralsQuery,
+  ClientReferralsQueryVariables,
   CreateReferralDocument,
 } from './__generated__/Referrals.generated';
-
-// Client needs now come from the intake form, in the shelter's own vocabulary —
-// see clientNeeds.ts. The picker reads the in-progress draft; a saved referral
-// reads the answers stored on that referral, so a card always reflects the needs
-// as they were recorded at the time rather than whatever is on screen now.
 
 type TProps = {
   client: ClientProfileQuery | undefined;
@@ -54,38 +50,54 @@ type TProps = {
 };
 
 export function ReferralsTab({ client, draftStore }: TProps) {
+  const clientId = client?.clientProfile.id;
+  if (!clientId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
   return (
     <ReferralDraftProvider store={draftStore ?? getPersistentReferralDraft()}>
-      <ReferralsContent client={client} />
+      <ReferralsContent client={client} clientId={clientId} />
     </ReferralDraftProvider>
   );
 }
 
-function ReferralsContent({ client }: Pick<TProps, 'client'>) {
+type TContentProps = {
+  client: ClientProfileQuery | undefined;
+  clientId: string;
+};
+
+function ReferralsContent({ client, clientId }: TContentProps) {
   const { draft, store } = useReferralDraft();
-  const clientId = client?.clientProfile.id;
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
   const [helpVisible, setHelpVisible] = useState(false);
   const router = useRouter();
 
-  const { data, loading, error, refetch } = useQuery<ClientReferralsQuery>(
-    ClientReferralsDocument,
-    {
-      variables: { clientId },
-      skip: !clientId,
-    },
-  );
+  const {
+    items: referrals,
+    total,
+    loading,
+    loadingMore,
+    hasMore,
+    error,
+    loadMore,
+    reload,
+  } = useInfiniteScrollQuery<
+    ClientReferralsQuery['referrals']['results'][number],
+    ClientReferralsQuery,
+    ClientReferralsQueryVariables
+  >({
+    document: ClientReferralsDocument,
+    queryFieldName: 'referrals',
+    variables: { filters: { clientProfile: clientId } },
+    pageSize: REFERRALS_PAGE_SIZE,
+  });
 
   const [createReferral] = useMutation(CreateReferralDocument);
 
-  if (!clientId) {
-    throw new Error('Something went wrong. Please try again.');
-  }
-
   const hasDraft = draft?.clientId === clientId;
-  const referrals = data?.referrals.results ?? [];
-  const totalCount = data?.referrals.totalCount ?? 0;
+  const totalCount = total ?? 0;
 
   const onSubmit = async (
     shelterId: string,
@@ -141,7 +153,7 @@ function ReferralsContent({ client }: Pick<TProps, 'client'>) {
 
       store.clear();
       closeForm();
-      refetch();
+      reload();
       return true;
     } catch (e) {
       showSnackbar({
@@ -187,24 +199,28 @@ function ReferralsContent({ client }: Pick<TProps, 'client'>) {
     });
   };
 
-  const startNewReferral = () => {
+  const beginNewReferral = () => {
     store.startNew(clientId);
     openReferralForm();
   };
 
-  const confirmDiscardDraft = () => {
-    Alert.alert(
-      'Discard draft?',
-      'This deletes the in-progress referral and cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Discard',
-          style: 'destructive',
-          onPress: () => store.clear(),
-        },
-      ],
-    );
+  const startNewReferral = () => {
+    // The device keeps a single draft. Starting a new one for another client
+    // silently replaced the old draft before, so confirm first.
+    const current = store.getSnapshot();
+    if (current && current.clientId !== clientId) {
+      Alert.alert(
+        'Replace the in-progress referral?',
+        'You have an unsent referral for another client. Starting a new one will replace it.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Replace', style: 'destructive', onPress: beginNewReferral },
+        ],
+      );
+      return;
+    }
+
+    beginNewReferral();
   };
 
   return (
@@ -263,7 +279,7 @@ function ReferralsContent({ client }: Pick<TProps, 'client'>) {
       )}
 
       {/* Error state */}
-      {error && (
+      {error && referrals.length === 0 && (
         <View style={styles.centered}>
           <TextRegular color={Colors.ERROR}>
             Error loading referrals. Please try again.
@@ -287,18 +303,28 @@ function ReferralsContent({ client }: Pick<TProps, 'client'>) {
           it scrolls away and doesn't eat the history's vertical space. The
           header's Resume button stays pinned, so resuming is always one tap. */}
       {!loading && (hasDraft || referrals.length > 0) && (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {hasDraft && (
-            <DraftCard
-              updatedAt={draft?.updatedAt}
-              onResume={openReferralForm}
-              onDiscard={confirmDiscardDraft}
-            />
-          )}
-          {referrals.map((referral) => (
-            <ReferralCard key={referral.id} referral={referral} />
-          ))}
-        </ScrollView>
+        <InfiniteList<ClientReferralsQuery['referrals']['results'][number]>
+          data={referrals}
+          keyExtractor={(referral) => referral.id}
+          renderItem={(referral) => <ReferralCard referral={referral} />}
+          totalItems={totalCount}
+          renderResultsHeader={null}
+          loadMore={loadMore}
+          hasMore={hasMore}
+          loadingMore={loadingMore}
+          itemGap={0}
+          ListHeaderComponent={
+            hasDraft ? (
+              <DraftCard
+                updatedAt={draft?.updatedAt}
+                onResume={openReferralForm}
+                onDiscard={() => store.clear()}
+              />
+            ) : null
+          }
+          // The draft card already explains the state when only a draft exists.
+          ListEmptyComponent={hasDraft ? NoListItems : undefined}
+        />
       )}
 
       <ReferralsHelp
@@ -309,168 +335,9 @@ function ReferralsContent({ client }: Pick<TProps, 'client'>) {
   );
 }
 
-// Compact "edited" suffix: time for today's draft, date for older ones.
-function formatEdited(updatedAt?: number): string {
-  if (!updatedAt) return '';
-  const d = new Date(updatedAt);
-  const isToday = d.toDateString() === new Date().toDateString();
-  return ` · ${
-    isToday
-      ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-      : d.toLocaleDateString()
-  }`;
-}
-
-// ── Draft card ─────────────────────────────────────────────────────────────
-// The in-progress local draft, made visible in the list (tap to resume). Styled
-// unmistakably as a not-yet-submitted, on-device draft — dashed edge + badge.
-function DraftCard({
-  updatedAt,
-  onResume,
-  onDiscard,
-}: {
-  updatedAt?: number;
-  onResume: () => void;
-  onDiscard: () => void;
-}) {
-  return (
-    <Pressable
-      testID="referral-draft-card"
-      style={styles.draftCard}
-      onPress={onResume}
-      accessibilityRole="button"
-      accessibilityLabel="resume referral draft"
-      accessibilityHint="reopens your in-progress referral"
-    >
-      {/* Row 1: badge + title + resume affordance */}
-      <View style={styles.draftRow}>
-        <View style={styles.draftBadge}>
-          <TextRegular size="xs" color={Colors.PRIMARY}>
-            DRAFT
-          </TextRegular>
-        </View>
-        <TextBold
-          size="sm"
-          color={Colors.NEUTRAL_DARK}
-          numberOfLines={1}
-          style={styles.draftGrow}
-        >
-          Referral in progress
-        </TextBold>
-        <TextBold size="sm" color={Colors.PRIMARY}>
-          Resume ›
-        </TextBold>
-      </View>
-
-      {/* Row 2: provenance + discard */}
-      <View style={styles.draftRow}>
-        <TextRegular
-          size="xs"
-          color={Colors.NEUTRAL}
-          numberOfLines={1}
-          style={styles.draftGrow}
-        >
-          On this device · not submitted{formatEdited(updatedAt)}
-        </TextRegular>
-        <Pressable
-          testID="draft-discard-btn"
-          onPress={onDiscard}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="discard referral draft"
-          accessibilityHint="permanently deletes this in-progress referral"
-        >
-          <TextRegular size="xs" color={Colors.ERROR}>
-            Discard
-          </TextRegular>
-        </Pressable>
-      </View>
-    </Pressable>
-  );
-}
-
-// ── Referral Card ──────────────────────────────────────────────────────────
-type ReferralCardProps = {
-  referral: ClientReferralsQuery['referrals']['results'][number];
-};
-
-function ReferralCard({ referral }: ReferralCardProps) {
-  const referrerName = referral.createdBy
-    ? `${referral.createdBy.firstName ?? ''} ${
-        referral.createdBy.lastName ?? ''
-      }`.trim()
-    : 'Unknown';
-
-  const dateStr = referral.createdAt
-    ? new Date(referral.createdAt).toLocaleDateString()
-    : '';
-
-  const statusColor =
-    referral.status === 'ACCEPTED'
-      ? Colors.SUCCESS
-      : referral.status === 'DECLINED'
-        ? Colors.ERROR
-        : Colors.WARNING;
-
-  // TEMPORARY: split the human notes from the intake sidecar for display.
-  const { humanNotes, intake } = decodeReferralNotes(referral.notes);
-  const intakeSummary = summarizeIntake(intake); // PII masked
-
-  return (
-    <View style={styles.card} testID={`referral-card-${referral.id}`}>
-      {/* date + status tags */}
-      <View style={styles.cardTopRow}>
-        <TextRegular size="sm" color={Colors.NEUTRAL}>
-          {dateStr}
-        </TextRegular>
-        <TagRow
-          tags={[{ label: referral.status ?? 'PENDING', color: statusColor }]}
-        />
-      </View>
-
-      {/* shelter block, shared with the picker */}
-      {referral.shelter ? (
-        <ShelterCard
-          id={referral.shelter.id}
-          name={referral.shelter.name}
-          place={referral.shelter.location?.place}
-          attributes={shelterAttributeLabels(referral.shelter)}
-          // The needs recorded on THIS referral, not the current draft's.
-          desiredAttributes={needLabelsFromIntake(intake)}
-        />
-      ) : (
-        <TextBold size="sm">Unknown Shelter</TextBold>
-      )}
-
-      {/* referrer + notes */}
-      <View style={styles.referrerRow}>
-        <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
-          Referrer:
-        </TextRegular>
-        {/* link to a worker/volunteer profile once such a screen exists */}
-        <View style={styles.userChip}>
-          <Avatar
-            size="sm"
-            accessibilityLabel={`${referrerName} profile photo`}
-            accessibilityHint="referrer profile photo"
-          />
-          <TextRegular size="sm">{referrerName}</TextRegular>
-        </View>
-      </View>
-
-      {humanNotes ? (
-        <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
-          Notes: {humanNotes}
-        </TextRegular>
-      ) : null}
-      {intakeSummary ? (
-        <TextRegular size="xs" color={Colors.NEUTRAL}>
-          Intake (temporary): {intakeSummary}
-        </TextRegular>
-      ) : null}
-    </View>
-  );
-}
+// When only a draft exists the draft card above already explains the state, so
+// the list itself renders nothing.
+const NoListItems = () => null;
 
 const styles = StyleSheet.create({
   container: {
@@ -502,70 +369,11 @@ const styles = StyleSheet.create({
     paddingTop: Spacings.xl,
     gap: Spacings.xs,
   },
-  card: {
-    backgroundColor: Colors.WHITE,
-    borderRadius: 8,
-    padding: Spacings.md,
-    marginBottom: Spacings.sm,
-    gap: Spacings.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  referrerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacings.xs,
-  },
-  userChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacings.xxs,
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-    borderRadius: 100,
-    paddingVertical: 2,
-    paddingLeft: Spacings.xxs,
-    paddingRight: Spacings.xs,
-  },
   resumeBtn: {
     borderWidth: 1,
     borderColor: Colors.PRIMARY,
     borderRadius: 8,
     paddingHorizontal: Spacings.sm,
     paddingVertical: Spacings.xxs,
-  },
-  draftCard: {
-    backgroundColor: Colors.WHITE,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.PRIMARY,
-    borderStyle: 'dashed',
-    paddingHorizontal: Spacings.md,
-    paddingVertical: Spacings.sm,
-    marginBottom: Spacings.sm,
-    gap: Spacings.xxs,
-  },
-  draftRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacings.xs,
-  },
-  draftGrow: {
-    flex: 1,
-    flexShrink: 1,
-  },
-  draftBadge: {
-    borderWidth: 1,
-    borderColor: Colors.PRIMARY,
-    borderRadius: 3,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
   },
 });

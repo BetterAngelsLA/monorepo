@@ -12,6 +12,7 @@
  * RVTM §7 Tier 2.
  */
 import '@testing-library/react-native/build/matchers/extend-expect';
+import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { useState } from 'react';
@@ -21,6 +22,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react-native';
+import { SHELTERS_PAGE_SIZE } from './constants';
 import { ReferralForm } from './ReferralForm';
 import { SheltersDocument } from './__generated__/Shelters.generated';
 
@@ -49,7 +51,10 @@ const shelter = (id: string, name: string) => ({
 
 const mocks = [
   {
-    request: { query: SheltersDocument },
+    request: {
+      query: SheltersDocument,
+      variables: { pagination: { offset: 0, limit: SHELTERS_PAGE_SIZE } },
+    },
     result: {
       data: {
         shelters: {
@@ -85,7 +90,7 @@ function renderPicker(props: Partial<Parameters<typeof ReferralForm>[0]> = {}) {
     );
   }
   render(
-    <MockedProvider mocks={mocks}>
+    <MockedProvider cache={createTestApolloCache()} mocks={mocks}>
       <ControlledPicker />
     </MockedProvider>,
   );

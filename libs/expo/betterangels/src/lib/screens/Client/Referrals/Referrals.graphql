@@ -1,5 +1,8 @@
-query ClientReferrals($clientId: ID!) {
-  referrals(filters: { clientProfile: $clientId }) {
+query ClientReferrals(
+  $filters: ReferralFilter
+  $pagination: OffsetPaginationInput
+) {
+  referrals(filters: $filters, pagination: $pagination) {
     results {
       id
       status

@@ -4,19 +4,8 @@ import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { partition } from 'remeda';
 import { matchTags, type TTag } from './shelterAttributes';
-
-// Pure attribute logic lives in ./shelterAttributes (no RN imports, so it is
-// unit-testable); re-exported here for existing call sites.
-export {
-  attributeCategoryOf,
-  matchTags,
-  shelterAttributeLabels,
-  type TAttributeCategory,
-  type TTag,
-  type TTagKind,
-  type TTagVariant,
-} from './shelterAttributes';
 
 // Reusable shelter sub-elements shared by the shelter picker and the
 // referral card (the wireframe draws them as separate screens, but the
@@ -44,17 +33,17 @@ export function ShelterHeader({
 
 // directory link row (attribute tags render in their own wrapping row below)
 export function ShelterDetailsRow({ shelterId }: { shelterId: string }) {
+  const url = shelterDirectoryUrl(shelterId);
+  if (!url) return null;
+
   return (
     <View style={styles.detailsRow}>
       <Pressable
         style={styles.directoryLink}
         onPress={() =>
           // in-app browser sheet (repo pattern, see WebBrowserLink) so the
-          // referral flow isn't abandoned. Placeholder URL — the real format
-          // is shelter-web's `/shelter/:id`; domain TBD (tracking doc C3)
-          WebBrowser.openBrowserAsync(
-            `https://shelterconnect.org/shelters/${shelterId}`,
-          )
+          // referral flow isn't abandoned.
+          WebBrowser.openBrowserAsync(url)
         }
         accessibilityRole="link"
       >
@@ -65,6 +54,18 @@ export function ShelterDetailsRow({ shelterId }: { shelterId: string }) {
       </Pressable>
     </View>
   );
+}
+
+/**
+ * shelter-web's detail route is `/shelter/:id`; its public hostname differs per
+ * environment and is not settled for production yet (tracking doc C3). Without
+ * a configured base URL there is no correct destination, so the link is hidden
+ * rather than pointing somewhere wrong.
+ */
+export function shelterDirectoryUrl(shelterId: string): string | null {
+  const baseUrl = process.env['EXPO_PUBLIC_SHELTER_WEB_URL'];
+  if (!baseUrl) return null;
+  return `${baseUrl.replace(/\/$/, '')}/shelter/${shelterId}`;
 }
 
 // container for one-or-more tags (referral status, outcomes, shelter
@@ -146,12 +147,9 @@ export function ShelterCard({
   // shelter offers that nobody asked about, a second-level consideration.
   // Without needs there is nothing to compare against and everything is
   // `other`, so collapsing would empty the row — show it as-is.
-  const relevant = hasNeeds
-    ? attributeTags.filter((tag) => tag.kind !== 'other')
-    : attributeTags;
-  const other = hasNeeds
-    ? attributeTags.filter((tag) => tag.kind === 'other')
-    : [];
+  const [relevant, other]: [TTag[], TTag[]] = hasNeeds
+    ? partition(attributeTags, (tag) => tag.kind !== 'other')
+    : [attributeTags, []];
   const visible = showOther ? [...relevant, ...other] : relevant;
 
   return (

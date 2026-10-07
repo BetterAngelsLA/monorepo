@@ -14,11 +14,13 @@
  * Test-plan reference: referral-test-brief.md, case T4.
  */
 import '@testing-library/react-native/build/matchers/extend-expect';
+import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { render, screen } from '@testing-library/react-native';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { ReferralsTab } from './ReferralsTab';
+import { REFERRALS_PAGE_SIZE } from './constants';
 import { ClientReferralsDocument } from './__generated__/Referrals.generated';
 import {
   createReferralDraftStore,
@@ -57,7 +59,10 @@ const emptyReferrals = [
   {
     request: {
       query: ClientReferralsDocument,
-      variables: { clientId: CLIENT_ID },
+      variables: {
+        filters: { clientProfile: CLIENT_ID },
+        pagination: { offset: 0, limit: REFERRALS_PAGE_SIZE },
+      },
     },
     result: {
       data: {
@@ -88,7 +93,7 @@ describe('empty referral history', () => {
 
   it('says there are no referrals yet instead of showing a blank screen', async () => {
     render(
-      <MockedProvider mocks={emptyReferrals}>
+      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -98,7 +103,7 @@ describe('empty referral history', () => {
 
   it('tells the user how to create the first one', async () => {
     render(
-      <MockedProvider mocks={emptyReferrals}>
+      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -110,7 +115,7 @@ describe('empty referral history', () => {
 
   it('shows a spinner first, then replaces it with the empty message', async () => {
     render(
-      <MockedProvider mocks={emptyReferrals}>
+      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -127,7 +132,7 @@ describe('empty referral history', () => {
 
   it('still offers the + button so an empty history is not a dead end', async () => {
     render(
-      <MockedProvider mocks={emptyReferrals}>
+      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );

@@ -1,3 +1,4 @@
+import { mapKeys } from 'remeda';
 import {
   INTAKE_FIELDS,
   getIntakeField,
@@ -73,7 +74,9 @@ export function decodeReferralNotes(
   definitions: readonly IntakeFieldDefinition[] = INTAKE_FIELDS,
 ): { humanNotes: string; intake: Intake } {
   const text = raw ?? '';
-  const startIdx = text.indexOf(START);
+  // Human notes are stored before the payload; take the last marker so a literal
+  // marker typed into the notes cannot shadow the real payload.
+  const startIdx = text.lastIndexOf(START);
   if (startIdx === -1) return { humanNotes: text.trim(), intake: {} };
   const before = text.slice(0, startIdx).trim();
   const endIdx = text.indexOf(END, startIdx);
@@ -91,15 +94,15 @@ export function decodeReferralNotes(
     const pii = parsed.PII ?? {};
     if (!isRecord(fields) || !isRecord(pii)) return { humanNotes, intake: {} };
 
-    const intake: Intake = {};
-    for (const [payloadKey, value] of Object.entries({ ...fields, ...pii })) {
-      const definition = definitions.find(
-        (field) =>
-          field.backend.mode === 'notesSidecar' &&
-          field.backend.payloadKey === payloadKey,
-      );
-      intake[definition?.key ?? payloadKey] = value;
-    }
+    const intake: Intake = mapKeys(
+      { ...fields, ...pii },
+      (payloadKey) =>
+        definitions.find(
+          (field) =>
+            field.backend.mode === 'notesSidecar' &&
+            field.backend.payloadKey === payloadKey,
+        )?.key ?? payloadKey,
+    );
     return { humanNotes, intake };
   } catch {
     // Do not expose malformed payloads. The original stored string is untouched.

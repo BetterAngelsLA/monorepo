@@ -11,16 +11,19 @@ import {
   within,
 } from '@testing-library/react-native';
 import { useState } from 'react';
+import { Alert } from 'react-native';
 import { Observable } from 'rxjs';
 import {
   OperationMessageKind,
   ReferralStatusEnum,
 } from '@monorepo/ba-platform/types';
+import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ModalScreenContext } from '../../../providers/modalScreen/ModalScreenContext';
 import type { TShowModalScreenProps } from '../../../providers/modalScreen/types';
 import type { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ReferralsTab } from './ReferralsTab';
+import { REFERRALS_PAGE_SIZE, SHELTERS_PAGE_SIZE } from './constants';
 import { createReferralDraftStore } from './referralDraft';
 import {
   buildReferralNotes,
@@ -138,7 +141,10 @@ function setup() {
       {
         request: {
           query: ClientReferralsDocument,
-          variables: { clientId: 'client-1' },
+          variables: {
+            filters: { clientProfile: 'client-1' },
+            pagination: { offset: 0, limit: REFERRALS_PAGE_SIZE },
+          },
         },
         delay: 0,
         result: {
@@ -154,13 +160,19 @@ function setup() {
       {
         request: {
           query: ClientReferralsDocument,
-          variables: { clientId: 'client-1' },
+          variables: {
+            filters: { clientProfile: 'client-1' },
+            pagination: { offset: 0, limit: REFERRALS_PAGE_SIZE },
+          },
         },
         delay: 0,
         result: refreshed,
       },
       {
-        request: { query: SheltersDocument },
+        request: {
+          query: SheltersDocument,
+          variables: { pagination: { offset: 0, limit: SHELTERS_PAGE_SIZE } },
+        },
         delay: 0,
         result: {
           data: {
@@ -200,7 +212,7 @@ function setup() {
     );
   }
   render(
-    <MockedProvider link={link}>
+    <MockedProvider cache={createTestApolloCache()} link={link}>
       <Harness />
     </MockedProvider>,
   );
@@ -417,3 +429,41 @@ it.each<ApolloLink.Result<CreateReferralMutation>>([
     }
   },
 );
+
+it("asks before replacing another client's draft and only replaces on confirm", async () => {
+  const { store, opened } = setup();
+  act(() => {
+    store.startNew('another-client');
+  });
+  const alertSpy = vi
+    .spyOn(Alert, 'alert')
+    .mockImplementation(() => undefined);
+
+  try {
+    fireEvent.press(screen.getByTestId('create-referral-btn'));
+
+    expect(store.getSnapshot()?.clientId).toBe('another-client');
+    expect(opened).not.toHaveBeenCalled();
+    expect(alertSpy.mock.calls[0]?.[0]).toBe(
+      'Replace the in-progress referral?',
+    );
+
+    const cancel = alertSpy.mock.calls[0]?.[2]?.find(
+      (button) => button.text === 'Cancel',
+    );
+    act(() => cancel?.onPress?.(undefined));
+    expect(store.getSnapshot()?.clientId).toBe('another-client');
+    expect(opened).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByTestId('create-referral-btn'));
+    const replace = alertSpy.mock.calls[1]?.[2]?.find(
+      (button) => button.text === 'Replace',
+    );
+    act(() => replace?.onPress?.(undefined));
+
+    expect(store.getSnapshot()?.clientId).toBe('client-1');
+    expect(opened).toHaveBeenCalledOnce();
+  } finally {
+    alertSpy.mockRestore();
+  }
+});

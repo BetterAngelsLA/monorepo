@@ -1,5 +1,7 @@
 # Visits the fixture client's Profile screen, creating the client if needed.
-# Precondition: on the clients screen.
+# Precondition: on the clients screen, with ffReferrals enabled — the clients
+# list only opens the profile directly while the flag is on (otherwise a card
+# opens the Profile Summary modal).
 # Input env vars:
 #   FIXTURE_CLIENT_NAME — name to search/create (default: "e2e-test-client")
 # Output:

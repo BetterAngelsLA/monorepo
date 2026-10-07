@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import CookieManager from '@preeternal/react-native-cookie-manager';
 import { cancelAllUploadRunners } from '../../providers/uploadProgress/uploadRunnerRegistry';
 import { useUser } from '../../providers/user/UserProvider';
+import { getPersistentReferralDraft } from '../../screens/Client/Referrals/referralDraftStorage';
 
 export const LOGOUT_MUTATION = gql`
   mutation Logout {
@@ -32,6 +33,9 @@ export default function useSignOut() {
     await client.clearStore();
     // The next user must not inherit this one's organization.
     clearActiveOrgId();
+    // The referral draft is a single on-device record that can hold sensitive
+    // answers; it must not survive into another user's session.
+    getPersistentReferralDraft().clear();
     setUser(undefined);
   }, [logout, setUser, client]);
 
