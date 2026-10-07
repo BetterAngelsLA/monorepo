@@ -13,7 +13,7 @@
  * Lives under src/__mocks__/ because tsconfig.lib.json already excludes that
  * directory from the library build.
  */
-import { cloneElement, ReactNode, ReactElement } from 'react';
+import { cloneElement, ReactNode, ReactElement, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 type Props = Record<string, unknown> & { children?: ReactNode };
@@ -26,23 +26,64 @@ const asPressable = ({ children, ...rest }: Props) => (
   <Pressable {...rest}>{children}</Pressable>
 );
 
-// The confirmation step is the modal's own behavior and is not under test; the
-// trigger performs the action directly so specs can exercise discard paths.
-const asDiscardTrigger = ({
+/**
+ * Mirrors the real DiscardModal's two-step contract: the trigger only opens the
+ * confirmation, and `onDiscard` runs when the modal's own Discard action is
+ * pressed. An earlier version ran `onDiscard` on the trigger, which let specs
+ * pass while a mis-wired or missing confirmation shipped.
+ *
+ * The confirm/cancel testIDs match the real component
+ * (libs/expo/shared/ui-components/src/lib/DiscardModal/index.tsx).
+ */
+const DiscardModalStub = ({
   button,
+  title,
+  body,
   onDiscard,
 }: {
   button?: ReactElement<{ onPress?: () => void }>;
+  title?: string;
+  body?: string;
   onDiscard?: () => void;
-}) =>
-  button
-    ? cloneElement(button, {
-        onPress: () => {
-          button.props.onPress?.();
-          onDiscard?.();
-        },
-      })
-    : null;
+}) => {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <>
+      {button
+        ? cloneElement(button, {
+            onPress: () => {
+              button.props.onPress?.();
+              setVisible(true);
+            },
+          })
+        : null}
+      {visible ? (
+        <View>
+          {title ? <Text>{title}</Text> : null}
+          {body ? <Text>{body}</Text> : null}
+          <Pressable
+            testID="discard-modal-cancel"
+            accessibilityRole="button"
+            onPress={() => setVisible(false)}
+          >
+            <Text>Keep Editing</Text>
+          </Pressable>
+          <Pressable
+            testID="discard-modal-confirm"
+            accessibilityRole="button"
+            onPress={() => {
+              onDiscard?.();
+              setVisible(false);
+            }}
+          >
+            <Text>Discard</Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </>
+  );
+};
 
 export const uiComponents = () => ({
   TextBold: asText,
@@ -53,7 +94,7 @@ export const uiComponents = () => ({
   Avatar: () => <View />,
   Loading: () => <View />,
   InfiniteList: InfiniteListStub,
-  DiscardModal: asDiscardTrigger,
+  DiscardModal: DiscardModalStub,
 });
 
 // Renders items synchronously; virtualization itself is FlashList's job and is

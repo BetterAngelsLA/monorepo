@@ -7,6 +7,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { CancelReferralButton } from './CancelReferralButton';
 import { SHELTERS_PAGE_SIZE } from './constants';
 import { ShelterCard } from './ShelterCard';
 import { shelterAttributeLabels } from './shelterAttributes';
@@ -86,18 +87,11 @@ export function ReferralForm({
     <View style={styles.container} testID="shelter-picker-screen">
       {/* Header — mirrors the intake step: Cancel / Pause / Submit */}
       <View style={styles.header}>
-        <Pressable
+        <CancelReferralButton
           testID="picker-cancel-btn"
           style={[styles.headerBtn, styles.headerBtnFlex]}
-          onPress={onCancel}
-          accessibilityRole="button"
-          accessibilityLabel="cancel referral"
-          accessibilityHint="discards this referral"
-        >
-          <TextRegular size="sm" color={Colors.PRIMARY}>
-            Cancel
-          </TextRegular>
-        </Pressable>
+          onCancel={onCancel}
+        />
         {onPause && (
           <Pressable
             testID="picker-pause-btn"
@@ -175,6 +169,13 @@ export function ReferralForm({
             itemGap={0}
             renderItem={(shelter) => {
               const isSelected = shelter.id === selectedShelterId;
+              // Radio semantics for picking (tapping any card moves the
+              // selection here), plus tap-again-to-clear — a volunteer who
+              // selects the wrong shelter would otherwise have no way back
+              // to "nothing chosen" without cancelling the referral.
+              const toggleSelection = () => {
+                onSelectShelter(isSelected ? null : shelter.id);
+              };
               return (
                 <Pressable
                   testID="shelter-option"
@@ -182,32 +183,33 @@ export function ReferralForm({
                     styles.shelterCard,
                     isSelected && styles.shelterCardSelected,
                   ]}
-                  onPress={() => {
-                    // Radio semantics for picking (tapping any card moves the
-                    // selection here), plus tap-again-to-clear — a volunteer who
-                    // selects the wrong shelter would otherwise have no way back
-                    // to "nothing chosen" without cancelling the referral.
-                    const next = isSelected ? null : shelter.id;
-                    onSelectShelter(next);
-                  }}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: isSelected }}
-                  accessibilityHint={
-                    isSelected
-                      ? 'double tap to clear this shelter selection'
-                      : 'double tap to select this shelter'
-                  }
+                  onPress={toggleSelection}
+                  // The card contains the directory link and the "more
+                  // attributes" toggle, so it must not group its children into
+                  // one inaccessible element. The radio itself carries the
+                  // selection semantics.
+                  accessible={false}
                 >
                   <View style={styles.shelterRow}>
                     {/* testID sits on the radio, not the row: the row also
                         contains the directory link, and a centre-tap would open
                         the browser instead of selecting. */}
-                    <View
+                    <Pressable
                       testID="shelter-option-radio"
                       style={styles.shelterRadio}
+                      onPress={toggleSelection}
+                      hitSlop={8}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: isSelected }}
+                      accessibilityLabel={shelter.name}
+                      accessibilityHint={
+                        isSelected
+                          ? 'double tap to clear this shelter selection'
+                          : 'double tap to select this shelter'
+                      }
                     >
                       {isSelected && <View style={styles.shelterRadioInner} />}
-                    </View>
+                    </Pressable>
                     <View style={styles.shelterInfo}>
                       <ShelterCard
                         id={shelter.id}

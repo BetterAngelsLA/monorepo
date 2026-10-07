@@ -94,12 +94,24 @@ describe('referral draft card', () => {
     expect(screen.queryByTestId('create-referral-btn')).toBeNull();
 
     fireEvent.press(screen.getByTestId('draft-discard-btn'));
+    // The trigger only opens the confirmation; the modal performs the discard.
+    fireEvent.press(screen.getByTestId('discard-modal-confirm'));
 
     await waitFor(() =>
       expect(screen.queryByTestId('referral-draft-card')).toBeNull(),
     );
     expect(store.getSnapshot()).toBeNull();
     expect(screen.getByTestId('create-referral-btn')).toBeOnTheScreen();
+  });
+
+  it('keeps the draft when the discard confirmation is dismissed', async () => {
+    const store = renderTabWithDraft();
+
+    fireEvent.press(await screen.findByTestId('draft-discard-btn'));
+    fireEvent.press(screen.getByTestId('discard-modal-cancel'));
+
+    expect(screen.getByTestId('referral-draft-card')).toBeOnTheScreen();
+    expect(store.getSnapshot()).not.toBeNull();
   });
 
   it('resumes the form when the card is tapped', async () => {

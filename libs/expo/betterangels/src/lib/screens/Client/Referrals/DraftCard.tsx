@@ -34,9 +34,10 @@ export function DraftCard({
       testID="referral-draft-card"
       style={styles.draftCard}
       onPress={onResume}
-      accessibilityRole="button"
-      accessibilityLabel="resume referral draft"
-      accessibilityHint="reopens your in-progress referral"
+      // Not an accessibility element on purpose: a grouped parent makes the
+      // nested Discard control unreachable to screen readers. Resume and
+      // Discard are each exposed by their own child control instead.
+      accessible={false}
     >
       {/* Row 1: badge + title + resume affordance */}
       <View style={styles.draftRow}>
@@ -53,9 +54,18 @@ export function DraftCard({
         >
           Referral in progress
         </TextBold>
-        <TextBold size="sm" color={Colors.PRIMARY}>
-          Resume ›
-        </TextBold>
+        <Pressable
+          testID="draft-resume-btn"
+          onPress={onResume}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="resume referral draft"
+          accessibilityHint="reopens your in-progress referral"
+        >
+          <TextBold size="sm" color={Colors.PRIMARY}>
+            Resume ›
+          </TextBold>
+        </Pressable>
       </View>
 
       {/* Row 2: provenance + discard */}
