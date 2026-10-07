@@ -8,10 +8,15 @@ from django.utils import timezone
 from model_bakery import baker
 from reports.models import ScheduledReport
 from reports.services import get_previous_month_range
+from test_utils.timezones import SITE_TZ
 
-# Schedules are placed on the site's calendar, whichever that is, so the cases
-# below stay correct under any TIME_ZONE.
-SITE_TZ = timezone.get_default_timezone()
+# Schedules are placed on the organization's calendar, which falls back to the
+# site's; ``conftest`` pins ``settings.TIME_ZONE`` to ``SITE_TZ`` for the whole
+# suite, and the orgs below name no zone of their own.  Read the zone from that
+# constant rather than from django at import time: ``get_default_timezone()`` here
+# would freeze whatever the environment happened to say at collection, and the
+# expectations below would then be built on a calendar the code under test is not
+# using.
 
 
 @pytest.mark.django_db

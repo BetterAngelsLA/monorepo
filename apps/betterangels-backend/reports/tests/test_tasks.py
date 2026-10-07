@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 import time_machine
-from accounts.models import Organization
+from accounts.models import OrgTypeChoices, Organization, OrganizationProfile
 from django.utils import timezone
 from model_bakery import baker
 from post_office.models import Email
@@ -73,8 +73,8 @@ class TestProcessScheduledReportsTask:
             assert mock_send.delay.call_count == 2
             mock_send.delay.assert_has_calls(
                 [
-                    call(due_now.pk),
-                    call(missed.pk),
+                    call(due_now.pk, due_at=due_now.next_run_at),
+                    call(missed.pk, due_at=missed.next_run_at),
                 ],
                 any_order=True,
             )
@@ -241,3 +241,103 @@ class TestSendScheduledReportTask:
         # month and year are positional args [3] and [4]
         assert call_args.args[3] == "12"
         assert call_args.args[4] == "2024"
+
+    def test_a_second_dispatch_for_the_same_period_is_discarded(self) -> None:
+        """Two dispatches for one due instant must email that period once.
+
+        The dispatcher handed both the same due instant.  The first send advances
+        ``next_run_at``; the second reads the advanced schedule, which is what used to
+        move its period a month forward and email September alongside August.
+        """
+        report = baker.make(
+            ScheduledReport,
+            organization=baker.make(Organization),
+            recipients="test@example.com",
+            subject_template="Subject {month}/{year}",
+            is_active=True,
+            next_run_at=datetime(2026, 9, 1, 7, 0, tzinfo=UTC),  # 1 September 00:00 in Los Angeles
+        )
+        due_at = report.next_run_at
+        assert due_at is not None
+
+        with (
+            patch("reports.tasks.generate_report_data") as mock_gen,
+            patch("reports.tasks.send_report_email") as mock_send_email,
+        ):
+            mock_gen.return_value = ("a.csv", "data", {})
+
+            first = send_scheduled_report.apply(args=(report.pk,), kwargs={"due_at": due_at}).get()
+            second = send_scheduled_report.apply(args=(report.pk,), kwargs={"due_at": due_at}).get()
+
+        assert first["subject"] == "Subject 08/2026"
+        # The duplicate is discarded rather than re-sent for the month after.
+        assert second["status"] == "skipped"
+        assert mock_send_email.call_count == 1
+
+    def test_a_stale_dispatch_cannot_move_the_period_forward(self) -> None:
+        """A task drained after the schedule advanced still reports the month it was due after.
+
+        The message carries the due instant read at dispatch time, so the value the
+        task finds on the row cannot rewrite the period it covers.
+        """
+        report = baker.make(
+            ScheduledReport,
+            organization=baker.make(Organization),
+            recipients="test@example.com",
+            subject_template="Subject {month}/{year}",
+            is_active=True,
+            next_run_at=datetime(2026, 9, 1, 7, 0, tzinfo=UTC),
+        )
+        due_at = report.next_run_at
+        assert due_at is not None
+
+        # Another run serviced the schedule while this message sat in the broker.
+        report.next_run_at = datetime(2026, 10, 1, 7, 0, tzinfo=UTC)
+        report.save(update_fields=["next_run_at"])
+
+        with (
+            patch("reports.tasks.generate_report_data") as mock_gen,
+            patch("reports.tasks.send_report_email"),
+        ):
+            mock_gen.return_value = ("a.csv", "data", {})
+
+            result = send_scheduled_report.apply(args=(report.pk,), kwargs={"due_at": due_at}).get()
+
+        assert result["status"] == "skipped"
+        mock_gen.assert_not_called()
+        assert Email.objects.count() == 0
+
+    def test_a_send_uses_the_organizations_calendar_not_the_sites(self, settings) -> None:  # type: ignore[no-untyped-def]
+        """One due instant is a different period for an org that runs a day ahead.
+
+        2026-09-01 07:00 UTC is 1 September in Los Angeles but 16:00 on 31 August
+        in Tokyo, so the month it reports on is not the same.  Reading the site's
+        calendar would send a Tokyo org a month that has not finished yet.
+        """
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+        baker.make(
+            OrganizationProfile,
+            organization=org,
+            org_types=[OrgTypeChoices.OUTREACH],
+            time_zone="Asia/Tokyo",
+        )
+        report = baker.make(
+            ScheduledReport,
+            organization=org,
+            recipients="test@example.com",
+            subject_template="Subject {month}/{year}",
+            is_active=True,
+            next_run_at=datetime(2026, 9, 1, 7, 0, tzinfo=UTC),
+        )
+
+        with (
+            patch("reports.tasks.generate_report_data") as mock_gen,
+            patch("reports.tasks.send_report_email"),
+        ):
+            mock_gen.return_value = ("a.csv", "data", {})
+            result = send_scheduled_report.apply(args=(report.pk,)).get()
+
+        # August, because on the org's calendar the run was due on 31 August.
+        assert result["subject"] == "Subject 08/2026"
+        assert mock_gen.call_args.args[1:] == (date(2026, 8, 1), date(2026, 8, 31))

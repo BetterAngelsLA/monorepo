@@ -1,14 +1,18 @@
 """Tests for report services."""
 
 from datetime import UTC, date, datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 import time_machine
-from accounts.models import Organization
+from accounts.models import OrgTypeChoices, Organization, OrganizationProfile
 from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note
+from pytest_django.fixtures import SettingsWrapper
+from reports.calendar import report_calendar_time_zone
 from reports.models import ScheduledReport
+from reports.selectors import report_default_date_range
 from reports.services import generate_report_data, get_previous_month_range
 
 
@@ -161,7 +165,11 @@ class TestGetPreviousMonthRange:
 
 @pytest.mark.django_db
 class TestReportTimeZoneBoundaries:
-    """Report ranges are cut on the active calendar's days, not UTC's."""
+    """Report ranges are cut on the active calendar's days, not UTC's.
+
+    Every case below asserts a boundary that only exists west of UTC, so the site
+    calendar is pinned rather than inherited from the environment's ``TIME_ZONE``.
+    """
 
     def test_late_evening_note_counts_in_the_month_it_was_logged(self) -> None:
         """A note at 5pm on 31 January in Los Angeles belongs to January, not February."""
@@ -194,3 +202,92 @@ class TestReportTimeZoneBoundaries:
 
         assert "01/31/2025" in content
         assert "02/01/2025" not in content
+
+
+@pytest.mark.django_db
+class TestCalendarBelongsToTheOrganization:
+    """The calendar a period is cut on is the organization's, not the deployment's.
+
+    Stored rather than read from ``settings`` at call time: the setting is a
+    stand-in for a single operating region, and moving it silently redefines every
+    period the organization has ever reported on.
+    """
+
+    def test_the_orgs_calendar_wins_over_the_sites(self, settings: SettingsWrapper) -> None:
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+        baker.make(
+            OrganizationProfile,
+            organization=org,
+            org_types=[OrgTypeChoices.OUTREACH],
+            time_zone="Asia/Tokyo",
+        )
+
+        assert report_calendar_time_zone(org) == ZoneInfo("Asia/Tokyo")
+
+    def test_an_org_that_has_not_named_one_falls_back_to_the_site(self, settings: SettingsWrapper) -> None:
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+
+        assert report_calendar_time_zone(org) == ZoneInfo("America/Los_Angeles")
+
+    def test_a_boundary_is_cut_on_the_orgs_calendar_not_the_sites(self, settings: SettingsWrapper) -> None:
+        """An org a day ahead of the site still reports its own month.
+
+        2025-02-01 05:30 UTC is 31 January in Los Angeles but 1 February in Tokyo,
+        so an org on Tokyo's calendar cannot have that note in its January report.
+        """
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+        baker.make(
+            OrganizationProfile,
+            organization=org,
+            org_types=[OrgTypeChoices.OUTREACH],
+            time_zone="Asia/Tokyo",
+        )
+        report = baker.make(ScheduledReport, organization=org)
+        baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 5, 30, tzinfo=UTC))
+
+        _, content, meta = generate_report_data(report, date(2025, 1, 1), date(2025, 1, 31))
+
+        assert meta["notes_count"] == 0
+        assert "02/01/2025" not in content
+
+    def test_the_row_label_follows_the_orgs_calendar(self, settings: SettingsWrapper) -> None:
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+        baker.make(
+            OrganizationProfile,
+            organization=org,
+            org_types=[OrgTypeChoices.OUTREACH],
+            time_zone="Asia/Tokyo",
+        )
+        report = baker.make(ScheduledReport, organization=org)
+        baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 5, 30, tzinfo=UTC))
+
+        _, content, meta = generate_report_data(report, date(2025, 2, 1), date(2025, 2, 28))
+
+        assert meta["notes_count"] == 1
+        assert "02/01/2025" in content
+
+    def test_the_default_range_is_the_current_month_on_the_orgs_calendar(self, settings: SettingsWrapper) -> None:
+        """Nothing else asserts the value this returns — the GraphQL default depends on it.
+
+        The site sits on a calendar a day behind, so the two disagree about which
+        month "today" is at this instant.
+        """
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+        baker.make(
+            OrganizationProfile,
+            organization=org,
+            org_types=[OrgTypeChoices.OUTREACH],
+            time_zone="Asia/Tokyo",
+        )
+
+        # 2026-08-31 16:00 UTC is still August in Los Angeles, already September in Tokyo.
+        with time_machine.travel("2026-08-31 16:00:00", tick=False):
+            assert report_default_date_range(org=org) == (date(2026, 9, 1), date(2026, 9, 30))
+
+        with time_machine.travel("2026-08-31 06:00:00", tick=False):
+            assert report_default_date_range(org=org) == (date(2026, 8, 1), date(2026, 8, 31))
