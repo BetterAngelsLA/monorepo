@@ -192,7 +192,11 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(19):
+            # Grant-only (ADR 0001 §5.3): require_can at the payload org adds the
+            # org-scoped grant checks; dual-write (ADR 0001 §4) mirrors the
+            # CASEWORKER membership as a Grant at the User.groups m2m edge
+            # (accounts.signals).
+            with self.assertNumQueriesWithoutCache(29):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()
@@ -275,8 +279,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         """
 
         variables = {
-            "userId": member.pk,
-            "organizationId": self.org.pk,
+            "membershipId": OrganizationUser.objects.get(organization=self.org, user=member).pk,
             "permissionTemplate": PermissionTemplateEnum.SHELTER_OPERATOR.name,
         }
 
@@ -288,8 +291,10 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
     def test_change_organization_member_role_keeps_a_role_it_cannot_name(self) -> None:
         """``ORG_ADMIN`` is ``is_invitable=False``, so ``PermissionTemplateEnum`` omits it.
 
-        Replacing every org-scoped group therefore demoted an org admin on any
-        call — including one only meant to grant them Caseworker as well.
+        Replacing every org-scoped role therefore demoted an org admin on any
+        call — including one only meant to grant them Caseworker as well.  After
+        the teardown ORG_ADMIN is grant-only, so the surviving admin shows up as
+        a scoped ``Role`` ``Grant`` rather than a ``PermissionGroup`` membership.
         """
         member = baker.make(User, email="keepsadmin@example.com")
         self.org.add_user(member)
@@ -314,8 +319,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         """
 
         variables = {
-            "userId": member.pk,
-            "organizationId": self.org.pk,
+            "membershipId": OrganizationUser.objects.get(organization=self.org, user=member).pk,
             "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
         }
 
@@ -324,7 +328,9 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         held = set(
             PermissionGroup.objects.filter(organization=self.org, user=member).values_list("template__name", flat=True)
         )
-        self.assertSetEqual(held, {CASEWORKER.name, ORG_ADMIN.name})
+        self.assertSetEqual(held, {CASEWORKER.name})
+        # The ORG_ADMIN role (grant-only, ADR 0001 teardown) survived as a Grant.
+        self.assertTrue(member.grants.filter(scope_org=self.org, role__name=ORG_ADMIN.name).exists())
 
     def test_add_organization_member_already_member(self) -> None:
         org_member = baker.make(
@@ -464,8 +470,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         """
 
         variables = {
-            "id": removable_member.pk,
-            "organizationId": self.org.pk,
+            "membershipId": OrganizationUser.objects.get(organization=self.org, user=removable_member).pk,
         }
 
         response = self.execute_graphql(mutation, {"data": variables})
@@ -484,14 +489,12 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         self.assertTrue(User.objects.filter(pk=removable_member.pk).exists())
 
-    def test_remove_organization_member_user_not_in_org(self) -> None:
-        outsider = baker.make(
-            User,
-            first_name="Out",
-            last_name="Side",
-            email="outsider@example.com",
-        )
+    def test_remove_organization_member_unknown_membership_fails_closed(self) -> None:
+        """A membership id with no row is a permission denial, never a crash.
 
+        Remove is keyed on the ``OrganizationUser`` row, so a stale/nonexistent
+        key is indistinguishable from no authority — fail closed.
+        """
         mutation = """
             mutation ($data: RemoveOrganizationMemberInput!) {
                 removeOrganizationMember(data: $data) {
@@ -503,24 +506,13 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             }
         """
 
-        variables = {
-            "id": outsider.pk,
-            "organizationId": self.org.pk,
-        }
+        response = self.execute_graphql(mutation, {"data": {"membershipId": 999_999}})
 
-        response = self.execute_graphql(mutation, {"data": variables})
-
+        self.assertIsNone(response.get("errors"), response.get("errors"))
         self.assertEqual(len(response["data"]["removeOrganizationMember"]["messages"]), 1)
         self.assertEqual(
             response["data"]["removeOrganizationMember"]["messages"][0]["message"],
-            "User is not a member of this organization.",
-        )
-
-        self.assertFalse(
-            OrganizationUser.objects.filter(
-                organization=self.org,
-                user=outsider,
-            ).exists()
+            "You do not have permission to remove this member.",
         )
 
     def test_remove_organization_member_cannot_remove_owner(self) -> None:
@@ -537,8 +529,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         """
 
         variables = {
-            "id": self.org_admin.pk,
-            "organizationId": self.org.pk,
+            "membershipId": OrganizationUser.objects.get(organization=self.org, user=self.org_admin).pk,
         }
 
         response = self.execute_graphql(mutation, {"data": variables})
@@ -546,7 +537,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         self.assertEqual(len(response["data"]["removeOrganizationMember"]["messages"]), 1)
         self.assertEqual(
             response["data"]["removeOrganizationMember"]["messages"][0]["message"],
-            "You cannot remove the organization owner. Transfer ownership first.",
+            "You cannot remove the organization owner. Transfer ownership to another member first.",
         )
 
         self.assertTrue(

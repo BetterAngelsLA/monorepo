@@ -1,5 +1,8 @@
-query ClientReferrals($clientId: ID!) {
-  referrals(filters: { clientProfile: $clientId }) {
+query ClientReferrals(
+  $filters: ReferralFilter
+  $pagination: OffsetPaginationInput
+) {
+  referrals(filters: $filters, pagination: $pagination) {
     results {
       id
       status
@@ -13,6 +16,18 @@ query ClientReferrals($clientId: ID!) {
       shelter {
         id
         name
+        location {
+          place
+        }
+        pets {
+          name
+        }
+        demographics {
+          name
+        }
+        accessibility {
+          name
+        }
       }
     }
     totalCount
@@ -21,19 +36,10 @@ query ClientReferrals($clientId: ID!) {
 
 mutation CreateReferral($data: CreateReferralInput!) {
   createReferral(data: $data) {
+    # The consumer only checks the payload type and the returned id (the list is
+    # refetched), so nothing else is requested.
     ... on ReferralType {
       id
-      status
-      createdAt
-      shelter {
-        id
-        name
-      }
-      createdBy {
-        id
-        firstName
-        lastName
-      }
     }
     ... on OperationInfo {
       messages {

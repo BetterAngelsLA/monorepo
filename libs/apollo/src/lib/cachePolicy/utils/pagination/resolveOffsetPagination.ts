@@ -1,10 +1,7 @@
-import {
-  DEFAULT_OFFSET_PAGINATION_VARS,
-  PaginationModeEnum,
-} from '../../constants';
+import { DEFAULT_OFFSET_PAGINATION_VARS } from '../../constants';
 import { MergePaginationArgs } from '../../merge/types';
 import { OffsetPaginationVariables } from '../../types';
-import { extractPagination } from './extractPagination';
+import { extractOffsetPagination } from './extractOffsetPagination';
 
 /**
  * Core resolver: variables + a known offset-style config → { offset, limit }
@@ -13,16 +10,18 @@ export function resolveOffsetPagination(
   variables: unknown,
   config: OffsetPaginationVariables = DEFAULT_OFFSET_PAGINATION_VARS,
 ): MergePaginationArgs {
-  const pagination = extractPagination(variables, config);
+  const pagination = extractOffsetPagination({
+    variables,
+    offsetPath: config.offsetPath,
+    limitPath: config.limitPath,
+  });
 
-  if (pagination?.mode !== PaginationModeEnum.Offset) {
+  if (!pagination) {
     return { offset: 0, limit: 0 };
   }
 
-  const { offset, limit } = pagination;
-
   return {
-    offset,
-    limit,
+    offset: pagination.offset,
+    limit: pagination.limit,
   };
 }

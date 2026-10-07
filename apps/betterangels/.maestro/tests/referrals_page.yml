@@ -1,0 +1,24 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Smoke test: the Referrals tab loads for a client.
+# Mirrors clients_page.yml / tasks_page.yml.
+#
+# Precondition: `ffReferrals` enabled in the target environment (see README.md →
+# "Feature Flags (ffReferrals)").
+
+- runFlow: ../lib/framework/start_test.yml
+
+- runFlow: ../steps/referrals/open_referrals_tab.yml
+
+# Proves the referrals query resolved rather than asserting the tab label, which
+# open_referrals_tab.yml already proved. The header swaps "Loading..." for the
+# count once the query settles — and also renders the count on failure — so wait
+# for the count (generous timeout: first load hits the network) and pair it with
+# the error copy being absent.
+- assertVisible:
+    id: referrals-screen
+- extendedWaitUntil:
+    visible:
+      text: 'Displaying .* of .* referrals'
+    timeout: 30000
+- assertNotVisible: 'Error loading referrals.*'

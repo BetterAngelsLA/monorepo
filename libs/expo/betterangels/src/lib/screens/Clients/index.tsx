@@ -1,10 +1,11 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
+import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { router, useFocusEffect } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useUser } from '../../hooks';
-import { pagePaddingHorizontal } from '../../static';
+import { FeatureFlags, pagePaddingHorizontal } from '../../static';
 import {
   ClientCard,
   ClientCardHmis,
@@ -27,6 +28,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   );
   const [search, setSearch] = useState('');
   const { user } = useUser();
+  const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
 
   // reset search query every time the screen regains focus
   useFocusEffect(
@@ -35,23 +37,31 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     }, []),
   );
 
-  const renderClientItem = useCallback(
-    (client: TClientProfile) => (
-      <ClientCard
-        arrivedFrom="/"
-        client={client}
-        onMenuPress={setCurrentClient}
-      />
-    ),
-    [setCurrentClient],
-  );
-
+  // Declared before renderClientItem because it appears in that callback's
+  // dependency array — referencing it earlier would hit the const's TDZ.
   const handleClientPress = useCallback((id: string) => {
     router.navigate({
       pathname: `/client/${id}`,
       params: { arrivedFrom: '/' },
     });
   }, []);
+
+  const renderClientItem = useCallback(
+    (client: TClientProfile) => (
+      <ClientCard
+        arrivedFrom="/"
+        client={client}
+        onMenuPress={setCurrentClient}
+        // Direct navigation is part of the referral work; without the flag the
+        // card keeps the legacy profile-summary modal so production users see
+        // no change.
+        onPress={
+          referralsEnabled ? () => handleClientPress(client.id) : undefined
+        }
+      />
+    ),
+    [setCurrentClient, handleClientPress, referralsEnabled],
+  );
 
   const renderClientItemHmis = useCallback(
     (client: TClientProfileHmis) => {

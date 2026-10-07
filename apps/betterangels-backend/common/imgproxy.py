@@ -57,7 +57,7 @@ def _get_image_source_url(file: object) -> Optional[str]:
         return None
 
     # When the storage backend exposes an S3 bucket, use an s3:// URL so imgproxy
-    # fetches directly from the bucket (works for both production S3 and local MinIO).
+    # fetches directly from the bucket (works for both production S3 and local SeaweedFS).
     try:
         bucket = storage.bucket_name
         key = f"{storage.location}/{name}" if storage.location else name

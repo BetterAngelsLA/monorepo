@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Colors } from '@monorepo/expo/shared/static';
 import { DiscardModal, TextButton } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
-import { useCallback, useEffect, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   DeleteNoteDocument,
@@ -74,10 +74,14 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
   const { watch, setValue, getValues, reset, formState } = methods;
 
+  const hasSeededForm = useRef(false);
+
   useEffect(() => {
-    if (data?.note && !isCreateMode) {
-      reset(formDataFromNote(data.note));
+    if (hasSeededForm.current || !data?.note || isCreateMode) {
+      return;
     }
+    hasSeededForm.current = true;
+    reset(formDataFromNote(data.note));
   }, [data, isCreateMode, reset]);
 
   const form = watch();

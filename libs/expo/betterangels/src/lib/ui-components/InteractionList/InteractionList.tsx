@@ -52,6 +52,7 @@ export function InteractionList(props: TProps) {
     reload,
     hasMore,
     error,
+    queryKey,
   } = useInfiniteScrollQuery<
     NoteType,
     InteractionsQuery,
@@ -94,6 +95,7 @@ export function InteractionList(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="interaction"
+        scrollResetKey={queryKey}
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}
