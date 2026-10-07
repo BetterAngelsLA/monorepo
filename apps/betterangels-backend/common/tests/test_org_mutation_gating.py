@@ -27,11 +27,12 @@ from pathlib import Path
 import pytest
 
 # Apps whose org-scoped mutations are grant-gated (ADR 0001).  A domain joins
-# this list the moment it cuts over — see the readiness matrix in the ADR §4.1.
+# this list the moment its cutover lands — see the readiness matrix in the ADR
+# §4.1 — and never before: a module listed ahead of its cutover is still on the
+# legacy arm, so this test scans it and fails on gates that do not exist yet.
 GRANT_GATED_MODULES = (
     "accounts.schema",
     "clients.schema",
-    "notes.schema",
     "reports.schema",
     "shelters.schema",
     "tasks.schema",
