@@ -1,46 +1,43 @@
 import { TAnswer, TQuestion } from '../types';
-import { findAnswerByQuestionId } from './findAnswer';
 
-type TProps = {
-  questions: TQuestion[];
-  answers: TAnswer[];
-};
+type Props = { questions: TQuestion[]; answers: TAnswer[] };
 
-export function validateForm(props: TProps): string[] {
-  const { questions, answers } = props;
-
+export function validateForm({ questions, answers }: Props): string[] {
   const errors: string[] = [];
-
   for (const question of questions) {
-    const rules = question.rules;
-
-    if (!rules) {
+    const result = answers.find(
+      (answer) => answer.questionId === question.id,
+    )?.result;
+    if (result === undefined) {
+      if (question.rules?.required)
+        errors.push(`answer required for question ${question.id}`);
       continue;
     }
 
-    const questionId = question.id;
+    const validShape =
+      question.type === 'radio'
+        ? typeof result === 'string'
+        : Array.isArray(result);
+    if (!validShape) {
+      errors.push(`invalid answer type for question ${question.id}`);
+      continue;
+    }
 
-    const answer = findAnswerByQuestionId({
-      answers,
-      questionId,
-    });
+    if (result.length === 0) {
+      if (question.rules?.required)
+        errors.push(`answer required for question ${question.id}`);
+      continue;
+    }
 
-    if (rules.required) {
-      const result = answer?.result;
-
-      if (!result) {
-        errors.push(`answer required for question ${questionId}`);
-      }
-
-      if (question.type === 'checkbox') {
-        const emptyArr = Array.isArray(result) && !result.length;
-
-        if (emptyArr) {
-          errors.push(`answer required for question ${questionId}`);
-        }
-      }
+    const values = Array.isArray(result) ? result : [result];
+    if (
+      values.some(
+        (value) =>
+          !question.options.some((option) => option.optionId === value),
+      )
+    ) {
+      errors.push(`invalid option for question ${question.id}`);
     }
   }
-
   return errors;
 }
