@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from functools import reduce
-from operator import or_
-from typing import Any, Sequence, Tuple, Type, TypeVar
+from functools import lru_cache
+from typing import Any, Sequence, Tuple, Type
 
 import strawberry
-from django.contrib.auth.models import AbstractBaseUser, Group
+from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
-from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
+from django.db.models import Model, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
-from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
@@ -40,6 +38,13 @@ def get_registered_permission_enums() -> list[type[TextChoices]]:
     return list(_permission_enum_registry)
 
 
+# Models identified as ``"<app_label>.<ModelName>"`` that must never emit grantable
+# permissions. Seed/dev-fixture-only models are not product surfaces: their
+# permissions would otherwise appear in the role/admin permission pickers, in
+# ``currentUser.permissions`` and in the generated frontend catalog.
+PERMISSION_EXCLUDED_MODELS: frozenset[str] = frozenset({"referrals.ReferralTestShelter"})
+
+
 def register_model_permissions() -> None:
     """Auto-discover model PermissionSets and register them as TextChoices.
 
@@ -47,10 +52,14 @@ def register_model_permissions() -> None:
     Models that declare an inner ``class perms(PermissionSet)`` are
     automatically discovered and their permission values registered
     for frontend codegen and the org permissions resolver.
+    Models listed in :data:`PERMISSION_EXCLUDED_MODELS` are skipped.
     """
     from django.apps import apps
 
     for model in apps.get_models():
+        if f"{model._meta.app_label}.{model.__name__}" in PERMISSION_EXCLUDED_MODELS:
+            continue
+
         perms_cls = getattr(model, "perms", None)
         if perms_cls is None or not isinstance(perms_cls, type):
             continue
@@ -73,6 +82,23 @@ def register_model_permissions() -> None:
 
         enum_cls = TextChoices(name, members)  # type: ignore[call-overload]
         _permission_enum_registry.append(enum_cls)
+
+
+@lru_cache(maxsize=1)
+def modeled_permission_strings() -> frozenset[str]:
+    """The product-modeled permission strings — the catalog the FE gates on.
+
+    Union across the permission registry (``@register_permission`` enums plus
+    auto-discovered model ``PermissionSet``s) — the exact catalog
+    ``manage.py generate_permission_enums`` emits as the FE ``PermissionEnum``.
+    ``global_permissions`` bounds the global list to it so
+    ``currentUser.permissions`` never ships permissions the product cannot gate on.
+
+    Memoized; the registry is complete by query time (``@register_permission``
+    fires at import; model discovery runs on the first call here).
+    """
+    register_model_permissions()  # discover model PermissionSets (idempotent)
+    return frozenset(str(member.value) for enum_cls in get_registered_permission_enums() for member in enum_cls)
 
 
 def perm(codename: str, description: str) -> str:
@@ -205,26 +231,12 @@ class IsAuthenticated(strawberry.BasePermission):
         return True
 
 
-def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__permissions") -> Q:
-    """Return a Q object matching a specific Django permission.
-
-    The default *prefix* ``permission_groups__permissions``
-    resolves from ``Organization`` through ``PermissionGroup`` →
-    ``Group`` → ``Permission`` → ``ContentType``.
-    """
-    return Q(
-        **{f"{prefix}__content_type__app_label": app_label},
-        **{f"{prefix}__codename": codename},
-    )
-
-
-def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_groups__permissions") -> Q:
-    """Public alias for ``_perm_q`` — Q for a single permission."""
-    return _perm_q(app_label, codename, prefix=prefix)
-
-
 def get_current_organization(info: Info) -> str:
     """Return the organization ID from the ``X-Organization-ID`` header.
+
+    Kept only until mobile migrates its teams reads to the ``organizationId``
+    filter (DEV-2566) — every other org-scoped surface is header-free.  See the
+    ADR 0001 §5.3 strip checklist.
 
     Raises ``PermissionDenied`` if the header is absent, or ``AttributeError``
     if ``OrganizationMiddleware`` is not installed.
@@ -237,109 +249,23 @@ def get_current_organization(info: Info) -> str:
     return str(org_id)
 
 
-_T = TypeVar("_T", bound=Model)
+#: The standard refusal for org-scoped authority checks — one string, so every
+#: refusal reads the same.
+PERMISSION_DENIED_MESSAGE = "You do not have permission to perform this action in this organization."
 
 
-def _org_perm_exists_across_fields(
-    user: AbstractBaseUser,
-    app_label: str,
-    codename: str,
-    fields: list[str],
-) -> Q:
-    """Return a ``Q`` checking the user holds a permission on any of the org fields.
+def require_can(user: Any, perm: str, *, org: Any) -> None:
+    """PermissionDenied unless *user* can exercise *perm* at *org* (ADR 0001 §2.6).
 
-    Both conditions — that *user* is in the group, and that the group carries
-    the permission — MUST stay inside a single ``.filter()`` call.
-    ``Organization.permission_groups`` is multi-valued, so chaining them as two
-    ``.filter()`` calls builds two independent joins and lets them be satisfied
-    by *different* permission groups: "user is in some group of this org, and
-    some group of this org has the permission". Every organization is
-    provisioned with every template, so that reads as "any member holds every
-    permission any template in their org has".
+    The create gate: creates carry an explicit target organization and are
+    authorized by ``can`` — never by the read rule.  ``can`` never implies the
+    organization exists (finding F7), so callers that take an org from client
+    input must check existence separately (see ``shelter_create``).
     """
-    return reduce(
-        or_,
-        (
-            Q(
-                Exists(
-                    Organization.objects.filter(pk=OuterRef(f)).filter(
-                        Q(permission_groups__user=user) & _perm_q(app_label, codename)
-                    )
-                )
-            )
-            for f in fields
-        ),
-    )
+    from common.permissions.selectors import can
 
-
-def permissioned_queryset(
-    queryset: "QuerySet[_T]",
-    *,
-    user: AbstractBaseUser,
-    organization_id: str,
-    perms: Sequence[str] | None = None,
-    any_perm: bool = True,
-    organization_field: str = "organization_id",
-    organization_fields: list[str] | None = None,
-) -> "QuerySet[_T]":
-    """Scope *queryset* to records in *organization_id* where *user* belongs to the org.
-
-    When *perms* is provided, further restricts to records where the
-    user holds the specified permission(s).  The org-membership check is
-    implicit — ``permission_groups__user`` proves both.
-
-    Parameters
-    ----------
-    queryset : QuerySet
-        The base queryset to filter (e.g. ``Shelter.objects.all()``).
-    user : User
-        The authenticated user.
-    organization_id : str
-        The active organization ID.
-    perms : Sequence[str] | None
-        Optional permission(s) in ``"app_label.codename"`` format.
-        If ``None``, only org membership is checked.
-    any_perm : bool
-        If ``True`` (default), user must hold at least one permission.
-        If ``False``, user must hold **all** permissions.  Ignored
-        when *perms* is ``None``.
-    organization_field : str
-        The Django field lookup path to the owning organization.
-        Default ``"organization_id"`` works for models with a direct FK.
-        Use ``"shelter__organization_id"`` for indirect (Bed, Room).
-        Ignored when *organization_fields* is provided.
-    organization_fields : list[str] | None
-        Multiple field paths (OR'd together). Use when a model reaches
-        its organization through more than one path (e.g. Reservation
-        via ``bed__shelter__organization_id`` or
-        ``room__shelter__organization_id``). Takes precedence over
-        *organization_field*. Default ``None``.
-
-    Returns
-    -------
-    QuerySet
-        The filtered queryset.
-    """
-    fields = organization_fields or [organization_field]
-
-    queryset = queryset.filter(reduce(or_, (Q(**{f: organization_id}) for f in fields)))
-
-    if perms is None:
-        queryset = queryset.filter(
-            reduce(or_, (Q(Exists(Organization.objects.filter(pk=OuterRef(f), users=user))) for f in fields))
-        )
-    elif any_perm:
-        q = Q()
-        for perm_str in perms:
-            app_label, codename = perm_str.split(".", 1)
-            q |= _org_perm_exists_across_fields(user, app_label, codename, fields)
-        queryset = queryset.filter(q)
-    else:
-        for perm_str in perms:
-            app_label, codename = perm_str.split(".", 1)
-            queryset = queryset.filter(_org_perm_exists_across_fields(user, app_label, codename, fields))
-
-    return queryset
+    if not can(user, perm, org=org):
+        raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 
 
 def assign_object_permissions(

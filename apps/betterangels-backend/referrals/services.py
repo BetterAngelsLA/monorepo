@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, Optional
 
 from accounts.models import PermissionGroup, User
@@ -7,6 +8,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from referrals.models import Referral
 from shelters.models import Shelter
+
+logger = logging.getLogger(__name__)
 
 REFERRAL_UPDATE_FIELDS = ("status", "notes")
 
@@ -32,7 +35,14 @@ def referral_create(
     try:
         referral.save()
     except IntegrityError as e:
-        raise ValidationError(str(e)) from e
+        # Log the real database error for diagnosis; the client only ever sees a
+        # generic message (never raw database text). Do not log the notes payload.
+        logger.exception(
+            "Failed to create referral (client_profile_id=%s, shelter_id=%s)",
+            client_profile.pk,
+            shelter.pk,
+        )
+        raise ValidationError("Unable to create this referral. Please check the details and try again.") from e
 
     assign_object_permissions(
         permission_group,

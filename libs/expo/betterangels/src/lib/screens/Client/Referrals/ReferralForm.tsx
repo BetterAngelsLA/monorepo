@@ -1,70 +1,131 @@
-import { useQuery } from '@apollo/client/react';
+import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Button,
+  InfiniteList,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { CancelReferralButton } from './CancelReferralButton';
+import { SHELTERS_PAGE_SIZE } from './constants';
+import { ShelterCard } from './ShelterCard';
+import { shelterAttributeLabels } from './shelterAttributes';
 import {
   SheltersDocument,
   SheltersQuery,
+  SheltersQueryVariables,
 } from './__generated__/Shelters.generated';
 
 type TProps = {
   onCancel: () => void;
-  onSubmit: (shelterId: string, notes: string | undefined) => void;
+  onPause?: () => void;
+  onSubmit: (shelterId: string, notes: string | undefined) => Promise<boolean>;
+  // client-needed attributes for match coloring; omit for a neutral list
+  desiredAttributes?: string[];
+  // Controlled by the shared draft; null means no current selection.
+  selectedShelterId: string | null;
+  onSelectShelter: (shelterId: string | null) => void;
 };
 
-export function ReferralForm({ onCancel, onSubmit }: TProps) {
-  const [selectedShelterId, setSelectedShelterId] = useState<string | null>(
-    null,
-  );
-  const [notes, setNotes] = useState('');
+type ShelterResult = SheltersQuery['shelters']['results'][number];
+
+// A resumed selection can sit on a page that is not loaded yet, so the name is
+// only known once its card has been rendered.
+function selectionLabel(selectedShelter: ShelterResult | undefined): string {
+  if (!selectedShelter) return '✓ Shelter selected';
+  return `✓ Selected: ${selectedShelter.name}`;
+}
+
+export function ReferralForm({
+  onCancel,
+  onPause,
+  onSubmit,
+  desiredAttributes,
+  selectedShelterId,
+  onSelectShelter,
+}: TProps) {
   const [submitted, setSubmitted] = useState(false);
 
-  const { data, loading, error } = useQuery<SheltersQuery>(SheltersDocument);
+  const {
+    items: shelters,
+    total,
+    loading,
+    loadingMore,
+    hasMore,
+    error,
+    loadMore,
+  } = useInfiniteScrollQuery<
+    ShelterResult,
+    SheltersQuery,
+    SheltersQueryVariables
+  >({
+    document: SheltersDocument,
+    queryFieldName: 'shelters',
+    pageSize: SHELTERS_PAGE_SIZE,
+  });
 
-  const shelters = (data?.shelters.results ?? []).filter(
-    (s) => s.status === 'APPROVED',
-  );
+  // No status filter here: the `shelters` query is already restricted to
+  // approved records server-side (ShelterType.get_queryset -> shelter_list ->
+  // filter(status=APPROVED)), and it additionally hides private shelters unless
+  // the user holds view_private_shelter. Re-filtering client-side could never
+  // remove a row the server sent, and implied a protection the client wasn't
+  // providing.
   const selectedShelter = shelters.find((s) => s.id === selectedShelterId);
 
   async function handleSubmit() {
-    if (!selectedShelterId) return;
+    if (!selectedShelterId || submitted) return;
     setSubmitted(true);
-    onSubmit(selectedShelterId, notes.trim() || undefined);
+    const created = await onSubmit(selectedShelterId, undefined);
+    // re-enable Submit so a failed referral can be retried
+    if (!created) {
+      setSubmitted(false);
+    }
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
+    <View style={styles.container} testID="shelter-picker-screen">
+      {/* Header — mirrors the intake step: Cancel / Pause / Submit */}
       <View style={styles.header}>
-        <Pressable onPress={onCancel} accessibilityRole="button">
-          <TextRegular color={Colors.PRIMARY}>Cancel</TextRegular>
-        </Pressable>
-        <TextBold size="md">Refer to Shelter</TextBold>
-        <Button
-          variant="primary"
-          size="sm"
-          title="Submit"
+        <CancelReferralButton
+          testID="picker-cancel-btn"
+          style={[styles.headerBtn, styles.headerBtnFlex]}
+          onCancel={onCancel}
+        />
+        {onPause && (
+          <Pressable
+            testID="picker-pause-btn"
+            style={[styles.headerBtn, styles.headerBtnFlex]}
+            onPress={onPause}
+            accessibilityRole="button"
+            accessibilityLabel="pause referral"
+            accessibilityHint="saves a draft you can resume later"
+          >
+            <TextRegular size="sm" color={Colors.PRIMARY}>
+              Pause
+            </TextRegular>
+          </Pressable>
+        )}
+        <Pressable
+          testID="submit-referral-btn"
+          style={[
+            styles.headerBtn,
+            styles.headerBtnFlex,
+            (!selectedShelterId || submitted) && styles.headerBtnDisabled,
+          ]}
           onPress={handleSubmit}
           disabled={!selectedShelterId || submitted}
+          accessibilityRole="button"
           accessibilityLabel="submit referral"
           accessibilityHint="submits referral to selected shelter"
-        />
+        >
+          <TextBold size="sm" color={Colors.PRIMARY}>
+            Submit
+          </TextBold>
+        </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <View style={styles.body}>
         {/* Shelter picker */}
         <TextBold size="sm" style={styles.sectionLabel}>
           Select a Shelter
@@ -76,7 +137,7 @@ export function ReferralForm({ onCancel, onSubmit }: TProps) {
           </View>
         )}
 
-        {error && (
+        {error && shelters.length === 0 && (
           <View style={styles.centered}>
             <TextRegular color={Colors.ERROR}>
               Error loading shelters. Please try again.
@@ -95,74 +156,92 @@ export function ReferralForm({ onCancel, onSubmit }: TProps) {
           </View>
         )}
 
-        {!loading &&
-          shelters.map((shelter) => {
-            const isSelected = shelter.id === selectedShelterId;
-            return (
-              <Pressable
-                key={shelter.id}
-                style={[
-                  styles.shelterCard,
-                  isSelected && styles.shelterCardSelected,
-                ]}
-                onPress={() => setSelectedShelterId(shelter.id)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-              >
-                <View style={styles.shelterRow}>
-                  <View style={styles.shelterRadio}>
-                    {isSelected && <View style={styles.shelterRadioInner} />}
-                  </View>
-                  <View style={styles.shelterInfo}>
-                    <TextBold size="sm">{shelter.name}</TextBold>
-                    {shelter.location?.place ? (
-                      <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
-                        {shelter.location.place}
-                      </TextRegular>
-                    ) : null}
+        {!loading && shelters.length > 0 && (
+          <InfiniteList<ShelterResult>
+            data={shelters}
+            keyExtractor={(shelter) => shelter.id}
+            totalItems={total}
+            renderResultsHeader={null}
+            loadMore={loadMore}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            // Cards carry their own bottom margin; keep their spacing only.
+            itemGap={0}
+            renderItem={(shelter) => {
+              const isSelected = shelter.id === selectedShelterId;
+              // Radio semantics for picking (tapping any card moves the
+              // selection here), plus tap-again-to-clear — a volunteer who
+              // selects the wrong shelter would otherwise have no way back
+              // to "nothing chosen" without cancelling the referral.
+              const toggleSelection = () => {
+                onSelectShelter(isSelected ? null : shelter.id);
+              };
+              return (
+                <Pressable
+                  testID="shelter-option"
+                  style={[
+                    styles.shelterCard,
+                    isSelected && styles.shelterCardSelected,
+                  ]}
+                  onPress={toggleSelection}
+                  // The card contains the directory link and the "more
+                  // attributes" toggle, so it must not group its children into
+                  // one inaccessible element. The radio itself carries the
+                  // selection semantics.
+                  accessible={false}
+                >
+                  <View style={styles.shelterRow}>
+                    {/* testID sits on the radio, not the row: the row also
+                        contains the directory link, and a centre-tap would open
+                        the browser instead of selecting. */}
                     <Pressable
-                      onPress={() =>
-                        Linking.openURL(
-                          `https://shelterconnect.org/shelters/${shelter.id}`,
-                        )
+                      testID="shelter-option-radio"
+                      style={styles.shelterRadio}
+                      onPress={toggleSelection}
+                      hitSlop={8}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: isSelected }}
+                      accessibilityLabel={shelter.name}
+                      accessibilityHint={
+                        isSelected
+                          ? 'double tap to clear this shelter selection'
+                          : 'double tap to select this shelter'
                       }
-                      accessibilityRole="link"
                     >
-                      <TextRegular size="sm" color={Colors.PRIMARY}>
-                        View shelter directory →
-                      </TextRegular>
+                      {isSelected && <View style={styles.shelterRadioInner} />}
                     </Pressable>
+                    <View style={styles.shelterInfo}>
+                      <ShelterCard
+                        id={shelter.id}
+                        name={shelter.name}
+                        place={shelter.location?.place}
+                        attributes={shelterAttributeLabels(shelter)}
+                        desiredAttributes={desiredAttributes}
+                      />
+                    </View>
                   </View>
-                </View>
-              </Pressable>
-            );
-          })}
-
-        {/* Confirmation section - shown when shelter is selected */}
-        {selectedShelter && (
-          <View style={styles.confirmationBox}>
-            <TextBold size="sm" color={Colors.SUCCESS}>
-              ✓ Selected: {selectedShelter.name}
-            </TextBold>
-          </View>
+                </Pressable>
+              );
+            }}
+            ListFooterComponent={
+              <>
+                {loadingMore && (
+                  <View style={styles.centered}>
+                    <ActivityIndicator size="small" color={Colors.PRIMARY} />
+                  </View>
+                )}
+                {selectedShelterId && (
+                  <View style={styles.confirmationBox}>
+                    <TextBold size="sm" color={Colors.SUCCESS}>
+                      {selectionLabel(selectedShelter)}
+                    </TextBold>
+                  </View>
+                )}
+              </>
+            }
+          />
         )}
-
-        {/* Notes field */}
-        <TextBold size="sm" style={styles.sectionLabel}>
-          Notes (optional)
-        </TextBold>
-        <TextInput
-          style={styles.notesInput}
-          placeholder="Add any notes about this referral..."
-          placeholderTextColor={Colors.NEUTRAL}
-          multiline
-          numberOfLines={4}
-          value={notes}
-          onChangeText={setNotes}
-          accessibilityLabel="referral notes"
-          accessibilityHint="optional notes to include with the referral"
-        />
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -174,13 +253,27 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: Spacings.xs,
     backgroundColor: Colors.WHITE,
     paddingHorizontal: Spacings.md,
     paddingVertical: Spacings.sm,
     borderBottomWidth: 1,
     borderBottomColor: Colors.NEUTRAL_LIGHT,
+  },
+  headerBtn: {
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
+    borderRadius: 8,
+    paddingHorizontal: Spacings.sm,
+    paddingVertical: Spacings.xxs,
+  },
+  headerBtnFlex: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerBtnDisabled: {
+    opacity: 0.4,
   },
   body: {
     flex: 1,
@@ -244,17 +337,5 @@ const styles = StyleSheet.create({
     padding: Spacings.md,
     marginTop: Spacings.sm,
     marginBottom: Spacings.md,
-  },
-  notesInput: {
-    backgroundColor: Colors.WHITE,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.NEUTRAL_LIGHT,
-    padding: Spacings.md,
-    fontSize: 14,
-    color: Colors.NEUTRAL_DARK,
-    textAlignVertical: 'top',
-    minHeight: 100,
-    marginBottom: Spacings.xl,
   },
 });

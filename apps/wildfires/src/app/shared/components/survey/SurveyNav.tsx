@@ -1,8 +1,7 @@
 import { ArrowLeftIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
-import { useContext } from 'react';
 import { SurveyButton } from '../../../pages/introduction/firesSurvey/components/SurveyButton';
-import { SurveyContext } from './provider/SurveyContext';
+import { useSurvey } from './provider/SurveyContext';
 
 type IProps = {
   className?: string;
@@ -13,11 +12,7 @@ type IProps = {
 export function SurveyNav(props: IProps) {
   const { className, onNext, onPrev } = props;
 
-  const context = useContext(SurveyContext);
-
-  if (!context) {
-    throw new Error('SurveyContext must be used with SurveyNav');
-  }
+  const context = useSurvey();
 
   const { currentForm, formHistory, validateCurrentForm } = context;
 
@@ -26,16 +21,11 @@ export function SurveyNav(props: IProps) {
   }
 
   if (!currentForm) {
-    return;
+    return null;
   }
 
   const showPrevBtn = formHistory.length > 1;
   const currentFormErrors = validateCurrentForm();
-
-  if (currentFormErrors.length) {
-    console.log('currentFormErrors:');
-    console.log(currentFormErrors);
-  }
 
   const nextDisabled = !!currentFormErrors.length;
 

@@ -16,7 +16,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.enums import ShelterPhotoTypeChoices
-from shelters.models import ShelterPhoto
+from shelters.models import Shelter, ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
 from shelters.types.inputs import UpdateShelterPhotoInput
 
@@ -61,12 +61,19 @@ class ShelterPhotoResolveItem:
 def create_presigned_uploads(
     *,
     user: User,
-    organization_id: str,
     shelter_id: int | str,
     uploads: Iterable[UploadRequest],
 ) -> AuthorizedPresignedUploadBatch:
-    """Generate presigned S3 URLs and upload tokens for shelter photos (Phase 1)."""
-    shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
+    """Generate presigned S3 URLs and upload tokens for shelter photos (Phase 1).
+
+    The parent shelter is resolved reach-scoped by the user's grants —
+    holding ``change_shelter`` at the shelter's org is the whole gate.
+    """
+    shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        permission=Shelter.perms.CHANGE,
+    )
     return file_upload.create_presigned_uploads(
         user=user,
         uploads=uploads,
@@ -77,15 +84,15 @@ def create_presigned_uploads(
 def resolve_uploads(
     *,
     user: User,
-    organization_id: str,
     shelter_id: int | str,
     photos: Iterable[ShelterPhotoResolveItem],
 ) -> list[ShelterPhoto]:
     """Validate tokens + S3 → create ShelterPhoto rows (Phase 3).
 
-    Accepts typed ``ShelterPhotoResolveItem`` instances so that
-    ``photo_type`` arrives as a ``ShelterPhotoTypeChoices`` enum member
-    — no string parsing, no ``KeyError`` possible.
+    The parent shelter is resolved reach-scoped by the user's grants.
+    Accepts typed ``ShelterPhotoResolveItem`` instances so that ``photo_type``
+    arrives as a ``ShelterPhotoTypeChoices`` enum member — no string parsing,
+    no ``KeyError`` possible.
     """
     photo_list = list(photos)
 
@@ -96,7 +103,11 @@ def resolve_uploads(
         config=SHELTER_PHOTO_CONFIG,
     )
 
-    shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
+    shelter = shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        permission=Shelter.perms.CHANGE,
+    )
     created: list[ShelterPhoto] = []
 
     with transaction.atomic():
@@ -113,13 +124,13 @@ def resolve_uploads(
 
 
 @transaction.atomic
-def delete_shelter_photos(*, user: "User", organization_id: str, ids: list[int]) -> list[int]:
-    """Delete shelter photos scoped to *organization_id*.
+def delete_shelter_photos(*, user: "User", ids: list[int]) -> list[int]:
+    """Delete shelter photos.
 
-    Only photos belonging to shelters in the active organization are
-    eligible for deletion.
+    The queryset is reach-scoped by the user's grants — only photos of
+    shelters the user may CHANGE are eligible.
     """
-    org_shelters = shelter_queryset(user=user, organization_id=organization_id)
+    org_shelters = shelter_queryset(user=user, permission=Shelter.perms.CHANGE)
     photos = ShelterPhoto.objects.filter(
         shelter__in=org_shelters,
         pk__in=ids,
@@ -135,10 +146,11 @@ def delete_shelter_photos(*, user: "User", organization_id: str, ids: list[int])
     return deleted_ids
 
 
-def update_shelter_photo(*, user: "User", organization_id: str, data: UpdateShelterPhotoInput) -> ShelterPhoto:
+def update_shelter_photo(*, user: "User", data: UpdateShelterPhotoInput) -> ShelterPhoto:
     """Update a shelter photo's type.
 
-    Validates org access via the photo's shelter, scoped to *organization_id*.
+    Validates access via the photo's shelter, reach-scoped by the user's
+    grants.
 
     Raises:
         ``ObjectDoesNotExist`` when the photo is not found or the user does not
@@ -147,7 +159,7 @@ def update_shelter_photo(*, user: "User", organization_id: str, data: UpdateShel
     photo_id = data.id
 
     photo = get_by_pk_or_not_found(
-        ShelterPhoto.objects.filter(shelter__in=shelter_queryset(user=user, organization_id=organization_id)),
+        ShelterPhoto.objects.filter(shelter__in=shelter_queryset(user=user, permission=Shelter.perms.CHANGE)),
         pk=photo_id,
     )
 

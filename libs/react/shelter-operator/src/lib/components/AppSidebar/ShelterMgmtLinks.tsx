@@ -21,7 +21,7 @@ export function ShelterMgmtLinks(props: IProps) {
       label="Shelter Management"
       isActive={false} // style only child links as active/inactive
       collapsed={!isOpen}
-      defaultExpanded={true}
+      defaultExpanded={isShelterMgmtRoute(pathname)}
     >
       <Sidebar.Content>
         <Sidebar.Link

@@ -1,10 +1,17 @@
-"""Tests for report views (DRF export) and GraphQL report summary query."""
+"""Tests for report views (DRF export) and GraphQL report summary query.
+
+Reports authorize via grants (ADR 0001 §5.3, reports cutover): ``can()`` over
+role-backed ORG_ADMIN/ORG_SUPERUSER backfilled Grants or a direct-grant holder,
+or the global tier.  The legacy ``PermissionGroup`` arm is not consulted, so the
+fixture below grants through a scoped ``Role`` + ``Grant``.
+"""
 
 from datetime import datetime
 
 import pytest
 import time_machine
-from accounts.models import PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import Role, User
+from accounts.services import grant_create
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -19,16 +26,33 @@ from teams.models import Team
 
 
 def grant_view_reports(user: User, org: Organization) -> None:
-    """Grant view_reports permission to a user for an org via PermissionGroup."""
+    """Grant ``reports.view_reports`` at *org* via a scoped Role + Grant.
+
+    Mirrors the production authority: the permission rides a scoped Role
+    (bound to ``ScheduledReport``'s real ContentType), and the user holds a
+    Grant at *org*.
+    """
     ct = ContentType.objects.get_for_model(ScheduledReport)
     perm, _ = Permission.objects.get_or_create(
         codename="view_reports", content_type=ct, defaults={"name": "Can view reports"}
     )
-    template, _ = PermissionGroupTemplate.objects.get_or_create(name="_test_report_viewer")
-    template.permissions.add(perm)
-    pg, _ = PermissionGroup.objects.get_or_create(organization=org, template=template)
-    pg.permissions.add(perm)
-    user.groups.add(pg)
+    role, _ = Role.objects.get_or_create(name="_test_report_viewer", is_global=False)
+    role.permissions.add(perm)
+    grant_create(user=user, role=role, scope_org=org)
+
+
+def summary_variables(org: Organization, **overrides: object) -> dict[str, object]:
+    """Variables for REPORT_SUMMARY_QUERY — the org is carried in the payload.
+
+    Defaults to a fixed January 2025 window; tests override via *overrides*.
+    """
+    variables: dict[str, object] = {
+        "organizationId": str(org.pk),
+        "startDate": "2025-01-01",
+        "endDate": "2025-01-31",
+    }
+    variables.update(overrides)
+    return variables
 
 
 @pytest.fixture
@@ -280,10 +304,34 @@ class TestExportInteractionDataView:
         response = api_client.get(f"/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id={other_org.id}")
         assert response.status_code == 403
 
+    def test_export_unknown_org_fails_closed(self, api_client: APIClient, org: Organization) -> None:
+        """An org id that does not exist denies cleanly (no DoesNotExist crash)."""
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        grant_view_reports(user, org)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id=999999999")
+        assert response.status_code == 403
+
+    def test_export_non_numeric_org_id_fails_closed(self, api_client: APIClient, org: Organization) -> None:
+        """A non-numeric org id denies cleanly (no ValueError crash)."""
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        grant_view_reports(user, org)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id=not-a-number")
+        assert response.status_code == 403
+
 
 REPORT_SUMMARY_QUERY = """
-    query ReportSummary($startDate: Date, $endDate: Date) {
-        reportSummary(startDate: $startDate, endDate: $endDate) {
+    query ReportSummary($organizationId: ID!, $startDate: Date, $endDate: Date) {
+        reportSummary(organizationId: $organizationId, startDate: $startDate, endDate: $endDate) {
             totalNotes
             uniqueClients
             startDate
@@ -333,14 +381,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_unauthenticated_returns_error(self) -> None:
         org = baker.make(Organization, name="Test Org")
-        self._set_active_org(org)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertGraphQLUnauthenticated(response)
 
     def test_user_without_permission_gets_error(self) -> None:
@@ -349,15 +390,8 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         user.set_password("testpass")
         user.save()
         org.add_user(user)
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertTrue(response.get("errors") is not None or response["data"]["reportSummary"] is None)
 
     def test_summary_returns_correct_data(self) -> None:
@@ -380,15 +414,8 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             team=team_dropin,
             _quantity=2,
         )
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
         self.assertEqual(data["totalNotes"], 5)
@@ -418,15 +445,8 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         first.provided_services.add(baker.make(ServiceRequest, service=shower))
         first.requested_services.add(baker.make(ServiceRequest, service=shower))
 
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
 
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
@@ -438,14 +458,9 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_empty_range(self) -> None:
         org, user = self._setup_org_user_with_access()
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2024-06-01",
-                "endDate": "2024-06-30",
-            },
+            REPORT_SUMMARY_QUERY, summary_variables(org, startDate="2024-06-01", endDate="2024-06-30")
         )
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
@@ -470,24 +485,16 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             interacted_at=timezone.make_aware(datetime(2025, 1, 15, 12, 0, 0)),
             _quantity=5,
         )
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
         self.assertEqual(data["totalNotes"], 2)
 
     def test_summary_defaults_when_no_dates(self) -> None:
         org, user = self._setup_org_user_with_access()
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(REPORT_SUMMARY_QUERY, {})
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, {"organizationId": str(org.pk)})
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
         self.assertIsNotNone(data["startDate"])
@@ -495,7 +502,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertIsInstance(data["totalNotes"], int)
 
     def test_user_targets_org_without_view_reports_gets_error(self) -> None:
-        """User belongs to two orgs but only has view_reports on one; HasOrgPerm rejects the other."""
+        """User holds reports at one org only; naming the other org is denied."""
         org_with_access = baker.make(Organization, name="Authorized Org")
         org_without_access = baker.make(Organization, name="Unauthorized Org")
         user = baker.make(User)
@@ -506,14 +513,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         grant_view_reports(user, org_with_access)
         # No view_reports on org_without_access
 
-        self._set_active_org(org_without_access)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org_without_access))
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)

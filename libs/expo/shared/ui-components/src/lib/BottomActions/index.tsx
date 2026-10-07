@@ -1,6 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../Button';
 
 interface IBottomActionsProps {
@@ -16,6 +17,7 @@ interface IBottomActionsProps {
 }
 
 export default function BottomActions(props: IBottomActionsProps) {
+  const insets = useSafeAreaInsets();
   const {
     optionalAction,
     cancel,
@@ -32,6 +34,7 @@ export default function BottomActions(props: IBottomActionsProps) {
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingVertical: Spacings.md,
+        paddingBottom: Spacings.md + insets.bottom,
         paddingHorizontal: Spacings.sm,
         backgroundColor: Colors.WHITE,
         borderTopWidth: 1,

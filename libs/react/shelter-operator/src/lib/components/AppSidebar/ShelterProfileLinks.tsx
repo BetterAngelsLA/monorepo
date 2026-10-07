@@ -1,8 +1,9 @@
 import { Sidebar } from '@monorepo/react/components';
+import { useBaPrivatePermissions } from '../../hooks';
 import {
   isShelterProfileRoute,
-  shelterProfileRoute,
   profileRouteConfig,
+  shelterProfileRoute,
 } from '../../routing';
 
 type IProps = {
@@ -15,13 +16,15 @@ type IProps = {
 export function ShelterProfileLinks(props: IProps) {
   const { className, pathname, shelterId, isOpen } = props;
 
+  const { canViewAny: canViewBaPrivate } = useBaPrivatePermissions();
+
   return (
     <Sidebar.NestedLinks
       className={className}
       label="Shelter Profile"
       isActive={false} // style only child links as active/inactive
       collapsed={!isOpen}
-      defaultExpanded={true}
+      defaultExpanded={isShelterProfileRoute(pathname)}
     >
       <Sidebar.Content>
         <Sidebar.Link
@@ -109,6 +112,21 @@ export function ShelterProfileLinks(props: IProps) {
         >
           Media
         </Sidebar.Link>
+        {canViewBaPrivate && (
+          <Sidebar.Link
+            to={shelterProfileRoute(
+              shelterId,
+              profileRouteConfig.children.baPrivate,
+            )}
+            isActive={isShelterProfileRoute(pathname, {
+              segment: profileRouteConfig.children.baPrivate,
+            })}
+            collapsed={!isOpen}
+            replace
+          >
+            BA Private
+          </Sidebar.Link>
+        )}
       </Sidebar.Content>
     </Sidebar.NestedLinks>
   );

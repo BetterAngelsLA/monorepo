@@ -55,7 +55,8 @@ class UnconfiguredOrganizationTestCase(TestCase):
         organization = organization_recipe.make(owner_roles=())
         OrganizationProfile.objects.filter(organization=organization).delete()
         before = set(PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True))
-        self.assertEqual(len(before), 3)
+        # Only the dual-write Caseworker row exists; org-admin roles are grant-only.
+        self.assertEqual(len(before), 1)
 
         reconcile_org_groups(organization)
 

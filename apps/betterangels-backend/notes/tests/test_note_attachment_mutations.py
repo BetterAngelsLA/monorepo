@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from accounts.tests.baker_recipes import permission_group_recipe
+from common.enums import AttachmentType
 from common.models import Attachment
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from notes.models import Note
@@ -242,12 +243,13 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         attachment = Attachment(
             file="note_attachments/abc.pdf",
             mime_type="application/pdf",
+            attachment_type=AttachmentType.DOCUMENT,
             original_filename="doc.pdf",
             content_type=ContentType.objects.get_for_model(Note),
             object_id=note.id,
             uploaded_by=self.org_1_case_manager_1,
         )
-        attachment.save(direct_upload=True)
+        attachment.save()
         mock_generic.return_value = [attachment]
 
         response = self.execute_graphql(
@@ -292,21 +294,23 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         att1 = Attachment(
             file="note_attachments/a.pdf",
             mime_type="application/pdf",
+            attachment_type=AttachmentType.DOCUMENT,
             original_filename="a.pdf",
             content_type=note_ct,
             object_id=note.id,
             uploaded_by=self.org_1_case_manager_1,
         )
-        att1.save(direct_upload=True)
+        att1.save()
         att2 = Attachment(
             file="note_attachments/b.png",
             mime_type="image/png",
+            attachment_type=AttachmentType.IMAGE,
             original_filename="b.png",
             content_type=note_ct,
             object_id=note.id,
             uploaded_by=self.org_1_case_manager_1,
         )
-        att2.save(direct_upload=True)
+        att2.save()
         mock_generic.return_value = [att1, att2]
 
         response = self.execute_graphql(
@@ -493,12 +497,13 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         attachment = Attachment(
             file="note_attachments/abc.pdf",
             mime_type="application/pdf",
+            attachment_type=AttachmentType.DOCUMENT,
             original_filename="doc.pdf",
             content_type=ContentType.objects.get_for_model(Note),
             object_id=note.id,
             uploaded_by=self.org_1_case_manager_1,
         )
-        attachment.save(direct_upload=True)
+        attachment.save()
         mock_generic.return_value = [attachment]
 
         self._handle_user_login(user_label)
