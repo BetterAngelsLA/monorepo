@@ -9,6 +9,7 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 
 from datetime import date, datetime, time, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from django.db.models import Count, F, QuerySet
 from django.db.models.functions import TruncDate
@@ -30,12 +31,27 @@ def report_month_range(*, year: int, month: int) -> tuple[date, date]:
     return start, (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
 
+def report_calendar_time_zone() -> ZoneInfo:
+    """The timezone a report's calendar days are cut on — the site's, not the viewer's.
+
+    A report is an organisation record: the same month emailed on a schedule and
+    downloaded from the portal has to contain the same rows.  Reading the zone a
+    request activated would let a viewer shift which records the range covers, and
+    would let the boundary disagree with the scheduled send for the same period.
+    """
+    return timezone.get_default_timezone()
+
+
 def note_list_for_org(*, org: Organization, start_date: date, end_date: date) -> QuerySet[Note]:
-    """Return Notes for an organization between two inclusive calendar dates."""
+    """Return Notes for an organization between two inclusive calendar dates.
+
+    The dates are read on :func:`report_calendar_time_zone`.
+    """
+    site_time_zone = report_calendar_time_zone()
     # Half-open on instants rather than ``interacted_at__date``, which would wrap
     # the column in a cast and lose the index.
-    start = timezone.make_aware(datetime.combine(start_date, time.min))
-    end = timezone.make_aware(datetime.combine(end_date + timedelta(days=1), time.min))
+    start = timezone.make_aware(datetime.combine(start_date, time.min), timezone=site_time_zone)
+    end = timezone.make_aware(datetime.combine(end_date + timedelta(days=1), time.min), timezone=site_time_zone)
 
     return Note.objects.filter(
         interacted_at__gte=start,
@@ -45,9 +61,14 @@ def note_list_for_org(*, org: Organization, start_date: date, end_date: date) ->
 
 
 def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
-    """Aggregate note counts grouped by calendar date."""
+    """Aggregate note counts grouped by calendar date.
+
+    ``tzinfo`` is passed explicitly: left to the default, ``TruncDate`` reads the
+    zone the request activated, and the buckets would land on a different calendar
+    than the range that selected them.
+    """
     rows = (
-        notes.annotate(trunc_date=TruncDate("interacted_at"))
+        notes.annotate(trunc_date=TruncDate("interacted_at", tzinfo=report_calendar_time_zone()))
         .values("trunc_date")
         .annotate(count=Count("id"))
         .order_by("trunc_date")
@@ -105,10 +126,13 @@ def note_unique_clients_count(*, notes: QuerySet[Note]) -> int:
 
 
 def note_unique_clients_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
-    """Count distinct client profiles grouped by interaction date."""
+    """Count distinct client profiles grouped by interaction date.
+
+    Bucketed on the same calendar as :func:`note_count_by_date`.
+    """
     rows = (
         notes.filter(client_profile__isnull=False)
-        .annotate(trunc_date=TruncDate("interacted_at"))
+        .annotate(trunc_date=TruncDate("interacted_at", tzinfo=report_calendar_time_zone()))
         .values("trunc_date")
         .annotate(count=Count("client_profile", distinct=True))
         .order_by("trunc_date")

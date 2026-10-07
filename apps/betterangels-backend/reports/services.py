@@ -1,7 +1,8 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from django.core.files.base import ContentFile
+from django.utils import timezone
 from notes.admin import NoteResource
 from post_office import mail
 
@@ -18,6 +19,18 @@ def get_previous_month_range(*, as_of: date) -> tuple[date, date]:
     """
     last_day_previous = as_of.replace(day=1) - timedelta(days=1)
     return last_day_previous.replace(day=1), last_day_previous
+
+
+def period_for_due_instant(*, due_at: datetime) -> tuple[date, date]:
+    """The month a report due at *due_at* covers, read on the site's calendar.
+
+    *due_at* is the instant the run was due, not the moment it runs.  The site's
+    calendar matters around the month boundary: a report due 00:00 UTC on the 1st
+    is still the last day of the previous month in Los Angeles, and taken on UTC's
+    calendar it would cover the month before that one.
+    """
+    site_date = due_at.astimezone(timezone.get_default_timezone()).date()
+    return get_previous_month_range(as_of=site_date)
 
 
 def generate_report_data(report: ScheduledReport, start_date: date, end_date: date) -> tuple[str, str, dict[str, Any]]:

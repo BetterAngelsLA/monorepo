@@ -1,6 +1,7 @@
 """Reports app Celery tasks."""
 
 import logging
+from datetime import datetime
 from typing import Any
 
 from celery import Task, shared_task
@@ -8,8 +9,7 @@ from common.celery import single_instance
 from django.utils import timezone
 
 from .models import ScheduledReport
-
-from .services import generate_report_data, get_previous_month_range, send_report_email
+from .services import generate_report_data, period_for_due_instant, send_report_email
 
 logger = logging.getLogger(__name__)
 
@@ -23,25 +23,38 @@ def process_scheduled_reports(self: Task) -> str:
     """
     Dispatcher Task: Runs hourly (via Celery Beat) to check for reports due now.
 
-    It finds active scheduled reports where next_run_at is in the past.
+    It finds active scheduled reports where next_run_at is in the past, and hands
+    each one the due instant it was dispatched for.  A report stays due until its
+    send advances ``next_run_at``, so the task must not re-read that instant later:
+    a second dispatch in the window would read the advanced value and cover the
+    month after the one it was queued for.
     """
     now = timezone.now()
     # Simple query: give me everything that is active and due
     reports_due = ScheduledReport.objects.filter(is_active=True, next_run_at__lte=now)
 
     for report in reports_due:
-        send_scheduled_report.delay(report.pk)
+        send_scheduled_report.delay(report.pk, due_at=report.next_run_at)
 
     return f"Queued {len(reports_due)} reports for processing"
 
 
 @shared_task(bind=True)
-def send_scheduled_report(self: Task, report_id: int, recipient_override: str | None = None) -> dict[str, Any]:
+def send_scheduled_report(
+    self: Task,
+    report_id: int,
+    *,
+    due_at: datetime | None = None,
+    recipient_override: str | None = None,
+) -> dict[str, Any]:
     """
     Send a scheduled report via email.
 
     Args:
         report_id: The ID of the ScheduledReport to send.
+        due_at: The instant this run was dispatched for. Callers pass the value they
+            read when queueing, so the period cannot move between queueing and
+            sending. Falls back to the stored schedule for direct invocation.
         recipient_override: If provided, send only to this email and do not update schedule.
     """
     try:
@@ -49,13 +62,25 @@ def send_scheduled_report(self: Task, report_id: int, recipient_override: str | 
     except ScheduledReport.DoesNotExist:
         return {"status": "error", "message": f"ScheduledReport {report_id} not found"}
 
-    # The period comes from the run being serviced, not from the clock — a job that
-    # runs late or on a retry must still report the month its due date fell after.
-    # A schedule has no viewer, so the due date is read on the site's calendar even
-    # if a request activated the caller's.
-    due_at = report.next_run_at or timezone.now()
-    due_date = due_at.astimezone(timezone.get_default_timezone()).date()
-    start_date, end_date = get_previous_month_range(as_of=due_date)
+    # The period comes from the run being serviced, not from the clock and not from
+    # whatever the schedule says by the time this task starts: a job that runs late,
+    # on a retry, or twice must still report the month its own due date fell after.
+    due_at = due_at or report.next_run_at
+    if due_at is None:
+        return {"status": "error", "message": f"ScheduledReport {report_id} has no due date"}
+
+    # Another dispatch for this same period already advanced the schedule, so this
+    # one is a duplicate. Discard it rather than emailing the month after.
+    if report.next_run_at is not None and report.next_run_at > due_at:
+        logger.warning(
+            "Discarding stale dispatch for report %s: due %s, schedule already at %s",
+            report_id,
+            due_at,
+            report.next_run_at,
+        )
+        return {"status": "skipped", "message": "Schedule already advanced for this period"}
+
+    start_date, end_date = period_for_due_instant(due_at=due_at)
     month_str = start_date.strftime("%m")
     year_str = start_date.strftime("%Y")
 

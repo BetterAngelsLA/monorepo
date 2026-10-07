@@ -8,6 +8,7 @@ from accounts.models import Organization
 from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note
+from pytest_django.fixtures import SettingsWrapper
 from reports.models import ScheduledReport
 from reports.services import generate_report_data, get_previous_month_range
 
@@ -161,7 +162,15 @@ class TestGetPreviousMonthRange:
 
 @pytest.mark.django_db
 class TestReportTimeZoneBoundaries:
-    """Report ranges are cut on the active calendar's days, not UTC's."""
+    """Report ranges are cut on the active calendar's days, not UTC's.
+
+    Every case below asserts a boundary that only exists west of UTC, so the site
+    calendar is pinned rather than inherited from the environment's ``TIME_ZONE``.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _site_calendar(self, settings: SettingsWrapper) -> None:
+        settings.TIME_ZONE = "America/Los_Angeles"
 
     def test_late_evening_note_counts_in_the_month_it_was_logged(self) -> None:
         """A note at 5pm on 31 January in Los Angeles belongs to January, not February."""

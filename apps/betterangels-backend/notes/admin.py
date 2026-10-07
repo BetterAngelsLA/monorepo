@@ -60,7 +60,15 @@ class NoteResource(resources.ModelResource):
             return "MISSING CLIENT ID"
 
     def dehydrate_interacted_at(self, note: Note) -> Optional[str]:
-        return timezone.localtime(note.interacted_at).strftime("%m/%d/%Y") if note.interacted_at else None
+        """The row's calendar day on the site's clock.
+
+        Localised to the zone a request activated, this date moves with whoever
+        ran the export — out of step with the range the rows were filtered on, and
+        with the same month's scheduled email.
+        """
+        if not note.interacted_at:
+            return None
+        return timezone.localtime(note.interacted_at, timezone.get_default_timezone()).strftime("%m/%d/%Y")
 
     def dehydrate_purpose(self, note: Note) -> Optional[str]:
         return note.purpose or None
