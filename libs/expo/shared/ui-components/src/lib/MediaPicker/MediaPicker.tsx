@@ -34,6 +34,12 @@ export function MediaPicker(props: MediaPickerModalProps) {
 
   const [currentMode, setCurrentMode] = useState<PickerMode>('menu');
   const currentModeRef = useRef<PickerMode>('menu');
+  // Guards against re-entrant picker launches. The menu sheet stays mounted
+  // and tappable while it animates out, so a fast second tap (or tapping a
+  // different option before the native picker covers the screen) would
+  // otherwise launch a second native picker and hang the UI. Shared by both
+  // handlers so "Image then File" can't race either.
+  const pickInFlightRef = useRef(false);
 
   const { pickImage } = useImagePicker({
     allowMultiple,
@@ -58,40 +64,60 @@ export function MediaPicker(props: MediaPickerModalProps) {
   }, [mediaPickerActive]);
 
   async function handlePickImage() {
-    setCurrentMode('pickingImage');
-
-    const result = await pickImage();
-
-    if (result.type !== 'success') {
-      setCurrentMode('menu');
-
+    if (pickInFlightRef.current) {
       return;
     }
 
-    // Selection always closes the picker, even if the caller's handler throws.
+    pickInFlightRef.current = true;
+    setCurrentMode('pickingImage');
+
     try {
-      onFilesSelected(result.files);
+      const result = await pickImage();
+
+      if (result.type !== 'success') {
+        setCurrentMode('menu');
+
+        return;
+      }
+
+      // Selection always closes the picker, even if the caller's handler
+      // throws.
+      try {
+        onFilesSelected(result.files);
+      } finally {
+        onMediaPickerClose();
+      }
     } finally {
-      onMediaPickerClose();
+      pickInFlightRef.current = false;
     }
   }
 
   async function handlePickDocuments() {
-    setCurrentMode('pickingFile');
-
-    const result = await pickDocuments();
-
-    if (result.type !== 'success') {
-      setCurrentMode('menu');
-
+    if (pickInFlightRef.current) {
       return;
     }
 
-    // Selection always closes the picker, even if the caller's handler throws.
+    pickInFlightRef.current = true;
+    setCurrentMode('pickingFile');
+
     try {
-      onFilesSelected(result.files);
+      const result = await pickDocuments();
+
+      if (result.type !== 'success') {
+        setCurrentMode('menu');
+
+        return;
+      }
+
+      // Selection always closes the picker, even if the caller's handler
+      // throws.
+      try {
+        onFilesSelected(result.files);
+      } finally {
+        onMediaPickerClose();
+      }
     } finally {
-      onMediaPickerClose();
+      pickInFlightRef.current = false;
     }
   }
 

@@ -17,7 +17,7 @@
 
 import { ComponentType, ReactNode, useCallback } from 'react';
 import { BackdropOverlay } from '../../core/BackdropOverlay';
-import { TBottomSheetInstance } from './types.internal';
+import { TBottomSheetInstance } from './types';
 
 type UseBottomSheetSharedBackdropResult = {
   render: () => ReactNode;

@@ -1,4 +1,4 @@
-import { BottomSheetOptions } from '../../types';
+import { BottomSheetOptions } from '../../../types';
 
 export function resolveBackdropSheetOptions(
   singleBackdrop: boolean,

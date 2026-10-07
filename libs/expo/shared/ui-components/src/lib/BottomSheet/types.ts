@@ -96,6 +96,10 @@ export type BottomSheetProviderOptions = {
    * - 'push': stack on top
    * - 'switch': replace only the top sheet
    * - 'replace': dismiss all existing sheets (default)
+   *
+   * Superseded sheets are dismissed, not unmounted on the spot: they stay
+   * mounted (animating out) until Gorhom reports the dismissal finished, so
+   * their native modal is always torn down by its owner.
    */
   stackBehavior?: StackBehavior;
 
