@@ -309,11 +309,28 @@ which handles direct card navigation (flag on) and the legacy Profile Summary
 modal (flag off), so they pass in either environment.
 
 **Enabling it:** in the Django admin of the API the build points at, create a
-waffle Flag named `ffReferrals` and activate it. Which API that is depends on
-the build profile — for the dev/preview builds used by CI it is the
-`EXPO_PUBLIC_API_URL` in `apps/betterangels/eas.json` (`development-simulator`
-and `preview` profiles). A flag that does not exist is off by definition, so
-"not configured" and "disabled" behave the same.
+waffle Flag named `ffReferrals`. Which API that is depends on the build
+profile — for the dev/preview builds used by CI it is the `EXPO_PUBLIC_API_URL`
+in `apps/betterangels/eas.json` (`development-simulator` and `preview`
+profiles). A flag that does not exist is off by definition, so "not configured"
+and "disabled" behave the same.
+
+**Scoping it to a pilot group** (e.g. one customer) — the two settings matter:
+
+| Setting           | Value                              | Why                                                                                                                                    |
+| ----------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `Everyone`        | **Unknown** (not `No`)             | `No` overrides every other setting: waffle then returns inactive for members *and* non-members, so the group list never applies. Verified against waffle: `Unknown` + group → member `True`, outsider `False`. |
+| `Groups`          | the pilot group(s)                 | e.g. `Booz Allen [40] · Caseworker`. Role groups are named `<Org> [id] · <Role>`, so there is usually no group named just `Booz Allen`. |
+| `Users`           | the CI/machine account (raw PK)    | Optional but recommended: the Maestro account is typically in no org group, and adding it to a Role group would also grant that org's data permissions. Listing it here makes the flag active for automation only. |
+| `Percent`         | blank                              | Blank means 100% of the scoped audience; `0` is off.                                                                                   |
+
+Everyone else (staff, superusers, authenticated) stays unchecked, so the flag
+reaches only the pilot group plus any listed CI account.
+
+Because the flag is scoped, the CI preflight — which queries anonymously — will
+report it as inactive even when it is configured correctly. That warning is
+expected for a scoped flag; verify with a member of the group, or with the CI
+account listed on the flag.
 
 CI cannot enforce this (it is server-side state outside the repo), but the
 GitHub Actions e2e job prints a preflight warning naming the flag when it is

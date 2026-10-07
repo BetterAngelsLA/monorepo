@@ -113,6 +113,10 @@ jobs:
         # environment the preview/dev builds point at, so a failing run explains
         # itself in its own log instead of looking like a flaky UI test.
         #
+        # The query is anonymous, so a flag scoped to groups or users reports as
+        # inactive here even when it is configured correctly; the warning text
+        # says so rather than sending the reader hunting for a non-problem.
+        #
         # Deliberately non-blocking (continue-on-error + always exit 0): the flag
         # is server-side state outside this repo, and the dev API being
         # unreachable must not fail the pipeline before it starts. The Maestro
@@ -167,7 +171,7 @@ jobs:
               echo "✅ ffReferrals is enabled on ${GRAPHQL_URL}."
               ;;
             false)
-              echo "::warning::ffReferrals exists on ${GRAPHQL_URL} but is INACTIVE. The referral E2E flows (referrals_page, referral_create, referral_draft) will fail. Enable it in the Django admin for that environment — see apps/betterangels/.maestro/README.md → 'Feature Flags (ffReferrals)'."
+              echo "::warning::ffReferrals exists on ${GRAPHQL_URL} but reads as INACTIVE to this anonymous check. If the flag is scoped to groups or users, that is expected — waffle reports it active only for those accounts and this preflight has no credentials. Confirm with a member of the assigned group (or the CI user listed on the flag); otherwise the referral E2E flows (referrals_page, referral_create, referral_draft) will fail. See apps/betterangels/.maestro/README.md → 'Feature Flags (ffReferrals)'."
               ;;
             *)
               echo "::warning::ffReferrals does not exist on ${GRAPHQL_URL} (waffle resolves an unknown flag to false). The referral E2E flows (referrals_page, referral_create, referral_draft) will fail. Create and enable it in the Django admin for that environment — see apps/betterangels/.maestro/README.md → 'Feature Flags (ffReferrals)'."
