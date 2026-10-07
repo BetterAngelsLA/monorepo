@@ -78,4 +78,18 @@ describe('BottomSheetModalControlled', () => {
 
     expect(closeSheet).toHaveBeenCalled();
   });
+
+  it('dismisses the sheet when unmounted while open', () => {
+    const { rerender, unmount } = render(<Controlled isOpen={false} />);
+    rerender(<Controlled isOpen={true} />);
+
+    const closeSheet = vi.fn();
+    act(() => {
+      mountSheetRender()({ closeSheet });
+    });
+
+    unmount();
+
+    expect(closeSheet).toHaveBeenCalled();
+  });
 });

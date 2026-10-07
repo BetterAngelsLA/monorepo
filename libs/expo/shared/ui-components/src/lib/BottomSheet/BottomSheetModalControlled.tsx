@@ -21,7 +21,7 @@
  * - `options` are forwarded to `showBottomSheet()`
  */
 
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useBottomSheet } from './providers/BottomSheetModal/useBottomSheet';
 import { BottomSheetOptions } from './types';
 
@@ -47,6 +47,19 @@ export function BottomSheetModalControlled(props: TProps) {
     onClose,
   });
 
+  // Imperatively dismiss the current sheet without notifying `onClose`: the
+  // parent either already knows it's closing (state-driven) or is gone
+  // via `unmount`, so re-notifying it would be wrong.
+  const dismissSheetFromState = useCallback(() => {
+    if (!closeSheetRef.current) {
+      return;
+    }
+
+    closingFromStateRef.current = true;
+    closeSheetRef.current();
+    closeSheetRef.current = null;
+  }, []);
+
   useEffect(() => {
     stableInputsRef.current = { children, options, onClose };
   }, [children, options, onClose]);
@@ -57,11 +70,7 @@ export function BottomSheetModalControlled(props: TProps) {
 
   useEffect(() => {
     if (!isOpen) {
-      if (closeSheetRef.current) {
-        closingFromStateRef.current = true;
-        closeSheetRef.current();
-        closeSheetRef.current = null;
-      }
+      dismissSheetFromState();
 
       return;
     }
@@ -98,7 +107,16 @@ export function BottomSheetModalControlled(props: TProps) {
         },
       },
     });
-  }, [isOpen, showBottomSheet]);
+  }, [isOpen, showBottomSheet, dismissSheetFromState]);
+
+  // Dismiss the sheet if this component unmounts while it is still open. The
+  // provider owns the sheet lifecycle, so without this the sheet would linger
+  // after its host component is gone (e.g. a per-item menu that unmounts).
+  useEffect(() => {
+    return () => {
+      dismissSheetFromState();
+    };
+  }, [dismissSheetFromState]);
 
   return null;
 }

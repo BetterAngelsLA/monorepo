@@ -33,7 +33,7 @@ export default function DeleteModal(props: TProps) {
 
   // A delete-initiated close must not re-run onCancel, which races with the
   // caller unmounting the modal and can briefly re-present the underlying
-  // sheet (e.g. DocumentModal's MainModal).
+  // sheet (e.g. a document actions menu).
   const deletingRef = useRef(false);
 
   useEffect(() => {

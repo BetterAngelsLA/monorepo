@@ -23,7 +23,7 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 }));
 
 vi.mock('../../../ui-components', () => ({
-  DocumentModal: () => null,
+  DocumentMenuSheet: () => null,
   FileThumbnail: () => null,
 }));
 
