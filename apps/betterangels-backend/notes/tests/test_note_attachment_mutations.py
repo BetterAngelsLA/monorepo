@@ -226,7 +226,7 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
 
     @patch("common.services.file_upload.create_attachment_records")
     @patch("notes.services.assign_object_permissions")
-    @patch("notes.services.resolve_permission_group")
+    @patch("notes.schema.resolve_permission_group")
     def test_creates_attachment_and_returns_it(
         self,
         mock_perm_group: MagicMock,
@@ -277,7 +277,7 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
 
     @patch("common.services.file_upload.create_attachment_records")
     @patch("notes.services.assign_object_permissions")
-    @patch("notes.services.resolve_permission_group")
+    @patch("notes.schema.resolve_permission_group")
     def test_creates_multiple_attachments(
         self,
         mock_perm_group: MagicMock,
@@ -478,7 +478,7 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
     )
     @patch("common.services.file_upload.create_attachment_records")
     @patch("notes.services.assign_object_permissions")
-    @patch("notes.services.resolve_permission_group")
+    @patch("notes.schema.resolve_permission_group")
     def test_permission_checks(
         self,
         mock_perm_group: MagicMock,

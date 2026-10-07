@@ -407,6 +407,18 @@ class Mutation:
 
         note = get_writable_or_deny(Note.objects.all(), data.note_id, user, NotePermissions.CHANGE)
 
+        # Authority is the note gate above.  The guardian rows the service
+        # mirrors are the legacy arm, so a grant-only holder — the blessed
+        # post-cutover state — has no group to mirror onto and must not be
+        # refused here (``resolve_permission_group`` raises ``PermissionError``,
+        # which would otherwise escape as an unhandled error).
+        try:
+            permission_group = resolve_permission_group(
+                user, template=CASEWORKER, organization_id=str(note.organization_id)
+            )
+        except PermissionError:
+            permission_group = None
+
         attachment_list = [
             UploadConfirmation(
                 presigned_key=a.presigned_key,
@@ -416,6 +428,8 @@ class Mutation:
             )
             for a in data.attachments
         ]
-        attachments = resolve_note_file_uploads(user=user, note=note, attachments=attachment_list)
+        attachments = resolve_note_file_uploads(
+            user=user, note=note, attachments=attachment_list, permission_group=permission_group
+        )
 
         return NoteAttachmentUploadsType(attachments=cast(list[NoteAttachmentType], attachments))

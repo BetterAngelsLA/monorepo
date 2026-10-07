@@ -3,7 +3,6 @@ from typing import Any, Dict, Iterable, List, Optional, cast
 
 import pghistory
 from accounts.models import PermissionGroup, User
-from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment, Location
@@ -19,7 +18,6 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
-from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.permissions import (
     NotePermissions,
@@ -359,19 +357,17 @@ def resolve_note_file_uploads(
     user: User,
     note: Note,
     attachments: Iterable[UploadConfirmation],
+    permission_group: Optional[PermissionGroup] = None,
 ) -> list[Attachment]:
     """Validate tokens + S3 → create Attachment rows for a note (Phase 3).
 
-    Uses the note's organization to resolve the permission group, so
-    object-level permissions are scoped to the correct org even when
-    the user belongs to multiple organizations.
+    ``permission_group`` is the legacy arm: when the caller holds the
+    ``CASEWORKER`` group, the guardian rows below are assigned for parity with
+    the pre-cutover path.  A grant-only holder has none — authority is the
+    caller's note gate (``get_writable_or_deny``), so the row is created without
+    guardians rather than refused.  Resolving the group here would raise for
+    that holder and abort the whole upload.
     """
-    permission_group = resolve_permission_group(
-        user,
-        template=CASEWORKER,
-        organization_id=str(note.organization_id),
-    )
-
     with transaction.atomic():
         attached = file_upload.create_attachment_records(
             user=user,
@@ -380,14 +376,15 @@ def resolve_note_file_uploads(
             config=NOTE_ATTACHMENT_CONFIG,
         )
 
-        for att in attached:
-            assign_object_permissions(
-                permission_group,
-                att,
-                [
-                    Attachment.perms.DELETE,
-                    Attachment.perms.CHANGE,
-                ],
-            )
+        if permission_group is not None:
+            for att in attached:
+                assign_object_permissions(
+                    permission_group,
+                    att,
+                    [
+                        Attachment.perms.DELETE,
+                        Attachment.perms.CHANGE,
+                    ],
+                )
 
     return attached
