@@ -310,5 +310,8 @@ class TaskCreateCompatWindowTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
 
         task_count = Task.objects.count()
         response = self.create_task_fixture({"summary": "should not appear"}, include_organization=False)
-        self.assertIn("errors", response)
+        # The legacy arm runs the same resolver guard as the payload path, so it
+        # refuses with the same structured OperationInfo — not a bare
+        # ``PermissionError`` escaping as a top-level error.
+        self.assertGraphQLOperationInfo(response, "createTask", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertEqual(Task.objects.count(), task_count)
