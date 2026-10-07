@@ -88,7 +88,9 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: draft-discard-btn
 
-- assertVisible: 'Discard draft?'
+# `?` is a regex quantifier in Maestro text selectors, so the raw title never
+# matches the literal "Discard draft?".
+- assertVisible: '.*Discard draft.*'
 
 - tapOn: 'DISCARD'
 

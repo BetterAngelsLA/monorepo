@@ -98,6 +98,10 @@ Verify installation:
 maestro --version
 ```
 
+**Minimum version: 2.8.0.** The shared `start_test.yml` uses `setPermissions`,
+which was added in 2.8 — on an older CLI the flows fail immediately with
+`Invalid Command: setPermissions`. Homebrew installs the latest release.
+
 ---
 
 ## Running Tests
@@ -356,6 +360,21 @@ Sometimes we need to add a `testID` prop to React Native components so Maestro c
 
 - verify displayed text — use `assertVisible: 'Tasks'` instead
 - check dynamic content — use text matchers or regex
+
+### Text selectors are regular expressions
+
+Maestro compiles every text selector (`assertVisible`, `tapOn`, `when: visible`, …)
+into a case-insensitive, full-string regex. Characters like `?`, `+`, `(`, `)`,
+`[`, `]`, `.` and `*` therefore change the meaning of the pattern:
+
+- ✗ `assertVisible: 'Discard draft?'` never matches the literal title
+  "Discard draft?" — the trailing `?` makes the `t` optional and the literal `?`
+  is left unconsumed.
+- ✓ `assertVisible: '.*Discard draft.*'` (the house style), or escape it:
+  `'Discard draft\?'`.
+
+This has bitten a real flow, so prefer the `.*…*` wrapper for any string that
+contains punctuation.
 
 #### Prefer ID-based selectors over coordinate-based ones:
 
