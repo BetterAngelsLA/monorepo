@@ -16,6 +16,10 @@ appId: ${MAESTRO_APP_ID}
 - runFlow: ../steps/referrals/clear_any_draft.yml
 
 # ── Start a draft and answer one field ──────────────────────────────────────
+# `output` is generated per run so the assertions below cannot be satisfied by a
+# draft left over from an earlier run.
+- evalScript: ${output.draftMarker = "draft-e2e-" + Date.now()}
+
 - tapOn:
     id: create-referral-btn
 
@@ -28,6 +32,19 @@ appId: ${MAESTRO_APP_ID}
 
 - tapOn:
     id: storage-AMNESTY_LOCKERS-btn
+
+# A typed answer as well as a selected chip: the text is the cross-platform
+# proof that the resumed draft rehydrated (see the assertion after the resume).
+- scrollUntilVisible:
+    element:
+      id: intake-notes-input
+    direction: DOWN
+    timeout: 30000
+
+- tapOn:
+    id: intake-notes-input
+- inputText: ${output.draftMarker}
+- hideKeyboard
 
 # ── Pause → the draft becomes visible in the list ───────────────────────────
 - tapOn:
@@ -70,16 +87,27 @@ appId: ${MAESTRO_APP_ID}
     direction: DOWN
     timeout: 30000
 
-# NOTE: this is the only `checked: true` assertion in the suite. The chip is a
-# React Native Pressable with accessibilityRole="checkbox"; Android maps that
-# straight onto the a11y checked state, while iOS derives it from the element
-# type/value, so it must be device-verified on BOTH platforms before relying on
-# it. It is kept (rather than dropped) because it is the only assertion that
-# proves the resumed draft rehydrated the selection, not just that the field is
-# on screen.
-- assertVisible:
-    id: storage-AMNESTY_LOCKERS-btn
-    checked: true
+# The chip's rehydrated selection, asserted where it is observable. iOS does not
+# expose `accessibilityState.checked` on a Pressable to XCUITest in a form
+# Maestro matches (`checked: true` and `selected: true` both fail there —
+# verified on iOS 26.4), while Android maps role="checkbox" onto the native
+# checked state. The typed marker below is the cross-platform proof.
+- runFlow:
+    when:
+      platform: android
+    commands:
+      - assertVisible:
+          id: storage-AMNESTY_LOCKERS-btn
+          checked: true
+
+# The answer typed before the pause must still be in the field after the resume.
+- scrollUntilVisible:
+    element:
+      id: intake-notes-input
+    direction: DOWN
+    timeout: 30000
+
+- assertVisible: ${output.draftMarker}
 
 # ── Discard → confirm, and the draft is gone ────────────────────────────────
 - tapOn:
