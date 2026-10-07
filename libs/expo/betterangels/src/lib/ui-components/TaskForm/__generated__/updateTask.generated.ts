@@ -7,9 +7,9 @@ export type UpdateTaskMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'TaskType', id: string, summary?: string | null, description?: string | null, status?: Types.TaskStatusEnum | null, updatedAt: DateTimeString, team?: { __typename?: 'TeamType', id: string, name: string } | null }
+export type UpdateTaskMutation = { __typename: 'Mutation', updateTask:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'TaskType', id: string, summary?: string | null, description?: string | null, status?: Types.TaskStatusEnum | null, updatedAt: DateTimeString, team?: { __typename: 'TeamType', id: string, name: string } | null }
    };
 
 

@@ -16,7 +16,7 @@ class TaskCreateValidationTestCase(TestCase):
     def setUp(self) -> None:
         self.organization = organization_recipe.make()
         self.permission_group = PermissionGroup.objects.create(
-            organization=self.organization, name="task-service-group"
+            organization=self.organization, label="task-service-group"
         )
         self.user = baker.make(User)
 

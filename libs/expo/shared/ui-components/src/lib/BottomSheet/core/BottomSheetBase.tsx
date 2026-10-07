@@ -16,6 +16,7 @@
  * - manage state
  * - resolve options
  * - control stacking or lifecycle
+ * - own any option defaults (authoritative source: `DEFAULT_BOTTOM_SHEET_OPTIONS`)
  *
  * Upstream:
  * - API + usage: `useBottomSheet`
@@ -71,7 +72,9 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
       enablePanDownToClose,
       enableDynamicSizing,
       snapPoints,
+      overDragResistanceFactor,
       containerComponent,
+      accessible,
 
       // Wrapper-level
       disableBackdrop,
@@ -116,8 +119,10 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
     return (
       <GbsBottomSheetModal
         ref={ref}
+        accessible={accessible}
         {...gorhomProps}
         snapPoints={snapPoints}
+        overDragResistanceFactor={overDragResistanceFactor}
         enablePanDownToClose={enablePanDownToClose}
         enableDynamicSizing={enableDynamicSizing}
         handleComponent={resolvedHandleComponent}

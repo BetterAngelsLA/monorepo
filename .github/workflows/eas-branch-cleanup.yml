@@ -35,7 +35,7 @@ jobs:
         run: yarn install
 
       - name: 📱 Install EAS CLI
-        run: npm install -g eas-cli@20.5.1
+        run: npm install -g eas-cli@24.8.0
 
       - name: ️ Delete EAS Branches for Affected Projects
         env:

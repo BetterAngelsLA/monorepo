@@ -7,9 +7,9 @@ export type DeleteClientContactMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteClientContactMutation = { __typename?: 'Mutation', deleteClientContact:
-    | { __typename?: 'ClientContactType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteClientContactMutation = { __typename: 'Mutation', deleteClientContact:
+    | { __typename: 'ClientContactType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

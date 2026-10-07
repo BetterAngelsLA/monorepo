@@ -280,6 +280,12 @@ DATABASES = {
             "ENABLED": env("USE_IAM_AUTH"),
             "REGION_NAME": env("AWS_REGION"),
         },
+        # Django derives the test database from NAME, so every checkout sharing a
+        # POSTGRES_NAME shares one test database — and `pytest --create-db` drops
+        # it underneath whoever else is using it.  Pass POSTGRES_TEST_NAME on a
+        # run that needs its own; unset, which is the default everywhere, means
+        # Django's `test_<NAME>`.
+        "TEST": {"NAME": env("POSTGRES_TEST_NAME", default=None)},
     },
 }
 

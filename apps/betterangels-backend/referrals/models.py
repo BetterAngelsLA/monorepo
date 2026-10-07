@@ -6,6 +6,17 @@ from django_choices_field import IntegerChoicesField
 from organizations.models import Organization
 
 
+class ReferralTestShelter(BaseModel):
+    """Ownership registry for shelters created by seed_referral_test_data.
+
+    A display name never establishes fixture ownership. The command creates this
+    entry and its shelter in the same transaction; reseeding reuses the shelter.
+    """
+
+    key = models.CharField(max_length=64, primary_key=True)
+    shelter = models.OneToOneField("shelters.Shelter", on_delete=models.CASCADE, related_name="+")
+
+
 @pghistory.track(
     pghistory.InsertEvent("referral.add"),
     pghistory.UpdateEvent("referral.update"),

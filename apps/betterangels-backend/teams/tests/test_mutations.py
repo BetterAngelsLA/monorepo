@@ -1,5 +1,6 @@
 from accounts.tests.baker_recipes import organization_recipe
 from model_bakery import baker
+from notes.models import Note
 from unittest_parametrize import parametrize
 
 from teams.models import Team
@@ -16,9 +17,11 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         self._set_active_org(self.org)
 
     def test_create_team_mutation(self) -> None:
-        variables = {"name": "team 1"}
+        variables = {"name": "team 1", "organizationId": self.org.pk}
 
-        expected_query_count = 7
+        # Grant-only authority adds grant-arm scope queries; the org comes
+        # from the payload.
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.create_team_fixture(variables)
 
@@ -31,7 +34,9 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         team = baker.make(Team, name="old name", organization=self.org)
         variables = {"id": team.pk, "name": "new name", "isActive": False}
 
-        expected_query_count = 11
+        # Grant-only authority adds grant-arm scope queries; the org comes
+        # from the row.
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_team_fixture(variables)
 
@@ -86,9 +91,26 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
     def test_delete_team_mutation(self) -> None:
         team = baker.make(Team, name="team", organization=self.org)
 
-        expected_query_count = 9
+        # Grant-only authority adds grant-arm scope queries; the org comes
+        # from the row.
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.delete_team_fixture(team.pk)
 
         self.assertEqual(response["data"]["deleteTeam"]["id"], team.pk)
         self.assertFalse(Team.objects.filter(id=team.pk).exists())
+
+    def test_delete_team_mutation_refuses_a_team_in_use(self) -> None:
+        team = baker.make(Team, name="team", organization=self.org)
+        baker.make(Note, organization=self.org, team=team)
+
+        response = self.delete_team_fixture(team.pk)
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "deleteTeam",
+            'Cannot delete "team": it is used by 1 note. '
+            "Deactivate it instead — an inactive team is hidden in the app but keeps its history.",
+            kind="VALIDATION",
+        )
+        self.assertTrue(Team.objects.filter(id=team.pk).exists())

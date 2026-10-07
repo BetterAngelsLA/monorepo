@@ -4,7 +4,9 @@ import type { BedsQuery } from './useBeds.generated';
 
 export const bedsOperationKey: keyof Omit<BedsQuery, '__typename'> = 'beds';
 export const bedsSuccessTypename: Extract<
-  NonNullable<BedsQuery['beds']>,
+  NonNullable<BedsQuery['beds']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<BedsQuery['beds']>,
   { __typename: 'BedTypeOffsetPaginated' }
 >['__typename'] = 'BedTypeOffsetPaginated';
 

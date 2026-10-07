@@ -9,6 +9,8 @@ const {
   GraphQLObjectType,
   GraphQLID,
   GraphQLString,
+  GraphQLBoolean,
+  GraphQLList,
 } = require('graphql');
 const { plugin } = require('./operation-meta-plugin.cjs');
 
@@ -127,6 +129,75 @@ describe('operation-meta-plugin', () => {
       assert.ok(content.includes('export const getShelterMeta'));
       assert.ok(content.includes('GetShelterQuery'));
     });
+
+    it('list return type — extracts successTypename from the element', () => {
+      const listSchema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            hmisClientPrograms: {
+              type: new GraphQLList(
+                new GraphQLObjectType({
+                  name: 'HmisClientProgramType',
+                  fields: { id: { type: GraphQLID } },
+                }),
+              ),
+            },
+          },
+        }),
+      });
+      const content = invokePlugin(
+        parse(`
+        query clientProgramsHmis {
+          hmisClientPrograms { id }
+        }
+      `),
+        listSchema,
+      );
+
+      assert.ok(
+        content.includes('export const clientProgramsHmisOperationKey'),
+      );
+      assert.ok(content.includes("'hmisClientPrograms'"));
+      assert.ok(
+        content.includes('export const clientProgramsHmisSuccessTypename'),
+      );
+      assert.ok(content.includes("'HmisClientProgramType'"));
+      assert.ok(content.includes('extends readonly (infer _T)[]'));
+    });
+
+    it('aliased root field — uses the response key (alias), not the schema field', () => {
+      const schema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            currentUser: {
+              type: new GraphQLObjectType({
+                name: 'CurrentUserType',
+                fields: { id: { type: GraphQLID } },
+              }),
+            },
+          },
+        }),
+      });
+      const content = invokePlugin(
+        parse(`
+        query currentOrgUser {
+          profile: currentUser { id }
+        }
+      `),
+        schema,
+      );
+
+      assert.ok(content.includes('export const currentOrgUserOperationKey'));
+      // operationKey is the response key (the alias), not the schema field.
+      assert.ok(content.includes("= 'profile';"));
+      // Schema lookup still resolves the success typename from the schema field.
+      assert.ok(content.includes("'CurrentUserType'"));
+      // SuccessTypename indexes the generated type by the response key.
+      assert.ok(content.includes("CurrentOrgUserQuery['profile']"));
+      assert.ok(!content.includes("CurrentOrgUserQuery['currentUser']"));
+    });
   });
 
   // ── Edge cases ─────────────────────────────────────────────
@@ -173,6 +244,60 @@ describe('operation-meta-plugin', () => {
       assert.ok(content.includes("'foo'"));
       assert.ok(!content.includes('SuccessTypename'));
       assert.ok(!content.includes('Meta'));
+    });
+
+    it('scalar return type — writes operationKey, no successTypename', () => {
+      const schema = new GraphQLSchema({
+        mutation: new GraphQLObjectType({
+          name: 'Mutation',
+          fields: {
+            logout: { type: GraphQLBoolean },
+          },
+        }),
+      });
+      const content = invokePlugin(
+        parse(`
+        mutation Logout {
+          logout
+        }
+      `),
+        schema,
+      );
+
+      assert.ok(content.includes('export const logoutOperationKey'));
+      assert.ok(content.includes("'logout'"));
+      assert.ok(!content.includes('SuccessTypename'));
+      assert.ok(!content.includes('Meta'));
+    });
+
+    it('lowercase operation name — PascalCases the generated type name', () => {
+      const schema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            currentUser: {
+              type: new GraphQLObjectType({
+                name: 'CurrentUserType',
+                fields: { id: { type: GraphQLID } },
+              }),
+            },
+          },
+        }),
+      });
+      const content = invokePlugin(
+        parse(`
+        query currentOrgUser {
+          currentUser { id }
+        }
+      `),
+        schema,
+      );
+
+      assert.ok(content.includes('export const currentOrgUserOperationKey'));
+      assert.ok(content.includes("'currentUser'"));
+      assert.ok(content.includes('CurrentOrgUserQuery'));
+      assert.ok(!content.includes('currentOrgUserQuery'));
+      assert.ok(content.includes('currentOrgUserSuccessTypename'));
     });
   });
 });

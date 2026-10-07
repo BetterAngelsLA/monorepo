@@ -19,9 +19,11 @@ const {
   visit,
   isUnionType,
   isInterfaceType,
+  isObjectType,
   GraphQLNonNull,
   GraphQLList,
 } = require('graphql');
+const { pascalCase, lowerCaseFirst } = require('change-case-all');
 
 // Strips GraphQL wrappers (NonNull, List) to reach the underlying named type.
 /**
@@ -36,16 +38,9 @@ function unwrapType(type) {
   return current && current.name ? current : null;
 }
 
-/**
- * @param {string} str
- * @returns {string}
- */
-function camelCase(str) {
-  return str.charAt(0).toLowerCase() + str.slice(1);
-}
-
 // Derives the generated TS type name from the operation name and type.
-// E.g. `UpdateShelterProfile` mutation → `UpdateShelterProfileMutation`
+// E.g. `UpdateShelterProfile` mutation → `UpdateShelterProfileMutation`,
+// `logout` mutation → `LogoutMutation`.
 /**
  * @param {string} operationName
  * @param {'query' | 'mutation'} operationType
@@ -53,7 +48,8 @@ function camelCase(str) {
  */
 function generatedTypeName(operationName, operationType) {
   const suffix = operationType === 'query' ? 'Query' : 'Mutation';
-  return `${operationName}${suffix}`;
+
+  return `${pascalCase(operationName)}${suffix}`;
 }
 
 /**
@@ -103,7 +99,11 @@ module.exports = {
             );
             return;
           }
-          const fieldName = field.name.value;
+          const schemaFieldName = field.name.value;
+          // The response key is the alias when the root field is aliased
+          // (e.g. `profile: currentUser` → key is `profile`). Schema lookup
+          // still uses the schema field name (`currentUser`).
+          const responseKey = field.alias?.value ?? schemaFieldName;
 
           // Strategy 1: extract success typename from inline fragments.
           // The first `... on <Type>` where Type is not 'OperationInfo' wins.
@@ -128,7 +128,7 @@ module.exports = {
             );
             if (hasFragments) {
               console.warn(
-                `[operation-meta] No success typename for ${operationName}:${fieldName} — ` +
+                `[operation-meta] No success typename for ${operationName}:${schemaFieldName} — ` +
                   `all inline fragments are OperationInfo.`,
               );
             }
@@ -142,13 +142,13 @@ module.exports = {
                 ? schema.getQueryType()
                 : schema.getMutationType();
             if (rootType) {
-              const fieldDef = rootType.getFields()[fieldName];
+              const fieldDef = rootType.getFields()[schemaFieldName];
               if (fieldDef) {
                 const type = unwrapType(fieldDef.type);
                 if (type) {
                   if (isUnionType(type) || isInterfaceType(type)) {
                     console.warn(
-                      `[operation-meta] Skipping successTypename for ${operationName}:${fieldName} — ` +
+                      `[operation-meta] Skipping successTypename for ${operationName}:${schemaFieldName} — ` +
                         `return type "${type.name}" is a ${
                           isUnionType(type) ? 'union' : 'interface'
                         }, ` +
@@ -156,10 +156,12 @@ module.exports = {
                     );
                   } else if (type.name === 'OperationInfo') {
                     console.warn(
-                      `[operation-meta] Field ${operationName}:${fieldName} resolves to OperationInfo — ` +
+                      `[operation-meta] Field ${operationName}:${schemaFieldName} resolves to OperationInfo — ` +
                         `this likely indicates a schema issue or missing inline fragments.`,
                     );
-                  } else {
+                  } else if (isObjectType(type)) {
+                    // Scalars (Boolean, String, …) and enums carry no
+                    // `__typename`, so only object types get a successTypename.
                     successTypename = type.name;
                   }
                 }
@@ -170,14 +172,14 @@ module.exports = {
           // Warn if no success typename could be resolved through any strategy.
           if (!successTypename && !schema) {
             console.warn(
-              `[operation-meta] No success typename for ${operationName}:${fieldName} — ` +
+              `[operation-meta] No success typename for ${operationName}:${schemaFieldName} — ` +
                 `schema unavailable and no inline fragments found.`,
             );
           }
 
           operations.push({
             name: operationName,
-            fieldName,
+            fieldName: responseKey,
             successTypename,
             type: node.operation,
           });
@@ -207,23 +209,27 @@ module.exports = {
 
     for (const op of operations) {
       const typeName = generatedTypeName(op.name, op.type);
-      const camelName = camelCase(op.name);
+      const operationName = lowerCaseFirst(op.name);
 
       sections.push(
         '',
-        `export const ${camelName}OperationKey: keyof Omit<${typeName}, '__typename'> = '${op.fieldName}';`,
+        `export const ${operationName}OperationKey: keyof Omit<${typeName}, '__typename'> = '${op.fieldName}';`,
       );
 
       if (op.successTypename) {
+        // List-returning fields (e.g. `hmisClientPrograms: [X!]!`) have an array
+        // payload, so unwrap to the element type before matching `__typename`.
         sections.push(
-          `export const ${camelName}SuccessTypename: Extract<`,
-          `  NonNullable<${typeName}['${op.fieldName}']>,`,
+          `export const ${operationName}SuccessTypename: Extract<`,
+          `  NonNullable<${typeName}['${op.fieldName}']> extends readonly (infer _T)[]`,
+          `    ? _T`,
+          `    : NonNullable<${typeName}['${op.fieldName}']>,`,
           `  { __typename: '${op.successTypename}' }`,
           `>['__typename'] = '${op.successTypename}';`,
           '',
-          `export const ${camelName}Meta = {`,
-          `  operationKey: ${camelName}OperationKey,`,
-          `  successTypename: ${camelName}SuccessTypename,`,
+          `export const ${operationName}Meta = {`,
+          `  operationKey: ${operationName}OperationKey,`,
+          `  successTypename: ${operationName}SuccessTypename,`,
           `} as const;`,
         );
       }

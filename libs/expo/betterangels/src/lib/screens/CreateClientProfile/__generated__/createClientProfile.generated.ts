@@ -7,9 +7,9 @@ export type CreateClientProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateClientProfileMutation = { __typename?: 'Mutation', createClientProfile:
-    | { __typename?: 'ClientProfileType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CreateClientProfileMutation = { __typename: 'Mutation', createClientProfile:
+    | { __typename: 'ClientProfileType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

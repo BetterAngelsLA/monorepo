@@ -4,7 +4,9 @@ import type { RoomsQuery } from './useRooms.generated';
 
 export const roomsOperationKey: keyof Omit<RoomsQuery, '__typename'> = 'rooms';
 export const roomsSuccessTypename: Extract<
-  NonNullable<RoomsQuery['rooms']>,
+  NonNullable<RoomsQuery['rooms']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<RoomsQuery['rooms']>,
   { __typename: 'RoomTypeOffsetPaginated' }
 >['__typename'] = 'RoomTypeOffsetPaginated';
 

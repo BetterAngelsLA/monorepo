@@ -19,9 +19,13 @@ import {
   UploadResume,
   UserProvider,
 } from '@monorepo/expo/betterangels';
-import { createErrorLink, loggerLink } from '@monorepo/expo/shared/clients';
+import {
+  createErrorLink,
+  isApiDebug,
+  loggerLink,
+} from '@monorepo/expo/shared/clients';
 
-import { baTypePolicies, isGqlDebug, reactQueryClient } from '../init';
+import { baTypePolicies, reactQueryClient } from '../init';
 
 /**
  * Data + auth providers — lives inside ``EnvironmentSwitcherProvider``
@@ -38,7 +42,7 @@ export function BaDataProviders({ children }: { children: ReactNode }) {
       fetch: rawFetch,
     });
     const links = [createErrorLink({ authPath: '/auth' }), httpLink];
-    if (isGqlDebug) links.unshift(loggerLink);
+    if (isApiDebug) links.unshift(loggerLink);
     return ApolloLink.from(links);
   }, [apiUrl, rawFetch]);
 

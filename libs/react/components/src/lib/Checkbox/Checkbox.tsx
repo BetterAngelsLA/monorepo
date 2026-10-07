@@ -33,6 +33,9 @@ export function Checkbox(props: ICheckbox): ReactElement {
     'border',
     'rounded-lg',
     checked ? 'border-primary-95 bg-primary-95' : 'border-neutral-90 bg-white',
+    'disabled:opacity-70',
+    'cursor-pointer',
+    'disabled:cursor-not-allowed',
     className,
   ];
 

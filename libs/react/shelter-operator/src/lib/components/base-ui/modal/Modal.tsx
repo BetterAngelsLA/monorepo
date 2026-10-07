@@ -11,6 +11,7 @@ export interface IModalProps {
   size?: TModalSize;
   showCloseButton?: boolean;
   closeButtonClassName?: string;
+  backdropClassName?: string;
   children: ReactNode;
   className?: string;
   contentClassname?: string;
@@ -31,6 +32,7 @@ export function Modal({
   size = 'md',
   showCloseButton = false,
   closeButtonClassName,
+  backdropClassName,
   className,
   contentClassname,
   children,
@@ -65,6 +67,20 @@ export function Modal({
     return () => dialog.removeEventListener('cancel', handleCancel);
   }, [onClose]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   if (!isOpen) {
     return null;
   }
@@ -89,7 +105,7 @@ export function Modal({
     }
   }
 
-  const backdropCss = ['backdrop:bg-black/50'];
+  const backdropCss = ['backdrop:bg-black/50', backdropClassName];
 
   const dialogCss = [
     'bg-white',

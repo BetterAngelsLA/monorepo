@@ -27,11 +27,6 @@ vi.mock('expo-crypto', () => ({
   randomUUID: () => 'session-generated',
 }));
 
-vi.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
-}));
-
 // The full providers index drags in expo-router and other native modules;
 // scope it to the upload-progress surface the stage actually uses.
 vi.mock('../../providers', async () => {

@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+
+{% block content_title %}
+  <h1>{{ title }}</h1>
+  <p class="help" style="margin: 0 0 16px 0; color: var(--body-quiet-color);">{{ help_text }}</p>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      {{ form.as_div }}
+      {% if form.locked_role_names %}
+        <div class="help">
+          Also holds, and keeps: {{ form.locked_role_names|join:", " }}.
+          These are granted from the group picker on the user's page.
+        </div>
+      {% endif %}
+    </fieldset>
+    <div class="submit-row">
+      <input type="submit" value="{{ submit_label }}" class="default">
+      <a href="{{ cancel_url }}" class="closelink">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

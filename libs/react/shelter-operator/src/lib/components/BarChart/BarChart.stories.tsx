@@ -12,6 +12,13 @@ type Story = StoryObj<typeof BarChart>;
 // Daily dates (Jun 1 – Jun 28)
 const DAYS = Array.from({ length: 28 }, (_, i) => `Jun ${i + 1}`);
 
+// 90-day range to exercise maxBars bucketing
+const DAYS_90 = Array.from({ length: 90 }, (_, i) => {
+  const d = new Date(2026, 0, 1);
+  d.setDate(d.getDate() + i);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+});
+
 const STATUSES = ['Occupied', 'Available', 'Reserved', 'Out of Service'];
 const STATUS_COLORS = ['#008CEE', '#05B428', '#FF7B00', '#F64949'];
 
@@ -47,6 +54,23 @@ const dailyTotalPercentageData = DAYS.map((date, i) => ({
         Math.floor(Math.cos(i * 0.3) * 10),
     ),
   ),
+}));
+
+// Large dataset (90 days) for the maxBars story
+const bedStatus90Data = DAYS_90.flatMap((date, i) => [
+  { date, status: 'Occupied', count: 25 + Math.floor(Math.sin(i * 0.15) * 8) },
+  {
+    date,
+    status: 'Available',
+    count: 12 + Math.floor(Math.cos(i * 0.2) * 5),
+  },
+  { date, status: 'Reserved', count: 8 + (i % 4) },
+  { date, status: 'Out of Service', count: 3 + (i % 3) },
+]);
+
+const dailyTotal90Data = DAYS_90.map((date, i) => ({
+  date,
+  count: 48 + Math.floor(Math.sin(i * 0.1) * 20),
 }));
 
 const cardDecorator: Story['decorators'] = [
@@ -137,6 +161,68 @@ export const StackedBarChart: Story = {
       lineWidth: 1,
       inset: 0.1,
     },
+    tooltip: { title: 'date' },
+    className: 'h-full',
+  },
+};
+
+/** 90 days of data bucketed into ≤40 bars (averaged). Each bar label shows the
+ *  date range it represents. */
+export const BucketedStackedBarChart: Story = {
+  parameters: {
+    customLayout: { variant: 'basic' },
+  },
+  decorators: cardDecorator,
+  args: {
+    chartTitle: 'Bed Status (90 days → ≤40 bars)',
+    showViewToggle: false,
+    maxBars: 40,
+    data: bedStatus90Data,
+    xField: 'date',
+    yField: 'count',
+    colorField: 'status',
+    stack: true,
+    axis: {
+      x: { title: 'Date Range' },
+      y: { title: 'Avg Status Count', tickCount: 6 },
+    },
+    scale: {
+      color: { domain: STATUSES, range: STATUS_COLORS },
+      x: { padding: 0.4 },
+      y: { nice: true },
+    },
+    style: {
+      stroke: '#ffffff',
+      lineWidth: 1,
+      inset: 0.1,
+    },
+    tooltip: { title: 'date' },
+    className: 'h-full',
+  },
+};
+
+/** 90 days of single-series data bucketed into ≤40 bars. */
+export const BucketedVerticalBarChart: Story = {
+  parameters: {
+    customLayout: { variant: 'basic' },
+  },
+  decorators: cardDecorator,
+  args: {
+    chartTitle: 'Daily Occupancy (90 days → ≤40 bars)',
+    showViewToggle: false,
+    maxBars: 40,
+    data: dailyTotal90Data,
+    xField: 'date',
+    yField: 'count',
+    axis: {
+      x: { title: 'Date Range' },
+      y: { title: 'Avg Occupied', tickCount: 6 },
+    },
+    scale: {
+      x: { padding: 0.4 },
+      y: { nice: true },
+    },
+    style: { fill: '#008CEE' },
     tooltip: { title: 'date' },
     className: 'h-full',
   },
