@@ -154,12 +154,12 @@ function ReferralsContent({ client, clientId }: TContentProps) {
 
       store.clear();
       closeForm();
-      // The referrals field is offset-merged, so refetching offset 0 after the
-      // new referral prepends itself rewrites every position. The shared merge
-      // (libs/apollo mergeObjectPayload) clears the slot it just wrote when ids
-      // move, which leaves `undefined` holes and drops the new row. Evicting
-      // first makes reload() rebuild the list instead of merging into a
-      // shifted one. Remove once the merge compacts shifted pages.
+      // Rebuild the list instead of paging into a shifted one. The field is
+      // offset-merged (keyArgs ['filters']) and the shared merge drops rows when
+      // the list shifts under it (proven at mergeObjectPayload level; the
+      // refetch path currently comes out clean, so this is cheap insurance and
+      // a guard against Apollo's merge semantics changing). The merge itself is
+      // being fixed separately, with its own shifted-page tests.
       apolloClient.cache.evict({ fieldName: 'referrals' });
       apolloClient.cache.gc();
       reload();

@@ -100,7 +100,12 @@ type PendingSubmission = {
   fail: (error: Error) => void;
 };
 
-function setup() {
+function setup(options?: {
+  initialReferrals?: ClientReferralsQuery['referrals']['results'];
+  refreshedReferrals?: ClientReferralsQuery['referrals']['results'];
+}) {
+  const initialReferrals = options?.initialReferrals ?? [];
+  const refreshedReferrals = options?.refreshedReferrals ?? [newReferral];
   const store = createReferralDraftStore({
     load: () => null,
     save: vi.fn(),
@@ -111,8 +116,8 @@ function setup() {
     data: {
       referrals: {
         __typename: 'ReferralTypeOffsetPaginated',
-        totalCount: 1,
-        results: [newReferral],
+        totalCount: refreshedReferrals.length,
+        results: refreshedReferrals,
       },
     },
   }));
@@ -147,8 +152,8 @@ function setup() {
           data: {
             referrals: {
               __typename: 'ReferralTypeOffsetPaginated',
-              totalCount: 0,
-              results: [],
+              totalCount: initialReferrals.length,
+              results: initialReferrals,
             },
           },
         },
@@ -215,8 +220,12 @@ function setup() {
   return { store, requests, refreshed, close, opened };
 }
 
-async function openPicker() {
-  await screen.findByText('No referrals yet');
+async function openPicker({ expectEmptyState = true } = {}) {
+  if (expectEmptyState) {
+    await screen.findByText('No referrals yet');
+  } else {
+    await screen.findByTestId(/^referral-card-/);
+  }
   fireEvent.press(screen.getByTestId('create-referral-btn'));
   fireEvent.changeText(
     screen.getByLabelText('Staff Observations / Notes'),
@@ -228,8 +237,9 @@ async function openPicker() {
     screen.getByRole('checkbox', { name: /Client gave consent/ }),
   );
   fireEvent.press(screen.getByTestId('intake-next-btn'));
-  await screen.findByText('Alpha House');
-  fireEvent.press(screen.getByTestId('shelter-option-radio'));
+  // Wait for the picker's own row: "Alpha House" also appears on an existing
+  // referral card, so the text alone does not prove the shelter list loaded.
+  fireEvent.press(await screen.findByTestId('shelter-option-radio'));
 }
 
 async function submit(requests: PendingSubmission[], expectedCount = 1) {
@@ -291,6 +301,27 @@ it('submits current answers once, consumes the draft only on success, and displa
     message: 'Referral submitted successfully!',
     type: 'success',
   });
+});
+
+it('keeps every already-loaded row when a create refetches a shifted page', async () => {
+  // The referrals field is offset-merged and a create prepends itself, so the
+  // refetch sees a shifted list (new row first, older rows moved down). Both
+  // rows must still render — no hole where the new row was, no dropped row.
+  const existing = { ...newReferral, id: 'existing-referral' };
+  const { requests, refreshed } = setup({
+    initialReferrals: [existing],
+    refreshedReferrals: [newReferral, existing],
+  });
+
+  await openPicker({ expectEmptyState: false });
+
+  const request = await submit(requests);
+  await act(async () => request.succeed({ data: created }));
+
+  await screen.findByTestId('referral-card-new-referral');
+  expect(refreshed).toHaveBeenCalledOnce();
+  // Both rows render — none replaced by a hole.
+  expect(screen.getAllByTestId(/^referral-card-/)).toHaveLength(2);
 });
 
 it.each([OperationMessageKind.Permission, OperationMessageKind.Validation])(
