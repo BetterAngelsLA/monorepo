@@ -5,7 +5,10 @@
   "projectType": "library",
   "tags": ["type:data-access", "scope:ba-platform"],
   "namedInputs": {
-    "default": ["{projectRoot}/**/*"]
+    "default": [
+      "{projectRoot}/**/*",
+      "{workspaceRoot}/apps/betterangels-backend/schema.graphql"
+    ]
   },
   "targets": {
     "generate-graphql-types": {
