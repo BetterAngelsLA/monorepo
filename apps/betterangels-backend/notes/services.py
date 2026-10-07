@@ -1,9 +1,8 @@
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, cast
 
 import pghistory
 from accounts.models import PermissionGroup, User
-from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment, Location
@@ -19,13 +18,13 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
-from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.permissions import (
     NotePermissions,
     PrivateDetailsPermissions,
     ServiceRequestPermissions,
 )
+from organizations.models import Organization
 from tasks.services import task_create
 
 # ---------------------------------------------------------------------------
@@ -63,6 +62,7 @@ def note_update(
     data: Dict[str, Any],
     user: Optional[User] = None,
     permission_group: Optional[PermissionGroup] = None,
+    organization: Optional[Organization] = None,
 ) -> Note:
     """
     Update a Note, including nested relations.
@@ -93,31 +93,33 @@ def note_update(
         note.save()
 
         # --- Provided services (replace-all) ---
-        if provided_services_data is not None and user and permission_group:
+        if provided_services_data is not None and user and (permission_group or organization):
             note.provided_services.all().delete()
             if provided_services_data:
                 note_service_request_create(
                     user=user,
                     permission_group=permission_group,
+                    organization=organization,
                     note=note,
                     data=provided_services_data,
                     sr_type=ServiceRequestTypeEnum.PROVIDED,
                 )
 
         # --- Requested services (replace-all) ---
-        if requested_services_data is not None and user and permission_group:
+        if requested_services_data is not None and user and (permission_group or organization):
             note.requested_services.all().delete()
             if requested_services_data:
                 note_service_request_create(
                     user=user,
                     permission_group=permission_group,
+                    organization=organization,
                     note=note,
                     data=requested_services_data,
                     sr_type=ServiceRequestTypeEnum.REQUESTED,
                 )
 
         # --- Tasks (replace-all) ---
-        if tasks_data is not None and user and permission_group:
+        if tasks_data is not None and user and (permission_group or organization):
             note.tasks.all().delete()
             if tasks_data:
                 task_create(
@@ -158,30 +160,39 @@ def note_update_location(
 def service_request_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    permission_group: Optional[PermissionGroup] = None,
+    organization: Optional[Organization] = None,
     data: List[Dict[str, Any]],
     status: ServiceRequestStatusEnum,
     client_profile: Optional[ClientProfile] = None,
 ) -> List[ServiceRequest]:
-    """Create one or more ServiceRequests and assign object-level permissions."""
+    """Create one or more ServiceRequests.
+
+    The org comes from *organization* (grant path) or the legacy
+    ``permission_group``; guardian rows are assigned only on the legacy path
+    (RFC 0003 slice 2).
+    """
+    org = organization if organization is not None else cast("PermissionGroup", permission_group).organization
+
     created: List[ServiceRequest] = []
     for item in data:
         sr = ServiceRequest.objects.create(
-            service=_resolve_service(item, permission_group.organization),
+            service=_resolve_service(item, org),
             status=status,
             client_profile=client_profile,
             created_by=user,
         )
 
-        assign_object_permissions(
-            permission_group,
-            sr,
-            [
-                ServiceRequestPermissions.VIEW,
-                ServiceRequestPermissions.CHANGE,
-                ServiceRequestPermissions.DELETE,
-            ],
-        )
+        if permission_group is not None:
+            assign_object_permissions(
+                permission_group,
+                sr,
+                [
+                    ServiceRequestPermissions.VIEW,
+                    ServiceRequestPermissions.CHANGE,
+                    ServiceRequestPermissions.DELETE,
+                ],
+            )
         created.append(sr)
 
     return created
@@ -206,7 +217,8 @@ def _status_for_sr_type(sr_type: ServiceRequestTypeEnum) -> ServiceRequestStatus
 def note_service_request_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    permission_group: Optional[PermissionGroup] = None,
+    organization: Optional[Organization] = None,
     note: Note,
     data: List[Dict[str, Any]],
     sr_type: ServiceRequestTypeEnum,
@@ -216,6 +228,7 @@ def note_service_request_create(
         service_requests = service_request_create(
             user=user,
             permission_group=permission_group,
+            organization=organization,
             data=data,
             status=_status_for_sr_type(sr_type),
             client_profile=note.client_profile,
@@ -233,7 +246,8 @@ def note_service_request_create(
 def note_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    permission_group: Optional[PermissionGroup] = None,
+    organization: Optional[Organization] = None,
     purpose: Optional[str] = None,
     team_id: Optional[str] = None,
     public_details: str = "",
@@ -257,6 +271,8 @@ def note_create(
     if location_data:
         location = Location.get_or_create_location(location_data)
 
+    org = organization if organization is not None else cast("PermissionGroup", permission_group).organization
+
     note = Note(
         purpose=purpose,
         team_id=team_id,
@@ -267,25 +283,27 @@ def note_create(
         interacted_at=interacted_at or timezone.now(),
         location=location,
         created_by=user,
-        organization=permission_group.organization,
+        organization=org,
     )
     note.full_clean()
     note.save()
 
-    assign_object_permissions(
-        permission_group,
-        note,
-        [
-            NotePermissions.CHANGE,
-            NotePermissions.DELETE,
-            PrivateDetailsPermissions.VIEW,
-        ],
-    )
+    if permission_group is not None:
+        assign_object_permissions(
+            permission_group,
+            note,
+            [
+                NotePermissions.CHANGE,
+                NotePermissions.DELETE,
+                PrivateDetailsPermissions.VIEW,
+            ],
+        )
 
     if provided_services:
         note_service_request_create(
             user=user,
             permission_group=permission_group,
+            organization=organization,
             note=note,
             data=provided_services,
             sr_type=ServiceRequestTypeEnum.PROVIDED,
@@ -295,6 +313,7 @@ def note_create(
         note_service_request_create(
             user=user,
             permission_group=permission_group,
+            organization=organization,
             note=note,
             data=requested_services,
             sr_type=ServiceRequestTypeEnum.REQUESTED,
@@ -338,19 +357,17 @@ def resolve_note_file_uploads(
     user: User,
     note: Note,
     attachments: Iterable[UploadConfirmation],
+    permission_group: Optional[PermissionGroup] = None,
 ) -> list[Attachment]:
     """Validate tokens + S3 → create Attachment rows for a note (Phase 3).
 
-    Uses the note's organization to resolve the permission group, so
-    object-level permissions are scoped to the correct org even when
-    the user belongs to multiple organizations.
+    ``permission_group`` is the legacy arm: when the caller holds the
+    ``CASEWORKER`` group, the guardian rows below are assigned for parity with
+    the pre-cutover path.  A grant-only holder has none — authority is the
+    caller's note gate (``get_writable_or_deny``), so the row is created without
+    guardians rather than refused.  Resolving the group here would raise for
+    that holder and abort the whole upload.
     """
-    permission_group = resolve_permission_group(
-        user,
-        template=CASEWORKER,
-        organization_id=str(note.organization_id),
-    )
-
     with transaction.atomic():
         attached = file_upload.create_attachment_records(
             user=user,
@@ -359,14 +376,15 @@ def resolve_note_file_uploads(
             config=NOTE_ATTACHMENT_CONFIG,
         )
 
-        for att in attached:
-            assign_object_permissions(
-                permission_group,
-                att,
-                [
-                    Attachment.perms.DELETE,
-                    Attachment.perms.CHANGE,
-                ],
-            )
+        if permission_group is not None:
+            for att in attached:
+                assign_object_permissions(
+                    permission_group,
+                    att,
+                    [
+                        Attachment.perms.DELETE,
+                        Attachment.perms.CHANGE,
+                    ],
+                )
 
     return attached

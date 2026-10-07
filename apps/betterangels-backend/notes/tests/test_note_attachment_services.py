@@ -5,7 +5,6 @@ from accounts.tests.baker_recipes import organization_recipe
 from common.models import Attachment
 from django.test import TestCase
 from model_bakery import baker
-from notes.groups import CASEWORKER
 from notes.models import Note
 from notes.services import (
     NOTE_ATTACHMENT_CONFIG,
@@ -75,16 +74,12 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         self.permission_group = MagicMock()
 
     @patch("notes.services.assign_object_permissions")
-    @patch("notes.services.resolve_permission_group")
     @patch("common.services.file_upload.create_attachment_records")
     def test_delegates_to_generic_with_correct_params(
         self,
         mock_generic: MagicMock,
-        mock_perm_group: MagicMock,
         mock_assign: MagicMock,
     ) -> None:
-        mock_perm_group.return_value = self.permission_group
-
         attachment = MagicMock()
         mock_generic.return_value = [attachment]
 
@@ -97,7 +92,9 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
             )
         ]
 
-        resolve_note_file_uploads(user=self.user, note=self.note, attachments=attachments)
+        resolve_note_file_uploads(
+            user=self.user, note=self.note, attachments=attachments, permission_group=self.permission_group
+        )
 
         mock_generic.assert_called_once_with(
             user=self.user,
@@ -107,22 +104,25 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         )
 
     @patch("notes.services.assign_object_permissions")
-    @patch("notes.services.resolve_permission_group")
     @patch("common.services.file_upload.create_attachment_records")
-    def test_scopes_permission_group_to_note_organization(
+    def test_uses_the_permission_group_the_caller_resolved(
         self,
         mock_generic: MagicMock,
-        mock_perm_group: MagicMock,
         mock_assign: MagicMock,
     ) -> None:
-        mock_perm_group.return_value = self.permission_group
+        """The service mirrors onto the caller's group; it does not resolve one.
 
+        Resolution moved to the schema edge, which knows the user and can tolerate
+        a grant-only holder.  A service that resolved its own group would raise
+        for that holder mid-upload.
+        """
         attachment = MagicMock()
         mock_generic.return_value = [attachment]
 
         resolve_note_file_uploads(
             user=self.user,
             note=self.note,
+            permission_group=self.permission_group,
             attachments=[
                 UploadConfirmation(
                     presigned_key="media/note_attachments/abc.pdf",
@@ -133,24 +133,52 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
             ],
         )
 
-        # Verify permission group was resolved with the note's org, not first-match.
-        mock_perm_group.assert_called_once_with(
-            self.user,
-            template=CASEWORKER,
-            organization_id=str(self.note.organization_id),
+        mock_assign.assert_called_once_with(
+            self.permission_group,
+            attachment,
+            [Attachment.perms.DELETE, Attachment.perms.CHANGE],
         )
 
     @patch("notes.services.assign_object_permissions")
-    @patch("notes.services.resolve_permission_group")
+    @patch("common.services.file_upload.create_attachment_records")
+    def test_a_grant_only_holder_uploads_without_guardian_rows(
+        self,
+        mock_generic: MagicMock,
+        mock_assign: MagicMock,
+    ) -> None:
+        """No legacy group is the blessed post-cutover state, not a refusal.
+
+        Authority is the caller's note gate; the guardian rows are the legacy
+        arm.  A holder with no ``CASEWORKER`` group must still get their
+        attachment, with no guardians assigned.
+        """
+        attachment = MagicMock()
+        mock_generic.return_value = [attachment]
+
+        result = resolve_note_file_uploads(
+            user=self.user,
+            note=self.note,
+            permission_group=None,
+            attachments=[
+                UploadConfirmation(
+                    presigned_key="media/note_attachments/abc.pdf",
+                    upload_token="token-1",
+                    filename="doc.pdf",
+                    mime_type="application/pdf",
+                )
+            ],
+        )
+
+        self.assertEqual(result, [attachment])
+        mock_assign.assert_not_called()
+
+    @patch("notes.services.assign_object_permissions")
     @patch("common.services.file_upload.create_attachment_records")
     def test_assigns_change_and_delete_permissions_per_attachment(
         self,
         mock_generic: MagicMock,
-        mock_perm_group: MagicMock,
         mock_assign: MagicMock,
     ) -> None:
-        mock_perm_group.return_value = self.permission_group
-
         att1 = MagicMock()
         att2 = MagicMock()
         mock_generic.return_value = [att1, att2]
@@ -158,6 +186,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         resolve_note_file_uploads(
             user=self.user,
             note=self.note,
+            permission_group=self.permission_group,
             attachments=[
                 UploadConfirmation(
                     presigned_key="media/note_attachments/a.pdf",
@@ -187,22 +216,19 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         )
 
     @patch("notes.services.assign_object_permissions")
-    @patch("notes.services.resolve_permission_group")
     @patch("common.services.file_upload.create_attachment_records")
     def test_returns_attachments_from_generic(
         self,
         mock_generic: MagicMock,
-        mock_perm_group: MagicMock,
         mock_assign: MagicMock,
     ) -> None:
-        mock_perm_group.return_value = self.permission_group
-
         attachment = MagicMock()
         mock_generic.return_value = [attachment]
 
         result = resolve_note_file_uploads(
             user=self.user,
             note=self.note,
+            permission_group=self.permission_group,
             attachments=[
                 UploadConfirmation(
                     presigned_key="media/note_attachments/abc.pdf",

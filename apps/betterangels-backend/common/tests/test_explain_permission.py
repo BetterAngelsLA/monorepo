@@ -103,7 +103,14 @@ class ExplainPermissionTestCase(TestCase):
         self.assertIn("inert", legacy.detail)
         self.assertTrue(any("inert" in note for note in result.notes))
 
-    def test_legacy_domain_rows_are_reported_live(self) -> None:
+    def test_cut_over_domain_legacy_rows_are_reported_inert(self) -> None:
+        """A domain that has cut over reports its legacy rows as inert, not live.
+
+        ``notes`` joined ``LEGACY_INERT_APPS`` with its cutover (RFC 0003 slice
+        2): the legacy ``PermissionGroup`` row is no longer authority, so the
+        explanation must say so rather than advertise a control the grant
+        predicates would refuse.
+        """
         group = make_permission_group(organization=self.org_a, template_name="Caseworker")
         group.permissions.add(Permission.objects.get(content_type__app_label="notes", codename="view_note"))
         holder = baker.make(User)
@@ -112,9 +119,31 @@ class ExplainPermissionTestCase(TestCase):
 
         result = explain(holder, "notes.view_note", org=self.org_a)
 
-        self.assertFalse(result.cut_over)
-        self.assertFalse(result.verdict)  # the grant model is not wired for notes yet
+        self.assertTrue(result.cut_over)
+        self.assertFalse(result.verdict)
         self.assertEqual(result.verdict, can(holder, "notes.view_note", org=self.org_a))
+        legacy = _arm(result, "legacy rows")
+        self.assertFalse(legacy.holds)
+        self.assertIn("inert", legacy.detail)
+
+    def test_legacy_domain_rows_are_reported_live(self) -> None:
+        """The remaining legacy-only domain still reports live rows.
+
+        ``referrals`` has not cut over — its reads still ride
+        ``filter_for_user`` — so its legacy rows are genuine authority and the
+        explanation must keep saying "live".
+        """
+        group = make_permission_group(organization=self.org_a, template_name="Caseworker")
+        group.permissions.add(Permission.objects.get(content_type__app_label="referrals", codename="view_referral"))
+        holder = baker.make(User)
+        self.org_a.add_user(holder)
+        add_legacy_membership(holder, group=group)
+
+        result = explain(holder, "referrals.view_referral", org=self.org_a)
+
+        self.assertFalse(result.cut_over)
+        self.assertFalse(result.verdict)  # the grant model is not wired for referrals yet
+        self.assertEqual(result.verdict, can(holder, "referrals.view_referral", org=self.org_a))
         legacy = _arm(result, "legacy rows")
         self.assertTrue(legacy.holds)
         self.assertIn("live", legacy.detail)
