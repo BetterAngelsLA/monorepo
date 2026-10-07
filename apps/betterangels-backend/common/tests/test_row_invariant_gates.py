@@ -398,7 +398,7 @@ def test_every_module_using_a_row_invariant_transport_is_scanned() -> None:
             try:
                 tree = ast.parse(text)
                 ns = vars(import_module(module))
-            except (ImportError, SyntaxError):  # pragma: no cover — a broken module fails elsewhere first
+            except ImportError, SyntaxError:  # pragma: no cover — a broken module fails elsewhere first
                 continue
             collector = _GateCollector(ns)
             collector.visit(tree)
