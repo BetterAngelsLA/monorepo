@@ -6,8 +6,9 @@ from django.core.files.base import ContentFile
 from notes.admin import NoteResource
 from post_office import mail
 
+from .calendar import report_calendar_time_zone
 from .models import ScheduledReport
-from .selectors import note_list_for_org, report_calendar_time_zone
+from .selectors import note_list_for_org
 
 
 def get_previous_month_range(*, as_of: date) -> tuple[date, date]:
@@ -39,14 +40,14 @@ def generate_report_data(report: ScheduledReport, start_date: date, end_date: da
     year_str = start_date.strftime("%Y")
 
     if report.report_type == ScheduledReport.ReportType.INTERACTION_DATA:
-        notes = note_list_for_org(org=report.organization, start_date=start_date, end_date=end_date).order_by(
-            "interacted_at"
-        )
+        # One calendar for the range and the row labels: a label written on a
+        # different one would not agree with the rows that were selected.
+        org_time_zone = report_calendar_time_zone(report.organization)
+        notes = note_list_for_org(
+            org=report.organization, start_date=start_date, end_date=end_date, time_zone=org_time_zone
+        ).order_by("interacted_at")
 
-        # The report's rows are labelled on the same calendar they were selected
-        # on — see ``note_list_for_org``.  Naming it explicitly keeps the two from
-        # drifting apart if the resource's default ever changes.
-        resource = NoteResource(time_zone=report_calendar_time_zone(report.organization))
+        resource = NoteResource(time_zone=org_time_zone)
         dataset = resource.export(queryset=notes)
         filename = f"interaction_data_{month_str}_{year_str}.csv"
         return filename, dataset.csv, {"notes_count": notes.count()}

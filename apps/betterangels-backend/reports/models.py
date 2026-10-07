@@ -12,8 +12,8 @@ from django.core.validators import EmailValidator, MaxValueValidator, MinValueVa
 from django.db import models
 from django.utils import timezone
 
+from .calendar import report_calendar_time_zone
 from .permissions import ReportPermissions
-from .selectors import report_calendar_time_zone
 
 
 def validate_email_list(value: str) -> None:

@@ -17,46 +17,32 @@ from django.utils import timezone
 from notes.models import Note
 from organizations.models import Organization
 
-
-def report_default_date_range(*, org: Organization) -> tuple[date, date]:
-    """Return the default date range — the current month, on the org's calendar."""
-    today = timezone.localdate(timezone=report_calendar_time_zone(org))
-    start = today.replace(day=1)
-    end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-    return start, end
+from .calendar import report_calendar_time_zone
 
 
 def report_month_range(*, year: int, month: int) -> tuple[date, date]:
-    """Inclusive first and last calendar day of the given month."""
+    """Inclusive first and last calendar day of the given month.
+
+    The one place the end-of-month arithmetic lives; the default range and the
+    "previous month" helper are both expressed through it.
+    """
     start = date(year, month, 1)
     return start, (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
 
-def report_calendar_time_zone(org: Organization | None = None) -> ZoneInfo:
-    """The timezone a report's calendar days are cut on — the org's, never a viewer's.
-
-    A report is an organisation record: the same month emailed on a schedule and
-    downloaded from the portal has to contain the same rows.  Reading the zone a
-    request activated would let a viewer shift which records the range covers, and
-    would let the boundary disagree with the scheduled send for the same period.
-
-    The calendar belongs to the organization that the days are about, so it is read
-    from there and only falls back to the deployment's ``TIME_ZONE`` when the org
-    has not named one — which is every org until someone sets it.
-    """
-    if org is not None:
-        profile = getattr(org, "profile", None)
-        if profile is not None and profile.time_zone:
-            return ZoneInfo(profile.time_zone)
-    return timezone.get_default_timezone()
+def report_default_date_range(*, org: Organization) -> tuple[date, date]:
+    """Return the default date range — the current month, on the org's calendar."""
+    today = timezone.localdate(timezone=report_calendar_time_zone(org))
+    return report_month_range(year=today.year, month=today.month)
 
 
-def note_list_for_org(*, org: Organization, start_date: date, end_date: date) -> QuerySet[Note]:
+def note_list_for_org(*, org: Organization, start_date: date, end_date: date, time_zone: ZoneInfo) -> QuerySet[Note]:
     """Return Notes for an organization between two inclusive calendar dates.
 
-    The dates are read on :func:`report_calendar_time_zone` for *org*.
+    *time_zone* is the calendar the dates are read on — one decision per report,
+    made by the caller, so the range and the buckets below it cannot disagree.
     """
-    org_time_zone = report_calendar_time_zone(org)
+    org_time_zone = time_zone
     # Half-open on instants rather than ``interacted_at__date``, which would wrap
     # the column in a cast and lose the index.
     start = timezone.make_aware(datetime.combine(start_date, time.min), timezone=org_time_zone)
@@ -163,10 +149,10 @@ def report_summary(*, org: Organization, start_date: date, end_date: date) -> di
 
     Returns a dict ready to be serialized by the GraphQL layer or a DRF view.
     """
-    # Resolved once: the range, the buckets and the labels all have to describe the
-    # same calendar, and a second read could answer differently.
+    # One calendar for the whole summary: the range, the buckets and the labels all
+    # have to describe the same one.
     org_time_zone = report_calendar_time_zone(org)
-    notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date)
+    notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date, time_zone=org_time_zone)
 
     return {
         "total_notes": notes.count(),

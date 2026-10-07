@@ -10,8 +10,9 @@ from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note
 from pytest_django.fixtures import SettingsWrapper
+from reports.calendar import report_calendar_time_zone
 from reports.models import ScheduledReport
-from reports.selectors import report_calendar_time_zone
+from reports.selectors import report_default_date_range
 from reports.services import generate_report_data, get_previous_month_range
 
 
@@ -170,10 +171,6 @@ class TestReportTimeZoneBoundaries:
     calendar is pinned rather than inherited from the environment's ``TIME_ZONE``.
     """
 
-    @pytest.fixture(autouse=True)
-    def _site_calendar(self, settings: SettingsWrapper) -> None:
-        settings.TIME_ZONE = "America/Los_Angeles"
-
     def test_late_evening_note_counts_in_the_month_it_was_logged(self) -> None:
         """A note at 5pm on 31 January in Los Angeles belongs to January, not February."""
         org = baker.make(Organization)
@@ -272,3 +269,25 @@ class TestCalendarBelongsToTheOrganization:
 
         assert meta["notes_count"] == 1
         assert "02/01/2025" in content
+
+    def test_the_default_range_is_the_current_month_on_the_orgs_calendar(self, settings: SettingsWrapper) -> None:
+        """Nothing else asserts the value this returns — the GraphQL default depends on it.
+
+        The site sits on a calendar a day behind, so the two disagree about which
+        month "today" is at this instant.
+        """
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+        baker.make(
+            OrganizationProfile,
+            organization=org,
+            org_types=[OrgTypeChoices.OUTREACH],
+            time_zone="Asia/Tokyo",
+        )
+
+        # 2026-08-31 16:00 UTC is still August in Los Angeles, already September in Tokyo.
+        with time_machine.travel("2026-08-31 16:00:00", tick=False):
+            assert report_default_date_range(org=org) == (date(2026, 9, 1), date(2026, 9, 30))
+
+        with time_machine.travel("2026-08-31 06:00:00", tick=False):
+            assert report_default_date_range(org=org) == (date(2026, 8, 1), date(2026, 8, 31))

@@ -47,9 +47,7 @@ class NoteResource(resources.ModelResource):
     )
     notes = fields.Field(column_name="Notes")
 
-    # Declared last to match where ``Meta.fields`` puts them.  The export order
-    # follows that tuple, not this one, so the two are kept in step rather than
-    # letting a reader assume the new columns sit beside ``interacted_at``.
+    # Declared last to match ``Meta.fields``, which is what actually orders the export.
     interacted_at_utc = fields.Field(column_name="Interacted At (UTC)")
     interacted_at_time_zone = fields.Field(column_name="Interacted At Time Zone")
 
@@ -76,20 +74,15 @@ class NoteResource(resources.ModelResource):
     def __init__(self, *args: Any, time_zone: ZoneInfo | None = None, **kwargs: Any) -> None:
         """``time_zone`` names the calendar the rows are dated on.
 
-        Optional so that the Django admin, which instantiates this resource with no
-        kwargs, keeps working; it falls back to the site's zone, which is what the
-        admin's own requests already resolve to.
+        Optional because the Django admin instantiates this resource with no
+        kwargs.  When a caller does not name a calendar the deployment's
+        ``TIME_ZONE`` is used — note that this is *not* the zone the admin's own
+        requests run under; the admin publishes ``django_timezone`` and
+        ``TimezoneMiddleware`` activates it, and this resource deliberately
+        ignores that, so a downloaded file matches the period it was filtered on.
         """
-        self._requested_time_zone = time_zone
-        self._time_zone: ZoneInfo | None = None
+        self.time_zone: ZoneInfo = time_zone or timezone.get_default_timezone()
         super().__init__(*args, **kwargs)
-
-    @property
-    def time_zone(self) -> ZoneInfo:
-        """The calendar in use, read once so every column agrees on it."""
-        if self._time_zone is None:
-            self._time_zone = self._requested_time_zone or timezone.get_default_timezone()
-        return self._time_zone
 
     def dehydrate_client_id(self, note: Note) -> int | str:
         if client_profile := note.client_profile:

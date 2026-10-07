@@ -7,7 +7,6 @@ fixture below grants through a scoped ``Role`` + ``Grant``.
 """
 
 import csv
-import inspect
 import io
 from datetime import UTC, datetime
 
@@ -454,18 +453,6 @@ class TestNoArgResourceInstantiation:
         resource = NoteResource()
 
         assert resource.time_zone == SITE_TZ
-
-    def test_no_constructor_argument_is_required(self) -> None:
-        """Guards the admin path generically, not just today's signature."""
-        required = [
-            name
-            for name, parameter in inspect.signature(NoteResource.__init__).parameters.items()
-            if name != "self"
-            and parameter.default is inspect.Parameter.empty
-            and parameter.kind not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
-        ]
-
-        assert required == []
 
 
 @ignore_warnings(category=UserWarning)

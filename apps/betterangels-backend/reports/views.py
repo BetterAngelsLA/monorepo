@@ -18,8 +18,9 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 from organizations.models import Organization
 
+from .calendar import report_calendar_time_zone
 from .permissions import HasReportAccess
-from .selectors import note_list_for_org, report_calendar_time_zone, report_month_range
+from .selectors import note_list_for_org, report_month_range
 
 
 def _resolve_range(data: dict[str, Any], *, org: Organization) -> tuple[date, date]:
@@ -73,11 +74,14 @@ class ExportInteractionDataApi(APIView):
         org = request.permitted_org  # type: ignore[attr-defined]  # set by HasReportAccess
         start_date, end_date = _resolve_range(serializer.validated_data, org=org)
 
-        notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date).order_by("interacted_at")
+        org_time_zone = report_calendar_time_zone(org)
+        notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date, time_zone=org_time_zone).order_by(
+            "interacted_at"
+        )
 
         # Same calendar the range was cut on, so the file's dates and its row set
         # describe one period.  See ``note_list_for_org``.
-        resource = NoteResource(time_zone=report_calendar_time_zone(org))
+        resource = NoteResource(time_zone=org_time_zone)
         dataset = resource.export(queryset=notes)
 
         start_str = start_date.strftime("%Y%m%d")
