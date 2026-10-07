@@ -1,16 +1,19 @@
 /**
  * Format a ``YYYY-MM-DD`` bucket label for the charts.
  *
- * The backend bucketed the note on the organization's calendar and already
- * encoded the answer in the string — ``2025-01-31`` means the 31st, full stop.
- * Reading that back through ``new Date(value)`` anchored it to UTC midnight, which
- * renders as the previous day anywhere west of UTC; ``parseDateString`` anchors to
- * *local* midnight instead, which renders correctly but makes the label depend on
- * the viewer's machine clock.
+ * The backend bucketed the note on the organization's calendar and already put the
+ * answer in the string — ``2025-01-31`` means the 31st, full stop.  There is no
+ * instant here to interpret and no zone to apply.
  *
- * Neither is needed.  The value is already a date, so read the digits and never
- * construct a ``Date`` — the label is then the same on every machine, which is
- * what the tests below assert.
+ * Deliberately not routed through ``@monorepo/shared/scalars``.  ``parseDateString``
+ * anchors to *local* midnight, so it renders the right day but reads the machine's
+ * clock to do it — which makes the output, and any test of it, dependent on where
+ * the test runs.  ``new Date(value)`` is worse: it anchors to UTC midnight and
+ * renders ``2025-01-31`` as the 30th west of UTC.  Reading the digits keeps the
+ * label identical on every machine, so the old implementation fails the test on a
+ * UTC CI runner instead of only on a developer's laptop.
+ *
+ * Anything not shaped like a date is passed through untouched.
  */
 export const formatBucketLabel = (value: string): string => {
   const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
