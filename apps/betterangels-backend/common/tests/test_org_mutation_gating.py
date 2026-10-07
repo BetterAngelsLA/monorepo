@@ -13,11 +13,14 @@ walks the cut-over schema modules and fails unless each mutation:
 3. is listed in ``GATE_EXEMPT`` — deliberately, with the reason.
 
 It is a heuristic tripwire, not a proof: the gate test is a string match over
-resolver and delegated sources, one delegation hop deep.  When it fails, either
-add the gate or add an exemption entry explaining why the mutation needs none.
+resolver and delegated sources, one delegation hop deep, and it matches only
+*executable* code — comments and docstrings are stripped first, so prose that
+merely names a gate can never satisfy it.  When it fails, either add the gate or
+add an exemption entry explaining why the mutation needs none.
 """
 
 import ast
+import textwrap
 from importlib import import_module
 from pathlib import Path
 
@@ -110,8 +113,45 @@ def _mutation_resolvers(app: str) -> list[tuple[str, str]]:
     return resolvers
 
 
+def _strip_docstrings(tree: ast.Module) -> ast.Module:
+    """Remove every docstring and standalone string statement from *tree*.
+
+    Markers are matched as substrings, so a mutation whose *prose* names the gate
+    it claims to call — a docstring reading ``... calls
+    require_can(organizations.add_org_member)`` — would otherwise satisfy the
+    search with no gate in the body at all.  Those docstrings are exactly what the
+    member-management mutations carry, so prose has to be out of scope before the
+    search runs.  Only bare string *statements* are dropped; a string passed to a
+    call (a message, a permission name) is real code and stays.
+    """
+    for node in ast.walk(tree):
+        body: list[ast.stmt] | None = getattr(node, "body", None)
+        if not isinstance(body, list) or not body:
+            continue
+        body[:] = [
+            statement
+            for statement in body
+            if not (isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Constant) and isinstance(statement.value.value, str))
+        ]
+    return tree
+
+
+def _code_only(source: str) -> str:
+    """*source* with comments and docstrings removed, for marker matching.
+
+    ``ast.unparse`` discards comments outright, and :func:`_strip_docstrings`
+    drops the docstrings, so only executable code remains.  A snippet that will
+    not parse is returned unchanged — this is a tripwire, and a syntax error is
+    another test's failure to report.
+    """
+    try:
+        return ast.unparse(_strip_docstrings(ast.parse(source)))
+    except SyntaxError:  # pragma: no cover — a broken module fails elsewhere first
+        return source
+
+
 def _gated(source: str) -> bool:
-    return any(marker in source for marker in GATE_MARKERS)
+    return any(marker in _code_only(source) for marker in GATE_MARKERS)
 
 
 def _delegated_sources(app: str) -> dict[str, list[str]]:
@@ -140,7 +180,7 @@ def _delegated_sources(app: str) -> dict[str, list[str]]:
 
 def _called_names(source: str) -> set[str]:
     names: set[str] = set()
-    for node in ast.walk(ast.parse(source)):
+    for node in ast.walk(ast.parse(_code_only(source))):
         if not isinstance(node, ast.Call):
             continue
         func = node.func
@@ -171,6 +211,39 @@ def test_every_mutation_in_a_grant_cutover_module_gates(module_name: str) -> Non
         "Gate with require_can()/can_obj() — or a scoped *_get/*_queryset load in the resolver "
         "or a service it delegates to — or add a GATE_EXEMPT entry with the reason."
     )
+
+
+def test_a_gate_named_only_in_prose_does_not_count_as_a_gate() -> None:
+    """Regression: the match must ignore docstrings and comments.
+
+    ``accounts.schema``'s member-management mutations name their gate in the
+    docstring *and* call it in the body.  Deleting the call previously left this
+    tripwire green, because the prose still contained ``require_can(`` — so the
+    three most privileged mutations in the module could lose their gate silently.
+    The snippets below are that shape: a call in the body is a gate, prose about
+    one is not.
+    """
+    real = textwrap.dedent(
+        '''
+        def add_organization_member(self, info, data):
+            """Adds a member.  Calls ``require_can(organizations.add_org_member)``."""
+            require_can(current_user, ADD_ORG_MEMBER, org=organization)
+            return membership
+        '''
+    )
+    prose_only = textwrap.dedent(
+        '''
+        def add_organization_member(self, info, data):
+            """Adds a member.  Calls ``require_can(organizations.add_org_member)``."""
+            # require_can(organizations.add_org_member) used to be here
+            return membership
+        '''
+    )
+
+    assert _gated(real) is True
+    assert _gated(prose_only) is False
+    # A string passed to a call is real code, not prose — it must still be seen.
+    assert _gated('def m():\n    require_can(user, "add_thing")\n') is True
 
 
 def test_exemptions_name_real_mutations_and_carry_a_reason() -> None:
