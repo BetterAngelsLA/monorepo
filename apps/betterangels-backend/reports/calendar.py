@@ -15,7 +15,7 @@ from organizations.models import Organization
 def report_calendar_time_zone(org: Organization) -> ZoneInfo:
     """The timezone a report's calendar days are cut on — the org's, never a viewer's.
 
-    A report is an organisation record: the same month emailed on a schedule and
+    A report is an organization record: the same month emailed on a schedule and
     downloaded from the portal has to contain the same rows.  Reading the zone a
     request activated would let a viewer shift which records the range covers, and
     would let the boundary disagree with the scheduled send for the same period.
