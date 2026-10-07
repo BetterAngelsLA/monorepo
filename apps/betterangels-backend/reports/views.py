@@ -16,14 +16,16 @@ from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
+from organizations.models import Organization
+
 from .permissions import HasReportAccess
 from .selectors import note_list_for_org, report_calendar_time_zone, report_month_range
 
 
-def _resolve_range(data: dict[str, Any]) -> tuple[date, date]:
+def _resolve_range(data: dict[str, Any], *, org: Organization) -> tuple[date, date]:
     """The requested range, or the previous month.
 
-    The default month is read on the site's calendar, like the range itself.  The
+    The default month is read on the organization's calendar, like the range itself.  The
     known client always sends explicit dates, so this only decides what a request
     without dates means — and the answer should not depend on who asks, or the
     same URL would return a different period to different viewers.
@@ -31,8 +33,8 @@ def _resolve_range(data: dict[str, Any]) -> tuple[date, date]:
     if data.get("start_date") and data.get("end_date"):
         return data["start_date"], data["end_date"]
 
-    site_today = timezone.localdate(timezone=report_calendar_time_zone())
-    previous_month = site_today.replace(day=1) - timedelta(days=1)
+    org_today = timezone.localdate(timezone=report_calendar_time_zone(org))
+    previous_month = org_today.replace(day=1) - timedelta(days=1)
     return report_month_range(
         year=data.get("year", previous_month.year),
         month=data.get("month", previous_month.month),
@@ -69,13 +71,13 @@ class ExportInteractionDataApi(APIView):
         serializer.is_valid(raise_exception=True)
 
         org = request.permitted_org  # type: ignore[attr-defined]  # set by HasReportAccess
-        start_date, end_date = _resolve_range(serializer.validated_data)
+        start_date, end_date = _resolve_range(serializer.validated_data, org=org)
 
         notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date).order_by("interacted_at")
 
         # Same calendar the range was cut on, so the file's dates and its row set
         # describe one period.  See ``note_list_for_org``.
-        resource = NoteResource(time_zone=report_calendar_time_zone())
+        resource = NoteResource(time_zone=report_calendar_time_zone(org))
         dataset = resource.export(queryset=notes)
 
         start_str = start_date.strftime("%Y%m%d")

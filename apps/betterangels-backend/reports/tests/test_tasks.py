@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 import time_machine
-from accounts.models import Organization
+from accounts.models import OrgTypeChoices, Organization, OrganizationProfile
 from django.utils import timezone
 from model_bakery import baker
 from post_office.models import Email
@@ -306,3 +306,38 @@ class TestSendScheduledReportTask:
         assert result["status"] == "skipped"
         mock_gen.assert_not_called()
         assert Email.objects.count() == 0
+
+    def test_a_send_uses_the_organizations_calendar_not_the_sites(self, settings) -> None:  # type: ignore[no-untyped-def]
+        """One due instant is a different period for an org that runs a day ahead.
+
+        2026-09-01 07:00 UTC is 1 September in Los Angeles but 16:00 on 31 August
+        in Tokyo, so the month it reports on is not the same.  Reading the site's
+        calendar would send a Tokyo org a month that has not finished yet.
+        """
+        settings.TIME_ZONE = "America/Los_Angeles"
+        org = baker.make(Organization)
+        baker.make(
+            OrganizationProfile,
+            organization=org,
+            org_types=[OrgTypeChoices.OUTREACH],
+            time_zone="Asia/Tokyo",
+        )
+        report = baker.make(
+            ScheduledReport,
+            organization=org,
+            recipients="test@example.com",
+            subject_template="Subject {month}/{year}",
+            is_active=True,
+            next_run_at=datetime(2026, 9, 1, 7, 0, tzinfo=UTC),
+        )
+
+        with (
+            patch("reports.tasks.generate_report_data") as mock_gen,
+            patch("reports.tasks.send_report_email"),
+        ):
+            mock_gen.return_value = ("a.csv", "data", {})
+            result = send_scheduled_report.apply(args=(report.pk,)).get()
+
+        # August, because on the org's calendar the run was due on 31 August.
+        assert result["subject"] == "Subject 08/2026"
+        assert mock_gen.call_args.args[1:] == (date(2026, 8, 1), date(2026, 8, 31))

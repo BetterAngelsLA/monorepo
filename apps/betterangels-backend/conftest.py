@@ -1,8 +1,16 @@
 from pathlib import Path
 
 import pytest
+from model_bakery import baker
+from organizations.fields import SlugField
 from pytest_django.fixtures import SettingsWrapper
 from test_utils.vcr_config import scrubbed_vcr
+
+# ``organizations.fields.SlugField`` comes from django-extensions and model_bakery
+# has no generator for it, so any test that bakes an Organization fails without
+# this.  Registered here rather than per-app because Organizations are shared test
+# furniture, not a reports concern.
+baker.generators.add(SlugField, lambda: baker.seq("org-"))  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture(autouse=True)

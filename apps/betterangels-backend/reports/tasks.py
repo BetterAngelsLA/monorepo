@@ -58,7 +58,7 @@ def send_scheduled_report(
         recipient_override: If provided, send only to this email and do not update schedule.
     """
     try:
-        report = ScheduledReport.objects.select_related("organization").get(pk=report_id)
+        report = ScheduledReport.objects.select_related("organization__profile").get(pk=report_id)
     except ScheduledReport.DoesNotExist:
         return {"status": "error", "message": f"ScheduledReport {report_id} not found"}
 
@@ -80,7 +80,7 @@ def send_scheduled_report(
         )
         return {"status": "skipped", "message": "Schedule already advanced for this period"}
 
-    start_date, end_date = period_for_due_instant(due_at=due_at)
+    start_date, end_date = period_for_due_instant(due_at=due_at, org=report.organization)
     month_str = start_date.strftime("%m")
     year_str = start_date.strftime("%Y")
 

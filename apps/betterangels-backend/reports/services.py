@@ -1,13 +1,13 @@
 from datetime import date, datetime, timedelta
 from typing import Any
 
+from accounts.models import Organization
 from django.core.files.base import ContentFile
-from django.utils import timezone
 from notes.admin import NoteResource
 from post_office import mail
 
 from .models import ScheduledReport
-from .selectors import note_list_for_org
+from .selectors import note_list_for_org, report_calendar_time_zone
 
 
 def get_previous_month_range(*, as_of: date) -> tuple[date, date]:
@@ -21,16 +21,16 @@ def get_previous_month_range(*, as_of: date) -> tuple[date, date]:
     return last_day_previous.replace(day=1), last_day_previous
 
 
-def period_for_due_instant(*, due_at: datetime) -> tuple[date, date]:
-    """The month a report due at *due_at* covers, read on the site's calendar.
+def period_for_due_instant(*, due_at: datetime, org: Organization) -> tuple[date, date]:
+    """The month a report due at *due_at* covers, read on *org*'s calendar.
 
-    *due_at* is the instant the run was due, not the moment it runs.  The site's
-    calendar matters around the month boundary: a report due 00:00 UTC on the 1st
-    is still the last day of the previous month in Los Angeles, and taken on UTC's
-    calendar it would cover the month before that one.
+    *due_at* is the instant the run was due, not the moment it runs.  The calendar
+    matters around the month boundary: a report due 00:00 UTC on the 1st is still
+    the last day of the previous month in Los Angeles, and taken on UTC's calendar
+    it would cover the month before that one.
     """
-    site_date = due_at.astimezone(timezone.get_default_timezone()).date()
-    return get_previous_month_range(as_of=site_date)
+    org_date = due_at.astimezone(report_calendar_time_zone(org)).date()
+    return get_previous_month_range(as_of=org_date)
 
 
 def generate_report_data(report: ScheduledReport, start_date: date, end_date: date) -> tuple[str, str, dict[str, Any]]:
@@ -46,7 +46,7 @@ def generate_report_data(report: ScheduledReport, start_date: date, end_date: da
         # The report's rows are labelled on the same calendar they were selected
         # on — see ``note_list_for_org``.  Naming it explicitly keeps the two from
         # drifting apart if the resource's default ever changes.
-        resource = NoteResource(time_zone=timezone.get_default_timezone())
+        resource = NoteResource(time_zone=report_calendar_time_zone(report.organization))
         dataset = resource.export(queryset=notes)
         filename = f"interaction_data_{month_str}_{year_str}.csv"
         return filename, dataset.csv, {"notes_count": notes.count()}

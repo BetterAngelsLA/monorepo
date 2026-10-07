@@ -42,6 +42,11 @@ class OrganizationProfileForm(forms.ModelForm):
 
     ``org_types`` is declared explicitly because the default form field for an
     ``ArrayField`` is a comma-separated text input.
+
+    ``time_zone`` is the calendar this organization's report days are cut on.  It
+    is a free-text IANA name validated on the model rather than a select: the list
+    of zones is long, half of it is aliases, and a select makes the stored value
+    depend on whichever tzdata the admin was rendered against.
     """
 
     org_types = forms.MultipleChoiceField(
@@ -51,10 +56,18 @@ class OrganizationProfileForm(forms.ModelForm):
         label="Org types",
         help_text="Determines which roles this organization's members can hold.",
     )
+    time_zone = forms.CharField(
+        required=False,
+        label="Report time zone",
+        help_text=(
+            "IANA name, e.g. America/Los_Angeles. Leave blank to use the site's TIME_ZONE. "
+            "Report boundaries, chart buckets and exported dates are read on this calendar."
+        ),
+    )
 
     class Meta:
         model = OrganizationProfile
-        fields = ("org_types",)
+        fields = ("org_types", "time_zone")
 
     def clean_org_types(self) -> list[OrgTypeChoices]:
         """Return enum members, matching what the services write."""
