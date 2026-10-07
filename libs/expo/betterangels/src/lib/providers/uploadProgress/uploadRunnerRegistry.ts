@@ -43,9 +43,18 @@ export function unregisterUploadRunner(sessionId: string): void {
  * Aborts every in-flight upload. Intended for teardown points where
  * continuing would be wrong regardless of session state — signing out, or
  * switching to a different backend environment.
+ *
+ * Each runner is cancelled in isolation: one runner throwing must not leave
+ * the remaining uploads running, nor break the teardown that called this.
  */
 export function cancelAllUploadRunners(): void {
-  runners.forEach((runner) => runner.cancelAll());
+  runners.forEach((runner) => {
+    try {
+      runner.cancelAll();
+    } catch (err) {
+      console.error(err);
+    }
+  });
 }
 
 /** Test-only: drops every registered runner. */

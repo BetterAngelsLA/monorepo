@@ -10,7 +10,7 @@ Docker so you can start contributing immediately.
 - **Node.js 22** with Yarn for frontend packages
 - **PostgreSQL 17** with PostGIS for spatial data
 - **Valkey** (Redis-compatible) for caching and task queues
-- **MinIO** (S3-compatible) for local file storage
+- **SeaweedFS** (S3-compatible) for local file storage
 - **imgproxy** for image resizing and processing
 - **Docker-in-Docker** for building and pushing images
 - **AWS CLI** and **Session Manager Plugin** for Fargate access
@@ -61,7 +61,7 @@ rebuilds:
 | Node modules      | `node_modules` | `/workspace/node_modules` |
 | Python virtualenv | `venv`         | `/workspace/.venv`        |
 | PostgreSQL data   | `pgdata`       | _(internal)_              |
-| MinIO data        | `minio_data`   | _(internal)_              |
+| Local S3 data     | `s3_data`      | _(internal)_              |
 
 ### Clearing Persisted State
 

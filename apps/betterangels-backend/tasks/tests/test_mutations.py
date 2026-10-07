@@ -191,6 +191,44 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertFalse(Task.objects.filter(summary="Illegal Task").exists())
 
 
+class TaskUnmatchableIdTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+    """An id the column cannot hold names no row, so it is a miss, not a crash."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_create_task_rejects_an_unmatchable_team_id(self) -> None:
+        response = self.create_task_fixture({"summary": "Org 1 task", "teamId": "abc"})
+
+        messages = response["data"]["createTask"]["messages"]
+        self.assertEqual(len(messages), 1, messages)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "team")
+        self.assertIn("abc", messages[0]["message"])
+        self.assertEqual(Task.objects.filter(summary="Org 1 task").count(), 0)
+
+    def test_update_task_denies_an_unmatchable_id(self) -> None:
+        unmatchable = self.update_task_fixture({"id": "abc", "summary": "Amended"})
+        missing = self.update_task_fixture({"id": "99999999", "summary": "Amended"})
+
+        self.assertEqual(
+            unmatchable["data"]["updateTask"]["messages"],
+            missing["data"]["updateTask"]["messages"],
+        )
+        self.assertEqual(unmatchable["data"]["updateTask"]["messages"][0]["kind"], "PERMISSION")
+
+    def test_delete_task_denies_an_unmatchable_id(self) -> None:
+        unmatchable = self.delete_task_fixture("abc")
+        missing = self.delete_task_fixture("99999999")
+
+        self.assertEqual(
+            unmatchable["data"]["deleteTask"]["messages"],
+            missing["data"]["deleteTask"]["messages"],
+        )
+        self.assertEqual(unmatchable["data"]["deleteTask"]["messages"][0]["kind"], "PERMISSION")
+
+
 class TaskTeamValidationMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     """A task may only reference a team from its own organization."""
 

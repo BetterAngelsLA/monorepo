@@ -17,7 +17,9 @@ export function FiresSurvey() {
   const [_surveyResults, storeSurveyResults] = useAtom(surveyResultsAtom);
   const navigateTo = useNavigate();
 
-  function onChange(results: any) {}
+const onChange = (_results: unknown) => {
+  // Intentionally no-op.
+};
 
   function onSurveyEnd(results: TSurveyResults) {
     storeSurveyResults(results);

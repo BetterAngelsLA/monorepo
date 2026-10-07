@@ -168,11 +168,11 @@ describe('getQueryPolicyFactory', () => {
       totalCountPath: ['data', 'total'],
       itemIdPath: ['data', 'items', 'clientId'],
       mergeOpts: { mode: MergeModeEnum.Object },
-      paginationMode: PaginationModeEnum.PerPage,
+      paginationMode: PaginationModeEnum.Offset,
       paginationVariables: {
-        mode: PaginationModeEnum.PerPage,
-        pagePath: ['pagination', 'page'],
-        perPagePath: ['pagination', 'pageSize'],
+        mode: PaginationModeEnum.Offset,
+        offsetPath: ['pagination', 'offset'],
+        limitPath: ['pagination', 'pageSize'],
       },
     });
 
@@ -190,7 +190,6 @@ describe('getQueryPolicyFactory', () => {
       {
         itemsPath: ['data', 'items'],
         totalCountPath: ['data', 'total'],
-        itemIdPath: ['data', 'items', 'clientId'],
       },
     );
 
@@ -199,11 +198,11 @@ describe('getQueryPolicyFactory', () => {
       expect.objectContaining({
         itemsPath: ['data', 'items'],
         totalCountPath: ['data', 'total'],
-        paginationMode: PaginationModeEnum.PerPage,
+        paginationMode: PaginationModeEnum.Offset,
         paginationVariables: {
-          mode: PaginationModeEnum.PerPage,
-          pagePath: ['pagination', 'page'],
-          perPagePath: ['pagination', 'pageSize'],
+          mode: PaginationModeEnum.Offset,
+          offsetPath: ['pagination', 'offset'],
+          limitPath: ['pagination', 'pageSize'],
         },
       }),
     );
@@ -212,11 +211,11 @@ describe('getQueryPolicyFactory', () => {
     expect(generateFieldPolicy).toHaveBeenCalledWith(
       expect.objectContaining({
         queryPolicyConfig: expect.objectContaining({
-          paginationMode: PaginationModeEnum.PerPage,
+          paginationMode: PaginationModeEnum.Offset,
           itemsPath: ['data', 'items'],
           totalCountPath: ['data', 'total'],
-          paginationPagePath: ['pagination', 'page'],
-          paginationPerPagePath: ['pagination', 'pageSize'],
+          paginationOffsetPath: ['pagination', 'offset'],
+          paginationLimitPath: ['pagination', 'pageSize'],
         }),
         mergeOpts: expect.objectContaining({
           mode: MergeModeEnum.Object,
@@ -276,7 +275,7 @@ describe('getQueryPolicyFactory', () => {
     );
   });
 
-  it('uses defaults for itemIdPath, itemsPath, totalCountPath when not provided', async () => {
+  it('uses default itemsPath and totalCountPath when not provided', async () => {
     type TasksQuery = {
       tasks: {
         results: Array<{ __typename: 'TaskType'; id: string }>;
@@ -302,7 +301,6 @@ describe('getQueryPolicyFactory', () => {
       {
         itemsPath: [DEFAULT_QUERY_RESULTS_KEY],
         totalCountPath: [DEFAULT_QUERY_TOTAL_COUNT_KEY],
-        itemIdPath: [DEFAULT_QUERY_ID_KEY],
       },
     );
   });

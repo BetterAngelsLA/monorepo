@@ -1,6 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { useContext } from 'react';
-import { SurveyContext } from './provider/SurveyContext';
+import { useSurvey } from './provider/SurveyContext';
 import { QuestionHeader } from './shared/QuestionHeader';
 
 type IProps = {
@@ -10,11 +9,7 @@ type IProps = {
 export function Results(props: IProps) {
   const { className } = props;
 
-  const context = useContext(SurveyContext);
-
-  if (!context) {
-    throw new Error('SurveyContext missing');
-  }
+  const context = useSurvey();
 
   const { answers = [] } = context;
 

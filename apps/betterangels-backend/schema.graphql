@@ -1,9 +1,4 @@
 """
-Requires the user to have the specified permission(s) in the organization set via X-Organization-ID header.
-"""
-directive @hasOrgPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
-
-"""
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
 
 When the condition fails, the following can be returned (following this priority):
@@ -192,8 +187,7 @@ type BulkDeleteResult {
 }
 
 input ChangeOrganizationMemberRoleInput {
-  userId: ID!
-  organizationId: ID!
+  membershipId: ID!
   permissionTemplate: PermissionTemplateEnum!
 }
 
@@ -482,12 +476,6 @@ enum ConditionChoices {
   EMERGENCY_EVACUATION
 }
 
-type ContactInfoType {
-  id: ID!
-  contactName: String!
-  contactNumber: PhoneNumber!
-}
-
 input CreateBedInput {
   shelterId: ID!
   roomId: ID = null
@@ -510,14 +498,6 @@ input CreateBedInput {
 union CreateBedPayload = BedType | OperationInfo
 
 union CreateClientContactPayload = ClientContactType | OperationInfo
-
-input CreateClientDocumentInput {
-  clientProfile: ID!
-  file: Upload!
-  namespace: ClientDocumentNamespaceEnum!
-}
-
-union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 union CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo
 
@@ -736,6 +716,7 @@ union CreateRoomPayload = RoomType | OperationInfo
 input CreateShelterInput {
   name: String!
   description: String = null
+  organizationId: ID = null
   accessibility: [AccessibilityChoices!] = null
   demographics: [DemographicChoices!] = null
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
@@ -805,6 +786,7 @@ union CreateTaskPayload = TaskType | OperationInfo
 
 input CreateTeamInput {
   name: String!
+  organizationId: ID!
 }
 
 union CreateTeamPayload = TeamType | OperationInfo
@@ -825,6 +807,7 @@ type CurrentUserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   username: String
+  permissions: [String!]!
   isHmisUser: Boolean
   isOutreachAuthorized: Boolean @deprecated(reason: "Use userPermissions check instead.")
 }
@@ -897,6 +880,8 @@ union DeleteReservationsPayload = BulkDeleteResult | OperationInfo
 union DeleteRoomsPayload = BulkDeleteResult | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
+
+union DeleteShelterPayload = DeletedObjectType | OperationInfo
 
 union DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo
 
@@ -1535,10 +1520,10 @@ type Mutation {
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   updateUserProfile(data: UpdateUserProfileInput!): UpdateUserProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
-  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
-  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
+  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload!
+  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload!
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
-  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "change_org_member_role"}], any: true)
+  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload!
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1555,7 +1540,6 @@ type Mutation {
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
-  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true) @deprecated(reason: "Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.")
   deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
@@ -1589,26 +1573,27 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "add_team"}], any: true)
-  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "change_team"}], any: true)
-  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "delete_team"}], any: true)
-  createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
-  updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
-  updateRoom(id: ID!, data: UpdateRoomInput!): UpdateRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_room"}], any: true)
-  cloneRoom(id: ID!): CloneRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
-  deleteRooms(data: BulkDeleteInput!): DeleteRoomsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "delete_room"}], any: true)
-  createBed(data: CreateBedInput!): CreateBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
-  updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
-  cloneBed(id: ID!): CloneBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
-  deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
-  createReservation(data: CreateReservationInput!): CreateReservationPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_reservation"}], any: true)
-  updateReservation(id: ID!, data: UpdateReservationInput!): UpdateReservationPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_reservation"}], any: true)
-  deleteReservations(data: BulkDeleteInput!): DeleteReservationsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "delete_reservation"}], any: true)
-  generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  createTeam(data: CreateTeamInput!): CreateTeamPayload!
+  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload!
+  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload!
+  createShelter(data: CreateShelterInput!): CreateShelterPayload!
+  updateShelter(data: UpdateShelterInput!): UpdateShelterPayload!
+  deleteShelter(id: ID!): DeleteShelterPayload!
+  createRoom(data: CreateRoomInput!): CreateRoomPayload!
+  updateRoom(data: UpdateRoomInput!): UpdateRoomPayload!
+  cloneRoom(id: ID!): CloneRoomPayload!
+  deleteRooms(data: BulkDeleteInput!): DeleteRoomsPayload!
+  createBed(data: CreateBedInput!): CreateBedPayload!
+  updateBed(data: UpdateBedInput!): UpdateBedPayload!
+  cloneBed(id: ID!): CloneBedPayload!
+  deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload!
+  createReservation(data: CreateReservationInput!): CreateReservationPayload!
+  updateReservation(data: UpdateReservationInput!): UpdateReservationPayload!
+  deleteReservations(data: BulkDeleteInput!): DeleteReservationsPayload!
+  generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload!
+  resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload!
+  updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload!
+  deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload!
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
@@ -1766,10 +1751,40 @@ enum OperationMessageKind {
   VALIDATION
 }
 
+input OperatorShelterFilter {
+  isPrivate: Boolean
+  AND: OperatorShelterFilter
+  OR: OperatorShelterFilter
+  NOT: OperatorShelterFilter
+  DISTINCT: Boolean
+  name: String
+  accessibility: [AccessibilityChoices!]
+  storage: [StorageChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
+  isAccessCenter: Boolean
+  maxStay: MaxStayInput
+  properties: ShelterPropertyInput
+  openNow: OpenNowInput
+  mapBounds: MapBoundsInput
+  geolocation: GeolocationInput
+  hasAvailableBeds: Boolean
+  spa: [ID!]
+  onSiteSecurity: Boolean
+  city: [ID!]
+  citiesServed: [ID!]
+  spasServed: [ID!]
+  services: [ID!]
+  organizations: [ID!]
+  search: String
+  status: [StatusChoices!]
+  cityCouncilDistrict: [Int!]
+  supervisorialDistrict: [Int!]
+  overallRating: [Int!]
+}
+
 type OperatorShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
-  additionalContacts: [ContactInfoType!]!
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
   bedFees: String
@@ -1831,6 +1846,7 @@ type OperatorShelterType {
   distanceInMiles: Float
   bedCounts: BedCountType!
   roomCounts: RoomCountType!
+  additionalContacts: [ShelterContactInfoType!]!
 }
 
 type OperatorShelterTypeOffsetPaginated {
@@ -1909,6 +1925,7 @@ type OrganizationMemberType {
   memberRole: OrgRoleEnum!
   isOrgOwner: Boolean!
   permissionTemplates: [PermissionTemplateEnum!]!
+  membershipId: ID
 }
 
 type OrganizationMemberTypeOffsetPaginated {
@@ -2057,10 +2074,36 @@ enum PronounEnum {
   OTHER
 }
 
+input PublicShelterFilter {
+  isPrivate: Boolean
+  AND: PublicShelterFilter
+  OR: PublicShelterFilter
+  NOT: PublicShelterFilter
+  DISTINCT: Boolean
+  name: String
+  accessibility: [AccessibilityChoices!]
+  storage: [StorageChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
+  isAccessCenter: Boolean
+  maxStay: MaxStayInput
+  properties: ShelterPropertyInput
+  openNow: OpenNowInput
+  mapBounds: MapBoundsInput
+  geolocation: GeolocationInput
+  hasAvailableBeds: Boolean
+  spa: [ID!]
+  onSiteSecurity: Boolean
+  city: [ID!]
+  citiesServed: [ID!]
+  spasServed: [ID!]
+  services: [ID!]
+  organizations: [ID!]
+}
+
 type Query {
   currentUser: CurrentUserType!
-  organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
+  organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
+  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -2086,23 +2129,24 @@ type Query {
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
-  reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPerm(permissions: [{app: "reports", permission: "view_reports"}], any: true)
+  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
-  operatorShelter(pk: ID!): OperatorShelterType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
-  operatorShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
+  operatorShelter(pk: ID!): OperatorShelterType!
+  operatorShelters(pagination: OffsetPaginationInput, filters: OperatorShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated!
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
-  bed(pk: ID!): BedType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
-  beds(pagination: OffsetPaginationInput, filters: BedFilter, ordering: [BedOrder!]! = []): BedTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
-  reservation(pk: ID!): ReservationType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_reservation"}], any: true)
-  reservations(pagination: OffsetPaginationInput, filters: ReservationFilter, ordering: [ReservationOrder!]! = []): ReservationTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_reservation"}], any: true)
-  room(pk: ID!): RoomType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
-  rooms(pagination: OffsetPaginationInput, filters: RoomFilter, ordering: [RoomOrder!]! = []): RoomTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
+  shelters(pagination: OffsetPaginationInput, filters: PublicShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  bed(pk: ID!): BedType!
+  beds(pagination: OffsetPaginationInput, filters: BedFilter, ordering: [BedOrder!]! = []): BedTypeOffsetPaginated!
+  reservation(pk: ID!): ReservationType!
+  reservations(pagination: OffsetPaginationInput, filters: ReservationFilter, ordering: [ReservationOrder!]! = []): ReservationTypeOffsetPaginated!
+  room(pk: ID!): RoomType!
+  rooms(pagination: OffsetPaginationInput, filters: RoomFilter, ordering: [RoomOrder!]! = []): RoomTypeOffsetPaginated!
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
+  shelterOrganizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   shelterMaxStay: Int
   shelterOccupancyMetrics(shelterId: ID!, startDate: Date = null, endDate: Date = null): ShelterOccupancyMetricsType!
   referral(pk: ID!): ReferralType! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
@@ -2201,8 +2245,7 @@ input RemoveHmisNoteServiceRequestInput {
 union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
 
 input RemoveOrganizationMemberInput {
-  id: ID!
-  organizationId: ID!
+  membershipId: ID!
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
@@ -2537,23 +2580,22 @@ enum ShelterChoices {
   OTHER
 }
 
-input ShelterFilter {
-  isPrivate: Boolean
-  AND: ShelterFilter
-  OR: ShelterFilter
-  NOT: ShelterFilter
-  DISTINCT: Boolean
-  isAccessCenter: Boolean
-  maxStay: MaxStayInput
-  name: String
-  organizations: [ID!]
-  properties: ShelterPropertyInput
-  openNowFor: [ScheduleTypeChoices!] @deprecated(reason: "Use openNow instead")
-  openNow: OpenNowInput
-  mapBounds: MapBoundsInput
-  geolocation: GeolocationInput
-  hasAvailableBeds: Boolean
-  spa: [ID!]
+input ShelterContactInfoInput {
+  id: ID = null
+  contactName: NonEmptyString!
+  contactNumber: PhoneNumber!
+  contactEmail: NonBlankString = null
+  contactTitle: NonBlankString = null
+  isClaimant: Boolean = null
+}
+
+type ShelterContactInfoType {
+  id: ID!
+  contactName: String!
+  contactNumber: PhoneNumber!
+  contactEmail: String
+  contactTitle: String
+  isClaimant: Boolean!
 }
 
 type ShelterHeroImageType {
@@ -2586,6 +2628,9 @@ type ShelterOccupancyMetricsType {
 input ShelterOrder {
   name: Ordering
   createdAt: Ordering
+  status: Ordering
+  organization: Ordering
+  bedCount: Ordering
 }
 
 input ShelterPhotoFromUploadInput {
@@ -2658,12 +2703,13 @@ input ShelterPropertyInput {
   roomStylesIncludeNull: Boolean = false
   parking: [ParkingChoices!] = null
   parkingIncludeNull: Boolean = false
+  funders: [FunderChoices!] = null
+  fundersIncludeNull: Boolean = false
 }
 
 type ShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
-  additionalContacts: [ContactInfoType!]!
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
   bedFees: String
@@ -2878,6 +2924,7 @@ type TaskTypeOffsetPaginated {
 
 input TeamFilter {
   isActive: Boolean
+  organizationId: ID
   AND: TeamFilter
   OR: TeamFilter
   NOT: TeamFilter
@@ -2908,6 +2955,7 @@ scalar Time
 scalar UUID
 
 input UpdateBedInput {
+  id: ID!
   roomId: ID
   accessibility: [AccessibilityChoices!]
   b7: Boolean
@@ -3083,6 +3131,7 @@ input UpdateReferralInput {
 union UpdateReferralPayload = ReferralType | OperationInfo
 
 input UpdateReservationInput {
+  id: ID!
   roomId: ID
   bedId: ID
   checkedInAt: DateTime
@@ -3097,6 +3146,7 @@ input UpdateReservationInput {
 union UpdateReservationPayload = ReservationType | OperationInfo
 
 input UpdateRoomInput {
+  id: ID!
   accessibility: [AccessibilityChoices!]
   amenities: String
   demographics: [DemographicChoices!]
@@ -3122,6 +3172,7 @@ input UpdateShelterInput {
   description: String
   email: String
   website: String
+  instagram: String
   isPrivate: Boolean
   heroImageId: ID
   cityId: ID
@@ -3162,6 +3213,7 @@ input UpdateShelterInput {
   location: ShelterLocationInput
   schedules: [ScheduleInput!]
   services: [ServiceInput!]
+  additionalContacts: [ShelterContactInfoInput!]
 }
 
 union UpdateShelterPayload = ShelterType | OperationInfo
