@@ -7,7 +7,8 @@ appId: ${MAESTRO_APP_ID}
 #
 # Preconditions:
 #   - at least one client, and at least one APPROVED shelter
-#   - `ffReferrals` enabled
+#   - `ffReferrals` enabled in the target environment (see README.md →
+#     "Feature Flags (ffReferrals)")
 
 - runFlow: ../lib/framework/start_test.yml
 
@@ -20,6 +21,10 @@ appId: ${MAESTRO_APP_ID}
 # ── Start a new referral ────────────────────────────────────────────────────
 - tapOn:
     id: create-referral-btn
+
+# The form opens as a full-screen modal; let it settle before asserting content
+# that sits below the fold.
+- waitForAnimationToEnd
 
 - assertVisible:
     id: referral-intake-screen
@@ -92,13 +97,15 @@ appId: ${MAESTRO_APP_ID}
     id: referral-draft-card
 
 # All three values must belong to the same newly created referral card.
+# The intake line renders human labels (field label: option label); the notes
+# line is the raw staff observation, so it keeps the unique marker.
 - scrollUntilVisible:
     element:
       id: 'referral-card-.*'
       containsDescendants:
         - text: '${"Notes: " + output.referralMarker}'
-        - text: '.*storage: AMNESTY_LOCKERS.*'
-        - text: '.*transportation: AUTOMOBILE.*'
+        - text: '.*Storage needed: Amnesty Lockers.*'
+        - text: '.*Vehicle needing parking: Automobile.*'
     direction: DOWN
     timeout: 30000
 
@@ -106,5 +113,5 @@ appId: ${MAESTRO_APP_ID}
     id: 'referral-card-.*'
     containsDescendants:
       - text: '${"Notes: " + output.referralMarker}'
-      - text: '.*storage: AMNESTY_LOCKERS.*'
-      - text: '.*transportation: AUTOMOBILE.*'
+      - text: '.*Storage needed: Amnesty Lockers.*'
+      - text: '.*Vehicle needing parking: Automobile.*'

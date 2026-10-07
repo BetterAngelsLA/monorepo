@@ -14,6 +14,7 @@ Maestro is a cross-platform mobile UI testing framework that works with both **i
 - [Environment Variables](#environment-variables)
 - [Running Maestro Directly (Optional)](#running-maestro-directly-optional)
 - [Directory Structure](#directory-structure)
+- [Feature Flags (ffReferrals)](#feature-flags-ffreferrals)
 - [Running Tests in CI](#running-tests-in-ci)
 - [Writing Tests](#writing-tests)
 - [Using Maestro Studio](#using-maestro-studio)
@@ -267,15 +268,61 @@ maestro --device <DEVICE_ID> test apps/betterangels/.maestro/tests \
         search_and_select_client.yml
         visit_fixture_client_profile.yml
 
+  steps/                    # Shared step sequences for one feature's flows
+    referrals/
+      open_referrals_tab.yml
+      clear_any_draft.yml
+
   scripts/
     setup-maestro.sh        # Auto-detects device & deep link, runs maestro
 ```
 
 ---
 
+## Feature Flags (ffReferrals)
+
+Three flows exercise the referral feature and require the **`ffReferrals`**
+waffle flag to be enabled in the environment the build points at:
+
+| Flow                        | Needs `ffReferrals` |
+| --------------------------- | ------------------- |
+| `tests/referrals_page.yml`  | yes                 |
+| `tests/referral_create.yml` | yes                 |
+| `tests/referral_draft.yml`  | yes                 |
+
+An unknown or absent flag resolves to `false` (waffle treats a missing flag as
+off), so the Referrals tab is simply not rendered and those three flows fail in
+`steps/referrals/open_referrals_tab.yml` when it looks for `client-tab-referrals`.
+
+The remaining flows are **flag-agnostic**, including the two client flows that
+open a client profile:
+
+- `tests/client_docs_crud.yml`
+- `tests/create_delete_client_interaction.yml`
+
+Both navigate through `lib/screens/clients/visit_fixture_client_profile.yml`,
+which handles direct card navigation (flag on) and the legacy Profile Summary
+modal (flag off), so they pass in either environment.
+
+**Enabling it:** in the Django admin of the API the build points at, create a
+waffle Flag named `ffReferrals` and activate it. Which API that is depends on
+the build profile — for the dev/preview builds used by CI it is the
+`EXPO_PUBLIC_API_URL` in `apps/betterangels/eas.json` (`development-simulator`
+and `preview` profiles). A flag that does not exist is off by definition, so
+"not configured" and "disabled" behave the same.
+
+CI cannot enforce this (it is server-side state outside the repo), but the
+GitHub Actions e2e job prints a preflight warning naming the flag when it is
+missing or inactive.
+
+---
+
 ## Running Tests in CI
 
 CI tests run via EAS Workflows. See `.eas/workflows/e2e-test.yml` for the pipeline configuration.
+
+The suite runs every file under `tests/`, so all of the flows in the table above
+are included automatically when the referral flows are added or removed.
 
 ---
 
@@ -326,9 +373,8 @@ without updating the corresponding Maestro steps.
 
 ### Reusable Flows
 
-`tests/` contains runnable scenarios; everything else that tests reuse via
-`runFlow` lives in `lib/`, grouped by the **precondition kind** (the app state
-that must hold when the flow starts):
+`tests/` contains runnable scenarios; reusable flows live in `lib/`, grouped by
+the **precondition kind** (the app state that must hold when the flow starts):
 
 | Precondition kind                        | Directory               |
 | ---------------------------------------- | ----------------------- |
@@ -349,6 +395,10 @@ Rules for reusable flows:
   with an `assertVisible` of their starting screen/component (e.g.
   `clients-screen`, `nav-menu-btn`), so calling a flow from the wrong screen
   fails fast with a clear signal instead of failing deep inside the flow.
+- **Feature-scoped step sequences live in `steps/<feature>/`** (e.g.
+  `steps/referrals/open_referrals_tab.yml`). They are shared steps for one
+  feature's flows rather than a precondition kind, so they are not part of the
+  `lib/` table above; they follow the same header/contract rules.
 
 ---
 

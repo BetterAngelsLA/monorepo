@@ -6,7 +6,8 @@ appId: ${MAESTRO_APP_ID}
 # the visible draft affordance. Unit tests cover the store, this covers the fact
 # that the store is actually wired to the screen.
 #
-# Preconditions: at least one client; `ffReferrals` enabled.
+# Preconditions: at least one client; `ffReferrals` enabled in the target
+# environment (see README.md → "Feature Flags (ffReferrals)").
 
 - runFlow: ../lib/framework/start_test.yml
 
@@ -69,6 +70,13 @@ appId: ${MAESTRO_APP_ID}
     direction: DOWN
     timeout: 30000
 
+# NOTE: this is the only `checked: true` assertion in the suite. The chip is a
+# React Native Pressable with accessibilityRole="checkbox"; Android maps that
+# straight onto the a11y checked state, while iOS derives it from the element
+# type/value, so it must be device-verified on BOTH platforms before relying on
+# it. It is kept (rather than dropped) because it is the only assertion that
+# proves the resumed draft rehydrated the selection, not just that the field is
+# on screen.
 - assertVisible:
     id: storage-AMNESTY_LOCKERS-btn
     checked: true

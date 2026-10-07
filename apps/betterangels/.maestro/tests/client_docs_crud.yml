@@ -7,10 +7,10 @@ appId: ${MAESTRO_APP_ID}
 
 - assertVisible: 'Clients'
 
-# Ensure fixture client exists and open its profile
-# With ffReferrals enabled, tapping a client card opens the profile directly;
-# there is no Profile Summary step in between (see
-# visit_fixture_client_profile.yml).
+# Ensure fixture client exists and open its profile.
+# The helper is flag-agnostic: with ffReferrals on the card opens the profile
+# directly, with it off the legacy Profile Summary modal appears first and the
+# helper takes its "See Details" exit (see visit_fixture_client_profile.yml).
 - runFlow:
     file: ../lib/screens/clients/visit_fixture_client_profile.yml
 

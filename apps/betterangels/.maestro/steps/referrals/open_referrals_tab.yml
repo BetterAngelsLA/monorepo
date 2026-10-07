@@ -2,9 +2,16 @@ appId: ${MAESTRO_APP_ID}
 ---
 # Opens the first client in the list and selects their Referrals tab.
 #
-# Preconditions:
+# Precondition:
+#   - the clients list is visible (`clients-screen`)
 #   - at least one client exists
-#   - the `ffReferrals` waffle flag is ENABLED (the tab is hidden otherwise)
+#   - `ffReferrals` is ENABLED in the target environment — the tab is hidden
+#     otherwise, and an unknown/absent waffle flag resolves to false. See
+#     README.md → "Feature Flags (ffReferrals)".
+# Input env vars: none.
+# Output vars: none.
+# Side effects: navigates from the clients list into the first client's
+# Referrals tab.
 #
 # Deliberately data-agnostic: taps the first client rather than a named one, so
 # the flow does not depend on a particular seed.

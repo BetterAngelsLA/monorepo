@@ -1,19 +1,36 @@
 appId: ${MAESTRO_APP_ID}
 ---
-# Ensures a clean slate on the Referrals tab.
+# Discards any on-device referral draft so the referral flows start clean.
 #
-# The referral draft is persisted on-device (MMKV), so it deliberately survives
-# app restarts — which means it also survives across test runs. A flow that
-# aborts midway leaves a draft behind, and the next run finds "Resume" where it
-# expected "+". Discard any existing draft first so flows are idempotent.
+# The draft is persisted in MMKV, so it deliberately survives app restarts —
+# which means it also survives across test runs. A flow that aborts midway
+# leaves a draft behind, and the next run finds "Resume" where it expected "+".
+# Discarding first keeps the referral flows idempotent.
 #
-# Assumes the Referrals tab is already open.
+# Precondition: the Referrals tab is open (`referrals-screen` visible).
+# Input env vars: none.
+# Output vars: none.
+# Side effects: deletes the persisted draft, so the header shows "+" again.
 
+- assertVisible:
+    id: referrals-screen
+
+# Gate on the header button, not the draft card: the header swaps "+" for
+# "Resume" synchronously from the draft store, while the draft *card* (and its
+# discard button) only renders once the referrals query resolves. Gating on the
+# card would race that query and skip the discard on a slow load, leaving
+# "Resume" showing for the final assertion.
 - runFlow:
     when:
       visible:
-        id: referral-draft-card
+        id: resume-referral-btn
     commands:
+      # The gate is immediate; the discard control is not. Wait for the card.
+      - extendedWaitUntil:
+          visible:
+            id: referral-draft-card
+          timeout: 30000
+
       - tapOn:
           id: draft-discard-btn
       - assertVisible: 'Discard draft?'

@@ -1,7 +1,11 @@
 # Visits the fixture client's Profile screen, creating the client if needed.
-# Precondition: on the clients screen, with ffReferrals enabled — the clients
-# list only opens the profile directly while the flag is on (otherwise a card
-# opens the Profile Summary modal).
+#
+# Flag-agnostic by design. Tapping a client card opens the profile directly only
+# while `ffReferrals` is enabled; with the flag off it opens the legacy Profile
+# Summary modal first. This helper takes whichever path is on screen, so its
+# callers work in both environments and do not need to know the flag state.
+#
+# Precondition: on the clients screen (either `ffReferrals` state).
 # Input env vars:
 #   FIXTURE_CLIENT_NAME — name to search/create (default: "e2e-test-client")
 # Output:
@@ -66,7 +70,20 @@ appId: ${MAESTRO_APP_ID}
           env:
             CLIENT_NAME: ${output.fixtureClientName}
 
-# Selecting a client now opens the profile directly.
+# Selecting a client opens the profile directly with `ffReferrals` on. With the
+# flag off it opens the Profile Summary modal instead, so take the "See Details"
+# exit when it is present. The wait before the check lets whichever navigation
+# the flag selects finish before we decide.
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: 'See Details'
+    commands:
+      - tapOn: 'See Details'
+      - waitForAnimationToEnd
+
+# Both paths must land on the client's Profile tab.
 - assertVisible:
     id: client-tab-profile
 - assertVisible: ${output.fixtureClientName}

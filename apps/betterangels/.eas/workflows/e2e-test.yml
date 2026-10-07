@@ -13,6 +13,12 @@
 # status posting is skipped — tests still run.
 #
 # Triggered via: eas workflow:run (from GitHub Actions)
+#
+# Prerequisite: the referral Maestro flows require the `ffReferrals` waffle flag
+# to be enabled in the environment these builds point at (the dev/preview API).
+# Waffle resolves an unknown flag to false, which hides the Referrals tab, so
+# referrals_page.yml / referral_create.yml / referral_draft.yml fail without it.
+# See apps/betterangels/.maestro/README.md → "Feature Flags (ffReferrals)".
 name: e2e-test
 
 on:
