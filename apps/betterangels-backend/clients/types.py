@@ -2,10 +2,11 @@ import re
 from datetime import date, datetime, timedelta
 from functools import reduce
 from operator import and_, or_
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
+from accounts.models import User
 from common.graphql.types import (
     AttachmentInterface,
     NonBlankString,
@@ -19,6 +20,7 @@ from django.db.models import CharField, Exists, F, Func, Max, OuterRef, Q, Query
 from django.utils import timezone
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
+from strawberry_django.auth.utils import get_current_user
 
 from clients.enums import (
     AdaAccommodationEnum,
@@ -42,6 +44,31 @@ from .models import (
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 MIN_PHONE_SEARCH_DIGITS = 3
 DOB_SEARCH_FORMATS = ("%m/%d/%Y", "%m-%d-%Y")
+
+
+def _visible_client_rows(queryset: QuerySet, info: Info, perm: str) -> QuerySet:
+    """List-read gate for the client family (ADR 0001 §5.1, RFC 0002).
+
+    Platform-shared (SHARED read): a holder sees every row, a non-holder sees
+    none — the empty-not-error shape the legacy per-row guardian filter
+    produced, kept for parity (single-row reads and mutations refuse instead).
+    The holder check is memoized per request on the user instance (the house
+    pattern — ``invalidate_scope_cache`` drops it with the other authority
+    memos), so nested lists of the same type cost one check, not one each.
+    Anonymous requests never reach here (``IsAuthenticated`` on the fields) but
+    fail closed anyway.
+    """
+    current = get_current_user(info)
+    if current is None or not getattr(current, "is_authenticated", False):
+        return queryset.none()
+
+    from common.permissions.selectors import can_anywhere
+
+    user = cast(User, current)
+    cache = user.__dict__.setdefault("_visible_client_rows_cache", {})
+    if perm not in cache:
+        cache[perm] = can_anywhere(user, perm)
+    return queryset if cache[perm] else queryset.none()
 
 
 def _parse_dob_search_value(value: str) -> Optional[date]:
@@ -265,6 +292,10 @@ class HmisProfileBaseType:
 class HmisProfileType(HmisProfileBaseType):
     id: auto
 
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:
+        return _visible_client_rows(queryset, info, HmisProfile.perms.VIEW)
+
 
 @strawberry_django.input(HmisProfile)
 class HmisProfileInput(HmisProfileBaseType):
@@ -282,6 +313,10 @@ class SocialMediaProfileBaseType:
 @strawberry_django.type(SocialMediaProfile)
 class SocialMediaProfileType(SocialMediaProfileBaseType):
     platform_user_id: NonBlankString
+
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:
+        return _visible_client_rows(queryset, info, SocialMediaProfile.perms.VIEW)
 
 
 @strawberry_django.input(SocialMediaProfile, partial=True)
@@ -312,6 +347,10 @@ class ClientContactType(ClientContactBaseType):
     client_profile: auto
     updated_at: auto
 
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:
+        return _visible_client_rows(queryset, info, ClientContact.perms.VIEW)
+
 
 @strawberry_django.input(ClientContact, partial=True)
 class ClientContactInput(ClientContactBaseType):
@@ -334,6 +373,10 @@ class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
     id: ID
     client_profile: auto
     display_gender: auto
+
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:
+        return _visible_client_rows(queryset, info, ClientHouseholdMember.perms.VIEW)
 
 
 @strawberry_django.input(ClientHouseholdMember, partial=True)
@@ -401,6 +444,10 @@ class ClientProfileType(ClientProfileBaseType):
             return str(case_managers[-1].name)
 
         return "Not Assigned"
+
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:
+        return _visible_client_rows(queryset, info, ClientProfile.perms.VIEW)
 
 
 @strawberry_django.input(ClientProfile, partial=True)
