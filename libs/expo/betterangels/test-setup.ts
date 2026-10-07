@@ -52,5 +52,6 @@ vi.mock('react-native-mmkv', () => ({
   })),
 }));
 
-// Mock native modules that crash in Jest Node.js environment
-vi.mock('@preeternal/react-native-cookie-manager');
+// NOTE: a bare `vi.mock('<module>')` after a factory for the same module
+// replaces the factory with an automock — that is why the MMKV and
+// cookie-manager duplicates were removed.
