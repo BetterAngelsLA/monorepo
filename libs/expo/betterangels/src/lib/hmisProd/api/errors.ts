@@ -2,7 +2,7 @@ import { ErrorHmis } from '@monorepo/expo/shared/clients';
 import type { HmisProdRequestDebugInfo } from './types';
 
 /**
- * Error thrown by `ClientHmisProd` — same shape as the shared `ErrorHmis`,
+ * Error thrown by `ApiClientHmisProd` — same shape as the shared `ErrorHmis`,
  * plus the raw debug payload (full URL + response body) so the debug UI can
  * offer it for copy/paste.
  */

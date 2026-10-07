@@ -1,7 +1,8 @@
-from accounts.permissions import UserOrganizationPermissions
 from common.permissions.config import RoleDef, TemplateConfig
 from reports.permissions import ReportPermissions
 from teams.models import Team
+
+from accounts.permissions import UserOrganizationPermissions
 
 ORG_ADMIN = TemplateConfig(
     name="Organization Admin",
@@ -17,6 +18,7 @@ ORG_ADMIN = TemplateConfig(
         Team.perms.VIEW,
     ],
     is_invitable=False,
+    legacy_inert=True,
 )
 
 ORG_SUPERUSER = TemplateConfig(
@@ -26,40 +28,24 @@ ORG_SUPERUSER = TemplateConfig(
         UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE,
     ],
     is_invitable=False,
+    legacy_inert=True,
 )
 
 
 # ── Role definitions (ADR 0001 §2.2 — org-admin cutover) ─────────────────
-# Role-backing ORG_ADMIN / ORG_SUPERUSER lets the teams and reports surfaces
-# read authority from Grants (``can()``) instead of legacy ``PermissionGroup``
-# rows.  The scoped Role carries ``teams.*`` + ``reports.view_reports`` —
-# codenames that resolve to a real model (``_resolve_permissions`` binds
-# ``reports.view_reports`` to ``ScheduledReport``'s ContentType).  The
-# member-management codenames (``organizations.*``) are portal actions
-# registered on no concrete model, so they cannot ride a RoleDef and stay
-# legacy until their own cutover; the legacy ``PermissionGroup`` rows are kept
-# (dual write) until the org-admin teardown retires them (``reconcile`` only
-# drops stale derived groups, and ORG_ADMIN is still a preset until then).
-ORG_ADMIN_ROLE = RoleDef(
-    name=ORG_ADMIN.name,
-    permissions=[
-        ReportPermissions.VIEW_REPORTS,
-        Team.perms.ADD,
-        Team.perms.CHANGE,
-        Team.perms.DELETE,
-        Team.perms.VIEW,
-    ],
-    is_invitable=ORG_ADMIN.is_invitable,
-)
-
-ORG_SUPERUSER_ROLE = RoleDef(
-    name=ORG_SUPERUSER.name,
-    # Same bundle as ORG_ADMIN while teams + reports are the only scoped
-    # permissions either role can carry (the phantom-ContentType guard keeps
-    # member management legacy).  Derived so the two cannot drift apart until
-    # that changes.
-    permissions=list(ORG_ADMIN_ROLE.permissions),
-    is_invitable=ORG_SUPERUSER.is_invitable,
-)
+# Role-backing ORG_ADMIN / ORG_SUPERUSER lets the teams, reports, and
+# member-management surfaces read authority from Grants (``can()``) instead of
+# legacy ``PermissionGroup`` rows.
+#
+# Each RoleDef is built from its TemplateConfig via ``RoleDef.from_template``
+# so the grant-side bundle is the SAME source as the (now inert) legacy
+# template — ORG_SUPERUSER = ORG_ADMIN + ``change_org_member_role`` — and a
+# mirrored Grant can never drift from, or amplify beyond, the legacy bundle.
+# ``RoleDef.from_template`` copies the permission list, so the two cannot
+# diverge by hand.  (This is deliberate for ORG_ADMIN/ORG_SUPERUSER only:
+# ``CASEWORKER_ROLE`` carries a strict subset of its template — RFC 0003 step
+# 1 — and is defined by hand in notes/groups.py.)
+ORG_ADMIN_ROLE = RoleDef.from_template(ORG_ADMIN)
+ORG_SUPERUSER_ROLE = RoleDef.from_template(ORG_SUPERUSER)
 
 ORG_ADMIN_ROLES: tuple[RoleDef, ...] = (ORG_ADMIN_ROLE, ORG_SUPERUSER_ROLE)

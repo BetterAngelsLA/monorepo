@@ -3,8 +3,9 @@ import { useDebounce } from '@monorepo/react/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import {
-  createClientHmisProd,
+  createApiClientHmisProd,
   ErrorHmisProd,
+  HMIS_PROD_QUERY_KEY_ROOT,
   resolveHmisProdBaseUrl,
   type HmisProdRequestDebugInfo,
 } from '../api';
@@ -14,7 +15,7 @@ const SEARCH_DEBOUNCE_MS = 200;
 export const getSearchClientsHmisProdQueryKey = (
   baseUrl: string,
   search: string,
-) => ['hmisProd', 'searchClients', baseUrl, search] as const;
+) => [HMIS_PROD_QUERY_KEY_ROOT, 'searchClients', baseUrl, search] as const;
 
 /**
  * Search clients directly against HMIS (Clarity `/api1/clients/long`).
@@ -37,12 +38,12 @@ export function useSearchClientsHmisProd(search: string) {
   const baseUrl = resolveHmisProdBaseUrl(baEnvApiUrl);
   const debouncedSearch = useDebounce(search.trim(), SEARCH_DEBOUNCE_MS);
 
-  const client = useMemo(() => createClientHmisProd(baseUrl), [baseUrl]);
+  const apiClient = useMemo(() => createApiClientHmisProd(baseUrl), [baseUrl]);
 
   const query = useQuery({
     queryKey: getSearchClientsHmisProdQueryKey(baseUrl, debouncedSearch),
     queryFn: () =>
-      client.searchClients({
+      apiClient.searchClients({
         search: debouncedSearch,
       }),
     enabled: debouncedSearch.length > 1,

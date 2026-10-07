@@ -1,24 +1,19 @@
-"""HasOrgPerm must match the user's group against the permission-holding group.
+"""Teams creation is grant-only: a role-backed Org Admin can create teams.
 
-``Organization.permission_groups`` is multi-valued, so two chained ``.filter()``
-calls on it build independent joins and can be satisfied by different groups.
-That made ``HasOrgPerm(X)`` mean "the user is in some group of this org, and
-some group of this org has X" — and since every org is provisioned with every
-template, effectively "any member holds every permission in their org".
+Teams is in ``LEGACY_INERT_APPS`` (ADR 0001 §5.3) — the legacy arm never
+confers team authority.  A role-backed ORG_ADMIN (Grant mirrored from the
+scoped Role) can create a team at the payload org; a caseworker holds no
+``teams.*`` permission and cannot.
 """
 
 import uuid
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import PermissionGroup, User
+from accounts.models import User
 from accounts.role_manager import OrgRoleManager
-from accounts.tests.baker_recipes import organization_recipe
-from common.permissions.utils import permissioned_queryset
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
-from django.test import TestCase, ignore_warnings
+from django.test import ignore_warnings
 from model_bakery import baker
-from organizations.models import Organization
 from teams.models import Team
 
 CREATE_TEAM = """
@@ -32,7 +27,7 @@ CREATE_TEAM = """
 
 
 @ignore_warnings(category=UserWarning)
-class OrgPermSameGroupTestCase(GraphQLBaseTestCase):
+class OrgAdminCanCreateTeamTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
@@ -70,46 +65,3 @@ class OrgPermSameGroupTestCase(GraphQLBaseTestCase):
         payload = (response.get("data") or {}).get("createTeam") or {}
         self.assertIsNone(payload.get("id"))
         self.assertEqual(Team.objects.filter(name="Caseworker Team").count(), 0)
-
-
-class PermissionedQuerysetSameGroupTestCase(TestCase):
-    """Direct coverage of the helper, independent of any app's mutations.
-
-    The end-to-end case above goes through ``createTeam``; this pins the same
-    rule at the level the fix lives, so it still holds if that mutation changes.
-    """
-
-    def setUp(self) -> None:
-        self.org = organization_recipe.make(name="perm_same_group_org")
-        self.user = baker.make(User, username=f"member_{uuid.uuid4()}")
-        self.org.add_user(self.user)
-
-        groups = list(PermissionGroup.objects.filter(organization=self.org)[:2])
-        assert len(groups) >= 2, "the org recipe should provision at least two permission groups"
-        self.member_group, self.holder_group = groups[0], groups[1]
-
-        permission = Permission.objects.exclude(pk__in=self.member_group.permissions.values("pk")).first()
-        assert permission is not None
-        self.permission = permission
-
-        # The permission lives in one group; the user belongs to the other.
-        self.holder_group.permissions.add(self.permission)
-        self.member_group.user_set.add(self.user)
-
-    def _matches(self) -> bool:
-        perm = f"{self.permission.content_type.app_label}.{self.permission.codename}"
-        return permissioned_queryset(
-            Organization.objects.all(),
-            user=self.user,
-            organization_id=str(self.org.pk),
-            perms=[perm],
-            organization_field="pk",
-        ).exists()
-
-    def test_membership_in_one_group_does_not_borrow_another_groups_permission(self) -> None:
-        self.assertFalse(self._matches())
-
-    def test_membership_in_the_holding_group_matches(self) -> None:
-        self.holder_group.user_set.add(self.user)
-
-        self.assertTrue(self._matches())
