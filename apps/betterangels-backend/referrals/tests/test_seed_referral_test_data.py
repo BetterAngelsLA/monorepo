@@ -1,3 +1,4 @@
+import os
 from io import StringIO
 from unittest.mock import patch
 
@@ -13,8 +14,33 @@ from shelters.models import Pet, Shelter
 class ReferralTestDataCommandTests(TestCase):
     def seed(self, *, clear: bool = False) -> str:
         output = StringIO()
-        call_command("seed_referral_test_data", clear=clear, stdout=output)
+        # The command is gated on DEBUG/REFERRAL_SEED_ALLOWED (tests run with
+        # DEBUG=false); opt in here so these tests keep exercising seeding.
+        with patch.dict(os.environ, {"REFERRAL_SEED_ALLOWED": "true"}):
+            call_command("seed_referral_test_data", clear=clear, stdout=output)
         return output.getvalue()
+
+    def test_refuses_to_seed_when_debug_is_off_and_env_var_is_unset(self) -> None:
+        output = StringIO()
+        env_without_flag = {key: value for key, value in os.environ.items() if key != "REFERRAL_SEED_ALLOWED"}
+
+        with patch("django.conf.settings.DEBUG", False):
+            with patch.dict(os.environ, env_without_flag, clear=True):
+                with self.assertRaisesMessage(CommandError, "REFERRAL_SEED_ALLOWED"):
+                    call_command("seed_referral_test_data", stdout=output)
+
+        self.assertFalse(ReferralTestShelter.objects.exists())
+        self.assertFalse(Shelter.objects.exists())
+
+    def test_seeds_when_env_var_is_true_although_debug_is_off(self) -> None:
+        output = StringIO()
+
+        with patch("django.conf.settings.DEBUG", False):
+            with patch.dict(os.environ, {"REFERRAL_SEED_ALLOWED": "TRUE"}):
+                call_command("seed_referral_test_data", stdout=output)
+
+        self.assertEqual(ReferralTestShelter.objects.count(), len(SCENARIOS))
+        self.assertIn("Seeded", output.getvalue())
 
     def test_creates_exact_scenarios_and_reruns_without_changing_ids_or_referrals(self) -> None:
         self.seed()

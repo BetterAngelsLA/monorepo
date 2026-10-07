@@ -15,10 +15,15 @@ Ownership is recorded in ReferralTestShelter, never inferred from a display name
 Older, unregistered fixtures are left untouched; inspect them separately rather
 than automatically adopting or deleting records with similar names.
 
-Usage (identical locally and against the shared dev instance):
+Usage (development only — the fixtures are APPROVED and non-private, so they
+become publicly listed):
 
     python manage.py seed_referral_test_data
     python manage.py seed_referral_test_data --clear     # remove owned, unreferenced fixtures
+
+The command refuses to run unless ``settings.DEBUG`` is true or the environment
+variable ``REFERRAL_SEED_ALLOWED=true`` is set, because a deployed environment
+must not publish these fixtures. The guard applies to ``--clear`` as well.
 
 Development tooling: fixture construction reuses the shared test recipes, so the
 command needs the dev dependency group (``model-bakery``) installed.
@@ -34,9 +39,11 @@ of having needs on the referral. Only pets, demographics and accessibility drive
 tags, because Shelters.graphql returns only those three.
 """
 
+import os
 from functools import partial
 from typing import Any
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from referrals.models import Referral, ReferralTestShelter
@@ -122,6 +129,17 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args: Any, **options: Any) -> None:
+        # These fixtures are APPROVED and non-private, so they are visible to every
+        # client and in the public shelter directory. Refuse to run in anything that
+        # is not an explicit development context.
+        seed_allowed = settings.DEBUG or os.environ.get("REFERRAL_SEED_ALLOWED", "").strip().lower() == "true"
+        if not seed_allowed:
+            raise CommandError(
+                "Refusing to create referral test fixtures: this command creates APPROVED, publicly "
+                "listed shelters and is intended for development only. Set REFERRAL_SEED_ALLOWED=true "
+                "(or run with DEBUG=true) to run it deliberately."
+            )
+
         if options["clear"]:
             shelter_ids = list(ReferralTestShelter.objects.select_for_update().values_list("shelter_id", flat=True))
             # Lock shelters before checking references so a concurrent referral
