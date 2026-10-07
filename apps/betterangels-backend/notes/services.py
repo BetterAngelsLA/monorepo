@@ -235,7 +235,7 @@ def note_create(
     user: User,
     permission_group: PermissionGroup,
     purpose: Optional[str] = None,
-    team_id: Optional[int] = None,
+    team_id: Optional[str] = None,
     public_details: str = "",
     private_details: str = "",
     client_profile_id: Optional[str] = None,

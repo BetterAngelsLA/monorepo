@@ -25,7 +25,12 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "libs/react/shelter-operator",
-        "command": "tsc --noEmit -p tsconfig.lib.json"
+        // Opts out of composite for this run only: importing shelter through
+        // the `paths` alias pulls its sources into the program, which
+        // composite's file-list rule rejects (TS6307). No other typecheck
+        // target in the repo needs the override; the config keeps composite
+        // for the editor — rationale in tsconfig.lib.json.
+        "command": "tsc --noEmit --composite false --declaration false -p tsconfig.lib.json"
       }
     },
     "test": {

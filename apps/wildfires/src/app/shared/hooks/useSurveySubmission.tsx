@@ -12,6 +12,16 @@ interface StoredSurveyData {
 
 type SubmissionStatus = 'idle' | 'loading' | 'success' | 'error';
 
+function readStoredSurveyData(): StoredSurveyData | null {
+  try {
+    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error('Failed to read stored survey submission:', error);
+    return null;
+  }
+}
+
 /**
  * Custom hook to handle survey submission with retry logic and localStorage persistence.
  *
@@ -25,11 +35,8 @@ const useSurveySubmission = (
   maxRetries = 3,
   retryDelay = 1000,
 ): SubmissionStatus => {
-  const [storedData, setStoredDataState] = useState<StoredSurveyData | null>(
-    () => {
-      const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-      return data ? JSON.parse(data) : null;
-    },
+  const [storedData, setStoredData] = useState<StoredSurveyData | null>(
+    readStoredSurveyData,
   );
 
   const [status, setStatus] = useState<SubmissionStatus>('idle');
@@ -42,53 +49,69 @@ const useSurveySubmission = (
    *
    * @param survey - The survey results.
    * @param surveyID - The unique identifier for the survey.
-   * @param retries - Current retry attempt (default: 0).
    */
   const attemptSubmission = useCallback(
-    async (survey: TSurveyResults, surveyID: string, retries = 0) => {
+    async (survey: TSurveyResults, surveyID: string) => {
+      const submitWithRetry = async (retries = 0): Promise<void> => {
+        try {
+          const response = await fetch(
+            `${window.location.origin}/api/submitResults`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: surveyID,
+                answers: survey.answers,
+                timestamp: new Date(),
+                referrer_base: import.meta.env.VITE_APP_BASE_PATH || '/',
+              }),
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
+          }
+
+          const newStoredData: StoredSurveyData = {
+            answers: survey.answers,
+            surveyID,
+          };
+
+          setStoredData(newStoredData);
+
+          try {
+            localStorage.setItem(
+              LOCAL_STORAGE_KEY,
+              JSON.stringify(newStoredData),
+            );
+          } catch (storageError) {
+            // The POST succeeded; a local storage failure must not retry it.
+            console.error('Failed to persist survey submission:', storageError);
+          }
+
+          setStatus('success');
+          console.log('Survey submitted successfully:', surveyID);
+        } catch (error) {
+          console.error(`Attempt ${retries + 1} failed:`, error);
+
+          if (retries < maxRetries) {
+            await new Promise<void>((resolve) => {
+              setTimeout(resolve, retryDelay);
+            });
+
+            await submitWithRetry(retries + 1);
+          } else {
+            setStatus('error');
+            console.error(`Max retries reached for survey ID: ${surveyID}`);
+          }
+        }
+      };
+
       setStatus('loading');
       isSubmitting.current = true;
 
       try {
-        const response = await fetch(
-          `${window.location.origin}/api/submitResults`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: surveyID,
-              answers: survey.answers,
-              timestamp: new Date(),
-              referrer_base: import.meta.env.VITE_APP_BASE_PATH || '/',
-            }),
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.statusText}`);
-        }
-
-        // Update localStorage and state after a successful submission
-        const newStoredData: StoredSurveyData = {
-          answers: survey.answers,
-          surveyID,
-        };
-        setStoredDataState(newStoredData);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newStoredData));
-        setStatus('success');
-        console.log('Survey submitted successfully:', surveyID);
-      } catch (error) {
-        console.error(`Attempt ${retries + 1} failed:`, error);
-
-        if (retries < maxRetries) {
-          setTimeout(
-            () => attemptSubmission(survey, surveyID, retries + 1),
-            retryDelay,
-          );
-        } else {
-          setStatus('error');
-          console.error(`Max retries reached for survey ID: ${surveyID}`);
-        }
+        await submitWithRetry();
       } finally {
         isSubmitting.current = false;
       }
@@ -105,7 +128,7 @@ const useSurveySubmission = (
 
     if (isNewSubmission) {
       const surveyID = uuidv4();
-      attemptSubmission(surveyResults, surveyID);
+      void attemptSubmission(surveyResults, surveyID);
     }
   }, [surveyResults, storedData, attemptSubmission]);
 
