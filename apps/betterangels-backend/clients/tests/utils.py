@@ -1,9 +1,10 @@
 from typing import Any, Dict, cast
 from unittest.mock import patch
 
+from common.images import build_img_url
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.base import ContentFile
 from django.test import override_settings
 from django.utils import timezone
 
@@ -24,6 +25,7 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
+from clients.models import ClientProfile
 
 
 # TODO: This is a temporary solution while we refactor the client profile and tests.
@@ -285,9 +287,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "veteranStatus": VeteranStatusEnum.NO.name,
             }
         )["data"]["createClientProfile"]
-        self.client_profile_1_photo_url = self._update_client_profile_photo_fixture(self.client_profile_1["id"])[
-            "data"
-        ]["updateClientProfilePhoto"]["profilePhoto"]["url"]
+        self.client_profile_1_photo_url = self._set_client_profile_photo(self.client_profile_1["id"])
         self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "adaAccommodation": [],
@@ -432,39 +432,15 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _update_client_profile_photo_fixture(
+    def _set_client_profile_photo(
         self,
         client_profile_id: str,
-        photo_content: bytes = b"test photo content",
         photo_name: str = "test_photo.jpg",
-    ) -> Dict[str, Any]:
-        photo = SimpleUploadedFile(name=photo_name, content=photo_content)
+    ) -> str:
+        client_profile = ClientProfile.objects.get(id=client_profile_id)
+        client_profile.profile_photo.save(photo_name, ContentFile(b"test photo content"), save=True)
 
-        return self.execute_graphql(
-            """
-            mutation UpdateClientProfilePhoto($clientProfileId: ID!, $photo: Upload!) {  # noqa: B950
-                updateClientProfilePhoto(data: { clientProfile: $clientProfileId, photo: $photo }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on ClientProfileType {
-                        id
-                        profilePhoto {
-                            url
-                        }
-                    }
-                }
-            }
-            """,
-            variables={
-                "clientProfileId": client_profile_id,
-            },
-            files={"photo": photo},
-        )
+        return build_img_url(client_profile.profile_photo)
 
     def _generate_client_document_uploads_fixture(
         self,
