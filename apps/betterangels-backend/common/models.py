@@ -213,6 +213,10 @@ class Attachment(OrgScoped, BaseModel):
     WRITE_OBJECT`` makes that explicit: a row is writable only by the global tier
     or by a user-principal object ``Grant`` naming it (ADR 0001 §2.5), which is
     what replaces the per-file guardian rows this model used to carry.
+
+    Read authority is NOT this model's reach — see ``clients.schema``, which
+    scopes the document list through the parent ``ClientProfile`` the attachment
+    belongs to.  Per-record object grants are additive on top of that.
     """
 
     org_via = None
