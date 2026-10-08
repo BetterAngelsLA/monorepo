@@ -74,6 +74,29 @@ appId: ${MAESTRO_APP_ID}
 
 - assertVisible: 'Select a Shelter'
 
+# ── Back to the form, then forward again (lossless round trip) ──────────────
+# Back is the only exit past intake that keeps the answers. The form remounts
+# scrolled to the top, so scroll back down to prove the answer survived.
+- tapOn:
+    id: picker-back-btn
+
+- assertVisible:
+    id: referral-intake-screen
+
+- scrollUntilVisible:
+    element:
+      id: intake-notes-input
+    direction: DOWN
+    timeout: 30000
+
+- assertVisible: ${output.referralMarker}
+
+- tapOn:
+    id: intake-next-btn
+
+- assertVisible:
+    id: shelter-picker-screen
+
 # tap the radio, not the row — the row also contains the "View in Shelter
 # Directory" link, and a centre-tap on the row opens the browser instead
 - tapOn:

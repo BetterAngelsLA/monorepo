@@ -39,6 +39,9 @@ export function ReferralCreateFlow({
     <ReferralForm
       onCancel={onCancel}
       onPause={onPause}
+      // Lossless: setStep rewrites only step/updatedAt, so the answers and the
+      // selection survive.
+      onBack={() => store.setStep('intake')}
       selectedShelterId={draft.selectedShelterId}
       onSelectShelter={(id) => store.setShelter(id)}
       onSubmit={(shelterId, pickerNotes) => {

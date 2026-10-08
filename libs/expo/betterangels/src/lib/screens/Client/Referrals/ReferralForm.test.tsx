@@ -79,6 +79,7 @@ function renderPicker(props: Partial<Parameters<typeof ReferralForm>[0]> = {}) {
     return (
       <ReferralForm
         onCancel={vi.fn()}
+        onBack={vi.fn()}
         onSubmit={vi.fn().mockResolvedValue(true)}
         {...props}
         selectedShelterId={selectedShelterId}
@@ -171,5 +172,20 @@ describe('ReferralForm shelter selection', () => {
 
     expect(isSelected(1)).toBe(true);
     expect(screen.getByText('✓ Selected: Beta House')).toBeOnTheScreen();
+  });
+
+  it('offers Back to the intake step without cancelling or submitting', async () => {
+    const onBack = vi.fn();
+    const onCancel = vi.fn();
+    const onSubmit = vi.fn().mockResolvedValue(true);
+    renderPicker({ onBack, onCancel, onSubmit });
+    await screen.findByText('Alpha House');
+
+    fireEvent.press(screen.getByTestId('picker-back-btn'));
+
+    expect(onBack).toHaveBeenCalledOnce();
+    // Back is not an exit: nothing is discarded and no referral is sent.
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
