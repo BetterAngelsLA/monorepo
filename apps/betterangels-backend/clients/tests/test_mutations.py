@@ -992,7 +992,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         # cleared (ADR 0001 §2.5, finding F3) — a grant must not outlive the row
         # it names.  The lookup is one extra query, not a per-grant one.
         # 10 rather than 9: the write-gate fetch replaces the guardian prefilter.
-        expected_query_count = 10
+        # Fewer queries: the per-model guardian permission tables are dropped, so the delete no longer cascades into them (ADR 0001 §2.5, step 5).
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_client_document_fixture(client_document_id)
 

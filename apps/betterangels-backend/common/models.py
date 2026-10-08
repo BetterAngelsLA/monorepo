@@ -10,10 +10,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.db import models
-from django.db.models import ForeignKey
 from django.db.models.functions import Lower
 from django_choices_field import TextChoicesField
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -501,16 +499,3 @@ class PhoneNumber(models.Model):
         super().save(*args, **kwargs)
 
 
-# Permissions
-class AttachmentUserObjectPermission(UserObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(
-        Attachment,
-        on_delete=models.CASCADE,
-    )
-
-
-class AttachmentGroupObjectPermission(GroupObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(
-        Attachment,
-        on_delete=models.CASCADE,
-    )

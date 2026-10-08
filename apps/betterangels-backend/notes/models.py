@@ -13,7 +13,6 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django_choices_field import TextChoicesField
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 from teams.models import Team
@@ -247,22 +246,6 @@ class NoteRequestedServices(Note.requested_services.through):  # type: ignore[na
 
         elif action == "remove":
             note.requested_services.add(service_request)
-
-
-class NoteUserObjectPermission(UserObjectPermissionBase):
-    content_object: models.ForeignKey = models.ForeignKey(Note, on_delete=models.CASCADE)
-
-
-class NoteGroupObjectPermission(GroupObjectPermissionBase):
-    content_object: models.ForeignKey = models.ForeignKey(Note, on_delete=models.CASCADE)
-
-
-class ServiceRequestUserObjectPermission(UserObjectPermissionBase):
-    content_object: models.ForeignKey = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)
-
-
-class ServiceRequestGroupObjectPermission(GroupObjectPermissionBase):
-    content_object: models.ForeignKey = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)
 
 
 # Data Import
