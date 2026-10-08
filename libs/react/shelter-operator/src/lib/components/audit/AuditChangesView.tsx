@@ -2,6 +2,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import type { ReactNode } from 'react';
 import { Text } from '../base-ui/text/text';
 import {
+  displayOptionsForAction,
   formatValue,
   parseFieldChanges,
   type AuditChange,
@@ -26,6 +27,24 @@ function renderChange(change: AuditChange): ReactNode {
             Added: {change.added.map(formatValue).join(', ')}
           </Text>
         )}
+      </div>
+    );
+  }
+
+  // Pinned context fields (e.g. Day/Type) render as a single value when the
+  // update did not change them.
+  if (change.oldValue === change.newValue) {
+    return (
+      <div
+        key={change.field}
+        className="flex flex-wrap items-baseline gap-x-1.5 py-0.5"
+      >
+        <Text variant="caption" textColor="text-neutral-50">
+          {change.label}:
+        </Text>
+        <Text variant="caption" textColor="text-neutral-20">
+          {formatValue(change.newValue)}
+        </Text>
       </div>
     );
   }
@@ -55,12 +74,14 @@ function renderChange(change: AuditChange): ReactNode {
  */
 export function AuditChangesView({
   value,
+  action,
   className,
 }: {
   value: unknown;
+  action?: string;
   className?: string;
 }) {
-  const changes = parseFieldChanges(value);
+  const changes = parseFieldChanges(value, displayOptionsForAction(action));
 
   if (changes.length === 0) {
     return null;
