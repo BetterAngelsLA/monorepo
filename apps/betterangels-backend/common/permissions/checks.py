@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from django.core.checks import Error, Tags, register
+from django.core.exceptions import FieldDoesNotExist
 
 
 @register(Tags.models)
@@ -74,12 +75,11 @@ def check_grant_never_references_global_role(app_configs: Any, **kwargs: Any) ->
 def check_object_grant_targets_whitelisted_model(app_configs: Any, **kwargs: Any) -> list[Error]:
     """E003 — object grants may only target whitelisted, non-org-bearing models.
 
-    The whitelist (``common.permissions.config.OBJECT_GRANT_WHITELIST``) is empty
-    until the object-grant arm is wired (ADR 0001 §2.5): object grants are
-    schema-live but must not be written before then, and org-bearing models are
-    never object-grantable (that would duplicate org scope).  ``Grant.clean``
-    shares the same whitelist, so the write-time and deploy-time gates open
-    together.
+    The whitelist (``common.permissions.config.OBJECT_GRANT_WHITELIST``) names the
+    models the arm may target — ``common.attachment`` today, whose polymorphic
+    rows have no org path to scope them by.  Org-bearing models are never
+    object-grantable (that would duplicate org scope).  ``Grant.clean`` shares the
+    same whitelist, so the write-time and deploy-time gates cannot drift.
     """
     from django.apps import apps
     from django.db.utils import DatabaseError
@@ -97,7 +97,8 @@ def check_object_grant_targets_whitelisted_model(app_configs: Any, **kwargs: Any
                 Error(
                     f"Grant {grant} is an object grant on {grant.scope_object_type}, "
                     "which is not on the object-grant whitelist.",
-                    hint="Object grants are not wired yet (ADR 0001 §2.5); no model is object-grantable.",
+                    hint="Add the model to OBJECT_GRANT_WHITELIST (common/permissions/config.py) if it "
+                    "genuinely has no org reach — otherwise scope it by org instead.",
                     obj=grant,
                     id="permissions.E003",
                 )
@@ -118,6 +119,32 @@ def _org_via_errors_for_model(model: Any) -> list[Error]:
                     f"{model.__name__}.org_via names {name!r}, which is multi-valued; "
                     "the scope filter would duplicate rows.",
                     hint="org_via hops must be single-valued (FK or OneToOne) relations.",
+                    obj=model,
+                    id="permissions.E004",
+                )
+            )
+    if model.own_org_or:
+        # ``own_org_or`` reaches through the model's OWN ``organization`` FK, so
+        # the only way it can be wrong is a missing or multi-valued FK — which
+        # would otherwise surface at the first query rather than at deploy time.
+        try:
+            field = model._meta.get_field("organization")
+        except FieldDoesNotExist:
+            errors.append(
+                Error(
+                    f"{model.__name__}.own_org_or reaches through an 'organization' FK it does not have.",
+                    hint="own_org_or adds the model's own organization FK to its reach — declare that FK, "
+                    "or drop own_org_or.",
+                    obj=model,
+                    id="permissions.E004",
+                )
+            )
+            return errors
+        if not (field.many_to_one or field.one_to_one):
+            errors.append(
+                Error(
+                    f"{model.__name__}.own_org_or needs a single-valued 'organization' FK.",
+                    hint="A multi-valued organization hop would duplicate rows in the scope filter.",
                     obj=model,
                     id="permissions.E004",
                 )
@@ -257,15 +284,17 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
       only — it widens every perm-holder to every row), :data:`WRITE_GLOBAL`
       (platform-staff-only writes; legal on org-anchored models as a
       narrowing) or :data:`WRITE_OBJECT`;
-    * ``WRITE_OBJECT`` stays reserved until the object arm turns on with the
-      clients cutover (ADR 0001 §2.5) — declaring it today would silently
-      route writes to an object-grant predicate nothing can satisfy;
+    * ``WRITE_OBJECT`` requires the model to be object-grantable — it routes
+      writes to the object-grant predicate, which can only authorize a row the
+      whitelist admits (``OBJECT_GRANT_WHITELIST``), so declaring it on a model
+      outside the whitelist would silently drop every scoped write;
     * an unknown value in either slot is an error — a typo must not enforce
       nothing like what it claims (ADR 0004 layer 1).
     """
     from django.apps import apps
 
     from common.models import ACCESS_GLOBAL, Access, ScopedResource, WRITE_GLOBAL, WRITE_OBJECT, WRITE_SHARED
+    from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
 
     errors: list[Error] = []
     valid_read = {ACCESS_GLOBAL}
@@ -303,17 +332,24 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
                 Error(
                     f"{model.__name__}.access.write = {write!r} is not a known class.",
                     hint=f"Legal write values: None, WRITE_SHARED ({WRITE_SHARED!r}), "
-                    f"WRITE_GLOBAL ({WRITE_GLOBAL!r}), WRITE_OBJECT ({WRITE_OBJECT!r}, reserved).",
+                    f"WRITE_GLOBAL ({WRITE_GLOBAL!r}), WRITE_OBJECT ({WRITE_OBJECT!r}).",
                     obj=model,
                     id="permissions.E007",
                 )
             )
-        elif write == WRITE_OBJECT:
+        elif (
+            write == WRITE_OBJECT
+            # A proxy (``clients.ClientDocument`` over ``common.Attachment``)
+            # inherits its parent's declaration and shares its rows, so it is
+            # object-grantable exactly when the model holding the rows is.
+            and content_type_key((model._meta.concrete_model or model)._meta) not in OBJECT_GRANT_WHITELIST
+        ):
             errors.append(
                 Error(
-                    f"{model.__name__}.access.write = {write!r} is reserved.",
-                    hint="The object-grant arm (WRITE_OBJECT) turns on with the clients "
-                    "cutover (ADR 0001 §2.5) — do not declare it before then.",
+                    f"{model.__name__}.access.write = {write!r} but it is not object-grantable.",
+                    hint="WRITE_OBJECT authorizes only rows named by an object grant, and a "
+                    "grant is refused for a model outside OBJECT_GRANT_WHITELIST "
+                    "(common/permissions/config.py) — add the model there first.",
                     obj=model,
                     id="permissions.E007",
                 )

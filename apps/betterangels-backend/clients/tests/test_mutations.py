@@ -987,6 +987,12 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
+        # 9 rather than 8: deleting an object-grantable row now resolves its
+        # content type once so the arm's generic ``scope_object`` grants can be
+        # cleared (ADR 0001 §2.5, finding F3) — a grant must not outlive the row
+        # it names.  The lookup is one extra query, not a per-grant one.
+        # 10 rather than 9: the write-gate fetch replaces the guardian prefilter.
+        # Fewer queries: the per-model guardian permission tables are dropped, so the delete no longer cascades into them (ADR 0001 §2.5, step 5).
         expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_client_document_fixture(client_document_id)
@@ -1095,7 +1101,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
-            expected_query_count = 39
+            # 13 rather than 39: no per-attachment guardian rows are written (ADR 0005).
+            expected_query_count = 13
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],
@@ -1132,7 +1139,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with patch("common.services.file_upload.validate_upload_token", return_value=False):
-            expected_query_count = 10
+            # One lookup fewer now that the upload path resolves no permission group.
+            expected_query_count = 9
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],

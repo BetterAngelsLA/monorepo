@@ -403,18 +403,19 @@ def _dedup_reservation_clients(sources: list[ClientProfile], target: ClientProfi
 
 @lru_cache(maxsize=1)
 def _get_guardian_perm_models() -> list[type[models.Model]]:
-    """Return guardian permission models, or empty list if guardian not installed."""
-    from django.conf import settings
+    """Always empty now: django-guardian is gone (ADR 0001 §2.5).
 
-    if "guardian" not in settings.INSTALLED_APPS:
-        return []
-    try:
-        from accounts.models import BigGroupObjectPermission, BigUserObjectPermission
+    This used to return the ``Big*`` permission models so a merge could re-point
+    their rows.  Guardian is no longer installed, so the helper returns nothing and
+    the three callers below become no-ops — which is why it is kept rather than
+    deleted: the surrounding merge/undo bookkeeping still runs, and ripping the
+    branches out is a separate change from removing the dependency.
 
-        return [BigUserObjectPermission, BigGroupObjectPermission]
-    except ImportError:
-        logger.warning("Guardian permission models not importable — skipping permission merge.")
-        return []
+    The two tables survive with their schema but hold nothing: nothing routes
+    per-record permissions any more.  Delete these branches (and this helper) when
+    the tables themselves are dropped.
+    """
+    return []
 
 
 def _append_guardian_permission_changes(

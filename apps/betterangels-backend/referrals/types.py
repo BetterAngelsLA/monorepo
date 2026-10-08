@@ -42,6 +42,13 @@ class CreateReferralInput:
     client_profile: ID
     shelter: ID
     notes: Optional[str]
+    # The acting org (RFC 0003): authority is ``require_can`` at this org and the
+    # created row's ``organization``.  REQUIRED, and unavoidably so: legacy
+    # referrals carried CHANGE/DELETE as per-record guardian rows and never a
+    # ``CASEWORKER`` ``PermissionGroup``, so there is no legacy arm left to fall
+    # back on for a build that omits this field — unlike tasks/notes, no tolerant
+    # middle phase exists.  Gated on app adoption; see the PR checklist.
+    organization_id: ID
 
 
 @strawberry_django.input(models.Referral, partial=True)

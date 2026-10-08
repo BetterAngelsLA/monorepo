@@ -6,7 +6,6 @@ from clients.services.client_document import (
     create_presigned_uploads,
     resolve_upload,
 )
-from common.models import Attachment
 from common.services.file_upload import UploadRequest, UploadConfirmation
 from common.services.exceptions import InvalidUploadTokenError
 from common.services.types import AuthorizedPresignedUploadBatch, AuthorizedPresignedUpload
@@ -97,19 +96,12 @@ class ResolveUploadTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
         self.client_profile: Any = baker.make("clients.ClientProfile")
-        self.permission_group = MagicMock()
-        self.permission_group = MagicMock()
 
-    @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.resolve_permission_group")
     @patch("common.services.file_upload.create_attachment_records")
     def test_delegates_to_generic_with_correct_params(
         self,
         mock_generic: MagicMock,
-        mock_perm_group: MagicMock,
-        mock_assign: MagicMock,
     ) -> None:
-        mock_perm_group.return_value = self.permission_group
         attachment = MagicMock()
         mock_generic.return_value = [attachment]
 
@@ -136,64 +128,11 @@ class ResolveUploadTest(TestCase):
             config=CLIENT_DOCUMENT_CONFIG,
         )
 
-    @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.resolve_permission_group")
-    @patch("common.services.file_upload.create_attachment_records")
-    def test_assigns_permissions_per_attachment(
-        self,
-        mock_generic: MagicMock,
-        mock_perm_group: MagicMock,
-        mock_assign: MagicMock,
-    ) -> None:
-        mock_perm_group.return_value = self.permission_group
-        att1 = MagicMock()
-        att2 = MagicMock()
-        mock_generic.return_value = [att1, att2]
-
-        result = resolve_upload(
-            user=self.user,
-            client_profile=self.client_profile,
-            documents=[
-                UploadConfirmation(
-                    presigned_key="media/attachments/a.pdf",
-                    upload_token="tok-1",
-                    filename="a.pdf",
-                    mime_type="application/pdf",
-                    namespace="OTHER_CLIENT_DOCUMENT",
-                ),
-                UploadConfirmation(
-                    presigned_key="media/attachments/b.pdf",
-                    upload_token="tok-2",
-                    filename="b.pdf",
-                    mime_type="application/pdf",
-                    namespace="OTHER_CLIENT_DOCUMENT",
-                ),
-            ],
-        )
-
-        self.assertEqual(mock_assign.call_count, 2)
-        mock_assign.assert_any_call(
-            self.permission_group,
-            att1,
-            [Attachment.perms.DELETE, Attachment.perms.CHANGE],
-        )
-        mock_assign.assert_any_call(
-            self.permission_group,
-            att2,
-            [Attachment.perms.DELETE, Attachment.perms.CHANGE],
-        )
-        self.assertEqual(result, [att1, att2])
-
-    @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.resolve_permission_group")
     @patch("common.services.file_upload.create_attachment_records")
     def test_returns_attachments_from_generic(
         self,
         mock_generic: MagicMock,
-        mock_perm_group: MagicMock,
-        mock_assign: MagicMock,
     ) -> None:
-        mock_perm_group.return_value = self.permission_group
         attachment = MagicMock()
         mock_generic.return_value = [attachment]
 
@@ -213,16 +152,11 @@ class ResolveUploadTest(TestCase):
 
         self.assertEqual(result, [attachment])
 
-    @patch("clients.services.client_document.assign_object_permissions")
-    @patch("clients.services.client_document.resolve_permission_group")
     @patch("common.services.file_upload.create_attachment_records")
     def test_raises_on_generic_failure(
         self,
         mock_generic: MagicMock,
-        mock_perm_group: MagicMock,
-        mock_assign: MagicMock,
     ) -> None:
-        mock_perm_group.return_value = self.permission_group
         mock_generic.side_effect = InvalidUploadTokenError("Invalid or expired upload signature for 'doc.pdf'")
 
         with self.assertRaisesMessage(InvalidUploadTokenError, "Invalid or expired upload signature for 'doc.pdf'"):
@@ -239,5 +173,3 @@ class ResolveUploadTest(TestCase):
                     )
                 ],
             )
-
-        mock_assign.assert_not_called()

@@ -318,6 +318,104 @@ def invalidate_scope_cache(user: "User") -> None:
     user.__dict__.pop("_perm_org_ids", None)
 
 
+def object_grant_q(
+    user: "User", perm: str, model: "type[Model]", *, ancestors: Optional[list[tuple["type[Model]", str]]] = None
+) -> "Q":
+    """The per-record arm: rows *user* holds an object ``Grant`` for (ADR 0001 §2.5).
+
+    An object grant names the record itself — ``Grant(principal_user, role,
+    scope_object=<row>)`` — so it is the only reach that can authorize a row
+    whose organization cannot be derived (a platform-shared model, or a
+    polymorphic row with no org path at all).  User-principal only: an
+    org-principal object grant is refused at write time (``Grant.clean``) and
+    deploy time (``permissions.E006``), because "every current *and future*
+    member of org B may edit this record" is the group-held per-record authority
+    this model replaced.
+
+    ``ancestors`` extends the arm to grants on rows *above* ``model`` in the
+    ``org_via`` graph — a grant on a Shelter covers the beds, rooms and
+    reservations under it — because each parent hop is single-valued, so a
+    descendant has exactly one ancestor of each kind.  Each ancestor is matched
+    through the hop path that reaches it, so a grant on a *different* shelter's
+    bed never leaks.
+
+    Returned as a ``Q`` so callers compose it with the org filter in ONE
+    ``filter()``: ORing querysets needs a UNION and loses the chainability the
+    selectors depend on.
+    """
+    from accounts.models import Grant
+    from django.contrib.contenttypes.models import ContentType
+
+    roles = _roles_carrying_perm(perm)
+    ct = ContentType.objects.get_for_model(model)
+
+    if ancestors is None:
+        ancestors = object_grant_ancestors(model)
+
+    direct = Q(
+        pk__in=Grant.objects.filter(
+            principal_user=user,
+            role__in=Subquery(roles),
+            scope_org__isnull=True,
+            scope_object_type=ct,
+        ).values("scope_object_id")
+    )
+
+    for ancestor, hops in ancestors:
+        ancestor_ct = ContentType.objects.get_for_model(ancestor)
+        reachable = Grant.objects.filter(
+            principal_user=user,
+            role__in=Subquery(roles),
+            scope_org__isnull=True,
+            scope_object_type=ancestor_ct,
+        ).values("scope_object_id")
+        direct |= Q(**{f"{hops}__in": Subquery(reachable)})
+    return direct
+
+
+def object_grant_ancestors(model: "type[Model]") -> list[tuple["type[Model]", str]]:
+    """Object-grantable ancestors of ``model``, each with every hop path reaching it.
+
+    Walks ``org_via`` upward collecting object-grantable models, then terminates
+    each path at the *ancestor's pk* — a grant stores the granted row's pk in
+    ``scope_object_id``, so ``bed__shelter__id`` is what matches a grant on the
+    shelter.  ``Reservation`` is the case that forces the multi-path form: it
+    reaches a Shelter through ``bed`` **or** ``room``, and a single-hop
+    implementation would silently miss every reservation made through a room.
+
+    Only models on ``OBJECT_GRANT_WHITELIST`` can carry object grants at all
+    (``Grant.clean`` / ``permissions.E003``), so only those are emitted — one
+    source, so the arm and the write gate cannot drift.
+
+    Empty for an ``org_via = None`` model (``Attachment``): it has no ancestors,
+    which is why its arm is direct-grant-only.
+    """
+    from common.models import ScopedResource
+    from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
+
+    reached: dict[type[Model], set[str]] = {}
+
+    def walk(current: "type[Model]", prefix: str) -> None:
+        if not issubclass(current, ScopedResource) or current.org_via is None:
+            return
+        for hop in current.org_via:
+            field = current._meta.get_field(hop)
+            target = field.related_model
+            if target is None:
+                continue
+            path = hop if not prefix else f"{prefix}__{hop}"
+            if content_type_key(target) in OBJECT_GRANT_WHITELIST:
+                reached.setdefault(target, set()).add(f"{path}__{target._meta.pk.name}")
+            walk(target, path)
+
+    walk(model, "")
+    return [
+        (ancestor, path)
+        for ancestor, paths in sorted(reached.items(), key=lambda item: item[0].__name__)
+        for path in sorted(paths)
+    ]
+
+
 def visible(qs: "QuerySet[T]", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet[T]":
     """The rows of *qs* on which *user* may exercise *perm*.
 
@@ -329,10 +427,16 @@ def visible(qs: "QuerySet[T]", user: "User", perm: str, *, in_org: str | None = 
     * org-scoped model — rows whose org is in *user*'s scopes.
     * model not declared ``ScopedResource`` — fails closed (no rows).
 
+    Object grants (:func:`object_grant_q`) are ORed on top — but only for a model
+    that opted into the arm (``access.write = WRITE_OBJECT``) or that has an
+    object-grantable ancestor.  Every other model keeps its exact pre-arm query:
+    the arm is a per-record addition, not a universal extra subquery, and adding
+    it everywhere would both widen reads and cost a query on every list.
+
     *in_org* confines the view to one organization, and only for finite scopes —
     a global holder is never org-confined by a stale header (ADR 0001 §2.4).
     """
-    from common.models import ScopedResource
+    from common.models import ScopedResource, WRITE_OBJECT
     from common.permissions.access import is_global_class
 
     if not issubclass(qs.model, ScopedResource):
@@ -346,14 +450,25 @@ def visible(qs: "QuerySet[T]", user: "User", perm: str, *, in_org: str | None = 
         # scoped holder of the very same perm) never widens the rows.
         return qs if s is ALL else qs.none()
 
+    ancestors = object_grant_ancestors(qs.model)
+    arm = (
+        object_grant_q(user, perm, qs.model, ancestors=ancestors)
+        if qs.model.access.write == WRITE_OBJECT or ancestors
+        else None
+    )
+
     if s is not ALL:
         if not paths:
-            # platform-shared: perm held anywhere (finite s) ⇒ all rows
-            qs = qs if s.exists() else qs.none()
+            # platform-shared: perm held anywhere (finite s) ⇒ all rows.  An
+            # arm model adds the rows a grant names on top of that all-or-none.
+            base = qs if s.exists() else qs.none()
+            qs = base | qs.filter(arm) if arm is not None else base
+        elif arm is not None:
+            qs = qs.filter(reduce(or_, (Q(**{f"{p}__in": s}) for p in paths)) | arm)
         elif s:
             qs = qs.filter(reduce(or_, (Q(**{f"{p}__in": s}) for p in paths)))
         else:
-            qs = qs.none()
+            qs = qs.filter(arm) if arm is not None else qs.none()
 
     if in_org is not None and s is not ALL and paths:
         qs = qs.filter(reduce(or_, (Q(**{p: in_org}) for p in paths)))
@@ -367,23 +482,22 @@ def writable(qs: "QuerySet[T]", user: "User", perm: str) -> "QuerySet[T]":
     chosen independently of read scope).  Mutation gates fetch through this
     instead of fetching unfiltered and checking ``can_obj`` afterwards: the
     fetch itself is the gate (a forbidden row is simply unfetchable), and one
-    query does the work of two.  The org arm reuses :func:`visible` *with the
-    write perm* — literally the predicate ``can_obj`` resolves for a row.
+    query does the work of two.
 
     Classes (kept in lockstep with :func:`can_obj`, which delegates here):
 
     * **GLOBAL** (``access.write = WRITE_GLOBAL``) — all rows for the global
-      tier, none for anyone else.  Org-anchored models route through
-      ``visible`` (which reads the same declaration); platform-shared ones land
-      on the fail-closed default.
+      tier, none for anyone else.
     * **ORG** (org-anchored, ``org_via`` not ``None``) — ``visible(qs, …)``.
-    * **SHARED** (``access.write = WRITE_SHARED``) — all rows iff the user
-      holds *perm* anywhere, none otherwise.
-    * **OBJECT** (``access.write = WRITE_OBJECT``) — no rows: the class stays
-      reserved until the object arm wires grants; E007 refuses the declaration,
-      and this branch is defense in depth.
-    * **Fail-closed default** — all rows only for the global tier (``scopes``
-      is ALL).
+    * **SHARED** (``access.write = WRITE_SHARED``) — all rows iff the user holds
+      *perm* anywhere, none otherwise.
+    * **OBJECT** (``access.write = WRITE_OBJECT``) — the rows a user-principal
+      object ``Grant`` names, plus everything for the global tier.  The arm for
+      a row whose organization cannot be derived (a platform-shared or
+      polymorphic model), where org reach would be meaningless or
+      over-permissive.  Declaring it requires ``OBJECT_GRANT_WHITELIST``
+      (``permissions.E007``).
+    * **Fail-closed default** — all rows only for the global tier.
     """
     from common.models import ScopedResource, WRITE_OBJECT, WRITE_SHARED
 
@@ -391,7 +505,9 @@ def writable(qs: "QuerySet[T]", user: "User", perm: str) -> "QuerySet[T]":
     if not issubclass(model, ScopedResource):
         return qs.none()
     if model.access.write == WRITE_OBJECT:
-        return qs.none()
+        if scopes(user, perm) is ALL:
+            return qs
+        return qs.filter(object_grant_q(user, perm, model))
     if model.org_via is not None:
         return visible(qs, user, perm)
     if model.access.write == WRITE_SHARED:

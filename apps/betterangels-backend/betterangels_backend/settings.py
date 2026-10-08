@@ -149,7 +149,6 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_ckeditor_5",
     "django_structlog",
-    "guardian",
     "model_clone",
     "places",
     "post_office",
@@ -232,7 +231,6 @@ TEMPLATES = [
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "guardian.backends.ObjectPermissionBackend",
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
@@ -451,12 +449,11 @@ INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 # via its base_url_setting field.
 SHELTER_WEB_BASE_URL = env("SHELTER_WEB_BASE_URL", default="http://localhost:4200")
 
-# Django Guardian
-# https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model
-# https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
-ANONYMOUS_USER_NAME = "anonymoususer"
-GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
-GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
+# django-guardian is gone (ADR 0001 §2.5).  Its two generic-pointer tables survive
+# as plain models in ``accounts.models`` so no column changes, but nothing routes
+# per-record permissions any more: the grant model is the only authority.  The
+# ``GUARDIAN_*_OBJ_PERMS_MODEL`` routing and ``ANONYMOUS_USER_NAME`` went with the
+# package, and ``anonymoususer`` was only ever guardian's own bookkeeping row.
 
 # Google Maps
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")

@@ -11,18 +11,6 @@ When the condition fails, the following can be returned (following this priority
 directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
 """
-Will check if the user has any/all permissions for the resolved value of this field before returning it.
-
-When the condition fails, the following can be returned (following this priority):
-1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
-2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
-3) An empty list in case the field is a list (e.g. `[String]!`)
-4) An empty `Connection` in case the return type is a relay connection
-2) Otherwise, an error will be raised
-"""
-directive @permissionedQuerySet(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
-
-"""
 Will check if the user has any/all permissions to resolve this.
 
 When the condition fails, the following can be returned (following this priority):
@@ -677,6 +665,7 @@ input CreateReferralInput {
   clientProfile: ID!
   shelter: ID!
   notes: String
+  organizationId: ID!
 }
 
 union CreateReferralPayload = ReferralType | OperationInfo
@@ -781,7 +770,7 @@ input CreateTaskInput {
   summary: String!
   teamId: ID
   status: TaskStatusEnum
-  organizationId: ID
+  organizationId: ID!
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
@@ -1538,11 +1527,10 @@ type Mutation {
   createSocialMediaProfile(data: SocialMediaProfileInput!): CreateSocialMediaProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_socialmediaprofile"}], any: true)
   updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "change_socialmediaprofile"}], any: true)
   deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "delete_socialmediaprofile"}], any: true)
-  updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "change_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
-  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
+  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload!
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true) @deprecated(reason: "Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.")
   deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
@@ -1551,6 +1539,7 @@ type Mutation {
   resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
+  updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload!
   hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
   createHmisClientProfile(data: CreateHmisClientProfileInput!): CreateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
@@ -1597,7 +1586,7 @@ type Mutation {
   updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload!
   deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload!
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
-  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
+  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload!
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
 }
 

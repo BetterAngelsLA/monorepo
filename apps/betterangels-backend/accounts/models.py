@@ -5,14 +5,15 @@ from accounts.managers import UserManager
 from common.models import BaseModel
 from django.contrib.auth.models import AbstractBaseUser, Group, Permission, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F, Q
+from django.utils.translation import gettext_lazy as _
 from django_choices_field import TextChoicesField
-from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from strawberry_django.descriptors import model_property
 
@@ -95,28 +96,63 @@ class ExtendedOrganizationInvitation(OrganizationInvitation):
     )
 
 
-class BigGroupObjectPermission(GroupObjectPermissionAbstract):
-    # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model
-    id: models.BigAutoField = models.BigAutoField(editable=False, unique=True, primary_key=True)
+class LegacyObjectPermissionBase(models.Model):
+    """The generic-pointer columns django-guardian's abstract models defined.
 
-    class Meta(GroupObjectPermissionAbstract.Meta):
+    Reproduced here, rather than inherited from ``guardian.models``, so the
+    package can be removed from ``INSTALLED_APPS`` without touching these two
+    tables: the fields, ``db_table`` and column names are byte-for-byte what the
+    original ``accounts.0001_initial`` created, so Django's autodetector sees no
+    schema change (confirmed by ``makemigrations --check``).
+
+    The behaviour guardian's base classes added — ``save()`` validating that the
+    permission's content type matches the object, and the permission-aware
+    manager — is deliberately not reproduced.  These tables are being retired:
+    the grant model is the authority (ADR 0001 §2.5), and the only remaining
+    writer is the client-merge path, which moves rows with plain ``filter()`` /
+    ``update()`` and needs none of it.
+    """
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_pk = models.CharField(_("object ID"), max_length=255)
+    content_object = GenericForeignKey(fk_field="object_pk")
+
+    class Meta:
+        abstract = True
+        # Guardian's ``BaseGenericObjectPermission.Meta.indexes``.
+        indexes = [models.Index(fields=["content_type", "object_pk"])]
+
+
+class BigGroupObjectPermission(LegacyObjectPermissionBase):
+    """Group-held object permission row (legacy guardian table)."""
+
+    id: models.BigAutoField = models.BigAutoField(editable=False, unique=True, primary_key=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
+
+    class Meta:
         abstract = False
+        # Guardian's ``GroupObjectPermissionAbstract.Meta``.
+        unique_together = ["group", "permission", "object_pk"]
         indexes = [
-            *GroupObjectPermissionAbstract.Meta.indexes,
-            # TODO: Check if this field order is optimal
+            *LegacyObjectPermissionBase.Meta.indexes,
             models.Index(fields=["content_type", "object_pk", "group"]),
         ]
 
 
-class BigUserObjectPermission(UserObjectPermissionAbstract):
-    # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
-    id: models.BigAutoField = models.BigAutoField(editable=False, unique=True, primary_key=True)
+class BigUserObjectPermission(LegacyObjectPermissionBase):
+    """User-held object permission row (legacy guardian table)."""
 
-    class Meta(UserObjectPermissionAbstract.Meta):
+    id: models.BigAutoField = models.BigAutoField(editable=False, unique=True, primary_key=True)
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
+    user = models.ForeignKey("accounts.User", on_delete=models.CASCADE)
+
+    class Meta:
         abstract = False
+        # Guardian's ``UserObjectPermissionAbstract.Meta``.
+        unique_together = ["user", "permission", "object_pk"]
         indexes = [
-            *UserObjectPermissionAbstract.Meta.indexes,
-            # TODO: Check if this field order is optimal
+            *LegacyObjectPermissionBase.Meta.indexes,
             models.Index(fields=["content_type", "object_pk", "user"]),
         ]
 
@@ -150,12 +186,15 @@ class PermissionGroup(Group):
     """An ``auth.Group`` scoped to one organization and one role.
 
     It *is* the group rather than pointing at one, so the group cannot outlive
-    it.  That matters because object-level permissions are assigned to the group
-    (:func:`common.permissions.gates.assign_object_permissions`) and
-    ``BigGroupObjectPermission`` cascades from it — an orphaned group would keep
-    granting them with no row left to revoke through.  Inheritance makes the
-    teardown a cascade Django's own collector performs, on a direct delete, a
-    queryset delete and an organization cascade alike.
+    it.  That matters for the legacy ``BigGroupObjectPermission`` rows, which
+    cascade from it — an orphaned group would keep holding them with no row left
+    to revoke through.  Inheritance makes the teardown a cascade Django's own
+    collector performs, on a direct delete, a queryset delete and an organization
+    cascade alike.
+
+    Those rows are no longer written by anything (django-guardian is gone, and the
+    grant model is the authority), but the cascade property is what retires any
+    that remain, so it is kept and tested.
 
     ``name`` is the group's, and is the unique key built by :meth:`group_name`.
     The human role label is :attr:`label`.

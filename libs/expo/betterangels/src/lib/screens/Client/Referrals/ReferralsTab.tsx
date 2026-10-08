@@ -7,7 +7,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { useSnackbar } from '../../../hooks';
+import { useActiveOrgId, useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { pagePaddingHorizontal } from '../../../static';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
@@ -36,6 +36,7 @@ export function ReferralsTab({ client }: TProps) {
   );
 
   const [createReferral] = useMutation(CreateReferralDocument);
+  const activeOrgId = useActiveOrgId();
 
   if (!clientId) {
     throw new Error('Something went wrong. Please try again.');
@@ -50,12 +51,24 @@ export function ReferralsTab({ client }: TProps) {
     closeForm: () => void,
   ) => {
     try {
+      // The payload org is required (RFC 0003): the server authorizes
+      // ``referrals.add_referral`` at it and stamps the row's organization.
+      // Skip rather than send a request the backend would refuse.
+      if (!activeOrgId) {
+        showSnackbar({
+          message: 'Select an organization before creating a referral.',
+          type: 'error',
+        });
+        return;
+      }
+
       const result = await createReferral({
         variables: {
           data: {
             clientProfile: clientId,
             shelter: shelterId,
             notes,
+            organizationId: activeOrgId,
           },
         },
       });

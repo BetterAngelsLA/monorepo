@@ -10,10 +10,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.db import models
-from django.db.models import ForeignKey
 from django.db.models.functions import Lower
 from django_choices_field import TextChoicesField
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -41,8 +39,11 @@ WRITE_SHARED = "shared"
 WRITE_OBJECT = "object"
 """Object-grant write class: only an object ``Grant`` (or the global tier) may act.
 
-Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
-``permissions.E007`` refuses it until then.
+The arm for a row whose organization cannot be derived — a platform-shared or
+polymorphic model.  ``Attachment`` declares it: attachments are polymorphic over
+``content_object`` with no org column, so no org path exists and a per-record
+grant is the only reach that can authorize one.  Declaring it requires the model
+to be in ``OBJECT_GRANT_WHITELIST`` (``permissions.E007``).
 """
 
 ACCESS_GLOBAL = "global"
@@ -108,11 +109,19 @@ class ScopedResource(models.Model):
                       scope for every organization it reaches
     * ``None``          — platform-shared; deliberately unscoped
 
+    ``own_org_or`` adds the row's *own* ``organization`` FK as a further reach
+    path alongside those hops — the "own org **or** via X" shape, which
+    ``org_via`` alone cannot express (it is either ``()`` or a hop tuple, never
+    both).  A model whose rows can be NULL in the own-org FK *and* every hop
+    matches no org at all: those rows answer to the global tier only, never to
+    every org.
+
     Object-grant ancestors are derived from the same graph, so this one
     declaration drives both the org filter and the object-grant cascade.
     """
 
     org_via: ClassVar[tuple[str, ...] | None] = ()
+    own_org_or: ClassVar[tuple[str, ...]] = ()
     _org_paths: ClassVar[tuple[str, ...] | None] = None
 
     access: ClassVar[Access] = Access()
@@ -182,24 +191,40 @@ class ScopedResource(models.Model):
             for sub in target.org_paths():
                 yield f"{hop}__{sub}"
 
+        # ``own_org_or`` — the row's own org is an ADDITIONAL reach alongside the
+        # hops above, which is what makes "own org or via X" expressible.  The
+        # own FK is nullable on the models that need this, so this path simply
+        # matches nothing for a NULL row rather than widening it.
+        if cls.own_org_or:
+            field = cls._meta.get_field("organization")
+            if not (field.many_to_one or field.one_to_one):
+                raise TypeError(f"{cls.__name__}.own_org_or requires a single-valued 'organization' FK.")
+            yield f"{field.name}_id"
 
-class Attachment(BaseModel):
+
+class Attachment(ScopedResource, BaseModel):
+    """A file attached to any model instance (polymorphic ``content_object``).
+
+    ``org_via = None`` — platform-shared reach: an attachment has no org column
+    and its ``GenericForeignKey`` parent is inexpressible as a single-valued org
+    path, so there is no org reach to scope a row by.
+
+    ``access.write = WRITE_SHARED``, deliberately not ``WRITE_OBJECT``.  Object
+    grants are person-granular ("this user may edit this record"); the authority
+    client documents always had is org-granular ("the creating org may edit this
+    document"), and per-record grants cannot express that without becoming the
+    forbidden org-principal shape (ADR 0001 §2.5).  Document authority mirrors
+    the parent ``ClientProfile``, which is what the API already does — the upload
+    mutations gate on ``ClientProfile.perms.CHANGE`` and the document list is a
+    field on ``ClientProfileType`` under its ``VIEW``.  See
+    ``docs/adr/0005-client-document-authority.md``.
+
+    Read authority is likewise not this model's reach — see ``clients.schema``,
+    which scopes the document list through the parent profile.
     """
-    Represents an attachment linked to any model instance within the app.
-    Attachments are organized by namespaces to allow for application-specific
-    categorization and by file types for easier management and filtering.
 
-
-    Attributes:
-        file: Stores the file with a unique path.
-        attachment_type: Enumerated type categorizing the file (e.g., IMAGE, AUDIO).
-        original_filename: The original name of the file as uploaded.
-        content_type: Links to the ContentType for polymorphic relations.
-        object_id: The ID of the associated model instance.
-        content_object: Generic relation to the associated model instance.
-        namespace: Optional field for further categorization within specific contexts.
-        uploaded_by: Reference to the User who uploaded the file.
-    """
+    org_via = None
+    access = Access(write=WRITE_SHARED)
 
     file = models.FileField(upload_to=get_unique_file_path)
     attachment_type = TextChoicesField(choices_enum=AttachmentType)
@@ -472,18 +497,3 @@ class PhoneNumber(models.Model):
             ).update(is_primary=False)
 
         super().save(*args, **kwargs)
-
-
-# Permissions
-class AttachmentUserObjectPermission(UserObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(
-        Attachment,
-        on_delete=models.CASCADE,
-    )
-
-
-class AttachmentGroupObjectPermission(GroupObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(
-        Attachment,
-        on_delete=models.CASCADE,
-    )

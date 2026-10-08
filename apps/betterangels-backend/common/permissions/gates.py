@@ -8,13 +8,11 @@ One message per refusal shape, so every surface denies identically.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import strawberry
-from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Model
-from guardian.shortcuts import assign_perm
 from strawberry_django.auth.utils import get_current_user
 
 from common.errors import UnauthenticatedGQLError
@@ -108,18 +106,3 @@ def get_writable_or_deny(
     if obj is None:
         raise PermissionDenied(message)
     return obj
-
-
-def assign_object_permissions(
-    group: Group,
-    obj: Model,
-    permissions: Sequence[str],
-) -> None:
-    """Assign a list of object-level permissions on ``obj`` to ``group``.
-
-    This is a thin wrapper around ``guardian.shortcuts.assign_perm`` that
-    eliminates the repeated ``for perm in perms: assign_perm(…)`` loop
-    scattered across mutations and services.
-    """
-    for perm in permissions:
-        assign_perm(perm, group, obj)

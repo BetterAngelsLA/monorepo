@@ -18,7 +18,11 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 34
+        # 15 rather than 34: note creation no longer writes per-record guardian
+        # rows (ADR 0001 §2.5 rule 4 — no grants at record-creation time).  The
+        # removed writes were three INSERTs plus their permission/content-type
+        # lookups, repeated per related row.
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -431,7 +435,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertIn(service_request, getattr(note, expected_type).all())
 
     def test_delete_note_mutation(self) -> None:
-        expected_query_count = 16
+        # Fewer queries: the per-model guardian permission tables are dropped, so the delete no longer cascades into them (ADR 0001 §2.5, step 5).
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_note_fixture(self.note["id"])
 
@@ -739,7 +744,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 40
+        # Fewer queries: the per-model guardian permission tables are dropped, so the delete no longer cascades into them (ADR 0001 §2.5, step 5).
+        expected_query_count = 36
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -812,7 +818,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 42
+        # Fewer queries: the per-model guardian permission tables are dropped, so the delete no longer cascades into them (ADR 0001 §2.5, step 5).
+        expected_query_count = 38
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 

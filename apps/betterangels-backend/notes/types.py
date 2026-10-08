@@ -183,7 +183,8 @@ def _perm_org_ids(info: Info, perm: str) -> Optional[list[int]]:
 def _can_edit_case(info: Info) -> Any:
     """Org-scoped edit flag: CHANGE where the caller's role holds it (RFC 0003 slice 2).
 
-    Replaces the guardian prefilter (``filter_for_user``) — the org-scoped arm
+    The org-scoped read arm (it replaced the guardian prefilter,
+    ``filter_for_user``, when the notes domain cut over) — the arm
     is the single authority; the object arm joins when the sharing edge ships.
     """
     org_ids = _perm_org_ids(info, NotePermissions.CHANGE)

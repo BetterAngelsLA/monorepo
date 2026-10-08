@@ -5,6 +5,8 @@ declaration errors a model can make: a multi-valued hop and a hop onto a model
 that does not declare ``ScopedResource``.
 """
 
+from typing import cast
+
 from common.models import ScopedResource
 from django.db import models
 from django.test import TestCase
@@ -71,3 +73,74 @@ class OrgPathsTestCase(TestCase):
 
         with self.assertRaises(TypeError):
             PointsAtThing.org_paths()
+
+
+class OwnOrgOrTestCase(TestCase):
+    """``own_org_or`` — the "own org **or** via X" reach (RFC 0003 §sub-decision 3).
+
+    ``org_via`` alone cannot express it: it is either ``()`` (the own FK) or a
+    hop tuple, never both.  Referral is the model that needs the union — a
+    referral reaches an organization through its own ``organization`` FK *or*
+    through the shelter it names.
+    """
+
+    def _model(self, name: str, **attrs: object) -> type[ScopedResource]:
+        """An abstract ``ScopedResource`` with *attrs*, isolated from the real app registry."""
+        meta, namespace = attrs.pop("Meta", None), dict(attrs)
+        namespace["__module__"] = __name__
+        namespace["Meta"] = meta or type("Meta", (), {"app_label": "accounts", "abstract": True})
+        return cast(type[ScopedResource], type(name, (ScopedResource,), namespace))
+
+    def test_own_org_or_adds_the_own_fk_to_the_hop_paths(self) -> None:
+        from organizations.models import Organization
+        from shelters.models import Shelter
+
+        Referralish = self._model(
+            "Referralish",
+            org_via=("shelter",),
+            own_org_or=("shelter",),
+            shelter=models.ForeignKey(Shelter, on_delete=models.CASCADE, null=True),
+            organization=models.ForeignKey(Organization, on_delete=models.CASCADE, null=True),
+        )
+        self.assertEqual(
+            set(Referralish.org_paths()),
+            {"organization_id", "shelter__organization_id"},
+        )
+
+    def test_own_org_or_is_not_pathed_when_unset(self) -> None:
+        from shelters.models import Shelter
+
+        HopOnly = self._model(
+            "HopOnly",
+            org_via=("shelter",),
+            shelter=models.ForeignKey(Shelter, on_delete=models.CASCADE, null=True),
+        )
+        self.assertEqual(HopOnly.org_paths(), ("shelter__organization_id",))
+
+    def test_own_org_or_without_an_organization_fk_raises(self) -> None:
+        from django.core.exceptions import FieldDoesNotExist
+        from shelters.models import Shelter
+
+        Mooch = self._model(
+            "Mooch",
+            org_via=("shelter",),
+            own_org_or=("shelter",),
+            shelter=models.ForeignKey(Shelter, on_delete=models.CASCADE, null=True),
+        )
+        # Resolution itself refuses; ``permissions.E004`` is the deploy-time
+        # backstop for the same condition, so a deploy never reaches this.
+        with self.assertRaises(FieldDoesNotExist):
+            Mooch.org_paths()
+
+    def test_e004_flags_own_org_or_without_an_organization_fk(self) -> None:
+        from common.permissions.checks import _org_via_errors_for_model
+        from shelters.models import Shelter
+
+        Mooch = self._model(
+            "Mooch",
+            org_via=("shelter",),
+            own_org_or=("shelter",),
+            shelter=models.ForeignKey(Shelter, on_delete=models.CASCADE, null=True),
+        )
+        errors = _org_via_errors_for_model(Mooch)
+        self.assertTrue(any(error.id == "permissions.E004" for error in errors), errors)
