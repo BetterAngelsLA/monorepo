@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shelters', '0003_accessibilityevent_cityevent_demographicevent_and_more'),
+        ('shelters', '0004_accessibilityevent_cityevent_demographicevent_and_more'),
     ]
 
     operations = [
