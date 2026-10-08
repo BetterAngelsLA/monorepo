@@ -3,7 +3,7 @@
 import base64
 import json
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from types import SimpleNamespace
 from typing import Any
 from unittest import mock
@@ -32,6 +32,7 @@ from audit.tests.utils import audit_context, audit_log, clear_history_context
 from audit.types import AuditEventFilter
 from clients.models import ClientProfile
 from shelters.enums import (
+    DayOfWeekChoices,
     DemographicChoices,
     ExitPolicyChoices,
     MedicalNeedChoices,
@@ -47,6 +48,7 @@ from shelters.models import (
     Reservation,
     ReservationClient,
     Room,
+    Schedule,
     Shelter,
 )
 from test_utils.pghistory import backdate_event_rows
@@ -1516,3 +1518,57 @@ class ObjectAuditLogQueryBudgetTestCase(TestCase):
         outer = _outer_select(queries[0]["sql"])
         self.assertRegex(outer, r'pgh_created_at"?\s*>=')
         self.assertRegex(outer, r'actor_id"?\s*=')
+
+
+class ObjectAuditLogScheduleNettingTestCase(TestCase):
+    """Full-replacement schedule saves are netted to one UPDATE per slot (§13).
+
+    ``shelter_update`` replaces the schedule set wholesale (delete all, then
+    bulk-create), so a single time edit emits a ``.remove`` and an ``.add`` of
+    the same slot. The selector pairs them back up instead of rendering a
+    deletion and a creation the user never made.
+    """
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Scheduled Shelter")
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+
+    def _replace_schedules(self, *, start: time, end: time) -> None:
+        """The same delete-then-create shape ``shelter_update`` uses."""
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=start,
+                end_time=end,
+            )
+
+    def test_time_edit_is_one_update_event_not_a_remove_plus_add(self) -> None:
+        self._replace_schedules(start=time(10, 0), end=time(18, 0))
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual([event.action for event in actions[0].events], ["shelter.schedule.update"])
+        self.assertEqual([event.kind for event in actions[0].events], ["UPDATE"])
+
+        changes = actions[0].events[0].field_changes or {}
+        self.assertEqual(changes["start_time"], ["09:00:00", "10:00:00"])
+        self.assertEqual(changes["end_time"], ["17:00:00", "18:00:00"])
+
+    def test_unchanged_slot_is_not_reported_as_a_change(self) -> None:
+        self._replace_schedules(start=time(9, 0), end=time(17, 0))
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].events, [])
+        self.assertEqual(actions[0].field_changes, {})
