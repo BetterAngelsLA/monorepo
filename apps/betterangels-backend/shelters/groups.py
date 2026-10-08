@@ -3,7 +3,6 @@ from accounts.permissions import OrganizationAdminPermissions
 from clients.models import ClientProfile
 from common.models import Address
 from common.permissions.config import RoleDef, TemplateConfig
-
 from shelters.models.availability import ShelterAvailability
 from shelters.models.lookups import (
     SPA,

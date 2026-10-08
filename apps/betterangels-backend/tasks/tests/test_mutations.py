@@ -1,11 +1,12 @@
 from unittest.mock import ANY
 
 import time_machine
+from django.test import ignore_warnings
+from model_bakery import baker
+
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import ignore_warnings
 from hmis.models import HmisNote
-from model_bakery import baker
 from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task

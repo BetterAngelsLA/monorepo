@@ -14,8 +14,9 @@ from zoneinfo import ZoneInfo
 from django.db.models import Count, F, QuerySet
 from django.db.models.functions import TruncDate
 from django.utils import timezone
-from notes.models import Note
 from organizations.models import Organization
+
+from notes.models import Note
 
 from .calendar import report_calendar_time_zone
 

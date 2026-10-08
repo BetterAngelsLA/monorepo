@@ -2,13 +2,14 @@ from datetime import datetime
 from typing import Optional, cast
 
 import strawberry
-from common.graphql.types import FeatureControlData, FlagType, SampleType, SwitchType
 from strawberry.types import Info
 from waffle import (
     get_waffle_flag_model,
     get_waffle_sample_model,
     get_waffle_switch_model,
 )
+
+from common.graphql.types import FeatureControlData, FlagType, SampleType, SwitchType
 
 
 @strawberry.type

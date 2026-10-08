@@ -1,13 +1,13 @@
 import datetime
 from typing import Any, Optional, cast
 
+from model_bakery import baker
+from unittest_parametrize import ParametrizedTestCase, parametrize
+
 from accounts.models import Role
 from accounts.services import role_assign
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
-from model_bakery import baker
-from unittest_parametrize import ParametrizedTestCase, parametrize
-
 from shelters.enums import (
     DemographicChoices,
     PetChoices,

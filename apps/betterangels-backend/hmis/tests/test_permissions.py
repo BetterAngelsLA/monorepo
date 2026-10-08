@@ -2,9 +2,10 @@ from unittest import skip
 from unittest.mock import patch
 
 from django.test import override_settings
+from model_bakery import baker
+
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
-from model_bakery import baker
 
 
 @skip("not implemented")

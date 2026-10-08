@@ -3,10 +3,10 @@ import random
 import string
 from typing import Any
 
-from accounts.tests.baker_recipes import organization_recipe
 from model_bakery.recipe import Recipe, foreign_key, related, seq
 from places import Places
 
+from accounts.tests.baker_recipes import organization_recipe
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,

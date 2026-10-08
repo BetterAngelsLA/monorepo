@@ -1,8 +1,6 @@
 from typing import Any, Dict, cast
 from unittest.mock import patch
 
-from common.images import build_img_url
-from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.core.files.base import ContentFile
 from django.test import override_settings
@@ -26,6 +24,8 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from clients.models import ClientProfile
+from common.images import build_img_url
+from common.tests.utils import GraphQLBaseTestCase
 
 
 # TODO: This is a temporary solution while we refactor the client profile and tests.

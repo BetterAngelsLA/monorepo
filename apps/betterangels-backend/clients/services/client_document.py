@@ -1,5 +1,8 @@
 from typing import Iterable
 
+from django.conf import settings
+from django.db import transaction
+
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
@@ -9,12 +12,10 @@ from common.permissions.utils import assign_object_permissions
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,
-    UploadRequest,
     UploadConfirmation,
+    UploadRequest,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
-from django.conf import settings
-from django.db import transaction
 from notes.groups import CASEWORKER
 
 # TODO: upload_path="attachments" is too generic — it dates from before the

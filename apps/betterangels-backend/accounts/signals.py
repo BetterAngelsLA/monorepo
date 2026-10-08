@@ -101,7 +101,8 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
     Also assigns test-agent roles on local dev (safe to call repeatedly
     — ``member_add`` is idempotent).
     """
-    from accounts.services import member_add, reconcile_org_groups as reconcile
+    from accounts.services import member_add
+    from accounts.services import reconcile_org_groups as reconcile
     from notes.groups import CASEWORKER
     from shelters.groups import SHELTER_OPERATOR
 

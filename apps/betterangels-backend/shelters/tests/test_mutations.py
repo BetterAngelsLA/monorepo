@@ -1,11 +1,11 @@
 from typing import Any
 
-from accounts.models import Role, User
-from accounts.services import role_assign
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase
 
+from accounts.models import Role, User
+from accounts.services import role_assign
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 from shelters.models import SPA, City, ContactInfo, Service, ServiceCategory, Shelter
 from shelters.tests.utils import ShelterTestCase

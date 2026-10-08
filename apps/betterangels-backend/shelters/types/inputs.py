@@ -5,9 +5,9 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from common.graphql.types import NonBlankString, NonEmptyString, PhoneNumberScalar
 from strawberry import ID, UNSET, Maybe, auto
 
+from common.graphql.types import NonBlankString, NonEmptyString, PhoneNumberScalar
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,

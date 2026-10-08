@@ -6,8 +6,9 @@ from datetime import date, datetime
 from typing import Any
 
 from celery import Task, shared_task
-from common.celery import single_instance
 from django.utils import timezone
+
+from common.celery import single_instance
 
 from .models import ScheduledReport
 from .services import generate_report_data, period_for_due_instant, send_report_email

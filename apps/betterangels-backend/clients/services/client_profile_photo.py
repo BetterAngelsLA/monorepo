@@ -1,15 +1,16 @@
+from django.conf import settings
+
 from accounts.models import User
 from clients.models import ClientProfile
 from common.constants import DEFAULT_IMAGE_CONTENT_TYPES
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,
-    UploadRequest,
     UploadConfirmation,
+    UploadRequest,
     validate_upload_batch,
 )
 from common.services.types import AuthorizedPresignedUpload
-from django.conf import settings
 
 CLIENT_PROFILE_PHOTO_CONFIG = AttachmentUploadConfig(
     upload_path="client_profile_photos",

@@ -2,13 +2,13 @@ import datetime
 from unittest.mock import ANY, Mock, patch
 
 import waffle
-from accounts.tests.baker_recipes import organization_recipe
-from common.imgproxy import IMGPROXY_SWITCH
-from common.tests.utils import GraphQLBaseTestCase
 from django.test import override_settings
 from places import Places
 from waffle.testutils import override_switch
 
+from accounts.tests.baker_recipes import organization_recipe
+from common.imgproxy import IMGPROXY_SWITCH
+from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,

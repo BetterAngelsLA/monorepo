@@ -1,10 +1,11 @@
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from accounts.models import Organization
 from django.core.files.base import ContentFile
-from notes.admin import NoteResource
 from post_office import mail
+
+from accounts.models import Organization
+from notes.admin import NoteResource
 
 from .calendar import report_calendar_time_zone
 from .models import ScheduledReport
