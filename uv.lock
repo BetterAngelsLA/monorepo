@@ -1412,7 +1412,7 @@ dev = [
     { name = "types-openpyxl", specifier = ">=3.1.5.20260827,<4" },
     { name = "types-python-dateutil", specifier = ">=2.9.0.20260807,<3" },
     { name = "types-requests", specifier = ">=2.33.0.20260906,<3" },
-    { name = "unittest-parametrize", specifier = ">=1.6.0,<2" },
+    { name = "unittest-parametrize", specifier = ">=1.9.0,<2" },
     { name = "vcrpy", specifier = ">=8.1.0,<9" },
     { name = "virtualenv", specifier = ">=21.1.0,<22" },
 ]
@@ -2245,11 +2245,11 @@ wheels = [
 
 [[package]]
 name = "unittest-parametrize"
-version = "1.8.0"
+version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d0/5a/32bb766239d938f6030dd3920387dedc30b1c89aca01cb5281c3075bdf87/unittest_parametrize-1.8.0.tar.gz", hash = "sha256:90818ddeb28648e795eb53983f42d44e273b26ab03a1db49c27f6830ed419236", size = 15060, upload-time = "2025-09-09T11:04:26.317Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d7/10/1cd6a2afc49aca2a67076844bd2d0ed75bd28400a539250694dbdcb6303d/unittest_parametrize-1.9.0.tar.gz", hash = "sha256:bc3b644539decbe309f4d0bea5a42b9c3b98610f800c315169ca541a48a6d2e8", size = 10521, upload-time = "2026-09-16T20:32:56.37Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/62/193690ddc422c7af943b3f371ef34742dbb6a061e0b348e356399a52004d/unittest_parametrize-1.8.0-py3-none-any.whl", hash = "sha256:10a580aa04d13cf4f1c8e5e07be5694392b7ecef3b4d585bfc2bddce65bc3275", size = 9261, upload-time = "2025-09-09T11:04:25.025Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/40/a9437d31cf526a871f6c4545933785bae92624270ee0cf10d748ba6f59b3/unittest_parametrize-1.9.0-py3-none-any.whl", hash = "sha256:9c978e54972f88acda08350e875a69113eaead25b5f6e4bab2541572bb459d13", size = 10585, upload-time = "2026-09-16T20:32:54.984Z" },
 ]
 
 [[package]]
