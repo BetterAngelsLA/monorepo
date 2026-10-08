@@ -63,28 +63,12 @@ GATE_EXEMPT = {
     ("accounts.schema", "create_organization"): (
         "org creation itself — no org authority exists yet; eligibility lives in create_organization_service"
     ),
-    ("clients.schema", "delete_client_document"): (
-        "attachment-domain gate (PermissionedQuerySet) — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
-    ),
-    ("clients.schema", "update_client_document"): (
-        "attachment-domain gate — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
-    ),
-    ("clients.schema", "generate_client_document_uploads"): (
-        "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
-    ),
-    ("clients.schema", "resolve_client_document_uploads"): (
-        "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
-    ),
-    ("clients.schema", "create_client_profile_data_import"): (
-        "import surfaces remain legacy until a role carries the import-record perms"
-    ),
-    ("clients.schema", "import_client_profile"): (
-        "import surfaces remain legacy until a role carries the import-record perms"
-    ),
-    ("notes.schema", "create_note_data_import"): (
-        "import surfaces remain legacy until a role carries the import-record perms"
-    ),
-    ("notes.schema", "import_note"): ("import surfaces remain legacy until a role carries the import-record perms"),
+    # No entries for ``clients.schema`` / ``notes.schema`` / ``tasks.schema``:
+    # those modules are not in GRANT_GATED_MODULES on this branch, so an
+    # exemption for them would never be consulted — a reason that reads as
+    # coverage while providing none.  Their exemptions live with the branch that
+    # adds the module to GRANT_GATED_MODULES, which is the commit whose cutover
+    # makes them necessary.  ``test_exemptions_name_gated_modules`` enforces this.
 }
 
 #: Raw ``get_or_none(<Model>.objects.all(), …)`` fetches allowed inside a gated
@@ -92,14 +76,10 @@ GATE_EXEMPT = {
 #: fetch its write target through ``writable(``/``get_writable_or_deny(`` —
 #: the fetch is the gate (RFC 0002 §Precondition), one query instead of
 #: fetch-then-check, and unfetchable means unwritable.
-RAW_FETCH_EXEMPT = {
-    ("notes.schema", "sr = get_or_none(ServiceRequest.objects.all(), data.id)"): (
-        "SR row load is un-scoped by design; the owning note's writable filter is the gate"
-    ),
-    ("tasks.schema", "task = get_or_none(Task.objects.all(), data.id)"): (
-        "two-step can_obj gate converts to the write-scoped fetch in the follow-up PR"
-    ),
-}
+#:
+#: Same rule as ``GATE_EXEMPT``: only modules in ``GRANT_GATED_MODULES``, because
+#: this dict is only consulted for those.
+RAW_FETCH_EXEMPT: dict[tuple[str, str], str] = {}
 
 
 def _app_dir(app: str) -> Path:
@@ -282,6 +262,29 @@ def test_exemptions_name_real_mutations_and_carry_a_reason() -> None:
         assert reason, f"{module_name}.{name}: exemption needs a reason"
         resolvers = {resolver_name for resolver_name, _ in _mutation_resolvers(module_name.split(".", 1)[0])}
         assert name in resolvers, f"{module_name}.{name} is exempted but no such mutation exists any more"
+
+
+def test_exemptions_name_gated_modules() -> None:
+    """An exemption for an ungated module is dead config, not coverage.
+
+    ``GATE_EXEMPT`` and ``RAW_FETCH_EXEMPT`` are only *consulted* for modules in
+    ``GRANT_GATED_MODULES``.  An entry for any other module therefore reads as
+    "this mutation is accounted for" while the tripwire never looks at it — and
+    because a stale reason is invisible in a passing test run, it can outlive the
+    cutover it described (the removed ``clients.schema`` entries still cited
+    ``PermissionedQuerySet``, a transport long since deleted).  Keeping the two
+    lists in step is the fix; this is the tripwire for the tripwire.
+    """
+    for module_name, name in GATE_EXEMPT:
+        assert module_name in GRANT_GATED_MODULES, (
+            f"{module_name}.{name} is exempted but {module_name} is not in GRANT_GATED_MODULES, "
+            "so the exemption is never consulted.  Drop it, or add the module once its cutover lands."
+        )
+    for module_name, snippet in RAW_FETCH_EXEMPT:
+        assert module_name in GRANT_GATED_MODULES, (
+            f"{module_name} raw-fetch exemption ({snippet!r}) is never consulted — "
+            "drop it, or add the module once its cutover lands."
+        )
 
 
 @pytest.mark.parametrize("module_name", GRANT_GATED_MODULES)
