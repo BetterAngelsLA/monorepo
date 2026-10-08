@@ -8,7 +8,8 @@ walks the cut-over schema modules and fails unless each mutation:
 1. gates in its own body — ``require_can(`` / ``can_anywhere(`` / ``can_obj(`` /
    ``visible(`` or a scoped load (``permission=`` — ADR §2.6: the scoped
    ``*_get``/``*_queryset`` load *is* the write check), or a declarative
-   field's grant checker (``can_anywhere_checker`` / ``can_obj_checker``), or
+   field's grant checker (``can_anywhere_checker`` — ``GATE_MARKERS`` below
+   lists every marker that counts), or
 2. delegates to a service/selector function in its own app that does, or
 3. is listed in ``GATE_EXEMPT`` — deliberately, with the reason.
 
