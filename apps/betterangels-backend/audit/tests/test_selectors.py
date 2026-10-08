@@ -1,8 +1,9 @@
-"""Tests for the object audit-log selector (ADR 0004 §20)."""
+"""Tests for the object audit-log selector (ADR 0004 §20–§21)."""
 
 import base64
 import json
 import re
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import Any
 from unittest import mock
@@ -1273,3 +1274,114 @@ _EXPECTED_ROOM_REFERENCES = {
     "shelters.TrackedRoomFunderEvent",
     "shelters.TrackedRoomPetEvent",
 }
+
+
+class ObjectAuditLogFilterTestCase(TestCase):
+    """Date/actor filters (ADR 0004 §21), applied in SQL before grouping (§10)."""
+
+    T1 = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+    T2 = datetime(2026, 2, 1, 12, 0, tzinfo=timezone.utc)
+    T3 = datetime(2026, 3, 1, 12, 0, tzinfo=timezone.utc)
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        self.other_user = baker.make(User, first_name="Grace", last_name="Hopper", email="grace@example.com")
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Filter Shelter")
+
+    def _rename(self, name: str, *, at: datetime, user: User | None = None) -> None:
+        """Rename the shelter, then pin the event's timestamp for determinism."""
+        with audit_context(user=user):
+            self.shelter.name = name
+            self.shelter.save()
+        backdate_event_rows(
+            Shelter.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+                pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name
+            ),
+            pgh_created_at=at,
+        )
+
+    def _log(self, **kwargs: Any) -> list[Any]:
+        return audit_log(obj=self.shelter, target_type="SHELTER", **kwargs)
+
+    def test_date_from_is_inclusive_and_excludes_earlier_actions(self) -> None:
+        self._rename("Early", at=self.T1, user=self.user)
+        self._rename("Late", at=self.T2, user=self.user)
+
+        actions = self._log(date_from=self.T2)
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Early", "Late"])
+
+    def test_date_to_is_inclusive_and_excludes_later_actions(self) -> None:
+        self._rename("Early", at=self.T1, user=self.user)
+        self._rename("Late", at=self.T2, user=self.user)
+
+        actions = self._log(date_to=self.T1)
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Filter Shelter", "Early"])
+
+    def test_date_window_bounds_both_ends(self) -> None:
+        self._rename("Early", at=self.T1, user=self.user)
+        self._rename("Middle", at=self.T2, user=self.user)
+        self._rename("Late", at=self.T3, user=self.user)
+
+        actions = self._log(date_from=self.T2, date_to=self.T2)
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Early", "Middle"])
+
+    def test_actor_id_restricts_to_a_single_actor(self) -> None:
+        self._rename("By Ada", at=self.T1, user=self.user)
+        self._rename("By Grace", at=self.T2, user=self.other_user)
+
+        actions = self._log(actor_id=self.user.pk)
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Filter Shelter", "By Ada"])
+
+    def test_unknown_actor_id_yields_no_actions(self) -> None:
+        self._rename("By Ada", at=self.T1, user=self.user)
+
+        self.assertEqual(self._log(actor_id=999_999), [])
+
+    def test_actor_id_excludes_context_less_system_events(self) -> None:
+        clear_history_context()
+        self.shelter.name = "System Write"
+        self.shelter.save()
+
+        self.assertEqual(self._log(actor_id=self.user.pk), [])
+        # The system write is still present when no actor filter is applied.
+        self.assertIsNotNone(_action_with(self._log(), "System Write"))
+
+    def test_date_and_actor_filters_compose(self) -> None:
+        self._rename("Ada One", at=self.T1, user=self.user)
+        self._rename("Grace One", at=self.T2, user=self.other_user)
+        self._rename("Ada Two", at=self.T3, user=self.user)
+
+        actions = self._log(date_from=self.T1, date_to=self.T2, actor_id=self.user.pk)
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Filter Shelter", "Ada One"])
+
+    def test_date_filter_applies_before_grouping_within_one_action(self) -> None:
+        # Two writes under one context (one pgh_context_id) → one action.
+        with audit_context(user=self.user):
+            self.shelter.name = "Early"
+            self.shelter.save()
+            self.shelter.name = "Late"
+            self.shelter.save()
+        events = Shelter.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+            pgh_obj_id=self.shelter.pk, pgh_label="shelter.update"
+        )
+        backdate_event_rows(events.filter(name="Early"), pgh_created_at=self.T1)
+        backdate_event_rows(events.filter(name="Late"), pgh_created_at=self.T2)
+
+        self.assertEqual(len(self._log()[0].events), 2)
+
+        actions = self._log(date_from=self.T2)
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual([event.action for event in actions[0].events], ["shelter.update"])
+        self.assertEqual(actions[0].field_changes["name"], ["Early", "Late"])

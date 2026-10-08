@@ -746,6 +746,9 @@ def object_audit_log(
     *,
     obj: Any,
     target_type: str,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    actor_id: Any = None,
     after: str | None = None,
     limit: int = 50,
     include_snapshot: bool = False,
@@ -760,6 +763,12 @@ def object_audit_log(
     pgh_id, action_key)`` total order the SQL page query uses, so an event
     inserted between requests cannot shift a later page (offset pagination can
     repeat an action).
+
+    ``date_from``/``date_to`` bound ``pgh_created_at`` (inclusive) and
+    ``actor_id`` restricts to a single acting user (ADR 0004 §21). All three are
+    applied as predicates on the aggregate CTE's outer SELECT — in SQL, before
+    the key grouping and the Python grouping below (§10) — so a filtered-out
+    event never contributes to an action.
 
     *hidden_fields* maps a model label to the raw attnames that must not be
     rendered for that model, and *hidden_summary_models* lists models whose
@@ -788,6 +797,17 @@ def object_audit_log(
         *_event_model_labels(hidden_summary_models),
     )
     base = AuditWriteEvent.objects.across(*_allowed_event_models(obj, excluded)).references([obj]).exclude(label="seed")
+
+    # Filters are predicates on the aggregate CTE's outer SELECT (§21), applied
+    # before the key grouping so a filtered-out event cannot keep an otherwise
+    # empty action on the page and cannot widen an action's time span.
+    if date_from is not None:
+        base = base.filter(pgh_created_at__gte=date_from)
+    if date_to is not None:
+        base = base.filter(pgh_created_at__lte=date_to)
+    if actor_id is not None:
+        base = base.filter(actor_id=actor_id)
+
     key_expr = _action_key_expr()
 
     # 1) Action keys for the requested page, grouped and limited in SQL.
