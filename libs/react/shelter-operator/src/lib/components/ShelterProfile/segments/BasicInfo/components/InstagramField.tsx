@@ -1,8 +1,15 @@
 import { InstagramLink } from '@monorepo/react/components';
 import { Controller, useWatch, type Control } from 'react-hook-form';
 import { Input } from '../../../../base-ui/input';
-import { Label } from '../../../../base-ui/label';
+import { Label, TLabelProps } from '../../../../base-ui/label';
 import { type BasicInfoFormData } from '../formSchema';
+
+type TLabel = Pick<TLabelProps, 'label' | 'labelSuffix'>;
+
+const INSTAGRAM_LABEL: TLabel = {
+  label: 'Instagram handle',
+  labelSuffix: '(or Url)',
+};
 
 type TProps = {
   control: Control<BasicInfoFormData>;
@@ -29,15 +36,15 @@ export function InstagramField(props: TProps) {
   if (isViewMode) {
     return (
       <div className="relative flex w-full flex-col gap-1 font-sans">
-        <Label label="Instagram handle" variant="offset" />
+        <Label {...INSTAGRAM_LABEL} variant="offset" />
 
         <div className="flex h-12 w-full items-center rounded-full border border-transparent bg-white px-5">
           <InstagramLink
             handleOrHref={value}
-            label={value}
             icon={true}
             openExternal={true}
             className="text-sm text-gray-900" // TODO: abstract styles from base-ui/input
+            iconH={10}
           />
         </div>
       </div>
@@ -50,7 +57,8 @@ export function InstagramField(props: TProps) {
       control={control}
       render={({ field }) => (
         <Input
-          label="Instagram handle"
+          {...INSTAGRAM_LABEL}
+          isViewMode={false}
           dataType="string"
           value={field.value}
           onChange={field.onChange}

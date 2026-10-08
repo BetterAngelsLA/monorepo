@@ -4,7 +4,8 @@ import {
   TextLink,
   TLinkType,
 } from '@monorepo/react/components';
-import { mergeCss } from '@monorepo/react/shared';
+import { mergeCss, toInstagramUrl, toMapsUrl } from '@monorepo/react/shared';
+import { ReactElement } from 'react';
 import { TContactInfoRow, TLinkInfoType } from './types';
 
 const linkTypeMap: Record<TLinkInfoType, TLinkType> = {
@@ -14,17 +15,40 @@ const linkTypeMap: Record<TLinkInfoType, TLinkType> = {
   phone: 'tel',
 };
 
-/** The location row points at coordinates; every other row points at an href. */
-function hasTarget(props: TContactInfoRow): boolean {
+/**
+ * Resolves a row to the link it will actually render, or `null` when there's
+ * nothing linkable (no href, a value that isn't a real Instagram link, or a
+ * location with neither usable coordinates nor an address).
+ *
+ * Visibility is derived from this same result, so a row can never render with
+ * no link inside it.
+ */
+function resolveContactLink(props: TContactInfoRow): ReactElement | null {
   if (props.type === 'location') {
-    return Boolean(props.location);
+    const latitude = props.location?.latitude;
+    const longitude = props.location?.longitude;
+    const place = props.location?.place;
+
+    if (!toMapsUrl({ latitude, longitude, address: place })) {
+      return null;
+    }
+
+    return (
+      <AddressLink
+        latitude={latitude}
+        longitude={longitude}
+        address={place}
+        label={props.label || 'address'}
+        openExternal={true}
+      />
+    );
   }
 
-  return Boolean(props.href);
-}
-
-function ContactInfoLink(props: TContactInfoRow) {
   if (props.type === 'instagram') {
+    if (!toInstagramUrl(props.href)) {
+      return null;
+    }
+
     return (
       <InstagramLink
         handleOrHref={props.href}
@@ -34,22 +58,14 @@ function ContactInfoLink(props: TContactInfoRow) {
     );
   }
 
-  if (props.type === 'location') {
-    return (
-      <AddressLink
-        latitude={props.location?.latitude}
-        longitude={props.location?.longitude}
-        address={props.location?.place}
-        label={props.label}
-        openExternal={true}
-      />
-    );
+  if (!props.href) {
+    return null;
   }
 
   return (
     <TextLink
       type={linkTypeMap[props.type]}
-      href={props.href ?? ''}
+      href={props.href}
       label={props.label}
       openExternal={true}
     />
@@ -58,6 +74,12 @@ function ContactInfoLink(props: TContactInfoRow) {
 
 export function ContactInfoRow(props: TContactInfoRow) {
   const { icon, className } = props;
+
+  const resolvedLink = resolveContactLink(props);
+
+  if (!resolvedLink) {
+    return null;
+  }
 
   const parentCss = [
     'border-b',
@@ -72,13 +94,9 @@ export function ContactInfoRow(props: TContactInfoRow) {
     className,
   ];
 
-  if (!hasTarget(props)) {
-    return null;
-  }
-
   return (
     <div className={mergeCss(parentCss)}>
-      <ContactInfoLink {...props} />
+      {resolvedLink}
       {icon}
     </div>
   );

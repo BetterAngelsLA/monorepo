@@ -13,6 +13,9 @@ export function TextLink(props: TLink) {
     iconPosition = 'after',
     className,
     defaultIconClassName,
+    iconW,
+    iconH,
+    iconColor,
   } = props;
 
   const typedHref = toTypedHref(href, type);
@@ -39,6 +42,9 @@ export function TextLink(props: TLink) {
       type={type}
       openExternal={openExternal}
       className={defaultIconClassName}
+      width={iconW}
+      height={iconH}
+      color={iconColor}
     />
   );
 

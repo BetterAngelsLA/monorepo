@@ -12,5 +12,8 @@ export type TLink = {
   openExternal?: boolean;
   icon?: ReactElement | boolean;
   iconPosition?: IconPosition;
+  iconW?: number;
+  iconH?: number;
+  iconColor?: string;
   defaultIconClassName?: string;
 };

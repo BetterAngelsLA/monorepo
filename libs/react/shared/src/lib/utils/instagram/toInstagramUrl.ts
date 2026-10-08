@@ -19,16 +19,20 @@ function isWebUrl(value: string): boolean {
   });
 }
 
+/** Matches an `http(s)://` scheme. Schemes are case-insensitive. */
+const HTTP_SCHEME_REGEX = /^https?:\/\//i;
+
+/** Prefixes `https://` unless `value` already carries an http(s) scheme. */
+function withHttpScheme(value: string): string {
+  return HTTP_SCHEME_REGEX.test(value) ? value : `https://${value}`;
+}
+
 function parseUrl(value: string): URL | null {
   try {
-    return new URL(value.startsWith('http') ? value : `https://${value}`);
+    return new URL(withHttpScheme(value));
   } catch {
     return null;
   }
-}
-
-function toAbsoluteWebUrl(value: string): string {
-  return value.startsWith('http') ? value : `https://${value}`;
 }
 
 function toProfileUrl(handle: string): string | null {
@@ -45,8 +49,10 @@ function toProfileUrl(handle: string): string | null {
  * - `betterangels` / `@betterangels` → `https://instagram.com/betterangels`
  * - `instagram.com/betterangels` / `https://www.instagram.com/betterangels/` →
  *   `https://instagram.com/betterangels`
- * - any other URL is passed through (with an `https://` prefix when missing)
- * - empty or unusable values → `null`
+ * - Instagram deep links (posts, reels, stories, ...) are returned as an
+ *   absolute URL, normalised so the scheme and host are lower-cased
+ * - anything else — a non-Instagram URL, a bare domain, or an unusable value →
+ *   `null`
  */
 export function toInstagramUrl(hrefOrHandle?: string | null): string | null {
   const value = hrefOrHandle?.trim();
@@ -60,26 +66,30 @@ export function toInstagramUrl(hrefOrHandle?: string | null): string | null {
     return toProfileUrl(value.slice(1).trim());
   }
 
-  const url = parseUrl(value);
+  const validUrl = parseUrl(value);
 
-  if (url && isInstagramHostname(url.hostname)) {
-    const segments = url.pathname.split('/').filter(Boolean);
+  if (validUrl && isInstagramHostname(validUrl.hostname)) {
+    const urlSegments = validUrl.pathname.split('/').filter(Boolean);
 
     // A single path segment is a profile (e.g. /betterangels).
-    if (segments.length === 1) {
-      return toProfileUrl(segments[0]);
+    if (urlSegments.length === 1) {
+      return toProfileUrl(urlSegments[0]);
     }
 
-    // Deep links (posts, reels, stories, ...) are kept as provided.
-    if (segments.length > 1) {
-      return toAbsoluteWebUrl(value);
+    // Deep links (posts, reels, stories, ...). `url.toString()` is the
+    // canonical absolute form: scheme/host lower-cased, path/query untouched.
+    if (urlSegments.length > 1) {
+      return validUrl.toString();
     }
 
     return null;
   }
 
   if (isWebUrl(value)) {
-    return toAbsoluteWebUrl(value);
+    // A real web URL (it has a TLD) that isn't Instagram — e.g. a pasted
+    // website — is not an Instagram link. Rejecting it here also stops a bare
+    // domain like `example.com` from being mistaken for a handle.
+    return null;
   }
 
   return toProfileUrl(value);

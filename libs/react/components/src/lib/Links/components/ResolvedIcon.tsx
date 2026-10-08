@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { ReactElement, isValidElement } from 'react';
 import { TLinkType } from '../types';
+import { toIconDims } from '../utils/toIconDims';
 
 const iconsByType: Record<TLinkType, LucideIcon> = {
   link: LinkIcon,
@@ -20,10 +21,21 @@ type TProps = {
   type?: TLinkType;
   openExternal?: boolean;
   className?: string;
+  width?: number;
+  height?: number;
+  color?: string;
 };
 
 export function ResolvedIcon(props: TProps): ReactElement | null {
-  const { icon, type = 'link', openExternal, className } = props;
+  const {
+    icon,
+    type = 'link',
+    openExternal,
+    width,
+    height = 12,
+    color,
+    className,
+  } = props;
 
   if (isValidElement(icon)) {
     return icon;
@@ -33,17 +45,29 @@ export function ResolvedIcon(props: TProps): ReactElement | null {
     return null;
   }
 
-  const parentCss = ['text-xs', 'text-red-500-x', 'h-3'];
+  const parentCss = ['text-xs'];
+
+  const dimensions = toIconDims({ width, height });
 
   if (openExternal && type === 'link') {
     return (
-      <ExternalLink className={mergeCss([parentCss, className])} aria-hidden />
+      <ExternalLink
+        className={mergeCss([parentCss, className])}
+        color={color}
+        {...dimensions}
+        aria-hidden
+      />
     );
   }
 
   const DefaultIcon = iconsByType[type];
 
   return (
-    <DefaultIcon className={mergeCss([parentCss, className])} aria-hidden />
+    <DefaultIcon
+      className={mergeCss([parentCss, className])}
+      color={color}
+      {...dimensions}
+      aria-hidden
+    />
   );
 }

@@ -1,8 +1,4 @@
-import {
-  INSTAGRAM_INVALID_MESSAGE,
-  Regex,
-  validateInstagramUrl,
-} from '@monorepo/react/shared';
+import { Regex, toInstagramUrl } from '@monorepo/react/shared';
 import { StatusChoices } from '@monorepo/react/shelter';
 import { z } from 'zod';
 import { ShelterProfileType } from '../../types';
@@ -47,8 +43,9 @@ export const formSchema = z.object({
     .string()
     .trim()
     .refine(
-      (value) => validateInstagramUrl(value).status !== 'invalid',
-      INSTAGRAM_INVALID_MESSAGE,
+      // Optional field: blank is allowed, anything present must resolve.
+      (value) => value === '' || toInstagramUrl(value) !== null,
+      'Enter a valid Instagram handle or link',
     ),
   isPrivate: z.boolean(),
   // Create anchor (ADR 0001 §2.6): rendered and required only in the create

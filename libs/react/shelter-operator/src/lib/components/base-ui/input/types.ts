@@ -25,9 +25,11 @@ type NativeAttrsOmit =
 
 type SharedCustomProps = {
   label?: string;
+  labelSuffix?: string;
   error?: string;
   dataType?: InputDataType;
   className?: string;
+  labelSuffixClassName?: string;
   containerClassName?: string;
   inputClassName?: string;
   isActive?: boolean;
