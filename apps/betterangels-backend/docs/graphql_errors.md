@@ -213,15 +213,16 @@ The `validate_client_profile_data` function (called in `create_client_profile` a
 # clients/schema.py
 from graphql import GraphQLError
 
+
 def validate_client_profile_data(data: dict) -> None:
     errors: list = []
 
-    errors += validate_name(data)          # at least one name field required
-    errors += validate_email(...)           # regex + uniqueness check
-    errors += validate_california_id(...)   # regex + uniqueness check
-    errors += validate_contacts(...)        # phone number format
-    errors += validate_hmis_profiles(...)   # hmis_id presence + uniqueness
-    errors += validate_phone_numbers(...)   # phone number format
+    errors += validate_name(data)  # at least one name field required
+    errors += validate_email(...)  # regex + uniqueness check
+    errors += validate_california_id(...)  # regex + uniqueness check
+    errors += validate_contacts(...)  # phone number format
+    errors += validate_hmis_profiles(...)  # hmis_id presence + uniqueness
+    errors += validate_phone_numbers(...)  # phone number format
 
     if errors:
         raise GraphQLError("Validation Errors", extensions={"errors": errors})
@@ -244,12 +245,14 @@ Mutation resolver
 ```python
 from graphql import GraphQLError
 
+
 class UnauthenticatedGQLError(GraphQLError):
     def __init__(self, message=None):
         super().__init__(
             message or "You must be logged in to perform this action.",
             extensions={"code": "UNAUTHENTICATED", "http": {"status": 401}},
         )
+
 
 class NotFoundGQLError(GraphQLError):
     def __init__(self, message=None):

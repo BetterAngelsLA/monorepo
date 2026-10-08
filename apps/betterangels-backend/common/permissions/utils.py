@@ -38,6 +38,13 @@ def get_registered_permission_enums() -> list[type[TextChoices]]:
     return list(_permission_enum_registry)
 
 
+# Models identified as ``"<app_label>.<ModelName>"`` that must never emit grantable
+# permissions. Seed/dev-fixture-only models are not product surfaces: their
+# permissions would otherwise appear in the role/admin permission pickers, in
+# ``currentUser.permissions`` and in the generated frontend catalog.
+PERMISSION_EXCLUDED_MODELS: frozenset[str] = frozenset({"referrals.ReferralTestShelter"})
+
+
 def register_model_permissions() -> None:
     """Auto-discover model PermissionSets and register them as TextChoices.
 
@@ -45,10 +52,14 @@ def register_model_permissions() -> None:
     Models that declare an inner ``class perms(PermissionSet)`` are
     automatically discovered and their permission values registered
     for frontend codegen and the org permissions resolver.
+    Models listed in :data:`PERMISSION_EXCLUDED_MODELS` are skipped.
     """
     from django.apps import apps
 
     for model in apps.get_models():
+        if f"{model._meta.app_label}.{model.__name__}" in PERMISSION_EXCLUDED_MODELS:
+            continue
+
         perms_cls = getattr(model, "perms", None)
         if perms_cls is None or not isinstance(perms_cls, type):
             continue

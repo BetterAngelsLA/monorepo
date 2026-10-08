@@ -15,7 +15,7 @@ class ServiceRequestModelTestCase(TestCase):
     def setUp(self) -> None:
         self.user = baker.make(User, email="test@example.com", username="testuser")
 
-    @time_machine.travel("03-11-2024 10:11:12", tick=False)
+    @time_machine.travel("03-11-2024 10:11:12+00:00", tick=False)
     def test_save(self) -> None:
         """Verify that completed_on is populated correctly."""
         ebt_service = OrganizationService.objects.get(label="EBT")

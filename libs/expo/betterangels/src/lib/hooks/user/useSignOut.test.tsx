@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   clearQueries: vi.fn(),
   clearActiveOrgId: vi.fn(),
   cancelAllUploadRunners: vi.fn(),
+  clearReferralDraft: vi.fn(),
   setUser: vi.fn(),
 }));
 
@@ -50,6 +51,12 @@ vi.mock('../../providers/user/UserProvider', () => ({
   useUser: () => ({ setUser: mocks.setUser }),
 }));
 
+// The draft is a separate on-device record that `useClearLocalSession` does not
+// touch, so `useSignOut` clears it itself.
+vi.mock('../../screens/Client/Referrals/referralDraftStorage', () => ({
+  clearPersistedReferralDraft: mocks.clearReferralDraft,
+}));
+
 describe('useSignOut', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -74,6 +81,7 @@ describe('useSignOut', () => {
     expect(mocks.clearQueries).toHaveBeenCalledTimes(1);
     expect(mocks.clearActiveOrgId).toHaveBeenCalledTimes(1);
     expect(mocks.setUser).toHaveBeenCalledWith(undefined);
+    expect(mocks.clearReferralDraft).toHaveBeenCalledTimes(1);
   });
 
   it('still signs the user out locally when HMIS storage removal fails', async () => {
@@ -108,5 +116,8 @@ describe('useSignOut', () => {
 
     expect(mocks.clearStore).toHaveBeenCalledTimes(1);
     expect(mocks.setUser).toHaveBeenCalledWith(undefined);
+    // The draft wipe runs before any await that can reject, so a failed native
+    // cleanup cannot skip it.
+    expect(mocks.clearReferralDraft).toHaveBeenCalledTimes(1);
   });
 });
