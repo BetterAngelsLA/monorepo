@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 from django.apps import apps
@@ -268,6 +269,9 @@ def object_audit_log(
     *,
     obj: Any,
     target_type: str,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    actor_id: Any = None,
     limit: int = 50,
     offset: int = 0,
 ) -> list[AuditActionData]:
@@ -275,14 +279,26 @@ def object_audit_log(
 
     *target_type* is the ``AuditTargetType`` value (``SHELTER``/``ROOM``/``BED``/
     ``RESERVATION``) echoed onto each event.
+
+    ``date_from``/``date_to`` bound ``pgh_created_at`` (inclusive) and
+    ``actor_id`` restricts to a single acting user (ADR 0004 §21). All three are
+    applied as predicates on the aggregate CTE's outer SELECT — in SQL, before
+    the Python grouping below (§10) — so a filtered-out event never contributes
+    to an action.
     """
     target_id = str(obj.pk)
     queryset = (
         AuditEvent.objects.references([obj])
         .exclude(pgh_model__in=_EXCLUDED_EVENT_MODELS)
         .exclude(label="seed")
-        .order_by("pgh_created_at", "pgh_id")
     )
+    if date_from is not None:
+        queryset = queryset.filter(pgh_created_at__gte=date_from)
+    if date_to is not None:
+        queryset = queryset.filter(pgh_created_at__lte=date_to)
+    if actor_id is not None:
+        queryset = queryset.filter(actor_id=actor_id)
+    queryset = queryset.order_by("pgh_created_at", "pgh_id")
 
     grouped: dict[str, list[Any]] = defaultdict(list)
     for row in queryset.iterator():
