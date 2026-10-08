@@ -3,7 +3,7 @@
 Normalizes pghistory write events for a single object into one event shape,
 groups events into actions, and orders actions newest-first (ADR 0004 §10–§19).
 
-The write source is a single ``AuditEvents.objects.references(obj)`` query
+The write source is a single ``AuditEvent.objects.references(obj)`` query
 (§10): it already aggregates the object's own events (via ``pgh_obj``) and every
 event model with an FK to the object — including the §6 through-table proxies.
 ``THROUGH_EVENT_MAP`` is rendering metadata only, never a second query source.
@@ -17,9 +17,9 @@ from typing import Any
 
 from django.apps import apps
 from django.utils import timezone
-
-from audit.models import AuditEvents
 from shelters.models import Bed, Room, Shelter
+
+from audit.models import AuditEvent
 
 # Mechanical columns dropped from rendered changes (ADR 0004 Phase 1 note / §13).
 _MECHANICAL_FIELDS = frozenset({"created_at", "updated_at"})
@@ -278,7 +278,7 @@ def object_audit_log(
     """
     target_id = str(obj.pk)
     queryset = (
-        AuditEvents.objects.references([obj])
+        AuditEvent.objects.references([obj])
         .exclude(pgh_model__in=_EXCLUDED_EVENT_MODELS)
         .exclude(label="seed")
         .order_by("pgh_created_at", "pgh_id")
