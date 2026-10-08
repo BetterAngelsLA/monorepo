@@ -257,6 +257,174 @@ def _merge_scalar(target: dict[str, list[Any]], changes: dict[str, list[Any]]) -
             target[field_name] = [old, new]
 
 
+# Full-replacement child models (schedules): ``shelter_update`` deletes every row
+# and bulk-creates the new set, so one logical edit emits a ``.remove`` and an
+# ``.add`` of the same slot. These labels are netted back into a per-slot change.
+_SCHEDULE_LABEL_PREFIX = "shelter.schedule."
+
+
+def _object_key(row: Any) -> tuple[str, str]:
+    """Identity of the object a row belongs to.
+
+    Merging is scoped to this key so two *different* rows of the same model (the
+    dozens of schedule rows in a full-replacement save) can never collapse into
+    one fabricated before→after (§13).
+    """
+    if row.pgh_obj_id is not None:
+        return (str(row.pgh_obj_model or row.pgh_model), str(row.pgh_obj_id))
+    return ("row", str(row.pgh_id))
+
+
+def _merge_object(
+    per_object: dict[tuple[str, str], dict[str, list[Any]]],
+    row: Any,
+    changes: dict[str, list[Any]],
+) -> None:
+    _merge_scalar(per_object.setdefault(_object_key(row), {}), changes)
+
+
+def _flatten_object_changes(
+    object_changes: list[dict[str, list[Any]]],
+) -> dict[str, list[Any]]:
+    """Flatten per-object diffs, omitting any field two objects disagree on.
+
+    A field name is not the same change when it originates from two different
+    objects; rather than fabricate a before→after across them, drop it (§13).
+    """
+    result: dict[str, list[Any]] = {}
+    conflicts: set[str] = set()
+    for changes in object_changes:
+        for field_name, pair in changes.items():
+            if field_name in conflicts:
+                continue
+            if field_name not in result:
+                result[field_name] = pair
+            elif result[field_name] != pair:
+                conflicts.add(field_name)
+                result.pop(field_name, None)
+    return result
+
+
+def _schedule_events(
+    rows: list[Any],
+    *,
+    target_type: str,
+    target_id: str,
+    resolver: _LabelResolver,
+) -> tuple[list[AuditEventData], list[dict[str, list[Any]]]]:
+    """Net a full-replacement schedule save into per-slot changes (§13).
+
+    ``shelter_update`` replaces the schedule set wholesale, so a single field edit
+    emits a ``.remove`` of the old slot and an ``.add`` of the new one. Match the
+    pair by identity — every field except the editable time window — and emit one
+    UPDATE event per slot whose times actually changed. Slots that were genuinely
+    added or removed keep their INSERT/DELETE events.
+
+    Returns ``(events, per_slot_changes)``.
+    """
+
+    def identity(data: dict[str, Any]) -> tuple[Any, ...]:
+        return (
+            data.get("schedule_type"),
+            data.get("day"),
+            str(data.get("start_date")),
+            str(data.get("end_date")),
+            data.get("is_exception"),
+            data.get("condition"),
+            str(data.get("demographic_id")),
+        )
+
+    adds_by_identity: dict[tuple[Any, ...], list[Any]] = defaultdict(list)
+    removes_by_identity: dict[tuple[Any, ...], list[Any]] = defaultdict(list)
+    for row in rows:
+        bucket = adds_by_identity if row.pgh_label.endswith(".add") else removes_by_identity
+        bucket[identity(row.pgh_data or {})].append(row)
+
+    events: list[AuditEventData] = []
+    object_changes: list[dict[str, list[Any]]] = []
+
+    def emit(row: Any, changes: dict[str, list[Any]], *, kind: str | None = None, action: str | None = None) -> None:
+        events.append(
+            AuditEventData(
+                timestamp=row.pgh_created_at,
+                actor=_actor(row),
+                kind=kind or _kind(row.pgh_label),
+                action=action or row.pgh_label,
+                target_type=target_type,
+                target_id=target_id,
+                field_changes={f: list(pair) for f, pair in changes.items()},
+            )
+        )
+
+    for ident, adds in adds_by_identity.items():
+        removes = removes_by_identity.get(ident, [])
+
+        # First pair slots whose times are identical: the replacement re-created
+        # them unchanged, so they are not a change at all.
+        changed_adds: list[Any] = []
+        for add in adds:
+            data = add.pgh_data or {}
+            match = next(
+                (
+                    index
+                    for index, rem in enumerate(removes)
+                    if (rem.pgh_data or {}).get("start_time") == data.get("start_time")
+                    and (rem.pgh_data or {}).get("end_time") == data.get("end_time")
+                ),
+                None,
+            )
+            if match is None:
+                changed_adds.append(add)
+            else:
+                removes.pop(match)
+
+        # What remains are time edits (or genuine add/remove). Pair by start_time
+        # so multiple slots of the same day/type cannot rotate into false diffs.
+        removes.sort(key=lambda r: str((r.pgh_data or {}).get("start_time")))
+        changed_adds.sort(key=lambda a: str((a.pgh_data or {}).get("start_time")))
+        paired = min(len(removes), len(changed_adds))
+
+        for add, rem in zip(changed_adds[:paired], removes[:paired]):
+            data = add.pgh_data or {}
+            old = rem.pgh_data or {}
+            diffs = {
+                field: [old.get(field), data.get(field)]
+                for field in ("start_time", "end_time")
+                if old.get(field) != data.get(field)
+            }
+            if not diffs:
+                continue
+            slot: dict[str, list[Any]] = {
+                "day": [data.get("day"), data.get("day")],
+                "schedule_type": [data.get("schedule_type"), data.get("schedule_type")],
+            }
+            slot.update(diffs)
+            emit(add, slot, kind="UPDATE", action="shelter.schedule.update")
+            object_changes.append(slot)
+
+        for add in changed_adds[paired:]:  # genuinely new slots
+            changes = _scalar_changes(add, resolver)
+            emit(add, changes)
+            object_changes.append(changes)
+
+        for rem in removes[paired:]:  # genuinely deleted slots
+            changes = _scalar_changes(rem, resolver)
+            emit(rem, changes)
+            object_changes.append(changes)
+
+    # Identities with removes but no adds: every slot of that shape was deleted.
+    for ident, removes in removes_by_identity.items():
+        if ident in adds_by_identity:
+            continue
+        for rem in removes:
+            changes = _scalar_changes(rem, resolver)
+            emit(rem, changes)
+            object_changes.append(changes)
+
+    events.sort(key=lambda event: event.timestamp)
+    return events, object_changes
+
+
 def _finalize(value: Any, resolver: _LabelResolver) -> Any:
     if isinstance(value, _Ref):
         return resolver.resolve(value)
@@ -370,11 +538,20 @@ def _build_action(
     rows.sort(key=lambda r: (r.pgh_created_at, r.pgh_id))
 
     actor = _actor(rows[0])
-    action_changes: dict[str, Any] = {}
     m2m_changes: dict[str, dict[str, list[_Ref]]] = defaultdict(lambda: {"removed": [], "added": []})
     events: list[AuditEventData] = []
+    # Scalar diffs merged per object, so distinct objects never collapse into one
+    # bogus before→after (the full-replacement schedule bug).
+    per_object: dict[tuple[str, str], dict[str, list[Any]]] = {}
+    schedule_rows: list[Any] = []
 
     for row in rows:
+        if row.pgh_label.startswith(_SCHEDULE_LABEL_PREFIX) and (
+            row.pgh_label.endswith(".add") or row.pgh_label.endswith(".remove")
+        ):
+            schedule_rows.append(row)
+            continue
+
         meta = _m2m_meta(row.pgh_model)
         if meta is not None:
             field_name, related_model_label = meta
@@ -402,7 +579,7 @@ def _build_action(
             continue
 
         changes = _scalar_changes(row, resolver)
-        _merge_scalar(action_changes, changes)
+        _merge_object(per_object, row, changes)
 
         events.append(
             AuditEventData(
@@ -415,6 +592,17 @@ def _build_action(
                 field_changes={f: list(pair) for f, pair in changes.items()},
             )
         )
+
+    # Schedules arrive as a full-replacement remove/add set; net them per slot.
+    schedule_events, schedule_object_changes = _schedule_events(
+        schedule_rows, target_type=target_type, target_id=target_id, resolver=resolver
+    )
+    events.extend(schedule_events)
+    events.sort(key=lambda event: event.timestamp)
+
+    action_changes: dict[str, Any] = _flatten_object_changes(
+        [*per_object.values(), *schedule_object_changes]
+    )
 
     # M2M changes: cancel an add/remove of the same related row, then merge the
     # action-level multi-value entry (§13, §15).
