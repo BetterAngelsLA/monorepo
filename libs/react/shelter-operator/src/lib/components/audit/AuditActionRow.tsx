@@ -4,7 +4,10 @@ import { useState } from 'react';
 import type { AuditAction } from '../../hooks';
 import { AuditEventRow } from './AuditEventRow';
 import { AuditChangesView } from './AuditChangesView';
-import { formatAuditTimestamp, formatAuditTimestampAbsolute } from './auditTime';
+import {
+  formatAuditTimestamp,
+  formatAuditTimestampAbsolute,
+} from './auditTime';
 import { Text } from '../base-ui/text/text';
 
 /** One grouped action (all events written under a single request context). */

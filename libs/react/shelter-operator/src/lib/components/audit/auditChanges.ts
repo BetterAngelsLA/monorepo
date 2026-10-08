@@ -89,9 +89,7 @@ export function parseFieldChanges(value: unknown): AuditChange[] {
         return { kind: 'multi', field, label, removed, added };
       }
 
-      const [oldValue, newValue] = Array.isArray(raw)
-        ? raw
-        : [undefined, raw];
+      const [oldValue, newValue] = Array.isArray(raw) ? raw : [undefined, raw];
 
       return { kind: 'scalar', field, label, oldValue, newValue };
     },

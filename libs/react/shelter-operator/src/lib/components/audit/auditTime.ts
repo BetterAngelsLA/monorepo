@@ -10,9 +10,7 @@ function toDate(value: string | null | undefined): Date | null {
 }
 
 /** Relative timestamp for inline display, e.g. "3 hours ago". */
-export function formatAuditTimestamp(
-  value: string | null | undefined,
-): string {
+export function formatAuditTimestamp(value: string | null | undefined): string {
   const date = toDate(value);
 
   return date ? formatDistanceToNow(date, { addSuffix: true }) : '';

@@ -12,7 +12,16 @@ export type AuditEvent = AuditAction['events'][number];
 
 const DEFAULT_PAGE_SIZE = 25;
 
-type UseObjectAuditLogArgs = {
+export type ObjectAuditLogFilters = {
+  /** Inclusive lower bound (ISO datetime). */
+  dateFrom?: string | null;
+  /** Inclusive upper bound (ISO datetime). */
+  dateTo?: string | null;
+  /** Restrict to a single acting user. */
+  actorId?: string | null;
+};
+
+type UseObjectAuditLogArgs = ObjectAuditLogFilters & {
   targetType: ObjectAuditLogQueryVariables['targetType'];
   objectId: string;
   pageSize?: number;
@@ -26,15 +35,29 @@ type UseObjectAuditLogArgs = {
  * last page. ``loadMore`` follows ``endCursor`` and appends the next page, so an
  * event written between requests cannot repeat or skip an action the way an
  * offset would.
+ *
+ * Date/actor filters are applied server-side (ADR 0004 §21). Changing them
+ * changes the query variables, which restarts at the first page — the cursor is
+ * deliberately not carried across a filter change.
  */
 export function useObjectAuditLog({
   targetType,
   objectId,
   pageSize = DEFAULT_PAGE_SIZE,
+  dateFrom,
+  dateTo,
+  actorId,
 }: UseObjectAuditLogArgs) {
   const variables = useMemo(
-    () => ({ targetType, objectId, limit: pageSize }),
-    [targetType, objectId, pageSize],
+    () => ({
+      targetType,
+      objectId,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      actorId: actorId || undefined,
+      limit: pageSize,
+    }),
+    [targetType, objectId, dateFrom, dateTo, actorId, pageSize],
   );
 
   const { data, loading, error, fetchMore } = useQuery<

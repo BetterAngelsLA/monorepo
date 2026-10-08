@@ -1,0 +1,13 @@
+query AuditActors($organizationId: String!) {
+  organizationMembers(
+    organizationId: $organizationId
+    pagination: { limit: 100 }
+  ) {
+    results {
+      id
+      firstName
+      lastName
+      email
+    }
+  }
+}

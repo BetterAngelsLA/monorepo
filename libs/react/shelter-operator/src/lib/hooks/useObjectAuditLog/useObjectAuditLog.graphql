@@ -1,12 +1,18 @@
 query ObjectAuditLog(
   $targetType: AuditTargetType!
   $objectId: ID!
+  $dateFrom: DateTime
+  $dateTo: DateTime
+  $actorId: ID
   $limit: Int!
   $after: String
 ) {
   objectAuditLog(
     targetType: $targetType
     objectId: $objectId
+    dateFrom: $dateFrom
+    dateTo: $dateTo
+    actorId: $actorId
     limit: $limit
     after: $after
   ) {
