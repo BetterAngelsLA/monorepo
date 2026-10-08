@@ -16,9 +16,26 @@ class CommonConfig(AppConfig):
 
         self._register_imgproxy_image_type()
         self._configure_allowed_hosts()
+        self._connect_object_grant_cleanup()
 
         # Connect with sender=self so handler fires exactly once.
         post_migrate.connect(enable_imgproxy_switch, sender=self)
+
+    @staticmethod
+    def _connect_object_grant_cleanup() -> None:
+        """Drop object grants when their row is deleted (ADR 0001 §2.5, finding F3).
+
+        ``Grant.scope_object`` is a generic pointer, so no foreign key cascades on
+        it: a grant would outlive the row it names and could later point at a
+        reused id.  One receiver per whitelisted model — Django consults
+        ``post_delete.sender_receivers_cache`` for an instance delete, so a
+        sender-less receiver is never reached.  The whitelist is also the complete
+        set of models that can carry an object grant (``Grant.clean`` /
+        ``permissions.E003``), so it defines the receivers exactly.
+        """
+        from common.permissions.signals import connect_object_grant_cleanup
+
+        connect_object_grant_cleanup()
 
     @staticmethod
     def _configure_allowed_hosts() -> None:

@@ -204,12 +204,12 @@ class ScopedResource(models.Model):
             yield f"{field.name}_id"
 
 
-class Attachment(OrgScoped, BaseModel):
+class Attachment(ScopedResource, BaseModel):
     """A file attached to any model instance (polymorphic ``content_object``).
 
     ``org_via = None`` — platform-shared reach: an attachment has no org column
     and its ``GenericForeignKey`` parent is inexpressible as a single-valued org
-    path, so there is no org reach to scope a row by.  ``write_tier =
+    path, so there is no org reach to scope a row by.  ``access.write =
     WRITE_OBJECT`` makes that explicit: a row is writable only by the global tier
     or by a user-principal object ``Grant`` naming it (ADR 0001 §2.5), which is
     what replaces the per-file guardian rows this model used to carry.
@@ -220,7 +220,7 @@ class Attachment(OrgScoped, BaseModel):
     """
 
     org_via = None
-    write_tier = WRITE_OBJECT
+    access = Access(write=WRITE_OBJECT)
 
     file = models.FileField(upload_to=get_unique_file_path)
     attachment_type = TextChoicesField(choices_enum=AttachmentType)

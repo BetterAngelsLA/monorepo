@@ -393,7 +393,13 @@ class AccessClassTestCase(TestCase):
         invalidate_scope_cache(gso)
         self.assertNotIn("_scope_cache", gso.__dict__)
 
-    def test_object_write_class_fails_closed_even_on_an_org_anchored_model(self) -> None:
+    def test_object_write_class_admits_only_the_global_tier_and_named_rows(self) -> None:
+        """The OBJECT class no longer fails closed: it answers to grants.
+
+        A scoped holder of the very permission gets nothing (org reach is
+        deliberately not consulted — there is no org to reach for the models this
+        class exists for), while the global tier keeps every row.
+        """
         from unittest.mock import patch
 
         from common.models import Access, WRITE_OBJECT
@@ -403,15 +409,26 @@ class AccessClassTestCase(TestCase):
         role_assign(user=gso, role=self.gso_role)
 
         with patch.object(Shelter, "access", Access(write=WRITE_OBJECT)):
-            self.assertFalse(writable(Shelter.objects.all(), gso, Shelter.perms.CHANGE).exists())
+            # Global Shelter Operator: global tier, so every row.
+            self.assertTrue(writable(Shelter.objects.all(), gso, Shelter.perms.CHANGE).exists())
 
     def test_can_model_fails_closed_for_an_undeclared_model(self) -> None:
-        from common.models import Attachment
+        """A model that declares no class has no rowless write authority.
+
+        ``common.Attachment`` used to stand in here, but it is declared now
+        (``access.write = WRITE_OBJECT``, the object arm's first consumer), so the
+        counterexample moves to a model that genuinely declares nothing.
+        """
+        from common.models import Attachment, Location
         from common.permissions.selectors import can_model
 
         admin = baker.make(User, is_superuser=True)
 
-        self.assertFalse(can_model(admin, "common.view_attachment", Attachment))
+        # Not a ScopedResource at all — no declaration, so no rowless authority.
+        self.assertFalse(can_model(admin, "common.change_location", Location))
+        # Declared models keep their semantics: Attachment is OBJECT class,
+        # ContactInfo GLOBAL.
+        self.assertTrue(can_model(admin, "common.view_attachment", Attachment))
         self.assertTrue(can_model(admin, ContactInfo.perms.VIEW, ContactInfo))
 
 

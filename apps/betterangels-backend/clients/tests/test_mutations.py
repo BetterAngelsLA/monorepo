@@ -987,7 +987,11 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 8
+        # 9 rather than 8: deleting an object-grantable row now resolves its
+        # content type once so the arm's generic ``scope_object`` grants can be
+        # cleared (ADR 0001 §2.5, finding F3) — a grant must not outlive the row
+        # it names.  The lookup is one extra query, not a per-grant one.
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_client_document_fixture(client_document_id)
 

@@ -106,18 +106,26 @@ class GrantSystemChecksTestCase(TestCase):
     def test_e004_is_quiet_for_the_shelter_models(self) -> None:
         self.assertEqual(_errors_with(check_org_via_hops_are_single_valued(None), "permissions.E004"), [])
 
-    def test_e005_fires_for_a_role_permission_on_an_unscoped_model(self) -> None:
+    def test_e005_fires_for_a_role_permission_on_an_undeclared_model(self) -> None:
+        """``Attachment`` used to stand in here, but it declares scoping now.
+
+        Making it a ``ScopedResource`` (``org_via = None``, the object arm's first
+        consumer) is exactly what E005 asks for, so the counterexample moves to a
+        model that genuinely declares nothing.
+        """
+        from common.models import Location
+
         role = Role.objects.create(name="Scoped Role")
-        content_type = ContentType.objects.get_for_model(Attachment)
+        content_type = ContentType.objects.get_for_model(Location)
         permission, _ = Permission.objects.get_or_create(
             content_type=content_type,
-            codename="view_attachment",
-            defaults={"name": "Can view attachment"},
+            codename="view_location",
+            defaults={"name": "Can view location"},
         )
         role.permissions.add(permission)
 
         errors = _errors_with(check_role_permissions_models_declare_org_scoping(None), "permissions.E005")
-        self.assertTrue(any("Attachment" in error.msg for error in errors))
+        self.assertTrue(any("Location" in error.msg for error in errors))
 
     def test_e005_is_quiet_for_a_role_permission_on_an_org_scoped_model(self) -> None:
         role = Role.objects.create(name="Scoped Role")
@@ -193,7 +201,6 @@ class AccessDeclarationChecksTestCase(TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("org-anchored", errors[0].msg)
 
-<<<<<<< HEAD
     def test_e007_fires_when_the_object_class_is_declared_off_the_whitelist(self) -> None:
         """``WRITE_OBJECT`` routes writes to the object-grant predicate.
 
