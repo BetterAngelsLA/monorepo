@@ -6,10 +6,13 @@ this module, including ``models``: keeping it in ``selectors`` would mean a mode
 importing from the read layer, which inverts the dependency for no gain.
 """
 
+import logging
 from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 from organizations.models import Organization
+
+logger = logging.getLogger(__name__)
 
 
 def report_calendar_time_zone(org: Organization) -> ZoneInfo:
@@ -27,8 +30,22 @@ def report_calendar_time_zone(org: Organization) -> ZoneInfo:
     ``getattr`` rather than ``org.profile`` because the reverse one-to-one raises
     ``RelatedObjectDoesNotExist``, and an org without a profile row is a normal
     state here (the admin and its tests both create them).
+
+    A stored name that ``zoneinfo`` cannot resolve falls back to the site zone with a
+    warning rather than raising.  ``validate_iana_time_zone`` only runs through
+    ``full_clean``, so an ORM write, a data import or raw SQL can store a bad value —
+    and raising here would 500 the summary, the export and the scheduled email for
+    that org every time, which is a worse failure than reporting on a wrong calendar.
     """
     profile = getattr(org, "profile", None)
     if profile is not None and profile.time_zone:
-        return ZoneInfo(profile.time_zone)
+        try:
+            return ZoneInfo(profile.time_zone)
+        except ValueError, KeyError:
+            logger.warning(
+                "Organization %s has an unusable report time zone %r; using %s",
+                org.pk,
+                profile.time_zone,
+                timezone.get_default_timezone(),
+            )
     return timezone.get_default_timezone()
