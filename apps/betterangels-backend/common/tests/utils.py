@@ -202,6 +202,12 @@ def add_legacy_membership(user: User, *, group: PermissionGroup) -> None:
     rows (``accounts.signals``); a pre-cutover membership — the state the
     backfills convert and the cutover denies — predates the mirror, so the
     just-created Grant is dropped.
+
+    **Destructive: this deletes every Grant *user* holds, not only the one the
+    membership just mirrored.**  That is exact for the intended caller — a
+    freshly-baked user, where the mirror is the only Grant there is — and wrong
+    for a user who already has authority, which this would silently revoke.  If
+    you need pre-existing authority to survive, grant it *after* this call.
     """
     group.user_set.add(user)
     revoke_grants(user)
