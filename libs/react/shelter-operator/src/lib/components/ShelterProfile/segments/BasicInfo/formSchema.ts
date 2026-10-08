@@ -1,4 +1,4 @@
-import { Regex, toInstagramUrl } from '@monorepo/react/shared';
+import { isValidInstagramUrlOrHandle, Regex } from '@monorepo/react/shared';
 import { StatusChoices } from '@monorepo/react/shelter';
 import { z } from 'zod';
 import { ShelterProfileType } from '../../types';
@@ -43,8 +43,8 @@ export const formSchema = z.object({
     .string()
     .trim()
     .refine(
-      // Optional field: blank is allowed, anything present must resolve.
-      (value) => value === '' || toInstagramUrl(value) !== null,
+      // Optional field: blank is allowed, anything present must be valid.
+      (value) => value === '' || isValidInstagramUrlOrHandle(value),
       'Enter a valid Instagram handle or link',
     ),
   isPrivate: z.boolean(),
