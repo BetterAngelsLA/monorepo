@@ -4,6 +4,7 @@ import pytest
 from model_bakery import baker
 from organizations.fields import SlugField
 from pytest_django.fixtures import SettingsWrapper
+
 from test_utils.vcr_config import scrubbed_vcr
 
 # ``organizations.fields.SlugField`` comes from django-extensions and model_bakery

@@ -1,3 +1,8 @@
+from strawberry import Schema
+from strawberry.schema.config import StrawberryConfig
+from strawberry.tools import merge_types
+from strawberry_django.optimizer import DjangoOptimizerExtension
+
 from accounts.schema import Mutation as AccountsMutation
 from accounts.schema import Query as AccountsQuery
 from clients.schema import Mutation as ClientsMutation
@@ -13,10 +18,6 @@ from referrals.schema import Query as ReferralsQuery
 from reports.schema import Query as ReportsQuery
 from shelters.schema import Mutation as SheltersMutation
 from shelters.schema import Query as SheltersQuery
-from strawberry import Schema
-from strawberry.schema.config import StrawberryConfig
-from strawberry.tools import merge_types
-from strawberry_django.optimizer import DjangoOptimizerExtension
 from tasks.schema import Mutation as TasksMutation
 from tasks.schema import Query as TasksQuery
 from teams.schema import Mutation as TeamsMutation

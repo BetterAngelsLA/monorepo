@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pghistory
-from common.models import BaseModel, OrgScoped
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from django_choices_field import TextChoicesField
+
+from common.models import BaseModel, OrgScoped
 from shelters.enums import ReservationStatusChoices
 
 from .shelter import ACTIVE_RESERVATION_STATUSES, Bed, Room

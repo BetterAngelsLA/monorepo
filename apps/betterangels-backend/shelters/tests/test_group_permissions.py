@@ -1,9 +1,10 @@
-from accounts.models import PermissionGroup, PermissionGroupTemplate, User
-from accounts.seed import seed_permission_templates, sync_group_permissions
-from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth.models import Permission
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.models import PermissionGroup, PermissionGroupTemplate, User
+from accounts.seed import seed_permission_templates, sync_group_permissions
+from accounts.tests.baker_recipes import organization_recipe
 
 
 class ShelterGroupPermissionsTestCase(TestCase):

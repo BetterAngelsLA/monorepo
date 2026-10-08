@@ -3,9 +3,10 @@ from zoneinfo import ZoneInfo
 
 import pytest
 import time_machine
-from accounts.models import Organization
 from django.utils import timezone
 from model_bakery import baker
+
+from accounts.models import Organization
 from reports.models import ScheduledReport
 from reports.services import get_previous_month_range
 from test_utils.timezones import SITE_TZ

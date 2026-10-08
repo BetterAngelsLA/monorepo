@@ -10,9 +10,10 @@ from collections import defaultdict
 from functools import reduce
 
 import pytest
-from common.org_types import REGISTRY
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Q
+
+from common.org_types import REGISTRY
 
 
 @pytest.mark.django_db

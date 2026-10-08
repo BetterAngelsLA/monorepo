@@ -2,6 +2,7 @@
 
 import pytest
 from pytest_django.fixtures import SettingsWrapper
+
 from test_utils.timezones import SITE_TIME_ZONE
 
 

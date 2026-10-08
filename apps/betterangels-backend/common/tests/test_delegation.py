@@ -8,13 +8,14 @@ Membership alone or a grant alone is NOT enough (no amplification); the delegati
 one hop only (no transitivity).
 """
 
+from django.contrib.auth.models import Permission
+from django.test import TestCase
+from model_bakery import baker
+
 from accounts.models import Role, User
 from accounts.services import grant_create, grant_delegate, grant_delete, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.permissions.selectors import ALL, can, scopes, visible
-from django.contrib.auth.models import Permission
-from django.test import TestCase
-from model_bakery import baker
 from shelters.groups import SHELTER_OPERATOR_ROLE
 from shelters.models import Shelter
 from shelters.tests.baker_recipes import shelter_recipe

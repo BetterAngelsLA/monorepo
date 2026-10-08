@@ -1,9 +1,10 @@
 """Tests for ScheduledReport model."""
 
 import pytest
-from accounts.models import Organization
 from django.core.exceptions import ValidationError
 from model_bakery import baker
+
+from accounts.models import Organization
 from reports.models import ScheduledReport
 
 

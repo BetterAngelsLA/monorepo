@@ -2,12 +2,12 @@ import datetime
 from typing import Any
 from unittest.mock import patch
 
-from common.tests.utils import GraphQLBaseTestCase
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from places import Places
 from unittest_parametrize import parametrize
 
+from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import (
     AccessibilityChoices,
     DayOfWeekChoices,

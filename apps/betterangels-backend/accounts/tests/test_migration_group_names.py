@@ -8,9 +8,10 @@ database effects are verified by running the migration itself.
 
 import importlib
 
-from accounts.models import OrganizationProfile, PermissionGroup
 from django.test import TestCase
 from organizations.models import Organization
+
+from accounts.models import OrganizationProfile, PermissionGroup
 
 from .baker_recipes import organization_recipe
 

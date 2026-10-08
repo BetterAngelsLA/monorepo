@@ -2,9 +2,10 @@ from unittest.mock import MagicMock
 
 from celery import Task
 from celery.exceptions import Ignore
-from common.celery import single_instance
 from django.core.cache import caches
 from django.test import SimpleTestCase, override_settings
+
+from common.celery import single_instance
 
 # use Django’s in‑memory cache for isolation
 LOC_MEM = {

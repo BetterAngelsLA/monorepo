@@ -17,16 +17,13 @@ members = ["apps/betterangels-backend"]
 [tool.ruff]
 line-length = 120
 exclude = ["node_modules", ".venv/lib", "*/migrations/*"]
+src = ["apps/betterangels-backend"]
 
 [tool.ruff.lint]
-select = ["E", "F", "B"]
+select = ["E", "F", "B", "I"]
 ignore = ["E501", "B904", "B905"]
 
-[tool.ruff.lint.isort]
-known-first-party = []
-
 [tool.ruff.lint.per-file-ignores]
-"*/migrations/*" = ["I"]
 "__init__.py" = ["F401"]
 
 [tool.ruff.format]

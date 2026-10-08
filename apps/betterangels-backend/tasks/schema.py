@@ -2,6 +2,14 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
+from django.db.models import QuerySet
+from strawberry import asdict
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+from strawberry_django.pagination import OffsetPaginated
+from strawberry_django.permissions import HasPerm, HasRetvalPerm
+from strawberry_django.utils.query import filter_for_user
+
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
@@ -10,16 +18,9 @@ from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import get_object_or_permission_error
 from common.permissions.utils import IsAuthenticated
-from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
 from notes.groups import CASEWORKER
 from notes.models import Note
-from strawberry import asdict
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
-from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm, HasRetvalPerm
-from strawberry_django.utils.query import filter_for_user
 from tasks.models import Task
 from tasks.services import task_create, task_delete, task_update
 

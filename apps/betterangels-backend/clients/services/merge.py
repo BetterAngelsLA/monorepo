@@ -11,9 +11,15 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+from functools import lru_cache
 from typing import Any, cast
 
-from functools import lru_cache
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db import models, transaction
+from django.utils import timezone
+from phonenumber_field.phonenumber import PhoneNumber
 
 from accounts.models import User
 from clients.models import ClientProfile
@@ -26,12 +32,6 @@ from clients.selectors.merge import (
     get_scalar_fields,
     get_unique_fields,
 )
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.gis.geos import Point
-from django.core.serializers.json import DjangoJSONEncoder
-from django.db import models, transaction
-from django.utils import timezone
-from phonenumber_field.phonenumber import PhoneNumber
 
 logger = logging.getLogger(__name__)
 

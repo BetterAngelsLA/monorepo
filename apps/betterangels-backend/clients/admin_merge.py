@@ -10,7 +10,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
-from accounts.models import User
 from django.contrib import admin, messages
 from django.contrib.admin.sites import AdminSite
 from django.db.models import QuerySet
@@ -19,6 +18,7 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 
+from accounts.models import User
 from clients.models import ClientProfile
 from clients.selectors.merge import get_merged_sources, get_profile_by_id, get_profiles_by_ids
 from clients.services.merge import MergeValidationError, merge_execute, merge_preview, merge_undo

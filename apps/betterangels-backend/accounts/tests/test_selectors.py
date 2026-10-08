@@ -8,13 +8,14 @@ selectors merge the two, so the arms must not double-report a dual-write role.
 
 from typing import TYPE_CHECKING
 
+from django.test import TestCase
+from organizations.models import Organization
+
 from accounts.groups import ORG_ADMIN
 from accounts.selectors import role_names_by_organization
 from accounts.services import member_add
 from common.permissions.config import TemplateConfig
-from django.test import TestCase
 from notes.groups import CASEWORKER
-from organizations.models import Organization
 from shelters.groups import SHELTER_OPERATOR
 
 from .baker_recipes import organization_recipe

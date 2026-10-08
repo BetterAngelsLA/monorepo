@@ -5,8 +5,9 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import unquote
 
-from common.enums import AttachmentType
 from django.db.models import Model
+
+from common.enums import AttachmentType
 
 _MIME_PREFIX_TO_TYPE = {
     "image": AttachmentType.IMAGE,

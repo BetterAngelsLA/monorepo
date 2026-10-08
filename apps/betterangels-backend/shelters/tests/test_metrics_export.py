@@ -8,15 +8,15 @@ from typing import Any, cast
 
 import pytest
 from openpyxl import load_workbook
+from strawberry import ID
+
+from shelters.services.metrics_export import MetricsExportOptions, shelter_metrics_export
 from shelters.types.reporting import (
     DailyBedStatusMetricsType,
     DailyOccupancyMetricsType,
     ReservationMetricsType,
     ShelterOccupancyMetricsType,
 )
-from strawberry import ID
-
-from shelters.services.metrics_export import MetricsExportOptions, shelter_metrics_export
 
 ALL_OPTIONS = [
     MetricsExportOptions.DAILY_OCCUPANCY_METRICS,

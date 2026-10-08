@@ -3,7 +3,6 @@ from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
 from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
-from common.admin import AttachmentAdminMixin
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.utils import timezone
@@ -13,6 +12,8 @@ from import_export.formats.base_formats import CSV
 from import_export.widgets import ForeignKeyWidget
 from organizations.models import Organization
 from rangefilter.filters import DateRangeFilterBuilder
+
+from common.admin import AttachmentAdminMixin
 
 from .models import (
     Note,

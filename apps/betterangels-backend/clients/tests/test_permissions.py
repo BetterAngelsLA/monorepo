@@ -1,6 +1,8 @@
 from typing import Optional
 from unittest.mock import patch
 
+from unittest_parametrize import parametrize
+
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.tests.utils import (
@@ -12,7 +14,6 @@ from clients.tests.utils import (
 )
 from common.models import Attachment
 from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
-from unittest_parametrize import parametrize
 
 
 class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):

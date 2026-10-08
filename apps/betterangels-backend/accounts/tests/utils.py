@@ -1,9 +1,10 @@
 from typing import Any, Dict
 
-from accounts.models import User
-from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from organizations.models import OrganizationUser
+
+from accounts.models import User
+from common.tests.utils import GraphQLBaseTestCase
 
 from .baker_recipes import organization_recipe, permission_group_recipe
 

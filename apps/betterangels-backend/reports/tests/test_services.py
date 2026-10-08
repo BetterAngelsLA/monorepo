@@ -5,11 +5,12 @@ from zoneinfo import ZoneInfo
 
 import pytest
 import time_machine
-from accounts.models import OrgTypeChoices, Organization, OrganizationProfile
 from django.utils import timezone
 from model_bakery import baker
-from notes.models import Note
 from pytest_django.fixtures import SettingsWrapper
+
+from accounts.models import Organization, OrganizationProfile, OrgTypeChoices
+from notes.models import Note
 from reports.calendar import report_calendar_time_zone
 from reports.models import ScheduledReport
 from reports.selectors import report_default_date_range

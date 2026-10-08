@@ -5,13 +5,14 @@ self-delegation, and per-principal uniqueness that does not collide between
 org-scoped and object-scoped rows.
 """
 
-from accounts.models import Grant, Role, User
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.models import Grant, Role, User
 from shelters.models import Shelter
 
 from .baker_recipes import organization_recipe

@@ -5,17 +5,17 @@ from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
-from common.constants import HMIS_SESSION_KEY_NAME
-from common.graphql.types import NonBlankString, NonEmptyString
-from common.org_types import REGISTRY
 from django.db.models import Q, QuerySet
-from notes.groups import CASEWORKER
 from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
 from accounts.enums import OrgRoleEnum
 from accounts.models import PermissionGroup
+from common.constants import HMIS_SESSION_KEY_NAME
+from common.graphql.types import NonBlankString, NonEmptyString
+from common.org_types import REGISTRY
+from notes.groups import CASEWORKER
 
 from .models import User
 
