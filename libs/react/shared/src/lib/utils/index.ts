@@ -4,5 +4,8 @@ export * from './errors';
 export * from './formatClientDisplayName';
 export * from './forms';
 export * from './html';
+export * from './instagram';
+export * from './maps';
+export * from './platform';
 export * from './storage';
 export * from './youtube';
