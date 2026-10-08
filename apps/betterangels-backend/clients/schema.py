@@ -18,7 +18,6 @@ from clients.models import (
 from clients.services import client_document, client_profile_photo
 from common.services.types import UploadRequest, UploadConfirmation
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
-from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
@@ -26,7 +25,6 @@ from common.graphql.types import (
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
-from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment, PhoneNumber
 from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE, get_writable_or_deny
 from common.permissions.selectors import can_anywhere
@@ -34,7 +32,7 @@ from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import ForeignKey, Prefetch, QuerySet
+from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
 from phonenumber_field.validators import validate_international_phonenumber
 from strawberry.scalars import JSON
@@ -611,17 +609,17 @@ class Mutation:
         extensions=[HasPerm(perms=SocialMediaProfile.perms.DELETE, perm_checker=can_anywhere_checker)],
     )
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[
-            PermissionedQuerySet(model=Attachment, perms=[Attachment.perms.DELETE]),
-        ],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_client_document(self, info: Info, data: DeleteDjangoObjectInput) -> ClientDocumentType:
-        qs: QuerySet[Attachment] = info.context.qs
-        client_document = get_object_or_permission_error(
-            qs, data.id, error_message="You do not have permission to delete this document."
-        )
+        """The fetch IS the gate (RFC 0002 §Precondition).
+
+        ``Attachment`` declares ``WRITE_SHARED`` — document authority mirrors the
+        parent client's (docs/adr/0005-client-document-authority.md) — so this
+        loads through :func:`writable` rather than an unfiltered fetch plus a
+        scope check, and without the guardian prefilter it replaces.
+        """
+        user = cast(User, get_current_user(info))
+        client_document = get_writable_or_deny(Attachment.objects.all(), data.id, user, Attachment.perms.DELETE)
 
         return cast(ClientDocumentType, resolvers.delete(info, client_document))
 
@@ -871,8 +869,22 @@ class Mutation:
             )
         return cast(ClientProfileImportRecordType, record)
 
-    update_client_document: ClientDocumentType = mutations.update(
-        UpdateClientDocumentInput,
-        permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=Attachment.perms.CHANGE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_client_document(self, info: Info, data: UpdateClientDocumentInput) -> ClientDocumentType:
+        """Rename a document through the same gate as delete (ADR 0005).
+
+        Fetching through :func:`writable` instead of the declarative
+        ``HasRetvalPerm`` extension: the extension resolves the permission by
+        content type, and ``Attachment`` is reachable through more than one
+        content-type row, so the declarative check refuses holders the grant
+        model admits.  The fetch IS the gate (RFC 0002 §Precondition).
+        """
+        user = cast(User, get_current_user(info))
+        client_document = get_writable_or_deny(Attachment.objects.all(), data.id, user, Attachment.perms.CHANGE)
+
+        if data.original_filename is not None:
+            client_document.original_filename = data.original_filename
+            client_document.full_clean()
+            client_document.save(update_fields=["original_filename", "updated_at"])
+
+        return cast(ClientDocumentType, client_document)

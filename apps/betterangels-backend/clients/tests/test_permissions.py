@@ -229,8 +229,9 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "user_label",
         [
-            ("org_1_case_manager_1",),
-            ("org_1_case_manager_2",),
+            ("org_1_case_manager_1",),  # uploader
+            ("org_1_case_manager_2",),  # colleague in the same org
+            ("org_2_case_manager_1",),  # another org: SHARED tier, mirrors the client gate
         ],
     )
     def test_delete_client_document_returns_the_deleted_document(self, user_label: str) -> None:
@@ -248,7 +249,6 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "user_label",
         [
-            ("org_2_case_manager_1",),
             ("non_case_manager_user",),
         ],
     )
@@ -261,7 +261,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertGraphQLOperationInfo(
             response,
             "deleteClientDocument",
-            "You do not have permission to delete this document.",
+            PERMISSION_DENIED_MESSAGE,
             kind="PERMISSION",
             exact=True,
         )
@@ -350,7 +350,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", False),  # CM in different org should not succeed
+            ("org_2_case_manager_1", True),  # CM in a different org: SHARED tier, mirrors the client gate
             ("non_case_manager_user", False),  # Non-CM user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -371,12 +371,14 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertGraphQLUnauthenticated(response)
         else:
             self.assertEqual(len(response["data"]["updateClientDocument"]["messages"]), 1)
+            # The canonical denial: the mutation now fetches through the write
+            # gate rather than the declarative permission extension (ADR 0005).
             self.assertEqual(
                 response["data"]["updateClientDocument"]["messages"][0],
                 {
                     "kind": "PERMISSION",
                     "field": None,
-                    "message": "You don't have permission to access this app.",
+                    "message": PERMISSION_DENIED_MESSAGE,
                 },
             )
 
@@ -436,7 +438,6 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
         with (
             patch("common.services.file_upload.validate_upload_token", return_value=True),
-            patch("clients.services.client_document.assign_object_permissions"),
             patch("common.services.file_upload.s3_key_exists", return_value=True),
             patch(
                 "common.services.file_upload.strip_storage_location",

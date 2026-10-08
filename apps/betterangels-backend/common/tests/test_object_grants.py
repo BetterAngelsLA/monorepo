@@ -6,11 +6,13 @@ route) and the ``post_delete`` cleanup that keeps a generic ``scope_object``
 pointer from outliving the row it names.
 """
 
+from contextlib import contextmanager
 from unittest.mock import patch
 
 from accounts.models import Grant, Role, User
 from common.models import Attachment
 from common.permissions.selectors import object_grant_ancestors
+from common.permissions.signals import delete_object_grants_for
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from model_bakery import baker
@@ -18,7 +20,31 @@ from shelters.models import Bed, Reservation
 
 
 class ObjectGrantCleanupTestCase(TestCase):
+    """The receivers are keyed off OBJECT_GRANT_WHITELIST, which ships empty.
+
+    The cleanup must still work for the next model that opts in, so these open the
+    whitelist around the connect + delete rather than relying on a production
+    consumer (see docs/adr/0005-client-document-authority.md).
+    """
+
     """A deleted row must not leave a grant pointing at its id (finding F3)."""
+
+    @contextmanager
+    def _open_whitelist(self):
+        """Open the whitelist around the cleanup call.
+
+        ``CommonConfig.ready()`` connects one ``post_delete`` receiver per
+        whitelisted model, and the whitelist ships empty.  These tests call
+        :func:`delete_object_grants_for` directly rather than reconnecting the
+        receiver: connecting mutates global signal state (``weak=False`` under a
+        real ``dispatch_uid``, plus Django's sender caches), which outlives the
+        test and added queries to later ``Attachment`` deletes — visible only in
+        the full-suite run, where ``common`` precedes ``clients``.
+        """
+        import common.permissions.config as config
+
+        with patch.object(config, "OBJECT_GRANT_WHITELIST", frozenset({"common.attachment"})):
+            yield
 
     def test_deleting_a_granted_row_drops_its_object_grant(self) -> None:
         user = baker.make(User)
@@ -29,7 +55,9 @@ class ObjectGrantCleanupTestCase(TestCase):
             principal_user=user, role=role, scope_object_type=content_type, scope_object_id=attachment.pk
         )
 
-        attachment.delete()
+        with self._open_whitelist():
+            delete_object_grants_for(Attachment, attachment)
+            attachment.delete()
 
         self.assertFalse(Grant.objects.filter(pk=grant.pk).exists())
 
@@ -43,7 +71,9 @@ class ObjectGrantCleanupTestCase(TestCase):
         )
         Grant.objects.create(principal_user=user, role=role, scope_object_type=content_type, scope_object_id=removed.pk)
 
-        removed.delete()
+        with self._open_whitelist():
+            delete_object_grants_for(Attachment, removed)
+            removed.delete()
 
         self.assertTrue(Grant.objects.filter(pk=grant.pk).exists())
         self.assertEqual(Grant.objects.filter(scope_object_type=content_type).count(), 1)

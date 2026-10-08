@@ -95,13 +95,16 @@ class RoleDef:
 # Models that may carry object grants (ADR 0001 §2.5), keyed "app_label.model".
 # A grant to a model outside this set is refused at write time (``Grant.clean``)
 # and flagged at deploy time (``permissions.E003``); declaring
-# ``write_tier = WRITE_OBJECT`` on a model outside it is refused by
+# ``Access(write=WRITE_OBJECT)`` on a model outside it is refused by
 # ``permissions.E007``.  One source, so the gates cannot drift apart.
 #
-# First consumer: ``Attachment``.  It is polymorphic (``content_object``) with no
-# org column, so there is no org path to scope it by — a per-record grant is the
-# only reach that can authorize one of its rows.
-OBJECT_GRANT_WHITELIST: frozenset[str] = frozenset({"common.attachment"})
+# Empty on purpose.  The arm's runtime ships (predicate, ``org_via`` cascade,
+# ``post_delete`` orphan cleanup — all tested directly), but it has no production
+# consumer: the one candidate, ``Attachment``, turned out to need org-granular
+# authority, which per-record grants cannot express without recreating the
+# forbidden org-principal shape (docs/adr/0005-client-document-authority.md).
+# Adding a model here is what turns the arm on for it.
+OBJECT_GRANT_WHITELIST: frozenset[str] = frozenset()
 
 
 def content_type_key(content_type: Any) -> str:

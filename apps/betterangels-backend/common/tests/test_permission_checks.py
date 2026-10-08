@@ -220,11 +220,21 @@ class AccessDeclarationChecksTestCase(TestCase):
         self.assertIn("not object-grantable", errors[0].msg)
 
     def test_e007_allows_the_object_class_on_a_whitelisted_model(self) -> None:
-        """The arm is on, so a whitelisted model may declare it — Attachment does."""
-        from common.models import Attachment
+        """The whitelist is what admits the class — empty in production today.
 
-        self.assertEqual(Attachment.access.write, WRITE_OBJECT)
-        self.assertEqual(_errors_with(check_access_declarations(None), "permissions.E007"), [])
+        ``Attachment`` was the intended consumer but needs org-granular authority,
+        which per-record grants cannot express (docs/adr/0005-client-document-authority.md),
+        so the whitelist ships empty.  The rule still has to work for the next
+        model that opts in, so it is exercised by opening the whitelist.
+        """
+        from unittest.mock import patch
+
+        from common.permissions import config
+
+        self.assertEqual(config.OBJECT_GRANT_WHITELIST, frozenset(), "no production consumer today")
+
+        with patch.object(config, "OBJECT_GRANT_WHITELIST", frozenset({"common.attachment"})):
+            self.assertEqual(_errors_with(check_access_declarations(None), "permissions.E007"), [])
 
     def test_e007_fires_on_an_unknown_write_class(self) -> None:
         """A typo must not silently fall back to the derived default (ADR 0004)."""

@@ -209,18 +209,24 @@ class Attachment(ScopedResource, BaseModel):
 
     ``org_via = None`` — platform-shared reach: an attachment has no org column
     and its ``GenericForeignKey`` parent is inexpressible as a single-valued org
-    path, so there is no org reach to scope a row by.  ``access.write =
-    WRITE_OBJECT`` makes that explicit: a row is writable only by the global tier
-    or by a user-principal object ``Grant`` naming it (ADR 0001 §2.5), which is
-    what replaces the per-file guardian rows this model used to carry.
+    path, so there is no org reach to scope a row by.
 
-    Read authority is NOT this model's reach — see ``clients.schema``, which
-    scopes the document list through the parent ``ClientProfile`` the attachment
-    belongs to.  Per-record object grants are additive on top of that.
+    ``access.write = WRITE_SHARED``, deliberately not ``WRITE_OBJECT``.  Object
+    grants are person-granular ("this user may edit this record"); the authority
+    client documents always had is org-granular ("the creating org may edit this
+    document"), and per-record grants cannot express that without becoming the
+    forbidden org-principal shape (ADR 0001 §2.5).  Document authority mirrors
+    the parent ``ClientProfile``, which is what the API already does — the upload
+    mutations gate on ``ClientProfile.perms.CHANGE`` and the document list is a
+    field on ``ClientProfileType`` under its ``VIEW``.  See
+    ``docs/adr/0005-client-document-authority.md``.
+
+    Read authority is likewise not this model's reach — see ``clients.schema``,
+    which scopes the document list through the parent profile.
     """
 
     org_via = None
-    access = Access(write=WRITE_OBJECT)
+    access = Access(write=WRITE_SHARED)
 
     file = models.FileField(upload_to=get_unique_file_path)
     attachment_type = TextChoicesField(choices_enum=AttachmentType)
