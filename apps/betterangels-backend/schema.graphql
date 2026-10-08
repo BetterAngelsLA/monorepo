@@ -677,6 +677,7 @@ input CreateReferralInput {
   clientProfile: ID!
   shelter: ID!
   notes: String
+  organizationId: ID!
 }
 
 union CreateReferralPayload = ReferralType | OperationInfo
@@ -1597,7 +1598,7 @@ type Mutation {
   updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload!
   deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload!
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
-  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
+  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload!
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
 }
 

@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional
 
-from accounts.models import PermissionGroup, User
+from accounts.models import User
 from clients.models import ClientProfile
-from common.permissions.gates import assign_object_permissions
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from organizations.models import Organization
 from referrals.models import Referral
 from shelters.models import Shelter
 
@@ -14,16 +14,24 @@ REFERRAL_UPDATE_FIELDS = ("status", "notes")
 def referral_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    organization: Organization,
     client_profile: ClientProfile,
     shelter: Shelter,
     notes: Optional[str] = None,
 ) -> Referral:
+    """Create a referral at *organization* (RFC 0003 §sub-decision 3).
+
+    The org comes from the payload and is the row's ``organization``, so authority
+    is the caller's org role — no per-row guardian grants are written.  A foreign
+    referral (one reaching an org only through its shelter) is *readable* through
+    the shared arm but not writable, which ``can_obj`` enforces by anchoring on
+    the row's own org.
+    """
     referral = Referral(
         client_profile=client_profile,
         shelter=shelter,
         created_by=user,
-        organization=permission_group.organization,
+        organization=organization,
         status=Referral.Status.PENDING,
         notes=notes,
     )
@@ -34,11 +42,6 @@ def referral_create(
     except IntegrityError as e:
         raise ValidationError(str(e)) from e
 
-    assign_object_permissions(
-        permission_group,
-        referral,
-        [Referral.perms.VIEW, Referral.perms.CHANGE, Referral.perms.DELETE],
-    )
     return referral
 
 

@@ -112,7 +112,7 @@ def content_type_key(content_type: Any) -> str:
     so normalise rather than trusting one attribute.
     """
     options = getattr(content_type, "_meta", content_type)
-    app_label = getattr(content_type, "app_label", None) or options.app_label
+    app_label: str = getattr(content_type, "app_label", None) or options.app_label
     model = getattr(content_type, "model", None)
-    name = model if isinstance(model, str) else getattr(options, "model_name", None)
+    name: str = model if isinstance(model, str) else options.model_name
     return f"{app_label}.{name.lower()}"
