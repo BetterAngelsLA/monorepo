@@ -175,6 +175,10 @@ function setup(options?: {
           variables: { pagination: { offset: 0, limit: SHELTERS_PAGE_SIZE } },
         },
         delay: 0,
+        // The picker refetches on every entry to it (cache-and-network), and the
+        // round-trip test enters it twice because Back unmounts it. MockLink
+        // serves each entry once by default.
+        maxUsageCount: 2,
         result: {
           data: {
             shelters: {
@@ -528,4 +532,28 @@ it("asks before replacing another client's draft and only replaces on confirm", 
   } finally {
     alertSpy.mockRestore();
   }
+});
+
+it('returns from the picker to the intake form and forward again without losing answers or the selection', async () => {
+  const { store } = setup();
+  // openPicker leaves the draft parked on the picker step — the state a tester
+  // resumes into.
+  await openPicker();
+
+  fireEvent.press(screen.getByTestId('picker-back-btn'));
+
+  expect(await screen.findByTestId('referral-intake-screen')).toBeOnTheScreen();
+  expect(store.getSnapshot()?.step).toBe('intake');
+  expect(
+    screen.getByLabelText('Staff Observations / Notes'),
+  ).toHaveDisplayValue(answers.notes);
+  expect(screen.getByLabelText('Substances')).toHaveDisplayValue(
+    answers.substances,
+  );
+
+  fireEvent.press(screen.getByTestId('intake-next-btn'));
+
+  expect(await screen.findByTestId('shelter-picker-screen')).toBeOnTheScreen();
+  // The shelter picked before going back is still selected.
+  expect(await screen.findByText('✓ Selected: Alpha House')).toBeOnTheScreen();
 });

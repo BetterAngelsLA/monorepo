@@ -1,4 +1,5 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
+import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   InfiniteList,
@@ -20,6 +21,9 @@ import {
 type TProps = {
   onCancel: () => void;
   onPause?: () => void;
+  // Returns to the intake step. Required, because past intake it is the only
+  // exit that keeps the draft — Cancel discards it and Pause reopens here.
+  onBack: () => void;
   onSubmit: (shelterId: string, notes: string | undefined) => Promise<boolean>;
   // client-needed attributes for match coloring; omit for a neutral list
   desiredAttributes?: string[];
@@ -40,6 +44,7 @@ function selectionLabel(selectedShelter: ShelterResult | undefined): string {
 export function ReferralForm({
   onCancel,
   onPause,
+  onBack,
   onSubmit,
   desiredAttributes,
   selectedShelterId,
@@ -85,8 +90,17 @@ export function ReferralForm({
 
   return (
     <View style={styles.container} testID="shelter-picker-screen">
-      {/* Header — mirrors the intake step: Cancel / Pause / Submit */}
       <View style={styles.header}>
+        <Pressable
+          testID="picker-back-btn"
+          onPress={onBack}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="back to the referral form"
+          accessibilityHint="returns to the required information form"
+        >
+          <ChevronLeftIcon size="md" color={Colors.PRIMARY} />
+        </Pressable>
         <CancelReferralButton
           testID="picker-cancel-btn"
           style={[styles.headerBtn, styles.headerBtnFlex]}
