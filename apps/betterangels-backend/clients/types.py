@@ -18,7 +18,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import CharField, Exists, F, Func, Max, OuterRef, Q, QuerySet, Value
 from django.utils import timezone
 from strawberry import ID, Info, auto
-from strawberry.file_uploads import Upload
 
 from clients.enums import (
     AdaAccommodationEnum,
@@ -290,12 +289,6 @@ class SocialMediaProfileInput(SocialMediaProfileBaseType):
     platform_user_id: NonBlankString | None
 
 
-@strawberry.input
-class ClientProfilePhotoInput:
-    client_profile: ID
-    photo: Optional[Upload]
-
-
 @strawberry_django.type(ClientContact)
 class ClientContactBaseType:
     name: auto
@@ -368,7 +361,6 @@ class ClientProfileBaseType:
     place_of_birth: auto
     preferred_communication: Optional[List[PreferredCommunicationEnum]]
     preferred_language: auto
-    profile_photo: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
@@ -382,6 +374,7 @@ class ClientProfileBaseType:
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, ordering=ClientProfileOrder, pagination=True)
 class ClientProfileType(ClientProfileBaseType):
     id: ID
+    profile_photo: auto
     contacts: Optional[List[ClientContactType]]
     hmis_profiles: Optional[List[HmisProfileType]]
     household_members: Optional[List[ClientHouseholdMemberType]]
