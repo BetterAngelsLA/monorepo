@@ -18,7 +18,7 @@ CASEWORKER = TemplateConfig(
         # Note: ADD + VIEW + CHANGE + DELETE.  The write cutover (RFC 0003
         # slice 2) removed the guardian write paths, so the model-level
         # CHANGE/DELETE perms can no longer over-permit through
-        # ``filter_for_user`` — they now mirror the Role bundle.
+        # guardian prefilter — they now mirror the Role bundle.
         Note.perms.ADD,
         Note.perms.VIEW,
         Note.perms.CHANGE,

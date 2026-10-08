@@ -65,13 +65,15 @@ GATE_EXEMPT = {
         "org creation itself — no org authority exists yet; eligibility lives in create_organization_service"
     ),
     ("clients.schema", "delete_client_document"): (
-        "attachment-domain gate (PermissionedQuerySet) — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+        "attachment-domain gate: fetches through ``writable()`` on the SHARED tier — "
+        "documents mirror the parent client's authority (ADR 0005)"
     ),
     ("clients.schema", "update_client_document"): (
-        "attachment-domain gate — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+        "attachment-domain gate: same ``writable()`` fetch as delete (ADR 0005)"
     ),
     ("clients.schema", "generate_client_document_uploads"): (
-        "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+        "attachment perms + legacy client CHANGE load; the parent-client gate is "
+        "``get_writable_or_deny`` on ClientProfile (ADR 0005)"
     ),
     ("clients.schema", "resolve_client_document_uploads"): (
         "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
