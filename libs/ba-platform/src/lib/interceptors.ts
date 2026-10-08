@@ -13,7 +13,6 @@ export {
   type CookiePersister,
   composeFetchInterceptors,
   createCsrfInterceptor,
-  createOrgInterceptor,
   createCsrfTokenRefresher,
   includeCredentialsInterceptor,
 } from '@monorepo/fetch';
