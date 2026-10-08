@@ -3,26 +3,27 @@ import { mergeCss } from '@monorepo/react/shared';
 import type { AuditEvent } from '../../hooks';
 import { AuditChangesView } from './AuditChangesView';
 import { humanizeAction } from './auditChanges';
-import { formatAuditTimestamp, formatAuditTimestampAbsolute } from './auditTime';
+import {
+  formatAuditTimestamp,
+  formatAuditTimestampAbsolute,
+} from './auditTime';
 import { Text } from '../base-ui/text/text';
 
-const KIND_META: Record<
-  AuditEventKind,
-  { label: string; className: string }
-> = {
-  [AuditEventKind.Insert]: {
-    label: 'Added',
-    className: 'bg-emerald-100 text-emerald-800',
-  },
-  [AuditEventKind.Update]: {
-    label: 'Changed',
-    className: 'bg-sky-100 text-sky-800',
-  },
-  [AuditEventKind.Delete]: {
-    label: 'Removed',
-    className: 'bg-red-100 text-red-800',
-  },
-};
+const KIND_META: Record<AuditEventKind, { label: string; className: string }> =
+  {
+    [AuditEventKind.Insert]: {
+      label: 'Added',
+      className: 'bg-emerald-100 text-emerald-800',
+    },
+    [AuditEventKind.Update]: {
+      label: 'Changed',
+      className: 'bg-sky-100 text-sky-800',
+    },
+    [AuditEventKind.Delete]: {
+      label: 'Removed',
+      className: 'bg-red-100 text-red-800',
+    },
+  };
 
 /** One low-level event within a grouped action. */
 export function AuditEventRow({ event }: { event: AuditEvent }) {

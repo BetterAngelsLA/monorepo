@@ -11,7 +11,16 @@ export type AuditEvent = AuditAction['events'][number];
 
 const DEFAULT_PAGE_SIZE = 25;
 
-type UseObjectAuditLogArgs = {
+export type ObjectAuditLogFilters = {
+  /** Inclusive lower bound (ISO datetime). */
+  dateFrom?: string | null;
+  /** Inclusive upper bound (ISO datetime). */
+  dateTo?: string | null;
+  /** Restrict to a single acting user. */
+  actorId?: string | null;
+};
+
+type UseObjectAuditLogArgs = ObjectAuditLogFilters & {
   targetType: ObjectAuditLogQueryVariables['targetType'];
   objectId: string;
   pageSize?: number;
@@ -20,17 +29,36 @@ type UseObjectAuditLogArgs = {
 /**
  * Fetches the grouped audit actions for one object. The API returns a plain
  * list (no total count), so "more" is inferred from page sizes.
+ *
+ * Date/actor filters are applied server-side; changing them restarts
+ * pagination from the first page.
  */
 export function useObjectAuditLog({
   targetType,
   objectId,
   pageSize = DEFAULT_PAGE_SIZE,
+  dateFrom,
+  dateTo,
+  actorId,
 }: UseObjectAuditLogArgs) {
+  const variables = useMemo(
+    () => ({
+      targetType,
+      objectId,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      actorId: actorId || undefined,
+      limit: pageSize,
+      offset: 0,
+    }),
+    [targetType, objectId, dateFrom, dateTo, actorId, pageSize],
+  );
+
   const { data, loading, error, fetchMore } = useQuery<
     ObjectAuditLogQuery,
     ObjectAuditLogQueryVariables
   >(ObjectAuditLogDocument, {
-    variables: { targetType, objectId, limit: pageSize, offset: 0 },
+    variables,
     skip: !objectId,
     fetchPolicy: 'cache-and-network',
     notifyOnNetworkStatusChange: true,
@@ -41,11 +69,11 @@ export function useObjectAuditLog({
   const [hasMore, setHasMore] = useState(false);
   const firstPageResolved = useRef(false);
 
-  // Reset pagination whenever the queried object changes.
+  // Restart pagination whenever the query (object or filters) changes.
   useEffect(() => {
     firstPageResolved.current = false;
     setHasMore(false);
-  }, [targetType, objectId, pageSize]);
+  }, [targetType, objectId, dateFrom, dateTo, actorId, pageSize]);
 
   // A full first page implies there may be more; a short page means the end.
   useEffect(() => {
@@ -58,12 +86,7 @@ export function useObjectAuditLog({
 
   const loadMore = useCallback(async () => {
     const result = await fetchMore({
-      variables: {
-        targetType,
-        objectId,
-        limit: pageSize,
-        offset: actions.length,
-      },
+      variables: { ...variables, offset: actions.length },
       updateQuery: (previous, { fetchMoreResult }) => {
         if (!fetchMoreResult) {
           return previous;
@@ -83,7 +106,7 @@ export function useObjectAuditLog({
     if (nextPage.length < pageSize) {
       setHasMore(false);
     }
-  }, [fetchMore, targetType, objectId, pageSize, actions.length]);
+  }, [fetchMore, variables, pageSize, actions.length]);
 
   return {
     actions,
