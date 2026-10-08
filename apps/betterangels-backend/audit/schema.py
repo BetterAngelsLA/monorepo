@@ -1,6 +1,7 @@
-"""GraphQL surface for the object audit log (ADR 0004 §18)."""
+"""GraphQL surface for the object audit log (ADR 0004 §18, §21)."""
 
-from typing import List, cast
+from datetime import datetime
+from typing import List, Optional, cast
 
 from accounts.models import User as AccountUser
 from common.permissions.utils import IsAuthenticated
@@ -38,11 +39,26 @@ class Query:
         info: Info,
         target_type: AuditTargetType,
         object_id: ID,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+        actor_id: Optional[ID] = None,
         limit: int = 50,
         offset: int = 0,
     ) -> List[AuditActionType]:
-        """The write audit log for one object, newest action first."""
+        """The write audit log for one object, newest action first.
+
+        ``dateFrom``/``dateTo`` window ``timestamp`` (inclusive) and ``actorId``
+        restricts to one actor (ADR 0004 §21).
+        """
         user = cast(AccountUser, get_current_user(info))
         obj = _resolve_target(user, target_type, object_id)
-        actions = object_audit_log(obj=obj, target_type=target_type.value, limit=limit, offset=offset)
+        actions = object_audit_log(
+            obj=obj,
+            target_type=target_type.value,
+            date_from=date_from,
+            date_to=date_to,
+            actor_id=actor_id,
+            limit=limit,
+            offset=offset,
+        )
         return [to_action_type(action) for action in actions]

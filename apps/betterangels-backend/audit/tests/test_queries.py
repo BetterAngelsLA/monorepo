@@ -1,4 +1,6 @@
-"""GraphQL tests for ``objectAuditLog`` (ADR 0004 §20)."""
+"""GraphQL tests for ``objectAuditLog`` (ADR 0004 §20–§21)."""
+
+from datetime import datetime, timezone
 
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
@@ -8,9 +10,28 @@ from audit.tests.utils import audit_context
 from shelters.enums import DemographicChoices, ReservationStatusChoices
 from shelters.models import Bed, Demographic, Reservation, ReservationClient, Shelter
 
+_T1 = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+_T2 = datetime(2026, 2, 1, 12, 0, tzinfo=timezone.utc)
+
 OBJECT_AUDIT_LOG_QUERY = """
-    query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $offset: Int) {
-        objectAuditLog(targetType: $targetType, objectId: $objectId, limit: $limit, offset: $offset) {
+    query ObjectAuditLog(
+        $targetType: AuditTargetType!,
+        $objectId: ID!,
+        $dateFrom: DateTime,
+        $dateTo: DateTime,
+        $actorId: ID,
+        $limit: Int,
+        $offset: Int
+    ) {
+        objectAuditLog(
+            targetType: $targetType,
+            objectId: $objectId,
+            dateFrom: $dateFrom,
+            dateTo: $dateTo,
+            actorId: $actorId,
+            limit: $limit,
+            offset: $offset
+        ) {
             timestamp
             actor
             summary
@@ -137,3 +158,42 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["First", "Second"])
+
+    # ── date / actor filters (§21) ───────────────────────────────────────────
+
+    def _rename_at(self, name: str, *, at: datetime, user: object) -> None:
+        with audit_context(user=user):
+            self.shelter.name = name
+            self.shelter.save()
+        Shelter.pgh_event_model.objects.filter(
+            pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name
+        ).update(pgh_created_at=at)
+
+    def test_date_filters_narrow_the_log(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self._rename_at("Early", at=_T1, user=self.org_1_case_manager_1)
+        self._rename_at("Late", at=_T2, user=self.org_1_case_manager_1)
+
+        response = self._query("SHELTER", self.shelter.id, dateFrom=_T2.isoformat())
+        actions = response["data"]["objectAuditLog"]
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["Early", "Late"])
+
+        response = self._query("SHELTER", self.shelter.id, dateTo=_T1.isoformat())
+        actions = response["data"]["objectAuditLog"]
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["Query Shelter", "Early"])
+
+    def test_actor_filter_narrows_the_log(self) -> None:
+        self._grant_permission(self.org_1_case_manager_2, Shelter.perms.VIEW, self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self._rename_at("By Casey", at=_T1, user=self.org_1_case_manager_1)
+        self._rename_at("By Dana", at=_T2, user=self.org_1_case_manager_2)
+
+        response = self._query("SHELTER", self.shelter.id, actorId=str(self.org_1_case_manager_1.id))
+        actions = response["data"]["objectAuditLog"]
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["Query Shelter", "By Casey"])
