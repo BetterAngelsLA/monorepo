@@ -1,6 +1,6 @@
 """Aggregate event model for the audit log.
 
-``AuditEvents`` is a proxy of pghistory's aggregate ``Events`` model that adds
+``AuditEvent`` is a proxy of pghistory's aggregate ``Events`` model that adds
 the context-derived fields the audit selector needs: the acting user (both the
 live FK and the frozen name/email snapshots from the ADR 0004 §8 middleware)
 and the context ``label`` (§11) used for the seed/import/clone split.
@@ -10,13 +10,12 @@ against context-less events (e.g. ``.exclude(label="seed")`` must not drop rows
 written outside any ``pghistory.context()``).
 """
 
+import pghistory
 from django.conf import settings
 from django.db import models
 
-import pghistory
 
-
-class AuditEvents(pghistory.models.Events):
+class AuditEvent(pghistory.models.Events):
     actor = pghistory.ProxyField(
         "pgh_context__user",
         models.ForeignKey(
