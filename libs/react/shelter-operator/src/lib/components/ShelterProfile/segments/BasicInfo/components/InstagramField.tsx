@@ -40,6 +40,7 @@ export function InstagramField(props: TProps) {
 
         <div className="flex h-12 w-full items-center rounded-full border border-transparent bg-white px-5">
           <InstagramLink
+            label={value}
             handleOrHref={value}
             icon={true}
             openExternal={true}
