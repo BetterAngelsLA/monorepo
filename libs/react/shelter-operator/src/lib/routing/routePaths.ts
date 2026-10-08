@@ -64,6 +64,7 @@ export const profileRouteConfig = {
     services: 'services',
     ecosystem: 'ecosystem',
     media: 'media',
+    activity: 'activity',
     baPrivate: 'ba-private',
   },
 } as const satisfies StaticRouteConfig;
