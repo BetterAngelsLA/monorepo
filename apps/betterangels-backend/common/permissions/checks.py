@@ -342,7 +342,7 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
             # A proxy (``clients.ClientDocument`` over ``common.Attachment``)
             # inherits its parent's declaration and shares its rows, so it is
             # object-grantable exactly when the model holding the rows is.
-            and content_type_key(model._meta.concrete_model._meta) not in OBJECT_GRANT_WHITELIST
+            and content_type_key((model._meta.concrete_model or model)._meta) not in OBJECT_GRANT_WHITELIST
         ):
             errors.append(
                 Error(

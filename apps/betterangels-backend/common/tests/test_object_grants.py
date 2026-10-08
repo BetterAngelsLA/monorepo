@@ -6,6 +6,7 @@ route) and the ``post_delete`` cleanup that keeps a generic ``scope_object``
 pointer from outliving the row it names.
 """
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from unittest.mock import patch
 
@@ -30,7 +31,7 @@ class ObjectGrantCleanupTestCase(TestCase):
     """A deleted row must not leave a grant pointing at its id (finding F3)."""
 
     @contextmanager
-    def _open_whitelist(self):
+    def _open_whitelist(self) -> Iterator[None]:
         """Open the whitelist around the cleanup call.
 
         ``CommonConfig.ready()`` connects one ``post_delete`` receiver per

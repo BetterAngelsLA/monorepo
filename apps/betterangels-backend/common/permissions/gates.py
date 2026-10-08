@@ -14,7 +14,6 @@ import strawberry
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Model
-from guardian.shortcuts import assign_perm
 from strawberry_django.auth.utils import get_current_user
 
 from common.errors import UnauthenticatedGQLError
@@ -115,11 +114,31 @@ def assign_object_permissions(
     obj: Model,
     permissions: Sequence[str],
 ) -> None:
-    """Assign a list of object-level permissions on ``obj`` to ``group``.
+    """Write group-held object permission rows on ``obj``.
 
-    This is a thin wrapper around ``guardian.shortcuts.assign_perm`` that
-    eliminates the repeated ``for perm in perms: assign_perm(…)`` loop
-    scattered across mutations and services.
+    This is the legacy transport, kept alive for exactly one caller: the tasks
+    compat window (``task_create_legacy``), which the strict flip deletes along
+    with this function (ADR 0001 §2.5 — no authority rows at record-creation
+    time).
+
+    It used to delegate to ``guardian.shortcuts.assign_perm``.  django-guardian is
+    gone, so it writes the ``accounts.BigGroupObjectPermission`` rows directly:
+    those two tables survive with their schema, the package is just no longer what
+    maps them.  Do not add callers — new code grants through ``Grant``.
     """
-    for perm in permissions:
-        assign_perm(perm, group, obj)
+    from accounts.models import BigGroupObjectPermission
+    from django.contrib.auth.models import Permission
+    from django.contrib.contenttypes.models import ContentType
+
+    content_type = ContentType.objects.get_for_model(obj)
+    codenames = [perm.rsplit(".", 1)[-1] for perm in permissions]
+    permission_ids = Permission.objects.filter(content_type=content_type, codename__in=codenames).values_list(
+        "pk", flat=True
+    )
+    for permission_id in permission_ids:
+        BigGroupObjectPermission.objects.get_or_create(
+            group=group,
+            permission_id=permission_id,
+            content_type=content_type,
+            object_pk=str(obj.pk),
+        )

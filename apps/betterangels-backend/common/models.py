@@ -497,5 +497,3 @@ class PhoneNumber(models.Model):
             ).update(is_primary=False)
 
         super().save(*args, **kwargs)
-
-
