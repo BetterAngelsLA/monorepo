@@ -57,7 +57,7 @@ export function AuditEventRow({ event }: { event: AuditEvent }) {
         </Text>
       </div>
 
-      <AuditChangesView value={event.fieldChanges} />
+      <AuditChangesView value={event.fieldChanges} action={event.action} />
     </div>
   );
 }

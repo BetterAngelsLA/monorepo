@@ -26,6 +26,54 @@ export type AuditChange = AuditScalarChange | AuditMultiChange;
 
 const ACTION_VERBS = new Set(['add', 'remove', 'update', 'status_change']);
 
+/**
+ * Fields hidden from every event. `id` churns on full-replacement saves (the
+ * row is deleted and re-created), and the two generated interval columns are
+ * derived from `day`/`start_time`/`end_time`, so they add no signal.
+ */
+const HIDDEN_FIELDS = new Set([
+  'id',
+  'start_cycle_minutes',
+  'duration_minutes',
+]);
+
+const SCHEDULE_ACTION_PREFIX = 'shelter.schedule';
+
+export type ParseFieldChangesOptions = {
+  /** Fields always shown as context, even when unchanged. */
+  pinnedFields?: readonly string[];
+  /** Fallback value for a pinned field missing from the payload. */
+  pinnedFallbacks?: Record<string, string>;
+  /** Fields dropped when both the old and new values are falsey. */
+  dropWhenBothFalsey?: readonly string[];
+};
+
+/**
+ * Display rules keyed off the event's action.
+ *
+ * Schedule rows are saved via full replacement (delete + bulk_create), so their
+ * merged `fieldChanges` carry every populated column as a no-op pair. Pinning
+ * `day`/`schedule_type` keeps the row identifiable and the no-op filter in
+ * `parseFieldChanges` drops the rest.
+ */
+export function displayOptionsForAction(
+  action?: string
+): ParseFieldChangesOptions {
+  if (action?.startsWith(SCHEDULE_ACTION_PREFIX)) {
+    return {
+      pinnedFields: ['day', 'schedule_type'],
+      pinnedFallbacks: { day: 'Every day' },
+      dropWhenBothFalsey: ['is_exception'],
+    };
+  }
+
+  return {};
+}
+
+function isFalsey(value: unknown): boolean {
+  return value === null || value === undefined || value === false;
+}
+
 /** `exit_policy` -> `Exit Policy` */
 export function humanizeFieldName(field: string): string {
   return field
@@ -74,24 +122,77 @@ function isArrayPair(value: unknown): value is [unknown[], unknown[]] {
   );
 }
 
-export function parseFieldChanges(value: unknown): AuditChange[] {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return [];
-  }
+export function parseFieldChanges(
+  value: unknown,
+  options: ParseFieldChangesOptions = {}
+): AuditChange[] {
+  const {
+    pinnedFields = [],
+    pinnedFallbacks = {},
+    dropWhenBothFalsey = [],
+  } = options;
+  const pinned = new Set(pinnedFields);
 
-  return Object.entries(value as Record<string, unknown>).map(
-    ([field, raw]): AuditChange => {
+  const parsed: AuditChange[] = [];
+
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    for (const [field, raw] of Object.entries(
+      value as Record<string, unknown>
+    )) {
+      if (HIDDEN_FIELDS.has(field)) {
+        continue;
+      }
+
       const label = humanizeFieldName(field);
 
       if (isArrayPair(raw)) {
         const [removed, added] = raw;
 
-        return { kind: 'multi', field, label, removed, added };
+        if (removed.length === 0 && added.length === 0) {
+          continue;
+        }
+
+        parsed.push({ kind: 'multi', field, label, removed, added });
+        continue;
       }
 
       const [oldValue, newValue] = Array.isArray(raw) ? raw : [undefined, raw];
 
-      return { kind: 'scalar', field, label, oldValue, newValue };
-    },
-  );
+      if (dropWhenBothFalsey.includes(field) && isFalsey(oldValue) && isFalsey(newValue)) {
+        continue;
+      }
+
+      // Only surface fields the update actually touched; pinned context
+      // fields are kept even when unchanged.
+      if (!pinned.has(field) && oldValue === newValue) {
+        continue;
+      }
+
+      parsed.push({ kind: 'scalar', field, label, oldValue, newValue });
+    }
+  }
+
+  if (pinnedFields.length === 0) {
+    return parsed;
+  }
+
+  const present = new Set(parsed.map((change) => change.field));
+  const injected: AuditChange[] = pinnedFields
+    .filter((field) => !present.has(field))
+    .map((field) => {
+      const fallback = pinnedFallbacks[field];
+
+      return {
+        kind: 'scalar',
+        field,
+        label: humanizeFieldName(field),
+        oldValue: fallback,
+        newValue: fallback,
+      };
+    });
+
+  const pinnedChanges = parsed.filter((change) => pinned.has(change.field));
+  const rest = parsed.filter((change) => !pinned.has(change.field));
+
+  return [...injected, ...pinnedChanges, ...rest];
 }

@@ -15,6 +15,12 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
   const [expanded, setExpanded] = useState(false);
   const hasEvents = action.events.length > 0;
 
+  // The merged action-level changes belong to one subject; use its action so
+  // schedule actions get day/type pinned and no-op fields dropped.
+  const subjectAction = action.events.find((event) =>
+    event.action.startsWith('shelter.schedule')
+  )?.action;
+
   return (
     <div className="rounded-2xl border border-neutral-90 bg-white p-4">
       <div className="flex items-start justify-between gap-4">
@@ -47,7 +53,11 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
         )}
       </div>
 
-      <AuditChangesView value={action.fieldChanges} className="mt-3" />
+      <AuditChangesView
+        value={action.fieldChanges}
+        action={subjectAction}
+        className="mt-3"
+      />
 
       {expanded && hasEvents && (
         <div className="mt-2 flex flex-col">
