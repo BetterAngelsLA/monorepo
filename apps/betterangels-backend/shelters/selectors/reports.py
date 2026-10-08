@@ -51,9 +51,8 @@ def _bed_lifecycles(*, shelter: "Shelter", before: datetime.datetime) -> list[Be
 
     Expected index: ``(shelter_id, pgh_label, pgh_created_at)`` on BedEvent.
     """
-    from shelters.models import (
-        BedEvent,  # type: ignore[attr-defined]  # pghistory event model; inline to avoid circular import
-    )
+    # pghistory event model; inline to avoid circular import
+    from shelters.models import BedEvent  # type: ignore[attr-defined]
 
     add_rows = BedEvent.objects.filter(
         shelter_id=shelter.pk,
@@ -300,9 +299,8 @@ def report_bed_status_counts(
     Raises:
         ValueError: if *end* is before *start*, or if either is naive.
     """
-    from shelters.models import (
-        BedEvent,  # type: ignore[attr-defined]  # pghistory event model; inline to avoid circular import
-    )
+    # pghistory event model; inline to avoid circular import
+    from shelters.models import BedEvent  # type: ignore[attr-defined]
 
     if end < start:
         raise ValueError("end must be on or after start")
