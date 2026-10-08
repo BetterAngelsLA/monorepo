@@ -6,7 +6,7 @@ from accounts.models import PermissionGroup, User
 from clients.models import ClientProfile
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment, Location
-from common.permissions.gates import PERMISSION_DENIED_MESSAGE, assign_object_permissions
+from common.permissions.gates import PERMISSION_DENIED_MESSAGE
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,
@@ -22,11 +22,6 @@ from django.db.models import Q
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.models import Note, OrganizationService, ServiceRequest
-from notes.permissions import (
-    NotePermissions,
-    PrivateDetailsPermissions,
-    ServiceRequestPermissions,
-)
 from organizations.models import Organization
 from tasks.services import task_create
 
@@ -201,16 +196,6 @@ def service_request_create(
             created_by=user,
         )
 
-        if permission_group is not None:
-            assign_object_permissions(
-                permission_group,
-                sr,
-                [
-                    ServiceRequestPermissions.VIEW,
-                    ServiceRequestPermissions.CHANGE,
-                    ServiceRequestPermissions.DELETE,
-                ],
-            )
         created.append(sr)
 
     return created
@@ -306,17 +291,6 @@ def note_create(
     note.full_clean()
     note.save()
 
-    if permission_group is not None:
-        assign_object_permissions(
-            permission_group,
-            note,
-            [
-                NotePermissions.CHANGE,
-                NotePermissions.DELETE,
-                PrivateDetailsPermissions.VIEW,
-            ],
-        )
-
     if provided_services:
         note_service_request_create(
             user=user,
@@ -393,16 +367,5 @@ def resolve_note_file_uploads(
             uploads=attachments,
             config=NOTE_ATTACHMENT_CONFIG,
         )
-
-        if permission_group is not None:
-            for att in attached:
-                assign_object_permissions(
-                    permission_group,
-                    att,
-                    [
-                        Attachment.perms.DELETE,
-                        Attachment.perms.CHANGE,
-                    ],
-                )
 
     return attached

@@ -225,17 +225,14 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     @patch("common.services.file_upload.create_attachment_records")
-    @patch("notes.services.assign_object_permissions")
     @patch("notes.schema.resolve_permission_group")
     def test_creates_attachment_and_returns_it(
         self,
         mock_perm_group: MagicMock,
-        mock_assign: MagicMock,
         mock_generic: MagicMock,
     ) -> None:
         from django.contrib.contenttypes.models import ContentType
 
-        # Create a real permission group so assign_object_permissions works.
         pg = permission_group_recipe.make(organization=self.org_1)
         mock_perm_group.return_value = pg
 
@@ -276,12 +273,10 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertEqual(attachments[0]["originalFilename"], "doc.pdf")
 
     @patch("common.services.file_upload.create_attachment_records")
-    @patch("notes.services.assign_object_permissions")
     @patch("notes.schema.resolve_permission_group")
     def test_creates_multiple_attachments(
         self,
         mock_perm_group: MagicMock,
-        mock_assign: MagicMock,
         mock_generic: MagicMock,
     ) -> None:
         from django.contrib.contenttypes.models import ContentType
@@ -477,12 +472,10 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         ],
     )
     @patch("common.services.file_upload.create_attachment_records")
-    @patch("notes.services.assign_object_permissions")
     @patch("notes.schema.resolve_permission_group")
     def test_permission_checks(
         self,
         mock_perm_group: MagicMock,
-        mock_assign: MagicMock,
         mock_generic: MagicMock,
         user_label: str,
         should_succeed: bool,
