@@ -4,14 +4,12 @@ import {
   InMemoryCache,
   Observable,
 } from '@apollo/client';
+import type { FormattedExecutionResult } from 'graphql';
 import { ApolloProvider } from '@apollo/client/react';
 import { act, render, waitFor } from '@testing-library/react-native';
 import { ReactNode } from 'react';
 import { Text, TextInput } from 'react-native';
-import {
-  AttachmentType,
-  ClientDocumentNamespaceEnum,
-} from '../../apollo';
+import { AttachmentType, ClientDocumentNamespaceEnum } from '../../apollo';
 import { ClientDocumentDocument } from './__generated__/Document.generated';
 import FileScreenComponent from './index';
 
@@ -87,10 +85,16 @@ const DOCUMENT = {
   originalFilename: 'original.pdf',
   attachmentType: AttachmentType.Document,
   mimeType: 'application/pdf',
-  file: { __typename: 'DjangoFileType', url: 'https://example.com/signed-1', name: 'original.pdf' },
+  file: {
+    __typename: 'DjangoFileType',
+    url: 'https://example.com/signed-1',
+    name: 'original.pdf',
+  },
 } as const;
 
-function createClient(deferred: { resolve: (data: unknown) => void }) {
+function createClient(deferred: {
+  resolve: (result: FormattedExecutionResult) => void;
+}) {
   const link = new ApolloLink(
     () =>
       new Observable((observer) => {
@@ -99,13 +103,13 @@ function createClient(deferred: { resolve: (data: unknown) => void }) {
   );
   const client = new ApolloClient({
     link,
-    cache: new InMemoryCache({ addTypename: false }),
+    cache: new InMemoryCache(),
   });
 
   client.writeQuery({
     query: ClientDocumentDocument,
     variables: { id: DOCUMENT.id },
-    data: { clientDocument: DOCUMENT },
+    data: { __typename: 'Query', clientDocument: DOCUMENT },
   });
 
   return client;
@@ -117,14 +121,18 @@ describe('FileScreenComponent (edit mode)', () => {
   });
 
   it('does not overwrite the typed file name when the background refetch resolves', async () => {
-    const deferred: { resolve: (data: unknown) => void } = {
+    const deferred: { resolve: (result: FormattedExecutionResult) => void } = {
       resolve: () => undefined,
     };
     const client = createClient(deferred);
 
     const { getByTestId } = render(
       <ApolloProvider client={client}>
-        <FileScreenComponent id={DOCUMENT.id} clientId="client-1" editing="true" />
+        <FileScreenComponent
+          id={DOCUMENT.id}
+          clientId="client-1"
+          editing="true"
+        />
       </ApolloProvider>,
     );
 

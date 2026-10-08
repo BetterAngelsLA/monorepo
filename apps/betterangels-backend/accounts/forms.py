@@ -42,6 +42,11 @@ class OrganizationProfileForm(forms.ModelForm):
 
     ``org_types`` is declared explicitly because the default form field for an
     ``ArrayField`` is a comma-separated text input.
+
+    ``time_zone`` is not declared: the generated field already carries the model's
+    ``max_length``, ``blank``, ``help_text`` and ``validate_iana_time_zone``, and
+    ``ModelForm._post_clean`` runs ``full_clean`` regardless.  Only the label is
+    set here.
     """
 
     org_types = forms.MultipleChoiceField(
@@ -54,7 +59,8 @@ class OrganizationProfileForm(forms.ModelForm):
 
     class Meta:
         model = OrganizationProfile
-        fields = ("org_types",)
+        fields = ("org_types", "time_zone")
+        labels = {"time_zone": "Report time zone"}
 
     def clean_org_types(self) -> list[OrgTypeChoices]:
         """Return enum members, matching what the services write."""

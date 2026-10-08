@@ -79,7 +79,7 @@ class Query:
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
         if start_date is None or end_date is None:
-            default_start, default_end = report_default_date_range()
+            default_start, default_end = report_default_date_range(org=org)
             start_date = start_date or default_start
             end_date = end_date or default_end
 

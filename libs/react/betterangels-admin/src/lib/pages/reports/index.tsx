@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
 import { useActiveOrg } from '@monorepo/ba-platform';
+import { formatBucketLabel } from './formatBucketLabel';
 import { ReportSummaryDocument } from './__generated__/reports.generated';
 
 const { RangePicker } = DatePicker;
@@ -168,13 +169,7 @@ export default function Reports({ className = '' }: IProps) {
                     yField="count"
                     height={300}
                     xAxis={{
-                      label: {
-                        autoRotate: true,
-                        formatter: (v: string) => {
-                          const d = new Date(v);
-                          return `${d.getMonth() + 1}/${d.getDate()}`;
-                        },
-                      },
+                      label: { autoRotate: true, formatter: formatBucketLabel },
                     }}
                     yAxis={{ title: { text: 'Interactions' } }}
                     color={CHART_COLORS.primary}
@@ -192,13 +187,7 @@ export default function Reports({ className = '' }: IProps) {
                     yField="count"
                     height={300}
                     xAxis={{
-                      label: {
-                        autoRotate: true,
-                        formatter: (v: string) => {
-                          const d = new Date(v);
-                          return `${d.getMonth() + 1}/${d.getDate()}`;
-                        },
-                      },
+                      label: { autoRotate: true, formatter: formatBucketLabel },
                     }}
                     yAxis={{ title: { text: 'Clients' } }}
                     color="#6A1B9A"
