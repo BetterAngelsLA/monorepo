@@ -6,7 +6,7 @@
  */
 
 import { BottomSheetOptions } from '../../types';
-import { TSheetFlags } from './types';
+import type { TGorhomModalStatus, TSheetFlags } from './types';
 
 /** Provider defaults, when the provider is mounted without any. */
 export const EMPTY_SHEET_OPTIONS: BottomSheetOptions = {};
@@ -20,14 +20,32 @@ export const NEW_SHEET_FLAGS: TSheetFlags = {
 };
 
 /**
- * Gorhom `MODAL_STATUS` (the enum is not exported) — the values in which
- * `dismiss()` is safe and effective: 1 PRESENTED, 2 CLOSED, 3 MINIMIZED,
- * 6 DISMISSING, 7 DISMISSED. Any other status means wait: dismissing mid-flight
- * is what latches Gorhom forever (rule 2), and an unrecognised status is
- * exactly when we should not guess.
+ * Gorhom's `MODAL_STATUS`, mirrored because the enum is not exported (index =
+ * value). Named so the numbers below read as statuses instead of magic
+ * integers.
  */
-export const GORHOM_DISMISSABLE_STATUSES: ReadonlyArray<number> = [
-  1, 2, 3, 6, 7,
+export const GORHOM_MODAL_STATUS = {
+  INITIAL: 0,
+  PRESENTED: 1,
+  CLOSED: 2,
+  MINIMIZED: 3,
+  MINIMIZING: 4,
+  ANIMATING: 5,
+  DISMISSING: 6,
+  DISMISSED: 7,
+} as const;
+
+/**
+ * The statuses in which `dismiss()` is safe and effective. Any other status
+ * means wait: dismissing mid-flight is what latches Gorhom forever (rule 2),
+ * and an unrecognised status is exactly when we should not guess.
+ */
+export const GORHOM_DISMISSABLE_STATUSES: ReadonlyArray<TGorhomModalStatus> = [
+  GORHOM_MODAL_STATUS.PRESENTED,
+  GORHOM_MODAL_STATUS.CLOSED,
+  GORHOM_MODAL_STATUS.MINIMIZED,
+  GORHOM_MODAL_STATUS.DISMISSING,
+  GORHOM_MODAL_STATUS.DISMISSED,
 ];
 
 /** How long `dismissWhenReady` keeps re-checking before leaving the sheet open. */

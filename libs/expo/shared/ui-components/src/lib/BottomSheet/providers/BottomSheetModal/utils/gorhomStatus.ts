@@ -9,8 +9,17 @@
 
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { GORHOM_DISMISSABLE_STATUSES } from '../constants';
+import { TGorhomModalStatus } from '../types';
 
-type TGorhomStatusRef = { current: number };
+/**
+ * The handle's ref holds a bare `number` (the enum Gorhom compares it against
+ * is unexported), so naming it `TGorhomModalStatus` is an assertion, not a
+ * guarantee — a status we mirrored wrongly still arrives as whatever Gorhom
+ * really set. Nothing switches on it exhaustively, though: `canDismiss` only
+ * asks whether it is in the dismissable list, so anything unexpected falls
+ * through to "not dismissable", which is the safe answer.
+ */
+type TGorhomStatusRef = { current: TGorhomModalStatus };
 
 /**
  * Current status for a handle, or `undefined` when the instance doesn't expose
@@ -18,7 +27,7 @@ type TGorhomStatusRef = { current: number };
  */
 export function getGorhomStatus(
   instance: BottomSheetModal,
-): number | undefined {
+): TGorhomModalStatus | undefined {
   return (instance as BottomSheetModal & { status?: TGorhomStatusRef }).status
     ?.current;
 }

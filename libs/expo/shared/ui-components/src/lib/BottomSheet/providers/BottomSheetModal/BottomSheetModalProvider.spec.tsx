@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShowBottomSheetParams } from '../../types';
 import { BottomSheetModalProvider } from './BottomSheetModalProvider';
-import { DISMISS_RETRY_INTERVAL_MS } from './constants';
+import { DISMISS_RETRY_INTERVAL_MS, GORHOM_MODAL_STATUS } from './constants';
 import { useBottomSheet } from './useBottomSheet';
 
 /**
@@ -28,10 +28,10 @@ type MockInstance = {
   status: { current: number };
 };
 
-/** `MODAL_STATUS` values we care about (not exported by Gorhom). */
-const STATUS_INITIAL = 0;
-const STATUS_PRESENTED = 1;
-const STATUS_ANIMATING = 5;
+/** The `MODAL_STATUS` values this spec exercises. */
+const STATUS_INITIAL = GORHOM_MODAL_STATUS.INITIAL;
+const STATUS_PRESENTED = GORHOM_MODAL_STATUS.PRESENTED;
+const STATUS_ANIMATING = GORHOM_MODAL_STATUS.ANIMATING;
 
 type MountedBase = {
   inst: MockInstance;

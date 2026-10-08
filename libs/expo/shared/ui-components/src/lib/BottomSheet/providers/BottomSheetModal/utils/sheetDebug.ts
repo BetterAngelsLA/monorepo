@@ -28,6 +28,7 @@
 
 import { BottomSheetModal, enableLogging } from '@gorhom/bottom-sheet';
 import { useEffect, useRef } from 'react';
+import { GORHOM_MODAL_STATUS } from '../constants';
 import { TSheet, TSheetFlags } from '../types';
 import { getGorhomStatus } from './gorhomStatus';
 
@@ -146,20 +147,11 @@ function describeSheet(sheet: TSheet): string {
 }
 
 /**
- * Gorhom's `MODAL_STATUS` in enum order (index = value) — mirror of the
- * unexported enum, only ever used to print names. The values we act on live in
- * `../constants`.
+ * Gorhom's `MODAL_STATUS` names in enum order (index = value), derived from the
+ * mirrored enum in `../constants` so the numbers live in exactly one place.
  */
-const GORHOM_STATUS_NAMES: ReadonlyArray<string> = [
-  'INITIAL', // 0
-  'PRESENTED', // 1
-  'CLOSED', // 2
-  'MINIMIZED', // 3
-  'MINIMIZING', // 4
-  'ANIMATING', // 5
-  'DISMISSING', // 6
-  'DISMISSED', // 7
-];
+const GORHOM_STATUS_NAMES: ReadonlyArray<string> =
+  Object.keys(GORHOM_MODAL_STATUS);
 
 /**
  * Status name, e.g. `ANIMATING` — or `unknown` when the handle exposes no

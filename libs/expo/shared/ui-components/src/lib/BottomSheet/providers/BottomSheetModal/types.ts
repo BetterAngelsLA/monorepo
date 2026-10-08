@@ -4,6 +4,7 @@ import {
   BottomSheetRenderApi,
   StackBehavior,
 } from '../../types';
+import type { GORHOM_MODAL_STATUS } from './constants';
 
 /**
  * Internal representation of an active sheet instance.
@@ -34,3 +35,14 @@ export type TSheetFlags = {
 
 /** A live sheet: the caller's inputs plus its lifecycle flags. */
 export type TSheet = TBottomSheetInstance & TSheetFlags;
+
+/**
+ * Gorhom's `MODAL_STATUS` type.
+ * Mirrored via GORHOM_MODAL_STATUS as the enum is not exported.
+ *
+ * The import above is `import type`: the enum is only ever read in this type
+ * query, so nothing survives to runtime and `constants.ts` is free to depend on
+ * this module without a cycle.
+ */
+export type TGorhomModalStatus =
+  (typeof GORHOM_MODAL_STATUS)[keyof typeof GORHOM_MODAL_STATUS];
