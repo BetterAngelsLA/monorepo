@@ -93,13 +93,26 @@ class RoleDef:
 
 
 # Models that may carry object grants (ADR 0001 §2.5), keyed "app_label.model".
-# Empty until the object-grant arm is wired at the clients cutover: a grant to a
-# model outside this set is refused at write time (``Grant.clean``) and flagged at
-# deploy time (``permissions.E003``).  One source, so the two gates cannot drift
-# apart — the cutover adds models here and both open together.
-OBJECT_GRANT_WHITELIST: frozenset[str] = frozenset()
+# A grant to a model outside this set is refused at write time (``Grant.clean``)
+# and flagged at deploy time (``permissions.E003``); declaring
+# ``write_tier = WRITE_OBJECT`` on a model outside it is refused by
+# ``permissions.E007``.  One source, so the gates cannot drift apart.
+#
+# First consumer: ``Attachment``.  It is polymorphic (``content_object``) with no
+# org column, so there is no org path to scope it by — a per-record grant is the
+# only reach that can authorize one of its rows.
+OBJECT_GRANT_WHITELIST: frozenset[str] = frozenset({"common.attachment"})
 
 
 def content_type_key(content_type: Any) -> str:
-    """The whitelist key for a ``ContentType`` (or any ``app_label``/``model`` holder)."""
-    return f"{content_type.app_label}.{content_type.model}"
+    """The whitelist key for a ``ContentType``, a model class, or an ``Options``.
+
+    All three spell the model name differently — ``ContentType.model`` and
+    ``Options.model_name`` are lowercase, ``Options.model`` is the class itself —
+    so normalise rather than trusting one attribute.
+    """
+    options = getattr(content_type, "_meta", content_type)
+    app_label = getattr(content_type, "app_label", None) or options.app_label
+    model = getattr(content_type, "model", None)
+    name = model if isinstance(model, str) else getattr(options, "model_name", None)
+    return f"{app_label}.{name.lower()}"

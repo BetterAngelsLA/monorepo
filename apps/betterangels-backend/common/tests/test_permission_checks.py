@@ -193,7 +193,15 @@ class AccessDeclarationChecksTestCase(TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("org-anchored", errors[0].msg)
 
-    def test_e007_fires_when_the_object_class_is_declared_before_the_arm(self) -> None:
+<<<<<<< HEAD
+    def test_e007_fires_when_the_object_class_is_declared_off_the_whitelist(self) -> None:
+        """``WRITE_OBJECT`` routes writes to the object-grant predicate.
+
+        A model outside ``OBJECT_GRANT_WHITELIST`` can never be named by an
+        object grant — ``Grant.clean`` refuses to create one — so declaring the
+        class there would silently drop every scoped write.  ``ClientProfile`` is
+        not on the whitelist, so it is the counterexample.
+        """
         from unittest.mock import patch
 
         from clients.models import ClientProfile
@@ -202,7 +210,14 @@ class AccessDeclarationChecksTestCase(TestCase):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
-        self.assertIn("reserved", errors[0].msg)
+        self.assertIn("not object-grantable", errors[0].msg)
+
+    def test_e007_allows_the_object_class_on_a_whitelisted_model(self) -> None:
+        """The arm is on, so a whitelisted model may declare it — Attachment does."""
+        from common.models import Attachment
+
+        self.assertEqual(Attachment.access.write, WRITE_OBJECT)
+        self.assertEqual(_errors_with(check_access_declarations(None), "permissions.E007"), [])
 
     def test_e007_fires_on_an_unknown_write_class(self) -> None:
         """A typo must not silently fall back to the derived default (ADR 0004)."""

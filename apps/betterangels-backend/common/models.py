@@ -41,8 +41,11 @@ WRITE_SHARED = "shared"
 WRITE_OBJECT = "object"
 """Object-grant write class: only an object ``Grant`` (or the global tier) may act.
 
-Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
-``permissions.E007`` refuses it until then.
+The arm for a row whose organization cannot be derived — a platform-shared or
+polymorphic model.  ``Attachment`` declares it: attachments are polymorphic over
+``content_object`` with no org column, so no org path exists and a per-record
+grant is the only reach that can authorize one.  Declaring it requires the model
+to be in ``OBJECT_GRANT_WHITELIST`` (``permissions.E007``).
 """
 
 ACCESS_GLOBAL = "global"
@@ -201,23 +204,19 @@ class ScopedResource(models.Model):
             yield f"{field.name}_id"
 
 
-class Attachment(BaseModel):
-    """
-    Represents an attachment linked to any model instance within the app.
-    Attachments are organized by namespaces to allow for application-specific
-    categorization and by file types for easier management and filtering.
+class Attachment(OrgScoped, BaseModel):
+    """A file attached to any model instance (polymorphic ``content_object``).
 
-
-    Attributes:
-        file: Stores the file with a unique path.
-        attachment_type: Enumerated type categorizing the file (e.g., IMAGE, AUDIO).
-        original_filename: The original name of the file as uploaded.
-        content_type: Links to the ContentType for polymorphic relations.
-        object_id: The ID of the associated model instance.
-        content_object: Generic relation to the associated model instance.
-        namespace: Optional field for further categorization within specific contexts.
-        uploaded_by: Reference to the User who uploaded the file.
+    ``org_via = None`` — platform-shared reach: an attachment has no org column
+    and its ``GenericForeignKey`` parent is inexpressible as a single-valued org
+    path, so there is no org reach to scope a row by.  ``write_tier =
+    WRITE_OBJECT`` makes that explicit: a row is writable only by the global tier
+    or by a user-principal object ``Grant`` naming it (ADR 0001 §2.5), which is
+    what replaces the per-file guardian rows this model used to carry.
     """
+
+    org_via = None
+    write_tier = WRITE_OBJECT
 
     file = models.FileField(upload_to=get_unique_file_path)
     attachment_type = TextChoicesField(choices_enum=AttachmentType)
