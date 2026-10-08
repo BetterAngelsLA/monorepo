@@ -3,7 +3,6 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.permission_checkers import can_anywhere_checker
@@ -13,15 +12,14 @@ from common.permissions.gates import IsAuthenticated, PERMISSION_DENIED_MESSAGE,
 from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from hmis.models import HmisClientProfile, HmisNote
-from notes.groups import CASEWORKER
 from notes.models import Note
-from strawberry import asdict, UNSET
+from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 from tasks.models import Task
-from tasks.services import task_create, task_create_legacy, task_delete, task_update
+from tasks.services import task_create, task_delete, task_update
 
 from .types import CreateTaskInput, TaskOrder, TaskType, UpdateTaskInput
 
@@ -51,24 +49,11 @@ class Mutation:
         task_data = asdict(data)
         organization_id = task_data.pop("organization_id", None)
 
-        legacy_create = organization_id is None or organization_id is UNSET
-        if legacy_create:
-            # Compat window: a build that predates the payload org creates
-            # through its legacy ``CASEWORKER`` group — the org comes from the
-            # group, as before the cutover.  Dropped by the strict flip once
-            # the build sending ``organizationId`` is deployed.
-            try:
-                permission_group = resolve_permission_group(current_user, template=CASEWORKER)
-            except PermissionError:
-                # Same structured denial the removed ``HasPerm`` extension
-                # produced (the builtin ``PermissionError`` would escape as an
-                # unhandled error).
-                raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
-            org = permission_group.organization
-        else:
-            # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 1).
-            org = org_or_deny(organization_id)
-            require_can(current_user, Task.perms.ADD, org=org)
+        # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 1).  The
+        # compat window is closed: no legacy group lookup, and the payload org is
+        # required, so there is one authority path instead of two.
+        org = org_or_deny(organization_id)
+        require_can(current_user, Task.perms.ADD, org=org)
 
         # Resolve FK references.  The Note is a scoped row: fetch it in the
         # acting org — a foreign or missing note refuses alike (no existence
@@ -93,26 +78,15 @@ class Mutation:
         if hmis_client_profile_id := task_data.pop("hmis_client_profile", None):
             hmis_client_profile = HmisClientProfile.objects.get(pk=str(hmis_client_profile_id))
 
-        if legacy_create:
-            tasks = task_create_legacy(
-                user=current_user,
-                permission_group=permission_group,
-                data=[task_data],
-                note=note,
-                hmis_note=hmis_note,
-                client_profile=client_profile,
-                hmis_client_profile=hmis_client_profile,
-            )
-        else:
-            tasks = task_create(
-                user=current_user,
-                organization=org,
-                data=[task_data],
-                note=note,
-                hmis_note=hmis_note,
-                client_profile=client_profile,
-                hmis_client_profile=hmis_client_profile,
-            )
+        tasks = task_create(
+            user=current_user,
+            organization=org,
+            data=[task_data],
+            note=note,
+            hmis_note=hmis_note,
+            client_profile=client_profile,
+            hmis_client_profile=hmis_client_profile,
+        )
 
         return cast(TaskType, tasks[0])
 

@@ -1,9 +1,10 @@
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from accounts.models import BigGroupObjectPermission, PermissionGroup, PermissionGroupTemplate
 from accounts.seed import sync_group_permissions
 from accounts.services import reconcile_org_groups
-from common.permissions.gates import assign_object_permissions
 from common.tests.utils import make_permission_group
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase
@@ -99,7 +100,16 @@ class PermissionGroupTestCase(TestCase):
         """
         permission_group = permission_group_recipe.make()
         subject = PermissionGroupTemplate.objects.create(name="Object Of A Grant")
-        assign_object_permissions(permission_group, subject, ["accounts.view_permissiongrouptemplate"])
+        permission = Permission.objects.get(
+            content_type=ContentType.objects.get_for_model(subject),
+            codename="view_permissiongrouptemplate",
+        )
+        BigGroupObjectPermission.objects.create(
+            group=permission_group,
+            permission=permission,
+            content_type=ContentType.objects.get_for_model(subject),
+            object_pk=str(subject.pk),
+        )
         self.assertTrue(BigGroupObjectPermission.objects.filter(group=permission_group).exists())
         group_id = permission_group.pk
 

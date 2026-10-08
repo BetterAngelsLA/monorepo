@@ -186,12 +186,15 @@ class PermissionGroup(Group):
     """An ``auth.Group`` scoped to one organization and one role.
 
     It *is* the group rather than pointing at one, so the group cannot outlive
-    it.  That matters because object-level permissions are assigned to the group
-    (:func:`common.permissions.gates.assign_object_permissions`) and
-    ``BigGroupObjectPermission`` cascades from it — an orphaned group would keep
-    granting them with no row left to revoke through.  Inheritance makes the
-    teardown a cascade Django's own collector performs, on a direct delete, a
-    queryset delete and an organization cascade alike.
+    it.  That matters for the legacy ``BigGroupObjectPermission`` rows, which
+    cascade from it — an orphaned group would keep holding them with no row left
+    to revoke through.  Inheritance makes the teardown a cascade Django's own
+    collector performs, on a direct delete, a queryset delete and an organization
+    cascade alike.
+
+    Those rows are no longer written by anything (django-guardian is gone, and the
+    grant model is the authority), but the cascade property is what retires any
+    that remain, so it is kept and tested.
 
     ``name`` is the group's, and is the unique key built by :meth:`group_name`.
     The human role label is :attr:`label`.
