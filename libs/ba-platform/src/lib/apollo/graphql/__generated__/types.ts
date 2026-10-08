@@ -87,6 +87,39 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
+export type AuditActionType = {
+  __typename: 'AuditActionType';
+  actor: Scalars['String']['output'];
+  events: Array<AuditEventType>;
+  fieldChanges: Scalars['JSON']['output'];
+  summary: Scalars['String']['output'];
+  timestamp: Scalars['DateTime']['output'];
+};
+
+export enum AuditEventKind {
+  Delete = 'DELETE',
+  Insert = 'INSERT',
+  Update = 'UPDATE'
+}
+
+export type AuditEventType = {
+  __typename: 'AuditEventType';
+  action: Scalars['String']['output'];
+  actor: Scalars['String']['output'];
+  fieldChanges: Scalars['JSON']['output'];
+  kind: AuditEventKind;
+  targetId: Scalars['ID']['output'];
+  targetType: AuditTargetType;
+  timestamp: Scalars['DateTime']['output'];
+};
+
+export enum AuditTargetType {
+  Bed = 'BED',
+  Reservation = 'RESERVATION',
+  Room = 'ROOM',
+  Shelter = 'SHELTER'
+}
+
 export type AuthResponse = {
   __typename: 'AuthResponse';
   status_code: Scalars['String']['output'];
@@ -2586,6 +2619,7 @@ export type Query = {
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
+  objectAuditLog: Array<AuditActionType>;
   operatorShelter: OperatorShelterType;
   operatorShelters: OperatorShelterTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
@@ -2739,6 +2773,17 @@ export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryObjectAuditLogArgs = {
+  actorId?: InputMaybe<Scalars['ID']['input']>;
+  dateFrom?: InputMaybe<Scalars['DateTime']['input']>;
+  dateTo?: InputMaybe<Scalars['DateTime']['input']>;
+  limit?: Scalars['Int']['input'];
+  objectId: Scalars['ID']['input'];
+  offset?: Scalars['Int']['input'];
+  targetType: AuditTargetType;
 };
 
 

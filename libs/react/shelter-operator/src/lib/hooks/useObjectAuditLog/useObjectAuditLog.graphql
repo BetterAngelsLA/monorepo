@@ -1,0 +1,27 @@
+query ObjectAuditLog(
+  $targetType: AuditTargetType!
+  $objectId: ID!
+  $limit: Int!
+  $offset: Int!
+) {
+  objectAuditLog(
+    targetType: $targetType
+    objectId: $objectId
+    limit: $limit
+    offset: $offset
+  ) {
+    timestamp
+    actor
+    summary
+    fieldChanges
+    events {
+      timestamp
+      actor
+      kind
+      action
+      targetType
+      targetId
+      fieldChanges
+    }
+  }
+}
