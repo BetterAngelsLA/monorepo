@@ -1,6 +1,7 @@
 """Reports app models."""
 
 import re
+from datetime import datetime
 from typing import Any
 
 from accounts.models import Organization
@@ -12,6 +13,7 @@ from django.core.validators import EmailValidator, MaxValueValidator, MinValueVa
 from django.db import models
 from django.utils import timezone
 
+from .calendar import report_calendar_time_zone
 from .permissions import ReportPermissions
 
 
@@ -88,7 +90,7 @@ class ScheduledReport(OrgScoped, models.Model):
     hour = models.IntegerField(
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(23)],
-        help_text="Hour of the day to send the report (0-23, UTC)",
+        help_text="Hour of the day to send the report (0-23), in the site's time zone",
     )
     subject_template = models.CharField(
         max_length=255,
@@ -140,15 +142,26 @@ class ScheduledReport(OrgScoped, models.Model):
 
         super().save(*args, **kwargs)
 
-    def set_next_run(self) -> None:
-        """Calculate and set the next run time based on the schedule."""
-        now = timezone.now()
+    def next_run_after(self, anchor: datetime) -> datetime:
+        """The firing after *anchor*, on this schedule's calendar.
 
-        # Calculate candidate for current month.
-        # relativedelta(day=N) replaces the day, clamping to the last valid day of month
-        # if the month is short (e.g. Feb 31 -> Feb 28).
-        # This matches the "Last Day of Month" behavior if day=31.
-        candidate = now + relativedelta(
+        *anchor* is the run being serviced, not "now".  Anchoring on the clock
+        instead makes a late run skip every firing between the two: a report due
+        1 September but first serviced on 2 October would email August and then
+        schedule November, and September's run would never be dispatched at all.
+        From the run just serviced, the dispatcher catches up one period at a time.
+
+        ``day_of_month`` and ``hour`` are read on the organization's calendar,
+        deliberately ignoring any zone the request activated: following the browsing
+        admin's zone would let a report set to 8am drift to 8am elsewhere on its
+        first reschedule.  A schedule fires once, globally — it has no viewer.
+        """
+        local_anchor = anchor.astimezone(report_calendar_time_zone(self.organization))
+
+        # ``relativedelta(day=N)`` replaces the day, clamping to the last valid day
+        # of the month if the month is short (e.g. Feb 31 -> Feb 28).  This is the
+        # "Last Day of Month" behavior when day=31.
+        candidate = local_anchor + relativedelta(
             day=self.day_of_month,
             hour=self.hour,
             minute=0,
@@ -156,11 +169,25 @@ class ScheduledReport(OrgScoped, models.Model):
             microsecond=0,
         )
 
-        # If the candidate time has already passed, schedule for next month
-        if candidate <= now:
+        # A candidate at or before the anchor is the run we just serviced, so the
+        # next firing is a month on.
+        if candidate <= local_anchor:
             candidate += relativedelta(months=1) + relativedelta(day=self.day_of_month)
 
-        self.next_run_at = candidate
+        return candidate
+
+    def set_next_run(self, *, anchor: datetime | None = None) -> None:
+        """Point the schedule at its next firing — after *anchor*, or after now.
+
+        Known limitation: ``save()`` only calls this when ``next_run_at`` is empty,
+        so changing an organization's ``time_zone`` does not move a schedule that is
+        already armed.  Until the first fire under the new calendar, the stored
+        instant and the calendar the period is read on disagree.  Rescheduling live
+        jobs on a config change is a product decision — an operator may not expect
+        that to move every schedule — so it is left as a follow-up rather than
+        inferred here.
+        """
+        self.next_run_at = self.next_run_after(anchor or timezone.now())
 
     def get_recipient_list(self) -> list[str]:
         """Parse the recipients field into a list of email addresses."""

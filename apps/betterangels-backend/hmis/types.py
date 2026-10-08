@@ -136,7 +136,6 @@ class HmisClientProfileBaseType:
     place_of_birth: auto
     preferred_communication: Optional[list[PreferredCommunicationEnum]]
     preferred_language: auto
-    profile_photo: auto
     pronouns: auto
     pronouns_other: auto
     residence_address: auto
@@ -153,6 +152,7 @@ class HmisClientProfileBaseType:
 )
 class HmisClientProfileType(HmisClientProfileBaseType):
     id: ID
+    profile_photo: auto
     # HMIS Fields
     hmis_id: Optional[str]
     personal_id: Optional[str]
