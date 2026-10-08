@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('clients', '0002_initial'),
         ('pghistory', '0007_auto_20250421_0444'),
-        ('shelters', '0002_shelter_schedule_idx'),
+        ('shelters', '0003_alter_shelter_instagram_alter_shelterevent_instagram'),
     ]
 
     operations = [
