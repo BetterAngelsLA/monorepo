@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from django.core.checks import Error, Tags, register
+from django.core.exceptions import FieldDoesNotExist
 
 
 @register(Tags.models)
@@ -118,6 +119,32 @@ def _org_via_errors_for_model(model: Any) -> list[Error]:
                     f"{model.__name__}.org_via names {name!r}, which is multi-valued; "
                     "the scope filter would duplicate rows.",
                     hint="org_via hops must be single-valued (FK or OneToOne) relations.",
+                    obj=model,
+                    id="permissions.E004",
+                )
+            )
+    if model.own_org_or:
+        # ``own_org_or`` reaches through the model's OWN ``organization`` FK, so
+        # the only way it can be wrong is a missing or multi-valued FK — which
+        # would otherwise surface at the first query rather than at deploy time.
+        try:
+            field = model._meta.get_field("organization")
+        except FieldDoesNotExist:
+            errors.append(
+                Error(
+                    f"{model.__name__}.own_org_or reaches through an 'organization' FK it does not have.",
+                    hint="own_org_or adds the model's own organization FK to its reach — declare that FK, "
+                    "or drop own_org_or.",
+                    obj=model,
+                    id="permissions.E004",
+                )
+            )
+            return errors
+        if not (field.many_to_one or field.one_to_one):
+            errors.append(
+                Error(
+                    f"{model.__name__}.own_org_or needs a single-valued 'organization' FK.",
+                    hint="A multi-valued organization hop would duplicate rows in the scope filter.",
                     obj=model,
                     id="permissions.E004",
                 )

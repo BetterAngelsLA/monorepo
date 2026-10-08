@@ -108,11 +108,19 @@ class ScopedResource(models.Model):
                       scope for every organization it reaches
     * ``None``          — platform-shared; deliberately unscoped
 
+    ``own_org_or`` adds the row's *own* ``organization`` FK as a further reach
+    path alongside those hops — the "own org **or** via X" shape, which
+    ``org_via`` alone cannot express (it is either ``()`` or a hop tuple, never
+    both).  A model whose rows can be NULL in the own-org FK *and* every hop
+    matches no org at all: those rows answer to the global tier only, never to
+    every org.
+
     Object-grant ancestors are derived from the same graph, so this one
     declaration drives both the org filter and the object-grant cascade.
     """
 
     org_via: ClassVar[tuple[str, ...] | None] = ()
+    own_org_or: ClassVar[tuple[str, ...]] = ()
     _org_paths: ClassVar[tuple[str, ...] | None] = None
 
     access: ClassVar[Access] = Access()
@@ -181,6 +189,16 @@ class ScopedResource(models.Model):
                 )
             for sub in target.org_paths():
                 yield f"{hop}__{sub}"
+
+        # ``own_org_or`` — the row's own org is an ADDITIONAL reach alongside the
+        # hops above, which is what makes "own org or via X" expressible.  The
+        # own FK is nullable on the models that need this, so this path simply
+        # matches nothing for a NULL row rather than widening it.
+        if cls.own_org_or:
+            field = cls._meta.get_field("organization")
+            if not (field.many_to_one or field.one_to_one):
+                raise TypeError(f"{cls.__name__}.own_org_or requires a single-valued 'organization' FK.")
+            yield f"{field.name}_id"
 
 
 class Attachment(BaseModel):
