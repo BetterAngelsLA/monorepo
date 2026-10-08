@@ -197,7 +197,6 @@ class ReportGrantAuthorityDeniedTestCase(ReportSummaryGraphQLGrantMixin, ReportE
         group.permissions.add(permission)
         self.assertTrue(group.permissions.filter(content_type__app_label="reports", codename="view_reports").exists())
         self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
-        self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
 
         self._assert_denied(self._read(legacy_admin, self.org_1))
         export = self._export(legacy_admin, self.org_1.pk)
