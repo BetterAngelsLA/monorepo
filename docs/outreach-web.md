@@ -107,8 +107,8 @@ Option 1 is the expected path. Decide before HMIS parity is scheduled.
 | Session teardown un-duplicated: `useClearLocalSession.web.ts` was a 64-of-71-line copy of the native hook. Now one implementation, with only the cookie step split (`clearSessionCookies` + a `.web` no-op) — the same shape already used for `hmisInterceptors` | `hooks/user/{useClearLocalSession.ts,clearSessionCookies.ts,clearSessionCookies.web.ts}` (deleted `useClearLocalSession.web.ts`) |
 | `downloadInBrowser` guards for a missing DOM (it is re-exported from a platform-neutral barrel, so a native caller would have failed at runtime with `ReferenceError: document is not defined`) and now reports whether the download was *dispatched*, so `DocumentModal` surfaces a snackbar instead of closing silently when it could not start | `libs/.../file/downloadInBrowser.ts` (+4→5 spec cases), `ui-components/DocumentModal.tsx` |
 | `WheelDatePicker.web.tsx`: dropped a `format` default that could never run (`format` is required in `IWheelDatePickerProps`, and the default diverged from native's `'MM/dd/yyyy'`) and a write-only `inputRef`. Time mode verified end-to-end in a browser — picking 14:30 on `/note/create` yields "10/09/2026 2:30 PM", so the parse → preserve-the-other-half → format path works | `libs/.../DatePicker/WheelDatePicker.web.tsx` |
-| Four styles used the `outline` shorthand, which react-native-web's validator **rejects and deletes**, so the focus-ring suppression silently did nothing. Now `outlineWidth: 0` (not `outlineStyle: 'none'` — RN's types allow only solid/dotted/dashed there) | `Input.tsx`, `SearchableDropdown.tsx`, `Textarea.tsx`, `BasicTextarea.tsx` |
-| All 9 `pointerEvents` **prop** usages migrated to `style.pointerEvents` (the prop is deprecated on web). Verified the two overlay paths still work: the BaseModal-hosted map picker still pans (389 m/drag, zoom stable) and the `+` modal still opens as a real `role="dialog"` | `Modal/BaseModal.tsx` ×3, `CheckboxLabel.tsx`, `Map/LocationMarker.tsx`, `BottomSheetFullScreenContainer.tsx`, `ui-components/Modal.tsx`, `FieldCardHmisNoteWrapper.tsx`, `(tabs)/_layout.tsx` |
+| The one `outline` shorthand inside `StyleSheet.create` — which react-native-web's validator **rejects and deletes**, so the focus-ring suppression silently did nothing in dev — is now `outlineWidth: 0` (not `outlineStyle: 'none'`: RN's types allow only solid/dotted/dashed there). Three others use the same shorthand on **inline** styles, where `validate()` never runs; those were changed too and then **reverted** (see below) | `Input.tsx` |
+| Nine `pointerEvents` **prop** usages were migrated to `style.pointerEvents` and then **reverted**: react-native-web still applies the prop (`createDOMProps` merges `pointerEventsStyles[pointerEvents]` into the style) and only emits a dev `warnOnce`, and migrating our own sites does not remove the warning because it is emitted by `@gorhom/bottom-sheet`. One new element uses the style form because it was written fresh | `(tabs)/_layout.tsx` |
 | `reconcileActiveOrgId` removed from the `@monorepo/ba-platform` barrel — its contract is "write during render, notify later", which only the provider that owns the state can honour. The one legitimate consumer imports the module path directly | `libs/ba-platform/src/lib/activeOrg/index.ts`, `.../providers/activeOrg/useActiveOrgState.ts` |
 
 Verified: `tsc --noEmit` clean for both `tsconfig.app.json` and `tsconfig.spec.json`; the
@@ -291,8 +291,11 @@ react-native-web's `StyleSheet.create`, which validates every style object in de
   evaluated, which is why the call stack is a chain of `metroRequire` frames rather than a
   component tree.
 - **It deletes the offending property** (`delete obj[k]`), so the style silently does not
-  apply. It is not merely noise: four inputs had `outline: 'none'` inside `StyleSheet.create`,
-  so their focus-ring suppression had never worked in dev.
+  apply. It is not merely noise, but its **scope is narrow**: only styles that go through
+  `StyleSheet.create` are validated. One input had `outline: 'none'` there, so its focus-ring
+  suppression had never worked in dev; three others use the same shorthand on *inline* styles,
+  which `createReactDOMStyle` passes through untouched — those were changed during this work
+  and reverted once that was established.
 
 The validator rejects three things: `background`, `borderTop/Right/Bottom/Left`, `font`,
 `grid`, `outline` and `textDecoration` outright; the multi-value shortforms
@@ -304,7 +307,7 @@ than just for `outline`):
 
 | Warning | Sites | Nature |
 | --- | --- | --- |
-| `props.pointerEvents is deprecated. Use style.pointerEvents` | **All 9 of ours migrated** to `style.pointerEvents` (`BaseModal.tsx` ×3, `CheckboxLabel.tsx`, `LocationMarker.tsx`, `BottomSheetFullScreenContainer.tsx`, `Modal.tsx`, `FieldCardHmisNoteWrapper.tsx`, plus the tab bar). **The warning still appears** — it is emitted by `@gorhom/bottom-sheet`, which passes `pointerEvents: "box-none"` as a prop to `View` (`BottomSheetHostingContainer.js:95`). Third-party; would need a patch or an upgrade | Deprecation; the prop still applied |
+| `props.pointerEvents is deprecated. Use style.pointerEvents` | Emitted by `@gorhom/bottom-sheet`, which passes `pointerEvents: "box-none"` as a prop to `View` (`BottomSheetHostingContainer.js:95`). Third-party; needs a patch or an upgrade. Our own nine sites were migrated and then reverted — react-native-web still applies the prop (`createDOMProps` merges `pointerEventsStyles[…]` into the style), so migrating them bought nothing and would not have silenced this warning | Deprecation only; the prop is still applied |
 | `"shadow*" style props are deprecated. Use "boxShadow"` | 60 occurrences across ~10 files (`BottomSheetPanel`, `MapDirectionsActionSheet`, `LocateMeButton`, `Copy`, `BaseModal`, `ServicesModal`, `shared/static/src/lib/shadow.ts`, …) | Deprecation; the styles still apply. A real migration, and platform-sensitive, so left alone |
 | `Unexpected text node: . A text node cannot be a child of a <View>` | `/note/create` (×5), `/settings/about` (×1) | **Mechanism known, source still not located — see below** |
 
@@ -690,15 +693,14 @@ new bucket. The units are applied for both accounts (0 added, 1 changed, 0 destr
 `post-pr-preview`. Because the existing pipeline already runs `nx affected -t deploy` and
 `nx affected -t post-pr-preview`, the outreach web app joins both automatically.
 
-A dedicated step was added so the web bundle is built on every affected run:
+No dedicated export step was needed: `deploy` declares `dependsOn: ["export-web"]`, and CI
+already runs `nx affected -t deploy`, so the browser bundle is built on every affected run.
+(An explicit step was added first and then removed — `export-web` has no `cache` entry in
+`nx.json` and Nx defaults it to off, so the second invocation re-bundled the whole app. One
+path, not two.)
 
-```yaml
-- name: 🌐 Export react-native-web build
-  run: yarn nx affected -t export-web --configuration ${{ matrix.environment }}
-```
-
-That step is what stops this rotting again — before it, nothing in CI ever bundled for the
-browser, so a native-only import could break web indefinitely without anyone noticing.
+That dependency chain is what stops this rotting again — before it, nothing in CI ever bundled
+for the browser, so a native-only import could break web indefinitely without anyone noticing.
 
 **And it does fire.** That claim was originally inferred (a reviewer could not run Nx locally),
 so it was re-checked by execution against this working tree:
@@ -917,12 +919,25 @@ Places/geocoding *can* be proxied, and already is server-side.
 > document as having verified it.
 
 **And the key is not in CI at all.** The workflow passes
-`secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY` to both the build and deploy steps, but that
-secret does not exist in the `preview` or the `production` GitHub Environment (nor at repo
-level, which only holds the two Expo tokens). An undefined secret expands to an empty string,
-so CI builds and deploys a bundle with no Maps key and nothing fails loudly — the first thing
-anyone would notice is a blank map on the deployed preview. Set it before relying on a deployed
-environment:
+`secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY` to the build and deploy steps, but that secret
+does not exist in the `preview` or the `production` GitHub Environment (nor at repo level,
+which only holds the two Expo tokens). An undefined secret expands to an empty string.
+
+Measured, rather than assumed: exporting the app with an empty web key produced a bundle whose
+`root` never rendered — **a white screen**, not a blank map, because `config.ts` treats a
+missing key as fatal and `loadConfig()` runs at module load. The browser reported
+`Missing required config: Google Places API key` and rendered nothing.
+
+Two things now stand in for that:
+
+- **The app no longer white-screens.** `config.ts` keeps the throw on native (where the build
+  always bakes a key, so an empty one means a broken artifact) but degrades on web, logging
+  `[config] EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY is empty in this build…` instead. The SPA
+  renders; only the map and address-search surfaces lose function.
+- **CI warns instead of failing silently.** The deploy step emits a GitHub `::warning`
+  annotation naming the missing secret and the environment it is missing for.
+
+Neither is a substitute for the key. Set it before relying on a deployed environment:
 
 ```sh
 gh secret set EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY --env preview    --body '<key>'

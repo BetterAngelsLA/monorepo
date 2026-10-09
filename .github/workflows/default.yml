@@ -198,17 +198,6 @@ jobs:
           fail-on-breaking: true
           approve-label: graphql-inspector:approved-breaking-change
 
-      - name: 🌐 Export react-native-web build
-        # Bundles the outreach app for the browser on every affected run, so a
-        # native-only import or a missing web variant fails the PR instead of
-        # silently rotting the way it did before (see docs/outreach-web.md).
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t export-web --configuration ${{ matrix.environment }}
-          EOF
-        env:
-          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
-
       - name: 🛠️ Build and Push Artifacts
         run: |
           docker compose run better-angels bash <<'EOF'
@@ -247,7 +236,13 @@ jobs:
           docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
       - name: 🚀 Deploy Changes
+        # `deploy` depends on `export-web`, so the browser bundle is built here
+        # (there is deliberately no separate export step: `export-web` is not
+        # cached, so a second invocation would bundle the whole app twice).
         run: |
+          if [ -z "${EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY:-}" ]; then
+            echo "::warning title=Web Maps key is not set::EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY is missing for the '${{ matrix.environment }}' environment, so this build deploys with no maps and no address search."
+          fi
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t deploy --configuration ${{ matrix.environment }}
           EOF

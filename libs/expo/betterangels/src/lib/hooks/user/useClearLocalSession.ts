@@ -25,9 +25,9 @@ import { clearSessionCookies } from './clearSessionCookies';
  * "signed in" locally, since in both callers the session is already gone.
  *
  * One implementation for both platforms — the only difference is the cookie step,
- * which lives in `clearSessionCookies` (+ its `.web` no-op). Previously this file
- * had a `.web` twin that duplicated all of the below, which is exactly how a
- * teardown quietly stops being a teardown.
+ * which lives in `clearSessionCookies` (+ its `.web` no-op). Two near-identical
+ * platform copies is exactly how a teardown quietly stops being a teardown, which
+ * is why the platform split is one import rather than one whole file.
  */
 export default function useClearLocalSession() {
   const client = useApolloClient();
