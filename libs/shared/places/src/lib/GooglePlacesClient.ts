@@ -248,8 +248,15 @@ export class GooglePlacesClient {
     });
 
     const headers = new Headers();
-    for (const [k, v] of Object.entries(this.platformHeaders)) {
-      headers.set(k, v);
+
+    // Same rule as `placesFetch`: when the proxy is installed the backend holds
+    // the key, and the platform headers exist to satisfy Google's key
+    // restrictions — which the proxy request does not need. Sending them anyway
+    // leaked the bundle id / signing certificate to our own backend.
+    if (!placesProxy) {
+      for (const [k, v] of Object.entries(this.platformHeaders)) {
+        headers.set(k, v);
+      }
     }
 
     const response = await this.fetchImpl(this.geocodeUrl(params), { headers });

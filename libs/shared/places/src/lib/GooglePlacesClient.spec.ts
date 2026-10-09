@@ -104,6 +104,33 @@ describe('GooglePlacesClient transport', () => {
     expect(calls[0].url).toContain('latlng=34.05%2C-118.24');
   });
 
+  it('does not send the native platform headers through the proxy', async () => {
+    // Those headers exist to satisfy Google's key restrictions on a direct call.
+    // The proxy holds its own key server-side, so forwarding them leaks the
+    // bundle id / signing certificate to our own backend for nothing.
+    const client = new GooglePlacesClient('test-key', {
+      iosBundleId: 'com.example.app',
+      androidPackage: 'com.example.app',
+      androidCertFingerprint: 'AA:BB',
+    });
+
+    await client.reverseGeocode(34.05, -118.24);
+    const direct = new Headers(calls[0].init?.headers);
+    expect(direct.get('X-Ios-Bundle-Identifier')).toBe('com.example.app');
+
+    calls.length = 0;
+    configurePlacesProxy({
+      apiUrl: 'https://api.example.test',
+      fetch: recordingFetch,
+    });
+
+    await client.reverseGeocode(34.05, -118.24);
+    const proxied = new Headers(calls[0].init?.headers);
+    expect(proxied.get('X-Ios-Bundle-Identifier')).toBeNull();
+    expect(proxied.get('X-Android-Package')).toBeNull();
+    expect(proxied.get('X-Android-Cert')).toBeNull();
+  });
+
   const respondWith = (body: unknown) =>
     ((url: unknown, init?: RequestInit) => {
       calls.push({ url: String(url), init });
