@@ -415,13 +415,7 @@ const MapView = forwardRef<unknown, TTeovillaMapViewProps>((props, ref) => {
     }
 
     innerRef.current?.animateToRegion?.(next, 0);
-  }, [
-    isMapReady,
-    latitude,
-    longitude,
-    latitudeDelta,
-    longitudeDelta,
-  ]);
+  }, [isMapReady, latitude, longitude, latitudeDelta, longitudeDelta]);
 
   return (
     <TeovillaMapView

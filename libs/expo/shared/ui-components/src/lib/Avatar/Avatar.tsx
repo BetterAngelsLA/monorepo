@@ -77,7 +77,9 @@ export function Avatar(props: IAvatarProps) {
   // nothing at all, on every platform. Put the label on the wrapper in that
   // branch; with an image it stays on the <Image>, which already works.
   const labelled =
-    !loading && !imageUrl && !!accessibilityLabel ? accessibilityLabel : undefined;
+    !loading && !imageUrl && !!accessibilityLabel
+      ? accessibilityLabel
+      : undefined;
 
   return (
     <View

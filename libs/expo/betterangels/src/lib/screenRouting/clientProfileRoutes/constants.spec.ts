@@ -54,7 +54,9 @@ describe('client profile section families', () => {
     expect(isStandardSection(ClientProfileSectionEnum.RelevantContacts)).toBe(
       false,
     );
-    expect(isRelatedModelSection(ClientProfileSectionEnum.FullName)).toBe(false);
+    expect(isRelatedModelSection(ClientProfileSectionEnum.FullName)).toBe(
+      false,
+    );
     expect(isRelatedModelSection(ClientProfileSectionEnum.PersonalInfo)).toBe(
       false,
     );

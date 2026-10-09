@@ -330,7 +330,10 @@ describe('ConsentModal', () => {
 
     await acceptAndSubmit(controls);
 
-    await controls.release('currentUser', currentUser({ hasAcceptedTos: false }));
+    await controls.release(
+      'currentUser',
+      currentUser({ hasAcceptedTos: false }),
+    );
 
     expect(consentSheet()).toBeNull();
     expect(registrationSheet()).toBeNull();

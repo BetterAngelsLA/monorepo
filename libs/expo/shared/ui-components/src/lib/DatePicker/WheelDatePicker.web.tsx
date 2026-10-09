@@ -9,11 +9,7 @@ import {
   isValid,
   parse as dateFnsParse,
 } from 'date-fns';
-import {
-  type ChangeEvent,
-  type CSSProperties,
-  useCallback,
-} from 'react';
+import { type ChangeEvent, type CSSProperties, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Input } from '../Input';
 import { IWheelDatePickerProps } from './types';

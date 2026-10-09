@@ -12,14 +12,8 @@
  * props are accepted and dropped. `KeyboardProvider` / `KeyboardToolbar`
  * become pass-throughs.
  */
-import {
-  forwardRef,
-  type ReactNode,
-} from 'react';
-import {
-  ScrollView,
-  type ScrollViewProps,
-} from 'react-native';
+import { forwardRef, type ReactNode } from 'react';
+import { ScrollView, type ScrollViewProps } from 'react-native';
 
 type TKeyboardAwareScrollViewProps = ScrollViewProps & {
   /** Native-only: how far above the keyboard to keep the focused input. */
@@ -48,7 +42,11 @@ function KeyboardToolbarDone() {
   return null;
 }
 
-function KeyboardToolbarRoot({ children: _children }: { children?: ReactNode }) {
+function KeyboardToolbarRoot({
+  children: _children,
+}: {
+  children?: ReactNode;
+}) {
   // The toolbar is a native input accessory; browsers have no equivalent.
   return null;
 }
@@ -65,7 +63,10 @@ type TKeyboardEventSubscription = { remove: () => void };
  * contract that callers rely on for cleanup.
  */
 export const KeyboardEvents = {
-  addListener(_eventName: string, _listener: () => void): TKeyboardEventSubscription {
+  addListener(
+    _eventName: string,
+    _listener: () => void,
+  ): TKeyboardEventSubscription {
     return { remove: () => undefined };
   },
 };

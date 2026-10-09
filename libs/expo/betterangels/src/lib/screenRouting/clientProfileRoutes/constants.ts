@@ -32,11 +32,12 @@ const standardSections: ReadonlySet<unknown> = new Set<TStandardSection>([
   ClientProfileSectionEnum.ContactInfo,
 ]);
 
-const relatedModelSections: ReadonlySet<unknown> = new Set<TRelatedModelSection>([
-  ClientProfileSectionEnum.HmisIds,
-  ClientProfileSectionEnum.Household,
-  ClientProfileSectionEnum.RelevantContacts,
-]);
+const relatedModelSections: ReadonlySet<unknown> =
+  new Set<TRelatedModelSection>([
+    ClientProfileSectionEnum.HmisIds,
+    ClientProfileSectionEnum.Household,
+    ClientProfileSectionEnum.RelevantContacts,
+  ]);
 
 /** True only for sections rendered by the standard `/clients/:id/edit` forms. */
 export function isStandardSection(value: unknown): value is TStandardSection {

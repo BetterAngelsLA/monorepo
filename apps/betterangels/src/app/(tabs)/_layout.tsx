@@ -15,12 +15,7 @@ import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Redirect, Tabs, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-  ColorValue,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ColorValue, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { privacyPolicyUrl, termsOfServiceUrl } from '../../../config';
 

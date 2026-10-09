@@ -136,7 +136,12 @@ describe('UserProvider parseUser receives the current user', () => {
         const kept = prev?.permissions ?? [];
 
         return currentUser
-          ? { id: 'user-1', permissions: [...new Set([...kept, ...(currentUser.permissions ?? [])])] }
+          ? {
+              id: 'user-1',
+              permissions: [
+                ...new Set([...kept, ...(currentUser.permissions ?? [])]),
+              ],
+            }
           : undefined;
       },
     );

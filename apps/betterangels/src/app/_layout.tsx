@@ -48,17 +48,17 @@ export default function RootLayout() {
   return (
     <FontLoader>
       <BaUiProviders>
-      <EnvironmentSwitcherProvider
-        environments={ENVIRONMENTS}
-        storage={asyncStorageAdapter}
-        buildFetch={buildFetchClient}
-      >
-        <BaDataProviders>
-          <AppUpdatePrompt />
-          <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
-          <AppRoutesStack />
-        </BaDataProviders>
-      </EnvironmentSwitcherProvider>
+        <EnvironmentSwitcherProvider
+          environments={ENVIRONMENTS}
+          storage={asyncStorageAdapter}
+          buildFetch={buildFetchClient}
+        >
+          <BaDataProviders>
+            <AppUpdatePrompt />
+            <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
+            <AppRoutesStack />
+          </BaDataProviders>
+        </EnvironmentSwitcherProvider>
       </BaUiProviders>
     </FontLoader>
   );

@@ -21,6 +21,9 @@ export default function ClientRelationsListScreen() {
   );
 
   return (
-    <ClientProfileRelatedModelList clientId={clientId} componentName={section} />
+    <ClientProfileRelatedModelList
+      clientId={clientId}
+      componentName={section}
+    />
   );
 }

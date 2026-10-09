@@ -375,9 +375,18 @@ describe('react-native-maps web shim', () => {
 
       await act(async () => {
         // A wheel-zoom burst.
-        fireRegionChange({ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }, {});
-        fireRegionChange({ ...LA, latitudeDelta: 0.02, longitudeDelta: 0.02 }, {});
-        fireRegionChange({ ...LA, latitudeDelta: 0.01, longitudeDelta: 0.01 }, {});
+        fireRegionChange(
+          { ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 },
+          {},
+        );
+        fireRegionChange(
+          { ...LA, latitudeDelta: 0.02, longitudeDelta: 0.02 },
+          {},
+        );
+        fireRegionChange(
+          { ...LA, latitudeDelta: 0.01, longitudeDelta: 0.01 },
+          {},
+        );
         vi.advanceTimersByTime(250);
       });
 

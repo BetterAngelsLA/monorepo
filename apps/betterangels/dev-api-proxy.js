@@ -67,7 +67,11 @@ function rewriteSetCookie(cookie) {
 
 /** Keep redirects on the proxy origin instead of leaking the API host. */
 function rewriteLocation(location, target, prefix) {
-  for (const base of [target.origin, `https://${target.host}`, `http://${target.host}`]) {
+  for (const base of [
+    target.origin,
+    `https://${target.host}`,
+    `http://${target.host}`,
+  ]) {
     if (location.startsWith(base)) {
       return prefix + location.slice(base.length);
     }
@@ -109,13 +113,16 @@ function createDevApiProxy(options = {}) {
       if (!isApiPath) return middleware(req, res, next);
       return sendJson(res, 502, {
         error: 'Dev API proxy is not configured.',
-        hint: 'Start the dev server with BA_DEV_PROXY_TARGET set, e.g. ' +
+        hint:
+          'Start the dev server with BA_DEV_PROXY_TARGET set, e.g. ' +
           'BA_DEV_PROXY_TARGET=https://api.dev.betterangels.la yarn nx serve betterangels',
       });
     }
 
     const targetUrl = new URL(target);
-    const upstreamPath = isApiPath ? req.url.slice(prefix.length) || '/' : req.url;
+    const upstreamPath = isApiPath
+      ? req.url.slice(prefix.length) || '/'
+      : req.url;
     const isHttps = targetUrl.protocol === 'https:';
     const transport = isHttps ? https : http;
 
@@ -139,7 +146,8 @@ function createDevApiProxy(options = {}) {
         const outHeaders = { ...upstreamRes.headers };
 
         if (outHeaders['set-cookie']) {
-          outHeaders['set-cookie'] = outHeaders['set-cookie'].map(rewriteSetCookie);
+          outHeaders['set-cookie'] =
+            outHeaders['set-cookie'].map(rewriteSetCookie);
         }
         if (outHeaders.location) {
           outHeaders.location = rewriteLocation(
