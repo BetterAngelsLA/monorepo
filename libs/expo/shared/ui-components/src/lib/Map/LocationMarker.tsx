@@ -23,10 +23,7 @@ const BADGE_GAP = Spacings.xs;
 
 function CustomLocationMarker({ label }: ILocationMarkerProps) {
   return (
-    <View
-      style={[styles.container, { pointerEvents: 'none' }]}
-      collapsable={false}
-    >
+    <View style={styles.container} collapsable={false} pointerEvents="none">
       {label ? (
         <View style={styles.badgeOuter} collapsable={false}>
           <View style={styles.badge} collapsable={false}>

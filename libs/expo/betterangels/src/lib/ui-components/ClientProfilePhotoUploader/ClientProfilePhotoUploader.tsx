@@ -60,16 +60,10 @@ export function ClientProfilePhotoUploader(props: TProps) {
         accessibilityHint={
           imageUrl ? 'view profile photo options' : 'update profile photo'
         }
-        testID="client-profile-photo-btn"
       >
         <View style={{ position: 'relative' }}>
           {/* Decorative: the button above already announces this. */}
-          <Avatar
-            loading={isUploading}
-            size="xl"
-            mr="xs"
-            imageUrl={imageUrl}
-          />
+          <Avatar loading={isUploading} size="xl" mr="xs" imageUrl={imageUrl} />
           {!imageUrl && (
             <View
               style={{

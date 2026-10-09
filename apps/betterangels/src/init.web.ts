@@ -13,7 +13,6 @@ import { QueryClient } from '@tanstack/react-query';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { createWebFetchClient } from '@monorepo/ba-platform/web';
 import { createBaTypePolicies } from '@monorepo/expo/betterangels';
-import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
 import { configurePlacesProxy } from '@monorepo/shared/places';
 
 // ---- Compile-time constants ----
@@ -21,9 +20,6 @@ export const isDevEnv = process.env['NODE_ENV'] === 'development';
 
 // ---- One-time side effects ----
 
-// No-op on web (it returns early unless Platform.OS === 'ios'); kept so this
-// file stays diffable against `init.ts`.
-hideDevMenuFab();
 initApolloRuntimeConfig({ isDevEnv: false });
 
 // ---- Singletons (stable references across re-renders) ----

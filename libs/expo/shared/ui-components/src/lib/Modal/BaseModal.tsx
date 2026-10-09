@@ -169,11 +169,9 @@ export function BaseModal({
 
               {/* Safe-area overlay close (below notch, above content) */}
               <SafeAreaView
+                pointerEvents="box-none"
                 edges={['top', 'right']}
-                style={[
-                  StyleSheet.absoluteFill,
-                  { pointerEvents: 'box-none' },
-                ]}
+                style={StyleSheet.absoluteFill}
               >
                 <Pressable
                   accessibilityRole="button"
@@ -204,9 +202,7 @@ export function BaseModal({
           )
         ) : (
           // --- SHEET ---
-          <View
-            style={[StyleSheet.absoluteFill, { pointerEvents: 'box-none' }]}
-          >
+          <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
             {/* Backdrop */}
             <Animated.View
               style={[
@@ -232,8 +228,8 @@ export function BaseModal({
                 direction === 'up' && sheetTopPadding > 0
                   ? { paddingTop: sheetTopPadding }
                   : undefined,
-                { pointerEvents: 'box-none' },
               ]}
+              pointerEvents="box-none"
             >
               <Animated.View
                 style={[

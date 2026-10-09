@@ -21,48 +21,25 @@ function getEmbeddedExtra(): Record<string, unknown> | undefined {
   return config?.extra;
 }
 
-/**
- * Resolve the Google Maps key for the current platform.
- *
- * Resolution order per platform:
- *   1. EXPO_PUBLIC_* env var (inlined by Metro at bundle time)
- *   2. Constants.expoConfig.extra (dev server manifest)
- *   3. Embedded native binary config (build-time values, bypasses dev server)
- *
- * Web has no embedded native config — the browser key is referrer-restricted
- * and is only ever read from the env var or the dev-server manifest.
- */
-function resolveGoogleMapsApiKey(
-  devExtra: Record<string, unknown> | undefined,
-  embeddedExtra: Record<string, unknown> | undefined,
-): string {
-  if (Platform.OS === 'web') {
-    return (
-      process.env.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY ||
-      (devExtra?.webGoogleMapsApiKey as string | undefined) ||
-      ''
-    );
-  }
-
-  return Platform.OS === 'ios'
-    ? (process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY ||
-        (devExtra?.iosGoogleMapsApiKey as string | undefined) ||
-        (embeddedExtra?.iosGoogleMapsApiKey as string | undefined)) ??
-        ''
-    : (process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY ||
-        (devExtra?.androidGoogleMapsApiKey as string | undefined) ||
-        (embeddedExtra?.androidGoogleMapsApiKey as string | undefined)) ??
-        '';
-}
-
 function loadConfig() {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const demoApiUrl = process.env.EXPO_PUBLIC_DEMO_API_URL;
 
+  // Resolve Google Places API key:
+  //   1. EXPO_PUBLIC_* env var (inlined by Metro at bundle time)
+  //   2. Constants.expoConfig.extra (dev server manifest)
+  //   3. Embedded native binary config (build-time values, bypasses dev server)
   const devExtra = Constants.expoConfig?.extra;
   const embeddedExtra = getEmbeddedExtra();
 
-  const googlePlacesApiKey = resolveGoogleMapsApiKey(devExtra, embeddedExtra);
+  const googlePlacesApiKey =
+    (Platform.OS === 'ios'
+      ? process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY ||
+        devExtra?.iosGoogleMapsApiKey ||
+        embeddedExtra?.iosGoogleMapsApiKey
+      : process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY ||
+        devExtra?.androidGoogleMapsApiKey ||
+        embeddedExtra?.androidGoogleMapsApiKey) ?? '';
 
   if (!apiUrl || !demoApiUrl || !googlePlacesApiKey) {
     throw new Error(

@@ -33,7 +33,7 @@ export function BottomSheetFullScreenContainer(props: TProps) {
   }
 
   return (
-    <View style={[styles.container, { pointerEvents: 'box-none' }]}>
+    <View pointerEvents="box-none" style={styles.container}>
       {children}
     </View>
   );

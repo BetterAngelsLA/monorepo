@@ -95,6 +95,16 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 // dev-api-proxy.js. Native builds never use metro.config.js's server section.
 const { createDevApiProxy } = require('./dev-api-proxy');
 
-config.server.enhanceMiddleware = createDevApiProxy();
+// Chain rather than replace: `enhanceMiddleware` is a general Metro extension
+// point, so anything already composed into it must keep running. Replacing it
+// would drop that behaviour in a way that looks unrelated to this project.
+const previousEnhanceMiddleware = config.server.enhanceMiddleware;
+
+config.server.enhanceMiddleware = (middleware, server) =>
+  createDevApiProxy()(
+    previousEnhanceMiddleware
+      ? previousEnhanceMiddleware(middleware, server)
+      : middleware,
+  );
 
 module.exports = config;
