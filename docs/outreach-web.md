@@ -5,13 +5,13 @@ browser app, and the decisions/deferrals attached to it.
 
 ## Decision log
 
-| Decision | Choice | Date |
-| --- | --- | --- |
-| Desktop layout | Phone-width centered frame first; responsive layouts are a follow-up once it works | 2026-10-08 |
-| Hostnames | prod `outreach.betterangels.la`, dev `outreach.dev.betterangels.la` | 2026-10-08 |
-| In-app Production/Demo environment switcher | Hidden on web — each deployment is built for, and locked to, its API environment | 2026-10-08 |
-| Sequencing | App fixes first, then infra + CI | 2026-10-08 |
-| Web export mode | SPA (`web.output: 'single'`, the Expo Router default) — no per-route prerendering | 2026-10-08 |
+| Decision                                    | Choice                                                                             | Date       |
+| ------------------------------------------- | ---------------------------------------------------------------------------------- | ---------- |
+| Desktop layout                              | Phone-width centered frame first; responsive layouts are a follow-up once it works | 2026-10-08 |
+| Hostnames                                   | prod `outreach.betterangels.la`, dev `outreach.dev.betterangels.la`                | 2026-10-08 |
+| In-app Production/Demo environment switcher | Hidden on web — each deployment is built for, and locked to, its API environment   | 2026-10-08 |
+| Sequencing                                  | App fixes first, then infra + CI                                                   | 2026-10-08 |
+| Web export mode                             | SPA (`web.output: 'single'`, the Expo Router default) — no per-route prerendering  | 2026-10-08 |
 
 Hostnames follow the existing static-site convention: prod units live in the
 `prod.betterangels.la` zone and expose the public name as an alias, dev units
@@ -65,51 +65,51 @@ Option 1 is the expected path. Decide before HMIS parity is scheduled.
 
 ### Landed
 
-| Change | Files |
-| --- | --- |
-| Web branch for the Maps key resolution (previously `ios ? … : android`, so web silently demanded the Android key and then threw) | `apps/betterangels/config.ts` |
-| `webGoogleMapsApiKey` in the embedded config `extra` | `apps/betterangels/app.config.js` |
-| Documented web key + its restrictions | `apps/betterangels/.env.local.sample` |
-| `react-native-maps` → Google Maps JS shim (restores `PROVIDER_GOOGLE`/`PROVIDER_DEFAULT`, injects the browser key) | `apps/betterangels/src/web-shims/react-native-maps.tsx` |
-| `react-native-keyboard-controller` → passthrough shim (plain `ScrollView`, inert toolbar/events) | `apps/betterangels/src/web-shims/react-native-keyboard-controller.tsx` |
-| Central web-shim map for cross-cutting package substitutions | `apps/betterangels/metro.config.js` |
-| `useNewRelic` no-op web build | `libs/.../hooks/newRelic/useNewRelic.web.ts` |
-| `useRememberedEmail` localStorage web build (SecureStore's web build is `export default {}`) | `libs/.../hooks/useRememberEmail/useRememberEmail.web.tsx` |
-| Feedback icon off the native `@react-native-vector-icons` TurboModule | `libs/.../NavModal/components/FeedbackModalButton.tsx` |
-| Web bootstrap on `createWebFetchClient()` (same export surface as `init.ts`) | `apps/betterangels/src/init.web.ts` |
-| HMIS interceptors split to a native module + inert `.web.ts`; storage keys to a neutral module | `libs/.../common/{hmisInterceptors.ts,hmisInterceptors.web.ts,hmisStorageKeys.ts}` |
-| Session teardown is one implementation for both platforms; only the cookie step splits (native `CookieManager.clearAll()`, a documented `.web` no-op) | `libs/.../hooks/user/{clearSessionCookies.ts,clearSessionCookies.web.ts}` |
-| PDF viewer: direct `<iframe src>` when there is nothing to authenticate, Blob URL only when auth headers must be attached (props shared with native so they cannot drift) | `libs/.../PdfViewer/{PdfViewer.web.tsx,types.ts}` |
-| Date/time picker via a transparent native `<input>` over the existing chrome | `libs/.../DatePicker/WheelDatePicker.web.tsx` |
-| Web disabled the "switch to production when signed out" effect — on a dev/preview deployment it silently repointed at the production API | `libs/.../SignInContainer/index.tsx` |
-| `ClientCard` menu hoisted out of the card's pressable area — it rendered `<button>` inside `<button>` on web | `libs/.../ClientCard/{ClientCard,ClientCardBase}.tsx` + new `ClientCard.spec.tsx` |
-| `Checkbox` gained an opt-in `accessibilityRole` (default unchanged); consent rows use `checkbox`, removing `<a>` inside `<button>` | `libs/.../Checkbox/Checkbox.tsx`, `libs/.../ConsentModal.tsx`, `Checkbox.spec.tsx` |
-| Tab bar "main plus" hoisted out of the tab bar into a layout overlay. As a `Tabs.Screen` it lived inside expo-router's tab `<a>`, so on web the navigation won the race and it landed on its own empty route instead of opening the modal. It is no longer a tab route, still carries `accessibilityRole="button"`, and is still gated on `hmisProdDemoEnabled` — which is what the deleted placeholder expressed with `href: null` | `apps/betterangels/src/app/(tabs)/_layout.tsx` (+ deleted `drawerPlaceholder.tsx`) |
-| Places/geocoding routed through the BA backend proxy on web, via an optional transport on `GooglePlacesClient`; `libs/shared/places` gained a test target | `libs/shared/places/src/lib/GooglePlacesClient.ts`, `apps/betterangels/src/init.web.ts` + new `GooglePlacesClient.spec.ts` |
-| Branch previews actually render: the web export now applies `experiments.baseUrl` from `getBranchBasePath()`, so bundled resources resolve under `/branches/<branch>` | `tools/shared/print-base-path.mjs`, `apps/betterangels/app.config.js`, `apps/betterangels/project.json` |
-| Deploy credentials wired the way the sibling apps do it: committed `.env.deploy.{preview,production}` (S3 bucket + deploy role), loaded by Nx per configuration — no CI change needed | `apps/betterangels/.env.deploy.*` |
-| `typecheck` targets added to the two projects that owned `.web` variants without one (`expo-shared-apollo`, `expo-shared-services`), so CI stops ignoring those files | `libs/expo/shared/{clients,services}/project.json` |
-| `Avatar` silently dropped `accessibilityLabel`/`accessibilityHint` whenever there was no image — a client with no photo announced nothing, on every platform. Label now goes on the wrapper in that branch, and the photo control carries its own label + testID | `libs/.../Avatar/Avatar.tsx`, `libs/.../ClientProfilePhotoUploader/...` |
-| Web camera verified live end-to-end in a real browser (synthetic camera device) | evidence below |
-| Camera capture contract pinned by a new spec (web returns a canvas data URL; the simulator-mock branch is unreachable off iOS) | `libs/.../Camera/useCapturePicture.spec.ts` |
-| `WheelDatePicker.web.tsx`: CSS-only props moved out of `StyleSheet.create` — the lib typecheck (which does see `.web` files) rejected `border: 'none'` / `cursor` | `libs/.../DatePicker/WheelDatePicker.web.tsx` |
-| Consent legal links made siblings of their checkbox — removes focusable children inside a `role="checkbox"` and nested hit targets | `libs/.../ui-components/ConsentModal.tsx` |
-| Document download on web hands the URL to the browser instead of going through expo-file-system (a warn-only stub on web) | `libs/.../ui-components/DocumentModal.tsx`, new `libs/expo/shared/utils/src/lib/file/downloadInBrowser.ts` + spec |
-| Web maps open at the zoom the call site asked for. teovilla drops `initialRegion` deltas and hardcodes `zoom: 3`; the shim derives `initialCamera.zoom` from the deltas instead | `apps/betterangels/src/web-shims/react-native-maps.tsx` + new `react-native-maps.spec.tsx` |
-| A controlled `region` prop now actually positions the web map — teovilla never reads it, so six call sites were rendering a world map at 0,0 | same shim; re-centres via `animateToRegion` on value change |
-| Store gained `reconcileActiveOrgId` (synchronous write, deferred notify) so the render-phase org reconcile stops updating the rendering component | `libs/ba-platform/src/lib/activeOrg/{activeOrgStore.ts,index.ts}`, `.../activeOrg/useActiveOrgState.ts` + 4 new store tests |
-| `export-web` / `deploy` / `post-pr-preview` Nx targets, with per-environment `EXPO_PUBLIC_*` | `apps/betterangels/project.json` |
-| CI step that bundles the browser build on every affected run, plus the new key wired through compose and the build/deploy steps | `.github/workflows/default.yml`, `docker-compose-ci.yml` |
-| Static-site units for `outreach.dev.betterangels.la` and `outreach.betterangels.la` | `infrastructure/environments/*/us-west-2/static-sites/outreach-web/` |
-| `.worktrees` added to `.nxignore` — worktree copies were making Nx see every project twice and refuse to build the graph | `.nxignore` |
-| Five styles asked for `fontFamily: 'Poppins'`, which matches no face `FontLoader` registers — so on web they silently fell back to the system font. Now the registered `Poppins-Regular` / `Poppins-SemiBold`, matching the weight each one asked for | `MapPinText.tsx`, `LoginForm/index.tsx`, `LoginFormHmis/index.tsx`, `ConsentModal.tsx` (×2) |
-| `FontLoader` no longer `throw`s when a font fails to load — that handed the error to the root boundary, which replaced the whole app (providers included) with the crash screen over a problem whose only consequence is a fallback typeface. It logs and continues, and `!loaded && !error` keeps that from becoming an eternal blank screen | `libs/.../Fonts/FontLoader.tsx` |
-| Session teardown un-duplicated: `useClearLocalSession.web.ts` was a 64-of-71-line copy of the native hook. Now one implementation, with only the cookie step split (`clearSessionCookies` + a `.web` no-op) — the same shape already used for `hmisInterceptors` | `hooks/user/{useClearLocalSession.ts,clearSessionCookies.ts,clearSessionCookies.web.ts}` (deleted `useClearLocalSession.web.ts`) |
-| `downloadInBrowser` guards for a missing DOM (it is re-exported from a platform-neutral barrel, so a native caller would have failed at runtime with `ReferenceError: document is not defined`) and now reports whether the download was *dispatched*, so `DocumentModal` surfaces a snackbar instead of closing silently when it could not start | `libs/.../file/downloadInBrowser.ts` (+4→5 spec cases), `ui-components/DocumentModal.tsx` |
-| `WheelDatePicker.web.tsx`: dropped a `format` default that could never run (`format` is required in `IWheelDatePickerProps`, and the default diverged from native's `'MM/dd/yyyy'`) and a write-only `inputRef`. Time mode verified end-to-end in a browser — picking 14:30 on `/note/create` yields "10/09/2026 2:30 PM", so the parse → preserve-the-other-half → format path works | `libs/.../DatePicker/WheelDatePicker.web.tsx` |
-| The one `outline` shorthand inside `StyleSheet.create` — which react-native-web's validator **rejects and deletes**, so the focus-ring suppression silently did nothing in dev — is now `outlineWidth: 0` (not `outlineStyle: 'none'`: RN's types allow only solid/dotted/dashed there). Three others use the same shorthand on **inline** styles, where `validate()` never runs; those were changed too and then **reverted** (see below) | `Input.tsx` |
-| Nine `pointerEvents` **prop** usages were migrated to `style.pointerEvents` and then **reverted**: react-native-web still applies the prop (`createDOMProps` merges `pointerEventsStyles[pointerEvents]` into the style) and only emits a dev `warnOnce`, and migrating our own sites does not remove the warning because it is emitted by `@gorhom/bottom-sheet`. One new element uses the style form because it was written fresh | `(tabs)/_layout.tsx` |
-| `reconcileActiveOrgId` removed from the `@monorepo/ba-platform` barrel — its contract is "write during render, notify later", which only the provider that owns the state can honour. The one legitimate consumer imports the module path directly | `libs/ba-platform/src/lib/activeOrg/index.ts`, `.../providers/activeOrg/useActiveOrgState.ts` |
+| Change                                                                                                                                                                                                                                                                                                                                                                                                                                     | Files                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Web branch for the Maps key resolution (previously `ios ? … : android`, so web silently demanded the Android key and then threw)                                                                                                                                                                                                                                                                                                           | `apps/betterangels/config.ts`                                                                                                    |
+| `webGoogleMapsApiKey` in the embedded config `extra`                                                                                                                                                                                                                                                                                                                                                                                       | `apps/betterangels/app.config.js`                                                                                                |
+| Documented web key + its restrictions                                                                                                                                                                                                                                                                                                                                                                                                      | `apps/betterangels/.env.local.sample`                                                                                            |
+| `react-native-maps` → Google Maps JS shim (restores `PROVIDER_GOOGLE`/`PROVIDER_DEFAULT`, injects the browser key)                                                                                                                                                                                                                                                                                                                         | `apps/betterangels/src/web-shims/react-native-maps.tsx`                                                                          |
+| `react-native-keyboard-controller` → passthrough shim (plain `ScrollView`, inert toolbar/events)                                                                                                                                                                                                                                                                                                                                           | `apps/betterangels/src/web-shims/react-native-keyboard-controller.tsx`                                                           |
+| Central web-shim map for cross-cutting package substitutions                                                                                                                                                                                                                                                                                                                                                                               | `apps/betterangels/metro.config.js`                                                                                              |
+| `useNewRelic` no-op web build                                                                                                                                                                                                                                                                                                                                                                                                              | `libs/.../hooks/newRelic/useNewRelic.web.ts`                                                                                     |
+| `useRememberedEmail` localStorage web build (SecureStore's web build is `export default {}`)                                                                                                                                                                                                                                                                                                                                               | `libs/.../hooks/useRememberEmail/useRememberEmail.web.tsx`                                                                       |
+| Feedback icon off the native `@react-native-vector-icons` TurboModule                                                                                                                                                                                                                                                                                                                                                                      | `libs/.../NavModal/components/FeedbackModalButton.tsx`                                                                           |
+| Web bootstrap on `createWebFetchClient()` (same export surface as `init.ts`)                                                                                                                                                                                                                                                                                                                                                               | `apps/betterangels/src/init.web.ts`                                                                                              |
+| HMIS interceptors split to a native module + inert `.web.ts`; storage keys to a neutral module                                                                                                                                                                                                                                                                                                                                             | `libs/.../common/{hmisInterceptors.ts,hmisInterceptors.web.ts,hmisStorageKeys.ts}`                                               |
+| Session teardown is one implementation for both platforms; only the cookie step splits (native `CookieManager.clearAll()`, a documented `.web` no-op)                                                                                                                                                                                                                                                                                      | `libs/.../hooks/user/{clearSessionCookies.ts,clearSessionCookies.web.ts}`                                                        |
+| PDF viewer: direct `<iframe src>` when there is nothing to authenticate, Blob URL only when auth headers must be attached (props shared with native so they cannot drift)                                                                                                                                                                                                                                                                  | `libs/.../PdfViewer/{PdfViewer.web.tsx,types.ts}`                                                                                |
+| Date/time picker via a transparent native `<input>` over the existing chrome                                                                                                                                                                                                                                                                                                                                                               | `libs/.../DatePicker/WheelDatePicker.web.tsx`                                                                                    |
+| Web disabled the "switch to production when signed out" effect — on a dev/preview deployment it silently repointed at the production API                                                                                                                                                                                                                                                                                                   | `libs/.../SignInContainer/index.tsx`                                                                                             |
+| `ClientCard` menu hoisted out of the card's pressable area — it rendered `<button>` inside `<button>` on web                                                                                                                                                                                                                                                                                                                               | `libs/.../ClientCard/{ClientCard,ClientCardBase}.tsx` + new `ClientCard.spec.tsx`                                                |
+| `Checkbox` gained an opt-in `accessibilityRole` (default unchanged); consent rows use `checkbox`, removing `<a>` inside `<button>`                                                                                                                                                                                                                                                                                                         | `libs/.../Checkbox/Checkbox.tsx`, `libs/.../ConsentModal.tsx`, `Checkbox.spec.tsx`                                               |
+| Tab bar "main plus" hoisted out of the tab bar into a layout overlay. As a `Tabs.Screen` it lived inside expo-router's tab `<a>`, so on web the navigation won the race and it landed on its own empty route instead of opening the modal. It is no longer a tab route, still carries `accessibilityRole="button"`, and is still gated on `hmisProdDemoEnabled` — which is what the deleted placeholder expressed with `href: null`        | `apps/betterangels/src/app/(tabs)/_layout.tsx` (+ deleted `drawerPlaceholder.tsx`)                                               |
+| Places/geocoding routed through the BA backend proxy on web, via an optional transport on `GooglePlacesClient`; `libs/shared/places` gained a test target                                                                                                                                                                                                                                                                                  | `libs/shared/places/src/lib/GooglePlacesClient.ts`, `apps/betterangels/src/init.web.ts` + new `GooglePlacesClient.spec.ts`       |
+| Branch previews actually render: the web export now applies `experiments.baseUrl` from `getBranchBasePath()`, so bundled resources resolve under `/branches/<branch>`                                                                                                                                                                                                                                                                      | `tools/shared/print-base-path.mjs`, `apps/betterangels/app.config.js`, `apps/betterangels/project.json`                          |
+| Deploy credentials wired the way the sibling apps do it: committed `.env.deploy.{preview,production}` (S3 bucket + deploy role), loaded by Nx per configuration — no CI change needed                                                                                                                                                                                                                                                      | `apps/betterangels/.env.deploy.*`                                                                                                |
+| A `typecheck` target added to the one project this PR touches that owned `.web` variants without one — the project named `expo-shared-apollo`, rooted at `libs/expo/shared/clients` — so CI stops ignoring those files. An equivalent target for `expo-shared-services` was added and then removed: that project is not otherwise touched here, and its pre-existing `s3Upload.web.ts` is covered by the consumer typechecks               | `libs/expo/shared/clients/project.json`                                                                                          |
+| `Avatar` silently dropped `accessibilityLabel`/`accessibilityHint` whenever there was no image — a client with no photo announced nothing, on every platform. Label now goes on the wrapper in that branch, and the photo control carries its own label + hint                                                                                                                                                                             | `libs/.../Avatar/Avatar.tsx`, `libs/.../ClientProfilePhotoUploader/...`                                                          |
+| Web camera verified live end-to-end in a real browser (synthetic camera device)                                                                                                                                                                                                                                                                                                                                                            | evidence below                                                                                                                   |
+| Camera capture contract pinned by a new spec (web returns a canvas data URL; the simulator-mock branch is unreachable off iOS)                                                                                                                                                                                                                                                                                                             | `libs/.../Camera/useCapturePicture.spec.ts`                                                                                      |
+| `WheelDatePicker.web.tsx`: CSS-only props moved out of `StyleSheet.create` — the lib typecheck (which does see `.web` files) rejected `border: 'none'` / `cursor`                                                                                                                                                                                                                                                                          | `libs/.../DatePicker/WheelDatePicker.web.tsx`                                                                                    |
+| Consent legal links made siblings of their checkbox — removes focusable children inside a `role="checkbox"` and nested hit targets                                                                                                                                                                                                                                                                                                         | `libs/.../ui-components/ConsentModal.tsx`                                                                                        |
+| Document download on web hands the URL to the browser instead of going through expo-file-system (a warn-only stub on web)                                                                                                                                                                                                                                                                                                                  | `libs/.../ui-components/DocumentModal.tsx`, new `libs/expo/shared/utils/src/lib/file/downloadInBrowser.ts` + spec                |
+| Web maps open at the zoom the call site asked for. teovilla drops `initialRegion` deltas and hardcodes `zoom: 3`; the shim derives `initialCamera.zoom` from the deltas instead                                                                                                                                                                                                                                                            | `apps/betterangels/src/web-shims/react-native-maps.tsx` + new `react-native-maps.spec.tsx`                                       |
+| A controlled `region` prop now actually positions the web map — teovilla never reads it, so six call sites were rendering a world map at 0,0                                                                                                                                                                                                                                                                                               | same shim; re-centres via `animateToRegion` on value change                                                                      |
+| Store gained `reconcileActiveOrgId` (synchronous write, deferred notify) so the render-phase org reconcile stops updating the rendering component                                                                                                                                                                                                                                                                                          | `libs/ba-platform/src/lib/activeOrg/{activeOrgStore.ts,index.ts}`, `.../activeOrg/useActiveOrgState.ts` + 4 new store tests      |
+| `export-web` / `deploy` / `post-pr-preview` Nx targets, with per-environment `EXPO_PUBLIC_*`                                                                                                                                                                                                                                                                                                                                               | `apps/betterangels/project.json`                                                                                                 |
+| CI step that bundles the browser build on every affected run, plus the new key wired through compose and the build/deploy steps                                                                                                                                                                                                                                                                                                            | `.github/workflows/default.yml`, `docker-compose-ci.yml`                                                                         |
+| Static-site units for `outreach.dev.betterangels.la` and `outreach.betterangels.la`                                                                                                                                                                                                                                                                                                                                                        | `infrastructure/environments/*/us-west-2/static-sites/outreach-web/`                                                             |
+| `.worktrees` added to `.nxignore` — worktree copies were making Nx see every project twice and refuse to build the graph                                                                                                                                                                                                                                                                                                                   | `.nxignore`                                                                                                                      |
+| Five styles asked for `fontFamily: 'Poppins'`, which matches no face `FontLoader` registers — so on web they silently fell back to the system font. Now the registered `Poppins-Regular` / `Poppins-SemiBold`, matching the weight each one asked for                                                                                                                                                                                      | `MapPinText.tsx`, `LoginForm/index.tsx`, `LoginFormHmis/index.tsx`, `ConsentModal.tsx` (×2)                                      |
+| `FontLoader` no longer `throw`s when a font fails to load — that handed the error to the root boundary, which replaced the whole app (providers included) with the crash screen over a problem whose only consequence is a fallback typeface. It logs and continues, and `!loaded && !error` keeps that from becoming an eternal blank screen                                                                                              | `libs/.../Fonts/FontLoader.tsx`                                                                                                  |
+| Session teardown un-duplicated: `useClearLocalSession.web.ts` was a 64-of-71-line copy of the native hook. Now one implementation, with only the cookie step split (`clearSessionCookies` + a `.web` no-op) — the same shape already used for `hmisInterceptors`                                                                                                                                                                           | `hooks/user/{useClearLocalSession.ts,clearSessionCookies.ts,clearSessionCookies.web.ts}` (deleted `useClearLocalSession.web.ts`) |
+| `downloadInBrowser` guards for a missing DOM (it is re-exported from a platform-neutral barrel, so a native caller would have failed at runtime with `ReferenceError: document is not defined`) and now reports whether the download was _dispatched_, so `DocumentModal` surfaces a snackbar instead of closing silently when it could not start                                                                                          | `libs/.../file/downloadInBrowser.ts` (+4→5 spec cases), `ui-components/DocumentModal.tsx`                                        |
+| `WheelDatePicker.web.tsx`: dropped a `format` default that could never run (`format` is required in `IWheelDatePickerProps`, and the default diverged from native's `'MM/dd/yyyy'`) and a write-only `inputRef`. Time mode verified end-to-end in a browser — picking 14:30 on `/note/create` yields "10/09/2026 2:30 PM", so the parse → preserve-the-other-half → format path works                                                      | `libs/.../DatePicker/WheelDatePicker.web.tsx`                                                                                    |
+| The one `outline` shorthand inside `StyleSheet.create` — which react-native-web's validator **rejects and deletes**, so the focus-ring suppression silently did nothing in dev — is now `outlineWidth: 0` (not `outlineStyle: 'none'`: RN's types allow only solid/dotted/dashed there). Three others use the same shorthand on **inline** styles, where `validate()` never runs; those were changed too and then **reverted** (see below) | `Input.tsx`                                                                                                                      |
+| Nine `pointerEvents` **prop** usages were migrated to `style.pointerEvents` and then **reverted**: react-native-web still applies the prop (`createDOMProps` merges `pointerEventsStyles[pointerEvents]` into the style) and only emits a dev `warnOnce`, and migrating our own sites does not remove the warning because it is emitted by `@gorhom/bottom-sheet`. One new element uses the style form because it was written fresh        | `(tabs)/_layout.tsx`                                                                                                             |
+| `reconcileActiveOrgId` removed from the `@monorepo/ba-platform` barrel — its contract is "write during render, notify later", which only the provider that owns the state can honour. The one legitimate consumer imports the module path directly                                                                                                                                                                                         | `libs/ba-platform/src/lib/activeOrg/index.ts`, `.../providers/activeOrg/useActiveOrgState.ts`                                    |
 
 Verified: `tsc --noEmit` clean for both `tsconfig.app.json` and `tsconfig.spec.json`; the
 `expo-shared-apollo` suite passes (12 tests, including `clientHmis.test.ts` which covers the
@@ -118,7 +118,7 @@ moved HMIS interceptor); `expo-betterangels` passes 460 tests including
 from a call site passing **neither** `provider` nor `googleMapsApiKey` — confirming both
 silent-failure modes are closed without touching the 19 map call sites.
 
-> `UserProfile/index.test.tsx` and `ConsentModal.test.tsx` previously failed to *load* under
+> `UserProfile/index.test.tsx` and `ConsentModal.test.tsx` previously failed to _load_ under
 > `vitest-native` (`expo-modules-core` type stripping). The real cause was the
 > `@monorepo/expo/shared/ui-components` barrel eagerly re-exporting native-backed components;
 > both specs now mock that barrel, following the repo's own convention
@@ -127,19 +127,19 @@ silent-failure modes are closed without touching the 19 map call sites.
 
 ### Bugs the web work surfaced
 
-Making those two specs actually *run* turned them from dead weight into a small bug hunt.
+Making those two specs actually _run_ turned them from dead weight into a small bug hunt.
 Three failures were real product bugs, not test problems — none of them web-specific, all of
 them reachable on mobile too:
 
-| Bug | Consequence | State |
-| --- | --- | --- |
-| `UserProfile.deleteCurrentUserFunction` only caught *thrown* errors, so a resolved `OperationInfo` refusal still navigated to `/auth` and called `signOut()` | Signed a user out while their account still existed | **Fixed** — surfaces `extractOperationInfoMessage(...)` via `showSnackbar` and returns |
-| `ConsentModal.submitAgreements` guarded only `if (!data)`, so a resolved `OperationInfo` rejection still called `setUser(accepted)` and closed the sheet | Told the user they had accepted terms the server had refused; the mutation's cache `update` also wrote `hasAcceptedTos: true` | **Fixed** — early-returns on `OperationInfo` before both, and the cache write is skipped for a refusal |
-| A read that **predates** the accept can land afterwards and flip the context back. The accept writes `hasAcceptedTos: true` into the `CurrentUserType` cache entry, then the in-flight `currentUser` query resolves with `hasAcceptedTos: false`; `createUserProvider`'s effect applies it via `setUser(parseUser(...))`, and the tabs-layout gate re-opens the sheet | The consent sheet re-opens after a successful accept | **Fixed** — `parseUser` now receives the user already in context, and the outreach app treats acceptance as monotonic |
+| Bug                                                                                                                                                                                                                                                                                                                                                                   | Consequence                                                                                                                   | State                                                                                                                 |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `UserProfile.deleteCurrentUserFunction` only caught _thrown_ errors, so a resolved `OperationInfo` refusal still navigated to `/auth` and called `signOut()`                                                                                                                                                                                                          | Signed a user out while their account still existed                                                                           | **Fixed** — surfaces `extractOperationInfoMessage(...)` via `showSnackbar` and returns                                |
+| `ConsentModal.submitAgreements` guarded only `if (!data)`, so a resolved `OperationInfo` rejection still called `setUser(accepted)` and closed the sheet                                                                                                                                                                                                              | Told the user they had accepted terms the server had refused; the mutation's cache `update` also wrote `hasAcceptedTos: true` | **Fixed** — early-returns on `OperationInfo` before both, and the cache write is skipped for a refusal                |
+| A read that **predates** the accept can land afterwards and flip the context back. The accept writes `hasAcceptedTos: true` into the `CurrentUserType` cache entry, then the in-flight `currentUser` query resolves with `hasAcceptedTos: false`; `createUserProvider`'s effect applies it via `setUser(parseUser(...))`, and the tabs-layout gate re-opens the sheet | The consent sheet re-opens after a successful accept                                                                          | **Fixed** — `parseUser` now receives the user already in context, and the outreach app treats acceptance as monotonic |
 
 The third one is not a component bug: a component cannot stop `createUserProvider` from
 overwriting context. It is a race — the app refetches `currentUser` on foreground, so a read
-issued *before* the accept resolves *after* it, and the provider applied whatever arrived last.
+issued _before_ the accept resolves _after_ it, and the provider applied whatever arrived last.
 
 The fix is deliberately made where the decision belongs rather than in the provider's policy:
 
@@ -153,12 +153,12 @@ implementation is still assignable, so the admin/dashboard apps were untouched),
 outreach implementation decides what wins:
 
 ```ts
-hasAcceptedTos: prev?.hasAcceptedTos || (userData.hasAcceptedTos ?? false)
+hasAcceptedTos: prev?.hasAcceptedTos || (userData.hasAcceptedTos ?? false);
 ```
 
 So `ba-platform` stays domain-agnostic — it offers "merge instead of replace" without knowing
 what consent is — while the rule "once accepted, stay accepted" lives in the app that owns it.
-The trade-off, accepted knowingly: a *server-side* revocation is not reflected until the next
+The trade-off, accepted knowingly: a _server-side_ revocation is not reflected until the next
 fresh read (a reload or a new session). Nothing in the product revokes acceptance today, and
 the alternative (ignoring any read that predates the last local write) needs request-identity
 plumbing through Apollo for the same user-visible result.
@@ -179,7 +179,7 @@ and `DocumentModal`.
 
 Worth recording so nobody acts on them:
 
-- **`useRememberEmail.web.tsx` is not dead code and not lazy duplication.** The *file* is
+- **`useRememberEmail.web.tsx` is not dead code and not lazy duplication.** The _file_ is
   `useRememberEmail.tsx` but its export is `useRememberedEmail` — and both login forms import
   it by explicit path (`hooks/useRememberEmail/useRememberEmail`), so the `.web` sibling is the
   **live web implementation**. A grep for the file's name finds nothing and looks conclusive;
@@ -187,7 +187,7 @@ Worth recording so nobody acts on them:
   side is `localStorage` with different failure modes (private mode, blocked storage) and a
   documented security scope. Left alone deliberately.
 - **`/auth` does not end the server session, and that is correct.** Visiting it while signed in
-  clears *local* state (and is how the app catches sessions that died without a sign-out), but
+  clears _local_ state (and is how the app catches sessions that died without a sign-out), but
   the Django session cookie is `HttpOnly` and only the server clears it on logout. So a private
   route re-authenticates afterwards — verified, not a bug.
 - **No user-facing "Sign out" control is reachable** in this build: sign-out is wired only to
@@ -199,12 +199,12 @@ Worth recording so nobody acts on them:
 - **"A date-mode pick should yield midnight" is not supported.** The review asserted native
   returns midnight for a date-only pick. The native implementation seeds its picker with
   `value={value || new Date()}` and passes the picker's `Date` straight through
-  (`WheelDatePicker.tsx:82`, `:71`) — so with no prior value it carries the *current* time too,
+  (`WheelDatePicker.tsx:82`, `:71`) — so with no prior value it carries the _current_ time too,
   and on iOS retains it. The change was implemented, then reverted, and the code now carries a
   comment saying why, so it is not "fixed" again on the same reasoning. (Separately: the wheel
   picker has exactly one call site, `NoteForm/DateAndTime.tsx`, and it is `mode="time"`, so the
   date branch is latent in this app either way. It shares the parse/preserve path with time
-  mode, which *is* exercised — see below.)
+  mode, which _is_ exercised — see below.)
 
 - **The three click timeouts in `tmp/click-through-errors.mjs` are the harness, not the app.**
   It reports "client tab #0"/"#1" and "plus button (task modal)" failing because a `<div>` with
@@ -213,7 +213,7 @@ Worth recording so nobody acts on them:
   which never matches the client-profile tabs (`ClientTabs` renders each as a `TextButton` with
   `testId` `client-tab-<label>`, lowercase in the DOM), and the screenshot taken at that moment
   shows the "Add Interaction / Upload Documents" action sheet still open over the Clients list —
-  a modal *correctly* blocking clicks. In a clean session all six client-profile tabs click with
+  a modal _correctly_ blocking clicks. In a clean session all six client-profile tabs click with
   0 console errors (`tmp/verify-client-tabs-web.mjs`). That probe also passed vacuously twice
   before this was fixed, once because `querySelectorAll` was handed `undefined` — which coerces
   to the string `"undefined"` and matches nothing — so it now aborts as INCONCLUSIVE when it
@@ -226,7 +226,7 @@ Worth recording so nobody acts on them:
 stray warning. It was pre-existing and not web-specific (the form is shared with mobile), but
 it was real: the page still rendered, so it burned CPU indefinitely rather than failing.
 
-**The cause was `PhoneNumberInputBase`.** Its effect re-emitted the current value on *every*
+**The cause was `PhoneNumberInputBase`.** Its effect re-emitted the current value on _every_
 parent render, because `onChangeParts` was an effect dependency and is always passed as an
 inline arrow:
 
@@ -259,7 +259,7 @@ measured, reverted). Guessing was then abandoned for instrumentation:
 2. `tmp/trace-setstate.mjs` wraps the `dispatch` of every `useState`/`useReducer` hook in the
    committed tree and captures an `Error` stack per call. Result: **385 calls into
    `ClientContactForm` alone**, all from a single stack, which named react-hook-form's
-   `onChange`. Keep 20+ frames: at 6 the interesting caller is cut off, and that caller *was*
+   `onChange`. Keep 20+ frames: at 6 the interesting caller is cut off, and that caller _was_
    the answer.
 3. Those stacks carry bundle line offsets, not source paths. Metro's dev bundle terminates each
    module with `},<id>,[deps],"path/to/file.tsx");`, so fetching the bundle and taking the first
@@ -271,7 +271,7 @@ A gotcha that cost a run: values from the Node scope are not visible inside a Pl
 call, React swallowed it, and the probe reported 0 commits while the page looped normally.
 Hardcode such values inside the page function.
 
-Two things that are *not* the cause, so nobody re-tests them: emitting the value on mount is
+Two things that are _not_ the cause, so nobody re-tests them: emitting the value on mount is
 intentional (it normalises the stored value), and `PhoneNumberInput` genuinely has to pass a
 fresh arrow, because its second consumer is a `Controller`'s `render` prop and there is no
 component boundary to hang a `useCallback` on. The ref is the fix, not a workaround.
@@ -293,7 +293,7 @@ react-native-web's `StyleSheet.create`, which validates every style object in de
 - **It deletes the offending property** (`delete obj[k]`), so the style silently does not
   apply. It is not merely noise, but its **scope is narrow**: only styles that go through
   `StyleSheet.create` are validated. One input had `outline: 'none'` there, so its focus-ring
-  suppression had never worked in dev; three others use the same shorthand on *inline* styles,
+  suppression had never worked in dev; three others use the same shorthand on _inline_ styles,
   which `createReactDOMStyle` passes through untouched — those were changed during this work
   and reverted once that was established.
 
@@ -305,14 +305,14 @@ than one token; and `!important` in any value.
 **Siblings still present in this repo** (same family, found by scanning for each rule rather
 than just for `outline`):
 
-| Warning | Sites | Nature |
-| --- | --- | --- |
-| `props.pointerEvents is deprecated. Use style.pointerEvents` | Emitted by `@gorhom/bottom-sheet`, which passes `pointerEvents: "box-none"` as a prop to `View` (`BottomSheetHostingContainer.js:95`). Third-party; needs a patch or an upgrade. Our own nine sites were migrated and then reverted — react-native-web still applies the prop (`createDOMProps` merges `pointerEventsStyles[…]` into the style), so migrating them bought nothing and would not have silenced this warning | Deprecation only; the prop is still applied |
-| `"shadow*" style props are deprecated. Use "boxShadow"` | 60 occurrences across ~10 files (`BottomSheetPanel`, `MapDirectionsActionSheet`, `LocateMeButton`, `Copy`, `BaseModal`, `ServicesModal`, `shared/static/src/lib/shadow.ts`, …) | Deprecation; the styles still apply. A real migration, and platform-sensitive, so left alone |
-| `Unexpected text node: . A text node cannot be a child of a <View>` | `/note/create` (×5), `/settings/about` (×1) | **Mechanism known, source still not located — see below** |
+| Warning                                                             | Sites                                                                                                                                                                                                                                                                                                                                                                                                                      | Nature                                                                                       |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `props.pointerEvents is deprecated. Use style.pointerEvents`        | Emitted by `@gorhom/bottom-sheet`, which passes `pointerEvents: "box-none"` as a prop to `View` (`BottomSheetHostingContainer.js:95`). Third-party; needs a patch or an upgrade. Our own nine sites were migrated and then reverted — react-native-web still applies the prop (`createDOMProps` merges `pointerEventsStyles[…]` into the style), so migrating them bought nothing and would not have silenced this warning | Deprecation only; the prop is still applied                                                  |
+| `"shadow*" style props are deprecated. Use "boxShadow"`             | 60 occurrences across ~10 files (`BottomSheetPanel`, `MapDirectionsActionSheet`, `LocateMeButton`, `Copy`, `BaseModal`, `ServicesModal`, `shared/static/src/lib/shadow.ts`, …)                                                                                                                                                                                                                                             | Deprecation; the styles still apply. A real migration, and platform-sensitive, so left alone |
+| `Unexpected text node: . A text node cannot be a child of a <View>` | `/note/create` (×5), `/settings/about` (×1)                                                                                                                                                                                                                                                                                                                                                                                | **Mechanism known, source still not located — see below**                                    |
 
 **The `Unexpected text node` warning, narrowed.** react-native-web emits it from the `View`
-export, while *rendering*, for any child that is a direct string:
+export, while _rendering_, for any child that is a direct string:
 
 ```js
 // node_modules/react-native-web/dist/exports/View/index.js:55
@@ -340,7 +340,7 @@ wants a `<Text>`) in a subtree that ends up empty, or one rendered into a detach
 
 **Three methods failed to name the component, so don't re-run them:**
 
-1. **DOM scan** for a `"."` text node — light DOM *and* every shadow root → **0** on both
+1. **DOM scan** for a `"."` text node — light DOM _and_ every shadow root → **0** on both
    routes (`tmp/locate-text-node.mjs`).
 2. **JS stack at the warning** (patching `console.error` before boot) — only React internals
    and a bundle offset, because RNW uses plain `console.error` rather than React's warning
@@ -350,7 +350,7 @@ wants a `<Text>`) in a subtree that ends up empty, or one rendered into a detach
    (`tmp/find-text-node-component.mjs`; it does find the roots, so the hook works).
 
 (2) and (3) together mean the offending `<View>` is never in the committed tree: it renders,
-warns, and its output is discarded. That is also *why* nothing appears in the DOM, and it is
+warns, and its output is discarded. That is also _why_ nothing appears in the DOM, and it is
 consistent with the warning being harmless in practice. Catching it would need a render-phase
 interception of the `View` component itself rather than an after-the-fact inspection.
 
@@ -366,20 +366,20 @@ renders `/auth` and `/sign-in?provider=ba`, and reaches the API from the browser
 All four former blockers are resolved:
 
 1. `@preeternal/react-native-cookie-manager` — resolved by a platform split, because
-   swapping the fetch client alone was *not* enough: three web-reachable modules imported
+   swapping the fetch client alone was _not_ enough: three web-reachable modules imported
    it, one of them through a barrel.
 
-   | Import site | Reached on web via | Resolution |
-   | --- | --- | --- |
-   | `libs/ba-platform/expo/src/lib/{fetchClient,csrfTokenProvider}.ts` | `init.ts` | `apps/betterangels/src/init.web.ts` uses `createWebFetchClient()`; Metro prefers it |
-   | `libs/expo/shared/clients/.../interceptors.ts` | `@monorepo/expo/shared/clients` barrel → `BaDataProviders` (`createErrorLink`) | HMIS code extracted to `hmisInterceptors.ts` + a `.web.ts` no-op; storage keys moved to `hmisStorageKeys.ts`; `interceptors.ts` re-exports both so its public surface is unchanged |
-   | `libs/expo/betterangels/.../useClearLocalSession.ts` | `auth.tsx` | only the cookie step is platform-split: `clearSessionCookies.web.ts` is a documented no-op (no JS cookie jar; the session cookie is `HttpOnly`) and the hook itself is shared |
+   | Import site                                                        | Reached on web via                                                             | Resolution                                                                                                                                                                         |
+   | ------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `libs/ba-platform/expo/src/lib/{fetchClient,csrfTokenProvider}.ts` | `init.ts`                                                                      | `apps/betterangels/src/init.web.ts` uses `createWebFetchClient()`; Metro prefers it                                                                                                |
+   | `libs/expo/shared/clients/.../interceptors.ts`                     | `@monorepo/expo/shared/clients` barrel → `BaDataProviders` (`createErrorLink`) | HMIS code extracted to `hmisInterceptors.ts` + a `.web.ts` no-op; storage keys moved to `hmisStorageKeys.ts`; `interceptors.ts` re-exports both so its public surface is unchanged |
+   | `libs/expo/betterangels/.../useClearLocalSession.ts`               | `auth.tsx`                                                                     | only the cookie step is platform-split: `clearSessionCookies.web.ts` is a documented no-op (no JS cookie jar; the session cookie is `HttpOnly`) and the hook itself is shared      |
 
 2. `react-native-pdf` — `PdfViewer.web.tsx`. Props moved to `PdfViewer/types.ts` so the two
    builds cannot drift; the disk cache is intentionally dropped (HTTP cache replaces it).
    Two paths, because they have different constraints:
    - **No `headers`** (the only call site) — the `<iframe>` points straight at the URL and the
-     browser fetches it as a *navigation*. A navigation is not subject to the CORS check, so
+     browser fetches it as a _navigation_. A navigation is not subject to the CORS check, so
      this renders a PDF from a media origin that sends no ACAO — which the blob fetch could
      not. The fetch bought nothing here: nothing was being authenticated, and it turned a
      working document into "Sorry, there was a problem loading the PDF file" on the deployed
@@ -393,9 +393,10 @@ All four former blockers are resolved:
    thumbnail mounts an `<iframe>` whose `src` is the direct presigned URL (`blob:` = false),
    with the browser actually requesting the bytes and no error state. Repeating it with the
    media response's ACAO header **stripped** still renders — i.e. the deployed condition the
-   old fetch path failed in. Note the local media store (SeaweedFS on `:9000`) *does* echo
+   old fetch path failed in. Note the local media store (SeaweedFS on `:9000`) _does_ echo
    `Access-Control-Allow-Origin`, which is why this failure was only ever visible on the
    deployed host and not locally.
+
 3. `@react-native-community/datetimepicker` — `WheelDatePicker.web.tsx` layers a
    transparent native `<input type="date" | "time">` over the existing field chrome, so the
    label/error/icon and the real browser picker both survive. Handles `mode="time"`.
@@ -410,11 +411,11 @@ validates the `Origin` header on cross-origin writes, so serving the web app fro
 port makes every `POST /graphql` and login fail with **403** — which looks exactly like a
 broken CSRF interceptor. Proved directly:
 
-| `Origin` sent | `POST /graphql` |
-| --- | --- |
-| `http://localhost:8090` | 403 |
-| `http://localhost:8081` | 200 |
-| (none) | 200 |
+| `Origin` sent           | `POST /graphql` |
+| ----------------------- | --------------- |
+| `http://localhost:8090` | 403             |
+| `http://localhost:8081` | 200             |
+| (none)                  | 200             |
 
 Verified working end-to-end in a browser against the local backend.
 
@@ -442,6 +443,7 @@ Two notes for whoever picks this up:
   correctly on web. `SignInContainer` routes on the deprecated `isOutreachAuthorized` field
   (`accounts/types.py` marks it "Use userPermissions check instead") — worth migrating, but
   it works.
+
 ### Web-only DOM nesting bugs — all three fixed
 
 `accessibilityRole="button"` renders a real `<button>` on react-native-web. Nesting one
@@ -450,12 +452,12 @@ reports it as a hydration error and screen readers get confused.
 
 They were found by **walking the live DOM** (`button button`, `button a`, `a button`) rather
 than by trusting the console, which matters: React's `validateDOMNesting` only warns about
-*some* combinations, so two of the three were silent. A final browser pass reports
+_some_ combinations, so two of the three were silent. A final browser pass reports
 `aInButton: 0`, `buttonInA: 0`, `buttonInButton: 0` with no nesting warnings.
 
 1. **`ClientCard` (Clients list).** The card wrapped its content in
    `<Pressable accessibilityRole="button">` with the menu button inside. The menu is now a
-   *sibling* of the card's pressable area (`ClientCardBase` renders contents only; `ClientCard`
+   _sibling_ of the card's pressable area (`ClientCardBase` renders contents only; `ClientCard`
    owns the menu). Verified: `button button` 1 → 0, `buttonsInsideFirstCard: 0`, card is still
    a `<button>`. Pinned by `ClientCard.spec.tsx` (4 tests, including that `onPress` still
    fires), which runs in CI.
@@ -465,7 +467,7 @@ than by trusting the console, which matters: React's `validateDOMNesting` only w
    `accessibilityRole="button"`. Rather than change the shared component's established role
    (its spec asserts `getByRole('button')`), `Checkbox` gained an **opt-in**
    `accessibilityRole` prop defaulting to `'button'`; the consent rows pass `'checkbox'`. That
-   renders `<div role="checkbox">`, which is valid *and* the more accurate role. Verified:
+   renders `<div role="checkbox">`, which is valid _and_ the more accurate role. Verified:
    `button a` 4 → 0, links still render, `firstCheckboxRole: "checkbox"`. Pinned by a new
    `Checkbox.spec.tsx` case.
 
@@ -475,7 +477,7 @@ than by trusting the console, which matters: React's `validateDOMNesting` only w
    and the modal is opened by the `tabPress` listener regardless. Verified: `a button` 4 → 0.
 
 4. **Consent legal links moved out of the checkbox row.** `ConsentModal` had put the ToS /
-   Privacy `<Link>`s *inside* the `Checkbox` label, so a `role="checkbox"` contained focusable
+   Privacy `<Link>`s _inside_ the `Checkbox` label, so a `role="checkbox"` contained focusable
    children — poor screen-reader structure on every platform, and nested hit targets (tapping
    the link also toggled the box). The links are now siblings of each checkbox. Verified in a
    browser: `[role="checkbox"] a` 4 → 0, links still render, no nesting warnings, and the
@@ -513,12 +515,12 @@ The email-driven switch already routes to a deployed API: any address that is no
 `https://api.dev.betterangels.la`. But a localhost page cannot actually talk to it, for four
 reasons — all deliberate, and all solved by serving the API from the page's own origin:
 
-| Blocker | Why | Fix in the proxy |
-| --- | --- | --- |
-| CORS | dev allows only `https://*.dev.betterangels.la` | request becomes same-origin |
-| CSRF origin | same allowlist, so Django 403s the write | rewrites request `Origin` to the upstream API's origin, satisfying both the host check and `CSRF_TRUSTED_ORIGINS` |
-| CSRF token | `csrftoken` is scoped to `.dev.betterangels.la`; `document.cookie` on localhost can't read it | strips `Domain`/`Secure` from `Set-Cookie` so the browser stores it host-only for `localhost` |
-| Session cookie | `SameSite=Lax` (Django default) isn't sent cross-site | first-party again once same-origin |
+| Blocker        | Why                                                                                           | Fix in the proxy                                                                                                  |
+| -------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| CORS           | dev allows only `https://*.dev.betterangels.la`                                               | request becomes same-origin                                                                                       |
+| CSRF origin    | same allowlist, so Django 403s the write                                                      | rewrites request `Origin` to the upstream API's origin, satisfying both the host check and `CSRF_TRUSTED_ORIGINS` |
+| CSRF token     | `csrftoken` is scoped to `.dev.betterangels.la`; `document.cookie` on localhost can't read it | strips `Domain`/`Secure` from `Set-Cookie` so the browser stores it host-only for `localhost`                     |
+| Session cookie | `SameSite=Lax` (Django default) isn't sent cross-site                                         | first-party again once same-origin                                                                                |
 
 `apps/betterangels/dev-api-proxy.js` implements this as Metro middleware via
 `config.server.enhanceMiddleware`, which Expo wraps into its own stack — so it is one process on
@@ -530,7 +532,7 @@ EXPO_PUBLIC_API_URL=http://localhost:8081/__api \
 yarn nx serve betterangels --clear
 ```
 
-The CSRF interceptor mints its token from `<origin>/admin/login/` — *outside* the API prefix —
+The CSRF interceptor mints its token from `<origin>/admin/login/` — _outside_ the API prefix —
 so the proxy also claims `/admin/login` when a target is set. Redirects pointing back at the API
 are rewritten onto the proxy origin, and a missing target returns a 502 explaining the env var
 instead of a confusing dev-server 404.
@@ -579,12 +581,12 @@ base-path source so there is one definition of the path:
 
 **Verified by deploying for real** (build → `aws s3 sync` → invalidation, dev account):
 
-| Check | Before | After |
-| --- | --- | --- |
-| Branch HTML | 200 | 200 |
-| Referenced JS/CSS/favicon | **403** | **200** |
-| Browser: 4xx/5xx responses | every asset | **none** |
-| Browser: React root | empty | **mounted**; `document.title = "BetterAngels (Dev)"` |
+| Check                      | Before      | After                                                |
+| -------------------------- | ----------- | ---------------------------------------------------- |
+| Branch HTML                | 200         | 200                                                  |
+| Referenced JS/CSS/favicon  | **403**     | **200**                                              |
+| Browser: 4xx/5xx responses | every asset | **none**                                             |
+| Browser: React root        | empty       | **mounted**; `document.title = "BetterAngels (Dev)"` |
 
 **No workflow change was needed.** CI already runs `export-web` and `deploy` for the `preview`
 configuration, and `.env.deploy.preview` now supplies the credentials, so previews deploy
@@ -596,14 +598,12 @@ site root — `shelter.dev.betterangels.la/branches/main/` returns 200 today, an
 
 ### Recipe: reaching the authenticated app in a browser
 
-
 Browser verification kept stalling on the consent modal. The gate is
 `apps/betterangels/src/app/(tabs)/_layout.tsx` and opens the modal when **either**:
 
 ```js
-needsAgreements = user.hasAcceptedTos === false || user.hasAcceptedPrivacyPolicy === false
-shouldOpen      = needsAgreements ||
-                  (bothAccepted && (!user.firstName || !user.lastName))  // "Complete Your Registration"
+needsAgreements = user.hasAcceptedTos === false || user.hasAcceptedPrivacyPolicy === false;
+shouldOpen = needsAgreements || (bothAccepted && (!user.firstName || !user.lastName)); // "Complete Your Registration"
 ```
 
 So a usable test account needs **both** flags accepted **and** a first/last name, plus a
@@ -619,7 +619,7 @@ TypeScript resolves `./Foo` to `Foo.tsx` — it has no notion of platform extens
 app's `tsconfig.app.json` **never checks `Foo.web.tsx`**. The app typecheck passing therefore
 says nothing about the web variants.
 
-What does cover them is the *lib's* typecheck target: those tsconfigs include all of `src/**`,
+What does cover them is the _lib's_ typecheck target: those tsconfigs include all of `src/**`,
 so `nx run expo-shared-ui-components:typecheck` sees `WheelDatePicker.web.tsx` and
 `PdfViewer.web.tsx`, and CI's `nx affected -t typecheck` runs it. That is what caught a real
 error here — a `StyleSheet.create` containing CSS-only props (`border: 'none'`, `cursor`),
@@ -631,17 +631,21 @@ The precise rule, since it is not uniform:
   `**/*.ts` by glob rather than by import. So `apps/betterangels/src/init.web.ts` is checked,
   and so are the `libs/ba-platform/web` modules it imports.
 - A `.web` file **in another project** is covered only if that project's own `typecheck`
-  target exists *and* its tsconfig includes all of `src/**`. Without the target, nothing
+  target exists _and_ its tsconfig includes all of `src/**`. Without the target, nothing
   checks it.
 
-Two projects owned `.web` variants with no `typecheck` target, so CI's
-`nx affected -t typecheck` was ignoring them entirely: `libs/expo/shared/clients`
-(`hmisInterceptors.web.ts`) and `libs/expo/shared/services` (`s3Upload.web.ts`). Both are clean
-— `tsc --noEmit -p tsconfig.lib.json` passes for each — and both now have a `typecheck` target
-so they stay that way.
+One project this PR touches owned `.web` variants with no `typecheck` target, so CI's
+`nx affected -t typecheck` was ignoring them entirely: the project _named_ `expo-shared-apollo`,
+rooted at `libs/expo/shared/clients` (`hmisInterceptors.web.ts`). `tsc --noEmit -p
+tsconfig.lib.json` passes there, and it now has a `typecheck` target so it stays that way.
+
+`libs/expo/shared/services` (`s3Upload.web.ts`) has the same shape — it declares no `typecheck`
+target — but this PR does not otherwise touch that project, so the target briefly added for it
+was dropped again as unrelated scope. That `.web` file is still checked: the consumers that
+import it typecheck it transitively (`tsc --listFiles` on `expo-betterangels` lists it).
 
 (26 of the repo's 40 projects have no `typecheck` target at all; that is pre-existing and
-broader than web, so only the two that own `.web` files were addressed here.)
+broader than web, so only the one this PR touches was addressed here.)
 
 **`ba-platform` is one of them, and it is not directly checkable either.** It has no
 `typecheck` target, and running `tsc -p tsconfig.lib.json` by hand fails with a wall of
@@ -662,10 +666,10 @@ drive — a structural DOM assertion is often more reliable evidence than a scri
 
 Two static-site units were added, mirroring `shelter-web` exactly:
 
-| Environment | Unit | Host | Bucket |
-| --- | --- | --- | --- |
-| dev | `infrastructure/environments/development/us-west-2/static-sites/outreach-web` | `outreach.dev.betterangels.la` | `development-us-west-2-outreach-web` |
-| prod | `infrastructure/environments/production/us-west-2/static-sites/outreach-web` | `outreach.prod.betterangels.la` + alias `outreach.betterangels.la` | `production-us-west-2-outreach-web` |
+| Environment | Unit                                                                          | Host                                                               | Bucket                               |
+| ----------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------ |
+| dev         | `infrastructure/environments/development/us-west-2/static-sites/outreach-web` | `outreach.dev.betterangels.la`                                     | `development-us-west-2-outreach-web` |
+| prod        | `infrastructure/environments/production/us-west-2/static-sites/outreach-web`  | `outreach.prod.betterangels.la` + alias `outreach.betterangels.la` | `production-us-west-2-outreach-web`  |
 
 Dev enables `enable_preview_routing`, so branch/PR previews are served under a path prefix on
 the same distribution. Prod exposes the public name as a CloudFront alias, matching the
@@ -706,10 +710,15 @@ for the browser, so a native-only import could break web indefinitely without an
 so it was re-checked by execution against this working tree:
 
 ```sh
-yarn nx affected -t export-web     # → nx run betterangels:export-web → "Exported: ../../dist/apps/betterangels"
-yarn nx affected -t typecheck --dry-run  # → betterangels, expo-betterangels, expo-shared-ui-components, shared-places
-yarn nx affected -t test --dry-run       # → the same four
+yarn nx affected -t export-web              # → nx run betterangels:export-web → "Exported: ../../dist/apps/betterangels"
+nx show projects --affected -t export-web   # → betterangels
+nx show projects --affected -t typecheck    # → 16 projects
+nx show projects --affected -t test         # → 23 projects
 ```
+
+(Those counts are this branch against `origin/main`. Nx has no `affected --dry-run` here: the
+flag is forwarded to the task's own command, so it lands on `tsc`/`mypy` and errors — use
+`nx show projects --affected -t <target>` to list what a run would cover.)
 
 So a change anywhere in the outreach web dependency graph is bundled, typechecked and tested
 by the existing pipeline. The web build genuinely cannot regress unnoticed.
@@ -717,10 +726,10 @@ by the existing pipeline. The web build genuinely cannot regress unnoticed.
 Per-environment API wiring is done in the target's `configurations`, and was **verified by
 inspecting the built bundle**:
 
-| Configuration | `apiUrl` baked | `shelterWebUrl` baked |
-| --- | --- | --- |
-| `preview` | `https://api.dev.betterangels.la` | `https://shelter.dev.betterangels.la` |
-| `production` | `https://api.prod.betterangels.la` | `https://shelter.betterangels.la` |
+| Configuration | `apiUrl` baked                     | `shelterWebUrl` baked                 |
+| ------------- | ---------------------------------- | ------------------------------------- |
+| `preview`     | `https://api.dev.betterangels.la`  | `https://shelter.dev.betterangels.la` |
+| `production`  | `https://api.prod.betterangels.la` | `https://shelter.betterangels.la`     |
 
 The **production** bundle was re-inspected after the `APP_VARIANT` fix, because the original
 `production` configuration was missing it and shipped dev identity:
@@ -740,7 +749,7 @@ just has no distribution root to live at yet (see the infrastructure section).
 `EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY` was added to `docker-compose-ci.yml` and to the build
 and deploy steps, alongside the existing iOS/Android keys.
 
-> **⚠️ `--clear` is load-bearing.** Metro caches the *inlined* `EXPO_PUBLIC_*` values, so
+> **⚠️ `--clear` is load-bearing.** Metro caches the _inlined_ `EXPO_PUBLIC_*` values, so
 > without `--clear` a rebuild keeps the previous environment's URLs regardless of the env
 > you pass — the output filename does not even change. This cost real debugging time here: a
 > "production" export silently shipped `api.dev`. The native `export` target already passes
@@ -764,10 +773,10 @@ apps/<app>/.env.deploy.production   -> nx run <app>:deploy --configuration produ
 "production"]`, so the filenames line up with `--configuration` exactly. Outreach now has both
 files, copied from the siblings — same bucket naming scheme, same per-environment deploy role:
 
-| | `S3_BUCKET` | `ASSUME_ROLE` |
-| --- | --- | --- |
-| preview | `development-us-west-2-outreach-web` | `arn:aws:iam::784154756963:role/github-actions-deploy` |
-| production | `production-us-west-2-outreach-web` | `arn:aws:iam::792513288588:role/github-actions-deploy` |
+|            | `S3_BUCKET`                          | `ASSUME_ROLE`                                          |
+| ---------- | ------------------------------------ | ------------------------------------------------------ |
+| preview    | `development-us-west-2-outreach-web` | `arn:aws:iam::784154756963:role/github-actions-deploy` |
+| production | `production-us-west-2-outreach-web`  | `arn:aws:iam::792513288588:role/github-actions-deploy` |
 
 The bucket names match the Terragrunt units exactly.
 
@@ -790,10 +799,10 @@ static-site unit is for.
 `CF_DISTRIBUTION_ID` is the only value that cannot be written in advance — CloudFront assigns
 it at creation. **Both** sites have now been applied and both files hold their real IDs.
 
-| | `S3_BUCKET` | `CF_DISTRIBUTION_ID` |
-| --- | --- | --- |
-| preview | `development-us-west-2-outreach-web` | `E18T6D6MTJ5IDH` (applied 2026-10-09) |
-| production | `production-us-west-2-outreach-web` | `E1HAHSEJI5YNWC` (applied 2026-10-09) |
+|            | `S3_BUCKET`                          | `CF_DISTRIBUTION_ID`                  |
+| ---------- | ------------------------------------ | ------------------------------------- |
+| preview    | `development-us-west-2-outreach-web` | `E18T6D6MTJ5IDH` (applied 2026-10-09) |
+| production | `production-us-west-2-outreach-web`  | `E1HAHSEJI5YNWC` (applied 2026-10-09) |
 
 The `static-website` module exposes both outputs for exactly this purpose — before that only the
 ARNs were exported, which the deploy script does not use. Read them with:
@@ -819,19 +828,19 @@ yarn nx run betterangels:deploy --configuration preview     → ...784154756963:
 yarn nx run betterangels:deploy --configuration production  → ...792513288588:role/github-actions-deploy  (prod)
 ```
 
-So the bridge was already wired; only the *values* were missing.
+So the bridge was already wired; only the _values_ were missing.
 
 **Both sites, as applied:**
 
-| Property | Development | Production |
-| --- | --- | --- |
-| CloudFront distribution | `E18T6D6MTJ5IDH` — **Deployed** | `E1HAHSEJI5YNWC` — **Deployed** |
-| Distribution domain | `d3c5u8o0gaamfs.cloudfront.net` | `d3fm2jodmz390e.cloudfront.net` |
-| Route53 record | `outreach.dev.betterangels.la` (A + AAAA) | `outreach.prod.betterangels.la` (A + AAAA) |
-| Certificate | `*.dev.betterangels.la` | `*.betterangels.la` / `*.prod.betterangels.la` |
-| Bucket | `development-us-west-2-outreach-web` | `production-us-west-2-outreach-web` |
-| AWS account | `784154756963` | `792513288588` |
-| `terragrunt apply` | 11 added, 0 changed, 0 destroyed | 11 added, 0 changed, 0 destroyed |
+| Property                | Development                               | Production                                     |
+| ----------------------- | ----------------------------------------- | ---------------------------------------------- |
+| CloudFront distribution | `E18T6D6MTJ5IDH` — **Deployed**           | `E1HAHSEJI5YNWC` — **Deployed**                |
+| Distribution domain     | `d3c5u8o0gaamfs.cloudfront.net`           | `d3fm2jodmz390e.cloudfront.net`                |
+| Route53 record          | `outreach.dev.betterangels.la` (A + AAAA) | `outreach.prod.betterangels.la` (A + AAAA)     |
+| Certificate             | `*.dev.betterangels.la`                   | `*.betterangels.la` / `*.prod.betterangels.la` |
+| Bucket                  | `development-us-west-2-outreach-web`      | `production-us-west-2-outreach-web`            |
+| AWS account             | `784154756963`                            | `792513288588`                                 |
+| `terragrunt apply`      | 11 added, 0 changed, 0 destroyed          | 11 added, 0 changed, 0 destroyed               |
 
 Both sites return **403**, which is correct for an empty bucket — neither has had content
 deployed yet. Two gaps remain before `outreach.betterangels.la` is usable:
@@ -872,19 +881,22 @@ cloudfront create-invalidation --distribution-id E18T6D6MTJ5IDH --paths /branche
   scratch artifact and is not committed.
 - Camera on native is untouched by any of this (the hook is shared; only the unreachable
   simulator-mock branch uses expo-file-system).
-- Remaining: desktop/responsive layout is a deliberate product decision, not a defect —
-  web currently renders the phone-width layout centred in the viewport.
+- Remaining: desktop/responsive layout is a deliberate product decision, not a defect. There is
+  no max-width frame and no centring in the app — `apps/betterangels/src/app/+html.tsx` only
+  pins a mobile viewport — so a wide window renders the mobile layout at full viewport width.
+  (An earlier revision of this note claimed the phone-width layout was centred in the viewport;
+  no code does that.)
 - **Infrastructure is applied for both environments** and `.env.deploy.preview` /
   `.env.deploy.production` are wired, so `nx affected -t deploy` covers dev branch previews and
-  can publish production. Two things remain before production is *reachable*: the apex DNS
+  can publish production. Two things remain before production is _reachable_: the apex DNS
   record for `outreach.betterangels.la` (only `outreach.prod.betterangels.la` resolves today),
   and the first content deploy — both buckets are empty, so both distributions answer `403`
   at `/`.
 
 ### Decided: web shims live in metro.config.js, per-module variants live as `.web.tsx`
 
-`apps/betterangels/metro.config.js` carries a `WEB_SHIMS` map for packages imported *by
-package name* from many files across `libs/` — a `.web.tsx` sibling has nowhere to live in
+`apps/betterangels/metro.config.js` carries a `WEB_SHIMS` map for packages imported _by
+package name_ from many files across `libs/` — a `.web.tsx` sibling has nowhere to live in
 that case. Everything else uses a platform-suffixed file next to the module. TypeScript is
 unaffected by the Metro substitution, so call sites keep the real `react-native-maps` types.
 
@@ -892,22 +904,22 @@ unaffected by the Metro substitution, so call sites keep the real `react-native-
 
 Two different keys, two different jobs — one cannot substitute for the other.
 
-| Key | Where | Restriction |
-| --- | --- | --- |
-| `EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY` | Frontend build (CI secret + `.env.local`) | **HTTP referrer**, Maps JavaScript API only. Public by nature — it is inlined into the JS bundle |
-| `GOOGLE_MAPS_API_KEY` | Backend, already provisioned via SSM | Server-side; used by `proxy/` for Places/geocoding. **Cannot** be referrer-restricted — server calls send no `Referer` |
+| Key                                    | Where                                     | Restriction                                                                                                            |
+| -------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY` | Frontend build (CI secret + `.env.local`) | **HTTP referrer**, Maps JavaScript API only. Public by nature — it is inlined into the JS bundle                       |
+| `GOOGLE_MAPS_API_KEY`                  | Backend, already provisioned via SSM      | Server-side; used by `proxy/` for Places/geocoding. **Cannot** be referrer-restricted — server calls send no `Referer` |
 
-The map *tiles* cannot be proxied: `maps.googleapis.com/maps/api/js` is a script the
+The map _tiles_ cannot be proxied: `maps.googleapis.com/maps/api/js` is a script the
 browser downloads and executes, and it validates the referrer itself.
-Places/geocoding *can* be proxied, and already is server-side.
+Places/geocoding _can_ be proxied, and already is server-side.
 
 > **Unverified: whether the web key's referrer allow-list includes the production host.**
 > This is a deploy prerequisite — a key that omits `outreach.betterangels.la` breaks maps on
-> the deployed site only, silently. It was *attempted* here and could not be established: a
+> the deployed site only, silently. It was _attempted_ here and could not be established: a
 > Playwright harness spoofed the `Referer` for `maps.googleapis.com` and watched
 > `window.gm_authFailure`, and every referrer "passed" — including a deliberately bogus one.
 > The control that settles it is re-running the same harness with a **deliberately invalid
-> key**, which *also* reported `google.maps.Map === true` and no auth failure. So the harness
+> key**, which _also_ reported `google.maps.Map === true` and no auth failure. So the harness
 > could not detect auth failures at all, its results are meaningless, and it has been deleted
 > rather than left around looking like evidence. `google.maps` is bootstrapped eagerly enough
 > that neither `gm_authFailure` nor the presence of the `Map` constructor proves anything at
@@ -934,8 +946,17 @@ Two things now stand in for that:
   always bakes a key, so an empty one means a broken artifact) but degrades on web, logging
   `[config] EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY is empty in this build…` instead. The SPA
   renders; only the map and address-search surfaces lose function.
-- **CI warns instead of failing silently.** The deploy step emits a GitHub `::warning`
-  annotation naming the missing secret and the environment it is missing for.
+- **CI emits a GitHub `::warning`** annotation naming the missing secret and the environment.
+
+> **Neither of those is a safety net in a production build.** The `console.error` above is
+> deleted from production bundles — `apps/betterangels/metro.config.js` sets
+> `minifierConfig.compress.drop_console = true`, so terser removes every `console.*` call.
+> Verified against the committed export: an in-app `console.log` on a live code path
+> (`loggerLink`) is absent from `dist/apps/betterangels/_expo/static/js/web`, while library
+> strings that merely *contain* `console.log` remain. And the CI annotation is a warning, not a
+> gate, so the pipeline goes green and deploys an outreach app with no maps and no address
+> search. Today the only real interlock is provisioning the secret; a fatal check for the
+> `production` environment has been proposed but is not applied.
 
 Neither is a substitute for the key. Set it before relying on a deployed environment:
 
@@ -948,12 +969,12 @@ gh secret set EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY --env production --body '<key
 > `apps/betterangels-backend/.env.local.sample` is a template — **nothing reads it**.
 > `settings.py` loads, in order, `.env` → `.compose/local.shared.env` → `.env.local`
 > (last wins), and `.env.local` is gitignored. So a key placed in the `.sample` file is
-> both committed *and* inert: the local backend still sees the `<GOOGLE_MAPS_API_KEY>`
+> both committed _and_ inert: the local backend still sees the `<GOOGLE_MAPS_API_KEY>`
 > placeholder from `.env`, and the Places proxy will fail locally. Put local values in
 > `apps/betterangels-backend/.env.local`.
 >
 > The thing that only matters in **deployed** environments: the browser key and the
-> backend key must be *different* keys. A referrer-restricted key cannot serve the
+> backend key must be _different_ keys. A referrer-restricted key cannot serve the
 > proxy (server calls send no `Referer`), and an unrestricted key that ships in a JS
 > bundle is a billing risk. Locally, one shared key is harmless.
 
@@ -966,21 +987,21 @@ Confirmed against the deployed configuration:
   `csrftoken` cookie is readable via `document.cookie` from `outreach.dev.betterangels.la`
   just as it is from `shelter.dev.betterangels.la`.
 - **Local dev is even simpler**: the web app (`localhost:8081`) and API (`localhost:8000`)
-  are the *same host* — cookies ignore port — and `CSRF_TRUSTED_ORIGINS` already lists
+  are the _same host_ — cookies ignore port — and `CSRF_TRUSTED_ORIGINS` already lists
   `http://localhost:8081`.
 - The session cookie stays host-only, which is correct: only the CSRF cookie needs to be
   readable by JS from a sibling subdomain.
 
 ### The deployed origins are allowed — by their own environment only
 
-Worth stating plainly, because "CORS" came up repeatedly and the *only* case that is actually
+Worth stating plainly, because "CORS" came up repeatedly and the _only_ case that is actually
 broken is local dev. Probed against the live APIs:
 
-| Origin tested | `api.dev` ACAO | `api.prod` ACAO |
-| --- | --- | --- |
-| `https://outreach.dev.betterangels.la` | **echoed** (+ credentials) | *none* |
-| `https://outreach.betterangels.la` | *none* | **echoed** |
-| `https://shelter.betterangels.la` | *none* | **echoed** |
+| Origin tested                          | `api.dev` ACAO             | `api.prod` ACAO |
+| -------------------------------------- | -------------------------- | --------------- |
+| `https://outreach.dev.betterangels.la` | **echoed** (+ credentials) | _none_          |
+| `https://outreach.betterangels.la`     | _none_                     | **echoed**      |
+| `https://shelter.betterangels.la`      | _none_                     | **echoed**      |
 
 Both outreach environments are wired correctly and independently: dev web ↔ dev API, prod web
 ↔ prod API. So the production site will be able to authenticate as soon as it is deployed to —
@@ -991,7 +1012,7 @@ allows it), which is why local web needs either the Metro dev proxy or a local A
 
 `https://outreach.dev.betterangels.la/` returns **403** because the root of the bucket is
 empty, and that is expected — branch previews are served under a path prefix on the same
-distribution. The thing that can silently rot is the *preview* itself: the export is built
+distribution. The thing that can silently rot is the _preview_ itself: the export is built
 with `experiments.baseUrl`, so if asset resolution or the SPA fallback were wrong the HTML
 would still return 200 while the page rendered nothing and 404'd every bundle.
 
@@ -1009,7 +1030,6 @@ So the base path resolves, the bundle loads from the branch prefix, and the app 
 real auth screen. The one failed request is the pre-login `currentUser` call to `api.dev`
 (`net::ERR_ABORTED`, no console error) — a client-side abort on the signed-out path, not a
 CORS or asset problem.
-
 
 ## Spike findings (2026-10-08)
 
@@ -1031,7 +1051,7 @@ marker library, and renders Google's map container. A deliberately invalid key
 produced Google's own `gm-err-*` overlay inside the mounted container, which is
 the expected "component works, key is bad" outcome.
 
-**The catch:** teovilla renders *nothing at all* — no container, no error —
+**The catch:** teovilla renders _nothing at all_ — no container, no error —
 unless `provider="google"` is passed. It does **not** export `PROVIDER_GOOGLE`
 (only `default`/`MapView`, `Marker`, `Polygon`, `Polyline`, `Circle`, `Callout`,
 `Geojson`). A plain bundler alias of `react-native-maps` →
@@ -1067,7 +1087,7 @@ compared with mobile. Both live in
 
 **Caveat, found after the fact and since fixed:** the shim is only reached by call
 sites that import `react-native-maps`. `libs/expo/betterangels/src/lib/maps/map.web.ts`
-imported teovilla *directly*, bypassing the shim entirely, so six call sites
+imported teovilla _directly_, bypassing the shim entirely, so six call sites
 (`NoteLocation`, `NoteLocationHmis`, `LocationHmis`, `NoteForm/Location`,
 `ClientSummaryLastSeen`, `DefaultLocation`) kept both bugs — and also loaded the
 Maps JS API with **no key at all** (teovilla takes the key as a prop, and only the
@@ -1098,7 +1118,7 @@ It reads only `latitude`/`longitude` out of `initialRegion`. `latitudeDelta` /
 `longitudeDelta` are never consulted, and nothing in the app passes
 `initialCamera`, so **every web map opened at zoom 3** — a continental view —
 while the same `initialRegion` on native shows the neighbourhood. This is why
-`animateToRegion` *appeared* to work (it converts the deltas into a
+`animateToRegion` _appeared_ to work (it converts the deltas into a
 `google.maps.LatLngBounds` and calls `fitBounds`) while the initial view did not.
 
 **2. A controlled `region` prop is never read.** There is no `props.region`
@@ -1111,12 +1131,12 @@ to `initialRegion ?? {lat: 0, lng: 0}` and rendered a world map centred on 0,0.
 Maps wants and passes it as `initialCamera`:
 
 ```ts
-zoom: Math.round(Math.log2(360 / region.longitudeDelta))
+zoom: Math.round(Math.log2(360 / region.longitudeDelta));
 ```
 
 This is deliberately the same conversion as
 `libs/expo/shared/ui-components/src/lib/Map/utils/regionToZoom.ts`, duplicated
-rather than imported because this module *is* the `react-native-maps`
+rather than imported because this module _is_ the `react-native-maps`
 substitution and importing from ui-components would close a resolution cycle
 back through itself. Two consequences worth knowing:
 
@@ -1127,7 +1147,7 @@ back through itself. Two consequences worth knowing:
 - Where `defaultRegionDelta` (0.03) is used, that lands on zoom 14; teovilla's
   fallback was 3.
 
-A controlled `region` also has to *move* the map when it changes. `initialCamera`
+A controlled `region` also has to _move_ the map when it changes. `initialCamera`
 only covers the first frame and teovilla re-reads the live map centre on every
 later render, so props cannot drive it — the shim calls `animateToRegion`
 imperatively, keyed on the region's **values** and never its object identity
@@ -1200,7 +1220,7 @@ loads throws `google.maps.LatLngBounds is not a constructor`), and
 `props.onRegionChangeComplete`, and never forwards Google's `idle`. So a wheel or pinch
 zoom — and any programmatic move — never reached `onRegionChangeComplete` at all, which is
 why `InteractionsMap`'s clusters never broke apart when zooming in. The shim now forwards
-`onRegionChange` verbatim *and* settles the last continuous region into
+`onRegionChange` verbatim _and_ settles the last continuous region into
 `onRegionChangeComplete` after 200 ms of quiet, which is the honest stand-in for `idle`
 that teovilla does not expose. Pinned by three new spec cases (verbatim forwarding, settle
 after the delay, and a burst collapsing to a single completion carrying the last region).
@@ -1213,10 +1233,10 @@ deliberately computes a fixed scale, so it ignores how wide the container actual
 0.03° span (`regionDeltaMap.M`) covers `256 × 2^z` px, so a 1000 px viewport needs roughly
 **two zoom levels more** than that formula yields. Measured on the client Locations map:
 
-| Span | Requested | Actually rendered | Ratio |
-| --- | --- | --- | --- |
-| Latitude | 0.03° | 0.0552° | 1.84× |
-| Longitude | 0.03° | 0.0858° | 2.86× |
+| Span      | Requested | Actually rendered | Ratio |
+| --------- | --------- | ----------------- | ----- |
+| Latitude  | 0.03°     | 0.0552°           | 1.84× |
+| Longitude | 0.03°     | 0.0858°           | 2.86× |
 
 Native fits the region to the view, so the honest fix is to put the container's pixel width
 into the zoom — `log2(360 · width / (256 · longitudeDelta))` — which needs an `onLayout`
@@ -1231,7 +1251,7 @@ made reliable**:
   fires, so `map?.fitBounds(...)` silently no-ops. Instrumentation showed the shim calling
   `animateToRegion` while teovilla's `fitBounds` was never entered — 0 calls in two of three
   runs. This is the same "swallowed by the optional chain" hazard the review flagged.
-- Even when it *is* entered, teovilla re-applies `initialCamera.zoom` as a controlled prop, so
+- Even when it _is_ entered, teovilla re-applies `initialCamera.zoom` as a controlled prop, so
   the map settles back on the fixed-scale zoom (14) rather than the fitted one, and the
   visible span is unchanged (0.0858° either way).
 
@@ -1271,7 +1291,7 @@ coordinate fallback is the right answer), and tolerates a body with no `status` 
 reshaping proxy cannot make every geocode throw.
 
 That makes the client honest, which shifts a responsibility onto its callers: the product
-intent is clearly to fall back to coordinates on *any* failure, so the two call sites that
+intent is clearly to fall back to coordinates on _any_ failure, so the two call sites that
 previously let the failure pass silently now catch and fall back explicitly —
 `NoteForm/Location.tsx` and `useInitialLocation.ts`. Both do it **inside** their geocode
 helper rather than at the call site, because both are also invoked from an `onRefine`
@@ -1280,16 +1300,16 @@ callback that is not awaited, where a rejection would escape the surrounding `tr
 
 Verified at both ends:
 
-| Check | Result |
-| --- | --- |
+| Check                                                            | Result                                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Unit (`GooglePlacesClient.spec.ts`, via Nx `shared-places:test`) | 7 tests: direct URL + key header unchanged; proxied autocomplete/details/geocode URLs, no key, field mask preserved; a 200 `REQUEST_DENIED` now rejects; `ZERO_RESULTS` still falls back; a body with no `status` still works. The spec also restores `globalThis.fetch` in `afterEach` instead of leaking its stub |
-| Backend proxy with the real key (Django test client) | 200, 5 suggestions |
-| **From a real browser origin** (authenticated session + CSRF) | **200, 5 suggestions, "1600 Amphitheatre Parkway"** |
+| Backend proxy with the real key (Django test client)             | 200, 5 suggestions                                                                                                                                                                                                                                                                                                  |
+| **From a real browser origin** (authenticated session + CSRF)    | **200, 5 suggestions, "1600 Amphitheatre Parkway"**                                                                                                                                                                                                                                                                 |
 
 `libs/shared/places` gained a `test` target and a `vite.config.ts` for this — it previously had
 only `typecheck`.
 
-Map *tiles* still need a referrer-restricted Maps JavaScript API key; only Places/geocoding
+Map _tiles_ still need a referrer-restricted Maps JavaScript API key; only Places/geocoding
 goes through the proxy.
 
 ### Native-only modules with no usable web build
