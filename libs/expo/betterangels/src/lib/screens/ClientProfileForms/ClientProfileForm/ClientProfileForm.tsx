@@ -10,6 +10,7 @@ import {
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
+import { getViewClientProfileRoute } from '../../../screenRouting';
 import {
   GetClientProfileDocument,
   UpdateClientProfileDocument,
@@ -106,7 +107,11 @@ export default function ClientProfileForm(props: IClientProfileForms) {
       // the query unmounts and refetch is cancelled.
       await refetch();
 
-      router.replace(`/client/${id}?openCard=${componentName}`);
+      // Through the route helper rather than a hand-built string: the helper owns
+      // the path, so a route change cannot leave this call site behind.
+      router.replace(
+        getViewClientProfileRoute({ id, openCard: componentName }),
+      );
     } catch (err) {
       console.error(`[updateClientProfile] error: ${err}`);
 
