@@ -34,24 +34,28 @@ config.resolver = {
 // ---------------------------------------------------------------------------
 // Web shims
 // ---------------------------------------------------------------------------
-// Third-party packages that have no usable browser build, replaced on the `web`
-// platform only. Native builds are untouched.
+// Package-name substitutions for the `web` platform only. Native builds are
+// untouched.
 //
-// These are alias-level replacements rather than `.web.tsx` siblings because the
-// packages are imported by *package name* from many files across `libs/`, so a
-// platform-suffixed file has nowhere to live. Anything that is a single-module
-// concern is better handled as a `.web.tsx` sibling next to that module (see
-// useRememberEmail, useNewRelic) — this map is for cross-cutting package
-// substitutions only.
+// This is the last resort, not the default. Prefer a `.web.tsx` sibling, or a
+// small re-export seam with a `.web` twin — `react-native-keyboard-controller`
+// used to be an entry here and is now
+// `libs/expo/shared/ui-components/src/lib/Keyboard`, which is visible at the
+// import site and needs no bundler hook.
 //
-// See docs/outreach-web.md for the reasoning behind each entry.
+// An entry is warranted only when the *module itself* has to be intercepted and
+// there is no repo module to hang a web variant off. `react-native-maps`
+// qualifies on both counts:
+//
+//   1. It is imported by package name from ~20 files across `libs/`, and the
+//      replacement needs the app's resolved browser key, so it cannot live in a
+//      library as a `.web` sibling; and
+//   2. the replacement implements behaviour teovilla omits (region deltas →
+//      zoom, provider forcing, key injection) rather than degrading to nothing
+//      the way the keyboard-controller shim did.
+//
+// See docs/outreach-web.md for the reasoning behind the entry.
 const WEB_SHIMS = {
-  // Native TurboModule views. Web needs nothing: browsers handle keyboard
-  // insets/dismissal natively, so this degrades to plain ScrollView/passthrough.
-  'react-native-keyboard-controller': path.resolve(
-    projectRoot,
-    'src/web-shims/react-native-keyboard-controller.tsx',
-  ),
   // Backed by @teovilla/react-native-web-maps. The shim also restores the
   // PROVIDER_GOOGLE/PROVIDER_DEFAULT constants teovilla omits and injects the
   // browser Maps key, which teovilla requires as a prop.

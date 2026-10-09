@@ -1,11 +1,14 @@
 import { useEnvironment } from '@monorepo/ba-platform';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  RNKeyboardAwareScrollView,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useFeatureControls } from '@monorepo/react/shared';
 import { Link, router } from 'expo-router';
 import { ReactNode, useEffect } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useUser } from '../../hooks';
 
 type AuthLayoutProps = {
@@ -48,7 +51,7 @@ export default function SignInContainer({
   }, [user]);
 
   return (
-    <KeyboardAwareScrollView
+    <RNKeyboardAwareScrollView
       style={{ flex: 1, backgroundColor: Colors.WHITE }}
       contentContainerStyle={{
         flexGrow: 1,
@@ -93,7 +96,7 @@ export default function SignInContainer({
           </Text>
         ) : null}
       </View>
-    </KeyboardAwareScrollView>
+    </RNKeyboardAwareScrollView>
   );
 }
 

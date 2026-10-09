@@ -1,8 +1,8 @@
-import { ReactNode, useEffect, useState } from 'react';
 import {
   KeyboardEvents,
   KeyboardToolbar,
-} from 'react-native-keyboard-controller';
+} from '@monorepo/expo/shared/ui-components';
+import { ReactNode, useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = { children: ReactNode };
