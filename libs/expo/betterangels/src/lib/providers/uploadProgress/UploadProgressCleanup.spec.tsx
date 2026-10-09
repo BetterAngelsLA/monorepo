@@ -40,113 +40,113 @@ describe('UploadProgressCleanup', () => {
     resetUploadProgressAtoms();
   });
 
-  it('renders nothing', () => {
-    const { toJSON } = render(<UploadProgressCleanup />);
+  it('renders nothing', async () => {
+    const { toJSON } = await render(<UploadProgressCleanup />);
 
     expect(toJSON()).toBeNull();
   });
 
-  it('prunes completed sessions after the cleanup delay', () => {
+  it('prunes completed sessions after the cleanup delay', async () => {
     startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
 
-    render(<UploadProgressCleanup />);
+    await render(<UploadProgressCleanup />);
 
     expect(store.get(uploadSessionsAtom)).toHaveLength(1);
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(3000);
     });
 
     expect(store.get(uploadSessionsAtom)).toHaveLength(0);
   });
 
-  it('leaves in-flight sessions alone', () => {
+  it('leaves in-flight sessions alone', async () => {
     startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
 
-    render(<UploadProgressCleanup />);
+    await render(<UploadProgressCleanup />);
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(3000);
     });
 
     expect(store.get(uploadSessionsAtom).map((s) => s.id)).toEqual(['s1']);
   });
 
-  it('clears a pending timer when a session ends before it fires', () => {
+  it('clears a pending timer when a session ends before it fires', async () => {
     startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
 
-    render(<UploadProgressCleanup />);
+    await render(<UploadProgressCleanup />);
 
     // The session ends early (e.g. user retried it) → the timer is pruned.
-    act(() => {
+    await act(async () => {
       endUploadSession('s1');
     });
 
     // Advancing past the delay must not end anything else or leak timers.
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(10000);
     });
 
     expect(store.get(uploadSessionsAtom)).toEqual([]);
   });
 
-  it('prunes each completed session exactly once', () => {
+  it('prunes each completed session exactly once', async () => {
     startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
     startUploadSession('s2', ['b.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
     completeUploadSession('s2');
 
-    render(<UploadProgressCleanup />);
+    await render(<UploadProgressCleanup />);
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(3000);
     });
 
     expect(store.get(uploadSessionsAtom)).toEqual([]);
   });
 
-  it('keeps completed sessions while the upload stage is open', () => {
+  it('keeps completed sessions while the upload stage is open', async () => {
     startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
     setUploadStageVisible(true);
 
-    render(<UploadProgressCleanup />);
+    await render(<UploadProgressCleanup />);
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(10000);
     });
 
     expect(store.get(uploadSessionsAtom)).toHaveLength(1);
   });
 
-  it('clears pending timers when the stage opens, then prunes after it closes', () => {
+  it('clears pending timers when the stage opens, then prunes after it closes', async () => {
     startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
 
-    render(<UploadProgressCleanup />);
+    await render(<UploadProgressCleanup />);
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(1000);
     });
 
     // The stage opens: the pending prune timer is cleared.
-    act(() => {
+    await act(async () => {
       setUploadStageVisible(true);
     });
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(10000);
     });
 
     expect(store.get(uploadSessionsAtom)).toHaveLength(1);
 
     // The stage closes: pruning is scheduled again.
-    act(() => {
+    await act(async () => {
       setUploadStageVisible(false);
     });
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(3000);
     });
 

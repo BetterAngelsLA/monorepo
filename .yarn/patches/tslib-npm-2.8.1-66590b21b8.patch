@@ -1,0 +1,14 @@
+diff --git a/modules/index.js b/modules/index.js
+index c91f61864fead99b3085eed82ae0aa8a098d83a8..d53ec66cedd1f8dd73774c8b9d0a52267ff3ca85 100644
+--- a/modules/index.js
++++ b/modules/index.js
+@@ -1,4 +1,8 @@
+-import tslib from '../tslib.js';
++// Patched for vitest-native native engine (upstream interop bug): tslib.js
++// sets __esModule, so a Babel-style default interop yields undefined, where
++// Node own CJS-ESM interop would hand back module.exports. A namespace
++// import carries the named exports under both. Drop once upstream fixes it.
++import * as tslib from '../tslib.js';
+ const {
+     __extends,
+     __assign,

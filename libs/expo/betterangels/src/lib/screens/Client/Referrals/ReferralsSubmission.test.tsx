@@ -1,4 +1,3 @@
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { ApolloLink } from '@apollo/client';
 import { MockLink } from '@apollo/client/testing';
 import { MockedProvider } from '@apollo/client/testing/react';
@@ -100,7 +99,7 @@ type PendingSubmission = {
   fail: (error: Error) => void;
 };
 
-function setup(options?: {
+async function setup(options?: {
   initialReferrals?: ClientReferralsQuery['referrals']['results'];
   refreshedReferrals?: ClientReferralsQuery['referrals']['results'];
 }) {
@@ -216,7 +215,7 @@ function setup(options?: {
       </ModalScreenContext.Provider>
     );
   }
-  render(
+  await render(
     <MockedProvider cache={createTestApolloCache()} link={link}>
       <Harness />
     </MockedProvider>,
@@ -230,24 +229,30 @@ async function openPicker({ expectEmptyState = true } = {}) {
   } else {
     await screen.findByTestId(/^referral-card-/);
   }
-  fireEvent.press(screen.getByTestId('create-referral-btn'));
-  fireEvent.changeText(
+  await fireEvent.press(screen.getByTestId('create-referral-btn'));
+  await fireEvent.changeText(
     screen.getByLabelText('Staff Observations / Notes'),
     answers.notes,
   );
-  fireEvent.changeText(screen.getByLabelText('Substances'), answers.substances);
-  fireEvent.press(screen.getByTestId('selfcare-no-btn'));
-  fireEvent.press(
+  await fireEvent.changeText(
+    screen.getByLabelText('Substances'),
+    answers.substances,
+  );
+  await fireEvent.press(screen.getByTestId('selfcare-no-btn'));
+  await fireEvent.press(
     screen.getByRole('checkbox', { name: /Client gave consent/ }),
   );
-  fireEvent.press(screen.getByTestId('intake-next-btn'));
+  await fireEvent.press(screen.getByTestId('intake-next-btn'));
   // Wait for the picker's own row: "Alpha House" also appears on an existing
   // referral card, so the text alone does not prove the shelter list loaded.
-  fireEvent.press(await screen.findByTestId('shelter-option-radio'));
+  await fireEvent.press(await screen.findByTestId('shelter-option-radio'));
 }
 
 async function submit(requests: PendingSubmission[], expectedCount = 1) {
-  fireEvent.press(screen.getByTestId('submit-referral-btn'));
+  // Deliberately not awaited: the CreateReferral observable stays pending until the
+  // test resolves it, and React's async act would keep waiting on that promise.
+  // waitFor below still runs inside act, so the resulting updates are flushed.
+  void fireEvent.press(screen.getByTestId('submit-referral-btn'));
   await waitFor(() => expect(requests).toHaveLength(expectedCount));
   const request = requests[expectedCount - 1];
   if (!request) throw new Error('Expected a pending submission');
@@ -259,7 +264,7 @@ beforeEach(() => {
 });
 
 it('submits current answers once, consumes the draft only on success, and displays the refetched record with sensitive values masked', async () => {
-  const { store, requests, refreshed, close, opened } = setup();
+  const { store, requests, refreshed, close, opened } = await setup();
   await openPicker();
   expect(opened).toHaveBeenCalledExactlyOnceWith(
     expect.objectContaining({
@@ -277,7 +282,7 @@ it('submits current answers once, consumes the draft only on success, and displa
     intake: { substances: answers.substances, selfcare: 'No', consent: true },
   });
   expect(screen.getByTestId('submit-referral-btn')).toBeDisabled();
-  fireEvent.press(screen.getByTestId('submit-referral-btn'));
+  await fireEvent.press(screen.getByTestId('submit-referral-btn'));
   expect(requests).toHaveLength(1);
   expect(store.getSnapshot()).toBe(before);
   expect(close).not.toHaveBeenCalled();
@@ -312,7 +317,7 @@ it('keeps every already-loaded row when a create refetches a shifted page', asyn
   // refetch sees a shifted list (new row first, older rows moved down). Both
   // rows must still render — no hole where the new row was, no dropped row.
   const existing = { ...newReferral, id: 'existing-referral' };
-  const { requests, refreshed } = setup({
+  const { requests, refreshed } = await setup({
     initialReferrals: [existing],
     refreshedReferrals: [newReferral, existing],
   });
@@ -331,7 +336,7 @@ it('keeps every already-loaded row when a create refetches a shifted page', asyn
 it.each([OperationMessageKind.Permission, OperationMessageKind.Validation])(
   'preserves the draft and allows retry after a %s response',
   async (kind) => {
-    const { store, requests, refreshed, close } = setup();
+    const { store, requests, refreshed, close } = await setup();
     await openPicker();
     const before = store.getSnapshot();
     const request = await submit(requests);
@@ -374,7 +379,7 @@ it.each([OperationMessageKind.Permission, OperationMessageKind.Validation])(
 it('does not surface an ERROR-kind OperationInfo message', async () => {
   // `Error` is strawberry-django's catch-all kind and its message can be raw
   // exception text, so only validation/permission messages reach the user.
-  const { store, requests } = setup();
+  const { store, requests } = await setup();
   await openPicker();
   const before = store.getSnapshot();
   const request = await submit(requests);
@@ -409,7 +414,7 @@ it('does not surface an ERROR-kind OperationInfo message', async () => {
 it('keeps the draft after a network error and submits current answers when retried', async () => {
   const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
   try {
-    const { store, requests, close, refreshed } = setup();
+    const { store, requests, close, refreshed } = await setup();
     await openPicker();
     const before = store.getSnapshot();
     const request = await submit(requests);
@@ -424,7 +429,7 @@ it('keeps the draft after a network error and submits current answers when retri
     expect(close).not.toHaveBeenCalled();
     expect(refreshed).not.toHaveBeenCalled();
     expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
-    act(() => {
+    await act(async () => {
       store.setField('notes', 'Updated before retry');
     });
     const retry = await submit(requests, 2);
@@ -440,7 +445,7 @@ it('keeps the draft after a network error and submits current answers when retri
 });
 
 it('shows a fallback error for an OperationInfo response without messages', async () => {
-  const { store, requests } = setup();
+  const { store, requests } = await setup();
   await openPicker();
   const before = store.getSnapshot();
   const request = await submit(requests);
@@ -479,7 +484,7 @@ it.each<ApolloLink.Result<CreateReferralMutation>>([
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
     try {
-      const { store, requests, close, refreshed } = setup();
+      const { store, requests, close, refreshed } = await setup();
       await openPicker();
       const before = store.getSnapshot();
       const request = await submit(requests);
@@ -499,14 +504,14 @@ it.each<ApolloLink.Result<CreateReferralMutation>>([
 );
 
 it("asks before replacing another client's draft and only replaces on confirm", async () => {
-  const { store, opened } = setup();
-  act(() => {
+  const { store, opened } = await setup();
+  await act(async () => {
     store.startNew('another-client');
   });
   const alertSpy = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
 
   try {
-    fireEvent.press(screen.getByTestId('create-referral-btn'));
+    await fireEvent.press(screen.getByTestId('create-referral-btn'));
 
     expect(store.getSnapshot()?.clientId).toBe('another-client');
     expect(opened).not.toHaveBeenCalled();
@@ -517,15 +522,15 @@ it("asks before replacing another client's draft and only replaces on confirm", 
     const cancel = alertSpy.mock.calls[0]?.[2]?.find(
       (button) => button.text === 'Cancel',
     );
-    act(() => cancel?.onPress?.(undefined));
+    await act(() => cancel?.onPress?.(undefined));
     expect(store.getSnapshot()?.clientId).toBe('another-client');
     expect(opened).not.toHaveBeenCalled();
 
-    fireEvent.press(screen.getByTestId('create-referral-btn'));
+    await fireEvent.press(screen.getByTestId('create-referral-btn'));
     const replace = alertSpy.mock.calls[1]?.[2]?.find(
       (button) => button.text === 'Replace',
     );
-    act(() => replace?.onPress?.(undefined));
+    await act(() => replace?.onPress?.(undefined));
 
     expect(store.getSnapshot()?.clientId).toBe('client-1');
     expect(opened).toHaveBeenCalledOnce();
@@ -535,12 +540,12 @@ it("asks before replacing another client's draft and only replaces on confirm", 
 });
 
 it('returns from the picker to the intake form and forward again without losing answers or the selection', async () => {
-  const { store } = setup();
+  const { store } = await setup();
   // openPicker leaves the draft parked on the picker step — the state a tester
   // resumes into.
   await openPicker();
 
-  fireEvent.press(screen.getByTestId('picker-back-btn'));
+  await fireEvent.press(screen.getByTestId('picker-back-btn'));
 
   expect(await screen.findByTestId('referral-intake-screen')).toBeOnTheScreen();
   expect(store.getSnapshot()?.step).toBe('intake');
@@ -551,7 +556,7 @@ it('returns from the picker to the intake form and forward again without losing 
     answers.substances,
   );
 
-  fireEvent.press(screen.getByTestId('intake-next-btn'));
+  await fireEvent.press(screen.getByTestId('intake-next-btn'));
 
   expect(await screen.findByTestId('shelter-picker-screen')).toBeOnTheScreen();
   // The shelter picked before going back is still selected.

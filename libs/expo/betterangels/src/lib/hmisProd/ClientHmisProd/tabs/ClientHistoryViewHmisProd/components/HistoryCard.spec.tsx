@@ -19,8 +19,8 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 // Sep 30 2026, 15:30 local — the humanized expectations are relative to this.
 const NOW = new Date(2026, 8, 30, 15, 30);
 
-const renderCard = (item: HmisProdClientHistoryItem) =>
-  render(<HistoryCard item={item} />);
+const renderCard = async (item: HmisProdClientHistoryItem) =>
+  await render(<HistoryCard item={item} />);
 
 describe('HistoryCard', () => {
   beforeEach(() => {
@@ -32,8 +32,8 @@ describe('HistoryCard', () => {
     vi.useRealTimers();
   });
 
-  it('renders an active entry with the dot, start date and "End: active"', () => {
-    const { getByLabelText, getByText } = renderCard({
+  it('renders an active entry with the dot, start date and "End: active"', async () => {
+    const { getByLabelText, getByText } = await renderCard({
       id: 1,
       type: 'service',
       data: {
@@ -54,8 +54,8 @@ describe('HistoryCard', () => {
     expect(getByLabelText('Currently active')).toBeTruthy();
   });
 
-  it('marks an entry starting today as active', () => {
-    const { getByLabelText, getByText } = renderCard({
+  it('marks an entry starting today as active', async () => {
+    const { getByLabelText, getByText } = await renderCard({
       id: 4,
       type: 'service',
       data: {
@@ -70,8 +70,8 @@ describe('HistoryCard', () => {
     expect(getByLabelText('Currently active')).toBeTruthy();
   });
 
-  it('does not mark an entry active until its start date is reached', () => {
-    const { getByText, queryByLabelText, queryByText } = renderCard({
+  it('does not mark an entry active until its start date is reached', async () => {
+    const { getByText, queryByLabelText, queryByText } = await renderCard({
       id: 5,
       type: 'service',
       data: {
@@ -89,8 +89,8 @@ describe('HistoryCard', () => {
     expect(queryByLabelText('Currently active')).toBeNull();
   });
 
-  it('does not mark an entry active when there is no start date', () => {
-    const { getByText, queryByLabelText, queryByText } = renderCard({
+  it('does not mark an entry active when there is no start date', async () => {
+    const { getByText, queryByLabelText, queryByText } = await renderCard({
       id: 6,
       type: 'demographic',
       data: {
@@ -106,8 +106,8 @@ describe('HistoryCard', () => {
     expect(queryByLabelText('Currently active')).toBeNull();
   });
 
-  it('renders a completed entry with its end date and no active indicators', () => {
-    const { getByText, queryByLabelText, queryByText } = renderCard({
+  it('renders a completed entry with its end date and no active indicators', async () => {
+    const { getByText, queryByLabelText, queryByText } = await renderCard({
       id: 2,
       type: 'program',
       data: {
@@ -124,8 +124,8 @@ describe('HistoryCard', () => {
     expect(queryByLabelText('Currently active')).toBeNull();
   });
 
-  it('falls back to raw values for unparseable dates and a placeholder for a missing name', () => {
-    const { getByText, queryByLabelText } = renderCard({
+  it('falls back to raw values for unparseable dates and a placeholder for a missing name', async () => {
+    const { getByText, queryByLabelText } = await renderCard({
       id: 3,
       type: 'demographic',
       data: {

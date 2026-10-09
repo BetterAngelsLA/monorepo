@@ -1,8 +1,9 @@
 // NOTE: keep this file free of imports that need the React Native transform.
-// `setupFiles` run outside that pipeline, so a static `import` of
-// '@testing-library/react-native/build/matchers/extend-expect' here fails every
-// spec with "SyntaxError: Unexpected token 'typeof'" — which is why the matcher
-// import stays in the individual spec files in this project. For the same
+// `setupFiles` run outside that pipeline, so a static import of anything that
+// needs it fails every spec with "SyntaxError: Unexpected token 'typeof'".
+// RNTL's custom matchers need no import anywhere any more: vitest-native
+// registers them at runtime, and their types come from the
+// 'vitest-native/rntl-matchers' reference in src/typings.d.ts. For the same
 // reason the ErrorUtils stub below must be assigned before anything imports
 // 'expo', and it is load-bearing: removing it fails 24 of the 42 spec files.
 //

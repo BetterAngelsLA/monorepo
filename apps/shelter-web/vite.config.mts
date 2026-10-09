@@ -13,9 +13,12 @@ import {
 } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8083;
-const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
+const WORKSPACE_ROOT = path.resolve(import.meta.dirname, '../..');
 
-const MEDIA_PATH = path.resolve(__dirname, '../betterangels-backend/media');
+const MEDIA_PATH = path.resolve(
+  import.meta.dirname,
+  '../betterangels-backend/media',
+);
 const devServerProxy: Record<string, string | ProxyOptions> = {
   // to import media from from betterangels-backend
   '/media': {
@@ -30,7 +33,7 @@ export default defineConfig(({ mode }) => {
   const basePath = getBranchBasePath();
   return {
     base: basePath,
-    root: __dirname,
+    root: import.meta.dirname,
     cacheDir: '../../node_modules/.vite/apps/shelter-web',
 
     define: {
@@ -67,7 +70,7 @@ export default defineConfig(({ mode }) => {
       postcss: {
         plugins: [
           tailwindcss({
-            base: path.resolve(__dirname, '../..'),
+            base: path.resolve(import.meta.dirname, '../..'),
             optimize: isDev ? { minify: false } : undefined,
           }),
         ],
