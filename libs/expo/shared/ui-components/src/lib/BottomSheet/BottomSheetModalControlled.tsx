@@ -19,10 +19,11 @@
  * - The sheet content is rendered through the provider's stacking system.
  * - The component itself renders null.
  * - `options` are forwarded to `showBottomSheet()`
+ * - Unmounting dismisses any sheet this component still owns.
  */
 
-import { ReactNode, useEffect, useRef } from 'react';
-import { useBottomSheet } from './providers/BottomSheetModal/useBottomSheet';
+import { ReactNode, useCallback, useEffect, useRef } from 'react';
+import { useBottomSheet } from './providers/BottomSheetModal/hooks';
 import { BottomSheetOptions } from './types';
 
 type TProps = {
@@ -60,14 +61,34 @@ export function BottomSheetModalControlled(props: TProps) {
     isOpenRef.current = isOpen;
   }, [isOpen]);
 
+  /**
+   * Dismiss the sheet this wrapper owns and stop tracking it. Marked as a
+   * state-driven close, so the provider does not bounce `onClose` to the parent.
+   */
+  const closeOwnedSheet = useCallback(() => {
+    if (!closeSheetRef.current) {
+      return;
+    }
+
+    closingFromStateRef.current = true;
+    closeSheetRef.current();
+    closeSheetRef.current = null;
+    activeSheetIdRef.current = null;
+  }, []);
+
+  // Dismiss sheets on unmount.
+  useEffect(() => {
+    return () => {
+      closeOwnedSheet();
+    };
+  }, [closeOwnedSheet]);
+
   useEffect(() => {
     if (!isOpen) {
       if (closeSheetRef.current) {
-        closingFromStateRef.current = true;
         // Dying renders of this sheet must not re-queue a close.
         didQueueCloseRef.current = true;
-        closeSheetRef.current();
-        closeSheetRef.current = null;
+        closeOwnedSheet();
       }
 
       // No active sheet while closed, so a reopen during the dismiss
@@ -141,7 +162,7 @@ export function BottomSheetModalControlled(props: TProps) {
         },
       },
     });
-  }, [isOpen, showBottomSheet]);
+  }, [closeOwnedSheet, isOpen, showBottomSheet]);
 
   return null;
 }

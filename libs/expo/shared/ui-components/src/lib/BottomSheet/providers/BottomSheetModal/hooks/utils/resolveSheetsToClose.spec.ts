@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { NEW_SHEET_FLAGS } from '../constants';
-import { TSheet, TSheetFlags } from '../types';
+import { NEW_SHEET_FLAGS } from '../../constants';
+import { TSheet, TSheetFlags } from '../../types';
 import { resolveSheetsToClose } from './resolveSheetsToClose';
 
 function makeSheet(

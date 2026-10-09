@@ -1,13 +1,13 @@
 /**
  * The sheet list and its stacking rules.
  *
- * Pure derivation: no refs, no React, no Gorhom. The provider owns the list and
- * applies the result of `resolveSheetsToClose`, which keeps the three stack
+ * Pure derivation: no refs, no React, no Gorhom. `useSheetStack` owns the list
+ * and applies the result of `resolveSheetsToClose`, which keeps the three stack
  * behaviors readable (and testable) without the lifecycle machinery around
  * them.
  */
 
-import { TSheet } from '../types';
+import { TSheet } from '../../types';
 
 /**
  * Sheets that must close because a newer one was opened on top of them, based

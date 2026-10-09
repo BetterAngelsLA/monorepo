@@ -12,8 +12,9 @@
  *
  *   [sheet] #3 dismiss deferred (gorhom ANIMATING)   not dismissable yet: wait
  *   [sheet] #3 dismiss                               handed to Gorhom
- *   [sheet] #3 dismiss retry 1/3 (gorhom DISMISSING) nothing confirmed yet
- *   [sheet] #3 dismiss never confirmed (…)           still on screen: a bug
+ *   [sheet] #3 dismiss retry 1/3 (gorhom PRESENTED)  dropped call: asking again
+ *   [sheet] #3 dismiss retry skipped (…)             in flight: waiting it out
+ *   [sheet] #3 dismiss never confirmed (…)           budget gone: sheet dropped
  *   [sheet] #3 dismiss cancelled (gorhom ANIMATING)  gave up: stays open
  *
  * ...plus one snapshot per provider render, listing every live sheet:
@@ -28,8 +29,8 @@
 
 import { BottomSheetModal, enableLogging } from '@gorhom/bottom-sheet';
 import { useEffect, useRef } from 'react';
-import { GORHOM_MODAL_STATUS } from '../constants';
-import { TSheet, TSheetFlags } from '../types';
+import { GORHOM_MODAL_STATUS } from '../../constants';
+import { TSheet, TSheetFlags } from '../../types';
 import { getGorhomStatus } from './gorhomStatus';
 
 /**
@@ -75,7 +76,7 @@ export function logSheetDebug(
 }
 
 /**
- * Per-render snapshot tracing, wired into the provider's render body:
+ * Per-render snapshot tracing, wired into `useSheetStack`'s render body:
  * `useSheetDebugSnapshot(sheets, instancesRef)`. Logs nothing unless
  * `SHEET_DEBUG_ENABLED`.
  */
@@ -103,8 +104,8 @@ export function useSheetDebugSnapshot(
 }
 
 /**
- * `sheet-<timestamp>-3` → `#3`: how these logs (and `present deferred` in the
- * provider) refer to a sheet.
+ * `sheet-<timestamp>-3` → `#3`: how these logs (and `present deferred` in
+ * `useSheetStack`) refer to a sheet.
  */
 export function sheetRef(id: string): string {
   return `#${id.slice(id.lastIndexOf('-') + 1)}`;

@@ -31,15 +31,6 @@ export type BottomSheetProviderConfig = {
   defaultOptions?: BottomSheetOptions;
 
   /**
-   * When enabled, the provider renders a single shared backdrop
-   * instead of one backdrop per sheet.
-   *
-   * This is useful when using `FullWindowOverlay`, where multiple
-   * Gorhom backdrops can race and render above sheets.
-   */
-  enableSharedBackdrop?: boolean;
-
-  /**
    * Enables the layout measurement system used to calculate
    * container height for bottom sheets.
    *

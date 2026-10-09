@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   showBottomSheet: vi.fn(),
 }));
 
-vi.mock('./providers/BottomSheetModal/useBottomSheet', () => ({
+vi.mock('./providers/BottomSheetModal/hooks', () => ({
   useBottomSheet: () => ({ showBottomSheet: mocks.showBottomSheet }),
 }));
 
@@ -77,6 +77,20 @@ describe('BottomSheetModalControlled', () => {
     mountSheet(0, 'sheet-1', closeSheet);
 
     rerender(<Controlled isOpen={false} />);
+    expect(closeSheet).toHaveBeenCalled();
+  });
+
+  it('dismisses its sheet when the owner unmounts', () => {
+    const { rerender, unmount } = render(<Controlled isOpen={false} />);
+
+    rerender(<Controlled isOpen={true} />);
+
+    const closeSheet = vi.fn();
+    mountSheet(0, 'sheet-1', closeSheet);
+
+    unmount();
+
+    // No ghost sheet left behind by an unmounted owner.
     expect(closeSheet).toHaveBeenCalled();
   });
 

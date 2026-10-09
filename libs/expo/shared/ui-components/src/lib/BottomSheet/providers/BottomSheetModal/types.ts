@@ -23,8 +23,8 @@ export type TBottomSheetInstance = {
 
 /**
  * The mutable part of a sheet: its four lifecycle flags. Everything else on a
- * record is set once, when it is created. See SHEET LIFECYCLE in the provider
- * header.
+ * record is set once, when it is created. See SHEET LIFECYCLE in the
+ * `useSheetStack` header.
  */
 export type TSheetFlags = {
   presented: boolean;
