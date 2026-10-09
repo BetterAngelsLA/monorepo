@@ -4,7 +4,12 @@ import { reactNative } from 'vitest-native';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [reactNative()],
+  plugins: [
+    reactNative({
+      transform: ['sanitize-html', 'htmlparser2'],
+      hotRuntime: false,
+    }),
+  ],
   resolve: {
     // These expo modules are redirected at the bundler level rather than mocked
     // with `vi.mock()` in test-setup.ts: vitest-native's native engine loads
@@ -18,13 +23,28 @@ export default defineConfig({
       {
         find: /^expo-file-system(?:\/.*)?$/,
         replacement: path.resolve(
-          __dirname,
+          import.meta.dirname,
           'src/__mocks__/expo-file-system.ts',
         ),
       },
       {
+        // tslib's `exports` map sends ESM imports to its CommonJS wrapper
+        // (modules/index.js), whose `import tslib from '../tslib.js'` default
+        // import resolves to undefined under the native engine — every consumer
+        // then throws "Cannot read properties of undefined (reading
+        // '__extends')". Point both resolvers at the real ESM build.
+        find: /^tslib$/,
+        replacement: path.resolve(
+          import.meta.dirname,
+          '../../../node_modules/tslib/tslib.es6.mjs',
+        ),
+      },
+      {
         find: /^expo-image(?:\/.*)?$/,
-        replacement: path.resolve(__dirname, 'src/__mocks__/expo-image.tsx'),
+        replacement: path.resolve(
+          import.meta.dirname,
+          'src/__mocks__/expo-image.tsx',
+        ),
       },
     ],
     tsconfigPaths: true,

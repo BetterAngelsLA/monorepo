@@ -130,14 +130,16 @@ const sampleFile = {
   type: 'application/pdf',
 };
 
-function renderModal(closeModal = vi.fn()) {
-  return render(<UploadModalHmis client={client} closeModal={closeModal} />);
+async function renderModal(closeModal = vi.fn()) {
+  return await render(
+    <UploadModalHmis client={client} closeModal={closeModal} />,
+  );
 }
 
-function selectCategory(selection: unknown) {
+async function selectCategory(selection: unknown) {
   const latest = mocks.selectorProps[mocks.selectorProps.length - 1];
 
-  act(() => {
+  await act(async () => {
     latest.onSelect(selection);
   });
 }
@@ -178,8 +180,8 @@ describe('UploadModalHmis', () => {
     mocks.uploadClientFile.mockResolvedValue({ id: 'file-1' });
     const closeModal = vi.fn();
 
-    renderModal(closeModal);
-    selectCategory({
+    await renderModal(closeModal);
+    await selectCategory({
       type: 'predefined',
       categoryId: '1',
       subCategoryId: '2',
@@ -215,8 +217,8 @@ describe('UploadModalHmis', () => {
     );
     const closeModal = vi.fn();
 
-    renderModal(closeModal);
-    selectCategory({
+    await renderModal(closeModal);
+    await selectCategory({
       type: 'predefined',
       categoryId: '1',
       subCategoryId: '2',
@@ -238,8 +240,8 @@ describe('UploadModalHmis', () => {
     );
     const closeModal = vi.fn();
 
-    renderModal(closeModal);
-    selectCategory({
+    await renderModal(closeModal);
+    await selectCategory({
       type: 'predefined',
       categoryId: '1',
       subCategoryId: '2',
@@ -257,8 +259,8 @@ describe('UploadModalHmis', () => {
   it('does not start a session when validation fails before upload', async () => {
     const closeModal = vi.fn();
 
-    renderModal(closeModal);
-    selectCategory({
+    await renderModal(closeModal);
+    await selectCategory({
       type: 'custom',
       categoryId: '1',
       categoryName: 'Category A',

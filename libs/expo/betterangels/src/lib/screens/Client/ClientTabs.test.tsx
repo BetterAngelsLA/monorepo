@@ -6,7 +6,6 @@
  * cover the feature itself; this covers that it cannot be reached without the
  * flag.
  */
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { render, screen } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
@@ -28,17 +27,21 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 
 const noop = () => undefined;
 
-it('hides the Referrals tab while ffReferrals is off', () => {
+it('hides the Referrals tab while ffReferrals is off', async () => {
   flags.referrals = false;
-  render(<ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />);
+  await render(
+    <ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />,
+  );
 
   expect(screen.queryByTestId('client-tab-referrals')).toBeNull();
   expect(screen.getByTestId('client-tab-profile')).toBeOnTheScreen();
 });
 
-it('shows the Referrals tab when ffReferrals is on', () => {
+it('shows the Referrals tab when ffReferrals is on', async () => {
   flags.referrals = true;
-  render(<ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />);
+  await render(
+    <ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />,
+  );
 
   expect(screen.getByTestId('client-tab-referrals')).toBeOnTheScreen();
 });

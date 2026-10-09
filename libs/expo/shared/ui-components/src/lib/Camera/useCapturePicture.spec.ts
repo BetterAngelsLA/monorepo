@@ -58,7 +58,7 @@ describe('useCapturePicture', () => {
       height: 100,
     });
 
-    const { result } = renderHook(() =>
+    const { result } = await renderHook(() =>
       useCapturePicture({ imageType: 'jpg' }),
     );
     const outcome = (await result.current.capture(
@@ -80,7 +80,7 @@ describe('useCapturePicture', () => {
   it('reports a cancel when the camera yields nothing', async () => {
     mocks.takePictureAsync.mockResolvedValue(null);
 
-    const { result } = renderHook(() =>
+    const { result } = await renderHook(() =>
       useCapturePicture({ imageType: 'jpg' }),
     );
     const outcome = (await result.current.capture(
@@ -92,7 +92,7 @@ describe('useCapturePicture', () => {
   });
 
   it('errors when the camera is not mounted yet', async () => {
-    const { result } = renderHook(() =>
+    const { result } = await renderHook(() =>
       useCapturePicture({ imageType: 'jpg' }),
     );
     const outcome = (await result.current.capture({
@@ -105,7 +105,7 @@ describe('useCapturePicture', () => {
   it('errors rather than throwing when capture fails', async () => {
     mocks.takePictureAsync.mockRejectedValue(new Error('camera busy'));
 
-    const { result } = renderHook(() =>
+    const { result } = await renderHook(() =>
       useCapturePicture({ imageType: 'jpg' }),
     );
     const outcome = (await result.current.capture(

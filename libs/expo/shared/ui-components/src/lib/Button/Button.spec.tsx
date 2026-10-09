@@ -2,8 +2,8 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { Button } from './Button';
 
 describe('Button Component', () => {
-  it('renders with correct title', () => {
-    const { getByText } = render(
+  it('renders with correct title', async () => {
+    const { getByText } = await render(
       <Button
         accessibilityHint={''}
         title="Click Me"
@@ -14,9 +14,9 @@ describe('Button Component', () => {
     expect(getByText('Click Me')).toBeTruthy();
   });
 
-  it('calls onPress when pressed', () => {
+  it('calls onPress when pressed', async () => {
     const mockOnPress = vi.fn();
-    const { getByText } = render(
+    const { getByText } = await render(
       <Button
         title="Press Me"
         onPress={mockOnPress}
@@ -26,13 +26,13 @@ describe('Button Component', () => {
       />,
     );
 
-    fireEvent.press(getByText('Press Me'));
+    await fireEvent.press(getByText('Press Me'));
     expect(mockOnPress).toHaveBeenCalled();
   });
 
-  it('does not call onPress when disabled and pressed', () => {
+  it('does not call onPress when disabled and pressed', async () => {
     const mockOnPress = vi.fn();
-    const { getByText } = render(
+    const { getByText } = await render(
       <Button
         accessibilityHint={''}
         title="Disabled Button"
@@ -43,17 +43,19 @@ describe('Button Component', () => {
       />,
     );
 
-    fireEvent.press(getByText('Disabled Button'));
+    await fireEvent.press(getByText('Disabled Button'));
     expect(mockOnPress).not.toHaveBeenCalled();
   });
 
-  it('renders correctly with different variants', () => {
+  it('renders correctly with different variants', async () => {
     const variants: Array<
       'primary' | 'secondary' | 'negative' | 'sky' | 'dark'
     > = ['primary', 'secondary', 'negative', 'sky', 'dark'];
-    variants.forEach((variant, index) => {
+    // Sequential, not `forEach(async …)`: render is async in RNTL 14, and an
+    // un-awaited render leaks into the next test's screen.
+    for (const [index, variant] of variants.entries()) {
       const testID = `button-${variant}-${index}`;
-      const { getByTestId } = render(
+      const { getByTestId } = await render(
         <Button
           accessibilityHint={''}
           title={variant}
@@ -63,11 +65,11 @@ describe('Button Component', () => {
         />,
       );
       expect(getByTestId(testID)).toBeTruthy();
-    });
+    }
   });
 
-  it('is accessible by role', () => {
-    const { getByRole } = render(
+  it('is accessible by role', async () => {
+    const { getByRole } = await render(
       <Button
         accessibilityHint={''}
         title="Accessible Button"

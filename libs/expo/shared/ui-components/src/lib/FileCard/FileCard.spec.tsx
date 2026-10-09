@@ -8,8 +8,8 @@ vi.mock('expo-image', () => ({
 const FORMATTED_DATE = '08/01/2026';
 
 describe('FileCard', () => {
-  it('renders a completed document row with its formatted date', () => {
-    const { getByText, queryByText } = render(
+  it('renders a completed document row with its formatted date', async () => {
+    const { getByText, queryByText } = await render(
       <FileCard
         filename="consent.pdf"
         url="https://example.com/doc.pdf"
@@ -24,9 +24,9 @@ describe('FileCard', () => {
     expect(queryByText('Retry')).toBeNull();
   });
 
-  it('opens on press for a completed document', () => {
+  it('opens on press for a completed document', async () => {
     const onPress = vi.fn();
-    const { getByText } = render(
+    const { getByText } = await render(
       <FileCard
         filename="a.pdf"
         url="u"
@@ -35,12 +35,12 @@ describe('FileCard', () => {
       />,
     );
 
-    fireEvent.press(getByText('a.pdf'));
+    await fireEvent.press(getByText('a.pdf'));
     expect(onPress).toHaveBeenCalled();
   });
 
-  it('exposes a disabled state when disabled', () => {
-    const { getByLabelText } = render(
+  it('exposes a disabled state when disabled', async () => {
+    const { getByLabelText } = await render(
       <FileCard
         filename="a.pdf"
         url="u"

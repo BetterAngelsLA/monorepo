@@ -82,8 +82,8 @@ describe('ClientCard', () => {
    * hydration error). The menu must be a sibling of the card's pressable area,
    * never a descendant.
    */
-  it('does not nest the menu button inside the card button', () => {
-    const { getByTestId, getByLabelText } = render(
+  it('does not nest the menu button inside the card button', async () => {
+    const { getByTestId, getByLabelText } = await render(
       <ClientCard client={client} onMenuPress={mocks.onMenuPress} />,
     );
 
@@ -93,28 +93,28 @@ describe('ClientCard', () => {
     expect(getByLabelText(MENU_LABEL)).toBeTruthy();
   });
 
-  it('still fires onPress when the card itself is tapped', () => {
-    const { getByTestId } = render(
+  it('still fires onPress when the card itself is tapped', async () => {
+    const { getByTestId } = await render(
       <ClientCard client={client} onPress={mocks.onPress} />,
     );
 
-    fireEvent.press(getByTestId('client-card-test'));
+    await fireEvent.press(getByTestId('client-card-test'));
 
     expect(mocks.onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('fires onMenuPress with the client when the menu is tapped', () => {
-    const { getByLabelText } = render(
+  it('fires onMenuPress with the client when the menu is tapped', async () => {
+    const { getByLabelText } = await render(
       <ClientCard client={client} onMenuPress={mocks.onMenuPress} />,
     );
 
-    fireEvent.press(getByLabelText(MENU_LABEL));
+    await fireEvent.press(getByLabelText(MENU_LABEL));
 
     expect(mocks.onMenuPress).toHaveBeenCalledWith(client);
   });
 
-  it('renders no menu when onMenuPress is not provided', () => {
-    const { queryByLabelText } = render(<ClientCard client={client} />);
+  it('renders no menu when onMenuPress is not provided', async () => {
+    const { queryByLabelText } = await render(<ClientCard client={client} />);
 
     expect(queryByLabelText(MENU_LABEL)).toBeNull();
   });

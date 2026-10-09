@@ -21,10 +21,20 @@ import SnackbarProvider from '../providers/snackbar/SnackbarProvider';
 import UserProvider, { useUser } from '../providers/user/UserProvider';
 import ConsentModal from './ConsentModal';
 
-vi.mock('expo-router', () => ({
-  Link: ({ children }: { children: ReactNode }) => children,
-  useRouter: () => ({ back: vi.fn(), navigate: vi.fn(), replace: vi.fn() }),
-}));
+// `Link` renders its children inside a `Text`, as expo-router does. The mock has
+// to match: returning the raw string puts text straight inside a View, which the
+// renderer now rejects with "Text strings must be rendered within a <Text>
+// component" (it used to be only a warning).
+vi.mock('expo-router', async () => {
+  const { Text: RNText } = await import('react-native');
+
+  return {
+    Link: ({ children }: { children: ReactNode }) => (
+      <RNText>{children}</RNText>
+    ),
+    useRouter: () => ({ back: vi.fn(), navigate: vi.fn(), replace: vi.fn() }),
+  };
+});
 
 // The real design-system barrel re-exports native-backed components (camera,
 // clipboard, PDF viewer) whose import chains cannot load under vitest-native.
@@ -186,7 +196,20 @@ function createControlledClient() {
     defaultOptions: { watchQuery: { notifyOnNetworkStatusChange: false } },
   });
 
-  return { client, release, pending };
+  /**
+   * Sends a response without awaiting `act`, for use *inside* an open act scope.
+   * `release` cannot be used there: awaiting it nests an async act inside the
+   * outer one, and a press whose work is never settled keeps that outer scope
+   * open past the end of the test.
+   */
+  const sendNow = (operationName: string, data: unknown) => {
+    const request = pending.find((p) => p.operationName === operationName);
+    if (!request) throw new Error(`no ${operationName} in flight`);
+    pending.splice(pending.indexOf(request), 1);
+    request.send(data);
+  };
+
+  return { client, release, sendNow, pending };
 }
 
 /**
@@ -233,10 +256,10 @@ function ConsentGate() {
   );
 }
 
-function renderConsentModal() {
+async function renderConsentModal() {
   const controls = createControlledClient();
 
-  render(
+  await render(
     <ApolloProvider client={controls.client}>
       <SafeAreaProvider
         initialMetrics={{
@@ -260,14 +283,21 @@ const consentSheet = () => screen.queryByText('Consent');
 const registrationSheet = () =>
   screen.queryByText('Complete Your Registration');
 
-async function acceptAndSubmit() {
+async function acceptAndSubmit(
+  controls: ReturnType<typeof createControlledClient>,
+  mutationResponse: unknown = ACCEPT_RECORDED,
+) {
   await act(async () => {
-    fireEvent.press(screen.getByHintText('Accept the terms of service'));
-    fireEvent.press(screen.getByHintText('Accept the privacy policy'));
+    await fireEvent.press(screen.getByHintText('Accept the terms of service'));
+    await fireEvent.press(screen.getByHintText('Accept the privacy policy'));
   });
-  await act(async () => {
-    fireEvent.press(screen.getByText('Get Started'));
-  });
+
+  // `Get Started` starts the accept mutation, which the controlled link answers
+  // only when told to. Answer it inside the same act scope so the press's
+  // promise settles here rather than dangling into the next test.
+  const press = fireEvent.press(screen.getByText('Get Started'));
+  controls.sendNow('UpdateCurrentUser', mutationResponse);
+  await press;
 }
 
 describe('ConsentModal', () => {
@@ -276,7 +306,7 @@ describe('ConsentModal', () => {
   });
 
   it('prompts a user who has not accepted', async () => {
-    const { release } = renderConsentModal();
+    const { release } = await renderConsentModal();
 
     await release('currentUser', currentUser());
 
@@ -284,9 +314,9 @@ describe('ConsentModal', () => {
   });
 
   it('stays closed when a read that predates the accept lands afterwards', async () => {
-    const { release, pending } = renderConsentModal();
+    const controls = await renderConsentModal();
 
-    await release('currentUser', currentUser());
+    await controls.release('currentUser', currentUser());
     await waitFor(() => expect(consentSheet()).not.toBeNull());
 
     // Stands in for the refetch the app fires on foreground — on the wire
@@ -295,27 +325,30 @@ describe('ConsentModal', () => {
       refetchUser?.();
     });
     expect(
-      pending.filter((p) => p.operationName === 'currentUser'),
+      controls.pending.filter((p) => p.operationName === 'currentUser'),
     ).toHaveLength(1);
 
-    await acceptAndSubmit();
-    await release('UpdateCurrentUser', ACCEPT_RECORDED);
+    await acceptAndSubmit(controls);
 
-    await release('currentUser', currentUser({ hasAcceptedTos: false }));
+    await controls.release('currentUser', currentUser({ hasAcceptedTos: false }));
 
     expect(consentSheet()).toBeNull();
     expect(registrationSheet()).toBeNull();
   });
 
   it('asks for a missing name in place, without re-prompting for consent', async () => {
-    const { release } = renderConsentModal();
+    const controls = await renderConsentModal();
 
-    await release('currentUser', currentUser({ lastName: undefined }));
+    await controls.release('currentUser', currentUser({ lastName: undefined }));
     await waitFor(() => expect(consentSheet()).not.toBeNull());
 
-    await acceptAndSubmit();
-    await release('UpdateCurrentUser', ACCEPT_RECORDED);
-    await release(
+    await acceptAndSubmit(controls);
+
+    // A fresh read lands after the accept (the app refetches on foreground).
+    await act(async () => {
+      refetchUser?.();
+    });
+    await controls.release(
       'currentUser',
       currentUser({
         hasAcceptedTos: true,
@@ -329,13 +362,12 @@ describe('ConsentModal', () => {
   });
 
   it('keeps prompting when the server rejects the accept', async () => {
-    const { release } = renderConsentModal();
+    const controls = await renderConsentModal();
 
-    await release('currentUser', currentUser());
+    await controls.release('currentUser', currentUser());
     await waitFor(() => expect(consentSheet()).not.toBeNull());
 
-    await acceptAndSubmit();
-    await release('UpdateCurrentUser', {
+    await acceptAndSubmit(controls, {
       updateCurrentUser: {
         __typename: 'OperationInfo',
         messages: [

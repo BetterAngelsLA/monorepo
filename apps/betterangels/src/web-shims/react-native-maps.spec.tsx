@@ -64,8 +64,8 @@ beforeEach(() => {
 });
 
 describe('react-native-maps web shim', () => {
-  it('derives a camera from initialRegion deltas instead of teovilla zoom 3', () => {
-    render(
+  it('derives a camera from initialRegion deltas instead of teovilla zoom 3', async () => {
+    await render(
       <MapView
         provider="google"
         initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
@@ -81,8 +81,8 @@ describe('react-native-maps web shim', () => {
     });
   });
 
-  it('derives a camera from a controlled region, which teovilla ignores entirely', () => {
-    render(
+  it('derives a camera from a controlled region, which teovilla ignores entirely', async () => {
+    await render(
       <MapView
         provider="google"
         region={{
@@ -103,8 +103,8 @@ describe('react-native-maps web shim', () => {
     });
   });
 
-  it('does not leak the controlled region through to teovilla', () => {
-    render(
+  it('does not leak the controlled region through to teovilla', async () => {
+    await render(
       <MapView
         provider="google"
         region={{ ...LA, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
@@ -114,7 +114,7 @@ describe('react-native-maps web shim', () => {
     expect(hoisted.props).not.toHaveProperty('region');
   });
 
-  it('leaves initialCamera untouched when the call site supplies one', () => {
+  it('leaves initialCamera untouched when the call site supplies one', async () => {
     const initialCamera = {
       center: { latitude: 1, longitude: 2 },
       zoom: 9,
@@ -122,15 +122,15 @@ describe('react-native-maps web shim', () => {
       pitch: 0,
     };
 
-    render(<MapView provider="google" initialCamera={initialCamera} />);
+    await render(<MapView provider="google" initialCamera={initialCamera} />);
 
     expect(hoisted.props?.initialCamera).toEqual(initialCamera);
   });
 
-  it('ignores an AnimatedRegion, which has no numeric coordinates', () => {
+  it('ignores an AnimatedRegion, which has no numeric coordinates', async () => {
     // `region` is typed `Region | AnimatedRegion`; an AnimatedMapRegion cannot be
     // expressed as a camera, so it must not produce one full of undefined.
-    render(
+    await render(
       <MapView
         provider="google"
         region={{ setValue: () => undefined } as never}
@@ -140,20 +140,20 @@ describe('react-native-maps web shim', () => {
     expect(hoisted.props?.initialCamera).toBeUndefined();
   });
 
-  it('falls back rather than producing a NaN zoom for a partial initialRegion', () => {
+  it('falls back rather than producing a NaN zoom for a partial initialRegion', async () => {
     // Call sites build initialRegion from possibly-absent data, e.g. a client
     // with no last-seen location.
-    render(<MapView provider="google" initialRegion={LA as never} />);
+    await render(<MapView provider="google" initialRegion={LA as never} />);
 
     expect(hoisted.props?.initialCamera).toBeUndefined();
   });
 
-  it('does not touch the imperative API before the map reports ready', () => {
+  it('does not touch the imperative API before the map reports ready', async () => {
     // teovilla's animateToRegion reads the *global* `google.maps` to build its
     // bounds, so calling it before the Maps JS SDK has loaded throws
     // "google.maps.LatLngBounds is not a constructor". A controlled region must
     // therefore stay pending until onMapReady.
-    render(
+    await render(
       <MapView
         provider="google"
         region={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
@@ -163,8 +163,8 @@ describe('react-native-maps web shim', () => {
     expect(hoisted.animateToRegion).not.toHaveBeenCalled();
   });
 
-  it('re-centres when the controlled region changes', () => {
-    const { rerender } = render(
+  it('re-centres when the controlled region changes', async () => {
+    const { rerender } = await render(
       <MapView
         provider="google"
         region={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
@@ -173,13 +173,13 @@ describe('react-native-maps web shim', () => {
 
     // Framing on mount comes from initialCamera; the imperative call only
     // becomes legal once the map is live.
-    act(() => {
+    await act(async () => {
       (hoisted.props?.onMapReady as (() => void) | undefined)?.();
     });
 
     hoisted.animateToRegion.mockClear();
 
-    rerender(
+    await rerender(
       <MapView
         provider="google"
         region={{
@@ -203,8 +203,8 @@ describe('react-native-maps web shim', () => {
     );
   });
 
-  it('applies a region that arrived before the map was ready, once it is', () => {
-    const { rerender } = render(
+  it('applies a region that arrived before the map was ready, once it is', async () => {
+    const { rerender } = await render(
       <MapView
         provider="google"
         region={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
@@ -213,7 +213,7 @@ describe('react-native-maps web shim', () => {
 
     // A region change lands while the SDK is still loading: it must not be
     // dropped on the floor.
-    rerender(
+    await rerender(
       <MapView
         provider="google"
         region={{
@@ -227,18 +227,18 @@ describe('react-native-maps web shim', () => {
 
     expect(hoisted.animateToRegion).not.toHaveBeenCalled();
 
-    act(() => {
+    await act(async () => {
       (hoisted.props?.onMapReady as (() => void) | undefined)?.();
     });
 
     expect(hoisted.animateToRegion).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects non-finite or zero deltas instead of producing a broken zoom', () => {
+  it('rejects non-finite or zero deltas instead of producing a broken zoom', async () => {
     // zoom is log2(360 / longitudeDelta): NaN deltas would yield zoom NaN and a
     // zero delta would yield Infinity, both of which the Maps API rejects.
     // typeof NaN === 'number', so the old numeric guard let these through.
-    render(
+    await render(
       <MapView
         provider="google"
         initialRegion={{
@@ -253,10 +253,10 @@ describe('react-native-maps web shim', () => {
     expect(hoisted.props?.initialCamera).toBeUndefined();
   });
 
-  it('forwards the caller ref to the teovilla handle', () => {
+  it('forwards the caller ref to the teovilla handle', async () => {
     const ref = createRef<unknown>();
 
-    render(
+    await render(
       <MapView
         ref={ref}
         provider="google"
@@ -267,10 +267,10 @@ describe('react-native-maps web shim', () => {
     expect(ref.current).toEqual({ animateToRegion: hoisted.animateToRegion });
   });
 
-  it('translates scrollEnabled into the Google draggable option', () => {
+  it('translates scrollEnabled into the Google draggable option', async () => {
     // teovilla drops `scrollEnabled` entirely, so without this the six static
     // mini-maps are drag-pannable on web and a drag moves the map off its pin.
-    const { unmount } = render(
+    const { unmount } = await render(
       <MapView
         provider="google"
         scrollEnabled={false}
@@ -280,10 +280,10 @@ describe('react-native-maps web shim', () => {
 
     expect(hoisted.props?.options).toEqual({ draggable: false });
 
-    unmount();
+    await unmount();
 
     // The default stays draggable, so the interactive maps are unaffected.
-    render(
+    await render(
       <MapView
         provider="google"
         initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
@@ -309,10 +309,10 @@ describe('react-native-maps web shim', () => {
     )(region, details);
   };
 
-  it('forwards a continuous region change verbatim', () => {
+  it('forwards a continuous region change verbatim', async () => {
     const onRegionChange = vi.fn();
 
-    render(
+    await render(
       <MapView
         provider="google"
         initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
@@ -321,17 +321,17 @@ describe('react-native-maps web shim', () => {
     );
 
     const region = { ...LA, latitudeDelta: 0.01, longitudeDelta: 0.01 };
-    act(() => fireRegionChange(region, { isGesture: true }));
+    await act(async () => fireRegionChange(region, { isGesture: true }));
 
     expect(onRegionChange).toHaveBeenCalledWith(region, { isGesture: true });
   });
 
-  it('settles a continuous region change into onRegionChangeComplete', () => {
+  it('settles a continuous region change into onRegionChangeComplete', async () => {
     vi.useFakeTimers();
     const onRegionChangeComplete = vi.fn();
 
     try {
-      render(
+      await render(
         <MapView
           provider="google"
           initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
@@ -340,14 +340,14 @@ describe('react-native-maps web shim', () => {
       );
 
       const region = { ...LA, latitudeDelta: 0.01, longitudeDelta: 0.01 };
-      act(() => {
+      await act(async () => {
         fireRegionChange(region, { isGesture: true });
       });
 
       // Not yet — the move has not settled.
       expect(onRegionChangeComplete).not.toHaveBeenCalled();
 
-      act(() => {
+      await act(async () => {
         vi.advanceTimersByTime(250);
       });
 
@@ -360,12 +360,12 @@ describe('react-native-maps web shim', () => {
     }
   });
 
-  it('collapses a burst of region changes into a single completion', () => {
+  it('collapses a burst of region changes into a single completion', async () => {
     vi.useFakeTimers();
     const onRegionChangeComplete = vi.fn();
 
     try {
-      render(
+      await render(
         <MapView
           provider="google"
           initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
@@ -373,7 +373,7 @@ describe('react-native-maps web shim', () => {
         />,
       );
 
-      act(() => {
+      await act(async () => {
         // A wheel-zoom burst.
         fireRegionChange({ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }, {});
         fireRegionChange({ ...LA, latitudeDelta: 0.02, longitudeDelta: 0.02 }, {});

@@ -5,7 +5,6 @@
  * between the card and the store (discard clears the draft, resume opens the
  * form) so a broken handler fails here instead of only in e2e.
  */
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { MockedProvider } from '@apollo/client/testing/react';
 import {
   fireEvent,
@@ -66,14 +65,14 @@ const emptyReferrals = [
   },
 ];
 
-const renderTabWithDraft = () => {
+const renderTabWithDraft = async () => {
   const store = createReferralDraftStore({
     load: () => null,
     save: vi.fn(),
     remove: vi.fn(),
   });
   store.startNew(CLIENT_ID);
-  render(
+  await render(
     <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
       <ReferralsTab client={client} draftStore={store} />
     </MockedProvider>,
@@ -87,15 +86,15 @@ beforeEach(() => {
 
 describe('referral draft card', () => {
   it('discards the draft from the card and brings back the + button', async () => {
-    const store = renderTabWithDraft();
+    const store = await renderTabWithDraft();
 
     expect(await screen.findByTestId('referral-draft-card')).toBeOnTheScreen();
     // While a draft exists the header offers Resume, not +.
     expect(screen.queryByTestId('create-referral-btn')).toBeNull();
 
-    fireEvent.press(screen.getByTestId('draft-discard-btn'));
+    await fireEvent.press(screen.getByTestId('draft-discard-btn'));
     // The trigger only opens the confirmation; the modal performs the discard.
-    fireEvent.press(screen.getByTestId('discard-modal-confirm'));
+    await fireEvent.press(screen.getByTestId('discard-modal-confirm'));
 
     await waitFor(() =>
       expect(screen.queryByTestId('referral-draft-card')).toBeNull(),
@@ -105,19 +104,19 @@ describe('referral draft card', () => {
   });
 
   it('keeps the draft when the discard confirmation is dismissed', async () => {
-    const store = renderTabWithDraft();
+    const store = await renderTabWithDraft();
 
-    fireEvent.press(await screen.findByTestId('draft-discard-btn'));
-    fireEvent.press(screen.getByTestId('discard-modal-cancel'));
+    await fireEvent.press(await screen.findByTestId('draft-discard-btn'));
+    await fireEvent.press(screen.getByTestId('discard-modal-cancel'));
 
     expect(screen.getByTestId('referral-draft-card')).toBeOnTheScreen();
     expect(store.getSnapshot()).not.toBeNull();
   });
 
   it('resumes the form when the card is tapped', async () => {
-    renderTabWithDraft();
+    await renderTabWithDraft();
 
-    fireEvent.press(await screen.findByTestId('referral-draft-card'));
+    await fireEvent.press(await screen.findByTestId('referral-draft-card'));
 
     expect(showModalScreen).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Refer to Shelter' }),

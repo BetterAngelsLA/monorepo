@@ -85,7 +85,7 @@ describe('ProfilePhotoUploaderHmis', () => {
   it('uploads the photo and refetches on success', async () => {
     mocks.uploadClientPhoto.mockResolvedValue(undefined);
 
-    render(
+    await render(
       <ProfilePhotoUploaderHmis
         clientId="client-1"
         imageUrl={null}
@@ -106,7 +106,7 @@ describe('ProfilePhotoUploaderHmis', () => {
   it('shows an error snackbar when the upload errors', async () => {
     mocks.uploadClientPhoto.mockRejectedValue(new Error('boom'));
 
-    render(
+    await render(
       <ProfilePhotoUploaderHmis
         clientId="client-1"
         imageUrl={null}

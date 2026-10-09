@@ -48,10 +48,10 @@ const sampleFile = {
   uri: 'file://photo.jpg',
 };
 
-function openPickerAndSelect(file: unknown) {
+async function openPickerAndSelect(file: unknown) {
   const latest = mocks.mediaPickerProps[mocks.mediaPickerProps.length - 1];
 
-  return act(async () => {
+  return await act(async () => {
     latest.onFilesSelected?.([file]);
   });
 }
@@ -66,7 +66,7 @@ describe('ClientProfilePhotoUploader', () => {
   it('uploads the selected photo', async () => {
     mocks.uploadPhoto.mockResolvedValue(undefined);
 
-    render(<ClientProfilePhotoUploader clientId="client-1" />);
+    await render(<ClientProfilePhotoUploader clientId="client-1" />);
 
     await openPickerAndSelect(sampleFile);
 
@@ -83,7 +83,7 @@ describe('ClientProfilePhotoUploader', () => {
   it('shows an error snackbar when the upload fails', async () => {
     mocks.uploadPhoto.mockRejectedValue(new Error('boom'));
 
-    render(<ClientProfilePhotoUploader clientId="client-1" />);
+    await render(<ClientProfilePhotoUploader clientId="client-1" />);
 
     await openPickerAndSelect(sampleFile);
 
@@ -96,7 +96,7 @@ describe('ClientProfilePhotoUploader', () => {
   it('passes through a captured camera file', async () => {
     mocks.uploadPhoto.mockResolvedValue(undefined);
 
-    render(<ClientProfilePhotoUploader clientId="client-1" />);
+    await render(<ClientProfilePhotoUploader clientId="client-1" />);
 
     const latest = mocks.mediaPickerProps[mocks.mediaPickerProps.length - 1];
 

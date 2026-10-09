@@ -121,7 +121,7 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 const REFUSAL_MESSAGE =
   "You own Twin Peaks Sheriff's Department. Transfer ownership to another member before deleting your account.";
 
-function renderProfile(payload: unknown) {
+async function renderProfile(payload: unknown) {
   const link = new ApolloLink(
     () =>
       new Observable((observer) => {
@@ -134,12 +134,12 @@ function renderProfile(payload: unknown) {
     <ApolloProvider client={client}>{children}</ApolloProvider>
   );
 
-  render(<UserProfile />, { wrapper });
+  await render(<UserProfile />, { wrapper });
 }
 
-function confirmDelete() {
-  fireEvent.press(screen.getByText('Delete My Account'));
-  fireEvent.press(screen.getByTestId('delete-modal-confirm-btn'));
+async function confirmDelete() {
+  await fireEvent.press(screen.getByText('Delete My Account'));
+  await fireEvent.press(screen.getByTestId('delete-modal-confirm-btn'));
 }
 
 describe('UserProfile account deletion', () => {
@@ -148,9 +148,9 @@ describe('UserProfile account deletion', () => {
   });
 
   it('signs the user out once the account is deleted', async () => {
-    renderProfile({ __typename: 'DeletedObjectType', id: 1 });
+    await renderProfile({ __typename: 'DeletedObjectType', id: 1 });
 
-    confirmDelete();
+    await confirmDelete();
 
     await waitFor(() => expect(mockSignOut).toHaveBeenCalled());
     expect(mockNavigate).toHaveBeenCalledWith('/auth');
@@ -158,7 +158,7 @@ describe('UserProfile account deletion', () => {
   });
 
   it('reports a refusal and keeps the user signed in', async () => {
-    renderProfile({
+    await renderProfile({
       __typename: 'OperationInfo',
       messages: [
         {
@@ -170,7 +170,7 @@ describe('UserProfile account deletion', () => {
       ],
     });
 
-    confirmDelete();
+    await confirmDelete();
 
     await waitFor(() =>
       expect(mockShowSnackbar).toHaveBeenCalledWith({

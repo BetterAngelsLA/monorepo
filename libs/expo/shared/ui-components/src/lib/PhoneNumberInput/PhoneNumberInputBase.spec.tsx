@@ -7,10 +7,10 @@ const baseProps = {
 };
 
 describe('PhoneNumberInputBase', () => {
-  it('emits the initial value once on mount', () => {
+  it('emits the initial value once on mount', async () => {
     const onChangeParts = vi.fn();
 
-    render(
+    await render(
       <PhoneNumberInputBase
         {...baseProps}
         phoneNumber="5551234567"
@@ -29,11 +29,11 @@ describe('PhoneNumberInputBase', () => {
   // re-rendered, which produced a new arrow, and so on -- an infinite render
   // loop (~100 "Maximum update depth exceeded" warnings per load) on the
   // related-contact form.
-  it('does not re-emit when the parent re-renders with a new callback identity', () => {
+  it('does not re-emit when the parent re-renders with a new callback identity', async () => {
     const first = vi.fn();
     const second = vi.fn();
 
-    const { rerender } = render(
+    const { rerender } = await render(
       <PhoneNumberInputBase
         {...baseProps}
         phoneNumber="5551234567"
@@ -54,15 +54,15 @@ describe('PhoneNumberInputBase', () => {
     expect(first).toHaveBeenCalledTimes(1);
   });
 
-  it('still emits when the number changes', () => {
+  it('still emits when the number changes', async () => {
     const onChangeParts = vi.fn();
 
-    const { getByPlaceholderText } = render(
+    const { getByPlaceholderText } = await render(
       <PhoneNumberInputBase {...baseProps} onChangeParts={onChangeParts} />,
     );
     onChangeParts.mockClear();
 
-    fireEvent.changeText(
+    await fireEvent.changeText(
       getByPlaceholderText('Enter phone number'),
       '5551234567',
     );
@@ -70,10 +70,10 @@ describe('PhoneNumberInputBase', () => {
     expect(onChangeParts).toHaveBeenCalledWith('5551234567', '');
   });
 
-  it('emits both parts', () => {
+  it('emits both parts', async () => {
     const onChangeParts = vi.fn();
 
-    const { getByPlaceholderText } = render(
+    const { getByPlaceholderText } = await render(
       <PhoneNumberInputBase
         placeholderNumber="Enter phone number"
         placeholderExt="ext"
@@ -82,20 +82,20 @@ describe('PhoneNumberInputBase', () => {
     );
     onChangeParts.mockClear();
 
-    fireEvent.changeText(
+    await fireEvent.changeText(
       getByPlaceholderText('Enter phone number'),
       '5551234567',
     );
-    fireEvent.changeText(getByPlaceholderText('ext'), '42');
+    await fireEvent.changeText(getByPlaceholderText('ext'), '42');
 
     expect(onChangeParts).toHaveBeenLastCalledWith('5551234567', '42');
   });
 
-  it('calls onClear when a populated number is cleared', () => {
+  it('calls onClear when a populated number is cleared', async () => {
     const onChangeParts = vi.fn();
     const onClear = vi.fn();
 
-    const { getByPlaceholderText } = render(
+    const { getByPlaceholderText } = await render(
       <PhoneNumberInputBase
         {...baseProps}
         phoneNumber="5551234567"
@@ -105,7 +105,7 @@ describe('PhoneNumberInputBase', () => {
     );
     onChangeParts.mockClear();
 
-    fireEvent.changeText(getByPlaceholderText('Enter phone number'), '');
+    await fireEvent.changeText(getByPlaceholderText('Enter phone number'), '');
 
     expect(onChangeParts).toHaveBeenCalledWith('', '');
     expect(onClear).toHaveBeenCalledTimes(1);
