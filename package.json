@@ -27,7 +27,7 @@
     "@config-plugins/react-native-pdf": "^14.0.0",
     "@expo/metro": "~56.0.0",
     "@expo/metro-runtime": "~57.0.9",
-    "@gorhom/bottom-sheet": "^5",
+    "@gorhom/bottom-sheet": "patch:@gorhom/bottom-sheet@npm%3A5.2.14#~/.yarn/patches/@gorhom-bottom-sheet-npm-5.2.14-369bca24fd.patch",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@hookform/resolvers": "^5.2.1",
     "@likashefqet/react-native-image-zoom": "^4.2.1",
