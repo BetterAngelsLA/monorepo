@@ -18,13 +18,16 @@ export default defineConfig({
       {
         find: /^expo-file-system(?:\/.*)?$/,
         replacement: path.resolve(
-          __dirname,
+          import.meta.dirname,
           'src/__mocks__/expo-file-system.ts',
         ),
       },
       {
         find: /^expo-image(?:\/.*)?$/,
-        replacement: path.resolve(__dirname, 'src/__mocks__/expo-image.tsx'),
+        replacement: path.resolve(
+          import.meta.dirname,
+          'src/__mocks__/expo-image.tsx',
+        ),
       },
     ],
     tsconfigPaths: true,
