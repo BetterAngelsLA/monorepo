@@ -32,6 +32,14 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any, Optional
 
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
+from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.db import transaction
+from django.utils import timezone
+from organizations.models import Organization
+
 from accounts.models import PermissionGroup, User
 from accounts.selectors import get_permission_group_for_org
 from clients.enums import (
@@ -48,16 +56,9 @@ from clients.enums import (
 )
 from clients.models import ClientContact, ClientProfile, HmisProfile
 from common.models import Location, PhoneNumber
-from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
-from django.contrib.gis.geos import Point
-from django.core.management.base import BaseCommand, CommandError, CommandParser
-from django.utils import timezone
 from notes.groups import CASEWORKER
 from notes.models import Note
 from notes.services import note_create
-from organizations.models import Organization
 from teams.models import Team
 
 # ---------------------------------------------------------------------------

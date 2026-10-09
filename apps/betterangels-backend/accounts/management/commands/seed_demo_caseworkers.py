@@ -14,9 +14,10 @@ never overwrites data that is not one of these accounts.
 
 from typing import Any
 
-from accounts.seed import DEMO_CASEWORKER_PASSWORD, resolve_demo_org, seed_demo_caseworkers
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+
+from accounts.seed import DEMO_CASEWORKER_PASSWORD, resolve_demo_org, seed_demo_caseworkers
 
 
 class Command(BaseCommand):
