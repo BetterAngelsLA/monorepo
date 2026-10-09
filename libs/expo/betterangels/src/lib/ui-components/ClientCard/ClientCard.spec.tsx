@@ -31,12 +31,18 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
     children,
     onPress,
     accessibilityLabel,
+    accessibilityHint,
   }: {
     children?: React.ReactNode;
     onPress?: () => void;
     accessibilityLabel?: string;
+    accessibilityHint?: string;
   }) => (
-    <Text accessibilityLabel={accessibilityLabel} onPress={onPress}>
+    <Text
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      onPress={onPress}
+    >
       {children}
     </Text>
   ),

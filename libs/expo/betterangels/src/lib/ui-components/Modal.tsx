@@ -59,8 +59,10 @@ export default function Modal({
   const insets = useSafeAreaInsets();
   const { width, height: screenH } = useWindowDimensions();
 
-  // 0 = closed, 1 = open
-  const progress = useRef(new Animated.Value(0)).current;
+  // 0 = closed, 1 = open. A lazily-initialised state value gives one stable
+  // Animated.Value for the component's lifetime; `useRef(...).current` would be
+  // a ref read during render, which react-hooks/refs rejects.
+  const [progress] = useState(() => new Animated.Value(0));
   const [mounted, setMounted] = useState<boolean>(isModalVisible);
   const prevVisible = useRef<boolean>(isModalVisible);
 
