@@ -259,7 +259,7 @@ export default function ConsentModal({
               {renderHeader()}
 
               <Image
-                style={{ height: windowHeight * 0.325 }}
+                style={[styles.consentImage, { height: windowHeight * 0.325 }]}
                 contentFit="contain"
                 source={consentImage}
                 accessibilityIgnoresInvertColors
@@ -323,6 +323,10 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
+  },
+  consentImage: {
+    aspectRatio: 1,
+    maxWidth: '100%',
   },
   checkbox: {
     flexDirection: 'row',
