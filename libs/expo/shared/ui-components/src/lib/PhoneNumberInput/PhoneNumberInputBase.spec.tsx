@@ -42,7 +42,7 @@ describe('PhoneNumberInputBase', () => {
     );
     expect(first).toHaveBeenCalledTimes(1);
 
-    rerender(
+    await rerender(
       <PhoneNumberInputBase
         {...baseProps}
         phoneNumber="5551234567"

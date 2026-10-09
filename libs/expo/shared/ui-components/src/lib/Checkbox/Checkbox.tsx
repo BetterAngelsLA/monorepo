@@ -60,7 +60,15 @@ export function Checkbox(props: ICheckboxProps) {
       accessibilityRole={accessibilityRole}
       // role="checkbox" without a state is invalid ARIA (and reads as
       // indeterminate on web), so the checked state travels with the role.
+      //
+      // Both props are needed. `accessibilityState` is the native prop, and
+      // react-native-web 0.21 does not read it at all: `createDOMProps` maps only
+      // `aria-checked`, and the `accessibilityProps` whitelist that decides what
+      // survives to the DOM omits `accessibilityState`. React Native aliases
+      // `aria-checked` onto `accessibilityState.checked`, so the two agree on
+      // native.
       accessibilityState={{ checked: isChecked }}
+      aria-checked={isChecked}
       accessible
       style={[
         styles.container,
