@@ -1,4 +1,5 @@
 import 'expo-dev-client';
+import { FontLoader } from '@monorepo/expo/shared/ui-components';
 
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -45,7 +46,8 @@ export default function RootLayout() {
   useNewRelic();
 
   return (
-    <BaUiProviders>
+    <FontLoader>
+      <BaUiProviders>
       <EnvironmentSwitcherProvider
         environments={ENVIRONMENTS}
         storage={asyncStorageAdapter}
@@ -57,6 +59,7 @@ export default function RootLayout() {
           <AppRoutesStack />
         </BaDataProviders>
       </EnvironmentSwitcherProvider>
-    </BaUiProviders>
+      </BaUiProviders>
+    </FontLoader>
   );
 }

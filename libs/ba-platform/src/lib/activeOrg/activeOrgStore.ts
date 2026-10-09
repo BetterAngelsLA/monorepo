@@ -99,20 +99,54 @@ export const getActiveOrgId = (): string | null => {
 };
 
 /**
+ * Commit a new id, if it differs. Returns whether anything changed.
+ *
+ * The write is always synchronous — that is the whole point of this store, see
+ * the module docs. Whether ``notify`` follows synchronously is the caller's
+ * choice (see :func:`reconcileActiveOrgId`).
+ */
+const write = (id: string | null): boolean => {
+  // Compare against the seeded value rather than the field: an unseeded store
+  // reads null, which would make clearActiveOrgId() a no-op that leaves the
+  // persisted copy behind.
+  if (id === getActiveOrgId()) return false;
+
+  current = id;
+  writePersisted(id);
+  return true;
+};
+
+/**
  * Set the active organization id and persist it, synchronously.
  *
  * Does not validate — ``useActiveOrgState`` owns that, because it is the thing
  * that knows which organizations the user belongs to.
  */
 export const setActiveOrgId = (id: string | null): void => {
-  // Compare against the seeded value rather than the field: an unseeded store
-  // reads null, which would make clearActiveOrgId() a no-op that leaves the
-  // persisted copy behind.
-  if (id === getActiveOrgId()) return;
+  if (write(id)) notify();
+};
 
-  current = id;
-  writePersisted(id);
-  notify();
+/**
+ * Set the active organization id **from a render phase**, deferring only the
+ * notification.
+ *
+ * ``useActiveOrgState`` has to reconcile during render rather than in an effect:
+ * React runs effects child-before-parent, so a child would fire its first query
+ * before the provider had chosen an organization, and the request would go out
+ * with no ``X-Organization-ID`` header.
+ *
+ * The *write* must therefore stay synchronous — this render, and any request
+ * issued from it, has to see the new id. The *notification* must not: this
+ * component subscribes to the same store through ``useSyncExternalStore``, so
+ * notifying synchronously asks React to update ``ActiveOrgProvider`` while it is
+ * rendering ``ActiveOrgProvider`` (React 19 warns about exactly that).
+ *
+ * Deferring to a microtask is safe for ordering: subscribers that render later in
+ * this same pass already read the new value from ``getSnapshot``, and the
+ * deferred notify simply covers anyone who already rendered.
+ */
+export const reconcileActiveOrgId = (id: string | null): void => {
+  if (write(id)) queueMicrotask(notify);
 };
 
 /**

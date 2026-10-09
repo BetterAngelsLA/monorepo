@@ -185,10 +185,10 @@ export default function Modal({
 
       {/* Panel */}
       <View
-        pointerEvents="box-none"
         style={[
           styles.root,
           { justifyContent: vertical ? 'flex-end' : 'flex-start' },
+          { pointerEvents: 'box-none' },
         ]}
       >
         <Animated.View

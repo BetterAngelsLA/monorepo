@@ -5,31 +5,22 @@ import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { useSnackbar } from '../../../hooks';
-import {
-  ClientProfileSectionEnum,
-  isValidClientProfileSectionEnum,
-} from '../../../screenRouting';
+import { TRelatedModelSection } from '../../../screenRouting';
 import { MainScrollContainer } from '../../../ui-components';
 import { GetClientProfileDocument } from '../ClientProfileForm/__generated__/clientProfile.generated';
 import { clientRelatedModelConfig } from './config';
 
 type TProps = {
   clientId: string;
-  componentName: string;
+  componentName: TRelatedModelSection;
 };
 
 export function ClientProfileRelatedModelList(props: TProps) {
-  const { clientId, componentName } = props;
+  const { clientId, componentName: section } = props;
 
   const navigation = useNavigation();
 
   const { showSnackbar } = useSnackbar();
-
-  if (!isValidClientProfileSectionEnum(componentName)) {
-    throw new Error(`Invalid componentName "${componentName}" provided.`);
-  }
-
-  const section = componentName as ClientProfileSectionEnum;
 
   const {
     data,

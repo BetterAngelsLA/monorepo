@@ -8,18 +8,7 @@ import TextMedium from '../TextMedium';
 import * as Crypto from 'expo-crypto';
 import { Directory, File, Paths } from 'expo-file-system';
 import { drop, filter, forEach, pipe, sortBy } from 'remeda';
-
-type TProps = {
-  url?: string;
-  /** Persist a copy under cacheDirectory keyed by URL (or cacheKey). Defaults to true. */
-  cache?: boolean;
-  /** Override the cache key (useful for signed/expiring URLs). */
-  cacheKey?: string;
-  onError?: (err?: unknown) => void;
-  headers?: Record<string, string>;
-  /** Max number of cached PDFs to keep (newest kept). Disabled if undefined. */
-  maxCacheEntries?: number;
-};
+import { TPdfViewerProps } from './types';
 
 export default function PdfViewer({
   url,
@@ -28,7 +17,7 @@ export default function PdfViewer({
   onError,
   headers,
   maxCacheEntries = 20,
-}: TProps) {
+}: TPdfViewerProps) {
   const [localUri, setLocalUri] = useState<string | null>(null);
   const [hasError, setHasError] = useState<boolean>(false);
 

@@ -15,7 +15,12 @@ import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Redirect, Tabs, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ColorValue, Pressable, StyleSheet, View } from 'react-native';
+import {
+  ColorValue,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { privacyPolicyUrl, termsOfServiceUrl } from '../../../config';
 
@@ -126,35 +131,6 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
-          name="drawerPlaceholder"
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              setIsModalVisible(true);
-            },
-          }}
-          options={{
-            href: hmisProdDemoEnabled ? null : undefined,
-            title: '',
-            tabBarIcon: () => (
-              <View style={styles.plusButtonWrapper}>
-                <Pressable
-                  testID="main-plus-tab-btn"
-                  accessibilityRole="button"
-                  accessibilityHint="Opening homepage main modal"
-                  onPress={() => setIsModalVisible(true)}
-                  style={({ pressed }) => [
-                    styles.plusButton,
-                    pressed && styles.plusButtonPressed,
-                  ]}
-                >
-                  <PlusIcon color={Colors.WHITE} />
-                </Pressable>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="interactions"
           options={{
             href: hmisProdDemoEnabled ? null : undefined,
@@ -171,6 +147,46 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
+
+      {/*
+        The "add" button is deliberately NOT a tab. As a `Tabs.Screen` it needed a
+        route whose screen rendered `null`, and it depended on cancelling the tab
+        press to avoid navigating there — reliable on native, but not on web, where
+        the tab bar wraps every tab in an <a> and the navigation wins: pressing it
+        landed on that empty screen instead of opening the modal. As a plain
+        Pressable rendered by the layout it never participates in navigation, so
+        both platforms behave identically with no platform branching.
+
+        Still gated on `hmisProdDemoEnabled`, which is what the placeholder tab
+        expressed with `href: hmisProdDemoEnabled ? null : undefined` — in that mode
+        the button was not shown at all, so hoisting it must not start showing it.
+
+        `pointerEvents` is set through `style` (the prop form is deprecated and
+        warns on react-native-web). It is load-bearing: without `box-none` this
+        wrapper swallows every tap in its square.
+      */}
+      {!hmisProdDemoEnabled && (
+        <View
+          style={[
+            styles.plusButtonOverlay,
+            { bottom: insets.bottom + 24, pointerEvents: 'box-none' },
+          ]}
+        >
+          <Pressable
+            testID="main-plus-tab-btn"
+            accessibilityRole="button"
+            accessibilityLabel="Add"
+            accessibilityHint="Opening homepage main modal"
+            onPress={() => setIsModalVisible(true)}
+            style={({ pressed }) => [
+              styles.plusButton,
+              pressed && styles.plusButtonPressed,
+            ]}
+          >
+            <PlusIcon color={Colors.WHITE} />
+          </Pressable>
+        </View>
+      )}
 
       <MainPlusModal
         closeModal={() => setIsModalVisible(false)}
@@ -207,9 +223,14 @@ const styles = StyleSheet.create({
   labelText: {
     textAlign: 'center',
   },
-  plusButtonWrapper: {
-    position: 'relative',
-    bottom: 36,
+  /**
+   * The "add" button, floated over the tab bar. Absolute rather than a tab slot,
+   * because it is not a destination — see the comment at its render site.
+   */
+  plusButtonOverlay: {
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -40,
     height: 80,
     width: 80,
     borderRadius: 100,

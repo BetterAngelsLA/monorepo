@@ -128,7 +128,10 @@ export function Textarea(props: ITextareaProps) {
                 overflow: 'scroll',
                 ...Platform.select({
                   web: {
-                    outline: 'none',
+                    // web-only: react-native-web deletes the `outline` shorthand
+                    // and RN's types allow only solid/dotted/dashed for
+                    // `outlineStyle`, so a zero width drops the focus ring.
+                    outlineWidth: 0,
                   },
                 }),
               }}

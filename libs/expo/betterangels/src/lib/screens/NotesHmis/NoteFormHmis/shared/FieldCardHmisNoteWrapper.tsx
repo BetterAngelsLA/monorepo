@@ -52,8 +52,11 @@ export function FieldCardHmisNoteWrapper(props: IFieldCardProps) {
     >
       {loading && (
         <View
-          pointerEvents="none"
-          style={[StyleSheet.absoluteFill, styles.loading]}
+          style={[
+            StyleSheet.absoluteFill,
+            styles.loading,
+            { pointerEvents: 'none' },
+          ]}
         >
           <Loading />
         </View>

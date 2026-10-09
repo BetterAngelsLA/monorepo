@@ -1,4 +1,5 @@
 import { Colors } from '@monorepo/expo/shared/static';
+import { Platform } from 'react-native';
 
 /**
  * Header palettes — the single source of truth for header colours. Both header
@@ -27,3 +28,21 @@ export const headerStyles = {
 } as const;
 
 export type THeaderStyleName = keyof typeof headerStyles;
+
+/**
+ * Leading inset for a header's left slot.
+ *
+ * react-navigation's JS (web) header lays `headerLeft` flush against the screen
+ * edge; the native bars inset it (react-navigation's own back chevron carries an
+ * ~11pt leading margin). Without this the "Back" label touches the left edge of
+ * the window on web only, which reads as misaligned next to the centred title.
+ *
+ * Applied by the button components rather than through a
+ * `headerLeftContainerStyle` screen option: that option belongs to the JS stack
+ * and is not part of native-stack's options, which is the stack this app uses
+ * (so it would be a type error and silently ignored on device).
+ *
+ * Web-only: the native bars already inset themselves.
+ */
+export const headerLeftInsetStyle =
+  Platform.OS === 'web' ? { paddingStart: 12 } : undefined;

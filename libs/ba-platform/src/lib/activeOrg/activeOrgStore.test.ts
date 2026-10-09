@@ -2,6 +2,7 @@ import {
   clearActiveOrgId,
   configureActiveOrgStorage,
   getActiveOrgId,
+  reconcileActiveOrgId,
   resetActiveOrgStoreForTests,
   setActiveOrgId,
   subscribeActiveOrgId,
@@ -97,5 +98,53 @@ describe('activeOrgStore', () => {
 
     // Persistence is best-effort; the session must still work.
     expect(getActiveOrgId()).toBe('org-2');
+  });
+
+  describe('reconcileActiveOrgId (render-phase write)', () => {
+    it('writes the value synchronously, so a request from this render sees it', () => {
+      const storage = createSyncStorage();
+      configureActiveOrgStorage(storage);
+
+      reconcileActiveOrgId('org-9');
+
+      expect(getActiveOrgId()).toBe('org-9');
+      expect(storage.get()).toBe('org-9');
+    });
+
+    it('defers the notification past the render phase', async () => {
+      configureActiveOrgStorage(createSyncStorage());
+      const listener = vi.fn();
+      subscribeActiveOrgId(listener);
+
+      reconcileActiveOrgId('org-9');
+
+      // Notifying synchronously would update the rendering component itself.
+      expect(listener).not.toHaveBeenCalled();
+
+      await Promise.resolve();
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not notify when the id is unchanged', async () => {
+      configureActiveOrgStorage(createSyncStorage('org-9'));
+      const listener = vi.fn();
+      subscribeActiveOrgId(listener);
+
+      reconcileActiveOrgId('org-9');
+      await Promise.resolve();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('leaves setActiveOrgId notifying synchronously, as callers expect', () => {
+      configureActiveOrgStorage(createSyncStorage());
+      const listener = vi.fn();
+      subscribeActiveOrgId(listener);
+
+      setActiveOrgId('org-9');
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
   });
 });

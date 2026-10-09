@@ -8,6 +8,10 @@ import {
   setActiveOrgId as commitActiveOrgId,
   subscribeActiveOrgId,
 } from '../../../activeOrg';
+// Imported from the module rather than the barrel on purpose: it writes during
+// render and does not notify synchronously, so it is only safe for the provider
+// below. Keeping it off the package's public surface stops an app reaching for it.
+import { reconcileActiveOrgId } from '../../../activeOrg/activeOrgStore';
 
 /**
  * Minimal org shape accepted by the active-org state.
@@ -77,6 +81,11 @@ export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
   // provider had chosen an organization and the request would go out with no
   // header. Safe here because it is idempotent and derived purely from props.
   //
+  // `reconcileActiveOrgId` (not `setActiveOrgId`) keeps the write synchronous
+  // while deferring the subscriber notification: this component subscribes to
+  // the same store via `useSyncExternalStore`, so notifying here would ask React
+  // to update `ActiveOrgProvider` while it renders `ActiveOrgProvider`.
+  //
   // An empty list means "not loaded yet", not "belongs to nothing" —
   // UserProvider renders children before the user query resolves. Reconciling
   // then would discard the organization restored from persistence and replace
@@ -86,7 +95,7 @@ export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
     organizations.length > 0 &&
     !organizations.some((o) => o.id === currentId)
   ) {
-    commitActiveOrgId(organizations[0].id);
+    reconcileActiveOrgId(organizations[0].id);
   }
 
   const activeOrgId = useSyncExternalStore(

@@ -156,6 +156,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: FontSizes.xsm.fontSize,
     includeFontPadding: false,
-    ...Platform.select({ web: { outline: 'none' as const } }),
+    // `outlineWidth: 0`, not `outline: 'none'`: react-native-web's StyleSheet
+    // validator rejects CSS shorthands and *deletes* them (dev only), so the
+    // shorthand silently did nothing. `outlineStyle` is the literal translation
+    // but React Native's own types only allow 'solid' | 'dotted' | 'dashed' for
+    // it, so a zero width is the type-safe way to drop the focus ring.
+    // See docs/outreach-web.md.
+    ...Platform.select({ web: { outlineWidth: 0 } }),
   },
 });

@@ -31,6 +31,7 @@ export { default as Divider } from './Divider';
 export { default as EditButton } from './EditButton';
 export { default as EmailBtn } from './EmailBtn';
 export { default as ExpandableContainer } from './ExpandableContainer';
+export { default as FontLoader } from './Fonts/FontLoader';
 export { default as FieldCard } from './FieldCard';
 export { default as FileCard } from './FileCard';
 export * from './Filters';

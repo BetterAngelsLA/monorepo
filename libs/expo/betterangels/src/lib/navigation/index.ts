@@ -1,6 +1,6 @@
 export * from './constants';
 export { HeaderLeftButton } from './HeaderLeftButton';
-export { headerStyles } from './headerStyles';
+export { headerStyles, headerLeftInsetStyle } from './headerStyles';
 export type { THeaderStyleName } from './headerStyles';
 export { getStackModalOptions, getStackScreenOptions } from './options';
 export * from './ScreenHeader';

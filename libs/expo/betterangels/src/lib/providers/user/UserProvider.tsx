@@ -36,7 +36,7 @@ export type TUser = {
 
 const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   document: CurrentUserDocument,
-  parseUser: (data: unknown): TUser | undefined => {
+  parseUser: (data: unknown, prev?: TUser): TUser | undefined => {
     const userData = data as CurrentUserQuery['currentUser'] | undefined;
     return userData
       ? {
@@ -51,8 +51,17 @@ const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
             permissions: (org.permissions ?? []) as PermissionEnum[],
           })),
           isOutreachAuthorized: userData.isOutreachAuthorized ?? false,
-          hasAcceptedTos: userData.hasAcceptedTos ?? false,
-          hasAcceptedPrivacyPolicy: userData.hasAcceptedPrivacyPolicy ?? false,
+          // Accepting the agreements is monotonic. The accept is written as
+          // soon as the server confirms it, but this query is re-run on
+          // foreground, so a read that was already in flight can resolve
+          // afterwards still carrying the pre-accept payload; applying it
+          // verbatim re-opens the consent sheet. Once true, stay true until a
+          // fresh read says otherwise.
+          hasAcceptedTos:
+            prev?.hasAcceptedTos || (userData.hasAcceptedTos ?? false),
+          hasAcceptedPrivacyPolicy:
+            prev?.hasAcceptedPrivacyPolicy ||
+            (userData.hasAcceptedPrivacyPolicy ?? false),
           isHmisUser: userData.isHmisUser ?? undefined,
         }
       : undefined;

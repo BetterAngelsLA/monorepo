@@ -22,8 +22,12 @@ interface IAvatarProps {
   mr?: TSpacing;
   headers?: Record<string, string> | null;
   alt?: string;
-  accessibilityLabel: string;
-  accessibilityHint: string;
+  /**
+   * Optional: an avatar inside a control that already announces itself should
+   * stay decorative, so that screen readers do not hit two elements.
+   */
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
   borderColor?: string;
   loading?: boolean;
 }
@@ -67,8 +71,20 @@ export function Avatar(props: IAvatarProps) {
         return null;
     }
   };
+  // Without an image the avatar is an icon, and the label used to be dropped
+  // entirely — declared as a prop, passed to <Image> only in the image branch,
+  // and silently discarded here. A client with no photo therefore announced
+  // nothing at all, on every platform. Put the label on the wrapper in that
+  // branch; with an image it stays on the <Image>, which already works.
+  const labelled =
+    !loading && !imageUrl && !!accessibilityLabel ? accessibilityLabel : undefined;
+
   return (
     <View
+      accessible={!!labelled}
+      accessibilityLabel={labelled}
+      accessibilityHint={labelled ? accessibilityHint : undefined}
+      accessibilityRole={labelled ? 'image' : undefined}
       style={{
         height: SIZE[size],
         width: SIZE[size],

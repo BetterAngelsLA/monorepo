@@ -19,7 +19,8 @@ import { DimensionValue, Dimensions, StyleSheet, View } from 'react-native';
 
 import { useMutation } from '@apollo/client/react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSignOut, useUser } from '../hooks';
+import { extractOperationInfoMessage } from '../apollo';
+import { useSignOut, useSnackbar, useUser } from '../hooks';
 import { UpdateCurrentUserDocument } from '../providers';
 import { TUser } from '../providers/user/UserProvider';
 import { UserProfileEdit } from '../screens/UserProfile/UserProfileEdit/UserProfileEdit';
@@ -59,8 +60,16 @@ export default function ConsentModal({
   height = 'auto',
 }: IConsentModalProps) {
   const { setUser } = useUser();
+  const { showSnackbar } = useSnackbar();
   const [updateCurrentUser] = useMutation(UpdateCurrentUserDocument, {
-    update: (cache) => {
+    update: (cache, { data }) => {
+      // A refused accept resolves to `OperationInfo` rather than `UserType`
+      // (see apps/betterangels-backend/docs/graphql_errors.md). Nothing was
+      // accepted, so the cache must not be told otherwise.
+      if (data?.updateCurrentUser?.__typename === 'OperationInfo') {
+        return;
+      }
+
       // `updateCurrentUser` returns `UserType`, which Apollo normalizes under a
       // DIFFERENT cache key than the `currentUser` query's `CurrentUserType`.
       // Without writing the accepted flags into the `CurrentUserType` cache
@@ -90,7 +99,7 @@ export default function ConsentModal({
   const accepted = user.hasAcceptedPrivacyPolicy && user.hasAcceptedTos;
 
   const submitAgreements = async () => {
-    const { data, error } = await updateCurrentUser({
+    const result = await updateCurrentUser({
       variables: {
         data: {
           id: user.id,
@@ -99,6 +108,23 @@ export default function ConsentModal({
         },
       },
     });
+
+    const { data, error } = result;
+
+    // A refused accept comes back as a resolved `OperationInfo` (see
+    // apps/betterangels-backend/docs/graphql_errors.md). Flipping the flags and
+    // closing here would tell the user they accepted terms the server did not
+    // record, so leave the sheet up and surface the reason.
+    if (data?.updateCurrentUser?.__typename === 'OperationInfo') {
+      showSnackbar({
+        message:
+          extractOperationInfoMessage(result, 'updateCurrentUser') ??
+          'Something went wrong. Please try again.',
+        type: 'error',
+      });
+
+      return;
+    }
 
     if (!data) {
       console.log('Error updating user', error);
@@ -153,28 +179,33 @@ export default function ConsentModal({
 
   const renderCheckboxes = () =>
     checkboxData.map((item) => (
-      <Checkbox
-        key={item.key}
-        isChecked={checkedItems[item.key]}
-        isConsent
-        hasBorder={false}
-        onCheck={() => handleCheck(item.key)}
-        accessibilityHint={item.accessibilityHint}
-        labelFirst={false}
-        size="sm"
-        justifyContent="flex-start"
-        mb="sm"
-        label={
-          <View style={styles.checkbox}>
+      <View key={item.key} style={styles.consentRow}>
+        <Checkbox
+          isChecked={checkedItems[item.key]}
+          isConsent
+          hasBorder={false}
+          onCheck={() => handleCheck(item.key)}
+          accessibilityHint={item.accessibilityHint}
+          labelFirst={false}
+          size="sm"
+          justifyContent="flex-start"
+          accessibilityRole="checkbox"
+          label={
             <TextRegular size="sm" style={{ fontWeight: '400' }} ml="xs">
-              I accept the{' '}
+              I accept the
             </TextRegular>
-            <Link style={styles.link} href={item.url}>
-              {item.linkText}
-            </Link>
-          </View>
-        }
-      />
+          }
+        />
+        {/*
+          The link is a SIBLING of the checkbox, never inside it. Two reasons:
+          an interactive element nested in a `role="checkbox"` is unreadable to
+          screen readers (and was invalid HTML while the row was a <button>), and
+          nested hit targets mean tapping the link also toggles the box.
+        */}
+        <Link style={styles.link} href={item.url}>
+          {item.linkText}
+        </Link>
+      </View>
     ));
 
   const renderHeader = () => (
@@ -318,20 +349,24 @@ export default function ConsentModal({
 const styles = StyleSheet.create({
   consent: {
     padding: 10,
-    fontFamily: 'Poppins',
-    fontWeight: '700',
+    // Must be a `useFonts` key (see FontLoader); the bare family name matches no
+    // registered face and falls back to the system font on web.
+    fontFamily: 'Poppins-SemiBold',
   },
   header: {
     alignItems: 'center',
   },
-  checkbox: {
+  /** Checkbox + its legal link as siblings; the row owns the item spacing. */
+  consentRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacings.sm,
   },
   link: {
-    fontFamily: 'Poppins',
+    fontFamily: 'Poppins-Regular',
     fontSize: FontSizes['sm'].fontSize,
     textDecorationLine: 'underline',
-    fontWeight: '400',
     color: '#052B73',
+    marginLeft: Spacings.xxs,
   },
 });

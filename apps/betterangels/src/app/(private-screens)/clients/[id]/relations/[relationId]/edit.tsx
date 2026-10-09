@@ -1,4 +1,8 @@
-import { ClientProfileRelatedModelForm } from '@monorepo/expo/betterangels';
+import {
+  ClientProfileRelatedModelForm,
+  DEFAULT_RELATED_MODEL_SECTION,
+  getClientProfileSectionOrDefault,
+} from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function ClientRelatedModelEditScreen() {
@@ -12,14 +16,19 @@ export default function ClientRelatedModelEditScreen() {
     componentName: string;
   }>();
 
-  if (!clientProfileId || !componentName || !relationId) {
+  if (!clientProfileId || !relationId) {
     throw new Error('Something went wrong. Please try again.');
   }
+
+  const section = getClientProfileSectionOrDefault(
+    componentName,
+    DEFAULT_RELATED_MODEL_SECTION,
+  );
 
   return (
     <ClientProfileRelatedModelForm
       clientProfileId={clientProfileId}
-      componentName={componentName}
+      componentName={section}
       relationId={relationId}
     />
   );

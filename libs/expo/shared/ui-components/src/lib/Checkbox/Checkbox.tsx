@@ -16,6 +16,16 @@ interface ICheckboxProps extends TMarginProps {
   onCheck: () => void;
   accessibilityLabel?: string;
   accessibilityHint: string;
+  /**
+   * Defaults to `'button'` (the long-standing contract).
+   *
+   * Pass `'checkbox'` when the label contains its own interactive content, such
+   * as a link to the terms of service. `accessibilityRole="button"` renders a
+   * real `<button>` on react-native-web, and an `<a>` inside a `<button>` is
+   * invalid HTML that React reports as a hydration error — `'checkbox'` renders
+   * a `<div role="checkbox">`, which is both valid and the more accurate role.
+   */
+  accessibilityRole?: 'button' | 'checkbox';
   size?: 'sm' | 'md';
   hasBorder?: boolean;
   labelFirst?: boolean;
@@ -32,6 +42,7 @@ export function Checkbox(props: ICheckboxProps) {
     onCheck,
     accessibilityHint,
     accessibilityLabel,
+    accessibilityRole = 'button',
     size,
     hasBorder,
     labelFirst = true,
@@ -46,7 +57,7 @@ export function Checkbox(props: ICheckboxProps) {
     <Pressable
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessible
       style={[
         styles.container,

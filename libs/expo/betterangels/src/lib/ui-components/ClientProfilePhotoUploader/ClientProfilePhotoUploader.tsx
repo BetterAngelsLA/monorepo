@@ -54,20 +54,21 @@ export function ClientProfilePhotoUploader(props: TProps) {
       <Pressable
         onPress={() => setModalType(imageUrl ? 'profile' : 'picker')}
         accessibilityRole="button"
+        // The control owns the announcement: it had a hint but no label, so a
+        // screen reader reached it with nothing to read out.
+        accessibilityLabel="client's profile photo"
         accessibilityHint={
           imageUrl ? 'view profile photo options' : 'update profile photo'
         }
+        testID="client-profile-photo-btn"
       >
         <View style={{ position: 'relative' }}>
+          {/* Decorative: the button above already announces this. */}
           <Avatar
             loading={isUploading}
             size="xl"
             mr="xs"
             imageUrl={imageUrl}
-            accessibilityLabel="client's profile photo"
-            accessibilityHint={
-              imageUrl ? 'view profile photo options' : 'update profile photo'
-            }
           />
           {!imageUrl && (
             <View

@@ -51,8 +51,14 @@ export interface UserProviderConfig<TUser, TQuery> {
   /**
    * Map the raw GraphQL ``currentUser`` (or ``undefined``) to the
    * app-specific user object.
+   *
+   * ``prev`` is the user currently in context (``undefined`` on the first
+   * load).  It is passed so an implementation can merge a payload *over* the
+   * current user instead of replacing it: a read that was already in flight
+   * when the app wrote locally resolves afterwards still carrying the older
+   * server state, and applying it verbatim would undo the newer local truth.
    */
-  parseUser: (data: unknown) => TUser | undefined;
+  parseUser: (data: unknown, prev: TUser | undefined) => TUser | undefined;
 
   /**
    * Return ``true`` when the errors indicate the session is expired or
@@ -183,13 +189,17 @@ export function createUserProvider<
         if (isUnauthenticated(res.errors)) {
           setUser(undefined);
         } else {
-          setUser(parseUser(res.data?.currentUser));
+          // Functional update so `parseUser` sees the user already in context:
+          // a read issued before a local write can resolve after it, and the
+          // app decides what wins rather than the resolution order doing so.
+          setUser((prev) => parseUser(res.data?.currentUser, prev));
         }
       },
-      // parseUser and isUnauthenticated are factory-level params — they're
-      // stable references captured once at module init, so omitting them from
-      // the dep array is intentional and safe.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // parseUser and isUnauthenticated are factory-level params — stable
+      // references captured once at module init — so the empty dep array is
+      // intentional. An eslint-disable for react-hooks/exhaustive-deps used to
+      // sit here; it became an unused directive once the payload was applied
+      // through the functional setUser above, so it was removed.
       [],
     );
 

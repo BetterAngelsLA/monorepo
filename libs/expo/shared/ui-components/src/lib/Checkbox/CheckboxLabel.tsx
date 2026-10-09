@@ -14,7 +14,7 @@ export function CheckboxLabel(props: TProps) {
   const isStringLabel = typeof label === 'string';
 
   return (
-    <View style={[styles.container, style]} pointerEvents="none">
+    <View style={[styles.container, style, { pointerEvents: 'none' }]}>
       {!isStringLabel && label}
 
       {!!isStringLabel && (

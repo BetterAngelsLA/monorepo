@@ -59,4 +59,17 @@ describe('Checkbox Component', () => {
     );
     expect(getByRole('button')).toBeTruthy();
   });
+
+  it('honours an explicit checkbox role for labels containing their own controls', () => {
+    const { getByRole } = render(
+      <Checkbox
+        accessibilityHint=""
+        accessibilityRole="checkbox"
+        label={<TextRegular ml="xs">I accept the Terms of Service</TextRegular>}
+        onCheck={() => console.log('Checkbox checked')}
+        isChecked={false}
+      />,
+    );
+    expect(getByRole('checkbox')).toBeTruthy();
+  });
 });

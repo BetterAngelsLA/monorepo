@@ -1,8 +1,12 @@
-export { GooglePlacesClient } from './lib/GooglePlacesClient';
+export {
+  configurePlacesProxy,
+  GooglePlacesClient,
+} from './lib/GooglePlacesClient';
 export type {
   TAutocompleteOptions,
   TGetDetailsOptions,
   TPlatformHeaders,
+  TPlacesProxy,
   TReverseGeocodeResult,
 } from './lib/GooglePlacesClient';
 export type {

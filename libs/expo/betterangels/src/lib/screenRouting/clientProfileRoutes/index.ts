@@ -1,5 +1,10 @@
 export {
   ClientProfileSectionEnum,
+  DEFAULT_RELATED_MODEL_SECTION,
+  DEFAULT_STANDARD_SECTION,
+  getClientProfileSectionOrDefault,
+  isRelatedModelSection,
+  isStandardSection,
   isValidClientProfileSectionEnum,
 } from './constants';
 export {

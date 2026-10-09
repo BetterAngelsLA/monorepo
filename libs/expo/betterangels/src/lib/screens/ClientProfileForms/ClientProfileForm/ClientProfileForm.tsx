@@ -10,14 +10,13 @@ import {
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
-import { isValidClientProfileSectionEnum } from '../../../screenRouting';
 import {
   GetClientProfileDocument,
   UpdateClientProfileDocument,
 } from './__generated__/clientProfile.generated';
 import { config } from './config';
 import { extractClientFormData } from './extractClientFormData';
-import { FormStateMapping, FormValues, IClientProfileForms } from './types';
+import { FormValues, IClientProfileForms } from './types';
 
 export default function ClientProfileForm(props: IClientProfileForms) {
   const { componentName, id } = props;
@@ -45,13 +44,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  if (!isValidClientProfileSectionEnum(componentName)) {
-    throw new Error(`Invalid componentName "${componentName}" provided.`);
-  }
-
-  const validComponentName = componentName as keyof FormStateMapping;
-
-  const { content, title: screenTitle } = config[validComponentName];
+  const { content, title: screenTitle } = config[componentName];
 
   useLayoutEffect(() => {
     if (screenTitle) {
@@ -113,7 +106,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
       // the query unmounts and refetch is cancelled.
       await refetch();
 
-      router.replace(`/client/${id}?openCard=${validComponentName}`);
+      router.replace(`/client/${id}?openCard=${componentName}`);
     } catch (err) {
       console.error(`[updateClientProfile] error: ${err}`);
 
@@ -130,12 +123,12 @@ export default function ClientProfileForm(props: IClientProfileForms) {
     }
 
     const formData = extractClientFormData(
-      validComponentName,
+      componentName,
       fetchProfileData.clientProfile,
     );
 
     methods.reset(formData);
-  }, [fetchProfileData, id, methods, validComponentName]);
+  }, [fetchProfileData, id, methods, componentName]);
 
   if (isFetchingProfile) {
     return <LoadingView />;
