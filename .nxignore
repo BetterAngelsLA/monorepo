@@ -1,2 +1,5 @@
 .nxignore
 shelter-e2e
+# Local git worktrees are full repo copies, so Nx sees every project twice and
+# refuses to build the project graph ("set a unique name for each project").
+.worktrees

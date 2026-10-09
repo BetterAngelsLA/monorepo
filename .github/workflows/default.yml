@@ -198,6 +198,17 @@ jobs:
           fail-on-breaking: true
           approve-label: graphql-inspector:approved-breaking-change
 
+      - name: 🌐 Export react-native-web build
+        # Bundles the outreach app for the browser on every affected run, so a
+        # native-only import or a missing web variant fails the PR instead of
+        # silently rotting the way it did before (see docs/outreach-web.md).
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t export-web --configuration ${{ matrix.environment }}
+          EOF
+        env:
+          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
+
       - name: 🛠️ Build and Push Artifacts
         run: |
           docker compose run better-angels bash <<'EOF'
@@ -215,6 +226,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
           EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
 
@@ -241,6 +253,9 @@ jobs:
           EOF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The outreach `deploy` target depends on `export-web`, so the browser
+          # Maps key has to be present here too or the bundle is built without it.
+          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
 
       - name: ⏹️ Spin down monorepo environment
         if: always()

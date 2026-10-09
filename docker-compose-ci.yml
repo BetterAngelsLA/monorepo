@@ -36,6 +36,8 @@ services:
       - PR_NUMBER
       - EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY
       - EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY
+      # Browser (referrer-restricted) Maps key for the react-native-web build.
+      - EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY
       - EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS
       - EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID
       # App Secrets
