@@ -58,6 +58,9 @@ export function Checkbox(props: ICheckboxProps) {
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       accessibilityRole={accessibilityRole}
+      // role="checkbox" without a state is invalid ARIA (and reads as
+      // indeterminate on web), so the checked state travels with the role.
+      accessibilityState={{ checked: isChecked }}
       accessible
       style={[
         styles.container,

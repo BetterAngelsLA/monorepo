@@ -5,12 +5,14 @@ import { DiscardModal, TextButton } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { View } from 'react-native';
 import {
   DeleteNoteDocument,
   UpdateNoteDocument,
   ViewNoteDocument,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
+import { headerLeftInsetStyle } from '../../navigation/headerStyles';
 import { useUserTeamPreference } from '../../state';
 import { CreateNoteDocument } from '../../ui-components/CreateClientInteraction';
 import { InteractionsDocument } from '../../ui-components/InteractionList';
@@ -105,25 +107,30 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: isCreateMode ? 'Add Interaction' : 'Edit Interaction',
+      // This screen supplies its own `headerLeft`, so it has to apply the same
+      // web inset every other screen gets from `HeaderLeftButton`; otherwise
+      // "Back" sits flush against the screen edge on the browser only.
       headerLeft: () => (
-        <DiscardModal
-          title={isCreateMode ? 'Discard interaction?' : 'Discard changes?'}
-          body={
-            isCreateMode
-              ? 'All data in this interaction will be lost.'
-              : 'Any unsaved changes to this interaction will be lost.'
-          }
-          onDiscard={goBack}
-          button={
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="discards changes and goes back"
-              title="Back"
-            />
-          }
-        />
+        <View style={headerLeftInsetStyle}>
+          <DiscardModal
+            title={isCreateMode ? 'Discard interaction?' : 'Discard changes?'}
+            body={
+              isCreateMode
+                ? 'All data in this interaction will be lost.'
+                : 'Any unsaved changes to this interaction will be lost.'
+            }
+            onDiscard={goBack}
+            button={
+              <TextButton
+                regular
+                color={Colors.WHITE}
+                fontSize="md"
+                accessibilityHint="discards changes and goes back"
+                title="Back"
+              />
+            }
+          />
+        </View>
       ),
     });
   }, [arrivedFrom, isCreateMode, navigation, router, goBack]);
