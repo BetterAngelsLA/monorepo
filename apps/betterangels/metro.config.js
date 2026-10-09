@@ -91,8 +91,15 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 //   yarn nx serve betterangels
 //
 // Expo wraps this in its own middleware stack (see `instantiateMetro`), and it
-// is inert unless a path under /__api is actually requested. See
-// dev-api-proxy.js. Native builds never use metro.config.js's server section.
+// is inert unless a path under /__api is actually requested — or the target is
+// unset, in which case only /__api is claimed with a 502 hint. See
+// dev-api-proxy.js.
+//
+// Shipped native builds never mount it, but the *native dev server* does:
+// @expo/cli installs `enhanceMiddleware` whenever it is not exporting. So a
+// shell with BA_DEV_PROXY_TARGET exported would claim /__api and /admin/login on
+// the native dev server too — harmless (nothing native requests them), but worth
+// knowing when debugging either server.
 const { createDevApiProxy } = require('./dev-api-proxy');
 
 // Chain rather than replace: `enhanceMiddleware` is a general Metro extension

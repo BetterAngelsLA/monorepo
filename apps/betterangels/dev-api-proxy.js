@@ -176,4 +176,4 @@ function createDevApiProxy(options = {}) {
   };
 }
 
-module.exports = { createDevApiProxy, DEFAULT_PREFIX, rewriteSetCookie };
+module.exports = { createDevApiProxy };

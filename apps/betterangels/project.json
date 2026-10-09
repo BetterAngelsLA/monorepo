@@ -84,6 +84,7 @@
     },
     "export-web": {
       "executor": "nx:run-commands",
+      "defaultConfiguration": "preview",
       "outputs": ["{workspaceRoot}/dist/apps/betterangels"],
       "options": {
         "command": "EXPO_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) expo export --platform web --clear --output-dir ../../dist/apps/betterangels",
