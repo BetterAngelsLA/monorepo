@@ -16,15 +16,16 @@ Including another URLconf
 """
 
 import admin_async_upload.views
-from accounts.headless_views import AutoCreateRequestLoginCodeView
 from allauth.headless.constants import Client
-from betterangels_backend import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic.base import RedirectView
 from strawberry.django.views import GraphQLView
+
+from accounts.headless_views import AutoCreateRequestLoginCodeView
+from betterangels_backend import settings
 
 from .schema import schema
 

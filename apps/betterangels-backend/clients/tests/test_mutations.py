@@ -1,9 +1,6 @@
 from typing import Any
 from unittest.mock import ANY, patch
 
-from common.imgproxy import IMGPROXY_SWITCH
-from common.models import Attachment
-from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
 from deepdiff import DeepDiff
 from django.test import override_settings
 from unittest_parametrize import parametrize
@@ -35,6 +32,9 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
+from common.imgproxy import IMGPROXY_SWITCH
+from common.models import Attachment
+from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
 
 
 @override_settings(IMGPROXY_KEY="", IMGPROXY_SALT="")

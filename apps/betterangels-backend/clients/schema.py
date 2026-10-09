@@ -3,31 +3,6 @@ from typing import Any, Dict, List, Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import User
-from clients.enums import ErrorCodeEnum
-from clients.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    ClientProfileDataImport,
-    ClientProfileImportRecord,
-    HmisProfile,
-    SocialMediaProfile,
-)
-
-from clients.services import client_document, client_profile_photo
-from common.services.types import UploadRequest, UploadConfirmation
-from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
-from common.graphql.extensions import PermissionedQuerySet
-from common.graphql.types import (
-    AuthorizedPresignedS3UploadsType,
-    AuthorizedPresignedS3UploadType,
-    DeleteDjangoObjectInput,
-    DeletedObjectType,
-)
-from common.graphql.utils import get_object_or_permission_error
-from common.models import Attachment, PhoneNumber
-from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -43,6 +18,31 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
+
+from accounts.models import User
+from clients.enums import ErrorCodeEnum
+from clients.models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    ClientProfileDataImport,
+    ClientProfileImportRecord,
+    HmisProfile,
+    SocialMediaProfile,
+)
+from clients.services import client_document, client_profile_photo
+from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
+from common.graphql.extensions import PermissionedQuerySet
+from common.graphql.types import (
+    AuthorizedPresignedS3UploadsType,
+    AuthorizedPresignedS3UploadType,
+    DeleteDjangoObjectInput,
+    DeletedObjectType,
+)
+from common.graphql.utils import get_object_or_permission_error
+from common.models import Attachment, PhoneNumber
+from common.permissions.utils import IsAuthenticated
+from common.services.types import UploadConfirmation, UploadRequest
 
 from .enums import RelationshipTypeEnum
 from .types import (

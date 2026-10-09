@@ -4,8 +4,9 @@ from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
-from notes.models import Note
 from organizations.models import Organization
+
+from notes.models import Note
 from tasks.models import Task
 from teams.models import Team
 from teams.services import team_create, team_delete, team_update

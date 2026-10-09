@@ -5,10 +5,11 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 import time_machine
-from accounts.models import OrgTypeChoices, Organization, OrganizationProfile
 from django.utils import timezone
 from model_bakery import baker
 from post_office.models import Email
+
+from accounts.models import Organization, OrganizationProfile, OrgTypeChoices
 from reports.models import ScheduledReport
 from reports.tasks import process_scheduled_reports, send_scheduled_report
 

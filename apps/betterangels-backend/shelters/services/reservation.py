@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Any, Dict
 
-from common.permissions.utils import require_can
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from common.permissions.utils import require_can
 from shelters.enums import ReservationStatusChoices
 from shelters.models import Bed, Reservation, ReservationClient, Room
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
@@ -14,7 +14,6 @@ from shelters.status import get_last_completed_checkout, is_in_turnaround
 
 if TYPE_CHECKING:
     from accounts.models import User
-
     from shelters.models.shelter import Bed, Room
 
 

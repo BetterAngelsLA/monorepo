@@ -9,8 +9,9 @@ def enable_imgproxy_switch(sender: object, **kwargs: object) -> None:
     if not settings.IS_LOCAL_DEV:
         return
 
-    from common.imgproxy import IMGPROXY_SWITCH
     from waffle.models import Switch
+
+    from common.imgproxy import IMGPROXY_SWITCH
 
     Switch.objects.get_or_create(name=IMGPROXY_SWITCH, defaults={"active": True})
     waffle.switch_is_active(IMGPROXY_SWITCH)  # prime the in-memory cache

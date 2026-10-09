@@ -1,5 +1,8 @@
 from typing import Any, Optional
 
+from django.test import TestCase
+from unittest_parametrize import parametrize
+
 from clients.enums import ClientDocumentNamespaceEnum, ErrorCodeEnum, HmisAgencyEnum
 from clients.schema import (
     validate_california_id,
@@ -12,8 +15,6 @@ from clients.schema import (
 )
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS
-from django.test import TestCase
-from unittest_parametrize import parametrize
 
 
 class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):

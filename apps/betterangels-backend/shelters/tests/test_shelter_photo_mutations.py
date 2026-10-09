@@ -2,11 +2,12 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import waffle
+from django.test import TestCase
+from model_bakery import baker
+
 from accounts.models import User
 from common.imgproxy import IMGPROXY_SWITCH
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
-from django.test import TestCase
-from model_bakery import baker
 from shelters.enums import ShelterPhotoTypeChoices
 from shelters.models import Shelter, ShelterPhoto
 from shelters.tests.baker_recipes import shelter_recipe

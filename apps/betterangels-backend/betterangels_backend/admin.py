@@ -1,9 +1,10 @@
 from typing import Any, Dict, Optional
 
-from betterangels_backend import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest, HttpResponse
+
+from betterangels_backend import settings
 
 UserModel = get_user_model()
 

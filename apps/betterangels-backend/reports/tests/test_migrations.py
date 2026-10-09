@@ -7,6 +7,7 @@ import pytest
 import time_machine
 from django.apps import apps
 from model_bakery import baker
+
 from reports.models import ScheduledReport
 
 reschedule = importlib.import_module("reports.migrations.0002_report_schedule_local_time").reschedule_active_reports

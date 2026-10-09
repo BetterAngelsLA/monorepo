@@ -7,9 +7,6 @@ from urllib.parse import quote
 import places
 import requests
 from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
-from betterangels_backend import settings
-from common.images import build_img_url
-from common.models import Location
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -35,6 +32,9 @@ from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
 
+from betterangels_backend import settings
+from common.images import build_img_url
+from common.models import Location
 from shelters.managers import BedQuerySet, RoomQuerySet
 
 from .enums import (

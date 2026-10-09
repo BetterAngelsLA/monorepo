@@ -7,13 +7,6 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from common.graphql.types import (
-    LatitudeScalar,
-    LongitudeScalar,
-    make_icontains_filter,
-    make_in_filter,
-    make_m2m_in_filter,
-)
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
@@ -22,6 +15,13 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone as django_timezone
 from strawberry import ID, Info, asdict, auto
 
+from common.graphql.types import (
+    LatitudeScalar,
+    LongitudeScalar,
+    make_icontains_filter,
+    make_in_filter,
+    make_m2m_in_filter,
+)
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,

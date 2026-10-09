@@ -24,18 +24,18 @@ These tests pin the flipped contract:
 
 from typing import Any
 
-from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from model_bakery import baker
-from notes.groups import CASEWORKER
 from organizations.models import Organization, OrganizationUser
-from test_utils.mixins import HasGraphQLProtocol
 
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from accounts.types import PermissionTemplateEnum
+from common.tests.utils import GraphQLBaseTestCase
+from notes.groups import CASEWORKER
+from test_utils.mixins import HasGraphQLProtocol
 
 PERMISSION_DENIED = "You do not have permission to perform this action in this organization."
 

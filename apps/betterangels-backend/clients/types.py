@@ -6,14 +6,6 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from common.graphql.types import (
-    AttachmentInterface,
-    NonBlankString,
-    PhoneNumberInput,
-    PhoneNumberScalar,
-    PhoneNumberType,
-)
-from common.models import Attachment, PhoneNumber
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import CharField, Exists, F, Func, Max, OuterRef, Q, QuerySet, Value
 from django.utils import timezone
@@ -27,6 +19,14 @@ from clients.enums import (
     LivingSituationEnum,
     PreferredCommunicationEnum,
 )
+from common.graphql.types import (
+    AttachmentInterface,
+    NonBlankString,
+    PhoneNumberInput,
+    PhoneNumberScalar,
+    PhoneNumberType,
+)
+from common.models import Attachment, PhoneNumber
 
 from .models import (
     ClientContact,

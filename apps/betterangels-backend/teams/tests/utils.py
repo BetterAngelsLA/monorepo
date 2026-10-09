@@ -2,12 +2,13 @@
 
 from typing import Any, Dict, Optional
 
+from model_bakery import baker
+
 from accounts.groups import ORG_ADMIN
 from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.tests.utils import GraphQLBaseTestCase
-from model_bakery import baker
 
 
 class TeamGraphQLUtilsMixin(GraphQLBaseTestCase):

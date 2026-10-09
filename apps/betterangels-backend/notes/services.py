@@ -2,6 +2,10 @@ from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional
 
 import pghistory
+from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
+
 from accounts.models import PermissionGroup, User
 from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
@@ -11,13 +15,10 @@ from common.permissions.utils import assign_object_permissions
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,
-    UploadRequest,
     UploadConfirmation,
+    UploadRequest,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
-from django.conf import settings
-from django.db import transaction
-from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest

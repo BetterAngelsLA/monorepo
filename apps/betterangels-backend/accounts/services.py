@@ -10,13 +10,14 @@ import logging
 import uuid
 from typing import TYPE_CHECKING, Any
 
-from common.org_types import REGISTRY
-from common.permissions.config import RoleDef, TemplateConfig
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
+
+from common.org_types import REGISTRY
+from common.permissions.config import RoleDef, TemplateConfig
 
 from .emails import base_url_for
 from .groups import ORG_ADMIN
@@ -590,10 +591,9 @@ def _all_role_defs() -> tuple[RoleDef, ...]:
     domain-specific on purpose — each converts its own template slice at its
     own cutover.
     """
-    from shelters.groups import ROLES
-
     from accounts.groups import ORG_ADMIN_ROLES
     from notes.groups import CASEWORKER_ROLE
+    from shelters.groups import ROLES
 
     return (*ROLES, *ORG_ADMIN_ROLES, CASEWORKER_ROLE)
 
@@ -776,9 +776,8 @@ def backfill_global_role_members() -> None:
     belong on the global Role's group, which is the global tier (ADR 0001 §2.1).
     Idempotent (``user.groups.add``).
     """
-    from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-
     from accounts.models import PermissionGroup, Role
+    from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 
     role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
     groups = PermissionGroup.objects.filter(template__name=GLOBAL_SHELTER_OPERATOR_ROLE.name)

@@ -2,9 +2,10 @@
 
 from typing import Optional
 
-from common.utils import get_or_none
 from django.db.models import QuerySet
 from organizations.models import Organization
+
+from common.utils import get_or_none
 
 from .models import Team
 

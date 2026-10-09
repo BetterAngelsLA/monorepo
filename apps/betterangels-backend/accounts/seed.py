@@ -16,7 +16,6 @@ admin.  Either way it is written onto the ``auth.Group`` that actually grants it
 from logging import getLogger
 from typing import Any, cast
 
-from common.org_types import REGISTRY
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
@@ -24,6 +23,7 @@ from django.db.models import Exists, ForeignKey, OuterRef
 from organizations.models import Organization, OrganizationUser
 
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
+from common.org_types import REGISTRY
 
 logger = getLogger(__name__)
 
@@ -220,10 +220,10 @@ def retire_superseded_phantom_permissions() -> None:
     re-pointed and still cascade; extend ``permission_m2m_throughs`` if a
     domain that uses them gains a retirable phantom.
     """
-    from accounts.models import PermissionGroup, Role
-
     from django.contrib.auth import get_user_model
     from django.contrib.auth.models import Group, Permission
+
+    from accounts.models import PermissionGroup, Role
 
     user_cls = get_user_model()
 
@@ -303,8 +303,9 @@ def seed_org_portal_permissions() -> None:
     synthesized ``(organizations, member/…)`` phantoms now that a real twin
     exists).  Idempotent.
     """
-    from accounts.permissions import UserOrganizationPermissions
     from organizations.models import Organization
+
+    from accounts.permissions import UserOrganizationPermissions
 
     ct = ContentType.objects.get_for_model(Organization)
     existing = set(Permission.objects.filter(content_type=ct).values_list("codename", flat=True))

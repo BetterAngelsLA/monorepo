@@ -8,12 +8,13 @@ The three team mutations authorize through ``require_can`` (``can()``) since
 
 from typing import Any
 
+from model_bakery import baker
+
 from accounts.groups import ORG_ADMIN
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.permissions.utils import PERMISSION_DENIED_MESSAGE
-from model_bakery import baker
 from teams.models import Team
 
 from .utils import TeamGraphQLUtilsMixin
