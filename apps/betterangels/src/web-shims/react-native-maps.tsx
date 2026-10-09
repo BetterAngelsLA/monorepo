@@ -94,9 +94,12 @@ type TImperativeMap = {
 /**
  * Google Maps takes a zoom *level*; react-native-maps takes a lat/lng *span*.
  * Same conversion the app already uses to reason about zoom in
- * `Map/utils/regionToZoom.ts` — duplicated rather than imported because this
- * module *is* the `react-native-maps` substitution, and importing from
- * ui-components would close a resolution cycle back through this file.
+ * `Map/utils/regionToZoom.ts`, duplicated rather than imported because this is
+ * an app-level Metro substitution and `regionToZoom` is an internal module of
+ * the ui-components library — deep-importing it here would put a library
+ * implementation detail on the app's import path for a one-line formula. The
+ * duplication is a real risk, not a free choice: the two copies can drift, and
+ * the other one runs in the same web bundle (via `useClusters`).
  *
  * The result is a fixed scale (zoom z is 360/2^z degrees across a 256px tile),
  * which is what we want here: it reproduces the mobile framing regardless of
@@ -313,7 +316,23 @@ const MapView = forwardRef<unknown, TTeovillaMapViewProps>((props, ref) => {
   const handlePress = useStableForwarder(latestProps, 'onPress');
   const handleDoublePress = useStableForwarder(latestProps, 'onDoublePress');
 
+  const regionSettleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRegionRef = useRef<{ region: Region; details: unknown } | null>(
+    null,
+  );
+
   const reportRegion = useCallback((nextRegion: Region, details: unknown) => {
+    // A real `onRegionChangeComplete` supersedes the settle timer the continuous
+    // handler scheduled: teovilla fires this one from Google's `dragEnd` and the
+    // settler from the last `bounds_changed` of the same drag, so without this
+    // the caller's handler runs twice per drag. Native fires it once.
+    if (regionSettleRef.current !== null) {
+      clearTimeout(regionSettleRef.current);
+      regionSettleRef.current = null;
+    }
+
+    pendingRegionRef.current = null;
+
     // Remember what the map reported, so the effect below can tell a user
     // gesture apart from a programmatic move.
     lastMapRegion.current = nextRegion;
@@ -338,11 +357,6 @@ const MapView = forwardRef<unknown, TTeovillaMapViewProps>((props, ref) => {
   // the last continuous region after a short pause. That preserves the callers'
   // "the map has finished moving" contract while making zoom changes visible, and
   // a caller that passes `onRegionChange` still receives it verbatim.
-  const regionSettleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingRegionRef = useRef<{ region: Region; details: unknown } | null>(
-    null,
-  );
-
   const handleRegionChange = useCallback(
     (nextRegion: Region, details: unknown) => {
       const direct = latestProps.current.onRegionChange;

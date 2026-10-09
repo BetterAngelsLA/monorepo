@@ -293,6 +293,21 @@ describe('react-native-maps web shim', () => {
     expect(hoisted.props?.options).toEqual({ draggable: true });
   });
 
+  it('forces the provider Google needs and injects the browser key', async () => {
+    // The shim's two other jobs. teovilla bails out of rendering the map when
+    // `provider !== 'google'` and does not export PROVIDER_GOOGLE, and it takes
+    // the Maps JS key as a prop that no call site passes. Neither is visible in
+    // the rendering above, so assert them directly.
+    await render(
+      <MapView
+        initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
+      />,
+    );
+
+    expect(hoisted.props?.provider).toBe('google');
+    expect(hoisted.props?.googleMapsApiKey).toBe('test-key');
+  });
+
   // teovilla binds `onBoundsChanged` → onRegionChange (continuous) but
   // `onDragEnd` → onRegionChangeComplete, and never forwards Google's `idle`. A
   // wheel/pinch zoom therefore never reached the app at all, so
@@ -308,6 +323,54 @@ describe('react-native-maps web shim', () => {
       ) => void
     )(region, details);
   };
+
+  // teovilla fires this one from Google's `dragEnd`.
+  const fireRegionChangeComplete = (
+    region: Record<string, number>,
+    details: unknown,
+  ) => {
+    (
+      hoisted.props?.onRegionChangeComplete as unknown as (
+        r: Record<string, number>,
+        d: unknown,
+      ) => void
+    )(region, details);
+  };
+
+  it('reports a drag once, even though drag-end arrives with a settle pending', async () => {
+    vi.useFakeTimers();
+    const onRegionChangeComplete = vi.fn();
+
+    try {
+      await render(
+        <MapView
+          provider="google"
+          initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
+          onRegionChangeComplete={onRegionChangeComplete}
+        />,
+      );
+
+      const region = { ...LA, latitudeDelta: 0.01, longitudeDelta: 0.01 };
+
+      await act(async () => {
+        // A drag: bounds arrive continuously, then drag-end.
+        fireRegionChange(region, { isGesture: true });
+        fireRegionChangeComplete(region, { isGesture: true });
+      });
+
+      expect(onRegionChangeComplete).toHaveBeenCalledTimes(1);
+
+      // The drag-end report has to cancel the settle the continuous handler
+      // scheduled, or the same drag is reported again ~200 ms later.
+      await act(async () => {
+        vi.advanceTimersByTime(250);
+      });
+
+      expect(onRegionChangeComplete).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it('forwards a continuous region change verbatim', async () => {
     const onRegionChange = vi.fn();
