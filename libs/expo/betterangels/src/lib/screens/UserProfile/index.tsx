@@ -15,6 +15,7 @@ import {
   extractOperationInfoMessage,
 } from '../../apollo';
 import { useSignOut, useSnackbar, useUser } from '../../hooks';
+import { headerRightInsetStyle } from '../../navigation/headerStyles';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {
@@ -29,13 +30,17 @@ export default function UserProfile() {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TextButton
-          color={Colors.WHITE}
-          regular
-          title="Edit"
-          accessibilityHint="goes to the edit user profile screen"
-          onPress={() => router.navigate({ pathname: '/user-profile/edit' })}
-        />
+        // The web header lays headerRight flush to the screen edge; the native
+        // bars inset it. See headerRightInsetStyle.
+        <View style={headerRightInsetStyle}>
+          <TextButton
+            color={Colors.WHITE}
+            regular
+            title="Edit"
+            accessibilityHint="goes to the edit user profile screen"
+            onPress={() => router.navigate({ pathname: '/user-profile/edit' })}
+          />
+        </View>
       ),
     });
   }, [user, navigation, router]);

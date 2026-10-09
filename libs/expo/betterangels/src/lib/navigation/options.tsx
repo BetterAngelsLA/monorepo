@@ -1,8 +1,13 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { CloseButton, TextBold } from '@monorepo/expo/shared/ui-components';
+import { View } from 'react-native';
 import { TModalHeaderConfig, TModalPresentationType } from '../providers';
 import { HeaderLeftButton } from './HeaderLeftButton';
-import { headerStyles, THeaderStyleName } from './headerStyles';
+import {
+  headerRightInsetStyle,
+  headerStyles,
+  THeaderStyleName,
+} from './headerStyles';
 
 /**
  * Which palette each presentation gets when the caller doesn't pick one. A
@@ -41,14 +46,18 @@ function getModalCloseBtn(props: TModalCloseBtnProps) {
   const { onClose, iconColor = Colors.WHITE, label } = props;
 
   return (
-    <CloseButton
-      onClose={onClose}
-      testId="modal-screen-close-btn"
-      iconColor={iconColor}
-      accessibilityHint="close modal"
-    >
-      {label ? <TextBold color={iconColor}>{label}</TextBold> : undefined}
-    </CloseButton>
+    // The web header lays headerRight flush to the screen edge; the native bars
+    // inset it. See headerRightInsetStyle.
+    <View style={headerRightInsetStyle}>
+      <CloseButton
+        onClose={onClose}
+        testId="modal-screen-close-btn"
+        iconColor={iconColor}
+        accessibilityHint="close modal"
+      >
+        {label ? <TextBold color={iconColor}>{label}</TextBold> : undefined}
+      </CloseButton>
+    </View>
   );
 }
 

@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useQuery } from '@apollo/client/react';
+import { headerRightInsetStyle } from '../../navigation/headerStyles';
 import { MainScrollContainer } from '../../ui-components';
 import NoteByline from './NoteByline';
 import NoteClient from './NoteClient';
@@ -36,20 +37,24 @@ export default function Note({
 
     navigation.setOptions({
       headerRight: () => (
-        <TextButton
-          color={Colors.WHITE}
-          regular
-          title="Edit"
-          accessibilityHint="goes to the edit interaction screen"
-          onPress={() =>
-            router.navigate({
-              pathname: `/note/${id}/edit`,
-              params: {
-                arrivedFrom,
-              },
-            })
-          }
-        />
+        // The web header lays headerRight flush to the screen edge; the native
+        // bars inset it. See headerRightInsetStyle.
+        <View style={headerRightInsetStyle}>
+          <TextButton
+            color={Colors.WHITE}
+            regular
+            title="Edit"
+            accessibilityHint="goes to the edit interaction screen"
+            onPress={() =>
+              router.navigate({
+                pathname: `/note/${id}/edit`,
+                params: {
+                  arrivedFrom,
+                },
+              })
+            }
+          />
+        </View>
       ),
     });
   }, [note?.userCanEdit, id, arrivedFrom, navigation, router]);
