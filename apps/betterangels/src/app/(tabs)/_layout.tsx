@@ -156,16 +156,23 @@ export default function TabLayout() {
         expressed with `href: hmisProdDemoEnabled ? null : undefined` — in that mode
         the button was not shown at all, so hoisting it must not start showing it.
 
-        `pointerEvents` is set through `style` (the prop form is deprecated and
-        warns on react-native-web). It is load-bearing: without `box-none` this
-        wrapper swallows every tap in its square.
+        `pointerEvents` is load-bearing: without `box-none` this wrapper swallows
+        every tap in its square, so the white ring around the button eats presses
+        meant for the tab bar underneath.
+
+        It has to live in the `StyleSheet.create` entry, not in the inline style
+        beside it. react-native-web polyfills `box-none` only in the atomic
+        compiler (`StyleSheet/compiler/index.js`), which emits
+        `pointer-events:none !important` for the element plus `auto` for its
+        direct children; the inline path has no `pointerEvents` handling at all and
+        silently drops the value, leaving the computed style `auto`. Measured on
+        the running web app: inline -> `auto` and all four ring probes resolve to
+        this wrapper; in `StyleSheet.create` -> `none`, and the ring probes fall
+        through to the tab bar.
       */}
       {!hmisProdDemoEnabled && (
         <View
-          style={[
-            styles.plusButtonOverlay,
-            { bottom: insets.bottom + 24, pointerEvents: 'box-none' },
-          ]}
+          style={[styles.plusButtonOverlay, { bottom: insets.bottom + 24 }]}
         >
           <Pressable
             testID="main-plus-tab-btn"
@@ -232,6 +239,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.WHITE,
+    // See the note above the element: `box-none` only works from here.
+    pointerEvents: 'box-none',
   },
   plusButton: {
     height: 66,
