@@ -670,6 +670,20 @@ convention used by `shelter` / `admin` / `wildfires`. SPA fallback (extension-le
 `index.html`) comes for free from the module's `index-redirect` CloudFront Function, which is
 what an Expo Router SPA needs.
 
+**A new static site also needs a line in the deploy role, and that is easy to miss.** The
+GitHub Actions role (`iam/github-actions` in each environment) builds its inline policy from a
+per-site list, and the bucket/distribution are only reachable if the site appears in it. The
+first CI deploy failed exactly there:
+
+```
+AccessDenied: ...assumed-role/github-actions-deploy/deploy-betterangels is not authorized
+to perform: s3:ListBucket on "arn:aws:s3:::development-us-west-2-outreach-web"
+```
+
+So `dependency "outreach_web"` plus an `OutreachWeb` entry were added to both environments'
+`iam/github-actions` units — the deploy itself was fine; the role simply had no policy for the
+new bucket. The units are applied for both accounts (0 added, 1 changed, 0 destroyed each).
+
 ### CI
 
 `apps/betterangels` gained three targets: `export-web`, `deploy` (depends on `export-web`) and
@@ -901,6 +915,19 @@ Places/geocoding *can* be proxied, and already is server-side.
 > and the production bundle bakes in the right key. Confirm the allow-list in the GCP console
 > before publishing prod, or simply look at a map on the deployed site — but do not treat this
 > document as having verified it.
+
+**And the key is not in CI at all.** The workflow passes
+`secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY` to both the build and deploy steps, but that
+secret does not exist in the `preview` or the `production` GitHub Environment (nor at repo
+level, which only holds the two Expo tokens). An undefined secret expands to an empty string,
+so CI builds and deploys a bundle with no Maps key and nothing fails loudly — the first thing
+anyone would notice is a blank map on the deployed preview. Set it before relying on a deployed
+environment:
+
+```sh
+gh secret set EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY --env preview    --body '<key>'
+gh secret set EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY --env production --body '<key>'
+```
 
 > **Local dev keys are fine to share; the sample file is just the wrong place.**
 > `apps/betterangels-backend/.env.local.sample` is a template — **nothing reads it**.
