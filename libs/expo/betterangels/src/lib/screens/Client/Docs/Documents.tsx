@@ -5,7 +5,7 @@ import { toTestId } from '@monorepo/expo/shared/utils';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { ClientDocumentType, Maybe } from '../../../apollo';
-import { DocumentModal, FileThumbnail } from '../../../ui-components';
+import { DocumentMenuSheet, FileThumbnail } from '../../../ui-components';
 import type { TDocFolder } from './folders';
 
 interface IDocumentsProps {
@@ -78,9 +78,10 @@ export default function Documents(props: IDocumentsProps) {
       )}
 
       {!!selectedDocument && (
-        <DocumentModal
+        <DocumentMenuSheet
+          key={selectedDocument.id}
           clientId={clientId}
-          closeModal={() => setSelectedDocument(undefined)}
+          onClose={() => setSelectedDocument(undefined)}
           document={selectedDocument}
           onDeleteStateChange={(documentId, isDeleting) =>
             setDeletingIds((prev) => {

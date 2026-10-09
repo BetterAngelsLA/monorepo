@@ -1,0 +1,1 @@
+export { getFileTypeLabel } from './getFileTypeLabel';

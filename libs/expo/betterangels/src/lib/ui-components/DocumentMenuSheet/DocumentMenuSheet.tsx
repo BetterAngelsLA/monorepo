@@ -4,50 +4,48 @@ import {
   BaPermissionError,
   getOperationInfoMessage,
 } from '@monorepo/ba-platform';
-import {
-  DeleteIcon,
-  DownloadIcon,
-  ViewIcon,
-  WFEdit,
-} from '@monorepo/expo/shared/icons';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
 import { Directory, File, Paths } from 'expo-file-system';
+import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
-import { ClientDocumentType, OperationMessageKind } from '../apollo';
-import { convertCapitalize } from '../helpers';
-import { useSnackbar } from '../hooks';
+import { ClientDocumentType, OperationMessageKind } from '../../apollo';
+import { convertCapitalize } from '../../helpers';
+import { useSnackbar } from '../../hooks';
 import {
   ClientProfileDocument,
   DeleteClientDocumentDocument,
-} from '../screens/Client/__generated__/Client.generated';
-import { deleteClientDocumentMeta } from '../screens/Client/__generated__/Client_meta.generated';
-import { MainModal } from './MainModal';
+} from '../../screens/Client/__generated__/Client.generated';
+import { deleteClientDocumentMeta } from '../../screens/Client/__generated__/Client_meta.generated';
+import { DocumentMenu } from './DocumentMenu';
+import { getFileTypeLabel } from './utils';
 
-type ModalState =
-  | 'mainVisible'
-  | 'mainClosing'
-  | 'deleteRequested'
-  | 'deleteVisible';
+type ModalStep = 'menuOpen' | 'confirmDelete' | 'closed';
 
-interface IDocumentModalProps {
-  closeModal: () => void;
+interface IDocumentMenuSheetProps {
+  onClose: () => void;
   document: ClientDocumentType;
   clientId: string;
   onDeleteStateChange?: (documentId: string, isDeleting: boolean) => void;
 }
 
-export default function DocumentModal({
-  closeModal,
+/**
+ * Orchestrates the document actions flow: presents the `DocumentMenu` sheet
+ * and, when delete is chosen, a `DeleteModal` confirmation. Owns the document
+ * side effects (navigation, download, delete).
+ */
+export function DocumentMenuSheet({
+  onClose,
   document,
   clientId,
   onDeleteStateChange,
-}: IDocumentModalProps) {
-  const fileTypeText = getFileTypeText(document.mimeType);
+}: IDocumentMenuSheetProps) {
+  const fileTypeLabel = getFileTypeLabel(document.mimeType);
 
+  const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [modalState, setModalState] = useState<ModalState>('mainVisible');
+  const [step, setStep] = useState<ModalStep>('menuOpen');
 
   const [deleteDocument] = useMutation(DeleteClientDocumentDocument, {
     refetchQueries: [
@@ -59,7 +57,11 @@ export default function DocumentModal({
 
   const deleteFile = async () => {
     onDeleteStateChange?.(document.id, true);
-    closeModal();
+    // Dismiss the confirm dialog without unmounting this component. We stay
+    // mounted until the mutation settles so we never tear down a presented
+    // native modal mid-flight (we used to call onClose() here, which did
+    // exactly that).
+    setStep('closed');
 
     try {
       const result = await deleteDocument({
@@ -71,7 +73,7 @@ export default function DocumentModal({
       // Success — file deleted.
       if (deleteResult?.__typename === successTypename) {
         showSnackbar({
-          message: `${convertCapitalize(fileTypeText)} deleted.`,
+          message: `${convertCapitalize(fileTypeLabel)} deleted.`,
           type: 'success',
           durationMs: 2000,
         });
@@ -107,6 +109,7 @@ export default function DocumentModal({
       });
     } finally {
       onDeleteStateChange?.(document.id, false);
+      onClose();
     }
   };
 
@@ -152,7 +155,7 @@ export default function DocumentModal({
         });
       }
 
-      closeModal();
+      onClose();
     } catch (err) {
       console.error('Download failed', err);
       Alert.alert(
@@ -162,73 +165,39 @@ export default function DocumentModal({
     }
   };
 
-  const ACTIONS = [
-    {
-      title: `View ${fileTypeText}`,
-      testId: 'view-file-btn',
-      Icon: ViewIcon,
-      route: `/file/${document.id}`,
-    },
-    {
-      title: `Edit ${fileTypeText} name`,
-      testId: 'edit-file-btn',
-      Icon: WFEdit,
-      route: `/file/${document.id}?editing=true&clientId=${clientId}`,
-    },
-    {
-      title: `Download ${fileTypeText}`,
-      testId: 'download-file-btn',
-      Icon: DownloadIcon,
-      onPress: downloadFile,
-    },
-    {
-      title: `Delete ${fileTypeText}`,
-      testId: 'delete-file-btn',
-      Icon: DeleteIcon,
-      onPress: () => setModalState('deleteRequested'),
-    },
-  ];
+  const handleViewPress = () => {
+    onClose();
+    router.navigate({ pathname: '/file/[id]', params: { id: document.id } });
+  };
+
+  const handleEditPress = () => {
+    onClose();
+    router.navigate({
+      pathname: '/file/[id]',
+      params: { id: document.id, editing: 'true', clientId },
+    });
+  };
 
   return (
     <>
-      {modalState === 'deleteVisible' && (
-        <DeleteModal
-          isVisible={true}
-          body={`All data associated with this ${fileTypeText} will be deleted.`}
-          title={`Delete ${fileTypeText}?`}
-          onDelete={deleteFile}
-          onCancel={() => setModalState('mainVisible')}
-          deleteableItemName={fileTypeText}
-        />
-      )}
+      <DocumentMenu
+        isOpen={step === 'menuOpen'}
+        onClose={onClose}
+        fileTypeLabel={fileTypeLabel}
+        onView={handleViewPress}
+        onEdit={handleEditPress}
+        onDownload={downloadFile}
+        onDelete={() => setStep('confirmDelete')}
+      />
 
-      {modalState !== 'deleteVisible' && (
-        <MainModal
-          isModalVisible={modalState === 'mainVisible'}
-          closeButton
-          vertical
-          actions={ACTIONS}
-          closeModal={() => setModalState('mainClosing')}
-          opacity={0.5}
-          onCloseComplete={() => {
-            // MainModal must fully close (animation + unmount) before DeleteModal
-            // mounts: RN can only present one Modal at a time, and mounting
-            // DeleteModal while MainModal is still up causes the confirm modal to
-            // be dropped and the actions sheet to reappear. Can possibly use BottomSheetModal.
-            if (modalState === 'deleteRequested') {
-              setTimeout(() => {
-                setModalState('deleteVisible');
-              }, 0);
-            } else {
-              closeModal();
-            }
-          }}
-        />
-      )}
+      <DeleteModal
+        isVisible={step === 'confirmDelete'}
+        body={`All data associated with this ${fileTypeLabel} will be deleted.`}
+        title={`Delete ${fileTypeLabel}?`}
+        onDelete={deleteFile}
+        onCancel={() => setStep('menuOpen')}
+        deleteableItemName={fileTypeLabel}
+      />
     </>
   );
-}
-
-function getFileTypeText(mimeType?: string): string {
-  return mimeType?.startsWith('image') ? 'image' : 'file';
 }
