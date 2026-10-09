@@ -3570,7 +3570,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@gorhom/bottom-sheet@npm:^5":
+"@gorhom/bottom-sheet@npm:5.2.14":
   version: 5.2.14
   resolution: "@gorhom/bottom-sheet@npm:5.2.14"
   dependencies:
@@ -3589,6 +3589,28 @@ __metadata:
     "@types/react-native":
       optional: true
   checksum: 10/6d2008a7b47fcc26bd15d6fa6aa827a2df64a3b07754ddfc861a1a70f52762268f09f386e1d469d256ba0ed04602f9af99195fa01b799306750012fc4774e3bd
+  languageName: node
+  linkType: hard
+
+"@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.2.14#~/.yarn/patches/@gorhom-bottom-sheet-npm-5.2.14-369bca24fd.patch":
+  version: 5.2.14
+  resolution: "@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.2.14#~/.yarn/patches/@gorhom-bottom-sheet-npm-5.2.14-369bca24fd.patch::version=5.2.14&hash=5071a5"
+  dependencies:
+    "@gorhom/portal": "npm:1.0.14"
+    invariant: "npm:^2.2.4"
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-native": "*"
+    react: "*"
+    react-native: "*"
+    react-native-gesture-handler: ">=2.16.1"
+    react-native-reanimated: "*"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-native":
+      optional: true
+  checksum: 10/ec88c97ef55e89986ec7616ec0f5c777e1663a793affa8eeaf4b7f4ecef011680519ea78da950b77bf1430ef3fc4fa69c90f80e0fbbdb17ec1a611848f0e2346
   languageName: node
   linkType: hard
 
@@ -5196,7 +5218,7 @@ __metadata:
     "@eslint/js": "npm:^10.0.1"
     "@expo/metro": "npm:~56.0.0"
     "@expo/metro-runtime": "npm:~57.0.9"
-    "@gorhom/bottom-sheet": "npm:^5"
+    "@gorhom/bottom-sheet": "patch:@gorhom/bottom-sheet@npm%3A5.2.14#~/.yarn/patches/@gorhom-bottom-sheet-npm-5.2.14-369bca24fd.patch"
     "@graphql-codegen/cli": "npm:^6.0.1"
     "@graphql-codegen/client-preset": "npm:^5.3.0"
     "@graphql-codegen/near-operation-file-preset": "npm:^5.0.0"

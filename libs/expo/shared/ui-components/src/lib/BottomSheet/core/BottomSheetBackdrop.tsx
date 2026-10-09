@@ -41,6 +41,12 @@ type BottomSheetBackdropWrapperProps = BottomSheetBackdropProps & {
    * If provided, it fully replaces the default implementation.
    */
   component?: ComponentType<BottomSheetBackdropProps>;
+
+  /**
+   * App-level dismiss request (dismissSheetById → modal dismiss/forceClose).
+   * A tap routes through here as the single dismissal path.
+   */
+  onRequestClose?: () => void;
 };
 
 export function BottomSheetBackdrop(
@@ -50,6 +56,7 @@ export function BottomSheetBackdrop(
     disableBackdrop,
     opacity = 0.5,
     component: CustomComponent,
+    onRequestClose,
     ...rest
   } = props;
 
@@ -67,7 +74,18 @@ export function BottomSheetBackdrop(
       appearsOnIndex={0}
       disappearsOnIndex={-1}
       opacity={opacity}
-      pressBehavior="close"
+      // Gorhom only attaches the backdrop tap when pressBehavior !== 'none',
+      // and it invokes onPress BEFORE applying the behavior. We want the tap
+      // (so onPress can route dismissal through onRequestClose) but must NOT
+      // let Gorhom close/collapse — that would double-dismiss alongside the
+      // provider's dismiss. numeric 0 → snapToIndex(0), a no-op for every
+      // sheet here because they all present at index 0 (dynamic sizing, or a
+      // single '100%' snap point).
+      //
+      // CONSTRAINT: a future multi-snap sheet that presents at index > 0 would
+      // visibly snap to index 0 on tap. If that's ever needed, revisit this.
+      pressBehavior={0}
+      onPress={onRequestClose}
     />
   );
 }
