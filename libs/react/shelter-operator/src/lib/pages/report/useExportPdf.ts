@@ -1,67 +1,70 @@
 import { RefObject, useCallback, useState } from 'react';
 
+export interface IExportPdfResult {
+  blob: Blob;
+  filename: string;
+}
+
 /**
- * Captures a DOM node to a canvas (via html2canvas-pro, which supports
- * Tailwind v4's oklch() colors) and saves it as a multi-page PDF.
+ * Captures each `[data-report-page="true"]` node under `targetRef` (see
+ * ShelterReportPrint.tsx — one node per physical Letter page) via
+ * html2canvas-pro (which, unlike plain html2canvas/react-to-pdf, supports
+ * Tailwind v4's oklch() colors) and assembles them 1:1 into a multi-page
+ * Letter PDF, returned as a Blob. Capturing per-page nodes (each already a
+ * fixed 816x1056px / 8.5x11in-at-96dpi box) means page breaks land exactly
+ * where they do in the DOM, instead of an arbitrary pixel-height slice.
  */
-export function useExportPdf(
-  targetRef: RefObject<HTMLElement | null>,
-  filename: string,
-) {
+export function useExportPdf(targetRef: RefObject<HTMLElement | null>) {
   const [isExporting, setIsExporting] = useState(false);
 
-  const exportPdf = useCallback(async () => {
-    const node = targetRef.current;
-    if (!node) return;
-
-    setIsExporting(true);
-    try {
-      // Both libraries are heavy and only needed on export, so they stay out
-      // of the initial bundle and load together when the user asks for a PDF.
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import('html2canvas-pro'),
-        import('jspdf'),
-      ]);
-
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-      });
-
-      const doc = new jsPDF({ unit: 'pt', format: 'letter' });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 24;
-
-      const usableWidth = pageWidth - margin * 2;
-      const imgHeight = (canvas.height * usableWidth) / canvas.width;
-      const imgData = canvas.toDataURL('image/png');
-
-      const usablePageHeight = pageHeight - margin * 2;
-
-      // Draw the full image on each page, shifted up by a page's worth each
-      // time so the next slice shows through the margins. A report that fits
-      // on one page is just the single-iteration case.
-      const pageCount = Math.max(1, Math.ceil(imgHeight / usablePageHeight));
-
-      for (let page = 0; page < pageCount; page++) {
-        if (page > 0) doc.addPage();
-        doc.addImage(
-          imgData,
-          'PNG',
-          margin,
-          margin - page * usablePageHeight,
-          usableWidth,
-          imgHeight,
-        );
+  const exportPdf = useCallback(
+    async (filename: string): Promise<IExportPdfResult> => {
+      const root = targetRef.current;
+      if (!root) {
+        throw new Error('Nothing to export');
       }
 
-      doc.save(filename);
-    } finally {
-      setIsExporting(false);
-    }
-  }, [targetRef, filename]);
+      const pageNodes = Array.from(
+        root.querySelectorAll<HTMLElement>('[data-report-page="true"]'),
+      );
+      if (pageNodes.length === 0) {
+        throw new Error('Nothing to export');
+      }
+
+      setIsExporting(true);
+      try {
+        // Dynamic imports keep html2canvas-pro/jspdf out of the initial bundle.
+        const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+          import('html2canvas-pro'),
+          import('jspdf'),
+        ]);
+
+        const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        for (let i = 0; i < pageNodes.length; i++) {
+          const canvas = await html2canvas(pageNodes[i], {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+          });
+          const imgData = canvas.toDataURL('image/png');
+
+          if (i > 0) doc.addPage();
+          // Each page node is already sized to the physical page's exact
+          // aspect ratio, so it maps 1:1 onto the full PDF page.
+          doc.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+        }
+
+        const blob = doc.output('blob');
+        return { blob, filename };
+      } finally {
+        setIsExporting(false);
+      }
+    },
+    [targetRef],
+  );
 
   return { exportPdf, isExporting };
 }
