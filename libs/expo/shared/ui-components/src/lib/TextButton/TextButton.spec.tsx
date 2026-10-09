@@ -2,16 +2,16 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { TextButton } from './TextButton';
 
 describe('TextButton Component', () => {
-  it('renders with correct title', () => {
-    const { getByText } = render(
+  it('renders with correct title', async () => {
+    const { getByText } = await render(
       <TextButton accessibilityHint={''} title="Click Me" color="blue" />,
     );
     expect(getByText('Click Me')).toBeTruthy();
   });
 
-  it('calls onPress when pressed', () => {
+  it('calls onPress when pressed', async () => {
     const mockOnPress = vi.fn();
-    const { getByText } = render(
+    const { getByText } = await render(
       <TextButton
         accessibilityHint={''}
         title="Press Me"
@@ -20,13 +20,13 @@ describe('TextButton Component', () => {
       />,
     );
 
-    fireEvent.press(getByText('Press Me'));
+    await fireEvent.press(getByText('Press Me'));
     expect(mockOnPress).toHaveBeenCalled();
   });
 
-  it('does not call onPress when disabled and pressed', () => {
+  it('does not call onPress when disabled and pressed', async () => {
     const mockOnPress = vi.fn();
-    const { getByText } = render(
+    const { getByText } = await render(
       <TextButton
         title="Disabled Button"
         accessibilityHint={''}
@@ -36,12 +36,12 @@ describe('TextButton Component', () => {
       />,
     );
 
-    fireEvent.press(getByText('Disabled Button'));
+    await fireEvent.press(getByText('Disabled Button'));
     expect(mockOnPress).not.toHaveBeenCalled();
   });
 
-  it('is accessible by role', () => {
-    const { getByRole } = render(
+  it('is accessible by role', async () => {
+    const { getByRole } = await render(
       <TextButton
         title="Accessible Button"
         color="blue"

@@ -192,7 +192,7 @@
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "6.4.2",
     "@testing-library/react": "16.1.0",
-    "@testing-library/react-native": "13.2.2",
+    "@testing-library/react-native": "^14.1.0",
     "@types/google.maps": "^3.58.1",
     "@types/jest": "29.5.14",
     "@types/lodash": "^4.17.23",
@@ -246,6 +246,7 @@
     "swc-loader": "0.1.15",
     "tailwind-merge": "^2.5.5",
     "tailwindcss": "^4.2.1",
+    "test-renderer": "~1.2.0",
     "ts-essentials": "^10.1.1",
     "ts-loader": "^9.5.2",
     "ts-node": "10.9.2",
@@ -256,13 +257,14 @@
     "vite-plugin-static-copy": "^4.1.1",
     "vite-plugin-svgr": "^4.5.0",
     "vitest": "5.0.3",
-    "vitest-native": "^0.9.0",
+    "vitest-native": "0.14.0-rc.5",
     "webpack": "^5.105.4"
   },
   "resolutions": {
     "fast-xml-parser": ">=5.7.0",
     "uuid": ">=11.1.1",
-    "undici@7.29.0": "^7.29.1"
+    "undici@7.29.0": "^7.29.1",
+    "tslib": "patch:tslib@npm%3A2.8.1#~/.yarn/patches/tslib-npm-2.8.1-66590b21b8.patch"
   },
   "expo": {},
   "engines": {

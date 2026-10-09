@@ -36,9 +36,9 @@ vi.mock('../TextRegular', () => ({
 }));
 
 describe('UploadItemRow', () => {
-  it('renders an uploading item with progress percentage and a Cancel action', () => {
+  it('renders an uploading item with progress percentage and a Cancel action', async () => {
     const onCancel = vi.fn();
-    const { getByText, queryByText } = render(
+    const { getByText, queryByText } = await render(
       <UploadItemRow
         filename="a.pdf"
         status="uploading"
@@ -53,8 +53,8 @@ describe('UploadItemRow', () => {
     expect(queryByText('Retry')).toBeNull();
   });
 
-  it('shows the queued label for a pending item without progress', () => {
-    const { getByText } = render(
+  it('shows the queued label for a pending item without progress', async () => {
+    const { getByText } = await render(
       <UploadItemRow filename="a.pdf" status="pending" />,
     );
 
@@ -62,20 +62,20 @@ describe('UploadItemRow', () => {
     expect(getByText('a.pdf')).toBeTruthy();
   });
 
-  it('fires onCancel from the row', () => {
+  it('fires onCancel from the row', async () => {
     const onCancel = vi.fn();
-    const { getByText } = render(
+    const { getByText } = await render(
       <UploadItemRow filename="a.pdf" status="pending" onCancel={onCancel} />,
     );
 
-    fireEvent.press(getByText('Cancel'));
+    await fireEvent.press(getByText('Cancel'));
     expect(onCancel).toHaveBeenCalled();
   });
 
-  it('offers both Retry and Dismiss for a failed item', () => {
+  it('offers both Retry and Dismiss for a failed item', async () => {
     const onRetry = vi.fn();
     const onCancel = vi.fn();
-    const { getByText, queryByText } = render(
+    const { getByText, queryByText } = await render(
       <UploadItemRow
         filename="a.pdf"
         status="error"
@@ -92,27 +92,27 @@ describe('UploadItemRow', () => {
     expect(getByText('Dismiss')).toBeTruthy();
     expect(queryByText('Cancel')).toBeNull();
 
-    fireEvent.press(getByText('Retry'));
+    await fireEvent.press(getByText('Retry'));
     expect(onRetry).toHaveBeenCalled();
 
-    fireEvent.press(getByText('Dismiss'));
+    await fireEvent.press(getByText('Dismiss'));
     expect(onCancel).toHaveBeenCalled();
   });
 
-  it('labels the in-flight removal Cancel and the settled one Dismiss', () => {
-    const uploading = render(
+  it('labels the in-flight removal Cancel and the settled one Dismiss', async () => {
+    const uploading = await render(
       <UploadItemRow filename="a.pdf" status="uploading" onCancel={vi.fn()} />,
     );
     expect(uploading.getByText('Cancel')).toBeTruthy();
 
-    const failed = render(
+    const failed = await render(
       <UploadItemRow filename="a.pdf" status="error" onCancel={vi.fn()} />,
     );
     expect(failed.getByText('Dismiss')).toBeTruthy();
   });
 
-  it('shows a saving label once the bytes are up but not yet persisted', () => {
-    const { getByText, queryByText } = render(
+  it('shows a saving label once the bytes are up but not yet persisted', async () => {
+    const { getByText, queryByText } = await render(
       <UploadItemRow filename="a.pdf" status="uploaded" onCancel={vi.fn()} />,
     );
 
@@ -121,8 +121,8 @@ describe('UploadItemRow', () => {
     expect(queryByText('Done')).toBeNull();
   });
 
-  it('keeps the row actions reachable to screen readers', () => {
-    const { getByLabelText } = render(
+  it('keeps the row actions reachable to screen readers', async () => {
+    const { getByLabelText } = await render(
       <UploadItemRow
         filename="a.pdf"
         status="error"
@@ -137,8 +137,8 @@ describe('UploadItemRow', () => {
     expect(getByLabelText('Dismiss')).toBeTruthy();
   });
 
-  it('shows Done for a finished item without actions', () => {
-    const { getByText, queryByText } = render(
+  it('shows Done for a finished item without actions', async () => {
+    const { getByText, queryByText } = await render(
       <UploadItemRow filename="a.pdf" status="done" />,
     );
 
@@ -147,8 +147,8 @@ describe('UploadItemRow', () => {
     expect(queryByText('Retry')).toBeNull();
   });
 
-  it('clamps the progress percentage to 100', () => {
-    const { getByText } = render(
+  it('clamps the progress percentage to 100', async () => {
+    const { getByText } = await render(
       <UploadItemRow filename="a.pdf" status="uploading" progressPct={125} />,
     );
 

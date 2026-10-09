@@ -86,15 +86,17 @@ describe('Client Docs', () => {
     mocks.showModalScreen.mockClear();
   });
 
-  it('shows the empty state when there are no documents', () => {
-    const { getByText, queryByText } = render(<Docs client={emptyClient} />);
+  it('shows the empty state when there are no documents', async () => {
+    const { getByText, queryByText } = await render(
+      <Docs client={emptyClient} />,
+    );
 
     expect(getByText('No files yet')).toBeTruthy();
     expect(queryByText('Doc Ready')).toBeNull();
   });
 
-  it('shows document sections when documents exist', () => {
-    const { getByText, queryByText } = render(
+  it('shows document sections when documents exist', async () => {
+    const { getByText, queryByText } = await render(
       <Docs client={populatedClient} />,
     );
 
@@ -103,17 +105,17 @@ describe('Client Docs', () => {
     expect(queryByText('No files yet')).toBeNull();
   });
 
-  it('opens the upload modal from the add button', () => {
-    const { getByLabelText } = render(<Docs client={emptyClient} />);
+  it('opens the upload modal from the add button', async () => {
+    const { getByLabelText } = await render(<Docs client={emptyClient} />);
 
-    fireEvent.press(getByLabelText('add document'));
+    await fireEvent.press(getByLabelText('add document'));
 
     expect(mocks.showModalScreen).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Upload Files' }),
     );
 
     const modalOptions = mocks.showModalScreen.mock.calls[0][0];
-    const modal = render(modalOptions.renderContent({ close: vi.fn() }));
+    const modal = await render(modalOptions.renderContent({ close: vi.fn() }));
     expect(modal.getByText('UploadModal')).toBeTruthy();
   });
 });

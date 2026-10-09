@@ -16,8 +16,8 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 }));
 
 describe('Docs EmptyState', () => {
-  it('renders the empty state title and subtitle', () => {
-    const { getByText } = render(<EmptyState />);
+  it('renders the empty state title and subtitle', async () => {
+    const { getByText } = await render(<EmptyState />);
 
     expect(getByText('No files yet')).toBeTruthy();
     expect(

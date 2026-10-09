@@ -16,7 +16,6 @@
  *
  * RVTM §7 Tier 2.
  */
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -54,48 +53,49 @@ function tagBadgeStyle(label: string): BadgeStyle | undefined {
 }
 
 describe('ReferralsHelp', () => {
-  const open = () => render(<ReferralsHelp visible onClose={vi.fn()} />);
+  const open = async () =>
+    await render(<ReferralsHelp visible onClose={vi.fn()} />);
 
-  it('renders nothing until opened', () => {
-    render(<ReferralsHelp visible={false} onClose={vi.fn()} />);
+  it('renders nothing until opened', async () => {
+    await render(<ReferralsHelp visible={false} onClose={vi.fn()} />);
 
     expect(screen.queryByText('About this list')).not.toBeOnTheScreen();
   });
 
-  it('explains the list when opened', () => {
-    open();
+  it('explains the list when opened', async () => {
+    await open();
 
     expect(screen.getByText('About this list')).toBeOnTheScreen();
     expect(screen.getByText('Shelter attribute tags')).toBeOnTheScreen();
   });
 
   describe('legend swatches match what they describe', () => {
-    it('shows the match example as a green fill', () => {
-      open();
+    it('shows the match example as a green fill', async () => {
+      await open();
 
       expect(
         tagBadgeStyle('Client Need: Provided by Shelter')?.backgroundColor,
       ).toBe(Colors.SUCCESS);
     });
 
-    it('shows the confirmed-gap example as a red fill', () => {
-      open();
+    it('shows the confirmed-gap example as a red fill', async () => {
+      await open();
 
       expect(
         tagBadgeStyle('Client Need: Not Provided by Shelter')?.backgroundColor,
       ).toBe(Colors.ERROR);
     });
 
-    it('shows the unknown example as a red outline with no fill', () => {
-      open();
+    it('shows the unknown example as a red outline with no fill', async () => {
+      await open();
       const style = tagBadgeStyle('Client Need: Not Reported by Shelter');
 
       expect(style?.backgroundColor).toBeUndefined();
       expect(style?.borderColor).toBe(Colors.ERROR);
     });
 
-    it('shows the no-stated-need example in gray', () => {
-      open();
+    it('shows the no-stated-need example in gray', async () => {
+      await open();
 
       expect(
         tagBadgeStyle('Shelter Attribute: Not Needed by Client')
@@ -104,33 +104,33 @@ describe('ReferralsHelp', () => {
     });
   });
 
-  it('warns that matching does not check bed availability', () => {
+  it('warns that matching does not check bed availability', async () => {
     // GAP-01 — the UI must not imply a bed is held
-    open();
+    await open();
 
     expect(
       screen.getByText(/never checks whether a bed is actually free/),
     ).toBeOnTheScreen();
   });
 
-  it('closes from the Close button', () => {
+  it('closes from the Close button', async () => {
     const onClose = vi.fn();
-    render(<ReferralsHelp visible onClose={onClose} />);
+    await render(<ReferralsHelp visible onClose={onClose} />);
 
-    fireEvent.press(screen.getByTestId('referrals-help-close-btn'));
+    await fireEvent.press(screen.getByTestId('referrals-help-close-btn'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('closes when the backdrop is tapped', () => {
+  it('closes when the backdrop is tapped', async () => {
     const onClose = vi.fn();
-    render(<ReferralsHelp visible onClose={onClose} />);
+    await render(<ReferralsHelp visible onClose={onClose} />);
 
     // includeHiddenElements: the sheet sets accessibilityViewIsModal, so the
     // backdrop is deliberately outside the accessibility tree — a screen-reader
     // user closes via the Close button. It stays touch-reachable for everyone
     // else, which is what this asserts.
-    fireEvent.press(
+    await fireEvent.press(
       screen.getByTestId('referrals-help-backdrop', {
         includeHiddenElements: true,
       }),
@@ -139,11 +139,11 @@ describe('ReferralsHelp', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps Close outside the scrolling body so it cannot scroll away', () => {
+  it('keeps Close outside the scrolling body so it cannot scroll away', async () => {
     // The exit must stay put however long the help text grows. Asserting the
     // structural relationship, because "is it visible on screen" is not
     // something the renderer can answer — that part is device-verified.
-    open();
+    await open();
 
     let node = screen.getByTestId('referrals-help-close-btn').parent;
     while (node) {
@@ -152,10 +152,10 @@ describe('ReferralsHelp', () => {
     }
   });
 
-  it('keeps the sheet itself inside the accessibility tree', () => {
+  it('keeps the sheet itself inside the accessibility tree', async () => {
     // guards the inverse mistake: marking the wrong node modal would hide the
     // help content rather than the backdrop
-    open();
+    await open();
 
     expect(screen.getByText('About this list')).toBeOnTheScreen();
     expect(screen.getByTestId('referrals-help-close-btn')).toBeOnTheScreen();

@@ -79,7 +79,7 @@ describe('useOrgTeams', () => {
   // So a test that doesn't install its own storage still starts empty.
   beforeEach(() => configureActiveOrgStorage(createSyncStorage()));
 
-  function renderWith(organizations: readonly (typeof ORG)[]) {
+  async function renderWith(organizations: readonly (typeof ORG)[]) {
     const { client, orgIdPerOperation } = createRecordingClient();
     const wrapper = ({ children }: { children: ReactNode }) => (
       <ApolloProvider client={client}>
@@ -89,7 +89,7 @@ describe('useOrgTeams', () => {
       </ApolloProvider>
     );
     return {
-      ...renderHook(() => useOrgTeams(), { wrapper }),
+      ...(await renderHook(() => useOrgTeams(), { wrapper })),
       orgIdPerOperation,
     };
   }
@@ -97,7 +97,7 @@ describe('useOrgTeams', () => {
   it('every request it issues carries an active org', async () => {
     configureActiveOrgStorage(createSyncStorage());
 
-    const { result, orgIdPerOperation } = renderWith([ORG]);
+    const { result, orgIdPerOperation } = await renderWith([ORG]);
 
     await waitFor(() => expect(result.current.teams).toHaveLength(1));
     expect(orgIdPerOperation.length).toBeGreaterThan(0);
@@ -108,7 +108,7 @@ describe('useOrgTeams', () => {
     const other = { ...ORG, id: 'org-2', name: 'Other Org' };
     configureActiveOrgStorage(createSyncStorage('org-2'));
 
-    const { result, orgIdPerOperation } = renderWith([ORG, other]);
+    const { result, orgIdPerOperation } = await renderWith([ORG, other]);
 
     await waitFor(() => expect(result.current.teams).toHaveLength(1));
     expect(orgIdPerOperation.every((id) => id === 'org-2')).toBe(true);
@@ -120,7 +120,7 @@ describe('useOrgTeams', () => {
     // the request is correctly attributed.
     configureActiveOrgStorage(createSyncStorage('org-1'));
 
-    const { orgIdPerOperation } = renderWith([]);
+    const { orgIdPerOperation } = await renderWith([]);
 
     await waitFor(() => expect(orgIdPerOperation.length).toBeGreaterThan(0));
     expect(orgIdPerOperation.every((id) => id === 'org-1')).toBe(true);

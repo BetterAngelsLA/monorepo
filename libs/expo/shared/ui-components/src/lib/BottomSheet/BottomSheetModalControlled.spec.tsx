@@ -30,44 +30,44 @@ describe('BottomSheetModalControlled', () => {
     mocks.showBottomSheet.mockReset();
   });
 
-  it('presents the sheet when isOpen becomes true', () => {
-    const { rerender } = render(<Controlled isOpen={false} />);
+  it('presents the sheet when isOpen becomes true', async () => {
+    const { rerender } = await render(<Controlled isOpen={false} />);
 
-    rerender(<Controlled isOpen={true} />);
+    await rerender(<Controlled isOpen={true} />);
 
     expect(mocks.showBottomSheet).toHaveBeenCalledTimes(1);
 
     // Sheet mounts while isOpen is true → it stays open.
     const closeSheet = vi.fn();
-    act(() => {
+    await act(async () => {
       mountSheetRender()({ closeSheet });
     });
     expect(closeSheet).not.toHaveBeenCalled();
   });
 
-  it('dismisses the sheet when isOpen flips to false after it mounted', () => {
-    const { rerender } = render(<Controlled isOpen={false} />);
-    rerender(<Controlled isOpen={true} />);
+  it('dismisses the sheet when isOpen flips to false after it mounted', async () => {
+    const { rerender } = await render(<Controlled isOpen={false} />);
+    await rerender(<Controlled isOpen={true} />);
 
     const closeSheet = vi.fn();
-    act(() => {
+    await act(async () => {
       mountSheetRender()({ closeSheet });
     });
 
-    rerender(<Controlled isOpen={false} />);
+    await rerender(<Controlled isOpen={false} />);
     expect(closeSheet).toHaveBeenCalled();
   });
 
   it('dismisses the sheet even when it mounts after isOpen already went false', async () => {
-    const { rerender } = render(<Controlled isOpen={false} />);
-    rerender(<Controlled isOpen={true} />);
+    const { rerender } = await render(<Controlled isOpen={false} />);
+    await rerender(<Controlled isOpen={true} />);
 
     // isOpen flips back to false BEFORE the sheet's render callback runs
     // (the mount-race that left the media picker open).
-    rerender(<Controlled isOpen={false} />);
+    await rerender(<Controlled isOpen={false} />);
 
     const closeSheet = vi.fn();
-    act(() => {
+    await act(async () => {
       mountSheetRender()({ closeSheet });
     });
 

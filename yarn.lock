@@ -4814,6 +4814,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jest/diff-sequences@npm:30.5.0":
+  version: 30.5.0
+  resolution: "@jest/diff-sequences@npm:30.5.0"
+  checksum: 10/6fdba657e811790850c68beeef9a9d435b77733242c0ff94226cd210bbc11320a39a687bb3037089be7ffc6a2d98f5527d987327a2a18f83ebc87a8fe1e97e2a
+  languageName: node
+  linkType: hard
+
 "@jest/environment@npm:30.4.1":
   version: 30.4.1
   resolution: "@jest/environment@npm:30.4.1"
@@ -4901,6 +4908,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jest/get-type@npm:30.5.0":
+  version: 30.5.0
+  resolution: "@jest/get-type@npm:30.5.0"
+  checksum: 10/6b67e70f6c1cca6da153814542903b4c385447c7c5e029f8911402ca8a75fbd33a14cc0fff4c6ed7c6c629f6425fade605d6f32eb9516b52146a8640fd899773
+  languageName: node
+  linkType: hard
+
 "@jest/globals@npm:30.4.1":
   version: 30.4.1
   resolution: "@jest/globals@npm:30.4.1"
@@ -4920,6 +4934,20 @@ __metadata:
     "@types/node": "npm:*"
     jest-regex-util: "npm:30.4.0"
   checksum: 10/4fb1db0e586713708d2fcd79059315600978608483ef2d80e04a0a59b20b0d8de0d3f47cad950ff90bfb9ea3cb788709ee3d1eb225734e4dbf1c4b743c93d204
+  languageName: node
+  linkType: hard
+
+"@jest/react-is-18@npm:react-is@^18.3.1, react-is-18@npm:react-is@^18.3.1, react-is@npm:^18.0.0":
+  version: 18.3.1
+  resolution: "react-is@npm:18.3.1"
+  checksum: 10/d5f60c87d285af24b1e1e7eaeb123ec256c3c8bdea7061ab3932e3e14685708221bf234ec50b21e10dd07f008f1b966a2730a0ce4ff67905b3872ff2042aec22
+  languageName: node
+  linkType: hard
+
+"@jest/react-is-19@npm:react-is@^19.2.5":
+  version: 19.3.0
+  resolution: "react-is@npm:19.3.0"
+  checksum: 10/69cfafcab48caac03da35fb17e640a2a2de8299a3cd699da720e671a22231fc7179c77c82e379826728857f9cc45cb56ff1e7f5d607acdd48fe151417a2a388f
   languageName: node
   linkType: hard
 
@@ -4965,6 +4993,15 @@ __metadata:
   dependencies:
     "@sinclair/typebox": "npm:^0.34.0"
   checksum: 10/86e62c8fd8fc77535085f1ede3a416430a3740f78b8f88ec7d0ee4516b22daf3326ffc1ade9d5f7839bbde923aaf1b5ac430a42ed4bb1a38edc3de5005a58f51
+  languageName: node
+  linkType: hard
+
+"@jest/schemas@npm:30.5.0":
+  version: 30.5.0
+  resolution: "@jest/schemas@npm:30.5.0"
+  dependencies:
+    "@sinclair/typebox": "npm:^0.34.0"
+  checksum: 10/8b882db2f056f96f4ef82cafca6270cbc0ab3a6201cd76f43214bc17cc3e16df3e5a10ffc03e5667c2381c8141f7dd79f49d03cb85354b38c33c228c832408e5
   languageName: node
   linkType: hard
 
@@ -5289,7 +5326,7 @@ __metadata:
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:6.4.2"
     "@testing-library/react": "npm:16.1.0"
-    "@testing-library/react-native": "npm:13.2.2"
+    "@testing-library/react-native": "npm:^14.1.0"
     "@tiptap/core": "npm:^3.30.5"
     "@tiptap/extension-link": "npm:^3.30.5"
     "@tiptap/extension-placeholder": "npm:^3.30.5"
@@ -5431,6 +5468,7 @@ __metadata:
     swc-loader: "npm:0.1.15"
     tailwind-merge: "npm:^2.5.5"
     tailwindcss: "npm:^4.2.1"
+    test-renderer: "npm:~1.2.0"
     ts-essentials: "npm:^10.1.1"
     ts-loader: "npm:^9.5.2"
     ts-node: "npm:10.9.2"
@@ -5443,7 +5481,7 @@ __metadata:
     vite-plugin-static-copy: "npm:^4.1.1"
     vite-plugin-svgr: "npm:^4.5.0"
     vitest: "npm:5.0.3"
-    vitest-native: "npm:^0.9.0"
+    vitest-native: "npm:0.14.0-rc.5"
     webpack: "npm:^5.105.4"
     zod: "npm:^4.0.14"
   languageName: unknown
@@ -9608,23 +9646,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react-native@npm:13.2.2":
-  version: 13.2.2
-  resolution: "@testing-library/react-native@npm:13.2.2"
+"@testing-library/react-native@npm:^14.1.0":
+  version: 14.1.0
+  resolution: "@testing-library/react-native@npm:14.1.0"
   dependencies:
-    chalk: "npm:^4.1.2"
-    jest-matcher-utils: "npm:^30.0.2"
-    pretty-format: "npm:^30.0.2"
+    jest-matcher-utils: "npm:^30.4.1"
+    picocolors: "npm:^1.1.1"
+    pretty-format: "npm:^30.4.1"
     redent: "npm:^3.0.0"
   peerDependencies:
     jest: ">=29.0.0"
-    react: ">=18.2.0"
-    react-native: ">=0.71"
-    react-test-renderer: ">=18.2.0"
+    react: ">=19.0.0"
+    react-native: ">=0.78"
+    test-renderer: ^1.0.0
   peerDependenciesMeta:
     jest:
       optional: true
-  checksum: 10/8531501117277489b8f448948cb0916b58ec9590b46e145f1b82c9e4d9d9862ab7610a91ed96c5aefaa536f44c9dcf86936fbe9a1fbea5f6f62e2420ea28f0cc
+  checksum: 10/4d0e0e33bfc4ba6b66453bac4e72d34c8a77985a0563673166759b926078bfecfd951e6946cd20ad3978e52d2fa000e5ba863edfa38f6ef8c5a50afe89d8d36a
   languageName: node
   linkType: hard
 
@@ -10546,6 +10584,15 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/9ebda2d2bc19179d3e4001d5e0b6d72bda857235532b5549e7f7cc8672fcc507dd31ca1f681bbd2f359d1b816040ea947f4eca08fe891da2f1200a9f8175e835
+  languageName: node
+  linkType: hard
+
+"@types/react-reconciler@npm:~0.33.0":
+  version: 0.33.1
+  resolution: "@types/react-reconciler@npm:0.33.1"
+  peerDependencies:
+    "@types/react": "*"
+  checksum: 10/82b79123831236765efcf12e3f4fe0195006062a75d8c49fda32dd69c49e81d373287228dda8a1640b0684cbfb072475f14379f7b69810de578de950e7ee92f5
   languageName: node
   linkType: hard
 
@@ -17546,7 +17593,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flow-remove-types@npm:^2.305.0, flow-remove-types@npm:^2.322.0":
+"flow-estree@npm:0.335.0":
+  version: 0.335.0
+  resolution: "flow-estree@npm:0.335.0"
+  checksum: 10/a9569d1df6be661f61384e102fe80593a90eda0b9ffbccd70e09d30f1b0a2840e12621c6721161e16c8fd2a443b39b503155d893ef423518bb5f96ae7dd6e234
+  languageName: node
+  linkType: hard
+
+"flow-parser@npm:^0.335.0":
+  version: 0.335.0
+  resolution: "flow-parser@npm:0.335.0"
+  dependencies:
+    flow-estree: "npm:0.335.0"
+  checksum: 10/610ed555cc0a2b00a585a6cb6c2568762567f074f1d63ef518ec5e991639da1baf897178927db466187bce9f89905bba6f4ddb52537662987fd788be31a596a9
+  languageName: node
+  linkType: hard
+
+"flow-remove-types@npm:^2.305.0":
   version: 2.324.0
   resolution: "flow-remove-types@npm:2.324.0"
   dependencies:
@@ -17557,6 +17620,20 @@ __metadata:
     flow-node: flow-node
     flow-remove-types: flow-remove-types
   checksum: 10/05d49475196b126aefb88ce85fe541082b7adac0c2cd04666629b9275b8a804bf9088d72ef4dc020675574ef215c6717fc7d999317bb3d3dbab4dc19079d7f60
+  languageName: node
+  linkType: hard
+
+"flow-remove-types@npm:^2.333.0":
+  version: 2.335.0
+  resolution: "flow-remove-types@npm:2.335.0"
+  dependencies:
+    flow-parser: "npm:^0.335.0"
+    pirates: "npm:^3.0.2"
+    vlq: "npm:^0.2.1"
+  bin:
+    flow-node: flow-node
+    flow-remove-types: flow-remove-types
+  checksum: 10/063dc4cf8c44e6c0c24f6dec5c31436cb79b9b3d1f208ebb0b78753804aafa0756169bc40d999d265a76489f1af81dccd1ee2920b94929f34e36f398e9f2e184
   languageName: node
   linkType: hard
 
@@ -19624,6 +19701,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jest-diff@npm:30.5.2":
+  version: 30.5.2
+  resolution: "jest-diff@npm:30.5.2"
+  dependencies:
+    "@jest/diff-sequences": "npm:30.5.0"
+    "@jest/get-type": "npm:30.5.0"
+    chalk: "npm:^4.1.2"
+    pretty-format: "npm:30.5.1"
+  checksum: 10/42c2f228f605438e2f6c128290365fce29914508fbb96a8bfda41000a2437d8de9718b77ad97d40e65d0e36ea05a4b06227137f669869e11f2fa08c92df5a4be
+  languageName: node
+  linkType: hard
+
 "jest-diff@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest-diff@npm:29.7.0"
@@ -19749,7 +19838,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-matcher-utils@npm:30.4.1, jest-matcher-utils@npm:^30.0.2":
+"jest-matcher-utils@npm:30.4.1":
   version: 30.4.1
   resolution: "jest-matcher-utils@npm:30.4.1"
   dependencies:
@@ -19770,6 +19859,18 @@ __metadata:
     jest-get-type: "npm:^29.6.3"
     pretty-format: "npm:^29.7.0"
   checksum: 10/981904a494299cf1e3baed352f8a3bd8b50a8c13a662c509b6a53c31461f94ea3bfeffa9d5efcfeb248e384e318c87de7e3baa6af0f79674e987482aa189af40
+  languageName: node
+  linkType: hard
+
+"jest-matcher-utils@npm:^30.4.1":
+  version: 30.5.2
+  resolution: "jest-matcher-utils@npm:30.5.2"
+  dependencies:
+    "@jest/get-type": "npm:30.5.0"
+    chalk: "npm:^4.1.2"
+    jest-diff: "npm:30.5.2"
+    pretty-format: "npm:30.5.1"
+  checksum: 10/c3a772f30d3cddb8bf32bad82cc87104dcfc853694fcd212fe2e0fadda3bedebb8a99cb8688f780e1118c12275395e90b27fd53f83c74560cc8eb2974e6a2463
   languageName: node
   linkType: hard
 
@@ -21022,7 +21123,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"magic-string@npm:^1.2.3":
+"magic-string@npm:^1.2.3, magic-string@npm:^1.4.2":
   version: 1.4.3
   resolution: "magic-string@npm:1.4.3"
   dependencies:
@@ -23315,7 +23416,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pretty-format@npm:30.4.1, pretty-format@npm:^30.0.2":
+"pretty-format@npm:30.4.1":
   version: 30.4.1
   resolution: "pretty-format@npm:30.4.1"
   dependencies:
@@ -23324,6 +23425,18 @@ __metadata:
     react-is-18: "npm:react-is@^18.3.1"
     react-is-19: "npm:react-is@^19.2.5"
   checksum: 10/60311ef47a646eeaec0432efe66290cb6f0d2eccb123a28ad4ab6d7e53087bc62db91cfd54c3cc00c89d6875aefb2bf6264381b6c9411ce6bff3d6aa8280abad
+  languageName: node
+  linkType: hard
+
+"pretty-format@npm:30.5.1, pretty-format@npm:^30.4.1":
+  version: 30.5.1
+  resolution: "pretty-format@npm:30.5.1"
+  dependencies:
+    "@jest/react-is-18": "npm:react-is@^18.3.1"
+    "@jest/react-is-19": "npm:react-is@^19.2.5"
+    "@jest/schemas": "npm:30.5.0"
+    ansi-styles: "npm:^5.2.0"
+  checksum: 10/bf86d7eb192ef2a456ded06fbe5d387c92b09dc4473331dbc7130e79128fd90f66c662717df8a52431060c1ddb8288a0a78858e9c203974de1b8d1107054b6e8
   languageName: node
   linkType: hard
 
@@ -23814,13 +23927,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is-18@npm:react-is@^18.3.1, react-is@npm:^18.0.0":
-  version: 18.3.1
-  resolution: "react-is@npm:18.3.1"
-  checksum: 10/d5f60c87d285af24b1e1e7eaeb123ec256c3c8bdea7061ab3932e3e14685708221bf234ec50b21e10dd07f008f1b966a2730a0ce4ff67905b3872ff2042aec22
-  languageName: node
-  linkType: hard
-
 "react-is-19@npm:react-is@^19.2.5, react-is@npm:^19.1.0, react-is@npm:^19.2.3, react-is@npm:^19.2.7":
   version: 19.2.8
   resolution: "react-is@npm:19.2.8"
@@ -24228,6 +24334,17 @@ __metadata:
   bin:
     react-native: cli.js
   checksum: 10/494aa0ca3b8f915813c3f39cca50479fb61643e8ca48bf1854bda1abfac195231d2ab9dca2f9e8e445a354dfb6c85db97e32c9e85ee1caa03ba9a4a8cc5fd0ed
+  languageName: node
+  linkType: hard
+
+"react-reconciler@npm:~0.33.0":
+  version: 0.33.0
+  resolution: "react-reconciler@npm:0.33.0"
+  dependencies:
+    scheduler: "npm:^0.27.0"
+  peerDependencies:
+    react: ^19.2.0
+  checksum: 10/eb8ddb8b5cfe850e022379df5330fad1871ab75dd7bc3a4e4c4fef7aa1b951b4cd784263186a0e5b01313de91b389499f95fc616f96b7d9e5dd33c13bdacb014
   languageName: node
   linkType: hard
 
@@ -26432,6 +26549,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"test-renderer@npm:~1.2.0":
+  version: 1.2.0
+  resolution: "test-renderer@npm:1.2.0"
+  dependencies:
+    "@types/react-reconciler": "npm:~0.33.0"
+    react-reconciler: "npm:~0.33.0"
+  peerDependencies:
+    react: ^19.0.0
+  checksum: 10/65be16c35ce1e0e2cef6b6f28043de96954077c303016fad98feee5d8fafd81ca62c215d566780e99b0f80064c40a92364122fbc96ec672e647f3f40fc365830
+  languageName: node
+  linkType: hard
+
 "text-decoder@npm:^1.1.0":
   version: 1.2.7
   resolution: "text-decoder@npm:1.2.7"
@@ -26841,10 +26970,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:2.8.1, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.5.0, tslib@npm:^2.5.3, tslib@npm:^2.6.3, tslib@npm:^2.7.0, tslib@npm:^2.8.0, tslib@npm:^2.8.1":
+"tslib@npm:2.8.1":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10/3e2e043d5c2316461cb54e5c7fe02c30ef6dccb3384717ca22ae5c6b5bc95232a6241df19c622d9c73b809bea33b187f6dbc73030963e29950c2141bc32a79f7
+  languageName: node
+  linkType: hard
+
+"tslib@patch:tslib@npm%3A2.8.1#~/.yarn/patches/tslib-npm-2.8.1-66590b21b8.patch":
+  version: 2.8.1
+  resolution: "tslib@patch:tslib@npm%3A2.8.1#~/.yarn/patches/tslib-npm-2.8.1-66590b21b8.patch::version=2.8.1&hash=ff2938"
+  checksum: 10/5b8d3c2ea8667e7925c4de9bc06c54a68156512c10cd127e1f7ed5e2ac03466617b921281c4678fd88667890a4fc618706552be6cad0b3761d427d28f351432f
   languageName: node
   linkType: hard
 
@@ -27657,12 +27793,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vitest-native@npm:^0.9.0":
-  version: 0.9.0
-  resolution: "vitest-native@npm:0.9.0"
+"vitest-native@npm:0.14.0-rc.5":
+  version: 0.14.0-rc.5
+  resolution: "vitest-native@npm:0.14.0-rc.5"
   dependencies:
-    flow-remove-types: "npm:^2.322.0"
-    magic-string: "npm:^0.30.21"
+    flow-remove-types: "npm:^2.333.0"
+    magic-string: "npm:^1.4.2"
   peerDependencies:
     "@babel/core": "*"
     "@react-native/babel-preset": "*"
@@ -27679,7 +27815,7 @@ __metadata:
       optional: true
   bin:
     vitest-native: dist/cli.mjs
-  checksum: 10/37fcde888cbe8c4e65d2ab54882a67aeefa8d52f76ee018636c759f4cb53f2dce33a0563cc34cbe98d5e5208d1e2347a59345b4d6b83977212d1d7c3497216e3
+  checksum: 10/7a10aa83fc8814d05bb9073c1cf0fb214a7c69328c5640ba1b4ff1357b4cc339e815e6322d8cb3695df045840aca8b19ada72f14f63032f745abbac121759aa5
   languageName: node
   linkType: hard
 
