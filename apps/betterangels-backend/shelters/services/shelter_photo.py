@@ -1,25 +1,25 @@
 from dataclasses import dataclass
 from typing import Iterable
 
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
+
 from accounts.models import User
 from common.constants import DEFAULT_IMAGE_CONTENT_TYPES
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,
-    UploadRequest,
     UploadConfirmation,
+    UploadRequest,
     validate_upload_batch,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
 from common.utils import get_by_pk_or_not_found
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from shelters.enums import ShelterPhotoTypeChoices
 from shelters.models import Shelter, ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
 from shelters.types.inputs import UpdateShelterPhotoInput
-
 
 SHELTER_PHOTO_CONFIG = AttachmentUploadConfig(
     upload_path="shelters",

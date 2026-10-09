@@ -1,10 +1,10 @@
 from typing import Any, cast
 
-from common.org_types import REGISTRY
 from django import forms
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from organizations.models import Organization
 
+from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 
 from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, User

@@ -1,14 +1,10 @@
 from unittest.mock import ANY, patch
 
 import time_machine
-from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
-from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
-from notes.groups import CASEWORKER
 from organizations.models import OrganizationUser
-from shelters.groups import SHELTER_OPERATOR
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from accounts.enums import OrgRoleEnum
@@ -16,6 +12,10 @@ from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
 from accounts.role_manager import OrgRoleManager
+from common.tests.utils import GraphQLBaseTestCase
+from hmis.tests.test_mutations import LOGIN_MUTATION
+from notes.groups import CASEWORKER
+from shelters.groups import SHELTER_OPERATOR
 
 from .baker_recipes import organization_recipe, permission_group_recipe
 

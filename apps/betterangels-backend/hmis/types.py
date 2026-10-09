@@ -5,6 +5,9 @@ from typing import Optional, Union
 
 import strawberry
 import strawberry_django
+from django.db.models import Q, QuerySet
+from strawberry import ID, Info, auto
+
 from accounts.types import CurrentUserType, UserType
 from clients.enums import (
     AdaAccommodationEnum,
@@ -20,7 +23,6 @@ from common.graphql.types import (
     PhoneNumberType,
     make_in_filter,
 )
-from django.db.models import Q, QuerySet
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -34,7 +36,6 @@ from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestTypeEnum
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
-from strawberry import ID, Info, auto
 from tasks.types import TaskType
 
 

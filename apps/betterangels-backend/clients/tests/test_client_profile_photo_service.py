@@ -1,16 +1,17 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from django.test import TestCase
+from model_bakery import baker
+
 from clients.services.client_profile_photo import (
     CLIENT_PROFILE_PHOTO_CONFIG,
     create_presigned_upload,
     resolve_upload,
 )
-from common.services.file_upload import UploadRequest, UploadConfirmation
 from common.services.exceptions import InvalidContentTypeError
+from common.services.file_upload import UploadConfirmation, UploadRequest
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
-from django.test import TestCase
-from model_bakery import baker
 
 
 class ValidateContentTypeTest(TestCase):

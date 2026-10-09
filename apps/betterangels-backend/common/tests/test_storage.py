@@ -1,7 +1,8 @@
 from unittest.mock import Mock, patch
 
-from common.storage import LocalS3Storage
 from django.test import SimpleTestCase, override_settings
+
+from common.storage import LocalS3Storage
 
 
 @override_settings(LOCAL_S3_PUBLIC_ENDPOINT_URL="http://localhost:9000", AWS_REGION="us-west-2")

@@ -1,12 +1,12 @@
 import datetime
 from typing import Any
 
-from accounts.models import User
-from clients.models import ClientProfile
 from django.test import TestCase
 from django.utils import timezone
 from model_bakery import baker
 
+from accounts.models import User
+from clients.models import ClientProfile
 from shelters.enums import ReservationStatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.tests.baker_recipes import shelter_recipe

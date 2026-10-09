@@ -1,9 +1,10 @@
 """ShelterAvailability model — tracks bed availability for shelters."""
 
 import pghistory
-from common.models import BaseModel, OrgScoped
 from django.core.validators import MinValueValidator
 from django.db import models
+
+from common.models import BaseModel, OrgScoped
 
 from .shelter import Shelter
 

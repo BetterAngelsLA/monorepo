@@ -1,13 +1,5 @@
 from typing import Optional, cast
 
-from clients.enums import (
-    ClientDocumentNamespaceEnum,
-    GenderEnum,
-    LivingSituationEnum,
-    RelationshipTypeEnum,
-)
-from clients.admin_merge import ClientProfileMergeMixin
-from common.models import Attachment, PhoneNumber
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
@@ -19,6 +11,15 @@ from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
 from pghistory.models import Events
 from rangefilter.filters import DateRangeFilterBuilder
+
+from clients.admin_merge import ClientProfileMergeMixin
+from clients.enums import (
+    ClientDocumentNamespaceEnum,
+    GenderEnum,
+    LivingSituationEnum,
+    RelationshipTypeEnum,
+)
+from common.models import Attachment, PhoneNumber
 
 from .models import (
     ClientContact,

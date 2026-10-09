@@ -1,17 +1,18 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from django.test import TestCase
+from model_bakery import baker
+
 from clients.services.client_document import (
     CLIENT_DOCUMENT_CONFIG,
     create_presigned_uploads,
     resolve_upload,
 )
 from common.models import Attachment
-from common.services.file_upload import UploadRequest, UploadConfirmation
 from common.services.exceptions import InvalidUploadTokenError
-from common.services.types import AuthorizedPresignedUploadBatch, AuthorizedPresignedUpload
-from django.test import TestCase
-from model_bakery import baker
+from common.services.file_upload import UploadConfirmation, UploadRequest
+from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 
 
 class ValidateContentTypeTest(TestCase):

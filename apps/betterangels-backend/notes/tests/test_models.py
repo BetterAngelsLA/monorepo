@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 
 import time_machine
-from accounts.models import User
-from accounts.tests.baker_recipes import organization_recipe
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.models import User
+from accounts.tests.baker_recipes import organization_recipe
 from notes.enums import ServiceRequestStatusEnum
 from notes.models import Note, OrganizationService, ServiceRequest
 from teams.models import Team

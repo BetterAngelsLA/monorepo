@@ -2,8 +2,6 @@ from typing import Any, ClassVar, cast
 from zoneinfo import ZoneInfo
 
 import pghistory
-from accounts.managers import UserManager
-from common.models import BaseModel
 from django.contrib.auth.models import AbstractBaseUser, Group, Permission, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.contenttypes.models import ContentType
@@ -16,6 +14,9 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from strawberry_django.descriptors import model_property
+
+from accounts.managers import UserManager
+from common.models import BaseModel
 
 
 @pghistory.track(

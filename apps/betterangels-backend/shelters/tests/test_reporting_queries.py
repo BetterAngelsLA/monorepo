@@ -1,10 +1,10 @@
 import datetime
 
 import time_machine
-from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from organizations.models import Organization
 
+from common.tests.utils import GraphQLBaseTestCase
 from shelters.models import Bed, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
 

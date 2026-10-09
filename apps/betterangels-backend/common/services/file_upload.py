@@ -13,6 +13,10 @@ authorization (permission checks, permission assignment) themselves.
 
 from typing import Any, Iterable
 
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+
 from accounts.models import User
 from common.files.utils import canonicalise_filename, infer_attachment_type
 from common.models import Attachment
@@ -31,14 +35,11 @@ from common.services.types import (
     AttachmentUploadConfig,
     AuthorizedPresignedUpload,
     AuthorizedPresignedUploadBatch,
-    UploadRequest,
     UploadConfirmation,
+    UploadRequest,
     ValidatedUpload,
 )
 from common.services.upload_token import create_upload_token, validate_upload_token
-from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
 
 
 def _validate_content_type(content_type: str, filename: str, allowed: frozenset[str]) -> None:

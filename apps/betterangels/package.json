@@ -97,6 +97,7 @@
     "react-native-paper-dates": "*",
     "eslint-plugin-storybook": "*",
     "libphonenumber-js": "*",
+    "validator": "*",
     "rxjs": "*"
   },
   "devDependencies": {}

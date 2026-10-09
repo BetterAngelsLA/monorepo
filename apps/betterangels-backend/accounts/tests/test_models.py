@@ -1,9 +1,10 @@
 import pytest
-from accounts.models import OrgTypeChoices, OrganizationProfile, User, validate_iana_time_zone
-from organizations.models import Organization
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
+from organizations.models import Organization
+
+from accounts.models import OrganizationProfile, OrgTypeChoices, User, validate_iana_time_zone
 
 
 class UserModelTestCase(TestCase):

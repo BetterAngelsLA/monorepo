@@ -1,18 +1,18 @@
 """Tests for the read-side authorization selectors (ADR 0001 §2.4, §2.10)."""
 
-from accounts.models import Role, User
-from accounts.services import grant_create, role_assign, sync_roles
-from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.models import Role, User
+from accounts.services import grant_create, role_assign, sync_roles
+from accounts.tests.baker_recipes import organization_recipe
+from common.permissions.selectors import ALL, can, can_anywhere, can_globally, can_obj, scopes, visible
 from notes.models import Note
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 from shelters.models import ContactInfo, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
-
-from common.permissions.selectors import ALL, can, can_anywhere, can_globally, can_obj, scopes, visible
 
 
 class GrantSelectorsTestCase(TestCase):

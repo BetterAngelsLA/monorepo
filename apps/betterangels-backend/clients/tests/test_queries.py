@@ -4,16 +4,13 @@ from unittest.mock import ANY
 
 import time_machine
 import waffle
-from accounts.tests.baker_recipes import organization_recipe
-from common.enums import ImagePresetEnum
-from common.imgproxy import IMGPROXY_SWITCH
 from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from model_bakery import baker
-from notes.models import Note
 from unittest_parametrize import parametrize
 from waffle.testutils import override_switch
 
+from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentGroupEnum,
@@ -41,6 +38,9 @@ from clients.tests.utils import (
     SocialMediaProfileBaseTestCase,
 )
 from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS, MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
+from common.enums import ImagePresetEnum
+from common.imgproxy import IMGPROXY_SWITCH
+from notes.models import Note
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):

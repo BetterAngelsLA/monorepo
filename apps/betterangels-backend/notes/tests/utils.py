@@ -1,8 +1,9 @@
 from typing import Any, Dict
 
+from model_bakery import baker
+
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
-from model_bakery import baker
 
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):

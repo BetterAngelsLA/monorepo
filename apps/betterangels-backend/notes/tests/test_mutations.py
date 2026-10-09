@@ -1,13 +1,14 @@
 from unittest.mock import ANY, patch
 
 import time_machine
-from common.models import Location
 from django.test import ignore_warnings
 from django.utils import timezone
+from unittest_parametrize import parametrize
+
+from common.models import Location
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
-from unittest_parametrize import parametrize
 
 
 @ignore_warnings(category=UserWarning)

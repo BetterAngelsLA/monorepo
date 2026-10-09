@@ -1,12 +1,13 @@
 from unittest.mock import MagicMock, patch
 
+from unittest_parametrize import parametrize
+
 from accounts.tests.baker_recipes import permission_group_recipe
 from common.enums import AttachmentType
 from common.models import Attachment
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
-from unittest_parametrize import parametrize
 
 
 class GenerateNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):

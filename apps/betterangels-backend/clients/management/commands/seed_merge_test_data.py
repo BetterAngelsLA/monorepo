@@ -20,10 +20,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from model_bakery import baker
+from organizations.models import Organization
 
 from accounts.models import User
 from clients.enums import HmisAgencyEnum, LivingSituationEnum, RaceEnum
-from common.enums import AttachmentType
 from clients.models import (
     ClientContact,
     ClientHouseholdMember,
@@ -31,11 +32,10 @@ from clients.models import (
     HmisProfile,
     SocialMediaProfile,
 )
+from common.enums import AttachmentType
 from common.models import Attachment, PhoneNumber
-from model_bakery import baker
 from notes.enums import ServiceRequestStatusEnum
 from notes.models import Note, ServiceRequest
-from organizations.models import Organization
 from teams.models import Team
 
 # ---------------------------------------------------------------------------

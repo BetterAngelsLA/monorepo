@@ -1,14 +1,18 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from accounts.models import Role
-from accounts.role_manager import OrgRoleManager
-from accounts.services import grant_create
-from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from model_bakery import baker
+from strawberry import ID
+
+from accounts.models import Role
+from accounts.role_manager import OrgRoleManager
+from accounts.services import grant_create
+from accounts.tests.baker_recipes import organization_recipe
+from common.services.file_upload import UploadRequest
+from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from shelters.enums import ShelterPhotoTypeChoices
 from shelters.groups import SHELTER_OPERATOR
 from shelters.models import ShelterPhoto
@@ -21,10 +25,7 @@ from shelters.services.shelter_photo import (
     update_shelter_photo,
 )
 from shelters.tests.baker_recipes import shelter_recipe
-from common.services.file_upload import UploadRequest
-from common.services.types import AuthorizedPresignedUploadBatch, AuthorizedPresignedUpload
 from shelters.types.inputs import UpdateShelterPhotoInput
-from strawberry import ID
 
 # ---------------------------------------------------------------------------
 # Content type validation (tests ALLOWED_CONTENT_TYPES constant)

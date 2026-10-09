@@ -1,10 +1,12 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from accounts.tests.baker_recipes import organization_recipe
-from common.models import Attachment
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.tests.baker_recipes import organization_recipe
+from common.models import Attachment
+from common.services.file_upload import UploadConfirmation, UploadRequest
 from notes.groups import CASEWORKER
 from notes.models import Note
 from notes.services import (
@@ -12,7 +14,6 @@ from notes.services import (
     create_note_attachment_presigned_uploads,
     resolve_note_file_uploads,
 )
-from common.services.file_upload import UploadRequest, UploadConfirmation
 
 
 class CreateNoteAttachmentPresignedUploadsTest(TestCase):

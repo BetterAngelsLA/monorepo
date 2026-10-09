@@ -12,14 +12,15 @@ The contract the frontend gates on:
   legacy groups) plus the global tier folded in where the backend enforces it.
 """
 
+from django.contrib.auth.models import Permission
+from model_bakery import baker
+
 from accounts.groups import ORG_ADMIN
 from accounts.models import Role, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import grant_create, grant_delegate, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
-from model_bakery import baker
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 from shelters.models import Shelter
 from teams.models import Team
@@ -307,8 +308,9 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
     def test_reported_shelter_perms_are_enforceable(self) -> None:
         """Property (domain-aware): the report never claims a grant-only perm
         (``LEGACY_INERT_APPS``) that ``can()`` would deny at that org."""
-        from common.permissions.selectors import can
         from organizations.models import Organization
+
+        from common.permissions.selectors import can
 
         b = organization_recipe.make(name="Prop B")
         c = organization_recipe.make(name="Prop C")
@@ -356,8 +358,9 @@ class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
 
     def _assert_report_matches_can(self, user: User) -> None:
         """For every switchable org and every shelter perm: entry ≡ can()."""
-        from common.permissions.selectors import can
         from organizations.models import Organization
+
+        from common.permissions.selectors import can
 
         response = self.execute_graphql(
             """
@@ -512,8 +515,9 @@ class CurrentUserMemberManagementCanEquivalenceTestCase(GraphQLBaseTestCase):
 
     def _assert_matches_can(self, user: User) -> None:
         """Every member-org entry must carry exactly the perms ``can()`` grants there."""
-        from common.permissions.selectors import can
         from organizations.models import Organization
+
+        from common.permissions.selectors import can
 
         global_perms, orgs = self._report()
         for org_name, org_perms in orgs.items():
@@ -637,8 +641,9 @@ class CurrentUserTeamsReportCanEquivalenceTestCase(GraphQLBaseTestCase):
         self.org = organization_recipe.make(name="Teams Equiv Org")
 
     def _assert_report_matches_can(self, user: User) -> None:
-        from common.permissions.selectors import can
         from organizations.models import Organization
+
+        from common.permissions.selectors import can
 
         response = self.execute_graphql(
             """
