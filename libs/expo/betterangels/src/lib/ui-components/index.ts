@@ -34,7 +34,6 @@ export { default as MainContainer } from './MainContainer';
 export * from './MainModal';
 export { default as MainPlusModal } from './MainPlusModal';
 export { default as MainScrollContainer } from './MainScrollContainer';
-export { default as Modal } from './Modal';
 export * from './Nav';
 export * from './NavModal';
 export { default as NoteCard } from './NoteCard';
