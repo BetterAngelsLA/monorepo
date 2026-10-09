@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/shelter-e2e/src",
   "tags": [],
-  "implicitDependencies": ["shelter"],
+  "implicitDependencies": ["shelter-web"],
   "// targets": "to see all targets run: nx show project shelter-e2e --web",
   "targets": {}
 }
