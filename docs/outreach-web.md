@@ -1133,10 +1133,11 @@ re-centring on a region change, the pre-`onMapReady` gate and the pending-region
 replay, and the `scrollEnabled` → `draggable` translation). Confirmed in a live
 browser against seeded data: the local DB now holds 25 interactions each with a
 PostGIS point across LA, so the client Locations map and the interaction detail
-map both render real clusters. Seeded with
-`python manage.py seed_demo_clients` (and `seed_demo_caseworkers` for logins);
-probe account `probe_x@example.com` / `probe-maps-1234`, or
-`caseworker1..10@example.com` / `password`.
+map both render real clusters. That data came from throwaway seeding scripts
+that are **not** part of this PR — they were scaffolding for verification, not a
+deliverable, and have been dropped. Probe account
+`probe_x@example.com` / `probe-maps-1234`; the `caseworker1..10@example.com` /
+`password` accounts those scripts created still exist in the author's local DB.
 
 **The `map.web.ts` bypass — closed.** Metro's `WEB_SHIMS` substitution already
 handles `react-native-maps` on web, so `libs/expo/betterangels/src/lib/maps/` did
