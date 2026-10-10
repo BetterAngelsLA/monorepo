@@ -221,6 +221,52 @@ Worth recording so nobody acts on them:
   to the string `"undefined"` and matches nothing — so it now aborts as INCONCLUSIVE when it
   finds no tabs rather than reporting a pass.
 
+### Two interaction bugs web hands you for free
+
+Both reported from a browser, both from the browser handing focus to something a native app has
+no equivalent of.
+
+#### The picker modal could not be dismissed
+
+`SingleSelect` falls back to `Picker` above a few items, and `Picker`'s field opened it from
+`onFocus`. react-native-web's `Modal` **refocuses whatever opened it when it closes** —
+`ModalFocusTrap`: _"To be fully compliant with WCAG we need to refocus element that triggered
+opening modal"_ — so every close immediately refired `onFocus` and reopened the picker. Escape,
+the backdrop and picking an item all closed it and all bounced straight back open.
+
+The fix is not just "ignore the next focus". Closing via the **backdrop produces no refocus at
+all**, so a flag waiting to be consumed by one stays armed and eats the user's next tap instead.
+Two things disarm it: a `pointerdown` (every real tap starts with one, the programmatic refocus
+never does) and a one-second timeout as a backstop. The field is also blurred as the refocus is
+swallowed — a tap on an already-focused field fires no focus event, so leaving focus there would
+make the picker impossible to \_re_open.
+
+There was a second, independent reason it would not close: `PickerModal`'s `centerWrap` is a
+later sibling of the backdrop and covers the whole screen, so a tap in the grey hit a plain
+`View` and the backdrop's `onPress` never fired. `pointerEvents: 'box-none'` on the wrap restores
+it — through `StyleSheet.create`, per the `box-none` note above; the prop form and the inline
+style form are not equivalent.
+
+Verified on `/settings/team` for all three close paths and for re-opening after each, and by
+picking a real team (modal closes, field takes the value, snackbar fires).
+
+#### Avatars flickered while scrolling
+
+`Avatar` renders `expo-image`, whose web default is `<img loading="lazy">`. Every mount is
+therefore a brand-new lazy image that paints blank and then fills in — and mounts are constant:
+windowing remounts rows as you scroll, and switching a client-profile tab remounts the content.
+`loading="eager"` on the avatar removes the blank frame. It costs nothing here: avatars are
+small, imgproxy serves them with `Cache-Control: max-age=31536000`, and windowing means only the
+mounted rows are requested in the first place.
+
+Worth recording what it is _not_: the photo URL is stable across screens (an imgproxy URL derived
+from the S3 key — checked identical on `/`, `/settings` and `/clients`) and is cached for a year,
+so this was never URL churn or a re-download.
+
+The HMIS path is worse and is left alone: those cards pass `headers`, which makes `Avatar` ask for
+`cachePolicy: 'none'`, and expo-image's web `useHeaders` then re-fetches the image into a fresh
+blob URL **on every mount**.
+
 ### Fixed: a render loop on the related-contact form
 
 `/clients/:id/relations/add?componentName=RelevantContacts` (and the edit route) emitted

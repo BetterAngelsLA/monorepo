@@ -125,6 +125,17 @@ export function Avatar(props: IAvatarProps) {
             cachePolicy={headers ? 'none' : 'memory-disk'}
             contentFit="cover"
             recyclingKey={imageUrl}
+            // expo-image defaults the web <img> to `loading="lazy"`. In a
+            // virtualized list — and on every tab switch, which remounts the
+            // content — each mount is a brand new lazy image, so the avatar
+            // paints blank and then fills in, which reads as flicker while
+            // scrolling. Avatars are small, imgproxy serves them with a
+            // one-year cache, and windowing means only the mounted rows are
+            // requested anyway, so eager loading costs nothing here and removes
+            // the blank frame. (The HMIS path passes `headers`, and expo-image
+            // then re-fetches into a blob URL on every mount regardless — see
+            // the cachePolicy above.)
+            loading="eager"
             style={{
               height: SIZE[size] - 1,
               width: SIZE[size] - 1,

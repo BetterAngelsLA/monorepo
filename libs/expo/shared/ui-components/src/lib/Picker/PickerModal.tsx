@@ -124,6 +124,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacings.md,
+    // Without this the wrap covers the backdrop (it is a later sibling, so it is
+    // on top) and every tap in the grey is swallowed by a plain View: the
+    // backdrop's onPress never fires and the picker cannot be dismissed by
+    // tapping outside it. `box-none` keeps the wrap out of hit-testing while its
+    // children — the items — still receive taps. Set through the stylesheet
+    // rather than the deprecated prop; react-native-web only polyfills
+    // `box-none` in its atomic compiler, which is what `StyleSheet.create` feeds.
+    pointerEvents: 'box-none',
   },
   content: {
     width: '100%',
