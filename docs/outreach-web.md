@@ -1041,6 +1041,34 @@ Two things now stand in for that:
 > every affected app in one step, so one missing secret would hold up unrelated releases. The
 > mitigation is provisioning, below. Revisit if the deploy step is ever split per app.
 
+#### What a keyless build looks like, so it is not re-diagnosed
+
+Reported as "a modal flickers while navigating, something about Google Maps not loading". All of
+it is one cause — an empty key — and it comes and goes with the map, which is why it flickers:
+tab screens stay mounted, so a transition creates and destroys the map, and the artefacts go with
+it.
+
+1. **Google's own dialog** over the map: _"This page can't load Google Maps correctly. Do you own
+   this website?"_ — with tiled **"For development purposes only"** watermarks.
+2. In **dev only**, Expo's LogBox toast at the bottom: `Google Maps JavaScript API error…`.
+3. In the console (dev only — stripped from production by `drop_console`, see above):
+   `Google Maps JavaScript API error: ApiProjectMapError` and `warning: NoApiKeys`.
+
+Reproduced by emptying `EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY` and loading `/note/create` or the
+client Locations tab; the Maps script request then carries **no `key=` parameter at all**.
+
+Two ways to hit it:
+
+- **Deployed.** The build has no key. Verified by pulling the deployed bundle and grepping it: a
+  keyless deploy still contains the iOS and Android keys — both are inlined because `config.ts`
+  and `app.config.js` reference them — so the bundle _looks_ keyed while the web key is `''`.
+  Grep for the web key itself, not just for `AIza`.
+- **Locally, with a stale bundle.** `EXPO_PUBLIC_*` is inlined at transform time, so a dev server
+  started before the key was added keeps serving a keyless bundle. Restart it with `--clear`.
+
+A third option — rendering an explicit "map unavailable" state instead of letting Google's dialog
+show — was proposed and declined, so the map surfaces are unchanged.
+
 Neither is a substitute for the key. Set it before relying on a deployed environment:
 
 ```sh
