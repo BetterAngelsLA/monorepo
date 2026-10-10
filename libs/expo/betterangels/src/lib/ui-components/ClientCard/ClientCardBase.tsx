@@ -9,22 +9,22 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { CardMenuBtn } from './CardMenuBtn';
 import { IClientCardProps } from './ClientCard';
 import { formatHeight } from './utils/formatHeight';
 import { getLahsaHmisId } from './utils/getLahsaHmisId';
 import { formatScalarDate } from '@monorepo/shared/scalars';
 
+/**
+ * The card's *contents* only — no menu, and no press handling.
+ *
+ * The menu button deliberately lives in `ClientCard` as a sibling of the card's
+ * pressable area rather than inside it. `accessibilityRole="button"` renders a
+ * real `<button>` on web, and a button nested inside a button is invalid HTML
+ * (React reports it as a hydration error) as well as a screen-reader problem.
+ */
 export function ClientCardBase(props: IClientCardProps) {
-  const { client, onMenuPress } = props;
-
-  const handleMenuPress = useCallback(() => {
-    if (client) {
-      onMenuPress?.(client);
-    }
-  }, [onMenuPress, client]);
+  const { client } = props;
 
   if (!client) {
     return null;
@@ -80,8 +80,6 @@ export function ClientCardBase(props: IClientCardProps) {
           </View>
         )}
       </View>
-
-      {!!onMenuPress && <CardMenuBtn onPress={handleMenuPress} />}
     </>
   );
 }

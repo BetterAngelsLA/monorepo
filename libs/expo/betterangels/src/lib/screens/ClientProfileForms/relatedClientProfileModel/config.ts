@@ -1,6 +1,9 @@
 import { ComponentType } from 'react';
 import { ViewStyle } from 'react-native';
-import { ClientProfileSectionEnum } from '../../../screenRouting';
+import {
+  ClientProfileSectionEnum,
+  TRelatedModelSection,
+} from '../../../screenRouting';
 import { TClientProfile } from '../../Client/ClientProfile/types';
 import { ClientContactForm } from './forms/ClientContactsForm';
 import { HmisProfileForm } from './forms/HmisProfileForm/HmisProfileForm';
@@ -22,7 +25,10 @@ type TRelationConfig = {
   FormComponent: ComponentType<TRelationComponentProps>;
 };
 
-export const clientRelatedModelConfig: Record<string, TRelationConfig> = {
+export const clientRelatedModelConfig: Record<
+  TRelatedModelSection,
+  TRelationConfig
+> = {
   [ClientProfileSectionEnum.HmisIds]: {
     titlePlural: 'HMIS IDs',
     titleSingular: 'HMIS ID',

@@ -4,12 +4,12 @@ import {
   HMIS_API_URL_STORAGE_KEY,
   HMIS_AUTH_DOMAIN_STORAGE_KEY,
 } from '@monorepo/expo/shared/clients';
-import CookieManager from '@preeternal/react-native-cookie-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { cancelAllUploadRunners } from '../../providers/uploadProgress/uploadRunnerRegistry';
 import { useUser } from '../../providers/user/UserProvider';
+import { clearSessionCookies } from './clearSessionCookies';
 
 /**
  * Clears every piece of local session state: in-flight uploads, cookies (the
@@ -23,6 +23,11 @@ import { useUser } from '../../providers/user/UserProvider';
  *
  * Each step is isolated: a failing native cleanup must never leave the user
  * "signed in" locally, since in both callers the session is already gone.
+ *
+ * One implementation for both platforms — the only difference is the cookie step,
+ * which lives in `clearSessionCookies` (+ its `.web` no-op). Two near-identical
+ * platform copies is exactly how a teardown quietly stops being a teardown, which
+ * is why the platform split is one import rather than one whole file.
  */
 export default function useClearLocalSession() {
   const client = useApolloClient();
@@ -35,12 +40,8 @@ export default function useClearLocalSession() {
     // client record this session no longer has any business touching.
     cancelAllUploadRunners();
 
-    try {
-      // Clears the HMIS `auth_token` cookie along with everything else.
-      await CookieManager.clearAll();
-    } catch (err) {
-      console.error(err);
-    }
+    // Clears the HMIS `auth_token` cookie along with everything else.
+    await clearSessionCookies();
 
     // The HMIS session pointers live in AsyncStorage, not the cookie jar —
     // without removing them the next login could inherit a stale HMIS host

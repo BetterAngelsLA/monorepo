@@ -31,6 +31,7 @@ export { default as Divider } from './Divider';
 export { default as EditButton } from './EditButton';
 export { default as EmailBtn } from './EmailBtn';
 export { default as ExpandableContainer } from './ExpandableContainer';
+export { default as FontLoader } from './Fonts/FontLoader';
 export { default as FieldCard } from './FieldCard';
 export { default as FileCard } from './FileCard';
 export * from './Filters';
@@ -42,6 +43,11 @@ export { default as IconButton } from './IconButton';
 export { default as ImageViewer } from './ImageViewer';
 export * from './InfiniteList';
 export * from './Input';
+// The keyboard seam (`KeyboardProvider`, `KeyboardToolbar`, `KeyboardEvents`,
+// `RNKeyboardAwareScrollView`). Note this does not collide with the styled
+// wrapper below: the seam exposes the raw library component under the qualified
+// name `RNKeyboardAwareScrollView`.
+export * from './Keyboard';
 export { default as KeyboardAwareScrollView } from './KeyboardAwareScrollView';
 export {
   feetInchesToInches,

@@ -1,7 +1,8 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { headerStyles } from './headerStyles';
+import { View } from 'react-native';
+import { headerLeftInsetStyle, headerStyles } from './headerStyles';
 
 type TProps = {
   accessibilityHint?: string;
@@ -23,14 +24,18 @@ export function HeaderLeftButton(props?: TProps) {
   const router = useRouter();
 
   return (
-    <TextButton
-      regular
-      color={color}
-      fontSize="md"
-      pressedBackgroundColor={pressedBackgroundColor}
-      accessibilityHint={accessibilityHint}
-      title={title}
-      onPress={onPress || router.back}
-    />
+    // The web header lays headerLeft flush to the screen edge; the native bars
+    // inset it. See headerLeftInsetStyle.
+    <View style={headerLeftInsetStyle}>
+      <TextButton
+        regular
+        color={color}
+        fontSize="md"
+        pressedBackgroundColor={pressedBackgroundColor}
+        accessibilityHint={accessibilityHint}
+        title={title}
+        onPress={onPress || router.back}
+      />
+    </View>
   );
 }

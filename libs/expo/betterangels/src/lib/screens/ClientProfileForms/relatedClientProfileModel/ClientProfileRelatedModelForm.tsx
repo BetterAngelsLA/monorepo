@@ -3,16 +3,13 @@ import { LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { useSnackbar } from '../../../hooks';
-import {
-  ClientProfileSectionEnum,
-  isValidClientProfileSectionEnum,
-} from '../../../screenRouting';
+import { TRelatedModelSection } from '../../../screenRouting';
 import { GetClientProfileDocument } from '../ClientProfileForm/__generated__/clientProfile.generated';
 import { clientRelatedModelConfig } from './config';
 
 type TProps = {
   clientProfileId: string;
-  componentName: string;
+  componentName: TRelatedModelSection;
   relationId?: string;
   createMode?: boolean;
 };
@@ -23,12 +20,6 @@ export function ClientProfileRelatedModelForm(props: TProps) {
   const navigation = useNavigation();
 
   const { showSnackbar } = useSnackbar();
-
-  if (!isValidClientProfileSectionEnum(componentName)) {
-    throw new Error(`Invalid componentName "${componentName}" provided.`);
-  }
-
-  const section = componentName as ClientProfileSectionEnum;
 
   const {
     data,
@@ -49,7 +40,7 @@ export function ClientProfileRelatedModelForm(props: TProps) {
       : `Edit ${titleSingular}`;
 
     navigation.setOptions({ title: navTitle });
-  }, [navigation, clientProfile, section, createMode, titleSingular]);
+  }, [navigation, clientProfile, componentName, createMode, titleSingular]);
 
   if (loading) {
     return <LoadingView />;

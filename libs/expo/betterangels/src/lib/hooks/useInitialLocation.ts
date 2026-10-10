@@ -44,9 +44,40 @@ export function useInitialLocation(
       } as LocationDraft);
     }
 
+    /**
+     * `reverseGeocode` throws on a real API failure now, rather than returning
+     * the coordinates as if they were an address. Fall back to them here as
+     * before: `onRefine` fires the caller without awaiting, so a rejection would
+     * escape the enclosing try and float.
+     */
+    const reverseGeocodeWithFallback = async (
+      latitude: number,
+      longitude: number,
+    ): Promise<Awaited<ReturnType<typeof places.reverseGeocode>>> => {
+      try {
+        return await places.reverseGeocode(latitude, longitude);
+      } catch (err) {
+        console.error(
+          'Reverse geocode failed; falling back to coordinates',
+          err,
+        );
+
+        const fallback = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+
+        return {
+          formattedAddress: fallback,
+          shortAddress: fallback,
+          addressComponents: [],
+        };
+      }
+    };
+
     const geocodeAndSet = async (loc: LocationObject) => {
       const { latitude, longitude } = loc.coords;
-      const geocodeResult = await places.reverseGeocode(latitude, longitude);
+      const geocodeResult = await reverseGeocodeWithFallback(
+        latitude,
+        longitude,
+      );
 
       setValueRef.current?.('location', {
         ...locationRef.current,
@@ -78,7 +109,7 @@ export function useInitialLocation(
         if (result?.location) {
           await geocodeAndSet(result.location);
         } else {
-          const geocodeResult = await places.reverseGeocode(
+          const geocodeResult = await reverseGeocodeWithFallback(
             INITIAL_LOCATION.latitude,
             INITIAL_LOCATION.longitude,
           );

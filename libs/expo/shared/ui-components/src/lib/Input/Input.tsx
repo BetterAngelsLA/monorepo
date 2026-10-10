@@ -7,7 +7,7 @@ import {
   getMarginStyles,
   omitMarginProps,
 } from '@monorepo/expo/shared/static';
-import { useRef } from 'react';
+import { useRef, type RefObject } from 'react';
 import {
   Platform,
   StyleProp,
@@ -35,6 +35,13 @@ export interface IInputProps extends TMarginProps, TextInputProps {
   slotLeft?: TInputSlot;
   slotRight?: TInputSlot;
   asSelect?: boolean;
+  /**
+   * Lets a parent drive the field's focus. `Picker` needs it: on web it has to
+   * drop focus off a select field after its modal closes, or the browser's
+   * focus restore reopens the modal forever. Optional — the internal ref is used
+   * when it is not given.
+   */
+  inputRef?: RefObject<TextInput | null>;
 }
 
 const defaultAsSelectProps: TextInputProps = {
@@ -59,6 +66,7 @@ export function Input(props: IInputProps) {
     borderRadius = Radiuses.xs,
     errorMessage,
     asSelect,
+    inputRef: externalInputRef,
     placeholderTextColor = Colors.NEUTRAL,
     ...rest
   } = props;
@@ -66,7 +74,8 @@ export function Input(props: IInputProps) {
   // Pull out multiline before we strip margin props (used to center text)
   const { multiline = false } = rest as TextInputProps;
 
-  const inputRef = useRef<TextInput>(null);
+  const internalInputRef = useRef<TextInput>(null);
+  const inputRef = externalInputRef ?? internalInputRef;
   const nonMarginOtherProps = omitMarginProps(rest);
   const asSelectProps = asSelect ? defaultAsSelectProps : {};
 
@@ -156,6 +165,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: FontSizes.xsm.fontSize,
     includeFontPadding: false,
-    ...Platform.select({ web: { outline: 'none' as const } }),
+    // `outlineWidth: 0`, not `outline: 'none'`: react-native-web's StyleSheet
+    // validator rejects CSS shorthands and *deletes* them (dev only), so the
+    // shorthand silently did nothing. `outlineStyle` is the literal translation
+    // but React Native's own types only allow 'solid' | 'dotted' | 'dashed' for
+    // it, so a zero width is the type-safe way to drop the focus ring.
+    // See docs/outreach-web.md.
+    ...Platform.select({ web: { outlineWidth: 0 } }),
   },
 });

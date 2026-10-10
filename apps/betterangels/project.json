@@ -82,6 +82,51 @@
       },
       "dependsOn": ["sync-deps"]
     },
+    "export-web": {
+      "executor": "nx:run-commands",
+      "defaultConfiguration": "preview",
+      "outputs": ["{workspaceRoot}/dist/apps/betterangels"],
+      "options": {
+        "command": "EXPO_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) expo export --platform web --clear --output-dir ../../dist/apps/betterangels",
+        "cwd": "apps/betterangels"
+      },
+      "configurations": {
+        "preview": {
+          "env": {
+            "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
+            "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
+            "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.dev.betterangels.la"
+          }
+        },
+        "production": {
+          "env": {
+            "APP_VARIANT": "production",
+            "EXPO_PUBLIC_APP_ENV": "production",
+            "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "WARN",
+            "EXPO_PUBLIC_API_URL": "https://api.prod.betterangels.la",
+            "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
+            "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.betterangels.la"
+          }
+        }
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["export-web"],
+      "options": {
+        "command": "node tools/deploy/cloudfront-deploy.mjs"
+      },
+      "configurations": {
+        "preview": {},
+        "production": {}
+      }
+    },
+    "post-pr-preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/post-preview-comment.js --url=https://outreach.dev.betterangels.la"
+      }
+    },
     "test": {
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {

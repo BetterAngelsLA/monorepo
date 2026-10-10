@@ -36,7 +36,7 @@ export type TUser = {
 
 const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   document: CurrentUserDocument,
-  parseUser: (data: unknown): TUser | undefined => {
+  parseUser: (data: unknown, prev?: TUser): TUser | undefined => {
     const userData = data as CurrentUserQuery['currentUser'] | undefined;
     return userData
       ? {
@@ -51,8 +51,23 @@ const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
             permissions: (org.permissions ?? []) as PermissionEnum[],
           })),
           isOutreachAuthorized: userData.isOutreachAuthorized ?? false,
-          hasAcceptedTos: userData.hasAcceptedTos ?? false,
-          hasAcceptedPrivacyPolicy: userData.hasAcceptedPrivacyPolicy ?? false,
+          // Accepting the agreements is monotonic *for the lifetime of this
+          // provider*. The accept is written as soon as the server confirms it,
+          // but this query is re-run on foreground, so a read that was already
+          // in flight can resolve afterwards still carrying the pre-accept
+          // payload; applying that verbatim re-opens the consent sheet.
+          //
+          // Deliberate trade-off: because the latch is `prev || payload`, a
+          // payload can never turn an accepted flag back off. A same-session
+          // revocation would only be picked up on the next fresh read (a reload
+          // or a new session). Nothing in the product revokes acceptance today;
+          // if that changes, this needs a read-version guard instead of a
+          // latch.
+          hasAcceptedTos:
+            prev?.hasAcceptedTos || (userData.hasAcceptedTos ?? false),
+          hasAcceptedPrivacyPolicy:
+            prev?.hasAcceptedPrivacyPolicy ||
+            (userData.hasAcceptedPrivacyPolicy ?? false),
           isHmisUser: userData.isHmisUser ?? undefined,
         }
       : undefined;

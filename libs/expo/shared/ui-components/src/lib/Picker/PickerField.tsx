@@ -1,6 +1,6 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
-import React, { useMemo } from 'react';
-import { ViewStyle } from 'react-native';
+import React, { useMemo, type RefObject } from 'react';
+import { TextInput, ViewStyle } from 'react-native';
 import { Input } from '../Input';
 import { TPickerItem } from './types';
 
@@ -9,6 +9,8 @@ type TProps = {
   placeholderTextColor?: string;
   items: TPickerItem[];
   onFocus: () => void;
+  /** Passed to the field so `Picker` can drop focus after closing on web. */
+  inputRef?: RefObject<TextInput | null>;
   selectedValue?: string | null;
   error?: string;
   label?: string;
@@ -31,6 +33,7 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
     disabled,
     style,
     testId,
+    inputRef,
   } = props;
 
   const displayValue = useMemo(() => {
@@ -43,6 +46,7 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
   return (
     <Input
       asSelect
+      inputRef={inputRef}
       style={style}
       disabled={disabled}
       required={required}

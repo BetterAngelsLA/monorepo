@@ -144,7 +144,28 @@ export default function LocationComponent(props: ILocationProps) {
     autoFilledRef.current = true;
 
     const geocodeAndSave = async (lat: number, lng: number) => {
-      const geocodeResult = await places.reverseGeocode(lat, lng);
+      // `reverseGeocode` now throws on a real API failure (a denied key, quota)
+      // instead of quietly returning the coordinates as if they were an address.
+      // Fall back to the coordinates here, as this screen always did — and do it
+      // inside the helper, because `onRefine` below fires it without awaiting, so
+      // a rejection there would escape the surrounding try and float.
+      let geocodeResult: Awaited<ReturnType<typeof places.reverseGeocode>>;
+
+      try {
+        geocodeResult = await places.reverseGeocode(lat, lng);
+      } catch (err) {
+        console.error(
+          'Reverse geocode failed; falling back to coordinates',
+          err,
+        );
+
+        const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        geocodeResult = {
+          formattedAddress: fallback,
+          shortAddress: fallback,
+          addressComponents: [],
+        };
+      }
 
       const newLocation: TLocation = {
         latitude: lat,

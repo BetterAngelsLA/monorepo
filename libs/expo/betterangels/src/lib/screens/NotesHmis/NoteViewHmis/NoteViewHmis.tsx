@@ -10,6 +10,7 @@ import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { headerRightInsetStyle } from '../../../navigation/headerStyles';
 import { MainScrollContainer } from '../../../ui-components';
 import NoteLocationHmis from './NoteLocationHmis';
 import NoteServicesHmis from './NoteServicesHmis';
@@ -37,18 +38,22 @@ export function NoteViewHmis(props: TProps) {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TextButton
-          color={Colors.WHITE}
-          regular
-          title="Edit"
-          accessibilityHint="edit note form"
-          onPress={() =>
-            router.navigate({
-              pathname: `notes-hmis/${id}/edit`,
-              params: { clientId },
-            })
-          }
-        />
+        // The web header lays headerRight flush to the screen edge; the native
+        // bars inset it. See headerRightInsetStyle.
+        <View style={headerRightInsetStyle}>
+          <TextButton
+            color={Colors.WHITE}
+            regular
+            title="Edit"
+            accessibilityHint="edit note form"
+            onPress={() =>
+              router.navigate({
+                pathname: `notes-hmis/${id}/edit`,
+                params: { clientId },
+              })
+            }
+          />
+        </View>
       ),
     });
   }, [id, clientId, navigation, router]);

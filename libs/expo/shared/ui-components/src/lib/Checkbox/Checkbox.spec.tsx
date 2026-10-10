@@ -59,4 +59,22 @@ describe('Checkbox Component', () => {
     );
     expect(getByRole('button')).toBeTruthy();
   });
+
+  it('honours an explicit checkbox role for labels containing their own controls', async () => {
+    const { getByRole } = await render(
+      <Checkbox
+        accessibilityHint=""
+        accessibilityRole="checkbox"
+        label={<TextRegular ml="xs">I accept the Terms of Service</TextRegular>}
+        onCheck={() => console.log('Checkbox checked')}
+        isChecked={false}
+      />,
+    );
+    expect(getByRole('checkbox')).toBeTruthy();
+    // The checked state has to travel with the role. This pins `isChecked`
+    // reaching the tree as accessibility state; the web half is the
+    // `aria-checked` prop beside it, because react-native-web drops
+    // `accessibilityState` and this renderer cannot observe the DOM.
+    expect(getByRole('checkbox', { checked: false })).toBeTruthy();
+  });
 });

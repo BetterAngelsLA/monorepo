@@ -126,35 +126,6 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
-          name="drawerPlaceholder"
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              setIsModalVisible(true);
-            },
-          }}
-          options={{
-            href: hmisProdDemoEnabled ? null : undefined,
-            title: '',
-            tabBarIcon: () => (
-              <View style={styles.plusButtonWrapper}>
-                <Pressable
-                  testID="main-plus-tab-btn"
-                  accessibilityRole="button"
-                  accessibilityHint="Opening homepage main modal"
-                  onPress={() => setIsModalVisible(true)}
-                  style={({ pressed }) => [
-                    styles.plusButton,
-                    pressed && styles.plusButtonPressed,
-                  ]}
-                >
-                  <PlusIcon color={Colors.WHITE} />
-                </Pressable>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="interactions"
           options={{
             href: hmisProdDemoEnabled ? null : undefined,
@@ -171,6 +142,53 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
+
+      {/*
+        The "add" button is deliberately NOT a tab. As a `Tabs.Screen` it needed a
+        route whose screen rendered `null`, and it depended on cancelling the tab
+        press to avoid navigating there — reliable on native, but not on web, where
+        the tab bar wraps every tab in an <a> and the navigation wins: pressing it
+        landed on that empty screen instead of opening the modal. As a plain
+        Pressable rendered by the layout it never participates in navigation, so
+        both platforms behave identically with no platform branching.
+
+        Still gated on `hmisProdDemoEnabled`, which is what the placeholder tab
+        expressed with `href: hmisProdDemoEnabled ? null : undefined` — in that mode
+        the button was not shown at all, so hoisting it must not start showing it.
+
+        `pointerEvents` is load-bearing: without `box-none` this wrapper swallows
+        every tap in its square, so the white ring around the button eats presses
+        meant for the tab bar underneath.
+
+        It has to live in the `StyleSheet.create` entry, not in the inline style
+        beside it. react-native-web polyfills `box-none` only in the atomic
+        compiler (`StyleSheet/compiler/index.js`), which emits
+        `pointer-events:none !important` for the element plus `auto` for its
+        direct children; the inline path has no `pointerEvents` handling at all and
+        silently drops the value, leaving the computed style `auto`. Measured on
+        the running web app: inline -> `auto` and all four ring probes resolve to
+        this wrapper; in `StyleSheet.create` -> `none`, and the ring probes fall
+        through to the tab bar.
+      */}
+      {!hmisProdDemoEnabled && (
+        <View
+          style={[styles.plusButtonOverlay, { bottom: insets.bottom + 24 }]}
+        >
+          <Pressable
+            testID="main-plus-tab-btn"
+            accessibilityRole="button"
+            accessibilityLabel="Add"
+            accessibilityHint="Opening homepage main modal"
+            onPress={() => setIsModalVisible(true)}
+            style={({ pressed }) => [
+              styles.plusButton,
+              pressed && styles.plusButtonPressed,
+            ]}
+          >
+            <PlusIcon color={Colors.WHITE} />
+          </Pressable>
+        </View>
+      )}
 
       <MainPlusModal
         closeModal={() => setIsModalVisible(false)}
@@ -207,15 +225,22 @@ const styles = StyleSheet.create({
   labelText: {
     textAlign: 'center',
   },
-  plusButtonWrapper: {
-    position: 'relative',
-    bottom: 36,
+  /**
+   * The "add" button, floated over the tab bar. Absolute rather than a tab slot,
+   * because it is not a destination — see the comment at its render site.
+   */
+  plusButtonOverlay: {
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -40,
     height: 80,
     width: 80,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.WHITE,
+    // See the note above the element: `box-none` only works from here.
+    pointerEvents: 'box-none',
   },
   plusButton: {
     height: 66,

@@ -1,14 +1,16 @@
 import { ReactNode } from 'react';
-import { ClientProfileSectionEnum } from '../../../screenRouting';
+import {
+  ClientProfileSectionEnum,
+  TStandardSection,
+} from '../../../screenRouting';
 import ContactInfoForm from './ContactInfoForm';
 import DemographicInfoForm from './DemographicInfoForm';
 import FullNameForm from './FullnameForm';
 import ImportantNotesForm from './ImportantNotesForm';
 import PersonalInfoForm from './PersonalInfoForm';
-import { FormStateMapping } from './types';
 
 export const config: Record<
-  keyof FormStateMapping,
+  TStandardSection,
   { title: string; content: ReactNode }
 > = {
   [ClientProfileSectionEnum.ContactInfo]: {

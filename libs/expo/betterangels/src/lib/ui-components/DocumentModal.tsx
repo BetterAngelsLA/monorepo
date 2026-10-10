@@ -11,6 +11,7 @@ import {
   WFEdit,
 } from '@monorepo/expo/shared/icons';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
+import { downloadInBrowser } from '@monorepo/expo/shared/utils';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
@@ -116,6 +117,28 @@ export default function DocumentModal({
 
     if (!url || !originalFilename) {
       Alert.alert('Download Error', 'Missing file URL or filename.');
+      return;
+    }
+
+    // A browser has no file system to download into and no share sheet — hand
+    // the URL to the browser's own download machinery instead. expo-file-system
+    // is a warn-only stub on web, so the native path below cannot run there.
+    if (Platform.OS === 'web') {
+      // Only surfaces "we could not start the download" (no DOM). A failure
+      // *after* dispatch is the browser's to report: it owns the transfer, and
+      // checking it ourselves would mean fetching the bytes — the exact CORS
+      // dependency this direct hand-off avoids.
+      const started = downloadInBrowser(url, originalFilename);
+
+      if (!started) {
+        showSnackbar({
+          message: 'An error occurred while downloading the file.',
+          type: 'error',
+        });
+        return;
+      }
+
+      closeModal();
       return;
     }
 

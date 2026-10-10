@@ -9,6 +9,10 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { ComponentType, ReactElement, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
+import {
+  headerLeftInsetStyle,
+  headerRightInsetStyle,
+} from '../../navigation/headerStyles';
 import { FeatureFlags } from '../../static';
 import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
@@ -153,23 +157,31 @@ export default function Client({
             </TextBold>
           ),
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
-              accessibilityHint="goes to previous screen"
-              onPress={() => router.dismissTo(arrivedFrom || '/')}
-              testID="client-screen-back-btn"
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            // This screen supplies its own headerLeft, so it needs the same web
+            // inset HeaderLeftButton applies. See headerLeftInsetStyle.
+            <View style={headerLeftInsetStyle}>
+              <Pressable
+                accessibilityRole="button"
+                accessible
+                accessibilityHint="goes to previous screen"
+                onPress={() => router.dismissTo(arrivedFrom || '/')}
+                testID="client-screen-back-btn"
+              >
+                <TextRegular color={Colors.WHITE}>Back</TextRegular>
+              </Pressable>
+            </View>
           ),
           headerRight: () => (
-            <ClientNavMenu
-              clientProfileId={clientProfileId}
-              onDeleted={() => {
-                router.dismissTo(arrivedFrom || '/');
-              }}
-            />
+            // This screen supplies its own headerRight, so it needs the same web
+            // inset as the "Edit" slots. See headerRightInsetStyle.
+            <View style={headerRightInsetStyle}>
+              <ClientNavMenu
+                clientProfileId={clientProfileId}
+                onDeleted={() => {
+                  router.dismissTo(arrivedFrom || '/');
+                }}
+              />
+            </View>
           ),
         }}
       />

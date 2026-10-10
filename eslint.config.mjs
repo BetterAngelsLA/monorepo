@@ -197,6 +197,33 @@ export default [
     },
   },
 
+  // Packages that must never be imported directly.
+  //
+  // `react-native-keyboard-controller` is native-only (Fabric/TurboModule views,
+  // no browser build), so importing it anywhere the web bundle can reach breaks
+  // the web app before React renders. Importing it through the seam gives the web
+  // build its `.web.tsx` twin instead — plain ScrollView, pass-through provider,
+  // inert toolbar/events. The seam's native half is the one place allowed to
+  // import the package, and it disables this rule inline so the reason sits with
+  // the import.
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-native-keyboard-controller',
+              message:
+                "Import from '@monorepo/expo/shared/ui-components' (the Keyboard seam) instead. The package is native-only and is not bundled for web.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Extracts GraphQL operations from template literals i/n .ts/.tsx/.js/.jsx
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],

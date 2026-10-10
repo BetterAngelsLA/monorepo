@@ -2,7 +2,6 @@ import { ApolloLink, HttpLink } from '@apollo/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import {
   ApolloClientProvider,
@@ -24,6 +23,7 @@ import {
   isApiDebug,
   loggerLink,
 } from '@monorepo/expo/shared/clients';
+import { KeyboardProvider } from '@monorepo/expo/shared/ui-components';
 
 import { baTypePolicies, reactQueryClient } from '../init';
 

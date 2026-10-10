@@ -1,5 +1,6 @@
 import { Colors, Regex } from '@monorepo/expo/shared/static';
 import {
+  type KeyboardAwareScrollViewRef,
   ControlledInput,
   Form,
   PhoneNumberInput,
@@ -10,7 +11,6 @@ import { useRouter } from 'expo-router';
 import { useRef } from 'react';
 import { Controller } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { useSnackbar } from '../../../../../hooks';
 import { clientRelevantContactEnumDisplay } from '../../../../../static';
 import AddressAutocomplete from '../../../../../ui-components/AddressField';
