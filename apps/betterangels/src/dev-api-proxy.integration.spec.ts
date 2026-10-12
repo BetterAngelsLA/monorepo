@@ -100,11 +100,12 @@ beforeAll(async () => {
   };
 
   // The proxy's handler is connect's `(req, res, next)`, and `createServer` supplies
-  // only two arguments — so `next` is passed here. It is reached only for a path
-  // the proxy does not claim, and `devServerRoutes` answers rather than calling it.
+  // only two arguments — so `next` is passed here. `devServerRoutes` answers every
+  // path the proxy passes on instead of calling it, so it is never reached.
   const handleRequest = createDevApiProxy()(devServerRoutes);
+  const unusedNext = () => undefined;
 
-  devServer = createServer((req, res) => handleRequest(req, res, () => {}));
+  devServer = createServer((req, res) => handleRequest(req, res, unusedNext));
   await listen(devServer);
   devUrl = originOf(devServer);
 });
