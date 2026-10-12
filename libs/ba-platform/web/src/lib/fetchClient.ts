@@ -34,7 +34,9 @@ function readProxyPrefix(apiUrl?: string): {
 
   const segments = path.replace(/\/+$/, '').split('/');
 
-  // ['', '__api', 'dev'] — the proxy mounts each target one segment deep.
+  // ['', '__api', 'dev'] — the proxy mounts each target one segment deep. This
+  // literal is `DEV_API_PROXY_PREFIX` (`apps/betterangels/src/apiEnvironments.ts`),
+  // repeated because the app depends on this lib and not the other way round.
   return segments[1] === '__api' && segments[2]
     ? { prefix: `/${segments[1]}/${segments[2]}`, target: segments[2] }
     : { prefix: '', target: null };

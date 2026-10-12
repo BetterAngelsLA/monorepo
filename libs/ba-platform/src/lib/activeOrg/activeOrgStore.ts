@@ -145,6 +145,16 @@ export const configureActiveOrgStorage = (next: ActiveOrgPersistence): void => {
   seeded = false;
 };
 
+/** The user's own choice, pulled from persistence on the first read. No derivation. */
+const readSelected = (): string | null => {
+  if (!seeded) {
+    seeded = true;
+    current = readPersisted();
+  }
+
+  return current;
+};
+
 /**
  * Read the active organization id. Safe from anywhere, including interceptors.
  *
@@ -157,16 +167,6 @@ export const configureActiveOrgStorage = (next: ActiveOrgPersistence): void => {
  * the outcome is a string, so repeated reads return the same value, which is
  * what ``useSyncExternalStore`` requires of a snapshot.
  */
-/** The user's own choice, pulled from persistence on the first read. No derivation. */
-const readSelected = (): string | null => {
-  if (!seeded) {
-    seeded = true;
-    current = readPersisted();
-  }
-
-  return current;
-};
-
 export const getActiveOrgId = (): string | null => {
   const selected = readSelected();
 

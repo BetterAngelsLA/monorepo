@@ -1,29 +1,21 @@
 /**
  * Web half of the maps seam, which Metro substitutes for `mapsApi.tsx` on the
- * `web` platform.
+ * `web` platform. Backed by `@teovilla/react-native-web-maps`, which maps the
+ * `react-native-maps` API onto the Google Maps JavaScript API.
  *
- * Backed by `@teovilla/react-native-web-maps`, which maps the `react-native-maps`
- * API onto the Google Maps JavaScript API. Four gaps have to be closed here, and
- * all four fail *silently* — the map still renders, just wrong or not at all:
+ * Four of teovilla's gaps are closed here, and all four fail *silently* — the map
+ * still renders, just wrong or not at all: it exports no `PROVIDER_GOOGLE` /
+ * `PROVIDER_DEFAULT`, so the prop every call site passes arrives `undefined` and
+ * the map is skipped; it takes the Maps JavaScript API key as a *prop* where the
+ * native SDKs read theirs from the app.config.js plugins, so no call site has
+ * one; it ignores region *deltas* (`zoom: props.initialCamera?.zoom || 3` opened
+ * every map at a continental view); and it never reads a controlled `region`, so
+ * those call sites fell back to `initialRegion ?? {lat: 0, lng: 0}` — a world map
+ * at 0,0.
  *
- * 1. teovilla exports no `PROVIDER_GOOGLE` / `PROVIDER_DEFAULT`, which every call
- *    site passes; the prop arrives `undefined` and teovilla bails out of
- *    rendering the map.
- * 2. it takes the Maps JavaScript API key as a *prop*, whereas the native SDKs
- *    read theirs from the app.config.js plugins, so no call site passes one and
- *    the app installs it through `configureWebMaps` instead.
- * 3. it ignores region *deltas* — it builds the map with
- *    `zoom: props.initialCamera?.zoom || 3`, so every map opened at zoom 3, a
- *    continental view.
- * 4. it never reads a controlled `region` prop, so those call sites fell back to
- *    `initialRegion ?? {lat: 0, lng: 0}` — a world map at 0,0.
- *
- * Gaps 3 and 4 are closed by converting the deltas into Google's zoom and handing
- * teovilla an `initialCamera`.
- *
- * Call sites are typechecked against `mapsApi.tsx`, whose types are the real
- * package's, so the props below stay the `react-native-maps` API this file stands
- * in for.
+ * The last two are closed by converting deltas into Google's zoom and handing
+ * teovilla an `initialCamera`. Call sites are typechecked against `mapsApi.tsx`,
+ * whose types are the real package's.
  */
 import * as TeovillaModule from '@teovilla/react-native-web-maps';
 import {
@@ -35,7 +27,6 @@ import {
   useState,
   type ComponentType,
   type MutableRefObject,
-  type ReactNode,
 } from 'react';
 import type { Camera, MapViewProps, Region } from 'react-native-maps';
 import type { TWebMapsConfig } from './types';
@@ -70,21 +61,13 @@ type TTeovillaMapViewProps = MapViewProps & {
 
 /**
  * teovilla's published types are incomplete: `dist/typescript/index.d.ts` only
- * re-exports `./components/marker-clusterer`, so TypeScript cannot see the
- * exports its runtime actually provides (`dist/commonjs/index.web.js` exports
- * default/MapView plus Marker, Polygon, Polyline, Circle, Callout, Geojson).
- *
- * Cast once, here, rather than sprinkling `any` through every call site. The
- * wrapper's own props stay typed against the real `react-native-maps` API.
+ * re-exports `./components/marker-clusterer`, so TypeScript cannot see what its
+ * runtime provides. Cast once, here, rather than sprinkling `any` through every
+ * call site; the wrapper's own props stay typed against `react-native-maps`.
  */
 type TTeovillaRuntime = {
   default: ComponentType<TTeovillaMapViewProps & { ref?: unknown }>;
   Marker: ComponentType<Record<string, unknown>>;
-  Polygon: ComponentType<Record<string, unknown>>;
-  Polyline: ComponentType<Record<string, unknown>>;
-  Circle: ComponentType<Record<string, unknown>>;
-  Callout: ComponentType<{ children?: ReactNode }>;
-  Geojson: ComponentType<Record<string, unknown>>;
 };
 
 const Teovilla = TeovillaModule as unknown as TTeovillaRuntime;
@@ -478,10 +461,5 @@ const MapView = forwardRef<unknown, TTeovillaMapViewProps>((props, ref) => {
 MapView.displayName = 'MapView';
 
 export const Marker = Teovilla.Marker;
-export const Polygon = Teovilla.Polygon;
-export const Polyline = Teovilla.Polyline;
-export const Circle = Teovilla.Circle;
-export const Callout = Teovilla.Callout;
-export const Geojson = Teovilla.Geojson;
 
 export default MapView;

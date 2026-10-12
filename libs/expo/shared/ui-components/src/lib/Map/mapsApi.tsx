@@ -1,7 +1,11 @@
 /**
  * Native half of the maps seam: the real `react-native-maps`, so there is
- * nothing to adapt. Metro substitutes `mapsApi.web.tsx` when bundling for web,
- * and both halves export the same surface.
+ * nothing to adapt. Metro substitutes `mapsApi.web.tsx` when bundling for web.
+ *
+ * Both halves export `MapView`, `Marker`, `configureWebMaps`, `PROVIDER_GOOGLE`
+ * and `PROVIDER_DEFAULT` — the surface `Map/index.ts` re-exports. Nothing may be
+ * added to one half alone; a component only one platform can render belongs to
+ * that platform's screens, not to this seam.
  *
  * The `.tsx` extension is load-bearing: Metro walks the source extensions in
  * order (`.ts` before `.tsx`) and tries the platform-less file within each one,

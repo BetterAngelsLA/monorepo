@@ -12,27 +12,22 @@ import TextMedium from '../TextMedium';
 import { TPdfViewerProps } from './types';
 
 /**
- * Web build of {@link PdfViewer}.
+ * Web build of {@link PdfViewer}: `react-native-pdf` is a native view (its module
+ * imports `codegenNativeComponent`, which Expo's web resolver rejects), and it
+ * caches to disk through `expo-file-system`, whose web build only warns.
  *
- * `react-native-pdf` is a native view (its module imports
- * `codegenNativeComponent`, which Expo's web resolver rejects outright), and the
- * native component also caches to disk through `expo-file-system`, whose web
- * build only warns "not supported on web".
- *
- * Two paths, because they have genuinely different constraints:
+ * Two paths, with genuinely different constraints:
  *
  * 1. **No `headers`** (the only call site today) — the `<iframe>` points straight
- *    at `url` and the browser fetches it as a *navigation*. A navigation is not
- *    subject to the CORS check, so this renders PDFs from an origin that sends no
- *    `Access-Control-Allow-Origin`.
- *
- * 2. **With `headers`** — the bytes have to be fetched to attach an
- *    `Authorization`-style header, then handed to the browser through a Blob URL.
- *    This path can fail visibly, so it is the one that reports through `onError`.
+ *    at `url`, so the browser fetches it as a *navigation*. CORS does not apply to
+ *    a navigation, which is what lets this render PDFs from an origin that sends
+ *    no `Access-Control-Allow-Origin`.
+ * 2. **With `headers`** — the bytes are fetched to attach the header, then handed
+ *    to the browser through a Blob URL. This path can fail visibly, so it is the
+ *    one that reports through `onError`.
  *
  * `cache` / `cacheKey` / `maxCacheEntries` are accepted for interface parity and
- * intentionally unused: HTTP caching plus the browser's own PDF handling replace
- * the on-disk cache, and this component does not persist bytes itself.
+ * unused: browser caching and PDF handling replace the on-disk cache.
  */
 const frameStyle: CSSProperties = {
   width: '100%',

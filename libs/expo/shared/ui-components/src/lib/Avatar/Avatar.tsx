@@ -1,7 +1,7 @@
 import { UserOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Image } from 'expo-image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import Loading from '../Loading';
 
@@ -9,7 +9,7 @@ import Loading from '../Loading';
  * The CDN re-signs the same photo on every response, so the query changes while
  * the path does not. A new URI is a new image to `expo-image`, which loads it and
  * paints the avatar blank first — the flicker when switching tabs. Keep the URI
- * we already render while the path is unchanged, and fall back to the latest one
+ * already on screen while the path is unchanged, and fall back to the latest one
  * if the held signature has aged out.
  */
 function useStableImageUrl(imageUrl?: string | null): {
@@ -17,24 +17,24 @@ function useStableImageUrl(imageUrl?: string | null): {
   adoptCurrent: () => void;
 } {
   const path = imageUrl?.split('?')[0] ?? null;
-  const heldPath = useRef(path);
-  const latestUrl = useRef<string | undefined>(imageUrl ?? undefined);
+  const [heldPath, setHeldPath] = useState(path);
   const [heldUrl, setHeldUrl] = useState<string | undefined>(
     imageUrl ?? undefined,
   );
 
-  latestUrl.current = imageUrl ?? undefined;
+  // Adjusting state during render rather than in an effect: an effect commits
+  // the held URI for a frame first, which is the flicker this exists to avoid.
+  if (heldPath !== path) {
+    setHeldPath(path);
+    setHeldUrl(imageUrl ?? undefined);
+  }
 
-  useEffect(() => {
-    if (!imageUrl || path === heldPath.current) return;
-    heldPath.current = path;
-    setHeldUrl(imageUrl);
-  }, [imageUrl, path]);
-
-  const adoptCurrent = useCallback(() => {
-    heldPath.current = null;
-    setHeldUrl(latestUrl.current);
-  }, []);
+  // The held signature can age out and 404; adopt the current one and let the
+  // next render settle. `heldPath: null` forces that re-adoption.
+  const adoptCurrent = () => {
+    setHeldPath(null);
+    setHeldUrl(imageUrl ?? undefined);
+  };
 
   return { url: heldUrl, adoptCurrent };
 }

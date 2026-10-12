@@ -139,8 +139,9 @@ export function useActiveOrgState(
     [cleanOrgs],
   );
 
+  // Already filtered by ``cleanOrgs`` above.
   const permSet = useMemo(
-    () => new Set((activeOrg?.permissions ?? []).filter(isPermission)),
+    () => new Set(activeOrg?.permissions ?? []),
     [activeOrg?.permissions],
   );
 
