@@ -6,15 +6,11 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// Load-bearing, not belt-and-braces: do not delete this block.
-//
-// Expo's monorepo detection keys off a `pnpm-workspace.yaml` or a `workspaces`
-// array in package.json. This repo has neither at the root (Yarn 4 with an Nx
-// project graph), so `getMetroServerRoot()` resolves to `apps/betterangels`
-// itself and Expo's own defaults come out empty — `watchFolders = []` and
-// `nodeModulesPaths = []` — which means no sibling `libs/` package resolves and
-// no library edit is watched.
-//
+// Load-bearing — do not delete. Expo's monorepo detection needs a
+// `pnpm-workspace.yaml` or a root `workspaces` field; this repo has neither, so
+// Expo resolves the app root and its own defaults come out empty
+// (`watchFolders = []`, `nodeModulesPaths = []`): no sibling `libs/` package
+// resolves and no library edit is watched.
 // https://docs.expo.dev/guides/monorepos/#manual-configuration-before-sdk-52
 config.watchFolders = [workspaceRoot];
 config.resolver.nodeModulesPaths = [
@@ -41,23 +37,13 @@ config.resolver = {
 // ---------------------------------------------------------------------------
 // Web shims
 // ---------------------------------------------------------------------------
-// Package-name substitutions for the `web` platform only. Native builds are
-// untouched.
+// Package-name substitutions for the `web` platform only. Native is untouched.
 //
-// Last resort, not the default. Choose by *when the failure happens*: an
-// **import-time fatal** (a module-scope `TurboModuleRegistry.getEnforcing`, a
-// resolver rejection) cannot be guarded with `Platform.OS`, because ES imports
-// are hoisted and evaluated regardless of the branch — that needs a `.web`
-// sibling, or an entry here when you do not own the import site. A **use-time**
-// failure (an `undefined` component, wrong constants) is better served by one
-// file plus one guard, so the contract stays in one place. Anything else prefers
-// a small re-export seam, which is visible at the import site.
-//
-// `react-native-maps` needs an entry: its bundled imports come from two
-// independent libraries, so there is no single module to hang a `.web` sibling
-// off, the replacement needs the app's resolved browser key, and it implements
-// behaviour teovilla omits (region deltas → zoom, provider forcing, key
-// injection).
+// Last resort: an import-time fatal (a module-scope TurboModule lookup, a resolver
+// rejection) cannot be guarded with `Platform.OS`, because imports are hoisted —
+// that needs a `.web` sibling, or an entry here if you do not own the import site.
+// `react-native-maps` needs one: its bundled imports span two libraries, so there
+// is no single module to hang a `.web` sibling off.
 const WEB_SHIMS = {
   // Backed by @teovilla/react-native-web-maps. The shim also restores the
   // PROVIDER_GOOGLE/PROVIDER_DEFAULT constants teovilla omits and injects the
@@ -103,15 +89,13 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 // dev-api-proxy.js.
 //
 // Shipped native builds never mount it, but the *native dev server* does:
-// @expo/cli installs `enhanceMiddleware` whenever it is not exporting. So a
-// shell with BA_DEV_PROXY_TARGET exported would claim /__api and /admin/login on
-// the native dev server too — harmless (nothing native requests them), but worth
-// knowing when debugging either server.
+// @expo/cli installs `enhanceMiddleware` whenever it is not exporting, so a shell
+// with BA_DEV_PROXY_TARGET exported claims /__api and /admin/login there too.
+// Harmless — nothing native requests them — but worth knowing.
 const { createDevApiProxy } = require('./dev-api-proxy');
 
-// Chain rather than replace: `enhanceMiddleware` is a general Metro extension
-// point, so anything already composed into it must keep running. Replacing it
-// would drop that behaviour in a way that looks unrelated to this project.
+// Chain rather than replace: `enhanceMiddleware` is a shared extension point, so
+// anything already composed into it has to keep running.
 const previousEnhanceMiddleware = config.server.enhanceMiddleware;
 
 config.server.enhanceMiddleware = (middleware, server) =>

@@ -235,9 +235,8 @@ jobs:
           docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
       - name: 🚀 Deploy Changes
-        # `deploy` depends on `export-web`, so the browser bundle is built here
-        # (there is deliberately no separate export step: `export-web` is not
-        # cached, so a second invocation would bundle the whole app twice).
+        # `deploy` depends on `export-web` and `export-web` is not cached, so the
+        # browser bundle is built here rather than in a second invocation.
         run: |
           if [ -z "${EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY:-}" ]; then
             echo "::warning title=Web Maps key is not set::EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY is missing for the '${{ matrix.environment }}' environment, so this build deploys with no maps and no address search."
@@ -247,8 +246,8 @@ jobs:
           EOF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # The outreach `deploy` target depends on `export-web`, so the browser
-          # Maps key has to be present here too or the bundle is built without it.
+          # `deploy` runs `export-web`, so the key must be here or the bundle
+          # ships without it.
           EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
 
       - name: ⏹️ Spin down monorepo environment

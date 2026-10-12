@@ -173,23 +173,18 @@ export default {
       iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
       androidGoogleMapsApiKey:
         process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
-      // Browser key, restricted by HTTP referrer. Used by the react-native-web
-      // build for the Maps JavaScript API — it cannot be used server-side and
-      // must not be the same key as GOOGLE_MAPS_API_KEY on the backend.
+      // Browser key (referrer-restricted), not the backend's GOOGLE_MAPS_API_KEY.
       webGoogleMapsApiKey: process.env.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY,
     },
     owner: 'better-angels',
     runtimeVersion: process.env.RUNTIME_VERSION,
     experiments: {
-      // Subpath the web export is hosted under, e.g. `/branches/my-branch` for a
-      // branch preview. Expo prepends it to every bundled resource URL, which is
-      // the web analogue of Vite's `base` (the sibling web apps pass the same
-      // path via VITE_APP_BASE_PATH).
+      // Subpath the web export is hosted under, e.g. `/branches/<branch>`. Set by
+      // the export-web target; empty for native and root deployments.
       //
-      // Without it the export writes root-absolute URLs (`/_expo/...`) while the
-      // files live under `/branches/<branch>/`, so every asset 403s and the page
-      // renders blank. Set by the export-web target; empty for native builds and
-      // for a root deployment.
+      // Without it the export writes root-absolute `/_expo/...` URLs while the
+      // files live under the branch path, so every asset 403s and the page is
+      // blank.
       baseUrl: process.env.EXPO_BASE_URL || '',
     },
   },

@@ -1,21 +1,17 @@
 /**
  * Dev-only same-origin API proxy for the Expo **web** dev server.
  *
- * A local web build cannot call a deployed API directly: CORS and the CSRF
- * origin allowlist reject it, the `csrftoken` cookie is scoped to
- * `.dev.betterangels.la` so `document.cookie` on localhost cannot read it, and
- * `SameSite=Lax` keeps the session cookie off a cross-site fetch. Serving the API
- * from the page's own origin fixes all four, the way Vite's `server.proxy` does,
- * via Metro's documented `server.enhanceMiddleware` hook. (Expo's own equivalent,
- * Router `+api` routes, is gated on `web.output === 'server'`, which would mean
- * giving up the SPA bundle deployed to S3 + CloudFront.)
+ * A local web build cannot call a deployed API directly: CORS and the CSRF origin
+ * allowlist reject it, the `csrftoken` cookie is scoped to `.dev.betterangels.la`,
+ * and `SameSite=Lax` keeps the session cookie off a cross-site fetch. Serving the
+ * API from the page's own origin fixes all of that, via Metro's
+ * `server.enhanceMiddleware` hook. (Expo's `+api` routes would need
+ * `web.output === 'server'`, giving up the SPA bundle.)
  *
  * Forwarding alone is not enough — hence the two rewrites: the request `Origin`
- * becomes the upstream API's own origin (Django compares it against
- * `CSRF_TRUSTED_ORIGINS` or the host), and the response `Set-Cookie` has `Domain`
- * and `Secure` stripped so the browser stores the cookies for `localhost` over
- * plain http and the page can read `csrftoken`. (`SameSite=None` is rejected
- * without `Secure`, so it is downgraded to `Lax`.)
+ * becomes the upstream API's own origin (Django checks it against
+ * `CSRF_TRUSTED_ORIGINS`), and the response `Set-Cookie` drops `Domain` and
+ * `Secure` so the browser stores them for `localhost` over plain http.
  *
  * Enable with:
  *

@@ -197,15 +197,10 @@ export default [
     },
   },
 
-  // Packages that must never be imported directly.
-  //
-  // `react-native-keyboard-controller` is native-only (Fabric/TurboModule views,
-  // no browser build), so importing it anywhere the web bundle can reach breaks
-  // the web app before React renders. Importing it through the seam gives the web
-  // build its `.web.tsx` twin instead — plain ScrollView, pass-through provider,
-  // inert toolbar/events. The seam's native half is the one place allowed to
-  // import the package, and it disables this rule inline so the reason sits with
-  // the import.
+  // Packages that must never be imported directly: `react-native-keyboard-controller`
+  // is native-only and breaks the web bundle before React renders. Import it through
+  // the Keyboard seam instead, which resolves its `.web.tsx` twin; the seam's native
+  // half disables this rule inline.
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
