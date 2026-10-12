@@ -2,13 +2,13 @@ import datetime
 import random
 from typing import Any
 
-from clients.models import ClientProfile
 from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
 from pghistory.models import Events
 from places import Places
 
+from clients.models import ClientProfile
 from shelters.enums import (
     AccessibilityChoices,
     ConditionChoices,

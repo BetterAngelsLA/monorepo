@@ -1,11 +1,12 @@
 """Tests for freezing the acting user's identity into the pghistory context."""
 
-from accounts.models import User
-from common.middleware import HistoryMiddleware
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpRequest, HttpResponse
 from django.test import RequestFactory, TestCase
 from model_bakery import baker
+
+from accounts.models import User
+from common.middleware import HistoryMiddleware
 from shelters.models import City
 
 

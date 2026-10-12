@@ -7,13 +7,14 @@ attributed as "system (<label>)"); see ADR 0004 §7b.
 
 from types import SimpleNamespace
 
-from accounts.models import User
 from django.contrib import admin
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from import_export import resources
+
+from accounts.models import User
 from shelters.admin import ShelterAdmin
-from shelters.models import City, Service, ServiceCategory, Shelter, SPA
+from shelters.models import SPA, City, Service, ServiceCategory, Shelter
 from shelters.seed import CITY_NAMES, SPA_DATA, seed_shelter_lookups
 
 CityEvent = City.pgh_event_model  # type: ignore[attr-defined]

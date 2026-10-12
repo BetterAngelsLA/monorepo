@@ -588,8 +588,22 @@ asserting the exact match set so it can't drift:
 - **Room** — `RoomEvent` (own), `BedEvent.room_id` (every bed in that room),
   `ReservationEvent.room_id`, and `TrackedRoom*Event` M2M tables (via `room`).
 
-The Bed/Room inclusion of `ReservationEvent`/`BedEvent` rows is the "what touched
-this bed/room" semantics and is intended; each is pinned by a test.
+**Bed/Room exclude `ReservationEvent` from the log (target-scoped blocklist).**
+`references()` matches `ReservationEvent` for Bed/Room via its `bed_id`/`room_id`
+FKs, but a room/bed log is that object's own configuration and occupancy, not
+every reservation that ever referenced it — otherwise a room active for a year
+would return thousands of stay events, which is the main volume driver for a busy
+room/bed. So `audit/selectors.py` applies a small per-target blocklist
+(`_SCOPED_EXCLUSIONS`) on top of `_EXCLUDED_EVENT_MODELS`:
+
+```python
+excluded = (*_EXCLUDED_EVENT_MODELS, *_SCOPED_EXCLUSIONS.get(target_type, ()))
+```
+
+Reservation history remains available via `objectAuditLog(RESERVATION)`.
+`BedEvent.room_id` rows **stay** in a Room's log (the room's beds are its
+configuration). The per-target match set from `references()` is still pinned by a
+test; the log filters on top of it.
 
 **Excluding `ReferralEvent` (blocklist, not allowlist).** **Decision:**
 `ReferralEvent.shelter_id` is excluded from a Shelter's log (referrals are a
@@ -633,6 +647,20 @@ field (§11) supports `.exclude(...)`, and
 `.filter(pgh_created_at__range=...)`/`.filter(user=...)` compose on the aggregate
 queryset. Add a query-count/latency guard test for a representative busy object
 (§20).
+
+**Composite `(pgh_obj, pgh_id)` event index (decided).** The correlated
+`_prev_data` subquery resolves the same object's preceding event with
+`WHERE pgh_obj_id = ? AND pgh_id < ? ORDER BY pgh_id DESC LIMIT 1`; `pgh_id` is
+the event PK and `pgh_obj` only creates a single-column FK index, so Postgres may
+fetch every event for the object and sort rather than seek. An `EXPLAIN ANALYZE`
+on a bulk-loaded 2000-event object showed exactly that (a `Sort` reading ~1000
+rows per event's lookup, ~7.1 s for the row fetch); adding a composite
+`(pgh_obj, pgh_id)` index turns the lookup into a bounded ordered seek (~0.16 s)
+and removes the reliance on per-object `pgh_id` clustering that the PK backward
+scan needs. Each tracked model aggregated by the selector declares one in
+`@pghistory.track(..., meta={"indexes": [...]})` — `Shelter`, `Bed`, `Room`,
+`ContactInfo`, `ShelterAvailability`, `ShelterPhoto`, `Video`, `MediaLink`,
+`Schedule`, `Reservation`, `ReservationClient`.
 
 ## 11. Actor resolution
 
@@ -917,7 +945,8 @@ a newly added M2M cannot diverge silently.
 - **`THROUGH_EVENT_MAP` completeness:** for each target in `{Shelter, Bed, Room, Reservation}`, derive the through models from `event_models(references_model=<target>)` (keep only models lacking `pgh_obj`, i.e. `hasattr(model, "pgh_obj_id")` is `False`) and assert the **union** across targets equals `set(THROUGH_EVENT_MAP)`, so a new M2M field cannot fall out of the map and silently render through the non-M2M path (§19).
 - **`reservation` double-event:** a status change renders as a single `reservation.update` action whose `field_changes` include the `status` old→new diff (sourced from the grouped `status_change` row, not the empty `reservation.update` diff).
 - **`references()` attribution:** a reservation's `objectAuditLog` includes `ReservationClient` add/remove (client assignments) attributed through `references()` — the most sensitive part of a reservation's history; a shelter's log includes `ShelterPhoto`/`MediaLink`/`Video`/`Schedule`/`ContactInfo`/`ShelterAvailability` changes.
-- **`references()` boundary pin:** the exact per-target match set from §10 is asserted by deriving the expected set from `event_models(references_model=<target>)` minus the `referrals.ReferralEvent` blocklist (not a hand-written literal, so a newly tracked model can't silently diverge) — Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
+- **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted by deriving the expected set from `event_models(references_model=<target>)` minus the `referrals.ReferralEvent` blocklist (not a hand-written literal, so a newly tracked model can't silently diverge) — Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
+- **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` but **not** in `objectAuditLog(ROOM)`/`(BED)` (the target-scoped blocklist, §10); a room/bed configuration change still appears.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request renders both the `status` and `notes` field changes (before/after diff), not just one winner row.
 - **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that label/date/actor filters are pushed to SQL (§10 performance note), not applied in Python after fetching.
 

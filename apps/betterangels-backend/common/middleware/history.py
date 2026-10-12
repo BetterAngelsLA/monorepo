@@ -8,9 +8,8 @@ name/email into the context metadata at write time keeps the audit trail stable
 
 from typing import Any
 
-from django.http import HttpRequest
-
 import pghistory.middleware
+from django.http import HttpRequest
 
 
 class HistoryMiddleware(pghistory.middleware.HistoryMiddleware):

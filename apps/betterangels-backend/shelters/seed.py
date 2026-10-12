@@ -6,6 +6,7 @@ Replaces RunPython data migrations. Called by post_migrate signal.
 from logging import getLogger
 
 import pghistory
+
 from shelters.models.lookups import SPA
 
 logger = getLogger(__name__)
