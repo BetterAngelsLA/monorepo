@@ -28,7 +28,9 @@ export default function NoteClient(props: INoteClientProps) {
       />
       <View style={{ paddingRight: Spacings.lg }}>
         <TextMedium selectable size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-          {clientProfile.firstName} {clientProfile.lastName}
+          {[clientProfile.firstName, clientProfile.lastName]
+            .filter(Boolean)
+            .join(' ')}
         </TextMedium>
       </View>
     </View>

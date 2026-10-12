@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useQuery } from '@apollo/client/react';
+import { HeaderLeftButton } from '../../navigation/HeaderLeftButton';
 import { headerRightInsetStyle } from '../../navigation/headerStyles';
 import { MainScrollContainer } from '../../ui-components';
 import NoteByline from './NoteByline';
@@ -36,6 +37,11 @@ export default function Note({
     if (!note?.userCanEdit) return;
 
     navigation.setOptions({
+      headerLeft: () => (
+        // Same inset as the client screen's, so the back button does not shift
+        // between a client's map and the interaction it opens.
+        <HeaderLeftButton />
+      ),
       headerRight: () => (
         // web-only inset — see headerRightInsetStyle
         <View style={headerRightInsetStyle}>

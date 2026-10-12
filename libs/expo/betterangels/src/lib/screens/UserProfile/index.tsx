@@ -111,7 +111,7 @@ export default function UserProfile() {
           accessibilityHint="user profile image"
         />
         <TextBold>
-          {user?.firstName} {user?.lastName}
+          {[user?.firstName, user?.lastName].filter(Boolean).join(' ')}
         </TextBold>
       </View>
       <View style={{ paddingHorizontal: Spacings.sm, gap: Spacings.xs }}>
