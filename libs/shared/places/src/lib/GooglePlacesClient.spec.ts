@@ -139,8 +139,7 @@ describe('GooglePlacesClient transport', () => {
 
   it('throws when the geocoder reports a failure with HTTP 200', async () => {
     // The Geocoding API answers REQUEST_DENIED / OVER_QUERY_LIMIT with 200 and a
-    // `status` field. Previously that fell through to the coordinate fallback and
-    // looked like a successful reverse geocode of the raw lat/lng.
+    // `status` field.
     (globalThis as { fetch: typeof fetch }).fetch = respondWith({
       status: 'REQUEST_DENIED',
       error_message: 'API keys with referer restrictions cannot be used',

@@ -197,9 +197,7 @@ export function createUserProvider<
       },
       // parseUser and isUnauthenticated are factory-level params — stable
       // references captured once at module init — so the empty dep array is
-      // intentional. The eslint-disable for react-hooks/exhaustive-deps that
-      // used to sit here was already an unused directive on main (the rule does
-      // not flag factory-scope values), so it was removed rather than carried.
+      // intentional.
       [],
     );
 

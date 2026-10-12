@@ -1,11 +1,9 @@
 /**
  * Fetch interceptor system for composable request/response handling
  *
- * The interceptors in this module are platform-neutral. The direct-HMIS ones
- * are not: the native implementation reads `Set-Cookie` off responses and
- * copies the cookies into the native jar by hand, which is impossible in a
- * browser. Those live in `./hmisInterceptors` with a `.web.ts` counterpart and
- * are re-exported below so this module's public surface is unchanged.
+ * These interceptors are platform-neutral. The direct-HMIS ones are not — they
+ * read `Set-Cookie`, which a browser forbids — so they live in
+ * `./hmisInterceptors` (+ a `.web` twin) and are re-exported below.
  */
 
 import type { FetchInterceptor } from '@monorepo/fetch';
@@ -17,8 +15,6 @@ import {
 
 export type HeadersObject = Record<string, string>;
 
-// Keeps the exports that consumers already import from this path (both the
-// package barrel and direct `../common/interceptors` imports) working.
 export * from './hmisStorageKeys';
 export * from './hmisInterceptors';
 

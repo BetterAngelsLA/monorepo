@@ -71,11 +71,9 @@ export function Avatar(props: IAvatarProps) {
         return null;
     }
   };
-  // Without an image the avatar is an icon, and the label used to be dropped
-  // entirely — declared as a prop, passed to <Image> only in the image branch,
-  // and silently discarded here. A client with no photo therefore announced
-  // nothing at all, on every platform. Put the label on the wrapper in that
-  // branch; with an image it stays on the <Image>, which already works.
+  // Without an image the avatar is an icon, so the label has to go on this
+  // wrapper: the <Image> that takes it is not rendered in that branch, and an
+  // icon-only avatar would otherwise announce nothing.
   const labelled =
     !loading && !imageUrl && !!accessibilityLabel
       ? accessibilityLabel

@@ -278,7 +278,7 @@ describe('react-native-maps web shim', () => {
       />,
     );
 
-    expect(hoisted.props?.options).toEqual({ draggable: false });
+    expect(hoisted.props?.options).toMatchObject({ draggable: false });
 
     await unmount();
 
@@ -290,7 +290,43 @@ describe('react-native-maps web shim', () => {
       />,
     );
 
-    expect(hoisted.props?.options).toEqual({ draggable: true });
+    expect(hoisted.props?.options).toMatchObject({ draggable: true });
+  });
+
+  it('restores double-click zoom and drops the desktop-only Google controls', async () => {
+    // teovilla maps `zoomTapEnabled` straight to
+    // `disableDoubleClickZoom: !zoomTapEnabled`, and react-native-maps documents
+    // that prop as @default true. No call site passes it, so `!undefined` left
+    // double-click zoom OFF on web — the map would not zoom on a double-click.
+    const { unmount } = await render(
+      <MapView
+        provider="google"
+        initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
+      />,
+    );
+
+    expect(hoisted.props?.options).toMatchObject({
+      disableDoubleClickZoom: false,
+      // Both default to on in the Maps JS API and land in the same bottom-right
+      // corner as MapLocateMeBtn (absolute, right 16 / bottom 15%).
+      streetViewControl: false,
+      fullscreenControl: false,
+    });
+
+    await unmount();
+
+    // A call site can still opt out, as react-native-maps allows.
+    await render(
+      <MapView
+        provider="google"
+        zoomTapEnabled={false}
+        initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
+      />,
+    );
+
+    expect(hoisted.props?.options).toMatchObject({
+      disableDoubleClickZoom: true,
+    });
   });
 
   it('forces the provider Google needs and injects the browser key', async () => {

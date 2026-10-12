@@ -24,8 +24,7 @@ export function HeaderLeftButton(props?: TProps) {
   const router = useRouter();
 
   return (
-    // The web header lays headerLeft flush to the screen edge; the native bars
-    // inset it. See headerLeftInsetStyle.
+    // web-only inset — see headerLeftInsetStyle
     <View style={headerLeftInsetStyle}>
       <TextButton
         regular

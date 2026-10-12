@@ -11,10 +11,9 @@ import { Fragment, ReactNode, useEffect } from 'react';
  * (Safari, iOS WebKit, Edge, IE), so on those a fallback can still paint — this
  * component cannot change that, and a font failure is still not fatal.
  *
- * This used to `throw error` from an effect, which handed the error to the root
- * boundary and replaced the entire app — providers included — with the crash
- * screen, for a problem whose only real consequence is that text renders in the
- * system font. It now logs and continues.
+ * Do not rethrow: the root boundary would replace the whole app — providers
+ * included — with the crash screen, for a problem whose only consequence is that
+ * text renders in the system font.
  *
  * The `!loaded && !error` guard is what keeps that from becoming an eternal blank
  * screen: on the error path we stop waiting and render the app anyway.

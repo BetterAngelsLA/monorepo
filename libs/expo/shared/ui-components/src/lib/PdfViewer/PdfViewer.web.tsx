@@ -24,10 +24,7 @@ import { TPdfViewerProps } from './types';
  * 1. **No `headers`** (the only call site today) — the `<iframe>` points straight
  *    at `url` and the browser fetches it as a *navigation*. A navigation is not
  *    subject to the CORS check, so this renders PDFs from an origin that sends no
- *    `Access-Control-Allow-Origin` — which the previous blob fetch could not do.
- *    That fetch bought nothing here: nothing was being authenticated, and it
- *    turned a working document into "Sorry, there was a problem loading the PDF
- *    file" whenever the media origin didn't opt into CORS.
+ *    `Access-Control-Allow-Origin`.
  *
  * 2. **With `headers`** — the bytes have to be fetched to attach an
  *    `Authorization`-style header, then handed to the browser through a Blob URL.

@@ -1,21 +1,12 @@
 /**
  * The app's keyboard surface — the **web** build. Counterpart of `Keyboard.tsx`.
  *
- * `react-native-keyboard-controller` is not usable on web, and not for the
- * obvious reason. It *does* ship a non-native `bindings.ts` — native views cast
- * to plain `View`, the native module replaced by NOOPs, `reanimated.ts` handlers
- * stubbed — so **importing** it is safe. **Using** it is not: with the package's
- * own fallback, `KeyboardAwareScrollView` resolves to `undefined` and the
- * sign-in screen lands in the error boundary. Measured on the running web app:
- *
- *   Error: Element type is invalid: expected a string (for built-in components)
- *   or a class/function … but got: undefined. … Check the render method of
- *   `SignInContainer`.
- *
- * Its toolbar also mounts a 42px "Done" bar — off-screen at the bottom, but real
- * DOM. A browser needs none of this: it scrolls the focused input into view
- * itself and has no input-accessory bar. So the web half degrades to what the
- * browser already does, and no part of the package enters the web bundle.
+ * Importing the package is safe (it ships a non-native `bindings.ts`), but using
+ * it is not: its own fallback resolves `KeyboardAwareScrollView` to `undefined`,
+ * which puts the sign-in screen in the error boundary. A browser needs none of
+ * it — it scrolls the focused input into view itself and has no input-accessory
+ * bar — so this half degrades to a plain `ScrollView` and no part of the package
+ * enters the web bundle.
  *
  * Every export mirrors `Keyboard.tsx` one-for-one; keep them in step.
  */

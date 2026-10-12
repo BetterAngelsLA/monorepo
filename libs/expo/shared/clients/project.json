@@ -40,6 +40,14 @@
           }
         ]
       }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "options": {
+        "cwd": "libs/expo/shared/clients",
+        "command": "eslint ."
+      }
     }
   }
 }

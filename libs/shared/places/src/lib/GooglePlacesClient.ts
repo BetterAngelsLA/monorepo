@@ -249,10 +249,9 @@ export class GooglePlacesClient {
 
     const headers = new Headers();
 
-    // Same rule as `placesFetch`: when the proxy is installed the backend holds
-    // the key, and the platform headers exist to satisfy Google's key
-    // restrictions — which the proxy request does not need. Sending them anyway
-    // leaked the bundle id / signing certificate to our own backend.
+    // Same rule as `placesFetch`: with the proxy installed the backend holds the
+    // key, and the platform headers exist only to satisfy Google's key
+    // restrictions, which the proxy request does not need.
     if (!placesProxy) {
       for (const [k, v] of Object.entries(this.platformHeaders)) {
         headers.set(k, v);

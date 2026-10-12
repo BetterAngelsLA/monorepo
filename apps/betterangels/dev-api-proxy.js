@@ -1,42 +1,21 @@
 /**
  * Dev-only same-origin API proxy for the Expo **web** dev server.
  *
- * Why this exists: a local web build cannot talk to a deployed API directly.
- * The browser refuses it for four separate reasons, all of them deliberate on
- * the API side (see docs/outreach-web.md):
+ * A local web build cannot call a deployed API directly: CORS and the CSRF
+ * origin allowlist reject it, the `csrftoken` cookie is scoped to
+ * `.dev.betterangels.la` so `document.cookie` on localhost cannot read it, and
+ * `SameSite=Lax` keeps the session cookie off a cross-site fetch. Serving the API
+ * from the page's own origin fixes all four, the way Vite's `server.proxy` does,
+ * via Metro's documented `server.enhanceMiddleware` hook. (Expo's own equivalent,
+ * Router `+api` routes, is gated on `web.output === 'server'`, which would mean
+ * giving up the SPA bundle deployed to S3 + CloudFront.)
  *
- *   1. CORS — the dev API allows only `https://*.dev.betterangels.la`.
- *   2. CSRF origin — same allowlist, so Django rejects the proxy-less write.
- *   3. CSRF token — the `csrftoken` cookie is scoped to `.dev.betterangels.la`,
- *      and `document.cookie` on `localhost` can never read it, so the
- *      `x-csrftoken` header is never set.
- *   4. Session cookie — `SameSite=Lax` (Django's default) means it is not even
- *      sent on a cross-site fetch.
- *
- * Serving the API from the same origin as the page fixes all four at once, the
- * way Vite's `server.proxy` does. Metro/Expo give us the hook for it
- * (`server.enhanceMiddleware`), so no separate process or port is needed.
- *
- * Expo's own answer to this shape is Router API routes (`app/**+api.ts`), and it
- * is not available here: `@expo/cli` gates them on `web.output === 'server'`,
- * which would mean giving up the SPA bundle that is deployed to S3 + CloudFront.
- * `enhanceMiddleware` is the documented extension point, so this is the right
- * hook rather than a workaround — but it is the reason a second Expo web app
- * needs this file (or one like it) too.
- *
- * Forwarding alone is *not* enough — hence the two rewrites below:
- *
- *   - **Request `Origin`** is set to the upstream API's own origin, because
- *     Django compares it against `CSRF_TRUSTED_ORIGINS` or the request host.
- *     Forwarding the browser's `http://localhost:8081` keeps the 403.
- *   - **Response `Set-Cookie`** has `Domain` and `Secure` stripped, so the
- *     browser stores the cookies for `localhost` over plain http and the page
- *     can read `csrftoken`. Without this the token stays invisible and every
- *     write 403s. (`SameSite=None` would be rejected without `Secure`, so it is
- *     downgraded to `Lax` if present.)
- *
- * Cookies are not port-scoped, so they flow correctly between the page, this
- * proxy, and the upstream API.
+ * Forwarding alone is not enough — hence the two rewrites: the request `Origin`
+ * becomes the upstream API's own origin (Django compares it against
+ * `CSRF_TRUSTED_ORIGINS` or the host), and the response `Set-Cookie` has `Domain`
+ * and `Secure` stripped so the browser stores the cookies for `localhost` over
+ * plain http and the page can read `csrftoken`. (`SameSite=None` is rejected
+ * without `Secure`, so it is downgraded to `Lax`.)
  *
  * Enable with:
  *
@@ -44,6 +23,7 @@
  *   EXPO_PUBLIC_API_URL=http://localhost:8081/__api
  *
  * Native builds never load metro.config.js's web middleware and are unaffected.
+ * See docs/outreach-web.md for the full reasoning.
  */
 
 const http = require('http');

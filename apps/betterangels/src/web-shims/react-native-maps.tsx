@@ -3,27 +3,21 @@
  *
  * Backed by `@teovilla/react-native-web-maps`, which maps the `react-native-maps`
  * API onto the Google Maps JavaScript API. Four gaps have to be closed here, and
- * all four fail *silently* (the map still renders, just wrong or not at all):
+ * all four fail *silently* — the map still renders, just wrong or not at all:
  *
- * 1. teovilla does not export `PROVIDER_GOOGLE` / `PROVIDER_DEFAULT`. Every call
- *    site in this app passes `provider={PROVIDER_GOOGLE}`, so without these the
- *    prop arrives as `undefined` and teovilla bails out of rendering the map.
- * 2. teovilla requires the Maps JavaScript API key as a *prop*, whereas the
- *    native SDKs read theirs from the app.config.js plugins — so no call site
- *    passes one. The resolved browser key is injected here instead of threading
- *    a prop through every map usage.
- * 3. teovilla ignores region *deltas*. It builds its Google Map with
- *    `zoom: props.initialCamera?.zoom || 3` and reads only `latitude`/
- *    `longitude` out of `initialRegion`, so every map opened at zoom 3 — a
- *    continental view, versus the neighbourhood the same prop shows on native.
- * 4. teovilla does not read a controlled `region` prop *at all* (there is no
- *    `props.region` access anywhere in map-view.js). Call sites that pass
- *    `region` therefore fell back to `initialRegion ?? {lat: 0, lng: 0}` —
- *    rendering a world map centred on 0,0.
+ * 1. teovilla exports no `PROVIDER_GOOGLE` / `PROVIDER_DEFAULT`, which every call
+ *    site passes; the prop arrives `undefined` and teovilla bails out of
+ *    rendering the map.
+ * 2. it takes the Maps JavaScript API key as a *prop*, whereas the native SDKs
+ *    read theirs from the app.config.js plugins, so no call site passes one.
+ * 3. it ignores region *deltas* — it builds the map with
+ *    `zoom: props.initialCamera?.zoom || 3`, so every map opened at zoom 3, a
+ *    continental view.
+ * 4. it never reads a controlled `region` prop, so those call sites fell back to
+ *    `initialRegion ?? {lat: 0, lng: 0}` — a world map at 0,0.
  *
- * Gaps 3 and 4 are closed by converting the deltas into the zoom Google Maps
- * wants and handing teovilla an `initialCamera`. Both are silent failures — the
- * map still renders, just somewhere else entirely.
+ * Gaps 3 and 4 are closed by converting the deltas into Google's zoom and handing
+ * teovilla an `initialCamera`.
  *
  * Types at call sites still come from the real `react-native-maps` (tsconfig
  * paths are not affected by this Metro-only substitution).
@@ -198,6 +192,7 @@ const MapView = forwardRef<unknown, TTeovillaMapViewProps>((props, ref) => {
     region,
     scrollEnabled,
     options,
+    zoomTapEnabled,
     ...rest
   } = props;
 
@@ -228,11 +223,31 @@ const MapView = forwardRef<unknown, TTeovillaMapViewProps>((props, ref) => {
   // map away from its own pin. teovilla spreads `props.options` last into the
   // Google map's options, so that is where `draggable` has to go.
   //
-  // Memoised on the value, not the object: a fresh `options` identity on every
+  // The same spread is how the next two are set:
+  //
+  //  - **Double-click zoom.** teovilla maps `zoomTapEnabled` to
+  //    `disableDoubleClickZoom: !zoomTapEnabled`, and react-native-maps
+  //    documents that prop as `@default true`. No call site passes it, so
+  //    `!undefined` turned double-click zoom OFF on web. Restore the documented
+  //    default; `zoomTapEnabled={false}` still disables it.
+  //  - **Google's desktop chrome.** teovilla leaves `streetViewControl` and
+  //    `fullscreenControl` at Google's defaults, and both land in the
+  //    bottom-right corner that `MapLocateMeBtn` occupies (absolute, right 16 /
+  //    bottom 15%) — measured overlapping it. A phone-shaped port has no use for
+  //    a street-view pegman or a fullscreen button, so the corner is ours. The
+  //    map-type toggle is top-left and stays.
+  //
+  // Memoised on the values, not the object: a fresh `options` identity on every
   // render would bust teovilla's map memo and undo the stability above.
   const resolvedOptions = useMemo(
-    () => ({ ...options, draggable: scrollEnabled !== false }),
-    [options, scrollEnabled],
+    () => ({
+      ...options,
+      draggable: scrollEnabled !== false,
+      disableDoubleClickZoom: !(zoomTapEnabled ?? true),
+      streetViewControl: false,
+      fullscreenControl: false,
+    }),
+    [options, scrollEnabled, zoomTapEnabled],
   );
 
   // Whichever prop the call site used, teovilla needs it as a camera.

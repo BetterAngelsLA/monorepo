@@ -157,8 +157,7 @@ export default function Client({
             </TextBold>
           ),
           headerLeft: () => (
-            // This screen supplies its own headerLeft, so it needs the same web
-            // inset HeaderLeftButton applies. See headerLeftInsetStyle.
+            // web-only inset — see headerLeftInsetStyle
             <View style={headerLeftInsetStyle}>
               <Pressable
                 accessibilityRole="button"
@@ -172,8 +171,7 @@ export default function Client({
             </View>
           ),
           headerRight: () => (
-            // This screen supplies its own headerRight, so it needs the same web
-            // inset as the "Edit" slots. See headerRightInsetStyle.
+            // web-only inset — see headerRightInsetStyle
             <View style={headerRightInsetStyle}>
               <ClientNavMenu
                 clientProfileId={clientProfileId}

@@ -144,17 +144,10 @@ export default function LocationComponent(props: ILocationProps) {
     autoFilledRef.current = true;
 
     const geocodeAndSave = async (lat: number, lng: number) => {
-      // `reverseGeocode` now throws on a real API failure (a denied key, quota)
-      // instead of quietly returning the coordinates as if they were an address.
-      // That path still saves the point — the field is required and the pin is
-      // the user's choice — but it does not invent an address: a service failure
-      // is not "there is no address here", and `"34.04866, -118.25882"` would be
-      // stored as though it were one. `reverseGeocode` still returns the
-      // coordinates for ZERO_RESULTS, which *is* that case.
-      //
-      // Handled inside the helper because `onRefine` below fires it without
-      // awaiting, so a rejection there would escape the surrounding try and
-      // float.
+      // A real API failure (denied key, quota) must not invent an address, and
+      // the point is saved either way; ZERO_RESULTS is the genuine "no address
+      // here" case. Caught here because `onRefine` fires this without awaiting,
+      // so a rejection would float. See useInitialLocation for the full rule.
       let geocodeResult:
         | Awaited<ReturnType<typeof places.reverseGeocode>>
         | undefined;

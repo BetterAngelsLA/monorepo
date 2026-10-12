@@ -45,7 +45,7 @@ const getAuthTokenHmis = async (): Promise<string | null> => {
 
     const cookiesHmis = await CookieManager.get(targetUrl);
     return cookiesHmis[HMIS_AUTH_COOKIE_NAME]?.value || null;
-  } catch (error) {
+  } catch {
     return null;
   }
 };

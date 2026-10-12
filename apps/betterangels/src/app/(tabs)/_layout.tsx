@@ -144,17 +144,13 @@ export default function TabLayout() {
       </Tabs>
 
       {/*
-        The "add" button is deliberately NOT a tab. As a `Tabs.Screen` it needed a
-        route whose screen rendered `null`, and it depended on cancelling the tab
-        press to avoid navigating there — reliable on native, but not on web, where
-        the tab bar wraps every tab in an <a> and the navigation wins: pressing it
-        landed on that empty screen instead of opening the modal. As a plain
-        Pressable rendered by the layout it never participates in navigation, so
-        both platforms behave identically with no platform branching.
+        Deliberately NOT a tab: as a `Tabs.Screen` it depended on cancelling the
+        tab press, which web cannot do — the tab bar wraps every tab in an <a>, so
+        the navigation won and landed on an empty screen. A plain Pressable in the
+        layout never participates in navigation, on either platform.
 
-        Still gated on `hmisProdDemoEnabled`, which is what the placeholder tab
-        expressed with `href: hmisProdDemoEnabled ? null : undefined` — in that mode
-        the button was not shown at all, so hoisting it must not start showing it.
+        Still gated on `hmisProdDemoEnabled`, which the placeholder tab expressed
+        with `href: hmisProdDemoEnabled ? null : undefined`.
 
         `pointerEvents` is load-bearing: without `box-none` this wrapper swallows
         every tap in its square, so the white ring around the button eats presses

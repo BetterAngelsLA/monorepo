@@ -30,8 +30,7 @@ export default function UserProfile() {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        // The web header lays headerRight flush to the screen edge; the native
-        // bars inset it. See headerRightInsetStyle.
+        // web-only inset — see headerRightInsetStyle
         <View style={headerRightInsetStyle}>
           <TextButton
             color={Colors.WHITE}

@@ -46,8 +46,7 @@ function getModalCloseBtn(props: TModalCloseBtnProps) {
   const { onClose, iconColor = Colors.WHITE, label } = props;
 
   return (
-    // The web header lays headerRight flush to the screen edge; the native bars
-    // inset it. See headerRightInsetStyle.
+    // web-only inset — see headerRightInsetStyle
     <View style={headerRightInsetStyle}>
       <CloseButton
         onClose={onClose}

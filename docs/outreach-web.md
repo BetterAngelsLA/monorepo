@@ -1296,6 +1296,60 @@ none; the key currently comes from native SDK config), and its
 longer exists in `expo-location` 57. The app does not use that method (it
 reverse-geocodes via `GooglePlacesClient`), so it is latent, not blocking.
 
+### Two more things teovilla gets wrong on web: double-click zoom and Google's chrome
+
+Both fixed in the shim, both web-only.
+
+**Double-click did not zoom.** teovilla maps the prop straight through —
+`disableDoubleClickZoom: !props.zoomTapEnabled` — and react-native-maps documents
+`zoomTapEnabled` as `@default true`. No call site passes it, so `!undefined`
+turned double-click zoom **off**, while `zoomEnabled` (which reaches Google as
+`scrollwheel`) stayed on. The shim now sets the option explicitly from the
+documented default, and a call site can still pass `zoomTapEnabled={false}`.
+Pinned in `react-native-maps.spec.tsx`, which asserts the options object handed to
+teovilla — a browser probe could not settle it, because the map renders vector
+tiles and there is no raster `z=` to read.
+
+**The locate button sat on top of Google's own controls.** `MapLocateMeBtn` is
+absolute at right 16 / bottom 15%, and teovilla leaves `streetViewControl` and
+`fullscreenControl` at Google's defaults, both of which land in that corner —
+measured overlapping the 40x40 button. The shim turns both off, since a
+phone-shaped port has no use for a street-view pegman or a fullscreen button; the
+map-type toggle is top-left and stays. Re-measured after the change: no overlaps
+between our controls and Google's.
+
+### Comments: what the web port needed to say, and where
+
+This branch added ~1390 comment lines, 27% of its added lines. An audit of every
+added comment (not just a grep — JSX `{/* */}` blocks and JSDoc included) put ~32%
+of the prose in the wrong place, and the pattern was consistent: **whole paragraphs
+of this log were inlined next to the code**. Where the log is the canonical home
+(metro shims, the dev proxy, the keyboard seam, `box-none` measurements, session
+teardown), the comment is now a short pointer; where the code is the canonical home
+(the consent latch, `reconcileActiveOrgId`, the shim's Google-Maps traps), it stayed.
+
+What went: ~110 lines of pure diff-narration — "this used to throw", "the label
+used to be dropped", "previous blob fetch", "was already an unused directive on
+main", "(measured — …)" asides about options _not_ taken — plus the biggest
+duplicated essays (`dev-api-proxy.js` 47→25, the `WEB_SHIMS` block 43→17, the
+`Keyboard` seam pair 46→24, the maps shim header 30→21, `headerStyles.ts` 32→16,
+the header-inset pointer repeated at eight call sites down to one line each).
+
+What deliberately stayed: every measured platform fact a future reader would
+otherwise re-derive — react-native-web's `box-none` polyfill living only in the
+atomic compiler, `outlineWidth: 0` versus a deleted CSS shorthand, `accessibilityState`
+being dropped by RNW 0.21, the Modal focus-restore loop, `typeof NaN === 'number'`
+in the zoom maths, `TurboModuleRegistry.getEnforcing` throwing at import time.
+
+### `expo-shared-apollo` had no `lint` target
+
+Found while linting the changed files by hand: `libs/expo/shared/clients` (project
+name `expo-shared-apollo`) declared `test` and `typecheck` but no `lint`, so its
+~90 files — including `hmisInterceptors.ts` and `hmisStorageKeys.ts`, both touched
+by this branch — were never linted in CI. It had one real error hiding there
+(an unused caught binding in `hmisInterceptors.ts`). Both fixed: the binding, and
+a `lint` target matching every sibling's.
+
 ### Web maps opened at the wrong zoom (and `region` was ignored entirely)
 
 Two more silent teovilla gaps, found because the web maps were visibly zoomed out

@@ -47,16 +47,13 @@ export function useInitialLocation(
     /**
      * Records a point, with its address when the geocoder can supply one.
      *
-     * `reverseGeocode` throws on a real API failure rather than returning the
-     * coordinates as if they were an address. That path still records the point —
-     * it is the user's choice and the form requires a location — but it invents
-     * no address: a denied key or an exhausted quota is not "there is no address
-     * here", and `"34.04866, -118.25882"` would be saved as though it were one.
-     * `reverseGeocode` still returns the coordinates for ZERO_RESULTS, which *is*
-     * that case.
+     * `reverseGeocode` throws on a real API failure (a denied key, an exhausted
+     * quota) rather than returning coordinates as if they were an address; that
+     * path keeps the point and invents no address. ZERO_RESULTS is the genuine
+     * "no address here" case and still returns coordinates.
      *
-     * The catch belongs here rather than around the caller because `onRefine`
-     * fires it without awaiting, so a rejection would float.
+     * The catch is here because `onRefine` fires this without awaiting, so a
+     * rejection would float.
      */
     const geocodeAndSet = async (latitude: number, longitude: number) => {
       const base = { ...locationRef.current, longitude, latitude };

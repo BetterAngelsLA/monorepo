@@ -5,19 +5,13 @@ import { isValid, parse } from 'date-fns';
  * field's current value.
  *
  * Extracted from the web date field so the rule can be tested without a DOM —
- * it is a product rule, not a detail of the input element, and it has already
- * been read the wrong way once ("a date-mode pick should yield midnight" is not
- * supported; see below).
+ * it is a product rule, not a detail of the input element.
  *
  * Returns `null` when there is nothing usable to apply: an empty input (clearing
  * the native control must not silently wipe a required value — the numeric
  * variant owns clear behaviour via `onDelete`) or an unparseable one.
  *
- * @param raw      the input's string value
- * @param mode     which half the control edits
- * @param value    the field's current value, if any
- * @param now      "now", injected so tests do not depend on the clock
- * @param format   the `date-fns` format the input's value uses
+ * `now` is injected so tests do not depend on the clock.
  */
 export function mergePickedDate(
   raw: string,
@@ -39,9 +33,8 @@ export function mergePickedDate(
   // must not reset the date, and vice versa.
   //
   // With no prior value `base` is "now", so a date-only pick carries the current
-  // clock time. That is deliberate — the native picker is seeded with
-  // `value || new Date()` and passes its Date straight through, so it does the
-  // same. Do not "fix" this to midnight without checking both platforms first.
+  // clock time — matching native, which seeds its picker with `value || new
+  // Date()` and passes that Date straight through.
   const base = value && isValid(value) ? value : now;
   const next = new Date(parsed);
 

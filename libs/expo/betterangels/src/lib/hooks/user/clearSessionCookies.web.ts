@@ -1,15 +1,8 @@
 /**
- * Web counterpart of {@link clearSessionCookies}: deliberately a no-op.
- *
- * There is no JavaScript cookie jar to clear in a browser:
- * - the Django session cookie is `HttpOnly`, so JS can neither read nor clear it
- *   — the server clears it on logout, and an expired session is rejected
- *   server-side regardless;
- * - the CSRF cookie is readable, but clearing it buys nothing: the CSRF
- *   interceptor refreshes it on demand.
- *
- * The native jar is also what holds the HMIS `auth_token`; HMIS is not supported
- * on web, so there is nothing to clear for it either.
+ * Web counterpart of {@link clearSessionCookies}: deliberately a no-op. There is
+ * no JS cookie jar — the Django session cookie is `HttpOnly`, and the CSRF
+ * interceptor refreshes its own cookie on demand. (The native jar is also what
+ * holds the HMIS `auth_token`, and HMIS is unsupported on web.)
  *
  * Kept `async` so callers are identical on both platforms.
  */
