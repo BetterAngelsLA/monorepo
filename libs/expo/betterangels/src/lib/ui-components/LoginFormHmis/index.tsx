@@ -5,6 +5,7 @@ import {
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
+import { stripEnvironmentTag } from '@monorepo/react/shared';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment, useUser } from '../../hooks';
@@ -37,7 +38,9 @@ export default function LoginFormHmis() {
     setErrorMsg('');
     setSubmitting(true);
     try {
-      const cleanedEmail = email.replace('+demo@', '@').toLowerCase().trim();
+      const cleanedEmail = stripEnvironmentTag(
+        email.toLowerCase().trim(),
+      );
       const { data, error } = await hmisLogin({
         variables: { email: cleanedEmail, password },
       }).catch((mutationError) => {
