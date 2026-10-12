@@ -94,12 +94,15 @@ type TImperativeMap = {
 /**
  * Google Maps takes a zoom *level*; react-native-maps takes a lat/lng *span*.
  * Same conversion the app already uses to reason about zoom in
- * `Map/utils/regionToZoom.ts`, duplicated rather than imported because this is
- * an app-level Metro substitution and `regionToZoom` is an internal module of
- * the ui-components library — deep-importing it here would put a library
- * implementation detail on the app's import path for a one-line formula. The
- * duplication is a real risk, not a free choice: the two copies can drift, and
- * the other one runs in the same web bundle (via `useClusters`).
+ * `Map/utils/regionToZoom.ts`. It is exported from the ui-components barrel, so
+ * it *could* be imported here — the reason not to is that this file is what the
+ * barrel's own `Map/index.ts` imports for `react-native-maps`, so importing the
+ * barrel back would re-enter this module while it is still evaluating, and it
+ * would drag the whole design system into the maps module graph for a one-line
+ * formula. The duplication is a real cost, not a free choice: both copies run in
+ * the same web bundle (the other via `useClusters`) and drift would show up as a
+ * wrong zoom level, with no error. The fix is a leaf module both can import, not
+ * a deep import — see the log.
  *
  * The result is a fixed scale (zoom z is 360/2^z degrees across a 256px tile),
  * which is what we want here: it reproduces the mobile framing regardless of

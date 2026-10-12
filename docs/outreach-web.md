@@ -690,9 +690,9 @@ looks like it worked if you only read the attribute back.
 
 #### Verifying a `.web` variant
 
-TypeScript resolves `./Foo` to `Foo.tsx` — it has no notion of platform extensions — so an
-app's `tsconfig.app.json` **never checks `Foo.web.tsx`**. The app typecheck passing therefore
-says nothing about the web variants.
+TypeScript resolves `./Foo` to `Foo.tsx` — it has no notion of platform extensions — so an app's
+`tsconfig.app.json` never checks a `*.web.tsx` file **that lives in another project**. The app
+typecheck passing therefore says nothing about the web variants of other projects.
 
 What does cover them is the _lib's_ typecheck target: those tsconfigs include all of `src/**`,
 so `nx run expo-shared-ui-components:typecheck` sees `WheelDatePicker.web.tsx` and
@@ -957,9 +957,10 @@ cloudfront create-invalidation --distribution-id E18T6D6MTJ5IDH --paths /branche
 - `useInitialLocation`'s reverse-geocode fallback now lives in one helper, but the same
   coordinate-fallback shape is still written in `NoteForm/Location.tsx` and
   `MapLocationPicker`; one exported helper in `libs/shared/places` would remove the drift risk.
-- `useRememberEmail`'s native and web variants duplicate their whole state machine, and only the
-  web one guards its storage calls — a native SecureStore rejection is currently unhandled. A
-  `{ get, set, remove }` adapter would collapse the duplication and unify the error handling.
+- `useRememberEmail`'s native and web variants duplicate their whole state machine. Both now
+  guard their storage calls, so the two agree — but by coincidence of this PR rather than because
+  the structure holds them together. A `{ get, set, remove }` adapter would collapse the
+  duplication and make the failure policy one decision.
 - `WheelDatePicker.web`'s overlay is positioned from the top of the whole `<Input>` (label
   included) with a hard-coded 56px height, so with a `label` the lower half of the field is not
   clickable. Latent today — the only `type="wheel"` call site passes no label — and it renders
@@ -1002,10 +1003,18 @@ keeps the substitution visible at the import site and needs no bundler hook. A r
 `no-restricted-imports` rule stops anything importing the package directly, so the seam cannot
 be bypassed by accident.
 
-`react-native-maps` stays an alias for two reasons together: it is imported by package name from
-~20 files across `libs/` and the replacement needs the app's resolved browser key, so there is
-no library module to hang a `.web` sibling off; and the replacement implements behaviour teovilla
-omits rather than degrading to nothing.
+`react-native-maps` stays an alias for two reasons together: the imports that actually reach the
+bundle come from two independent libraries — `libs/expo/betterangels/src/lib/maps/map.ts` and four
+modules under `libs/expo/shared/ui-components/src/lib/Map/` — so there is no single library module
+to hang a `.web` sibling off (a seam would mean two mirrored files, one of them over the wide
+`Map/index.ts` surface); and the replacement implements behaviour teovilla omits rather than
+degrading to nothing.
+
+The "19 files import it" figure is about _sites_, not about what has to be substituted: 14 of those
+files import only types (`Region`, `EdgePadding`, `Details`, the event types, `RNMapView` as a type
+alias), which Babel erases and which cannot affect the web bundle. Five are runtime imports. Saying
+"~20 files" makes the seam look like a non-choice; the honest cost is 1 alias entry + 1 shim versus
+2 mirrored library files.
 
 **The keyboard package is worth understanding before anyone "simplifies" this away again.** It
 ships its own non-native fallback — `src/bindings.ts` casts the native views to plain `View` and
@@ -1423,7 +1432,14 @@ none of that: those headers are what satisfies the key restriction, and they can
 from a page. `apps/betterangels-backend/proxy/` already exposed
 `proxy/places/v1/<path>` and `proxy/maps/api/<path>` (with tests) but nothing used it.
 
-`GooglePlacesClient` now takes an optional transport, `configurePlacesProxy({ apiUrl, fetch })`:
+`GooglePlacesClient` now routes through a module-level `configurePlacesProxy({ apiUrl, fetch })`
+when one is installed. It is a setter on the module, not a transport passed to the constructor —
+the constructor takes the key and headers, and there is exactly one construction site
+(`GooglePlacesProvider`) that cannot see the environment-switched fetch client, because
+`BaUiProviders` wraps `EnvironmentSwitcherProvider` in `app/_layout.tsx`: the proxied client is
+created _below_ it. That ordering is the whole reason for the global, and it is why the spec has to
+reset it in both `beforeEach` and `afterEach`. A context provider registered by effect would scope
+it to the tree instead.
 
 - **Native** leaves it unset and keeps calling Google directly (one fewer hop, unchanged).
 - **Web** configures it in `init.web.ts`'s `buildFetchClient`, passing the **app's own fetch

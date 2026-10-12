@@ -37,22 +37,41 @@ config.resolver = {
 // Package-name substitutions for the `web` platform only. Native builds are
 // untouched.
 //
-// This is the last resort, not the default. Prefer a `.web.tsx` sibling, or a
-// small re-export seam with a `.web` twin — `react-native-keyboard-controller`
-// used to be an entry here and is now
-// `libs/expo/shared/ui-components/src/lib/Keyboard`, which is visible at the
-// import site and needs no bundler hook.
+// This is the last resort, not the default. Pick by *when the failure happens*,
+// not by where the module sits:
 //
-// An entry is warranted only when the *module itself* has to be intercepted and
-// there is no repo module to hang a web variant off. `react-native-maps`
+//   - **Import-time fatal** (a module-scope `TurboModuleRegistry.getEnforcing`,
+//     a resolver rejection): a `Platform.OS` check cannot help — ES imports are
+//     hoisted and evaluated regardless of the ternary — so the module needs a
+//     `.web` sibling, or an entry here if you do not own the import site.
+//     `libs/ba-platform/expo/src/lib/fetchClient.ts` is the example.
+//   - **Use-time only** (an `undefined` component, wrong constants, a missing
+//     method): one file plus one `Platform.OS` guard is better than a split,
+//     because the contract then lives in one place. This is how
+//     `libs/expo/shared/services/src/lib/s3/index.ts` selects its transport.
+//   - **A third-party package imported by name from code you do not own**: an
+//     entry here is the only mechanism that reaches it.
+//
+// Everything else prefers a small re-export seam with a `.web` twin, because it
+// is visible at the import site — `react-native-keyboard-controller` used to be
+// an entry here and is now
+// `libs/expo/shared/ui-components/src/lib/Keyboard`, which needs no bundler hook.
+//
+// An entry here is warranted only when the *module itself* has to be intercepted
+// and there is no repo module to hang a web variant off. `react-native-maps`
 // qualifies on both counts:
 //
-//   1. It is imported by package name from ~20 files across `libs/`, and the
-//      replacement needs the app's resolved browser key, so it cannot live in a
-//      library as a `.web` sibling; and
+//   1. The imports that reach the bundle come from two independent libraries
+//      (`libs/expo/betterangels/src/lib/maps/map.ts` and four modules under
+//      `libs/expo/shared/ui-components/src/lib/Map/`), and the replacement needs
+//      the app's resolved browser key, so it cannot live in one library as a
+//      `.web` sibling; and
 //   2. the replacement implements behaviour teovilla omits (region deltas →
 //      zoom, provider forcing, key injection) rather than degrading to nothing
 //      the way the keyboard-controller shim did.
+//
+// Note "imported by ~20 files" counts sites, not runtime imports: 14 of them
+// import only types, which are erased and cannot reach the bundle.
 //
 // See docs/outreach-web.md for the reasoning behind the entry.
 const WEB_SHIMS = {
