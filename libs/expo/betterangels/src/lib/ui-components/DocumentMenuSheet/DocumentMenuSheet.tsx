@@ -4,7 +4,10 @@ import {
   BaPermissionError,
   getOperationInfoMessage,
 } from '@monorepo/ba-platform';
-import { DeleteModal } from '@monorepo/expo/shared/ui-components';
+import {
+  BottomSheetModalControlled,
+  DeleteModal,
+} from '@monorepo/expo/shared/ui-components';
 import { Directory, File, Paths } from 'expo-file-system';
 import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
@@ -31,9 +34,9 @@ interface IDocumentMenuSheetProps {
 }
 
 /**
- * Orchestrates the document actions flow: presents the `DocumentMenu` sheet
- * and, when delete is chosen, a `DeleteModal` confirmation. Owns the document
- * side effects (navigation, download, delete).
+ * Orchestrates the document actions flow: presents the `DocumentMenu` in a
+ * bottom sheet and, when delete is chosen, a `DeleteModal` confirmation. Owns
+ * the document side effects (navigation, download, delete).
  */
 export function DocumentMenuSheet({
   onClose,
@@ -180,15 +183,19 @@ export function DocumentMenuSheet({
 
   return (
     <>
-      <DocumentMenu
+      <BottomSheetModalControlled
         isOpen={step === 'menuOpen'}
         onClose={onClose}
-        fileTypeLabel={fileTypeLabel}
-        onView={handleViewPress}
-        onEdit={handleEditPress}
-        onDownload={downloadFile}
-        onDelete={() => setStep('confirmDelete')}
-      />
+        options={{ showHandle: true, showCloseButton: true }}
+      >
+        <DocumentMenu
+          fileTypeLabel={fileTypeLabel}
+          onView={handleViewPress}
+          onEdit={handleEditPress}
+          onDownload={downloadFile}
+          onDelete={() => setStep('confirmDelete')}
+        />
+      </BottomSheetModalControlled>
 
       <DeleteModal
         isVisible={step === 'confirmDelete'}
