@@ -3,14 +3,13 @@ import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useSyncExternalStore,
 } from 'react';
 
 import {
-  configureActiveOrgSource,
+  pushActiveOrgSource,
   getActiveOrgId,
   setActiveOrgId as commitActiveOrgId,
   subscribeActiveOrgId,
@@ -105,15 +104,18 @@ export function useActiveOrgState(
   // to see it, and layout effects all run before any of those. The write is
   // legal here (an effect, not a render) and the store notifies only if the
   // derived id actually moved.
+  //
+  // Disposed from the effect's cleanup, so an unmounting (or changing) provider
+  // restores whatever was installed beneath it — nesting is real: shelter-web
+  // mounts one provider around the app and another inside it on /operator.
   useLayoutEffect(() => {
-    configureActiveOrgSource(
-      organizations === undefined ? () => null : () => cleanOrgs,
-    );
-  }, [organizations, cleanOrgs]);
+    // Nothing to contribute while the list is unknown: leaving the slot alone
+    // lets an outer provider's list stay in play, which is what keeps requests
+    // attributed during a refetch.
+    if (organizations === undefined) return;
 
-  // Forget the list on unmount: a request from a session that is on its way out
-  // must not derive an organization from the one that just left.
-  useEffect(() => () => configureActiveOrgSource(() => null), []);
+    return pushActiveOrgSource(() => cleanOrgs);
+  }, [organizations, cleanOrgs]);
 
   // No reconciliation: the store derives the id from the same two inputs this
   // hook renders from, so a stale remembered id simply reads as the first

@@ -45,25 +45,57 @@ export interface ActiveOrgSource {
   (): readonly { id: string }[] | null;
 }
 
-/** Unset: nothing validates the remembered id. */
-const unknownOrganizations = (): null => null;
+/**
+ * Installed readers, innermost last.
+ *
+ * A stack because providers nest: `apps/shelter-web` mounts one around the whole
+ * app and `OperatorApp` mounts another on a route inside it. A single slot meant
+ * the inner provider's unmount disarmed the outer one, which then never
+ * re-installed (its props had not changed) and left the app sending no
+ * organization at all.
+ */
+const organizationSources: ActiveOrgSource[] = [];
 
-let organizationSource: ActiveOrgSource = unknownOrganizations;
+const readOrganizations = (): readonly { id: string }[] | null => {
+  const source = organizationSources[organizationSources.length - 1];
+  if (!source) return null;
+
+  try {
+    return source();
+  } catch {
+    // Same best-effort rule as persistence: a failing reader costs validation,
+    // never the running session.
+    return null;
+  }
+};
+
+/** The organization list the innermost installed reader reports, if any. */
+const announceSourceChange = (): void => {
+  if (getActiveOrgId() !== lastDerived) notify();
+};
+
+let lastDerived: string | null = null;
 
 /**
- * Install the organization reader.
+ * Install an organization reader, returning the function that removes it again.
  *
  * Reads nothing: the reader is consulted lazily, when the header is needed or the
- * snapshot is taken. Notifies only when the change moves the *derived id*, so a
- * caller that installs a fresh closure on every render cannot make subscribers
- * loop.
+ * snapshot is taken. Callers dispose it from an effect cleanup, so a provider
+ * that unmounts (or whose list changes) restores whatever was installed beneath
+ * it. Notifies only when the change moves the *derived* id, so a caller that
+ * installs a fresh closure on every render cannot make subscribers loop.
  */
-export const configureActiveOrgSource = (next: ActiveOrgSource): void => {
-  const before = getActiveOrgId();
+export const pushActiveOrgSource = (next: ActiveOrgSource): (() => void) => {
+  lastDerived = getActiveOrgId();
+  organizationSources.push(next);
+  announceSourceChange();
 
-  organizationSource = next;
+  return () => {
+    const at = organizationSources.lastIndexOf(next);
+    if (at !== -1) organizationSources.splice(at, 1);
 
-  if (getActiveOrgId() !== before) notify();
+    announceSourceChange();
+  };
 };
 
 const inMemoryPersistence = (): ActiveOrgPersistence => {
@@ -129,32 +161,31 @@ export const configureActiveOrgStorage = (next: ActiveOrgPersistence): void => {
  * the outcome is a string, so repeated reads return the same value, which is
  * what ``useSyncExternalStore`` requires of a snapshot.
  */
-export const getActiveOrgId = (): string | null => {
+/** The user's own choice, pulled from persistence on the first read. No derivation. */
+const readSelected = (): string | null => {
   if (!seeded) {
     seeded = true;
     current = readPersisted();
   }
 
-  let organizations: readonly { id: string }[] | null;
+  return current;
+};
 
-  try {
-    organizations = organizationSource();
-  } catch {
-    // Same best-effort rule as persistence: a failing reader costs validation,
-    // never the running session.
-    organizations = null;
-  }
+export const getActiveOrgId = (): string | null => {
+  const selected = readSelected();
+
+  const organizations = readOrganizations();
 
   // Unknown (the user query has not resolved): the remembered id is the best
   // answer available, and requests in that window are correctly attributed.
-  if (organizations === null) return current;
+  if (organizations === null) return selected;
 
   // Known and empty: the user belongs to no organization, so a remembered id is
   // stale rather than merely unvalidated.
   if (organizations.length === 0) return null;
 
-  return organizations.some((org) => org.id === current)
-    ? current
+  return organizations.some((org) => org.id === selected)
+    ? selected
     : organizations[0].id;
 };
 
@@ -166,10 +197,10 @@ export const getActiveOrgId = (): string | null => {
  * default.
  */
 const write = (id: string | null): boolean => {
-  // Compare against the seeded value rather than the field: an unseeded store
-  // reads null, which would make clearActiveOrgId() a no-op that leaves the
-  // persisted copy behind.
-  if (id === getActiveOrgId()) return false;
+  // Against the *selected* value, never the derived one: `getActiveOrgId()` may be
+  // answering from the organization list, and comparing with that would turn
+  // clearing (or any write) into a no-op that leaves the persisted copy behind.
+  if (id === readSelected()) return false;
 
   current = id;
   writePersisted(id);
@@ -194,6 +225,11 @@ export const setActiveOrgId = (id: string | null): void => {
  * until a new organization list reconciles it.
  */
 export const clearActiveOrgId = (): void => {
+  // Forget the readers along with the choice. The organizations belong to the
+  // session being torn down (logout, an environment switch), and a derivation
+  // that kept reading them would put an organization straight back into the
+  // header. Providers still mounted re-install theirs on their next render.
+  organizationSources.length = 0;
   setActiveOrgId(null);
 };
 
@@ -211,7 +247,8 @@ export const subscribeActiveOrgId = (listener: () => void): (() => void) => {
  */
 export const resetActiveOrgStoreForTests = (): void => {
   persistence = inMemoryPersistence();
-  organizationSource = unknownOrganizations;
+  organizationSources.length = 0;
+  lastDerived = null;
   current = null;
   seeded = false;
   listeners.clear();

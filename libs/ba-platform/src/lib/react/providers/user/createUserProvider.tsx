@@ -172,11 +172,6 @@ export function createUserProvider<
 
   function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<TUser | undefined>();
-    // Whether the user query has answered at all. `loading` goes true again on a
-    // refetch, which must not read as "the organizations are unknown" — that
-    // would drop the active org out of requests that are already allowed to make
-    // them.
-    const [settled, setSettled] = useState(false);
 
     const { data, loading, error, refetch } = useQuery(document, {
       fetchPolicy: 'network-only',
@@ -208,7 +203,6 @@ export function createUserProvider<
 
     useEffect(() => {
       if (!loading) {
-        setSettled(true);
 
         // error is typed as ErrorLike but is an ApolloError at runtime
         // with graphQLErrors — narrow via runtime check.
@@ -257,7 +251,7 @@ export function createUserProvider<
 
     return (
       <UserContext.Provider value={contextValue}>
-        <ActiveOrgProvider organizations={settled ? organizations : undefined}>
+        <ActiveOrgProvider organizations={organizations}>
           {children}
         </ActiveOrgProvider>
       </UserContext.Provider>
