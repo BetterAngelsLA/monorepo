@@ -1,11 +1,4 @@
-/**
- * The field-as-a-button mode.
- *
- * `Picker` opens its modal from this instead of from `onFocus`, which is what
- * let the whole web-only refocus workaround go away: react-native-web's Modal
- * hands focus back to whatever opened it, so an `onFocus`-opened picker re-opened
- * itself every time it closed.
- */
+/** The field-as-a-button mode, which `Picker` opens its modal from. */
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { Input } from './Input';

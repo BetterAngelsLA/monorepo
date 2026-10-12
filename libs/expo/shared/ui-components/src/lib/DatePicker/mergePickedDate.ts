@@ -2,16 +2,12 @@ import { isValid, parse } from 'date-fns';
 
 /**
  * Merge a value picked from a native `<input type="date" | "time">` into the
- * field's current value.
- *
- * Extracted from the web date field so the rule can be tested without a DOM —
- * it is a product rule, not a detail of the input element.
+ * field's current value, preserving the half the user did not edit.
  *
  * Returns `null` when there is nothing usable to apply: an empty input (clearing
- * the native control must not silently wipe a required value — the numeric
- * variant owns clear behaviour via `onDelete`) or an unparseable one.
- *
- * `now` is injected so tests do not depend on the clock.
+ * the control must not silently wipe a required value — the numeric variant owns
+ * that via `onDelete`) or an unparseable one. `now` is injected so tests do not
+ * depend on the clock.
  */
 export function mergePickedDate(
   raw: string,

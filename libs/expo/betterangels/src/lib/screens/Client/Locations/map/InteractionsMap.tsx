@@ -156,10 +156,8 @@ export function InteractionsMap(props: TProps) {
     // so it can be absent or stale by the time a cluster is clicked.
     const camera = await mapRef.current?.getCamera?.();
 
-    // Zooming is how you drill into a cluster, but it cannot separate one whose
-    // points are already on screen — the map would not move and no card would
-    // appear, which reads as a dead click. So zoom only while it buys
-    // separation, and otherwise show what is inside.
+    // Zoom only while it buys separation; otherwise show what is inside. Fitting
+    // points that are already on screen moves nothing.
     if (canExpandFurther(cluster, camera?.zoom)) {
       void zoomToCluster(cluster, mapRef);
 

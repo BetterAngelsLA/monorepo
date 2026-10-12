@@ -96,11 +96,7 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
     [clusterManager],
   );
 
-  /**
-   * Whether zooming into `c` would separate it from where the map is now. Callers
-   * use it to decide between drilling in and showing the cluster's points — see
-   * `canExpandFurther` on the manager.
-   */
+  /** See `canExpandFurther` on the manager. */
   const canExpandFurther = useCallback(
     (c: TClusterPoint, currentZoom?: number) =>
       clusterManager.canExpandFurther(c.properties.cluster_id, currentZoom),

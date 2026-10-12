@@ -1,15 +1,11 @@
 // ---------------------------------------------------------------------------
-// The web fetch client — see `fetchClient.ts` for why this is a platform pair
-// and why the native adapter cannot be reached from here.
+// The web fetch client — see `fetchClient.ts` for why this is a platform pair.
 //
 // `createWebFetchClient()` owns CSRF (read from `document.cookie`, refreshed via
-// the Django admin login path) and `credentials: 'include'` on its own.
+// the Django admin login path) and `credentials: 'include'`.
 //
-// The native client's extra interceptors are deliberately absent:
-//   - `hmisAuthInterceptor` / `interceptorHmis` read the native cookie jar, and
-//     HMIS is not supported on web yet.
-//   - `createRefererInterceptor` and `userAgentInterceptor` set `Referer` and
-//     `User-Agent`, which browsers strip as forbidden headers.
+// No native interceptors here: the HMIS pair reads the native cookie jar, and
+// browsers strip `Referer` and `User-Agent` as forbidden headers.
 // ---------------------------------------------------------------------------
 import { createWebFetchClient } from '@monorepo/ba-platform/web';
 import { configurePlacesProxy } from '@monorepo/shared/places';
@@ -18,12 +14,11 @@ import { configurePlacesProxy } from '@monorepo/shared/places';
 export const buildFetchClient = (apiUrl: string) => {
   const fetchClient = createWebFetchClient();
 
-  // Places/geocoding go through the BA backend proxy on web. The native Google
-  // keys are restricted by bundle id / package name + signing certificate, and
-  // the headers that satisfy that cannot be set from a browser. The proxy holds
-  // its own key server-side; routing through the app's fetch client means the
-  // call carries the session cookie and CSRF header its `@login_required` needs.
-  // Re-installed on every environment switch, since the origin changes.
+  // Places/geocoding go through the BA backend proxy on web: the native keys are
+  // restricted by bundle id / signing certificate, which a browser cannot satisfy.
+  // Routing through the app's fetch client carries the session cookie and CSRF
+  // header the proxy's `@login_required` needs. Re-installed per environment
+  // switch, since the origin changes.
   configurePlacesProxy({ apiUrl, fetch: fetchClient });
 
   return fetchClient;

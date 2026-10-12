@@ -1,9 +1,6 @@
 /**
- * The picker's core interaction, which used to be driven by focus.
- *
- * It opens on a press now: an `onFocus`-opened field could not be dismissed on
- * web, because react-native-web's Modal hands focus back to whatever opened it
- * and re-fired the open handler.
+ * The picker opens from a press on the field — react-native-web's Modal hands focus
+ * back to whatever opened it, so an `onFocus`-opened field could not be dismissed.
  */
 import { fireEvent, render, screen } from '@testing-library/react-native';
 

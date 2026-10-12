@@ -129,13 +129,9 @@ export class MapClusterManager<P extends IClusterGeoJson> {
   }
 
   /**
-   * Whether zooming into this cluster would actually separate it from where the
-   * map is now.
-   *
-   * A click that cannot buy separation should show the cluster's contents instead
-   * of moving the map: `fitToCoordinates` over leaves that are already on screen
-   * leaves the view where it was, so the click reads as having done nothing. With
-   * no current zoom to compare against, zooming is assumed to be worthwhile.
+   * Whether zooming into this cluster would separate it from where the map is now.
+   * When it would not, a caller should show the cluster's contents instead of
+   * fitting leaves that are already on screen.
    */
   canExpandFurther(clusterId: number, currentZoom?: number): boolean {
     if (currentZoom === undefined) {
@@ -226,20 +222,13 @@ export class MapClusterManager<P extends IClusterGeoJson> {
     return sorted.find((b) => leavesCount <= b.max)?.padding ?? maxPadding;
   }
 
-  // alternative to animateToCluster (animateToRegion)
-  // animates to fit selected cluster leaves on map
   /**
-   * Fit the map to a cluster's points, resolving with the region it settled at
-   * when the map can report one.
+   * Fit the map to a cluster's points, resolving with the region it settled at when
+   * the map can report one.
    *
-   * The fit is programmatic, and on web Google fires `bounds_changed` for gestures
-   * rather than for this, so `onRegionChangeComplete` never reaches the caller.
-   * The cluster layer then kept rendering the clusters it had computed at the
-   * *previous* zoom: a cluster that no longer matched the map and could not be
-   * opened. Handing the settled region back lets the caller recompute for where
-   * the map actually is. Native maps fire the callback themselves and simply have
-   * no `getMapBoundaries`, in which case this resolves `undefined` and nothing
-   * changes.
+   * Web fires no region callback for a programmatic fit, so without this the caller
+   * keeps the clusters it computed at the previous zoom. Native maps report the
+   * move themselves and have no `getMapBoundaries`, so this resolves `undefined`.
    */
   async fitToCluster(
     clusterId: number,
@@ -286,9 +275,8 @@ function boundsToRegion(bounds: TMapBoundaries): Region {
 }
 
 /**
- * Poll the map's bounds until two reads agree, i.e. until the animated fit has
- * finished. Returns `undefined` for a map that cannot report bounds (native), so
- * the caller falls back to whatever the platform reports on its own.
+ * Poll the map's bounds until two reads agree — i.e. until the animated fit stops
+ * moving. `undefined` when the map cannot report bounds.
  */
 async function waitForSettledRegion(
   map: TMapView,

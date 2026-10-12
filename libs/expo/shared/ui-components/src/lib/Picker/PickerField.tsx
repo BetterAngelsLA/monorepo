@@ -8,7 +8,6 @@ type TProps = {
   placeholder: string;
   placeholderTextColor?: string;
   items: TPickerItem[];
-  /** Opens the picker. A press, never a focus — see `Input`'s `onPress`. */
   onOpen: () => void;
   selectedValue?: string | null;
   error?: string;

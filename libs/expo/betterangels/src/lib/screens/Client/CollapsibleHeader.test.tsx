@@ -1,11 +1,6 @@
 /**
- * The header has to survive being hidden.
- *
- * It used to be conditionally rendered, so leaving the Profile tab destroyed the
- * client header and the profile photo's `<img>` with it; coming back mounted a
- * new image, which the browser had to decode again — the photo flickered on every
- * switch. Asserting that the children stay mounted while hidden is what keeps
- * that from coming back.
+ * The header has to survive being hidden: unmounting it makes the browser lay out
+ * and decode the profile photo again on every tab switch.
  */
 import { render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';

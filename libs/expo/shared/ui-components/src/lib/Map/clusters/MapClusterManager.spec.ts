@@ -1,12 +1,4 @@
-/**
- * The rule behind a cluster click.
- *
- * Zooming into a cluster is what drills into it, but it cannot separate points
- * that are already on screen — `fitToCoordinates` leaves the view where it was and
- * no card appears, so the click reads as having done nothing. That is why a click
- * falls through to the cluster's contents when `canExpandFurther` says zooming
- * would not buy any separation.
- */
+/** The rule behind a cluster click: zoom while it separates, otherwise list. */
 import { PointFeature } from 'supercluster';
 
 import { MapClusterManager } from './MapClusterManager';

@@ -37,28 +37,18 @@ export interface IInputProps extends TMarginProps, TextInputProps {
   slotRight?: TInputSlot;
   asSelect?: boolean;
   /**
-   * Element rendered on top of the field box itself — the row that holds the
-   * text input and the slots, not the label or the error line above and below
-   * it. It fills that row, so the element can size itself with `100%` and needs
-   * no knowledge of the field's height, which varies with font scale and with
-   * whether a label is present.
-   *
-   * The web date/time fields use it to lay a transparent native `<input>` over
-   * the chrome. Anything left uncovered stays interactive, so the text input
-   * underneath is still reachable.
+   * Fills the field row — the row holding the input and the slots, not the label
+   * or the error line. An overlay can size itself with `100%`; anything it leaves
+   * uncovered stays interactive. The web date/time fields use it for their
+   * transparent `<input>`.
    */
   fieldOverlay?: ReactNode;
   /**
-   * Turns the field into a press target instead of something you type into.
-   *
-   * The input stays, purely as display — the value and placeholder render exactly
-   * as they did — but it leaves the tab order and a full-width target over the row
-   * calls this. That is how a select should behave: a button, not a text field.
-   *
-   * It is also why `Picker` no longer opens from `onFocus`. Opening on focus meant
-   * react-native-web's Modal, which hands focus back to whatever opened it, re-fired
-   * the open handler every time the modal closed — and the workaround for that was
-   * platform-specific. Opening on press cannot loop, on either platform.
+   * Makes the field a press target instead of something you type into: the input
+   * stays as display, leaves the tab order, and a target over the row reports the
+   * press. Use it for a select — a button, not a text field. `Picker` opens its
+   * modal from this rather than from `onFocus`, which react-native-web's Modal
+   * re-fires on close.
    */
   onPress?: () => void;
 }
@@ -196,12 +186,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   /**
-   * Covers the field row so a tap anywhere on it opens the picker. Rendered
-   * before the slots, so the clear and chevron buttons paint on top of it and
-   * keep their own taps.
-   *
-   * Written out rather than spread from `StyleSheet.absoluteFill`, which
-   * react-native-web compiles to a class map.
+   * Covers the field row. Rendered before the slots so they paint on top and keep
+   * their own taps.
    */
   pressTarget: {
     position: 'absolute',
@@ -211,19 +197,10 @@ const styles = StyleSheet.create({
     left: 0,
   },
   /**
-   * The overlay covers the field row exactly (the row is `position: relative`),
-   * so an overlay element can size itself with `100%` and needs no knowledge of
-   * the field's height — which varies with font scale, and with the error line.
-   *
-   * Written out rather than spread from `StyleSheet.absoluteFill`: react-native-web
-   * compiles that one to a class map, so spreading it relies on `create` skipping
-   * an object that already carries `$$css`. Explicit props read the same on both
-   * platforms.
-   *
-   * `box-none` from the stylesheet, not the prop — react-native-web only
-   * polyfills it through the atomic compiler, which is what `StyleSheet.create`
-   * feeds. Anything the overlay leaves uncovered stays interactive, so the text
-   * input underneath is still reachable.
+   * Spelled out rather than spread from `StyleSheet.absoluteFill`, which
+   * react-native-web compiles to a class map. `box-none` has to come from the
+   * stylesheet as well: react-native-web only polyfills it through the atomic
+   * compiler.
    */
   fieldOverlay: {
     position: 'absolute',
