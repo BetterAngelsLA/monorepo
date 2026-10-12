@@ -36,7 +36,7 @@ todos:
     content: 'Phase 2: Refactor selector to SQL-level action pagination (group action keys in SQL with LIMIT/OFFSET before Python grouping)'
     status: pending
   - id: audit-rename-models
-    content: 'Phase 2: Rename write aggregate AuditEvent -> AuditWriteEvent (RenameModel migration) and update importers'
+    content: 'Phase 2: Rename write aggregate AuditEvent -> AuditWriteEvent (regenerate the unmerged initial migration) and update importers'
     status: pending
   - id: audit-choices-labels
     content: 'Phase 2: Render choice/enum fields as display labels and column names as verbose_name/friendly names'
@@ -659,9 +659,11 @@ dependency `audit` → `shelters` (for `*_get` helpers, event models, and the
 `AuditEvent`, which over-claimed by covering only writes). The Phase 4 read model
 is **`AuditReadEvent`** — a durable table, not a proxy. The GraphQL
 `AuditEventType` remains the *unified* write+read shape backed by both (§17). The
-rename emits a `RenameModel` migration, since the proxy is registered in
-[audit/migrations/0001_initial.py](apps/betterangels-backend/audit/migrations/0001_initial.py);
-no DB table changes.
+rename is folded into the (unmerged) initial migration
+[audit/migrations/0001_initial.py](apps/betterangels-backend/audit/migrations/0001_initial.py)
+rather than a follow-up `RenameModel`: the proxy is state-only, so regenerating
+the initial `CreateModel` under the new name is equivalent and avoids churn
+before the app has been pushed or merged.
 
 ## 10. The write selector — `references()` alone
 
@@ -1115,14 +1117,15 @@ unrelated to reservations — the §7b context-`label` seed exclusion and the Ph
 
 - Add `AuditActionType` (an action grouped by `pgh_context_id`, exposing `timestamp`, `actor`, `summary`, and a nested `events: [AuditEventType!]!` list), `AuditEventType`, `AuditEventKind` enum (`CHANGE`; `READ` is added in §28), and `AuditTargetType` enum in the `audit` app's types (e.g. `audit/types.py`).
 - `AuditEventType` gains an optional `snapshot: JSON` field (opt-in, §13) rendered from the event's `pgh_data`.
-- Add one query to a new `Query` class in `audit/schema.py`, `permission_classes=[IsAuthenticated]`. It returns a **plain list** of `AuditActionType`, not an `OffsetPaginated` wrapper — the selector produces grouped Python actions (not a queryset), so `strawberry_django.offset_paginated` cannot wrap it. Pagination is applied in the resolver via explicit `limit`/`offset` args (the grouped list is already in memory, so it is a simple slice):
+- Add one query to a new `Query` class in `audit/schema.py`, `permission_classes=[IsAuthenticated]`. It returns a **plain list** of `AuditActionType`, not an `OffsetPaginated` wrapper — the selector produces grouped Python actions (not a queryset), so `strawberry_django.offset_paginated` cannot wrap it. Pagination is applied in SQL by the selector (§10), not as an in-memory slice of a fully-grouped list: the resolver forwards the explicit `limit`/`offset` args.
 
 ```graphql
 objectAuditLog(
   targetType: AuditTargetType!,
   objectId: ID!,
   limit: Int = 50,
-  offset: Int = 0
+  offset: Int = 0,
+  includeSnapshot: Boolean = false
 ): [AuditActionType!]!
 ```
 

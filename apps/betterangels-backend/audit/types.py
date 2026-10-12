@@ -2,7 +2,7 @@
 
 import enum
 from datetime import datetime
-from typing import Any, List
+from typing import Any, List, Optional
 
 import strawberry
 from strawberry.scalars import JSON
@@ -38,6 +38,7 @@ class AuditEventType:
     target_type: AuditTargetType
     target_id: strawberry.ID
     field_changes: JSON
+    snapshot: Optional[JSON] = None
 
 
 @strawberry.type
@@ -60,6 +61,7 @@ def to_event_type(event: Any) -> AuditEventType:
         target_type=AuditTargetType(event.target_type),
         target_id=strawberry.ID(event.target_id),
         field_changes=event.field_changes,
+        snapshot=event.snapshot,
     )
 
 

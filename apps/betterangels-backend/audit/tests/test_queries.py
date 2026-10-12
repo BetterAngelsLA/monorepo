@@ -1,16 +1,16 @@
 """GraphQL tests for ``objectAuditLog`` (ADR 0004 §20)."""
 
-from clients.models import ClientProfile
-from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 
 from audit.tests.utils import audit_context
+from clients.models import ClientProfile
+from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import DemographicChoices, ReservationStatusChoices
 from shelters.models import Bed, Demographic, Reservation, ReservationClient, Shelter
 
 OBJECT_AUDIT_LOG_QUERY = """
-    query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $offset: Int) {
-        objectAuditLog(targetType: $targetType, objectId: $objectId, limit: $limit, offset: $offset) {
+    query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $offset: Int, $includeSnapshot: Boolean) {
+        objectAuditLog(targetType: $targetType, objectId: $objectId, limit: $limit, offset: $offset, includeSnapshot: $includeSnapshot) {
             timestamp
             actor
             summary
@@ -22,6 +22,7 @@ OBJECT_AUDIT_LOG_QUERY = """
                 targetId
                 actor
                 fieldChanges
+                snapshot
             }
         }
     }
@@ -99,7 +100,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["events"][0]["action"], "reservation_client.add")
-        self.assertEqual(actions[0]["fieldChanges"]["client_profile_id"], [None, "Grace Hopper"])
+        self.assertEqual(actions[0]["fieldChanges"]["client profile"], [None, "Grace Hopper"])
 
     # ── authorization (§18) ──────────────────────────────────────────────────
 
@@ -137,3 +138,25 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["First", "Second"])
+
+    def test_offset_beyond_range_returns_no_actions(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        with audit_context(user=self.org_1_case_manager_1):
+            self.shelter.name = "Only"
+            self.shelter.save()
+
+        response = self._query("SHELTER", self.shelter.id, limit=5, offset=50)
+
+        self.assertEqual(response["data"]["objectAuditLog"], [])
+
+    def test_include_snapshot_returns_full_object_state(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        with audit_context(user=self.org_1_case_manager_1):
+            self.shelter.name = "Snapshot Query"
+            self.shelter.save()
+
+        response = self._query("SHELTER", self.shelter.id, includeSnapshot=True)
+        event = response["data"]["objectAuditLog"][0]["events"][0]
+
+        self.assertEqual(event["snapshot"]["name"], "Snapshot Query")
+        self.assertNotIn("updated_at", event["snapshot"])

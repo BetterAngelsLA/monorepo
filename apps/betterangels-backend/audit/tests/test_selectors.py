@@ -2,15 +2,17 @@
 
 from typing import Any
 
-from accounts.models import User
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
 from pghistory.core import event_models
 
+from accounts.models import User
 from audit.selectors import (
+    _EXCLUDED_EVENT_MODELS,
     LABEL_FIELD,
     THROUGH_EVENT_MAP,
-    _EXCLUDED_EVENT_MODELS,
     object_audit_log,
 )
 from audit.tests.utils import audit_context, clear_history_context
@@ -115,7 +117,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         labels = [event.action for event in action.events]
         self.assertNotIn("reservation.status_change", labels)
         self.assertIn("reservation.update", labels)
-        self.assertEqual(action.field_changes["status"], ["confirmed", "checked_in"])
+        self.assertEqual(action.field_changes["status"], ["Confirmed", "Checked In"])
 
     # ── §13/§14 INSERT and FK labels ─────────────────────────────────────────
 
@@ -124,11 +126,13 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             Reservation.objects.create(bed=self.bed, status=ReservationStatusChoices.CANCELLED)
 
         actions = object_audit_log(obj=self.bed, target_type="BED")
-        add_action = _action_with(actions, "cancelled")
+        add_action = _action_with(actions, "Cancelled")
 
         self.assertIsNotNone(add_action)
         assert add_action is not None
-        self.assertEqual(add_action.field_changes["bed_id"], [None, "Bed A"])
+        # Keys render the field's verbose_name, FK values its display label (§13/§14).
+        self.assertEqual(add_action.field_changes["bed"], [None, "Bed A"])
+        self.assertEqual(add_action.field_changes["status"], [None, "Cancelled"])
         self.assertNotIn("created_at", add_action.field_changes)
         self.assertNotIn("updated_at", add_action.field_changes)
 
@@ -138,10 +142,10 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.bed.save()
 
         actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
-        bed_actions = [a for a in actions if a.field_changes.get("room_id")]
+        bed_actions = [a for a in actions if a.field_changes.get("room")]
 
         self.assertEqual(len(bed_actions), 1)
-        self.assertEqual(bed_actions[0].field_changes["room_id"], [None, "Room A"])
+        self.assertEqual(bed_actions[0].field_changes["room"], [None, "Room A"])
 
     # ── §11 seed / import / clone attribution ────────────────────────────────
 
@@ -193,6 +197,59 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
         assert action is not None
         self.assertEqual(action.actor, "Ada Lovelace")
+
+    # ── §13 full-state snapshot (opt-in) / §10 SQL pagination ────────────────
+
+    def test_snapshot_is_opt_in_and_renders_full_state(self) -> None:
+        with audit_context(user=self.user):
+            self.shelter.name = "Snapshot Shelter"
+            self.shelter.save()
+
+        without = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        self.assertIsNone(without[0].events[0].snapshot)
+
+        with_snapshot = object_audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        snapshot = with_snapshot[0].events[0].snapshot
+        self.assertIsNotNone(snapshot)
+        assert snapshot is not None
+        self.assertEqual(snapshot["name"], "Snapshot Shelter")
+        self.assertNotIn("created_at", snapshot)
+        self.assertNotIn("updated_at", snapshot)
+
+    def test_offset_beyond_range_returns_no_actions(self) -> None:
+        with audit_context(user=self.user):
+            self.shelter.name = "Only Rename"
+            self.shelter.save()
+
+        actions = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=10, offset=100)
+
+        self.assertEqual(actions, [])
+
+    def test_sql_pagination_returns_the_requested_page(self) -> None:
+        for name in ("Page One", "Page Two", "Page Three"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+
+        page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, offset=1)
+
+        self.assertEqual(len(page), 1)
+        self.assertEqual(page[0].field_changes["name"], ["Page One", "Page Two"])
+
+    def test_pagination_groups_and_limits_in_sql(self) -> None:
+        for name in ("Alpha", "Beta", "Gamma"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+
+        with CaptureQueriesContext(connection) as ctx:
+            object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, offset=0)
+
+        sql = " ".join(query["sql"] for query in ctx.captured_queries).upper()
+        # The action keys are grouped and sliced in SQL, not by fetching the
+        # object's whole history into Python first (§10).
+        self.assertIn("GROUP BY", sql)
+        self.assertIn("LIMIT 1", sql)
 
     # ── §19 through-map completeness / §10 references boundary ───────────────
 

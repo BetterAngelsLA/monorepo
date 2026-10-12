@@ -1,9 +1,10 @@
 """Aggregate event model for the audit log.
 
-``AuditEvent`` is a proxy of pghistory's aggregate ``Events`` model that adds
-the context-derived fields the audit selector needs: the acting user (both the
-live FK and the frozen name/email snapshots from the ADR 0004 §8 middleware)
-and the context ``label`` (§11) used for the seed/import/clone split.
+``AuditWriteEvent`` is a proxy of pghistory's aggregate ``Events`` model that
+adds the context-derived fields the audit selector needs: the acting user (both
+the live FK and the frozen name/email snapshots from the ADR 0004 §8 middleware)
+and the context ``label`` (§11) used for the seed/import/clone split. It is the
+*write* half of the audit stream; the read half is ``AuditReadEvent`` (Phase 4).
 
 All proxy fields are declared ``null=True`` so Django NULL-guards ``.exclude()``
 against context-less events (e.g. ``.exclude(label="seed")`` must not drop rows
@@ -15,7 +16,7 @@ from django.conf import settings
 from django.db import models
 
 
-class AuditEvent(pghistory.models.Events):
+class AuditWriteEvent(pghistory.models.Events):
     actor = pghistory.ProxyField(
         "pgh_context__user",
         models.ForeignKey(
@@ -40,4 +41,4 @@ class AuditEvent(pghistory.models.Events):
 
     class Meta:
         proxy = True
-        verbose_name_plural = "audit events"
+        verbose_name_plural = "audit write events"

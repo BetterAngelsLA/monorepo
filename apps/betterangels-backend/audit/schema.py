@@ -2,14 +2,14 @@
 
 from typing import List, cast
 
-from accounts.models import User as AccountUser
-from common.permissions.utils import IsAuthenticated
-from shelters.models import Bed, Room, Reservation, Shelter
-from shelters.selectors.operator import bed_get, reservation_get, room_get, shelter_get
-
 import strawberry
 from strawberry import ID, Info
 from strawberry_django.auth.utils import get_current_user
+
+from accounts.models import User as AccountUser
+from common.permissions.utils import IsAuthenticated
+from shelters.models import Bed, Reservation, Room, Shelter
+from shelters.selectors.operator import bed_get, reservation_get, room_get, shelter_get
 
 from .selectors import object_audit_log
 from .types import AuditActionType, AuditTargetType, to_action_type
@@ -40,9 +40,20 @@ class Query:
         object_id: ID,
         limit: int = 50,
         offset: int = 0,
+        include_snapshot: bool = False,
     ) -> List[AuditActionType]:
-        """The write audit log for one object, newest action first."""
+        """The write audit log for one object, newest action first.
+
+        ``includeSnapshot`` opts each event into a full-object-state snapshot
+        rendered from the event's ``pgh_data`` (ADR 0004 §13).
+        """
         user = cast(AccountUser, get_current_user(info))
         obj = _resolve_target(user, target_type, object_id)
-        actions = object_audit_log(obj=obj, target_type=target_type.value, limit=limit, offset=offset)
+        actions = object_audit_log(
+            obj=obj,
+            target_type=target_type.value,
+            limit=limit,
+            offset=offset,
+            include_snapshot=include_snapshot,
+        )
         return [to_action_type(action) for action in actions]
