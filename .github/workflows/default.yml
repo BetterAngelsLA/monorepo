@@ -238,9 +238,6 @@ jobs:
         # `deploy` depends on `export-web` and `export-web` is not cached, so the
         # browser bundle is built here rather than in a second invocation.
         run: |
-          if [ -z "${EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY:-}" ]; then
-            echo "::warning title=Web Maps key is not set::EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY is missing for the '${{ matrix.environment }}' environment, so this build deploys with no maps and no address search."
-          fi
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t deploy --configuration ${{ matrix.environment }}
           EOF

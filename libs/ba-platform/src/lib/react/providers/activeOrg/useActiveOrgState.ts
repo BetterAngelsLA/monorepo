@@ -8,9 +8,6 @@ import {
   setActiveOrgId as commitActiveOrgId,
   subscribeActiveOrgId,
 } from '../../../activeOrg';
-// Imported from the module rather than the barrel on purpose: it writes during
-// render and does not notify synchronously, so it is only safe for the provider
-// below. Keeping it off the package's public surface stops an app reaching for it.
 import { reconcileActiveOrgId } from '../../../activeOrg/activeOrgStore';
 
 /**
