@@ -45,9 +45,9 @@ describe('BottomSheetBackdrop', () => {
     mocks.onGorhomProps.mockClear();
   });
 
-  it('forwards taps to onRequestClose as the single dismissal path', () => {
+  it('forwards taps to onRequestClose as the single dismissal path', async () => {
     const onRequestClose = vi.fn();
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <BottomSheetBackdrop
         animatedIndex={fakeSharedValue}
         animatedPosition={fakeSharedValue}
@@ -66,12 +66,12 @@ describe('BottomSheetBackdrop', () => {
     expect(gorhomProps.pressBehavior).toBe(0);
     expect(gorhomProps.onPress).toBe(onRequestClose);
 
-    fireEvent.press(getByTestId('gorhom-backdrop'));
+    await fireEvent.press(getByTestId('gorhom-backdrop'));
     expect(onRequestClose).toHaveBeenCalledTimes(1);
   });
 
-  it('renders nothing when disableBackdrop is set', () => {
-    const { queryByTestId } = render(
+  it('renders nothing when disableBackdrop is set', async () => {
+    const { queryByTestId } = await render(
       <BottomSheetBackdrop
         animatedIndex={fakeSharedValue}
         animatedPosition={fakeSharedValue}

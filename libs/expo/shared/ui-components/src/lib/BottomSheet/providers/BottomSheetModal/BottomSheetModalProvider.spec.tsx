@@ -180,10 +180,10 @@ describe('BottomSheetModalProvider', () => {
     state.mountedBases.length = 0;
   });
 
-  function renderProvider() {
+  async function renderProvider() {
     const ref: { show?: (params: ShowBottomSheetParams) => void } = {};
 
-    render(
+    await render(
       <BottomSheetModalProvider enableLayoutProvider={false}>
         <Harness onReady={(fn) => (ref.show = fn)} />
       </BottomSheetModalProvider>,
@@ -196,39 +196,39 @@ describe('BottomSheetModalProvider', () => {
     return { show: ref.show };
   }
 
-  function showSheet(
+  async function showSheet(
     show: (params: ShowBottomSheetParams) => void,
     options?: ShowBottomSheetParams['options'],
   ) {
-    act(() => {
+    await act(async () => {
       show({ render: () => null, options });
     });
   }
 
-  it('presents each sheet exactly once, even across provider re-renders', () => {
-    const { show } = renderProvider();
+  it('presents each sheet exactly once, even across provider re-renders', async () => {
+    const { show } = await renderProvider();
 
-    showSheet(show, { stackBehavior: 'replace' });
+    await showSheet(show, { stackBehavior: 'replace' });
     expect(state.mountedBases).toHaveLength(1);
     const first = state.mountedBases[0].inst;
     expect(first.present).toHaveBeenCalledTimes(1);
 
     // Adding a second sheet re-renders the provider, which re-attaches the
     // ref callbacks for ALL mounted sheets. present() must NOT re-fire.
-    showSheet(show, { stackBehavior: 'push' });
+    await showSheet(show, { stackBehavior: 'push' });
     expect(state.mountedBases).toHaveLength(2);
     expect(first.present).toHaveBeenCalledTimes(1);
     expect(state.mountedBases[1].inst.present).toHaveBeenCalledTimes(1);
   });
 
-  it("'replace' keeps the previous sheet mounted until Gorhom confirms dismissal", () => {
-    const { show } = renderProvider();
+  it("'replace' keeps the previous sheet mounted until Gorhom confirms dismissal", async () => {
+    const { show } = await renderProvider();
 
-    showSheet(show, { stackBehavior: 'replace' });
+    await showSheet(show, { stackBehavior: 'replace' });
     const first = state.mountedBases[0];
     expect(first.inst.dismiss).not.toHaveBeenCalled();
 
-    showSheet(show, { stackBehavior: 'replace' });
+    await showSheet(show, { stackBehavior: 'replace' });
 
     // Dismissed exactly once, and NOT unmounted: dropping it from React before
     // Gorhom finishes tearing it down leaks its portal entry, which keeps the
@@ -237,29 +237,29 @@ describe('BottomSheetModalProvider', () => {
     expect(state.mountedBases).toHaveLength(2);
 
     // Gorhom reports the dismissal finishing → now it may be unmounted.
-    act(() => {
+    await act(async () => {
       first.onDismiss?.();
     });
 
     expect(state.mountedBases).toHaveLength(1);
   });
 
-  it("'push' leaves the sheets below it untouched", () => {
-    const { show } = renderProvider();
+  it("'push' leaves the sheets below it untouched", async () => {
+    const { show } = await renderProvider();
 
-    showSheet(show, { stackBehavior: 'push' });
+    await showSheet(show, { stackBehavior: 'push' });
     const first = state.mountedBases[0];
 
-    showSheet(show, { stackBehavior: 'push' });
+    await showSheet(show, { stackBehavior: 'push' });
 
     expect(first.inst.dismiss).not.toHaveBeenCalled();
     expect(state.mountedBases).toHaveLength(2);
   });
 
   it('defers a dismiss requested while the modal is still materialising', async () => {
-    const { show } = renderProvider();
+    const { show } = await renderProvider();
 
-    showSheet(show, {});
+    await showSheet(show, {});
     const base = state.mountedBases[0];
 
     // `present()` is in flight: Gorhom has not mounted the modal natively yet
@@ -267,7 +267,7 @@ describe('BottomSheetModalProvider', () => {
     // resurrect itself with no owner left to tear it down.
     base.inst.status.current = STATUS_INITIAL;
 
-    act(() => {
+    await act(async () => {
       base.onRequestClose?.();
     });
 
@@ -285,13 +285,13 @@ describe('BottomSheetModalProvider', () => {
     expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('dismisses a sheet at most once, even with repeated close requests', () => {
-    const { show } = renderProvider();
+  it('dismisses a sheet at most once, even with repeated close requests', async () => {
+    const { show } = await renderProvider();
 
-    showSheet(show, {});
+    await showSheet(show, {});
     const base = state.mountedBases[0];
 
-    act(() => {
+    await act(async () => {
       base.onRequestClose?.();
       base.onRequestClose?.();
     });
@@ -300,9 +300,9 @@ describe('BottomSheetModalProvider', () => {
   });
 
   it('defers a dismiss requested while the sheet is still animating', async () => {
-    const { show } = renderProvider();
+    const { show } = await renderProvider();
 
-    showSheet(show, {});
+    await showSheet(show, {});
     const base = state.mountedBases[0];
 
     // Dismissing mid-animation latches Gorhom's status at DISMISSING and its
@@ -311,7 +311,7 @@ describe('BottomSheetModalProvider', () => {
     // again, which is the freeze.
     base.inst.status.current = STATUS_ANIMATING;
 
-    act(() => {
+    await act(async () => {
       base.onRequestClose?.();
     });
 
@@ -332,12 +332,12 @@ describe('BottomSheetModalProvider', () => {
     vi.useFakeTimers();
 
     try {
-      const { show } = renderProvider();
+      const { show } = await renderProvider();
 
-      showSheet(show, {});
+      await showSheet(show, {});
       const base = state.mountedBases[0];
 
-      act(() => {
+      await act(async () => {
         base.onRequestClose?.();
       });
 
@@ -351,7 +351,7 @@ describe('BottomSheetModalProvider', () => {
       expect(base.inst.dismiss).toHaveBeenCalledTimes(2);
 
       // Once Gorhom confirms the dismissal, retrying stops.
-      act(() => {
+      await act(async () => {
         base.onDismiss?.();
       });
 
@@ -369,12 +369,12 @@ describe('BottomSheetModalProvider', () => {
     vi.useFakeTimers();
 
     try {
-      const { show } = renderProvider();
+      const { show } = await renderProvider();
 
-      showSheet(show, {});
+      await showSheet(show, {});
       const base = state.mountedBases[0];
 
-      act(() => {
+      await act(async () => {
         base.onRequestClose?.();
       });
       expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
@@ -392,7 +392,7 @@ describe('BottomSheetModalProvider', () => {
       expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
 
       // Gorhom confirms; the retries are done watching either way.
-      act(() => {
+      await act(async () => {
         base.onDismiss?.();
       });
 
@@ -406,14 +406,14 @@ describe('BottomSheetModalProvider', () => {
     }
   });
 
-  it('onRequestClose notifies onClose at request time and dismisses (backdrop / header X)', () => {
-    const { show } = renderProvider();
+  it('onRequestClose notifies onClose at request time and dismisses (backdrop / header X)', async () => {
+    const { show } = await renderProvider();
     const onClose = vi.fn();
 
-    showSheet(show, { onClose });
+    await showSheet(show, { onClose });
     const base = state.mountedBases[0];
 
-    act(() => {
+    await act(async () => {
       base.onRequestClose?.();
     });
 
@@ -425,18 +425,18 @@ describe('BottomSheetModalProvider', () => {
 
     // When Gorhom later reports the dismissal finishing, onClose is NOT fired
     // again (once-per-sheet guard) and the sheet is removed.
-    act(() => {
+    await act(async () => {
       base.onDismiss?.();
     });
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(state.mountedBases).toHaveLength(0);
   });
 
-  it('closeSheet (render API) dismisses the sheet', () => {
-    const { show } = renderProvider();
+  it('closeSheet (render API) dismisses the sheet', async () => {
+    const { show } = await renderProvider();
 
     let closeSheet: (() => void) | undefined;
-    act(() => {
+    await act(async () => {
       show({
         render: ({ closeSheet: cs }) => {
           closeSheet = cs;
@@ -448,21 +448,21 @@ describe('BottomSheetModalProvider', () => {
     const base = state.mountedBases[0];
     expect(base.inst.dismiss).not.toHaveBeenCalled();
 
-    act(() => {
+    await act(async () => {
       closeSheet?.();
     });
 
     expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('fires options.onClose(id) once on dismissal and removes the sheet', () => {
-    const { show } = renderProvider();
+  it('fires options.onClose(id) once on dismissal and removes the sheet', async () => {
+    const { show } = await renderProvider();
     const onClose = vi.fn();
 
-    showSheet(show, { onClose });
+    await showSheet(show, { onClose });
     expect(state.mountedBases).toHaveLength(1);
 
-    act(() => {
+    await act(async () => {
       state.mountedBases[0].onDismiss?.();
     });
 
@@ -472,14 +472,14 @@ describe('BottomSheetModalProvider', () => {
     expect(state.mountedBases).toHaveLength(0);
   });
 
-  it('presents a new sheet immediately once the closing sheet is dismissing', () => {
-    const { show } = renderProvider();
+  it('presents a new sheet immediately once the closing sheet is dismissing', async () => {
+    const { show } = await renderProvider();
 
-    showSheet(show, { stackBehavior: 'replace' });
+    await showSheet(show, { stackBehavior: 'replace' });
     const first = state.mountedBases[0];
 
     // Dismissal handed to Gorhom (mock status is PRESENTED, i.e. dismissable).
-    act(() => {
+    await act(async () => {
       first.onRequestClose?.();
     });
 
@@ -488,16 +488,16 @@ describe('BottomSheetModalProvider', () => {
     // No need to wait for the close animation: Gorhom's own `mountSheet` skips
     // a DISMISSING modal, so e.g. "Take Photo" opens the camera sheet while the
     // menu slides away.
-    showSheet(show, { stackBehavior: 'replace' });
+    await showSheet(show, { stackBehavior: 'replace' });
     const second = state.mountedBases[1];
 
     expect(second.inst.present).toHaveBeenCalledTimes(1);
   });
 
-  it('holds a new sheet back while the closing sheet is not dismissing yet', () => {
-    const { show } = renderProvider();
+  it('holds a new sheet back while the closing sheet is not dismissing yet', async () => {
+    const { show } = await renderProvider();
 
-    showSheet(show, {});
+    await showSheet(show, {});
     const first = state.mountedBases[0];
 
     // Not dismissable, so our dismiss is deferred: that modal is still live
@@ -505,24 +505,24 @@ describe('BottomSheetModalProvider', () => {
     // letting the dismissal run.
     first.inst.status.current = STATUS_ANIMATING;
 
-    act(() => {
+    await act(async () => {
       first.onRequestClose?.();
     });
 
     expect(first.inst.dismiss).not.toHaveBeenCalled();
 
-    showSheet(show, {});
+    await showSheet(show, {});
     const second = state.mountedBases[1];
 
     expect(second.inst.present).not.toHaveBeenCalled();
   });
 
-  it('keeps an imperatively-shown sheet mounted when its caller unmounts', () => {
+  it('keeps an imperatively-shown sheet mounted when its caller unmounts', async () => {
     // Sheets are owned by the provider, not by the component that opened them.
     // The imperative API hands the caller no id and no close handle, and
     // unmounting the caller must not pull the sheet out of React —
     // it stays put until something explicitly dismisses it.
-    const { rerender } = render(
+    const { rerender } = await render(
       <BottomSheetModalProvider enableLayoutProvider={false}>
         <SheetOpener />
       </BottomSheetModalProvider>,
@@ -533,7 +533,7 @@ describe('BottomSheetModalProvider', () => {
     expect(base.inst.present).toHaveBeenCalledTimes(1);
 
     // The caller goes away; the provider stays mounted.
-    rerender(
+    await rerender(
       <BottomSheetModalProvider enableLayoutProvider={false}>
         {null}
       </BottomSheetModalProvider>,
@@ -543,10 +543,10 @@ describe('BottomSheetModalProvider', () => {
     expect(base.inst.dismiss).not.toHaveBeenCalled();
   });
 
-  it('closes a sheet that never presented by removing it, not dismissing it', () => {
-    const { show } = renderProvider();
+  it('closes a sheet that never presented by removing it, not dismissing it', async () => {
+    const { show } = await renderProvider();
 
-    showSheet(show, {});
+    await showSheet(show, {});
     const first = state.mountedBases[0];
 
     // The first sheet is not dismissable, so its close is deferred and its
@@ -554,11 +554,11 @@ describe('BottomSheetModalProvider', () => {
     // presenting at all (assumption 3).
     first.inst.status.current = STATUS_ANIMATING;
 
-    act(() => {
+    await act(async () => {
       first.onRequestClose?.();
     });
 
-    showSheet(show, {});
+    await showSheet(show, {});
     const second = state.mountedBases[1];
     expect(second.inst.present).not.toHaveBeenCalled();
 
@@ -566,7 +566,7 @@ describe('BottomSheetModalProvider', () => {
     // animate out, and dropping it from React cannot leak a portal entry, so it
     // goes straight out of the stack — `dismiss()` here would target a modal
     // Gorhom never mounted.
-    act(() => {
+    await act(async () => {
       second.onRequestClose?.();
     });
 
@@ -578,12 +578,12 @@ describe('BottomSheetModalProvider', () => {
     vi.useFakeTimers();
 
     try {
-      const { show } = renderProvider();
+      const { show } = await renderProvider();
 
-      showSheet(show, {});
+      await showSheet(show, {});
       const base = state.mountedBases[0];
 
-      act(() => {
+      await act(async () => {
         base.onRequestClose?.();
       });
       expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
@@ -612,13 +612,13 @@ describe('BottomSheetModalProvider', () => {
       const onClose = vi.fn();
       let closeSheet: (() => void) | undefined;
 
-      const { unmount } = render(
+      const { unmount } = await render(
         <BottomSheetModalProvider enableLayoutProvider={false}>
           <Harness onReady={(fn) => (ref.show = fn)} />
         </BottomSheetModalProvider>,
       );
 
-      act(() => {
+      await act(async () => {
         ref.show?.({
           render: ({ closeSheet: cs }) => {
             closeSheet = cs;
@@ -631,12 +631,12 @@ describe('BottomSheetModalProvider', () => {
       const base = state.mountedBases[0];
       base.inst.status.current = STATUS_PRESENTED;
 
-      act(() => {
+      await act(async () => {
         closeSheet?.();
       });
       expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
 
-      unmount();
+      await unmount();
 
       await act(async () => {
         vi.advanceTimersByTime(
@@ -647,7 +647,7 @@ describe('BottomSheetModalProvider', () => {
       // Nothing may keep working against a tree that is gone.
       expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
 
-      act(() => {
+      await act(async () => {
         base.onDismiss?.();
       });
 
@@ -661,12 +661,12 @@ describe('BottomSheetModalProvider', () => {
     vi.useFakeTimers();
 
     try {
-      const { show } = renderProvider();
+      const { show } = await renderProvider();
 
-      showSheet(show, {});
+      await showSheet(show, {});
       const base = state.mountedBases[0];
 
-      act(() => {
+      await act(async () => {
         base.onRequestClose?.();
       });
       expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
@@ -691,7 +691,7 @@ describe('BottomSheetModalProvider', () => {
 
       const dismissCallsBefore = base.inst.dismiss.mock.calls.length;
 
-      act(() => {
+      await act(async () => {
         base.onRequestClose?.();
       });
 
@@ -717,16 +717,16 @@ describe('BottomSheetModalProvider', () => {
     });
 
     try {
-      const { show } = renderProvider();
+      const { show } = await renderProvider();
 
-      showSheet(show, {});
+      await showSheet(show, {});
       const base = state.mountedBases[0];
 
       // The modal never settles: it stays ANIMATING past the deadline, so no
       // dismissal is ever handed over.
       base.inst.status.current = STATUS_ANIMATING;
 
-      act(() => {
+      await act(async () => {
         base.onRequestClose?.();
       });
       expect(base.inst.dismiss).not.toHaveBeenCalled();
@@ -743,7 +743,7 @@ describe('BottomSheetModalProvider', () => {
 
       base.inst.status.current = STATUS_PRESENTED;
 
-      act(() => {
+      await act(async () => {
         base.onRequestClose?.();
       });
 
@@ -771,9 +771,9 @@ describe('BottomSheetModalProvider', () => {
     });
 
     try {
-      const { show } = renderProvider();
+      const { show } = await renderProvider();
 
-      showSheet(show, {});
+      await showSheet(show, {});
       const stuck = state.mountedBases[0];
 
       // Never settles, so its close is deferred and then released rather than
@@ -781,7 +781,7 @@ describe('BottomSheetModalProvider', () => {
       stuck.inst.status.current = STATUS_ANIMATING;
 
       // A newer sheet opens on top and supersedes it (the default behaviour).
-      showSheet(show, { stackBehavior: 'replace' });
+      await showSheet(show, { stackBehavior: 'replace' });
 
       await act(async () => {
         vi.advanceTimersByTime(DISMISS_DEFER_TIMEOUT_MS + 100);
@@ -801,7 +801,7 @@ describe('BottomSheetModalProvider', () => {
       expect(stuck.inst.dismiss).not.toHaveBeenCalled();
 
       // Released, not forgotten — asking again still closes it.
-      act(() => {
+      await act(async () => {
         stuck.onRequestClose?.();
       });
 
