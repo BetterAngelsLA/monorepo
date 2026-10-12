@@ -79,7 +79,7 @@ function readTargets() {
  *
  * Returns `null` for a request the proxy does not own.
  */
-function routeRequest(rawUrl, { named, single }) {
+function routeRequest(rawUrl, { named, single, names }) {
   const queryAt = rawUrl.indexOf('?');
   const pathname = queryAt === -1 ? rawUrl : rawUrl.slice(0, queryAt);
   const query = queryAt === -1 ? '' : rawUrl.slice(queryAt);
@@ -111,6 +111,11 @@ function routeRequest(rawUrl, { named, single }) {
       prefix: `${API_PREFIX}/${name}`,
     };
   }
+
+  // With named targets configured, an unknown name is a mistake — not a request
+  // for the single target, which would silently send a typo'd environment to
+  // whatever `BA_DEV_PROXY_TARGET` points at (production, in the documented use).
+  if (names.length > 0 && name) return { unknownTarget: name };
 
   if (!single) return null;
 
@@ -171,6 +176,16 @@ function stripRequestCookies(cookieHeader, env, names) {
         if (other !== env && name.startsWith(`${other}_`)) return [];
       }
 
+      // An un-namespaced auth cookie can only be a leftover from the
+      // single-target form (or another tool); sending it to every target is how
+      // one target's session reaches another.
+      if (
+        !name.includes('_') &&
+        (name === 'sessionid' || name === 'csrftoken')
+      ) {
+        return [];
+      }
+
       return [
         `${name.startsWith(`${env}_`) ? name.slice(env.length + 1) : name}${value}`,
       ];
@@ -206,8 +221,9 @@ function sendJson(res, status, payload) {
  * function. Inert unless a target is configured.
  */
 function createDevApiProxy() {
-  const targets = readTargets();
-  const names = [...targets.named.keys()];
+  const named = new Map(readTargets().named);
+  const names = [...named.keys()];
+  const targets = { named, single: readTargets().single, names };
   const configured = !!targets.single || names.length > 0;
 
   return (middleware) => (req, res, next) => {
@@ -228,6 +244,13 @@ function createDevApiProxy() {
           `and point the app at EXPO_PUBLIC_API_URL=http://${req.headers.host}${API_PREFIX}. ` +
           'To serve several at once, use ' +
           'BA_DEV_PROXY_TARGETS=dev=https://api.dev.betterangels.la,prod=https://api.betterangels.la',
+      });
+    }
+
+    if (route.unknownTarget) {
+      return sendJson(res, 502, {
+        error: `Unknown dev API proxy target '${route.unknownTarget}'.`,
+        configured: names,
       });
     }
 

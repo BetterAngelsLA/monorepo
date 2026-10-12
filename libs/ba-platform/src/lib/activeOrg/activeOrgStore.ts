@@ -69,13 +69,6 @@ const readOrganizations = (): readonly { id: string }[] | null => {
   }
 };
 
-/** The organization list the innermost installed reader reports, if any. */
-const announceSourceChange = (): void => {
-  if (getActiveOrgId() !== lastDerived) notify();
-};
-
-let lastDerived: string | null = null;
-
 /**
  * Install an organization reader, returning the function that removes it again.
  *
@@ -86,15 +79,18 @@ let lastDerived: string | null = null;
  * installs a fresh closure on every render cannot make subscribers loop.
  */
 export const pushActiveOrgSource = (next: ActiveOrgSource): (() => void) => {
-  lastDerived = getActiveOrgId();
   organizationSources.push(next);
-  announceSourceChange();
+  notify();
 
   return () => {
     const at = organizationSources.lastIndexOf(next);
     if (at !== -1) organizationSources.splice(at, 1);
 
-    announceSourceChange();
+    // Always, not only when the derived id moved: tracking "the last value we
+    // announced" in one place and mutating the stack in several is how a removal
+    // that restores an older value ends up notifying nobody, which leaves
+    // subscribers rendering one organization while the header sends another.
+    notify();
   };
 };
 
@@ -248,7 +244,6 @@ export const subscribeActiveOrgId = (listener: () => void): (() => void) => {
 export const resetActiveOrgStoreForTests = (): void => {
   persistence = inMemoryPersistence();
   organizationSources.length = 0;
-  lastDerived = null;
   current = null;
   seeded = false;
   listeners.clear();
