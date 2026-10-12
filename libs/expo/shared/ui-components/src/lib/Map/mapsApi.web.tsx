@@ -1,5 +1,6 @@
 /**
- * Web shim for `react-native-maps`, wired in through `metro.config.js`.
+ * Web half of the maps seam, which Metro substitutes for `mapsApi.tsx` on the
+ * `web` platform.
  *
  * Backed by `@teovilla/react-native-web-maps`, which maps the `react-native-maps`
  * API onto the Google Maps JavaScript API. Four gaps have to be closed here, and
@@ -9,7 +10,8 @@
  *    site passes; the prop arrives `undefined` and teovilla bails out of
  *    rendering the map.
  * 2. it takes the Maps JavaScript API key as a *prop*, whereas the native SDKs
- *    read theirs from the app.config.js plugins, so no call site passes one.
+ *    read theirs from the app.config.js plugins, so no call site passes one and
+ *    the app installs it through `configureWebMaps` instead.
  * 3. it ignores region *deltas* — it builds the map with
  *    `zoom: props.initialCamera?.zoom || 3`, so every map opened at zoom 3, a
  *    continental view.
@@ -19,8 +21,9 @@
  * Gaps 3 and 4 are closed by converting the deltas into Google's zoom and handing
  * teovilla an `initialCamera`.
  *
- * Types at call sites still come from the real `react-native-maps` (tsconfig
- * paths are not affected by this Metro-only substitution).
+ * Call sites are typechecked against `mapsApi.tsx`, whose types are the real
+ * package's, so the props below stay the `react-native-maps` API this file stands
+ * in for.
  */
 import * as TeovillaModule from '@teovilla/react-native-web-maps';
 import {
@@ -35,8 +38,19 @@ import {
   type ReactNode,
 } from 'react';
 import type { Camera, MapViewProps, Region } from 'react-native-maps';
+import type { TWebMapsConfig } from './types';
+import { regionToZoom } from './utils/regionToZoom';
 
-import { googlePlacesApiKey } from '../../config';
+/**
+ * Installed once by the app (`src/init.ts`), the way `configurePlacesProxy`
+ * installs the Places proxy: teovilla wants the Maps JavaScript API key as a
+ * prop, and no call site has one.
+ */
+let webMapsApiKey: string | undefined;
+
+export function configureWebMaps({ apiKey }: TWebMapsConfig): void {
+  webMapsApiKey = apiKey;
+}
 
 // Same values react-native-maps uses, so call sites behave identically on both
 // platforms.
@@ -87,27 +101,18 @@ type TImperativeMap = {
 
 /**
  * Google Maps takes a zoom *level*; react-native-maps takes a lat/lng *span*.
- * Same conversion the app already uses to reason about zoom in
- * `Map/utils/regionToZoom.ts`. It is exported from the ui-components barrel, so
- * it *could* be imported here — the reason not to is that this file is what the
- * barrel's own `Map/index.ts` imports for `react-native-maps`, so importing the
- * barrel back would re-enter this module while it is still evaluating, and it
- * would drag the whole design system into the maps module graph for a one-line
- * formula. The duplication is a real cost, not a free choice: both copies run in
- * the same web bundle (the other via `useClusters`) and drift would show up as a
- * wrong zoom level, with no error. The fix is a leaf module both can import, not
- * a deep import.
- *
- * The result is a fixed scale (zoom z is 360/2^z degrees across a 256px tile),
- * which is what we want here: it reproduces the mobile framing regardless of
- * how wide the browser is. Native instead fits the deltas to the view, so on a
- * very wide viewport native shows the same span across more pixels at a higher
- * zoom. Matching mobile's framing is the point of this shim.
+ * `regionToZoom` is the conversion `useClusters` already applies, so the framing
+ * and the clustering agree on what a zoom means. The result is a fixed scale
+ * (zoom z is 360/2^z degrees across a 256px tile), which is what we want here:
+ * it reproduces the mobile framing regardless of how wide the browser is.
+ * Native instead fits the deltas to the view, so on a very wide viewport native
+ * shows the same span across more pixels at a higher zoom. Matching mobile's
+ * framing is the point of this shim.
  */
 function regionToCamera(region: Region): Camera {
   return {
     center: { latitude: region.latitude, longitude: region.longitude },
-    zoom: Math.round(Math.log2(360 / region.longitudeDelta)),
+    zoom: regionToZoom(region),
     // Required by the Camera type; teovilla only reads center and zoom.
     heading: 0,
     pitch: 0,
@@ -459,7 +464,7 @@ const MapView = forwardRef<unknown, TTeovillaMapViewProps>((props, ref) => {
       // Forced after the spread: teovilla only supports Google, and a call site
       // passing an undefined provider would otherwise blank the map.
       provider={PROVIDER_GOOGLE}
-      googleMapsApiKey={props.googleMapsApiKey ?? googlePlacesApiKey}
+      googleMapsApiKey={props.googleMapsApiKey ?? webMapsApiKey}
       onMapReady={handleMapReady}
       onRegionChange={handleRegionChange}
       onRegionChangeComplete={handleRegionChangeComplete}

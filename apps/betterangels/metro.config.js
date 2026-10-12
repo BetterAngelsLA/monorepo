@@ -35,45 +35,6 @@ config.resolver = {
 };
 
 // ---------------------------------------------------------------------------
-// Web shims
-// ---------------------------------------------------------------------------
-// Package-name substitutions for the `web` platform only. Native is untouched.
-//
-// Last resort: an import-time fatal (a module-scope TurboModule lookup, a resolver
-// rejection) cannot be guarded with `Platform.OS`, because imports are hoisted —
-// that needs a `.web` sibling, or an entry here if you do not own the import site.
-// `react-native-maps` needs one: its bundled imports span two libraries, so there
-// is no single module to hang a `.web` sibling off.
-const WEB_SHIMS = {
-  // Backed by @teovilla/react-native-web-maps. The shim also restores the
-  // PROVIDER_GOOGLE/PROVIDER_DEFAULT constants teovilla omits and injects the
-  // browser Maps key, which teovilla requires as a prop.
-  'react-native-maps': path.resolve(
-    projectRoot,
-    'src/web-shims/react-native-maps.tsx',
-  ),
-};
-
-const previousResolveRequest = config.resolver.resolveRequest;
-
-config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (platform === 'web') {
-    const shim = WEB_SHIMS[moduleName];
-    if (shim) {
-      return { type: 'sourceFile', filePath: shim };
-    }
-  }
-
-  // Falls through to Expo's resolver chain (which handles platform extensions,
-  // tsconfig paths, and its own native-module guards).
-  return (previousResolveRequest ?? context.resolveRequest)(
-    context,
-    moduleName,
-    platform,
-  );
-};
-
-// ---------------------------------------------------------------------------
 // Dev-only same-origin API proxy
 // ---------------------------------------------------------------------------
 // Lets the local web dev server talk to a deployed API that the browser would

@@ -1,8 +1,8 @@
 /**
- * Regression tests for the `react-native-maps` web shim.
+ * Regression tests for the web half of the maps seam (`mapsApi.web`).
  *
  * teovilla builds its Google Map with `zoom: props.initialCamera?.zoom || 3` and
- * reads only `latitude`/`longitude` from `initialRegion`, so without this shim
+ * reads only `latitude`/`longitude` from `initialRegion`, so without the wrapper
  * every map on web opened at zoom 3 (a continental view) regardless of the
  * deltas the call site asked for — and a controlled `region` prop was ignored
  * outright, leaving the map at 0,0.
@@ -14,14 +14,12 @@
 import { createRef } from 'react';
 import { act, render } from '@testing-library/react-native';
 
-import MapView from './react-native-maps';
+import MapView, { configureWebMaps } from './mapsApi.web';
 
 const hoisted = vi.hoisted(() => ({
   props: null as Record<string, unknown> | null,
   animateToRegion: vi.fn(),
 }));
-
-vi.mock('../../config', () => ({ googlePlacesApiKey: 'test-key' }));
 
 vi.mock('@teovilla/react-native-web-maps', async () => {
   const React = await import('react');
@@ -45,8 +43,8 @@ vi.mock('@teovilla/react-native-web-maps', async () => {
   return {
     __esModule: true,
     default: MockMapView,
-    // The shim re-exports these; teovilla's published types hide them, which is
-    // why the shim casts. They are not exercised here beyond being present.
+    // The wrapper re-exports these; teovilla's published types hide them, which
+    // is why the wrapper casts. They are not exercised here beyond being present.
     Marker: () => null,
     Polygon: () => null,
     Polyline: () => null,
@@ -61,6 +59,10 @@ const LA = { latitude: 34.05, longitude: -118.24 };
 beforeEach(() => {
   hoisted.props = null;
   hoisted.animateToRegion.mockClear();
+
+  // The app installs the browser key at startup (`src/init.ts`), because
+  // teovilla takes it as a prop that no call site passes.
+  configureWebMaps({ apiKey: 'test-key' });
 });
 
 describe('react-native-maps web shim', () => {
@@ -330,10 +332,11 @@ describe('react-native-maps web shim', () => {
   });
 
   it('forces the provider Google needs and injects the browser key', async () => {
-    // The shim's two other jobs. teovilla bails out of rendering the map when
+    // The wrapper's two other jobs. teovilla bails out of rendering the map when
     // `provider !== 'google'` and does not export PROVIDER_GOOGLE, and it takes
-    // the Maps JS key as a prop that no call site passes. Neither is visible in
-    // the rendering above, so assert them directly.
+    // the Maps JS key as a prop that no call site passes — `configureWebMaps`
+    // supplies it instead. Neither is visible in the rendering above, so assert
+    // them directly.
     await render(
       <MapView
         initialRegion={{ ...LA, latitudeDelta: 0.03, longitudeDelta: 0.03 }}

@@ -4,6 +4,14 @@ import type RNMapView from 'react-native-maps';
 // `react-native-maps` into bundles that only need the type.
 export type TMapView = RNMapView;
 
+/**
+ * Browser Maps JavaScript API key, installed once by the app through
+ * `configureWebMaps`. The native SDKs take theirs from the app config plugins.
+ */
+export type TWebMapsConfig = {
+  apiKey: string;
+};
+
 export type TMapLatLng = {
   lat: number;
   lng: number;
