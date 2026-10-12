@@ -1296,6 +1296,39 @@ none; the key currently comes from native SDK config), and its
 longer exists in `expo-location` 57. The app does not use that method (it
 reverse-geocodes via `GooglePlacesClient`), so it is latent, not blocking.
 
+### The profile photo that "flickered" when switching tabs was being unmounted
+
+Reported twice, and the first fix — `loading="eager"` on `Avatar` — was a guess
+that did not address it. The real cause was in the client screen:
+
+```ts
+const showHeader = referralsEnabled
+  ? activeTab !== ClientViewTabEnum.Locations
+  : activeTab === ClientViewTabEnum.Profile;
+...
+{showHeader && <ClientHeader client={data?.clientProfile} />}
+```
+
+Conditional **rendering**, so every tab change that moved `showHeader` destroyed
+`ClientHeader` and the profile photo's `<img>` with it, and mounted a brand new
+one on the way back. Measured on the flag-off path (which is production's default
+— waffle resolves an unknown flag to false): the image node is removed the moment
+you leave Profile and re-created when you return. A new `<img>` means a new layout
+and decode, so the photo visibly blinked. `showHeader` also moves while the flag
+query resolves, so this did not even require navigating.
+
+It is now hidden rather than unmounted, through `CollapsibleHeader`
+(`display: 'none'`, which takes it out of the layout exactly as unmounting did).
+Verified on both flag paths: with the flag off the image node survives the switch
+(`0x0` in the DOM while hidden, back to `59x59` with no add/remove events), and
+with the flag on the rendered output is **pixel-identical** to before the change
+(0 of 900,000 pixels differ on either tab, header region delta 0). Pinned by
+`CollapsibleHeader.test.tsx`, which asserts the children stay mounted while
+hidden.
+
+The `loading="eager"` change stayed: it was a real fix for a different thing
+(a fresh `<img>` used to start out `loading="lazy"`).
+
 ### Two more things teovilla gets wrong on web: double-click zoom and Google's chrome
 
 Both fixed in the shim, both web-only.

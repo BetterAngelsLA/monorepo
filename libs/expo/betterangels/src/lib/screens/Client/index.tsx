@@ -16,6 +16,7 @@ import {
 import { FeatureFlags } from '../../static';
 import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
+import { CollapsibleHeader } from './CollapsibleHeader';
 import { ClientNavMenu } from './ClientNavMenu';
 import ClientProfileView from './ClientProfile';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
@@ -190,7 +191,9 @@ export default function Client({
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         px={0}
       >
-        {showHeader && <ClientHeader client={data?.clientProfile} />}
+        <CollapsibleHeader visible={showHeader}>
+          <ClientHeader client={data?.clientProfile} />
+        </CollapsibleHeader>
         <UploadProgressBar />
         <ClientTabs selectedTab={activeTab} setTab={setTab} />
         {getTabComponent(activeTab, data, openCard)}
