@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, MaxValueValidator, MinValueValidator
 from django.db import models
@@ -35,6 +36,20 @@ def validate_email_list(value: str) -> None:
             email_validator(email)
         except ValidationError:
             raise ValidationError(f"Invalid email address: {email}")
+
+
+def default_report_from_email() -> str:
+    """Return the ``From`` address used when a scheduled report does not set one.
+
+    Reports are delivered through SES, which only accepts a sender on a domain
+    identity that has been verified for the account.  ``DEFAULT_FROM_EMAIL`` is
+    provisioned from the deployed SES identity (``no-reply@mail.<zone>``), so
+    deriving this default keeps the report sender on a verified domain in every
+    environment.  Hardcoding an address here instead — as this field previously
+    did with ``noreply@betterangels.la`` — silently produces a sender that SES
+    rejects, because the apex domain is not a verified identity.
+    """
+    return settings.DEFAULT_FROM_EMAIL
 
 
 class ScheduledReport(OrgScoped, models.Model):
@@ -103,8 +118,8 @@ class ScheduledReport(OrgScoped, models.Model):
         help_text="Email body template. Use {month} and {year} placeholders.",
     )
     from_email = models.EmailField(
-        default="noreply@betterangels.la",
-        help_text="Email address to send from",
+        default=default_report_from_email,
+        help_text="Email address to send from. Must be on a domain verified in SES (mail.<zone>).",
     )
     is_active = models.BooleanField(
         default=True,
