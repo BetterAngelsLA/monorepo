@@ -14,7 +14,7 @@ export default function NoteTitleHmis({
 
   return (
     <View>
-      {hmisNote?.title && (
+      {!!(hmisNote?.title) && (
         <TextBold selectable size="lg" mb="xs">
           {hmisNote?.title}
         </TextBold>

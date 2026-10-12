@@ -72,7 +72,7 @@ export default function Task({
             team={task.team}
           />
         </View>
-        {task.description && <TaskBody description={task.description} />}
+        {!!(task.description) && <TaskBody description={task.description} />}
       </View>
       <TaskStatusBtn id={task.id} status={task.status} />
     </MainScrollContainer>
