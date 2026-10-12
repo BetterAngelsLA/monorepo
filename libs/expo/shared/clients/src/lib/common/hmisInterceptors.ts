@@ -7,8 +7,8 @@
  *
  * That mechanism is impossible in a browser (`Set-Cookie` is a forbidden
  * response header, so `response.headers.get('set-cookie')` is always `null`),
- * which is why this file has a `.web.ts` counterpart that is inert. HMIS support
- * on web is deferred — see `docs/outreach-web.md`.
+ * which is why this file has a `.web.ts` counterpart that is inert: HMIS support
+ * on web is deferred.
  */
 import type { FetchInterceptor } from '@monorepo/fetch';
 import {

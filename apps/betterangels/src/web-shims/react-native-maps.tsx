@@ -96,7 +96,7 @@ type TImperativeMap = {
  * formula. The duplication is a real cost, not a free choice: both copies run in
  * the same web bundle (the other via `useClusters`) and drift would show up as a
  * wrong zoom level, with no error. The fix is a leaf module both can import, not
- * a deep import — see the log.
+ * a deep import.
  *
  * The result is a fixed scale (zoom z is 360/2^z degrees across a 256px tile),
  * which is what we want here: it reproduces the mobile framing regardless of

@@ -58,8 +58,6 @@ config.resolver = {
 // off, the replacement needs the app's resolved browser key, and it implements
 // behaviour teovilla omits (region deltas → zoom, provider forcing, key
 // injection).
-//
-// See docs/outreach-web.md for the reasoning behind the entry.
 const WEB_SHIMS = {
   // Backed by @teovilla/react-native-web-maps. The shim also restores the
   // PROVIDER_GOOGLE/PROVIDER_DEFAULT constants teovilla omits and injects the

@@ -6,8 +6,8 @@
 // the Django admin login path) and `credentials: 'include'` on its own.
 //
 // The native client's extra interceptors are deliberately absent:
-//   - `hmisAuthInterceptor` / `interceptorHmis` read the native cookie jar. HMIS
-//     is not supported on web yet — see docs/outreach-web.md.
+//   - `hmisAuthInterceptor` / `interceptorHmis` read the native cookie jar, and
+//     HMIS is not supported on web yet.
 //   - `createRefererInterceptor` and `userAgentInterceptor` set `Referer` and
 //     `User-Agent`, which browsers strip as forbidden headers.
 // ---------------------------------------------------------------------------

@@ -11,7 +11,7 @@
  * The native implementation in `./hmisInterceptors.ts` cannot be ported as-is:
  * it copies cookies out of the `Set-Cookie` response header, and in a browser
  * `Set-Cookie` is a forbidden header that always reads `null`. Making HMIS work
- * on web needs a different approach entirely — see `docs/outreach-web.md`.
+ * on web needs a different approach entirely.
  *
  * Keep this module's export surface identical to `./hmisInterceptors.ts`.
  */

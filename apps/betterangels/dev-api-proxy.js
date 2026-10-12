@@ -23,7 +23,6 @@
  *   EXPO_PUBLIC_API_URL=http://localhost:8081/__api
  *
  * Native builds never load metro.config.js's web middleware and are unaffected.
- * See docs/outreach-web.md for the full reasoning.
  */
 
 const http = require('http');
