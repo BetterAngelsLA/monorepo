@@ -19,7 +19,7 @@ it('keeps its children mounted while hidden', async () => {
   expect(
     screen.getByText('client header', { includeHiddenElements: true }),
   ).toBeOnTheScreen();
-  // ... but out of the layout, which is what unmounting used to achieve.
+  // ... but out of the layout, as unmounting would leave it.
   expect(
     screen.getByTestId('header-slot', { includeHiddenElements: true }),
   ).toHaveStyle({ display: 'none' });

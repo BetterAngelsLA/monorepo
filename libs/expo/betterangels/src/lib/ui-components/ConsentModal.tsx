@@ -197,9 +197,8 @@ export default function ConsentModal({
           }
         />
         {/*
-          The link is a SIBLING of the checkbox, never inside it. Two reasons:
-          an interactive element nested in a `role="checkbox"` is unreadable to
-          screen readers (and was invalid HTML while the row was a <button>), and
+          The link is a SIBLING of the checkbox, never inside it: an interactive
+          element nested in a `role="checkbox"` is unreadable to screen readers, and
           nested hit targets mean tapping the link also toggles the box.
         */}
         <Link style={styles.link} href={item.url}>

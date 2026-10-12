@@ -23,8 +23,7 @@ import ConsentModal from './ConsentModal';
 
 // `Link` renders its children inside a `Text`, as expo-router does. The mock has
 // to match: returning the raw string puts text straight inside a View, which the
-// renderer now rejects with "Text strings must be rendered within a <Text>
-// component" (it used to be only a warning).
+// renderer rejects with "Text strings must be rendered within a <Text>".
 vi.mock('expo-router', async () => {
   const { Text: RNText } = await import('react-native');
 
@@ -119,14 +118,14 @@ vi.mock('../providers', async () => {
 });
 
 /**
- * The consent sheet is the app's only blocking gate, and what used to break it
- * was ordering: a ``currentUser`` read issued before the accept landed after
- * it, still answering "not accepted", and put the sheet back up. Apollo hands
- * an in-flight read to a later refetch rather than issuing a fresh one, so
- * re-reading after the write is not enough on its own.
+ * The consent sheet is the app's only blocking gate, and its failure mode is
+ * ordering: a ``currentUser`` read issued before the accept can land after it,
+ * still answering "not accepted", and put the sheet back up. Apollo hands an
+ * in-flight read to a later refetch rather than issuing a fresh one, so re-reading
+ * after the write is not enough on its own.
  *
- * These tests hold reads open at the link, so the ordering is decided by the
- * code rather than by whichever response happens to win a real network race.
+ * These tests hold reads open at the link, so the ordering is decided by the code
+ * rather than by whichever response wins a real network race.
  */
 
 const BASE_USER = {

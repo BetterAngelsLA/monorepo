@@ -12,10 +12,9 @@
  * Persistence is a write-behind detail, not a channel between the two.
  *
  * Scope: per JavaScript context. Two browser tabs each keep their own active
- * organization and do not follow each other, which is deliberate — a tab's UI
- * and its request headers now always agree, where previously a switch in one
- * tab changed the other's headers without changing what it displayed. Add a
- * ``storage`` event listener here if cross-tab following is ever wanted.
+ * organization and do not follow each other, which is deliberate — a tab's UI and
+ * its request headers agree with each other. Add a ``storage`` event listener here
+ * if cross-tab following is ever wanted.
  */
 
 /**

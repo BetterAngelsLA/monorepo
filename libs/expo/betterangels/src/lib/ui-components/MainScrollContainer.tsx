@@ -6,7 +6,7 @@ import {
 import { type Ref, type ReactNode, forwardRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
-// used to offset view scroll on keyboard show, accounting for toolbar height
+// Height of the keyboard toolbar the scroll view has to clear.
 const iOSToolbarHeightApprox = 44;
 const androidToolbarHeightApprox = 50;
 
