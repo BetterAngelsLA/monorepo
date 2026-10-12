@@ -1,8 +1,8 @@
 import {
   clearActiveOrgId,
+  configureActiveOrgSource,
   configureActiveOrgStorage,
   getActiveOrgId,
-  reconcileActiveOrgId,
   resetActiveOrgStoreForTests,
   setActiveOrgId,
   subscribeActiveOrgId,
@@ -100,49 +100,70 @@ describe('activeOrgStore', () => {
     expect(getActiveOrgId()).toBe('org-2');
   });
 
-  describe('reconcileActiveOrgId (render-phase write)', () => {
-    it('writes the value synchronously, so a request from this render sees it', () => {
-      const storage = createSyncStorage();
+  describe('derivation', () => {
+    const orgs = [{ id: 'org-1' }, { id: 'org-2' }];
+
+    it('keeps a remembered id the user still belongs to', () => {
+      configureActiveOrgStorage(createSyncStorage('org-2'));
+      configureActiveOrgSource(() => orgs);
+
+      expect(getActiveOrgId()).toBe('org-2');
+    });
+
+    it('replaces a remembered id the user no longer belongs to', () => {
+      configureActiveOrgStorage(createSyncStorage('org-stale'));
+      configureActiveOrgSource(() => orgs);
+
+      // Read-time, so even a request issued before any component renders is
+      // attributed to an organization the user is actually in.
+      expect(getActiveOrgId()).toBe('org-1');
+    });
+
+    it('keeps the remembered id while the organization list is unknown', () => {
+      configureActiveOrgStorage(createSyncStorage('org-2'));
+      configureActiveOrgSource(() => null);
+
+      expect(getActiveOrgId()).toBe('org-2');
+    });
+
+    it('sends nothing once the user is known to belong to no organization', () => {
+      configureActiveOrgStorage(createSyncStorage('org-2'));
+      configureActiveOrgSource(() => []);
+
+      expect(getActiveOrgId()).toBeNull();
+    });
+
+    it('falls back to the remembered id when the source throws', () => {
+      configureActiveOrgStorage(createSyncStorage('org-2'));
+      configureActiveOrgSource(() => {
+        throw new Error('no cache');
+      });
+
+      expect(getActiveOrgId()).toBe('org-2');
+    });
+
+    it('persists the choice, not the derived default', () => {
+      const storage = createSyncStorage('org-stale');
       configureActiveOrgStorage(storage);
+      configureActiveOrgSource(() => orgs);
 
-      reconcileActiveOrgId('org-9');
+      expect(getActiveOrgId()).toBe('org-1');
+      // The default is derived on every read rather than written back, so the
+      // persisted value stays what the user actually chose.
+      expect(storage.get()).toBe('org-stale');
 
-      expect(getActiveOrgId()).toBe('org-9');
-      expect(storage.get()).toBe('org-9');
+      setActiveOrgId('org-2');
+
+      expect(storage.get()).toBe('org-2');
     });
 
-    it('defers the notification past the render phase', async () => {
+    it('notifies synchronously when the user picks an organization', () => {
       configureActiveOrgStorage(createSyncStorage());
+      configureActiveOrgSource(() => orgs);
       const listener = vi.fn();
       subscribeActiveOrgId(listener);
 
-      reconcileActiveOrgId('org-9');
-
-      // Notifying synchronously would update the rendering component itself.
-      expect(listener).not.toHaveBeenCalled();
-
-      await Promise.resolve();
-
-      expect(listener).toHaveBeenCalledTimes(1);
-    });
-
-    it('does not notify when the id is unchanged', async () => {
-      configureActiveOrgStorage(createSyncStorage('org-9'));
-      const listener = vi.fn();
-      subscribeActiveOrgId(listener);
-
-      reconcileActiveOrgId('org-9');
-      await Promise.resolve();
-
-      expect(listener).not.toHaveBeenCalled();
-    });
-
-    it('leaves setActiveOrgId notifying synchronously, as callers expect', () => {
-      configureActiveOrgStorage(createSyncStorage());
-      const listener = vi.fn();
-      subscribeActiveOrgId(listener);
-
-      setActiveOrgId('org-9');
+      setActiveOrgId('org-2');
 
       expect(listener).toHaveBeenCalledTimes(1);
     });

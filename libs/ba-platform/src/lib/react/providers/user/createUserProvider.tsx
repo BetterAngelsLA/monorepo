@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
+import { configureActiveOrgSource } from '../../../activeOrg';
 import {
   isPermission,
   type PermissionEnum,
@@ -173,7 +174,7 @@ export function createUserProvider<
   function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<TUser | undefined>();
 
-    const { data, loading, error, refetch } = useQuery(document, {
+    const { data, loading, error, refetch, client } = useQuery(document, {
       fetchPolicy: 'network-only',
       errorPolicy: 'all',
     });
@@ -215,6 +216,33 @@ export function createUserProvider<
         updateUser({ data, errors: gqlErrors?.length ? gqlErrors : undefined });
       }
     }, [loading, data, error, updateUser]);
+
+    // Tell the active-org store which organizations this user belongs to, so it
+    // can tell a remembered id that is still valid from one that is not.
+    //
+    // Read from the cache rather than published from a render: Apollo writes the
+    // response into the cache before React re-renders, so a request issued from
+    // that render already sees it — publishing could only happen afterwards, in
+    // an effect, which is exactly the ordering the store must not depend on.
+    useEffect(() => {
+      configureActiveOrgSource(() => {
+        try {
+          const cached = client.readQuery<TQuery>({ query: document });
+          const organizations = (
+            cached?.currentUser as
+              | { organizations?: readonly { id: string }[] | null }
+              | null
+              | undefined
+          )?.organizations;
+
+          return organizations ?? null;
+        } catch {
+          // Nothing cached yet (or the cache is mid-reset): unknowable, which is
+          // "keep sending the remembered id" rather than "send none".
+          return null;
+        }
+      });
+    }, [client]);
 
     const refetchUser = useCallback(async () => {
       try {

@@ -7,9 +7,12 @@
  * — by a commit on web, by an ``AsyncStorage`` round trip on React Native — so
  * requests went out header-less while an organization was already on screen.
  *
- * One value, written synchronously, read synchronously by React (via
- * ``useSyncExternalStore``) and by the interceptor (via :func:`getActiveOrgId`).
- * Persistence is a write-behind detail, not a channel between the two.
+ * The id is *derived* on every read from two inputs — the id the user chose (or
+ * the one remembered from last launch) and the organizations the user belongs to
+ * — so the UI and the header cannot disagree, and nothing has to be written
+ * during render. React reads it via ``useSyncExternalStore``; the interceptor via
+ * :func:`getActiveOrgId`. Persistence is a write-behind detail, not a channel
+ * between the two.
  *
  * Scope: per JavaScript context. Two browser tabs each keep their own active
  * organization and do not follow each other, which is deliberate — a tab's UI and
@@ -28,6 +31,34 @@ export interface ActiveOrgPersistence {
   get(): string | null;
   set(value: string | null): void;
 }
+
+/**
+ * Where the store finds the signed-in user's organizations, or ``null`` while
+ * that is still unknown.
+ *
+ * A function rather than a published value: it is read when the header is needed
+ * (at request time) and in ``getSnapshot``, so it cannot lag a render. A published
+ * list would have to be in place before the first render that mounts a component
+ * which queries, which no render-order-independent point in React offers.
+ */
+export interface ActiveOrgSource {
+  (): readonly { id: string }[] | null;
+}
+
+/** Unset: nothing validates the remembered id. */
+const unknownOrganizations = (): null => null;
+
+let organizationSource: ActiveOrgSource = unknownOrganizations;
+
+/**
+ * Install the platform's organization reader.
+ *
+ * Reads nothing: it is consulted lazily, so it can be installed at any point
+ * before the first org-scoped request.
+ */
+export const configureActiveOrgSource = (next: ActiveOrgSource): void => {
+  organizationSource = next;
+};
 
 const inMemoryPersistence = (): ActiveOrgPersistence => {
   let value: string | null = null;
@@ -83,10 +114,14 @@ export const configureActiveOrgStorage = (next: ActiveOrgPersistence): void => {
 /**
  * Read the active organization id. Safe from anywhere, including interceptors.
  *
- * Pulls from persistence on the first read after an install. Reading during
- * render is fine — persistence is synchronous by contract, and repeated reads
- * return the same value, which is what ``useSyncExternalStore`` requires of a
- * snapshot.
+ * Pulls from persistence on the first read after an install, then **derives**:
+ * the remembered id if the user still belongs to it, otherwise their first
+ * organization. Deriving rather than reconciling is what keeps the id and the
+ * UI in step without a write during render — both read the same two inputs.
+ *
+ * Reading during render is fine — persistence is synchronous by contract, and
+ * the outcome is a string, so repeated reads return the same value, which is
+ * what ``useSyncExternalStore`` requires of a snapshot.
  */
 export const getActiveOrgId = (): string | null => {
   if (!seeded) {
@@ -94,15 +129,35 @@ export const getActiveOrgId = (): string | null => {
     current = readPersisted();
   }
 
-  return current;
+  let organizations: readonly { id: string }[] | null;
+
+  try {
+    organizations = organizationSource();
+  } catch {
+    // Same best-effort rule as persistence: a failing reader costs validation,
+    // never the running session.
+    organizations = null;
+  }
+
+  // Unknown (the user query has not resolved): the remembered id is the best
+  // answer available, and requests in that window are correctly attributed.
+  if (organizations === null) return current;
+
+  // Known and empty: the user belongs to no organization, so a remembered id is
+  // stale rather than merely unvalidated.
+  if (organizations.length === 0) return null;
+
+  return organizations.some((org) => org.id === current)
+    ? current
+    : organizations[0].id;
 };
 
 /**
  * Commit a new id, if it differs. Returns whether anything changed.
  *
  * The write is always synchronous — that is the whole point of this store, see
- * the module docs. Whether ``notify`` follows synchronously is the caller's
- * choice (see :func:`reconcileActiveOrgId`).
+ * the module docs — and it is the *choice* that gets persisted, not the derived
+ * default.
  */
 const write = (id: string | null): boolean => {
   // Compare against the seeded value rather than the field: an unseeded store
@@ -123,29 +178,6 @@ const write = (id: string | null): boolean => {
  */
 export const setActiveOrgId = (id: string | null): void => {
   if (write(id)) notify();
-};
-
-/**
- * Set the active organization id **from a render phase**, deferring only the
- * notification.
- *
- * ``useActiveOrgState`` has to reconcile during render rather than in an effect:
- * React runs effects child-before-parent, so a child would fire its first query
- * before the provider had chosen an organization, and the request would go out
- * with no ``X-Organization-ID`` header.
- *
- * The *write* must therefore stay synchronous — this render, and any request
- * issued from it, has to see the new id. The *notification* must not: this
- * component subscribes to the same store through ``useSyncExternalStore``, so
- * notifying synchronously asks React to update ``ActiveOrgProvider`` while it is
- * rendering ``ActiveOrgProvider`` (React 19 warns about exactly that).
- *
- * Deferring to a microtask is safe for ordering: subscribers that render later in
- * this same pass already read the new value from ``getSnapshot``, and the
- * deferred notify simply covers anyone who already rendered.
- */
-export const reconcileActiveOrgId = (id: string | null): void => {
-  if (write(id)) queueMicrotask(notify);
 };
 
 /**
@@ -173,6 +205,7 @@ export const subscribeActiveOrgId = (listener: () => void): (() => void) => {
  */
 export const resetActiveOrgStoreForTests = (): void => {
   persistence = inMemoryPersistence();
+  organizationSource = unknownOrganizations;
   current = null;
   seeded = false;
   listeners.clear();

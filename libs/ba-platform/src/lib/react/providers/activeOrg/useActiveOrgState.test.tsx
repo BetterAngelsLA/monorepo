@@ -1,5 +1,6 @@
 import { act, render, renderHook } from '@testing-library/react';
 import {
+  configureActiveOrgSource,
   configureActiveOrgStorage,
   getActiveOrgId,
   type ActiveOrgPersistence,
@@ -44,6 +45,8 @@ describe('useActiveOrgState', () => {
     configureActiveOrgStorage(createSyncStorage());
     const orgs = [makeOrg({ id: 'org-1' }), makeOrg({ id: 'org-2' })];
 
+    configureActiveOrgSource(() => orgs);
+
     const { result } = renderHook(() => useActiveOrgState(orgs));
 
     expect(result.current.activeOrg?.id).toBe('org-1');
@@ -52,6 +55,8 @@ describe('useActiveOrgState', () => {
   it('publishes the default org to the store, so the interceptor can read it', () => {
     configureActiveOrgStorage(createSyncStorage());
     const orgs = [makeOrg({ id: 'org-1' }), makeOrg({ id: 'org-2' })];
+
+    configureActiveOrgSource(() => orgs);
 
     renderHook(() => useActiveOrgState(orgs));
 
@@ -62,6 +67,8 @@ describe('useActiveOrgState', () => {
     const storage = createSyncStorage();
     configureActiveOrgStorage(storage);
     const orgs = [makeOrg({ id: 'org-1' }), makeOrg({ id: 'org-2' })];
+    configureActiveOrgSource(() => orgs);
+
     const { result } = renderHook(() => useActiveOrgState(orgs));
 
     act(() => {
@@ -79,6 +86,8 @@ describe('useActiveOrgState', () => {
     configureActiveOrgStorage(createSyncStorage('org-2'));
     const orgs = [makeOrg({ id: 'org-1' }), makeOrg({ id: 'org-2' })];
 
+    configureActiveOrgSource(() => orgs);
+
     const { result } = renderHook(() => useActiveOrgState(orgs));
 
     expect(result.current.activeOrg?.id).toBe('org-2');
@@ -95,6 +104,8 @@ describe('useActiveOrgState', () => {
     configureActiveOrgStorage(createSyncStorage('org-stale'));
     const orgs = [makeOrg({ id: 'org-1' })];
 
+    configureActiveOrgSource(() => orgs);
+
     const { result } = renderHook(() => useActiveOrgState(orgs));
 
     expect(result.current.activeOrg?.id).toBe('org-1');
@@ -104,6 +115,8 @@ describe('useActiveOrgState', () => {
   it('hasPermission reflects the active org', () => {
     configureActiveOrgStorage(createSyncStorage());
     const orgs = [makeOrg({ id: 'org-1' })];
+
+    configureActiveOrgSource(() => orgs);
 
     const { result } = renderHook(() => useActiveOrgState(orgs));
 
@@ -117,6 +130,8 @@ describe('useActiveOrgState', () => {
   it('ignores backend permission strings the app does not model', () => {
     configureActiveOrgStorage(createSyncStorage());
     const orgs = [makeOrg({ permissions: ['accounts.view_user'] })];
+
+    configureActiveOrgSource(() => orgs);
 
     const { result } = renderHook(() => useActiveOrgState(orgs));
 
@@ -136,6 +151,8 @@ describe('useActiveOrgState', () => {
       }),
     ];
 
+    configureActiveOrgSource(() => orgs);
+
     const { result } = renderHook(() => useActiveOrgState(orgs));
 
     expect(result.current.hasPermission('shelters.view_shelter')).toBe(true);
@@ -147,6 +164,8 @@ describe('useActiveOrgState', () => {
   it('setActiveOrgId ignores an org the user does not belong to', () => {
     configureActiveOrgStorage(createSyncStorage());
     const orgs = [makeOrg({ id: 'org-1' })];
+    configureActiveOrgSource(() => orgs);
+
     const { result } = renderHook(() => useActiveOrgState(orgs));
 
     act(() => {
@@ -179,6 +198,8 @@ describe('useActiveOrgState', () => {
       return null;
     }
 
+    configureActiveOrgSource(() => orgs);
+
     render(
       <ActiveOrgProvider organizations={orgs}>
         <Child />
@@ -197,6 +218,8 @@ describe('useActiveOrgState', () => {
     const storage = createSyncStorage('org-2');
     configureActiveOrgStorage(storage);
     const orgs = [makeOrg({ id: 'org-1' }), makeOrg({ id: 'org-2' })];
+
+    configureActiveOrgSource(() => orgs);
 
     const { rerender } = render(
       <ActiveOrgProvider organizations={[]}>{null}</ActiveOrgProvider>,

@@ -8,7 +8,6 @@ import {
   setActiveOrgId as commitActiveOrgId,
   subscribeActiveOrgId,
 } from '../../../activeOrg';
-import { reconcileActiveOrgId } from '../../../activeOrg/activeOrgStore';
 
 /**
  * Minimal org shape accepted by the active-org state.
@@ -49,8 +48,8 @@ export interface ActiveOrgState {
 /**
  * Active organization selection, backed by the active-org store.
  *
- * Owns *validation*: the store holds whatever it is told, and this is the only
- * thing that knows which organizations the user belongs to. Consumers can rely
+ * Owns *validation*: the store holds what the user chose, and derives the
+ * effective id from the organization list its source reports. Consumers can rely
  * on ``activeOrg`` alone — there is no readiness flag to wait on.
  *
  * This hook is the ORG-SCOPED gate only.  ``hasPermission`` checks the active
@@ -73,28 +72,10 @@ export interface ActiveOrgState {
  * ``permissions`` hold only modeled permissions.
  */
 export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
-  // Reconcile during render, before the snapshot read below. NOT an effect:
-  // React runs effects child-before-parent, so a child would query before this
-  // provider had chosen an organization and the request would go out with no
-  // header. Safe here because it is idempotent and derived purely from props.
-  //
-  // `reconcileActiveOrgId` (not `setActiveOrgId`) keeps the write synchronous
-  // while deferring the subscriber notification: this component subscribes to
-  // the same store via `useSyncExternalStore`, so notifying here would ask React
-  // to update `ActiveOrgProvider` while it renders `ActiveOrgProvider`.
-  //
-  // An empty list means "not loaded yet", not "belongs to nothing" —
-  // UserProvider renders children before the user query resolves. Reconciling
-  // then would discard the organization restored from persistence and replace
-  // it with the first one once the list arrived.
-  const currentId = getActiveOrgId();
-  if (
-    organizations.length > 0 &&
-    !organizations.some((o) => o.id === currentId)
-  ) {
-    reconcileActiveOrgId(organizations[0].id);
-  }
-
+  // No reconciliation: the store derives the id from the same two inputs this
+  // hook renders from — the remembered id and the user's organizations — so a
+  // stale remembered id simply reads as the first organization, here and in the
+  // request header alike. Choosing one is `setActiveOrgId`.
   const activeOrgId = useSyncExternalStore(
     subscribeActiveOrgId,
     getActiveOrgId,
