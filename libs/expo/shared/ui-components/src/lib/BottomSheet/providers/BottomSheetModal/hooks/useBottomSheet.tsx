@@ -147,13 +147,15 @@
  */
 
 import { useContext } from 'react';
-import { BottomSheetContext } from './BottomSheetContext';
+import { BottomSheetContext } from '../BottomSheetContext';
 
 export function useBottomSheet() {
   const ctx = useContext(BottomSheetContext);
 
   if (!ctx) {
-    throw new Error('useBottomSheet must be used within BottomSheetProvider');
+    throw new Error(
+      'useBottomSheet must be used within BottomSheetModalProvider',
+    );
   }
 
   return ctx;
