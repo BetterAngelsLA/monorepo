@@ -1306,9 +1306,20 @@ Both fixed in the shim, both web-only.
 turned double-click zoom **off**, while `zoomEnabled` (which reaches Google as
 `scrollwheel`) stayed on. The shim now sets the option explicitly from the
 documented default, and a call site can still pass `zoomTapEnabled={false}`.
-Pinned in `react-native-maps.spec.tsx`, which asserts the options object handed to
-teovilla — a browser probe could not settle it, because the map renders vector
-tiles and there is no raster `z=` to read.
+Pinned twice: `react-native-maps.spec.tsx` asserts the options object handed to
+teovilla, and a browser probe that wraps `google.maps.Map` to read the real zoom
+measured a double-click taking the map **14 → 15** (three `zoom_changed` events;
+wheel zoom 15 → 16 as a control). The first attempt to measure this was
+inconclusive for a reason worth recording: the map renders **vector** tiles, so
+there is no raster `z=` in an `<img src>` to diff, and the level has to be read off
+the map instance.
+
+**Mobile is untouched by this.** The substitution is gated on `platform === 'web'`
+in `metro.config.js`, so the shim cannot reach a native bundle, and no call site
+passes `zoomTapEnabled` — native keeps react-native-maps' own documented
+`@default true` (double-tap zooms; iOS with the Google provider, unsupported on
+Android). Turning it _off_ on iOS would be a one-line `zoomTapEnabled={false}` on
+`MapViewport`; nothing does that today.
 
 **The locate button sat on top of Google's own controls.** `MapLocateMeBtn` is
 absolute at right 16 / bottom 15%, and teovilla leaves `streetViewControl` and
