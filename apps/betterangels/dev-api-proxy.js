@@ -1,67 +1,91 @@
 /**
- * Dev-only same-origin API proxy for the Expo **web** dev server.
+ * Dev-only same-origin API proxy for the Expo **web** dev server, mounted through
+ * Metro's `server.enhanceMiddleware`.
  *
  * A local web build cannot call a deployed API directly: CORS and the CSRF origin
- * allowlist reject it, the `csrftoken` cookie is scoped to `.dev.betterangels.la`,
- * and `SameSite=Lax` keeps the session cookie off a cross-site fetch. Serving the
- * API from the page's own origin fixes all of that, via Metro's
- * `server.enhanceMiddleware` hook. (Expo's `+api` routes would need
- * `web.output === 'server'`, giving up the SPA bundle.)
+ * allowlist reject it, and the `csrftoken` cookie is scoped to
+ * `.dev.betterangels.la`, so the app cannot read it from `document.cookie`. Serving
+ * the API from the page's own origin removes all of that.
  *
- * Forwarding alone is not enough — hence the two rewrites: the request `Origin`
- * becomes the upstream API's own origin (Django checks it against
- * `CSRF_TRUSTED_ORIGINS`), and the response `Set-Cookie` drops `Domain` and
- * `Secure` so the browser stores them for `localhost` over plain http.
+ * `http-proxy-middleware` does the forwarding, the redirects and the cross-domain
+ * cookie cleanup. What is left here is only what a generic proxy cannot know: which
+ * named targets to serve, and how to keep their cookies apart on the one
+ * `localhost` jar they share.
  *
- * Two ways to point it:
+ * Expo's server primitives cannot replace this: `+api.ts` and `+middleware.ts` both
+ * need `web.output: 'server'`, while production web is a static export
+ * (`export-web` → `tools/deploy/cloudfront-deploy.mjs`) with no Node server in the
+ * path; and middleware could not forward a body anyway, since it receives
+ * `expo-server`'s `ImmutableRequest`, whose `json()`/`text()`/`formData()` throw.
  *
- *   BA_DEV_PROXY_TARGET=https://api.dev.betterangels.la
- *   EXPO_PUBLIC_API_URL=http://localhost:8081/__api
- *
- *   BA_DEV_PROXY_TARGETS=dev=https://api.dev.betterangels.la,prod=https://api.betterangels.la
- *   EXPO_PUBLIC_API_URL=http://localhost:8081/__api/dev
- *   EXPO_PUBLIC_DEMO_API_URL=http://localhost:8081/__api/prod
- *
- * The second form serves each target under `/__api/<name>`, so the app's
- * environment switcher can move between them without restarting the dev server.
- * Cookies are namespaced per target (see `namespaceSetCookie`) because every
- * target shares one `localhost` cookie jar, and the CSRF bootstrap lives under the
- * target's prefix (`/__api/dev/admin/login/`) rather than the origin root.
- *
- * Native builds never load metro.config.js's web middleware and are unaffected.
+ * Targets are derived from the app's own URLs — `EXPO_PUBLIC_API_URL` →
+ * `/__api/production`, `EXPO_PUBLIC_DEMO_API_URL` → `/__api/demo`,
+ * `EXPO_PUBLIC_LOCAL_API_URL` → `/__api/local` — and `BA_DEV_PROXY_TARGETS=name=url,...`
+ * adds or overrides. Native and production web use those URLs directly.
  */
 
-const http = require('http');
-const https = require('https');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const API_PREFIX = '/__api';
 
 /**
- * Paths the CSRF interceptor fetches at the **origin root**, outside the API
- * prefix: `createCsrfInterceptor` mints a token by GETting `<origin>/admin/login/`.
- * Only the single-target form needs these — a named target is reached through its
- * prefix, so its bootstrap is `/__api/<name>/admin/login/`.
- */
-const CSRF_BOOTSTRAP_PATHS = ['/admin/login'];
-
-/**
- * Cookie names the app reads from `document.cookie` and must keep reachable from
- * every path, so they are namespaced but not path-scoped. `sessionid` is
- * `HttpOnly` — nothing in the app reads it — so it is scoped to its target's
- * prefix, which is also what stops one target's session being sent to another.
+ * Cookie names the app reads from `document.cookie`, as `<target>_<name>`.
+ * `sessionid` is `HttpOnly`, so nothing reads it and it can stay path-scoped to
+ * its own target — which is what isolates one environment's session from another.
  */
 const APP_READABLE_COOKIES = new Set(['csrftoken']);
 
+/** The named targets the app's own API URLs imply, in the order the app lists them. */
+const ENV_TARGETS = [
+  ['production', 'EXPO_PUBLIC_API_URL'],
+  ['demo', 'EXPO_PUBLIC_DEMO_API_URL'],
+  ['local', 'EXPO_PUBLIC_LOCAL_API_URL'],
+];
+
 /**
- * Read the configured targets.
- *
- * `BA_DEV_PROXY_TARGETS` is a comma-separated `name=url` list served under
- * `/__api/<name>`; `BA_DEV_PROXY_TARGET` remains the single unprefixed target.
+ * True for a URL that already points at this proxy. A leftover `…/__api` in
+ * `EXPO_PUBLIC_*_API_URL` would otherwise be derived as a target pointing at the
+ * dev server itself; refusing it fails legibly instead.
  */
-function readTargets() {
+function pointsAtProxy(url) {
+  try {
+    const { pathname } = new URL(url);
+    return pathname === API_PREFIX || pathname.startsWith(`${API_PREFIX}/`);
+  } catch {
+    // Not a URL we can reason about; let it through and fail on the request.
+    return false;
+  }
+}
+
+/** The named targets implied by the app's environment variables. */
+function deriveProxyTargets(env) {
   const named = new Map();
 
-  for (const entry of (process.env.BA_DEV_PROXY_TARGETS ?? '').split(',')) {
+  for (const [name, variable] of ENV_TARGETS) {
+    const url = (env[variable] ?? '').trim();
+    if (!url) continue;
+
+    if (pointsAtProxy(url)) {
+      console.warn(
+        `[dev-api-proxy] ignoring ${variable}=${url}: it points at the dev ` +
+          'proxy itself, not at an API. Point it at the API host (e.g. ' +
+          'https://api.dev.betterangels.la) — the browser adds the ' +
+          `/__api/${name} prefix on its own.`,
+      );
+      continue;
+    }
+
+    named.set(name, url);
+  }
+
+  return named;
+}
+
+/** `name` → API base URL: derived, then added to or overridden by `BA_DEV_PROXY_TARGETS`. */
+function readTargets(env = process.env) {
+  const named = deriveProxyTargets(env);
+
+  for (const entry of (env.BA_DEV_PROXY_TARGETS ?? '').split(',')) {
     const separator = entry.indexOf('=');
     if (separator === -1) continue;
 
@@ -71,98 +95,48 @@ function readTargets() {
     if (name && url) named.set(name, url);
   }
 
-  return { named, single: process.env.BA_DEV_PROXY_TARGET ?? '' };
+  return named;
 }
 
 /**
- * Which target a request belongs to, and the path to ask it for.
- *
- * Returns `null` for a request the proxy does not own.
+ * Strip what stops a browser storing a cross-domain cookie. `Secure` goes too:
+ * `http://localhost` is a secure context, but a LAN IP is not, and dropping the
+ * cookie there would break sign-in.
  */
-function routeRequest(rawUrl, { named, single, names }) {
-  const queryAt = rawUrl.indexOf('?');
-  const pathname = queryAt === -1 ? rawUrl : rawUrl.slice(0, queryAt);
-  const query = queryAt === -1 ? '' : rawUrl.slice(queryAt);
-
-  const segments = pathname.split('/');
-  const underPrefix = segments[1] === API_PREFIX.slice(1);
-
-  if (!underPrefix) {
-    // The CSRF bootstrap a single-target dev server mints at the origin root.
-    const bootstrap = CSRF_BOOTSTRAP_PATHS.some((p) => pathname.startsWith(p));
-
-    if (!bootstrap || !single) return null;
-
-    return {
-      env: null,
-      target: single,
-      upstreamPath: pathname + query,
-      prefix: API_PREFIX,
-    };
-  }
-
-  const name = segments[2];
-
-  if (name && named.has(name)) {
-    return {
-      env: name,
-      target: named.get(name),
-      upstreamPath: '/' + segments.slice(3).join('/') + query,
-      prefix: `${API_PREFIX}/${name}`,
-    };
-  }
-
-  // With named targets configured, an unknown name is a mistake — not a request
-  // for the single target, which would silently send a typo'd environment to
-  // whatever `BA_DEV_PROXY_TARGET` points at (production, in the documented use).
-  if (names.length > 0 && name) return { unknownTarget: name };
-
-  if (!single) return null;
-
-  return {
-    env: null,
-    target: single,
-    upstreamPath: rawUrl.slice(API_PREFIX.length) || '/',
-    prefix: API_PREFIX,
-  };
-}
-
-/** Strip the attributes that stop a browser storing a cross-domain cookie. */
 function rewriteSetCookie(cookie) {
-  let out = cookie
-    .replace(/;\s*Domain=[^;]*/gi, '')
-    .replace(/;\s*Secure/gi, '');
-
-  if (/;\s*SameSite=None/i.test(out)) {
-    // A `SameSite=None` cookie without `Secure` is rejected outright.
-    out = out.replace(/;\s*SameSite=None/gi, '; SameSite=Lax');
-  }
-
-  return out;
+  return (
+    cookie
+      .replace(/;\s*Domain=[^;]*/gi, '')
+      .replace(/;\s*Secure/gi, '')
+      // A `SameSite=None` cookie without `Secure` is rejected outright.
+      .replace(/;\s*SameSite=None/gi, '; SameSite=Lax')
+  );
 }
 
 /**
- * Give a target's cookie a name of its own, so two targets can be signed in at
- * once from the same `localhost` jar, and scope it to the target's prefix unless
- * the app has to be able to read it.
+ * Name a target's cookie after it, so two targets can be signed in at once from
+ * one `localhost` jar — at `Path=/` for the cookies the app reads, and scoped to
+ * the target's prefix for the rest.
  */
-function namespaceSetCookie(cookie, env) {
-  if (!env) return cookie;
-
+function namespaceSetCookie(cookie, target) {
   const separator = cookie.indexOf('=');
   if (separator === -1) return cookie;
 
   const name = cookie.slice(0, separator).trim();
   const value = cookie.slice(separator);
-  const path = APP_READABLE_COOKIES.has(name) ? '/' : `${API_PREFIX}/${env}/`;
+  const path = APP_READABLE_COOKIES.has(name)
+    ? '/'
+    : `${API_PREFIX}/${target}/`;
 
-  return `${env}_${name}${value.replace(/;\s*Path=[^;]*/gi, '')}; Path=${path}`;
+  return `${target}_${name}${value.replace(/;\s*Path=[^;]*/gi, '')}; Path=${path}`;
 }
 
-/** The inverse: this target's cookies travel under their real names, and no others travel at all. */
-function stripRequestCookies(cookieHeader, env, names) {
-  if (!env) return cookieHeader;
-
+/**
+ * The inverse: only this target's cookies travel, under their real names. Every
+ * target's `csrftoken` sits at `Path=/`, so without this the others would be
+ * sent too.
+ */
+function stripRequestCookies(cookieHeader, target, names) {
   return cookieHeader
     .split(';')
     .map((part) => part.trim())
@@ -173,38 +147,35 @@ function stripRequestCookies(cookieHeader, env, names) {
       const value = separator === -1 ? '' : part.slice(separator);
 
       for (const other of names) {
-        if (other !== env && name.startsWith(`${other}_`)) return [];
-      }
-
-      // An un-namespaced auth cookie can only be a leftover from the
-      // single-target form (or another tool); sending it to every target is how
-      // one target's session reaches another.
-      if (
-        !name.includes('_') &&
-        (name === 'sessionid' || name === 'csrftoken')
-      ) {
-        return [];
+        if (other !== target && name.startsWith(`${other}_`)) return [];
       }
 
       return [
-        `${name.startsWith(`${env}_`) ? name.slice(env.length + 1) : name}${value}`,
+        `${
+          name.startsWith(`${target}_`) ? name.slice(target.length + 1) : name
+        }${value}`,
       ];
     })
     .join('; ');
 }
 
-/** Keep redirects on the proxy origin instead of leaking the API host. */
-function rewriteLocation(location, target, prefix) {
-  for (const base of [
-    target.origin,
-    `https://${target.host}`,
-    `http://${target.host}`,
-  ]) {
-    if (location.startsWith(base)) {
-      return prefix + location.slice(base.length);
-    }
+/**
+ * Prefix the Location of a redirect back to this target. `autoRewrite` swaps only
+ * the host — it keeps the upstream `https:` scheme and drops the prefix — so the
+ * path is rewritten here and `autoRewrite` then leaves it alone.
+ */
+function rewriteLocation(location, targetUrl, prefix) {
+  let parsed;
+  try {
+    parsed = new URL(location);
+  } catch {
+    // Relative, or protocol-relative — `autoRewrite` handles the latter.
+    return location;
   }
-  return location;
+
+  if (parsed.host !== targetUrl.host) return location;
+
+  return `${prefix}${parsed.pathname}${parsed.search}${parsed.hash}`;
 }
 
 function sendJson(res, status, payload) {
@@ -216,101 +187,129 @@ function sendJson(res, status, payload) {
   res.end(body);
 }
 
-/**
- * @returns {(middleware: any, server: any) => any} a Metro `enhanceMiddleware`
- * function. Inert unless a target is configured.
- */
-function createDevApiProxy() {
-  const named = new Map(readTargets().named);
-  const names = [...named.keys()];
-  const targets = { named, single: readTargets().single, names };
-  const configured = !!targets.single || names.length > 0;
+/** One `http-proxy-middleware` instance, serving `/__api/<name>` from `target`. */
+function createTargetProxy(name, target, names) {
+  const targetUrl = new URL(target);
+  const prefix = `${API_PREFIX}/${name}`;
 
-  return (middleware) => (req, res, next) => {
-    const route = routeRequest(req.url, targets);
-    const isApiPath =
-      req.url.startsWith(`${API_PREFIX}/`) || req.url === API_PREFIX;
-
-    if (!route) {
-      // Nothing configured still claims the API prefix, so a misconfiguration
-      // fails legibly rather than 404ing through the dev server.
-      if (configured || !isApiPath) return middleware(req, res, next);
-
-      return sendJson(res, 502, {
-        error: 'Dev API proxy is not configured.',
-        hint:
-          'Start the dev server with BA_DEV_PROXY_TARGET set, e.g. ' +
-          'BA_DEV_PROXY_TARGET=https://api.dev.betterangels.la yarn nx serve betterangels, ' +
-          `and point the app at EXPO_PUBLIC_API_URL=http://${req.headers.host}${API_PREFIX}. ` +
-          'To serve several at once, use ' +
-          'BA_DEV_PROXY_TARGETS=dev=https://api.dev.betterangels.la,prod=https://api.betterangels.la',
-      });
-    }
-
-    if (route.unknownTarget) {
-      return sendJson(res, 502, {
-        error: `Unknown dev API proxy target '${route.unknownTarget}'.`,
-        configured: names,
-      });
-    }
-
-    const { env, target, upstreamPath, prefix } = route;
-    const targetUrl = new URL(target);
-    const isHttps = targetUrl.protocol === 'https:';
-    const transport = isHttps ? https : http;
-
-    const headers = { ...req.headers };
-    headers.host = targetUrl.host;
-    // Django's CSRF check compares Origin with the request host or
-    // CSRF_TRUSTED_ORIGINS; claiming the API's own origin satisfies both.
-    headers.origin = targetUrl.origin;
-    if (headers.referer) headers.referer = `${targetUrl.origin}/`;
-    if (headers.cookie) {
-      headers.cookie = stripRequestCookies(headers.cookie, env, names);
-    }
-
-    const upstream = transport.request(
-      {
-        protocol: targetUrl.protocol,
-        hostname: targetUrl.hostname,
-        port: targetUrl.port || (isHttps ? 443 : 80),
-        method: req.method,
-        path: upstreamPath,
-        headers,
-      },
-      (upstreamRes) => {
-        const outHeaders = { ...upstreamRes.headers };
-
-        if (outHeaders['set-cookie']) {
-          outHeaders['set-cookie'] = outHeaders['set-cookie'].map((cookie) =>
-            namespaceSetCookie(rewriteSetCookie(cookie), env),
+  return createProxyMiddleware({
+    target,
+    // Host must be the API's or Django rejects the request; `Origin` goes with it
+    // because Django's CSRF check compares the two against CSRF_TRUSTED_ORIGINS.
+    changeOrigin: true,
+    // Net for a Location `rewriteLocation` could not parse, e.g. the
+    // protocol-relative `//api.dev.betterangels.la/x`.
+    autoRewrite: true,
+    pathRewrite: (path) =>
+      path.startsWith(`${prefix}/`)
+        ? path.slice(prefix.length)
+        : path === prefix
+          ? '/'
+          : path,
+    on: {
+      proxyReq(proxyReq, req) {
+        proxyReq.setHeader('origin', targetUrl.origin);
+        if (req.headers.referer) {
+          proxyReq.setHeader('referer', `${targetUrl.origin}/`);
+        }
+        if (req.headers.cookie) {
+          proxyReq.setHeader(
+            'cookie',
+            stripRequestCookies(req.headers.cookie, name, names),
           );
         }
-        if (outHeaders.location) {
-          outHeaders.location = rewriteLocation(
-            outHeaders.location,
+      },
+      proxyRes(proxyRes) {
+        const cookies = proxyRes.headers['set-cookie'];
+        if (cookies) {
+          proxyRes.headers['set-cookie'] = cookies.map((cookie) =>
+            namespaceSetCookie(rewriteSetCookie(cookie), name),
+          );
+        }
+        if (proxyRes.headers.location) {
+          proxyRes.headers.location = rewriteLocation(
+            proxyRes.headers.location,
             targetUrl,
             prefix,
           );
         }
-
-        res.writeHead(upstreamRes.statusCode ?? 502, outHeaders);
-        upstreamRes.pipe(res);
       },
-    );
+      // Defining `on.error` replaces http-proxy-middleware's plain-text default,
+      // so an unreachable API answers like the rest of this file.
+      error(err, req, res) {
+        if (res.headersSent) return res.destroy();
+        sendJson(res, 502, {
+          error: 'Dev API proxy could not reach the upstream API.',
+          target,
+          detail: String(err && err.message ? err.message : err),
+        });
+      },
+    },
+  });
+}
 
-    upstream.on('error', (err) => {
-      if (res.headersSent) return res.destroy();
-      sendJson(res, 502, {
-        error: 'Dev API proxy could not reach the upstream API.',
-        target,
-        detail: String(err && err.message ? err.message : err),
-      });
+/**
+ * Which target a request URL names, or `null` when the request is not ours. The
+ * upstream path is not built here: the middleware strips the prefix on the way
+ * out, so anything computed for it would be dead.
+ */
+function routeRequest(rawUrl, names) {
+  const segments = rawUrl.split('?')[0].split('/');
+  if (segments[1] !== API_PREFIX.slice(1)) return null;
+
+  const name = segments[2];
+
+  return name && names.has(name) ? { name } : { unknown: name ?? '' };
+}
+
+/** @returns {(middleware: any) => any} a Metro `enhanceMiddleware` function. */
+function createDevApiProxy() {
+  const named = readTargets();
+  const names = new Set(named.keys());
+  const proxies = new Map(
+    [...named].map(([name, target]) => [
+      name,
+      createTargetProxy(name, target, names),
+    ]),
+  );
+
+  return (middleware) => (req, res, next) => {
+    const route = routeRequest(req.url, names);
+
+    // Not an API path: the dev server's own routes, bundler and assets.
+    if (!route) return middleware(req, res, next);
+
+    if (route.unknown === undefined) {
+      return proxies.get(route.name)(req, res, next);
+    }
+
+    // A typo must not silently reach another target, and a dev server with no API
+    // URLs configured must say so rather than 404 through Metro.
+    return sendJson(res, 502, {
+      error: names.size
+        ? `Unknown dev API proxy target '${route.unknown}'.`
+        : 'Dev API proxy is not configured.',
+      configured: [...names],
+      ...(names.size
+        ? {}
+        : {
+            hint:
+              'Set EXPO_PUBLIC_API_URL (and optionally EXPO_PUBLIC_DEMO_API_URL / ' +
+              'EXPO_PUBLIC_LOCAL_API_URL), then restart the dev server.',
+          }),
     });
-
-    // Stream the request body straight through (GraphQL and form posts).
-    req.pipe(upstream);
   };
 }
 
-module.exports = { createDevApiProxy };
+// The helpers are exported for the unit tests that pin the app's contract with
+// them — metro.config.js only needs `createDevApiProxy`.
+module.exports = {
+  createDevApiProxy,
+  deriveProxyTargets,
+  readTargets,
+  routeRequest,
+  namespaceSetCookie,
+  stripRequestCookies,
+  rewriteSetCookie,
+  rewriteLocation,
+};

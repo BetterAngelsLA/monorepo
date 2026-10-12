@@ -95,6 +95,7 @@
           "env": {
             "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
             "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
+            "EXPO_PUBLIC_LOCAL_API_URL": "",
             "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.dev.betterangels.la"
           }
         },
@@ -105,6 +106,7 @@
             "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "WARN",
             "EXPO_PUBLIC_API_URL": "https://api.prod.betterangels.la",
             "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
+            "EXPO_PUBLIC_LOCAL_API_URL": "",
             "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.betterangels.la"
           }
         }

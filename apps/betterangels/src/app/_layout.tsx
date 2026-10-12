@@ -13,7 +13,8 @@ import {
 } from '@monorepo/expo/betterangels';
 import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 
-import { apiUrl, demoApiUrl } from '../../config';
+import { apiUrl, demoApiUrl, localApiUrl } from '../../config';
+import { buildApiEnvironments } from '../apiEnvironments';
 import { buildFetchClient } from '../init';
 import { BaDataProviders } from '../providers/BaDataProviders';
 import { BaUiProviders } from '../providers/BaUiProviders';
@@ -33,10 +34,21 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
 
-const ENVIRONMENTS = [
-  { name: 'production' as const, url: apiUrl },
-  { name: 'demo' as const, url: demoApiUrl },
-];
+// The URLs below are the direct API URLs on native and in a deployed web build.
+// A web *dev* build gets the same-origin dev proxy instead, so the browser is not
+// crossing an origin (see `buildApiEnvironments`, and dev-api-proxy.js for the
+// server half). Module-level because the provider treats it as static config.
+const ENVIRONMENTS = buildApiEnvironments({
+  platform: Platform.OS,
+  isDev: __DEV__,
+  // Keyed on `Platform.OS`, not `typeof window`: React Native defines a global
+  // `window` without a `location`, so a `typeof window` guard dereferences
+  // `window.location.origin` on native and throws while this module is evaluated.
+  webOrigin: Platform.OS === 'web' ? window.location.origin : undefined,
+  apiUrl,
+  demoApiUrl,
+  localApiUrl,
+});
 
 // ---------------------------------------------------------------------------
 // Root layout

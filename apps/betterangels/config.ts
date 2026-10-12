@@ -58,6 +58,9 @@ function resolveGoogleMapsApiKey(
 function loadConfig() {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const demoApiUrl = process.env.EXPO_PUBLIC_DEMO_API_URL;
+  // Optional: a local backend adds a third environment to the switcher, and it
+  // is only ever listed when it is configured (`buildApiEnvironments`).
+  const localApiUrl = process.env.EXPO_PUBLIC_LOCAL_API_URL;
 
   const devExtra = Constants.expoConfig?.extra;
   const embeddedExtra = getEmbeddedExtra();
@@ -94,10 +97,10 @@ function loadConfig() {
     );
   }
 
-  return { apiUrl, demoApiUrl, googlePlacesApiKey };
+  return { apiUrl, demoApiUrl, localApiUrl, googlePlacesApiKey };
 }
 
-const { apiUrl, demoApiUrl, googlePlacesApiKey } = loadConfig();
+const { apiUrl, demoApiUrl, localApiUrl, googlePlacesApiKey } = loadConfig();
 
 const privacyPolicyUrl = `${apiUrl}/legal/privacy-policy`;
 const termsOfServiceUrl = `${apiUrl}/legal/terms-of-service`;
@@ -105,6 +108,7 @@ const termsOfServiceUrl = `${apiUrl}/legal/terms-of-service`;
 export {
   apiUrl,
   demoApiUrl,
+  localApiUrl,
   googlePlacesApiKey,
   privacyPolicyUrl,
   termsOfServiceUrl,

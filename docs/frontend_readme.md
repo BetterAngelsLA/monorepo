@@ -102,7 +102,7 @@ Run the following on the host machine—**not in the container**:
 1. Optional: add a `.env.local` file:
    - See `.env.local.sample` file for refernce
    - .env.local file should override the .env values on your local machine
-     - usage example: seting `EXPO_PUBLIC_API_URL`` and `EXPO_PUBLIC_DEMO_API_URL` to same domain to avoid CORS issues
+     - usage example: set `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_DEMO_API_URL` to the API hosts you want; a web dev build reaches them through the dev server's same-origin `/__api/<environment>` proxy, so no CORS setup is needed there
    - NX docs on [Environment Variables](https://nx.dev/recipes/tips-n-tricks/define-environment-variables)
 
 ### Running the Frontend: Nx Workspace with Expo Application

@@ -98,7 +98,8 @@
     "eslint-plugin-storybook": "*",
     "libphonenumber-js": "*",
     "validator": "*",
-    "rxjs": "*"
+    "rxjs": "*",
+    "http-proxy-middleware": "*"
   },
   "devDependencies": {}
 }

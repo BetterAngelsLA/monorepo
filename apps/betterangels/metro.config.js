@@ -38,21 +38,28 @@ config.resolver = {
 // Dev-only same-origin API proxy
 // ---------------------------------------------------------------------------
 // Lets the local web dev server talk to a deployed API that the browser would
-// otherwise refuse (CORS + cross-domain CSRF cookie scoping). Enable with:
+// otherwise refuse (CORS + cross-domain CSRF cookie scoping). Nothing to
+// configure — the targets are derived from the app's own API URLs, which are
+// loaded from `.env*` before this file is evaluated:
 //
-//   BA_DEV_PROXY_TARGET=https://api.dev.betterangels.la \
-//   EXPO_PUBLIC_API_URL=http://localhost:8081/__api \
-//   yarn nx serve betterangels
+//   EXPO_PUBLIC_API_URL=https://api.betterangels.la          -> /__api/production
+//   EXPO_PUBLIC_DEMO_API_URL=https://api.dev.betterangels.la -> /__api/demo
+//   EXPO_PUBLIC_LOCAL_API_URL=http://localhost:8000           -> /__api/local
+//
+// A web dev build asks for those prefixed URLs itself; native never does. Set
+// BA_DEV_PROXY_TARGETS=name=url,... to add or override a target.
 //
 // Expo wraps this in its own middleware stack (see `instantiateMetro`), and it
-// is inert unless a path under /__api is actually requested — or the target is
-// unset, in which case only /__api is claimed with a 502 hint. See
-// dev-api-proxy.js.
+// is inert unless a path under /__api is actually requested — or nothing is
+// configured, in which case only /__api is claimed with a 502 hint. See
+// dev-api-proxy.js, which delegates the forwarding itself to
+// http-proxy-middleware and keeps only the target derivation and the per-target
+// cookie rewriting.
 //
 // Shipped native builds never mount it, but the *native dev server* does:
-// @expo/cli installs `enhanceMiddleware` whenever it is not exporting, so a shell
-// with BA_DEV_PROXY_TARGET exported claims /__api and /admin/login there too.
-// Harmless — nothing native requests them — but worth knowing.
+// @expo/cli installs `enhanceMiddleware` whenever it is not exporting, so a
+// dev server claims /__api there too. Harmless — nothing native requests it —
+// but worth knowing.
 const { createDevApiProxy } = require('./dev-api-proxy');
 
 // Chain rather than replace: `enhanceMiddleware` is a shared extension point, so
