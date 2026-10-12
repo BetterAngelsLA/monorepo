@@ -43,10 +43,14 @@ const HEADER_SLOT_INSET = 12;
  * ~11pt leading margin). Without this the "Back" label touches the left edge of
  * the window on web only, which reads as misaligned next to the centred title.
  *
- * Applied by the button components rather than through a
- * `headerLeftContainerStyle` screen option: that option belongs to the JS stack
- * and is not part of native-stack's options, which is the stack this app uses
- * (so it would be a type error and silently ignored on device).
+ * Applied by wrapping the slot in a View rather than through a
+ * `headerLeftContainerStyle` screen option. That option is declared by the JS
+ * stack, not by native-stack — the stack this app uses — so passing it is a type
+ * error, and that is the reason it is not used here. Worth knowing: the web
+ * runtime *would* honour it, because the vendored native-stack spreads unknown
+ * options into `elements.Header`, which reads exactly these two keys (measured —
+ * the slot's padding moves to 12px and the button inset follows, with no wrapper
+ * element). A wrapper does not depend on that forwarding, which is why it stays.
  *
  * Web-only: the native bars already inset themselves.
  */

@@ -77,7 +77,10 @@ function loadConfig() {
         [
           !apiUrl && 'EXPO_PUBLIC_API_URL',
           !demoApiUrl && 'EXPO_PUBLIC_DEMO_API_URL',
-          !googlePlacesApiKey && 'Google Places API key',
+          // Only where the key is required: on web it is optional (maps
+          // degrade), so naming it would send someone hunting for a key when the
+          // API URL is what is actually missing.
+          mapsKeyRequired && !googlePlacesApiKey && 'Google Places API key',
         ]
           .filter(Boolean)
           .join(', '),
