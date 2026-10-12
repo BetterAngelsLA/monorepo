@@ -32,6 +32,18 @@ todos:
   - id: audit-selector
     content: 'Phase 2: Add audit selector for writes (MiddlewareEvents.references)'
     status: pending
+  - id: audit-selector-pagination
+    content: 'Phase 2: Refactor selector to SQL-level action pagination (group action keys in SQL with LIMIT/OFFSET before Python grouping)'
+    status: pending
+  - id: audit-rename-models
+    content: 'Phase 2: Rename write aggregate AuditEvent -> AuditWriteEvent (RenameModel migration) and update importers'
+    status: pending
+  - id: audit-choices-labels
+    content: 'Phase 2: Render choice/enum fields as display labels and column names as verbose_name/friendly names'
+    status: pending
+  - id: audit-snapshot
+    content: 'Phase 2: Add opt-in full-state snapshot (rendered from existing pgh_data) to AuditEventType'
+    status: pending
   - id: audit-graphql
     content: 'Phase 2: Add objectAuditLog query (write-only) with org-scoped authorization'
     status: pending
@@ -45,7 +57,7 @@ todos:
     content: 'Phase 3: Add dateFrom/dateTo/actorId filters to objectAuditLog'
     status: pending
   - id: audit-event-model
-    content: 'Phase 4: Add AuditEvent model (single-object read attribution)'
+    content: 'Phase 4: Add AuditReadEvent model (single-object read attribution)'
     status: pending
   - id: audit-extension
     content: 'Phase 4: Add AuditViewExtension (Strawberry SchemaExtension.resolve hook) to record single-object reads'
@@ -57,7 +69,7 @@ todos:
     content: 'Phase 4: Add view-tracking tests and migration'
     status: pending
   - id: audit-merge
-    content: 'Phase 5: Extend the selector to merge reads (AuditEvent) with writes'
+    content: 'Phase 5: Extend the selector to merge reads (AuditReadEvent) with writes'
     status: pending
   - id: audit-merge-tests
     content: 'Phase 5: Add read/write merge tests'
@@ -68,11 +80,14 @@ todos:
   - id: rds-proxy-pinning
     content: 'Phase 3: Record the RDS Proxy connection-pinning interaction and drop the selector cursor'
     status: pending
-  - id: update-guard
-    content: 'Phase 1: Guard the audit event tables against UPDATE (protect_updates) instead of append-only'
+  - id: append-only
+    content: 'Phase 1: Make the audit event tables append-only and add the tamper guard'
     status: pending
-  - id: retention-purge
-    content: 'Phase 2: Add purge_audit_log --before in the audit app with a 730-day safety floor; wire a Celery-beat schedule'
+  - id: retention-command
+    content: 'Retention: add purge_audit_log --before management command (event tables, Context, AuditReadEvent)'
+    status: pending
+  - id: multi-object-note
+    content: 'Future: note the multi-object/get_for_objects extension feeding org-level audit log'
     status: pending
 isProject: false
 ---
@@ -127,6 +142,8 @@ riskier read mechanism is deferred.
   log now shows both change and read events.
 - **Phase 6 — Update filters.** The event-kind filter, meaningful once reads
   exist.
+- **Phase 7 — Retention.** The `purge_audit_log --before` management command
+  (§31).
 
 ---
 
@@ -500,7 +517,7 @@ until Phase 2, so the middleware cannot live there.
 
 The write selector reads the frozen `user_name`/`user_email` from the context
 metadata rather than resolving a live `User` join (§11). The read-side
-`AuditEvent` model snapshots the same identity on its own columns (§22). The
+`AuditReadEvent` model snapshots the same identity on its own columns (§22). The
 `actor`/`user` FK remains for relational lookup and org scoping; display names
 come from the frozen snapshots.
 
@@ -517,90 +534,37 @@ Extend [shelters/tests/test_models.py](apps/betterangels-backend/shelters/tests/
 - **Report regression:** `report_bed_status_counts` and `daily_occupancy` output is unchanged when a non-status `reservation.update` fires (and when a status+notes update fires). With the disjoint conditions (§2) a non-status `update` never carries a status, so the interval walk's `pgh_label__in=["reservation.add", "reservation.status_change"]` scope already excludes it; the test also asserts the directly-created path (`created_as`, no `status_change`) still counts, proving `reservation.add` is retained.
 - **Bed-reparent pin:** a test pinning the *current* (mis-attributed) occupancy behavior when a `reservation.update` changes `bed_id` without changing `status` (the interval does not close on the old bed — pre-existing). This keeps any future refactor of `_reservation_status_intervals` visible rather than silently altering an already-wrong path. The §2 label scope keeps the reparent out of the walk, so it stays latent but documented.
 - **§7b labels:** `seed_shelter_lookups()` (on cleared tables) yields events with `pgh_context` metadata `{"label": "seed"}` and no `user`; a `clone_view` POST yields events whose context has `label == "clone"` **and** the admin `user`; a CSV import yields `label == "import"`. The seed-exclusion vs clone/import-retention split is asserted in §20.
-- **Update guard (see §9b):** [test_event_update_protection.py](apps/betterangels-backend/shelters/tests/test_event_update_protection.py) asserts the eleven `protect_updates` triggers are declared *and* installed, that `UPDATE` on an event row is rejected, that `DELETE` is **allowed** (retention depends on it, §31), and that `INSERT` (a normal write) still succeeds.
+- **Append-only guard (see §9b):** [test_append_only.py](apps/betterangels-backend/shelters/tests/test_append_only.py) asserts the eleven `append_only` triggers are declared *and* installed, that `UPDATE` and `DELETE` on an event row are both rejected, and that `INSERT` (a normal write) still succeeds.
 
 Run with the project convention: `pytest --reuse-db`.
 
 ---
 
-## 9b. Update-protected event tables (not a security boundary)
+## 9b. Append-only event tables (tamper protection)
 
-The event tables reject `UPDATE`. Without this, nothing stopped a stray
+The event tables are **append-only**. Without this, nothing stopped a stray
 `.update()` — or a direct SQL edit — from rewriting the audit trail, so the
 "audit" log was only as trustworthy as the code that never touched it.
 
-An explicit UPDATE-only trigger on each of the eleven Phase 1 trackers
+`append_only=True` on each of the eleven Phase 1 trackers
 ([shelter.py](apps/betterangels-backend/shelters/models/shelter.py),
 [availability.py](apps/betterangels-backend/shelters/models/availability.py),
 [media.py](apps/betterangels-backend/shelters/models/media.py),
 [schedule.py](apps/betterangels-backend/shelters/models/schedule.py),
 [reservation.py](apps/betterangels-backend/shelters/models/reservation.py))
-carries
-
-```python
-meta={
-    "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="<model>_evt_obj_idx")],
-    "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
-},
-```
-
-which compiles to a `pgtrigger.Protect(name="protect_updates", operation=Update)`
-on the event table, i.e. a `BEFORE UPDATE` trigger that raises:
+compiles to a `pgtrigger.Protect(name="append_only", operation=Update | Delete)`
+on the event table, i.e. a `BEFORE UPDATE OR DELETE` trigger that raises:
 
 ```
-pgtrigger: Cannot update rows from shelters_bedevent table
+pgtrigger: Cannot update or delete rows from shelters_bedevent table
 ```
 
 `INSERT` is deliberately **not** guarded — the audit trail is written by inserts,
-so guarding them would stop it entirely — and `DELETE` is deliberately not guarded
-either: see "Why `DELETE` is allowed" below. Migrations:
-[shelters/migrations/0006](apps/betterangels-backend/shelters/migrations/0006_bedevent_protect_updates_and_more.py)
-(11 `AddTrigger` operations, `operation='UPDATE'`). Verified installed — all eleven
-present in `pg_trigger` — rather than assumed from a migration being generated,
-because a `makemigrations --dry-run` with no actual migration silently "tests"
-nothing.
-
-### What this buys, and what it does not
-
-It buys a **loud failure on an accidental rewrite** of recorded history. It is not a
-privilege boundary, and never was:
-
-- `pgtrigger.ignore` is just `set_config('pgtrigger.ignore', ..., true)`, and any role
-  can call `set_config` — so any SQL on the app's own connection can bypass the
-  guard. That is exactly how the test helper works; there is nothing special about
-  the test role.
-- `session_replication_role = replica` disables triggers for a session.
-- The table owner can `ALTER TABLE … DISABLE TRIGGER` (pgtrigger never emits
-  `ENABLE ALWAYS`).
-- `TRUNCATE` was never covered — `Truncate` is a separate pgtrigger operation.
-
-Independent of the bypasses, the surface this "protects" was already empty:
-
-- **No admin write surface.** No `*Event` model is registered in admin. The only
-  event admin is the auto-registered `pghistory.Events` aggregate, which pghistory
-  hard-wires read-only (`has_add_permission` / `has_change_permission` /
-  `has_delete_permission` all return `False`).
-- **No production code path.** Nothing in non-test code updates or deletes an event
-  row; the only `UPDATE` in the repo is the test-only `backdate_event_rows`.
-- **No cascade path.** Every event FK is `DO_NOTHING, db_constraint=False`, so
-  deleting a tracked row inserts a new event and retains the prior rows.
-- **Revert features do not rewrite history.** `NoteReverter` and the client-merge
-  undo replay by writing the *tracked* models, which produces new events.
-
-So the honest statement is: the guard stops accidental doctoring, not a determined
-actor. Against that reality, blocking `DELETE` as well was pure cost.
-
-### Why `DELETE` is allowed
-
-`pghistory.track(append_only=True)` compiles to `Protect(operation=Update | Delete)`
-and is the only knob pghistory offers — there is no UPDATE-only option. Blocking
-`DELETE` bought nothing beyond the bypassable `UPDATE` guard, but it did cost: it
-made every retention policy a partition project, because the only ways to expire
-rows became a partition drop or a privileged role.
-
-Narrowing to `UPDATE` keeps the failure that matters and frees `DELETE`, so
-retention is an ordinary batched delete (§31). Measurement (§9c) shows that is the
-*only* thing retention needs: a date filter alone does not bound the read cost.
+so guarding them would stop it entirely. Migrations:
+[shelters/migrations/0006](apps/betterangels-backend/shelters/migrations/0006_bedevent_append_only_contactinfoevent_append_only_and_more.py)
+(11 `AddTrigger` operations). Verified installed — all eleven present in
+`pg_trigger` — rather than assumed from a migration being generated, because a
+`makemigrations --dry-run` with no actual migration silently "tests" nothing.
 
 **Blast radius — corrected.** An earlier revision of this ADR claimed "9 call
 sites, 2 models, 1 file". That figure came from grepping for
@@ -627,7 +591,7 @@ trigger's `INSERT ... NOW()` (`PGHISTORY_CREATED_AT_FUNCTION`), and Python-level
 time freezing (`time_machine`/`freezegun`) only affects Python-side defaults such
 as `auto_now_add` on ORM inserts. A trigger-generated row is always "now".
 Backdating a real event row therefore requires an `UPDATE`, which is exactly what
-the update guard forbids.
+append-only forbids.
 
 **The escape hatch** is
 [test_utils/pghistory.py](apps/betterangels-backend/test_utils/pghistory.py):
@@ -636,7 +600,7 @@ the update guard forbids.
 backdate_event_rows(BedEvent.objects.filter(...), pgh_created_at=...)
 ```
 
-It ignores the `protect_updates` trigger *by name* (`pgtrigger.ignore("<label>:protect_updates")`),
+It ignores the `append_only` trigger *by name* (`pgtrigger.ignore("<label>:append_only")`),
 never with a bare `pgtrigger.ignore()` — ignoring every trigger would also suppress
 the event-*creation* triggers, letting a fixture write no events while still
 appearing to. It asserts the trigger exists before ignoring it, so a mis-scoped
@@ -647,10 +611,10 @@ This is **test-only**. `pgtrigger.ignore`'s teardown issues
 ("RDS Proxy interaction") prohibits on request paths, because it pins the
 connection.
 
-**Regression guard:** [test_event_update_protection.py](apps/betterangels-backend/shelters/tests/test_event_update_protection.py)
-asserts the triggers are declared *and* installed, that `UPDATE` on an event row is
-rejected, that `DELETE` **succeeds** (the retention contract, §31), and that a
-normal write still succeeds (the `INSERT` positive control).
+**Regression guard:** [test_append_only.py](apps/betterangels-backend/shelters/tests/test_append_only.py)
+asserts the triggers are declared *and* installed, that both `UPDATE` and
+`DELETE` on an event row are rejected, and that a normal write still succeeds
+(the `INSERT` positive control).
 
 **Caveats.**
 
@@ -658,53 +622,10 @@ normal write still succeeds (the `INSERT` positive control).
   (e.g. `TrackedBedDemographicEvent`), the tracked lookup tables, and
   `Service`/`ServiceCategory` remain mutable. A shelter's log aggregates 27 event
   models (§10), so ~16 of them are still rewritable — a follow-up, not covered here.
-- *Purge interaction:* `DELETE` is intentionally allowed, so the retention job is a
-  plain batched `.delete()` (§31) with no trigger-bypassing path and no exempt role.
-
-## 9c. Measured read cost (why retention, and why it is just `DELETE`)
-
-Numbers from a synthetic-events bench harness (the `bench_audit_read` command
-added with the audit app) run against a database with all 11
-`(pgh_obj, pgh_id)` indexes installed, reading
-`pgh_obj`-anchored page 1 with `limit=25`, median of 5 runs:
-
-| question | axis | result |
-| --- | --- | --- |
-| **H1** does page-1 cost grow with the *table*? | 2k → 160k rows | **flat**: p50 17.3 → 15.5 → 17.1 → 17.5 ms; exec 3.00 → 2.86 ms |
-| **H2** does it grow with the *object's own history*? | 100 → 8000 rows | **mild growth**: exec 2.67 → 2.88 → 3.40 → 4.76 ms |
-| **H3** does a date filter bound the work? | 5y vs 2y window | **no**: the predicate lands in the outer SELECT only, never in the CTE branches; p50 16.2 vs 15.7 ms |
-| **H4** what does the *unanchored* aggregate do? | all event tables | **149 `Seq Scan` nodes** vs the selector's 1; 29.4 ms for 50 rows |
-
-Index options, same object and data:
-
-| index on `shelters_shelterevent` | exec ms |
-| --- | --- |
-| `(pgh_obj_id, pgh_id)` — as shipped | **3.07** |
-| *(that index dropped)* | **20.00** |
-| `(pgh_obj_id, pgh_created_at DESC)` | 3.09 |
-| `+ BRIN(pgh_created_at)` | 2.94 |
-
-Bounded vs unbounded — 2000 events per object spread over 5 years:
-
-| configuration | p50 |
-| --- | --- |
-| full history (2000 rows) | 20.7 ms |
-| same, `date_from` = 2y, nothing purged | 18.9 ms |
-| after the retention `DELETE` (12 000 rows removed, 800 left) | 18.3 ms |
-
-Read the last table carefully: **a date filter buys nothing** (H3), and even after
-deleting 60% of the rows the page cost barely moves, because H2 is sub-linear and a
-fixed ~15 ms floor dominates (two round trips, the ~30-branch union, the context
-joins). Consequences:
-
-- The premise that an ever-growing event table makes the *object-anchored* page
-  slower is **refuted** at these scales (H1). The `(pgh_obj, pgh_id)` index anchors
-  every union branch, so total size does not matter — but drop that index and exec
-  time rises ~6.5x, so the index is load-bearing.
-- What *does* degrade with unbounded growth is the **unanchored** path — admin,
-  exports, `AuditEvent.objects.count()` — which seq-scans every branch (H4).
-- Retention therefore has to be an actual `DELETE`; a query-side date filter cannot
-  substitute for it. That is precisely why §9b frees `DELETE`.
+- *Purge interaction:* because `DELETE` is blocked, the retention/purge job in
+  Future considerations cannot use a plain `.delete()`. It needs a
+  trigger-bypassing path — a partition drop, or a privileged role — and that must
+  be settled before the purge is written.
 
 ---
 
@@ -732,6 +653,15 @@ lives in its own app and imports `notes`/`clients`/`teams`). The whole feature
 — model, extension, selector, and query — lives here, with a one-way
 dependency `audit` → `shelters` (for `*_get` helpers, event models, and the
 `THROUGH_EVENT_MAP`).
+
+**Naming (decided).** The write side is a proxy of pghistory's aggregate
+`Events` model; name it **`AuditWriteEvent`** (renamed from the earlier draft's
+`AuditEvent`, which over-claimed by covering only writes). The Phase 4 read model
+is **`AuditReadEvent`** — a durable table, not a proxy. The GraphQL
+`AuditEventType` remains the *unified* write+read shape backed by both (§17). The
+rename emits a `RenameModel` migration, since the proxy is registered in
+[audit/migrations/0001_initial.py](apps/betterangels-backend/audit/migrations/0001_initial.py);
+no DB table changes.
 
 ## 10. The write selector — `references()` alone
 
@@ -830,21 +760,42 @@ the `field_changes` contract below, not naively from `pgh_diff`). `kind` is
 introduced now even though it only ever takes `CHANGE`, so §28 can add `READ`
 without reshaping the model.
 
-**Performance note:** `references()` widens the aggregate `Events` CTE to every
-event model with an FK to the target (a `UNION ALL` across ~30+ tables), each
-with a correlated `_prev_data` subquery (`models.py:461-468`). Grouping happens
-in Python (§12), so the DB cannot `LIMIT` before grouping. Apply the §7b `label`
-exclusion and any `dateFrom`/`dateTo`/`actorId` filters (Phase 3) in SQL *before*
-Python grouping — as a predicate on the aggregate CTE's **outer SELECT**, not
-inside the per-model subqueries. `filter`/`exclude` on the aggregate queryset
-compile to that outer `WHERE` over the `pghistory_events` CTE; the CTE still
-references every matched event table, so Postgres may or may not push the
-predicate into each `UNION ALL` branch. The load-bearing guarantee — filters run
-in SQL before Python grouping — holds either way. The `pgh_context__label` proxy
+**Performance and pagination (decided).** `references()` widens the aggregate
+`Events` CTE to every event model with an FK to the target (a `UNION ALL` across
+~30+ tables), each with a correlated `_prev_data` subquery (`models.py:461-468`).
+The naive implementation fetches *every* event for the object and then groups,
+sorts, and slices in Python, so page size scales with total history size rather
+than with the page. Instead, paginate actions in SQL with **two queries**:
+
+1. **Action-key query** — select the page's action keys in SQL by grouping the
+   aggregate queryset on the composite action key (§12) and ordering by
+   `max(pgh_created_at) DESC`, applying `LIMIT`/`OFFSET` here. This is the only
+   place `limit`/`offset` bind; it returns at most one page of keys. If the
+   aggregate CTE cannot express the group-by directly, select the keys via a
+   minimal-column projection of the same CTE (no per-row diff rendering), which
+   achieves the same bounded work.
+2. **Row fetch** — fetch the event rows for just those keys (a filtered
+   `references()` query), then build the actions and render `field_changes`/
+   labels in Python as today.
+
+SQL-level predicates stay on the aggregate CTE's **outer SELECT**: the §7b
+`seed` `label` exclusion and the Phase 3 `dateFrom`/`dateTo`/`actorId` filters
+must be applied **before** the action-key grouping, so pagination windows match
+the filtered set. `filter`/`exclude` compile to that outer `WHERE` over the
+`pghistory_events` CTE; Postgres may or may not push the predicate into each
+`UNION ALL` branch — the load-bearing guarantee (filters and pagination run in
+SQL before Python grouping) holds either way. The `pgh_context__label` proxy
 field (§11) supports `.exclude(...)`, and
 `.filter(pgh_created_at__range=...)`/`.filter(user=...)` compose on the aggregate
-queryset. Add a query-count/latency guard test for a representative busy object
-(§20).
+queryset.
+
+**Rejected for now (decided):** a denormalized/projected audit table, or a
+materialized Postgres view. Both introduce a second source of truth
+(sync/refresh + drift) this plan avoids; the two-query pagination above removes
+the scaling problem without it. Revisit only if profiling shows the aggregate CTE
+itself is too slow. Add a query-count/latency guard test for a representative
+busy object asserting bounded queries and that page size does not scale work with
+total history (§20).
 
 **Composite `(pgh_obj, pgh_id)` event index (decided).** The correlated
 `_prev_data` subquery resolves the same object's preceding event with
@@ -935,7 +886,7 @@ write path emits the transaction-local form and never a session-scoped
 | `nextval`/`setval` in SQL | No | Django uses server-side defaults + `RETURNING` |
 | Advisory locks | No | the merge path's `select_for_update()` is a row lock, not advisory |
 | Temp tables / `LISTEN` | No | no request-path usage |
-| `Protect` trigger (`protect_updates`, §9b) | Exempt — server-side | raises inside the database after the proxy has handed off the statement, so it is invisible to the proxy |
+| `Protect` trigger (`append_only`, §9b) | Exempt — server-side | raises inside the database after the proxy has handed off the statement, so it is invisible to the proxy |
 
 **Measured: `objectAuditLog` exceeds the 16 KB pinning cliff by construction.**
 The statement the selector compiles is proportional to the number of event models
@@ -1008,7 +959,9 @@ migrations, management commands, shell writes, or any script not wrapped per
 NULLs as one group, so every such "system" event would merge into a single
 spurious action. Define the grouping key as a composite — e.g.
 `COALESCE(pgh_context_id::text, 'system-' || pgh_id)` — or treat each
-NULL-context event as its own singleton action.
+NULL-context event as its own singleton action. This composite key is also the
+SQL pagination key (§10): the action-key query groups on it and orders by
+`max(pgh_created_at)`, then the row fetch selects the keys on the current page.
 
 **Granularity caveat:** `pgh_context_id` is per-_request_ (the top-level
 `pghistory.context()` entered by `HistoryMiddleware`), not per-mutation. Two
@@ -1068,6 +1021,32 @@ action-level diff from the object's before/after state across the grouped action
 events remains the preferred approach — it is naturally robust to one request
 performing several changes — and should be tested (§20).
 
+**Display rendering (decided) — choices and verbose names.** Stored values are
+raw column values; the log is operator-facing, so rendering translates them
+(mirroring auditlog's `changes_display_dict`/`mapping_fields`):
+
+- **Choice/enum fields** render their human label (`get_<field>_display()`), not
+  the raw stored code (e.g. a reservation `status` shows "Checked in", not
+  `CHECKED_IN`). Applies to any field with `choices` (including
+  `django-multiselectfield`/`ArrayField` choices).
+- **Field names** render their `verbose_name` (custom, else Django's munged
+  camel-case), so `bed_id`/`notes` read as human labels.
+- FK-id → related-object resolution (§14) is unchanged; a field with neither a
+  choice label nor a `verbose_name` falls back to the raw value/field name
+  (never dropped).
+
+**Full-state snapshot (decided, opt-in).** pghistory already materializes the
+tracked row's full state on every event — one column per tracked field, and the
+aggregate `Events.pgh_data` is `row_to_json` of that row (`pghistory/models.py`
+`Events`). Exposing it therefore adds **no** storage (unlike auditlog's opt-in
+`serialize_data` blob). Add an optional `snapshot` field to `AuditEventType`
+(§17), rendered from `pgh_data`: strip `pgh_*`/mechanical columns, resolve FK ids
+via §14, and translate choices/verbose names as above. "Object as of this event"
+is exactly the event's `pgh_data`. Make it opt-in per query/field (a
+`snapshot: Boolean` arg or a dedicated field) to bound response size. Because the
+snapshot is complete, this also unblocks the deferred Revert capability
+(`Event.can_revert`/`revert()`, a Future consideration).
+
 ## 14. Resolve FK ids to labels
 
 `pgh_data`/`pgh_diff` store FK fields as ids (`shelter_id`, `demographic_id`,
@@ -1078,6 +1057,11 @@ batched resolver (one lookup per model type per page) that falls back to the
 raw id when the row is gone. Labels are the _current_ name, not a historical
 snapshot — triggers capture only the FK id, so a renamed related object
 re-renders under its new name. Acceptable for stable lookup values.
+
+Extended (decided, §13) to non-FK display rendering: scalar choice/enum fields
+resolve to their display label, and raw field names resolve to their
+`verbose_name`/friendly name. Both use per-model field metadata and fall back to
+the raw value/field name when no label exists.
 
 ## 15. M2M through-table field changes
 
@@ -1130,6 +1114,7 @@ unrelated to reservations — the §7b context-`label` seed exclusion and the Ph
 ## 17. GraphQL types + query
 
 - Add `AuditActionType` (an action grouped by `pgh_context_id`, exposing `timestamp`, `actor`, `summary`, and a nested `events: [AuditEventType!]!` list), `AuditEventType`, `AuditEventKind` enum (`CHANGE`; `READ` is added in §28), and `AuditTargetType` enum in the `audit` app's types (e.g. `audit/types.py`).
+- `AuditEventType` gains an optional `snapshot: JSON` field (opt-in, §13) rendered from the event's `pgh_data`.
 - Add one query to a new `Query` class in `audit/schema.py`, `permission_classes=[IsAuthenticated]`. It returns a **plain list** of `AuditActionType`, not an `OffsetPaginated` wrapper — the selector produces grouped Python actions (not a queryset), so `strawberry_django.offset_paginated` cannot wrap it. Pagination is applied in the resolver via explicit `limit`/`offset` args (the grouped list is already in memory, so it is a simple slice):
 
 ```graphql
@@ -1146,14 +1131,15 @@ objectAuditLog(
 
 `AuditTargetType` covers the primary operator objects (`SHELTER`, `ROOM`, `BED`, `RESERVATION`), each mapped to its model + content type + pghistory event model. `RESERVATION`'s write half is driven by `references()` (its `ReservationClient`, etc.), not by `THROUGH_EVENT_MAP` — `Reservation` has no M2M through tables (§19).
 
-**Naming note:** the GraphQL `AuditEventType` is the *unified* write+read event
-shape (backed by pghistory `*Event` rows for writes and the `AuditEvent` model
-for reads), while the Django `AuditEvent` model (§22) holds *read events only*.
-This follows the codebase's `Model → ModelType` convention (`Referral →
-ReferralType`, `Shelter → ShelterType`) and is not a collision, but the model's
-name over-claims: it is not "the" audit event, only the read half. Both names
-are kept; implementers should note `AuditEventType` instances mostly come from
-pghistory, not from the `AuditEvent` table.
+**Naming note (decided).** The GraphQL `AuditEventType` is the *unified*
+write+read shape, backed by two Django models with distinct names:
+**`AuditWriteEvent`** (the pghistory aggregate proxy for writes — renamed from the
+earlier draft's `AuditEvent`, §10) and **`AuditReadEvent`** (§22, the durable read
+table). The rename removes the earlier over-claim where a lone `AuditEvent` name
+implied it was "the" audit event while covering only the read half. The
+`Model → ModelType` convention is preserved (`AuditReadEvent` → `AuditEventType`),
+and implementers should note `AuditEventType` instances mostly originate from
+pghistory, not from the `AuditReadEvent` table.
 
 ## 18. Authorization (org scoping)
 
@@ -1296,7 +1282,7 @@ requested field selection) is the robust baseline, and the target is attributed
 per resolved field so a multi-object operation is not silently mis-attributed:
 
 - **Single-object fields** (`operator_shelter(pk)`, `bed(pk)`, `room(pk)`,
-  `reservation(pk)`) each emit their own `AuditEvent` with that object's
+  `reservation(pk)`) each emit their own `AuditReadEvent` with that object's
   `target_object_id`. A single operation selecting `{ operatorShelter(pk: 7)
   bed(pk: 3) }` therefore produces **two** events, one per object.
 - **Aliases** of one field are distinct top-level fields and each emits its own
@@ -1316,14 +1302,14 @@ Operator reads arrive via the `operator_shelter` / `bed` / `room` /
 not an operator action). This boundary is naturally enforced by only registering
 operator single-object fields in the extension's field map.
 
-## 22. `AuditEvent` model (new `audit` app)
+## 22. `AuditReadEvent` model (new `audit` app)
 
 The `audit` app (introduced in Phase 2) already houses the write selector,
 types, and query; this section adds the read model to it. Read events don't belong in pghistory's
 per-model `*Event` tables, which have write-specific columns and triggers:
 
 ```python
-class AuditEvent(models.Model):
+class AuditReadEvent(models.Model):
     actor = models.ForeignKey("accounts.User", on_delete=models.SET_NULL, null=True, blank=True)
     # Frozen at event time — see §23.
     actor_name = models.CharField(max_length=255, blank=True, default="")
@@ -1345,7 +1331,7 @@ class AuditEvent(models.Model):
 
 Correlate with pghistory write events via `(target_content_type, target_object_id, actor, created_at)`.
 
-**Id typing:** `AuditEvent.target_object_id` is `PositiveBigIntegerField`. The
+**Id typing:** `AuditReadEvent.target_object_id` is `PositiveBigIntegerField`. The
 write path matches integer FK columns directly — `references()` filters on the
 event model's FK columns, and `target_object_id` is integer — so **no cast is
 needed on the normal path**. A cast is only necessary if the selector ever
@@ -1364,7 +1350,7 @@ org-at-event-time capture must be re-specified then (see Future considerations).
 
 ## 23. Freeze actor identity on reads
 
-Mirroring the write-side freeze (§8), `AuditEvent` snapshots the acting user's
+Mirroring the write-side freeze (§8), `AuditReadEvent` snapshots the acting user's
 `actor_name`/`actor_email` at read time. `actor` remains a live FK (`SET_NULL`)
 for relational lookup and org scoping; the frozen snapshots are what the audit
 log displays, so renaming or deleting a user cannot rewrite or null-out read
@@ -1394,7 +1380,7 @@ which is also a better fit for per-field attribution.
   field and gives the canonical `info.field_name` (aliases resolved for free),
   `info.path`, `info.operation`, and `info.variable_values`. Call
   `_next(root, info, *args, **kwargs)` to obtain the resolved value, then record
-  **one `AuditEvent` per audited top-level single-object field** with
+  **one `AuditReadEvent` per audited top-level single-object field** with
   `action="view"` and `target_object_id` from the resolved value's `id`.
   Gate on `len(info.path) == 1` so nested/related fields don't emit spurious
   rows. Freeze `actor_name`/`actor_email` at write time (§23).
@@ -1427,7 +1413,7 @@ applies; the requirement is simply that the extension never raises out of
 
 ### Latency note (potential alternative, not adopted now)
 
-Writing `AuditEvent` rows synchronously adds latency to every tracked read. An
+Writing `AuditReadEvent` rows synchronously adds latency to every tracked read. An
 alternative is to buffer/offload the write (Celery task or batched write). This
 is **not** adopted initially — keep the synchronous write, and only switch to an
 off-request-path write if profiling shows real-time inserts add significant
@@ -1443,11 +1429,11 @@ extensions=[DjangoOptimizerExtension, AuditViewExtension],
 
 ## 27. Migration + tests (Phase 4)
 
-- `python manage.py makemigrations audit` for the new `AuditEvent` table. The migration must declare `migrations.swappable_dependency(settings.AUTH_USER_MODEL)` (for the `actor` FK) and depend on `contenttypes`.
-- Add a test that an `operatorShelter(pk: ...)` query creates an `AuditEvent` with the correct actor/action/target_object_id (and frozen `actor_name`/`actor_email`), that `arguments == {"pk": <id>}` for a single-object read, that non-`pk` arguments are pruned from `arguments`, and that anonymous or public-`shelter` queries create nothing.
+- `python manage.py makemigrations audit` for the new `AuditReadEvent` table. The migration must declare `migrations.swappable_dependency(settings.AUTH_USER_MODEL)` (for the `actor` FK) and depend on `contenttypes`.
+- Add a test that an `operatorShelter(pk: ...)` query creates an `AuditReadEvent` with the correct actor/action/target_object_id (and frozen `actor_name`/`actor_email`), that `arguments == {"pk": <id>}` for a single-object read, that non-`pk` arguments are pruned from `arguments`, and that anonymous or public-`shelter` queries create nothing.
 - **Multi-field read attribution:** an operation selecting `{ operatorShelter(pk: 7) bed(pk: 3) }` produces two events (one per object); an aliased single-object field produces its own event.
 - **Reachability:** every recorded read event is reachable by `objectAuditLog` for its target (no orphan/dead rows — list reads are not recorded, §Decision).
-- **Failure isolation:** a failing audit insert (e.g. a forced DB error on the `AuditEvent` insert) does not fail the query — reads stay non-failing.
+- **Failure isolation:** a failing audit insert (e.g. a forced DB error on the `AuditReadEvent` insert) does not fail the query — reads stay non-failing.
 
 ---
 
@@ -1456,12 +1442,12 @@ extensions=[DjangoOptimizerExtension, AuditViewExtension],
 ## 28. Merge reads into the selector
 
 Extend the Phase 2 selector (which currently surfaces only write events) to also
-union `AuditEvent` rows and render them in the same unified stream:
+union `AuditReadEvent` rows and render them in the same unified stream:
 
 ```mermaid
 flowchart LR
   write["Write (mutation / admin / script)"] --> pg["MiddlewareEvents.references()"]
-  read["Read (GraphQL query)"] --> ae["AuditEvent.actor"]
+  read["Read (GraphQL query)"] --> ae["AuditReadEvent.actor"]
   pg --> selector["audit selector (unify + group + org-scope + sort)"]
   ae --> selector
   selector --> q1["objectAuditLog(targetType, objectId) — writes + reads"]
@@ -1469,20 +1455,20 @@ flowchart LR
 
 Concretely:
 
-- Add `AuditEvent.objects.filter(target_content_type=..., target_object_id=...)`
+- Add `AuditReadEvent.objects.filter(target_content_type=..., target_object_id=...)`
   as the read source alongside the single write source `references()` (§10).
-- Add `READ` to the `AuditEventKind` enum (§17) and map each `AuditEvent` to
+- Add `READ` to the `AuditEventKind` enum (§17) and map each `AuditReadEvent` to
   `kind="READ"`, `action` = `"view"`, and `field_changes` = null (reads have no
   diff).
 - Read events have no `pgh_context_id`, so each read is its own single-event
   action in the grouping logic (§12) — no grouping by context for reads.
 - Read/write correlation is by `(target_content_type, target_object_id)`; the
-  actor comes from `AuditEvent.actor` plus the frozen `actor_name`/`actor_email`
+  actor comes from `AuditReadEvent.actor` plus the frozen `actor_name`/`actor_email`
   (§23), which the selector treats identically to the write side's frozen
   `user_name`/`user_email` (§8, §11).
 - **Filters apply to both sources.** The Phase 3 `dateFrom`/`dateTo`/`actorId`
-  filters are not write-only: bind `dateFrom`/`dateTo` to `AuditEvent.created_at`
-  and `actorId` to `AuditEvent.actor` on the read query exactly as they bind to
+  filters are not write-only: bind `dateFrom`/`dateTo` to `AuditReadEvent.created_at`
+  and `actorId` to `AuditReadEvent.actor` on the read query exactly as they bind to
   the `references()` aggregate on the write query (§10, §21). A caller filtering
   by date/actor must not receive unfiltered read events; the §30 `kinds` filter
   is the only post-merge addition.
@@ -1490,8 +1476,8 @@ Concretely:
 ## 29. Tests (Phase 5)
 
 - `objectAuditLog` returns write **and** read events for the object, ordered by timestamp, with reads as single-event actions and writes grouped by `pgh_context_id`.
-- **Date/actor filter spans reads:** a `dateFrom`/`dateTo` (or `actorId`) filter excludes matching read events (`AuditEvent.created_at` / `AuditEvent.actor`) as well as write events, not just writes (§28).
-- **Cross-org read, split by tier:** (a) a scoped operator's cross-org read fails closed via `*_get` (§18) and records **no** `AuditEvent` (nothing to attribute); (b) a global-tier operator's cross-org read is recorded and attributed correctly.
+- **Date/actor filter spans reads:** a `dateFrom`/`dateTo` (or `actorId`) filter excludes matching read events (`AuditReadEvent.created_at` / `AuditReadEvent.actor`) as well as write events, not just writes (§28).
+- **Cross-org read, split by tier:** (a) a scoped operator's cross-org read fails closed via `*_get` (§18) and records **no** `AuditReadEvent` (nothing to attribute); (b) a global-tier operator's cross-org read is recorded and attributed correctly.
 
 ---
 
@@ -1516,35 +1502,62 @@ objectAuditLog(
 
 - `kinds` — `[CHANGE, READ]`; defaults to both.
 
-## 31. Retention (`purge_audit_log`)
+---
 
-§9c shows the object-anchored read path does not degrade with table size (H1), so
-retention is not a latency fix — it is a storage and compliance-boundary fix, and
-it has to be a real `DELETE`, because a query-side date filter cannot bound the work
-(H3). `DELETE` is available precisely because §9b narrowed the guard to `UPDATE`.
+# Phase 7 — Retention
 
-**Not implemented on this branch.** The command lands with the audit app (Phase 2),
-which is where the read-event tables it must also prune (ADR 0005) live — keeping it
-out of `common` avoids a `common` → `audit` dependency (§Phase 2). The design is
-settled:
+## 31. `purge_audit_log` command (decided)
 
-```bash
-python manage.py purge_audit_log --before 2024-01-01            # batched delete, then orphan contexts
-python manage.py purge_audit_log --before 2024-01-01 --dry-run  # report what would go, change nothing
-```
+Retention is promoted from Future to scheduled. Add a management command
+`purge_audit_log --before <date>` (idempotent, batched) that deletes audit data
+older than the given date. Run it via
+`uv run python manage.py purge_audit_log --before YYYY-MM-DD`, or
+`nx run betterangels-backend:manage -- purge_audit_log --before YYYY-MM-DD`
+(the generic `manage` target in [project.json](apps/betterangels-backend/project.json)).
+A Celery-beat schedule makes retention automatic.
 
-- `--before <YYYY-MM-DD>` — upper bound on `pgh_created_at`; rows strictly older are removed.
-- `MIN_RETENTION_DAYS = 730` — the command refuses a cutoff inside the last two
-  years unless `--force`, so a mistyped date cannot wipe recent history.
-- `--batch-size` (default 5000) — loops until drained, so no single statement holds
-  a long lock or one huge `DELETE` on the primary.
-- Once the event rows are gone, unreferenced `pghistory.Context` rows are removed
-  with `NOT EXISTS` across every event table, so context rows do not accumulate as
-  an orphan shadow of the purged events.
+Targets (all three, batched to avoid long locks):
 
-Tests will cover the retention floor, `--dry-run`, orphan-context cleanup, and that
-still-referenced contexts survive. The remaining work is operational: choose the
-window and wire a Celery-beat schedule.
+- pghistory `*Event` tables (the per-model write event rows).
+- `pghistory.Context` rows with no remaining referencing events.
+- `AuditReadEvent` (Phase 4) once it exists.
+
+**Decision: no admin "purge before" action.** Django admin actions operate on a
+selected queryset of rows, not a date window, so a date-driven purge does not fit
+the action model; the management command is the primitive. An admin view/form
+could call the same function later if BA staff need a UI trigger.
+
+**Tension to note:** enabling `PGHISTORY_APPEND_ONLY = True` (tamper-evidence,
+Future considerations) blocks deletes, so retention and append-only are mutually
+exclusive as configured. No schedule is wired by default; enabling one is a
+deliberate ops choice.
+
+---
+
+# Considered and rejected (django-auditlog borrows)
+
+`django-auditlog` was evaluated as an alternative and rejected as the mechanism
+(signal-based writes miss `bulk_create`/`bulk_update`/`.update()`; no read
+tracking; no DB-level guarantee; would duplicate pghistory, which the reporting
+selectors depend on). A few of its ideas were **adopted** (choices/verbose
+rendering §13/§14, full-state snapshot §13, retention command §31). These were
+**considered and rejected**, recorded here so they are not re-litigated:
+
+- **Field masking** — the tracked models are shelter-operational data with no
+  sensitive fields to redact today. The personal-data candidates
+  (`ReservationClient` → `ClientProfile.full_name`; `ContactInfo.contact_name`/
+  `contact_email`/`phone`) are either the point of the log (who a client is
+  assigned to) or already operator-visible. Revisit only if a concrete redaction
+  requirement appears.
+- **Correlation-id exposure** — grouping already uses `pgh_context_id`
+  internally (§12); exposing it in the API fixes no operator-facing problem.
+  Keep it internal.
+- **Display truncation** — auditlog caps rendered strings at 140 characters; low
+  value here and it hides data. Omit unless response size proves problematic.
+- **Admin history view** — already listed under Future considerations; not built
+  now.
+- **Admin "purge before" action** — the management command is the primitive
+  (§31); a date-driven purge does not fit admin actions.
 
 ---
 
@@ -1557,7 +1570,8 @@ window and wire a Celery-beat schedule.
   per-user query must join those event tables on the acting user and attribute
   each row back to its parent via `THROUGH_EVENT_MAP` — not just filter the
   object's own event table.
-- **Org-level audit log** — a third query (`organizationAuditLog`) for the global tier. The selector is org-parameterized so this drops in later if needed. Note: `AuditEvent.organization_id` was dropped (§22), so when this query is scheduled it must (re-)specify how org-at-event-time is captured.
+- **Org-level audit log** — a third query (`organizationAuditLog`) for the global tier. The selector is org-parameterized so this drops in later if needed. Note: `AuditReadEvent.organization_id` was dropped (§22), so when this query is scheduled it must (re-)specify how org-at-event-time is captured.
+- **Multi-object / related-row union** — `references(*objs)` already accepts a list, so a stream spanning an object *and* its related rows (auditlog's `get_for_objects`) is a small selector extension. Schedule it with `organizationAuditLog`/`userAuditLog`; not built now.
 - **List-read capture** — recording `operator_shelters`/`beds`/… list reads was deferred (§Decision) because those events have no `target_object_id` and no query to surface them. Schedule it alongside `organizationAuditLog` (or another list-scoped query) and re-specify org-at-event-time capture then.
 - **Admin read-only history view** — a read-only "History" tab on the Shelter/Bed/Room Django-admin change pages rendering the same selector output for BA staff. Deferred; the portal `objectAuditLog` covers operators.
 - **Export** — CSV/JSON export of an object's history for compliance. `django-import-export` is already a dependency.
@@ -1569,5 +1583,4 @@ window and wire a Celery-beat schedule.
   after N days) or org/actor-at-event-time metadata recorded on the event context
   so the object can be authorized without a live row. Deletion events produced
   before that future change will be unrecoverable through this surface.
-- **Retention schedule** — `purge_audit_log --before` lands with the audit app (§31); what remains after that is operational: pick the window and wire a Celery-beat schedule. Watch bloat from the batched deletes.
-- **Partitioning (contingent)** — not needed at current scale (§9c). Revisit if the unanchored path (admin/export/`count()` — 149 seq scans, H4) becomes a real cost, or if purge batches start causing meaningful bloat. At that point, partition `*Event` by `pgh_created_at` range and expire with `DROP PARTITION` instead of `DELETE`.
+- **Retention/purge policy** — implemented as the `purge_audit_log --before` command (§31). Wiring a Celery-beat retention window is the remaining ops decision. Because event rows are append-only (§9b), `DELETE` is blocked, so the purge must use a trigger-bypassing path rather than a plain `.delete()` (§31).
