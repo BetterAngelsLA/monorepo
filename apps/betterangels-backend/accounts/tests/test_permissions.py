@@ -1,10 +1,11 @@
 from typing import Optional
 
-from accounts.models import User
-from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from organizations.models import OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
+
+from accounts.models import User
+from common.tests.utils import GraphQLBaseTestCase
 
 from .baker_recipes import organization_recipe
 

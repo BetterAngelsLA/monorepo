@@ -8,12 +8,13 @@ scoped Role) can create a team at the payload org; a caseworker holds no
 
 import uuid
 
+from django.test import ignore_warnings
+from model_bakery import baker
+
 from accounts.groups import ORG_ADMIN
 from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import ignore_warnings
-from model_bakery import baker
 from teams.models import Team
 
 CREATE_TEAM = """

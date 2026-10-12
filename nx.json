@@ -17,6 +17,15 @@
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
       "cache": true
     },
+    "typecheck": {
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/tsconfig.base.json",
+        "{workspaceRoot}/yarn.lock"
+      ],
+      "cache": true
+    },
     "build-storybook": {
       "inputs": [
         "default",

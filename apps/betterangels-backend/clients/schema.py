@@ -3,31 +3,6 @@ from typing import Any, Dict, List, Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import User
-from clients.enums import ErrorCodeEnum
-from clients.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    ClientProfileDataImport,
-    ClientProfileImportRecord,
-    HmisProfile,
-    SocialMediaProfile,
-)
-
-from clients.services import client_document, client_profile_photo
-from common.services.types import UploadRequest, UploadConfirmation
-from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
-from common.graphql.extensions import PermissionedQuerySet
-from common.graphql.types import (
-    AuthorizedPresignedS3UploadsType,
-    AuthorizedPresignedS3UploadType,
-    DeleteDjangoObjectInput,
-    DeletedObjectType,
-)
-from common.graphql.utils import get_object_or_permission_error
-from common.models import Attachment, PhoneNumber
-from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -44,6 +19,31 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
+from accounts.models import User
+from clients.enums import ErrorCodeEnum
+from clients.models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    ClientProfileDataImport,
+    ClientProfileImportRecord,
+    HmisProfile,
+    SocialMediaProfile,
+)
+from clients.services import client_document, client_profile_photo
+from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
+from common.graphql.extensions import PermissionedQuerySet
+from common.graphql.types import (
+    AuthorizedPresignedS3UploadsType,
+    AuthorizedPresignedS3UploadType,
+    DeleteDjangoObjectInput,
+    DeletedObjectType,
+)
+from common.graphql.utils import get_object_or_permission_error
+from common.models import Attachment, PhoneNumber
+from common.permissions.utils import IsAuthenticated
+from common.services.types import UploadConfirmation, UploadRequest
+
 from .enums import RelationshipTypeEnum
 from .types import (
     ClientContactInput,
@@ -55,7 +55,6 @@ from .types import (
     ClientProfileDataImportType,
     ClientProfileImportRecordsBulkInput,
     ClientProfileImportRecordType,
-    ClientProfilePhotoInput,
     ClientProfileType,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
@@ -604,29 +603,6 @@ class Mutation:
         )
 
         return cast(ClientDocumentType, resolvers.delete(info, client_document))
-
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=[ClientProfile.perms.CHANGE])],
-        deprecation_reason="Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.",
-    )
-    def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
-        with transaction.atomic():
-            user = get_current_user(info)
-
-            try:
-                client_profile = filter_for_user(
-                    ClientProfile.objects.all(),
-                    user,
-                    [ClientProfile.perms.CHANGE],
-                ).get(id=data.client_profile)
-
-                client_profile.profile_photo = data.photo
-                client_profile.save(update_fields=["profile_photo"])
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
-
-            return cast(ClientProfileType, client_profile)
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],

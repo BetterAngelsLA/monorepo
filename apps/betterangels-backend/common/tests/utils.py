@@ -4,20 +4,20 @@ import json
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple, Union
 
-from accounts.models import User
-from accounts.role_manager import OrgRoleManager
-from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.contrib.sites.models import Site
 from django.test import TestCase
 from model_bakery import baker
-from test_utils.assert_mixins import GraphQLAssertionsMixin
-from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
+from accounts.models import User
+from accounts.role_manager import OrgRoleManager
+from accounts.tests.baker_recipes import organization_recipe
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.models import Address, Location
+from test_utils.assert_mixins import GraphQLAssertionsMixin
+from test_utils.mixins import GraphQLTestCaseMixin
 
 if TYPE_CHECKING:
     from organizations.models import Organization
@@ -239,8 +239,9 @@ class GraphQLBaseTestCase(
         ``Grant`` references, so this creates a scoped test Role carrying *perm*
         and grants it to *user* at *org*.  Idempotent.
         """
-        from accounts.models import Grant, Role
         from django.contrib.auth.models import Permission
+
+        from accounts.models import Grant, Role
 
         app_label, codename = perm.split(".")
         permission = Permission.objects.get(codename=codename, content_type__app_label=app_label)

@@ -1,10 +1,11 @@
 from typing import Any, Callable, Optional, cast
 
-from common.graphql.types import SCALAR_MAP, PhoneNumberScalar
-from common.models import Address, PhoneNumber
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
+
+from common.graphql.types import SCALAR_MAP, PhoneNumberScalar
+from common.models import Address, PhoneNumber
 
 serialize_phone_number = cast(Callable[[Any], str], SCALAR_MAP[PhoneNumberScalar].serialize)
 

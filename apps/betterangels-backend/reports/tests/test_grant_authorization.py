@@ -19,16 +19,17 @@ These tests pin the contract:
 from datetime import datetime
 from typing import Any
 
+from django.contrib.auth.models import Permission
+from django.utils import timezone
+from model_bakery import baker
+from rest_framework.test import APIClient
+
 from accounts.groups import ORG_ADMIN
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
-from django.utils import timezone
-from model_bakery import baker
 from notes.models import Note
-from rest_framework.test import APIClient
 
 REPORT_SUMMARY_QUERY = """
     query ReportSummary($organizationId: ID!, $startDate: Date, $endDate: Date) {

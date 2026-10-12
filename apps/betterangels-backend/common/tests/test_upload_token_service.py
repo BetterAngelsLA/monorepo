@@ -1,5 +1,6 @@
-from common.services.upload_token import TTL_GRACE_PERIOD_SECONDS, _signer, create_upload_token, validate_upload_token
 from django.test import SimpleTestCase
+
+from common.services.upload_token import TTL_GRACE_PERIOD_SECONDS, _signer, create_upload_token, validate_upload_token
 
 
 class CreateUploadTokenTests(SimpleTestCase):

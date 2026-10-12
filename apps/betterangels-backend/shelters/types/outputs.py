@@ -5,6 +5,10 @@ from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
+from django.db.models import Prefetch, QuerySet
+from strawberry import ID, Info, auto
+from strawberry_django.auth.utils import get_current_user
+
 from accounts.models import User
 from accounts.types import OrganizationType
 from clients.types import ClientProfileType
@@ -12,10 +16,6 @@ from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
 from common.permissions.selectors import can_globally
-from django.db.models import Prefetch, QuerySet
-from strawberry import ID, Info, auto
-from strawberry_django.auth.utils import get_current_user
-
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,

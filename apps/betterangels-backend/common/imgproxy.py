@@ -7,8 +7,9 @@ from typing import Optional, cast
 from urllib.parse import urlunsplit
 
 import waffle
-from common.enums import ImagePresetEnum
 from django.conf import settings
+
+from common.enums import ImagePresetEnum
 
 IMGPROXY_SWITCH = "imgproxy_enabled"
 IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {

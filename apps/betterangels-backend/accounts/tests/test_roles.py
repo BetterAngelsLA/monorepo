@@ -1,5 +1,12 @@
 """Tests for Role provisioning and grant backfill (ADR 0001 §2.2, §4 phase 1)."""
 
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
+from django.core.management import call_command
+from django.test import TestCase
+from model_bakery import baker
+
+from accounts.groups import ORG_ADMIN_ROLE
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
 from accounts.seed import _resolve_permissions
 from accounts.services import (
@@ -16,16 +23,9 @@ from common.permissions.checks import (
     check_scoped_role_never_in_user_groups,
 )
 from common.permissions.config import RoleDef
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
-from django.core.management import call_command
-from django.test import TestCase
-from model_bakery import baker
 from notes.groups import CASEWORKER_ROLE
 from notes.models import Note
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
-
-from accounts.groups import ORG_ADMIN_ROLE
 
 
 def _add_legacy_membership(group: PermissionGroup, member: User) -> None:

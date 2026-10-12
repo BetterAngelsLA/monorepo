@@ -3,14 +3,15 @@ from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import User as AccountUser
-from common.permissions.utils import IsAuthenticated, require_can
-from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from organizations.models import Organization
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
+
+from accounts.models import User as AccountUser
+from common.permissions.utils import IsAuthenticated, require_can
+from common.utils import get_or_none
 
 from .permissions import ReportPermissions
 from .selectors import report_default_date_range, report_summary
@@ -79,7 +80,7 @@ class Query:
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
         if start_date is None or end_date is None:
-            default_start, default_end = report_default_date_range()
+            default_start, default_end = report_default_date_range(org=org)
             start_date = start_date or default_start
             end_date = end_date or default_end
 

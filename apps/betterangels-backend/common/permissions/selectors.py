@@ -20,9 +20,10 @@ from typing import TYPE_CHECKING, Any, Optional, cast
 from django.db.models import Exists, OuterRef, Q, Subquery
 
 if TYPE_CHECKING:
-    from accounts.models import User
     from django.db.models import Model, QuerySet
     from organizations.models import Organization
+
+    from accounts.models import User
 
 ALL = object()
 """Sentinel for the global tier — row-invariant, so ``visible`` hoists it."""
@@ -282,7 +283,7 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
       only the global tier (``scopes`` is ALL) may act, until an object grant
       covers the row once the object arm is wired at the clients cutover.
     """
-    from common.models import OrgScoped, WRITE_SHARED
+    from common.models import WRITE_SHARED, OrgScoped
 
     model = obj.__class__
     if not issubclass(model, OrgScoped):

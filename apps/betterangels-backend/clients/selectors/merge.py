@@ -9,11 +9,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from clients.models import ClientProfile
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
+
+from clients.models import ClientProfile
 
 
 class MergeProfilesNotFoundError(Exception):

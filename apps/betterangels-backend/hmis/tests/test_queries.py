@@ -3,6 +3,11 @@ from typing import Any
 from unittest import skip
 from unittest.mock import ANY
 
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
+from django.test import override_settings
+from model_bakery import baker
+
 from clients.enums import (
     AdaAccommodationEnum,
     EyeColorEnum,
@@ -14,9 +19,6 @@ from clients.enums import (
     PronounEnum,
 )
 from common.models import PhoneNumber
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.gis.geos import Point
-from django.test import override_settings
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -28,7 +30,6 @@ from hmis.enums import (
 )
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
-from model_bakery import baker
 from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 

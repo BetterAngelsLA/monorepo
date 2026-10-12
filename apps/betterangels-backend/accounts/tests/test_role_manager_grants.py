@@ -9,11 +9,12 @@ not just ``OrgRoleManager``.
 
 from typing import Any
 
+from django.test import TestCase
+from model_bakery import baker
+
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
 from accounts.role_manager import OrgRoleManager
 from common.permissions.config import TemplateConfig
-from django.test import TestCase
-from model_bakery import baker
 from notes.groups import CASEWORKER
 from shelters.groups import SHELTER_OPERATOR
 

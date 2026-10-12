@@ -1,6 +1,7 @@
-from accounts.tests.baker_recipes import organization_recipe
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.tests.baker_recipes import organization_recipe
 from shelters.enums import (
     BedStatusChoices,
     ReservationStatusChoices,

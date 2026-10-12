@@ -8,6 +8,13 @@
 #
 # The EAS workflow (.eas/workflows/e2e-test.yml) only runs Maestro tests.
 #
+# Prerequisite: the referral flows require the `ffReferrals` waffle flag to be
+# enabled in the environment the build points at (the preview profile's
+# EXPO_PUBLIC_API_URL). Waffle resolves an unknown flag to false, which hides
+# the Referrals tab, so those flows fail without it. See
+# apps/betterangels/.maestro/README.md → "Feature Flags (ffReferrals)".
+# The preflight step below reports the flag state (non-blocking, no credentials).
+#
 # Triggers:
 #   - Comment "/run-e2e" on a PR          (affected projects)
 #   - Comment "/run-e2e <project>" on a PR (specific project)
@@ -100,6 +107,86 @@ jobs:
         with:
           ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 0
+
+      - name: 🔎 Preflight — ffReferrals on the target API
+        # Reports whether the referral flows' prerequisite flag is enabled in the
+        # environment the preview/dev builds point at, so a failing run explains
+        # itself in its own log instead of looking like a flaky UI test.
+        #
+        # The query is anonymous, so a flag scoped to groups or users reports as
+        # inactive here even when it is configured correctly; the warning text
+        # says so rather than sending the reader hunting for a non-problem.
+        #
+        # Deliberately non-blocking (continue-on-error + always exit 0): the flag
+        # is server-side state outside this repo, and the dev API being
+        # unreachable must not fail the pipeline before it starts. The Maestro
+        # flows remain the gate. To make it fail fast instead, drop
+        # continue-on-error and exit 1 in the inactive/missing branches.
+        #
+        # The featureControls query needs no credentials: the field declares no
+        # permission class (apps/betterangels-backend/common/graphql/schema.py)
+        # and the schema applies no auth extension. It must be sent as a GET,
+        # though: a POST to the deployed endpoint is rejected by Django CSRF
+        # (403), while the equivalent GET query is served anonymously. Verified
+        # against the dev API.
+        #
+        # Only betterangels has an eas-e2e target, so this reads its eas.json.
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+
+          if ! command -v jq >/dev/null 2>&1; then
+            echo "::notice::jq is unavailable; skipping the ffReferrals preflight."
+            exit 0
+          fi
+
+          # Single source of truth: the API the dev/preview builds talk to.
+          API_URL="$(jq -r '.build.preview.env.EXPO_PUBLIC_API_URL // empty' apps/betterangels/eas.json)"
+          if [ -z "${API_URL}" ]; then
+            echo "::notice::Could not read EXPO_PUBLIC_API_URL from apps/betterangels/eas.json; skipping the ffReferrals preflight."
+            exit 0
+          fi
+
+          GRAPHQL_URL="${API_URL%/}/graphql"
+
+          if ! RESPONSE="$(curl -sS --max-time 20 -G "${GRAPHQL_URL}" \
+              --data-urlencode 'query={ featureControls { flags { name isActive } } }' 2>/dev/null)"; then
+            echo "::warning::${GRAPHQL_URL} did not answer the featureControls query; cannot confirm ffReferrals is enabled. Referral E2E flows may fail."
+            exit 0
+          fi
+
+          if ! printf '%s' "${RESPONSE}" | jq -e . >/dev/null 2>&1; then
+            echo "::warning::${GRAPHQL_URL} returned a non-JSON response to the featureControls query; cannot confirm ffReferrals is enabled."
+            exit 0
+          fi
+
+          # NB: `first // "missing"` would be wrong here — jq's `//` treats
+          # `false` as absent, so an inactive flag would read as missing.
+          FLAG_STATE="$(printf '%s' "${RESPONSE}" \
+            | jq -r '[.data.featureControls.flags[]? | select(.name == "ffReferrals") | .isActive] as $f
+                     | if ($f | length) == 0 then "missing" else ($f[0] | tostring) end')"
+
+          case "${FLAG_STATE}" in
+            true)
+              echo "✅ ffReferrals is enabled on ${GRAPHQL_URL}."
+              ;;
+            false)
+              echo "::warning::ffReferrals exists on ${GRAPHQL_URL} but reads as INACTIVE to this anonymous check. If the flag is scoped to groups or users, that is expected — waffle reports it active only for those accounts and this preflight has no credentials. Confirm with a member of the assigned group (or the CI user listed on the flag); otherwise the referral E2E flows (referrals_page, referral_create, referral_draft) will fail. See apps/betterangels/.maestro/README.md → 'Feature Flags (ffReferrals)'."
+              ;;
+            *)
+              echo "::warning::ffReferrals does not exist on ${GRAPHQL_URL} (waffle resolves an unknown flag to false). The referral E2E flows (referrals_page, referral_create, referral_draft) will fail. Create and enable it in the Django admin for that environment — see apps/betterangels/.maestro/README.md → 'Feature Flags (ffReferrals)'."
+              ;;
+          esac
+
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            {
+              echo "### ffReferrals preflight"
+              echo ""
+              echo "| Target API | \`ffReferrals\` |"
+              echo "| --- | --- |"
+              echo "| \`${GRAPHQL_URL}\` | **${FLAG_STATE}** |"
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
 
       - name: 🔀 Track main for NX affected
         run: git branch --track main origin/main || true

@@ -3,10 +3,11 @@
 from types import SimpleNamespace
 from typing import Any, cast
 
-from common.permissions.utils import get_current_organization
 from django.core.exceptions import PermissionDenied
 from django.test import SimpleTestCase
 from strawberry.types import Info
+
+from common.permissions.utils import get_current_organization
 
 
 def fake_info(organization_id: Any) -> Info:

@@ -31,15 +31,6 @@ export type BottomSheetProviderConfig = {
   defaultOptions?: BottomSheetOptions;
 
   /**
-   * When enabled, the provider renders a single shared backdrop
-   * instead of one backdrop per sheet.
-   *
-   * This is useful when using `FullWindowOverlay`, where multiple
-   * Gorhom backdrops can race and render above sheets.
-   */
-  enableSharedBackdrop?: boolean;
-
-  /**
    * Enables the layout measurement system used to calculate
    * container height for bottom sheets.
    *
@@ -96,13 +87,26 @@ export type BottomSheetProviderOptions = {
    * - 'push': stack on top
    * - 'switch': replace only the top sheet
    * - 'replace': dismiss all existing sheets (default)
+   *
+   * Superseded sheets are dismissed, not unmounted on the spot: they stay
+   * mounted (animating out) until Gorhom reports the dismissal finished, so
+   * their native modal is always torn down by its owner.
    */
   stackBehavior?: StackBehavior;
 
   /**
-   * Optional callback invoked after the sheet is fully dismissed.
+   * Invoked when a sheet is dismissed, with the dismissed sheet's id.
+   *
+   * Timing:
+   * - user-initiated closes (backdrop tap / header X) fire at dismissal
+   *   REQUEST time, so controlled sheets can flip `isOpen` immediately and be
+   *   reopened during the dismiss animation;
+   * - gorhom-initiated closes (e.g. pan-down) fire when dismissal ENDS.
+   *
+   * Fires at most once per sheet. The id lets callers distinguish a current
+   * dismissal from a superseded one.
    */
-  onClose?: () => void;
+  onClose?: (id: string) => void;
 };
 
 /**
@@ -235,6 +239,11 @@ export type BottomSheetRenderApi = {
    * Imperatively closes the current sheet.
    */
   closeSheet: () => void;
+
+  /**
+   * The provider-assigned id of this sheet.
+   */
+  id: string;
 };
 
 /**

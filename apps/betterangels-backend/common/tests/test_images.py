@@ -1,12 +1,13 @@
 from types import SimpleNamespace
 from unittest.mock import PropertyMock, patch
 
-from common.enums import ImagePresetEnum
-from common.images import build_img_url
-from common.imgproxy import IMGPROXY_SWITCH
 from django.db.models.fields.files import FieldFile
 from django.test import TestCase, override_settings
 from waffle.testutils import override_switch
+
+from common.enums import ImagePresetEnum
+from common.images import build_img_url
+from common.imgproxy import IMGPROXY_SWITCH
 
 TEST_KEY = "736563726574"
 TEST_SALT = "68656C6C6F"

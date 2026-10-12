@@ -6,11 +6,12 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 import logging
 from typing import Optional, Union
 
-from common.permissions.config import TemplateConfig
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from organizations.models import Organization
+
+from common.permissions.config import TemplateConfig
 
 from .models import Grant, PermissionGroup, User
 

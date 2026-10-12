@@ -1,8 +1,6 @@
 from collections.abc import Callable
 from typing import Any, Type, cast
 
-from common.org_types import REGISTRY
-from common.permissions.config import TemplateConfig
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
@@ -10,7 +8,8 @@ from django.contrib.admin.utils import unquote
 from django.contrib.admin.widgets import ForeignKeyRawIdWidget, RelatedFieldWidgetWrapper
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import Group, User as DefaultUser
+from django.contrib.auth.models import Group
+from django.contrib.auth.models import User as DefaultUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Field, Model, Prefetch, QuerySet
 from django.forms import Field as FormField
@@ -18,10 +17,13 @@ from django.forms import ModelMultipleChoiceField
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
-from django.urls import URLPattern, NoReverseMatch, path, reverse
+from django.urls import NoReverseMatch, URLPattern, path, reverse
 from django.utils.html import format_html, format_html_join
 from django.utils.text import Truncator
 from organizations.models import Organization, OrganizationInvitation, OrganizationOwner, OrganizationUser
+
+from common.org_types import REGISTRY
+from common.permissions.config import TemplateConfig
 
 from .forms import (
     OrganizationMemberInviteForm,

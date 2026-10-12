@@ -10,13 +10,14 @@ permissions globally — but the GSO template originally carried only
 (403 on /admin/organizations/organization/).
 """
 
-from accounts.models import PermissionGroup, PermissionGroupTemplate, User
-from accounts.seed import sync_group_permissions
-from accounts.tests.baker_recipes import organization_recipe
 from django.test import TestCase
 from django.urls import reverse
 from model_bakery import baker
 from organizations.models import Organization
+
+from accounts.models import PermissionGroup, PermissionGroupTemplate, User
+from accounts.seed import sync_group_permissions
+from accounts.tests.baker_recipes import organization_recipe
 from shelters.groups import GLOBAL_SHELTER_OPERATOR
 
 ORG_ADMIN_PERMS = {
