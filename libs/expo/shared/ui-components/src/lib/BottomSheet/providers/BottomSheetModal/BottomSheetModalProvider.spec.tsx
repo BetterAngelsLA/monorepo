@@ -176,7 +176,7 @@ function SheetOpener() {
 }
 
 describe('BottomSheetModalProvider', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     state.mountedBases.length = 0;
   });
 

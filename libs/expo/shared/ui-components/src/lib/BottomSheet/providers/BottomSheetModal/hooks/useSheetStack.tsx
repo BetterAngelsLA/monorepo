@@ -48,7 +48,8 @@
  * The contract is `BottomSheetModalProvider.spec.tsx`, not this comment. If a
  * test and a line here disagree, the test is right and this comment is wrong.
  *
- *   Package  @gorhom/bottom-sheet 5.2.14 (unpatched — this repo patches only tslib)
+ *   Package  @gorhom/bottom-sheet 5.2.14
+ *   Patch    .yarn/patches/@gorhom-bottom-sheet-npm-5.2.14-*.patch
  *
  * How far each one was checked:
  *   [read]    seen in the package source at that version
@@ -73,10 +74,9 @@
  *    settled re-enters that call — our own retries included. There is no error
  *    signal: a call either eventually produces `onDismiss`, or disappears.
  *    [read] A later `dismiss()` is not always a no-op: `handleDismiss` early-
- *    exits to `unmount()` for CLOSED and MINIMIZED, and for DISMISSING once the
- *    index is -1. That set is the library's own — nothing here widens it — so a
- *    dismissal handed over before the modal has settled is the case that latches,
- *    which is what `canDismiss` is for.
+ *    exits to `unmount()` for INITIAL, CLOSED, MINIMIZED and DISMISSED, and for
+ *    DISMISSING once the index is -1. Our patch widened that set so a premature
+ *    call tears down instead of latching (gorhom#2669).
  *    [unread] "`forceClose()` no-ops on a running animation or unmeasured
  *    detents, and never resets its latch" is a long-standing note about
  *    `BottomSheet` (not the modal) that has never been read. Folklore.
