@@ -1,5 +1,9 @@
-import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
+import {
+  clearRememberedEmail,
+  loadRememberedEmail,
+  saveRememberedEmail,
+} from './rememberedEmailStorage';
 
 export function useRememberedEmail(storageKey: string) {
   const [email, setEmail] = useState('');
@@ -9,16 +13,16 @@ export function useRememberedEmail(storageKey: string) {
   useEffect(() => {
     (async () => {
       try {
-        const savedEmail = await SecureStore.getItemAsync(storageKey);
+        const savedEmail = await loadRememberedEmail(storageKey);
         if (savedEmail) {
           setEmail(savedEmail);
           setRememberMe(true);
         }
       } catch {
-        // The keychain can be unavailable (locked device, simulator, a corrupted
-        // entry). Pre-filling the field is a convenience, so failing silently is
-        // correct here — and without this an unhandled rejection is noise, not a
-        // signal. The web build carries the same guard; see the `.web` sibling.
+        // Storage can be unavailable (locked keychain, private-mode browser, a
+        // corrupted entry). Pre-filling the field is a convenience, so failing
+        // silently is correct here — and without this an unhandled rejection is
+        // noise, not a signal.
       }
     })();
   }, [storageKey]);
@@ -29,11 +33,9 @@ export function useRememberedEmail(storageKey: string) {
 
       try {
         if (rememberMe && trimmed) {
-          await SecureStore.setItemAsync(storageKey, trimmed, {
-            keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
-          });
+          await saveRememberedEmail(storageKey, trimmed);
         } else {
-          await SecureStore.deleteItemAsync(storageKey);
+          await clearRememberedEmail(storageKey);
         }
       } catch {
         // Never block a successful sign-in on a storage failure: the caller
