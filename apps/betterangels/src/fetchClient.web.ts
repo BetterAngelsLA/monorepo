@@ -12,7 +12,7 @@ import { configurePlacesProxy } from '@monorepo/shared/places';
 
 /** `apiUrl` selects both the request target and the Places proxy origin. */
 export const buildFetchClient = (apiUrl: string) => {
-  const fetchClient = createWebFetchClient();
+  const fetchClient = createWebFetchClient(apiUrl);
 
   // Places/geocoding go through the BA backend proxy on web: the native keys are
   // restricted by bundle id / signing certificate, which a browser cannot satisfy.
