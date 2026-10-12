@@ -1,5 +1,5 @@
 import { RefObject } from 'react';
-import { EdgePadding } from 'react-native-maps';
+import { EdgePadding, Region } from 'react-native-maps';
 import Supercluster, {
   AnyProps,
   ClusterFeature,
@@ -128,6 +128,25 @@ export class MapClusterManager<P extends IClusterGeoJson> {
     return this.clusterIndex.getClusterExpansionZoom(clusterId);
   }
 
+  /**
+   * Whether zooming into this cluster would actually separate it from where the
+   * map is now.
+   *
+   * A click that cannot buy separation should show the cluster's contents instead
+   * of moving the map: `fitToCoordinates` over leaves that are already on screen
+   * leaves the view where it was, so the click reads as having done nothing. With
+   * no current zoom to compare against, zooming is assumed to be worthwhile.
+   */
+  canExpandFurther(clusterId: number, currentZoom?: number): boolean {
+    if (currentZoom === undefined) {
+      return true;
+    }
+
+    // Half a level: `getClusterExpansionZoom` returns a whole level, and the
+    // map's own zoom is fractional.
+    return this.getClusterExpansionZoom(clusterId) > currentZoom + 0.5;
+  }
+
   getClusterChildren(
     clusterId: number,
   ): Array<PointFeature<P> | ClusterFeature<AnyProps>> {
@@ -209,11 +228,27 @@ export class MapClusterManager<P extends IClusterGeoJson> {
 
   // alternative to animateToCluster (animateToRegion)
   // animates to fit selected cluster leaves on map
-  fitToCluster(clusterId: number, mapRef: RefObject<TMapView | null>) {
+  /**
+   * Fit the map to a cluster's points, resolving with the region it settled at
+   * when the map can report one.
+   *
+   * The fit is programmatic, and on web Google fires `bounds_changed` for gestures
+   * rather than for this, so `onRegionChangeComplete` never reaches the caller.
+   * The cluster layer then kept rendering the clusters it had computed at the
+   * *previous* zoom: a cluster that no longer matched the map and could not be
+   * opened. Handing the settled region back lets the caller recompute for where
+   * the map actually is. Native maps fire the callback themselves and simply have
+   * no `getMapBoundaries`, in which case this resolves `undefined` and nothing
+   * changes.
+   */
+  async fitToCluster(
+    clusterId: number,
+    mapRef: RefObject<TMapView | null>,
+  ): Promise<Region | undefined> {
     const map = mapRef.current;
 
     if (!map) {
-      return;
+      return undefined;
     }
 
     const leaves = this.getLeaves(clusterId);
@@ -229,5 +264,64 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       edgePadding: padding || defaultEdgePadding,
       animated: true,
     });
+
+    return waitForSettledRegion(map);
   }
+}
+
+type TMapBoundaries = {
+  northEast: { latitude: number; longitude: number };
+  southWest: { latitude: number; longitude: number };
+};
+
+function boundsToRegion(bounds: TMapBoundaries): Region {
+  const { northEast, southWest } = bounds;
+
+  return {
+    latitude: (northEast.latitude + southWest.latitude) / 2,
+    longitude: (northEast.longitude + southWest.longitude) / 2,
+    latitudeDelta: Math.abs(northEast.latitude - southWest.latitude),
+    longitudeDelta: Math.abs(northEast.longitude - southWest.longitude),
+  };
+}
+
+/**
+ * Poll the map's bounds until two reads agree, i.e. until the animated fit has
+ * finished. Returns `undefined` for a map that cannot report bounds (native), so
+ * the caller falls back to whatever the platform reports on its own.
+ */
+async function waitForSettledRegion(
+  map: TMapView,
+  intervalMs = 100,
+  attempts = 20,
+): Promise<Region | undefined> {
+  const getBounds = (
+    map as TMapView & { getMapBoundaries?: () => Promise<TMapBoundaries> }
+  ).getMapBoundaries;
+
+  if (typeof getBounds !== 'function') {
+    return undefined;
+  }
+
+  let previous = '';
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+
+    const bounds = await getBounds().catch(() => undefined);
+
+    if (!bounds) {
+      continue;
+    }
+
+    const key = JSON.stringify(bounds);
+
+    if (key === previous) {
+      return boundsToRegion(bounds);
+    }
+
+    previous = key;
+  }
+
+  return undefined;
 }

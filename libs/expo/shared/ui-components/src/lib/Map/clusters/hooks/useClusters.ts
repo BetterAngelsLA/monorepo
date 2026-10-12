@@ -96,6 +96,23 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
     [clusterManager],
   );
 
+  /**
+   * Whether zooming into `c` would separate it from where the map is now. Callers
+   * use it to decide between drilling in and showing the cluster's points — see
+   * `canExpandFurther` on the manager.
+   */
+  const canExpandFurther = useCallback(
+    (c: TClusterPoint, currentZoom?: number) =>
+      clusterManager.canExpandFurther(c.properties.cluster_id, currentZoom),
+    [clusterManager],
+  );
+
+  /** The points inside `c`, for when the cluster cannot be broken up further. */
+  const getClusterLeaves = useCallback(
+    (c: TClusterPoint) => clusterManager.getLeaves(c.properties.cluster_id),
+    [clusterManager],
+  );
+
   // cleanup
   useEffect(() => () => clusterManager.clear(), [clusterManager]);
 
@@ -103,5 +120,7 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
     clusters,
     updateClustersForRegion,
     zoomToCluster,
+    canExpandFurther,
+    getClusterLeaves,
   };
 }
