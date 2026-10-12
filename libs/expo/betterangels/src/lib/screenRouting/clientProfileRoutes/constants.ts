@@ -60,18 +60,14 @@ export const DEFAULT_RELATED_MODEL_SECTION: TRelatedModelSection =
   ClientProfileSectionEnum.RelevantContacts;
 
 /**
- * The section a route renders arrives as the `componentName` search param, which
- * in-app navigation supplies via the `getEditClientProfileRoute`,
- * `getRelatedModelViewRoute` and `getRelatedModelAddRoute` helpers. A direct URL,
- * a bookmark or a refresh carries no such param, so fall back to the route
- * family's default section rather than throwing. Mirrors how `/client/[id]`
- * treats its optional `openCard` param.
+ * A route can arrive without the `componentName` that in-app navigation supplies
+ * (a direct URL, a bookmark, a refresh), so resolve to the route family's default
+ * rather than throwing.
  *
- * Resolution is family-aware: the fallback fixes the route family, and a
- * `componentName` that is valid but belongs to the other family resolves to that
- * family's default instead of reaching an unguarded config-map lookup. The
- * return type is the fallback's family, so the compiler rejects that section
- * value at the config map.
+ * Family-aware: a section that is valid but belongs to the *other* family resolves
+ * to that family's default, so the config-map lookup is never unguarded. The
+ * return type is the fallback's family, and the compiler rejects a value from the
+ * other one. The sets above are the canonical statement of the families.
  */
 export function getClientProfileSectionOrDefault(
   value: unknown,

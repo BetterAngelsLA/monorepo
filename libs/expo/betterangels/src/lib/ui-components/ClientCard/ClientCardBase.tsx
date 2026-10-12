@@ -16,12 +16,9 @@ import { getLahsaHmisId } from './utils/getLahsaHmisId';
 import { formatScalarDate } from '@monorepo/shared/scalars';
 
 /**
- * The card's *contents* only — no menu, and no press handling.
- *
- * The menu button deliberately lives in `ClientCard` as a sibling of the card's
- * pressable area rather than inside it. `accessibilityRole="button"` renders a
- * real `<button>` on web, and a button nested inside a button is invalid HTML
- * (React reports it as a hydration error) as well as a screen-reader problem.
+ * The card's *contents* only — no menu, no press handling. The menu is a sibling
+ * of the card's pressable area in `ClientCard`, for the nested-`<button>` reason
+ * documented there.
  */
 export function ClientCardBase(props: IClientCardProps) {
   const { client } = props;

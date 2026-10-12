@@ -50,12 +50,10 @@ vi.mock('../../hooks', () => ({
   useSnackbar: () => ({ showSnackbar: mockShowSnackbar }),
 }));
 
-// The real design-system barrel re-exports native-backed components (camera,
-// clipboard, PDF viewer) whose import chains cannot load under vitest-native.
-// Stub the barrel to the pieces UserProfile renders, reproducing DeleteModal's
-// two-step contract — the trigger only opens the confirmation, and `onDelete`
-// runs from the modal's own confirm button (testID `delete-modal-confirm-btn`,
-// matching the real component) — so the spec exercises the screen's handler.
+// Stub the design-system barrel to what this screen renders (the real one pulls
+// in native-backed chains vitest-native cannot load), reproducing DeleteModal's
+// two-step contract: the trigger opens the confirmation and `onDelete` runs from
+// the modal's own confirm button.
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
   Avatar: () => null,
   Button: ({

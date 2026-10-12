@@ -23,19 +23,14 @@ const RELATED_MODEL_SECTIONS = [
 ];
 
 /**
- * `ClientProfileForm/config.tsx` is `Record<TStandardSection, …>` and
- * `relatedClientProfileModel/config.ts` is `Record<TRelatedModelSection, …>`, so
- * "is a member of the family" and "is a key of that family's config map" are the
- * same statement — the `Record` makes the key set exhaustive and `tsc` fails if
- * an entry is missing. These specs pin the runtime *values* (and the enum-to-
- * family classification the maps are keyed by), which is what regressed when a
- * cross-family `componentName` reached `config[section]` and destructured
- * `undefined`.
+ * Both config maps are `Record<..., …>`, so "is a member of the family" and "is a
+ * key of that family's map" are the same statement and `tsc` fails if an entry is
+ * missing. These specs pin the runtime *values* and the enum-to-family
+ * classification the maps are keyed by.
  *
- * The config maps themselves are not imported here on purpose: both pull in
- * `expo-modules-core` (through the hooks/providers and design-system chains),
- * which vitest-native's loader cannot strip — the same pre-existing limitation
- * that fails ConsentModal.test.tsx and UserProfile/index.test.tsx at load time.
+ * The maps are not imported here on purpose: both pull in `expo-modules-core`,
+ * which vitest-native's loader cannot strip (the limitation behind the barrel
+ * stubs in ConsentModal.test.tsx and UserProfile/index.test.tsx).
  */
 describe('client profile section families', () => {
   it('classifies every enum member into exactly one family', () => {
@@ -146,9 +141,6 @@ describe('getClientProfileSectionOrDefault', () => {
     ).toBe(ClientProfileSectionEnum.RelevantContacts);
   });
 
-  // The crash path: these values pass `isValidClientProfileSectionEnum`, so the
-  // old resolver returned them and the next line destructured `undefined` out of
-  // the other family's config map.
   it('falls back when componentName is valid but belongs to the other family', () => {
     for (const section of RELATED_MODEL_SECTIONS) {
       const resolved = getClientProfileSectionOrDefault(
