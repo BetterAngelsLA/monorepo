@@ -6,8 +6,16 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// Expo SDK 52+ auto-detects monorepos, but Nx workspaces can be missed.
-// Manually set watchFolders + nodeModulesPaths per official guidance:
+// Load-bearing, not belt-and-braces: do not delete this block.
+//
+// Expo's monorepo detection keys off a `pnpm-workspace.yaml` or a `workspaces`
+// array in package.json. This repo has neither at the root (Yarn 4 with an Nx
+// project graph), so `getMetroServerRoot()` resolves to `apps/betterangels`
+// itself and Expo's own defaults come out empty — `watchFolders = []` and
+// `nodeModulesPaths = []` — which means no sibling `libs/` package resolves and
+// no library edit is watched. Verified by running those helpers against this
+// checkout.
+//
 // https://docs.expo.dev/guides/monorepos/#manual-configuration-before-sdk-52
 config.watchFolders = [workspaceRoot];
 config.resolver.nodeModulesPaths = [

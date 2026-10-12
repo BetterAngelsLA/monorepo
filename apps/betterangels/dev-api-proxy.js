@@ -17,6 +17,13 @@
  * way Vite's `server.proxy` does. Metro/Expo give us the hook for it
  * (`server.enhanceMiddleware`), so no separate process or port is needed.
  *
+ * Expo's own answer to this shape is Router API routes (`app/**+api.ts`), and it
+ * is not available here: `@expo/cli` gates them on `web.output === 'server'`,
+ * which would mean giving up the SPA bundle that is deployed to S3 + CloudFront.
+ * `enhanceMiddleware` is the documented extension point, so this is the right
+ * hook rather than a workaround — but it is the reason a second Expo web app
+ * needs this file (or one like it) too.
+ *
  * Forwarding alone is *not* enough — hence the two rewrites below:
  *
  *   - **Request `Origin`** is set to the upstream API's own origin, because

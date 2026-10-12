@@ -1023,10 +1023,22 @@ cloudfront create-invalidation --distribution-id E18T6D6MTJ5IDH --paths /branche
 - Camera on native is untouched by any of this (the hook is shared; only the unreachable
   simulator-mock branch uses expo-file-system).
 - Remaining: desktop/responsive layout is a deliberate product decision, not a defect. There is
-  no max-width frame and no centring in the app — `apps/betterangels/src/app/+html.tsx` only
-  pins a mobile viewport — so a wide window renders the mobile layout at full viewport width.
-  (An earlier revision of this note claimed the phone-width layout was centred in the viewport;
-  no code does that.)
+  no max-width frame and no centring in the app, and the viewport is not pinned, so a wide window
+  renders the mobile layout at full width.
+
+  Worth recording, because it is a trap: `apps/betterangels/src/app/+html.tsx` described a
+  pinch-zoom-disabled viewport and a dark-mode body background, and **none of it ever shipped**.
+  Under `web.output: 'single'` (the SDK default, and what this app uses) expo-router treats that
+  file as server-only — `@expo/metro-config`'s transform worker replaces it in the client bundle
+  with a "server-only file was removed" string, and the SPA shell is
+  `@expo/cli/static/template/index.html`, or `public/index.html` when one exists. The built
+  artifact proved it: `dist/apps/betterangels/index.html` carried the CLI template's
+  `initial-scale=1, shrink-to-fit=no`, not the file's `maximum-scale=1.00001`. The file is removed
+  rather than left looking authoritative. The shipping viewport stays zoomable, which is the
+  accessibility-preserving default and a deliberate choice; the app-like pinned viewport is a
+  one-liner in `apps/betterangels/public/index.html` if it is ever wanted (that is the file the SPA
+  build reads, and the place for preconnect hints).
+
 - **Infrastructure is applied for both environments** and `.env.deploy.preview` /
   `.env.deploy.production` are wired, so `nx affected -t deploy` covers dev branch previews and
   can publish production. Two things remain before production is _reachable_: the apex DNS
