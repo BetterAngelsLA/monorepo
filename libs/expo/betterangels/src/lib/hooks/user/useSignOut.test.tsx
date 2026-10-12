@@ -63,7 +63,7 @@ describe('useSignOut', () => {
   });
 
   it('clears HMIS pointers, caches and user on success', async () => {
-    const { result } = renderHook(() => useSignOut());
+    const { result } = await renderHook(() => useSignOut());
 
     await act(async () => {
       await result.current.signOut();
@@ -89,7 +89,7 @@ describe('useSignOut', () => {
       new Error('storage unavailable'),
     );
 
-    const { result } = renderHook(() => useSignOut());
+    const { result } = await renderHook(() => useSignOut());
 
     await act(async () => {
       await result.current.signOut();
@@ -108,7 +108,7 @@ describe('useSignOut', () => {
       new Error('cookie store unavailable'),
     );
 
-    const { result } = renderHook(() => useSignOut());
+    const { result } = await renderHook(() => useSignOut());
 
     await act(async () => {
       await result.current.signOut();

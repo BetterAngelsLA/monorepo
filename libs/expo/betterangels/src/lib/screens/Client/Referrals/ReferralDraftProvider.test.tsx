@@ -1,4 +1,3 @@
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
@@ -32,12 +31,12 @@ function Probe({ name }: { name: string }) {
   return <Text testID={name}>{draft?.answers.notes ?? 'No notes'}</Text>;
 }
 
-it('updates all subscribers to one store while keeping another provider independent', () => {
+it('updates all subscribers to one store while keeping another provider independent', async () => {
   const first = createStore();
   const second = createStore();
   first.startNew('client-a');
   second.startNew('client-b');
-  render(
+  await render(
     <>
       <ReferralDraftProvider store={first}>
         <Probe name="first" />
@@ -48,13 +47,13 @@ it('updates all subscribers to one store while keeping another provider independ
       </ReferralDraftProvider>
     </>,
   );
-  act(() => {
+  await act(async () => {
     first.setField('notes', 'Shared update');
   });
   expect(screen.getByTestId('first')).toHaveTextContent('Shared update');
   expect(screen.getByTestId('second')).toHaveTextContent('Shared update');
   expect(screen.getByTestId('isolated')).toHaveTextContent('No notes');
-  act(() => {
+  await act(async () => {
     first.clear();
   });
   expect(screen.getByTestId('first')).toHaveTextContent('No notes');
@@ -101,11 +100,11 @@ const mocks = [
 ];
 
 describe('shared create-flow state', () => {
-  function setup() {
+  async function setup() {
     const store = createStore();
     store.startNew('client-1');
     const onSubmit = vi.fn().mockResolvedValue(true);
-    render(
+    await render(
       <MockedProvider cache={createTestApolloCache()} mocks={mocks}>
         <ReferralDraftProvider store={store}>
           <ReferralCreateFlow
@@ -121,30 +120,30 @@ describe('shared create-flow state', () => {
   }
 
   it('uses one source for answers, step, and shelter selection, including external changes', async () => {
-    const { store } = setup();
-    act(() => {
+    const { store } = await setup();
+    await act(async () => {
       store.setField('notes', 'Preserved observation');
       store.setStep('picker');
       store.setShelter('s-2');
     });
     expect(await screen.findByText('✓ Selected: Beta House')).toBeOnTheScreen();
-    act(() => {
+    await act(async () => {
       store.setShelter('s-1');
     });
     expect(screen.getByText('✓ Selected: Alpha House')).toBeOnTheScreen();
-    act(() => {
+    await act(async () => {
       store.setStep('intake');
     });
     expect(screen.getByDisplayValue('Preserved observation')).toBeOnTheScreen();
-    act(() => {
+    await act(async () => {
       store.clear();
     });
     expect(screen.queryByTestId('referral-intake-screen')).toBeNull();
   });
 
-  it('does not show a replacement draft belonging to another client in the existing flow', () => {
-    const { store } = setup();
-    act(() => {
+  it('does not show a replacement draft belonging to another client in the existing flow', async () => {
+    const { store } = await setup();
+    await act(async () => {
       store.startNew('client-2');
     });
     expect(screen.queryByTestId('referral-intake-screen')).toBeNull();
@@ -152,18 +151,18 @@ describe('shared create-flow state', () => {
   });
 
   it('submits the shared answers and the controlled shelter selection', async () => {
-    const { store, onSubmit } = setup();
-    act(() => {
+    const { store, onSubmit } = await setup();
+    await act(async () => {
       store.setField('pets', [PetChoices.Cats]);
     });
-    fireEvent.press(screen.getByTestId('intake-next-btn'));
+    await fireEvent.press(screen.getByTestId('intake-next-btn'));
     await screen.findByText('Alpha House');
-    fireEvent.press(screen.getAllByTestId('shelter-option-radio')[0]);
+    await fireEvent.press(screen.getAllByTestId('shelter-option-radio')[0]);
     expect(store.getSnapshot()?.selectedShelterId).toBe('s-1');
-    act(() => {
+    await act(async () => {
       store.setField('notes', 'Latest observation');
     });
-    fireEvent.press(screen.getByTestId('submit-referral-btn'));
+    await fireEvent.press(screen.getByTestId('submit-referral-btn'));
     expect(onSubmit).toHaveBeenCalledOnce();
     expect(onSubmit.mock.calls[0][0]).toBe('s-1');
     expect(decodeReferralNotes(onSubmit.mock.calls[0][1])).toEqual({

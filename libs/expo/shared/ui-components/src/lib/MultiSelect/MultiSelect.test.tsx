@@ -34,21 +34,21 @@ describe('MultiSelect component', () => {
   describe('with default checkbox', () => {
     const defaultProps = { ...baseProps };
 
-    it('renders all options', () => {
-      const { getByText } = render(<MultiSelect {...defaultProps} />);
+    it('renders all options', async () => {
+      const { getByText } = await render(<MultiSelect {...defaultProps} />);
 
       expect(getByText('Option A')).toBeTruthy();
       expect(getByText('Option AB')).toBeTruthy();
       expect(getByText('Option ABC')).toBeTruthy();
     });
 
-    it('renders checked options as selected', () => {
+    it('renders checked options as selected', async () => {
       const props = {
         ...defaultProps,
         selected: [mockOptions[0], mockOptions[1]],
       };
 
-      const { queryByTestId } = render(<MultiSelect {...props} />);
+      const { queryByTestId } = await render(<MultiSelect {...props} />);
 
       const checkmarkA = queryByTestId('MultiSelect-option-0');
       const checkmarkB = queryByTestId('MultiSelect-option-1');
@@ -59,7 +59,7 @@ describe('MultiSelect component', () => {
       expect(checkmarkC).toBeFalsy();
     });
 
-    it('selects checkbox', () => {
+    it('selects checkbox', async () => {
       const testOption = mockOptions[1];
 
       const props = {
@@ -67,16 +67,16 @@ describe('MultiSelect component', () => {
         selected: [],
       };
 
-      const { getByText } = render(<MultiSelect {...props} />);
+      const { getByText } = await render(<MultiSelect {...props} />);
 
       const activeOptionEl = getByText(testOption.label);
 
-      fireEvent.press(activeOptionEl);
+      await fireEvent.press(activeOptionEl);
 
       expect(mockOnChange).toHaveBeenCalledWith([testOption]);
     });
 
-    it('unselects checkbox', () => {
+    it('unselects checkbox', async () => {
       const testOption = mockOptions[1];
 
       const props = {
@@ -84,16 +84,16 @@ describe('MultiSelect component', () => {
         selected: [testOption],
       };
 
-      const { getByText } = render(<MultiSelect {...props} />);
+      const { getByText } = await render(<MultiSelect {...props} />);
 
       const activeOptionEl = getByText(testOption.label);
 
-      fireEvent.press(activeOptionEl);
+      await fireEvent.press(activeOptionEl);
 
       expect(mockOnChange).toHaveBeenCalledWith([]);
     });
 
-    it('selects All', () => {
+    it('selects All', async () => {
       const props = {
         ...defaultProps,
         selected: [],
@@ -101,16 +101,16 @@ describe('MultiSelect component', () => {
         selectAllLabel: 'Select All',
       };
 
-      const { getByText } = render(<MultiSelect {...props} />);
+      const { getByText } = await render(<MultiSelect {...props} />);
 
       const selectAllOption = getByText('Select All');
 
-      fireEvent.press(selectAllOption);
+      await fireEvent.press(selectAllOption);
 
       expect(mockOnChange).toHaveBeenCalledWith(mockOptions);
     });
 
-    it('unselects All', () => {
+    it('unselects All', async () => {
       const props = {
         ...defaultProps,
         selected: mockOptions,
@@ -118,16 +118,16 @@ describe('MultiSelect component', () => {
         selectAllLabel: 'Select All',
       };
 
-      const { getByText } = render(<MultiSelect {...props} />);
+      const { getByText } = await render(<MultiSelect {...props} />);
 
       const activeOptionEl = getByText('Select All');
 
-      fireEvent.press(activeOptionEl);
+      await fireEvent.press(activeOptionEl);
 
       expect(mockOnChange).toHaveBeenCalledWith([]);
     });
 
-    it('unselects single item', () => {
+    it('unselects single item', async () => {
       const testOption = mockOptions[1];
 
       const props = {
@@ -137,11 +137,11 @@ describe('MultiSelect component', () => {
         selectAllLabel: 'Select All',
       };
 
-      const { getByText } = render(<MultiSelect {...props} />);
+      const { getByText } = await render(<MultiSelect {...props} />);
 
       const activeOptionEl = getByText(testOption.label);
 
-      fireEvent.press(activeOptionEl);
+      await fireEvent.press(activeOptionEl);
 
       expect(mockOnChange).toHaveBeenCalledWith([
         mockOptions[0],
@@ -149,8 +149,8 @@ describe('MultiSelect component', () => {
       ]);
     });
 
-    it('filters options correctly', () => {
-      const { getByPlaceholderText, getByText } = render(
+    it('filters options correctly', async () => {
+      const { getByPlaceholderText, getByText } = await render(
         <MultiSelect
           {...defaultProps}
           withFilter
@@ -160,7 +160,7 @@ describe('MultiSelect component', () => {
 
       const input = getByPlaceholderText('Search options');
 
-      fireEvent.changeText(input, 'AB');
+      await fireEvent.changeText(input, 'AB');
 
       expect(() => getByText('A')).toThrow();
       expect(getByText('Option AB')).toBeTruthy();
@@ -187,21 +187,21 @@ describe('MultiSelect component', () => {
       );
     };
 
-    it('renders all options', () => {
-      const { getByText } = render(<MultiSelect {...defaultProps} />);
+    it('renders all options', async () => {
+      const { getByText } = await render(<MultiSelect {...defaultProps} />);
 
       expect(getByText('Option A')).toBeTruthy();
       expect(getByText('Option AB')).toBeTruthy();
       expect(getByText('Option ABC')).toBeTruthy();
     });
 
-    it('renders checked options as selected', () => {
+    it('renders checked options as selected', async () => {
       const props = {
         ...defaultProps,
         selected: [mockOptions[0], mockOptions[1]],
       };
 
-      const { queryByTestId } = render(<MultiSelect {...props} />);
+      const { queryByTestId } = await render(<MultiSelect {...props} />);
 
       const checkmarkA = queryByTestId('MultiSelect-option-0');
       const checkmarkB = queryByTestId('MultiSelect-option-1');
@@ -212,7 +212,7 @@ describe('MultiSelect component', () => {
       expect(checkmarkC).toBeFalsy();
     });
 
-    it('selects checkbox', () => {
+    it('selects checkbox', async () => {
       const testOption = mockOptions[1];
 
       const props = {
@@ -220,16 +220,16 @@ describe('MultiSelect component', () => {
         selected: [],
       };
 
-      const { getByText } = render(<MultiSelect {...props} />);
+      const { getByText } = await render(<MultiSelect {...props} />);
 
       const activeOptionEl = getByText(testOption.label);
 
-      fireEvent.press(activeOptionEl);
+      await fireEvent.press(activeOptionEl);
 
       expect(mockOnChange).toHaveBeenCalledWith([testOption]);
     });
 
-    it('unselects checkbox', () => {
+    it('unselects checkbox', async () => {
       const testOption = mockOptions[1];
 
       const props = {
@@ -237,11 +237,11 @@ describe('MultiSelect component', () => {
         selected: [testOption],
       };
 
-      const { getByText } = render(<MultiSelect {...props} />);
+      const { getByText } = await render(<MultiSelect {...props} />);
 
       const activeOptionEl = getByText(testOption.label);
 
-      fireEvent.press(activeOptionEl);
+      await fireEvent.press(activeOptionEl);
 
       expect(mockOnChange).toHaveBeenCalledWith([]);
     });

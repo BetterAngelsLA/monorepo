@@ -27,8 +27,8 @@ vi.mock('../../../ui-components', () => ({
   FileThumbnail: () => null,
 }));
 
-function renderFolder(options: { data?: ClientDocumentType[] }) {
-  return render(
+async function renderFolder(options: { data?: ClientDocumentType[] }) {
+  return await render(
     <Documents
       title="Doc Ready"
       expanded="Doc Ready"
@@ -44,7 +44,7 @@ describe('Documents', () => {
     mocks.fileCards = [];
   });
 
-  it('renders completed document rows from the query data', () => {
+  it('renders completed document rows from the query data', async () => {
     const data = [
       {
         id: 'd1',
@@ -55,14 +55,14 @@ describe('Documents', () => {
       },
     ] as unknown as ClientDocumentType[];
 
-    renderFolder({ data });
+    await renderFolder({ data });
 
     expect(mocks.fileCards).toHaveLength(1);
     expect(mocks.fileCards[0].filename).toBe('consent.pdf');
   });
 
-  it('renders no rows when there are no documents', () => {
-    renderFolder({});
+  it('renders no rows when there are no documents', async () => {
+    await renderFolder({});
 
     expect(mocks.fileCards).toHaveLength(0);
   });

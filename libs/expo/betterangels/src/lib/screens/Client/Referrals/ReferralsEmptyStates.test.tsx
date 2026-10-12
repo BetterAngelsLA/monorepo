@@ -13,7 +13,6 @@
  *
  * Test-plan reference: referral-test-brief.md, case T4.
  */
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
@@ -93,7 +92,7 @@ describe('empty referral history', () => {
   });
 
   it('says there are no referrals yet instead of showing a blank screen', async () => {
-    render(
+    await render(
       <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
@@ -103,7 +102,7 @@ describe('empty referral history', () => {
   });
 
   it('tells the user how to create the first one', async () => {
-    render(
+    await render(
       <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
@@ -115,7 +114,7 @@ describe('empty referral history', () => {
   });
 
   it('shows a spinner first, then replaces it with the empty message', async () => {
-    render(
+    await render(
       <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
@@ -132,7 +131,7 @@ describe('empty referral history', () => {
   });
 
   it('still offers the + button so an empty history is not a dead end', async () => {
-    render(
+    await render(
       <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
@@ -144,10 +143,10 @@ describe('empty referral history', () => {
 });
 
 describe('sparse client profile in the intake form', () => {
-  const renderIntake = (
+  const renderIntake = async (
     profile: Parameters<typeof ReferralIntakeForm>[0]['profile'],
   ) =>
-    render(
+    await render(
       <ReferralDraftProvider store={createStore()}>
         <ReferralIntakeForm
           onCancel={vi.fn()}
@@ -158,37 +157,37 @@ describe('sparse client profile in the intake form', () => {
       </ReferralDraftProvider>,
     );
 
-  it('marks every absent field "Not on file" rather than leaving it blank', () => {
-    renderIntake({});
+  it('marks every absent field "Not on file" rather than leaving it blank', async () => {
+    await renderIntake({});
 
     // Name, Gender, Age, Accommodations, Veteran — five of the six rows.
     expect(screen.getAllByText('Not on file')).toHaveLength(5);
   });
 
-  it('distinguishes an empty household from an unknown one', () => {
-    renderIntake({});
+  it('distinguishes an empty household from an unknown one', async () => {
+    await renderIntake({});
 
     expect(screen.getByText('None on file')).toBeOnTheScreen();
   });
 
-  it('renders the card at all when the profile is missing entirely', () => {
-    renderIntake(null);
+  it('renders the card at all when the profile is missing entirely', async () => {
+    await renderIntake(null);
 
     expect(screen.getByText("From the client's profile")).toBeOnTheScreen();
     expect(screen.getAllByText('Not on file').length).toBeGreaterThan(0);
   });
 
-  it('never leaks "undefined" into a value row', () => {
-    renderIntake(null);
+  it('never leaks "undefined" into a value row', async () => {
+    await renderIntake(null);
 
     expect(screen.queryByText(/undefined/)).toBeNull();
   });
 
-  it('shows real values where they exist and placeholders where they do not', () => {
+  it('shows real values where they exist and placeholders where they do not', async () => {
     // The value has to collide with neither a row label ("Veteran") nor the
     // intake form's own yes/no controls, or the assertion matches those instead
     // of the profile row it is meant to check.
-    renderIntake({
+    await renderIntake({
       firstName: 'Client',
       lastName: 'One',
       veteranStatus: VeteranStatusEnum.PreferNotToSay,

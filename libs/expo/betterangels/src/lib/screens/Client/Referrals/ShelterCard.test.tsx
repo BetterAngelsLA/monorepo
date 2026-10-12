@@ -7,7 +7,6 @@
  *
  * RVTM §7 Tier 2.
  */
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { Colors } from '@monorepo/expo/shared/static';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { openBrowserAsync } from 'expo-web-browser';
@@ -74,8 +73,8 @@ const tagFillOf = (label: string) => tagBadgeStyle(label)?.backgroundColor;
 const tagBorderOf = (label: string) => tagBadgeStyle(label)?.borderColor;
 
 describe('ShelterCard', () => {
-  it('renders the shelter name and location', () => {
-    render(
+  it('renders the shelter name and location', async () => {
+    await render(
       <ShelterCard
         id="s-1"
         name="Jackson Foundation Haven"
@@ -87,42 +86,42 @@ describe('ShelterCard', () => {
     expect(screen.getByText('1946 Venice Blvd')).toBeOnTheScreen();
   });
 
-  it('omits the location line when the shelter has no place', () => {
-    render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
+  it('omits the location line when the shelter has no place', async () => {
+    await render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
 
     expect(screen.getByText('Jackson Foundation Haven')).toBeOnTheScreen();
     expect(screen.queryByText('1946 Venice Blvd')).not.toBeOnTheScreen();
   });
 
-  it('offers the shelter directory link when a directory URL is configured', () => {
+  it('offers the shelter directory link when a directory URL is configured', async () => {
     vi.stubEnv('EXPO_PUBLIC_SHELTER_WEB_URL', 'https://shelter.example');
-    render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
+    await render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
 
     expect(screen.getByText('View in Shelter Directory')).toBeOnTheScreen();
   });
 
-  it('opens the directory detail route for the specific shelter', () => {
+  it('opens the directory detail route for the specific shelter', async () => {
     // trailing slash must not double up before the route
     vi.stubEnv('EXPO_PUBLIC_SHELTER_WEB_URL', 'https://shelter.example/');
-    render(<ShelterCard id="s-42" name="Jackson Foundation Haven" />);
+    await render(<ShelterCard id="s-42" name="Jackson Foundation Haven" />);
 
-    fireEvent.press(screen.getByText('View in Shelter Directory'));
+    await fireEvent.press(screen.getByText('View in Shelter Directory'));
 
     expect(openBrowserAsync).toHaveBeenCalledWith(
       'https://shelter.example/shelter/s-42',
     );
   });
 
-  it('hides the link when no directory URL is configured', () => {
-    render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
+  it('hides the link when no directory URL is configured', async () => {
+    await render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
 
     expect(
       screen.queryByText('View in Shelter Directory'),
     ).not.toBeOnTheScreen();
   });
 
-  it('renders each attribute as a tag', () => {
-    render(
+  it('renders each attribute as a tag', async () => {
+    await render(
       <ShelterCard
         id="s-1"
         name="Jackson Foundation Haven"
@@ -134,10 +133,10 @@ describe('ShelterCard', () => {
     expect(screen.getByText('Pet Area')).toBeOnTheScreen();
   });
 
-  it('surfaces a needed-but-unavailable attribute the shelter never listed', () => {
+  it('surfaces a needed-but-unavailable attribute the shelter never listed', async () => {
     // The red tag is the user-visible payoff of matchTags: it appears even
     // though the shelter itself never reported that attribute.
-    render(
+    await render(
       <ShelterCard
         id="s-1"
         name="Jackson Foundation Haven"
@@ -149,10 +148,10 @@ describe('ShelterCard', () => {
     expect(screen.getByText('Wheelchair Accessible')).toBeOnTheScreen();
   });
 
-  it('colours matched needs green and unmet needs red', () => {
+  it('colours matched needs green and unmet needs red', async () => {
     // both needs are pets, the category this shelter reported, so the unmet one
     // is a confirmed gap and gets a red fill
-    render(
+    await render(
       <ShelterCard
         id="s-1"
         name="Jackson Foundation Haven"
@@ -165,8 +164,8 @@ describe('ShelterCard', () => {
     expect(tagFillOf('Service Animals')).toBe(Colors.ERROR);
   });
 
-  it('renders no tags when the shelter has no attributes', () => {
-    render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
+  it('renders no tags when the shelter has no attributes', async () => {
+    await render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
 
     expect(screen.queryByText('Cats')).not.toBeOnTheScreen();
   });
@@ -174,16 +173,16 @@ describe('ShelterCard', () => {
   describe('unreported attributes', () => {
     // GAP-23: most records in the shelter DB carry no attributes at all, so a
     // card must distinguish "we don't know" from "doesn't match".
-    it('says so explicitly when the shelter reported no attributes', () => {
-      render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
+    it('says so explicitly when the shelter reported no attributes', async () => {
+      await render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
 
       expect(
         screen.getByText('No attributes reported for this shelter'),
       ).toBeOnTheScreen();
     });
 
-    it('still lists the client needs, with a legend for the outlines', () => {
-      render(
+    it('still lists the client needs, with a legend for the outlines', async () => {
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -198,10 +197,10 @@ describe('ShelterCard', () => {
       ).toBeOnTheScreen();
     });
 
-    it('draws unconfirmed needs as red outlines, not red fills', () => {
+    it('draws unconfirmed needs as red outlines, not red fills', async () => {
       // The distinction is the whole point: a filled red tag asserts a
       // confirmed mismatch, which unreported data cannot support.
-      render(
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -213,10 +212,10 @@ describe('ShelterCard', () => {
       expect(tagBorderOf('Wheelchair Accessible')).toBe(Colors.ERROR);
     });
 
-    it('fills the tag only when the need’s own category was reported', () => {
+    it('fills the tag only when the need’s own category was reported', async () => {
       // pets reported, accessibility not: the pet gap is confirmed and filled,
       // the accessibility need stays an unconfirmed outline on the same card
-      render(
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -233,8 +232,8 @@ describe('ShelterCard', () => {
       ).toBeOnTheScreen();
     });
 
-    it('drops the notice when every need had its category reported', () => {
-      render(
+    it('drops the notice when every need had its category reported', async () => {
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -256,8 +255,8 @@ describe('ShelterCard', () => {
     const NEEDS = ['Cats', 'Wheelchair Accessible'];
     const OFFERED = ['Cats', 'Pet Area', 'Single Women', 'ADA Rooms'];
 
-    it('shows every need and hides the rest by default', () => {
-      render(
+    it('shows every need and hides the rest by default', async () => {
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -275,8 +274,8 @@ describe('ShelterCard', () => {
       expect(screen.queryByText('ADA Rooms')).not.toBeOnTheScreen();
     });
 
-    it('counts the hidden attributes in the toggle', () => {
-      render(
+    it('counts the hidden attributes in the toggle', async () => {
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -288,8 +287,8 @@ describe('ShelterCard', () => {
       expect(screen.getByText('+3 more attributes')).toBeOnTheScreen();
     });
 
-    it('singularises the count for one hidden attribute', () => {
-      render(
+    it('singularises the count for one hidden attribute', async () => {
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -301,8 +300,8 @@ describe('ShelterCard', () => {
       expect(screen.getByText('+1 more attribute')).toBeOnTheScreen();
     });
 
-    it('reveals the hidden attributes when expanded, and re-hides them', () => {
-      render(
+    it('reveals the hidden attributes when expanded, and re-hides them', async () => {
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -311,20 +310,24 @@ describe('ShelterCard', () => {
         />,
       );
 
-      fireEvent.press(screen.getByTestId('shelter-other-attributes-toggle'));
+      await fireEvent.press(
+        screen.getByTestId('shelter-other-attributes-toggle'),
+      );
 
       expect(screen.getByText('Pet Area')).toBeOnTheScreen();
       expect(screen.getByText('ADA Rooms')).toBeOnTheScreen();
       expect(screen.getByText('Show fewer attributes')).toBeOnTheScreen();
 
-      fireEvent.press(screen.getByTestId('shelter-other-attributes-toggle'));
+      await fireEvent.press(
+        screen.getByTestId('shelter-other-attributes-toggle'),
+      );
 
       expect(screen.queryByText('Pet Area')).not.toBeOnTheScreen();
       expect(screen.getByText('+3 more attributes')).toBeOnTheScreen();
     });
 
-    it('offers no toggle when every reported attribute is a stated need', () => {
-      render(
+    it('offers no toggle when every reported attribute is a stated need', async () => {
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -338,11 +341,11 @@ describe('ShelterCard', () => {
       ).not.toBeOnTheScreen();
     });
 
-    it('does not cap the needs shown, however many there are', () => {
+    it('does not cap the needs shown, however many there are', async () => {
       // The tag count tracks the need set the user chose; truncating it would
       // hide the consequence of over-selecting.
       const many = Array.from({ length: 20 }, (_, i) => `Need ${i + 1}`);
-      render(
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"
@@ -354,10 +357,10 @@ describe('ShelterCard', () => {
       many.forEach((need) => expect(screen.getByText(need)).toBeOnTheScreen());
     });
 
-    it('shows all attributes uncollapsed when there are no client needs', () => {
+    it('shows all attributes uncollapsed when there are no client needs', async () => {
       // No needs means nothing to compare against, so collapsing would empty
       // the row. Callers without client context rely on this.
-      render(
+      await render(
         <ShelterCard
           id="s-1"
           name="Jackson Foundation Haven"

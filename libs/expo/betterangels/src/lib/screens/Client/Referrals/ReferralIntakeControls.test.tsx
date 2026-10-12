@@ -1,4 +1,3 @@
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
@@ -12,8 +11,8 @@ vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
 
-function mountForm(store: ReferralDraftStore) {
-  return render(
+async function mountForm(store: ReferralDraftStore) {
+  return await render(
     <ReferralDraftProvider store={store}>
       <ReferralIntakeForm
         onCancel={vi.fn()}
@@ -24,7 +23,7 @@ function mountForm(store: ReferralDraftStore) {
   );
 }
 
-function setup() {
+async function setup() {
   let saved: string | null = null;
   const persistence = {
     load: () => (saved === null ? null : JSON.parse(saved)),
@@ -37,13 +36,13 @@ function setup() {
   };
   const store = createReferralDraftStore(persistence);
   store.startNew('client-1');
-  const view = mountForm(store);
+  const view = await mountForm(store);
   return {
     store,
-    restart: () => {
-      view.unmount();
+    restart: async () => {
+      await view.unmount();
       const reloaded = createReferralDraftStore(persistence);
-      mountForm(reloaded);
+      await mountForm(reloaded);
       return reloaded;
     },
   };
@@ -57,73 +56,79 @@ it.each([
   ['notes', 'Staff Observations / Notes'],
 ] as const)(
   'edits and clears %s through its text control without changing other answers',
-  (key, label) => {
-    const { store, restart } = setup();
-    fireEvent.press(screen.getByTestId('selfcare-no-btn'));
-    fireEvent.changeText(screen.getByLabelText(label), 'First observation');
+  async (key, label) => {
+    const { store, restart } = await setup();
+    await fireEvent.press(screen.getByTestId('selfcare-no-btn'));
+    await fireEvent.changeText(
+      screen.getByLabelText(label),
+      'First observation',
+    );
     expect(store.getField(key)).toBe('First observation');
-    fireEvent.changeText(screen.getByLabelText(label), 'Revised observation');
+    await fireEvent.changeText(
+      screen.getByLabelText(label),
+      'Revised observation',
+    );
     expect(store.getField(key)).toBe('Revised observation');
-    fireEvent.changeText(screen.getByLabelText(label), '');
+    await fireEvent.changeText(screen.getByLabelText(label), '');
     expect(store.getField(key)).toBe('');
     expect(store.getField('selfcare')).toBe('No');
-    const reloaded = restart();
+    const reloaded = await restart();
     expect(screen.getByLabelText(label)).toHaveDisplayValue('');
     expect(reloaded.getField(key)).toBe('');
     expect(reloaded.getField('selfcare')).toBe('No');
   },
 );
 
-it('starts self-care unanswered, switches between Yes and No, and restores No as an answer', () => {
-  const { store, restart } = setup();
+it('starts self-care unanswered, switches between Yes and No, and restores No as an answer', async () => {
+  const { store, restart } = await setup();
   const yes = () => screen.getByTestId('selfcare-yes-btn');
   const no = () => screen.getByTestId('selfcare-no-btn');
   expect(yes().props.accessibilityState.selected).toBe(false);
   expect(no().props.accessibilityState.selected).toBe(false);
   expect(store.getField('selfcare')).toBeUndefined();
-  fireEvent.press(yes());
+  await fireEvent.press(yes());
   expect(store.getField('selfcare')).toBe('Yes');
   expect(yes().props.accessibilityState.selected).toBe(true);
-  fireEvent.press(no());
+  await fireEvent.press(no());
   expect(store.getField('selfcare')).toBe('No');
   expect(yes().props.accessibilityState.selected).toBe(false);
   expect(no().props.accessibilityState.selected).toBe(true);
-  restart();
+  await restart();
   expect(no().props.accessibilityState.selected).toBe(true);
   expect(yes().props.accessibilityState.selected).toBe(false);
 });
 
-it('records consent as a boolean and keeps an unchecked answer unchecked after restart', () => {
-  const { store, restart } = setup();
+it('records consent as a boolean and keeps an unchecked answer unchecked after restart', async () => {
+  const { store, restart } = await setup();
   expect(consent()).not.toBeChecked();
-  fireEvent.press(consent());
+  await fireEvent.press(consent());
   expect(consent()).toBeChecked();
   expect(store.getField('consent')).toBe(true);
-  fireEvent.press(consent());
+  await fireEvent.press(consent());
   expect(consent()).not.toBeChecked();
   expect(store.getField('consent')).toBe(false);
-  const reloaded = restart();
+  const reloaded = await restart();
   expect(consent()).not.toBeChecked();
   expect(reloaded.getField('consent')).toBe(false);
 });
 
-it('restores text, multiline notes, consent, and choices together from a new store instance', () => {
-  const { store, restart } = setup();
-  fireEvent.changeText(
+it('restores text, multiline notes, consent, and choices together from a new store instance', async () => {
+  const { store, restart } = await setup();
+  await fireEvent.changeText(
     screen.getByLabelText('Substances'),
     'Fictional sensitive answer',
   );
-  fireEvent.changeText(
+  await fireEvent.changeText(
     screen.getByLabelText('Staff Observations / Notes'),
     'First line\nSecond line',
   );
-  fireEvent.press(consent());
-  fireEvent.press(screen.getByTestId('selfcare-yes-btn'));
-  fireEvent.press(screen.getByTestId('pets-CATS-btn'));
+  await fireEvent.press(consent());
+  await fireEvent.press(screen.getByTestId('selfcare-yes-btn'));
+  await fireEvent.press(screen.getByTestId('pets-CATS-btn'));
   expect(store.getSnapshot()?.pii).toEqual({
     substances: 'Fictional sensitive answer',
   });
-  const reloaded = restart();
+  const reloaded = await restart();
   expect(screen.getByLabelText('Substances')).toHaveDisplayValue(
     'Fictional sensitive answer',
   );
