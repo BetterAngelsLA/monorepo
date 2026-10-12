@@ -3,6 +3,7 @@
 from typing import List, cast
 
 import strawberry
+from graphql import GraphQLError
 from strawberry import ID, Info
 from strawberry_django.auth.utils import get_current_user
 
@@ -49,11 +50,16 @@ class Query:
         """
         user = cast(AccountUser, get_current_user(info))
         obj = _resolve_target(user, target_type, object_id)
-        actions = object_audit_log(
-            obj=obj,
-            target_type=target_type.value,
-            limit=limit,
-            offset=offset,
-            include_snapshot=include_snapshot,
-        )
+        try:
+            actions = object_audit_log(
+                obj=obj,
+                target_type=target_type.value,
+                limit=limit,
+                offset=offset,
+                include_snapshot=include_snapshot,
+            )
+        except ValueError as error:
+            # A bad ``limit``/``offset`` is caller input, not a server fault;
+            # surface it as a GraphQL error rather than a 500 (§10 cap).
+            raise GraphQLError(str(error)) from error
         return [to_action_type(action) for action in actions]

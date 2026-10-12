@@ -12,6 +12,7 @@ from accounts.models import User
 from audit.selectors import (
     _EXCLUDED_EVENT_MODELS,
     LABEL_FIELD,
+    MAX_LIMIT,
     THROUGH_EVENT_MAP,
     object_audit_log,
 )
@@ -154,9 +155,9 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
     def test_insert_renders_non_null_fields_and_resolves_fk_labels(self) -> None:
         with audit_context(user=self.user):
-            Reservation.objects.create(bed=self.bed, status=ReservationStatusChoices.CANCELLED)
+            reservation = Reservation.objects.create(bed=self.bed, status=ReservationStatusChoices.CANCELLED)
 
-        actions = object_audit_log(obj=self.bed, target_type="BED")
+        actions = object_audit_log(obj=reservation, target_type="RESERVATION")
         add_action = _action_with(actions, "Cancelled")
 
         self.assertIsNotNone(add_action)
@@ -256,6 +257,18 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
         self.assertEqual(actions, [])
 
+    def test_limit_and_offset_are_validated(self) -> None:
+        # An oversized/non-positive limit or a negative offset is caller input
+        # and must raise rather than slicing unboundedly (§10 cap).
+        for limit, offset in ((0, 0), (MAX_LIMIT + 1, 0), (50, -1)):
+            with self.subTest(limit=limit, offset=offset):
+                with self.assertRaises(ValueError):
+                    object_audit_log(obj=self.shelter, target_type="SHELTER", limit=limit, offset=offset)
+
+    def test_max_limit_is_the_inclusive_upper_bound(self) -> None:
+        actions = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=MAX_LIMIT)
+        self.assertIsInstance(actions, list)
+
     def test_sql_pagination_returns_the_requested_page(self) -> None:
         for name in ("Page One", "Page Two", "Page Three"):
             with audit_context(user=self.user):
@@ -281,6 +294,35 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         # object's whole history into Python first (§10).
         self.assertIn("GROUP BY", sql)
         self.assertIn("LIMIT 1", sql)
+
+    def test_busy_object_query_count_is_bounded_and_page_size_independent(self) -> None:
+        # The aggregate CTE spans every event model referencing the target (§10).
+        # A busy object must still be served with a bounded number of queries,
+        # and asking for a bigger page must not cost more queries — the
+        # query-count/latency guard §10/§20 commits to (not just the GROUP BY
+        # string check above).
+        #
+        # Each action is an M2M change so both pages resolve the same related
+        # model: event tables have independent ``pgh_id`` sequences, and in a
+        # test transaction ``pgh_created_at`` is constant, so the cross-table
+        # tie-break ordering is not meaningful for mixing models in one page.
+        for index in range(25):
+            with audit_context(user=self.user):
+                target = self.demographic_couples if index % 2 == 0 else self.demographic_all
+                self.shelter.demographics.set([target])
+
+        with CaptureQueriesContext(connection) as one:
+            object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1)
+        with CaptureQueriesContext(connection) as many:
+            object_audit_log(obj=self.shelter, target_type="SHELTER", limit=50)
+
+        self.assertEqual(len(one), len(many))
+        self.assertLessEqual(len(many), 4)
+
+        sql = " ".join(query["sql"] for query in many.captured_queries).lower()
+        # Filtering (the seed exclusion) is pushed into SQL, not applied in Python.
+        self.assertIn("seed", sql)
+        self.assertIn("group by", sql)
 
     # ── §19 multi-word M2M columns (the regression-prone names) ──────────────
 
@@ -347,12 +389,28 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         # A bed reaches the reservations on it and its own TrackedBed* proxies.
         self.assertIn("shelters.ReservationEvent", labels)
 
+    def test_room_and_bed_logs_exclude_reservations_but_keep_config_changes(self) -> None:
+        # ``references()`` matches ``ReservationEvent`` via ``room_id``/``bed_id``,
+        # but the *log* filters it out: a room/bed log is its own configuration,
+        # not every stay that referenced it (§10).
+        with audit_context(user=self.user):
+            Reservation.objects.create(bed=self.bed, room=self.room, status=ReservationStatusChoices.CANCELLED)
+        with audit_context(user=self.user):
+            self.room.name = "Renamed Room"
+            self.room.save()
+
+        room_actions = object_audit_log(obj=self.room, target_type="ROOM")
+        self.assertEqual(len(room_actions), 1)
+        self.assertEqual(room_actions[0].field_changes.get("name"), ["Room A", "Renamed Room"])
+
+        self.assertEqual(object_audit_log(obj=self.bed, target_type="BED"), [])
+
     def test_references_boundary_for_room(self) -> None:
         labels = {event_model._meta.label for event_model in event_models(references_model=Room)}
 
         self.assertEqual(labels, _EXPECTED_ROOM_REFERENCES)
-        # Counter-intuitive but intended: a room's log includes BedEvent and
-        # ReservationEvent because both carry a room_id FK (§10, §20).
+        # ``references()`` matches these, but the Room *log* drops ReservationEvent
+        # (see the exclusion test above); BedEvent stays (beds in the room).
         self.assertIn("shelters.BedEvent", labels)
         self.assertIn("shelters.ReservationEvent", labels)
 
@@ -387,8 +445,10 @@ _EXPECTED_SHELTER_REFERENCES = {
     "referrals.ReferralEvent",
 }
 
-# Bed/Room reference sets, pinned literally (like the Shelter set) so adding a
-# model with a bed_id/room_id FK must be acknowledged, not silently absorbed.
+# Bed/Room ``references()`` match sets, pinned literally (like the Shelter set)
+# so adding a model with a bed_id/room_id FK must be acknowledged, not silently
+# absorbed. These are the *match* sets — the Room/Bed log additionally drops
+# ``ReservationEvent`` (§10).
 _EXPECTED_BED_REFERENCES = {
     "shelters.BedEvent",
     "shelters.ReservationEvent",

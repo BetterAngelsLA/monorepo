@@ -30,10 +30,25 @@ from shelters.models import Bed, Room, Shelter
 # Mechanical columns dropped from rendered changes (ADR 0004 Phase 1 note / §13).
 _MECHANICAL_FIELDS = frozenset({"created_at", "updated_at"})
 
+# Upper bound on a single page of actions. Each action carries N events, and
+# with ``include_snapshot=True`` each event carries the object's full state, so
+# an uncapped ``limit`` is an easy way to request an unbounded response (§10).
+MAX_LIMIT = 200
+
 # The single deliberate exclusion from a Shelter's log (§10). ``references()``
 # unions every event model with an FK to the target, so this is a blocklist
 # (default-inclusive) rather than a hand-maintained allowlist.
 _EXCLUDED_EVENT_MODELS = ("referrals.ReferralEvent",)
+
+# Additional, target-scoped exclusions. A Room/Bed log is about that object's
+# own configuration and occupancy, not every reservation that ever referenced
+# it (``references()`` includes ``ReservationEvent`` via its ``room_id``/
+# ``bed_id``, which is the main volume driver for a busy room/bed). Reservation
+# history is still available via ``objectAuditLog(RESERVATION)``.
+_SCOPED_EXCLUSIONS: dict[str, tuple[str, ...]] = {
+    "ROOM": ("shelters.ReservationEvent",),
+    "BED": ("shelters.ReservationEvent",),
+}
 
 # Labels that are recorded but rendered as a reason rather than an actor (§11).
 _SYSTEM_REASON_LABELS = frozenset({"import", "clone"})
@@ -47,23 +62,22 @@ _HIDDEN_LABELS = frozenset({"reservation.status_change"})
 # Django's auto-generated name (the related model, lowercased, underscores
 # stripped). Verified against the migration and by introspection.
 THROUGH_EVENT_MAP: dict[str, tuple[str, str]] = {
-    "shelters.TrackedDemographicEvent": ("shelter_id", "demographic"),
-    "shelters.TrackedSpecialSituationRestrictionEvent": ("shelter_id", "specialsituationrestriction"),
-    "shelters.TrackedShelterTypeEvent": ("shelter_id", "sheltertype"),
-    "shelters.TrackedRoomStyleEvent": ("shelter_id", "roomstyle"),
     "shelters.TrackedAccessibilityEvent": ("shelter_id", "accessibility"),
-    "shelters.TrackedStorageEvent": ("shelter_id", "storage"),
-    "shelters.TrackedPetEvent": ("shelter_id", "pet"),
-    "shelters.TrackedParkingEvent": ("shelter_id", "parking"),
-    "shelters.TrackedEntryRequirementEvent": ("shelter_id", "entryrequirement"),
-    "shelters.TrackedVaccinationRequirementEvent": ("shelter_id", "vaccinationrequirement"),
     "shelters.TrackedCityEvent": ("shelter_id", "city"),
-    "shelters.TrackedSPAEvent": ("shelter_id", "spa"),
-    "shelters.TrackedShelterProgramEvent": ("shelter_id", "shelterprogram"),
-    "shelters.TrackedFunderEvent": ("shelter_id", "funder"),
+    "shelters.TrackedDemographicEvent": ("shelter_id", "demographic"),
+    "shelters.TrackedEntryRequirementEvent": ("shelter_id", "entryrequirement"),
     "shelters.TrackedExitPolicyEvent": ("shelter_id", "exitpolicy"),
+    "shelters.TrackedFunderEvent": ("shelter_id", "funder"),
+    "shelters.TrackedParkingEvent": ("shelter_id", "parking"),
+    "shelters.TrackedPetEvent": ("shelter_id", "pet"),
     "shelters.TrackedReferralRequirementEvent": ("shelter_id", "referralrequirement"),
+    "shelters.TrackedSPAEvent": ("shelter_id", "spa"),
     "shelters.TrackedServiceEvent": ("shelter_id", "service"),
+    "shelters.TrackedShelterProgramEvent": ("shelter_id", "shelterprogram"),
+    "shelters.TrackedShelterTypeEvent": ("shelter_id", "sheltertype"),
+    "shelters.TrackedSpecialSituationRestrictionEvent": ("shelter_id", "specialsituationrestriction"),
+    "shelters.TrackedStorageEvent": ("shelter_id", "storage"),
+    "shelters.TrackedVaccinationRequirementEvent": ("shelter_id", "vaccinationrequirement"),
     "shelters.TrackedBedAccessibilityEvent": ("bed_id", "accessibility"),
     "shelters.TrackedBedDemographicEvent": ("bed_id", "demographic"),
     "shelters.TrackedBedFunderEvent": ("bed_id", "funder"),
@@ -73,6 +87,7 @@ THROUGH_EVENT_MAP: dict[str, tuple[str, str]] = {
     "shelters.TrackedRoomDemographicEvent": ("room_id", "demographic"),
     "shelters.TrackedRoomFunderEvent": ("room_id", "funder"),
     "shelters.TrackedRoomPetEvent": ("room_id", "pet"),
+    "shelters.TrackedRoomStyleEvent": ("shelter_id", "roomstyle"),
 }
 
 # Related-model display attribute (§14). Falls back to the raw id when absent.
@@ -401,9 +416,18 @@ def object_audit_log(
     *target_type* is the ``AuditTargetType`` value (``SHELTER``/``ROOM``/``BED``/
     ``RESERVATION``) echoed onto each event. Pagination is done in SQL (§10):
     only the requested page's action keys are fetched from the aggregate CTE.
+
+    Raises ``ValueError`` for a non-positive/oversized ``limit`` or a negative
+    ``offset`` (§10 cap): callers surface this as a GraphQL error.
     """
+    if limit < 1 or limit > MAX_LIMIT:
+        raise ValueError(f"limit must be between 1 and {MAX_LIMIT}.")
+    if offset < 0:
+        raise ValueError("offset must be non-negative.")
+
     target_id = str(obj.pk)
-    base = AuditWriteEvent.objects.references([obj]).exclude(pgh_model__in=_EXCLUDED_EVENT_MODELS).exclude(label="seed")
+    excluded = (*_EXCLUDED_EVENT_MODELS, *_SCOPED_EXCLUSIONS.get(target_type, ()))
+    base = AuditWriteEvent.objects.references([obj]).exclude(pgh_model__in=excluded).exclude(label="seed")
     key_expr = _action_key_expr()
 
     # 1) Action keys for the requested page, grouped and limited in SQL.

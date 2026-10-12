@@ -4,8 +4,9 @@ from contextlib import contextmanager
 from typing import Any, Iterator
 
 import pghistory
-from accounts.models import User
 from django.db import connection
+
+from accounts.models import User
 
 
 @contextmanager

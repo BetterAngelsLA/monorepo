@@ -4,6 +4,7 @@ from model_bakery import baker
 
 from accounts.models import Role, User
 from accounts.services import role_assign, sync_roles
+from audit.selectors import MAX_LIMIT
 from audit.tests.utils import audit_context
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
@@ -173,6 +174,20 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         response = self._query("SHELTER", self.shelter.id, limit=5, offset=50)
 
         self.assertEqual(response["data"]["objectAuditLog"], [])
+
+    def test_limit_over_the_cap_is_a_graphql_error_not_a_crash(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        response = self._query("SHELTER", self.shelter.id, limit=MAX_LIMIT + 1)
+
+        self.assertGraphQLError(response, f"limit must be between 1 and {MAX_LIMIT}")
+
+    def test_negative_offset_is_a_graphql_error(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        response = self._query("SHELTER", self.shelter.id, offset=-1)
+
+        self.assertGraphQLError(response, "offset must be non-negative")
 
     def test_include_snapshot_returns_full_object_state(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
