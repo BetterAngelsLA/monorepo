@@ -6,7 +6,13 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ComponentType, ReactElement, useEffect, useState } from 'react';
+import {
+  Activity,
+  ComponentType,
+  ReactElement,
+  useEffect,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import {
@@ -16,7 +22,6 @@ import {
 import { FeatureFlags } from '../../static';
 import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
-import { CollapsibleHeader } from './CollapsibleHeader';
 import { ClientNavMenu } from './ClientNavMenu';
 import ClientProfileView from './ClientProfile';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
@@ -191,9 +196,11 @@ export default function Client({
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         px={0}
       >
-        <CollapsibleHeader visible={showHeader}>
+        {/* Hidden rather than unmounted: a fresh image element means the browser
+            lays out and decodes the profile photo again. */}
+        <Activity mode={showHeader ? 'visible' : 'hidden'}>
           <ClientHeader client={data?.clientProfile} />
-        </CollapsibleHeader>
+        </Activity>
         <UploadProgressBar />
         <ClientTabs selectedTab={activeTab} setTab={setTab} />
         {getTabComponent(activeTab, data, openCard)}
