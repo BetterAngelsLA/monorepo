@@ -6,10 +6,6 @@ import {
   defaultMapOrganizations,
 } from './createUserProvider';
 
-import { configureActiveOrgStorage, getActiveOrgId } from '../../../activeOrg';
-// Test-only reset, deliberately off the package barrel.
-import { resetActiveOrgStoreForTests } from '../../../activeOrg/activeOrgStore';
-
 const mockUseQuery = vi.fn();
 const mockReadQuery = vi.fn(() => null);
 
@@ -44,44 +40,6 @@ function PermissionProbe() {
 
   return <span data-testid="probe">{`${canAdd}:${canDelete}`}</span>;
 }
-
-describe('active org wiring', () => {
-  afterEach(() => {
-    resetActiveOrgStoreForTests();
-    mockReadQuery.mockReset();
-    mockReadQuery.mockReturnValue(null);
-  });
-
-  it('derives the org from the organizations the query cached', async () => {
-    let remembered: string | null = 'org-stale';
-    configureActiveOrgStorage({
-      get: () => remembered,
-      set: (next) => {
-        remembered = next;
-      },
-    });
-    // What Apollo writes to the cache when the response lands — before React
-    // re-renders, which is what lets a request from that render see it.
-    mockReadQuery.mockReturnValue({
-      currentUser: { organizations: [{ id: 'org-2', name: 'Two' }] },
-    });
-    mockUseQuery.mockReturnValue({
-      data: undefined,
-      loading: true,
-      error: undefined,
-      refetch: vi.fn(),
-    });
-
-    await render(
-      <UserProvider>
-        <span>child</span>
-      </UserProvider>,
-    );
-
-    // A remembered org the user is not in is replaced by one they are.
-    expect(getActiveOrgId()).toBe('org-2');
-  });
-});
 
 describe('defaultMapOrganizations', () => {
   it('keeps only the permission strings the frontend models', () => {

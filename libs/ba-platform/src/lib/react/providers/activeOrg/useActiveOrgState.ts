@@ -1,9 +1,16 @@
 import { isPermission } from '@monorepo/ba-platform/permissions';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 
 import {
+  configureActiveOrgSource,
   getActiveOrgId,
   setActiveOrgId as commitActiveOrgId,
   subscribeActiveOrgId,
@@ -49,8 +56,10 @@ export interface ActiveOrgState {
  * Active organization selection, backed by the active-org store.
  *
  * Owns *validation*: the store holds what the user chose, and derives the
- * effective id from the organization list its source reports. Consumers can rely
- * on ``activeOrg`` alone — there is no readiness flag to wait on.
+ * effective id from the organizations passed here. Consumers can rely on
+ * ``activeOrg`` alone — there is no readiness flag to wait on. ``undefined``
+ * organizations mean the list is not known yet, which keeps the remembered id in
+ * play instead of treating the user as belonging to nothing.
  *
  * This hook is the ORG-SCOPED gate only.  ``hasPermission`` checks the active
  * org's EFFECTIVE entry, never a global list: org entries are enforcement-
@@ -71,27 +80,49 @@ export interface ActiveOrgState {
  * state (``activeOrg``/``organizations``) are sanitized the same way, so their
  * ``permissions`` hold only modeled permissions.
  */
-export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
-  // No reconciliation: the store derives the id from the same two inputs this
-  // hook renders from — the remembered id and the user's organizations — so a
-  // stale remembered id simply reads as the first organization, here and in the
-  // request header alike. Choosing one is `setActiveOrgId`.
-  const activeOrgId = useSyncExternalStore(
-    subscribeActiveOrgId,
-    getActiveOrgId,
-    getActiveOrgId,
-  );
-
+export function useActiveOrgState(
+  organizations: Org[] | undefined,
+): ActiveOrgState {
   // Exposed orgs carry only the permissions the frontend models: raw backend
   // ``app.codename`` strings are filtered once here, so ``activeOrg`` and
   // ``organizations`` never leak a permission ``hasPermission`` cannot check.
   const cleanOrgs = useMemo(
     () =>
-      organizations.map((org) => ({
+      (organizations ?? []).map((org) => ({
         ...org,
         permissions: (org.permissions ?? []).filter(isPermission),
       })),
     [organizations],
+  );
+
+  // The store derives the id — the remembered one if the user still belongs to
+  // it, otherwise their first organization — so this is where it learns who the
+  // user belongs to. `undefined` means "not known yet", which is not the same as
+  // belonging to nothing: requests keep the remembered id in that window rather
+  // than going out unattributed.
+  //
+  // In a layout effect because a query issued from a child's *passive* effect has
+  // to see it, and layout effects all run before any of those. The write is
+  // legal here (an effect, not a render) and the store notifies only if the
+  // derived id actually moved.
+  useLayoutEffect(() => {
+    configureActiveOrgSource(
+      organizations === undefined ? () => null : () => cleanOrgs,
+    );
+  }, [organizations, cleanOrgs]);
+
+  // Forget the list on unmount: a request from a session that is on its way out
+  // must not derive an organization from the one that just left.
+  useEffect(() => () => configureActiveOrgSource(() => null), []);
+
+  // No reconciliation: the store derives the id from the same two inputs this
+  // hook renders from, so a stale remembered id simply reads as the first
+  // organization, here and in the request header alike. Choosing one is
+  // `setActiveOrgId`.
+  const activeOrgId = useSyncExternalStore(
+    subscribeActiveOrgId,
+    getActiveOrgId,
+    getActiveOrgId,
   );
 
   const activeOrg = useMemo(

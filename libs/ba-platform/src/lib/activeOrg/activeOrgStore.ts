@@ -51,13 +51,19 @@ const unknownOrganizations = (): null => null;
 let organizationSource: ActiveOrgSource = unknownOrganizations;
 
 /**
- * Install the platform's organization reader.
+ * Install the organization reader.
  *
- * Reads nothing: it is consulted lazily, so it can be installed at any point
- * before the first org-scoped request.
+ * Reads nothing: the reader is consulted lazily, when the header is needed or the
+ * snapshot is taken. Notifies only when the change moves the *derived id*, so a
+ * caller that installs a fresh closure on every render cannot make subscribers
+ * loop.
  */
 export const configureActiveOrgSource = (next: ActiveOrgSource): void => {
+  const before = getActiveOrgId();
+
   organizationSource = next;
+
+  if (getActiveOrgId() !== before) notify();
 };
 
 const inMemoryPersistence = (): ActiveOrgPersistence => {
