@@ -36,25 +36,21 @@ export type THeaderStyleName = keyof typeof headerStyles;
 const HEADER_SLOT_INSET = 12;
 
 /**
- * Leading inset for a header's left slot.
+ * Leading inset for a header's left slot. Web-only: the JS (web) header lays
+ * `headerLeft` flush against the screen edge while the native bars inset it, so
+ * without this the "Back" label touches the window edge on web only.
  *
- * The JS (web) header lays `headerLeft` flush against the screen edge, while the
- * native bars inset it, so without this the "Back" label touches the window edge
- * on web only. Applied by wrapping the slot in a View: the
- * `headerLeftContainerStyle` screen option is declared by the JS stack rather
- * than native-stack, so passing it is a type error, and a wrapper also does not
- * depend on the vendored fork continuing to forward undeclared options.
- *
- * Web-only: the native bars already inset themselves.
+ * Applied by wrapping the slot in a View: `headerLeftContainerStyle` is declared
+ * by the JS stack rather than native-stack, so passing it is a type error, and a
+ * wrapper does not rely on the vendored fork forwarding undeclared options.
  */
 export const headerLeftInsetStyle =
   Platform.OS === 'web' ? { paddingStart: HEADER_SLOT_INSET } : undefined;
 
 /**
- * Trailing inset for a header's right slot — the mirror of
- * {@link headerLeftInsetStyle}, for the same reason. Every right slot needs it
- * (the "Edit" buttons, the client screen's overflow menu, the modal close
- * button), so apply it to the slot's content rather than to one kind of button.
+ * Trailing mirror of {@link headerLeftInsetStyle}. Every right slot needs it (the
+ * "Edit" buttons, the client screen's overflow menu, the modal close button), so
+ * apply it to the slot's content rather than to one kind of button.
  */
 export const headerRightInsetStyle =
   Platform.OS === 'web' ? { paddingEnd: HEADER_SLOT_INSET } : undefined;

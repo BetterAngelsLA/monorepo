@@ -3,13 +3,10 @@
  * counterpart and must export the same three functions.
  *
  * `expo-secure-store`'s web build is an empty module (`export default {}`), so
- * its calls fail at use time and a browser has no OS keychain to fall back to.
- * The prefix lives here so the hook's storage key is the same logical key on
- * both platforms.
- *
- * Scope note: `localStorage` is readable by any script on the origin, so it is
- * not a secure store. That is acceptable because this only pre-fills the email
- * field for convenience — never tokens or credentials.
+ * its calls fail at use time and a browser has no OS keychain; the prefix below
+ * keeps the hook's logical key identical on both platforms. `localStorage` is not
+ * a secure store, which is acceptable because this only pre-fills the email
+ * field — never tokens or credentials.
  */
 const STORAGE_PREFIX = 'ba.rememberedEmail.';
 

@@ -117,11 +117,9 @@ export const interceptorHmis: FetchInterceptor = async (input, init, next) => {
   const headers = new Headers(init.headers);
   const url = getUrl(input);
 
-  // 1. Authorization Header
   const token = await getAuthTokenHmis();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  // 2. Standard HMIS Headers
   headers.set(HEADER_NAMES.ACCEPT, HEADER_VALUES.ACCEPT_JSON_ALL);
   headers.set(
     HEADER_NAMES.X_REQUESTED_WITH,
@@ -130,7 +128,6 @@ export const interceptorHmis: FetchInterceptor = async (input, init, next) => {
 
   const response = await next(input, { ...init, headers });
 
-  // 3. Capture API URL & Domain Context
   const setCookie = response.headers.get('set-cookie');
   if (setCookie) {
     const splitCookies = splitCookiesString(setCookie);
@@ -153,7 +150,7 @@ export const interceptorHmis: FetchInterceptor = async (input, init, next) => {
       targetDomain = await AsyncStorage.getItem(HMIS_AUTH_DOMAIN_STORAGE_KEY);
     }
 
-    // Only set cookies to the target domain if they explicitly match it
+    // Only set cookies whose domain matches the target
     if (targetDomain) {
       const host = new URL(targetDomain).hostname;
 

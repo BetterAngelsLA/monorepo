@@ -12,20 +12,13 @@ import { useUser } from '../../providers/user/UserProvider';
 import { clearSessionCookies } from './clearSessionCookies';
 
 /**
- * Clears every piece of local session state: in-flight uploads, cookies (the
- * HMIS `auth_token` included), the HMIS storage pointers, and cached
- * user-scoped data.
+ * Clears all local session state: in-flight uploads, cookies, the HMIS storage
+ * pointers and cached user-scoped data.
  *
- * Single home for the teardown used in two situations:
- * - after a server logout (`useSignOut`), and
- * - on the `/auth` screen, which catches sessions that died without a
- *   sign-out (401 redirects, app restart with an expired session).
- *
- * Each step is isolated: a failing native cleanup must never leave the user
- * "signed in" locally, since in both callers the session is already gone.
- *
- * One implementation for both platforms; only the cookie step differs, and that
- * lives in `clearSessionCookies` (+ its `.web` no-op).
+ * Single home for the teardown used after a server logout (`useSignOut`) and on
+ * the `/auth` screen, which catches sessions that died without a sign-out (401
+ * redirects, app restart with an expired session). Steps are isolated so a
+ * failing cleanup cannot leave the user "signed in" locally.
  */
 export default function useClearLocalSession() {
   const client = useApolloClient();
@@ -38,7 +31,6 @@ export default function useClearLocalSession() {
     // client record this session no longer has any business touching.
     cancelAllUploadRunners();
 
-    // Clears the HMIS `auth_token` cookie along with everything else.
     await clearSessionCookies();
 
     // The HMIS session pointers live in AsyncStorage, not the cookie jar —

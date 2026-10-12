@@ -144,27 +144,18 @@ export default function TabLayout() {
       </Tabs>
 
       {/*
-        Deliberately NOT a tab: as a `Tabs.Screen` it depended on cancelling the
+        Deliberately not a tab: as a `Tabs.Screen` it depended on cancelling the
         tab press, which web cannot do — the tab bar wraps every tab in an <a>, so
-        the navigation won and landed on an empty screen. A plain Pressable in the
-        layout never participates in navigation, on either platform.
-
-        Still gated on `hmisProdDemoEnabled`, which the placeholder tab expressed
-        with `href: hmisProdDemoEnabled ? null : undefined`.
+        the navigation won and landed on an empty screen. A plain Pressable never
+        participates in navigation on either platform.
 
         `pointerEvents` is load-bearing: without `box-none` this wrapper swallows
-        every tap in its square, so the white ring around the button eats presses
-        meant for the tab bar underneath.
+        every tap in its square, so the ring around the button eats presses meant
+        for the tab bar underneath.
 
-        It has to live in the `StyleSheet.create` entry, not in the inline style
-        beside it. react-native-web polyfills `box-none` only in the atomic
-        compiler (`StyleSheet/compiler/index.js`), which emits
-        `pointer-events:none !important` for the element plus `auto` for its
-        direct children; the inline path has no `pointerEvents` handling at all and
-        silently drops the value, leaving the computed style `auto`. Measured on
-        the running web app: inline -> `auto` and all four ring probes resolve to
-        this wrapper; in `StyleSheet.create` -> `none`, and the ring probes fall
-        through to the tab bar.
+        It has to come from the `StyleSheet.create` entry, not the inline style
+        beside it: react-native-web polyfills `box-none` only in the atomic
+        compiler, while the inline path drops the value and leaves it `auto`.
       */}
       {!hmisProdDemoEnabled && (
         <View

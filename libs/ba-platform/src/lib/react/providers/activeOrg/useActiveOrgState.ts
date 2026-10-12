@@ -38,15 +38,9 @@ export interface ActiveOrgState {
   /** Switch to a different org by its id. */
   setActiveOrgId: (orgId: string) => void;
   /**
-   * Whether the ACTIVE ORG can exercise *permission* — the org-scoped gate.
-   *
-   * The active org's entry is EFFECTIVE (the backend folds the global tier in
-   * only where it is enforceable per org — grant-only/dual domains — and adds
-   * the org-scoped grant/delegated/legacy arms), so this is the single
-   * membership test ADR 0001 §5.2 prescribes.  It deliberately does NOT consult
-   * the global list: a global holder must not see a legacy-only-domain control
-   * at an org whose ``PermissionGroup`` does not carry it, because the backend
-   * (``HasOrgPerm``) would refuse it (finding H2).
+   * Whether the ACTIVE ORG can exercise *permission* — the org-scoped gate. It
+   * deliberately does not consult the global list; see ``useActiveOrgState`` for
+   * why.
    */
   hasPermission: (permission: PermissionEnum) => boolean;
 }
@@ -94,20 +88,17 @@ export function useActiveOrgState(
     [organizations],
   );
 
-  // The store derives the id — the remembered one if the user still belongs to
-  // it, otherwise their first organization — so this is where it learns who the
-  // user belongs to. `undefined` means "not known yet", which is not the same as
-  // belonging to nothing: requests keep the remembered id in that window rather
-  // than going out unattributed.
+  // This is where the store learns who the user belongs to. `undefined` means
+  // "not known yet", which is not the same as belonging to nothing: requests keep
+  // the remembered id in that window rather than going out unattributed.
   //
-  // In a layout effect because a query issued from a child's *passive* effect has
-  // to see it, and layout effects all run before any of those. The write is
-  // legal here (an effect, not a render) and the store notifies only if the
-  // derived id actually moved.
+  // A layout effect because a query issued from a child's passive effect has to
+  // see it, and layout effects all run before any of those. The push is legal
+  // here (an effect, not a render).
   //
-  // Disposed from the effect's cleanup, so an unmounting (or changing) provider
-  // restores whatever was installed beneath it — nesting is real: shelter-web
-  // mounts one provider around the app and another inside it on /operator.
+  // Disposed from the cleanup, so an unmounting (or changing) provider restores
+  // whatever was installed beneath it — nesting is real: shelter-web mounts one
+  // provider around the app and another inside it on /operator.
   useLayoutEffect(() => {
     // Nothing to contribute while the list is unknown: leaving the slot alone
     // lets an outer provider's list stay in play, which is what keeps requests
@@ -118,9 +109,8 @@ export function useActiveOrgState(
   }, [organizations, cleanOrgs]);
 
   // No reconciliation: the store derives the id from the same two inputs this
-  // hook renders from, so a stale remembered id simply reads as the first
-  // organization, here and in the request header alike. Choosing one is
-  // `setActiveOrgId`.
+  // hook renders from, so a stale remembered id reads as the first organization
+  // here and in the request header alike. Choosing one is `setActiveOrgId`.
   const activeOrgId = useSyncExternalStore(
     subscribeActiveOrgId,
     getActiveOrgId,

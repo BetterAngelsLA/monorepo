@@ -1,11 +1,10 @@
 /**
  * The active organization id, held outside React.
  *
- * The ``X-Organization-ID`` header is attached by a fetch interceptor, which is
- * not a component and cannot read React state. Holding the id as React state
- * and mirroring it into storage gave the interceptor a copy that lagged the UI
- * — by a commit on web, by an ``AsyncStorage`` round trip on React Native — so
- * requests went out header-less while an organization was already on screen.
+ * The ``X-Organization-ID`` header comes from a fetch interceptor, which is not
+ * a component and cannot read React state. Mirroring React state into storage
+ * gave it a copy that lagged the UI, so requests went out header-less while an
+ * organization was already on screen.
  *
  * The id is *derived* on every read from two inputs — the id the user chose (or
  * the one remembered from last launch) and the organizations the user belongs to
@@ -49,10 +48,8 @@ export interface ActiveOrgSource {
  * Installed readers, innermost last.
  *
  * A stack because providers nest: `apps/shelter-web` mounts one around the whole
- * app and `OperatorApp` mounts another on a route inside it. A single slot meant
- * the inner provider's unmount disarmed the outer one, which then never
- * re-installed (its props had not changed) and left the app sending no
- * organization at all.
+ * app and `OperatorApp` another on a route inside it. A single slot let the inner
+ * provider's unmount disarm the outer one, which then sent no organization at all.
  */
 const organizationSources: ActiveOrgSource[] = [];
 

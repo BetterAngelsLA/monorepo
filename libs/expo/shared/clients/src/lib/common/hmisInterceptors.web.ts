@@ -1,19 +1,12 @@
 /**
- * Direct-HMIS fetch interceptors — **web build**.
- *
- * HMIS is not supported on web yet, so every export here is inert. This module
- * exists so that the shared `@monorepo/expo/shared/clients` barrel can be
+ * Direct-HMIS fetch interceptors — web build. HMIS is unsupported on web, so
+ * every export is inert. The module exists so the shared clients barrel can be
  * imported in a browser without pulling in
- * `@preeternal/react-native-cookie-manager`, which calls
- * `TurboModuleRegistry.getEnforcing('CookieManager')` at import time and throws
- * before React ever renders.
+ * `@preeternal/react-native-cookie-manager`, whose import-time
+ * `TurboModuleRegistry.getEnforcing('CookieManager')` throws before React
+ * renders; the native mechanism cannot be ported — see `./hmisInterceptors.ts`.
  *
- * The native implementation in `./hmisInterceptors.ts` cannot be ported as-is:
- * it copies cookies out of the `Set-Cookie` response header, and in a browser
- * `Set-Cookie` is a forbidden header that always reads `null`. Making HMIS work
- * on web needs a different approach entirely.
- *
- * Keep this module's export surface identical to `./hmisInterceptors.ts`.
+ * Keep the export surface identical to `./hmisInterceptors.ts`.
  */
 import type { FetchInterceptor } from '@monorepo/fetch';
 

@@ -1,14 +1,11 @@
 /**
- * The app's keyboard surface — the **web** build. Counterpart of `Keyboard.tsx`.
+ * The app's keyboard surface — the web build, counterpart of `Keyboard.tsx`.
  *
- * Importing the package is safe (it ships a non-native `bindings.ts`), but using
- * it is not: its own fallback resolves `KeyboardAwareScrollView` to `undefined`,
- * which puts the sign-in screen in the error boundary. A browser needs none of
- * it — it scrolls the focused input into view itself and has no input-accessory
- * bar — so this half degrades to a plain `ScrollView` and no part of the package
- * enters the web bundle.
- *
- * Every export mirrors `Keyboard.tsx` one-for-one; keep them in step.
+ * Using the package here is unsafe: its own fallback resolves
+ * `KeyboardAwareScrollView` to `undefined`, which puts the sign-in screen in the
+ * error boundary. A browser scrolls the focused input into view itself and has no
+ * input-accessory bar, so everything here degrades to a plain `ScrollView`.
+ * Exports mirror `Keyboard.tsx` one-for-one; keep them in step.
  */
 import { forwardRef, type ReactNode } from 'react';
 import { ScrollView, type ScrollViewProps } from 'react-native';

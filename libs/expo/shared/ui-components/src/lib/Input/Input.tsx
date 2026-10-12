@@ -37,18 +37,16 @@ export interface IInputProps extends TMarginProps, TextInputProps {
   slotRight?: TInputSlot;
   asSelect?: boolean;
   /**
-   * Fills the field row — the row holding the input and the slots, not the label
-   * or the error line. An overlay can size itself with `100%`; anything it leaves
-   * uncovered stays interactive. The web date/time fields use it for their
-   * transparent `<input>`.
+   * Fills the field row (input and slots), not the label or error line. An
+   * overlay can size itself with `100%`; anything it leaves uncovered stays
+   * interactive. The web date/time fields use it for their transparent `<input>`.
    */
   fieldOverlay?: ReactNode;
   /**
-   * Makes the field a press target instead of something you type into: the input
-   * stays as display, leaves the tab order, and a target over the row reports the
-   * press. Use it for a select — a button, not a text field. `Picker` opens its
-   * modal from this rather than from `onFocus`, which react-native-web's Modal
-   * re-fires on close.
+   * Makes the field a press target instead of something you type into (use it for
+   * a select): the input stays as display, leaves the tab order, and a target over
+   * the row reports the press. `Picker` opens its modal from this rather than from
+   * `onFocus`, which react-native-web's Modal re-fires on close.
    */
   onPress?: () => void;
 }
@@ -185,10 +183,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
   },
-  /**
-   * Covers the field row. Rendered before the slots so they paint on top and keep
-   * their own taps.
-   */
+  /** Covers the field row; rendered before the slots so they keep their own taps. */
   pressTarget: {
     position: 'absolute',
     top: 0,
@@ -198,9 +193,8 @@ const styles = StyleSheet.create({
   },
   /**
    * Spelled out rather than spread from `StyleSheet.absoluteFill`, which
-   * react-native-web compiles to a class map. `box-none` has to come from the
-   * stylesheet as well: react-native-web only polyfills it through the atomic
-   * compiler.
+   * react-native-web compiles to a class map. `box-none` must come from the
+   * stylesheet: react-native-web polyfills it only through the atomic compiler.
    */
   fieldOverlay: {
     position: 'absolute',
@@ -224,10 +218,9 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xsm.fontSize,
     includeFontPadding: false,
     // `outlineWidth: 0`, not `outline: 'none'`: react-native-web's StyleSheet
-    // validator rejects CSS shorthands and *deletes* them (dev only), so the
-    // shorthand silently did nothing. `outlineStyle` is the literal translation
-    // but React Native's own types only allow 'solid' | 'dotted' | 'dashed' for
-    // it, so a zero width is the type-safe way to drop the focus ring.
+    // validator deletes CSS shorthands (dev only), and React Native's own types
+    // only allow 'solid' | 'dotted' | 'dashed' for `outlineStyle`, so a zero width
+    // is the type-safe way to drop the focus ring.
     ...Platform.select({ web: { outlineWidth: 0 } }),
   },
 });

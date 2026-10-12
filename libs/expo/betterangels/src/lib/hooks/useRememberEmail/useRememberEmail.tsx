@@ -9,7 +9,6 @@ export function useRememberedEmail(storageKey: string) {
   const [email, setEmail] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Load once
   useEffect(() => {
     (async () => {
       try {

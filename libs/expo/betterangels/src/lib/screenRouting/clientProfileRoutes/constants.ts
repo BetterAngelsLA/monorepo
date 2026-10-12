@@ -61,13 +61,9 @@ export const DEFAULT_RELATED_MODEL_SECTION: TRelatedModelSection =
 
 /**
  * A route can arrive without the `componentName` that in-app navigation supplies
- * (a direct URL, a bookmark, a refresh), so resolve to the route family's default
- * rather than throwing.
- *
- * Family-aware: a section that is valid but belongs to the *other* family resolves
- * to that family's default, so the config-map lookup is never unguarded. The
- * return type is the fallback's family, and the compiler rejects a value from the
- * other one. The sets above are the canonical statement of the families.
+ * (a direct URL, a bookmark, a refresh), so fall back to the route family's
+ * default rather than throwing — including for a section that is valid but
+ * belongs to the other family.
  */
 export function getClientProfileSectionOrDefault(
   value: unknown,

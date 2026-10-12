@@ -12,18 +12,15 @@ import { mergePickedDate } from './mergePickedDate';
 import { IWheelDatePickerProps } from './types';
 
 /**
- * Web build of {@link WheelDatePicker}.
- *
- * `@react-native-community/datetimepicker` is a native view with no browser
- * build. Rather than reimplement a wheel, this layers a transparent native
+ * Web build of {@link WheelDatePicker}. `@react-native-community/datetimepicker`
+ * is a native view with no browser build, so this layers a transparent
  * `<input type="date" | "time">` over the existing field chrome: the browser
- * supplies its own accessible picker (and keyboard entry), while the label,
- * error state, icon and margins stay identical to native.
+ * supplies the picker, while label, error, icon and margins stay identical to
+ * native.
  *
- * The `<input>` is handed to `Input` as `fieldOverlay`, which fills the field
- * row exactly. It is not positioned from the outside: the row's height varies
- * (font scale, the error line) and with a `label` an overlay anchored to the
- * wrapper would cover the label and leave the bottom of the field dead.
+ * The input is passed to `Input` as `fieldOverlay`, not positioned from outside:
+ * row height varies with font scale and the error line, so an overlay anchored to
+ * the wrapper would cover the label.
  */
 const INPUT_VALUE_FORMAT = {
   date: 'yyyy-MM-dd',
@@ -124,16 +121,11 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Style for the transparent click target covering the field.
- *
- * Kept as `CSSProperties` rather than a `StyleSheet` entry because it lands on a
- * real `<input>`: `border: 'none'` and `cursor: 'pointer'` are CSS, not React
- * Native style props, and `StyleSheet.create` rejects them.
- *
- * Fills the overlay box `Input` provides, so no height is hard-coded.
- *
- * `opacity: 0` rather than `display: none` so the browser still owns focus and
- * the picker affordance.
+ * Style for the transparent click target covering the field: a plain
+ * `CSSProperties` object, not a `StyleSheet` entry, because it lands on a real
+ * `<input>` and `StyleSheet.create` rejects CSS props like `border` and `cursor`.
+ * It fills the overlay box `Input` provides, and `opacity: 0` rather than
+ * `display: none` keeps browser focus.
  */
 const nativeInputStyle: CSSProperties = {
   width: '100%',
