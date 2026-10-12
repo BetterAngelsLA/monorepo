@@ -24,14 +24,14 @@
 const http = require('http');
 const https = require('https');
 
-const DEFAULT_PREFIX = '/__api';
+const API_PREFIX = '/__api';
 
 /**
  * Paths the CSRF interceptor fetches at the **origin root**, outside the API
  * prefix: `createCsrfInterceptor` mints a token by GETting `<origin>/admin/login/`.
  * Without these the token bootstrap misses the proxy and returns dev-server HTML.
  */
-const DEFAULT_BOOTSTRAP_PATHS = ['/admin/login'];
+const CSRF_BOOTSTRAP_PATHS = ['/admin/login'];
 
 /** Strip the attributes that stop a browser storing a cross-domain cookie. */
 function rewriteSetCookie(cookie) {
@@ -71,23 +71,22 @@ function sendJson(res, status, payload) {
 }
 
 /**
- * @returns {((middleware: any, server: any) => any) | null} a Metro
- * `enhanceMiddleware` function, or `null` when no target is configured.
+ * @returns {(middleware: any, server: any) => any} a Metro `enhanceMiddleware`
+ * function. Inert unless a target is configured.
  */
-function createDevApiProxy(options = {}) {
-  const prefix = options.prefix ?? DEFAULT_PREFIX;
-  const target = options.target ?? process.env.BA_DEV_PROXY_TARGET ?? '';
-  const bootstrapPaths = options.bootstrapPaths ?? DEFAULT_BOOTSTRAP_PATHS;
+function createDevApiProxy() {
+  const target = process.env.BA_DEV_PROXY_TARGET ?? '';
 
   const owns = (url) =>
-    url.startsWith(`${prefix}/`) ||
-    url === prefix ||
-    (!!target && bootstrapPaths.some((p) => url.startsWith(p)));
+    url.startsWith(`${API_PREFIX}/`) ||
+    url === API_PREFIX ||
+    (!!target && CSRF_BOOTSTRAP_PATHS.some((p) => url.startsWith(p)));
 
   return (middleware) => (req, res, next) => {
     // Always claim the API prefix so a missing target fails legibly rather than
     // 404ing through the dev server as if the app were misconfigured.
-    const isApiPath = req.url.startsWith(`${prefix}/`) || req.url === prefix;
+    const isApiPath =
+      req.url.startsWith(`${API_PREFIX}/`) || req.url === API_PREFIX;
 
     if (!owns(req.url)) return middleware(req, res, next);
 
@@ -97,13 +96,14 @@ function createDevApiProxy(options = {}) {
         error: 'Dev API proxy is not configured.',
         hint:
           'Start the dev server with BA_DEV_PROXY_TARGET set, e.g. ' +
-          'BA_DEV_PROXY_TARGET=https://api.dev.betterangels.la yarn nx serve betterangels',
+          'BA_DEV_PROXY_TARGET=https://api.dev.betterangels.la yarn nx serve betterangels, ' +
+          `and point the app at EXPO_PUBLIC_API_URL=http://${req.headers.host}${API_PREFIX}`,
       });
     }
 
     const targetUrl = new URL(target);
     const upstreamPath = isApiPath
-      ? req.url.slice(prefix.length) || '/'
+      ? req.url.slice(API_PREFIX.length) || '/'
       : req.url;
     const isHttps = targetUrl.protocol === 'https:';
     const transport = isHttps ? https : http;
@@ -135,7 +135,7 @@ function createDevApiProxy(options = {}) {
           outHeaders.location = rewriteLocation(
             outHeaders.location,
             targetUrl,
-            prefix,
+            API_PREFIX,
           );
         }
 
