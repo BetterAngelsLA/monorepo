@@ -756,11 +756,14 @@ filtered. The §20 boundary test derives the expected set from
 `event_models(references_model=...)` minus the blocklist, rather than a literal,
 so it cannot go stale.
 
-Unified fields: `timestamp`, `actor`, `kind` (`CHANGE` only for now), `action`
-(pghistory label), `target_type`, `target_id`, and `field_changes` (rendered per
-the `field_changes` contract below, not naively from `pgh_diff`). `kind` is
-introduced now even though it only ever takes `CHANGE`, so §28 can add `READ`
-without reshaping the model.
+Unified fields: `timestamp`, `actor`, `kind`, `action` (pghistory label),
+`target_type`, `target_id`, and `field_changes` (rendered per the `field_changes`
+contract below, not naively from `pgh_diff`). `kind` is the write *operation*
+derived from the event label suffix — `.add` → `INSERT`, `.remove` → `DELETE`,
+anything else → `UPDATE` — so it is always one of `INSERT`/`UPDATE`/`DELETE` on
+the write side. §28 adds a `READ` value (a read/write axis) alongside these three
+operation values without reshaping the model, so `kind` remains a single flat
+enum of four members.
 
 **Performance and pagination (decided).** `references()` widens the aggregate
 `Events` CTE to every event model with an FK to the target (a `UNION ALL` across
@@ -1115,7 +1118,7 @@ unrelated to reservations — the §7b context-`label` seed exclusion and the Ph
 
 ## 17. GraphQL types + query
 
-- Add `AuditActionType` (an action grouped by `pgh_context_id`, exposing `timestamp`, `actor`, `summary`, and a nested `events: [AuditEventType!]!` list), `AuditEventType`, `AuditEventKind` enum (`CHANGE`; `READ` is added in §28), and `AuditTargetType` enum in the `audit` app's types (e.g. `audit/types.py`).
+- Add `AuditActionType` (an action grouped by `pgh_context_id`, exposing `timestamp`, `actor`, `summary`, and a nested `events: [AuditEventType!]!` list), `AuditEventType`, `AuditEventKind` enum (`INSERT`/`UPDATE`/`DELETE`; `READ` is added in §28), and `AuditTargetType` enum in the `audit` app's types (e.g. `audit/types.py`).
 - `AuditEventType` gains an optional `snapshot: JSON` field (opt-in, §13) rendered from the event's `pgh_data`.
 - Add one query to a new `Query` class in `audit/schema.py`, `permission_classes=[IsAuthenticated]`. It returns a **plain list** of `AuditActionType`, not an `OffsetPaginated` wrapper — the selector produces grouped Python actions (not a queryset), so `strawberry_django.offset_paginated` cannot wrap it. Pagination is applied in SQL by the selector (§10), not as an in-memory slice of a fully-grouped list: the resolver forwards the explicit `limit`/`offset` args.
 
@@ -1503,7 +1506,7 @@ objectAuditLog(
 ): [AuditActionType!]!
 ```
 
-- `kinds` — `[CHANGE, READ]`; defaults to both.
+- `kinds` — `[INSERT, UPDATE, DELETE, READ]`; defaults to all.
 
 ---
 

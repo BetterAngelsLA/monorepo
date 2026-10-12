@@ -2,10 +2,13 @@
 
 from model_bakery import baker
 
+from accounts.models import Role, User
+from accounts.services import role_assign, sync_roles
 from audit.tests.utils import audit_context
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import DemographicChoices, ReservationStatusChoices
+from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 from shelters.models import Bed, Demographic, Reservation, ReservationClient, Shelter
 
 OBJECT_AUDIT_LOG_QUERY = """
@@ -125,6 +128,28 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         response = self._query("SHELTER", self.shelter.id)
 
         self.assertGraphQLError(response, "could not be found")
+
+    def test_global_tier_operator_can_read_a_cross_org_object(self) -> None:
+        # §18: unlike the scoped tier above, a Global Shelter Operator reaches
+        # any org's object — the primary audit surface for the global tier.
+        sync_roles()
+        gso = baker.make(User)
+        role_assign(user=gso, role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name))
+
+        with audit_context(label="seed"):
+            cross_org_shelter = Shelter.objects.create(name="Org 2 Shelter", organization=self.org_2)
+        with audit_context(user=gso):
+            cross_org_shelter.name = "Org 2 Renamed"
+            cross_org_shelter.save()
+
+        # The active-org header still points at org_1 (§2.4 never confines a
+        # global holder), yet the org_2 object resolves.
+        self.graphql_client.force_login(gso)
+        response = self._query("SHELTER", cross_org_shelter.id)
+        actions = response["data"]["objectAuditLog"]
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["Org 2 Shelter", "Org 2 Renamed"])
 
     def test_pagination_slices_actions(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)

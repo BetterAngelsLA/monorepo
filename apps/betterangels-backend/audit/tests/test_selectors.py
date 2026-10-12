@@ -16,8 +16,23 @@ from audit.selectors import (
     object_audit_log,
 )
 from audit.tests.utils import audit_context, clear_history_context
-from shelters.enums import DemographicChoices, ReservationStatusChoices
-from shelters.models import Bed, Demographic, Reservation, Room, Shelter
+from shelters.enums import (
+    DemographicChoices,
+    ExitPolicyChoices,
+    MedicalNeedChoices,
+    ReferralRequirementChoices,
+    ReservationStatusChoices,
+)
+from shelters.models import (
+    Bed,
+    Demographic,
+    ExitPolicy,
+    MedicalNeed,
+    ReferralRequirement,
+    Reservation,
+    Room,
+    Shelter,
+)
 
 
 def _action_with(actions: list[Any], value: Any) -> Any | None:
@@ -118,6 +133,22 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertNotIn("reservation.status_change", labels)
         self.assertIn("reservation.update", labels)
         self.assertEqual(action.field_changes["status"], ["Confirmed", "Checked In"])
+
+    def test_status_change_and_notes_update_render_both_field_changes(self) -> None:
+        # Two writes in one request (a status change + a notes edit) must merge
+        # into one action carrying *both* diffs — not just one winner row (§20).
+        with audit_context(user=self.user):
+            self.reservation.status = ReservationStatusChoices.CHECKED_IN
+            self.reservation.save()
+            self.reservation.notes = "Bed bugs reported"
+            self.reservation.save()
+
+        actions = object_audit_log(obj=self.reservation, target_type="RESERVATION")
+
+        self.assertEqual(len(actions), 1)
+        changes = actions[0].field_changes
+        self.assertEqual(changes["status"], ["Confirmed", "Checked In"])
+        self.assertEqual(changes["notes"], [None, "Bed bugs reported"])
 
     # ── §13/§14 INSERT and FK labels ─────────────────────────────────────────
 
@@ -251,6 +282,35 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertIn("GROUP BY", sql)
         self.assertIn("LIMIT 1", sql)
 
+    # ── §19 multi-word M2M columns (the regression-prone names) ──────────────
+
+    def test_multi_word_m2m_columns_render_via_the_through_map(self) -> None:
+        # The multi-word FK columns are the most likely to silently regress:
+        # Django strips underscores when auto-naming the through FK, so
+        # medical_needs -> medicalneed_id, exit_policy -> exitpolicy_id,
+        # referral_requirement -> referralrequirement_id (§19, §20).
+        with audit_context(user=self.user):
+            medical_need = MedicalNeed.objects.create(name=MedicalNeedChoices.ERC)
+            exit_policy = ExitPolicy.objects.create(name=ExitPolicyChoices.MIA)
+            referral_requirement = ReferralRequirement.objects.create(name=ReferralRequirementChoices.SELF_REFERRAL)
+            self.bed.medical_needs.set([medical_need])
+            self.shelter.exit_policy.set([exit_policy])
+            self.shelter.referral_requirement.set([referral_requirement])
+
+        bed_actions = object_audit_log(obj=self.bed, target_type="BED")
+        self.assertEqual(len(bed_actions), 1)
+        # Rendering the correct through FK column proves it was attributed
+        # rather than dropped to the non-M2M path (§19).
+        removed, added = bed_actions[0].field_changes["medical needs"]
+        self.assertEqual(removed, [])
+        self.assertEqual(added, ["erc"])
+
+        shelter_actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        self.assertEqual(len(shelter_actions), 1)
+        changes = shelter_actions[0].field_changes
+        self.assertEqual(changes["exit policy"], [[], ["mia"]])
+        self.assertEqual(changes["referral requirement"], [[], ["self_referral"]])
+
     # ── §19 through-map completeness / §10 references boundary ───────────────
 
     def test_through_event_map_covers_every_through_event_model(self) -> None:
@@ -279,6 +339,22 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(labels, _EXPECTED_SHELTER_REFERENCES)
         self.assertIn("referrals.ReferralEvent", labels)
         self.assertEqual(_EXCLUDED_EVENT_MODELS, ("referrals.ReferralEvent",))
+
+    def test_references_boundary_for_bed(self) -> None:
+        labels = {event_model._meta.label for event_model in event_models(references_model=Bed)}
+
+        self.assertEqual(labels, _EXPECTED_BED_REFERENCES)
+        # A bed reaches the reservations on it and its own TrackedBed* proxies.
+        self.assertIn("shelters.ReservationEvent", labels)
+
+    def test_references_boundary_for_room(self) -> None:
+        labels = {event_model._meta.label for event_model in event_models(references_model=Room)}
+
+        self.assertEqual(labels, _EXPECTED_ROOM_REFERENCES)
+        # Counter-intuitive but intended: a room's log includes BedEvent and
+        # ReservationEvent because both carry a room_id FK (§10, §20).
+        self.assertIn("shelters.BedEvent", labels)
+        self.assertIn("shelters.ReservationEvent", labels)
 
 
 _EXPECTED_SHELTER_REFERENCES = {
@@ -309,4 +385,26 @@ _EXPECTED_SHELTER_REFERENCES = {
     "shelters.TrackedReferralRequirementEvent",
     "shelters.TrackedServiceEvent",
     "referrals.ReferralEvent",
+}
+
+# Bed/Room reference sets, pinned literally (like the Shelter set) so adding a
+# model with a bed_id/room_id FK must be acknowledged, not silently absorbed.
+_EXPECTED_BED_REFERENCES = {
+    "shelters.BedEvent",
+    "shelters.ReservationEvent",
+    "shelters.TrackedBedAccessibilityEvent",
+    "shelters.TrackedBedDemographicEvent",
+    "shelters.TrackedBedFunderEvent",
+    "shelters.TrackedBedMedicalNeedEvent",
+    "shelters.TrackedBedPetEvent",
+}
+
+_EXPECTED_ROOM_REFERENCES = {
+    "shelters.BedEvent",
+    "shelters.ReservationEvent",
+    "shelters.RoomEvent",
+    "shelters.TrackedRoomAccessibilityEvent",
+    "shelters.TrackedRoomDemographicEvent",
+    "shelters.TrackedRoomFunderEvent",
+    "shelters.TrackedRoomPetEvent",
 }
