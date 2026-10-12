@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  API_PREFIX,
   deriveProxyTargets,
   namespaceSetCookie,
   readTargets,
@@ -248,6 +249,27 @@ describe('per-target cookie isolation', () => {
       ),
     ).toBe('sessionid=a; other=keep');
   });
+
+  it('drops an un-prefixed session cookie left by the single-target form', () => {
+    // Every target is sent this header, and Django parses last-wins, so a stale
+    // un-prefixed `sessionid` would outrank the target's own.
+    expect(
+      stripRequestCookies(
+        'sessionid=legacy; csrftoken=legacy; demo_sessionid=fresh; demo_csrftoken=fresh2',
+        'demo',
+        ['demo', 'production'],
+      ),
+    ).toBe('sessionid=fresh; csrftoken=fresh2');
+  });
+
+  it('does not let a target name shadow one that extends it', () => {
+    expect(
+      stripRequestCookies('a_sessionid=x; a_b_sessionid=y', 'a_b', [
+        'a',
+        'a_b',
+      ]),
+    ).toBe('sessionid=y');
+  });
 });
 
 describe('rewriteLocation', () => {
@@ -279,10 +301,34 @@ describe('rewriteLocation', () => {
     );
   });
 
-  it('leaves a relative redirect alone', () => {
+  it('prefixes a path-absolute redirect, which is the shape Django sends', () => {
     expect(rewriteLocation('/accounts/login/', api, '/__api/demo')).toBe(
-      '/accounts/login/',
+      '/__api/demo/accounts/login/',
     );
+  });
+
+  it('prefixes a protocol-relative redirect to the same host', () => {
+    expect(
+      rewriteLocation(
+        '//api.dev.betterangels.la/accounts/login/',
+        api,
+        '/__api/demo',
+      ),
+    ).toBe('/__api/demo/accounts/login/');
+  });
+
+  it('does not apply a target base path a second time', () => {
+    expect(
+      rewriteLocation(
+        'https://api.dev.betterangels.la/base/after',
+        new URL('https://api.dev.betterangels.la/base'),
+        '/__api/demo',
+      ),
+    ).toBe('/__api/demo/after');
+  });
+
+  it('leaves a Location with no path alone', () => {
+    expect(rewriteLocation('', api, '/__api/demo')).toBe('');
   });
 });
 
@@ -299,6 +345,10 @@ describe('the app and the proxy agree on target names', () => {
 
     const named = deriveProxyTargets(LOCAL_ENV);
 
+    // The proxy owns the literal, and the web build builds URLs from the app's
+    // copy of it: if they drift every request 404s through Metro while these
+    // tests stay green.
+    expect(DEV_API_PROXY_PREFIX).toBe(API_PREFIX);
     expect(environments.map(({ name }) => name)).toEqual([...named.keys()]);
 
     for (const { name, url } of environments) {

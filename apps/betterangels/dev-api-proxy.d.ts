@@ -5,6 +5,9 @@
  * exactly as it is. Keep in sync with that file.
  */
 
+/** The path the proxy mounts its targets under. The app builds URLs from it. */
+export const API_PREFIX: string;
+
 /** `name` → upstream API base URL, served under `/__api/<name>`. */
 export type DevProxyTargets = Map<string, string>;
 

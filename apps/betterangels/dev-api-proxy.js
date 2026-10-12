@@ -35,6 +35,9 @@ const API_PREFIX = '/__api';
  */
 const APP_READABLE_COOKIES = new Set(['csrftoken']);
 
+/** Every session cookie a target namespaces, so an un-prefixed one is a leftover. */
+const AUTH_COOKIES = new Set(['csrftoken', 'sessionid']);
+
 /** The named targets the app's own API URLs imply, in the order the app lists them. */
 const ENV_TARGETS = [
   ['production', 'EXPO_PUBLIC_API_URL'],
@@ -133,10 +136,12 @@ function namespaceSetCookie(cookie, target) {
 
 /**
  * The inverse: only this target's cookies travel, under their real names. Every
- * target's `csrftoken` sits at `Path=/`, so without this the others would be
- * sent too.
+ * target's `csrftoken` sits at `Path=/`, so without this the others would be sent
+ * too.
  */
 function stripRequestCookies(cookieHeader, target, names) {
+  const own = `${target}_`;
+
   return cookieHeader
     .split(';')
     .map((part) => part.trim())
@@ -145,37 +150,56 @@ function stripRequestCookies(cookieHeader, target, names) {
       const separator = part.indexOf('=');
       const name = separator === -1 ? part : part.slice(0, separator);
       const value = separator === -1 ? '' : part.slice(separator);
+      const mine = name.startsWith(own);
 
-      for (const other of names) {
-        if (other !== target && name.startsWith(`${other}_`)) return [];
+      if (!mine) {
+        // A bare session cookie is a leftover from the single-target form, or
+        // another tool. It goes to every target, and Django parses last-wins, so
+        // forwarding it lets a stale session outrank the target's own — requests
+        // silently attributed to the wrong session.
+        if (AUTH_COOKIES.has(name)) return [];
+
+        for (const other of names) {
+          if (other !== target && name.startsWith(`${other}_`)) return [];
+        }
       }
 
-      return [
-        `${
-          name.startsWith(`${target}_`) ? name.slice(target.length + 1) : name
-        }${value}`,
-      ];
+      return [`${mine ? name.slice(own.length) : name}${value}`];
     })
     .join('; ');
 }
 
 /**
- * Prefix the Location of a redirect back to this target. `autoRewrite` swaps only
- * the host — it keeps the upstream `https:` scheme and drops the prefix — so the
- * path is rewritten here and `autoRewrite` then leaves it alone.
+ * Point a redirect back at this target's prefix. `pathRewrite` is request-side
+ * only and http-proxy's own rewrite options cannot add a path, so a redirect has
+ * to be rewritten here.
  */
 function rewriteLocation(location, targetUrl, prefix) {
+  // `//host/path` is the upstream's scheme, not ours, so give it one to parse.
+  const absolute = location.startsWith('//') ? `http:${location}` : location;
+
   let parsed;
   try {
-    parsed = new URL(location);
+    parsed = new URL(absolute);
   } catch {
-    // Relative, or protocol-relative — `autoRewrite` handles the latter.
-    return location;
+    // Path-absolute, which is the shape of nearly every Django admin and allauth
+    // redirect. Left alone the browser would leave the proxy for the dev server
+    // and lose the prefix, the path-scoped session and the CSRF cookie name.
+    return location.startsWith('/') ? `${prefix}${location}` : location;
   }
 
   if (parsed.host !== targetUrl.host) return location;
 
-  return `${prefix}${parsed.pathname}${parsed.search}${parsed.hash}`;
+  // The target may carry its own path (`https://host/base`), and http-proxy
+  // prepends that on the way out — so prefixing the whole pathname would apply
+  // it a second time.
+  const base = targetUrl.pathname.replace(/\/+$/, '');
+  const rest =
+    base && parsed.pathname.startsWith(base)
+      ? parsed.pathname.slice(base.length)
+      : parsed.pathname;
+
+  return `${prefix}${rest || '/'}${parsed.search}${parsed.hash}`;
 }
 
 function sendJson(res, status, payload) {
@@ -197,15 +221,14 @@ function createTargetProxy(name, target, names) {
     // Host must be the API's or Django rejects the request; `Origin` goes with it
     // because Django's CSRF check compares the two against CSRF_TRUSTED_ORIGINS.
     changeOrigin: true,
-    // Net for a Location `rewriteLocation` could not parse, e.g. the
-    // protocol-relative `//api.dev.betterangels.la/x`.
-    autoRewrite: true,
-    pathRewrite: (path) =>
-      path.startsWith(`${prefix}/`)
-        ? path.slice(prefix.length)
-        : path === prefix
-          ? '/'
-          : path,
+    // Safe to slice blindly: `routeRequest` only dispatches on an exact
+    // `/__api/<name>` segment boundary, so the prefix is always there. The query
+    // rides along in `req.url`, so a bare `/__api/<name>?x=1` needs the slash
+    // put back or the request line is malformed.
+    pathRewrite: (path) => {
+      const rest = path.slice(prefix.length);
+      return rest.startsWith('/') ? rest : `/${rest}`;
+    },
     on: {
       proxyReq(proxyReq, req) {
         proxyReq.setHeader('origin', targetUrl.origin);
@@ -279,6 +302,11 @@ function createDevApiProxy() {
     // Not an API path: the dev server's own routes, bundler and assets.
     if (!route) return middleware(req, res, next);
 
+    // http-proxy skips the `proxyReq` hook outright when a client sends
+    // `Expect: 100-continue`, which would drop the origin rewrite and the cookie
+    // un-naming without saying so. Browsers never send it; curl does.
+    delete req.headers.expect;
+
     if (route.unknown === undefined) {
       return proxies.get(route.name)(req, res, next);
     }
@@ -304,6 +332,7 @@ function createDevApiProxy() {
 // The helpers are exported for the unit tests that pin the app's contract with
 // them — metro.config.js only needs `createDevApiProxy`.
 module.exports = {
+  API_PREFIX,
   createDevApiProxy,
   deriveProxyTargets,
   readTargets,
