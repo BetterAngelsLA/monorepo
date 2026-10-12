@@ -30,6 +30,7 @@ export function BottomSheetCloseButton(props: TProps) {
 const styles = StyleSheet.create({
   container: {
     minWidth: 0,
-    width: 40,
+    paddingRight: 24,
+    paddingLeft: 12,
   },
 });
