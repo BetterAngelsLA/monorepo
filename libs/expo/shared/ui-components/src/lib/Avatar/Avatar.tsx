@@ -1,8 +1,43 @@
 import { UserOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Image } from 'expo-image';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import Loading from '../Loading';
+
+/**
+ * The CDN re-signs the same photo on every response, so the query changes while
+ * the path does not. A new URI is a new image to `expo-image`, which loads it and
+ * paints the avatar blank first — the flicker when switching tabs. Keep the URI
+ * we already render while the path is unchanged, and fall back to the latest one
+ * if the held signature has aged out.
+ */
+function useStableImageUrl(imageUrl?: string | null): {
+  url: string | undefined;
+  adoptCurrent: () => void;
+} {
+  const path = imageUrl?.split('?')[0] ?? null;
+  const heldPath = useRef(path);
+  const latestUrl = useRef<string | undefined>(imageUrl ?? undefined);
+  const [heldUrl, setHeldUrl] = useState<string | undefined>(
+    imageUrl ?? undefined,
+  );
+
+  latestUrl.current = imageUrl ?? undefined;
+
+  useEffect(() => {
+    if (!imageUrl || path === heldPath.current) return;
+    heldPath.current = path;
+    setHeldUrl(imageUrl);
+  }, [imageUrl, path]);
+
+  const adoptCurrent = useCallback(() => {
+    heldPath.current = null;
+    setHeldUrl(latestUrl.current);
+  }, []);
+
+  return { url: heldUrl, adoptCurrent };
+}
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -56,6 +91,11 @@ export function Avatar(props: IAvatarProps) {
     borderColor,
     loading,
   } = props;
+
+  // Stable identity for the photo, so a re-signed URI reuses the cached image
+  // instead of being fetched as a new one (native; web caches by URI).
+  const cacheKey = imageUrl?.split('?')[0];
+  const { url: stableImageUrl, adoptCurrent } = useStableImageUrl(imageUrl);
 
   const getTextComponent = (size: 'sm' | 'lg' | 'xl' | '2xl') => {
     switch (size) {
@@ -115,6 +155,7 @@ export function Avatar(props: IAvatarProps) {
         {!loading && !imageUrl && getTextComponent(size)}
         {!loading && !!imageUrl && (
           <Image
+            onError={adoptCurrent}
             accessible
             accessibilityLabel={accessibilityLabel}
             accessibilityRole="image"
@@ -122,7 +163,7 @@ export function Avatar(props: IAvatarProps) {
             accessibilityIgnoresInvertColors
             cachePolicy={headers ? 'none' : 'memory-disk'}
             contentFit="cover"
-            recyclingKey={imageUrl}
+            recyclingKey={cacheKey}
             // Avatars are small and cached for a year, and windowing means only
             // the mounted rows ask for one, so there is nothing to defer —
             // `loading="lazy"` (expo-image's web default) just lets a fresh
@@ -134,7 +175,8 @@ export function Avatar(props: IAvatarProps) {
               borderRadius: Radiuses.xxxl,
             }}
             source={{
-              uri: imageUrl,
+              uri: stableImageUrl,
+              cacheKey,
               headers: headers ?? undefined,
             }}
           />
