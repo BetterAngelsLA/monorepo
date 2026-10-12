@@ -11,14 +11,23 @@ export const API_PREFIX: string;
 /** `name` → upstream API base URL, served under `/__api/<name>`. */
 export type DevProxyTargets = Map<string, string>;
 
+/** An `EXPO_PUBLIC_*` variable that named the proxy itself and was ignored. */
+export interface DevProxyIgnored {
+  variable: string;
+  url: string;
+  name: string;
+}
+
 /** The named targets the app's `EXPO_PUBLIC_*_API_URL` variables imply. */
 export function deriveProxyTargets(
   env: Record<string, string | undefined>,
+  onIgnored?: (entry: DevProxyIgnored) => void,
 ): DevProxyTargets;
 
 /** The derived targets, added to or overridden by `BA_DEV_PROXY_TARGETS`. */
 export function readTargets(
   env?: Record<string, string | undefined>,
+  onIgnored?: (entry: DevProxyIgnored) => void,
 ): DevProxyTargets;
 
 /** A configured target, or the name that was asked for and is not configured. */

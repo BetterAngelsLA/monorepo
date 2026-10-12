@@ -61,7 +61,7 @@ function pointsAtProxy(url) {
 }
 
 /** The named targets implied by the app's environment variables. */
-function deriveProxyTargets(env) {
+function deriveProxyTargets(env, onIgnored) {
   const named = new Map();
 
   for (const [name, variable] of ENV_TARGETS) {
@@ -75,6 +75,10 @@ function deriveProxyTargets(env) {
           'https://api.dev.betterangels.la) — the browser adds the ' +
           `/__api/${name} prefix on its own.`,
       );
+      // Also carried into the 502 the browser sees: the warning above is only on
+      // the dev server's stdout, and this is the one failure a developer hits
+      // while looking at the page.
+      if (onIgnored) onIgnored({ variable, url, name });
       continue;
     }
 
@@ -85,8 +89,8 @@ function deriveProxyTargets(env) {
 }
 
 /** `name` → API base URL: derived, then added to or overridden by `BA_DEV_PROXY_TARGETS`. */
-function readTargets(env = process.env) {
-  const named = deriveProxyTargets(env);
+function readTargets(env = process.env, onIgnored) {
+  const named = deriveProxyTargets(env, onIgnored);
 
   for (const entry of (env.BA_DEV_PROXY_TARGETS ?? '').split(',')) {
     const separator = entry.indexOf('=');
@@ -287,7 +291,8 @@ function routeRequest(rawUrl, names) {
 
 /** @returns {(middleware: any) => any} a Metro `enhanceMiddleware` function. */
 function createDevApiProxy() {
-  const named = readTargets();
+  const ignored = [];
+  const named = readTargets(process.env, (entry) => ignored.push(entry));
   const names = new Set(named.keys());
   const proxies = new Map(
     [...named].map(([name, target]) => [
@@ -318,6 +323,7 @@ function createDevApiProxy() {
         ? `Unknown dev API proxy target '${route.unknown}'.`
         : 'Dev API proxy is not configured.',
       configured: [...names],
+      ...(ignored.length ? { ignored } : {}),
       ...(names.size
         ? {}
         : {

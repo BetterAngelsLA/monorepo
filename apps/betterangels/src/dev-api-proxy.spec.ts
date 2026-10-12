@@ -81,6 +81,27 @@ describe('deriveProxyTargets', () => {
     },
   );
 
+  it('reports the ignored variable, which the browser 502 carries', () => {
+    const warn = vi.spyOn(console, 'warn').mockReturnValue(undefined);
+    const ignored: { variable: string; url: string; name: string }[] = [];
+
+    deriveProxyTargets(
+      { EXPO_PUBLIC_API_URL: 'http://localhost:8081/__api/production' },
+      (entry) => ignored.push(entry),
+    );
+
+    // The stdout warning is invisible to whoever is looking at the page.
+    expect(ignored).toEqual([
+      {
+        variable: 'EXPO_PUBLIC_API_URL',
+        url: 'http://localhost:8081/__api/production',
+        name: 'production',
+      },
+    ]);
+
+    warn.mockRestore();
+  });
+
   it('still accepts a deployed API whose path merely contains the word api', () => {
     expect([
       ...deriveProxyTargets({
