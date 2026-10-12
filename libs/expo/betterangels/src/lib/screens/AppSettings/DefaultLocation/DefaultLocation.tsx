@@ -12,7 +12,7 @@ import {
   TLocationData,
 } from '@monorepo/expo/shared/ui-components';
 import { useInitialLocation, useSnackbar } from '../../../hooks';
-import { MapView, Marker } from '../../../maps';
+import { MapView, Marker } from '@monorepo/expo/shared/ui-components';
 import { useModalScreen } from '../../../providers';
 import { useUserDefaultNoteLocation } from '../../../state';
 import { MainScrollContainer } from '../../../ui-components';

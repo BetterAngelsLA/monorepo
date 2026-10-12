@@ -9,7 +9,11 @@ import {
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { LocationInput } from '../../apollo';
-import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
+import {
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
+} from '@monorepo/expo/shared/ui-components';
 import { useModalScreen } from '../../providers';
 import { useUserDefaultNoteLocation } from '../../state';
 import { LocationMapModal, TLocationData } from '../../ui-components';
