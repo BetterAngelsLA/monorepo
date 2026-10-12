@@ -1,6 +1,6 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
-import React, { useMemo, type RefObject } from 'react';
-import { TextInput, ViewStyle } from 'react-native';
+import React, { useMemo } from 'react';
+import { ViewStyle } from 'react-native';
 import { Input } from '../Input';
 import { TPickerItem } from './types';
 
@@ -8,9 +8,8 @@ type TProps = {
   placeholder: string;
   placeholderTextColor?: string;
   items: TPickerItem[];
-  onFocus: () => void;
-  /** Passed to the field so `Picker` can drop focus after closing on web. */
-  inputRef?: RefObject<TextInput | null>;
+  /** Opens the picker. A press, never a focus — see `Input`'s `onPress`. */
+  onOpen: () => void;
   selectedValue?: string | null;
   error?: string;
   label?: string;
@@ -22,7 +21,7 @@ type TProps = {
 
 export const PickerField = React.memo(function PickerField(props: TProps) {
   const {
-    onFocus,
+    onOpen,
     error,
     selectedValue,
     placeholder,
@@ -33,7 +32,6 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
     disabled,
     style,
     testId,
-    inputRef,
   } = props;
 
   const displayValue = useMemo(() => {
@@ -46,7 +44,7 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
   return (
     <Input
       asSelect
-      inputRef={inputRef}
+      onPress={onOpen}
       style={style}
       disabled={disabled}
       required={required}
@@ -57,9 +55,8 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
       error={!!error}
       errorMessage={error}
       testID={testId}
-      onFocus={onFocus}
       slotRight={{
-        focusableInput: true,
+        onPress: onOpen,
         component: <ChevronLeftIcon size="sm" rotate="-90deg" />,
         accessibilityLabel: `selector for ${label || 'field'}`,
         accessibilityHint: `opens selector for ${label || 'field'}`,

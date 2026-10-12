@@ -234,21 +234,35 @@ no equivalent of.
 opening modal"_ — so every close immediately refired `onFocus` and reopened the picker. Escape,
 the backdrop and picking an item all closed it and all bounced straight back open.
 
-The fix is not just "ignore the next focus". Closing via the **backdrop produces no refocus at
-all**, so a flag waiting to be consumed by one stays armed and eats the user's next tap instead.
-Two things disarm it: a `pointerdown` (every real tap starts with one, the programmatic refocus
-never does) and a one-second timeout as a backstop. The field is also blurred as the refocus is
-swallowed — a tap on an already-focused field fires no focus event, so leaving focus there would
-make the picker impossible to \_re_open.
-
 There was a second, independent reason it would not close: `PickerModal`'s `centerWrap` is a
 later sibling of the backdrop and covers the whole screen, so a tap in the grey hit a plain
 `View` and the backdrop's `onPress` never fired. `pointerEvents: 'box-none'` on the wrap restores
 it — through `StyleSheet.create`, per the `box-none` note above; the prop form and the inline
-style form are not equivalent.
+style form are not equivalent. That part is a real fix and stayed.
 
-Verified on `/settings/team` for all three close paths and for re-opening after each, and by
-picking a real team (modal closes, field takes the value, snackbar fires).
+**The focus half is gone rather than worked around.** The first attempt was a web-only protocol:
+suppress the one focus coming back, disarm the flag on a `pointerdown` (a real tap has one, the
+programmatic refocus does not) with a timeout as backstop, and blur the field so it could still be
+re-opened. It worked — all three close paths, verified in the browser — but it was ~35 lines of
+platform-specific machinery, a `pointerdown` listener and a timer, all of it existing only to
+defeat the fact that the field opened on **focus**.
+
+So the field opens on **press** instead. `Input` gained an `onPress` mode: the text input stays
+purely as display, leaves the tab order, and a full-row target over it reports the press. That is
+what a select should be — a button, not a text field — and it cannot loop on either platform,
+because react-native-web's refocus fires `focus`, never `press`. The `Platform.OS` check, the
+listener, the timer, the suppression ref, the field `blur()` and the `inputRef` prop that existed
+only to serve them are all deleted; `Picker.tsx` lost 59 lines and gained 4.
+
+Verified after the change, on `/settings/team`: the field opens the picker, Escape, the backdrop
+and picking an item each close it, each can be re-opened, the chevron opens it too (it used to
+focus the input to do that), and picking a real team sets the field and fires the snackbar. The
+field is a `role="button"` whose accessible name carries the label and the current value
+(`aria-valuetext` is not emitted for a button, so the value goes in the name). The rendered output
+is **pixel-identical** to before: 0 of 900,000 pixels differ on `/settings/team` and on a client's
+Tasks tab, which is full of `SingleSelect` filter pills. Pinned by `Input.spec.tsx` (button
+semantics, press reported, plain input when `onPress` is absent) and `Picker.spec.tsx` (opens on
+press, selecting reports the value).
 
 #### Avatars flickered while scrolling
 

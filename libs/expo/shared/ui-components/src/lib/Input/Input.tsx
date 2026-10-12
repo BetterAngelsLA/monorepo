@@ -7,9 +7,10 @@ import {
   getMarginStyles,
   omitMarginProps,
 } from '@monorepo/expo/shared/static';
-import { useRef, type ReactNode, type RefObject } from 'react';
+import { useRef, type ReactNode } from 'react';
 import {
   Platform,
+  Pressable,
   StyleProp,
   StyleSheet,
   TextInput,
@@ -48,12 +49,18 @@ export interface IInputProps extends TMarginProps, TextInputProps {
    */
   fieldOverlay?: ReactNode;
   /**
-   * Lets a parent drive the field's focus. `Picker` needs it: on web it has to
-   * drop focus off a select field after its modal closes, or the browser's
-   * focus restore reopens the modal forever. Optional — the internal ref is used
-   * when it is not given.
+   * Turns the field into a press target instead of something you type into.
+   *
+   * The input stays, purely as display — the value and placeholder render exactly
+   * as they did — but it leaves the tab order and a full-width target over the row
+   * calls this. That is how a select should behave: a button, not a text field.
+   *
+   * It is also why `Picker` no longer opens from `onFocus`. Opening on focus meant
+   * react-native-web's Modal, which hands focus back to whatever opened it, re-fired
+   * the open handler every time the modal closed — and the workaround for that was
+   * platform-specific. Opening on press cannot loop, on either platform.
    */
-  inputRef?: RefObject<TextInput | null>;
+  onPress?: () => void;
 }
 
 const defaultAsSelectProps: TextInputProps = {
@@ -79,7 +86,7 @@ export function Input(props: IInputProps) {
     errorMessage,
     asSelect,
     fieldOverlay,
-    inputRef: externalInputRef,
+    onPress,
     placeholderTextColor = Colors.NEUTRAL,
     ...rest
   } = props;
@@ -87,8 +94,7 @@ export function Input(props: IInputProps) {
   // Pull out multiline before we strip margin props (used to center text)
   const { multiline = false } = rest as TextInputProps;
 
-  const internalInputRef = useRef<TextInput>(null);
-  const inputRef = externalInputRef ?? internalInputRef;
+  const inputRef = useRef<TextInput>(null);
   const nonMarginOtherProps = omitMarginProps(rest);
   const asSelectProps = asSelect ? defaultAsSelectProps : {};
 
@@ -130,9 +136,29 @@ export function Input(props: IInputProps) {
           autoCapitalize={autoCapitalize}
           placeholderTextColor={placeholderTextColor}
           value={value ?? ''}
+          // A press-target field is reached through the target below, so it must
+          // not be a second tab stop (or a focus entry point) of its own.
+          focusable={onPress ? false : undefined}
           {...asSelectProps}
           {...nonMarginOtherProps}
         />
+
+        {onPress && !disabled && (
+          <Pressable
+            style={styles.pressTarget}
+            onPress={onPress}
+            accessibilityRole="button"
+            // The value belongs in the label: react-native-web only emits
+            // `aria-valuetext` for value-bearing roles, not for a button.
+            accessibilityLabel={[
+              label,
+              value ? String(value) : rest.placeholder,
+            ]
+              .filter(Boolean)
+              .join(': ')}
+            accessibilityHint={`opens options for ${label || 'field'}`}
+          />
+        )}
 
         {showClear && (
           <InputSlot
@@ -168,6 +194,21 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     width: '100%',
+  },
+  /**
+   * Covers the field row so a tap anywhere on it opens the picker. Rendered
+   * before the slots, so the clear and chevron buttons paint on top of it and
+   * keep their own taps.
+   *
+   * Written out rather than spread from `StyleSheet.absoluteFill`, which
+   * react-native-web compiles to a class map.
+   */
+  pressTarget: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   /**
    * The overlay covers the field row exactly (the row is `position: relative`),
