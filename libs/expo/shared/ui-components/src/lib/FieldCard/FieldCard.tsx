@@ -33,6 +33,22 @@ interface IFieldCardProps {
   overflow?: 'hidden' | 'visible' | 'scroll' | undefined;
 }
 
+/**
+ * `ReactNode` admits a plain string, and a `View` cannot contain a text node —
+ * native throws outright and react-native-web logs "Unexpected text node". Render
+ * text the way every element call site already does, and treat an empty string as
+ * no action at all rather than as content.
+ *
+ * Exported for its own unit test: the empty case has no *native* symptom, so it
+ * cannot be pinned through a rendered tree.
+ */
+export function renderActionName(actionName: ReactNode): ReactNode {
+  if (typeof actionName !== 'string') return actionName;
+  if (actionName === '') return null;
+
+  return <TextMedium size="sm">{actionName}</TextMedium>;
+}
+
 export function FieldCard(props: IFieldCardProps) {
   const {
     children,
@@ -115,7 +131,7 @@ export function FieldCard(props: IFieldCardProps) {
           {required && <TextRegular color={Colors.ERROR}>*</TextRegular>}
           {info && info}
         </View>
-        {actionName}
+        {renderActionName(actionName)}
       </View>
       {error && (
         <TextRegular mt="xs" color={Colors.ERROR}>

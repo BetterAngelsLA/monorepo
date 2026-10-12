@@ -65,9 +65,7 @@ export default function HmisRequestedProvidedServices(
                 />
               ))}
           </View>
-        ) : (
-          ''
-        )
+        ) : null
       }
       mb="xs"
       title={`${enumDisplayServiceType[type]} Services`}
