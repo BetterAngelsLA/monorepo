@@ -116,15 +116,14 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
       : BottomSheetView;
 
     /**
-     * A sheet uses the unified `BottomSheetTopBar` whenever it has top-bar
-     * content — a handle indicator, a close button, or a header — or explicit
-     * `topBarProps`. With no content it renders no top chrome at all.
+     * The bar mounts only when it has something to render.
      */
     const hasTopBarContent =
       showHandle === true ||
       !!showCloseButton ||
       !!headerContent ||
-      !!topBarProps;
+      !!topBarProps?.header ||
+      !!topBarProps?.leftSlot;
 
     /**
      * The component Gorhom renders as the sheet's handle — the unified

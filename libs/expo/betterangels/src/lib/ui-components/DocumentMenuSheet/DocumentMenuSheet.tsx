@@ -24,7 +24,7 @@ import { deleteClientDocumentMeta } from '../../screens/Client/__generated__/Cli
 import { DocumentMenu } from './DocumentMenu';
 import { getFileTypeLabel } from './utils';
 
-type ModalStep = 'menuOpen' | 'confirmDelete' | 'closed';
+type ModalState = 'menuOpen' | 'confirmDelete' | 'closed';
 
 interface IDocumentMenuSheetProps {
   onClose: () => void;
@@ -48,7 +48,7 @@ export function DocumentMenuSheet({
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [step, setStep] = useState<ModalStep>('menuOpen');
+  const [modalState, setModalState] = useState<ModalState>('menuOpen');
 
   const [deleteDocument] = useMutation(DeleteClientDocumentDocument, {
     refetchQueries: [
@@ -64,7 +64,7 @@ export function DocumentMenuSheet({
     // mounted until the mutation settles so we never tear down a presented
     // native modal mid-flight (we used to call onClose() here, which did
     // exactly that).
-    setStep('closed');
+    setModalState('closed');
 
     try {
       const result = await deleteDocument({
@@ -184,7 +184,7 @@ export function DocumentMenuSheet({
   return (
     <>
       <BottomSheetModalControlled
-        isOpen={step === 'menuOpen'}
+        isOpen={modalState === 'menuOpen'}
         onClose={onClose}
         options={{ showHandle: true, showCloseButton: true }}
       >
@@ -193,16 +193,16 @@ export function DocumentMenuSheet({
           onView={handleViewPress}
           onEdit={handleEditPress}
           onDownload={downloadFile}
-          onDelete={() => setStep('confirmDelete')}
+          onDelete={() => setModalState('confirmDelete')}
         />
       </BottomSheetModalControlled>
 
       <DeleteModal
-        isVisible={step === 'confirmDelete'}
+        isVisible={modalState === 'confirmDelete'}
         body={`All data associated with this ${fileTypeLabel} will be deleted.`}
         title={`Delete ${fileTypeLabel}?`}
         onDelete={deleteFile}
-        onCancel={() => setStep('menuOpen')}
+        onCancel={() => setModalState('menuOpen')}
         deleteableItemName={fileTypeLabel}
       />
     </>

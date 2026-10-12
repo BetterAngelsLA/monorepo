@@ -107,6 +107,23 @@ describe('BottomSheetBase topBarProps', () => {
     expect(getByTestId('left-slot')).toBeTruthy();
   });
 
+  it('mounts the bar when only topBarProps content is provided', async () => {
+    const { getByTestId } = await renderBase({
+      topBarProps: { leftSlot: <Text testID="left-slot">back</Text> },
+    });
+
+    expect(getByTestId(HANDLE_SLOT_TEST_ID)).toBeTruthy();
+    expect(getByTestId('left-slot')).toBeTruthy();
+  });
+
+  it('does not mount the bar for style-only topBarProps', async () => {
+    const { queryByTestId } = await renderBase({
+      topBarProps: { handleIndicatorStyle: { backgroundColor: 'red' } },
+    });
+
+    expect(queryByTestId(HANDLE_SLOT_TEST_ID)).toBeNull();
+  });
+
   it('keeps showHandle sheet-owned — a topBarProps value cannot force the indicator', async () => {
     const { queryByTestId } = await renderBase({
       showCloseButton: true,
