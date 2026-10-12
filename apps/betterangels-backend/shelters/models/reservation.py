@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     pghistory.DeleteEvent("reservation.remove"),
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
     pghistory.UpdateEvent("reservation.update"),
+    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="reservation_evt_obj_idx")]},
 )
 class Reservation(OrgScoped, BaseModel):
     org_via = ("bed", "room")
@@ -97,6 +98,7 @@ class Reservation(OrgScoped, BaseModel):
     pghistory.InsertEvent("reservation_client.add"),
     pghistory.UpdateEvent("reservation_client.update"),
     pghistory.DeleteEvent("reservation_client.remove"),
+    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="resclient_evt_obj_idx")]},
 )
 class ReservationClient(BaseModel):
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="reservation_clients")

@@ -1386,6 +1386,50 @@ class Migration(migrations.Migration):
             name='shelter',
             field=models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='shelters.shelter'),
         ),
+        migrations.AddIndex(
+            model_name='bedevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='bed_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='contactinfoevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='contactinfo_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='medialinkevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='medialink_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='reservationclientevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='resclient_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='reservationevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='reservation_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='roomevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='room_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='scheduleevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='schedule_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='shelteravailabilityevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='shelteravail_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='shelterevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='shelter_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='shelterphotoevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='shelterphoto_evt_obj_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='videoevent',
+            index=models.Index(fields=['pgh_obj', 'pgh_id'], name='video_evt_obj_idx'),
+        ),
         pgtrigger.migrations.AddTrigger(
             model_name='trackedbedaccessibility',
             trigger=pgtrigger.compiler.Trigger(name='bed_accessibility_add_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "shelters_trackedbedaccessibilityevent" ("accessibility_id", "bed_id", "id", "pgh_context_id", "pgh_created_at", "pgh_label") VALUES (NEW."accessibility_id", NEW."bed_id", NEW."id", _pgh_attach_context(), NOW(), \'bed.accessibility.add\'); RETURN NULL;', hash='61e2a43983db7e24df4857bd48481dcf80141f9c', operation='INSERT', pgid='pgtrigger_bed_accessibility_add_insert_d1bb0', table='shelters_bed_accessibility', when='AFTER')),

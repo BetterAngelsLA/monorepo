@@ -66,6 +66,7 @@ ACTIVE_RESERVATION_STATUSES = (
     pghistory.InsertEvent("shelter.add"),
     pghistory.UpdateEvent("shelter.update"),
     pghistory.DeleteEvent("shelter.remove"),
+    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelter_evt_obj_idx")]},
 )
 class Shelter(OrgScoped, BaseModel):
     class perms(PermissionSet):
@@ -222,6 +223,7 @@ class Shelter(OrgScoped, BaseModel):
     pghistory.InsertEvent("bed.add"),
     pghistory.DeleteEvent("bed.remove"),
     pghistory.UpdateEvent("bed.update"),
+    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="bed_evt_obj_idx")]},
 )
 class Bed(CloneMixin, OrgScoped, BaseModel):
     org_via = ("shelter",)
@@ -303,6 +305,7 @@ class Bed(CloneMixin, OrgScoped, BaseModel):
     pghistory.InsertEvent("room.add"),
     pghistory.UpdateEvent("room.update"),
     pghistory.DeleteEvent("room.remove"),
+    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="room_evt_obj_idx")]},
 )
 class Room(CloneMixin, OrgScoped, BaseModel):
     org_via = ("shelter",)
@@ -375,6 +378,7 @@ class Room(CloneMixin, OrgScoped, BaseModel):
     pghistory.InsertEvent("shelter.contact_info.add"),
     pghistory.UpdateEvent("shelter.contact_info.update"),
     pghistory.DeleteEvent("shelter.contact_info.remove"),
+    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="contactinfo_evt_obj_idx")]},
 )
 class ContactInfo(OrgScoped):
     org_via = ("shelter",)
