@@ -156,9 +156,10 @@ export function InteractionsMap(props: TProps) {
     // so it can be absent or stale by the time a cluster is clicked.
     const camera = await mapRef.current?.getCamera?.();
 
-    // Zoom only while it buys separation; otherwise show what is inside. Fitting
-    // points that are already on screen moves nothing.
-    if (canExpandFurther(cluster, camera?.zoom)) {
+    // List what is inside when the cluster cannot be split at all, or when
+    // zooming would not separate it: fitting points that are already on screen
+    // moves nothing, and a click that only re-fits reads as having done nothing.
+    if (!maxZoomLeaves?.length && canExpandFurther(cluster, camera?.zoom)) {
       void zoomToCluster(cluster, mapRef);
 
       setMapState((prev) => ({

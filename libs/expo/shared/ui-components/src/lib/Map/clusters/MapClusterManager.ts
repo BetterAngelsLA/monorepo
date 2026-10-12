@@ -227,8 +227,8 @@ export class MapClusterManager<P extends IClusterGeoJson> {
    * the map can report one.
    *
    * Web fires no region callback for a programmatic fit, so without this the caller
-   * keeps the clusters it computed at the previous zoom. Native maps report the
-   * move themselves and have no `getMapBoundaries`, so this resolves `undefined`.
+   * keeps the clusters it computed at the previous zoom. Native reports the move
+   * itself, so there the resolved region only saves the caller a round trip.
    */
   async fitToCluster(
     clusterId: number,

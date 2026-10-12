@@ -91,9 +91,19 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
   }, [pointFeaturesHash, clusterManager, updateClusters]);
 
   const zoomToCluster = useCallback(
-    (c: TClusterPoint, mapRef: RefObject<TMapView | null>) =>
-      clusterManager.fitToCluster(c.properties.cluster_id, mapRef),
-    [clusterManager],
+    async (c: TClusterPoint, mapRef: RefObject<TMapView | null>) => {
+      const region = await clusterManager.fitToCluster(
+        c.properties.cluster_id,
+        mapRef,
+      );
+
+      // Recompute for where the fit ended up. Web fires no region callback for a
+      // programmatic move, so without this the layer keeps rendering the clusters
+      // it computed at the previous zoom — a cluster that no longer matches the
+      // map and cannot be opened.
+      if (region) updateClustersForRegion(region);
+    },
+    [clusterManager, updateClustersForRegion],
   );
 
   /** See `canExpandFurther` on the manager. */
