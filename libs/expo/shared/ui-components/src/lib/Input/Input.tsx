@@ -7,7 +7,7 @@ import {
   getMarginStyles,
   omitMarginProps,
 } from '@monorepo/expo/shared/static';
-import { useRef, type RefObject } from 'react';
+import { useRef, type ReactNode, type RefObject } from 'react';
 import {
   Platform,
   StyleProp,
@@ -35,6 +35,18 @@ export interface IInputProps extends TMarginProps, TextInputProps {
   slotLeft?: TInputSlot;
   slotRight?: TInputSlot;
   asSelect?: boolean;
+  /**
+   * Element rendered on top of the field box itself — the row that holds the
+   * text input and the slots, not the label or the error line above and below
+   * it. It fills that row, so the element can size itself with `100%` and needs
+   * no knowledge of the field's height, which varies with font scale and with
+   * whether a label is present.
+   *
+   * The web date/time fields use it to lay a transparent native `<input>` over
+   * the chrome. Anything left uncovered stays interactive, so the text input
+   * underneath is still reachable.
+   */
+  fieldOverlay?: ReactNode;
   /**
    * Lets a parent drive the field's focus. `Picker` needs it: on web it has to
    * drop focus off a select field after its modal closes, or the browser's
@@ -66,6 +78,7 @@ export function Input(props: IInputProps) {
     borderRadius = Radiuses.xs,
     errorMessage,
     asSelect,
+    fieldOverlay,
     inputRef: externalInputRef,
     placeholderTextColor = Colors.NEUTRAL,
     ...rest
@@ -140,6 +153,10 @@ export function Input(props: IInputProps) {
             {...slotRight}
           />
         )}
+
+        {fieldOverlay && (
+          <View style={styles.fieldOverlay}>{fieldOverlay}</View>
+        )}
       </View>
 
       {errorMessage && <FormFieldError message={errorMessage} />}
@@ -151,6 +168,29 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     width: '100%',
+  },
+  /**
+   * The overlay covers the field row exactly (the row is `position: relative`),
+   * so an overlay element can size itself with `100%` and needs no knowledge of
+   * the field's height — which varies with font scale, and with the error line.
+   *
+   * Written out rather than spread from `StyleSheet.absoluteFill`: react-native-web
+   * compiles that one to a class map, so spreading it relies on `create` skipping
+   * an object that already carries `$$css`. Explicit props read the same on both
+   * platforms.
+   *
+   * `box-none` from the stylesheet, not the prop — react-native-web only
+   * polyfills it through the atomic compiler, which is what `StyleSheet.create`
+   * feeds. Anything the overlay leaves uncovered stays interactive, so the text
+   * input underneath is still reachable.
+   */
+  fieldOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    pointerEvents: 'box-none',
   },
   input: {
     position: 'relative',

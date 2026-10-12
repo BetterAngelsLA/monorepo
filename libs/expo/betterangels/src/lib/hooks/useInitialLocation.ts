@@ -45,48 +45,46 @@ export function useInitialLocation(
     }
 
     /**
-     * `reverseGeocode` throws on a real API failure now, rather than returning
-     * the coordinates as if they were an address. Fall back to them here as
-     * before: `onRefine` fires the caller without awaiting, so a rejection would
-     * escape the enclosing try and float.
+     * Records a point, with its address when the geocoder can supply one.
+     *
+     * `reverseGeocode` throws on a real API failure rather than returning the
+     * coordinates as if they were an address. That path still records the point —
+     * it is the user's choice and the form requires a location — but it invents
+     * no address: a denied key or an exhausted quota is not "there is no address
+     * here", and `"34.04866, -118.25882"` would be saved as though it were one.
+     * `reverseGeocode` still returns the coordinates for ZERO_RESULTS, which *is*
+     * that case.
+     *
+     * The catch belongs here rather than around the caller because `onRefine`
+     * fires it without awaiting, so a rejection would float.
      */
-    const reverseGeocodeWithFallback = async (
-      latitude: number,
-      longitude: number,
-    ): Promise<Awaited<ReturnType<typeof places.reverseGeocode>>> => {
+    const geocodeAndSet = async (latitude: number, longitude: number) => {
+      const base = { ...locationRef.current, longitude, latitude };
+
       try {
-        return await places.reverseGeocode(latitude, longitude);
+        const geocodeResult = await places.reverseGeocode(latitude, longitude);
+
+        setValueRef.current?.('location', {
+          ...base,
+          formattedAddress: geocodeResult.formattedAddress,
+          shortAddressName: geocodeResult.shortAddress,
+          components: geocodeResult.addressComponents,
+        } as LocationDraft);
       } catch (err) {
         console.error(
-          'Reverse geocode failed; falling back to coordinates',
+          'Reverse geocode failed; recording the point without an address',
           err,
         );
 
-        const fallback = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-
-        return {
-          formattedAddress: fallback,
-          shortAddress: fallback,
-          addressComponents: [],
-        };
+        // Cleared explicitly: `base` carries the previous draft, whose address
+        // describes a different point.
+        setValueRef.current?.('location', {
+          ...base,
+          formattedAddress: undefined,
+          shortAddressName: undefined,
+          components: undefined,
+        } as LocationDraft);
       }
-    };
-
-    const geocodeAndSet = async (loc: LocationObject) => {
-      const { latitude, longitude } = loc.coords;
-      const geocodeResult = await reverseGeocodeWithFallback(
-        latitude,
-        longitude,
-      );
-
-      setValueRef.current?.('location', {
-        ...locationRef.current,
-        longitude,
-        latitude,
-        formattedAddress: geocodeResult.formattedAddress,
-        shortAddressName: geocodeResult.shortAddress,
-        components: geocodeResult.addressComponents,
-      } as LocationDraft);
     };
 
     const autoSetInitialLocation = async () => {
@@ -95,7 +93,7 @@ export function useInitialLocation(
           onRefine: (refined) => {
             setUserLocation(refined);
             if (!editingRef.current) {
-              geocodeAndSet(refined);
+              geocodeAndSet(refined.coords.latitude, refined.coords.longitude);
             }
           },
         });
@@ -106,22 +104,12 @@ export function useInitialLocation(
 
         if (editingRef.current || defaultLocation) return;
 
-        if (result?.location) {
-          await geocodeAndSet(result.location);
-        } else {
-          const geocodeResult = await reverseGeocodeWithFallback(
-            INITIAL_LOCATION.latitude,
-            INITIAL_LOCATION.longitude,
-          );
-          setValueRef.current?.('location', {
-            ...locationRef.current,
-            longitude: INITIAL_LOCATION.longitude,
-            latitude: INITIAL_LOCATION.latitude,
-            formattedAddress: geocodeResult.formattedAddress,
-            shortAddressName: geocodeResult.shortAddress,
-            components: geocodeResult.addressComponents,
-          } as LocationDraft);
-        }
+        const coords = result?.location?.coords;
+
+        await geocodeAndSet(
+          coords?.latitude ?? INITIAL_LOCATION.latitude,
+          coords?.longitude ?? INITIAL_LOCATION.longitude,
+        );
       } catch (err) {
         console.error('Error auto-setting initial location', err);
       }

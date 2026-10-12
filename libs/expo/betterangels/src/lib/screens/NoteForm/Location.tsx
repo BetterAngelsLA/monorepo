@@ -146,39 +146,40 @@ export default function LocationComponent(props: ILocationProps) {
     const geocodeAndSave = async (lat: number, lng: number) => {
       // `reverseGeocode` now throws on a real API failure (a denied key, quota)
       // instead of quietly returning the coordinates as if they were an address.
-      // Fall back to the coordinates here, as this screen always did — and do it
-      // inside the helper, because `onRefine` below fires it without awaiting, so
-      // a rejection there would escape the surrounding try and float.
-      let geocodeResult: Awaited<ReturnType<typeof places.reverseGeocode>>;
+      // That path still saves the point — the field is required and the pin is
+      // the user's choice — but it does not invent an address: a service failure
+      // is not "there is no address here", and `"34.04866, -118.25882"` would be
+      // stored as though it were one. `reverseGeocode` still returns the
+      // coordinates for ZERO_RESULTS, which *is* that case.
+      //
+      // Handled inside the helper because `onRefine` below fires it without
+      // awaiting, so a rejection there would escape the surrounding try and
+      // float.
+      let geocodeResult:
+        | Awaited<ReturnType<typeof places.reverseGeocode>>
+        | undefined;
 
       try {
         geocodeResult = await places.reverseGeocode(lat, lng);
       } catch (err) {
         console.error(
-          'Reverse geocode failed; falling back to coordinates',
+          'Reverse geocode failed; saving the point without an address',
           err,
         );
-
-        const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-        geocodeResult = {
-          formattedAddress: fallback,
-          shortAddress: fallback,
-          addressComponents: [],
-        };
       }
 
       const newLocation: TLocation = {
         latitude: lat,
         longitude: lng,
-        address: geocodeResult.formattedAddress,
-        name: geocodeResult.shortAddress,
+        address: geocodeResult?.formattedAddress ?? null,
+        name: geocodeResult?.shortAddress ?? null,
       };
 
       setLocation(newLocation);
 
       onLocationChange({
         point: [lng, lat],
-        address: geocodeResult.formattedAddress
+        address: geocodeResult?.formattedAddress
           ? {
               formattedAddress: geocodeResult.formattedAddress,
               addressComponents: JSON.stringify(
