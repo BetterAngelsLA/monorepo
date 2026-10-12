@@ -85,7 +85,7 @@ export function PickerModal(props: TProps) {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              {title && <TextBold size="sm">{title}</TextBold>}
+              {!!title && <TextBold size="sm">{title}</TextBold>}
               {!!allowSelectNone && (
                 <PickerItem
                   value={NONE_VALUE}

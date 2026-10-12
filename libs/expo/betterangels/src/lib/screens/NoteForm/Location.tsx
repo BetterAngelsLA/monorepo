@@ -272,7 +272,7 @@ export default function LocationComponent(props: ILocationProps) {
         )
       }
     >
-      {location && location.longitude && location.latitude && (
+      {!!(location && location.longitude && location.latitude) && (
         <View style={{ paddingBottom: Spacings.md }}>
           <MapView
             zoomEnabled={false}

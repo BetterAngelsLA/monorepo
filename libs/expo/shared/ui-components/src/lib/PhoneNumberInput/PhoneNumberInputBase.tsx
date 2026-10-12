@@ -92,7 +92,7 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
           />
         )}
       </View>
-      {error && <FormFieldError message={error} />}
+      {!!error && <FormFieldError message={error} />}
     </View>
   );
 }

@@ -114,7 +114,7 @@ export function LengthInput(props: LengthInputProps) {
         </View>
       </View>
 
-      {error && <FormFieldError message={error} />}
+      {!!error && <FormFieldError message={error} />}
     </View>
   );
 }

@@ -92,7 +92,7 @@ export function Input(props: IInputProps) {
 
   return (
     <View style={[styles.container, style, getMarginStyles(props)]}>
-      {label && <FormFieldLabel label={label} required={required} />}
+      {!!label && <FormFieldLabel label={label} required={required} />}
 
       <View
         style={[
@@ -168,12 +168,12 @@ export function Input(props: IInputProps) {
           />
         )}
 
-        {fieldOverlay && (
+        {!!fieldOverlay && (
           <View style={styles.fieldOverlay}>{fieldOverlay}</View>
         )}
       </View>
 
-      {errorMessage && <FormFieldError message={errorMessage} />}
+      {!!errorMessage && <FormFieldError message={errorMessage} />}
     </View>
   );
 }

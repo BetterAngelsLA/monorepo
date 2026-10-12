@@ -73,7 +73,7 @@ export function FieldCardHmisNote(props: IFieldCardProps) {
         {!expanded && !value && <View>{renderActionName(actionName)}</View>}
       </View>
 
-      {error && (
+      {!!error && (
         <TextRegular mt="xs" color={Colors.ERROR}>
           {error}
         </TextRegular>

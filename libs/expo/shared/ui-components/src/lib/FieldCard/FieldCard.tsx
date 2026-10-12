@@ -133,7 +133,7 @@ export function FieldCard(props: IFieldCardProps) {
         </View>
         {renderActionName(actionName)}
       </View>
-      {error && (
+      {!!error && (
         <TextRegular mt="xs" color={Colors.ERROR}>
           {error}
         </TextRegular>

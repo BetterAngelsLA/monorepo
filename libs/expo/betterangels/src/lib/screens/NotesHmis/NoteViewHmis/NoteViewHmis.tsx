@@ -89,7 +89,7 @@ export function NoteViewHmis(props: TProps) {
 
         {!!clientName && <TextBold selectable>{clientName}</TextBold>}
 
-        {programName && (
+        {!!programName && (
           <View>
             <TextBold mb="xs">Program</TextBold>
             <TextRegular selectable>{programName}</TextRegular>

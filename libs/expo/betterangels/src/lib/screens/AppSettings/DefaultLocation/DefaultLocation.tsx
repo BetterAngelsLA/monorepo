@@ -104,36 +104,38 @@ export function DefaultLocation() {
         title="Location "
         actionName={<TextMedium size="sm">{getLocationLabel()}</TextMedium>}
       >
-        {defaultLocation &&
+        {!!(
+          defaultLocation &&
           defaultLocation.longitude &&
-          defaultLocation.latitude && (
-            <>
-              <View style={{ paddingBottom: Spacings.md }}>
-                <MapView
-                  zoomEnabled={false}
-                  scrollEnabled={false}
-                  provider={PROVIDER_GOOGLE}
-                  region={{
-                    longitudeDelta: 0.005,
-                    latitudeDelta: 0.005,
+          defaultLocation.latitude
+        ) && (
+          <>
+            <View style={{ paddingBottom: Spacings.md }}>
+              <MapView
+                zoomEnabled={false}
+                scrollEnabled={false}
+                provider={PROVIDER_GOOGLE}
+                region={{
+                  longitudeDelta: 0.005,
+                  latitudeDelta: 0.005,
+                  latitude: defaultLocation.latitude,
+                  longitude: defaultLocation.longitude,
+                }}
+                userInterfaceStyle="light"
+                style={styles.map}
+              >
+                <Marker
+                  coordinate={{
                     latitude: defaultLocation.latitude,
                     longitude: defaultLocation.longitude,
                   }}
-                  userInterfaceStyle="light"
-                  style={styles.map}
                 >
-                  <Marker
-                    coordinate={{
-                      latitude: defaultLocation.latitude,
-                      longitude: defaultLocation.longitude,
-                    }}
-                  >
-                    <LocationPinIcon size="2xl" />
-                  </Marker>
-                </MapView>
-              </View>
-            </>
-          )}
+                  <LocationPinIcon size="2xl" />
+                </Marker>
+              </MapView>
+            </View>
+          </>
+        )}
       </FieldCard>
       {defaultLocation && (
         <Pressable

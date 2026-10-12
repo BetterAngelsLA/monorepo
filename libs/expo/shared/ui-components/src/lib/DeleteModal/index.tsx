@@ -68,7 +68,7 @@ export default function DeleteModal(props: TProps) {
       {clonedButton}
       <BasicModal visible={visible} onClose={handleClose}>
         <TextBold size="lg">{title}</TextBold>
-        {body && (
+        {!!body && (
           <TextRegular size="sm" style={{ marginTop: Spacings.sm }}>
             {body}
           </TextRegular>

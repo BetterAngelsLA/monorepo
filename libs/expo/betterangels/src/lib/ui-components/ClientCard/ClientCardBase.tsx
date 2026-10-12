@@ -45,7 +45,7 @@ export function ClientCardBase(props: IClientCardProps) {
           {client.nickname && `(${client.nickname})`}
         </TextBold>
 
-        {(client.dateOfBirth || formattedHeight) && (
+        {!!(client.dateOfBirth || formattedHeight) && (
           <View style={styles.row}>
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!client.dateOfBirth && (
