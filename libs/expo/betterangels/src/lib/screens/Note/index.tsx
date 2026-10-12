@@ -88,7 +88,7 @@ export default function Note({
         {note.location?.point && <NoteLocation note={note} />}
         {(note.providedServices.length > 0 ||
           note.requestedServices.length > 0) && <NoteServices note={note} />}
-        {note.publicDetails && <NotePublicNote note={note} />}
+        {!!note.publicDetails && <NotePublicNote note={note} />}
       </View>
     </MainScrollContainer>
   );
