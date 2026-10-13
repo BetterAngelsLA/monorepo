@@ -153,28 +153,29 @@ export default function ConsentModal({
 
   const renderCheckboxes = () =>
     checkboxData.map((item) => (
-      <Checkbox
-        key={item.key}
-        isChecked={checkedItems[item.key]}
-        isConsent
-        hasBorder={false}
-        onCheck={() => handleCheck(item.key)}
-        accessibilityHint={item.accessibilityHint}
-        labelFirst={false}
-        size="sm"
-        justifyContent="flex-start"
-        mb="sm"
-        label={
-          <View style={styles.checkbox}>
-            <TextRegular size="sm" style={{ fontWeight: '400' }} ml="xs">
-              I accept the{' '}
-            </TextRegular>
-            <Link style={styles.link} href={item.url}>
-              {item.linkText}
-            </Link>
-          </View>
-        }
-      />
+      <View key={item.key} style={styles.checkbox}>
+        <View style={styles.checkboxControl}>
+          <Checkbox
+            isChecked={checkedItems[item.key]}
+            isConsent
+            hasBorder={false}
+            onCheck={() => handleCheck(item.key)}
+            accessibilityLabel={`I accept the ${item.linkText}`}
+            accessibilityHint={item.accessibilityHint}
+            labelFirst={false}
+            size="sm"
+            justifyContent="flex-start"
+            label={
+              <TextRegular size="sm" style={{ fontWeight: '400' }} ml="xs">
+                I accept the{' '}
+              </TextRegular>
+            }
+          />
+        </View>
+        <Link style={styles.link} href={item.url}>
+          {item.linkText}
+        </Link>
+      </View>
     ));
 
   const renderHeader = () => (
@@ -259,7 +260,7 @@ export default function ConsentModal({
               {renderHeader()}
 
               <Image
-                style={{ height: windowHeight * 0.325 }}
+                style={[styles.consentImage, { height: windowHeight * 0.325 }]}
                 contentFit="contain"
                 source={consentImage}
                 accessibilityIgnoresInvertColors
@@ -324,8 +325,17 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
   },
+  consentImage: {
+    aspectRatio: 1,
+    maxWidth: '100%',
+  },
   checkbox: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacings.sm,
+  },
+  checkboxControl: {
+    alignItems: 'flex-start',
   },
   link: {
     fontFamily: 'Poppins',
