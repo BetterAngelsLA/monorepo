@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "name": "test_regions_mislabelled",
+  "_comment": "Reproduces the real data.lacity.org defect: the file DECLARES WGS84 lon/lat via the crs member, but the coordinates are actually EPSG:2229 California State Plane Zone V (feet). Values below are genuine LA State Plane feet. Because the declared CRS is honoured, no reprojection happens and the geometry lands ~1.3e7 degrees from Los Angeles. The loader's bbox assertion must reject this.",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    { "type": "Feature", "properties": { "NAME": "Mislabelled Park", "DISTRICT": 1 },
+      "geometry": { "type": "Polygon", "coordinates": [[
+        [6471422.29, 1844939.98], [6471721.81, 1844941.19],
+        [6471721.81, 1844923.07], [6471423.50, 1844914.62],
+        [6471422.29, 1844939.98]]] } }
+  ]
+}

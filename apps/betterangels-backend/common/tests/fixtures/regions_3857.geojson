@@ -1,0 +1,12 @@
+{
+  "type": "FeatureCollection",
+  "name": "test_regions_3857",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3857" } },
+  "features": [
+    { "type": "Feature", "properties": { "NAME": "District A", "DISTRICT": 1 },
+      "geometry": { "type": "Polygon", "coordinates": [[
+        [-13169095.76, 4031487.85], [-13155737.42, 4031487.85],
+        [-13155737.42, 4044926.50], [-13169095.76, 4044926.50],
+        [-13169095.76, 4031487.85]]] } }
+  ]
+}

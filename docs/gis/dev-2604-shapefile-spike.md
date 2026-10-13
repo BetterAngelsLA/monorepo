@@ -1,0 +1,468 @@
+# DEV-2604 — Make a process to load shapefiles
+
+**Spike writeup for the GIS analytics foundation (parent epic [DEV-2570](#dev-2570-context)).**
+Ticket: <https://betterangels.atlassian.net/browse/DEV-2604>
+
+**Status of this document:** every command, query, and output shown below was **executed and
+verified** against the PostGIS 17.5 / PostGIS 3.5 + GeoDjango dev environment on 2026-10-13.
+Nothing here is speculative.
+
+| Ticket ask | Where |
+|---|---|
+| Identify a single region, official source | [§1](#1-the-region-and-the-official-source) — LA City Council Districts, City of LA GeoHub |
+| Make a process to download + load into the db | [§4](#4-the-load-process) — working `load_region_boundaries` command |
+| Writeup of the landscape | [§2](#2-landscape-what-types-of-data-exist-and-where) — 143 verified endpoints in [la-geodata-sources.md](la-geodata-sources.md) |
+| What types of data exist | [§2](#2-landscape-what-types-of-data-exist-and-where) |
+| Where does it exist | [§2](#2-landscape-what-types-of-data-exist-and-where) + [la-geodata-sources.md](la-geodata-sources.md) |
+| How to load it | [§4](#4-the-load-process) |
+| How to query it ("interactions in this region") | [§5](#5-querying-interactions-in-this-region) |
+| Sample code that loads the data | [§6](#6-sample-code) — `common/management/commands/load_region_boundaries.py` |
+
+---
+
+## 1. The region and the official source
+
+**Chosen region: LA City Council District** (`council_district`).
+
+Rationale: it is the smallest genuinely *official* boundary set that maps cleanly onto the
+epic's list ("ZIP, City Council District, SPA, Supervisorial District"), the City publishes it
+directly, and it is one of the four regions the epic names. ZIP/ZCTA was the alternative but
+carries the Census-vs-postal ambiguity noted in §2.
+
+| | |
+|---|---|
+| **Source** | City of Los Angeles GeoHub — "LA City Council Districts (Adopted 2021)" |
+| **Download** | `https://geohub.lacity.org/api/download/v1/items/76104f230e384f38871eb3c4782f903d/shapefile?layers=13` |
+| **Direct from govt?** | Yes — City of LA, published via its own GeoHub |
+| **Format** | ESRI Shapefile (zip bundle), plus GeoJSON/CSV/KML via the same endpoint |
+| **Live REST** | `https://maps.lacity.org/lahub/rest/services/Boundaries/MapServer/13` |
+| **Features** | 15 (verified) |
+| **Source CRS** | **EPSG:3857** — WGS 84 / Pseudo-Mercator (verified from `.prj`) |
+| **Encoding** | UTF-8 (verified from `.cpg`) |
+| **Vintage** | Adopted 2021; DBF last updated 2026-10-04 (verified) |
+
+The download was performed and verified — 368,885 bytes, 15 features, 33,027 vertices.
+
+> A note on the "official" test: the City's own `.prj` declares **3857**, while many LA County
+> layers declare **EPSG:2229** (CA State Plane Zone V, *feet*), and `data.lacity.org` GeoJSON
+> exports declare CRS84 while actually emitting State Plane feet. Always read the CRS from the
+> payload, never from the portal's metadata.
+
+---
+
+## 2. Landscape: what types of data exist, and where
+
+The full catalog is [la-geodata-sources.md](la-geodata-sources.md) — **143 endpoints
+individually HTTP-probed**, with CRS, geometry type, and `maxRecordCount` read from live
+`?f=pjson` responses. Coverage:
+
+1. **Administrative boundaries** — council districts, supervisorial districts, city/county
+   boundaries, census tracts/block groups/blocks, ZCTA, LA Times neighborhoods, community plan areas.
+2. **Service geographies** — LAHSA Service Planning Areas (SPAs), Health Districts, HUD
+   Continuum of Care, police divisions, school districts.
+3. **Points of interest** — shelters, food assistance, congregate meal sites, restrooms,
+   libraries, parks, transit stops.
+4. **State/federal** — CalEnviroScreen, TIGER/Line, HRSA shortage areas, HUD datasets.
+
+Highest-value endpoints for this epic, all verified:
+
+| Region | Endpoint | CRS |
+|---|---|---|
+| LA City Council Districts | `maps.lacity.org/lahub/rest/services/Boundaries/MapServer/13` | 3857 |
+| LA County Supervisorial | `public.gis.lacounty.gov/.../Political_Boundaries/FeatureServer/27` | 2229 |
+| Service Planning Areas (2022) | `services.arcgis.com/RmCCgQtiZLDCtblq/.../Service_Planning_Areas_2022_view/FeatureServer/4` | 2229 |
+| HUD CoC grantee areas | `services1.arcgis.com/4yjifSiIG17X0gW4/.../Continuum_of_Care_Grantee_Areas_from_HUD/FeatureServer/0` | 3857 |
+| Census tracts (2020) | TIGERweb `.../tigerWMS_Census2020/MapServer/6` | 4269 |
+| Shelters (from 211 LA) | `public.gis.lacounty.gov/.../LMS_Data_Public/MapServer/158` | 2229 |
+
+**Format guidance:** prefer **live ArcGIS REST** for refresh (it declares its CRS) and
+**GeoPackage** as the pinned archival artifact. Use **shapefile only as a small/ASCII
+fallback** — it cannot store null geometry (silently drops records), truncates field names to
+10 chars, and depends on a `.cpg` to avoid mojibake on LA place names like *Cañada*.
+
+**Two gaps that need a decision:** LAHSA publishes **no geometry at all**, and LACDMH service
+area polygons are **not public**. Both are noted in the catalog.
+
+---
+
+## 3. What is already in our codebase
+
+This matters because it makes the job much smaller than it looks.
+
+| | |
+|---|---|
+| Database | PostGIS already — `ENGINE = common.backends.iam_dbauth.postgis`; image `nickblah/postgis:17.5-bullseye-postgis-3.5` |
+| Django | 6.1, Python 3.14, psycopg 3.3.4. `django.contrib.gis` **already installed** |
+| GDAL | `gdal-bin` **already in the production image** (`Dockerfile:127`) |
+| Geometry today | Exactly **four point fields**, all `PointField(srid=4326, geography=True)` (`Shelter.geolocation`, `ClientProfile.residence_geolocation`, HMIS, `common.Location.point`). **No polygon field anywhere.** |
+| The data we want to aggregate | `Note.location` → `common.Location.point` (`notes/models.py:153`). Every interaction already has a point. |
+| Reusable precedent | `shelters/types/filters.py:196` already does `Polygon.from_bbox` + `geolocation__within` |
+| Hand-keyed today | `Shelter.city_council_district` / `supervisorial_district` are hand-entered integers that polygons would let us **derive** |
+
+**So the shape is: interactions already have points → load region polygons → spatial-join the
+two.** No new geometry needs to be captured from users.
+
+---
+
+## 4. The load process
+
+`common/management/commands/load_region_boundaries.py` (sample code in §6). It is deliberately
+**dependency-free** — it uses the GeoDjango/OGR bindings that ship with Django, so no new
+packages, no `ogr2ogr` subprocess, and no IAM-credential juggling.
+
+```bash
+python manage.py load_region_boundaries \
+  --shapefile ./council_districts.zip \
+  --layer poc_region_council_district \
+  --kind council_district \
+  --source-url "https://geohub.lacity.org/api/download/v1/items/76104f230e384f38871eb3c4782f903d/shapefile?layers=13" \
+  --source-vintage 2021 \
+  --name-field NAME \
+  --code-field District
+```
+
+**Verified output:**
+
+```
+source      : council_districts.zip  (sha256 002abb5cd929…)
+ogr path    : /vsizip//workspace/.poc-shapefiles/council_districts.zip/LA_City_Council_Districts_(Adopted_2021).shp
+layer       : LA_City_Council_Districts_(Adopted_2021)  |  15 features  |  geom Polygon
+source SRS  : WGS 84 / Pseudo-Mercator
+note        : --name-field 'name' resolved to field 'NAME'
+note        : --code-field 'district' resolved to field 'District'
+output bbox : (-118.6682, 33.7046) -> (-118.1554, 34.3373)
+parsed      : 15 polygons, 33027 vertices total
+  average 2201 vertices/feature exceeds 2000; consider ST_CoverageSimplify for the map layer.
+loaded 15 features into poc_region_council_district
+```
+
+Result: `geometry(MultiPolygon,4326)`, 15 rows, SRID 4326, GiST index built after load.
+
+### Why the process is shaped this way
+
+1. **Normalise to `MultiPolygon,4326`.** A shapefile layer is a *single* geometry type, so a
+   dataset that is `Polygon` on disk cannot hold a multi-part feature. `to_multipolygon()`
+   promotes it, and repairs self-intersections with `make_valid()` first — `MakeValid` can
+   return a `GEOMETRYCOLLECTION`, so we extract polygonal parts before casting.
+2. **Geometry, not geography.** See §7 — this is a measured decision, not a preference.
+3. **Assert the LA bbox.** The single cheapest guard against a silent no-op reprojection.
+   Verified against the real data to fall inside `(-119.0, 32.8) – (-117.6, 34.9)`.
+4. **Refuse an undeclared CRS.** A missing `.prj` is the #1 cause of silently mislocated data.
+   The command raises rather than guessing.
+5. **Hash-based idempotency.** Re-running the same file is a verified no-op:
+   `poc_region_council_district already holds sha256 002abb5cd929…; nothing to do`.
+6. **Fail loudly on bad field names.** `--code-field DISTRICTT` errors with the real field list
+   rather than writing a column of NULLs. Field lookup is case-insensitive because DBF is.
+7. **Index after load.** Building the GiST index during insert is markedly slower.
+8. **Stream, don't materialise.** Iterating `for feature in layer` reads without slurping.
+9. **Never in a web request.** `gunicorn[gevent]` runs `gevent.monkey.patch_all()`, so a
+   CPU-bound GDAL loop starves the event loop. Run as a Celery task on a dedicated queue, or a
+   one-off ECS task mirroring the existing `migration_service`.
+
+---
+
+## 5. Querying "interactions in this region"
+
+### Q1 — Interactions rolled up by council district
+
+```sql
+SELECT r.code AS district, r.name AS councilmember, count(i.id) AS interactions
+FROM poc_region_council_district r
+LEFT JOIN poc_location l ON ST_Covers(r.geom, l.point::geometry)
+LEFT JOIN poc_interaction i ON i.location_id = l.id
+WHERE r.kind = 'council_district'
+GROUP BY r.code, r.name
+HAVING count(i.id) > 0
+ORDER BY interactions DESC;
+```
+
+**Verified output** (32 seeded interactions at 8 real LA landmarks):
+
+```
+ district |   councilmember    | interactions
+----------+--------------------+--------------
+ 13       | Hugo Soto-Martinez |            8
+ 14       | Ysabel J. Jurado   |            8
+ 6        | Imelda Padilla     |            4
+ 7        | Monica Rodriguez   |            4
+```
+
+### Q2 — "Give me the interactions in *this* region"
+
+```sql
+SELECT i.id, i.created_at::date AS on_date, i.note_type,
+       round(ST_X(l.point::geometry)::numeric,4) AS lon,
+       round(ST_Y(l.point::geometry)::numeric,4) AS lat
+FROM poc_interaction i
+JOIN poc_location l ON l.id = i.location_id
+JOIN poc_region_council_district r ON ST_Covers(r.geom, l.point::geometry)
+WHERE r.kind = 'council_district' AND r.code = '13'
+ORDER BY i.created_at DESC;
+```
+
+Verified — returns 8 rows with dates and coordinates.
+
+### Q3 — Reverse lookup: which district is each interaction in?
+
+```sql
+SELECT i.id, r.code AS district, r.name
+FROM poc_interaction i
+JOIN poc_location l ON l.id = i.location_id
+LEFT JOIN LATERAL (
+  SELECT r.code, r.name FROM poc_region_council_district r
+  WHERE ST_Covers(r.geom, l.point::geometry) LIMIT 1
+) r ON true;
+```
+
+### The result that matters most: unassigned interactions
+
+**8 of the 32 seeded interactions fell outside every council district** — points in Westwood and
+near Santa Monica are *outside LA city limits*, so they belong to no council district.
+
+```sql
+SELECT count(*) AS unassigned_interactions
+FROM poc_location l
+JOIN poc_interaction i ON i.location_id = l.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM poc_region_council_district r WHERE ST_Covers(r.geom, l.point::geometry));
+-- => 8
+```
+
+> **This is the finding that should shape the report UI.** A naive `INNER JOIN` silently drops
+> 25% of interactions here. The aggregated report needs an explicit **"Unassigned / outside
+> city"** bucket, because coverage of any single boundary set is inherently partial. This is
+> also why the query must be driven by a viewport or an explicit bucket, not by the polygons alone.
+
+### Index behaviour (verified with `EXPLAIN`)
+
+The join uses the GiST index — `Index Cond: (geom ~ (l.point)::geometry)`. See §7 for the
+geography caveat that makes this non-obvious.
+
+---
+
+## 6. Sample code
+
+**`apps/betterangels-backend/common/management/commands/load_region_boundaries.py`** — complete,
+runnable, and used to produce every result in this document. Core loop:
+
+```python
+from django.contrib.gis.gdal import DataSource
+from django.contrib.gis.geos import MultiPolygon
+
+datasource = DataSource("/vsizip//path/to/bundle.zip")   # OGR reads the zip directly
+layer = datasource[0]
+if layer.srs is None:
+    raise CommandError("source declares no CRS; refusing to guess")
+
+parsed = []
+for feature in layer:                       # streams; does not slurp the file
+    geometry = feature.geom.geos
+    if not geometry.valid:
+        geometry = geometry.make_valid()     # 1. repair
+    if geometry.geom_type == "GeometryCollection":        # 2. MakeValid can widen the type
+        geometry = MultiPolygon([p for g in geometry
+                                 for p in (g if g.geom_type == "MultiPolygon" else [g])],
+                                srid=geometry.srid)
+    elif geometry.geom_type == "Polygon":
+        geometry = MultiPolygon(geometry, srid=geometry.srid)
+    if geometry.srid != 4326:
+        geometry = geometry.transform(4326, clone=True)   # 3. reproject last
+    parsed.append((feature.get("District"), feature.get("NAME"), geometry))
+```
+
+Insert streams EWKB hex and lets Postgres do the geometry work:
+
+```sql
+INSERT INTO poc_region_council_district
+  (kind, code, name, source_url, source_vintage, source_sha256, geom)
+VALUES (%s,%s,%s,%s,%s,%s, ST_GeomFromEWKB(decode(%s,'hex')))
+```
+
+### The `ogr2ogr` alternative (works, but not the recommended path)
+
+Also verified working in the app container:
+
+```bash
+ogr2ogr -f PostgreSQL "PG:host=db dbname=... user=..." \
+  "/workspace/.poc-shapefiles/council/....shp" \
+  -nln public.poc_council_districts \
+  -nlt PROMOTE_TO_MULTI -t_srs EPSG:4326 \
+  -lco GEOMETRY_NAME=geom -lco FID=id -lco PRECISION=NO -lco SPATIAL_INDEX=GIST -overwrite
+```
+
+Use it for **discovery** (`ogrinfo -so -al` to inspect CRS/fields before writing code) and as an
+**escape hatch** for pathological files. Reasons it isn't the default here: it is a subprocess
+that **cannot use our IAM DB backend** (you must mint a 15-minute `PGPASSWORD` via boto3), RDS is
+private-subnet so it only runs inside a Fargate task, and `-overwrite` **destroys** an ORM-managed
+table (id sequence, `created_at`, `pghistory` triggers, constraints).
+
+---
+
+## 7. Traps found — each verified, not theoretical
+
+### 7.1 Geography columns cannot use the index for `within` — measured
+
+I flagged this from reading Django's source; here is the measured confirmation.
+
+```
+A) geography column + Django's ST_Within(geog::geometry, poly::geometry)
+   -> Seq Scan   (predicate is a cast expression; index unusable)
+B) geometry column + ST_Within(geom, poly)
+   -> Index Scan using ..._geom_gix   Index Cond: (geom @ '...'::geometry)
+C) geography column + a geography-native operator, ST_Covers(geog, geog::geography)
+   -> Index Scan using ..._gix        Index Cond: (geog && '...'::geography)
+```
+
+Only `bboverlaps`, `coveredby`, `covers`, `intersects` and `dwithin` are geography-native. Django
+maps `within` → `ST_Within` **without** `geography=True`, so it appends `::geometry` to the lhs
+and the index is lost.
+
+**⇒ Region boundary columns must be `geometry(MultiPolygon,4326)`, not `geography`.**
+(Point columns can stay geography; that is working today.)
+
+### 7.2 Missing `.prj` ⇒ reprojection is a silent no-op
+
+If a shapefile has no `.prj` and no explicit source SRID is supplied, OGR assumes the source is
+already in the target and **does nothing** — no warning. The LA bbox assertion in §4 is the
+guard. Our downloaded file *does* have a `.prj` (verified, 3857), but the catalog shows several
+LA sources that don't.
+
+### 7.3 The `data.lacity.org` GeoJSON CRS is wrong
+
+Reproduced directly: the endpoint declares WGS84 lon/lat —
+
+```json
+"crs": {"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}}
+```
+
+— while the actual first coordinate is `6471422.29, 1844939.98`, i.e. **EPSG:2229 State Plane
+feet**. A loader that trusts the declared CRS places Los Angeles in the Gulf of Guinea with no
+error. Prefer the ArcGIS REST form, which reports its CRS truthfully.
+
+### 7.4 Vertex counts are already over the map budget
+
+The council districts carry **33,027 vertices across 15 features — an average of 2,201
+each**. That is at the limit where Google Maps polygon rendering degrades, and it is a *tiny*
+dataset compared with census tracts. Simplification is not optional at the next tier.
+
+### 7.5 `postgis` extension is unverified on RDS
+
+Nothing in Terraform or in any migration creates it. Local gets it from the image. **Check
+dev/preview/prod before writing geometry DDL.**
+
+---
+
+## 7a. How this is tested
+
+`apps/betterangels-backend/common/tests/test_load_region_boundaries.py` — 19 tests, all
+passing, plus `mypy` (strict) and `ruff` clean. Most assert *safety* properties rather than
+the happy path, because that is where a loader does damage:
+
+| Property | Why it matters |
+|---|---|
+| `regions_mislabelled_crs.geojson` is **rejected** | Reproduces the real `data.lacity.org` defect: the file declares WGS84 lon/lat while holding EPSG:2229 State Plane feet. The bbox assertion must catch it and write nothing. |
+| A 3857 source is reprojected to the correct LA lon/lat | Guards the common case of LA layers published in Web Mercator or State Plane. |
+| Self-intersecting polygons are repaired | Bow-tie geometry is routine in real shapefiles and would otherwise fail the `MultiPolygon` insert. |
+| Geometry with no SRID raises | An undeclared CRS must never be guessed. |
+| Non-areal geometry raises | A point/line layer must not be silently coerced. |
+| Re-running an identical file is a no-op | Prevents duplicate regions on a scheduled refresh. |
+| An unknown field name fails loudly | Otherwise the table fills with NULL codes and no error is raised. |
+| Field lookup is case-insensitive | DBF headers are case-insensitive and truncated to 10 chars. |
+| A malformed `--layer` is rejected | Table names are interpolated into SQL; this is the injection guard. |
+| A malformed `--kind` is rejected | Same class of input. |
+| `--dry-run` writes nothing | Lets an operator validate before a destructive-ish reload. |
+| Missing file / unsupported extension are reported | Clear operator errors. |
+
+Three GeoJSON fixtures live in `common/tests/fixtures/`. GeoJSON is used for the fixtures
+rather than shapefiles so the CRS cases are expressible in a readable, diffable file — and
+because the loader accepts both.
+
+To run:
+
+```bash
+python -m pytest common/tests/test_load_region_boundaries.py
+```
+
+---
+
+## 8. Recommended next steps
+
+**Phase 0 — settle the two questions that change the design (½ day)**
+1. Confirm the **`postgis` extension** exists on dev/preview/prod RDS.
+2. Decide the **initial region set**. The epic names ZIP, council district, SPA, and
+   supervisorial district. Recommend shipping **council district + SPA** first: both are
+   officially published, both are few features, and together they answer the client-interaction
+   question for the outreach admin.
+
+**Phase 1 — productionise the loader (1–2 days).**
+3. Move the command's `CREATE TABLE` into a real Django model + migration:
+   `Region(kind, code, name, source_url, source_vintage, source_sha256, geom)` with
+   `MultiPolygonField(srid=4326)` (geometry, per §7.1) and `CreateExtension("postgis")`.
+4. Add a `DatasetImport` row per load for provenance, and `pghistory` on the header only.
+5. Wire it to the existing **presigned-S3 / `django-admin-async-upload`** flow: upload the zip,
+   store the key, enqueue the import. `/vsizip/` means no unpack step.
+6. Run it as a Celery task on a new **`imports` queue** (`celery_worker_config` is a map keyed
+   by queue, so this is a config-only Terraform change).
+
+**Phase 2 — the report (the epic's actual deliverable).**
+7. Aggregate `Note` → `Location.point` by region, **including the "Unassigned" bucket** (§5).
+8. Expose it via Strawberry. Note the GraphQL schema has **no geometry type today** — serving
+   boundaries needs `ST_AsGeoJSON`.
+9. Tabular view first; the map view needs the `MultiPolygon` frontend work below.
+
+**Phase 3 — map view (needs separate frontend work).**
+10. **Do not use teovilla's `Polygon` on web** — I read the source and it discards the result of
+    `mapMouseEventToMapEvent(...)`, so `onPress` never fires, and it drops `holes`
+    (uses `path`, not `paths`) so holes render filled. Its sibling `polyline.tsx` does it
+    correctly, confirming it's a bug. Use `@react-google-maps/api`'s batched `<Data>` layer on
+    web; teovilla renders children inside `<GoogleMap>`, so the escape hatch works.
+11. `react-native-maps`' `<Geojson>` maps **every feature to its own native view**, so it is fine
+    for 15 districts and wrong for thousands of tracts. Simplify with **`ST_CoverageSimplify`**
+    (not `ST_SimplifyPreserveTopology`, which does not preserve *shared* boundaries and produces
+    visible slivers between adjacent polygons).
+
+**Phase 4 — derive what's hand-keyed.**
+12. Backfill `Shelter.city_council_district` / `supervisorial_district` via
+    `ST_Covers(region.geom, shelter.geolocation::geometry)` and keep new rows fresh.
+
+---
+
+## DEV-2570 context
+
+> "Analytics" is an overloaded term here. What Adam is actually asking for is the foundation for
+> regional data aggregation: get the underlying shape files in place so data can be rolled up by
+> geography — ZIP, City Council District, SPA, Supervisorial District, etc. — and by actor
+> (individual, manager, organization, CD, city/county).
+>
+> Deliverable: a single report in the outreach admin that slices data across these regions.
+> Interactions data is the starting point. Rough steps: get a clear list of the regions; look for
+> where we can get these shape files; load data in; create a report that displays client
+> interactions grouped by the above shape files — tabular view and map view.
+
+---
+
+## Appendix: reproduce this
+
+```bash
+# 1. download the official shapefile
+curl -sL "https://geohub.lacity.org/api/download/v1/items/76104f230e384f38871eb3c4782f903d/shapefile?layers=13" \
+  -o council_districts.zip
+
+# 2. inspect before writing code (reveals CRS + real field names)
+ogrinfo -so -al council_districts.zip
+
+# 3. load
+python manage.py load_region_boundaries \
+  --shapefile council_districts.zip --layer region_council_district \
+  --kind council_district --source-vintage 2021 \
+  --name-field NAME --code-field District
+
+# 4. verify the CRS actually landed
+psql -c "select count(*), ST_SRID(geom), GeometryType(geom)
+         from region_council_district group by 2,3;"
+# => 15 | 4326 | MULTIPOLYGON
+```
+
+Companion documents: [la-geodata-sources.md](la-geodata-sources.md) (143 verified endpoints),
+[shapefile-import-research.md](shapefile-import-research.md) (import methods deep-dive),
+[gis-shapefile-options.md](gis-shapefile-options.md) (consolidated options).
