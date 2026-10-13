@@ -188,15 +188,22 @@ def available_kinds() -> list[str]:
 def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:
     """Region polygons as GeoJSON, for the map view.
 
-    ``ST_AsGeoJSON`` is asked for 6 decimal places (~10 cm). There is no
-    simplification argument: boundaries are served at full resolution, and a
-    caller needing a smaller payload would have to ask for one explicitly rather
-    than receive silently-simplified geometry.
+    Serves ``geom_display`` -- the boundary simplified once at import to a tolerance
+    below what the map can draw (see ``Region.geom_display``). Serving the
+    authoritative ``geom`` instead meant 21 MB across six dimensions, with ZIP alone
+    at 9,960 kB of detail rendering at 0.2 px.
+
+    Falls back to ``geom`` for any row where the importer has not set the display
+    copy, so a region is never invisible on the map merely because it was created
+    outside the importer.
+
+    ``ST_AsGeoJSON`` is asked for 6 decimal places (~10 cm), which is finer than the
+    simplification tolerance, so no precision is lost in serialisation.
     """
     with connection.cursor() as cursor:
         cursor.execute(
             """
-            SELECT kind, code, name, ST_AsGeoJSON(geom, 6)::json
+            SELECT kind, code, name, ST_AsGeoJSON(COALESCE(geom_display, geom), 6)::json
             FROM regions_region
             WHERE kind = ANY(%(kinds)s)
               AND (%(codes)s IS NULL OR code = ANY(%(codes)s))

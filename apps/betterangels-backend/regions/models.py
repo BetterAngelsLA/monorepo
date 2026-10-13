@@ -26,6 +26,11 @@ from django.db.utils import OperationalError, ProgrammingError
 
 
 # Subdivision is gated: only regions above the threshold are chopped.
+# Tolerance for the map's display geometry, in degrees. 0.0005 deg is ~46 m at Los
+# Angeles, which is 0.2 px at zoom 9 and 0.7 px at zoom 11 -- below what the map can
+# draw. Measured: it takes the full boundary payload from 21 MB to 817 kB.
+DISPLAY_SIMPLIFY_DEGREES = 0.0005
+
 SUBDIVIDE_VERTEX_THRESHOLD = 2000
 # Passed to ST_Subdivide as the target size, NOT a guaranteed ceiling. The PostGIS
 # docs say it cuts with rectilinear lines so each part holds "no more than
@@ -150,7 +155,31 @@ class Region(models.Model):
     # its URL (URLs get reorganised; item ids do not).
     source_item_id = models.CharField(max_length=64, blank=True, default="")
 
+    # The authoritative boundary: full resolution. Used for area, exports, and any
+    # question where the real line matters.
     geom = MultiPolygonField(srid=4326)
+
+    # Simplified copy of ``geom``, solely for the map view, built by the importer.
+    #
+    # Three consumers want three different tolerances, so there are three columns
+    # rather than one compromise:
+    #
+    #   geom         authoritative, full resolution (area, disputes, exports)
+    #   geom_display ST_SimplifyPreserveTopology(geom, DISPLAY_SIMPLIFY_DEGREES) (map)
+    #   RegionPiece  subdivided parts (the spatial join; see below)
+    #
+    # Serving ``geom`` to the map shipped 9,960 kB of ZIP geometry whose finest
+    # detail is 0.2 px on screen -- 21 MB across all six dimensions. Simplifying per
+    # request fixed the payload (817 kB) but cost 310 ms on every map load, so it is
+    # done once at import instead.
+    #
+    # Nullable because a region created directly (tests, admin, a script) may not set
+    # it; ``region_features`` falls back to ``geom`` in that case.
+    #
+    # It is NOT derivable from ``RegionPiece``: subdivision clips parts at
+    # subdivision boundaries, so reassembling pieces does not reproduce the parent --
+    # measured, 1 of 8 SPAs and 0 of 5 supervisorial districts come back exact.
+    geom_display = MultiPolygonField(srid=4326, null=True, blank=True)
 
     objects = models.Manager()
 
