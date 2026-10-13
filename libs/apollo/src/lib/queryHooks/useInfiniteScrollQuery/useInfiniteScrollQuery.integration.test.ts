@@ -192,4 +192,85 @@ describe('useInfiniteScrollQuery – end to end', () => {
 
     errorSpy.mockRestore();
   });
+
+  it('drops a row the server stopped returning, and keeps paging (DEV-2466)', async () => {
+    // A mutable server, so a row can disappear between renders the way a
+    // client profile does when it is merged away in the Django admin.
+    let server = ['1', '2', '3', '4', '5', '6'].map(task);
+
+    const link = new ApolloLink(
+      (operation) =>
+        new Observable((observer) => {
+          const vars = operation.variables as TasksVars;
+          const offset = vars.pagination?.offset ?? 0;
+          const limit = vars.pagination?.limit ?? PAGE_SIZE;
+
+          observer.next({
+            data: {
+              tasks: {
+                results: server.slice(offset, offset + limit),
+                totalCount: server.length,
+              },
+            },
+          });
+          observer.complete();
+        }),
+    );
+
+    const { client } = makeClient(link);
+    const variables = {
+      filters: { q: 'x' },
+      ordering: [{ createdAt: 'DESC' as const }],
+    };
+    const render = () =>
+      renderWithClient(client, () =>
+        useInfiniteScrollQuery<TaskItem, TasksData, TasksVars>({
+          document: TASKS_DOCUMENT,
+          queryFieldName: 'tasks',
+          variables,
+          pageSize: PAGE_SIZE,
+        }),
+      );
+
+    const first = render();
+    await waitFor(() =>
+      expect(first.result.current.items).toHaveLength(PAGE_SIZE),
+    );
+    await act(async () => {
+      first.result.current.loadMore();
+    });
+    await waitFor(() => expect(first.result.current.items).toHaveLength(TOTAL));
+
+    // "6" is merged away, then the user reopens the list.
+    server = server.filter((row) => row.id !== '6');
+    first.unmount();
+
+    const second = render();
+
+    // The stale row must not survive the remount, and the list must not be
+    // left contradicting its own totalCount.
+    await waitFor(() =>
+      expect(second.result.current.items.map((item) => item.id)).toEqual([
+        '1',
+        '2',
+        '3',
+      ]),
+    );
+    expect(second.result.current.total).toBe(TOTAL - 1);
+    expect(second.result.current.hasMore).toBe(true);
+
+    // ...and the surviving tail is still reachable, with nothing skipped.
+    await act(async () => {
+      second.result.current.loadMore();
+    });
+    await waitFor(() =>
+      expect(second.result.current.items.map((item) => item.id)).toEqual([
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+      ]),
+    );
+  });
 });
