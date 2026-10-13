@@ -7,16 +7,25 @@ Ticket: <https://betterangels.atlassian.net/browse/DEV-2604>
 verified** against the PostGIS 17.5 / PostGIS 3.5 + GeoDjango dev environment on 2026-10-13.
 Nothing here is speculative.
 
+> **Read this as the spike record, not as the shipped design.** The prototype it describes
+> used a scratch command (`load_region_boundaries`) writing to a table named
+> `poc_region_council_district`. **That command has been deleted** — the shipped path is
+> `manage.py import_regions` writing the `regions` app's own model, which
+> [README.md](README.md) documents. The verified findings, the CRS traps and the spatial-query
+> behaviour below still hold and are why the shipped design looks the way it does; the
+> command line and table names in §4 and §6 do not. Renamed/retained specifics are called out
+> inline.
+
 | Ticket ask | Where |
 |---|---|
 | Identify a single region, official source | [§1](#1-the-region-and-the-official-source) — LA City Council Districts, City of LA GeoHub |
-| Make a process to download + load into the db | [§4](#4-the-load-process) — working `load_region_boundaries` command |
-| Writeup of the landscape | [§2](#2-landscape-what-types-of-data-exist-and-where) — 143 verified endpoints in [la-geodata-sources.md](la-geodata-sources.md) |
+| Make a process to download + load into the db | [§4](#4-the-load-process) — working command; shipped as `import_regions`, the spike-time `load_region_boundaries` is deleted |
+| Writeup of the landscape | [§2](#2-landscape-what-types-of-data-exist-and-where) — 143 verified endpoints in [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) |
 | What types of data exist | [§2](#2-landscape-what-types-of-data-exist-and-where) |
-| Where does it exist | [§2](#2-landscape-what-types-of-data-exist-and-where) + [la-geodata-sources.md](la-geodata-sources.md) |
+| Where does it exist | [§2](#2-landscape-what-types-of-data-exist-and-where) + [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) |
 | How to load it | [§4](#4-the-load-process) |
 | How to query it ("interactions in this region") | [§5](#5-querying-interactions-in-this-region) |
-| Sample code that loads the data | [§6](#6-sample-code) — `common/management/commands/load_region_boundaries.py` |
+| Sample code that loads the data | [§6](#6-sample-code) — now `regions/management/commands/import_regions.py` |
 
 ---
 
@@ -52,7 +61,7 @@ The download was performed and verified — 368,885 bytes, 15 features, 33,027 v
 
 ## 2. Landscape: what types of data exist, and where
 
-The full catalog is [la-geodata-sources.md](la-geodata-sources.md) — **143 endpoints
+The full catalog is [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) — 228 verified URLs
 individually HTTP-probed**, with CRS, geometry type, and `maxRecordCount` read from live
 `?f=pjson` responses. Coverage:
 
@@ -106,7 +115,10 @@ two.** No new geometry needs to be captured from users.
 
 ## 4. The load process
 
-`common/management/commands/load_region_boundaries.py` (sample code in §6). It is deliberately
+The command reproduced below is the spike prototype, `load_region_boundaries`; it has since
+been **deleted** and replaced by `regions/management/commands/import_regions.py` (§6), which
+writes the `regions` app's model rather than a caller-named table. The output is kept verbatim
+because it is the evidence the design rests on. It is deliberately
 **dependency-free** — it uses the GeoDjango/OGR bindings that ship with Django, so no new
 packages, no `ogr2ogr` subprocess, and no IAM-credential juggling.
 
@@ -242,7 +254,8 @@ geography caveat that makes this non-obvious.
 
 ## 6. Sample code
 
-**`apps/betterangels-backend/common/management/commands/load_region_boundaries.py`** — complete,
+**`apps/betterangels-backend/regions/management/commands/import_regions.py`** — the shipped
+loader (the spike prototype that follows was `load_region_boundaries`, now deleted) — complete,
 runnable, and used to produce every result in this document. Core loop:
 
 ```python
@@ -274,7 +287,7 @@ Insert streams EWKB hex and lets Postgres do the geometry work:
 
 ```sql
 INSERT INTO poc_region_council_district
-  (kind, code, name, source_url, source_vintage, source_sha256, geom)
+  (kind, code, name, source_url, source_vintage, geom)
 VALUES (%s,%s,%s,%s,%s,%s, ST_GeomFromEWKB(decode(%s,'hex')))
 ```
 
@@ -345,17 +358,27 @@ The council districts carry **33,027 vertices across 15 features — an average 
 each**. That is at the limit where Google Maps polygon rendering degrades, and it is a *tiny*
 dataset compared with census tracts. Simplification is not optional at the next tier.
 
-### 7.5 `postgis` extension is unverified on RDS
+### 7.5 `postgis` extension — RESOLVED: already present, and we must not create it
 
-Nothing in Terraform or in any migration creates it. Local gets it from the image. **Check
-dev/preview/prod before writing geometry DDL.**
+**This open question is closed, and the answer inverted.** An earlier revision of the
+migration added `CreateExtension("postgis")` on the premise that nothing created it. That
+premise was wrong: `clients`, `common`, `hmis` and `shelters` each declare geometry fields in
+their `0001_initial` migrations, and those migrations cannot apply without the extension.
+
+It was removed, and should not be re-added. PostGIS is **not** a trusted extension, so
+`CREATE EXTENSION postgis` needs superuser or `rds_superuser` — which the app's IAM-minted
+role is not — and `CreateExtension`'s *reverse* migration compiles to
+`DROP EXTENSION IF EXISTS postgis`, which would try to drop it out from under four other
+apps' geometry columns.
 
 ---
 
 ## 7a. How this is tested
 
-`apps/betterangels-backend/common/tests/test_load_region_boundaries.py` — 19 tests, all
-passing, plus `mypy` (strict) and `ruff` clean. Most assert *safety* properties rather than
+`apps/betterangels-backend/regions/tests/` — the suite for the shipped feature (see
+[README.md](README.md)), plus `mypy` and `ruff` clean. The table below describes the
+properties that mattered to the spike prototype; the same properties are what the shipped
+importer is built to preserve. Most assert *safety* properties rather than
 the happy path, because that is where a loader does damage:
 
 | Property | Why it matters |
@@ -380,7 +403,7 @@ because the loader accepts both.
 To run:
 
 ```bash
-python -m pytest common/tests/test_load_region_boundaries.py
+python -m pytest regions/tests
 ```
 
 ---
@@ -396,7 +419,7 @@ python -m pytest common/tests/test_load_region_boundaries.py
 
 **Phase 1 — productionise the loader (1–2 days).**
 3. Move the command's `CREATE TABLE` into a real Django model + migration:
-   `Region(kind, code, name, source_url, source_vintage, source_sha256, geom)` with
+   `Region(kind, code, name, source_url, source_vintage, geom)` with
    `MultiPolygonField(srid=4326)` (geometry, per §7.1) and `CreateExtension("postgis")`.
 4. Add a `DatasetImport` row per load for provenance, and `pghistory` on the header only.
 5. Wire it to the existing **presigned-S3 / `django-admin-async-upload`** flow: upload the zip,
@@ -452,17 +475,13 @@ curl -sL "https://geohub.lacity.org/api/download/v1/items/76104f230e384f38871eb3
 ogrinfo -so -al council_districts.zip
 
 # 3. load
-python manage.py load_region_boundaries \
-  --shapefile council_districts.zip --layer region_council_district \
-  --kind council_district --source-vintage 2021 \
-  --name-field NAME --code-field District
+python manage.py import_regions --kind council_district
 
 # 4. verify the CRS actually landed
 psql -c "select count(*), ST_SRID(geom), GeometryType(geom)
-         from region_council_district group by 2,3;"
+         from regions_region where kind='council_district' group by 2,3;"
 # => 15 | 4326 | MULTIPOLYGON
 ```
 
-Companion documents: [la-geodata-sources.md](la-geodata-sources.md) (143 verified endpoints),
-[shapefile-import-research.md](shapefile-import-research.md) (import methods deep-dive),
-[gis-shapefile-options.md](gis-shapefile-options.md) (consolidated options).
+Companion document: [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) — the
+verified source inventory, and the provenance for every boundary layer the importer loads.

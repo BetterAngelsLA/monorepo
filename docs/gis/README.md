@@ -9,32 +9,28 @@ supervisorial district, …).
 | Document | What it is |
 |---|---|
 | [dev-2604-shapefile-spike.md](dev-2604-shapefile-spike.md) | **The spike deliverable.** Picks one region, names the official source, and shows the verified load + query process end to end. Read this first. |
-| [la-geodata-sources.md](la-geodata-sources.md) | The source inventory: LA geospatial endpoints with CRS, geometry type, feature counts, licensing, and current/superseded verdicts. |
-| [la-boundary-currency-audit.md](la-boundary-currency-audit.md) | **Are they current?** Live-probed verdicts on each candidate layer, and which vintages are superseded. Read before importing. |
-| [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) | **The exhaustive inventory** — 283 services probed live, 266 real feature counts, 228 verified URLs, plus 33 supersessions and 19 dead/empty sources. |
-| [shapefile-import-research.md](shapefile-import-research.md) | Deep dive on ingestion methods (`ogr2ogr`, `shp2pgsql`, GeoDjango/OGR, geopandas) and why the recommended one was chosen. |
-| [gis-shapefile-options.md](gis-shapefile-options.md) | Consolidated options across data sources, backend import, and frontend rendering. |
+| [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) | **The source inventory** — 283 services probed live, 266 real feature counts, 228 verified URLs, plus 33 supersessions and 19 dead/empty sources. Read this before importing anything. |
 
 ## The code
 
-`apps/betterangels-backend/common/management/commands/load_region_boundaries.py`
-
-A dependency-free loader for Shapefile / GeoJSON / GeoPackage boundary layers. It uses
-the GeoDjango OGR bindings that already ship with Django, so it adds no packages and
-needs no `ogr2ogr` subprocess or IAM-credential juggling.
+`apps/betterangels-backend/regions/` — the app that stores boundaries and answers the
+grouping queries — plus one command, `manage.py import_regions`, which populates it.
 
 ```bash
-python manage.py load_region_boundaries \
-  --shapefile ./council_districts.zip \
-  --layer region_council_district \
-  --kind council_district \
-  --source-url "https://geohub.lacity.org/api/download/v1/items/76104f230e384f38871eb3c4782f903d/shapefile?layers=13" \
-  --source-vintage 2021 \
-  --name-field NAME \
-  --code-field District
+python manage.py import_regions                      # every dimension
+python manage.py import_regions --kind spa --dry-run # validate one, write nothing
+python manage.py import_regions --kind city \
+  --source ./cities.geojson                          # local file instead of a fetch
 ```
 
-Tests: `apps/betterangels-backend/common/tests/test_load_region_boundaries.py`
+It pulls each dimension from its publisher's live ArcGIS REST endpoint as GeoJSON,
+normalises to `MultiPolygon/EPSG:4326`, and replaces the dimension wholesale so a code
+that vanished from the publisher's current vintage cannot linger. It uses the GeoDjango
+OGR bindings that already ship with Django, so it needs no extra packages and no
+`ogr2ogr` subprocess. It also refuses a truncated ArcGIS response rather than importing a
+partial layer.
+
+Tests: `apps/betterangels-backend/regions/tests/`
 
 ## The short version
 
@@ -47,11 +43,16 @@ Tests: `apps/betterangels-backend/common/tests/test_load_region_boundaries.py`
   GiST index.
 - **CRS is the biggest data hazard.** LA's native projection is EPSG:2229 (State Plane V,
   *feet*); CalEnviroScreen is 3310; TIGER is 4269; HUD is 3857. `data.lacity.org`'s GeoJSON
-  export declares WGS84 lon/lat while emitting State Plane feet. The loader asserts an LA
-  bounding box to catch this, and there is a regression test for that exact defect.
-- **Any single boundary set leaves coverage gaps.** In the spike, 8 of 32 sample
-  interactions fell outside every council district (they were outside city limits), so the
-  report needs an explicit "Unassigned" bucket — an inner join silently drops them.
+  export declares WGS84 lon/lat while emitting State Plane feet. The importer asserts an
+  LA bounding box to catch that class of failure.
+- **Any single boundary set leaves coverage gaps.** In a seeded 32-interaction sample, 8
+  fell outside every council district (they were in Beverly Hills and Santa Monica, i.e.
+  outside city limits), so the API returns an explicit unassigned bucket — an inner join
+  would silently drop them.
+- **The heavy layers need subdivided lookup geometry.** One city multipolygon has ~310k
+  vertices in one row, so the GiST index prunes nothing and the rollup took 10.6 s at
+  20k interactions. `RegionPiece` holds subdivided parts; the rollup joins that and runs
+  in 375 ms. See `dev-2604-shapefile-spike.md` §7a.
 
 ## Region grouping (backend, shipped)
 
