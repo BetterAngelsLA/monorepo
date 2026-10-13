@@ -45,7 +45,7 @@ function shade(max: number, count: number): string {
 }
 
 /** What the map is showing. Regions are always drawn, as context. */
-export type MapView = 'regions' | 'pins' | 'density' | 'heatmap';
+export type MapView = 'regions' | 'pins' | 'density';
 
 /** Warm ramp for density, deliberately distinct from the blue region shading. */
 function densityShade(max: number, count: number): string {
@@ -55,42 +55,6 @@ function densityShade(max: number, count: number): string {
   const g = Math.round(0xe0 + (0x4a - 0xe0) * t);
   const b = Math.round(0xc8 + (0x1a - 0xc8) * t);
   return `rgb(${r},${g},${b})`;
-}
-
-/**
- * A gradient heatmap, drawn as graded translucent discs by the Data layer.
- *
- * Not the Maps `visualization.HeatmapLayer`: its bundled type declaration is
- * `constructor()` with no `setMap`, so using it would need a cast the frontend
- * styleguide forbids, and it would add a second rendering path for one view. Discs
- * with soft alpha overlap into the same continuous gradient, and they keep every
- * other layer on `map.data`.
- *
- * Each disc is weighted by how many interactions sit near it, so a dense cluster
- * reads hot rather than merely overlapping — that is what makes it a heatmap rather
- * than a scatter of flat dots.
- */
-function gradientShade(weight: number): string {
-  // pale yellow -> orange -> deep red, the conventional heat ramp
-  const stops: [number, [number, number, number]][] = [
-    [0, [255, 237, 160]],
-    [0.5, [254, 178, 76]],
-    [1, [189, 0, 38]],
-  ];
-  const t = Math.max(0, Math.min(1, weight));
-  let lo = stops[0];
-  let hi = stops[stops.length - 1];
-  for (let i = 0; i < stops.length - 1; i++) {
-    if (t >= stops[i][0] && t <= stops[i + 1][0]) {
-      lo = stops[i];
-      hi = stops[i + 1];
-      break;
-    }
-  }
-  const span = hi[0] - lo[0] || 1;
-  const f = (t - lo[0]) / span;
-  const mix = (a: number, b: number) => Math.round(a + (b - a) * f);
-  return `rgb(${mix(lo[1][0], hi[1][0])},${mix(lo[1][1], hi[1][1])},${mix(lo[1][2], hi[1][2])})`;
 }
 
 /**
@@ -123,33 +87,7 @@ function InteractionLayer({
     const layer = map.data;
     const added: google.maps.Data.Feature[] = [];
 
-    if (view === 'heatmap') {
-      // Weight each point by how many neighbours sit within the radius, computed
-      // once here rather than per style call.
-      const radius = 0.02; // ~2 km in degrees at this latitude
-      points.forEach((point, index) => {
-        let weight = 0;
-        for (const other of points) {
-          if (
-            Math.abs(other.latitude - point.latitude) <= radius &&
-            Math.abs(other.longitude - point.longitude) <= radius
-          ) {
-            weight += 1;
-          }
-        }
-        try {
-          const feature = layer.add({
-            geometry: new google.maps.Data.Point(
-              new google.maps.LatLng(point.latitude, point.longitude),
-            ),
-            properties: { kind: 'heat', heat: weight, key: `heat-${index}` },
-          });
-          added.push(feature);
-        } catch (error) {
-          console.error('[RegionMap] could not plot a heat point', error);
-        }
-      });
-    } else if (view === 'pins') {
+    if (view === 'pins') {
       points.forEach((point, index) => {
         try {
           const feature = layer.add({
@@ -210,19 +148,11 @@ function RegionLayer({
   regions,
   view,
   maxDensity,
-  maxHeat,
 }: {
   rows: RegionCountType[];
   regions: RegionGeometryType[];
   view: MapView;
   maxDensity: number;
-  /**
-   * Normaliser for the heat ramp. It belongs here rather than only on the
-   * interaction layer because `map.data` styles every feature with a single
-   * function — one feature set, one style — so this layer has to know the value
-   * even though the heat points come from the other one.
-   */
-  maxHeat: number;
 }) {
   const map = useMap();
 
@@ -281,19 +211,6 @@ function RegionLayer({
             fillOpacity: 0.85,
             strokeColor: '#7B0F3A',
             strokeWeight: 0.8,
-          },
-        };
-      }
-
-      if (kind === 'heat') {
-        const heat = featureNumber(feature, 'heat');
-        return {
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 26,
-            fillColor: gradientShade(maxHeat > 0 ? heat / maxHeat : 0),
-            fillOpacity: 0.45,
-            strokeWeight: 0,
           },
         };
       }
@@ -358,7 +275,7 @@ function RegionLayer({
       layer.forEach((f: google.maps.Data.Feature) => layer.remove(f));
       map.getDiv().removeAttribute('title');
     };
-  }, [map, regions, countsByCode, max, view, maxDensity, maxHeat]);
+  }, [map, regions, countsByCode, max, view, maxDensity]);
 
   return null;
 }
@@ -398,9 +315,6 @@ export function RegionMap({
   className = '',
 }: RegionMapProps) {
   const [view, setView] = useState<MapView>('regions');
-  // Normalises the heat ramp. Derived from the point count rather than a global
-  // maximum, which would need a second query.
-  const maxHeat = useMemo(() => Math.max(1, Math.round(points.length / 20)), [points.length]);
 
   const maxDensity = useMemo(
     () => density.reduce((max, cell) => Math.max(max, cell.count), 0),
@@ -413,9 +327,6 @@ export function RegionMap({
     }
     if (view === 'density') {
       return `Interactions${scope} aggregated into roughly 1 km cells; darker and larger means more.`;
-    }
-    if (view === 'heatmap') {
-      return `Density of interactions${scope}, as a continuous gradient. Relative only — use the table below for exact figures.`;
     }
     return `Regions shaded by interaction count${scope}. Areas with no shading had no interactions in this range.`;
   }, [view, points.length, filteredTo]);
@@ -473,7 +384,6 @@ export function RegionMap({
             { label: 'Regions', value: 'regions' },
             { label: 'Interactions', value: 'pins' },
             { label: 'Density', value: 'density' },
-            { label: 'Heatmap', value: 'heatmap' },
           ]}
         />
       </div>
@@ -489,7 +399,6 @@ export function RegionMap({
           regions={regions}
           view={view}
           maxDensity={maxDensity}
-          maxHeat={maxHeat}
         />
         <InteractionLayer view={view} points={points} density={density} />
       </GoogleMap>
