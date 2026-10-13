@@ -1,10 +1,14 @@
 """Tests for freezing the acting user's identity into the pghistory context."""
 
+import re
+
 from accounts.models import User
 from common.middleware import HistoryMiddleware
 from django.contrib.auth.models import AnonymousUser
+from django.db import connection
 from django.http import HttpRequest, HttpResponse
 from django.test import RequestFactory, TestCase
+from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
 from shelters.models import City
 
@@ -72,3 +76,36 @@ class HistoryMiddlewareTests(TestCase):
         event = City.pgh_event_model.objects.latest("pgh_id")  # type: ignore[attr-defined]
         assert event.pgh_context is not None
         self.assertNotIn("user_name", event.pgh_context.metadata)
+
+    def test_write_injects_transaction_local_context_only(self) -> None:
+        """The context GUCs must be transaction-local so RDS Proxy does not pin.
+
+        pghistory prepends ``set_config(<name>, <value>, true)`` (``is_local``,
+        i.e. ``SET LOCAL``) to every write. AWS documents that ``SET LOCAL`` does
+        not pin a proxy connection, but a session-scoped ``set_config(..., false)``
+        or ``SET SESSION`` does. Guard the write path against regressing to the
+        session-scoped form (ADR 0004 §10, "RDS Proxy interaction").
+        """
+        user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+
+        def get_response(request: HttpRequest) -> HttpResponse:
+            baker.make(City, name="Pinnedville")
+            return HttpResponse()
+
+        request = self.factory.post("/shelters/")
+        request.user = user
+
+        with CaptureQueriesContext(connection) as captured:
+            HistoryMiddleware(get_response)(request)
+
+        sql = "\n".join(query["sql"] for query in captured.captured_queries)
+        self.assertIn("set_config('pghistory.context_id'", sql)
+        self.assertIn(", true)", sql)
+        self.assertIsNone(
+            re.search(r"set_config\([^)]*,\s*false\s*\)", sql, re.IGNORECASE),
+            "session-scoped set_config(..., false) would pin the RDS Proxy connection",
+        )
+        self.assertIsNone(
+            re.search(r"\bSET\s+SESSION\b", sql, re.IGNORECASE),
+            "SET SESSION would pin the RDS Proxy connection",
+        )

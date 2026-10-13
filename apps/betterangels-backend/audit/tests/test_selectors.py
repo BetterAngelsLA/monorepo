@@ -1,13 +1,17 @@
 """Tests for the object audit-log selector (ADR 0004 §20–§21)."""
 
+import re
 from datetime import datetime, timezone
 from typing import Any
 
 from accounts.models import User
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
 from pghistory.core import event_models
 
+from audit.models import AuditEvent
 from audit.selectors import (
     LABEL_FIELD,
     THROUGH_EVENT_MAP,
@@ -245,6 +249,48 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertIn("referrals.ReferralEvent", labels)
         self.assertEqual(_EXCLUDED_EVENT_MODELS, ("referrals.ReferralEvent",))
 
+    # ── RDS Proxy pinning guards (ADR 0004 §10) ──────────────────────────────
+
+    # The aggregate statement's size tracks the number of event models
+    # ``references()`` matches, so these ceilings catch a newly tracked model
+    # (each branch adds a few KB). SHELTER/BED exceed RDS Proxy's 16 KB pinning
+    # threshold by construction — a documented, accepted trade-off — so this
+    # asserts the recorded ceiling rather than a bound the design cannot meet.
+    _STATEMENT_CEILINGS = {"SHELTER": 78_000, "BED": 21_000, "RESERVATION": 7_500}
+
+    def test_selector_issues_no_server_side_cursor(self) -> None:
+        """``.iterator()`` would emit ``DECLARE``, which RDS Proxy pins (§10)."""
+        with audit_context(user=self.user):
+            self.shelter.name = "Renamed Shelter"
+            self.shelter.save()
+
+        with CaptureQueriesContext(connection) as captured:
+            object_audit_log(obj=self.shelter, target_type="SHELTER")
+
+        sql = "\n".join(query["sql"] for query in captured.captured_queries)
+
+        # Guard against a vacuous pass: the selector must have issued its
+        # aggregate CTE query (key query + page query) for the assertion below
+        # to mean anything.
+        self.assertTrue(captured.captured_queries)
+        self.assertIn("WITH", sql.upper())
+
+        self.assertIsNone(re.search(r"\bDECLARE\b", sql, re.IGNORECASE))
+
+    def test_selector_statement_stays_within_the_recorded_ceiling(self) -> None:
+        """Guard the aggregate statement against growth (see the ADR §10 note)."""
+        for target_type, obj in (
+            ("SHELTER", self.shelter),
+            ("BED", self.bed),
+            ("RESERVATION", self.reservation),
+        ):
+            queryset = (
+                AuditEvent.objects.references([obj]).exclude(pgh_model__in=_EXCLUDED_EVENT_MODELS).exclude(label="seed")
+            )
+            size = len(str(queryset.query))
+
+            self.assertLessEqual(size, self._STATEMENT_CEILINGS[target_type], f"{target_type} statement grew to {size}")
+
 
 _EXPECTED_SHELTER_REFERENCES = {
     "shelters.ShelterEvent",
@@ -381,4 +427,3 @@ class ObjectAuditLogFilterTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertEqual([event.action for event in actions[0].events], ["shelter.update"])
         self.assertEqual(actions[0].field_changes["name"], ["Early", "Late"])
-

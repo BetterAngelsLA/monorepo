@@ -17,6 +17,8 @@ from datetime import datetime
 from typing import Any
 
 from django.apps import apps
+from django.db.models import Max, TextField, Value
+from django.db.models.functions import Cast, Coalesce, Concat
 from django.utils import timezone
 from shelters.models import Bed, Room, Shelter
 
@@ -24,6 +26,10 @@ from audit.models import AuditEvent
 
 # Mechanical columns dropped from rendered changes (ADR 0004 Phase 1 note / §13).
 _MECHANICAL_FIELDS = frozenset({"created_at", "updated_at"})
+
+# Upper bound on a single page of actions. Each action carries N events, so an
+# uncapped ``limit`` is an easy way to request an unbounded response (§10).
+MAX_LIMIT = 200
 
 # The single deliberate exclusion from a Shelter's log (§10). ``references()``
 # unions every event model with an FK to the target, so this is a blocklist
@@ -261,6 +267,19 @@ def _finalize(value: Any, resolver: _LabelResolver) -> Any:
     return value
 
 
+def _action_key_expr() -> Any:
+    """SQL action-grouping key (§12): context id, else a per-event singleton.
+
+    ``GROUP BY`` treats all NULL ``pgh_context_id`` rows as one group, so
+    context-less events get ``system-<pgh_id>`` to keep them distinct.
+    """
+    return Coalesce(
+        Cast("pgh_context_id", TextField()),
+        Concat(Value("system-"), Cast("pgh_id", TextField())),
+        output_field=TextField(),
+    )
+
+
 def object_audit_log(
     *,
     obj: Any,
@@ -274,32 +293,56 @@ def object_audit_log(
     """Return the write audit log for *obj*, newest action first.
 
     *target_type* is the ``AuditTargetType`` value (``SHELTER``/``ROOM``/``BED``/
-    ``RESERVATION``) echoed onto each event.
+    ``RESERVATION``) echoed onto each event. Pagination is done in SQL (§10):
+    only the requested page's action keys are fetched from the aggregate CTE.
 
     ``date_from``/``date_to`` bound ``pgh_created_at`` (inclusive) and
     ``actor_id`` restricts to a single acting user (ADR 0004 §21). All three are
     applied as predicates on the aggregate CTE's outer SELECT — in SQL, before
     the Python grouping below (§10) — so a filtered-out event never contributes
     to an action.
+
+    Raises ``ValueError`` for a non-positive/oversized ``limit`` or a negative
+    ``offset`` (§10 cap): callers surface this as a GraphQL error.
     """
+    if limit < 1 or limit > MAX_LIMIT:
+        raise ValueError(f"limit must be between 1 and {MAX_LIMIT}.")
+    if offset < 0:
+        raise ValueError("offset must be non-negative.")
+
     target_id = str(obj.pk)
-    queryset = (
-        AuditEvent.objects.references([obj])
-        .exclude(pgh_model__in=_EXCLUDED_EVENT_MODELS)
-        .exclude(label="seed")
-    )
+    # Filters go on ``base`` *before* the key query: a filter applied after key
+    # selection could pick a key and then drop its rows, yielding a short page.
+    base = AuditEvent.objects.references([obj]).exclude(pgh_model__in=_EXCLUDED_EVENT_MODELS).exclude(label="seed")
     if date_from is not None:
-        queryset = queryset.filter(pgh_created_at__gte=date_from)
+        base = base.filter(pgh_created_at__gte=date_from)
     if date_to is not None:
-        queryset = queryset.filter(pgh_created_at__lte=date_to)
+        base = base.filter(pgh_created_at__lte=date_to)
     if actor_id is not None:
-        queryset = queryset.filter(actor_id=actor_id)
-    queryset = queryset.order_by("pgh_created_at", "pgh_id")
+        base = base.filter(actor_id=actor_id)
+
+    key_expr = _action_key_expr()
+
+    # 1) Action keys for the requested page, grouped and limited in SQL.
+    key_rows = (
+        base.annotate(action_key=key_expr)
+        .values("action_key")
+        .annotate(last_event=Max("pgh_created_at"), last_id=Max("pgh_id"))
+        .order_by("-last_event", "-last_id")[offset : offset + limit]
+    )
+    page_keys = [row["action_key"] for row in key_rows]
+    if not page_keys:
+        return []
+
+    # 2) Fetch only the page's rows and build actions. This is a plain iteration,
+    # not ``.iterator()``: Django's server-side cursor issues ``DECLARE``, which
+    # RDS Proxy pins (ADR 0004 §10). The row set is already bounded by
+    # ``page_keys``, so a server-side cursor buys nothing here.
+    rows = base.annotate(action_key=key_expr).filter(action_key__in=page_keys).order_by("pgh_created_at", "pgh_id")
 
     grouped: dict[str, list[Any]] = defaultdict(list)
-    for row in queryset.iterator():
-        key = str(row.pgh_context_id) if row.pgh_context_id else f"system-{row.pgh_id}"
-        grouped[key].append(row)
+    for row in rows:
+        grouped[row.action_key].append(row)
 
     resolver = _LabelResolver()
     actions = [
@@ -314,7 +357,7 @@ def object_audit_log(
             event.field_changes = _finalize(event.field_changes, resolver)
 
     actions.sort(key=lambda a: (a.timestamp, a.order), reverse=True)
-    return actions[offset : offset + limit]
+    return actions
 
 
 def _build_action(
