@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: 🚦 Turnstyle
-        uses: softprops/turnstyle@master
+        uses: softprops/turnstyle@3805450be63b8c80577dc253e8c17e9132036df4 # pinned: master as of 2026-09-29
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -79,6 +79,10 @@ jobs:
           echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-${BRANCH_NAME}" >> $GITHUB_ENV
 
       - name: 🐳 Configure AWS credentials
+        # Trusted provenance only — forked PRs must never hold cloud credentials.
+        # (Defense in depth: PRs can edit workflow files, so the real boundary is
+        # credential placement + the AWS role trust policy, not this guard.)
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
@@ -86,6 +90,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: 🐳 Login to Amazon ECR
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: 🐳 Set up Docker Buildx
@@ -188,7 +193,7 @@ jobs:
           EOF
 
       - name: 🕵🏻‍♂️ GraphQL Inspector
-        uses: kamilkisiela/graphql-inspector@master
+        uses: kamilkisiela/graphql-inspector@e9db2c45eae85a6afd1adfe0ae2ce0770a9ba165 # pinned: master as of 2026-09-29
         # Warning: This now skips schema breaking checks in forked repositories.
         # Resolve in: https://betterangels.atlassian.net/browse/DEV-690
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
@@ -199,6 +204,8 @@ jobs:
           approve-label: graphql-inspector:approved-breaking-change
 
       - name: 🛠️ Build and Push Artifacts
+        # EAS/vite builds consume EXPO_TOKEN and cloud credentials; forked PRs skip.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         run: |
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t build --configuration ${{ matrix.environment }}
@@ -219,7 +226,7 @@ jobs:
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
 
       - name: 💬 Post preview link to PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
         run: |
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t post-pr-preview
@@ -235,6 +242,7 @@ jobs:
           docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
       - name: 🚀 Deploy Changes
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         run: |
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t deploy --configuration ${{ matrix.environment }}
