@@ -11,6 +11,7 @@ supervisorial district, …).
 | [dev-2604-shapefile-spike.md](dev-2604-shapefile-spike.md) | **The spike deliverable.** Picks one region, names the official source, and shows the verified load + query process end to end. Read this first. |
 | [la-geodata-sources.md](la-geodata-sources.md) | The source inventory: LA geospatial endpoints with CRS, geometry type, feature counts, licensing, and current/superseded verdicts. |
 | [la-boundary-currency-audit.md](la-boundary-currency-audit.md) | **Are they current?** Live-probed verdicts on each candidate layer, and which vintages are superseded. Read before importing. |
+| [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) | **The exhaustive inventory** — 283 services probed live, 266 real feature counts, 228 verified URLs, plus 33 supersessions and 19 dead/empty sources. |
 | [shapefile-import-research.md](shapefile-import-research.md) | Deep dive on ingestion methods (`ogr2ogr`, `shp2pgsql`, GeoDjango/OGR, geopandas) and why the recommended one was chosen. |
 | [gis-shapefile-options.md](gis-shapefile-options.md) | Consolidated options across data sources, backend import, and frontend rendering. |
 
@@ -52,11 +53,46 @@ Tests: `apps/betterangels-backend/common/tests/test_load_region_boundaries.py`
   interactions fell outside every council district (they were outside city limits), so the
   report needs an explicit "Unassigned" bucket — an inner join silently drops them.
 
+## Region grouping (backend, shipped)
+
+The `regions` app stores boundary polygons and answers "group/filter interactions by
+geography" for six dimensions: ZCTA, city, council district, supervisorial district, SPA,
+and CoC.
+
+```bash
+python manage.py import_regions                       # all six dimensions
+python manage.py import_regions --kind council_district --kind spa
+python manage.py import_regions --dry-run             # validate, write nothing
+```
+
+Verified live: **751 regions** — 630 ZCTA, 89 city, 15 council district, 8 SPA,
+5 supervisorial, 4 CoC.
+
+GraphQL: `interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes)`,
+plus `regionDimensions` (what is loaded) and `regions(dimension, codes)` (boundaries as
+GeoJSON for the map). All require `reports.view_reports` at the org.
+
+### Two corrections the expanded catalog forced
+
+- **LAHSA *does* publish SPA geometry** (a live polygon layer, updated 2026-09). The earlier
+  "publishes no geometry" note was wrong; only their *counts* are tables.
+- **The CA state DCAT feed is nearly useless for this work** — 3,950 datasets but exactly
+  **one** LA-relevant boundary layer. Use the Geoportal search API
+  (`gis.data.ca.gov/api/search/v1/collections/dataset/items?q=...`) instead.
+
+Also superseded, and easy to get wrong: the **congressional map was replaced by Prop 50
+(Nov 2025)** — Caltrans' layer is two cycles stale; **CalEnviroScreen 5.0** supersedes
+4.0/3.0/2.0; and **2022 SPAs/Health Districts** supersede the 2012 versions, which are
+still served side by side.
+
 ## Open questions
 
-1. Does the **`postgis` extension** exist on dev/preview/prod RDS? Nothing creates it today.
+1. Does the **`postgis` extension** exist on dev/preview/prod RDS? The `regions` app's
+   initial migration now creates it, so `migrate` will settle this loudly.
 2. Which **region set** ships first? Council district + SPA is the recommendation.
-3. **LACDMH service areas have no public polygon layer**, and LAHSA publishes no geometry
-   at all — both need a decision.
-4. **Map view needs separate frontend work** — `@teovilla/react-native-web-maps`'s `Polygon`
-   silently drops `onPress` and `holes` on web. See the spike doc §8.
+3. **LACDMH service areas have no public polygon layer** — needs a decision (extract from
+   their web app, ask them, or adopt SPAs as the proxy).
+4. **The report UI is not in this PR.** The GraphQL surface is complete; the antd screens
+   still need building against it. Note `graphql-codegen` currently fails in this
+   environment on an ESM/CJS resolution error in `near-operation-file-preset`, which is
+   unrelated to these changes but blocks regenerating typed documents.
