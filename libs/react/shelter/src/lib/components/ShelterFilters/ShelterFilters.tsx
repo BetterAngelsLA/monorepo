@@ -6,12 +6,7 @@ import { ScheduleTypeChoices } from '../../apollo';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
 import {
-  demographicFilter,
-  entryRequirementFilter,
-  parkingFilter,
-  petsFilter,
-  referralRequirementFilter,
-  roomStyleFilter,
+  filterConfigs,
   shelterTypeFilter,
   specialSituationFilter,
   TFilterConfig,
@@ -38,16 +33,10 @@ const OPEN_NOW_OPTIONS: {
   },
 ];
 
-const ALWAYS_VISIBLE_FILTERS = [
-  demographicFilter,
-  entryRequirementFilter,
-  parkingFilter,
-  petsFilter,
-  referralRequirementFilter,
-  roomStyleFilter,
-];
-
 const TOGGLEABLE_FILTERS = [shelterTypeFilter, specialSituationFilter];
+const ALWAYS_VISIBLE_FILTERS = filterConfigs.filter(
+  (filter) => !TOGGLEABLE_FILTERS.includes(filter),
+);
 
 export function ShelterFilters(props: IProps) {
   const { className, filters, onFiltersChange } = props;
