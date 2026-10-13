@@ -191,8 +191,11 @@ describe('cookies', () => {
     resetUpstream();
     upstreamHeaders = {
       'set-cookie': [
+        // `csrftoken` is deliberately readable from `document.cookie` (the app
+        // reads it); Django's `sessionid` is `HttpOnly`, which is why one stays at
+        // `Path=/` and the other can be path-scoped to its target.
         'csrftoken=csrf-value; Domain=.betterangels.la; Path=/; Secure',
-        'sessionid=session-value; Domain=.betterangels.la; Path=/; Secure',
+        'sessionid=session-value; Domain=.betterangels.la; Path=/; Secure; HttpOnly',
       ],
     };
 

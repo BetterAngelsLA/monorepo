@@ -241,8 +241,8 @@ describe('per-target cookie isolation', () => {
 
   it.each([
     [
-      'sessionid=abc; Domain=api.dev.betterangels.la; Path=/; Secure; SameSite=None',
-      'demo_sessionid=abc; SameSite=Lax; Path=/__api/demo/',
+      'sessionid=abc; Domain=api.dev.betterangels.la; Path=/; Secure; SameSite=None; HttpOnly',
+      'demo_sessionid=abc; SameSite=Lax; HttpOnly; Path=/__api/demo/',
     ],
     [
       'csrftoken=tok; Domain=.dev.betterangels.la; Secure',
