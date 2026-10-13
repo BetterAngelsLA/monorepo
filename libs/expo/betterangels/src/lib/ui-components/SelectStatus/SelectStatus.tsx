@@ -92,7 +92,7 @@ export function SelectStatus({
             <PlusIcon rotate="45deg" />
           </IconButton>
 
-          {title && (
+          {!!title && (
             <TextBold mb="md" size="xl">
               {title}
             </TextBold>

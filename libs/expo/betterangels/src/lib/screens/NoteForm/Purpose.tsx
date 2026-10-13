@@ -49,7 +49,9 @@ export default function Purpose(props: IPurposeProps) {
           onChangeText={(e) => onPurposeChange(e)}
         />
       </View>
-      {purpose && !isPurpose && <TextRegular mb="md">{purpose}</TextRegular>}
+      {!!(purpose && !isPurpose) && (
+        <TextRegular mb="md">{purpose}</TextRegular>
+      )}
     </FieldCard>
   );
 }

@@ -10,8 +10,12 @@ import {
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { DeleteCurrentUserDocument } from '../../apollo';
+import {
+  DeleteCurrentUserDocument,
+  extractOperationInfoMessage,
+} from '../../apollo';
 import { useSignOut, useSnackbar, useUser } from '../../hooks';
+import { HeaderSlot } from '../../navigation';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {
@@ -26,13 +30,15 @@ export default function UserProfile() {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TextButton
-          color={Colors.WHITE}
-          regular
-          title="Edit"
-          accessibilityHint="goes to the edit user profile screen"
-          onPress={() => router.navigate({ pathname: '/user-profile/edit' })}
-        />
+        <HeaderSlot side="right">
+          <TextButton
+            color={Colors.WHITE}
+            regular
+            title="Edit"
+            accessibilityHint="goes to the edit user profile screen"
+            onPress={() => router.navigate({ pathname: '/user-profile/edit' })}
+          />
+        </HeaderSlot>
       ),
     });
   }, [user, navigation, router]);
@@ -57,7 +63,23 @@ export default function UserProfile() {
 
   async function deleteCurrentUserFunction() {
     try {
-      await deleteCurrentUser();
+      const result = await deleteCurrentUser();
+
+      // A refusal (e.g. the account still owns an organization) arrives as a
+      // resolved `OperationInfo` payload rather than a thrown error — see
+      // apps/betterangels-backend/docs/graphql_errors.md. The account still
+      // exists, so signing out here would strand the user without one.
+      if (result.data?.deleteCurrentUser?.__typename === 'OperationInfo') {
+        showSnackbar({
+          message:
+            extractOperationInfoMessage(result, 'deleteCurrentUser') ??
+            'Sorry, there was an error logging you out.',
+          type: 'error',
+        });
+
+        return;
+      }
+
       router.navigate('/auth');
       signOut();
     } catch (err) {
@@ -88,7 +110,7 @@ export default function UserProfile() {
           accessibilityHint="user profile image"
         />
         <TextBold>
-          {user?.firstName} {user?.lastName}
+          {[user?.firstName, user?.lastName].filter(Boolean).join(' ')}
         </TextBold>
       </View>
       <View style={{ paddingHorizontal: Spacings.sm, gap: Spacings.xs }}>

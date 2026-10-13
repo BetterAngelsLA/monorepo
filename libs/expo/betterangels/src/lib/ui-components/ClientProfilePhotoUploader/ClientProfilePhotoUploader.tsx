@@ -54,21 +54,13 @@ export function ClientProfilePhotoUploader(props: TProps) {
       <Pressable
         onPress={() => setModalType(imageUrl ? 'profile' : 'picker')}
         accessibilityRole="button"
+        accessibilityLabel="client's profile photo"
         accessibilityHint={
           imageUrl ? 'view profile photo options' : 'update profile photo'
         }
       >
         <View style={{ position: 'relative' }}>
-          <Avatar
-            loading={isUploading}
-            size="xl"
-            mr="xs"
-            imageUrl={imageUrl}
-            accessibilityLabel="client's profile photo"
-            accessibilityHint={
-              imageUrl ? 'view profile photo options' : 'update profile photo'
-            }
-          />
+          <Avatar loading={isUploading} size="xl" mr="xs" imageUrl={imageUrl} />
           {!imageUrl && (
             <View
               style={{

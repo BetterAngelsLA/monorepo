@@ -1,11 +1,14 @@
 import { useEnvironment } from '@monorepo/ba-platform';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  RNKeyboardAwareScrollView,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useFeatureControls } from '@monorepo/react/shared';
 import { Link, router } from 'expo-router';
 import { ReactNode, useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
 
 type AuthLayoutProps = {
@@ -25,6 +28,11 @@ export default function SignInContainer({
 
   // On mount, optionally switch env when unauthenticated.
   useEffect(() => {
+    // Web builds are pinned to their API at build time (EXPO_PUBLIC_API_URL per
+    // deployment), so this dev-client nudge is not just unnecessary — on a dev
+    // or preview deployment it would silently repoint the app at production.
+    if (Platform.OS === 'web') return;
+
     if (!user && environment !== 'production') {
       switchEnvironment('production');
     }
@@ -43,7 +51,7 @@ export default function SignInContainer({
   }, [user]);
 
   return (
-    <KeyboardAwareScrollView
+    <RNKeyboardAwareScrollView
       style={{ flex: 1, backgroundColor: Colors.WHITE }}
       contentContainerStyle={{
         flexGrow: 1,
@@ -88,7 +96,7 @@ export default function SignInContainer({
           </Text>
         ) : null}
       </View>
-    </KeyboardAwareScrollView>
+    </RNKeyboardAwareScrollView>
   );
 }
 

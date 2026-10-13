@@ -32,7 +32,7 @@ export default function ClientSummaryHeader(props: IClientSummaryHeaderProps) {
           .filter(Boolean)
           .join(' ')}
       </TextBold>
-      {nicknamePronouns && (
+      {!!nicknamePronouns && (
         <TextRegular size="sm" mb="xs" color={Colors.NEUTRAL_DARK}>
           ({nicknamePronouns})
         </TextRegular>

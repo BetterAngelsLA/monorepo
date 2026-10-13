@@ -1,7 +1,6 @@
 export * from './array';
 export * from './auth';
 export * from './debugUtils';
-export * from './devMenu';
 export * from './file';
 export { default as hexToRGBA } from './HexToRGBA';
 export * from './html';

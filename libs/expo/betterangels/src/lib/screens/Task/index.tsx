@@ -51,7 +51,12 @@ export default function Task({
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <View accessibilityRole="button" style={styles.body}>
+      {/*
+        No `accessibilityRole="button"` on the card: react-native-web renders that
+        as a real <button>, and the client row inside it is its own press target —
+        a button nested in a button is invalid HTML. This wrapper has no onPress.
+      */}
+      <View style={styles.body}>
         <TaskHeader id={id} task={task} arrivedFrom={arrivedFrom} />
         <TaskUpdatedAt updatedAt={task.updatedAt} />
         <View>
@@ -67,7 +72,7 @@ export default function Task({
             team={task.team}
           />
         </View>
-        {task.description && <TaskBody description={task.description} />}
+        {!!(task.description) && <TaskBody description={task.description} />}
       </View>
       <TaskStatusBtn id={task.id} status={task.status} />
     </MainScrollContainer>

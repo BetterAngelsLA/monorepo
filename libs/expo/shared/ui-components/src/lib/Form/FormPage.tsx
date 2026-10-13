@@ -1,7 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode, RefObject } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
+import { type KeyboardAwareScrollViewRef } from '../Keyboard';
 import KeyboardAwareScrollView from '../KeyboardAwareScrollView';
 import LoadingView from '../LoadingView';
 import { FormButtons, TFormButtons } from './FormButtons';

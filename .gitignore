@@ -109,3 +109,6 @@ logs/
 apps/betterangels/android/
 libs/expo/modules/*/android/build/
 .vitest
+
+# Local git worktrees (full checkouts — never commit)
+.worktrees/
