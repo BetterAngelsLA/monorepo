@@ -2122,7 +2122,7 @@ type Query {
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   interactionsByRegion(organizationId: ID!, dimension: RegionDimension!, startDate: Date = null, endDate: Date = null, regionCodes: [String!] = null): [RegionCountType!]!
-  regionDimensions: [String!]!
+  regionDimensions: [RegionDimension!]!
   regions(dimension: RegionDimension!, codes: [String!] = null): [RegionType!]!
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
@@ -2219,6 +2219,7 @@ type RegionCountType {
   name: String!
   count: Int!
   isUnassigned: Boolean!
+  unassignedReason: UnassignedReason
 }
 
 enum RegionDimension {
@@ -2231,7 +2232,7 @@ enum RegionDimension {
 }
 
 type RegionType {
-  kind: String!
+  kind: RegionDimension!
   code: String!
   name: String!
   geometry: String!
@@ -2971,6 +2972,11 @@ type TeamTypeOffsetPaginated {
 scalar Time
 
 scalar UUID
+
+enum UnassignedReason {
+  OUTSIDE_ALL_REGIONS
+  NO_LOCATION
+}
 
 input UpdateBedInput {
   id: ID!
