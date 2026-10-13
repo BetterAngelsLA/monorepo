@@ -39,6 +39,25 @@ from .models import Region
 # GiST index to discriminate and the per-row recheck is smaller. See
 # ``RegionPiece``.
 #
+# Why this is raw SQL and not the ORM. The equivalent ORM form is a correlated
+# subquery -- ``piece.filter(geom__covers=Cast(OuterRef("location__point"), ...))``
+# -- and it returns identical buckets. It is 10-26x slower, and the reason is not
+# the geometry: Django emits, per note, a scan of every region of that kind, a sort
+# of them, and a LIMIT 1 (measured plan: "Index Scan ... rows=15 loops=2000, Rows
+# Removed by Join Filter: 14, Full-sort Groups: 2000"). Cost is therefore linear in
+# NOTE count, whereas this query resolves each LOCATION once and stays flat:
+#
+#   notes   locations   raw SQL    ORM subquery
+#     500          50   0.002s          0.048s
+#   2,000          50   0.001s          0.206s
+#   8,000          50   0.001s          0.738s
+#
+# Simplifying the geometry 25x moved the ORM from 0.266s to 0.171s, which rules out
+# point-in-polygon work as the cause. A denormalised assignment table removes it
+# entirely (see below) and is ~2x faster than this query, but it is new mutable
+# state that must be rebuilt when boundaries change, so it is not adopted yet:
+# 120,000 notes x 6 dimensions measured 410-894ms denormalised vs 781-1312ms here.
+#
 # Two consequences that are load-bearing:
 #
 # 1. The lateral returns exactly one ``region_id``. A point can coincide with two

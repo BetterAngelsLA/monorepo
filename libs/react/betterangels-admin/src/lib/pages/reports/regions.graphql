@@ -1,0 +1,25 @@
+query RegionDimensions {
+  regionDimensions
+}
+
+query InteractionsByRegion(
+  $organizationId: ID!
+  $dimension: RegionDimension!
+  $startDate: Date
+  $endDate: Date
+  $regionCodes: [String!]
+) {
+  interactionsByRegion(
+    organizationId: $organizationId
+    dimension: $dimension
+    startDate: $startDate
+    endDate: $endDate
+    regionCodes: $regionCodes
+  ) {
+    code
+    name
+    count
+    isUnassigned
+    unassignedReason
+  }
+}
