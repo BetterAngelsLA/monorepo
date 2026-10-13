@@ -15,6 +15,7 @@ import {
 } from '@monorepo/ba-platform/types';
 import { ChartCard } from '../../components';
 import {
+  useInteractionMap,
   useInteractionsByRegion,
   useRegionDimensions,
   type RegionCountType,
@@ -101,6 +102,15 @@ export function LocationBreakdown({
     startDate,
     endDate,
   });
+  // The pins and density views. Both come back in one request, so switching
+  // between them on the map costs nothing; the dimension does not apply, because
+  // an interaction's location is the same point whichever way the regions are cut.
+  const {
+    points,
+    density,
+    truncated,
+    error: mapError,
+  } = useInteractionMap({ organizationId, startDate, endDate });
 
   const assigned = useMemo(
     () => rows.filter((r) => !r.isUnassigned && r.count > 0),
@@ -109,7 +119,7 @@ export function LocationBreakdown({
   const unassigned = useMemo(() => rows.filter((r) => r.isUnassigned), [rows]);
 
   const dimensionName = DIMENSION_LABELS[dimension] ?? dimension;
-  const queryError = error ?? dimensionsError;
+  const queryError = error ?? dimensionsError ?? mapError;
 
   // Backend error bodies are not user-facing copy: log the real error and show a
   // generic message instead.
@@ -182,6 +192,9 @@ export function LocationBreakdown({
           <RegionMap
             dimension={dimension}
             rows={rows}
+            points={points}
+            density={density}
+            truncated={truncated}
             hasMapsKey={hasMapsKey}
           />
         </div>

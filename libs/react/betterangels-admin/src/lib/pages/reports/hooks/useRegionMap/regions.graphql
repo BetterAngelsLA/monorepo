@@ -32,3 +32,28 @@ query RegionsForMap($dimension: RegionDimension!, $codes: [String!]) {
     geometry
   }
 }
+
+query InteractionMap(
+  $organizationId: ID!
+  $startDate: Date
+  $endDate: Date
+  $limit: Int
+) {
+  interactionMap(
+    organizationId: $organizationId
+    startDate: $startDate
+    endDate: $endDate
+    limit: $limit
+  ) {
+    points {
+      latitude
+      longitude
+    }
+    density {
+      latitude
+      longitude
+      count
+    }
+    truncated
+  }
+}

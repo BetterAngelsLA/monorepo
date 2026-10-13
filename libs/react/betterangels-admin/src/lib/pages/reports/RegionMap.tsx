@@ -1,11 +1,13 @@
 /// <reference types="google.maps" />
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
-import { Alert, Spin } from 'antd';
-import { useEffect, useMemo } from 'react';
+import { Alert, Radio, Spin } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { mergeCss } from '@monorepo/react/shared';
 import {
   useRegionMap,
+  type DensityCellType,
+  type InteractionPointType,
   type RegionCountType,
   type RegionGeometryType,
 } from './hooks';
@@ -42,6 +44,88 @@ function shade(max: number, count: number): string {
   return `rgb(${r},${g},${b})`;
 }
 
+/** What the map is showing. Regions are always drawn, as context. */
+export type MapView = 'regions' | 'pins' | 'density';
+
+/** Warm ramp for density, deliberately distinct from the blue region shading. */
+function densityShade(max: number, count: number): string {
+  if (max <= 0) return '#FDE0C8';
+  const t = Math.sqrt(Math.max(0, count) / max);
+  const r = Math.round(0xfd + (0xd8 - 0xfd) * t);
+  const g = Math.round(0xe0 + (0x4a - 0xe0) * t);
+  const b = Math.round(0xc8 + (0x1a - 0xc8) * t);
+  return `rgb(${r},${g},${b})`;
+}
+
+/**
+ * Draws interaction locations: individual pins, or the density grid.
+ *
+ * Both go through the map's Data layer, so this is one `setStyle` pass over N
+ * features rather than N React components. At the point cap that difference is the
+ * whole reason the view is usable.
+ *
+ * `map.data` is one layer per map, shared with the choropleth — the two coordinate
+ * by property name, and this component owns the cleanup for the features it adds.
+ */
+function InteractionLayer({
+  view,
+  points,
+  density,
+}: {
+  view: MapView;
+  points: InteractionPointType[];
+  density: DensityCellType[];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || view === 'regions') {
+      return;
+    }
+
+    const layer = map.data;
+    const added: google.maps.Data.Feature[] = [];
+
+    if (view === 'pins') {
+      points.forEach((point, index) => {
+        try {
+          const feature = layer.add({
+            geometry: new google.maps.Data.Point(
+              new google.maps.LatLng(point.latitude, point.longitude),
+            ),
+            properties: { kind: 'pin', key: `pin-${index}` },
+          });
+          added.push(feature);
+        } catch (error) {
+          console.error('[RegionMap] could not plot a point', error);
+        }
+      });
+    } else {
+      density.forEach((cell, index) => {
+        try {
+          const feature = layer.add({
+            geometry: new google.maps.Data.Point(
+              new google.maps.LatLng(cell.latitude, cell.longitude),
+            ),
+            properties: { kind: 'density', count: cell.count, key: `cell-${index}` },
+          });
+          added.push(feature);
+        } catch (error) {
+          console.error('[RegionMap] could not plot a density cell', error);
+        }
+      });
+    }
+
+    return () => {
+      // Remove before adding to the shared layer; removing only what this added
+      // keeps the choropleth intact when the view changes.
+      added.forEach((feature) => layer.remove(feature));
+    };
+  }, [map, view, points, density]);
+
+  return null;
+}
+
 /**
  * Draws the choropleth. Must be a child of `<GoogleMap>`, which is what provides
  * the map context that `useMap()` reads.
@@ -61,9 +145,13 @@ function shade(max: number, count: number): string {
 function RegionLayer({
   rows,
   regions,
+  view,
+  maxDensity,
 }: {
   rows: RegionCountType[];
   regions: RegionGeometryType[];
+  view: MapView;
+  maxDensity: number;
 }) {
   const map = useMap();
 
@@ -110,13 +198,48 @@ function RegionLayer({
     });
 
     layer.setStyle((feature: google.maps.Data.Feature) => {
+      const kind = featureString(feature, 'kind');
+
+      if (kind === 'pin') {
+        // Points have no area, so an icon is what makes them visible at all.
+        return {
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: '#C2185B',
+            fillOpacity: 0.85,
+            strokeColor: '#7B0F3A',
+            strokeWeight: 0.8,
+          },
+        };
+      }
+
+      if (kind === 'density') {
+        // Size carries the count as well as colour, so a dense cell reads as dense
+        // even where two cells overlap or the ramp is hard to judge.
+        const count = featureNumber(feature, 'count');
+        const weight = maxDensity > 0 ? Math.sqrt(count / maxDensity) : 0;
+        return {
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8 + 14 * weight,
+            fillColor: densityShade(maxDensity, count),
+            fillOpacity: 0.8,
+            strokeColor: '#D84A1A',
+            strokeWeight: 0.6,
+          },
+        };
+      }
+
       const count = featureNumber(feature, 'count');
       return {
         fillColor: shade(max, count),
-        fillOpacity: count > 0 ? 0.75 : 0.15,
+        // Dimmed while a point view is on, so the pins read against the geography
+        // rather than competing with it.
+        fillOpacity: view === 'regions' ? (count > 0 ? 0.75 : 0.15) : 0.08,
         strokeColor: '#1B3A5C',
-        strokeWeight: 0.8,
-        strokeOpacity: 0.6,
+        strokeWeight: view === 'regions' ? 0.8 : 0.5,
+        strokeOpacity: view === 'regions' ? 0.6 : 0.35,
       };
     });
 
@@ -151,7 +274,7 @@ function RegionLayer({
       layer.forEach((f: google.maps.Data.Feature) => layer.remove(f));
       map.getDiv().removeAttribute('title');
     };
-  }, [map, regions, countsByCode, max]);
+  }, [map, regions, countsByCode, max, view, maxDensity]);
 
   return null;
 }
@@ -159,6 +282,12 @@ function RegionLayer({
 type RegionMapProps = {
   dimension: RegionDimension;
   rows: RegionCountType[];
+  /** Individual interaction locations, from `interactionMap`. */
+  points?: InteractionPointType[];
+  /** Occupied density cells for the same period. */
+  density?: DensityCellType[];
+  /** True when the point cap was reached and the pins are a subset. */
+  truncated?: boolean;
   /** The app owns the key; the lib only needs to know whether one exists. */
   hasMapsKey?: boolean;
   className?: string;
@@ -175,9 +304,28 @@ type RegionMapProps = {
 export function RegionMap({
   dimension,
   rows,
+  points = [],
+  density = [],
+  truncated = false,
   hasMapsKey = true,
   className = '',
 }: RegionMapProps) {
+  const [view, setView] = useState<MapView>('regions');
+
+  const maxDensity = useMemo(
+    () => density.reduce((max, cell) => Math.max(max, cell.count), 0),
+    [density],
+  );
+
+  const caption = useMemo(() => {
+    if (view === 'pins') {
+      return `Each dot is one interaction. ${points.length.toLocaleString()} plotted.`;
+    }
+    if (view === 'density') {
+      return 'Interactions aggregated into roughly 1 km cells; darker means more.';
+    }
+    return 'Regions shaded by interaction count. Areas with no shading had no interactions in this range.';
+  }, [view, points.length]);
   const codes = useMemo(
     () => rows.filter((r) => !r.isUnassigned && r.count > 0).map((r) => r.code),
     [rows],
@@ -222,6 +370,19 @@ export function RegionMap({
           <Spin size="small" /> loading boundaries...
         </div>
       )}
+      <div className="mb-2">
+        <Radio.Group
+          value={view}
+          onChange={(event) => setView(event.target.value)}
+          optionType="button"
+          buttonStyle="solid"
+          options={[
+            { label: 'Regions', value: 'regions' },
+            { label: 'Interactions', value: 'pins' },
+            { label: 'Density', value: 'density' },
+          ]}
+        />
+      </div>
       <GoogleMap
         id="admin-region-map"
         style={{ width: '100%', height: 420, borderRadius: 6 }}
@@ -229,12 +390,24 @@ export function RegionMap({
         defaultZoom={LA_ZOOM}
         gestureHandling="cooperative"
       >
-        <RegionLayer rows={rows} regions={regions} />
+        <RegionLayer
+          rows={rows}
+          regions={regions}
+          view={view}
+          maxDensity={maxDensity}
+        />
+        <InteractionLayer view={view} points={points} density={density} />
       </GoogleMap>
-      <p className="mt-2 text-xs text-neutral-500">
-        Regions shaded by interaction count. Areas with no shading had no
-        interactions in this range.
-      </p>
+      <p className="mt-2 text-xs text-neutral-500">{caption}</p>
+      {truncated && view === 'pins' && (
+        <Alert
+          className="mt-2"
+          type="warning"
+          showIcon
+          message="Showing the most recent interactions only"
+          description="There are more interactions in this range than the map can plot, so the pins are a subset — the counts and table below are complete."
+        />
+      )}
     </div>
   );
 }
