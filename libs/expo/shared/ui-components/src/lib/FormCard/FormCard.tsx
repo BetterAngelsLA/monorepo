@@ -23,7 +23,7 @@ export function FormCard(props: TProps) {
           {title}
           {required && <TextBold color={Colors.ERROR}>*</TextBold>}
         </TextBold>
-        {subtitle && (
+        {!!subtitle && (
           <TextRegular
             size="sm"
             color={subtitleError ? Colors.ERROR : Colors.PRIMARY_EXTRA_DARK}

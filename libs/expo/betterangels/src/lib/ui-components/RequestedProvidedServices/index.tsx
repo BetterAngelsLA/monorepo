@@ -110,9 +110,7 @@ export default function RequestedProvidedServices(
                   />
                 ))}
           </View>
-        ) : (
-          ''
-        )
+        ) : null
       }
       mb="xs"
       title={`${enumDisplayServiceType[type]} Services`}

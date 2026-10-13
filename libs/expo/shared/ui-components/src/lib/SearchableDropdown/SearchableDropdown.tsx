@@ -134,7 +134,7 @@ export function SearchableDropdown({
           onBlur={handleBlur}
           onFocus={handleFocus}
         />
-        {value && (
+        {!!value && (
           <Pressable
             accessible
             accessibilityRole="button"
@@ -170,7 +170,7 @@ export function SearchableDropdown({
               <TextRegular>{item}</TextRegular>
             </TouchableOpacity>
           ))}
-          {extraTitle && (
+          {!!extraTitle && (
             <TouchableOpacity
               accessible
               accessibilityRole="button"

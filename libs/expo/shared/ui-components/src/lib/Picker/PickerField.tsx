@@ -8,7 +8,7 @@ type TProps = {
   placeholder: string;
   placeholderTextColor?: string;
   items: TPickerItem[];
-  onFocus: () => void;
+  onOpen: () => void;
   selectedValue?: string | null;
   error?: string;
   label?: string;
@@ -20,7 +20,7 @@ type TProps = {
 
 export const PickerField = React.memo(function PickerField(props: TProps) {
   const {
-    onFocus,
+    onOpen,
     error,
     selectedValue,
     placeholder,
@@ -43,6 +43,7 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
   return (
     <Input
       asSelect
+      onPress={onOpen}
       style={style}
       disabled={disabled}
       required={required}
@@ -53,9 +54,8 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
       error={!!error}
       errorMessage={error}
       testID={testId}
-      onFocus={onFocus}
       slotRight={{
-        focusableInput: true,
+        onPress: onOpen,
         component: <ChevronLeftIcon size="sm" rotate="-90deg" />,
         accessibilityLabel: `selector for ${label || 'field'}`,
         accessibilityHint: `opens selector for ${label || 'field'}`,

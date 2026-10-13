@@ -58,8 +58,10 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   defaultText: {
-    fontFamily: 'Poppins',
-    fontWeight: 700,
+    // Must be a `useFonts` key (see FontLoader), not the bare family name —
+    // `fontFamily: 'Poppins'` matches no registered face and silently falls back
+    // to the system font on web.
+    fontFamily: 'Poppins-SemiBold',
     color: Colors.ERROR,
     letterSpacing: -1.5,
     includeFontPadding: false, // android

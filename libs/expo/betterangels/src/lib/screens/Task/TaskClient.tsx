@@ -38,7 +38,9 @@ export default function TaskClient(props: TaskClientProps) {
         imageUrl={clientProfile?.profilePhoto?.url}
       />
       <TextBold size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-        {clientProfile?.firstName} {clientProfile?.lastName}
+        {[clientProfile?.firstName, clientProfile?.lastName]
+          .filter(Boolean)
+          .join(' ')}
       </TextBold>
     </Pressable>
   );

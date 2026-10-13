@@ -629,7 +629,7 @@ export default function RestDebugHmis() {
                 </TextRegular>
               </View>
 
-              {error && (
+              {!!error && (
                 <TextRegular color={Colors.ERROR_DARK} size="sm">
                   {error}
                 </TextRegular>
@@ -742,7 +742,7 @@ export default function RestDebugHmis() {
                 </TextRegular>
               </View>
 
-              {uploadError && (
+              {!!uploadError && (
                 <TextRegular color={Colors.ERROR_DARK} size="sm">
                   {uploadError}
                 </TextRegular>
@@ -818,7 +818,7 @@ export default function RestDebugHmis() {
                 </TextRegular>
               </View>
 
-              {categoriesError && (
+              {!!categoriesError && (
                 <TextRegular color={Colors.ERROR_DARK} size="sm">
                   {categoriesError}
                 </TextRegular>
@@ -892,7 +892,7 @@ export default function RestDebugHmis() {
                 </TextRegular>
               </View>
 
-              {fileNamesError && (
+              {!!fileNamesError && (
                 <TextRegular color={Colors.ERROR_DARK} size="sm">
                   {fileNamesError}
                 </TextRegular>
@@ -994,7 +994,7 @@ export default function RestDebugHmis() {
                 </TextRegular>
               </View>
 
-              {filesError && (
+              {!!filesError && (
                 <TextRegular color={Colors.ERROR_DARK} size="sm">
                   {filesError}
                 </TextRegular>
@@ -1084,7 +1084,7 @@ export default function RestDebugHmis() {
                 </TextRegular>
               </View>
 
-              {deleteError && (
+              {!!deleteError && (
                 <TextRegular color={Colors.ERROR_DARK} size="sm">
                   {deleteError}
                 </TextRegular>
@@ -1200,7 +1200,7 @@ export default function RestDebugHmis() {
                 </TextRegular>
               </View>
 
-              {updateError && (
+              {!!updateError && (
                 <TextRegular color={Colors.ERROR_DARK} size="sm">
                   {updateError}
                 </TextRegular>
@@ -1282,7 +1282,7 @@ export default function RestDebugHmis() {
                 </TextRegular>
               </View>
 
-              {photoError && (
+              {!!photoError && (
                 <TextRegular color={Colors.ERROR_DARK} size="sm">
                   {photoError}
                 </TextRegular>
@@ -1405,7 +1405,7 @@ export default function RestDebugHmis() {
                 </TextRegular>
               </View>
 
-              {cropError && (
+              {!!cropError && (
                 <TextRegular color={Colors.ERROR_DARK} size="sm">
                   {cropError}
                 </TextRegular>

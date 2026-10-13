@@ -6,9 +6,16 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ComponentType, ReactElement, useEffect, useState } from 'react';
+import {
+  Activity,
+  ComponentType,
+  ReactElement,
+  useEffect,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
+import { HeaderSlot } from '../../navigation';
 import { FeatureFlags } from '../../static';
 import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
@@ -153,23 +160,27 @@ export default function Client({
             </TextBold>
           ),
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
-              accessibilityHint="goes to previous screen"
-              onPress={() => router.dismissTo(arrivedFrom || '/')}
-              testID="client-screen-back-btn"
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            <HeaderSlot side="left">
+              <Pressable
+                accessibilityRole="button"
+                accessible
+                accessibilityHint="goes to previous screen"
+                onPress={() => router.dismissTo(arrivedFrom || '/')}
+                testID="client-screen-back-btn"
+              >
+                <TextRegular color={Colors.WHITE}>Back</TextRegular>
+              </Pressable>
+            </HeaderSlot>
           ),
           headerRight: () => (
-            <ClientNavMenu
-              clientProfileId={clientProfileId}
-              onDeleted={() => {
-                router.dismissTo(arrivedFrom || '/');
-              }}
-            />
+            <HeaderSlot side="right">
+              <ClientNavMenu
+                clientProfileId={clientProfileId}
+                onDeleted={() => {
+                  router.dismissTo(arrivedFrom || '/');
+                }}
+              />
+            </HeaderSlot>
           ),
         }}
       />
@@ -180,7 +191,11 @@ export default function Client({
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         px={0}
       >
-        {showHeader && <ClientHeader client={data?.clientProfile} />}
+        {/* Hidden rather than unmounted: a fresh image element means the browser
+            lays out and decodes the profile photo again. */}
+        <Activity mode={showHeader ? 'visible' : 'hidden'}>
+          <ClientHeader client={data?.clientProfile} />
+        </Activity>
         <UploadProgressBar />
         <ClientTabs selectedTab={activeTab} setTab={setTab} />
         {getTabComponent(activeTab, data, openCard)}

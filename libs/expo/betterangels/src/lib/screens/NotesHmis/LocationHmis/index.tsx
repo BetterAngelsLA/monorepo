@@ -5,7 +5,11 @@ import { Dispatch, SetStateAction } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 import { useInitialLocation } from '../../../hooks';
-import { MapView, Marker, PROVIDER_GOOGLE } from '../../../maps';
+import {
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
+} from '@monorepo/expo/shared/ui-components';
 import { useModalScreen } from '../../../providers';
 import { LocationMapModal, TLocationData } from '../../../ui-components';
 import { LocationDraft } from '../NoteFormHmis';

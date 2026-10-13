@@ -11,7 +11,7 @@ export function AboutApp() {
   return (
     <MainScrollContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View style={styles.pageCard}>
-        {version && <AppDataCard label="App Version" value={version} />}
+        {!!version && <AppDataCard label="App Version" value={version} />}
 
         <Divider style={{ marginVertical: Spacings.xxs }} />
 

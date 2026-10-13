@@ -48,7 +48,7 @@ export function Dropdown(props: DropdownProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      {label && (
+      {!!label && (
         <label htmlFor={id} className={mergeCss(labelCss)}>
           {label}
         </label>
@@ -69,7 +69,7 @@ export function Dropdown(props: DropdownProps) {
         ))}
       </select>
 
-      {error && <div className={mergeCss(errorCss)}>{error}</div>}
+      {!!error && <div className={mergeCss(errorCss)}>{error}</div>}
     </div>
   );
 }
