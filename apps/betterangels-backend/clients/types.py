@@ -6,15 +6,6 @@ from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import User
-from common.graphql.types import (
-    AttachmentInterface,
-    NonBlankString,
-    PhoneNumberInput,
-    PhoneNumberScalar,
-    PhoneNumberType,
-)
-from common.models import Attachment, PhoneNumber
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import CharField, Exists, F, Func, Max, OuterRef, Q, QuerySet, Value
 from django.utils import timezone
@@ -22,6 +13,7 @@ from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
 from strawberry_django.auth.utils import get_current_user
 
+from accounts.models import User
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentGroupEnum,
@@ -30,6 +22,14 @@ from clients.enums import (
     LivingSituationEnum,
     PreferredCommunicationEnum,
 )
+from common.graphql.types import (
+    AttachmentInterface,
+    NonBlankString,
+    PhoneNumberInput,
+    PhoneNumberScalar,
+    PhoneNumberType,
+)
+from common.models import Attachment, PhoneNumber
 
 from .models import (
     ClientContact,

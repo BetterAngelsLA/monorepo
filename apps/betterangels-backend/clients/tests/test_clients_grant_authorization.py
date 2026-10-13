@@ -13,15 +13,16 @@ CASEWORKER permissions did.  These tests pin the cutover posture:
 
 from typing import Any, Tuple
 
+from model_bakery import baker
+from organizations.models import Organization
+
 from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from clients.models import ClientContact, ClientProfile
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.tests.utils import make_legacy_only_holder, make_permission_group
-from model_bakery import baker
 from notes.groups import CASEWORKER
-from organizations.models import Organization
 from shelters.groups import SHELTER_OPERATOR
 
 
