@@ -179,23 +179,25 @@ export default function ConsentModal({
 
   const renderCheckboxes = () =>
     checkboxData.map((item) => (
-      <View key={item.key} style={styles.consentRow}>
-        <Checkbox
-          isChecked={checkedItems[item.key]}
-          isConsent
-          hasBorder={false}
-          onCheck={() => handleCheck(item.key)}
-          accessibilityHint={item.accessibilityHint}
-          labelFirst={false}
-          size="sm"
-          justifyContent="flex-start"
-          accessibilityRole="checkbox"
-          label={
-            <TextRegular size="sm" style={{ fontWeight: '400' }} ml="xs">
-              I accept the
-            </TextRegular>
-          }
-        />
+      <View key={item.key} style={styles.checkbox}>
+        <View style={styles.checkboxControl}>
+          <Checkbox
+            isChecked={checkedItems[item.key]}
+            isConsent
+            hasBorder={false}
+            onCheck={() => handleCheck(item.key)}
+            accessibilityLabel={`I accept the ${item.linkText}`}
+            accessibilityHint={item.accessibilityHint}
+            labelFirst={false}
+            size="sm"
+            justifyContent="flex-start"
+            label={
+              <TextRegular size="sm" style={{ fontWeight: '400' }} ml="xs">
+                I accept the{' '}
+              </TextRegular>
+            }
+          />
+        </View>
         {/*
           The link is a SIBLING of the checkbox, never inside it: an interactive
           element nested in a `role="checkbox"` is unreadable to screen readers, and
@@ -289,7 +291,7 @@ export default function ConsentModal({
               {renderHeader()}
 
               <Image
-                style={{ height: windowHeight * 0.325 }}
+                style={[styles.consentImage, { height: windowHeight * 0.325 }]}
                 contentFit="contain"
                 source={consentImage}
                 accessibilityIgnoresInvertColors
@@ -355,11 +357,17 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
   },
-  /** Checkbox + its legal link as siblings; the row owns the item spacing. */
-  consentRow: {
+  consentImage: {
+    aspectRatio: 1,
+    maxWidth: '100%',
+  },
+  checkbox: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacings.sm,
+  },
+  checkboxControl: {
+    alignItems: 'flex-start',
   },
   link: {
     fontFamily: 'Poppins-Regular',

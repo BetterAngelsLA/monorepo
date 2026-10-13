@@ -8,6 +8,7 @@ from accounts.models import BigGroupObjectPermission, PermissionGroup, Permissio
 from accounts.seed import sync_group_permissions
 from accounts.services import reconcile_org_groups
 from common.permissions.utils import assign_object_permissions
+from common.tests.utils import make_permission_group
 from notes.groups import CASEWORKER
 
 from .baker_recipes import organization_recipe, permission_group_recipe
@@ -31,9 +32,8 @@ class PermissionGroupTestCase(TestCase):
     def test_a_long_organization_name_is_truncated_to_fit(self) -> None:
         """``Organization.name`` allows 200 characters, ``auth.Group.name`` 150."""
         organization = Organization.objects.create(name="L" * 200)
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=CASEWORKER.name)
 
-        permission_group = PermissionGroup.objects.create(organization=organization, template=template)
+        permission_group = make_permission_group(organization=organization, template_name=CASEWORKER.name)
 
         self.assertLessEqual(len(permission_group.name), 150)
         self.assertTrue(permission_group.name.endswith(f"[{organization.pk}] · {CASEWORKER.name}"))
@@ -41,10 +41,9 @@ class PermissionGroupTestCase(TestCase):
     def test_two_organizations_may_share_a_name(self) -> None:
         first = Organization.objects.create(name="Acme")
         second = Organization.objects.create(name="Acme")
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=CASEWORKER.name)
 
-        first_group = PermissionGroup.objects.create(organization=first, template=template)
-        second_group = PermissionGroup.objects.create(organization=second, template=template)
+        first_group = make_permission_group(organization=first, template_name=CASEWORKER.name)
+        second_group = make_permission_group(organization=second, template_name=CASEWORKER.name)
 
         self.assertNotEqual(first_group.name, second_group.name)
 
