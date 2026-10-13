@@ -1,6 +1,5 @@
 import { Column, Pie } from '@ant-design/charts';
 import { DownloadOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useQuery } from '@apollo/client/react';
 import {
   Alert,
   Button,
@@ -13,19 +12,23 @@ import {
 } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { mergeCss } from '@monorepo/react/shared';
 import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
-import { useActiveOrg } from '@monorepo/ba-platform';
 import { formatBucketLabel } from './formatBucketLabel';
-import LocationBreakdown from './LocationBreakdown';
-import { ReportSummaryDocument } from './__generated__/reports.generated';
+import { useReportSummary } from './hooks';
+import { LocationBreakdown } from './LocationBreakdown';
 
 const { RangePicker } = DatePicker;
 
 type IProps = {
   className?: string;
+  hasMapsKey?: boolean;
 };
+
+const GENERIC_ERROR_MESSAGE = 'Sorry, something went wrong. Please try again.';
 
 function getDefaultRange(): [Dayjs, Dayjs] {
   const now = dayjs();
@@ -38,35 +41,53 @@ function formatScalarDate(d: Dayjs): string {
   return d.format('YYYY-MM-DD');
 }
 
-const CHART_COLORS = {
+function DownloadIcon({ isDownloading }: { isDownloading: boolean }) {
+  if (isDownloading) {
+    return <LoadingOutlined />;
+  }
+  return <DownloadOutlined />;
+}
+
+const CHART_COLORS: Record<'primary' | 'success' | 'warning', string> = {
   primary: '#1B3A5C',
   success: '#2E7D32',
   warning: '#E65100',
-} as const;
+};
 
-export default function Reports({
-  className = '',
-  hasMapsKey = true,
-}: IProps & { hasMapsKey?: boolean }) {
+export function Reports({ className = '', hasMapsKey = true }: IProps) {
   const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
-  const { download, isDownloading, error, clearError } = useCSVDownload();
+  const {
+    download,
+    isDownloading,
+    error: downloadError,
+    clearError,
+  } = useCSVDownload();
 
   const [startDate, endDate] = dateRange;
   const startStr = formatScalarDate(startDate);
   const endStr = formatScalarDate(endDate);
 
-  const { data, loading } = useQuery(ReportSummaryDocument, {
-    variables: {
-      // reportSummary carries its org in the payload; '' is never sent because
-      // the query is skipped without an active org.
-      organizationId: activeOrg ? activeOrg.id : '',
-      startDate: startStr,
-      endDate: endStr,
-    },
-    skip: !activeOrg,
+  const organizationId = activeOrg?.id ?? '';
+  const { summary, loading, error } = useReportSummary({
+    organizationId,
+    startDate: startStr,
+    endDate: endStr,
   });
-  const summary = data?.reportSummary;
+
+  // Backend error bodies are not user-facing copy: log the real error and show a
+  // generic message instead.
+  useEffect(() => {
+    if (downloadError) {
+      console.error(downloadError);
+    }
+  }, [downloadError]);
+
+  useEffect(() => {
+    if (error) {
+      console.error(error);
+    }
+  }, [error]);
 
   const orgName = activeOrg?.name ?? 'Your Organization';
 
@@ -83,7 +104,7 @@ export default function Reports({
     summary?.topProvidedServices?.reduce((s, x) => s + (x.count ?? 0), 0) ?? 0;
 
   return (
-    <div className={`flex flex-col gap-6 ${className}`}>
+    <div className={mergeCss(['flex flex-col gap-6', className])}>
       <div>
         <h1 className="text-2xl font-semibold text-neutral-900">Reports</h1>
         <p className="mt-1 text-sm text-neutral-500">
@@ -102,23 +123,34 @@ export default function Reports({
           />
           <Button
             type="primary"
-            icon={isDownloading ? <LoadingOutlined /> : <DownloadOutlined />}
+            icon={<DownloadIcon isDownloading={isDownloading} />}
             loading={isDownloading}
             onClick={handleDownload}
           >
             Download CSV
           </Button>
         </div>
-        {error && (
+        {downloadError && (
           <Alert
             className="mt-4"
             type="error"
-            message={error}
+            showIcon
+            message={GENERIC_ERROR_MESSAGE}
             closable
             onClose={clearError}
           />
         )}
       </Card>
+
+      {/* Error */}
+      {error && (
+        <Alert
+          type="error"
+          showIcon
+          message={GENERIC_ERROR_MESSAGE}
+          description="We could not load the report data."
+        />
+      )}
 
       {/* Loading */}
       {loading && (

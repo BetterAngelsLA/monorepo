@@ -27,8 +27,11 @@ from datetime import datetime
 from typing import Any, Iterable, Sequence
 
 from django.db import connection
+from django.db.models import Count, Q
 
-from .models import Region
+from notes.models import Note
+
+from .models import Region, RegionKind
 
 # The lateral join shared by every rollup. ``%(kind)s`` is a bound parameter;
 # ``kind`` is never concatenated into the SQL text.
@@ -60,53 +63,118 @@ from .models import Region
 #    both match and the LIMIT 1 makes the *name* nondeterministic between them.
 # 2. Grouping is by region, so a location matching several pieces of one region
 #    still contributes exactly once — the ``LIMIT 1`` is the dedupe.
-_REGION_ROLLUP_SQL = """
--- NOT materialized, and that is a measurement rather than an oversight. The CTE is
--- inlined, so the lateral below runs once per NOTE. That is the right shape for real
--- data and the wrong shape for skewed data, and the two differ enough to be worth
--- stating:
---
---   * 3,000 notes on ONE location: inlined 19.8 ms, MATERIALIZED 2.5 ms (8x faster)
---   * 120,000 notes on 40,000 locations (realistic): inlined 951 ms / 602 ms,
---     MATERIALIZED 1,103 ms / 1,088 ms (16 to 44 percent SLOWER)
---
--- Materializing wins when many notes share few locations, because it collapses N
--- spatial lookups into one. It loses when they do not, because it forfeits the
--- planner's ability to push the date filter through before the join — which is the
--- realistic case. If the data is denser than about 3 notes per location, re-measure
--- before assuming either way. This was originally asserted without measurement and
--- an adversarial review correctly refused to accept it.
-WITH region_of_location AS (
-    SELECT l.id AS location_id, p.region_id
-    FROM {location_table} l
-    LEFT JOIN LATERAL (
-        SELECT p.region_id
-        FROM regions_regionpiece p
-        JOIN regions_region rr ON rr.id = p.region_id
-        WHERE p.kind = %(kind)s
-          AND ST_Covers(p.geom, l.point::geometry)
-        -- Deterministic when a point matches more than one *region*: ST_Covers
-        -- includes boundaries, so a coordinate on a shared edge matches both.
-        -- Without an ORDER BY the winner is whatever the planner emits.
-        --
-        -- Ordered by ``code``, not by ``region_id``: ids follow creation order, so
-        -- ordering on them would silently re-attribute boundary coordinates
-        -- whenever a dimension is re-imported. Code is the stable identity.
-        ORDER BY rr.code, rr.id
-        LIMIT 1
-    ) p ON true
-)
-SELECT r.code, r.name, count(n.id) AS count
-FROM {note_table} n
-JOIN region_of_location rl ON rl.location_id = n.location_id
-LEFT JOIN regions_region r ON r.id = rl.region_id
-WHERE n.interacted_at >= %(start)s
-  AND n.interacted_at < %(end)s
-  {org_clause}
-{code_clause}
-GROUP BY 1, 2
-ORDER BY count DESC, r.code
-"""
+# The rollup was raw SQL for as long as it had to work out "which region contains this
+# point" in a LATERAL join, which Django cannot express. It no longer has to: the
+# assignment is stored in ``LocationRegion``, so the read is an ordinary join and is
+# expressed in the ORM like the rest of this module.
+#
+# ``ensure_location_regions`` below is where the spatial work went. It still needs the
+# pieces table (that is what makes it fast), but it runs at import and incrementally
+# for new locations, not once per report.
+
+
+def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> int:
+    """Resolve locations to regions and store the answer.
+
+    This is the *write* side of the trade :class:`LocationRegion` describes: the
+    spatial work happens here, once, instead of on every report read.
+
+    ``force`` clears the stored answers for the scope first, which is what the
+    importer wants after replacing a dimension — the boundaries changed, so every
+    previous answer for that kind may now be wrong, and recomputing the still-correct
+    ones is cheaper than working out which moved.
+
+    Without ``force`` only *unresolved* locations are processed: a location created
+    since the last import has no row at all. A location that resolved to nothing is
+    stored as a row with a NULL ``region_id`` precisely so it is not re-resolved
+    forever — the NULL is an answer, not a gap.
+
+    Returns the number of assignments written.
+    """
+    from django.db import transaction
+
+    # `.order_by()` is load-bearing. ``Region.Meta.ordering`` is ["kind", "code"], and
+    # a default ordering is added to the SELECT list and the ORDER BY — so a bare
+    # `.distinct()` de-duplicates on (kind, code) and returns one row PER REGION
+    # rather than one per kind. That silently turned a 6-iteration loop into 431
+    # iterations: measured, it made one rebuild take 260 s and report 2,155,000
+    # assignments (431 x 5,000) for 30,000 rows of actual work. Clearing the ordering
+    # is what makes DISTINCT mean what it reads as.
+    scopes = [kind] if kind else list(Region.objects.order_by().values_list("kind", flat=True).distinct())
+    written = 0
+
+    for scope in scopes:
+        with transaction.atomic(), connection.cursor() as cursor:
+            if force:
+                cursor.execute("DELETE FROM regions_locationregion WHERE kind = %s", [scope])
+            else:
+                # Nothing to resolve if this dimension has no regions loaded.
+                cursor.execute("SELECT 1 FROM regions_region WHERE kind = %s LIMIT 1", [scope])
+                if cursor.fetchone() is None:
+                    continue
+            cursor.execute(
+                """
+                INSERT INTO regions_locationregion (location_id, kind, region_id)
+                SELECT l.id,
+                       %(kind)s,
+                       (
+                         -- Prefers the subdivided pieces, because that is what makes
+                         -- this fast on a real layer; falls back to the whole boundary
+                         -- when a region has no pieces (a region created directly by a
+                         -- test, the admin, or a script). Without the fallback the
+                         -- caller would silently get NULL — "in no region" — for a
+                         -- region that plainly contains the point.
+                         SELECT src.region_id
+                         FROM (
+                           SELECT p.region_id, p.geom
+                           FROM regions_regionpiece p
+                           WHERE p.kind = %(kind)s
+                           UNION ALL
+                           SELECT rr.id, rr.geom
+                           FROM regions_region rr
+                           WHERE rr.kind = %(kind)s
+                             AND NOT EXISTS (SELECT 1 FROM regions_regionpiece q WHERE q.region_id = rr.id)
+                         ) src
+                         JOIN regions_region rr ON rr.id = src.region_id
+                         WHERE ST_Covers(src.geom, l.point::geometry)
+                         -- Deterministic on a shared boundary. Ordered by `code`
+                         -- rather than id: ids follow creation order, so ordering on
+                         -- them re-attributes boundary coordinates whenever a
+                         -- dimension is re-imported.
+                         ORDER BY rr.code, rr.id
+                         -- LIMIT 1 is load-bearing, not tidiness. Without it the
+                         -- subquery returns one row per overlapping piece instead of
+                         -- the single winning region: measured 2,843 rows per location
+                         -- against the city layer, which both inflated `rowcount` to
+                         -- 431x the truth and made the whole assignment take minutes.
+                         LIMIT 1
+                       )
+                FROM common_location l
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM regions_locationregion lr
+                    WHERE lr.location_id = l.id AND lr.kind = %(kind)s
+                )
+                """,
+                {"kind": scope},
+            )
+            written += cursor.rowcount or 0
+
+    return written
+
+
+def _code_predicate(codes: Sequence[str] | None, include_unassigned: bool) -> Q:
+    """The ``code`` filter, with the unassigned arm written out explicitly.
+
+    ``code = ANY(...)`` evaluates to NULL for an unassigned row, so an unassigned
+    bucket cannot be selected by putting a sentinel in the list — it needs its own
+    ``IS NULL`` arm. That is why ``codes`` and ``include_unassigned`` are separate
+    arguments rather than one list with a marker in it.
+    """
+    if codes is None:
+        return Q()
+    if include_unassigned:
+        return Q(region_code__in=list(codes)) | Q(region_code__isnull=True)
+    return Q(region_code__in=list(codes))
 
 
 def region_counts(
@@ -119,50 +187,50 @@ def region_counts(
     unassigned_only: bool = False,
     include_unassigned: bool = False,
 ) -> list[dict[str, Any]]:
-    """Interactions per region of ``kind``, including an unassigned bucket.
+    """Interactions per region of ``kind``, plus the unassigned buckets.
 
-    ``organization_id`` scopes the count to one org (the report is org-scoped).
+    Reads the stored assignment, so a location in no region of this dimension comes
+    back with a NULL code rather than being dropped — an inner join to ``Region``
+    would silently lose every Beverly Hills address in a city-council report.
 
-    ``codes`` narrows to specific regions. ``unassigned_only`` narrows to rows
-    that matched no region at all (``code IS NULL``).
-
-    These are deliberately *two* parameters rather than one list with a sentinel.
-    A sentinel cannot be expressed in the predicate — "code IN (…) OR code IS
-    NULL" is a different shape from "code IN (…)" — and collapsing the two cases
-    is exactly how an unfiltered rollup gets returned for a filtered request.
+    ``codes is not None`` throughout: an explicitly empty list means "no codes" and
+    matches nothing, where a truthiness check treats it as absent, drops the
+    predicate, and returns the whole dimension.
     """
-    params: dict[str, Any] = {"kind": kind, "start": start, "end": end}
-    org_clause = ""
+    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end)
     if organization_id is not None:
-        org_clause = "AND n.organization_id = %(org_id)s"
-        params["org_id"] = organization_id
+        notes = notes.filter(organization_id=organization_id)
 
-    # `codes is not None` throughout, never `if codes:` — an explicitly empty list
-    # means "no codes", and `if codes:` treats it as absent, emits no clause at all,
-    # and returns the WHOLE dimension. This is the third place the same collapse
-    # appeared; it is the one that actually reached the resolver.
-    code_clause = ""
+    # The assignment is reached through the FK, so this is an ordinary join.
+    rows = notes.filter(location__region_assignments__kind=kind)
+
     if unassigned_only:
-        code_clause = "AND r.code IS NULL"
-    elif codes is not None and include_unassigned:
-        # Both arms in one predicate. Written as an explicit OR rather than a
-        # sentinel inside the array: SQL evaluates `code = ANY(...)` to NULL for
-        # an unassigned row, so a sentinel in the list would silently drop it.
-        code_clause = "AND (r.code = ANY(%(codes)s) OR r.code IS NULL)"
-        params["codes"] = list(codes)
+        rows = rows.filter(location__region_assignments__region__isnull=True)
     elif codes is not None:
-        code_clause = "AND r.code = ANY(%(codes)s)"
-        params["codes"] = list(codes)
+        codes_q = Q(location__region_assignments__region__code__in=list(codes))
+        if include_unassigned:
+            # Joining on `region__code` already drops unassigned rows, so the
+            # unassigned arm has to come from a separate query rather than an OR.
+            codes_q |= Q(location__region_assignments__region__isnull=True)
+        rows = rows.filter(codes_q)
 
-    sql = _REGION_ROLLUP_SQL.format(
-        location_table="common_location", note_table="notes_note", org_clause=org_clause, code_clause=code_clause
-    )
+    counts = rows.values("location__region_assignments__region__code").annotate(count=Count("id")).order_by()
+    buckets = [
+        {
+            "code": row["location__region_assignments__region__code"],
+            "name": "",
+            "count": row["count"],
+        }
+        for row in counts
+    ]
 
-    with connection.cursor() as cursor:
-        cursor.execute(sql, params)
-        rows = cursor.fetchall()
+    # Names come from the authoritative region row, one query for the handful of
+    # codes rather than a join that would widen the GROUP BY.
+    named = {code: name for code, name in Region.objects.filter(kind=kind).values_list("code", "name")}
+    for bucket in buckets:
+        bucket["name"] = named.get(bucket["code"] or "", "")
 
-    return [{"code": row[0], "name": row[1] or "", "count": int(row[2])} for row in rows]
+    return buckets
 
 
 def region_totals_without_boundaries(*, start: datetime, end: datetime, organization_id: int | None = None) -> int:
@@ -193,9 +261,18 @@ def region_totals_without_boundaries(*, start: datetime, end: datetime, organiza
 def available_kinds() -> list[str]:
     """Dimensions that actually have boundaries loaded.
 
-    The UI uses this to avoid offering a grouping the database cannot answer.
+    The UI uses this to avoid offering a grouping the database cannot answer, so a
+    kind the GraphQL enum does not know is filtered out rather than allowed to make
+    ``regionDimensions`` fail wholesale — one unrecognised row used to break the
+    dimension picker for every user.
+
+    ``.order_by()`` is load-bearing for the same reason as in
+    ``ensure_location_regions``: the model's default ordering is appended to the
+    SELECT, so a bare ``.distinct()`` de-duplicates on ``(kind, code)`` and returns
+    one row per region.
     """
-    return list(Region.objects.order_by("kind").values_list("kind", flat=True).distinct())
+    kinds = Region.objects.order_by().values_list("kind", flat=True).distinct()
+    return sorted(kind for kind in kinds if kind in RegionKind._value2member_map_)
 
 
 def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:

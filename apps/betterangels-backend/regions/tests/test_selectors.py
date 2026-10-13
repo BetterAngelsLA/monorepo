@@ -39,6 +39,8 @@ from regions.selectors import (
     region_totals_without_boundaries,
 )
 
+from .helpers import assign_locations
+
 # Two disjoint boxes: "A" around downtown LA, "B" well to the north-west.
 BOX_A = ((-118.30, 34.02), (-118.18, 34.02), (-118.18, 34.12), (-118.30, 34.12), (-118.30, 34.02))
 BOX_B = ((-118.60, 34.30), (-118.48, 34.30), (-118.48, 34.40), (-118.60, 34.40), (-118.60, 34.30))
@@ -66,13 +68,20 @@ class RegionRollupTestCase(TestCase):
         when: datetime | None = None,
         location: bool = True,
     ) -> Note:
-        """A note in this org. ``lon``/``lat`` are ignored when ``location`` is False."""
-        return baker.make(
+        """A note in this org. ``lon``/``lat`` are ignored when ``location`` is False.
+
+        Assignments are rebuilt here, after the location exists, because the rollup
+        reads them rather than doing the spatial join itself.
+        """
+        note = baker.make(
             Note,
             organization=self.org,
             interacted_at=when or datetime(2026, 1, 15, tzinfo=UTC),
             location=None if not location else baker.make(Location, point=Point(lon, lat, srid=4326)),
         )
+        if location:
+            assign_locations()
+        return note
 
     def _counts(self, **kwargs: Any) -> dict[str | None, int]:
         rows = region_counts(
@@ -227,6 +236,10 @@ class RegionReconciliationTestCase(TestCase):
         )
         # (c) no location at all — the only "unlocatable" shape the schema allows
         baker.make(Note, organization=self.org, interacted_at=when, location=None)
+
+        # The rollup reads the stored assignment, so resolve the two located notes
+        # (the locationless one has nothing to resolve) before asserting anything.
+        assign_locations()
 
     def test_every_note_lands_in_exactly_one_bucket(self) -> None:
         rows = region_counts(

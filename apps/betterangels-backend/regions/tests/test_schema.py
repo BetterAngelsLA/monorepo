@@ -29,6 +29,8 @@ from common.tests.utils import GraphQLBaseTestCase
 from notes.models import Note
 from regions.models import Region, RegionKind
 
+from .helpers import assign_locations
+
 BOX_A = ((-118.30, 34.02), (-118.18, 34.02), (-118.18, 34.12), (-118.30, 34.12), (-118.30, 34.02))
 BOX_B = ((-118.60, 34.30), (-118.48, 34.30), (-118.48, 34.40), (-118.60, 34.40), (-118.60, 34.30))
 OUTSIDE = (-118.41, 34.07)
@@ -85,6 +87,7 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
                 location=baker.make(Location, point=point),
             )
         baker.make(Note, organization=self.org_1, interacted_at=when, location=None)
+        assign_locations()
 
     def _query(self, codes: Any = None) -> list[dict[str, Any]]:
         self.graphql_client.force_login(self.reader)

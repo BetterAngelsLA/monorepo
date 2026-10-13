@@ -42,6 +42,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from regions.models import DISPLAY_SIMPLIFY_DEGREES, Region, RegionKind, build_region_pieces
+from regions.selectors import ensure_location_regions
 
 # Subdivision is gated: only regions above the threshold are chopped.
 SUBDIVIDE_VERTEX_THRESHOLD = 2000
@@ -451,8 +452,13 @@ class Command(BaseCommand):
             Region.objects.filter(kind=source.kind).delete()
             Region.objects.bulk_create(regions, batch_size=200)
             pieces = self._build_pieces(source.kind)
+            # Boundaries just changed, so every stored location-to-region answer for
+            # this dimension is suspect. `force` clears and recomputes rather than
+            # trying to work out which ones moved.
+            assignments = ensure_location_regions(kind=source.kind, force=True)
 
         self.stdout.write(f"  pieces    : {pieces}")
+        self.stdout.write(f"  assigned  : {assignments} location(s)")
         return len(regions)
 
     def _build_pieces(self, kind: str) -> int:

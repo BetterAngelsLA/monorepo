@@ -46,63 +46,41 @@ INSERT INTO regions_regionpiece (region_id, kind, geom)
 SELECT r.id, r.kind,
        -- COALESCE is load-bearing: ST_Subdivide is set-returning and may yield
        -- ZERO rows for a degenerate ring, and with the LEFT JOIN's ON predicate
-       -- true that produces a NULL-extended row which the CASE would select —
+       -- true that produces a NULL-extended row which the CASE would select --
        -- inserting NULL into a NOT NULL column. Falling back to the parent
        -- boundary keeps the region visible instead of aborting the import.
        ST_Multi(COALESCE(CASE WHEN ST_NPoints(r.geom) > %(threshold)s THEN p.geom END, r.geom))
 FROM regions_region r
 LEFT JOIN LATERAL ST_Subdivide(r.geom, %(max_vertices)s) AS p(geom)
        ON ST_NPoints(r.geom) > %(threshold)s
-WHERE (%(region_id)s IS NOT NULL AND r.id = %(region_id)s)
-   OR (%(region_id)s IS NULL AND (%(kind)s IS NULL OR r.kind = %(kind)s))
+WHERE %(kind)s IS NULL OR r.kind = %(kind)s
 """
 
 
-def _region_pieces_missing(region_id: int | None = None, kind: str | None = None) -> bool:
-    """Whether any in-scope region currently has zero pieces."""
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT EXISTS (
-                SELECT 1 FROM regions_region r
-                WHERE ((%(region_id)s IS NOT NULL AND r.id = %(region_id)s)
-                    OR (%(region_id)s IS NULL AND (%(kind)s IS NULL OR r.kind = %(kind)s)))
-                  AND NOT EXISTS (SELECT 1 FROM regions_regionpiece p WHERE p.region_id = r.id)
-            )
-            """,
-            {"region_id": region_id, "kind": kind},
-        )
-        row = cursor.fetchone()
-    return bool(row and row[0])
+def build_region_pieces(*, kind: str | None = None) -> int:
+    """(Re)build the lookup geometry for one dimension, or all of them.
 
+    Called by ``import_regions`` after it replaces a dimension. Deliberately no
+    longer called from ``Region.save``: that put a bulk derived-data write behind a
+    single-row save, which is the shape that produced two separate defects here (a
+    quadratic piece count, and a NULL-geometry insert), and it put business logic on
+    the model. Nothing needs it now -- the assignment builder in ``selectors`` falls
+    back to the full boundary when a region has no pieces, so a region created
+    outside the importer resolves slower rather than being invisible.
 
-def build_region_pieces(*, region_id: int | None = None, kind: str | None = None) -> int:
-    """(Re)build the lookup geometry for one region, one dimension, or everything.
-
-    The DELETE-and-INSERT is the whole point: an earlier version was a bare INSERT,
-    so calling it repeatedly accumulated duplicates — measured, five regions saved
-    one at a time produced 15 piece rows instead of 5, and the count kept growing
-    with every save. Counts stayed correct because the rollup's ``LIMIT 1`` dedupes,
-    so the damage was silent: a bloating GiST index and a longer per-location sort.
-
-    Prefer ``region_id`` — it is what ``Region.save`` needs, it is O(1) in the
-    dimension's size, and rebuilding a whole dimension from a single-row write is
-    the quadratic behaviour above. ``kind``/``None`` are for ``import_regions``,
-    which has just replaced an entire dimension and must rebuild it once.
+    The DELETE-and-INSERT is the whole point: a bare INSERT accumulated duplicates
+    when called twice, and because the lookup dedupes on region the counts stayed
+    correct, so the damage was a bloating GiST index and a longer per-location sort
+    with nothing to show for it.
     """
     with transaction.atomic(), connection.cursor() as cursor:
-        if region_id is not None:
-            # Replace this region's pieces only, so the DELETE and the INSERT see
-            # the same target set.
-            cursor.execute("DELETE FROM regions_regionpiece WHERE region_id = %(region_id)s", {"region_id": region_id})
-        elif kind is not None:
+        if kind is not None:
             cursor.execute("DELETE FROM regions_regionpiece WHERE kind = %(kind)s", {"kind": kind})
         else:
             cursor.execute("DELETE FROM regions_regionpiece")
         cursor.execute(
             _BUILD_PIECES_SQL,
             {
-                "region_id": region_id,
                 "kind": kind,
                 "threshold": SUBDIVIDE_VERTEX_THRESHOLD,
                 "max_vertices": SUBDIVIDE_MAX_VERTICES,
@@ -191,41 +169,6 @@ class Region(models.Model):
         # GiST index on `geom` comes from `spatial_index=True` (the default).
         ordering = ["kind", "code"]
 
-    def save(self, *args: object, **kwargs: object) -> None:
-        """Save, and make sure the row is reachable by the spatial rollup.
-
-        The rollup joins ``RegionPiece``, never ``Region.geom``, so a region with
-        no pieces would be silently absent from every count. ``import_regions``
-        builds pieces itself (subdividing the heavy boundaries); this covers every
-        other writer — tests, the admin, a shell, a future one-off script.
-
-        Guarded two ways: it only fires for a *new* region (so replacing a
-        dimension's geometry is the importer's job, not a per-row surprise), and
-        it tolerates the table not existing yet, which is the case while
-        migrations are still building the app's tables.
-        """
-        creating = self._state.adding
-        super().save(*args, **kwargs)  # type: ignore[arg-type]
-        if not creating:
-            return
-        # Scoped to this row. Rebuilding the whole dimension here was quadratic:
-        # N single-row saves produced N(N+1)/2 piece rows.
-        #
-        # The table may not exist yet while migrations build the app, and catching
-        # the resulting ProgrammingError is NOT safe — in PostgreSQL a failed
-        # statement aborts the surrounding transaction, so a try/except would
-        # leave the caller's transaction dead. Ask the catalog instead.
-        if self._pieces_table_exists():
-            build_region_pieces(region_id=self.pk)
-
-    @staticmethod
-    def _pieces_table_exists() -> bool:
-        """Whether ``regions_regionpiece`` is present yet (false mid-migrate)."""
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT to_regclass('regions_regionpiece') IS NOT NULL")
-            row = cursor.fetchone()
-        return bool(row and row[0])
-
     def __str__(self) -> str:
         label = self.name or self.code
         return f"{self.get_kind_display()} {label}"
@@ -304,3 +247,44 @@ class RegionPiece(models.Model):
 
     def __str__(self) -> str:
         return f"piece of {self.region_id}"
+
+
+class LocationRegion(models.Model):
+    """Which region each location falls in, per dimension — resolved once, not per query.
+
+    The rollup used to work out "which region contains this point" on every read, in
+    a ``LATERAL`` join against :class:`RegionPiece`. That is correct but it puts a
+    spatial operation in the read path, which means the report query cannot be
+    expressed in the ORM and its cost scales with the *notes* in range rather than the
+    locations they belong to.
+
+    Resolving the assignment once and storing it turns the rollup into an ordinary
+    join, which is both simpler and faster: measured on the real layers at 120,000
+    notes across the six dimensions, 410-894 ms here against 781-1,312 ms for the
+    live spatial join. It is also the only way the read path can be plain ORM, since
+    Django cannot express ``LATERAL``.
+
+    ``region`` is nullable **on purpose**: NULL means "resolved, and this location is
+    in no region of this dimension". That is a real answer — a Beverly Hills address
+    has no LA city council district — and recording it is what lets the resolver tell
+    "already worked out, outside everything" apart from "not worked out yet" without
+    re-running the spatial join to find out which it is.
+
+    Cost of the trade: this is derived state, so it has to be rebuilt when boundaries
+    change (``import_regions`` does it) and when a location moves (``ensure_location_regions``
+    fills gaps). That obligation is the price of the simpler, faster read.
+    """
+
+    location = models.ForeignKey("common.Location", on_delete=models.CASCADE, related_name="region_assignments")
+    # Denormalised from the region so a lookup filters to one dimension without
+    # joining first, the same way RegionPiece does it, and for the same reason.
+    kind = models.CharField(max_length=32, choices=RegionKind.choices, db_index=True)
+    region = models.ForeignKey(Region, on_delete=models.CASCADE, null=True, blank=True, related_name="assignments")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["location", "kind"], name="unique_location_kind_assignment"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.kind} for location {self.location_id}"

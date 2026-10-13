@@ -1,24 +1,29 @@
 import { Column } from '@ant-design/charts';
-import { useQuery } from '@apollo/client/react';
-import { Select, Spin, Table, Tag, Typography } from 'antd';
-import { useMemo, useState } from 'react';
-import { ChartCard } from '../../components';
-import RegionMap from './RegionMap';
-import { RegionDimension } from '@monorepo/ba-platform/types';
-import type { InteractionsByRegionQuery } from './__generated__/regions.generated';
 import {
-  InteractionsByRegionDocument,
-  RegionDimensionsDocument,
-} from './__generated__/regions.generated';
-
-/**
- * The generated operations export their whole `Query` type rather than per-field
- * types (the config only generates operations here; base types live in
- * `@monorepo/ba-platform/types`), so the row type is derived from it.
- */
-type RegionCountType = InteractionsByRegionQuery['interactionsByRegion'][number];
+  Alert,
+  Select,
+  Spin,
+  Table,
+  Tag,
+  Typography,
+  type TableColumnsType,
+} from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  RegionDimension,
+  UnassignedReason,
+} from '@monorepo/ba-platform/types';
+import { ChartCard } from '../../components';
+import {
+  useInteractionsByRegion,
+  useRegionDimensions,
+  type RegionCountType,
+} from './hooks';
+import { RegionMap } from './RegionMap';
 
 const { Text } = Typography;
+
+const GENERIC_ERROR_MESSAGE = 'Sorry, something went wrong. Please try again.';
 
 /**
  * Display names for the dimensions. The enum values are GraphQL identifiers
@@ -39,14 +44,35 @@ const DIMENSION_LABELS: Record<RegionDimension, string> = {
  * we can act on, the second is a coverage gap — so they are labelled separately
  * rather than collapsed into one "Unassigned" slice.
  */
-const UNASSIGNED_LABELS: Record<string, string> = {
-  NO_LOCATION: 'No location on file',
-  OUTSIDE_ALL_REGIONS: 'Outside all boundaries',
+const UNASSIGNED_LABELS: Partial<Record<UnassignedReason, string>> = {
+  [UnassignedReason.NoLocation]: 'No location on file',
+  [UnassignedReason.OutsideAllRegions]: 'Outside all boundaries',
 };
 
 function unassignedLabel(row: RegionCountType): string {
-  return UNASSIGNED_LABELS[row.unassignedReason ?? ''] ?? 'Unassigned';
+  if (!row.unassignedReason) return 'Unassigned';
+  return UNASSIGNED_LABELS[row.unassignedReason] ?? 'Unassigned';
 }
+
+function renderRegionName(name: string, row: RegionCountType) {
+  if (row.isUnassigned) {
+    return (
+      <Text type="secondary">
+        {unassignedLabel(row)} <Tag>{name}</Tag>
+      </Text>
+    );
+  }
+  // An empty name means the backend has no display label; the code is the fallback.
+  return name || row.code;
+}
+
+type LocationBreakdownProps = {
+  organizationId: string;
+  startDate: string;
+  endDate: string;
+  hasMapsKey?: boolean;
+  className?: string;
+};
 
 /**
  * Interactions grouped by geography.
@@ -57,62 +83,75 @@ function unassignedLabel(row: RegionCountType): string {
  * bar next to districts numbering in the dozens distorts the comparison — and shown
  * beneath it as their own figures.
  */
-export default function LocationBreakdown({
+export function LocationBreakdown({
   organizationId,
   startDate,
   endDate,
   hasMapsKey = true,
-}: {
-  organizationId: string;
-  startDate: string;
-  endDate: string;
-  hasMapsKey?: boolean;
-}) {
-  const [dimension, setDimension] = useState<RegionDimension>(RegionDimension.CouncilDistrict);
+  className = '',
+}: LocationBreakdownProps) {
+  const [dimension, setDimension] = useState<RegionDimension>(
+    RegionDimension.CouncilDistrict,
+  );
 
-  const { data: dimensionsData } = useQuery(RegionDimensionsDocument);
-  const { data, loading } = useQuery(InteractionsByRegionDocument, {
-    variables: { organizationId, dimension, startDate, endDate },
-    skip: !organizationId,
+  const { dimensions, error: dimensionsError } = useRegionDimensions();
+  const { rows, loading, error } = useInteractionsByRegion({
+    organizationId,
+    dimension,
+    startDate,
+    endDate,
   });
 
-  const rows = useMemo(() => data?.interactionsByRegion ?? [], [data]);
   const assigned = useMemo(
     () => rows.filter((r) => !r.isUnassigned && r.count > 0),
     [rows],
   );
   const unassigned = useMemo(() => rows.filter((r) => r.isUnassigned), [rows]);
 
-  const dimensions = dimensionsData?.regionDimensions ?? [];
   const dimensionName = DIMENSION_LABELS[dimension] ?? dimension;
+  const queryError = error ?? dimensionsError;
 
-  const columns = [
+  // Backend error bodies are not user-facing copy: log the real error and show a
+  // generic message instead.
+  useEffect(() => {
+    if (queryError) {
+      console.error(queryError);
+    }
+  }, [queryError]);
+
+  const columns: TableColumnsType<RegionCountType> = [
     {
       title: dimensionName,
       dataIndex: 'name',
       key: 'name',
-      render: (name: string, row: RegionCountType) =>
-        row.isUnassigned ? (
-          <Text type="secondary">
-            {unassignedLabel(row)} <Tag>{name}</Tag>
-          </Text>
-        ) : (
-          (name || row.code)
-        ),
+      render: renderRegionName,
     },
     { title: 'Code', dataIndex: 'code', key: 'code' },
     {
       title: 'Interactions',
       dataIndex: 'count',
       key: 'count',
-      align: 'right' as const,
-      sorter: (a: RegionCountType, b: RegionCountType) => a.count - b.count,
-      defaultSortOrder: 'descend' as const,
+      align: 'right',
+      sorter: (a, b) => a.count - b.count,
+      defaultSortOrder: 'descend',
     },
   ];
 
+  if (queryError) {
+    return (
+      <ChartCard title="Interactions by Location" className={className}>
+        <Alert
+          type="error"
+          showIcon
+          message={GENERIC_ERROR_MESSAGE}
+          description="We could not load the location breakdown."
+        />
+      </ChartCard>
+    );
+  }
+
   return (
-    <ChartCard title="Interactions by Location">
+    <ChartCard title="Interactions by Location" className={className}>
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Text type="secondary">Group by</Text>
         <Select
@@ -159,10 +198,10 @@ export default function LocationBreakdown({
             yAxis={{ title: { text: 'Interactions' } }}
             color="#1B3A5C"
           />
-          <Table
+          <Table<RegionCountType>
             className="mt-4"
             size="small"
-            rowKey={(row: RegionCountType) =>
+            rowKey={(row) =>
               `${row.isUnassigned}-${row.unassignedReason ?? ''}-${row.code}`
             }
             columns={columns}

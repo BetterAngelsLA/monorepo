@@ -1,17 +1,31 @@
 /// <reference types="google.maps" />
-import { useQuery } from '@apollo/client/react';
-import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
 import { Alert, Spin } from 'antd';
 import { useEffect, useMemo } from 'react';
-import type { InteractionsByRegionQuery } from './__generated__/regions.generated';
-import { RegionsForMapDocument } from './__generated__/regions.generated';
-
-type RegionCountType = InteractionsByRegionQuery['interactionsByRegion'][number];
-type RegionGeometry = { code: string; name: string; geometry: string };
+import type { RegionDimension } from '@monorepo/ba-platform/types';
+import { mergeCss } from '@monorepo/react/shared';
+import {
+  useRegionMap,
+  type RegionCountType,
+  type RegionGeometryType,
+} from './hooks';
 
 const LA_CENTER = { lat: 34.05, lng: -118.35 };
 const LA_ZOOM = 9;
+
+/**
+ * `google.maps.Data.Feature` properties are typed `unknown`, so the two readers
+ * narrow them instead of casting at every call site.
+ */
+function featureNumber(feature: google.maps.Data.Feature, name: string): number {
+  const value = feature.getProperty(name);
+  return typeof value === 'number' ? value : 0;
+}
+
+function featureString(feature: google.maps.Data.Feature, name: string): string {
+  const value = feature.getProperty(name);
+  return typeof value === 'string' ? value : '';
+}
 
 /**
  * Choropleth ramp: low counts pale, high counts saturated. Deliberately a single
@@ -49,7 +63,7 @@ function RegionLayer({
   regions,
 }: {
   rows: RegionCountType[];
-  regions: RegionGeometry[];
+  regions: RegionGeometryType[];
 }) {
   const map = useMap();
 
@@ -62,7 +76,11 @@ function RegionLayer({
   }, [rows]);
 
   const max = useMemo(
-    () => rows.reduce((m, r) => (r.isUnassigned ? m : Math.max(m, r.count)), 0),
+    () =>
+      rows.reduce((acc, r) => {
+        if (r.isUnassigned) return acc;
+        return Math.max(acc, r.count);
+      }, 0),
     [rows],
   );
 
@@ -92,7 +110,7 @@ function RegionLayer({
     });
 
     layer.setStyle((feature: google.maps.Data.Feature) => {
-      const count = (feature.getProperty('count') as number) ?? 0;
+      const count = featureNumber(feature, 'count');
       return {
         fillColor: shade(max, count),
         fillOpacity: count > 0 ? 0.75 : 0.15,
@@ -103,8 +121,8 @@ function RegionLayer({
     });
 
     const onOver = (event: google.maps.Data.MouseEvent) => {
-      const name = event.feature.getProperty('name') as string;
-      const count = (event.feature.getProperty('count') as number) ?? 0;
+      const name = featureString(event.feature, 'name');
+      const count = featureNumber(event.feature, 'count');
       layer.overrideStyle(event.feature, { strokeWeight: 2, fillOpacity: 0.9 });
       // A native tooltip: it follows the cursor and needs no info-window wiring.
       map.getDiv().setAttribute('title', `${name}: ${count.toLocaleString()}`);
@@ -138,6 +156,14 @@ function RegionLayer({
   return null;
 }
 
+type RegionMapProps = {
+  dimension: RegionDimension;
+  rows: RegionCountType[];
+  /** The app owns the key; the lib only needs to know whether one exists. */
+  hasMapsKey?: boolean;
+  className?: string;
+};
+
 /**
  * Interactions by region, drawn on a map.
  *
@@ -146,41 +172,29 @@ function RegionLayer({
  * driving the geometry request from those codes avoids shipping polygons nobody
  * will look at — a real saving on the 311-region ZIP dimension.
  */
-export default function RegionMap({
+export function RegionMap({
   dimension,
   rows,
   hasMapsKey = true,
-}: {
-  dimension: RegionDimension;
-  rows: RegionCountType[];
-  /** The app owns the key; the lib only needs to know whether one exists. */
-  hasMapsKey?: boolean;
-}) {
+  className = '',
+}: RegionMapProps) {
   const codes = useMemo(
     () => rows.filter((r) => !r.isUnassigned && r.count > 0).map((r) => r.code),
     [rows],
   );
 
-  const { data, loading } = useQuery(RegionsForMapDocument, {
-    variables: { dimension, codes },
-    skip: codes.length === 0,
-  });
+  const { regions, loading, error } = useRegionMap({ dimension, codes });
 
-  const regions = useMemo(
-    () =>
-      (data?.regions ?? [])
-        .filter((r) => r.geometry)
-        .map((r) => ({
-          code: r.code ?? '',
-          name: r.name ?? '',
-          geometry: r.geometry as string,
-        })),
-    [data],
-  );
+  useEffect(() => {
+    if (error) {
+      console.error(error);
+    }
+  }, [error]);
 
   if (!hasMapsKey) {
     return (
       <Alert
+        className={mergeCss(className)}
         type="info"
         showIcon
         message="Map unavailable"
@@ -189,8 +203,20 @@ export default function RegionMap({
     );
   }
 
+  if (error) {
+    return (
+      <Alert
+        className={mergeCss(className)}
+        type="error"
+        showIcon
+        message="Sorry, something went wrong."
+        description="We could not load the region boundaries. The chart and table below are unaffected."
+      />
+    );
+  }
+
   return (
-    <div className="relative">
+    <div className={mergeCss(['relative', className])}>
       {loading && (
         <div className="absolute top-2 right-2 z-10 rounded bg-white/90 px-2 py-1 text-xs text-neutral-600">
           <Spin size="small" /> loading boundaries...
