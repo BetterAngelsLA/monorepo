@@ -34,7 +34,6 @@ from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
 
-from .models import RegionKind
 from .selectors import (
     available_kinds,
     region_counts,
@@ -272,4 +271,4 @@ def _org_or_deny(org_id: object) -> Organization:
     return org
 
 
-__all__ = ["Query", "RegionCountType", "RegionDimension", "RegionType", "RegionKind"]
+__all__ = ["Query", "RegionCountType", "RegionDimension", "RegionType", "UnassignedReason"]

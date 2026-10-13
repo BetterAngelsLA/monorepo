@@ -39,13 +39,19 @@ from typing import Any, cast
 from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.geos import MultiPolygon
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.db import connection, transaction
 
-from regions.models import Region, RegionKind
+from regions.models import Region, RegionKind, build_region_pieces
 
-# LA County bounding box — same guard as load_region_boundaries: catches a
-# silently-failed reprojection, which is the failure this data is most prone to.
-LA_BBOX = (-119.0, 32.8, -117.6, 34.9)
+# Subdivision is gated: only regions above the threshold are chopped.
+SUBDIVIDE_VERTEX_THRESHOLD = 2000
+# Passed to ST_Subdivide as the target size, NOT a guaranteed ceiling. The docs
+# say it divides with rectilinear lines so that each part contains "no more than
+# max_vertices" — but a compact ring with more vertices than the target cannot be
+# cut smaller, and measured output here reaches ~1900 vertices on the heavy
+# layers. The win comes from smaller *bounding boxes*, which is what the GiST
+# index scans; it is not a vertex count cap. Do not describe it as one.
+SUBDIVIDE_MAX_VERTICES = 256
 # Wider envelope for the ZCTA/CoC layers, which are fetched slightly beyond the
 # county so edge polygons are complete rather than clipped.
 LA_BBOX_PADDED = (-119.5, 32.4, -117.0, 35.2)
@@ -74,9 +80,6 @@ class RegionSource:
     # envelope, so those results legitimately extend past it — such a source
     # declares a wider guard rather than having the guard removed.
     guard_bbox: tuple[float, float, float, float] | None = None
-    # Optional SQL-free post-processing hint: consolidate part-polygons that
-    # share a code (city layers are published in pieces).
-    dissolve_by_code: bool = False
     # Fetch a real polygon and use it as the spatial filter, instead of an
     # envelope. An envelope wide enough to cover LA County also catches whole
     # neighbouring counties' worth of features, which makes that one dimension's
@@ -121,7 +124,6 @@ SOURCES: tuple[RegionSource, ...] = (
             # the land pieces should become a City region.
             "where": "FEAT_TYPE = 'Land'",
         },
-        dissolve_by_code=True,
     ),
     RegionSource(
         kind=RegionKind.SPA,
@@ -369,8 +371,6 @@ class Command(BaseCommand):
             multipolygon = normalise(geometry)
             entry = buckets.setdefault(code, {"name": name, "parts": []})
             entry["parts"].append(multipolygon)
-            if name and not entry["name"]:
-                entry["name"] = name
 
         if not buckets:
             raise CommandError(f"{source.kind}: no usable features (is the code field {source.code_field!r} right?)")
@@ -424,10 +424,17 @@ class Command(BaseCommand):
         with transaction.atomic():
             # Replace this dimension wholesale: a code that disappeared from the
             # publisher's current vintage should not linger as a stale region.
+            # Pieces cascade with their region.
             Region.objects.filter(kind=source.kind).delete()
             Region.objects.bulk_create(regions, batch_size=200)
+            pieces = self._build_pieces(source.kind)
 
+        self.stdout.write(f"  pieces    : {pieces}")
         return len(regions)
+
+    def _build_pieces(self, kind: str) -> int:
+        """Rebuild the lookup geometry for one dimension (see ``build_region_pieces``)."""
+        return build_region_pieces(kind=kind)
 
     @staticmethod
     def _attr(feature: Any, field_name: str) -> str | None:

@@ -32,33 +32,51 @@ from .models import Region
 
 # The lateral join shared by every rollup. ``%(kind)s`` is a bound parameter;
 # ``kind`` is never concatenated into the SQL text.
+#
+# The point is matched against ``regions_regionpiece``, not ``regions_region``.
+# A region is stored as one authoritative full-resolution boundary plus a set of
+# subdivided pieces; only the pieces have bounding boxes tight enough for the
+# GiST index to discriminate, and their vertex recheck is capped. See
+# ``RegionPiece`` for the measurements.
+#
+# Two consequences that are load-bearing:
+#
+# 1. The lateral selects ``region_id``, never ``code``/``name``. A point can
+#    coincide with two pieces of the SAME region (interior or shared edge), so
+#    matching on code would let two pieces both match and the ``LIMIT 1`` would
+#    make the *name* nondeterministic between them. Collapsing to region_id first
+#    means the tie-break happens between regions, which is the only ambiguity
+#    that actually exists, and ``code``/``name`` are joined on afterwards from the
+#    authoritative row.
+# 2. Grouping is by region, so a location that matches several pieces of one
+#    region still contributes exactly once — ``LIMIT 1`` is the dedupe.
 _REGION_ROLLUP_SQL = """
 WITH region_of_location AS (
-    SELECT l.id AS location_id, r.code, r.name
+    SELECT l.id AS location_id, p.region_id
     FROM {location_table} l
     LEFT JOIN LATERAL (
-        SELECT r.code, r.name
-        FROM regions_region r
-        WHERE r.kind = %(kind)s
-          AND ST_Covers(r.geom, l.point::geometry)
-        -- Deterministic when a point matches more than one region: ST_Covers
-        -- includes boundaries, so a coordinate sitting exactly on a shared edge
-        -- matches both neighbours. Without an ORDER BY the winner is whatever
-        -- the planner happens to emit. Lowest code wins, which is stable and
-        -- reproducible; `id` breaks a tie between duplicate codes.
-        ORDER BY r.code, r.id
+        SELECT p.region_id
+        FROM regions_regionpiece p
+        WHERE p.kind = %(kind)s
+          AND ST_Covers(p.geom, l.point::geometry)
+        -- Deterministic when a point matches more than one *region*: ST_Covers
+        -- includes boundaries, so a coordinate on a shared edge matches both.
+        -- Without an ORDER BY the winner is whatever the planner emits. Lowest
+        -- region id wins, which is stable and reproducible.
+        ORDER BY p.region_id
         LIMIT 1
-    ) r ON true
+    ) p ON true
 )
-SELECT rr.code, rr.name, count(n.id) AS count
+SELECT r.code, r.name, count(n.id) AS count
 FROM {note_table} n
-JOIN region_of_location rr ON rr.location_id = n.location_id
+JOIN region_of_location rl ON rl.location_id = n.location_id
+LEFT JOIN regions_region r ON r.id = rl.region_id
 WHERE n.interacted_at >= %(start)s
   AND n.interacted_at < %(end)s
   {org_clause}
 {code_clause}
 GROUP BY 1, 2
-ORDER BY count DESC, rr.code
+ORDER BY count DESC, r.code
 """
 
 
@@ -92,15 +110,15 @@ def region_counts(
 
     code_clause = ""
     if unassigned_only:
-        code_clause = "AND rr.code IS NULL"
+        code_clause = "AND r.code IS NULL"
     elif codes and include_unassigned:
         # Both arms in one predicate. Written as an explicit OR rather than a
         # sentinel inside the array: SQL evaluates `code = ANY(...)` to NULL for
         # an unassigned row, so a sentinel in the list would silently drop it.
-        code_clause = "AND (rr.code = ANY(%(codes)s) OR rr.code IS NULL)"
+        code_clause = "AND (r.code = ANY(%(codes)s) OR r.code IS NULL)"
         params["codes"] = list(codes)
     elif codes:
-        code_clause = "AND rr.code = ANY(%(codes)s)"
+        code_clause = "AND r.code = ANY(%(codes)s)"
         params["codes"] = list(codes)
 
     sql = _REGION_ROLLUP_SQL.format(
@@ -150,9 +168,10 @@ def available_kinds() -> list[str]:
 def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:
     """Region polygons as GeoJSON, for the map view.
 
-    ``ST_AsGeoJSON`` is asked for 6 decimal places (~10 cm) and
-    ``ST_SimplifyPreserveTopology`` is available to callers that need a cheaper
-    payload; simplification is left to the caller so the API stays explicit.
+    ``ST_AsGeoJSON`` is asked for 6 decimal places (~10 cm). There is no
+    simplification argument: boundaries are served at full resolution, and a
+    caller needing a smaller payload would have to ask for one explicitly rather
+    than receive silently-simplified geometry.
     """
     with connection.cursor() as cursor:
         cursor.execute(
