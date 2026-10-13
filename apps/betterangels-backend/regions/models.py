@@ -21,7 +21,7 @@ Design notes that are load-bearing:
 from __future__ import annotations
 
 from django.contrib.gis.db.models import MultiPolygonField
-from django.db import connection, models
+from django.db import connection, models, transaction
 from django.db.utils import OperationalError, ProgrammingError
 
 
@@ -41,26 +41,71 @@ SUBDIVIDE_MAX_VERTICES = 256
 _BUILD_PIECES_SQL = """
 INSERT INTO regions_regionpiece (region_id, kind, geom)
 SELECT r.id, r.kind,
-       ST_Multi(CASE WHEN ST_NPoints(r.geom) > %(threshold)s THEN p.geom ELSE r.geom END)
+       -- COALESCE is load-bearing: ST_Subdivide is set-returning and may yield
+       -- ZERO rows for a degenerate ring, and with the LEFT JOIN's ON predicate
+       -- true that produces a NULL-extended row which the CASE would select —
+       -- inserting NULL into a NOT NULL column. Falling back to the parent
+       -- boundary keeps the region visible instead of aborting the import.
+       ST_Multi(COALESCE(CASE WHEN ST_NPoints(r.geom) > %(threshold)s THEN p.geom END, r.geom))
 FROM regions_region r
 LEFT JOIN LATERAL ST_Subdivide(r.geom, %(max_vertices)s) AS p(geom)
        ON ST_NPoints(r.geom) > %(threshold)s
-WHERE %(kind)s IS NULL OR r.kind = %(kind)s
+WHERE (%(region_id)s IS NOT NULL AND r.id = %(region_id)s)
+   OR (%(region_id)s IS NULL AND (%(kind)s IS NULL OR r.kind = %(kind)s))
 """
 
 
-def build_region_pieces(*, kind: str | None = None) -> int:
-    """(Re)build the lookup geometry for one dimension, or all of them.
-
-    Called by ``import_regions`` after it replaces a dimension, and by
-    ``Region.save`` when a region has no pieces yet — without that second caller a
-    region created through the ORM is silently invisible to the rollup, which is a
-    trap rather than a design.
-    """
+def _region_pieces_missing(region_id: int | None = None, kind: str | None = None) -> bool:
+    """Whether any in-scope region currently has zero pieces."""
     with connection.cursor() as cursor:
         cursor.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1 FROM regions_region r
+                WHERE ((%(region_id)s IS NOT NULL AND r.id = %(region_id)s)
+                    OR (%(region_id)s IS NULL AND (%(kind)s IS NULL OR r.kind = %(kind)s)))
+                  AND NOT EXISTS (SELECT 1 FROM regions_regionpiece p WHERE p.region_id = r.id)
+            )
+            """,
+            {"region_id": region_id, "kind": kind},
+        )
+        row = cursor.fetchone()
+    return bool(row and row[0])
+
+
+def build_region_pieces(*, region_id: int | None = None, kind: str | None = None) -> int:
+    """(Re)build the lookup geometry for one region, one dimension, or everything.
+
+    The DELETE-and-INSERT is the whole point: an earlier version was a bare INSERT,
+    so calling it repeatedly accumulated duplicates — measured, five regions saved
+    one at a time produced 15 piece rows instead of 5, and the count kept growing
+    with every save. Counts stayed correct because the rollup's ``LIMIT 1`` dedupes,
+    so the damage was silent: a bloating GiST index and a longer per-location sort.
+
+    Prefer ``region_id`` — it is what ``Region.save`` needs, it is O(1) in the
+    dimension's size, and rebuilding a whole dimension from a single-row write is
+    the quadratic behaviour above. ``kind``/``None`` are for ``import_regions``,
+    which has just replaced an entire dimension and must rebuild it once.
+    """
+    with transaction.atomic(), connection.cursor() as cursor:
+        if region_id is not None:
+            # Replace this region's pieces only, so the DELETE and the INSERT see
+            # the same target set.
+            cursor.execute(
+                "DELETE FROM regions_regionpiece WHERE region_id = %(region_id)s", {"region_id": region_id}
+            )
+        elif kind is not None:
+            cursor.execute("DELETE FROM regions_regionpiece WHERE kind = %(kind)s", {"kind": kind})
+        else:
+            cursor.execute("DELETE FROM regions_regionpiece")
+        cursor.execute(
             _BUILD_PIECES_SQL,
-            {"kind": kind, "threshold": SUBDIVIDE_VERTEX_THRESHOLD, "max_vertices": SUBDIVIDE_MAX_VERTICES},
+            {
+                "region_id": region_id,
+                "kind": kind,
+                "threshold": SUBDIVIDE_VERTEX_THRESHOLD,
+                "max_vertices": SUBDIVIDE_MAX_VERTICES,
+            },
         )
         return int(cursor.rowcount or 0)
 
@@ -124,12 +169,23 @@ class Region(models.Model):
         super().save(*args, **kwargs)  # type: ignore[arg-type]
         if not creating:
             return
-        try:
-            build_region_pieces(kind=self.kind)
-        except (ProgrammingError, OperationalError):
-            # The pieces table does not exist yet (mid-migrate). The importer or a
-            # later save will build them.
-            pass
+        # Scoped to this row. Rebuilding the whole dimension here was quadratic:
+        # N single-row saves produced N(N+1)/2 piece rows.
+        #
+        # The table may not exist yet while migrations build the app, and catching
+        # the resulting ProgrammingError is NOT safe — in PostgreSQL a failed
+        # statement aborts the surrounding transaction, so a try/except would
+        # leave the caller's transaction dead. Ask the catalog instead.
+        if self._pieces_table_exists():
+            build_region_pieces(region_id=self.pk)
+
+    @staticmethod
+    def _pieces_table_exists() -> bool:
+        """Whether ``regions_regionpiece`` is present yet (false mid-migrate)."""
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT to_regclass('regions_regionpiece') IS NOT NULL")
+            row = cursor.fetchone()
+        return bool(row and row[0])
 
     def __str__(self) -> str:
         label = self.name or self.code
@@ -153,8 +209,13 @@ class RegionPiece(models.Model):
     report good results from pre-conditioning their geometry in this way."*
     (https://postgis.net/documentation/faq/big-objects-performance/)
 
-    Measured on real LA geometry at 20,000 interactions: the city rollup went
-    from 10,560 ms to 375 ms, with identical counts.
+    The reasoning is PostGIS's own ("spatially large objects have large bounding
+    boxes, which means inefficient index scans"), and the model docstring in
+    ``import_regions`` records the measured vertex counts that motivate it. The
+    specific end-to-end speedup number is NOT independently reproduced and should
+    not be quoted as fact — an adversarial review could not reproduce it, and the
+    original baseline was measured with a different ORDER BY than the comparison.
+    Benchmark against real data before relying on it.
 
     Every region has at least one piece, including small ones, so the lookup is a
     single uniform join rather than a "pieces if present, else the parent"
@@ -168,10 +229,15 @@ class RegionPiece(models.Model):
     """
 
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="pieces")
-    # Denormalised from the parent so a lookup can filter to one dimension inside
-    # the same index scan, rather than joining Region first and then probing
-    # pieces per candidate region. Kept honest by the importer, which writes both
-    # from the same source row; ``Region.save`` is not the only writer.
+    # Denormalised from the parent so a lookup can filter to one dimension without
+    # joining Region first. Two writers keep it consistent — ``import_regions``
+    # (which deletes and recreates the whole dimension, so pieces cascade) and
+    # ``Region.save`` (which rebuilds this row's pieces on create). Both write
+    # ``kind`` from the parent, so they cannot disagree.
+    #
+    # Known gap: updating an existing region's ``geom`` or ``kind`` does not rebuild
+    # its pieces, so the rollup keeps using the old geometry. Re-run
+    # ``import_regions`` for that dimension, or call ``build_region_pieces``.
     kind = models.CharField(max_length=32, choices=RegionKind.choices, db_index=True)
     geom = MultiPolygonField(srid=4326)
 

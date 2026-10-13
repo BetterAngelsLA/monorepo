@@ -36,20 +36,17 @@ from .models import Region
 # The point is matched against ``regions_regionpiece``, not ``regions_region``.
 # A region is stored as one authoritative full-resolution boundary plus a set of
 # subdivided pieces; only the pieces have bounding boxes tight enough for the
-# GiST index to discriminate, and their vertex recheck is capped. See
-# ``RegionPiece`` for the measurements.
+# GiST index to discriminate and the per-row recheck is smaller. See
+# ``RegionPiece``.
 #
 # Two consequences that are load-bearing:
 #
-# 1. The lateral selects ``region_id``, never ``code``/``name``. A point can
-#    coincide with two pieces of the SAME region (interior or shared edge), so
-#    matching on code would let two pieces both match and the ``LIMIT 1`` would
-#    make the *name* nondeterministic between them. Collapsing to region_id first
-#    means the tie-break happens between regions, which is the only ambiguity
-#    that actually exists, and ``code``/``name`` are joined on afterwards from the
-#    authoritative row.
-# 2. Grouping is by region, so a location that matches several pieces of one
-#    region still contributes exactly once — ``LIMIT 1`` is the dedupe.
+# 1. The lateral returns exactly one ``region_id``. A point can coincide with two
+#    pieces of the SAME region (interior or on a seam), so the row it picks must
+#    be identified by region, not by piece — otherwise two pieces of one region
+#    both match and the LIMIT 1 makes the *name* nondeterministic between them.
+# 2. Grouping is by region, so a location matching several pieces of one region
+#    still contributes exactly once — the ``LIMIT 1`` is the dedupe.
 _REGION_ROLLUP_SQL = """
 WITH region_of_location AS (
     SELECT l.id AS location_id, p.region_id
@@ -57,13 +54,17 @@ WITH region_of_location AS (
     LEFT JOIN LATERAL (
         SELECT p.region_id
         FROM regions_regionpiece p
+        JOIN regions_region rr ON rr.id = p.region_id
         WHERE p.kind = %(kind)s
           AND ST_Covers(p.geom, l.point::geometry)
         -- Deterministic when a point matches more than one *region*: ST_Covers
         -- includes boundaries, so a coordinate on a shared edge matches both.
-        -- Without an ORDER BY the winner is whatever the planner emits. Lowest
-        -- region id wins, which is stable and reproducible.
-        ORDER BY p.region_id
+        -- Without an ORDER BY the winner is whatever the planner emits.
+        --
+        -- Ordered by ``code``, not by ``region_id``: ids follow creation order, so
+        -- ordering on them would silently re-attribute boundary coordinates
+        -- whenever a dimension is re-imported. Code is the stable identity.
+        ORDER BY rr.code, rr.id
         LIMIT 1
     ) p ON true
 )
