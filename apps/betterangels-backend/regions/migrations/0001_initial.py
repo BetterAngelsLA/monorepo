@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                     "kind",
                     models.CharField(
                         choices=[
-                            ("zcta", "ZIP Code Tabulation Area"),
+                            ("zip", "ZIP Code"),
                             ("city", "City"),
                             ("council_district", "City Council District"),
                             ("supervisorial_district", "Supervisorial District"),

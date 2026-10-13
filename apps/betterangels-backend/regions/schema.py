@@ -52,7 +52,7 @@ class RegionDimension(enum.Enum):
     Values mirror ``RegionKind`` so the enum, the DB and the loader agree.
     """
 
-    ZCTA = "zcta"
+    ZIP = "zip"
     CITY = "city"
     COUNCIL_DISTRICT = "council_district"
     SUPERVISORIAL_DISTRICT = "supervisorial_district"

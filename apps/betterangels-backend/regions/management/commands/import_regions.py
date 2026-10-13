@@ -13,7 +13,7 @@ idempotent.
     python manage.py import_regions --kind council_district --kind spa
 
     # verify without writing
-    python manage.py import_regions --kind zcta --dry-run
+    python manage.py import_regions --kind zip --dry-run
 
 Why live REST rather than vendored shapefiles: the services declare their own
 CRS in ``?f=pjson`` (LA's GeoJSON files sometimes do not — ``data.lacity.org``
@@ -52,7 +52,19 @@ SUBDIVIDE_VERTEX_THRESHOLD = 2000
 # layers. The win comes from smaller *bounding boxes*, which is what the GiST
 # index scans; it is not a vertex count cap. Do not describe it as one.
 SUBDIVIDE_MAX_VERTICES = 256
-# Wider envelope for the ZCTA/CoC layers, which are fetched slightly beyond the
+# Wider envelope for layers fetched slightly beyond the guard, so edge polygons
+# county so edge polygons are complete rather than clipped.
+LA_BBOX_PADDED = (-119.5, 32.4, -117.0, 35.2)
+
+SUBDIVIDE_VERTEX_THRESHOLD = 2000
+# Passed to ST_Subdivide as the target size, NOT a guaranteed ceiling. The docs
+# say it divides with rectilinear lines so that each part contains "no more than
+# max_vertices" — but a compact ring with more vertices than the target cannot be
+# cut smaller, and measured output here reaches ~1900 vertices on the heavy
+# layers. The win comes from smaller *bounding boxes*, which is what the GiST
+# index scans; it is not a vertex count cap. Do not describe it as one.
+SUBDIVIDE_MAX_VERTICES = 256
+# Wider envelope for layers fetched slightly beyond the guard, so edge polygons
 # county so edge polygons are complete rather than clipped.
 LA_BBOX_PADDED = (-119.5, 32.4, -117.0, 35.2)
 
@@ -75,16 +87,6 @@ class RegionSource:
     vintage: str = ""
     # Extra ArcGIS query parameters (a where clause, a spatial filter, ...).
     params: dict[str, str] = field(default_factory=dict)
-    # The envelope the bbox guard checks against. Defaults to the LA area, but a
-    # spatially-filtered fetch returns every polygon that *intersects* the
-    # envelope, so those results legitimately extend past it — such a source
-    # declares a wider guard rather than having the guard removed.
-    guard_bbox: tuple[float, float, float, float] | None = None
-    # Fetch a real polygon and use it as the spatial filter, instead of an
-    # envelope. An envelope wide enough to cover LA County also catches whole
-    # neighbouring counties' worth of features, which makes that one dimension's
-    # denominator inconsistent with the others.
-    clip_to_county: bool = False
 
 
 SOURCES: tuple[RegionSource, ...] = (
@@ -119,10 +121,23 @@ SOURCES: tuple[RegionSource, ...] = (
         code_field="CITY_NAME",
         name_field="CITY_LABEL",
         params={
-            "outFields": "CITY_NAME,CITY_LABEL,FEAT_TYPE",
-            # The layer splits each city into land/breakwater/water pieces; only
-            # the land pieces should become a City region.
-            "where": "FEAT_TYPE = 'Land'",
+            "outFields": "CITY_NAME,CITY_LABEL,FEAT_TYPE,CITY_TYPE",
+            # Two filters, both load-bearing:
+            #   FEAT_TYPE='Land'      — the layer splits each city into land,
+            #                           breakwater, water and pier pieces.
+            #   CITY_TYPE='City'      — the layer also carries 190 polygons of
+            #                           `Unincorporated` land, which is a legal
+            #                           *status* (the absence of a city), not a
+            #                           city. Loading it here put a pseudo-city
+            #                           holding two-thirds of the county's land
+            #                           into every "top cities" rollup.
+            #
+            # "Not in a city" is still available and needs no dimension: a point
+            # that falls in none of the 88 city polygons is unincorporated by
+            # definition, and the rollup already produces that bucket. Deriving it
+            # is also self-correcting — if the county annexes a pocket, the answer
+            # updates with no re-import, where a stored blob would go stale.
+            "where": "FEAT_TYPE = 'Land' AND CITY_TYPE = 'City'",
         },
     ),
     RegionSource(
@@ -140,9 +155,15 @@ SOURCES: tuple[RegionSource, ...] = (
     RegionSource(
         kind=RegionKind.COC,
         label="HUD Continuum of Care grantee areas (LA area)",
+        # HUD's OWN ArcGIS org (`VTyQ9soqVukalItT`, "Department of Housing and Urban
+        # Development"), not the copy we used before. That copy lived on
+        # `4yjifSiIG17X0gW4`, which is "Urban Observatory by Esri" — an Esri re-host
+        # whose own accessInformation points back at HUD — and it was frozen at
+        # 2022-04-14 with 21 obsolete CoC codes and 12 missing. This one is edited
+        # 2025-08-19.
         endpoint=(
-            "https://services1.arcgis.com/4yjifSiIG17X0gW4/arcgis/rest/services/"
-            "Continuum_of_Care_Grantee_Areas_from_HUD/FeatureServer/0/query"
+            "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/"
+            "Continuum_of_Care_Grantee_Areas/FeatureServer/0/query"
         ),
         code_field="COCNUM",
         name_field="COCNAME",
@@ -157,62 +178,46 @@ SOURCES: tuple[RegionSource, ...] = (
         },
     ),
     RegionSource(
-        kind=RegionKind.ZCTA,
-        label="2020 Census ZIP Code Tabulation Areas (LA area)",
+        kind=RegionKind.ZIP,
+        label="LA County postal ZIP Codes (parcel-based)",
         endpoint=(
-            "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/1/query"
+            "https://services.arcgis.com/RmCCgQtiZLDCtblq/arcgis/rest/services/"
+            "LA_County_ZIP_Codes_Hosted/FeatureServer/0/query"
         ),
-        code_field="ZCTA5",
-        name_field="NAME",
-        vintage="2020",
+        code_field="ZIPCODE",
+        name_field="ZIPCODE",
+        vintage="postal",
         params={
-            "outFields": "ZCTA5,NAME",
+            "outFields": "ZIPCODE",
             "where": "1=1",
-            # The spatial filter is the LA County *polygon*, supplied at fetch
-            # time, not an envelope. Measured: the padded envelope returned 630
-            # ZCTAs of which only 318 intersect LA County; a tight bounding box
-            # returned 423. ZCTA is a national layer, so this is the dimension
-            # most likely to drag in a neighbour's geography.
-            "spatialRel": "esriSpatialRelIntersects",
-            "inSR": "4326",
         },
-        # Intersecting polygons reach past the county line (a ZCTA straddling the
-        # edge is returned whole), so the guard is wider than the clip geometry.
-        guard_bbox=(-120.7, 31.5, -115.6, 36.5),
-        clip_to_county=True,
     ),
 )
 
 
-def fetch_county_clip(timeout: int = 120) -> str:
-    """The LA County boundary as an ArcGIS polygon literal, for spatial filters.
+def fetch_service_metadata(source: RegionSource, timeout: int = 60) -> dict[str, str]:
+    """The publisher's own claim of ownership for a layer.
 
-    Used instead of an envelope so a national layer is scoped to the county
-    rather than to a rectangle that overlaps four other counties. Simplified on
-    the server (``maxAllowableOffset``) — this only decides which features are
-    in scope, so sub-metre precision is irrelevant and the unsimplified county
-    outline is thousands of vertices.
+    ArcGIS exposes ``copyrightText`` ("This data is maintained by the Los Angeles
+    County Department of Registrar-Recorder/County Clerk") and
+    ``serviceItemId``. Both are captured so that "is this authoritative?" is
+    answerable in SQL rather than by re-probing the endpoint later. Failure is not
+    fatal: a layer that exposes neither is worth recording as such, not worth
+    aborting an import over.
     """
-    params = {
-        "where": f"STATE='{LA_COUNTY_STATE_FIPS}' AND COUNTY='{LA_COUNTY_FIPS}'",
-        "outFields": "GEOID",
-        "returnGeometry": "true",
-        "outSR": "4326",
-        "maxAllowableOffset": "0.0005",
-        "f": "json",
-    }
-    url = f"{LA_COUNTY_ENDPOINT}?{urllib.parse.urlencode(params)}"
+    url = source.endpoint.removesuffix("/query") + "?f=pjson"
     request = urllib.request.Request(url, headers={"User-Agent": "BetterAngels-GIS-import/1.0"})
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        payload = json.load(response)
-
-    features = payload.get("features") or []
-    if not features:
-        raise CommandError(f"could not fetch the LA County outline from {LA_COUNTY_ENDPOINT}")
-    geometry = features[0].get("geometry")
-    if not geometry:
-        raise CommandError("the LA County outline came back without geometry")
-    return json.dumps(geometry)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            payload = json.load(response)
+    except Exception:  # noqa: BLE001 — provenance is best-effort, never blocking
+        return {"attribution": "", "item_id": ""}
+    if not isinstance(payload, dict) or "error" in payload:
+        return {"attribution": "", "item_id": ""}
+    return {
+        "attribution": " ".join(str(payload.get("copyrightText") or "").split())[:2000],
+        "item_id": str(payload.get("serviceItemId") or "")[:64],
+    }
 
 
 def fetch_geojson(source: RegionSource, timeout: int = 120) -> Path:
@@ -223,13 +228,10 @@ def fetch_geojson(source: RegionSource, timeout: int = 120) -> Path:
     that would write a partial layer and a partial layer is worse than none,
     because every count downstream would be quietly wrong. Pagination is not
     implemented — the guard fails loudly instead, which is this command's stated
-    posture. Today no configured source comes close (max seen: 630 ZCTAs against
+    posture. Today no configured source comes close (max seen: 317 ZIPs against
     a 100,000 limit), but census tracts would.
     """
     params = dict(source.params)
-    if source.clip_to_county:
-        params["geometry"] = fetch_county_clip(timeout=timeout)
-        params["geometryType"] = "esriGeometryPolygon"
     params.update({"outSR": "4326", "f": "geojson"})
     url = f"{source.endpoint}?{urllib.parse.urlencode(params)}"
 
@@ -354,6 +356,15 @@ class Command(BaseCommand):
     def _ingest(self, source: RegionSource, *, path: Path, dry_run: bool) -> int:
         self.stdout.write(f"  source file: {path}")
 
+        metadata = fetch_service_metadata(source) if not path.name.startswith("tmpshape") else {
+            "attribution": "",
+            "item_id": "",
+        }
+        if metadata["attribution"]:
+            self.stdout.write(f"  attributed: {metadata['attribution'][:90]}")
+        else:
+            self.stdout.write("  attributed: (the publisher exposes no copyrightText)")
+
         datasource = DataSource(str(path))
         layer = datasource[0]
         self.stdout.write(f"  features  : {len(layer)}")
@@ -396,6 +407,8 @@ class Command(BaseCommand):
                     name=str(entry["name"])[:255],
                     source_url=source.endpoint[:1024],
                     source_vintage=source.vintage,
+                    source_attribution=metadata["attribution"],
+                    source_item_id=metadata["item_id"],
                     geom=geometry,
                 )
             )
@@ -408,7 +421,7 @@ class Command(BaseCommand):
         min_y = min(r.geom.extent[1] for r in regions)
         max_x = max(r.geom.extent[2] for r in regions)
         max_y = max(r.geom.extent[3] for r in regions)
-        guard = source.guard_bbox or LA_BBOX_PADDED
+        guard = LA_BBOX_PADDED
         self.stdout.write(f"  bbox      : ({min_x:.4f}, {min_y:.4f}) -> ({max_x:.4f}, {max_y:.4f})")
         if not (guard[0] <= min_x and max_x <= guard[2] and guard[1] <= min_y and max_y <= guard[3]):
             raise CommandError(

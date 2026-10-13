@@ -57,7 +57,7 @@ Tests: `apps/betterangels-backend/regions/tests/`
 ## Region grouping (backend, shipped)
 
 The `regions` app stores boundary polygons and answers "group/filter interactions by
-geography" for six dimensions: ZCTA, city, council district, supervisorial district, SPA,
+geography" for six dimensions: postal ZIP, city, council district, supervisorial district, SPA,
 and CoC.
 
 ```bash
@@ -66,8 +66,38 @@ python manage.py import_regions --kind council_district --kind spa
 python manage.py import_regions --dry-run             # validate, write nothing
 ```
 
-Verified live: **751 regions** — 630 ZCTA, 89 city, 15 council district, 8 SPA,
+Verified live: **431 regions** — 311 postal ZIP, 88 city, 15 council district, 8 SPA,
 5 supervisorial, 4 CoC.
+
+### Where each dimension comes from, and whether that is the owner
+
+Every layer records the publisher's own attribution (`copyrightText`) at import, so
+"is this authoritative?" is answerable in SQL:
+
+| dimension | publisher (from the service) | count |
+|---|---|---|
+| supervisorial district | LA County **Registrar-Recorder/County Clerk** | 5 |
+| SPA | LA County **Dept. of Public Health** | 8 |
+| CoC | **U.S. Dept. of Housing and Urban Development** (HUD's own ArcGIS org) | 4 |
+| postal ZIP | **CAMS, USPS** — parcel-based, via LA County | 311 |
+| council district | City of LA — *publishes no `copyrightText`* | 15 |
+| city | LA County — *publishes no `copyrightText`* | 88 |
+
+Two layers expose no ownership text, which is recorded as an empty attribution
+rather than glossed over: for those, the service itself does not evidence authority.
+
+Two deliberate source choices worth knowing:
+
+- **ZIP is postal ZIP, not Census ZCTA.** ZCTA is a statistical approximation built
+  from census blocks; a geocoded street address carries a *USPS* ZIP. Using ZCTA
+  silently dropped 10 real ZIPs (including 90090) and pulled in 22 out-of-county
+  spill ZCTAs. USPS publishes no official boundary file, so no postal polygon set is
+  perfectly authoritative — this one is parcel-based with USPS/Assessor/CAMS credits.
+- **`Unincorporated` is not a city.** The county city layer carries 190 polygons of
+  unincorporated land alongside the 88 cities. It is a legal status, not a place, so
+  the import filters to `CITY_TYPE='City'`. "Not in any city" still works and needs no
+  dimension — a point matching none of the 88 is unincorporated by definition, and
+  deriving it is self-correcting when the county annexes a pocket.
 
 GraphQL: `interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes)`,
 plus `regionDimensions` (what is loaded) and `regions(dimension, codes)` (boundaries as

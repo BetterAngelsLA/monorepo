@@ -2223,7 +2223,7 @@ type RegionCountType {
 }
 
 enum RegionDimension {
-  ZCTA
+  ZIP
   CITY
   COUNCIL_DISTRICT
   SUPERVISORIAL_DISTRICT

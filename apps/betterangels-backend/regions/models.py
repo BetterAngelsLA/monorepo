@@ -1,7 +1,7 @@
 """Region boundary models (DEV-2570 / DEV-2604).
 
 A ``Region`` is one polygon of one geographic dimension — a council district, a
-ZCTA, a city, an SPA. Interactions already carry a point (``Note.location`` →
+ZIP, a city, an SPA. Interactions already carry a point (``Note.location`` →
 ``common.Location.point``), so aggregation is a spatial join against this table
 rather than anything captured from users.
 
@@ -117,7 +117,7 @@ class RegionKind(models.TextChoices):
     loader's ``--kind`` argument both use, so keep them stable.
     """
 
-    ZCTA = "zcta", "ZIP Code Tabulation Area"
+    ZIP = "zip", "ZIP Code"
     CITY = "city", "City"
     COUNCIL_DISTRICT = "council_district", "City Council District"
     SUPERVISORIAL_DISTRICT = "supervisorial_district", "Supervisorial District"
@@ -130,12 +130,25 @@ class Region(models.Model):
 
     kind = models.CharField(max_length=32, choices=RegionKind.choices, db_index=True)
     # The region's stable identifier within its kind: "13" for council district
-    # 13, "90012" for a ZCTA, "CA-600" for a CoC. Text because the formats differ.
+    # 13, "90012" for a ZIP, "CA-600" for a CoC. Text because the formats differ.
     code = models.CharField(max_length=32)
     name = models.CharField(max_length=255, blank=True, default="")
     # Provenance, so a stale boundary set is identifiable after the fact.
     source_url = models.URLField(max_length=1024, blank=True, default="")
     source_vintage = models.CharField(max_length=32, blank=True, default="")
+    # The publisher's own claim of ownership, captured verbatim from the service's
+    # `copyrightText`. This is the field that answers "is this authoritative?" from
+    # the database instead of by re-probing the endpoint: e.g. supervisorial
+    # districts say "maintained by the Los Angeles County Department of
+    # Registrar-Recorder/County Clerk", SPAs say "Department of Public Health".
+    #
+    # Two of our layers publish none — LA City council districts and the county
+    # city layer — which is itself worth recording rather than papering over: for
+    # those, authority is not evidenced by the service.
+    source_attribution = models.TextField(blank=True, default="")
+    # The ArcGIS item id, which identifies the exact hosted layer rather than just
+    # its URL (URLs get reorganised; item ids do not).
+    source_item_id = models.CharField(max_length=64, blank=True, default="")
 
     geom = MultiPolygonField(srid=4326)
 
