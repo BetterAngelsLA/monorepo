@@ -16,6 +16,9 @@ These run against the PostGIS test database the rest of the suite already uses.
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
+import tempfile
 from io import StringIO
 from pathlib import Path
 from typing import Any
@@ -306,14 +309,14 @@ class LoadRegionBoundariesTestCase(TestCase):
         self.assertIn("no such file", str(ctx.exception))
 
     def test_unsupported_extension_is_reported(self) -> None:
-        tmp = FIXTURES / "regions.txt"
-        tmp.write_text("not geodata")
-        try:
+        # A temp dir, not the fixtures dir: writing scratch files into the source
+        # tree breaks a read-only checkout and litters the repo if interrupted.
+        with tempfile.TemporaryDirectory() as workdir:
+            tmp = Path(workdir) / "regions.txt"
+            tmp.write_text("not geodata")
             with self.assertRaises(CommandError) as ctx:
                 load(shapefile=str(tmp), layer=TABLE, kind="test_district")
             self.assertIn("expected a .shp", str(ctx.exception))
-        finally:
-            tmp.unlink()
 
 
 class UndeclaredCrsTestCase(TestCase):
@@ -354,9 +357,9 @@ class UndeclaredCrsTestCase(TestCase):
                 }
             ],
         }
-        tmp = FIXTURES / "regions_no_crs.geojson"
-        tmp.write_text(json.dumps(payload))
-        try:
+        with tempfile.TemporaryDirectory() as workdir:
+            tmp = Path(workdir) / "regions_no_crs.geojson"
+            tmp.write_text(json.dumps(payload))
             load(
                 shapefile=str(tmp),
                 layer=TABLE,
@@ -369,8 +372,6 @@ class UndeclaredCrsTestCase(TestCase):
                 row = cursor.fetchone()
             assert row is not None
             self.assertEqual(int(row[0]), 4326)
-        finally:
-            tmp.unlink()
 
 
 class ShapefileWithoutPrjTestCase(TestCase):
@@ -384,10 +385,6 @@ class ShapefileWithoutPrjTestCase(TestCase):
         # Built rather than checked in: a .prj-less shapefile is awkward to keep
         # in the repo without tools re-adding it, and ogr2ogr is available in the
         # image that runs these tests.
-        import shutil
-        import subprocess
-        import tempfile
-
         workdir = Path(tempfile.mkdtemp())
         try:
             source = FIXTURES / "regions_4326.geojson"
