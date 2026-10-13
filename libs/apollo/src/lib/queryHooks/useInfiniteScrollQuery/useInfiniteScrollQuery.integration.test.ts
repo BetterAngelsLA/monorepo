@@ -273,4 +273,108 @@ describe('useInfiniteScrollQuery – end to end', () => {
       ]),
     );
   });
+
+  it('drops a row merged away on a LATER page, not just the first', async () => {
+    // The first-page write discards the whole cached list, so a row stranded on
+    // page 2 or 3 has to go too — not only the tail of page 1.
+    let server = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(task);
+
+    const link = new ApolloLink(
+      (operation) =>
+        new Observable((observer) => {
+          const vars = operation.variables as TasksVars;
+          const offset = vars.pagination?.offset ?? 0;
+          const limit = vars.pagination?.limit ?? PAGE_SIZE;
+
+          observer.next({
+            data: {
+              tasks: {
+                results: server.slice(offset, offset + limit),
+                totalCount: server.length,
+              },
+            },
+          });
+          observer.complete();
+        }),
+    );
+
+    const { client } = makeClient(link);
+    const variables = {
+      filters: { q: 'x' },
+      ordering: [{ createdAt: 'DESC' as const }],
+    };
+    const render = () =>
+      renderWithClient(client, () =>
+        useInfiniteScrollQuery<TaskItem, TasksData, TasksVars>({
+          document: TASKS_DOCUMENT,
+          queryFieldName: 'tasks',
+          variables,
+          pageSize: PAGE_SIZE,
+        }),
+      );
+
+    const first = render();
+    await waitFor(() =>
+      expect(first.result.current.items).toHaveLength(PAGE_SIZE),
+    );
+    await act(async () => {
+      first.result.current.loadMore();
+    });
+    await waitFor(() =>
+      expect(first.result.current.items).toHaveLength(PAGE_SIZE * 2),
+    );
+    await act(async () => {
+      first.result.current.loadMore();
+    });
+    await waitFor(() =>
+      expect(first.result.current.items.map((item) => item.id)).toEqual([
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+      ]),
+    );
+
+    // "5" sits on the second page, well past the page the remount refetches.
+    server = server.filter((row) => row.id !== '5');
+    first.unmount();
+
+    const second = render();
+
+    await waitFor(() =>
+      expect(second.result.current.items.map((item) => item.id)).toEqual([
+        '1',
+        '2',
+        '3',
+      ]),
+    );
+    expect(second.result.current.total).toBe(8);
+    expect(second.result.current.hasMore).toBe(true);
+
+    // Page all the way through: "5" must be gone and nothing else skipped.
+    await act(async () => {
+      second.result.current.loadMore();
+    });
+    await waitFor(() => expect(second.result.current.items).toHaveLength(6));
+    await act(async () => {
+      second.result.current.loadMore();
+    });
+    await waitFor(() =>
+      expect(second.result.current.items.map((item) => item.id)).toEqual([
+        '1',
+        '2',
+        '3',
+        '4',
+        '6',
+        '7',
+        '8',
+        '9',
+      ]),
+    );
+  });
 });
