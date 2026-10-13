@@ -44,8 +44,24 @@ config.resolver = {
 // server claims /__api there too. Harmless — nothing native requests it.
 const { createDevApiProxy } = require('./dev-api-proxy');
 
-// Chain rather than replace: `enhanceMiddleware` is a shared extension point, so
-// anything already composed into it has to keep running.
+// `enhanceMiddleware` is deprecated, and its successor is Metro's
+// `server.unstable_extraMiddleware` — a Metro maintainer confirms that on
+// react/metro#1678, Metro implements it, and React Native's CLI uses it.
+//
+// Expo's dev server does not wire it up yet, which is the only reason this file
+// still uses the deprecated hook: `@expo/metro` declares the option in its types
+// (`index.flow.d.ts`) but does not implement it, and `@expo/cli` builds its own
+// `connect` stack (`dev-server/createMetroMiddleware.js`) that reads neither
+// option — `instantiateMetro` wires only `enhanceMiddleware`, and calls it
+// deprecated in the same breath as it relies on it.
+//
+// Measured rather than assumed: with `unstable_extraMiddleware` set,
+// `/__api/nope/` answered 200 with the dev server's own HTML instead of this
+// proxy's 502, so the handler was never mounted. Migrate when Expo's fork
+// implements the option.
+//
+// Chain rather than replace: it is a shared extension point, so anything already
+// composed into it has to keep running.
 const previousEnhanceMiddleware = config.server.enhanceMiddleware;
 
 config.server.enhanceMiddleware = (middleware, server) =>
