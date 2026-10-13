@@ -65,6 +65,9 @@ todos:
   - id: audit-kind-filters
     content: 'Phase 6: Add kinds filter to objectAuditLog'
     status: pending
+  - id: rds-proxy-pinning
+    content: 'Phase 3: Record the RDS Proxy connection-pinning interaction and drop the selector cursor'
+    status: pending
 isProject: false
 ---
 
@@ -699,6 +702,87 @@ against `pgh_obj_id` on this table. It is declared for completeness per the list
 above — write cost with no reader today — noted so it is not mistaken for
 evidence that the query shape exists.
 
+### RDS Proxy interaction (connection pinning)
+
+This deployment talks to PostgreSQL through **Amazon RDS Proxy** (with IAM DB
+authentication via `common.backends.iam_dbauth.postgis`, which mints a token per
+new connection), so the audit feature must be read against the proxy's pinning
+rules.
+
+**The triggers are not the risk.** `pghistory`/`pgtrigger` install PostgreSQL
+triggers, which run server-side *after* the proxy has already handed the
+statement to the database. The proxy never sees the trigger, the per-model
+`*Event` tables, or the `INSERT INTO shelters_*event` the trigger performs.
+Write tracking in itself cannot break the proxy.
+
+**What the proxy actually sees is the client-side statement shape.** pghistory
+propagates context by prepending a `set_config` pair to every non-`SELECT`
+statement (`pghistory/runtime.py`):
+
+```sql
+SELECT set_config('pghistory.context_id', %s, true),
+       set_config('pghistory.context_metadata', %s, true);
+```
+
+The third argument is `is_local = true`, i.e. `SET LOCAL` semantics, and AWS
+documents that `SET LOCAL` does **not** pin. pghistory's own performance note
+describes the mechanism more broadly ("session/connection-scoped GUC state …
+may create session pinning"), so this is recorded as *expected exempt*, and is
+pinned by a regression test rather than an assumption (§20): the test asserts the
+write path emits the transaction-local form and never a session-scoped
+`set_config(..., false)`.
+
+**Pinning inventory for this codebase:**
+
+| Cause (per AWS) | Present? | Detail |
+| --- | --- | --- |
+| `SET LOCAL` / `set_config(..., true)` | Exempt | every write, via pghistory; contract-pinned by test |
+| `set_config(..., false)` / `SET SESSION` | **Dormant landmine** | `pgtrigger.ignore()` teardown issues `set_config('pgtrigger.ignore', NULL, false)`; unused today |
+| Server-side cursors (`DECLARE`) | **Yes** | `.iterator()` in the audit selector (removed, §20) |
+| Statement text > 16 KB | **Yes — by construction** | the `objectAuditLog` aggregate, see below |
+| `nextval`/`setval` in SQL | No | Django uses server-side defaults + `RETURNING` |
+| Advisory locks | No | the merge path's `select_for_update()` is a row lock, not advisory |
+| Temp tables / `LISTEN` | No | no request-path usage |
+
+**Measured: `objectAuditLog` exceeds the 16 KB pinning cliff by construction.**
+The statement the selector compiles is proportional to the number of event models
+`references()` matches, and one `UNION ALL` branch plus a correlated `_prev_data`
+subquery is emitted per model:
+
+| target | matched event models | compiled statement |
+| --- | --- | --- |
+| `SHELTER` | 27 | ~72 KB |
+| `BED` / `ROOM` | 7 | ~19 KB |
+| `RESERVATION` | 2 | ~6.4 KB |
+
+RDS Proxy pins any statement over 16 KB, so **opening a shelter's or bed's audit
+log pins that client connection for the life of the connection** (up to
+`CONN_MAX_AGE = 300` on this deployment). This is the single largest pinning
+source in the feature, and it is a *structural* property of the `references()`
+design (§10), not something pagination fixes: pagination bounds the number of
+**rows** fetched, not the size of the **statement text**, since the aggregate CTE
+still names every matched event table. The real mitigation is narrowing the
+matched set (per-target projections, or a materialized/denormalized event feed);
+that is deliberately left as a follow-up so it can be designed against real query
+plans. The §20 guard records these ceilings so the statement cannot grow further
+unnoticed, and the 16 KB conflict is an accepted, documented trade-off because
+`objectAuditLog` is an on-demand operator read rather than a per-request write.
+
+**Operational guidance.**
+
+- Watch `DatabaseConnectionsCurrentlySessionPinned` against `DatabaseConnections`.
+  Pinned connections that track concurrency (rather than pool size) are the signal
+  that multiplexing has been lost; sustained saturation is when this becomes an
+  availability problem rather than a throughput one.
+- Grep proxy logs for `SQL changed session settings that the proxy doesn't track`
+  and `pinned to the database connection`.
+- `DISABLE_SERVER_SIDE_CURSORS = True` is the app-wide lever if a server-side
+  cursor reappears anywhere; prefer it over per-call-site fixes.
+- Anything that must be session-level belongs in the proxy's `InitQuery`, not in
+  client SQL.
+- **Do not use `pgtrigger.ignore()` (nor any session-scoped `set_config`) on a
+  request path.** Its teardown is session-scoped and would pin.
+
 ## 11. Actor resolution
 
 - Write events carry the actor via pghistory's `MiddlewareEvents.user` (populated by `HistoryMiddleware`); this is the same mechanism [shelters/admin.py](apps/betterangels-backend/shelters/admin.py) already uses for its `updated_by` annotation (`MiddlewareEvents.objects.tracks(qs)`). Display names come from the frozen `user_name`/`user_email` (§8), not a live `User` join.
@@ -974,6 +1058,8 @@ a newly added M2M cannot diverge silently.
 - **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` but **not** in `objectAuditLog(ROOM)`/`(BED)` (the target-scoped blocklist, §10); a room/bed configuration change still appears.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request renders both the `status` and `notes` field changes (before/after diff), not just one winner row.
 - **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that label/date/actor filters are pushed to SQL (§10 performance note), not applied in Python after fetching.
+- **No server-side cursor:** `objectAuditLog` must not emit a `DECLARE` (Django's `.iterator()`), which RDS Proxy pins. Assert the captured queries contain no `DECLARE` (§10 RDS Proxy note).
+- **Connection-pinning guards:** (a) the write path's injected SQL uses the transaction-local `set_config(..., true)` form and never a session-scoped `set_config(..., false)`; (b) the selector's compiled statement stays within the documented per-target ceilings, recording the >16 KB reality from §10 rather than asserting a bound the design cannot meet.
 
 ---
 
