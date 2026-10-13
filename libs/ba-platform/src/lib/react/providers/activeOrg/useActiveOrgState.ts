@@ -79,6 +79,14 @@ export function useActiveOrgState(
   // Exposed orgs carry only the permissions the frontend models: raw backend
   // ``app.codename`` strings are filtered once here, so ``activeOrg`` and
   // ``organizations`` never leak a permission ``hasPermission`` cannot check.
+  //
+  // The `?? []` is for *rendering* only — it does not decide the "list not loaded
+  // yet" case. The store is never handed this array while the list is unknown:
+  // the effect below pushes no source in that state. Keep both halves of that:
+  // pushing an empty list would read as "belongs to nothing" and would also
+  // shadow an outer provider's list, which is what keeps requests attributed
+  // during a refetch. Pinned by the "before the organization list is known",
+  // "before the org list loads" and "genuinely org-less user" tests.
   const cleanOrgs = useMemo(
     () =>
       (organizations ?? []).map((org) => ({
