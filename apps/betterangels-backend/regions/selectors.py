@@ -206,3 +206,107 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
         rows = cursor.fetchall()
 
     return [{"kind": row[0], "code": row[1], "name": row[2] or "", "geometry": row[3]} for row in rows]
+
+
+# Cap on per-interaction points returned in one response. The map clusters them, so
+# past a few thousand the extra rows change nothing visible but do change the payload
+# — the same failure the boundary geometry had at 21 MB. The cap is reported back
+# (`truncated`) rather than silently applied, because a partial map that looks
+# complete is worse than a slow one.
+POINT_LIMIT = 10_000
+POINT_LIMIT_MAX = 50_000
+
+# Grid cell size for the density view, in degrees. 0.01 deg is ~1.1 km of latitude
+# and ~0.9 km of longitude at Los Angeles — roughly a walkable neighbourhood, which
+# is the granularity the density view is for.
+DENSITY_GRID_DEGREES = 0.01
+
+
+def interaction_points(
+    *,
+    start: datetime,
+    end: datetime,
+    organization_id: int | None = None,
+    limit: int = POINT_LIMIT,
+) -> tuple[list[dict[str, Any]], bool]:
+    """Individual interaction locations, for map pins.
+
+    **Coordinates and a timestamp, and nothing else.** Deliberately no client
+    name, client id, note id, address, or note content: this answers "where were
+    our interactions" without answering "who". `LocationType.point` already exposes
+    coordinates wherever a location is readable, and ADR 0002 makes read scope a
+    per-model choice, so this is consistent with existing behaviour rather than a
+    new class of disclosure — but it stays minimal anyway.
+
+    Returns ``(rows, truncated)``. ``truncated`` says the cap was reached, so the
+    caller can tell the user the map is a subset rather than let them read it as
+    complete. Asking for one row more than the cap is what detects that.
+    """
+    limit = max(1, min(limit, POINT_LIMIT_MAX))
+    params: dict[str, Any] = {"start": start, "end": end, "limit": limit + 1}
+    org_clause = ""
+    if organization_id is not None:
+        org_clause = "AND n.organization_id = %(org_id)s"
+        params["org_id"] = organization_id
+
+    sql = f"""
+        SELECT ST_Y(l.point::geometry) AS latitude,
+               ST_X(l.point::geometry) AS longitude,
+               n.interacted_at
+        FROM notes_note n
+        JOIN common_location l ON l.id = n.location_id
+        WHERE n.interacted_at >= %(start)s
+          AND n.interacted_at < %(end)s
+          AND n.location_id IS NOT NULL
+          {org_clause}
+        ORDER BY n.interacted_at DESC
+        LIMIT %(limit)s
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(sql, params)
+        rows = [
+            {"latitude": float(lat), "longitude": float(lon), "interacted_at": when}
+            for lat, lon, when in cursor.fetchall()
+        ]
+    truncated = len(rows) > limit
+    return rows[:limit], truncated
+
+
+def interaction_density(
+    *,
+    start: datetime,
+    end: datetime,
+    organization_id: int | None = None,
+    cell_degrees: float = DENSITY_GRID_DEGREES,
+) -> list[dict[str, Any]]:
+    """Interaction counts on a fixed grid, for the density view.
+
+    Aggregated in the database rather than in the browser, so the payload is
+    bounded by the grid rather than by the number of interactions. A grid cell with
+    no interactions is simply absent; a caller draws only what it receives.
+    """
+    params: dict[str, Any] = {"start": start, "end": end, "cell": cell_degrees}
+    org_clause = ""
+    if organization_id is not None:
+        org_clause = "AND n.organization_id = %(org_id)s"
+        params["org_id"] = organization_id
+
+    sql = f"""
+        SELECT ST_Y(ST_SnapToGrid(l.point::geometry, %(cell)s)) AS latitude,
+               ST_X(ST_SnapToGrid(l.point::geometry, %(cell)s)) AS longitude,
+               count(*) AS count
+        FROM notes_note n
+        JOIN common_location l ON l.id = n.location_id
+        WHERE n.interacted_at >= %(start)s
+          AND n.interacted_at < %(end)s
+          AND n.location_id IS NOT NULL
+          {org_clause}
+        GROUP BY 1, 2
+        ORDER BY count DESC, 1, 2
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(sql, params)
+        return [
+            {"latitude": float(lat), "longitude": float(lon), "count": int(count)}
+            for lat, lon, count in cursor.fetchall()
+        ]

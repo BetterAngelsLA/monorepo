@@ -32,6 +32,8 @@ from notes.models import Note
 from regions.models import Region, RegionKind
 from regions.selectors import (
     available_kinds,
+    interaction_density,
+    interaction_points,
     region_counts,
     region_features,
     region_totals_without_boundaries,
@@ -246,3 +248,95 @@ class RegionReconciliationTestCase(TestCase):
         )
         assigned = {r["code"]: r["count"] for r in rows if r["code"] is not None}
         self.assertEqual(assigned, {"1": 1})
+
+
+class InteractionMapTestCase(TestCase):
+    """The pins and density views (DEV-2570 / DEV-2604).
+
+    The properties worth pinning down are the ones a reviewer would not see by
+    reading the SQL: that neither view leaks client identity, that org scoping
+    actually scopes, that truncation is reported rather than silent, and that the
+    two views describe the same interactions so the toggle cannot change the story.
+    """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make()
+        self.other_org = organization_recipe.make()
+        self.start = datetime(2026, 1, 1, tzinfo=UTC)
+        self.end = datetime(2026, 2, 1, tzinfo=UTC)
+
+    def _note_at(self, lon: float, lat: float, *, org: Any = None, location: bool = True) -> Note:
+        return baker.make(
+            Note,
+            organization=org or self.org,
+            interacted_at=datetime(2026, 1, 15, tzinfo=UTC),
+            location=None if not location else baker.make(Location, point=Point(lon, lat, srid=4326)),
+        )
+
+    def _points(self, **kwargs: Any) -> tuple[list[dict[str, Any]], bool]:
+        return interaction_points(start=self.start, end=self.end, organization_id=self.org.id, **kwargs)
+
+    def test_points_are_returned_with_coordinates(self) -> None:
+        self._note_at(-118.24, 34.05)
+        rows, truncated = self._points()
+        self.assertEqual(len(rows), 1)
+        self.assertFalse(truncated)
+        self.assertAlmostEqual(rows[0]["latitude"], 34.05, places=5)
+        self.assertAlmostEqual(rows[0]["longitude"], -118.24, places=5)
+
+    def test_points_carry_no_client_identity(self) -> None:
+        """The map answers "where", not "who".
+
+        Asserted as an exact key set rather than spot-checks, so adding a client or
+        note field to this selector fails here instead of quietly widening what the
+        map exposes.
+        """
+        self._note_at(-118.24, 34.05)
+        rows, _ = self._points()
+        self.assertEqual(set(rows[0].keys()), {"latitude", "longitude", "interacted_at"})
+
+    def test_notes_without_a_location_are_absent(self) -> None:
+        """A note with no point cannot be pinned, and must not appear as (0, 0)."""
+        self._note_at(0, 0, location=False)
+        rows, _ = self._points()
+        self.assertEqual(rows, [])
+
+    def test_other_organizations_are_excluded(self) -> None:
+        self._note_at(-118.24, 34.05)
+        self._note_at(-118.24, 34.05, org=self.other_org)
+        rows, _ = self._points()
+        self.assertEqual(len(rows), 1, "org scoping must exclude the other org's points")
+
+    def test_truncation_is_reported_not_silent(self) -> None:
+        for i in range(5):
+            self._note_at(-118.24 + i * 0.001, 34.05)
+        rows, truncated = self._points(limit=3)
+        self.assertEqual(len(rows), 3)
+        self.assertTrue(truncated, "hitting the cap must be visible to the caller")
+
+        rows, truncated = self._points(limit=5)
+        self.assertEqual(len(rows), 5)
+        self.assertFalse(truncated, "exactly at the cap is not truncated")
+
+    def test_limit_is_clamped(self) -> None:
+        self._note_at(-118.24, 34.05)
+        rows, _ = self._points(limit=10**9)
+        self.assertEqual(len(rows), 1)
+
+    def test_density_aggregates_to_a_grid(self) -> None:
+        # two points in one cell (~1km), one in another
+        self._note_at(-118.2401, 34.0501)
+        self._note_at(-118.2402, 34.0502)
+        self._note_at(-118.30, 34.10)
+        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id)
+        counts = sorted(cell["count"] for cell in cells)
+        self.assertEqual(counts, [1, 2])
+        self.assertEqual(sum(counts), 3)
+
+    def test_the_two_views_describe_the_same_interactions(self) -> None:
+        """Toggling pins/density must not change how many interactions there are."""
+        for i in range(4):
+            self._note_at(-118.24 + i * 0.02, 34.05 + i * 0.02)
+        points, _ = self._points()
+        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id)
+        self.assertEqual(len(points), sum(cell["count"] for cell in cells))

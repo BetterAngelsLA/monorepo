@@ -36,6 +36,9 @@ from reports.selectors import report_default_date_range
 
 from .selectors import (
     available_kinds,
+    POINT_LIMIT,
+    interaction_density,
+    interaction_points,
     region_counts,
     region_features,
     region_totals_without_boundaries,
@@ -96,6 +99,46 @@ class RegionCountType:
     # can tell "outside every region" from "no location recorded" without
     # parsing the display name.
     unassigned_reason: Optional[UnassignedReason]
+
+
+@strawberry.type
+class InteractionPointType:
+    """One interaction's location, for a map pin.
+
+    Coordinates and a timestamp only. There is deliberately no client, note, or
+    address field: the map answers "where were our interactions", not "who".
+    """
+
+    latitude: float
+    longitude: float
+    interacted_at: datetime
+
+
+@strawberry.type
+class DensityCellType:
+    """Interactions counted on a fixed grid cell, for the density view.
+
+    Aggregated in the database, so the payload is bounded by the grid rather than
+    by the number of interactions.
+    """
+
+    latitude: float
+    longitude: float
+    count: int
+
+
+@strawberry.type
+class InteractionMapType:
+    """Both views of the same interactions, so the client can toggle without refetching.
+
+    ``truncated`` is set when the point cap was reached — the map is then a subset
+    of the period's interactions and the UI must say so, because a partial map that
+    looks complete is worse than no map.
+    """
+
+    points: List[InteractionPointType]
+    density: List[DensityCellType]
+    truncated: bool
 
 
 @strawberry.type
@@ -217,6 +260,64 @@ class Query:
                 )
 
         return buckets
+
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    def interaction_map(
+        self,
+        info: Info,
+        organization_id: ID,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        limit: Optional[int] = None,
+    ) -> InteractionMapType:
+        """Where the interactions happened: pins, and the same data as a density grid.
+
+        Authority is ``reports.view_reports`` at the payload org, identical to
+        ``interactionsByRegion`` and enforced the same way (``require_can`` in the
+        body, ``IsAuthenticated`` on the field). This is the same client-derived data
+        at a lower level of aggregation, so it cannot be reachable by a weaker check
+        than the rollup built from it.
+
+        Both representations of one period are returned together so the client can
+        switch between them without a second round trip; the density grid is
+        aggregated in the database, so carrying both costs far less than a second
+        request would.
+        """
+        user = cast(AccountUser, get_current_user(info))
+        org = _org_or_deny(organization_id)
+        require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
+
+        if start_date is None or end_date is None:
+            default_start, default_end = report_default_date_range(org=org)
+            start_date = start_date or default_start
+            end_date = end_date or default_end
+
+        tz = report_calendar_time_zone(org)
+        start, end = _aware_range(start_date, end_date, tz)
+
+        points, truncated = interaction_points(
+            start=start,
+            end=end,
+            organization_id=org.id,
+            limit=limit or POINT_LIMIT,
+        )
+        density = interaction_density(start=start, end=end, organization_id=org.id)
+
+        return InteractionMapType(
+            points=[
+                InteractionPointType(
+                    latitude=row["latitude"],
+                    longitude=row["longitude"],
+                    interacted_at=row["interacted_at"],
+                )
+                for row in points
+            ],
+            density=[
+                DensityCellType(latitude=row["latitude"], longitude=row["longitude"], count=row["count"])
+                for row in density
+            ],
+            truncated=truncated,
+        )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def region_dimensions(self, info: Info) -> List[RegionDimension]:
