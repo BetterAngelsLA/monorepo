@@ -10,6 +10,7 @@ supervisorial district, …).
 |---|---|
 | [dev-2604-shapefile-spike.md](dev-2604-shapefile-spike.md) | **The spike deliverable.** Picks one region, names the official source, and shows the verified load + query process end to end. Read this first. |
 | [la-geodata-sources.md](la-geodata-sources.md) | The source inventory: LA geospatial endpoints with CRS, geometry type, feature counts, licensing, and current/superseded verdicts. |
+| [la-boundary-currency-audit.md](la-boundary-currency-audit.md) | **Are they current?** Live-probed verdicts on each candidate layer, and which vintages are superseded. Read before importing. |
 | [shapefile-import-research.md](shapefile-import-research.md) | Deep dive on ingestion methods (`ogr2ogr`, `shp2pgsql`, GeoDjango/OGR, geopandas) and why the recommended one was chosen. |
 | [gis-shapefile-options.md](gis-shapefile-options.md) | Consolidated options across data sources, backend import, and frontend rendering. |
 
