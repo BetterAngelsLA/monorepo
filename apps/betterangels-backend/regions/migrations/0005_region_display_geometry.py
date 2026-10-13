@@ -13,8 +13,8 @@ rejects.
 
 Deliberately **not** derived from ``regions_regionpiece``. Subdivision clips parts at
 subdivision boundaries, so reassembling pieces does not reproduce the parent —
-measured, 1 of 8 SPAs and 0 of 5 supervisorial districts come back geometrically
-equal. It is the authoritative ``geom`` that must be simplified.
+measured, only 334 of 431 imported regions come back geometrically equal. It is the
+authoritative ``geom`` that must be simplified.
 """
 
 from django.contrib.gis.db.models import MultiPolygonField

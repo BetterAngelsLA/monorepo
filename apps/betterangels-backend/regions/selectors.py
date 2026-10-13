@@ -128,16 +128,20 @@ def region_counts(
         org_clause = "AND n.organization_id = %(org_id)s"
         params["org_id"] = organization_id
 
+    # `codes is not None` throughout, never `if codes:` — an explicitly empty list
+    # means "no codes", and `if codes:` treats it as absent, emits no clause at all,
+    # and returns the WHOLE dimension. This is the third place the same collapse
+    # appeared; it is the one that actually reached the resolver.
     code_clause = ""
     if unassigned_only:
         code_clause = "AND r.code IS NULL"
-    elif codes and include_unassigned:
+    elif codes is not None and include_unassigned:
         # Both arms in one predicate. Written as an explicit OR rather than a
         # sentinel inside the array: SQL evaluates `code = ANY(...)` to NULL for
         # an unassigned row, so a sentinel in the list would silently drop it.
         code_clause = "AND (r.code = ANY(%(codes)s) OR r.code IS NULL)"
         params["codes"] = list(codes)
-    elif codes:
+    elif codes is not None:
         code_clause = "AND r.code = ANY(%(codes)s)"
         params["codes"] = list(codes)
 
@@ -208,7 +212,11 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
             WHERE kind = ANY(%(kinds)s)
               AND (%(codes)s IS NULL OR code = ANY(%(codes)s))
             """,
-            {"kinds": list(kinds), "codes": list(codes) if codes else None},
+            # `codes if codes is not None` rather than `codes or None`: an explicit
+            # empty list means "no codes", and must match nothing. Collapsing it to
+            # NULL removes the predicate entirely and returns the whole dimension —
+            # the same bug class as the unassigned sentinel.
+            {"kinds": list(kinds), "codes": list(codes) if codes is not None else None},
         )
         rows = cursor.fetchall()
 

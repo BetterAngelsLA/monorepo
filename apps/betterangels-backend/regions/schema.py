@@ -35,8 +35,8 @@ from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
 
 from .selectors import (
-    available_kinds,
     POINT_LIMIT,
+    available_kinds,
     interaction_density,
     interaction_points,
     region_counts,
@@ -222,7 +222,10 @@ class Query:
             start=start,
             end=end,
             organization_id=org.id,
-            codes=wanted or None,
+            # `wanted` is passed through even when empty: `or None` would drop the
+            # code predicate and return the WHOLE dimension for `regionCodes: []`,
+            # which is the bug this module already fixed once for the sentinel.
+            codes=wanted if region_codes is not None else None,
             unassigned_only=unassigned_only,
             # Real codes plus the sentinel: the predicate needs both arms, which
             # is not expressible by putting the sentinel in the code list.

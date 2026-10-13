@@ -22,8 +22,6 @@ from __future__ import annotations
 
 from django.contrib.gis.db.models import MultiPolygonField
 from django.db import connection, models, transaction
-from django.db.utils import OperationalError, ProgrammingError
-
 
 # Subdivision is gated: only regions above the threshold are chopped.
 # Tolerance for the map's display geometry, in degrees. 0.0005 deg is ~46 m at Los
@@ -96,9 +94,7 @@ def build_region_pieces(*, region_id: int | None = None, kind: str | None = None
         if region_id is not None:
             # Replace this region's pieces only, so the DELETE and the INSERT see
             # the same target set.
-            cursor.execute(
-                "DELETE FROM regions_regionpiece WHERE region_id = %(region_id)s", {"region_id": region_id}
-            )
+            cursor.execute("DELETE FROM regions_regionpiece WHERE region_id = %(region_id)s", {"region_id": region_id})
         elif kind is not None:
             cursor.execute("DELETE FROM regions_regionpiece WHERE kind = %(kind)s", {"kind": kind})
         else:
@@ -178,7 +174,8 @@ class Region(models.Model):
     #
     # It is NOT derivable from ``RegionPiece``: subdivision clips parts at
     # subdivision boundaries, so reassembling pieces does not reproduce the parent --
-    # measured, 1 of 8 SPAs and 0 of 5 supervisorial districts come back exact.
+    # measured across the imported layers, reuniting a region from its pieces is
+    # geometrically equal to the parent for only 334 of 431 regions (23% differ).
     geom_display = MultiPolygonField(srid=4326, null=True, blank=True)
 
     objects = models.Manager()
@@ -307,4 +304,3 @@ class RegionPiece(models.Model):
 
     def __str__(self) -> str:
         return f"piece of {self.region_id}"
-

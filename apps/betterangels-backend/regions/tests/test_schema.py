@@ -132,6 +132,30 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
         self.assertEqual(counts[("", "OUTSIDE_ALL_REGIONS")], 1)
         self.assertEqual(counts[("", "NO_LOCATION")], 1)
 
+    def test_empty_code_list_returns_no_named_regions(self) -> None:
+        """Regression: `regionCodes: []` used to return the ENTIRE rollup.
+
+        `wanted or None` collapsed an explicitly-empty list to SQL NULL, which drops
+        the code predicate altogether. An empty list means "no codes", so it must
+        match nothing — the same class of bug as the unassigned sentinel, and it was
+        untested, which is why it survived the fix for that one.
+        """
+        buckets = self._query([])
+        named = [b for b in buckets if not b["isUnassigned"]]
+        self.assertEqual(named, [], f"an empty code list leaked every region: {named}")
+
+    def test_empty_code_list_does_not_smuggle_in_unassigned_rows(self) -> None:
+        """The empty list asks for no regions, not for the unassigned buckets.
+
+        Asserted separately from the named-region check because the two leak through
+        different branches: the code predicate and `include_locationless`.
+        """
+        buckets = self._query([])
+        reasons = {b["unassignedReason"] for b in buckets if b["isUnassigned"]}
+        self.assertNotIn(
+            "OUTSIDE_ALL_REGIONS", reasons, "an empty code list asked for no regions, but returned outside-all-regions"
+        )
+
     def test_code_plus_sentinel_keeps_the_outside_all_regions_bucket(self) -> None:
         counts = self._counts(self._query(["1", "__unassigned__"]))
         self.assertEqual(counts["1"], 1)

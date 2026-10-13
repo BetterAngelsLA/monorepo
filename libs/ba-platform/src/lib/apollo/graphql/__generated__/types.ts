@@ -920,6 +920,13 @@ export type DemographicType = {
   name?: Maybe<DemographicChoices>;
 };
 
+export type DensityCellType = {
+  __typename: 'DensityCellType';
+  count: Scalars['Int']['output'];
+  latitude: Scalars['Float']['output'];
+  longitude: Scalars['Float']['output'];
+};
+
 export type DjangoFileType = {
   __typename: 'DjangoFileType';
   name: Scalars['String']['output'];
@@ -1436,6 +1443,20 @@ export type InteractionAuthorTypeOffsetPaginated = {
   results: Array<InteractionAuthorType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
+};
+
+export type InteractionMapType = {
+  __typename: 'InteractionMapType';
+  density: Array<DensityCellType>;
+  points: Array<InteractionPointType>;
+  truncated: Scalars['Boolean']['output'];
+};
+
+export type InteractionPointType = {
+  __typename: 'InteractionPointType';
+  interactedAt: Scalars['DateTime']['output'];
+  latitude: Scalars['Float']['output'];
+  longitude: Scalars['Float']['output'];
 };
 
 export enum LanguageEnum {
@@ -2568,6 +2589,7 @@ export type Query = {
   hmisProfile: HmisProfileType;
   hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
+  interactionMap: InteractionMapType;
   interactionsByRegion: Array<RegionCountType>;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
@@ -2714,6 +2736,14 @@ export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
   ordering?: Array<InteractionAuthorOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryInteractionMapArgs = {
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  organizationId: Scalars['ID']['input'];
+  startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
 

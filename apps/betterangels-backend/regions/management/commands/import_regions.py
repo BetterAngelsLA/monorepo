@@ -39,7 +39,7 @@ from typing import Any, cast
 from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.geos import MultiPolygon
 from django.core.management.base import BaseCommand, CommandError
-from django.db import connection, transaction
+from django.db import transaction
 
 from regions.models import DISPLAY_SIMPLIFY_DEGREES, Region, RegionKind, build_region_pieces
 
@@ -356,10 +356,14 @@ class Command(BaseCommand):
     def _ingest(self, source: RegionSource, *, path: Path, dry_run: bool) -> int:
         self.stdout.write(f"  source file: {path}")
 
-        metadata = fetch_service_metadata(source) if not path.name.startswith("tmpshape") else {
-            "attribution": "",
-            "item_id": "",
-        }
+        metadata = (
+            fetch_service_metadata(source)
+            if not path.name.startswith("tmpshape")
+            else {
+                "attribution": "",
+                "item_id": "",
+            }
+        )
         if metadata["attribution"]:
             self.stdout.write(f"  attributed: {metadata['attribution'][:90]}")
         else:

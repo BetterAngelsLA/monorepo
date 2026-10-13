@@ -38,11 +38,25 @@ class Migration(migrations.Migration):
             name="source_item_id",
             field=models.CharField(blank=True, default="", max_length=64),
         ),
-        # The stored value changes with the label, so rewrite it before the choices
-        # are narrowed, or existing ZIP rows would fall outside the new choices.
+        # Rewrite the stored value before the choices narrow, or existing ZIP rows
+        # fall outside the new choices.
+        #
+        # BOTH tables. `regions_regionpiece.kind` is denormalised from the parent and
+        # the rollup filters on it (`WHERE p.kind = %(kind)s`), so updating only
+        # `regions_region` leaves every piece tagged `zcta` while the region says
+        # `zip`. Nothing errors: the lateral simply matches no rows and the whole ZIP
+        # dimension reports OUTSIDE_ALL_REGIONS until someone re-imports. 0003
+        # backfills pieces from `r.kind`, so on a database that already had regions
+        # this is exactly the state that exists at this point in the chain.
         migrations.RunSQL(
-            sql="UPDATE regions_region SET kind = 'zip' WHERE kind = 'zcta';",
-            reverse_sql="UPDATE regions_region SET kind = 'zcta' WHERE kind = 'zip';",
+            sql=[
+                "UPDATE regions_region SET kind = 'zip' WHERE kind = 'zcta';",
+                "UPDATE regions_regionpiece SET kind = 'zip' WHERE kind = 'zcta';",
+            ],
+            reverse_sql=[
+                "UPDATE regions_regionpiece SET kind = 'zcta' WHERE kind = 'zip';",
+                "UPDATE regions_region SET kind = 'zcta' WHERE kind = 'zip';",
+            ],
         ),
         migrations.AlterField(
             model_name="region",
