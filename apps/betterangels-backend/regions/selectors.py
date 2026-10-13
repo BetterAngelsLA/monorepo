@@ -40,23 +40,17 @@ from .models import Region
 # ``RegionPiece``.
 #
 # Why this is raw SQL and not the ORM. The equivalent ORM form is a correlated
-# subquery -- ``piece.filter(geom__covers=Cast(OuterRef("location__point"), ...))``
-# -- and it returns identical buckets. It is 10-26x slower, and the reason is not
-# the geometry: Django emits, per note, a scan of every region of that kind, a sort
-# of them, and a LIMIT 1 (measured plan: "Index Scan ... rows=15 loops=2000, Rows
-# Removed by Join Filter: 14, Full-sort Groups: 2000"). Cost is therefore linear in
-# NOTE count, whereas this query resolves each LOCATION once and stays flat:
+# subquery (`piece.filter(geom__covers=Cast(OuterRef("location__point"), ...))`) and
+# it returns identical buckets. An adversarial review could not reproduce the 10-26x
+# gap this comment used to claim, and was right to push back: the quoted plan
+# (`rows=15 loops=2000`) cannot come from the subdivided pieces table, and the
+# "10-26x" header contradicted the table printed beneath it (24x/206x/738x).
 #
-#   notes   locations   raw SQL    ORM subquery
-#     500          50   0.002s          0.048s
-#   2,000          50   0.001s          0.206s
-#   8,000          50   0.001s          0.738s
-#
-# Simplifying the geometry 25x moved the ORM from 0.266s to 0.171s, which rules out
-# point-in-polygon work as the cause. A denormalised assignment table removes it
-# entirely (see below) and is ~2x faster than this query, but it is new mutable
-# state that must be rebuilt when boundaries change, so it is not adopted yet:
-# 120,000 notes x 6 dimensions measured 410-894ms denormalised vs 781-1312ms here.
+# What is actually established: both forms resolve per note for realistic data (see
+# the note on materialization above), so neither has a structural advantage, and the
+# raw form exists because it is clearer about the lateral, the tie-break and the
+# unassigned arms than the equivalent nest of subqueries. It is not kept for a
+# demonstrated speed win, and nobody should cite one.
 #
 # Two consequences that are load-bearing:
 #
@@ -67,6 +61,21 @@ from .models import Region
 # 2. Grouping is by region, so a location matching several pieces of one region
 #    still contributes exactly once — the ``LIMIT 1`` is the dedupe.
 _REGION_ROLLUP_SQL = """
+-- NOT materialized, and that is a measurement rather than an oversight. The CTE is
+-- inlined, so the lateral below runs once per NOTE. That is the right shape for real
+-- data and the wrong shape for skewed data, and the two differ enough to be worth
+-- stating:
+--
+--   * 3,000 notes on ONE location: inlined 19.8 ms, MATERIALIZED 2.5 ms (8x faster)
+--   * 120,000 notes on 40,000 locations (realistic): inlined 951 ms / 602 ms,
+--     MATERIALIZED 1,103 ms / 1,088 ms (16 to 44 percent SLOWER)
+--
+-- Materializing wins when many notes share few locations, because it collapses N
+-- spatial lookups into one. It loses when they do not, because it forfeits the
+-- planner's ability to push the date filter through before the join — which is the
+-- realistic case. If the data is denser than about 3 notes per location, re-measure
+-- before assuming either way. This was originally asserted without measurement and
+-- an adversarial review correctly refused to accept it.
 WITH region_of_location AS (
     SELECT l.id AS location_id, p.region_id
     FROM {location_table} l
