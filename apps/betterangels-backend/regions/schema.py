@@ -26,10 +26,13 @@ from organizations.models import Organization
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.utils.query import filter_for_user
 
 from accounts.models import User as AccountUser
 from common.permissions.utils import IsAuthenticated, require_can
 from common.utils import get_or_none
+from notes.models import Note
+from notes.permissions import NotePermissions
 from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
@@ -275,11 +278,19 @@ class Query:
     ) -> InteractionMapType:
         """Where the interactions happened: pins, and the same data as a density grid.
 
-        Authority is ``reports.view_reports`` at the payload org, identical to
-        ``interactionsByRegion`` and enforced the same way (``require_can`` in the
-        body, ``IsAuthenticated`` on the field). This is the same client-derived data
-        at a lower level of aggregation, so it cannot be reachable by a weaker check
-        than the rollup built from it.
+        Authority is **the note read scope, not the report scope.** Unlike the
+        rollup beside it — which returns counts — this returns individual
+        coordinates, so it is gated on ``notes.view_note`` and every row is filtered
+        through ``filter_for_user``, the same call the ``notes`` query uses. A user
+        holding ``reports.view_reports`` but not ``notes.view_note`` sees no pins;
+        one who can read some notes in an org sees exactly those notes' locations.
+
+        The earlier revision gated this on ``reports.view_reports`` alone, on the
+        reasoning that coordinates are already on ``LocationType.point``. That was
+        wrong in a way worth recording: ``LocationType.point`` is reached *through* a
+        note, so it inherits the note scope, and ``reports.view_reports`` is granted
+        to ORG_ADMIN with no note permission at all. Reusing the report permission
+        here therefore widened the scope rather than matching it.
 
         Both representations of one period are returned together so the client can
         switch between them without a second round trip; the density grid is
@@ -289,6 +300,10 @@ class Query:
         user = cast(AccountUser, get_current_user(info))
         org = _org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
+        # The pins are note locations, so the note permission is required too. The
+        # org-level check below is the coarse gate; `filter_for_user` narrows it to
+        # the rows this user may actually read.
+        require_can(user, NotePermissions.VIEW, org=org)
 
         if start_date is None or end_date is None:
             default_start, default_end = report_default_date_range(org=org)
@@ -298,13 +313,23 @@ class Query:
         tz = report_calendar_time_zone(org)
         start, end = _aware_range(start_date, end_date, tz)
 
+        # The same filter the `notes` query applies: org scoping plus any
+        # object-level grants. `organization_id` is still passed so the common case
+        # does not depend on the filter's SQL shape.
+        scoped_notes = filter_for_user(
+            Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end),
+            user,
+            [NotePermissions.VIEW],
+        )
+
         points, truncated = interaction_points(
             start=start,
             end=end,
             organization_id=org.id,
             limit=limit or POINT_LIMIT,
+            notes=scoped_notes,
         )
-        density = interaction_density(start=start, end=end, organization_id=org.id)
+        density = interaction_density(start=start, end=end, organization_id=org.id, notes=scoped_notes)
 
         return InteractionMapType(
             points=[

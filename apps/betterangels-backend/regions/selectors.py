@@ -27,7 +27,7 @@ from datetime import datetime
 from typing import Any, Iterable, Sequence
 
 from django.db import connection
-from django.db.models import Count, Q
+from django.db.models import Count, Q, QuerySet
 
 from notes.models import Note
 
@@ -329,6 +329,7 @@ def interaction_points(
     end: datetime,
     organization_id: int | None = None,
     limit: int = POINT_LIMIT,
+    notes: "QuerySet[Note] | None" = None,
 ) -> tuple[list[dict[str, Any]], bool]:
     """Individual interaction locations, for map pins.
 
@@ -345,6 +346,15 @@ def interaction_points(
     """
     limit = max(1, min(limit, POINT_LIMIT_MAX))
     params: dict[str, Any] = {"start": start, "end": end, "limit": limit + 1}
+    # `notes` is an already-permission-filtered queryset when the caller has one,
+    # which is how the map inherits the note read scope rather than inventing its
+    # own. `org_id` remains for callers that only scope by organization.
+    # `note_ids` is a bound array parameter, not interpolated text: the scoped
+    # queryset decides *which* ids, and the placeholder keeps them out of the SQL.
+    notes_clause = ""
+    if notes is not None:
+        notes_clause = "AND n.id = ANY(%(note_ids)s)"
+        params["note_ids"] = list(notes.values_list("id", flat=True))
     org_clause = ""
     if organization_id is not None:
         org_clause = "AND n.organization_id = %(org_id)s"
@@ -360,6 +370,7 @@ def interaction_points(
           AND n.interacted_at < %(end)s
           AND n.location_id IS NOT NULL
           {org_clause}
+          {notes_clause}
         ORDER BY n.interacted_at DESC
         LIMIT %(limit)s
     """
@@ -379,6 +390,7 @@ def interaction_density(
     end: datetime,
     organization_id: int | None = None,
     cell_degrees: float = DENSITY_GRID_DEGREES,
+    notes: "QuerySet[Note] | None" = None,
 ) -> list[dict[str, Any]]:
     """Interaction counts on a fixed grid, for the density view.
 
@@ -387,6 +399,12 @@ def interaction_density(
     no interactions is simply absent; a caller draws only what it receives.
     """
     params: dict[str, Any] = {"start": start, "end": end, "cell": cell_degrees}
+    # `note_ids` is a bound array parameter, not interpolated text: the scoped
+    # queryset decides *which* ids, and the placeholder keeps them out of the SQL.
+    notes_clause = ""
+    if notes is not None:
+        notes_clause = "AND n.id = ANY(%(note_ids)s)"
+        params["note_ids"] = list(notes.values_list("id", flat=True))
     org_clause = ""
     if organization_id is not None:
         org_clause = "AND n.organization_id = %(org_id)s"
@@ -402,6 +420,7 @@ def interaction_density(
           AND n.interacted_at < %(end)s
           AND n.location_id IS NOT NULL
           {org_clause}
+          {notes_clause}
         GROUP BY 1, 2
         ORDER BY count DESC, 1, 2
     """

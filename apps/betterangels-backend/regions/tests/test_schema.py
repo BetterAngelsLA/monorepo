@@ -191,3 +191,97 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
         )
         self.assertIsNotNone(response.get("errors"))
         self.assertIsNone((response.get("data") or {}).get("interactionsByRegion"))
+
+
+INTERACTION_MAP_QUERY = """
+    query InteractionMap($organizationId: ID!, $startDate: Date, $endDate: Date, $limit: Int) {
+        interactionMap(organizationId: $organizationId, startDate: $startDate, endDate: $endDate, limit: $limit) {
+            points { latitude longitude }
+            density { latitude longitude count }
+            truncated
+        }
+    }
+"""
+
+
+class InteractionMapPermissionTestCase(GraphQLBaseTestCase):
+    """Pins are note locations, so they carry the note read scope, not the report one.
+
+    ``ORG_ADMIN`` holds ``reports.view_reports`` and **no** ``notes.view_note``
+    (``accounts/groups.py``) — it can read the aggregated rollup but not an individual
+    note. An earlier revision gated ``interactionMap`` on the report permission alone,
+    which handed that role exact per-interaction coordinates. These tests are the
+    regression guard for that.
+
+    Geometry is deliberately irrelevant here: the assertions are all or nothing.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+        self.reader = baker.make(User)
+        self.org_1.add_user(self.reader)
+        OrgRoleManager(self.org_1).add_roles(self.reader, ORG_ADMIN)
+
+        Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_A))
+        baker.make(
+            Note,
+            organization=self.org_1,
+            interacted_at=datetime(2026, 1, 15, tzinfo=UTC),
+            location=baker.make(Location, point=Point(-118.24, 34.05, srid=4326)),
+        )
+        assign_locations()
+
+    def _map(self) -> dict[str, Any]:
+        self.graphql_client.force_login(self.reader)
+        response = self.execute_graphql(
+            INTERACTION_MAP_QUERY,
+            {
+                "organizationId": str(self.org_1.pk),
+                "startDate": "2026-01-01",
+                "endDate": "2026-01-31",
+            },
+        )
+        if response.get("errors"):
+            return {"errors": response["errors"]}
+        return cast(dict[str, Any], response["data"]["interactionMap"])
+
+    def test_org_admin_without_note_permission_sees_no_pins(self) -> None:
+        """The role that can read reports but not notes must not see coordinates.
+
+        It either gets a permission error or an empty map — both are acceptable
+        refusals. Leaking a coordinate is not.
+        """
+        result = self._map()
+        if "errors" in result:
+            return
+        self.assertEqual(
+            result["points"],
+            [],
+            f"ORG_ADMIN has no notes.view_note but received {len(result['points'])} pin(s): {result['points'][:2]}",
+        )
+        self.assertEqual(
+            sum(cell["count"] for cell in result["density"]),
+            0,
+            "the density view leaked the same note the pins view withheld",
+        )
+
+    def test_the_rollup_still_works_for_that_role(self) -> None:
+        """Refusing the pins must not disable the aggregate report.
+
+        ``interactionsByRegion`` returns counts, which is what ``view_reports`` is
+        for. If this starts failing, the note check has been applied in the wrong
+        place — which is exactly the mistake that briefly broke every rollup test.
+        """
+        self.graphql_client.force_login(self.reader)
+        response = self.execute_graphql(
+            ROLLUP_QUERY,
+            {
+                "organizationId": str(self.org_1.pk),
+                "dimension": "COUNCIL_DISTRICT",
+                "startDate": "2026-01-01",
+                "endDate": "2026-01-31",
+            },
+        )
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+        self.assertTrue(response["data"]["interactionsByRegion"])
