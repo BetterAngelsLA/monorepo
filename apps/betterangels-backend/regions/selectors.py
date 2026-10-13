@@ -28,7 +28,7 @@ from typing import Any, Iterable, Sequence
 
 from django.db import connection
 
-from .models import Region, RegionKind
+from .models import Region
 
 # The lateral join shared by every rollup. ``%(kind)s`` is a bound parameter;
 # ``kind`` is never concatenated into the SQL text.
@@ -43,7 +43,6 @@ WITH region_of_location AS (
           AND ST_Covers(r.geom, l.point::geometry)
         LIMIT 1
     ) r ON true
-    WHERE l.point IS NOT NULL
 )
 SELECT rr.code, rr.name, count(n.id) AS count
 FROM {note_table} n
@@ -118,22 +117,12 @@ def region_totals_without_boundaries(*, start: datetime, end: datetime, organiza
     return int(row[0]) if row else 0
 
 
-def region_codes_for_kind(kind: str) -> list[str]:
-    """Every known code for a dimension — lets callers validate filter input."""
-    return list(Region.objects.filter(kind=kind).order_by("code").values_list("code", flat=True))
-
-
 def available_kinds() -> list[str]:
     """Dimensions that actually have boundaries loaded.
 
     The UI uses this to avoid offering a grouping the database cannot answer.
     """
     return list(Region.objects.order_by("kind").values_list("kind", flat=True).distinct())
-
-
-def all_kinds() -> list[str]:
-    """Every dimension the code supports, whether or not boundaries are loaded."""
-    return [choice.value for choice in RegionKind]
 
 
 def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:

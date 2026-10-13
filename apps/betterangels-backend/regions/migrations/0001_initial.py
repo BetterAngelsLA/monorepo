@@ -1,13 +1,20 @@
-"""Create the Region model and the PostGIS extension (DEV-2570 / DEV-2604).
+"""Create the Region model (DEV-2570 / DEV-2604).
 
-``CreateExtension("postgis")`` is added here explicitly. Nothing in the project
-created it before: local PostGIS came from the DB image and RDS was assumed to
-have it. Making it a migration means every environment either has the extension
-or fails loudly at migrate time rather than at the first geometry INSERT.
+Deliberately **no** ``CreateExtension("postgis")`` here, despite an earlier
+version of this migration having one. The extension is already present in every
+environment this code can run in: ``clients``, ``common``, ``hmis`` and
+``shelters`` each created geometry columns in their own initial migrations, and
+PostGIS cannot create those columns without the extension. Adding
+``CreateExtension`` would be a no-op at best.
+
+At worst it is a deploy hazard: PostGIS is **not** a trusted extension in
+PostgreSQL, so ``CREATE EXTENSION postgis`` requires superuser or
+``rds_superuser``. On RDS the application connects with an IAM-minted token for a
+non-superuser role, so that statement can fail and block the whole migration run
+— for an extension that is already installed.
 """
 
 from django.contrib.gis.db.models import MultiPolygonField
-from django.contrib.postgres.operations import CreateExtension
 from django.db import migrations, models
 
 
@@ -17,7 +24,6 @@ class Migration(migrations.Migration):
     dependencies: list = []
 
     operations = [
-        CreateExtension("postgis"),
         migrations.CreateModel(
             name="Region",
             fields=[

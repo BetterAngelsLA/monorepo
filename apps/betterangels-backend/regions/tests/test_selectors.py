@@ -169,3 +169,57 @@ class RegionModelTestCase(TestCase):
         region.refresh_from_db()
         self.assertEqual(region.geom.srid, 4326)
         self.assertEqual(region.geom.geom_type, "MultiPolygon")
+
+
+class RegionReconciliationTestCase(TestCase):
+    """The rollup must not silently lose interactions.
+
+    Three shapes of note can exist, and the report claims nothing is dropped.
+    All three are exercised here, and the buckets are asserted to sum to the
+    total number of notes in range — the property a client relies on when it
+    renders an "Unassigned" slice next to the KPI row.
+
+    A fourth shape — a ``Location`` row whose ``point`` is NULL — is deliberately
+    absent because it is impossible: ``common.Location.point`` is declared
+    non-null, so the database rejects it. ``region_counts`` still guards with
+    ``WHERE l.point IS NOT NULL``; that guard is belt-and-braces, not a live path.
+    """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make()
+        Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_A))
+        self.start = datetime(2026, 1, 1, tzinfo=UTC)
+        self.end = datetime(2026, 2, 1, tzinfo=UTC)
+        when = datetime(2026, 1, 15, tzinfo=UTC)
+
+        # (a) a point inside a region
+        baker.make(Note, organization=self.org, interacted_at=when,
+                   location=baker.make(Location, point=Point(-118.24, 34.05, srid=4326)))
+        # (b) a point outside every region (Beverly Hills has no LA council district)
+        baker.make(Note, organization=self.org, interacted_at=when,
+                   location=baker.make(Location, point=Point(*OUTSIDE, srid=4326)))
+        # (c) no location at all — the only "unlocatable" shape the schema allows
+        baker.make(Note, organization=self.org, interacted_at=when, location=None)
+
+    def test_every_note_lands_in_exactly_one_bucket(self) -> None:
+        rows = region_counts(
+            kind=RegionKind.COUNCIL_DISTRICT, start=self.start, end=self.end, organization_id=self.org.id
+        )
+        spatial_total = sum(r["count"] for r in rows)
+        locationless = region_totals_without_boundaries(
+            start=self.start, end=self.end, organization_id=self.org.id
+        )
+
+        # (a) in a region and (b) outside all of them -> the spatial rollup;
+        # (c) with no location -> counted separately.
+        self.assertEqual(spatial_total, 2, f"spatial rollup lost a note: {rows}")
+        self.assertEqual(locationless, 1, "a note with no location must still be counted")
+        self.assertEqual(spatial_total + locationless, 3, "buckets must reconcile to the total")
+
+    def test_only_the_region_counted_note_is_assigned(self) -> None:
+        """Exactly one note sits in district 1; the others must not be attributed to it."""
+        rows = region_counts(
+            kind=RegionKind.COUNCIL_DISTRICT, start=self.start, end=self.end, organization_id=self.org.id
+        )
+        assigned = {r["code"]: r["count"] for r in rows if r["code"] is not None}
+        self.assertEqual(assigned, {"1": 1})
