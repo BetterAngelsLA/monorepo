@@ -15,7 +15,7 @@ import {
   extractOperationInfoMessage,
 } from '../../apollo';
 import { useSignOut, useSnackbar, useUser } from '../../hooks';
-import { headerRightInsetStyle } from '../../navigation/headerStyles';
+import { HeaderSlot } from '../../navigation';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {
@@ -30,8 +30,7 @@ export default function UserProfile() {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        // web-only inset — see headerRightInsetStyle
-        <View style={headerRightInsetStyle}>
+        <HeaderSlot side="right">
           <TextButton
             color={Colors.WHITE}
             regular
@@ -39,7 +38,7 @@ export default function UserProfile() {
             accessibilityHint="goes to the edit user profile screen"
             onPress={() => router.navigate({ pathname: '/user-profile/edit' })}
           />
-        </View>
+        </HeaderSlot>
       ),
     });
   }, [user, navigation, router]);

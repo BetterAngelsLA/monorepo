@@ -15,10 +15,7 @@ import {
 } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
-import {
-  headerLeftInsetStyle,
-  headerRightInsetStyle,
-} from '../../navigation/headerStyles';
+import { HeaderSlot } from '../../navigation';
 import { FeatureFlags } from '../../static';
 import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
@@ -163,8 +160,7 @@ export default function Client({
             </TextBold>
           ),
           headerLeft: () => (
-            // web-only inset — see headerLeftInsetStyle
-            <View style={headerLeftInsetStyle}>
+            <HeaderSlot side="left">
               <Pressable
                 accessibilityRole="button"
                 accessible
@@ -174,18 +170,17 @@ export default function Client({
               >
                 <TextRegular color={Colors.WHITE}>Back</TextRegular>
               </Pressable>
-            </View>
+            </HeaderSlot>
           ),
           headerRight: () => (
-            // web-only inset — see headerRightInsetStyle
-            <View style={headerRightInsetStyle}>
+            <HeaderSlot side="right">
               <ClientNavMenu
                 clientProfileId={clientProfileId}
                 onDeleted={() => {
                   router.dismissTo(arrivedFrom || '/');
                 }}
               />
-            </View>
+            </HeaderSlot>
           ),
         }}
       />

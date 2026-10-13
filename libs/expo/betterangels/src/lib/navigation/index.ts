@@ -1,12 +1,9 @@
 export * from './constants';
 export { HeaderLeftButton } from './HeaderLeftButton';
-// Both slot insets are exported because screens outside this library supply
-// their own header slots and need the same web inset the button components apply.
-export {
-  headerLeftInsetStyle,
-  headerRightInsetStyle,
-  headerStyles,
-} from './headerStyles';
+// Screens outside this library supply their own header slots, so the slot itself
+// is what they consume.
+export { HeaderSlot } from './HeaderSlot';
+export { headerStyles } from './headerStyles';
 export type { THeaderStyleName } from './headerStyles';
 export { getStackModalOptions, getStackScreenOptions } from './options';
 export * from './ScreenHeader';

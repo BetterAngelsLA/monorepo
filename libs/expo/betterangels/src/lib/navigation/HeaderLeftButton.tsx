@@ -1,8 +1,8 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { View } from 'react-native';
-import { headerLeftInsetStyle, headerStyles } from './headerStyles';
+import { HeaderSlot } from './HeaderSlot';
+import { headerStyles } from './headerStyles';
 
 type TProps = {
   accessibilityHint?: string;
@@ -24,8 +24,7 @@ export function HeaderLeftButton(props?: TProps) {
   const router = useRouter();
 
   return (
-    // web-only inset — see headerLeftInsetStyle
-    <View style={headerLeftInsetStyle}>
+    <HeaderSlot side="left">
       <TextButton
         regular
         color={color}
@@ -35,6 +34,6 @@ export function HeaderLeftButton(props?: TProps) {
         title={title}
         onPress={onPress || router.back}
       />
-    </View>
+    </HeaderSlot>
   );
 }

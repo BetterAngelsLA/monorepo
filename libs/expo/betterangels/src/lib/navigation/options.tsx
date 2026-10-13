@@ -1,13 +1,9 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { CloseButton, TextBold } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
 import { TModalHeaderConfig, TModalPresentationType } from '../providers';
 import { HeaderLeftButton } from './HeaderLeftButton';
-import {
-  headerRightInsetStyle,
-  headerStyles,
-  THeaderStyleName,
-} from './headerStyles';
+import { HeaderSlot } from './HeaderSlot';
+import { headerStyles, THeaderStyleName } from './headerStyles';
 
 /**
  * Which palette each presentation gets when the caller doesn't pick one. A
@@ -46,8 +42,7 @@ function getModalCloseBtn(props: TModalCloseBtnProps) {
   const { onClose, iconColor = Colors.WHITE, label } = props;
 
   return (
-    // web-only inset — see headerRightInsetStyle
-    <View style={headerRightInsetStyle}>
+    <HeaderSlot side="right">
       <CloseButton
         onClose={onClose}
         testId="modal-screen-close-btn"
@@ -56,7 +51,7 @@ function getModalCloseBtn(props: TModalCloseBtnProps) {
       >
         {label ? <TextBold color={iconColor}>{label}</TextBold> : undefined}
       </CloseButton>
-    </View>
+    </HeaderSlot>
   );
 }
 

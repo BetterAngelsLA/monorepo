@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useQuery } from '@apollo/client/react';
 import { HeaderLeftButton } from '../../navigation/HeaderLeftButton';
-import { headerRightInsetStyle } from '../../navigation/headerStyles';
+import { HeaderSlot } from '../../navigation';
 import { MainScrollContainer } from '../../ui-components';
 import NoteByline from './NoteByline';
 import NoteClient from './NoteClient';
@@ -43,8 +43,7 @@ export default function Note({
         <HeaderLeftButton />
       ),
       headerRight: () => (
-        // web-only inset — see headerRightInsetStyle
-        <View style={headerRightInsetStyle}>
+        <HeaderSlot side="right">
           <TextButton
             color={Colors.WHITE}
             regular
@@ -59,7 +58,7 @@ export default function Note({
               })
             }
           />
-        </View>
+        </HeaderSlot>
       ),
     });
   }, [note?.userCanEdit, id, arrivedFrom, navigation, router]);

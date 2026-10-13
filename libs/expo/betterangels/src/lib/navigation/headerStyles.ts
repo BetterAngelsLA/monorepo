@@ -32,25 +32,15 @@ export type THeaderStyleName = keyof typeof headerStyles;
 /**
  * How far a header slot's content sits from the window edge on web. Matches the
  * ~11–12pt leading margin react-navigation's own back chevron carries on native.
+ *
+ * Web-only, and consumed by `HeaderSlot`, which owns the wrapper and the reason.
  */
 const HEADER_SLOT_INSET = 12;
 
-/**
- * Leading inset for a header's left slot. Web-only: the JS (web) header lays
- * `headerLeft` flush against the screen edge while the native bars inset it, so
- * without this the "Back" label touches the window edge on web only.
- *
- * Applied by wrapping the slot in a View: `headerLeftContainerStyle` is declared
- * by the JS stack rather than native-stack, so passing it is a type error, and a
- * wrapper does not rely on the vendored fork forwarding undeclared options.
- */
+/** Leading inset for a header's left slot. See `HeaderSlot`. */
 export const headerLeftInsetStyle =
   Platform.OS === 'web' ? { paddingStart: HEADER_SLOT_INSET } : undefined;
 
-/**
- * Trailing mirror of {@link headerLeftInsetStyle}. Every right slot needs it (the
- * "Edit" buttons, the client screen's overflow menu, the modal close button), so
- * apply it to the slot's content rather than to one kind of button.
- */
+/** Trailing mirror of {@link headerLeftInsetStyle}. See `HeaderSlot`. */
 export const headerRightInsetStyle =
   Platform.OS === 'web' ? { paddingEnd: HEADER_SLOT_INSET } : undefined;

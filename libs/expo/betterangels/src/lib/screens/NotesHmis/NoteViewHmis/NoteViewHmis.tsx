@@ -10,7 +10,7 @@ import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { headerRightInsetStyle } from '../../../navigation/headerStyles';
+import { HeaderSlot } from '../../../navigation';
 import { MainScrollContainer } from '../../../ui-components';
 import NoteLocationHmis from './NoteLocationHmis';
 import NoteServicesHmis from './NoteServicesHmis';
@@ -38,8 +38,7 @@ export function NoteViewHmis(props: TProps) {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        // web-only inset — see headerRightInsetStyle
-        <View style={headerRightInsetStyle}>
+        <HeaderSlot side="right">
           <TextButton
             color={Colors.WHITE}
             regular
@@ -52,7 +51,7 @@ export function NoteViewHmis(props: TProps) {
               })
             }
           />
-        </View>
+        </HeaderSlot>
       ),
     });
   }, [id, clientId, navigation, router]);

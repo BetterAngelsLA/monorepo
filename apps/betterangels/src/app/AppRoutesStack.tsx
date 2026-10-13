@@ -1,12 +1,11 @@
 import {
   getStackModalOptions,
-  headerLeftInsetStyle,
+  HeaderSlot,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
 import { ArrowLeftIcon } from '@monorepo/expo/shared/icons';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { Stack, useRouter } from 'expo-router';
-import { View } from 'react-native';
 
 export default function AppRoutesStack() {
   const router = useRouter();
@@ -34,8 +33,7 @@ export default function AppRoutesStack() {
         name="sign-in"
         options={{
           headerLeft: () => (
-            // web-only inset — see headerLeftInsetStyle
-            <View style={headerLeftInsetStyle}>
+            <HeaderSlot side="left">
               <IconButton
                 onPress={() => router.back()}
                 variant="transparent"
@@ -44,7 +42,7 @@ export default function AppRoutesStack() {
               >
                 <ArrowLeftIcon />
               </IconButton>
-            </View>
+            </HeaderSlot>
           ),
           headerShadowVisible: false,
           title: '',
