@@ -91,7 +91,7 @@ describe('useOrgTeams', () => {
   beforeEach(() => configureActiveOrgStorage(createSyncStorage()));
 
   async function renderWith(organizations: readonly (typeof ORG)[]) {
-    const { client, orgIdPerOperation } = createRecordingClient();
+    const { client, operations } = createRecordingClient();
     const wrapper = ({ children }: { children: ReactNode }) => (
       <ApolloProvider client={client}>
         <ActiveOrgProvider organizations={[...organizations]}>
@@ -101,14 +101,14 @@ describe('useOrgTeams', () => {
     );
     return {
       ...(await renderHook(() => useOrgTeams(), { wrapper })),
-      orgIdPerOperation,
+      operations,
     };
   }
 
   it('every request it issues names the active org', async () => {
     configureActiveOrgStorage(createSyncStorage());
 
-    const { result, orgIdPerOperation } = await renderWith([ORG]);
+    const { result, operations } = await renderWith([ORG]);
 
     await waitFor(() => expect(result.current.teams).toHaveLength(1));
     expect(operations.length).toBeGreaterThan(0);
@@ -123,7 +123,7 @@ describe('useOrgTeams', () => {
     const other = { ...ORG, id: 'org-2', name: 'Other Org' };
     configureActiveOrgStorage(createSyncStorage('org-2'));
 
-    const { result, orgIdPerOperation } = await renderWith([ORG, other]);
+    const { result, operations } = await renderWith([ORG, other]);
 
     await waitFor(() => expect(result.current.teams).toHaveLength(1));
     expect(operations.length).toBeGreaterThan(0);
@@ -136,7 +136,7 @@ describe('useOrgTeams', () => {
     // the request carries it anyway.
     configureActiveOrgStorage(createSyncStorage('org-1'));
 
-    await renderWith([]);
+    const { operations } = await renderWith([]);
 
     await waitFor(() => expect(operations.length).toBeGreaterThan(0));
     expect(operations.every((op) => op.organizationId === 'org-1')).toBe(true);
@@ -145,7 +145,7 @@ describe('useOrgTeams', () => {
   it('does not query while no org is active', async () => {
     configureActiveOrgStorage(createSyncStorage());
 
-    const { result } = await renderWith([]);
+    const { result, operations } = await renderWith([]);
 
     // Nothing to scope the read to — the hook stays idle instead of issuing a
     // request the backend would deny.
