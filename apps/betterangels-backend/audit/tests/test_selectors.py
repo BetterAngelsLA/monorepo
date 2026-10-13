@@ -104,7 +104,10 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
     # ── §16 reservation status_change ────────────────────────────────────────
 
-    def test_status_change_is_folded_into_the_reservation_update_action(self) -> None:
+    def test_status_change_renders_as_a_single_event(self) -> None:
+        # §2/§16: the two update triggers are disjoint, so a status change emits
+        # one ``reservation.status_change`` event (carrying its own diff) and no
+        # ``reservation.update`` row to fold in.
         with audit_context(user=self.user):
             self.reservation.status = ReservationStatusChoices.CHECKED_IN
             self.reservation.save()
@@ -114,9 +117,27 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         action = actions[0]
         labels = [event.action for event in action.events]
-        self.assertNotIn("reservation.status_change", labels)
-        self.assertIn("reservation.update", labels)
+        self.assertEqual(labels.count("reservation.status_change"), 1)
+        self.assertNotIn("reservation.update", labels)
         self.assertEqual(action.field_changes["status"], ["confirmed", "checked_in"])
+
+    def test_status_change_and_notes_update_render_both_field_changes(self) -> None:
+        # A single save touching both ``status`` and ``notes`` fires both disjoint
+        # triggers, so the action carries each label's own diff (§2).
+        with audit_context(user=self.user):
+            self.reservation.status = ReservationStatusChoices.CHECKED_IN
+            self.reservation.notes = "Checked in"
+            self.reservation.save()
+
+        actions = object_audit_log(obj=self.reservation, target_type="RESERVATION")
+
+        self.assertEqual(len(actions), 1)
+        action = actions[0]
+        labels = [event.action for event in action.events]
+        self.assertEqual(labels.count("reservation.status_change"), 1)
+        self.assertEqual(labels.count("reservation.update"), 1)
+        self.assertEqual(action.field_changes["status"], ["confirmed", "checked_in"])
+        self.assertEqual(action.field_changes["notes"], [None, "Checked in"])
 
     # ── §13/§14 INSERT and FK labels ─────────────────────────────────────────
 

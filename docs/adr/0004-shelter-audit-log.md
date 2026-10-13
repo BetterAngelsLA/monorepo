@@ -9,7 +9,7 @@ todos:
     content: 'Phase 1: Add @pghistory.track to Room model'
     status: pending
   - id: track-reservation-update
-    content: 'Phase 1: Add unconditional reservation.update event to Reservation'
+    content: 'Phase 1: Add a non-status reservation.update event, disjoint from status_change'
     status: pending
   - id: track-reservation-client
     content: 'Phase 1: Add @pghistory.track to ReservationClient model'
@@ -93,16 +93,12 @@ trigger to fire.
 Most reporting consumers are unaffected: the selectors that filter on a single
 `pgh_label` (`bed.add`, `reservation.status_change`, etc. in
 [shelters/selectors/reports.py](apps/betterangels-backend/shelters/selectors/reports.py))
-ignore the new labels. One exception: `_reservation_status_intervals` (used by
-`report_bed_status_counts` and `daily_occupancy`) reads **every** `ReservationEvent`
-label, so the unconditional `reservation.update` doubles the rows it scans. Because
-the selector orders by `pgh_created_at`, the unpinned `update` rows sort to the end
-of each reservation's stream and are **not** collapsed by the consecutive-duplicate
-dedup; the interval query must instead be scoped to
-`pgh_label__in=["reservation.add", "reservation.status_change"]` — `add` is
-load-bearing (it opens intervals for reservations created directly in a target
-status, with no `status_change`), so only `update` may be excluded. §2 adds an
-explicit regression test for this.
+ignore the new labels. `_reservation_status_intervals` (used by
+`report_bed_status_counts` and `daily_occupancy`) walks status transitions and
+scopes `reservation.update` out. Because §2 makes the two update conditions
+**disjoint**, that scope no longer guards against a replayed status change — it is
+retained defensively, because it also keeps a non-status bed reparent out of the
+walk. §2 documents the reasoning and adds the regression test.
 
 ## Deliverables (phased)
 
@@ -129,16 +125,18 @@ riskier read mechanism is deferred.
 
 > **Snapshot noise (mechanical columns):** pghistory snapshots all model fields
 > by default, including `BaseModel.created_at`/`updated_at` (`auto_now_add`/
-> `auto_now`). `updated_at` changes on every save, so an unconditional `*.update`
-> would render a phantom `updated_at` diff on every edit, and a save changing
-> only `updated_at` still fires an event. The `field_changes` rendering (§13)
-> must therefore **exclude `created_at`/`updated_at`** (and any `pgh_*` keys),
-> the same way the aggregate SQL already filters `pgh_*`. For the *new* event
-> tables created in this phase, alternatively pass `exclude=["created_at",
-> "updated_at"]` to the decorator; do **not** change the existing `Reservation`
-> decorator's snapshot shape (it would drop columns from `reservation.status_change`,
-> which the report selectors already consume). `pgh_created_at` is the event's
-> own timestamp and is unaffected either way.
+> `auto_now`). `updated_at` changes on every save, so a bare `*.update` event
+> (no condition) would fire on every `.save()` and render a phantom `updated_at`
+> diff. The `field_changes` rendering (§13) must therefore **exclude
+> `created_at`/`updated_at`** (and any `pgh_*` keys), the same way the aggregate
+> SQL already filters `pgh_*`. For the *new* event tables created in this phase,
+> alternatively pass `exclude=["created_at", "updated_at"]` to the decorator;
+> **do not** change the existing `Reservation` decorator's snapshot *shape* (it
+> would drop columns from `reservation.status_change`, which the report selectors
+> already consume). For `Reservation.update` the mechanical column is excluded
+> from the trigger *condition* instead — not the snapshot — so the trigger fires
+> only on real changes (§2). `pgh_created_at` is the event's own timestamp and is
+> unaffected either way.
 
 ## 1. Track `Room` (currently untracked)
 
@@ -155,74 +153,51 @@ class Room(CloneMixin, OrgScoped, BaseModel):
 
 ## 2. Track all `Reservation` updates (currently status-only)
 
-In [shelters/models/reservation.py](apps/betterangels-backend/shelters/models/reservation.py), add an unconditional update event alongside the existing conditional one — keeping `reservation.status_change` intact for the reporting selectors:
+In [shelters/models/reservation.py](apps/betterangels-backend/shelters/models/reservation.py), add a second update event whose condition is **disjoint** from the existing `status_change`, so a status change writes exactly one row:
 
 ```python
 @pghistory.track(
     pghistory.InsertEvent("reservation.add"),
     pghistory.DeleteEvent("reservation.remove"),
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
-    pghistory.UpdateEvent("reservation.update"),
+    pghistory.UpdateEvent("reservation.update", condition=pghistory.AnyChange(exclude=["status", "updated_at"])),
 )
 ```
 
-A status change now emits **two** events (`reservation.status_change` and
-`reservation.update`). That is intentional: `reservation.status_change` exists
-only to feed the reporting selectors and is **excluded from the audit log**
-(see Phase 2 §16).
+`reservation.status_change` exists to feed the reporting selectors; `reservation.update` covers every other change. Because the conditions are mutually exclusive, a status change emits **one** event, not two, and each label carries its own diff.
 
-**Reporting regression risk:** `_reservation_status_intervals`
+> **Why `updated_at` is excluded, not just `status`.** `AnyChange(exclude=["status"])` is *not* disjoint on its own: `BaseModel.updated_at` is `auto_now`, so it changes on every `save()`, and the generated condition `... OR OLD."updated_at" IS DISTINCT FROM NEW."updated_at"` matches every status change too. Excluding the mechanical column is what actually makes the pair mutually exclusive. (Only `updated_at` churns — `created_at` is `auto_now_add` and never changes on update.)
+
+**Reporting:** `_reservation_status_intervals`
 ([shelters/selectors/reports.py](apps/betterangels-backend/shelters/selectors/reports.py))
-reads every `ReservationEvent` label and orders by `pgh_obj_id, pgh_created_at,
-pgh_id` (not `pgh_id` alone):
-
-```145:148:apps/betterangels-backend/shelters/selectors/reports.py
-    rows = (
-        reservation_event_model.objects.filter(bed_id__in=bed_ids, pgh_created_at__lt=before)
-        .order_by("pgh_obj_id", "pgh_created_at", "pgh_id")
-```
-
-The selector test helpers pin only `reservation.add` and
-`reservation.status_change` timestamps, leaving the new `reservation.update`
-rows at real `NOW()`. Because ordering is by `pgh_created_at`, the unpinned
-`update` rows sort to the **end** of each reservation's stream — not adjacent to
-their `status_change` partner — so the consecutive-duplicate dedup does **not**
-collapse the pair. The trailing `update` rows instead replay the transitions and
-open/close a spurious `[NOW(), NOW()]` interval. Worked example for a
-checked-in→checked-out reservation (`t1`, `t2` both past):
-
-```
-add@t1-1s, status_change(in)@t1, status_change(out)@t2, update(in)@NOW, update(out)@NOW
-# walk: open@t1 (in), close@t2 (out), then update(in) → open@NOW, update(out) → close@NOW  → spurious interval
-```
-
-**The dedup does not protect against this.** Today's harmlessness comes from the
-`pgh_created_at__lt=before` cutoff: past-dated fixture windows exclude the
-`NOW()` rows, which is precisely the case where they would otherwise sort last
-and produce the trailing interval. A production query whose `before` is ≥ now
-(e.g. `daily_occupancy` for the current day) *includes* those rows and genuinely
-runs the spurious path. The fix is therefore **required, not optional**: scope
-the interval query to `pgh_label__in=["reservation.add", "reservation.status_change"]`
-to exclude `reservation.update` outright. **`reservation.add` must be retained** —
-the interval walk relies on the INSERT snapshot to open intervals for reservations
-created directly in a target status (`created_as` in the test helper, mirroring
-bulk/admin creation), where no `status_change` event exists
+walks status transitions and filters `pgh_label__in=["reservation.add",
+"reservation.status_change"]`. With disjoint conditions a `reservation.update`
+can never carry a status, so this scope is no longer load-bearing — it is
+retained **defensively**, because it also keeps a non-status bed reparent out of
+the walk. That reparent is the reason to keep it: an `update` that changes
+`bed_id` without changing `status` snapshots the new bed, the
+consecutive-duplicate dedup does **not** skip it (`bed_id` differs), and the
+open/close logic keys only on status — so surfacing it would open/close intervals
+against the wrong bed. **`reservation.add` must be retained** — the interval walk
+relies on the INSERT snapshot to open intervals for reservations created directly
+in a target status (`created_as` in the test helper, mirroring bulk/admin
+creation), where no `status_change` event exists
 ([test_selectors.py:386](apps/betterangels-backend/shelters/tests/test_selectors.py)
 `test_created_directly_as_checked_in_is_counted`). Scoping to `status_change`
 alone would drop `add`, never open that interval, and undercount occupancy.
 `reservation.remove` (DELETE) is inert here — its snapshot duplicates the
-preceding status, so the dedup already skips it — so omitting it is harmless.
-Add a regression test asserting `report_bed_status_counts`/`daily_occupancy`
-output is unchanged when a non-status update fires (and when a status+notes
-update fires), and that the directly-created path still counts.
+preceding status, so the dedup already skips it. Keep a regression test asserting
+`report_bed_status_counts`/`daily_occupancy` output is unchanged when a non-status
+update fires (and when a status+notes update fires), and that the directly-created
+path still counts.
 
-**Latent bed-reparent edge case (separate):** a `reservation.update` that changes
-`bed_id` without changing `status` is not skipped by the dedup (bed_id differs),
-yet the interval open/close logic keys only on status transitions and does not
-close the interval on the old bed — pre-existing, but the new event now surfaces
-that data. Scope-fixing the interval query removes the new `update` rows from this
-walk, so this edge stays latent; note it but do not let it block the label-scoping
-fix.
+**Latent bed-reparent edge case (separate):** as above, the interval open/close
+logic keys only on status transitions and does not close the interval on the old
+bed when `bed_id` changes without a status change. Pre-existing; the label scope
+keeps it latent. Asserted (not fixed) by
+`test_reparent_without_status_change_pins_current_behaviour`, so a future
+refactor of `_reservation_status_intervals` renders the change visible rather
+than silently altering a wrong path.
 
 ## 3. Track `ReservationClient` (currently untracked)
 
@@ -442,9 +417,37 @@ These writes run under the `HistoryMiddleware` context (so they already carry
   ([shelters/admin.py:1252](apps/betterangels-backend/shelters/admin.py)).
 - `common/management/commands/seed_data.py` calls `seed_shelter_lookups()`,
   which is itself wrapped per §7b.1, so the `seed` label still applies there.
+- **Client merge/undo.** `merge_execute` bulk-reassigns every FK pointing at the
+  source `ClientProfile` via `get_fk_relations()`
+  ([clients/selectors/merge.py:114](apps/betterangels-backend/clients/selectors/merge.py)),
+  which includes `ReservationClient.client_profile` — so a merge re-points
+  reservation-client rows ([clients/services/merge.py:306](apps/betterangels-backend/clients/services/merge.py)),
+  and `merge_undo` reverses it ([clients/services/merge.py:517](apps/betterangels-backend/clients/services/merge.py)).
+  Both run inside the admin merge request
+  ([clients/admin_merge.py:241](apps/betterangels-backend/clients/admin_merge.py)),
+  so the middleware supplies `user` — this is not an attribution bug. Without a
+  label the operation renders as an ordinary user edit, which is *correct* but
+  loses the fact that a bulk reassignment moved reservations. `merge_execute`
+  already takes `performed_by`, documented `# reserved for future audit logging`;
+  if merge is later given its own label (as `clone`/`import` are, §7b.3/§7b.4),
+  that parameter is the natural hook.
 
 These produce attributed events with no `label`; the selector's actor/label
 precedence must not render them "system" when a `user` is present.
+
+### 7b.6 Sensitive fields retained by design (`ContactInfo`)
+
+`ContactInfoEvent` snapshots `contact_name`, `contact_number`, and
+`contact_email` ([shelters/models/shelter.py](apps/betterangels-backend/shelters/models/shelter.py))
+on every write, into an append-only-by-convention event table. This is retained
+deliberately: `ContactInfo` is shelter **staff** contact information (additional
+shelter contacts), not sensitive client PII, so there is no data-subject deletion
+obligation that would require excluding it. Keeping the fields on the event also
+preserves `Event.can_revert()` for `ContactInfo`, which requires every
+tracked-model field to be present on the event model
+(`pghistory/models.py`). `contact_title`/`is_claimant` are non-sensitive and
+retained for the same reason. (If client PII is ever tracked into an event table,
+this decision does **not** extend to it — see the retention/open-items notes.)
 
 ### Test coverage
 
@@ -502,8 +505,8 @@ Extend [shelters/tests/test_models.py](apps/betterangels-backend/shelters/tests/
 - `ShelterPhoto` create/delete fire `shelter_photo.add` / `shelter_photo.remove`.
 - The newly tracked admin/lookup models fire their add/remove events.
 - Bed/Room M2M `.set()` fires the new `bed.*.add/remove` and `room.*.add/remove` labels.
-- **Report regression:** `report_bed_status_counts` and `daily_occupancy` output is unchanged when a non-status `reservation.update` fires (and when a status+notes update fires) — guards the `_reservation_status_intervals` double-row interaction in §2. This test must run against a scope-fixed interval query (`pgh_label__in=["reservation.add", "reservation.status_change"]`, the **required** fix in §2), since the consecutive-duplicate dedup does not collapse the `update` rows; it must also assert the directly-created path (`created_as`, no `status_change`) still counts, proving `reservation.add` is retained.
-- **Bed-reparent pin:** add a test pinning the *current* (mis-attributed) occupancy behavior when a `reservation.update` changes `bed_id` without changing `status` (the interval does not close on the old bed — pre-existing, now surfaced). This makes any future refactor of `_reservation_status_intervals` render the change visible, rather than silently altering an already-wrong path. The §2 label-scoping fix removes the new `update` rows from the walk, so this stays latent but should remain documented.
+- **Report regression:** `report_bed_status_counts` and `daily_occupancy` output is unchanged when a non-status `reservation.update` fires (and when a status+notes update fires). With the disjoint conditions (§2) a non-status `update` never carries a status, so the interval walk's `pgh_label__in=["reservation.add", "reservation.status_change"]` scope already excludes it; the test also asserts the directly-created path (`created_as`, no `status_change`) still counts, proving `reservation.add` is retained.
+- **Bed-reparent pin:** a test pinning the *current* (mis-attributed) occupancy behavior when a `reservation.update` changes `bed_id` without changing `status` (the interval does not close on the old bed — pre-existing). This keeps any future refactor of `_reservation_status_intervals` visible rather than silently altering an already-wrong path. The §2 label scope keeps the reparent out of the walk, so it stays latent but documented.
 - **§7b labels:** `seed_shelter_lookups()` (on cleared tables) yields events with `pgh_context` metadata `{"label": "seed"}` and no `user`; a `clone_view` POST yields events whose context has `label == "clone"` **and** the admin `user`; a CSV import yields `label == "import"`. The seed-exclusion vs clone/import-retention split is asserted in §20.
 
 Run with the project convention: `pytest --reuse-db`.
@@ -634,6 +637,54 @@ field (§11) supports `.exclude(...)`, and
 queryset. Add a query-count/latency guard test for a representative busy object
 (§20).
 
+**Composite `(pgh_obj, pgh_id)` event index (decided).** The correlated
+`_prev_data` subquery resolves the same object's preceding event with
+`WHERE pgh_obj_id = ? AND pgh_id < ? ORDER BY pgh_id DESC LIMIT 1`; `pgh_id` is
+the event PK and `pgh_obj` only creates a single-column FK index, so Postgres may
+fetch every event for the object and sort rather than seek. An `EXPLAIN ANALYZE`
+on a bulk-loaded 2000-event object showed exactly that (a `Sort` reading ~1000
+rows per event's lookup, ~7.1 s for the row fetch); adding a composite
+`(pgh_obj, pgh_id)` index turns the lookup into a bounded ordered seek (~0.16 s)
+and removes the reliance on per-object `pgh_id` clustering that the PK backward
+scan needs. Each tracked model aggregated by the selector declares one in
+`@pghistory.track(..., meta={"indexes": [...]})` — `Shelter`, `Bed`, `Room`,
+`ContactInfo`, `ShelterAvailability`, `ShelterPhoto`, `Video`, `MediaLink`,
+`Schedule`, `Reservation`, `ReservationClient`.
+
+**Benchmark (independent verification).** On a twin table with 200,000
+interleaved events across 2,000 objects (100 events for the probed object), with
+indexes toggled explicitly:
+
+| indexes | inner `_prev_data` query |
+| --- | --- |
+| `pgh_obj_idx` only | ~20.1 ms (`SORT`) |
+| `(pgh_obj, pgh_id)` composite | ~0.7 ms (no sort) |
+| none | ~1221 ms (`SORT`) |
+
+~28x on the inner query at this scale, consistent with the direction of the
+7.1 s → 0.16 s figure above. Two gotchas when re-running: 20k *contiguous* events
+for one object lets the PK index win regardless, and
+`CREATE TABLE ... (LIKE ... INCLUDING INDEXES)` silently copies `shelter_evt_obj_idx`
+into both "variants", masking the difference.
+
+**Scope caveat — not a general-purpose win.** The composite index is validated
+for `shelters_reservationevent`. It does **not** help uniformly across all 11
+declarations: through-table event models have no `pgh_obj` column at all
+(§15), so `_prev_data` is forced to `NULL::JSONB` for them and the index is
+unused; and `shelters_shelterevent` reads are dominated by `pgh_created_at`
+scans rather than the per-object seek. The index is declared per the list above
+for consistency, but only the models whose `_prev_data` runs against `pgh_obj_id`
+benefit.
+
+**`ReservationClient` note.** `resclient_evt_obj_idx`
+([shelters/models/reservation.py](apps/betterangels-backend/shelters/models/reservation.py))
+has no matching read shape on the current design: `references()` reaches
+`ReservationClientEvent` through its `reservation_id` FK, and the selector
+aggregates those rows under the parent `Reservation`, so `_prev_data` never runs
+against `pgh_obj_id` on this table. It is declared for completeness per the list
+above — write cost with no reader today — noted so it is not mistaken for
+evidence that the query shape exists.
+
 ## 11. Actor resolution
 
 - Write events carry the actor via pghistory's `MiddlewareEvents.user` (populated by `HistoryMiddleware`); this is the same mechanism [shelters/admin.py](apps/betterangels-backend/shelters/admin.py) already uses for its `updated_by` annotation (`MiddlewareEvents.objects.tracks(qs)`). Display names come from the frozen `user_name`/`user_email` (§8), not a live `User` join.
@@ -686,7 +737,7 @@ state from the last prior event). Derive `field_changes` from event _kind_, not
 from an assumption about `pgh_diff`:
 
 - **INSERT** — only the **non-null (or non-default)** snapshot fields in `pgh_data`, rendered as `{field: [null, value]}` (all "added"). `pgh_data` is the full row JSON, so an unset field is `null` and would otherwise render as a no-op `{field: [null, null]}`; omit null-valued fields to avoid dozens of noise rows per action on a wide model (e.g. a ~45-column `Shelter` insert where most columns are null).
-- **UPDATE** — the action-level `old → new` diff (see the `reservation` caveat below), rendered as `{field: [old, new]}`.
+- **UPDATE** — the action-level `old → new` diff (see the `reservation` update-labels note below), rendered as `{field: [old, new]}`.
 - **DELETE** — only the **non-null (or non-default)** snapshot fields in `pgh_data`, rendered as `{field: [value, null]}` (all "removed"); same null-omission as INSERT.
 
 **Multi-value fields (M2M and list-valued scalars):** the `[old, new]` pair above
@@ -713,26 +764,18 @@ excluded from both `pgh_data` and `pgh_diff` by the aggregate CTE
 (`WHERE key NOT LIKE 'pgh_%'`, pghistory `models.py`), so no extra filtering is
 needed for them.
 
-**`reservation` double-event caveat:** a status change fires both
-`reservation.status_change` and `reservation.update`, and both event rows carry
-an _identical_ snapshot. Because `pgh_diff` is "diff vs the immediately preceding
-event," the trigger that fires second has an **empty** `pgh_diff` — the real
-`old → new` diff lands on the first. Trigger ordering is **deterministic, not
-arbitrary**: Postgres fires same-type AFTER triggers in name order, and the
-actual pgtrigger names use underscores (label dots → underscores, `_<operation>`
-suffix) — `reservation_status_change_update` sorts before
-`reservation_update_update` — so `reservation.status_change` reliably carries the
-real diff and `reservation.update` the empty one. Since the audit log excludes
-`reservation.status_change` and keeps `reservation.update` (§2, §16), the
-selector must **not** source a `Reservation` action's `field_changes` from
-`reservation.update.pgh_diff` alone. **Preferred: compute the action-level diff
-from the object's before/after state** across the grouped action's events, rather
-than picking a single "winner" row — reading only the `status_change` row's diff
-would drop a notes diff when a single request performs a status change *and* a
-separate non-status update (two `.save()` calls → `status_change` + two `update`
-rows). The portal's `reservation_update` does one `save()` per mutation today, so
-this edge is currently admin/future-code only, but the before/after approach is
-robust to it and should be tested (§20).
+**`reservation` update labels:** the two update triggers have disjoint
+conditions (§2), so each label carries its own diff — `reservation.status_change`
+fires only for a status change (carrying the `status` `old → new` diff) and
+`reservation.update` fires for every other change (carrying that diff). When a
+single request performs both (a status change *and* a non-status edit — one save
+that sets both, or two `.save()` calls), both labels fire, each with its own
+diff, and the action-level diff is simply their union. Because the conditions are
+mutually exclusive there is no identical-snapshot pair and no empty-`pgh_diff`
+row to reconcile, and nothing depends on trigger firing order. Computing the
+action-level diff from the object's before/after state across the grouped action's
+events remains the preferred approach — it is naturally robust to one request
+performing several changes — and should be tested (§20).
 
 ## 14. Resolve FK ids to labels
 
@@ -773,29 +816,25 @@ the exact `demographics` field_changes (`[[removed], [added]]`, one entry for th
 field) for the parent, plus the multi-word cases (`medical_needs`, `exit_policy`,
 `referral_requirement`) so the FK-column naming can't silently regress (§20).
 
-## 16. Exclude `reservation.status_change` from the audit log
+## 16. `reservation.status_change` in the audit log
 
-`reservation.status_change` exists only for the reporting selectors. The audit
-selector must **exclude** it (filter out the label) so a status change renders
-as a single `reservation.update` event with a `status` field change, not two
-events. Because of the empty-diff caveat (§13), excluding the label does _not_
-mean reading `pgh_diff` from the kept `reservation.update` row; the selector
-reads the diff from the grouped action's `status_change` row (or recomputes the
-action-level diff), then drops the `status_change` row from the output.
+With the disjoint update conditions (§2), a status change produces exactly one
+event — `reservation.status_change` — carrying the `status` `old → new` diff,
+and `reservation.update` covers every other change. The audit log **includes**
+`reservation.status_change`: it *is* the status-change event. There is no second
+row to drop and no diff to lift from a sibling label.
 
-**Exclusion mechanism — two distinct tiers, stated explicitly:**
+An earlier revision of this ADR excluded `reservation.status_change` and kept
+`reservation.update`, which required reading the diff from the grouped
+`status_change` row and then dropping that row in Python — because the row that
+fired second (the unconditional `update`) had the empty `pgh_diff` (§13). That
+mechanism is gone: under disjoint conditions the paired row no longer exists, so
+the empty-diff reconciliation and the Python-side drop are both obsolete.
 
-- **SQL-level** (before grouping): the §7b context-`label` seed exclusion and the
-  Phase 3 `dateFrom`/`dateTo`/`actorId` filters. These are applied in SQL before
-  grouping (outer `SELECT` over the aggregate CTE) and never need the excluded
-  rows' contents (§10, §11).
-- **Python-level** (after grouping): dropping the `reservation.status_change` row
-  from the *output*, **after** extracting its diff. It cannot be an SQL
-  `.exclude(pgh_label=...)` — that would delete the row whose `pgh_diff` is the
-  only non-empty one (§13). Prefer recomputing the action-level diff from the
-  object's before/after state across the grouped action's events (§13), which
-  removes the dependency on `status_change`'s diff entirely and makes this
-  Python-side drop trivial.
+**Exclusion mechanism:** the only label exclusions that remain are SQL-level and
+unrelated to reservations — the §7b context-`label` seed exclusion and the Phase 3
+`dateFrom`/`dateTo`/`actorId` filters, applied on the aggregate CTE's outer
+`SELECT` before grouping (§10, §11). No Python-side event dropping is needed.
 
 ## 17. GraphQL types + query
 
@@ -907,7 +946,7 @@ a newly added M2M cannot diverge silently.
 
 ## 20. Tests (Phase 2)
 
-- `objectAuditLog` returns write events for the object (grouped into actions), excludes `reservation.status_change`, includes M2M changes attributed to the parent, and fails closed for a cross-org object.
+- `objectAuditLog` returns write events for the object (grouped into actions), renders a status change as a single `reservation.status_change` event (§16), includes M2M changes attributed to the parent, and fails closed for a cross-org object.
 - Global tier can read any object's log; scoped tier cannot.
 - **No double-count:** a single write (e.g. one `shelter.save()`) produces exactly **one** output row/action, and a single M2M `.set()` produces exactly **one** action — not the 2-3 that a `tracks()`+`references()`+`THROUGH_EVENT_MAP` union would emit (§10). This is the core guard against the double-counting regression.
 - **Seed/import/clone retention split:** a seed run produces **no** visible audit actions (label `seed` excluded in SQL, §11); a `clone_view` POST and a CSV import each produce **visible**, attributed actions rendered "system (clone)"/"system (import)" — never silently dropped.
@@ -915,7 +954,7 @@ a newly added M2M cannot diverge silently.
 - **NULL-context + seed filter:** a NULL-context event **survives** the seed `.exclude(pgh_context__label="seed")` (i.e. the `label` proxy field is nullable, §11), so out-of-band system writes are never silently dropped.
 - **M2M field_changes:** a Bed `.set()` on `medical_needs` renders the exact `medical_needs` field change as a single multi-value entry `{medical_needs: [[removed], [added]]}` via the through-table path (§13, §15) — asserting **one entry per related field**, not one per through row — with the multi-word M2Ms asserting the correct related FK column — `medical_needs`→`medicalneed` (Bed), `exit_policy`→`exitpolicy` and `referral_requirement`→`referralrequirement` (both Shelter) — so the FK-field naming (§19) can't silently regress.
 - **`THROUGH_EVENT_MAP` completeness:** for each target in `{Shelter, Bed, Room, Reservation}`, derive the through models from `event_models(references_model=<target>)` (keep only models lacking `pgh_obj`, i.e. `hasattr(model, "pgh_obj_id")` is `False`) and assert the **union** across targets equals `set(THROUGH_EVENT_MAP)`, so a new M2M field cannot fall out of the map and silently render through the non-M2M path (§19).
-- **`reservation` double-event:** a status change renders as a single `reservation.update` action whose `field_changes` include the `status` old→new diff (sourced from the grouped `status_change` row, not the empty `reservation.update` diff).
+- **`reservation` status change:** a status change renders as a single `reservation.status_change` action whose `field_changes` include the `status` old→new diff — the disjoint conditions (§2) mean no paired `reservation.update` row exists to reconcile.
 - **`references()` attribution:** a reservation's `objectAuditLog` includes `ReservationClient` add/remove (client assignments) attributed through `references()` — the most sensitive part of a reservation's history; a shelter's log includes `ShelterPhoto`/`MediaLink`/`Video`/`Schedule`/`ContactInfo`/`ShelterAvailability` changes.
 - **`references()` boundary pin:** the exact per-target match set from §10 is asserted by deriving the expected set from `event_models(references_model=<target>)` minus the `referrals.ReferralEvent` blocklist (not a hand-written literal, so a newly tracked model can't silently diverge) — Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request renders both the `status` and `notes` field changes (before/after diff), not just one winner row.
@@ -1197,7 +1236,9 @@ objectAuditLog(
 - **Org-level audit log** — a third query (`organizationAuditLog`) for the global tier. The selector is org-parameterized so this drops in later if needed. Note: `AuditEvent.organization_id` was dropped (§22), so when this query is scheduled it must (re-)specify how org-at-event-time is captured.
 - **List-read capture** — recording `operator_shelters`/`beds`/… list reads was deferred (§Decision) because those events have no `target_object_id` and no query to surface them. Schedule it alongside `organizationAuditLog` (or another list-scoped query) and re-specify org-at-event-time capture then.
 - **Admin read-only history view** — a read-only "History" tab on the Shelter/Bed/Room Django-admin change pages rendering the same selector output for BA staff. Deferred; the portal `objectAuditLog` covers operators.
-- **Append-only / tamper protection** — leave pghistory's default (event rows remain mutable) for now; enable `PGHISTORY_APPEND_ONLY = True` if/when tamper-evidence becomes a hard requirement.
+- **Append-only / tamper protection** — event rows are mutable today (pghistory's default); nothing prevents a stray `.update()` on an event table. This is a **deliberate deferral**, not an unexplored default: enabling `append_only=True` per tracker was measured and is close. It migrates cleanly (a normal `AddTrigger` emitting a `RAISE EXCEPTION` guard on `UPDATE OR DELETE`), it verifiably blocks both operations, and it broke nothing on `ShelterEvent` (`614 passed` with it on). Blast radius repo-wide is 9 call sites, 2 models, 1 file — all in
+  [shelters/tests/test_selectors.py](apps/betterangels-backend/shelters/tests/test_selectors.py)
+  (`BedEvent`/`ReservationEvent` `.update()` pins). So it can be adopted in two waves: (1) turn it on now for `Shelter`, `Room`, `ReservationClient`, `ContactInfo`, `Schedule`, `ShelterPhoto`, `Video`, `MediaLink` and the through-table proxies with **zero** test changes; (2) rework the `Bed`/`Reservation` fixtures (a `freezegun`-style approach would both enable append-only and stop tests reaching into event tables). Cost to adopt: one trigger migration plus those 9 call sites. Deferred because it is not required for the feature, but it should be a conscious decision to leave event rows mutable, not a default nobody revisited.
 - **Export** — CSV/JSON export of an object's history for compliance. `django-import-export` is already a dependency.
 - **Revert** — the event data already supports reverting an object to a prior event (the `NoteReverter` in [notes/utils/note_reverter_util.py](apps/betterangels-backend/notes/utils/note_reverter_util.py) demonstrates the pattern with `Events` + `Context`). Note this as a future capability; do not build it now.
 - **Deleted-object history** — "who deleted shelter 7?" is the single most common

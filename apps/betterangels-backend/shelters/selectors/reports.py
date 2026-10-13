@@ -50,7 +50,9 @@ def _bed_lifecycles(*, shelter: "Shelter", before: datetime.datetime) -> list[Be
     database query automatically.  A bed exists on day *D* iff
     ``added_at < D_end`` AND (``removed_at IS NULL`` OR ``removed_at >= D_end``).
 
-    Expected index: ``(shelter_id, pgh_label, pgh_created_at)`` on BedEvent.
+    Expected index: ``(pgh_obj, pgh_id)`` on BedEvent (the ADR 0004 §10 composite
+    index) — the add/remove lookups filter by ``pgh_created_at`` but resolve the
+    preceding event per ``pgh_obj``.
     """
     from shelters.models import BedEvent  # type: ignore[attr-defined]  # pghistory event model; inline to avoid circular import
 
@@ -128,13 +130,15 @@ def _reservation_status_intervals(
     closes when it leaves the set.  Still-open intervals at the reservation's
     last event are returned with ``freed=None``.
 
-    The unconditional ``reservation.update`` label (ADR 0004 §2) is deliberately
-    excluded: its snapshot duplicates the preceding ``status_change`` snapshot,
-    but it is written under a separate trigger and can sort to the end of a
-    reservation's stream, where the consecutive-duplicate dedup below cannot
-    collapse it.  ``reservation.add`` is retained — the walk relies on the INSERT
-    snapshot to open intervals for reservations created directly in a target
-    status (no ``status_change`` event).
+    The ``reservation.update`` label is scoped out: the walk keys only on status
+    transitions, so a non-status ``update`` carries no signal for it, and a bed
+    reparent (``bed_id`` changes without ``status``) is *not* collapsed by the
+    consecutive-duplicate dedup below because ``bed_id`` differs.  Since ADR 0004
+    §2 makes the two update triggers disjoint, an ``update`` can never carry a
+    status change anyway, so this scope is defensive rather than required — but
+    it keeps the walk to status-bearing events only.  ``reservation.add`` is
+    retained — the walk relies on the INSERT snapshot to open intervals for
+    reservations created directly in a target status (no ``status_change`` event).
 
     *before* must be timezone-aware; Django converts it to UTC automatically.
 

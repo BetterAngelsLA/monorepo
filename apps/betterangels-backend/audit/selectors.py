@@ -33,10 +33,6 @@ _EXCLUDED_EVENT_MODELS = ("referrals.ReferralEvent",)
 # Labels that are recorded but rendered as a reason rather than an actor (§11).
 _SYSTEM_REASON_LABELS = frozenset({"import", "clone"})
 
-# ``reservation.status_change`` is excluded from the rendered events, but its
-# diff is merged into the action so the status change still shows (§16).
-_HIDDEN_LABELS = frozenset({"reservation.status_change"})
-
 # Through-table rendering metadata (§19): event ``_meta.label`` ->
 # (parent column, related FK field on the through model). The related FK field is
 # Django's auto-generated name (the related model, lowercased, underscores
@@ -336,12 +332,6 @@ def _build_action(
     events: list[AuditEventData] = []
 
     for row in rows:
-        if row.pgh_label in _HIDDEN_LABELS and _m2m_meta(row.pgh_model) is None:
-            # Keep its diff in the action (so a status change still shows) but
-            # do not emit it as its own event (§16).
-            _merge_scalar(action_changes, _scalar_changes(row, resolver))
-            continue
-
         meta = _m2m_meta(row.pgh_model)
         if meta is not None:
             field_name, related_model_label = meta
