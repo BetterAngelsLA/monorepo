@@ -275,6 +275,8 @@ class Query:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         limit: Optional[int] = None,
+        dimension: Optional[RegionDimension] = None,
+        region_codes: Optional[List[str]] = None,
     ) -> InteractionMapType:
         """Where the interactions happened: pins, and the same data as a density grid.
 
@@ -296,6 +298,12 @@ class Query:
         switch between them without a second round trip; the density grid is
         aggregated in the database, so carrying both costs far less than a second
         request would.
+
+        ``dimension`` + ``regionCodes`` narrow the map to interactions inside those
+        regions — the way a program manager asks "show me the SPA 4 visits" rather
+        than "show me every visit, coloured by SPA". ``regionCodes`` without a
+        dimension is ignored rather than guessed at, because a code such as ``"4"``
+        is ambiguous across dimensions.
         """
         user = cast(AccountUser, get_current_user(info))
         org = _org_or_deny(organization_id)
@@ -321,6 +329,11 @@ class Query:
             user,
             [NotePermissions.VIEW],
         )
+
+        scoped_codes = list(region_codes or []) if dimension is not None else []
+        if scoped_codes:
+            # The assignment table makes this an indexed lookup, not a spatial test.
+            scoped_notes = scoped_notes.filter(location__region_assignments__region__code__in=scoped_codes).distinct()
 
         points, truncated = interaction_points(
             start=start,

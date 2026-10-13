@@ -336,6 +336,48 @@ class InteractionMapTestCase(TestCase):
         rows, _ = self._points(limit=10**9)
         self.assertEqual(len(rows), 1)
 
+    def _box_region(self, code: str, box_coords: Any) -> None:
+        """This class has no regions by default; the filter tests need one."""
+        Region.objects.create(
+            kind=RegionKind.COUNCIL_DISTRICT, code=code, name=f"District {code}", geom=box(box_coords)
+        )
+
+    def test_region_codes_narrow_the_points(self) -> None:
+        """Filtering by region is the "show me the SPA 4 visits" case.
+
+        Reads the stored assignment, so this is an indexed lookup — and it must
+        actually narrow, not silently return everything the way an unwired filter
+        would.
+        """
+        self._box_region("1", BOX_A)
+        self._note_at(-118.24, 34.05)  # in region "1"
+        self._note_at(-118.54, 34.35)  # in region "2"
+        self._note_at(*OUTSIDE)  # in neither
+        assign_locations()
+
+        rows, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id, region_codes=["1"])
+        self.assertEqual(len(rows), 1, "the filter must narrow to the one note in region 1")
+        self.assertAlmostEqual(rows[0]["latitude"], 34.05, places=4)
+        self.assertAlmostEqual(rows[0]["longitude"], -118.24, places=4)
+
+    def test_region_codes_narrow_the_density_too(self) -> None:
+        """Both views must narrow together, or the toggle changes the story."""
+        self._box_region("1", BOX_A)
+        self._note_at(-118.24, 34.05)
+        self._note_at(-118.54, 34.35)
+        assign_locations()
+        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id, region_codes=["1"])
+        self.assertEqual(sum(c["count"] for c in cells), 1)
+
+    def test_no_region_codes_means_no_filter(self) -> None:
+        """Absent filter is not an empty filter — it must not match nothing."""
+        self._box_region("1", BOX_A)
+        self._note_at(-118.24, 34.05)
+        self._note_at(-118.54, 34.35)
+        assign_locations()
+        rows, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id)
+        self.assertEqual(len(rows), 2)
+
     def test_density_aggregates_to_a_grid(self) -> None:
         # two points in one cell (~1km), one in another
         self._note_at(-118.2401, 34.0501)

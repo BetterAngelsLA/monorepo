@@ -95,6 +95,12 @@ export function LocationBreakdown({
     RegionDimension.CouncilDistrict,
   );
 
+  // A single region to narrow the map to — "show me the SPA 4 visits". Empty means
+  // every interaction in range. Single rather than multi: the rollup already shows
+  // all regions, so this control exists to drill into one, and a multi-select on a
+  // map reads as "highlight these", which the map does not do.
+  const [selectedCode, setSelectedCode] = useState<string | undefined>(undefined);
+
   const { dimensions, error: dimensionsError } = useRegionDimensions();
   const { rows, loading, error } = useInteractionsByRegion({
     organizationId,
@@ -110,15 +116,30 @@ export function LocationBreakdown({
     density,
     truncated,
     error: mapError,
-  } = useInteractionMap({ organizationId, startDate, endDate });
+  } = useInteractionMap({
+    organizationId,
+    startDate,
+    endDate,
+    dimension,
+    regionCodes: selectedCode ? [selectedCode] : [],
+  });
 
   const assigned = useMemo(
     () => rows.filter((r) => !r.isUnassigned && r.count > 0),
     [rows],
   );
   const unassigned = useMemo(() => rows.filter((r) => r.isUnassigned), [rows]);
+  // Named regions with interactions, which is what the drill-down offers. The
+  // unassigned buckets are excluded: they have no code to filter by.
+  const named = useMemo(() => assigned, [assigned]);
 
   const dimensionName = DIMENSION_LABELS[dimension] ?? dimension;
+
+  // Selecting a different dimension invalidates the code: "4" is an SPA and also a
+  // Long Beach council district.
+  useEffect(() => {
+    setSelectedCode(undefined);
+  }, [dimension]);
   const queryError = error ?? dimensionsError ?? mapError;
 
   // Backend error bodies are not user-facing copy: log the real error and show a
@@ -173,6 +194,18 @@ export function LocationBreakdown({
             label: DIMENSION_LABELS[d] ?? d,
           }))}
         />
+        <Text type="secondary">Show</Text>
+        <Select
+          allowClear
+          value={selectedCode}
+          onChange={(value) => setSelectedCode(value)}
+          style={{ minWidth: 220 }}
+          placeholder={`All ${dimensionName.toLowerCase()}s`}
+          options={named.map((row) => ({
+            value: row.code,
+            label: `${row.name || row.code} (${row.count.toLocaleString()})`,
+          }))}
+        />
       </div>
 
       {loading && (
@@ -196,6 +229,11 @@ export function LocationBreakdown({
             density={density}
             truncated={truncated}
             hasMapsKey={hasMapsKey}
+            filteredTo={
+              selectedCode
+                ? (named.find((r) => r.code === selectedCode)?.name || selectedCode)
+                : undefined
+            }
           />
         </div>
       )}

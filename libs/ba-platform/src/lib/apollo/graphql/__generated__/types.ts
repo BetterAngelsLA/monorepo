@@ -2740,9 +2740,11 @@ export type QueryInteractionAuthorsArgs = {
 
 
 export type QueryInteractionMapArgs = {
+  dimension?: InputMaybe<RegionDimension>;
   endDate?: InputMaybe<Scalars['Date']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 

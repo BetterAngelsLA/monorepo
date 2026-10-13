@@ -323,6 +323,24 @@ POINT_LIMIT_MAX = 50_000
 DENSITY_GRID_DEGREES = 0.01
 
 
+def _region_scope_clause(region_codes: Sequence[str] | None, params: dict[str, Any]) -> str:
+    """Restrict to interactions whose location falls in one of ``region_codes``.
+
+    Uses the stored assignment rather than a spatial test, so this is an indexed
+    lookup on ``regions_locationregion`` — the whole point of keeping that table.
+    ``kind`` is not a parameter: a code alone identifies the region, and the caller
+    has already chosen a dimension, so the codes it passes are that dimension's.
+    """
+    if not region_codes:
+        return ""
+    params["region_codes"] = list(region_codes)
+    return (
+        "AND EXISTS (SELECT 1 FROM regions_locationregion lr "
+        "JOIN regions_region rr ON rr.id = lr.region_id "
+        "WHERE lr.location_id = n.location_id AND rr.code = ANY(%(region_codes)s))"
+    )
+
+
 def interaction_points(
     *,
     start: datetime,
@@ -330,6 +348,7 @@ def interaction_points(
     organization_id: int | None = None,
     limit: int = POINT_LIMIT,
     notes: "QuerySet[Note] | None" = None,
+    region_codes: Sequence[str] | None = None,
 ) -> tuple[list[dict[str, Any]], bool]:
     """Individual interaction locations, for map pins.
 
@@ -355,6 +374,7 @@ def interaction_points(
     if notes is not None:
         notes_clause = "AND n.id = ANY(%(note_ids)s)"
         params["note_ids"] = list(notes.values_list("id", flat=True))
+    region_clause = _region_scope_clause(region_codes, params)
     org_clause = ""
     if organization_id is not None:
         org_clause = "AND n.organization_id = %(org_id)s"
@@ -371,6 +391,7 @@ def interaction_points(
           AND n.location_id IS NOT NULL
           {org_clause}
           {notes_clause}
+          {region_clause}
         ORDER BY n.interacted_at DESC
         LIMIT %(limit)s
     """
@@ -391,6 +412,7 @@ def interaction_density(
     organization_id: int | None = None,
     cell_degrees: float = DENSITY_GRID_DEGREES,
     notes: "QuerySet[Note] | None" = None,
+    region_codes: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Interaction counts on a fixed grid, for the density view.
 
@@ -405,6 +427,7 @@ def interaction_density(
     if notes is not None:
         notes_clause = "AND n.id = ANY(%(note_ids)s)"
         params["note_ids"] = list(notes.values_list("id", flat=True))
+    region_clause = _region_scope_clause(region_codes, params)
     org_clause = ""
     if organization_id is not None:
         org_clause = "AND n.organization_id = %(org_id)s"
@@ -421,6 +444,7 @@ def interaction_density(
           AND n.location_id IS NOT NULL
           {org_clause}
           {notes_clause}
+          {region_clause}
         GROUP BY 1, 2
         ORDER BY count DESC, 1, 2
     """

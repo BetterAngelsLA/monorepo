@@ -1,4 +1,5 @@
 import { useQuery } from '@apollo/client/react';
+import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { useMemo } from 'react';
 import {
   InteractionMapDocument,
@@ -15,6 +16,12 @@ type UseInteractionMapArgs = {
   organizationId: string;
   startDate: string;
   endDate: string;
+  dimension: RegionDimension;
+  /**
+   * Narrow the map to these regions of `dimension` — "show me the SPA 4 visits".
+   * Empty means every interaction in range.
+   */
+  regionCodes: string[];
 };
 
 /**
@@ -32,12 +39,22 @@ export function useInteractionMap({
   organizationId,
   startDate,
   endDate,
+  dimension,
+  regionCodes,
 }: UseInteractionMapArgs) {
   const { data, loading, error } = useQuery<
     InteractionMapQuery,
     InteractionMapQueryVariables
   >(InteractionMapDocument, {
-    variables: { organizationId, startDate, endDate },
+    variables: {
+      organizationId,
+      startDate,
+      endDate,
+      dimension,
+      // Undefined rather than [] so the backend sees "no filter" instead of an
+      // empty list, which would match nothing.
+      regionCodes: regionCodes.length > 0 ? regionCodes : undefined,
+    },
     skip: !organizationId,
   });
 
