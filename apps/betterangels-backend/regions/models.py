@@ -61,11 +61,9 @@ class Region(models.Model):
             # stops a re-import from doubling every count.
             models.UniqueConstraint(fields=["kind", "code"], name="regions_region_kind_code_uniq"),
         ]
-        indexes = [
-            # ST_Covers uses the && operator first, which is what this GiST index
-            # serves; `kind` is a cheap filter applied alongside it.
-            models.Index(fields=["kind"], name="regions_region_kind_idx"),
-        ]
+        # No explicit index on `kind`: `db_index=True` on the field already
+        # creates one, and declaring both produced two identical indexes. The
+        # GiST index on `geom` comes from `spatial_index=True` (the default).
         ordering = ["kind", "code"]
 
     def __str__(self) -> str:

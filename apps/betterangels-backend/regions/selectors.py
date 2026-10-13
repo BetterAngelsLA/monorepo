@@ -41,6 +41,12 @@ WITH region_of_location AS (
         FROM regions_region r
         WHERE r.kind = %(kind)s
           AND ST_Covers(r.geom, l.point::geometry)
+        -- Deterministic when a point matches more than one region: ST_Covers
+        -- includes boundaries, so a coordinate sitting exactly on a shared edge
+        -- matches both neighbours. Without an ORDER BY the winner is whatever
+        -- the planner happens to emit. Lowest code wins, which is stable and
+        -- reproducible; `id` breaks a tie between duplicate codes.
+        ORDER BY r.code, r.id
         LIMIT 1
     ) r ON true
 )
@@ -63,12 +69,20 @@ def region_counts(
     end: datetime,
     organization_id: int | None = None,
     codes: Sequence[str] | None = None,
+    unassigned_only: bool = False,
+    include_unassigned: bool = False,
 ) -> list[dict[str, Any]]:
     """Interactions per region of ``kind``, including an unassigned bucket.
 
     ``organization_id`` scopes the count to one org (the report is org-scoped).
-    ``codes`` narrows to specific regions, which is the filter half of the
-    feature — a caller passes the codes the user selected.
+
+    ``codes`` narrows to specific regions. ``unassigned_only`` narrows to rows
+    that matched no region at all (``code IS NULL``).
+
+    These are deliberately *two* parameters rather than one list with a sentinel.
+    A sentinel cannot be expressed in the predicate — "code IN (…) OR code IS
+    NULL" is a different shape from "code IN (…)" — and collapsing the two cases
+    is exactly how an unfiltered rollup gets returned for a filtered request.
     """
     params: dict[str, Any] = {"kind": kind, "start": start, "end": end}
     org_clause = ""
@@ -77,7 +91,15 @@ def region_counts(
         params["org_id"] = organization_id
 
     code_clause = ""
-    if codes:
+    if unassigned_only:
+        code_clause = "AND rr.code IS NULL"
+    elif codes and include_unassigned:
+        # Both arms in one predicate. Written as an explicit OR rather than a
+        # sentinel inside the array: SQL evaluates `code = ANY(...)` to NULL for
+        # an unassigned row, so a sentinel in the list would silently drop it.
+        code_clause = "AND (rr.code = ANY(%(codes)s) OR rr.code IS NULL)"
+        params["codes"] = list(codes)
+    elif codes:
         code_clause = "AND rr.code = ANY(%(codes)s)"
         params["codes"] = list(codes)
 
@@ -132,10 +154,6 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
     ``ST_SimplifyPreserveTopology`` is available to callers that need a cheaper
     payload; simplification is left to the caller so the API stays explicit.
     """
-    queryset = Region.objects.filter(kind__in=list(kinds))
-    if codes:
-        queryset = queryset.filter(code__in=list(codes))
-
     with connection.cursor() as cursor:
         cursor.execute(
             """

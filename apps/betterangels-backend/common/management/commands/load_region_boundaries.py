@@ -56,7 +56,7 @@ VERTEX_WARN_THRESHOLD = 2000
 
 # Table/identifier names are interpolated into SQL and therefore must be
 # validated. This is the only place a caller-supplied name reaches SQL text.
-IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
 def sha256_file(path: Path) -> str:
@@ -154,12 +154,12 @@ class Command(BaseCommand):
         # Table names cannot be parameterised in SQL, so they are interpolated.
         # Validate them against a strict identifier pattern rather than trusting
         # the caller — without this, `--layer` is an injection vector.
-        if not IDENTIFIER_RE.match(options["layer"]):
+        if not IDENTIFIER_RE.fullmatch(options["layer"]):
             raise CommandError(
                 f"--layer {options['layer']!r} is not a valid table name "
                 "(letters, digits and underscore only, must not start with a digit)"
             )
-        if not IDENTIFIER_RE.match(options["kind"]):
+        if not IDENTIFIER_RE.fullmatch(options["kind"]):
             raise CommandError(f"--kind {options['kind']!r} is not a valid region kind identifier")
 
         source_hash = sha256_file(path)
@@ -210,6 +210,25 @@ class Command(BaseCommand):
         if not parsed:
             raise CommandError("no usable polygon features found")
 
+        # Collapse duplicate codes. Publishers do ship repeated codes (a city in
+        # several pieces, a layer with overlapping vintages), and without this the
+        # table would hold two rows for one region and every count downstream
+        # would double. Later features union into the first, as in import_regions.
+        by_code: dict[str | None, tuple[str | None, MultiPolygon]] = {}
+        for code, name, geometry in parsed:
+            existing = by_code.get(code)
+            if existing is None:
+                by_code[code] = (name, geometry)
+                continue
+            existing_name, existing_geometry = existing
+            merged = existing_geometry.union(geometry)
+            by_code[code] = (name or existing_name, to_multipolygon(merged))
+        parsed = [(code, name, geometry) for code, (name, geometry) in by_code.items()]
+
+        duplicates = len(layer) - len(parsed)
+        if duplicates > 0:
+            self.stdout.write(f"deduped     : {duplicates} feature(s) merged into existing codes")
+
         # LA bbox assertion — catches a silent no-op reprojection immediately.
         # GEOSGeometry.extent is (xmin, ymin, xmax, ymax).
         extents = [mp.extent for _, _, mp in parsed]
@@ -250,16 +269,24 @@ class Command(BaseCommand):
                     source_url   text,
                     source_vintage text,
                     source_sha256  char(64),
-                    geom         geometry(MultiPolygon, %s) NOT NULL
+                    geom         geometry(MultiPolygon, %s) NOT NULL,
+                    -- One row per (kind, code). Mirrors regions.Region, and stops
+                    -- a duplicate publisher code from silently doubling counts.
+                    UNIQUE (kind, code)
                 )
                 """,
                 [options["target_srid"]],
             )
 
-            cursor.execute(f"SELECT 1 FROM {table} WHERE source_sha256 = %s LIMIT 1", [source_hash])
+            cursor.execute(
+                f"SELECT 1 FROM {table} WHERE source_sha256 = %s AND kind = %s LIMIT 1",
+                [source_hash, options["kind"]],
+            )
             if cursor.fetchone() and not options["force"]:
                 self.stdout.write(
-                    self.style.SUCCESS(f"{table} already holds sha256 {source_hash[:12]}…; nothing to do")
+                    self.style.SUCCESS(
+                        f"{table} already holds kind={options['kind']} sha256 {source_hash[:12]}…; nothing to do"
+                    )
                 )
                 return
 

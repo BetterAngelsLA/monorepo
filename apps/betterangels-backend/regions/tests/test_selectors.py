@@ -21,6 +21,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from django.contrib.gis.geos import MultiPolygon, Point, Polygon
+from django.db import transaction
 from django.db.utils import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
@@ -55,14 +56,21 @@ class RegionRollupTestCase(TestCase):
         self.end = datetime(2026, 2, 1, tzinfo=UTC)
         self.org = organization_recipe.make()
 
-    def _note_at(self, lon: float, lat: float, *, when: datetime | None = None, location: bool = True) -> Note:
-        note = baker.make(
+    def _note_at(
+        self,
+        lon: float = 0.0,
+        lat: float = 0.0,
+        *,
+        when: datetime | None = None,
+        location: bool = True,
+    ) -> Note:
+        """A note in this org. ``lon``/``lat`` are ignored when ``location`` is False."""
+        return baker.make(
             Note,
             organization=self.org,
             interacted_at=when or datetime(2026, 1, 15, tzinfo=UTC),
             location=None if not location else baker.make(Location, point=Point(lon, lat, srid=4326)),
         )
-        return note
 
     def _counts(self, **kwargs: Any) -> dict[str | None, int]:
         rows = region_counts(
@@ -118,7 +126,7 @@ class RegionRollupTestCase(TestCase):
 
     def test_note_without_a_location_is_counted_separately(self) -> None:
         """A locationless note is invisible to a spatial join, so it is reported apart."""
-        self._note_at(0, 0, location=False)
+        self._note_at(location=False)
         self._note_at(-118.24, 34.05)
         self.assertEqual(
             region_totals_without_boundaries(start=self.start, end=self.end, organization_id=self.org.id), 1
@@ -150,13 +158,20 @@ class RegionMetadataTestCase(TestCase):
         self.assertIn("coordinates", geometry if isinstance(geometry, dict) else {})
 
     def test_region_features_can_filter_by_code(self) -> None:
+        rows = region_features(kinds=[RegionKind.SPA], codes=["4"])
+        self.assertEqual([row["code"] for row in rows], ["4"])
+
+    def test_region_features_unknown_code_returns_nothing(self) -> None:
         self.assertEqual(region_features(kinds=[RegionKind.SPA], codes=["nope"]), [])
 
 
 class RegionModelTestCase(TestCase):
     def test_kind_and_code_are_unique(self) -> None:
         Region.objects.create(kind=RegionKind.CITY, code="Los Angeles", name="LA", geom=box(BOX_A))
-        with self.assertRaises(IntegrityError):
+        # The atomic() block is what makes the assertion safe: a constraint error
+        # poisons the surrounding transaction, and any query afterwards would
+        # raise TransactionManagementError rather than the expected result.
+        with self.assertRaises(IntegrityError), transaction.atomic():
             Region.objects.create(kind=RegionKind.CITY, code="Los Angeles", name="dupe", geom=box(BOX_B))
 
     def test_same_code_in_a_different_dimension_is_allowed(self) -> None:
@@ -181,8 +196,10 @@ class RegionReconciliationTestCase(TestCase):
 
     A fourth shape — a ``Location`` row whose ``point`` is NULL — is deliberately
     absent because it is impossible: ``common.Location.point`` is declared
-    non-null, so the database rejects it. ``region_counts`` still guards with
-    ``WHERE l.point IS NOT NULL``; that guard is belt-and-braces, not a live path.
+    non-null and the database enforces it, so the INSERT itself is rejected. That
+    is also why ``region_counts`` carries no ``point IS NOT NULL`` guard: it
+    would be unreachable. (An earlier revision had one; this test is what showed
+    it could never fire.)
     """
 
     def setUp(self) -> None:
@@ -193,11 +210,19 @@ class RegionReconciliationTestCase(TestCase):
         when = datetime(2026, 1, 15, tzinfo=UTC)
 
         # (a) a point inside a region
-        baker.make(Note, organization=self.org, interacted_at=when,
-                   location=baker.make(Location, point=Point(-118.24, 34.05, srid=4326)))
+        baker.make(
+            Note,
+            organization=self.org,
+            interacted_at=when,
+            location=baker.make(Location, point=Point(-118.24, 34.05, srid=4326)),
+        )
         # (b) a point outside every region (Beverly Hills has no LA council district)
-        baker.make(Note, organization=self.org, interacted_at=when,
-                   location=baker.make(Location, point=Point(*OUTSIDE, srid=4326)))
+        baker.make(
+            Note,
+            organization=self.org,
+            interacted_at=when,
+            location=baker.make(Location, point=Point(*OUTSIDE, srid=4326)),
+        )
         # (c) no location at all — the only "unlocatable" shape the schema allows
         baker.make(Note, organization=self.org, interacted_at=when, location=None)
 
@@ -206,9 +231,7 @@ class RegionReconciliationTestCase(TestCase):
             kind=RegionKind.COUNCIL_DISTRICT, start=self.start, end=self.end, organization_id=self.org.id
         )
         spatial_total = sum(r["count"] for r in rows)
-        locationless = region_totals_without_boundaries(
-            start=self.start, end=self.end, organization_id=self.org.id
-        )
+        locationless = region_totals_without_boundaries(start=self.start, end=self.end, organization_id=self.org.id)
 
         # (a) in a region and (b) outside all of them -> the spatial rollup;
         # (c) with no location -> counted separately.

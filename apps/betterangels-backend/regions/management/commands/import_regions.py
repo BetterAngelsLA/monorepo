@@ -50,6 +50,12 @@ LA_BBOX = (-119.0, 32.8, -117.6, 34.9)
 # county so edge polygons are complete rather than clipped.
 LA_BBOX_PADDED = (-119.5, 32.4, -117.0, 35.2)
 
+# LA County, for clipping national layers to the county instead of a rectangle.
+# TIGERweb State_County layer 1; FIPS 06/037.
+LA_COUNTY_ENDPOINT = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query"
+LA_COUNTY_STATE_FIPS = "06"
+LA_COUNTY_FIPS = "037"
+
 
 @dataclass(frozen=True)
 class RegionSource:
@@ -71,6 +77,11 @@ class RegionSource:
     # Optional SQL-free post-processing hint: consolidate part-polygons that
     # share a code (city layers are published in pieces).
     dissolve_by_code: bool = False
+    # Fetch a real polygon and use it as the spatial filter, instead of an
+    # envelope. An envelope wide enough to cover LA County also catches whole
+    # neighbouring counties' worth of features, which makes that one dimension's
+    # denominator inconsistent with the others.
+    clip_to_county: bool = False
 
 
 SOURCES: tuple[RegionSource, ...] = (
@@ -155,23 +166,68 @@ SOURCES: tuple[RegionSource, ...] = (
         params={
             "outFields": "ZCTA5,NAME",
             "where": "1=1",
-            # Scope the national layer to the LA envelope. The server is asked
-            # in 4326 so the envelope needs no reprojection on our side.
-            "geometry": ",".join(str(v) for v in LA_BBOX_PADDED),
-            "geometryType": "esriGeometryEnvelope",
+            # The spatial filter is the LA County *polygon*, supplied at fetch
+            # time, not an envelope. Measured: the padded envelope returned 630
+            # ZCTAs of which only 318 intersect LA County; a tight bounding box
+            # returned 423. ZCTA is a national layer, so this is the dimension
+            # most likely to drag in a neighbour's geography.
             "spatialRel": "esriSpatialRelIntersects",
             "inSR": "4326",
         },
-        # Intersecting polygons reach past the fetch envelope (a ZCTA straddling
-        # the edge is wholly returned), so the guard is ~1 degree wider.
+        # Intersecting polygons reach past the county line (a ZCTA straddling the
+        # edge is returned whole), so the guard is wider than the clip geometry.
         guard_bbox=(-120.7, 31.5, -115.6, 36.5),
+        clip_to_county=True,
     ),
 )
 
 
+def fetch_county_clip(timeout: int = 120) -> str:
+    """The LA County boundary as an ArcGIS polygon literal, for spatial filters.
+
+    Used instead of an envelope so a national layer is scoped to the county
+    rather than to a rectangle that overlaps four other counties. Simplified on
+    the server (``maxAllowableOffset``) — this only decides which features are
+    in scope, so sub-metre precision is irrelevant and the unsimplified county
+    outline is thousands of vertices.
+    """
+    params = {
+        "where": f"STATE='{LA_COUNTY_STATE_FIPS}' AND COUNTY='{LA_COUNTY_FIPS}'",
+        "outFields": "GEOID",
+        "returnGeometry": "true",
+        "outSR": "4326",
+        "maxAllowableOffset": "0.0005",
+        "f": "json",
+    }
+    url = f"{LA_COUNTY_ENDPOINT}?{urllib.parse.urlencode(params)}"
+    request = urllib.request.Request(url, headers={"User-Agent": "BetterAngels-GIS-import/1.0"})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        payload = json.load(response)
+
+    features = payload.get("features") or []
+    if not features:
+        raise CommandError(f"could not fetch the LA County outline from {LA_COUNTY_ENDPOINT}")
+    geometry = features[0].get("geometry")
+    if not geometry:
+        raise CommandError("the LA County outline came back without geometry")
+    return json.dumps(geometry)
+
+
 def fetch_geojson(source: RegionSource, timeout: int = 120) -> Path:
-    """Download one layer as GeoJSON to a temp file and return its path."""
+    """Download one layer as GeoJSON to a temp file and return its path.
+
+    Refuses a truncated response. ArcGIS silently caps results at the layer's
+    ``maxRecordCount`` and signals it with ``exceededTransferLimit``; importing
+    that would write a partial layer and a partial layer is worse than none,
+    because every count downstream would be quietly wrong. Pagination is not
+    implemented — the guard fails loudly instead, which is this command's stated
+    posture. Today no configured source comes close (max seen: 630 ZCTAs against
+    a 100,000 limit), but census tracts would.
+    """
     params = dict(source.params)
+    if source.clip_to_county:
+        params["geometry"] = fetch_county_clip(timeout=timeout)
+        params["geometryType"] = "esriGeometryPolygon"
     params.update({"outSR": "4326", "f": "geojson"})
     url = f"{source.endpoint}?{urllib.parse.urlencode(params)}"
 
@@ -183,6 +239,12 @@ def fetch_geojson(source: RegionSource, timeout: int = 120) -> Path:
         raise CommandError(f"{source.kind}: ArcGIS error: {payload['error'].get('message', payload['error'])}")
     if not payload.get("features"):
         raise CommandError(f"{source.kind}: no features returned (check the where clause / envelope)")
+    if payload.get("exceededTransferLimit"):
+        raise CommandError(
+            f"{source.kind}: the service truncated the response (exceededTransferLimit). "
+            f"{len(payload['features'])} features returned but more exist; page the query "
+            "or narrow the where clause before importing."
+        )
 
     handle = tempfile.NamedTemporaryFile(suffix=".geojson", delete=False, mode="w", encoding="utf-8")
     with handle:
@@ -226,7 +288,11 @@ class Command(BaseCommand):
             default=[],
             help="Limit to one or more dimensions (repeatable). Default: all.",
         )
-        parser.add_argument("--source", default="", help="Load a local .geojson/.gpkg/.shp instead of fetching.")
+        parser.add_argument(
+            "--source",
+            default="",
+            help="Load ONE local .geojson/.gpkg/.shp instead of fetching. Requires exactly one --kind.",
+        )
         parser.add_argument("--dry-run", action="store_true", help="Parse and validate; write nothing.")
         parser.add_argument("--list", action="store_true", help="List the configured sources and exit.")
 
@@ -240,9 +306,26 @@ class Command(BaseCommand):
         if not selected:
             raise CommandError(f"no sources match {options['kind']}; try --list")
 
+        # A local file is a file for ONE dimension. Applying it to every selected
+        # source does not merely duplicate data — field names are matched
+        # case-insensitively, so a council-district file with `District` also
+        # satisfies a supervisorial source's `DISTRICT` code field and the same
+        # polygons get written to an unrelated dimension. Require the caller to
+        # say which dimension the file is.
+        if options["source"] and len(selected) != 1:
+            raise CommandError(
+                f"--source loads a single file, but {len(selected)} dimensions are selected "
+                f"({', '.join(s.kind for s in selected)}). Pass exactly one --kind."
+            )
+
         total = 0
-        for source in selected:
-            total += self._load(source, dry_run=options["dry_run"], local=options["source"])
+        # One transaction across every dimension, so a failure part-way through a
+        # multi-dimension run cannot leave some dimensions loaded and others not
+        # behind a command that reported failure. Each source is independently
+        # atomic; without this the *command* is not.
+        with transaction.atomic():
+            for source in selected:
+                total += self._load(source, dry_run=options["dry_run"], local=options["source"])
 
         verb = "validated" if options["dry_run"] else "loaded"
         self.stdout.write(self.style.SUCCESS(f"{verb} {total} regions across {len(selected)} dimension(s)"))
@@ -250,13 +333,24 @@ class Command(BaseCommand):
     def _load(self, source: RegionSource, *, dry_run: bool, local: str) -> int:
         self.stdout.write(f"\n{source.kind}: {source.label}")
 
+        downloaded: Path | None = None
         if local:
             path = Path(local)
             if not path.exists():
                 raise CommandError(f"no such file: {path}")
         else:
             path = fetch_geojson(source)
-            self.stdout.write(f"  fetched   : {path}")
+            # A ~22 MB temp file per fetch, so it is always removed — including on
+            # the failure paths below, which is exactly when it would leak.
+            downloaded = path
+        try:
+            return self._ingest(source, path=path, dry_run=dry_run)
+        finally:
+            if downloaded is not None:
+                downloaded.unlink(missing_ok=True)
+
+    def _ingest(self, source: RegionSource, *, path: Path, dry_run: bool) -> int:
+        self.stdout.write(f"  source file: {path}")
 
         datasource = DataSource(str(path))
         layer = datasource[0]
@@ -296,7 +390,9 @@ class Command(BaseCommand):
             regions.append(
                 Region(
                     kind=source.kind,
-                    code=str(code),
+                    # Both columns are bounded; truncating beats a DataError
+                    # raised from inside the atomic block.
+                    code=str(code)[:32],
                     name=str(entry["name"])[:255],
                     source_url=source.endpoint[:1024],
                     source_vintage=source.vintage,

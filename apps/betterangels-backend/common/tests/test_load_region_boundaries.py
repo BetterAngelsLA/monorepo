@@ -16,6 +16,7 @@ These run against the PostGIS test database the rest of the suite already uses.
 from __future__ import annotations
 
 import json
+from io import StringIO
 from pathlib import Path
 from typing import Any
 
@@ -191,16 +192,58 @@ class LoadRegionBoundariesTestCase(TestCase):
             self.assertIsNone(cursor.fetchone()[0], "nothing should have been written")
 
     def test_reload_of_identical_file_is_a_noop(self) -> None:
-        for _ in range(2):
-            load(
-                shapefile=str(FIXTURES / "regions_4326.geojson"),
-                layer=TABLE,
-                kind="test_district",
-                name_field="NAME",
-                code_field="DISTRICT",
-            )
-        # A duplicate insert would show four rows.
+        """The second run must do no work — not merely end up with the same rows.
+
+        Asserting the row count alone proves nothing: the command deletes rows for
+        the kind and re-inserts, so the count is 2 whether or not the no-op path
+        runs. This asserts the two observable signals instead — the message, and
+        unchanged primary keys.
+        """
+        first_stdout = StringIO()
+        load(
+            shapefile=str(FIXTURES / "regions_4326.geojson"),
+            layer=TABLE,
+            kind="test_district",
+            name_field="NAME",
+            code_field="DISTRICT",
+            stdout=first_stdout,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT id FROM {TABLE} ORDER BY id")
+            ids_before = [row[0] for row in cursor.fetchall()]
+
+        second_stdout = StringIO()
+        load(
+            shapefile=str(FIXTURES / "regions_4326.geojson"),
+            layer=TABLE,
+            kind="test_district",
+            name_field="NAME",
+            code_field="DISTRICT",
+            stdout=second_stdout,
+        )
+
+        self.assertIn("nothing to do", second_stdout.getvalue())
         self.assertEqual(self._count(), 2)
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT id FROM {TABLE} ORDER BY id")
+            # A re-insert would allocate new sequence values.
+            self.assertEqual([row[0] for row in cursor.fetchall()], ids_before)
+
+    def test_same_file_under_a_second_kind_is_not_skipped(self) -> None:
+        """The sha256 no-op is scoped per kind.
+
+        Unscoped, loading the same file under a second dimension matched the
+        first kind's hash and silently wrote nothing — a whole dimension missing
+        behind a success message.
+        """
+        path = str(FIXTURES / "regions_4326.geojson")
+        load(shapefile=path, layer=TABLE, kind="first_kind", name_field="NAME", code_field="DISTRICT")
+        load(shapefile=path, layer=TABLE, kind="second_kind", name_field="NAME", code_field="DISTRICT")
+
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT kind, count(*) FROM {TABLE} GROUP BY kind ORDER BY kind")
+            counts = dict(cursor.fetchall())
+        self.assertEqual(counts, {"first_kind": 2, "second_kind": 2})
 
     def test_unknown_field_fails_loudly(self) -> None:
         with self.assertRaises(CommandError) as ctx:
@@ -274,13 +317,26 @@ class LoadRegionBoundariesTestCase(TestCase):
 
 
 class UndeclaredCrsTestCase(TestCase):
-    """A file with no CRS declaration must be refused, never guessed."""
+    """CRS handling at the boundary: what is defaulted, and what is refused.
+
+    These are two *different* outcomes and the distinction matters:
+
+    * A bare **GeoJSON** file with no ``crs`` member is legitimately WGS84 —
+      RFC 7946 says so, and GDAL applies that default. Loading it is correct.
+    * A **shapefile** with no ``.prj`` declares nothing at all, so the source CRS
+      is unknowable. Reprojecting it is a silent no-op at best and a wrong
+      location at worst, so the command refuses.
+
+    An earlier version of this file had a single test named
+    ``test_undeclared_crs_is_refused`` that asserted the GeoJSON case *succeeds* —
+    it tested the opposite of its name, and left the refusal path uncovered.
+    """
 
     def tearDown(self) -> None:
         with connection.cursor() as cursor:
             cursor.execute(f"DROP TABLE IF EXISTS {TABLE}")
 
-    def test_undeclared_crs_is_refused(self) -> None:
+    def test_crsless_geojson_defaults_to_wgs84(self) -> None:
         # GeoJSON without a "crs" member and without an EPSG hint is ambiguous
         # to OGR; assert the command refuses rather than assuming.
         payload = {
@@ -298,9 +354,6 @@ class UndeclaredCrsTestCase(TestCase):
                 }
             ],
         }
-        # GDAL defaults bare GeoJSON to WGS84 per RFC 7946, so this one is
-        # legitimately loadable — the refusal path is covered for shapefiles by
-        # the missing-.prj case, asserted via to_multipolygon's SRID guard.
         tmp = FIXTURES / "regions_no_crs.geojson"
         tmp.write_text(json.dumps(payload))
         try:
@@ -318,3 +371,44 @@ class UndeclaredCrsTestCase(TestCase):
             self.assertEqual(int(row[0]), 4326)
         finally:
             tmp.unlink()
+
+
+class ShapefileWithoutPrjTestCase(TestCase):
+    """A shapefile with no ``.prj`` has no knowable CRS and must be refused."""
+
+    def tearDown(self) -> None:
+        with connection.cursor() as cursor:
+            cursor.execute(f"DROP TABLE IF EXISTS {TABLE}")
+
+    def test_shapefile_without_prj_is_refused(self) -> None:
+        # Built rather than checked in: a .prj-less shapefile is awkward to keep
+        # in the repo without tools re-adding it, and ogr2ogr is available in the
+        # image that runs these tests.
+        import shutil
+        import subprocess
+        import tempfile
+
+        workdir = Path(tempfile.mkdtemp())
+        try:
+            source = FIXTURES / "regions_4326.geojson"
+            shp = workdir / "no_prj.shp"
+            subprocess.run(
+                ["ogr2ogr", "-f", "ESRI Shapefile", str(shp), str(source)],
+                check=True,
+                capture_output=True,
+            )
+            prj = workdir / "no_prj.prj"
+            self.assertTrue(prj.exists(), "fixture step: expected a .prj to remove")
+            prj.unlink()
+
+            with self.assertRaises(CommandError) as ctx:
+                load(
+                    shapefile=str(shp),
+                    layer=TABLE,
+                    kind="test_district",
+                    name_field="NAME",
+                    code_field="DISTRICT",
+                )
+            self.assertIn("no CRS", str(ctx.exception))
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)

@@ -70,7 +70,12 @@ Verified live: **751 regions** — 630 ZCTA, 89 city, 15 council district, 8 SPA
 
 GraphQL: `interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes)`,
 plus `regionDimensions` (what is loaded) and `regions(dimension, codes)` (boundaries as
-GeoJSON for the map). All require `reports.view_reports` at the org.
+GeoJSON for the map).
+
+**Authorization differs deliberately by query.** `interactionsByRegion` carries client data
+and requires `reports.view_reports` at the payload org. `regionDimensions` and `regions`
+require only an authenticated session: they serve public reference boundaries, identical for
+every tenant, and their SELECT touches no org- or client-scoped column.
 
 ### Two corrections the expanded catalog forced
 
@@ -87,8 +92,14 @@ still served side by side.
 
 ## Open questions
 
-1. Does the **`postgis` extension** exist on dev/preview/prod RDS? The `regions` app's
-   initial migration now creates it, so `migrate` will settle this loudly.
+1. ~~Does the `postgis` extension exist on RDS?~~ **Settled, and the answer is that we must
+   not create it.** PostGIS is already present: `clients`, `common`, `hmis` and `shelters`
+   each declare geometry fields in their `0001_initial` migrations, which is impossible
+   without it. The `regions` migration therefore **deliberately does not** include
+   `CreateExtension("postgis")` — PostGIS is not a trusted extension, so creating it needs
+   `rds_superuser` (which the app's IAM role is not), and its reverse migration compiles to
+   `DROP EXTENSION IF EXISTS postgis`, which would try to drop it out from under four other
+   apps' columns.
 2. Which **region set** ships first? Council district + SPA is the recommendation.
 3. **LACDMH service areas have no public polygon layer** — needs a decision (extract from
    their web app, ask them, or adopt SPAs as the proxy).

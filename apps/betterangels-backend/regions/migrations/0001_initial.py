@@ -51,7 +51,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ["kind", "code"],
-                "indexes": [models.Index(fields=["kind"], name="regions_region_kind_idx")],
                 "constraints": [
                     models.UniqueConstraint(fields=("kind", "code"), name="regions_region_kind_code_uniq")
                 ],
