@@ -437,11 +437,14 @@ def object_audit_log(
     if not page_keys:
         return []
 
-    # 2) Fetch only the page's rows and build actions.
+    # 2) Fetch only the page's rows and build actions. This is a plain iteration,
+    # not ``.iterator()``: Django's server-side cursor issues ``DECLARE``, which
+    # RDS Proxy pins (ADR 0004 §10). The row set is already bounded by
+    # ``page_keys``, so a server-side cursor buys nothing here.
     rows = base.annotate(action_key=key_expr).filter(action_key__in=page_keys).order_by("pgh_created_at", "pgh_id")
 
     grouped: dict[str, list[Any]] = defaultdict(list)
-    for row in rows.iterator():
+    for row in rows:
         grouped[row.action_key].append(row)
 
     resolver = _LabelResolver()
