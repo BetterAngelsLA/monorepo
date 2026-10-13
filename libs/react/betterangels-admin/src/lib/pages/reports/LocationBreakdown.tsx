@@ -3,6 +3,7 @@ import { useQuery } from '@apollo/client/react';
 import { Select, Spin, Table, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { ChartCard } from '../../components';
+import RegionMap from './RegionMap';
 import { RegionDimension } from '@monorepo/ba-platform/types';
 import type { InteractionsByRegionQuery } from './__generated__/regions.generated';
 import {
@@ -60,10 +61,12 @@ export default function LocationBreakdown({
   organizationId,
   startDate,
   endDate,
+  hasMapsKey = true,
 }: {
   organizationId: string;
   startDate: string;
   endDate: string;
+  hasMapsKey?: boolean;
 }) {
   const [dimension, setDimension] = useState<RegionDimension>(RegionDimension.CouncilDistrict);
 
@@ -133,6 +136,16 @@ export default function LocationBreakdown({
         <p className="text-center text-neutral-500">
           No located interactions for this range.
         </p>
+      )}
+
+      {!loading && assigned.length > 0 && (
+        <div className="mb-5">
+          <RegionMap
+            dimension={dimension}
+            rows={rows}
+            hasMapsKey={hasMapsKey}
+          />
+        </div>
       )}
 
       {!loading && assigned.length > 0 && (

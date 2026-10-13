@@ -23,3 +23,12 @@ query InteractionsByRegion(
     unassignedReason
   }
 }
+
+query RegionsForMap($dimension: RegionDimension!, $codes: [String!]) {
+  regions(dimension: $dimension, codes: $codes) {
+    kind
+    code
+    name
+    geometry
+  }
+}

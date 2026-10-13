@@ -55,21 +55,57 @@ generating against the PR's schema produces exactly what main will produce once 
 PR is in. Note `codegen` must be run from `libs/ba-platform` — run from the repo root
 it fails to resolve the schema with a misleading "please provide a schema" error.
 
-## What the UI needs
+## What the UI does (built)
 
-1. `libs/react/betterangels-admin/src/lib/pages/reports/regions.graphql` — the two
-   operations. Written; mirrors `reports.graphql`.
-2. A `LocationBreakdown` component: a dimension selector (`regionDimensions`),
-   a chart and table of `interactionsByRegion` for the selected range and dimension.
-3. Wire it into the existing Reports page beneath the current charts, reusing the
-   page's `dateRange` state and `activeOrg`.
-4. Render the unassigned bucket deliberately rather than dropping it. `NO_LOCATION`
-   is a data-completeness signal ("this client has no address on file") and
-   `OUTSIDE_ALL_REGIONS` is a coverage signal ("this client is outside every
-   boundary we load") — they mean different things to a program manager and should
-   not be merged into one "Unassigned" slice.
-5. `formatBucketLabel` already exists for axis labels; region codes are short enough
-   to need no equivalent.
+`LocationBreakdown` renders on the Reports page beneath the existing charts and
+inherits its `dateRange` and `activeOrg`, so the geographic figures always match the
+KPIs above them. It offers a dimension selector (all six, from `regionDimensions`),
+a **map**, a bar chart of the top 20, and a sortable table of all of them.
+
+`RegionMap` is a **choropleth**: region polygons shaded by interaction count. Two
+implementation notes worth keeping:
+
+- It uses the map's built-in **Data layer** (`map.data`), not one `<Polygon>` per
+  region. The API returns GeoJSON, which `addGeoJson` consumes directly, and
+  `google.maps.Data` handles **MultiPolygon** properly — regions with islands or
+  enclaves (Long Beach, Santa Catalina, the unincorporated pockets) are
+  multipolygons, and a naive one-polygon-per-feature render silently draws only the
+  first ring. Using `map.data` also avoids `useMapsLibrary`, since Data is core Maps
+  rather than a separately-loaded library, so there is no load-order race.
+- Geometry and counts are fetched separately and joined on `code` client-side.
+  `interactionsByRegion` reports only regions that have interactions, so requesting
+  geometry for those codes avoids shipping polygons nobody will look at — a real
+  saving on the 311-region ZIP dimension.
+
+The **unassigned buckets render separately**, deliberately. `NO_LOCATION` ("no
+address on file") is a data-completeness gap the team can act on; `OUTSIDE_ALL_REGIONS`
+("outside every boundary we load") is a coverage gap. Merging them into one
+"Unassigned" slice would hide which problem you have. They are excluded from the chart
+and the map — an 8,000-count unassigned bar beside districts numbering in the dozens
+distorts the comparison, and unassigned rows have no polygon to shade.
+
+## Maps API key
+
+The admin app had no Maps key, so the map is the first thing here that needs one.
+It reads `VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY` and **falls back to
+`VITE_SHELTER_GOOGLE_MAPS_API_KEY`** so it can be evaluated without a new secret.
+
+That fallback should not survive to production: sharing the key shares its quotas and
+HTTP-referrer restrictions, and the two apps are served from different origins. Add
+the admin-specific variable and the fallback can be dropped.
+
+The key is deliberately **not** a hard requirement: `config.ts` throws for a missing
+`apiUrl` but not for a missing Maps key, and `RegionMap` degrades to an explanatory
+panel. The rest of the admin app works without a map, so a missing key should cost
+one panel rather than the page.
+
+## Not built
+
+**Individual interaction points.** There is no query returning per-interaction
+coordinates, so pins cannot be drawn without a new backend query — `Note` →
+`Location.point`, org- and permission-scoped. That also raises a privacy question
+about plotting individual client locations on a shared map, which should be decided
+explicitly rather than defaulted.
 
 ## Numbers to expect
 

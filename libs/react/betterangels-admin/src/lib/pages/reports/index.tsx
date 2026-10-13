@@ -44,7 +44,10 @@ const CHART_COLORS = {
   warning: '#E65100',
 } as const;
 
-export default function Reports({ className = '' }: IProps) {
+export default function Reports({
+  className = '',
+  hasMapsKey = true,
+}: IProps & { hasMapsKey?: boolean }) {
   const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
   const { download, isDownloading, error, clearError } = useCSVDownload();
@@ -278,6 +281,7 @@ export default function Reports({ className = '' }: IProps) {
                   organizationId={activeOrg.id}
                   startDate={startStr}
                   endDate={endStr}
+                  hasMapsKey={hasMapsKey}
                 />
               </Col>
             </Row>
