@@ -20,8 +20,14 @@ if TYPE_CHECKING:
 @pghistory.track(
     pghistory.InsertEvent("reservation.add"),
     pghistory.DeleteEvent("reservation.remove"),
+    # These two update triggers are mutually exclusive: ``status_change`` fires
+    # only when ``status`` changes, and ``update`` excludes ``status``, so a
+    # status change writes exactly one row (with its own diff) rather than two.
+    # ``updated_at`` is excluded alongside ``status`` because it is ``auto_now``
+    # and would otherwise make every save (including a bare status change) match
+    # ``update`` — the pair is only disjoint once the mechanical column is out.
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
-    pghistory.UpdateEvent("reservation.update"),
+    pghistory.UpdateEvent("reservation.update", condition=pghistory.AnyChange(exclude=["status", "updated_at"])),
     meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="reservation_evt_obj_idx")]},
 )
 class Reservation(OrgScoped, BaseModel):

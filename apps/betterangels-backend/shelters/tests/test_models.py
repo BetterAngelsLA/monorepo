@@ -846,11 +846,28 @@ class WriteEventCoverageTestCase(TestCase):
         self.assertEqual(labels.count("reservation.update"), 1)
         self.assertEqual(labels.count("reservation.status_change"), 0)
 
-    def test_reservation_status_change_also_fires_the_unconditional_update(self) -> None:
+    def test_reservation_status_change_does_not_fire_the_update_event(self) -> None:
+        # ADR 0004 §2: ``status_change`` fires on a status change and ``update``
+        # excludes ``status``, so the conditions are disjoint — a status change
+        # writes exactly one event, not two.
         bed = Bed.objects.create(shelter=self.shelter, name="Bed")
         reservation = Reservation.objects.create(bed=bed)
 
         reservation.status = ReservationStatusChoices.CHECKED_IN
+        reservation.save()
+
+        labels = self._labels(Reservation, reservation.pk)
+        self.assertEqual(labels.count("reservation.status_change"), 1)
+        self.assertEqual(labels.count("reservation.update"), 0)
+
+    def test_reservation_status_and_notes_update_fires_both_labels(self) -> None:
+        # A save that changes status *and* a non-status field matches both
+        # disjoint conditions, so each label fires once with its own diff.
+        bed = Bed.objects.create(shelter=self.shelter, name="Bed")
+        reservation = Reservation.objects.create(bed=bed)
+
+        reservation.status = ReservationStatusChoices.CHECKED_IN
+        reservation.notes = "Needs a lower bunk"
         reservation.save()
 
         labels = self._labels(Reservation, reservation.pk)
