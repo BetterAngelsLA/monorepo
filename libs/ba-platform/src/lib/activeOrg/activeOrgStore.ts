@@ -223,7 +223,14 @@ export const clearActiveOrgId = (): void => {
   // that kept reading them would put an organization straight back into the
   // header. Providers still mounted re-install theirs on their next render.
   organizationSources.length = 0;
-  setActiveOrgId(null);
+
+  // `write` then `notify`, not `setActiveOrgId`: dropping the sources changes the
+  // *derived* id on its own, and `setActiveOrgId` broadcasts only when the
+  // *selected* id moves. With the selected id already null it stays silent, leaving
+  // every subscriber on the organization just discarded — the header then keeps an
+  // id belonging to the session that was torn down.
+  write(null);
+  notify();
 };
 
 /** Subscribe to changes. Returns an unsubscribe function. */

@@ -112,6 +112,27 @@ describe('deriveProxyTargets', () => {
 });
 
 describe('readTargets', () => {
+  it('refuses an override that is not an absolute http(s) URL', () => {
+    const warn = vi.spyOn(console, 'warn').mockReturnValue(undefined);
+
+    // Taken verbatim before, so `new URL()` threw while the middleware was built
+    // and the dev server died with a stack trace instead of naming the entry.
+    expect([
+      ...readTargets({ BA_DEV_PROXY_TARGETS: 'production=not-a-url' }).keys(),
+    ]).toEqual([]);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('still takes an explicit target at its word, even under /__api', () => {
+    // A remote API may genuinely live under a `/__api` base path.
+    expect([
+      ...readTargets({
+        BA_DEV_PROXY_TARGETS: 'remote=https://api.example.test/__api',
+      }),
+    ]).toEqual([['remote', 'https://api.example.test/__api']]);
+  });
+
   it('derives the app targets when nothing else is configured', () => {
     expect([...readTargets(APP_ENV)]).toEqual([
       ['production', 'https://api.betterangels.la'],

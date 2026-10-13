@@ -86,6 +86,24 @@ describe('activeOrgStore', () => {
     expect(storage.get()).toBeNull();
   });
 
+  it('broadcasts when clearing, even with no selected id to change', () => {
+    // The sources alone can supply the id, so dropping them changes what
+    // `getActiveOrgId()` answers while the *selected* id never moved. Skipping the
+    // broadcast here leaves every subscriber on the organization we just dropped.
+    configureActiveOrgStorage(createSyncStorage());
+    pushActiveOrgSource(() => [{ id: 'org-1' }, { id: 'org-2' }]);
+
+    expect(getActiveOrgId()).toBe('org-1');
+
+    const listener = vi.fn();
+    subscribeActiveOrgId(listener);
+
+    clearActiveOrgId();
+
+    expect(getActiveOrgId()).toBeNull();
+    expect(listener).toHaveBeenCalled();
+  });
+
   it('survives a storage backend that throws on write', () => {
     configureActiveOrgStorage({
       get: () => null,

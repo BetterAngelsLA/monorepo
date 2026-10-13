@@ -88,6 +88,16 @@ function deriveProxyTargets(env, onIgnored) {
   return named;
 }
 
+/** True for an absolute http(s) URL the proxy can forward to. */
+function isUsableTargetUrl(url) {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 /** `name` → API base URL: derived, then added to or overridden by `BA_DEV_PROXY_TARGETS`. */
 function readTargets(env = process.env, onIgnored) {
   const named = deriveProxyTargets(env, onIgnored);
@@ -98,8 +108,23 @@ function readTargets(env = process.env, onIgnored) {
 
     const name = entry.slice(0, separator).trim();
     const url = entry.slice(separator + 1).trim();
+    if (!name || !url) continue;
 
-    if (name && url) named.set(name, url);
+    // Deliberately NOT the derivation's `pointsAtProxy` check: a legitimate remote
+    // API can live under a `/__api` base path, which is indistinguishable from the
+    // proxy's own by path alone, so an explicit target is taken at its word (there
+    // is a test for this). Validity is different — an unparseable URL throws while
+    // the middleware is built, so `expo start` dies with a stack trace instead of
+    // naming the entry that is wrong.
+    if (!isUsableTargetUrl(url)) {
+      console.warn(
+        `[dev-api-proxy] ignoring BA_DEV_PROXY_TARGETS entry ${name}=${url}: it is not an absolute http(s) URL.`,
+      );
+      if (onIgnored) onIgnored({ variable: 'BA_DEV_PROXY_TARGETS', url, name });
+      continue;
+    }
+
+    named.set(name, url);
   }
 
   return named;
