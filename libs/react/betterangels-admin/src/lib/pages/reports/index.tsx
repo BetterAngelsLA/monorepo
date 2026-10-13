@@ -18,6 +18,7 @@ import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
 import { useActiveOrg } from '@monorepo/ba-platform';
 import { formatBucketLabel } from './formatBucketLabel';
+import LocationBreakdown from './LocationBreakdown';
 import { ReportSummaryDocument } from './__generated__/reports.generated';
 
 const { RangePicker } = DatePicker;
@@ -267,6 +268,20 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
           </Row>
+
+          {/* Geographic breakdown. Reuses the page's own date range and org so the
+              region figures always match the KPIs above them. */}
+          {activeOrg && (
+            <Row gutter={[16, 16]}>
+              <Col xs={24}>
+                <LocationBreakdown
+                  organizationId={activeOrg.id}
+                  startDate={startStr}
+                  endDate={endStr}
+                />
+              </Col>
+            </Row>
+          )}
 
           {summary.totalNotes === 0 && (
             <Card>

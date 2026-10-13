@@ -1,0 +1,23 @@
+import type * as Types from '@monorepo/ba-platform/types';
+
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+export type RegionDimensionsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type RegionDimensionsQuery = { __typename: 'Query', regionDimensions: Array<Types.RegionDimension> };
+
+export type InteractionsByRegionQueryVariables = Types.Exact<{
+  organizationId: Types.Scalars['ID']['input'];
+  dimension: Types.RegionDimension;
+  startDate?: Types.InputMaybe<Types.Scalars['Date']['input']>;
+  endDate?: Types.InputMaybe<Types.Scalars['Date']['input']>;
+  regionCodes?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+}>;
+
+
+export type InteractionsByRegionQuery = { __typename: 'Query', interactionsByRegion: Array<{ __typename: 'RegionCountType', code: string, name: string, count: number, isUnassigned: boolean, unassignedReason?: Types.UnassignedReason | null }> };
+
+
+export const RegionDimensionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"RegionDimensions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"regionDimensions"}}]}}]} as unknown as DocumentNode<RegionDimensionsQuery, RegionDimensionsQueryVariables>;
+export const InteractionsByRegionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"InteractionsByRegion"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"dimension"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RegionDimension"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"startDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Date"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"endDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Date"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"regionCodes"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"interactionsByRegion"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"organizationId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}}},{"kind":"Argument","name":{"kind":"Name","value":"dimension"},"value":{"kind":"Variable","name":{"kind":"Name","value":"dimension"}}},{"kind":"Argument","name":{"kind":"Name","value":"startDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"startDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"endDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"endDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"regionCodes"},"value":{"kind":"Variable","name":{"kind":"Name","value":"regionCodes"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"isUnassigned"}},{"kind":"Field","name":{"kind":"Name","value":"unassignedReason"}}]}}]}}]} as unknown as DocumentNode<InteractionsByRegionQuery, InteractionsByRegionQueryVariables>;
