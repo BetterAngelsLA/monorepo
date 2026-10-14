@@ -72,7 +72,7 @@ todos:
     content: 'Phase 1: Guard the audit event tables against UPDATE (protect_updates) instead of append-only'
     status: pending
   - id: retention-purge
-    content: 'Phase 1: Add purge_audit_log --before with a 730-day safety floor and wire a Celery-beat schedule'
+    content: 'Phase 2: Add purge_audit_log --before in the audit app with a 730-day safety floor; wire a Celery-beat schedule'
     status: pending
 isProject: false
 ---
@@ -663,9 +663,9 @@ normal write still succeeds (the `INSERT` positive control).
 
 ## 9c. Measured read cost (why retention, and why it is just `DELETE`)
 
-Numbers from
-[audit/management/commands/bench_audit_read.py](apps/betterangels-backend/audit/management/commands/bench_audit_read.py)
-against the schema with all 11 `(pgh_obj, pgh_id)` indexes installed, reading
+Numbers from a synthetic-events bench harness (the `bench_audit_read` command
+added with the audit app) run against a database with all 11
+`(pgh_obj, pgh_id)` indexes installed, reading
 `pgh_obj`-anchored page 1 with `limit=25`, median of 5 runs:
 
 | question | axis | result |
@@ -1523,8 +1523,10 @@ retention is not a latency fix — it is a storage and compliance-boundary fix, 
 it has to be a real `DELETE`, because a query-side date filter cannot bound the work
 (H3). `DELETE` is available precisely because §9b narrowed the guard to `UPDATE`.
 
-[common/management/commands/purge_audit_log.py](apps/betterangels-backend/common/management/commands/purge_audit_log.py)
-deletes in batches behind a safety floor:
+**Not implemented on this branch.** The command lands with the audit app (Phase 2),
+which is where the read-event tables it must also prune (ADR 0005) live — keeping it
+out of `common` avoids a `common` → `audit` dependency (§Phase 2). The design is
+settled:
 
 ```bash
 python manage.py purge_audit_log --before 2024-01-01            # batched delete, then orphan contexts
@@ -1540,10 +1542,9 @@ python manage.py purge_audit_log --before 2024-01-01 --dry-run  # report what wo
   with `NOT EXISTS` across every event table, so context rows do not accumulate as
   an orphan shadow of the purged events.
 
-Tests in [common/tests/test_purge_audit_log.py](apps/betterangels-backend/common/tests/test_purge_audit_log.py)
-cover the retention floor, `--dry-run`, orphan-context cleanup, and that still-referenced
-contexts survive. The remaining work is operational: choose the window, schedule it
-via Celery beat, and watch bloat from the batched deletes (§Future considerations).
+Tests will cover the retention floor, `--dry-run`, orphan-context cleanup, and that
+still-referenced contexts survive. The remaining work is operational: choose the
+window and wire a Celery-beat schedule.
 
 ---
 
@@ -1568,5 +1569,5 @@ via Celery beat, and watch bloat from the batched deletes (§Future consideratio
   after N days) or org/actor-at-event-time metadata recorded on the event context
   so the object can be authorized without a live row. Deletion events produced
   before that future change will be unrecoverable through this surface.
-- **Retention schedule** — `purge_audit_log --before` now exists (§31); what remains is operational: pick the window and wire a Celery-beat schedule. Watch bloat from the batched deletes.
+- **Retention schedule** — `purge_audit_log --before` lands with the audit app (§31); what remains after that is operational: pick the window and wire a Celery-beat schedule. Watch bloat from the batched deletes.
 - **Partitioning (contingent)** — not needed at current scale (§9c). Revisit if the unanchored path (admin/export/`count()` — 149 seq scans, H4) becomes a real cost, or if purge batches start causing meaningful bloat. At that point, partition `*Event` by `pgh_created_at` range and expire with `DROP PARTITION` instead of `DELETE`.
