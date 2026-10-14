@@ -87,17 +87,28 @@ export function ExportDataModal({
     if (!step) return;
 
     event.preventDefault();
-    // -1 means the format is currently unavailable (e.g. PDF with no data).
+
     const selectable = MODAL_FORMATS.map((option, i) => ({ option, i })).filter(
       ({ option }) => !(option === 'pdf' && disablePdfExport),
     );
     if (selectable.length === 0) return;
 
+    // An unavailable format is `disabled` and non-tabbable, so it cannot hold
+    // the selection — that is what actually keeps the user off a dead option.
+    // This fallback is the belt to that braces: if a not-found (-1) index ever
+    // did reach here it would wrap the step round and move the focus
+    // backwards, so resolve it to an end of the list instead.
     const currentIndex = selectable.findIndex(
       ({ option }) => option === format,
     );
-    const next =
-      selectable[(currentIndex + step + selectable.length) % selectable.length];
+    const nextIndex =
+      currentIndex === -1
+        ? step > 0
+          ? 0
+          : selectable.length - 1
+        : (currentIndex + step + selectable.length) % selectable.length;
+
+    const next = selectable[nextIndex];
     if (!next) return;
 
     setFormat(next.option);
@@ -145,8 +156,11 @@ export function ExportDataModal({
                     aria-checked={format === option}
                     aria-disabled={optionBlocked || undefined}
                     // Roving tabindex: only the selected radio is tabbable,
-                    // arrows move between them (see onFormatKeyDown).
-                    tabIndex={format === option ? 0 : -1}
+                    // arrows move between them (see onFormatKeyDown). An
+                    // unavailable format is skipped, so it can never become
+                    // the selection and strand the user on a dead option.
+                    tabIndex={format === option && !optionBlocked ? 0 : -1}
+                    disabled={optionBlocked}
                     onClick={() => setFormat(option)}
                     onKeyDown={onFormatKeyDown}
                     className={mergeCss([

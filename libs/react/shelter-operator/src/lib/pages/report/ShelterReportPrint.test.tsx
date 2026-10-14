@@ -365,6 +365,42 @@ describe('ShelterReportPrint', () => {
   });
 
   describe('overflow handling', () => {
+    it('treats a zero-height measurement as unmeasured instead of collapsing the report', () => {
+      // No layout available (detached/hidden container): every section
+      // measures 0. Accepting 0 would pack the whole report onto one page and
+      // silently drop everything past the page box, so it must be ignored.
+      vi.spyOn(
+        HTMLElement.prototype,
+        'getBoundingClientRect',
+      ).mockImplementation(function (this: HTMLElement) {
+        return {
+          height: 0,
+          width: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        } as DOMRect;
+      });
+
+      render(
+        <ShelterReportPrint
+          {...baseProps(ALL_METRICS)}
+          bedCounts={COUNTS}
+          roomCounts={COUNTS}
+        />,
+      );
+
+      // Unmeasured sections over-paginate rather than under-paginate, so the
+      // charts still get their own pages instead of sharing one.
+      expect(pagesWithTestId('bed-status-chart')).toBe(1);
+      expect(pagesWithTestId('daily-occupancy-chart')).toBe(1);
+      expect(reportPages().length).toBeGreaterThanOrEqual(2);
+    });
+
     it('adds pages instead of clipping when the content is taller than one page', () => {
       render(
         <ShelterReportPrint

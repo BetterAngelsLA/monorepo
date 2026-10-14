@@ -28,7 +28,27 @@ function pdfDataMocks(): MockLink.MockedResponse[] {
           operatorShelter: {
             id: SHELTER_ID,
             name: 'Downtown Emergency Shelter',
+            // The summary query also feeds the PDF's Bed/Room Summary
+            // sections, so the mock must carry every field the real response
+            // has or Apollo warns that the selection went unanswered.
+            organization: { id: 'org-1', name: 'Better Angels' },
             location: { place: '1234 S Main St' },
+            bedCounts: {
+              available: 20,
+              inTurnaround: 10,
+              occupied: 60,
+              outOfService: 5,
+              reserved: 5,
+              total: 100,
+            },
+            roomCounts: {
+              available: 10,
+              inTurnaround: 4,
+              occupied: 30,
+              outOfService: 2,
+              reserved: 2,
+              total: 48,
+            },
           },
         },
       },
@@ -135,6 +155,19 @@ function waitForExportEnabled() {
       name: /^export$/i,
     }) as HTMLButtonElement;
     expect(button.disabled).toBe(false);
+  });
+}
+
+/**
+ * The PDF option stays disabled until its own queries land, which can trail
+ * the shared Export button by a tick.
+ */
+function waitForPdfSelectable() {
+  return waitFor(() => {
+    const pdf = screen.getByRole('radio', {
+      name: /^pdf$/i,
+    }) as HTMLButtonElement;
+    expect(pdf.disabled).toBe(false);
   });
 }
 
@@ -250,8 +283,9 @@ describe('ReportFilterBar export', () => {
 
     renderFilterBar('7');
     fireEvent.click(screen.getByRole('button', { name: /export data/i }));
+    // The PDF radio is disabled until its own data lands, so wait first.
+    await waitForPdfSelectable();
     fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
-    await waitForExportEnabled();
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
 
     await waitFor(() => expect(exportPdfMock).toHaveBeenCalledTimes(1));
@@ -271,8 +305,8 @@ describe('ReportFilterBar export', () => {
 
     renderFilterBar('7');
     fireEvent.click(screen.getByRole('button', { name: /export data/i }));
+    await waitForPdfSelectable();
     fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
-    await waitForExportEnabled();
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
 
     await waitFor(() =>
@@ -317,15 +351,15 @@ describe('ReportFilterBar export', () => {
     }) as HTMLButtonElement;
     expect(button.disabled).toBe(false);
 
-    // Selecting PDF surfaces the blocked state.
-    fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
-    expect(
-      (
-        screen.getByRole('button', {
-          name: /^export$/i,
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+    // The PDF option itself advertises that it is not ready, and cannot be
+    // selected — so the user is never stranded on a dead format.
+    const pdf = screen.getByRole('radio', {
+      name: /^pdf$/i,
+    }) as HTMLButtonElement;
+    expect(pdf.disabled).toBe(true);
+    fireEvent.click(pdf);
+    expect(pdf.getAttribute('aria-checked')).toBe('false');
+    expect(button.disabled).toBe(false);
   });
 
   it('keeps CSV export available when the PDF render data fails to load', async () => {
@@ -376,15 +410,19 @@ describe('ReportFilterBar export', () => {
       expect(button.disabled).toBe(false);
     });
 
-    // ...but PDF is blocked, and says so.
-    fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
+    // ...but PDF is blocked, and cannot be selected.
+    const pdf = screen.getByRole('radio', {
+      name: /^pdf$/i,
+    }) as HTMLButtonElement;
+    expect(pdf.disabled).toBe(true);
+    fireEvent.click(pdf);
+    expect(pdf.getAttribute('aria-checked')).toBe('false');
     expect(
       (
         screen.getByRole('button', {
           name: /^export$/i,
         }) as HTMLButtonElement
       ).disabled,
-    ).toBe(true);
-    expect(screen.getByText(/PDF isn’t ready yet/)).toBeTruthy();
+    ).toBe(false);
   });
 });

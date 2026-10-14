@@ -34,11 +34,28 @@ function waitForNextPaint(): Promise<void> {
 /** `requestAnimationFrame` in a background tab can stall, so cap the wait. */
 const MAX_PAINT_WAIT_MS = 250;
 
+/**
+ * A pending webfont request can keep `document.fonts.ready` unresolved
+ * indefinitely; the export must not hang (and hold `isExporting`) forever
+ * waiting for a font the report may not even use.
+ */
+const MAX_FONT_WAIT_MS = 2000;
+
+/**
+ * Resolves when `promise` settles or `ms` elapses, whichever comes first, and
+ * discards the value: callers only care that the wait is over.
+ */
+function withTimeout(
+  promise: Promise<unknown> | undefined,
+  ms: number,
+): Promise<void> {
+  const settled = Promise.resolve(promise).then(() => undefined);
+  const expired = new Promise<void>((resolve) => setTimeout(resolve, ms));
+  return Promise.race([settled, expired]);
+}
+
 function waitForPaint(): Promise<void> {
-  return Promise.race([
-    waitForNextPaint(),
-    new Promise<void>((resolve) => setTimeout(resolve, MAX_PAINT_WAIT_MS)),
-  ]);
+  return withTimeout(waitForNextPaint(), MAX_PAINT_WAIT_MS);
 }
 
 /**
@@ -84,7 +101,10 @@ export function useExportPdf(targetRef: RefObject<HTMLElement | null>) {
 
         // Settle chart/font rendering before the first synchronous snapshot.
         // `document.fonts` is optional: the Font Loading API is not universal.
-        await Promise.all([waitForPaint(), document.fonts?.ready]);
+        await Promise.all([
+          waitForPaint(),
+          withTimeout(document.fonts?.ready, MAX_FONT_WAIT_MS),
+        ]);
         if (signal?.aborted) return null;
 
         const doc = new jsPDF({ unit: 'pt', format: 'letter' });

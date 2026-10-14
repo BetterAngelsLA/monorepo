@@ -370,6 +370,12 @@ export function ShelterReportPrint({
         if (!key) continue;
 
         const height = node.getBoundingClientRect().height;
+        // A section that reports no height has not actually been laid out
+        // (detached, hidden, or measured before styles applied). Recording it
+        // would let the packer put every section on page one and silently
+        // drop everything past the page box, so stay unmeasured and retry.
+        if (height <= 0) continue;
+
         if (prev[key] === undefined || Math.abs(prev[key] - height) >= 0.5) {
           next[key] = height;
           changed = true;
