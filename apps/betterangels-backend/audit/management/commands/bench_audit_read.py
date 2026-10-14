@@ -1,0 +1,285 @@
+"""Benchmark the write-audit-log read path (ADR 0004 §20, §22).
+
+Bulk-loads synthetic ``Shelter`` event rows, then times the selector and EXPLAINs
+the SQL it captured. On-demand tool, not a CI test: it writes real rows and its
+numbers are machine-dependent, so it must not gate a build.
+
+    python manage.py bench_audit_read --objects 50 --events-per-object 2000 --analyze
+
+Synthetic rows are written straight into the event table with ``bulk_create``
+(``INSERT`` is unaffected by the update guard) and tagged with object ids at or
+above ``SYNTHETIC_BASE_ID`` so they can be cleaned up with an ordinary ``DELETE``
+-- the very operation the guard no longer blocks.
+
+What each flag is for:
+
+* ``--objects``        how many objects to spread events over. Grow this to test
+                       H1: per-object page-1 latency should stay flat in the total
+                       table size because the ``(pgh_obj, pgh_id)`` index anchors
+                       the union.
+* ``--events-per-object``  grow this to test H2: the CTE materialises an object's
+                       whole history before ``LIMIT``, so the object's own history
+                       is the axis that should actually cost anything.
+* ``--date-from``      both the earliest synthetic event and the selector's
+                       ``date_from`` filter, to test H3 (does the predicate push
+                       into the union?) and the bounded-vs-unbounded comparison.
+* ``--analyze``        run ``EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`` on the
+                       selector's own SQL instead of guessing from timing.
+"""
+
+from __future__ import annotations
+
+import datetime
+import json
+import statistics
+import time
+from typing import Any, cast
+
+from django.core.management.base import BaseCommand, CommandError
+from django.db import connection
+from django.utils import timezone
+from model_bakery import baker
+
+from audit.selectors import object_audit_log
+from shelters.models import Shelter
+
+# Synthetic object ids start here so they never collide with real rows and can be
+# identified (and deleted) by a single predicate.
+SYNTHETIC_BASE_ID = 900_000_000
+
+_SKIPPED_TEMPLATE_FIELDS = frozenset({"pgh_id", "pgh_created_at", "pgh_label", "pgh_obj", "pgh_context"})
+
+
+class Command(BaseCommand):
+    help = "Bulk-load synthetic audit events and measure the selector's read cost."
+
+    def add_arguments(self, parser: Any) -> None:
+        parser.add_argument("--objects", type=int, default=20, help="Synthetic objects to spread events over.")
+        parser.add_argument(
+            "--events-per-object",
+            type=int,
+            default=500,
+            help="Event rows per synthetic object (one object's history size).",
+        )
+        parser.add_argument("--runs", type=int, default=5, help="Timed selector runs for the measured object.")
+        parser.add_argument("--limit", type=int, default=50, help="Page size passed to the selector.")
+        parser.add_argument(
+            "--date-from",
+            default=None,
+            help="Earliest synthetic event (YYYY-MM-DD) and the selector's date_from filter.",
+        )
+        parser.add_argument("--date-to", default=None, help="Optional selector date_to filter (YYYY-MM-DD).")
+        parser.add_argument("--analyze", action="store_true", help="EXPLAIN (ANALYZE, BUFFERS) the captured SQL.")
+        parser.add_argument("--batch-size", type=int, default=5000, help="bulk_create batch size.")
+        parser.add_argument("--keep", action="store_true", help="Do not delete synthetic rows on the way out.")
+
+    def handle(self, *args: Any, **options: Any) -> None:
+        objects = options["objects"]
+        events_per_object = options["events_per_object"]
+        if objects < 1 or events_per_object < 1:
+            raise CommandError("--objects and --events-per-object must both be >= 1.")
+
+        spread_start = self._parse_date(options["date_from"]) or (timezone.now() - datetime.timedelta(days=365 * 2))
+        date_from = self._parse_date(options["date_from"])
+        date_to = self._parse_date(options["date_to"])
+
+        event_model = Shelter.pgh_event_model  # type: ignore[attr-defined]
+
+        self._delete_synthetic(event_model)
+        sample = baker.make(Shelter, name="bench-sample")
+        sample_row = event_model.objects.filter(pgh_obj_id=sample.pk).first()
+        if sample_row is None:
+            raise CommandError("The sample Shelter produced no event row; is write tracking enabled?")
+
+        template = self._template_row(event_model, sample_row)
+        inserted = self._bulk_insert(
+            event_model,
+            template,
+            objects=objects,
+            events_per_object=events_per_object,
+            spread_start=spread_start,
+            batch_size=options["batch_size"],
+        )
+        self.stdout.write(self.style.SUCCESS(f"inserted {inserted} synthetic event rows across {objects} objects"))
+
+        # Measure the last synthetic object: the one furthest from the sample.
+        measured_id = SYNTHETIC_BASE_ID + objects - 1
+        measured = Shelter(pk=measured_id)
+        self.stdout.write(
+            f"measuring object pgh_obj_id={measured_id} "
+            f"(history={events_per_object}, limit={options['limit']}, runs={options['runs']})"
+        )
+
+        timings, query_count, captured_sql, captured_params = self._time_selector(
+            measured, date_from, date_to, options["limit"], options["runs"]
+        )
+        self._report(timings, query_count, captured_sql)
+
+        if options["analyze"]:
+            self._explain(captured_sql, captured_params)
+
+        if options["keep"]:
+            self.stdout.write("kept synthetic rows (--keep)")
+        else:
+            removed = self._delete_synthetic(event_model)
+            self.stdout.write(f"deleted {removed} synthetic event rows")
+
+    # -- fixture -------------------------------------------------------------
+
+    @staticmethod
+    def _parse_date(raw: str | None) -> datetime.datetime | None:
+        if raw is None:
+            return None
+        parsed = datetime.datetime.strptime(raw, "%Y-%m-%d").date()
+        return datetime.datetime.combine(parsed, datetime.time.min, tzinfo=datetime.timezone.utc)
+
+    @staticmethod
+    def _template_row(event_model: Any, sample: Any) -> dict[str, Any]:
+        """Every column but the ones we vary, taken from a real event row."""
+        row: dict[str, Any] = {}
+        for f in event_model._meta.concrete_fields:
+            if f.name in _SKIPPED_TEMPLATE_FIELDS or f.attname in _SKIPPED_TEMPLATE_FIELDS:
+                continue
+            row[f.attname] = getattr(sample, f.attname)
+        return row
+
+    def _bulk_insert(
+        self,
+        event_model: Any,
+        template: dict[str, Any],
+        *,
+        objects: int,
+        events_per_object: int,
+        spread_start: datetime.datetime,
+        batch_size: int,
+    ) -> int:
+        now = timezone.now()
+        window = max((now - spread_start).total_seconds(), 1.0)
+        step = window / max(events_per_object - 1, 1)
+        obj_field = self._attname(event_model, "pgh_obj")
+        assert obj_field is not None  # every tracked event model has pgh_obj
+        context_field = self._attname(event_model, "pgh_context")
+
+        batch: list[Any] = []
+        total = 0
+        for offset in range(objects):
+            obj_id = SYNTHETIC_BASE_ID + offset
+            for i in range(events_per_object):
+                fields = dict(template)
+                fields[obj_field] = obj_id
+                if context_field is not None:
+                    fields[context_field] = None
+                fields["pgh_created_at"] = spread_start + datetime.timedelta(seconds=step * i)
+                fields["pgh_label"] = "shelter.add" if i == 0 else "shelter.update"
+                # ``pgh_data``/``pgh_diff`` are not columns: the aggregate derives
+                # them by diffing a row's tracked columns against the previous row
+                # of the same object. Vary a tracked column so the derived diff is
+                # non-empty, and mirror the object id into the tracked pk column.
+                fields["name"] = f"Synthetic {obj_id} v{i}"
+                if "id" in fields:
+                    fields["id"] = obj_id
+                batch.append(event_model(**fields))
+                if len(batch) >= batch_size:
+                    event_model.objects.bulk_create(batch, batch_size=batch_size)
+                    total += len(batch)
+                    batch = []
+        if batch:
+            event_model.objects.bulk_create(batch, batch_size=batch_size)
+            total += len(batch)
+        return total
+
+    @staticmethod
+    def _attname(event_model: Any, field_name: str) -> str | None:
+        try:
+            return cast(str, event_model._meta.get_field(field_name).attname)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _delete_synthetic(event_model: Any) -> int:
+        obj_field = Command._attname(event_model, "pgh_obj") or "pgh_obj_id"
+        deleted, _ = event_model.objects.filter(**{f"{obj_field}__gte": SYNTHETIC_BASE_ID}).delete()
+        return int(deleted)
+
+    # -- measurement ---------------------------------------------------------
+
+    def _time_selector(
+        self,
+        obj: Any,
+        date_from: datetime.datetime | None,
+        date_to: datetime.datetime | None,
+        limit: int,
+        runs: int,
+    ) -> tuple[list[float], int, str, list[Any]]:
+        timings: list[float] = []
+        query_count = 0
+        captured_sql = ""
+        captured_params: list[Any] = []
+
+        for run in range(max(runs, 1)):
+            # Capture (sql, params) through an execute wrapper rather than
+            # ``CaptureQueriesContext``: Django 6 no longer records the params,
+            # and EXPLAIN needs them to resolve the placeholders.
+            captured: list[tuple[str, list[Any]]] = []
+
+            def _record(
+                execute: Any, sql: str, params: Any, many: bool, context: Any, _sink: list[Any] = captured
+            ) -> Any:
+                _sink.append((sql, list(params or [])))
+                return execute(sql, params, many, context)
+
+            with connection.execute_wrapper(_record):
+                started = time.perf_counter()
+                page = object_audit_log(
+                    obj=obj,
+                    target_type="SHELTER",
+                    date_from=date_from,
+                    date_to=date_to,
+                    limit=limit,
+                )
+                timings.append((time.perf_counter() - started) * 1000.0)
+
+            if run == 0:
+                query_count = len(captured)
+                self.stdout.write(f"page returned {len(page.results)} actions")
+                if captured:
+                    # The aggregate CTE query is the widest statement issued.
+                    captured_sql, captured_params = max(captured, key=lambda pair: len(pair[0]))
+
+        return timings, query_count, captured_sql, captured_params
+
+    def _report(self, timings: list[float], query_count: int, captured_sql: str) -> None:
+        self.stdout.write(f"queries per page: {query_count}")
+        self.stdout.write(
+            f"latency ms: min={min(timings):.2f} median={statistics.median(timings):.2f} max={max(timings):.2f}"
+        )
+        self.stdout.write(f"widest captured SQL is {len(captured_sql)} chars")
+
+    def _explain(self, sql: str, params: list[Any]) -> None:
+        if not sql:
+            self.stderr.write("no captured SQL to EXPLAIN")
+            return
+        with connection.cursor() as cursor:
+            cursor.execute(f"EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) {sql}", params)
+            row = cursor.fetchone()
+        summary = self._summarize_plan(row[0])
+        self.stdout.write("EXPLAIN (ANALYZE, BUFFERS):")
+        for key, value in summary.items():
+            self.stdout.write(f"  {key}: {value}")
+
+    @staticmethod
+    def _summarize_plan(raw: Any) -> dict[str, Any]:
+        data = json.loads(raw) if isinstance(raw, str) else raw
+        root = data[0] if isinstance(data, list) else data
+        node = root.get("Plan", root)
+        return {
+            "node": node.get("Node Type"),
+            "relation": node.get("Relation Name"),
+            "plan_rows": node.get("Plan Rows"),
+            "actual_rows": node.get("Actual Rows"),
+            "actual_total_time_ms": node.get("Actual Total Time"),
+            "shared_hit_blocks": node.get("Shared Hit Blocks"),
+            "shared_read_blocks": node.get("Shared Read Blocks"),
+            "planning_time_ms": root.get("Planning Time"),
+            "execution_time_ms": root.get("Execution Time"),
+        }
