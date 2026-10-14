@@ -395,10 +395,6 @@ export function RegionMap({
             <div className="mt-0.5 w-40 text-[10px] text-neutral-500">
               100% = the densest spot in this selection
             </div>
-            {/* "everywhere" would be a lie about zoom: the kernel radius changes with
-                zoom, so the reference is per-zoom. It is fixed against *panning*, which
-                is the thing that was wrong. */}
-            <div className="text-[10px] text-neutral-500">fixed when you pan</div>
           </div>
         )}
       </GoogleMap>
