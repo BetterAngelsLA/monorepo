@@ -13,7 +13,7 @@ export * from './ClientProfileList';
 export * from './ClientProfilePhotoUploader';
 export { default as ConsentModal } from './ConsentModal';
 export * from './CreateClientInteraction';
-export { default as DocumentModal } from './DocumentModal';
+export * from './DocumentMenuSheet';
 export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export { FileUploadsPreview } from './FileUploadsPreview/FileUploadPreview';
