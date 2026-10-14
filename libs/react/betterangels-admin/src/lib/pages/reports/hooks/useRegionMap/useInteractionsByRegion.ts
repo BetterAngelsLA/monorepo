@@ -16,7 +16,8 @@ export type RegionCountType =
 
 type UseInteractionsByRegionArgs = {
   organizationId: string;
-  dimension: RegionDimension;
+  /** Absent means every dimension at once; buckets then carry their own `kind`. */
+  dimension?: RegionDimension;
   startDate: string;
   endDate: string;
   /** Narrow the rollup to these regions, matching the map's drill-down. */

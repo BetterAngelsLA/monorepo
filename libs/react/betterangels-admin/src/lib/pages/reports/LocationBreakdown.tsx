@@ -31,6 +31,16 @@ const GENERIC_ERROR_MESSAGE = 'Sorry, something went wrong. Please try again.';
  * Display names for the dimensions. The enum values are GraphQL identifiers
  * (COUNCIL_DISTRICT); these are what a program manager reads.
  */
+/** Enum value (`council_district`) -> prose label. Keys are the wire values. */
+const KIND_LABELS: Record<string, string> = {
+  zip: 'ZIP Code',
+  city: 'City',
+  council_district: 'City Council District',
+  supervisorial_district: 'Supervisorial District',
+  spa: 'Service Planning Area',
+  coc: 'Continuum of Care',
+};
+
 const DIMENSION_LABELS: Record<RegionDimension, string> = {
   [RegionDimension.Zip]: 'ZIP Code',
   [RegionDimension.City]: 'City',
@@ -106,6 +116,11 @@ function useSuppressAutofill(): RefObject<HTMLDivElement | null> {
   return ref;
 }
 
+/** Prose label for a bucket's `kind`; falls back to the raw value if it is unknown. */
+function kindLabel(kind: string): string {
+  return KIND_LABELS[kind] ?? kind;
+}
+
 /**
  * Case-insensitive substring match on the option's searchable text.
  *
@@ -123,7 +138,10 @@ export function LocationBreakdown({
   hasMapsKey = true,
   className = '',
 }: LocationBreakdownProps) {
-  const [dimension, setDimension] = useState<RegionDimension>(
+  // `undefined` is "All": the rollup then counts every dimension at once and each
+  // bucket carries its own `kind`. Codes are meaningless across dimensions, so the
+  // drill-down is disabled in that state rather than silently ignored.
+  const [dimension, setDimension] = useState<RegionDimension | undefined>(
     RegionDimension.CouncilDistrict,
   );
 
@@ -197,7 +215,9 @@ export function LocationBreakdown({
   // Named regions with interactions, which is what the drill-down offers. The
   // unassigned buckets are excluded: they have no code to filter by.
 
-  const dimensionName = DIMENSION_LABELS[dimension];
+  // Used for prose only ("Loading city council district data"). Absent means the rollup
+  // spans every dimension, so there is no single name to interpolate.
+  const dimensionName = dimension ? DIMENSION_LABELS[dimension] : 'region';
 
   // Selecting a different dimension invalidates the code: "4" is an SPA and also a
   // Long Beach council district.
@@ -215,8 +235,20 @@ export function LocationBreakdown({
   }, [queryError]);
 
   const columns: TableColumnsType<RegionCountType> = [
+      // Only when the rollup spans every dimension. A code is ambiguous without it, so
+      // two rows both named "1" would otherwise be indistinguishable.
+      ...(dimension === undefined
+        ? [
+            {
+              title: 'Grouped by',
+              dataIndex: 'kind' as const,
+              key: 'kind',
+              render: (kind: string) => kindLabel(kind),
+            },
+          ]
+        : []),
     {
-      title: dimensionName,
+      title: dimension ? dimensionName : 'Region',
       dataIndex: 'name',
       key: 'name',
       render: renderRegionName,
@@ -251,9 +283,16 @@ export function LocationBreakdown({
         <Text type="secondary">Group by</Text>
         <Select
           showSearch
+          // Clears to "All" — the rollup then spans every dimension, and each row
+          // carries its own `kind` so the table can say which it came from.
+          allowClear
           value={dimension}
-          onChange={setDimension}
+          onChange={(value) => {
+            setDimension(value);
+            setSelectedCode(undefined);
+          }}
           style={{ minWidth: 220 }}
+          placeholder="All dimensions"
           options={dimensions.map((d) => ({
             value: d,
             label: DIMENSION_LABELS[d] ?? d,
@@ -266,10 +305,13 @@ export function LocationBreakdown({
         <Select
           allowClear
           showSearch
+          // Disabled rather than hidden, so the control does not jump around when the
+          // grouping changes — and because a code without a dimension cannot be resolved.
+          disabled={dimension === undefined}
           value={selectedCode}
           onChange={(value) => setSelectedCode(value)}
           style={{ minWidth: 220 }}
-          placeholder={`All ${dimensionName.toLowerCase()}s`}
+          placeholder={dimension ? `All ${dimensionName.toLowerCase()}s` : 'Pick a dimension first'}
           options={assigned.map((row) => ({
             value: row.code,
             // Carries the code as well as the name, because `filterOption` searches
@@ -285,7 +327,8 @@ export function LocationBreakdown({
 
       {rowsLoading && (
         <div className="flex items-center gap-2 text-sm text-neutral-500">
-          <Spin size="small" /> Loading {dimensionName.toLowerCase()} data...
+          <Spin size="small" /> Loading{' '}
+          {dimension ? `${dimensionName.toLowerCase()} ` : ''}data...
         </div>
       )}
 
@@ -334,7 +377,9 @@ export function LocationBreakdown({
 
       {!rowsLoading && unassigned.length > 0 && (
         <div className="mt-4 rounded border border-neutral-200 bg-neutral-50 p-3">
-          <Text strong>Not attributed to a {dimensionName.toLowerCase()}</Text>
+          <Text strong>
+            Not attributed to {dimension ? `a ${dimensionName.toLowerCase()}` : 'any region'}
+          </Text>
           <ul className="mt-2 mb-0 list-disc pl-5 text-sm text-neutral-600">
             {unassigned.map((row) => (
               <li key={`${row.unassignedReason}-${row.code}`}>

@@ -239,7 +239,8 @@ function RegionLayer({
 }
 
 type RegionMapProps = {
-  dimension: RegionDimension;
+  /** Absent when the report is not grouped by geography; then no polygons are drawn. */
+  dimension?: RegionDimension;
   rows: RegionCountType[];
   /** Individual interaction locations, from `interactionMap`. */
   points?: InteractionPointType[];

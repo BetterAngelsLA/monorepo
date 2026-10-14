@@ -11,7 +11,13 @@ import {
 export type RegionGeometryType = RegionsForMapQuery['regions'][number];
 
 type UseRegionMapArgs = {
-  dimension: RegionDimension;
+  /**
+   * Required by the query, and rightly so: without a dimension there is nothing to draw.
+   * "All" means every dimension at once, and overlaying six sets of boundaries — 431
+   * polygons, many nested inside each other — would be unreadable rather than
+   * informative. So the request is skipped and the map shows the heatmap alone.
+   */
+  dimension?: RegionDimension;
   /** Only the codes that actually have interactions are requested. */
   codes: string[];
 };
@@ -28,8 +34,8 @@ export function useRegionMap({ dimension, codes }: UseRegionMapArgs) {
     RegionsForMapQuery,
     RegionsForMapQueryVariables
   >(RegionsForMapDocument, {
-    variables: { dimension, codes },
-    skip: codes.length === 0,
+    variables: { dimension: dimension as RegionDimension, codes },
+    skip: dimension === undefined || codes.length === 0,
   });
 
   const regions = useMemo(

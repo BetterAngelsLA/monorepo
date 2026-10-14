@@ -13,7 +13,8 @@ type UseInteractionMapArgs = {
   organizationId: string;
   startDate: string;
   endDate: string;
-  dimension: RegionDimension;
+  /** Absent means every dimension at once; `regionCodes` is then not meaningful. */
+  dimension?: RegionDimension;
   /** Narrow the map to these regions of `dimension` — "show me the SPA 4 visits". */
   regionCodes?: string[];
 };
