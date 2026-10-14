@@ -8,7 +8,8 @@ import {
   Typography,
   type TableColumnsType,
 } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 import {
   RegionDimension,
   UnassignedReason,
@@ -85,6 +86,27 @@ type LocationBreakdownProps = {
  * beneath it as their own figures.
  */
 /**
+ * Take the `autocomplete="new-password"` off a searchable antd `Select`.
+ *
+ * antd sets that attribute on any select with `showSearch`, deliberately, so browser
+ * autofill cannot cover the option list. The side effect is that browsers and password
+ * managers classify the control as a password field — Chrome offers to save it, and
+ * 1Password/lastpass badges it — for what is a "group by" dropdown.
+ *
+ * It cannot be overridden through props: antd's `Select` does not forward
+ * `autoComplete` (only the inner `BaseSelect` does), and the attribute is applied there.
+ * So it is corrected on the rendered input instead.
+ */
+function useSuppressAutofill(): RefObject<HTMLDivElement | null> {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const inputs = ref.current?.querySelectorAll('input');
+    inputs?.forEach((input) => input.setAttribute('autocomplete', 'off'));
+  }, []);
+  return ref;
+}
+
+/**
  * Case-insensitive substring match on the option's searchable text.
  *
  * Matching the code as well as the name is the point: a reader looking for council
@@ -110,6 +132,7 @@ export function LocationBreakdown({
   // all regions, so this control exists to drill into one, and a multi-select on a
   // map reads as "highlight these", which the map does not do.
   const [selectedCode, setSelectedCode] = useState<string | undefined>(undefined);
+  const controlsRef = useSuppressAutofill();
 
   const { dimensions, error: dimensionsError } = useRegionDimensions();
   const {
@@ -229,7 +252,7 @@ export function LocationBreakdown({
 
   return (
     <ChartCard title="Interactions by Location" className={className}>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div ref={controlsRef} className="mb-4 flex flex-wrap items-center gap-3">
         <Text type="secondary">Group by</Text>
         <Select
           showSearch
