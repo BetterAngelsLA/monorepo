@@ -1,5 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyListView } from './EmptyListView';
@@ -58,6 +59,8 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     ({ item }: { item: T }) => renderItem(item),
     [renderItem],
   );
+
+  const isFocused = useIsFocused();
 
   const onEndReached = useCallback(() => {
     if (!isAnyLoading && hasMore && loadMore) {
@@ -118,6 +121,13 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     [data.length, itemGap, extraData],
   );
 
+  // A list kept mounted but not on screen reads as "at the end" on every commit and
+  // would page in its whole dataset — the clients list reached "456 of 456" behind a
+  // pushed route with nothing scrolled. Withhold the handler rather than guard the
+  // callback: FlashList spends its one-shot end latch before calling it, so guarding
+  // would spend the latch on a list nobody is looking at.
+  const endReachedHandler = isFocused ? onEndReached : undefined;
+
   return (
     <View style={[styles.container, style]}>
       {!error && (
@@ -135,7 +145,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
         ref={listRef}
         data={data}
         renderItem={renderItemStable}
-        onEndReached={onEndReached}
+        onEndReached={endReachedHandler}
         onEndReachedThreshold={onEndReachedThreshold}
         ItemSeparatorComponent={ItemSeparator}
         extraData={stableExtraData}
