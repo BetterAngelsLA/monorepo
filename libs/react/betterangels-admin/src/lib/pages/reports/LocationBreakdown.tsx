@@ -1,6 +1,8 @@
 import { Column } from '@ant-design/charts';
 import {
   Alert,
+  Button,
+  Checkbox,
   Input,
   Select,
   Spin,
@@ -14,7 +16,6 @@ import {
   RegionDimension,
   UnassignedReason,
 } from '@monorepo/ba-platform/types';
-import { CheckboxGroup } from '@monorepo/react/components';
 import { ChartCard, useNoAutofill } from '../../components';
 import {
   useInteractionMap,
@@ -230,17 +231,22 @@ export function LocationBreakdown({
 
   // The checkbox list searches name *and* code, because a code is what a reader usually
   // has to hand ("district 13") and it is not what the label shows.
+  /** Every region of the dimension that has interactions — the picker's full set. */
+  const pickable = useMemo(
+    () => availableRegions.filter((row) => !row.isUnassigned && row.count > 0),
+    [availableRegions],
+  );
+
   const selectable = useMemo(() => {
     const needle = filter.trim().toLowerCase();
-    const pool = availableRegions.filter((row) => !row.isUnassigned && row.count > 0);
     const matching =
       needle === ''
-        ? pool
-        : pool.filter((row) =>
+        ? pickable
+        : pickable.filter((row) =>
             `${row.name} ${row.code}`.toLowerCase().includes(needle),
           );
     return [...matching].sort((a, b) => compareRegionCodes(a.code, b.code));
-  }, [availableRegions, filter]);
+  }, [pickable, filter]);
 
   const unassigned = useMemo(() => shown.filter((r) => r.isUnassigned), [shown]);
   // Resolved above the JSX rather than inline: the styleguide asks for `if`/`else`
@@ -351,10 +357,22 @@ export function LocationBreakdown({
 
       {dimension !== undefined && (
         <div className="mb-4 rounded-lg border border-neutral-90 p-3">
-          <div className="mb-2 flex items-baseline justify-between">
+          <div className="mb-2 flex max-w-md items-baseline justify-between gap-2">
+            {/* No "All regions" checkbox. It read as a peer of the regions when it is not
+                one, and it was redundant: an empty selection already *is* "all" — that is
+                how the API reads an absent `regionCodes`, and how the grouping's own
+                "All dimensions" works. The state says which it is, and clearing is an
+                action rather than a value. */}
             <Text type="secondary">
-              Show {selectedCodes.length > 0 ? `(${selectedCodes.length} selected)` : '(all)'}
+              {selectedCodes.length === 0
+                ? `Show — all ${dimensionName.toLowerCase()}s`
+                : `Show — ${selectedCodes.length} of ${pickable.length}`}
             </Text>
+            {selectedCodes.length > 0 && (
+              <Button type="link" size="small" onClick={() => setSelectedCodes([])}>
+                Clear
+              </Button>
+            )}
           </div>
           <Input
             allowClear
@@ -371,14 +389,18 @@ export function LocationBreakdown({
             </Text>
           ) : (
             <div className="max-h-56 overflow-y-auto pr-1">
-              <CheckboxGroup
-                selectAll="All regions"
+              <Checkbox.Group
+                className="flex w-full flex-col gap-2"
+                value={selectedCodes}
+                // The values are region codes, which are strings, so narrow rather than
+                // cast — `Checkbox.Group` types its change as `CheckboxValueType[]`.
+                onChange={(next) =>
+                  setSelectedCodes(next.filter((v): v is string => typeof v === 'string'))
+                }
                 options={selectable.map((row) => ({
                   value: row.code,
                   label: `${row.name || row.code} (${row.count.toLocaleString()})`,
                 }))}
-                values={selectedCodes}
-                onChange={setSelectedCodes}
               />
             </div>
           )}
