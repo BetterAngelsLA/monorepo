@@ -57,8 +57,7 @@ def backfill(apps, schema_editor):  # type: ignore[no-untyped-def]
     display update is total, and ``ensure_location_regions(force=True)`` clears first
     — so a half-applied run is safe to repeat.
     """
-    from regions.models import build_region_pieces
-    from regions.selectors import ensure_location_regions
+    from regions.services import build_region_pieces, ensure_location_regions
 
     build_region_pieces()
     schema_editor.execute(

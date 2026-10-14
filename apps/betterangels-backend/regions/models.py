@@ -21,7 +21,7 @@ Design notes that are load-bearing:
 from __future__ import annotations
 
 from django.contrib.gis.db.models import MultiPolygonField
-from django.db import connection, models, transaction
+from django.db import models
 
 # Subdivision is gated: only regions above the threshold are chopped.
 # Tolerance for the map's display geometry, in degrees. 0.0005 deg is ~46 m at Los
@@ -38,55 +38,10 @@ SUBDIVIDE_VERTEX_THRESHOLD = 2000
 # not a vertex cap; do not describe it as one.
 SUBDIVIDE_MAX_VERTICES = 256
 
+
 # One INSERT that gives every region at least one piece: subdivided when the
 # boundary is complex, copied whole when it is not. Set-returning ST_Subdivide is
 # why this is SQL and not Python.
-_BUILD_PIECES_SQL = """
-INSERT INTO regions_regionpiece (region_id, kind, geom)
-SELECT r.id, r.kind,
-       -- COALESCE is load-bearing: ST_Subdivide is set-returning and may yield
-       -- ZERO rows for a degenerate ring, and with the LEFT JOIN's ON predicate
-       -- true that produces a NULL-extended row which the CASE would select --
-       -- inserting NULL into a NOT NULL column. Falling back to the parent
-       -- boundary keeps the region visible instead of aborting the import.
-       ST_Multi(COALESCE(CASE WHEN ST_NPoints(r.geom) > %(threshold)s THEN p.geom END, r.geom))
-FROM regions_region r
-LEFT JOIN LATERAL ST_Subdivide(r.geom, %(max_vertices)s) AS p(geom)
-       ON ST_NPoints(r.geom) > %(threshold)s
-WHERE %(kind)s IS NULL OR r.kind = %(kind)s
-"""
-
-
-def build_region_pieces(*, kind: str | None = None) -> int:
-    """(Re)build the lookup geometry for one dimension, or all of them.
-
-    Called by ``import_regions`` after it replaces a dimension. Not called from
-    ``Region.save``: a bulk derived-data write does not belong behind a single-row
-    save. The assignment builder falls back to the full boundary for a region with
-    no pieces, so a region created outside the importer resolves slower rather than
-    being invisible.
-
-    DELETE-then-INSERT, not a bare INSERT. Calling an INSERT twice accumulates
-    duplicate pieces, and because the lookup dedupes on region the counts stay
-    correct — the damage is a bloating GiST index and a longer per-location sort,
-    with nothing to show for it.
-    """
-    with transaction.atomic(), connection.cursor() as cursor:
-        if kind is not None:
-            cursor.execute("DELETE FROM regions_regionpiece WHERE kind = %(kind)s", {"kind": kind})
-        else:
-            cursor.execute("DELETE FROM regions_regionpiece")
-        cursor.execute(
-            _BUILD_PIECES_SQL,
-            {
-                "kind": kind,
-                "threshold": SUBDIVIDE_VERTEX_THRESHOLD,
-                "max_vertices": SUBDIVIDE_MAX_VERTICES,
-            },
-        )
-        return int(cursor.rowcount or 0)
-
-
 class RegionKind(models.TextChoices):
     """The geographic dimensions we aggregate by.
 

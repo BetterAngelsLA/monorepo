@@ -41,8 +41,8 @@ from django.contrib.gis.geos import MultiPolygon
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from regions.models import DISPLAY_SIMPLIFY_DEGREES, Region, RegionKind, build_region_pieces
-from regions.selectors import ensure_location_regions
+from regions.models import DISPLAY_SIMPLIFY_DEGREES, Region, RegionKind
+from regions.services import build_region_pieces, ensure_location_regions
 
 # Envelope for the guard that catches a silently-skipped reprojection. Padded
 # because LA County legitimately reaches latitude ~32.80 (Catalina and San

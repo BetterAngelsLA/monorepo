@@ -395,3 +395,53 @@ class InteractionMapTestCase(TestCase):
         points, _ = self._points()
         cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id)
         self.assertEqual(len(points), sum(cell["count"] for cell in cells))
+
+
+class StaleAssignmentTestCase(RegionRollupTestCase):
+    """A location created since the last import must still be counted.
+
+    The rollup joins the stored assignment rather than doing the spatial test
+    itself, so if it only counted rows already in that table, a location added since
+    the last import would be absent from **every** bucket — including the
+    outside-everything one. The report would then under-count silently: nothing
+    errors, the figures still look plausible, and the total quietly stops
+    reconciling against the KPI row.
+
+    ``_note_at_resolved_by_no_one`` is what creates that state: the note has a real
+    ``Location`` with a real point, and nothing has written an assignment for it,
+    because the normal helper resolves as it goes.
+    """
+
+    def _note_at_resolved_by_no_one(self, lon: float, lat: float) -> Note:
+        """A note whose ``Location`` exists but has never been assigned."""
+        return baker.make(
+            Note,
+            organization=self.org,
+            location=baker.make(Location, point=Point(lon, lat, srid=4326)),
+            interacted_at=datetime(2026, 1, 15, tzinfo=UTC),
+        )
+
+    def test_the_rollup_resolves_a_location_it_has_never_seen(self) -> None:
+        self._note_at_resolved_by_no_one(-118.24, 34.05)  # inside BOX_A
+
+        counts = self._counts()
+        self.assertEqual(counts.get("1"), 1, "a fresh location must land in its region")
+        self.assertNotIn(None, counts, "it resolved, so it is not unassigned")
+
+    def test_an_unresolvable_fresh_location_is_still_reported(self) -> None:
+        self._note_at_resolved_by_no_one(-118.24, 34.05)  # BOX_A
+        self._note_at_resolved_by_no_one(*OUTSIDE)  # no region
+
+        counts = self._counts()
+        self.assertEqual(counts.get("1"), 1)
+        self.assertEqual(counts.get(None), 1, "the outside note is reported, not dropped")
+        self.assertEqual(sum(counts.values()), 2, "buckets must reconcile to the total")
+
+    def test_repeated_reads_do_not_double_count(self) -> None:
+        """Resolving on read must be idempotent, or every report inflates."""
+        self._note_at_resolved_by_no_one(-118.24, 34.05)
+
+        first = self._counts()
+        second = self._counts()
+        self.assertEqual(first, second, "a repeated read must not resolve again")
+        self.assertEqual(second.get("1"), 1)
