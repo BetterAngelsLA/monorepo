@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pghistory
+import pgtrigger
 from common.models import BaseModel, OrgScoped
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
@@ -27,8 +28,10 @@ if TYPE_CHECKING:
     # ``update`` — the pair is only disjoint once the mechanical column is out.
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
     pghistory.UpdateEvent("reservation.update", condition=pghistory.AnyChange(exclude=["status", "updated_at"])),
-    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="reservation_evt_obj_idx")]},
-    append_only=True,
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="reservation_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Reservation(OrgScoped, BaseModel):
     org_via = ("bed", "room")
@@ -104,8 +107,10 @@ class Reservation(OrgScoped, BaseModel):
     pghistory.InsertEvent("reservation_client.add"),
     pghistory.UpdateEvent("reservation_client.update"),
     pghistory.DeleteEvent("reservation_client.remove"),
-    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="resclient_evt_obj_idx")]},
-    append_only=True,
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="resclient_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class ReservationClient(BaseModel):
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="reservation_clients")
