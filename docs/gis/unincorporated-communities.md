@@ -13,14 +13,14 @@ geography DPH already uses for unincorporated service delivery.
 Source: [Community Boundaries (CSA)], layer 23 —
 `https://public.gis.lacounty.gov/public/rest/services/LACounty_Dynamic/Political_Boundaries/MapServer/23`
 
-## Why the layer *as a whole* is unusable, but this subset is
+## The filter, and what it excludes
 
 The full layer mixes three publishers: `SOURCE` is `BOS` (county eGIS), `LA City`
 (the city's own community geography) and `Long Beach City`, and `COMMUNITY` is
 therefore not one countywide taxonomy. It also carries 19 water/pier/breakwater
 features.
 
-**The filter collapses all of that away.** Within `CITY_TYPE='Unincorporated' AND
+The filter excludes all of it. Within `CITY_TYPE='Unincorporated' AND
 Feat_Type='Land'`, **100% of the 120 rows are `SOURCE='BOS'` with
 `LCITY='Unincorporated'`** — one authority, one naming convention. `COMMUNITY` is
 unique across all 120, as is `CSA_ID`.
@@ -34,7 +34,7 @@ Verified properties of that subset:
   units as `csa_unincorp_<name>` — **119 of 120 names match.** The 120-unit set is the
   de-facto recognised geography for county service delivery, not a GIS artefact.
 
-## Three suspected defects, investigated and refuted
+## Non-defects
 
 **`Arcadia` and `Azusa` looked mislabelled as unincorporated.** They are not. They are
 real unincorporated land *adjacent to* those cities, named for them — 0.91 and 1.57

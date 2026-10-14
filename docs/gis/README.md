@@ -125,7 +125,7 @@ and requires `reports.view_reports` at the payload org. `regionDimensions` and `
 require only an authenticated session: they serve public reference boundaries, identical for
 every tenant, and their SELECT touches no org- or client-scoped column.
 
-### Two corrections the expanded catalog forced
+### Sources that look right but are not
 
 - **LAHSA *does* publish SPA geometry** (a live polygon layer, updated 2026-09). The earlier
   "publishes no geometry" note was wrong; only their *counts* are tables.
@@ -139,9 +139,6 @@ Also superseded, and easy to get wrong: the **congressional map was replaced by 
 still served side by side.
 
 ## Open questions
-
-(The `postgis`-on-RDS question is settled: the migration deliberately does not create
-the extension, and says why. Not repeated here.)
 
 1. Which **region set** ships first? Council district + SPA is the recommendation.
 2. **LACDMH service areas have no public polygon layer** — needs a decision (extract from

@@ -315,7 +315,7 @@ table (id sequence, `created_at`, `pghistory` triggers, constraints).
 
 ### 7.1 Geography columns cannot use the index for `within` — measured
 
-I flagged this from reading Django's source; here is the measured confirmation.
+Measured confirmation:
 
 ```
 A) geography column + Django's ST_Within(geog::geometry, poly::geometry)
@@ -360,8 +360,7 @@ dataset compared with census tracts. Simplification is not optional at the next 
 
 ### 7.5 `postgis` extension — RESOLVED: already present, and we must not create it
 
-**This open question is closed, and the answer inverted.** An earlier revision of the
-migration added `CreateExtension("postgis")` on the premise that nothing created it. That
+**RESOLVED: already present, and we must not create it.** That
 premise was wrong: `clients`, `common`, `hmis` and `shelters` each declare geometry fields in
 their `0001_initial` migrations, and those migrations cannot apply without the extension.
 

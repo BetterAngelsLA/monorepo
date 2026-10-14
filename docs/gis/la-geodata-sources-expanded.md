@@ -501,24 +501,11 @@ Coordinate pairs counted from full-precision GeoJSON (`geometryPrecision=6`); "s
 
 ### 5.3 Performance implications (concrete) — **PROPOSAL, SUPERSEDED**
 
-> **The implementation did not follow this section's schema and CRS advice, and the
-> advice below is kept only as the reasoning that led there.** Two recommendations were
-> reversed on purpose:
->
-> * **CRS.** This proposed storing in **EPSG:2229**. The shipped `Region` stores
->   **EPSG:4326**, because boundaries have to join against `Location.point` (which is
->   4326) without a per-query reprojection. See [README.md](README.md).
-> * **Schema.** This proposed one `geography_boundary` table per tier plus a
->   materialized `client_interaction_region` map. The shipped design is `Region` +
->   `RegionPiece` (subdivided lookup) + `LocationRegion` (the resolved assignment) —
->   the same idea, but with the assignment stored per location and kind rather than in
->   a separate materialized table.
->
-> What still holds below: **simplify before ingest** (the shipped code uses
-> `ST_SimplifyPreserveTopology` at 0.0005° for a display copy, keeping the authoritative
-> geometry full-precision), **`ST_Subdivide` the heavy layers** (that is exactly what
-> `RegionPiece` is for), **join on a stable code and never a display name**, and the
-> `maxRecordCount` pagination constraint.
+> **SUPERSEDED.** The shipped design stores **EPSG:4326** and uses
+> `Region` + `RegionPiece` + `LocationRegion`, not EPSG:2229 and a
+> `geography_boundary` table per tier. The reasons below are kept only for the parts
+> that still hold: simplify before ingest, `ST_Subdivide` the heavy layers, and join
+> on a stable code rather than a display name.
 
 - **CRS: no single CRS exists** — 2229 (145 layers), 3857 (117), 3310, 4269, 4326, 6414, 6424, 26910/26911. **Store in EPSG:2229** (CA State Plane Zone 5, US survey feet): the plurality of authoritative LA County layers ship in it, it's projected (so area math and GiST indexing are sound), and it's the native SRID for the County's whole `Political_Boundaries` service. Reproject the 3857 City/LAHSA layers, the 3310 statewide layers (CalEnviroScreen 5.0, FHSZ LRA, CDT county/city boundaries, CEC DAC), the 6414 CEC DAC variant, and 4269 TIGER files on load.
 - **`maxRecordCount` throttling:** most services cap at 1000–2000 features/request. Pulling 91,626 blocks or 156,924 catchment areas over REST needs `resultOffset`/`resultRecordCount` pagination — **or better, use bulk download** where offered. LA County AGOL items expose GPKG/FileGDB/GeoJSON via `opendata.arcgis.com/api/download/v1/items/{id}/geoPackage` (etc.). **TIGERweb allows `maxRecordCount = 100000`** and LA County `Demographics` allows **3000** — the two most generous services.

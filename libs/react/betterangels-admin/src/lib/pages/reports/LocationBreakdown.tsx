@@ -128,6 +128,8 @@ export function LocationBreakdown({
     () => rows.filter((r) => !r.isUnassigned && r.count > 0),
     [rows],
   );
+  const hasData = !loading && assigned.length > 0;
+
   const unassigned = useMemo(() => rows.filter((r) => r.isUnassigned), [rows]);
   // Resolved above the JSX rather than inline: the styleguide asks for `if`/`else`
   // over a ternary whose branch is a call, and `??` rather than `||` — an empty name
@@ -143,7 +145,7 @@ export function LocationBreakdown({
   // Named regions with interactions, which is what the drill-down offers. The
   // unassigned buckets are excluded: they have no code to filter by.
 
-  const dimensionName = DIMENSION_LABELS[dimension] ?? dimension;
+  const dimensionName = DIMENSION_LABELS[dimension];
 
   // Selecting a different dimension invalidates the code: "4" is an SPA and also a
   // Long Beach council district.
@@ -224,13 +226,13 @@ export function LocationBreakdown({
         </div>
       )}
 
-      {!loading && assigned.length === 0 && (
+      {!loading && !hasData && (
         <p className="text-center text-neutral-500">
           No located interactions for this range.
         </p>
       )}
 
-      {!loading && assigned.length > 0 && (
+      {hasData && (
         <div className="mb-5">
           <RegionMap
             dimension={dimension}
@@ -244,7 +246,7 @@ export function LocationBreakdown({
         </div>
       )}
 
-      {!loading && assigned.length > 0 && (
+      {hasData && (
         <>
           <Column
             data={assigned.slice(0, 20)}

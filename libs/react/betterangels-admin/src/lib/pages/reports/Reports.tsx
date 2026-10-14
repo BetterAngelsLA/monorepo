@@ -81,13 +81,10 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
     if (downloadError) {
       console.error(downloadError);
     }
-  }, [downloadError]);
-
-  useEffect(() => {
     if (error) {
       console.error(error);
     }
-  }, [error]);
+  }, [downloadError, error]);
 
   const orgName = activeOrg?.name ?? 'Your Organization';
 
