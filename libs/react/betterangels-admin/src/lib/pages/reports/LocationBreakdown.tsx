@@ -1,9 +1,6 @@
 import { Column } from '@ant-design/charts';
 import {
   Alert,
-  Button,
-  Checkbox,
-  Input,
   Select,
   Spin,
   Table,
@@ -131,7 +128,7 @@ export function LocationBreakdown({
   // question ("where are we strong in 8 versus 9?"), and the plumbing is already a list
   // the whole way down to the API, so single-select was an artificial restriction.
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
-  const [filter, setFilter] = useState('');
+
   const controlsRef = useNoAutofill();
 
   const { dimensions, error: dimensionsError } = useRegionDimensions();
@@ -237,16 +234,11 @@ export function LocationBreakdown({
     [availableRegions],
   );
 
-  const selectable = useMemo(() => {
-    const needle = filter.trim().toLowerCase();
-    const matching =
-      needle === ''
-        ? pickable
-        : pickable.filter((row) =>
-            `${row.name} ${row.code}`.toLowerCase().includes(needle),
-          );
-    return [...matching].sort((a, b) => compareRegionCodes(a.code, b.code));
-  }, [pickable, filter]);
+  /** Sorted for reading: numeric codes as numbers, everything else alphabetically. */
+  const selectable = useMemo(
+    () => [...pickable].sort((a, b) => compareRegionCodes(a.code, b.code)),
+    [pickable],
+  );
 
   const unassigned = useMemo(() => shown.filter((r) => r.isUnassigned), [shown]);
   // Resolved above the JSX rather than inline: the styleguide asks for `if`/`else`
@@ -356,54 +348,44 @@ export function LocationBreakdown({
       </div>
 
       {dimension !== undefined && (
-        <div className="mb-4 rounded-lg border border-neutral-90 p-3">
-          <div className="mb-2 flex max-w-md items-baseline justify-between gap-2">
-            {/* No "All regions" checkbox. It read as a peer of the regions when it is not
-                one, and it was redundant: an empty selection already *is* "all" — that is
-                how the API reads an absent `regionCodes`, and how the grouping's own
-                "All dimensions" works. The state says which it is, and clearing is an
-                action rather than a value. */}
-            <Text type="secondary">
-              {selectedCodes.length === 0
-                ? `Show — all ${dimensionName.toLowerCase()}s`
-                : `Show — ${selectedCodes.length} of ${pickable.length}`}
-            </Text>
-            {selectedCodes.length > 0 && (
-              <Button type="link" size="small" onClick={() => setSelectedCodes([])}>
-                Clear
-              </Button>
-            )}
-          </div>
-          <Input
+        <div className="mb-4 max-w-2xl">
+          {/* A searchable multi-select with the selection kept visible as removable pills.
+              The earlier attempt at this collapsed after every pick, for two reasons that
+              are both now fixed: the options were derived from the *filtered* rollup, so
+              choosing one region deleted the others from the list, and the dropdown itself
+              closes on select in multiple mode. */}
+          <Select
+            mode="multiple"
+            showSearch
             allowClear
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-            placeholder={`Filter ${dimensionName.toLowerCase()}s by name or code`}
-            className="mb-2 max-w-xs"
+            // The options come from the unfiltered rollup, so choosing one never removes
+            // the others from the list.
+            options={selectable.map((row) => ({
+              value: row.code,
+              label: `${row.name || row.code} (${row.count.toLocaleString()})`,
+              searchText: `${row.name} ${row.code}`,
+            }))}
+            value={selectedCodes}
+            onChange={setSelectedCodes}
+            // Keeps the pills from growing without bound; the overflow is the "+N" chip.
+            // A fixed cap rather than `responsive`: antd's responsive mode renders the
+            // overflow chip even when nothing is hidden, so three selected regions showed a
+            // stray "+ 0 ..." beside them. Capping at two is also more honest — a "+N" that
+            // always means N things you cannot see.
+            maxTagCount={2}
+            placeholder={`All ${dimensionName.toLowerCase()}s`}
+            style={{ width: '100%' }}
+            // Searches the name *and* the code, because a reader usually has the code in
+            // hand ("district 13") and it is not what the label starts with.
+            filterOption={(input, option) =>
+              matches((option?.searchText as string) ?? '', input)
+            }
           />
-          {selectable.length === 0 ? (
-            <Text type="secondary">
-              {selectable.length === 0 && filter.trim() === ''
-                ? 'No interactions in this range.'
-                : 'Nothing matches that filter.'}
-            </Text>
-          ) : (
-            <div className="max-h-56 overflow-y-auto pr-1">
-              <Checkbox.Group
-                className="flex w-full flex-col gap-2"
-                value={selectedCodes}
-                // The values are region codes, which are strings, so narrow rather than
-                // cast — `Checkbox.Group` types its change as `CheckboxValueType[]`.
-                onChange={(next) =>
-                  setSelectedCodes(next.filter((v): v is string => typeof v === 'string'))
-                }
-                options={selectable.map((row) => ({
-                  value: row.code,
-                  label: `${row.name || row.code} (${row.count.toLocaleString()})`,
-                }))}
-              />
-            </div>
-          )}
+          <div className="mt-1 text-xs text-neutral-500">
+            {selectedCodes.length === 0
+              ? `No selection means every ${dimensionName.toLowerCase()} in range.`
+              : `${selectedCodes.length} of ${pickable.length} selected — clear the control to show all.`}
+          </div>
         </div>
       )}
 
