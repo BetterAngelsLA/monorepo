@@ -20,7 +20,7 @@ from .models import LocationRegion, Region, RegionKind
 
 def region_counts(
     *,
-    kind: str,
+    kind: str | None,
     start: datetime,
     end: datetime,
     organization_id: int | None = None,
@@ -28,7 +28,13 @@ def region_counts(
     unassigned_only: bool = False,
     include_unassigned: bool = False,
 ) -> list[dict[str, Any]]:
-    """Interactions per region of ``kind``, plus the unassigned buckets.
+    """Interactions per region, plus the unassigned buckets.
+
+    ``kind`` may be ``None``, which counts **every dimension at once**. Codes are not
+    unique across dimensions — ``"1"`` is a council district, an SPA and a supervisorial
+    district in this data — so the ungrouped rollup groups by ``(kind, code)`` and
+    returns the kind on every bucket. Grouping on the code alone would merge three
+    unrelated regions into one row.
 
     Reads the stored assignment, so a location in no region of this dimension comes
     back with a NULL code rather than being dropped — an inner join to ``Region``
@@ -51,33 +57,44 @@ def region_counts(
     if organization_id is not None:
         notes = notes.filter(organization_id=organization_id)
 
-    rows = notes.filter(location__region_assignments__kind=kind)
+    assignments = "location__region_assignments"
+    rows = notes.filter(**{f"{assignments}__isnull": False})
+    if kind is not None:
+        rows = rows.filter(**{f"{assignments}__kind": kind})
 
     if unassigned_only:
-        rows = rows.filter(location__region_assignments__region__isnull=True)
+        rows = rows.filter(**{f"{assignments}__region__isnull": True})
     elif codes is not None:
-        codes_q = Q(location__region_assignments__region__code__in=list(codes))
+        codes_q = Q(**{f"{assignments}__region__code__in": list(codes)})
         if include_unassigned:
             # Joining on `region__code` already drops unassigned rows, so the
             # unassigned arm has to come from a separate query rather than an OR.
-            codes_q |= Q(location__region_assignments__region__isnull=True)
+            codes_q |= Q(**{f"{assignments}__region__isnull": True})
         rows = rows.filter(codes_q)
 
-    counts = rows.values("location__region_assignments__region__code").annotate(count=Count("id")).order_by()
+    # Grouped by kind as well as code: without it, SPA 1, council district 1 and
+    # supervisorial district 1 collapse into a single bucket.
+    counts = (
+        rows.values(f"{assignments}__kind", f"{assignments}__region__code")
+        .annotate(count=Count("id"))
+        .order_by()
+    )
     buckets = [
         {
-            "code": row["location__region_assignments__region__code"],
+            "kind": row[f"{assignments}__kind"],
+            "code": row[f"{assignments}__region__code"],
             "name": "",
             "count": row["count"],
         }
         for row in counts
     ]
 
-    # Names come from the authoritative region row, one query for the handful of
-    # codes rather than a join that would widen the GROUP BY.
-    named = {code: name for code, name in Region.objects.filter(kind=kind).values_list("code", "name")}
+    # Names come from the authoritative region row, one query rather than a join that
+    # would widen the GROUP BY. Keyed by (kind, code), since a code alone is ambiguous.
+    regions = Region.objects.all() if kind is None else Region.objects.filter(kind=kind)
+    named = {(r_kind, r_code): r_name for r_kind, r_code, r_name in regions.values_list("kind", "code", "name")}
     for bucket in buckets:
-        bucket["name"] = named.get(bucket["code"] or "", "")
+        bucket["name"] = named.get((bucket["kind"], bucket["code"] or ""), "")
 
     return buckets
 

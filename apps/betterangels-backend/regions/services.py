@@ -242,7 +242,7 @@ def parse_region_code_filter(region_codes: Sequence[str] | None) -> RegionCodeFi
 
 def region_rollup(
     *,
-    kind: str,
+    kind: str | None,
     start: datetime,
     end: datetime,
     organization_id: int,
@@ -286,6 +286,7 @@ def region_rollup(
         if locationless:
             buckets.append(
                 RegionCountType(
+                    kind="",
                     code="",
                     name="No location recorded",
                     count=locationless,

@@ -44,12 +44,18 @@ class UnassignedReason(enum.Enum):
 class RegionCountType:
     """One bucket of the rollup.
 
-    Exactly one bucket per ``code``, plus at most one bucket of each
+    At most one bucket per ``(kind, code)``, plus at most one of each
     ``unassigned_reason``. ``code`` is empty for an unassigned bucket; use
-    ``is_unassigned``/``unassigned_reason`` to identify it, never ``code`` alone
-    — there can be two unassigned buckets in a single response.
+    ``is_unassigned``/``unassigned_reason`` to identify it, never ``code`` alone —
+    there can be two unassigned buckets in a single response.
+
+    ``kind`` is empty when the rollup covers a single dimension, and names the
+    dimension on every bucket when it spans all of them. It is needed there because a
+    code alone is ambiguous: ``"1"`` is a council district, an SPA and a supervisorial
+    district.
     """
 
+    kind: str
     code: str
     name: str
     count: int

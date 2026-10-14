@@ -37,7 +37,7 @@ from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
 
-from .selectors import POINT_LIMIT, available_kinds, region_features
+from .selectors import POINT_LIMIT, available_kinds, region_features, scope_notes_to_regions
 from .services import interaction_map_data, region_rollup
 from .types import (
     InteractionMapType,
@@ -75,7 +75,7 @@ class Query:
         self,
         info: Info,
         organization_id: ID,
-        dimension: RegionDimension,
+        dimension: Optional[RegionDimension] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         region_codes: Optional[List[str]] = None,
@@ -99,7 +99,9 @@ class Query:
         start, end = _aware_range(start_date, end_date, report_calendar_time_zone(org))
 
         return region_rollup(
-            kind=dimension.value,
+            # `None` counts every dimension at once, grouping by (kind, code) because a
+            # code is ambiguous across dimensions.
+            kind=dimension.value if dimension else None,
             start=start,
             end=end,
             organization_id=org.id,
@@ -111,10 +113,10 @@ class Query:
         self,
         info: Info,
         organization_id: ID,
-        dimension: RegionDimension,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         limit: Optional[int] = None,
+        dimension: Optional[RegionDimension] = None,
         region_codes: Optional[List[str]] = None,
     ) -> InteractionMapType:
         """Where the interactions happened: pins, and the same data as a density grid.
@@ -149,14 +151,23 @@ class Query:
             user,
             [NotePermissions.VIEW],
         )
+        scoped_codes = list(region_codes or [])
+        if scoped_codes:
+            if dimension is None:
+                # Refused, not ignored. A code without a dimension cannot be resolved —
+                # "1" is a council district, an SPA and a supervisorial district — so
+                # dropping the filter would return every interaction while looking
+                # filtered, which is worse than an error.
+                raise ValueError("regionCodes requires a dimension")
+            scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=scoped_codes)
+
         return interaction_map_data(
-            kind=dimension.value,
+            kind=dimension.value if dimension else None,
             start=start,
             end=end,
             organization_id=org.id,
             notes=scoped_notes,
             limit=limit or POINT_LIMIT,
-            region_codes=region_codes,
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])

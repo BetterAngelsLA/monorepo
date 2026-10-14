@@ -121,6 +121,10 @@ export function LocationBreakdown({
     dimension,
     startDate,
     endDate,
+    // The drill-down has to reach the rollup, not just the map: `RegionMap` draws the
+    // polygons for the regions it is given, so without this the shapes never change
+    // however the map is filtered.
+    regionCodes: selectedCode === undefined ? undefined : [selectedCode],
   });
   // The pins and density views. Both come back in one request, so switching
   // between them on the map costs nothing; the dimension does not apply, because
