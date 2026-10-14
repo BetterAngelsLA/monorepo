@@ -14,6 +14,39 @@ import {
 } from './hooks';
 
 const LA_CENTER = { lat: 34.05, lng: -118.35 };
+
+/**
+ * Strip the basemap back to what the data needs.
+ *
+ * Under a heatmap every business pin, restaurant label and attraction icon is noise
+ * competing with the field being read, and it is worst exactly where the data is densest —
+ * central LA — where the clutter and the heat overlap.
+ *
+ * What stays is what orients the reader: roads, water, city and neighbourhood names, and
+ * administrative boundaries. `poi` goes entirely, including `poi.park`, because park
+ * labels ("Griffith Park") are still labels on a field rather than part of the
+ * measurement. Transit is removed for the same reason: a metro station icon is a landmark,
+ * not an interaction.
+ *
+ * Applied as a static style rather than a cloud-styled map ID. A `mapId` would take
+ * precedence and make this array a no-op, and the map has no `mapId` — this is raster, so
+ * `styles` applies.
+ */
+const DATA_FOCUSED_STYLES: google.maps.MapTypeStyle[] = [
+  // Everything the reader is not measuring.
+  { featureType: 'poi', elementType: 'all', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', elementType: 'all', stylers: [{ visibility: 'off' }] },
+  // The green "Mt San Antonio" badge survives the `poi` rule because it is a *terrain*
+  // label, not a point of interest — it lives under `landscape.natural`. Terrain names are
+  // orientation at the scale of a whole county, which this map is never read at.
+  { featureType: 'landscape.natural', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  // Icons and shields multiply the noise on their own, even where labels are useful.
+  { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  // Softened so the basemap sits behind the heatmap instead of beside it.
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ saturation: -40 }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ saturation: -60 }, { lightness: 15 }] },
+];
 const LA_ZOOM = 9;
 
 /**
@@ -315,6 +348,7 @@ export function RegionMap({
         defaultCenter={LA_CENTER}
         defaultZoom={LA_ZOOM}
         gestureHandling="cooperative"
+        styles={DATA_FOCUSED_STYLES}
         // The map is a fixed analytical view, not a place to explore. Street View and the
         // map/satellite switch offer ways to look at *imagery* rather than at the data, and
         // the satellite basemap in particular competes with the heatmap and the boundaries
