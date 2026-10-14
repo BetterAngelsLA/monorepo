@@ -71,7 +71,10 @@ function RegionLayer({
 }: {
   rows: RegionCountType[];
   regions: RegionGeometryType[];
-  /** Region codes the reader narrowed to; the viewport frames these when set. */
+  /**
+   * Region codes to restrict to. Empty means every region of the dimension, so the
+   * grouping's full geography is shown; a drill-down narrows it to those regions.
+   */
   focusCodes: string[];
 }) {
   const map = useMap();
@@ -123,15 +126,16 @@ function RegionLayer({
     layer.setStyle((feature: google.maps.Data.Feature) => {
       // Only region polygons live on the Data layer now; points are drawn on a canvas.
       const count = featureNumber(feature, 'count');
-      // Context, not a chart: a light tint so the selected regions read as areas, with
-      // outlines strong enough to survive being underneath a dense field. Shading by
-      // count is what the table is for.
+      // These are the grouping's boundaries, so they have to be readable *through* the
+      // heatmap — an earlier pass used 0.04-0.12 fill and 0.55 stroke, which was
+      // effectively invisible under a dense field and read as "the districts aren't
+      // drawn at all". The fill stays a light tint; the outline carries the shape.
       return {
         fillColor: shade(max, count),
-        fillOpacity: count > 0 ? 0.12 : 0.04,
-        strokeColor: '#1B3A5C',
-        strokeWeight: 0.7,
-        strokeOpacity: 0.55,
+        fillOpacity: count > 0 ? 0.18 : 0.06,
+        strokeColor: '#0F2438',
+        strokeWeight: 1.4,
+        strokeOpacity: 0.85,
       };
     });
 
@@ -245,10 +249,15 @@ export function RegionMap({
     }
     return `Interactions in this range${scope}.`;
   }, [view, points.length, filteredTo]);
-  // The overlay shows exactly what was narrowed to, so the geometry request follows the
-  // *selection* rather than every region that happens to have interactions. Ungrouped and
-  // unselected therefore draws nothing, which is the intended resting state: the map is
-  // for the data, and the boundaries only appear once they mean something.
+  // The overlay is the *grouping's* geography, not the data's: choosing City Council
+  // District should show all fifteen districts, including the ones with no interactions
+  // in range. Driving this from the rollup's codes was wrong — it drew only the twelve
+  // that had data, so three districts silently vanished and the map no longer answered
+  // "where are the districts?".
+  //
+  // An empty list therefore means "all of this dimension", and only a drill-down narrows
+  // it. With no dimension at all the hook skips the request and nothing is drawn, which is
+  // the intended resting state.
   const { regions, loading, error } = useRegionMap({ dimension, codes: focusCodes });
 
   useEffect(() => {
