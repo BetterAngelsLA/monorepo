@@ -102,7 +102,11 @@ export function LocationBreakdown({
   const [selectedCode, setSelectedCode] = useState<string | undefined>(undefined);
 
   const { dimensions, error: dimensionsError } = useRegionDimensions();
-  const { rows, loading, error } = useInteractionsByRegion({
+  const {
+    rows,
+    loading: rowsLoading,
+    error,
+  } = useInteractionsByRegion({
     organizationId,
     dimension,
     startDate,
@@ -124,13 +128,29 @@ export function LocationBreakdown({
     regionCodes: selectedCode === undefined ? undefined : [selectedCode],
   });
 
-  const assigned = useMemo(
-    () => rows.filter((r) => !r.isUnassigned && r.count > 0),
-    [rows],
-  );
-  const hasData = !loading && assigned.length > 0;
+  // The last non-empty set of rows, kept so a refetch does not blank the panel.
+  //
+  // `loading` goes true on every variable change, and rendering a spinner instead of
+  // the content unmounts `RegionMap` — which tears down and rebuilds the Google map —
+  // and collapses the page height, so the reader's scroll position jumps. Holding the
+  // previous rows keeps the layout stable and the map alive; the spinner becomes an
+  // inline affordance rather than a replacement for everything.
+  const [settledRows, setSettledRows] = useState<RegionCountType[]>([]);
+  useEffect(() => {
+    if (!rowsLoading && rows.length > 0) {
+      setSettledRows(rows);
+    }
+  }, [rows, rowsLoading]);
 
-  const unassigned = useMemo(() => rows.filter((r) => r.isUnassigned), [rows]);
+  const shown = rowsLoading && rows.length === 0 ? settledRows : rows;
+  const assigned = useMemo(
+    () => shown.filter((r) => !r.isUnassigned && r.count > 0),
+    [shown],
+  );
+  // `hasData` deliberately ignores `loading`: a refetch must not unmount the map.
+  const hasData = assigned.length > 0;
+
+  const unassigned = useMemo(() => shown.filter((r) => r.isUnassigned), [shown]);
   // Resolved above the JSX rather than inline: the styleguide asks for `if`/`else`
   // over a ternary whose branch is a call, and `??` rather than `||` — an empty name
   // is a legitimate value the importer can produce, and `||` would silently swap in
@@ -220,13 +240,13 @@ export function LocationBreakdown({
         />
       </div>
 
-      {loading && (
+      {rowsLoading && (
         <div className="flex items-center gap-2 text-sm text-neutral-500">
           <Spin size="small" /> Loading {dimensionName.toLowerCase()} data...
         </div>
       )}
 
-      {!loading && !hasData && (
+      {!rowsLoading && !hasData && (
         <p className="text-center text-neutral-500">
           No located interactions for this range.
         </p>
@@ -236,7 +256,7 @@ export function LocationBreakdown({
         <div className="mb-5">
           <RegionMap
             dimension={dimension}
-            rows={rows}
+            rows={shown}
             points={points}
             density={density}
             truncated={truncated}
@@ -264,13 +284,13 @@ export function LocationBreakdown({
               `${row.isUnassigned}-${row.unassignedReason ?? ''}-${row.code}`
             }
             columns={columns}
-            dataSource={rows}
+            dataSource={shown}
             pagination={{ pageSize: 10, hideOnSinglePage: true }}
           />
         </>
       )}
 
-      {!loading && unassigned.length > 0 && (
+      {!rowsLoading && unassigned.length > 0 && (
         <div className="mt-4 rounded border border-neutral-200 bg-neutral-50 p-3">
           <Text strong>Not attributed to a {dimensionName.toLowerCase()}</Text>
           <ul className="mt-2 mb-0 list-disc pl-5 text-sm text-neutral-600">

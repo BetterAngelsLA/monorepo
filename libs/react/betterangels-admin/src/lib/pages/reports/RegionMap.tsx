@@ -1,5 +1,6 @@
 /// <reference types="google.maps" />
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
+import { HeatmapLayer } from './HeatmapLayer';
 import { Alert, Radio, Spin } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
@@ -45,7 +46,7 @@ function shade(max: number, count: number): string {
 }
 
 /** What the map is showing. Regions are always drawn, as context. */
-export type MapView = 'regions' | 'pins' | 'density';
+export type MapView = 'heatmap' | 'regions' | 'pins' | 'density';
 
 /** Warm ramp for density, deliberately distinct from the blue region shading. */
 function densityShade(max: number, count: number): string {
@@ -313,7 +314,9 @@ export function RegionMap({
   hasMapsKey = true,
   className = '',
 }: RegionMapProps) {
-  const [view, setView] = useState<MapView>('regions');
+  // Heatmap first: density over an area is the question this page is usually
+  // asked, and the choropleth is the same data once you know where to look.
+  const [view, setView] = useState<MapView>('heatmap');
 
   const maxDensity = useMemo(
     () => density.reduce((max, cell) => Math.max(max, cell.count), 0),
@@ -323,6 +326,9 @@ export function RegionMap({
     const scope = filteredTo ? ` within ${filteredTo}` : '';
     if (view === 'pins') {
       return `Each dot is one interaction${scope}. ${points.length.toLocaleString()} plotted.`;
+    }
+    if (view === 'heatmap') {
+      return `Density of interactions${scope}, as a continuous field. Red is where interactions concentrate, blue where they thin out — relative only, so read the table below for counts.`;
     }
     if (view === 'density') {
       return `Interactions${scope} aggregated into roughly 1 km cells; darker and larger means more.`;
@@ -380,6 +386,7 @@ export function RegionMap({
           optionType="button"
           buttonStyle="solid"
           options={[
+            { label: 'Heatmap', value: 'heatmap' },
             { label: 'Regions', value: 'regions' },
             { label: 'Interactions', value: 'pins' },
             { label: 'Density', value: 'density' },
@@ -399,7 +406,10 @@ export function RegionMap({
           view={view}
           maxDensity={maxDensity}
         />
-        <InteractionLayer view={view} points={points} density={density} />
+        {view !== 'heatmap' && (
+          <InteractionLayer view={view} points={points} density={density} />
+        )}
+        {view === 'heatmap' && <HeatmapLayer points={points} />}
       </GoogleMap>
       <p className="mt-2 text-xs text-neutral-500">{caption}</p>
       {truncated && view === 'pins' && (
