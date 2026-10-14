@@ -23,6 +23,8 @@ from __future__ import annotations
 from django.contrib.gis.db.models import MultiPolygonField
 from django.db import models
 
+from common.models import BaseModel
+
 # Subdivision is gated: only regions above the threshold are chopped.
 # Tolerance for the map's display geometry, in degrees. 0.0005 deg is ~46 m at Los
 # Angeles, which is 0.2 px at zoom 9 and 0.7 px at zoom 11 -- below what the map can
@@ -57,7 +59,7 @@ class RegionKind(models.TextChoices):
     COC = "coc", "Continuum of Care"
 
 
-class Region(models.Model):
+class Region(BaseModel):
     """One boundary polygon belonging to one geographic dimension."""
 
     kind = models.CharField(max_length=32, choices=RegionKind.choices, db_index=True)
@@ -127,7 +129,7 @@ class Region(models.Model):
         return f"{self.get_kind_display()} {label}"
 
 
-class RegionPiece(models.Model):
+class RegionPiece(BaseModel):
     """A sub-polygon of a :class:`Region`, sized for fast point lookup.
 
     ``Region.geom`` is the authoritative boundary: full resolution, used for
@@ -202,7 +204,7 @@ class RegionPiece(models.Model):
         return f"piece of {self.region_id}"
 
 
-class LocationRegion(models.Model):
+class LocationRegion(BaseModel):
     """Which region each location falls in, per dimension — resolved once, not per query.
 
     The rollup used to work out "which region contains this point" on every read, in

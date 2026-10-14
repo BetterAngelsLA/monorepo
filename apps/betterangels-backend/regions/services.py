@@ -104,7 +104,7 @@ def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> 
                     continue
             cursor.execute(
                 """
-                INSERT INTO regions_locationregion (location_id, kind, region_id)
+                INSERT INTO regions_locationregion (location_id, kind, region_id, created_at, updated_at)
                 SELECT l.id,
                        %(kind)s,
                        (
@@ -138,7 +138,9 @@ def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> 
                          -- against the city layer, which both inflated `rowcount` to
                          -- 431x the truth and made the whole assignment take minutes.
                          LIMIT 1
-                       )
+                       ),
+                       NOW(),
+                       NOW()
                 FROM common_location l
                 WHERE NOT EXISTS (
                     SELECT 1 FROM regions_locationregion lr
