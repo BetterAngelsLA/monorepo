@@ -33,6 +33,10 @@ export type TProps = {
   options: TCheckboxOption[];
   values: string[];
   selectAll?: string;
+  /** Override when Select All includes options outside this group. */
+  selectAllChecked?: boolean;
+  /** Handle explicit Select All toggles instead of the default onChange. */
+  onSelectAllChange?: (checked: boolean) => void;
   onChange: (selected: string[]) => void;
 };
 
@@ -42,12 +46,18 @@ export function CheckboxGroup(props: TProps) {
     options,
     values = [],
     selectAll = SELECT_ALL_LABEL,
+    selectAllChecked,
+    onSelectAllChange,
     onChange,
   } = props;
 
   const cbxOptions = normalizeOptions(options);
 
   function handleChange(value: string, checked: boolean) {
+    if (selectAll && value === SELECT_ALL_KEY && onSelectAllChange) {
+      return onSelectAllChange(checked);
+    }
+
     // add filter
     if (checked) {
       // if select All
@@ -104,8 +114,8 @@ export function CheckboxGroup(props: TProps) {
       {visibleOptions.map((option, idx: number) => {
         let isChecked = values.indexOf(option.value) > -1;
 
-        if (allSelected && option.value === SELECT_ALL_KEY) {
-          isChecked = true;
+        if (option.value === SELECT_ALL_KEY) {
+          isChecked = selectAllChecked ?? (allSelected || isChecked);
         }
 
         return (
