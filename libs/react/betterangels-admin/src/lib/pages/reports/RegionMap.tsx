@@ -1,9 +1,9 @@
 /// <reference types="google.maps" />
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
-import { HEATMAP_RAMP_CSS, HeatmapLayer } from './HeatmapLayer';
+import { HEATMAP_RAMP_CSS, HeatmapLayerWithScale } from './HeatmapLayer';
 import { PointLayer } from './PointLayer';
 import { Alert, Spin } from 'antd';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { mergeCss } from '@monorepo/react/shared';
 import {
@@ -275,6 +275,12 @@ export function RegionMap({
 }: RegionMapProps) {
   // Heatmap first: density over an area is the question this page is usually asked, and
   // the choropleth is the same data once you know where to look.
+  // What 100% means, in interactions. `reference / weight` is the number of interactions
+  // under the densest kernel, because a pixel's intensity is `count * weight`.
+  // Reported by the heatmap, which sits inside the map and can see the zoom. Nothing here
+  // needs to know how the scale is derived.
+  const [scale, setScale] = useState<{ zoom: number; count: number } | null>(null);
+
   const caption = useMemo(() => {
     const scope = filteredTo ? ` within ${filteredTo}` : '';
     if (view === 'clusters') {
@@ -359,7 +365,9 @@ export function RegionMap({
         {/* Both layers are always mounted. The overlay draws whichever regions the
             grouping resolved to — none, when nothing did — rather than being a view of
             its own, and the point layer draws only for the clusters view. */}
-        {view === 'heatmap' && <HeatmapLayer points={points} />}
+        {view === 'heatmap' && (
+          <HeatmapLayerWithScale points={points} onScale={setScale} />
+        )}
         {view === 'clusters' && <PointLayer points={points} />}
         {/* On the map rather than beside it: the ramp is meaningless without knowing it is
             absolute, and a reader looking at a gradient should not have to hunt for its
@@ -386,7 +394,14 @@ export function RegionMap({
               <span>100%</span>
             </div>
             <div className="mt-0.5 w-40 text-[10px] text-neutral-500">
-              100% = the densest spot in this selection
+              {scale
+                ? `100% = ${scale.count.toLocaleString()} interactions in the densest area`
+                : '100% = the densest area in this selection'}
+            </div>
+            {/* The reference is per-zoom, because the kernel radius is in pixels. Saying so
+                is the difference between a scale and a scale that quietly changes. */}
+            <div className="text-[10px] text-neutral-400">
+              scale set for this zoom level
             </div>
           </div>
         )}
