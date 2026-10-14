@@ -200,24 +200,15 @@ class Query:
         tz = report_calendar_time_zone(org)
         start, end = _aware_range(start_date, end_date, tz)
 
-        # Three cases, and conflating the first two is the bug this replaces:
-        #   * no `regionCodes` at all      -> unfiltered: every region + both
-        #                                     unassigned buckets.
-        #   * `["__unassigned__"]` alone   -> *only* rows that matched no region,
-        #                                     both causes. Asking for "unassigned"
-        #                                     and getting only half of it would be
-        #                                     its own surprise; the bucket's
-        #                                     `unassignedReason` says which is which.
-        #   * real codes (with or without the sentinel) -> those regions, plus the
-        #                                     outside-every-region bucket when the
-        #                                     sentinel was asked for.
+        # `regionCodes` has three shapes and the first two must not be conflated:
+        #   absent            -> unfiltered: every region + both unassigned buckets
+        #   `["__unassigned__"]` alone -> only rows matching no region, both causes
+        #   real codes (+ sentinel)    -> those regions, plus unassigned when asked
         requested_codes = list(region_codes or [])
         sentinel_requested = UNASSIGNED in requested_codes
         wanted = [c for c in requested_codes if c != UNASSIGNED]
         unassigned_only = sentinel_requested and not wanted
         include_unassigned = region_codes is None or sentinel_requested
-        # "No location at all" is a separate unassigned cause: include it unless
-        # the caller named specific regions and did not ask for unassigned.
         include_locationless = include_unassigned or (not sentinel_requested and not wanted)
 
         rows = region_counts(
@@ -225,9 +216,8 @@ class Query:
             start=start,
             end=end,
             organization_id=org.id,
-            # `wanted` is passed through even when empty: `or None` would drop the
-            # code predicate and return the WHOLE dimension for `regionCodes: []`,
-            # which is the bug this module already fixed once for the sentinel.
+            # `wanted` passes through even when empty: `or None` would drop the code
+            # predicate and return the WHOLE dimension for `regionCodes: []`.
             codes=wanted if region_codes is not None else None,
             unassigned_only=unassigned_only,
             # Real codes plus the sentinel: the predicate needs both arms, which
@@ -287,12 +277,10 @@ class Query:
         holding ``reports.view_reports`` but not ``notes.view_note`` sees no pins;
         one who can read some notes in an org sees exactly those notes' locations.
 
-        The earlier revision gated this on ``reports.view_reports`` alone, on the
-        reasoning that coordinates are already on ``LocationType.point``. That was
-        wrong in a way worth recording: ``LocationType.point`` is reached *through* a
-        note, so it inherits the note scope, and ``reports.view_reports`` is granted
-        to ORG_ADMIN with no note permission at all. Reusing the report permission
-        here therefore widened the scope rather than matching it.
+        Gating this on ``reports.view_reports`` alone would widen the scope rather than
+        match it: ``LocationType.point`` is reached *through* a note, so it inherits
+        the note scope, and ``reports.view_reports`` is granted to ORG_ADMIN with no
+        note permission at all.
 
         Both representations of one period are returned together so the client can
         switch between them without a second round trip; the density grid is
@@ -394,15 +382,10 @@ class Query:
                 kind=RegionDimension(row["kind"]),
                 code=row["code"],
                 name=row["name"],
-                geometry=row["geometry"] if isinstance(row["geometry"], str) else _dumps(row["geometry"]),
+                geometry=row["geometry"] if isinstance(row["geometry"], str) else json.dumps(row["geometry"]),
             )
             for row in rows
         ]
-
-
-def _dumps(value: object) -> str:
-    """``ST_AsGeoJSON`` may come back already parsed by the driver."""
-    return json.dumps(value)
 
 
 def _org_or_deny(org_id: object) -> Organization:

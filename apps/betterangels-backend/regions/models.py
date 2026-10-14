@@ -25,7 +25,6 @@ from django.db import models
 
 from common.models import BaseModel
 
-# Subdivision is gated: only regions above the threshold are chopped.
 # Tolerance for the map's display geometry, in degrees. 0.0005 deg is ~46 m at Los
 # Angeles, which is 0.2 px at zoom 9 and 0.7 px at zoom 11 -- below what the map can
 # draw. Measured: it takes the full boundary payload from 21 MB to 817 kB.
@@ -41,9 +40,6 @@ SUBDIVIDE_VERTEX_THRESHOLD = 2000
 SUBDIVIDE_MAX_VERTICES = 256
 
 
-# One INSERT that gives every region at least one piece: subdivided when the
-# boundary is complex, copied whole when it is not. Set-returning ST_Subdivide is
-# why this is SQL and not Python.
 class RegionKind(models.TextChoices):
     """The geographic dimensions we aggregate by.
 
@@ -77,7 +73,7 @@ class Region(BaseModel):
     # Registrar-Recorder/County Clerk", SPAs say "Department of Public Health".
     #
     # Two of our layers publish none — LA City council districts and the county
-    # city layer — which is itself worth recording rather than papering over: for
+    # city layer — which is worth recording: for
     # those, authority is not evidenced by the service.
     source_attribution = models.TextField(blank=True, default="")
     # The ArcGIS item id, which identifies the exact hosted layer rather than just

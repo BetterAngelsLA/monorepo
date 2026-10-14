@@ -1,9 +1,5 @@
 """Tests for the region GraphQL surface (DEV-2570 / DEV-2604).
 
-``regions/schema.py`` had no coverage at all, which is precisely why the
-``regionCodes`` filter shipped broken: the SQL underneath was well tested while
-the layer translating an API request into a SQL predicate was not.
-
 The case that matters most is the ``__unassigned__`` sentinel. Expressing it as
 an empty code list collapses "only rows that matched no region" into "no filter",
 which returns the entire rollup.
@@ -123,9 +119,7 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
         self.assertEqual(counts[("", "NO_LOCATION")], 1)
 
     def test_unassigned_sentinel_alone_does_not_return_every_region(self) -> None:
-        """Regression: this used to return the whole unfiltered rollup.
-
-        It returns *only* unassigned rows — both causes of "unassigned", since
+        """Returns *only* unassigned rows — both causes of "unassigned", since
         asking for unassigned and receiving half of it would be its own surprise.
         Named regions must be absent.
         """
@@ -136,12 +130,11 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
         self.assertEqual(counts[("", "NO_LOCATION")], 1)
 
     def test_empty_code_list_returns_no_named_regions(self) -> None:
-        """Regression: `regionCodes: []` used to return the ENTIRE rollup.
+        """`regionCodes: []` must match nothing, not everything.
 
         `wanted or None` collapsed an explicitly-empty list to SQL NULL, which drops
         the code predicate altogether. An empty list means "no codes", so it must
-        match nothing — the same class of bug as the unassigned sentinel, and it was
-        untested, which is why it survived the fix for that one.
+        match nothing — the same class of bug as the unassigned sentinel.
         """
         buckets = self._query([])
         named = [b for b in buckets if not b["isUnassigned"]]
@@ -209,9 +202,8 @@ class InteractionMapPermissionTestCase(GraphQLBaseTestCase):
 
     ``ORG_ADMIN`` holds ``reports.view_reports`` and **no** ``notes.view_note``
     (``accounts/groups.py``) — it can read the aggregated rollup but not an individual
-    note. An earlier revision gated ``interactionMap`` on the report permission alone,
-    which handed that role exact per-interaction coordinates. These tests are the
-    regression guard for that.
+    note, so it must not be gated on the report permission alone: that would hand
+    ``ORG_ADMIN`` exact per-interaction coordinates.
 
     Geometry is deliberately irrelevant here: the assertions are all or nothing.
     """
@@ -271,7 +263,7 @@ class InteractionMapPermissionTestCase(GraphQLBaseTestCase):
 
         ``interactionsByRegion`` returns counts, which is what ``view_reports`` is
         for. If this starts failing, the note check has been applied in the wrong
-        place — which is exactly the mistake that briefly broke every rollup test.
+        place — which is the mistake this guards.
         """
         self.graphql_client.force_login(self.reader)
         response = self.execute_graphql(

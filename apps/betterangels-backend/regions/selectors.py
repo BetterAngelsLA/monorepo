@@ -1,24 +1,8 @@
-"""Region boundaries and the interaction rollup (DEV-2570 / DEV-2604).
+"""Read-only rollups over the stored region assignments (DEV-2570 / DEV-2604).
 
-The rollup is a lateral spatial join: for each interaction's point, find the one
-region of the requested kind that covers it.
-
-Two properties this module exists to preserve:
-
-1. **Regions are ``geometry``, not ``geography``.** Django's ``within`` lookup
-   maps to ``ST_Within`` without ``geography=True`` and therefore appends
-   ``::geometry`` to a geography operand, which discards the GiST index. A plain
-   ``ST_Covers`` against ``geometry`` keeps it. The point side is cast with
-   ``::geometry`` for the same reason.
-
-2. **A point may fall in no region.** A Beverly Hills or Santa Monica address has
-   no LA City council district. Those rows are reported with a ``None`` code so
-   callers can surface an "Unassigned" bucket — an inner join would silently drop
-   roughly a quarter of them.
-
-Raw SQL is used deliberately: the lateral subquery plus ``GROUP BY`` on output
-aliases expresses this far more directly than an ORM chain, and the parameter
-surface is two scalars and a start/end pair.
+The rollup is an ordinary indexed ORM join against ``LocationRegion``. The spatial
+work — deciding which region covers a point — happens once on the write side, in
+``services``, not on every read.
 """
 
 from __future__ import annotations
@@ -32,60 +16,6 @@ from django.db.models import Count, Q, QuerySet
 from notes.models import Note
 
 from .models import Region, RegionKind
-
-# The lateral join shared by every rollup. ``%(kind)s`` is a bound parameter;
-# ``kind`` is never concatenated into the SQL text.
-#
-# The point is matched against ``regions_regionpiece``, not ``regions_region``.
-# A region is stored as one authoritative full-resolution boundary plus a set of
-# subdivided pieces; only the pieces have bounding boxes tight enough for the
-# GiST index to discriminate and the per-row recheck is smaller. See
-# ``RegionPiece``.
-#
-# Why this is raw SQL and not the ORM. The equivalent ORM form is a correlated
-# subquery (`piece.filter(geom__covers=Cast(OuterRef("location__point"), ...))`) and
-# it returns identical buckets. An adversarial review could not reproduce the 10-26x
-# gap this comment used to claim, and was right to push back: the quoted plan
-# (`rows=15 loops=2000`) cannot come from the subdivided pieces table, and the
-# "10-26x" header contradicted the table printed beneath it (24x/206x/738x).
-#
-# What is actually established: both forms resolve per note for realistic data (see
-# the note on materialization above), so neither has a structural advantage, and the
-# raw form exists because it is clearer about the lateral, the tie-break and the
-# unassigned arms than the equivalent nest of subqueries. It is not kept for a
-# demonstrated speed win, and nobody should cite one.
-#
-# Two consequences that are load-bearing:
-#
-# 1. The lateral returns exactly one ``region_id``. A point can coincide with two
-#    pieces of the SAME region (interior or on a seam), so the row it picks must
-#    be identified by region, not by piece — otherwise two pieces of one region
-#    both match and the LIMIT 1 makes the *name* nondeterministic between them.
-# 2. Grouping is by region, so a location matching several pieces of one region
-#    still contributes exactly once — the ``LIMIT 1`` is the dedupe.
-# The rollup was raw SQL for as long as it had to work out "which region contains this
-# point" in a LATERAL join, which Django cannot express. It no longer has to: the
-# assignment is stored in ``LocationRegion``, so the read is an ordinary join and is
-# expressed in the ORM like the rest of this module.
-#
-# ``services.ensure_location_regions`` is where the spatial work went. It still needs
-# the pieces table (that is what makes it fast), but it runs at import and
-# incrementally for new locations, not once per report.
-
-
-def _code_predicate(codes: Sequence[str] | None, include_unassigned: bool) -> Q:
-    """The ``code`` filter, with the unassigned arm written out explicitly.
-
-    ``code = ANY(...)`` evaluates to NULL for an unassigned row, so an unassigned
-    bucket cannot be selected by putting a sentinel in the list — it needs its own
-    ``IS NULL`` arm. That is why ``codes`` and ``include_unassigned`` are separate
-    arguments rather than one list with a marker in it.
-    """
-    if codes is None:
-        return Q()
-    if include_unassigned:
-        return Q(region_code__in=list(codes)) | Q(region_code__isnull=True)
-    return Q(region_code__in=list(codes))
 
 
 def region_counts(
@@ -109,17 +39,10 @@ def region_counts(
     predicate, and returns the whole dimension.
     """
 
-    # Fill any location this dimension has never resolved before counting. The
-    # read joins ``LocationRegion``, so a location created since the last import
-    # has no row and would be absent from *every* bucket — including the
-    # outside-everything one — making the report under-count with no error and no
-    # obvious symptom beyond a total that stops reconciling.
-    #
-    # Doing it here rather than in each caller is deliberate: the join is what
-    # creates the obligation, so every path through this function is covered.
-    # Incremental (no ``force``), so it only touches locations with no row for this
-    # kind, and a location that resolved to nothing has a NULL row rather than none
-    # — so it is not retried on every read.
+    # Fill unresolved locations first. The read joins ``LocationRegion``, so a
+    # location created since the last import would be absent from every bucket,
+    # including unassigned, and the report would under-count with no error.
+    # Incremental, so a NULL assignment (resolved, in no region) is not retried.
     from .services import ensure_location_regions
 
     ensure_location_regions(kind=kind)
@@ -295,8 +218,6 @@ def interaction_points(
     # `notes` is an already-permission-filtered queryset when the caller has one,
     # which is how the map inherits the note read scope rather than inventing its
     # own. `org_id` remains for callers that only scope by organization.
-    # `note_ids` is a bound array parameter, not interpolated text: the scoped
-    # queryset decides *which* ids, and the placeholder keeps them out of the SQL.
     notes_clause = ""
     if notes is not None:
         notes_clause = "AND n.id = ANY(%(note_ids)s)"

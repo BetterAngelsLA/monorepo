@@ -1,44 +1,18 @@
-"""The Region schema: authoritative boundaries, subdivided lookup, and derived data.
+"""The Region schema: boundaries, subdivided lookup, and resolved assignments.
 
-One migration, because that is what this actually is. The app has never been
-deployed, so the earlier six existed only to describe a sequence of branch-local
-edits — a `zcta` -> `zip` rename that every committed revision already had under its
-final name, and three backfills that write nothing on a fresh database. What a reader
-needs is the finished schema, not the route it took to get here.
-
-Three tables, and the distinction between them is the design:
-
-``Region``
-    The authoritative boundary. Full resolution, one row per region per dimension.
-    Used for area, exports, and anything where the real line matters. ``geom_display``
-    is a simplified copy solely for the map: at 0.0005 degrees (about 46 m at Los
-    Angeles) the finest detail is 0.2 px on screen, and serving the authoritative
-    geometry instead shipped 21 MB across the six dimensions where 817 kB suffices.
-
-``RegionPiece``
-    Subdivided copies of the same geometry, for point lookup only. A single city
-    multipolygon gives the GiST index one enormous bounding box that matches nearly
-    every point in Los Angeles, so the index prunes nothing and the cost lands in the
-    vertex recheck. Pieces have tight boxes. This is PostGIS's own guidance
-    (https://postgis.net/documentation/faq/big-objects-performance/), and pieces keep
-    the parent key as that guidance requires.
-
-``LocationRegion``
-    Which region each location falls in, resolved once rather than per request. A
-    nullable ``region`` means "resolved, and in no region of this dimension" — a real
-    answer, since a Beverly Hills address has no LA city council district — which is
-    what lets a reader tell it apart from "not resolved yet".
+One migration. This app has never been deployed, so there is no schema history to
+preserve — see ``regions/models.py`` for what the three tables are for.
 
 **No ``CreateExtension("postgis")``.** The extension is already present: ``clients``,
 ``common``, ``hmis`` and ``shelters`` each created geometry columns in their own
 initial migrations, and PostGIS cannot create those columns without it. Worse, it
 would be a deploy hazard — PostGIS is not a trusted extension, so
 ``CREATE EXTENSION postgis`` needs superuser or ``rds_superuser``, and on RDS the
-application connects with an IAM-minted token for a non-superuser role. The statement
-could fail and block the run, for an extension that is already installed.
+application connects with an IAM-minted token for a non-superuser role. Its reverse
+migration would also ``DROP EXTENSION`` out from under those four apps.
 
 The backfill at the end is for a database that already has boundaries and wants the
-derived tables populated without re-running the importer. On a fresh database it is a
+derived tables populated without re-running the importer. On a fresh one it is a
 no-op, because there is nothing to derive from.
 """
 

@@ -352,13 +352,13 @@ class Command(BaseCommand):
         # Group by code so a layer published in parts (cities) becomes one region.
         buckets: dict[str, dict[str, Any]] = {}
         for feature in layer:
-            code = self._attr(feature, source.code_field)
+            code = self._read_field(feature, source.code_field)
             if code is None:
                 continue
             geometry = feature.geom.geos
             if geometry is None:
                 continue  # type: ignore[unreachable]
-            name = self._attr(feature, source.name_field) or code
+            name = self._read_field(feature, source.name_field) or code
             multipolygon = normalise(geometry)
             entry = buckets.setdefault(code, {"name": name, "parts": []})
             entry["parts"].append(multipolygon)
@@ -426,7 +426,7 @@ class Command(BaseCommand):
             # Pieces cascade with their region.
             Region.objects.filter(kind=source.kind).delete()
             Region.objects.bulk_create(regions, batch_size=200)
-            pieces = self._build_pieces(source.kind)
+            pieces = build_region_pieces(kind=source.kind)
             # Boundaries just changed, so every stored location-to-region answer for
             # this dimension is suspect. `force` clears and recomputes rather than
             # trying to work out which ones moved.
@@ -436,12 +436,8 @@ class Command(BaseCommand):
         self.stdout.write(f"  assigned  : {assignments} location(s)")
         return len(regions)
 
-    def _build_pieces(self, kind: str) -> int:
-        """Rebuild the lookup geometry for one dimension (see ``build_region_pieces``)."""
-        return build_region_pieces(kind=kind)
-
     @staticmethod
-    def _attr(feature: Any, field_name: str) -> str | None:
+    def _read_field(feature: Any, field_name: str) -> str | None:
         """Read an attribute, tolerating case differences (DBF is case-insensitive)."""
         if not field_name:
             return None

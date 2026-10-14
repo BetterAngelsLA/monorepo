@@ -1,18 +1,7 @@
-"""Tests for region rollup and filtering (DEV-2570 / DEV-2604).
+"""Rollup, unassigned buckets, filtering and boundary serving (DEV-2570 / DEV-2604).
 
-These assert the properties the report depends on, not just that SQL runs:
-
-* a point inside a region is counted in it;
-* a point in **no** region comes back as an unassigned bucket rather than being
-  dropped (a Beverly Hills address has no LA City council district);
-* a note with no location at all is still reported, so the regional total can be
-  reconciled against the KPI row;
-* filtering by code narrows the rollup;
-* boundaries are served as GeoJSON with the right SRID.
-
-Boundaries are created directly rather than downloaded: the importer's network
-behaviour is not what these tests are about, and a unit test must not depend on
-an external service.
+Boundaries are created directly rather than downloaded: a unit test must not depend
+on the importer's network behaviour.
 """
 
 from __future__ import annotations
@@ -266,7 +255,7 @@ class RegionReconciliationTestCase(TestCase):
 class InteractionMapTestCase(TestCase):
     """The pins and density views (DEV-2570 / DEV-2604).
 
-    The properties worth pinning down are the ones a reviewer would not see by
+    The properties asserted here are the ones a reviewer would not see by
     reading the SQL: that neither view leaks client identity, that org scoping
     actually scopes, that truncation is reported rather than silent, and that the
     two views describe the same interactions so the toggle cannot change the story.
