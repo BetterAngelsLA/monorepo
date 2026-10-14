@@ -1,6 +1,7 @@
 /// <reference types="google.maps" />
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
 import { HeatmapLayer } from './HeatmapLayer';
+import { PointLayer } from './PointLayer';
 import { Alert, Radio, Spin } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
@@ -46,54 +47,6 @@ function shade(max: number, count: number): string {
 
 /** The map's views. Heatmap is the default; see `RegionMap` below. */
 export type MapView = 'heatmap' | 'pins';
-
-/**
- * Draws interaction locations as individual pins.
- *
- * They go through the map's Data layer, so this is one `setStyle` pass over N
- * features rather than N React components. At the point cap that difference is the
- * whole reason the view is usable.
- *
- * `map.data` is one layer per map, shared with the choropleth — the two coordinate
- * by property name, and this component owns the cleanup for the features it adds.
- */
-function InteractionLayer({ view, points }: { view: MapView; points: InteractionPointType[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    // The heatmap draws itself on a canvas; this layer only serves the pins.
-    if (!map || view === 'heatmap') {
-      return;
-    }
-
-    const layer = map.data;
-    const added: google.maps.Data.Feature[] = [];
-
-    if (view === 'pins') {
-      points.forEach((point, index) => {
-        try {
-          const feature = layer.add({
-            geometry: new google.maps.Data.Point(
-              new google.maps.LatLng(point.latitude, point.longitude),
-            ),
-            properties: { kind: 'pin', key: `pin-${index}` },
-          });
-          added.push(feature);
-        } catch (error) {
-          console.error('[RegionMap] could not plot a point', error);
-        }
-      });
-    }
-
-    return () => {
-      // Remove before adding to the shared layer; removing only what this added
-      // keeps the choropleth intact when the view changes.
-      added.forEach((feature) => layer.remove(feature));
-    };
-  }, [map, view, points]);
-
-  return null;
-}
 
 /**
  * Draws the choropleth. Must be a child of `<GoogleMap>`, which is what provides
@@ -168,22 +121,7 @@ function RegionLayer({
     });
 
     layer.setStyle((feature: google.maps.Data.Feature) => {
-      const kind = featureString(feature, 'kind');
-
-      if (kind === 'pin') {
-        // Points have no area, so an icon is what makes them visible at all.
-        return {
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 6,
-            fillColor: '#C2185B',
-            fillOpacity: 0.85,
-            strokeColor: '#7B0F3A',
-            strokeWeight: 0.8,
-          },
-        };
-      }
-
+      // Only region polygons live on the Data layer now; points are drawn on a canvas.
       const count = featureNumber(feature, 'count');
       // Context, not a chart: a light tint so the selected regions read as areas, with
       // outlines strong enough to survive being underneath a dense field. Shading by
@@ -298,7 +236,9 @@ export function RegionMap({
   const caption = useMemo(() => {
     const scope = filteredTo ? ` within ${filteredTo}` : '';
     if (view === 'pins') {
-      return `Each dot is one interaction${scope}. ${points.length.toLocaleString()} plotted.`;
+      // Not "each dot is one interaction" any more: points in the same screen cell are
+      // merged into one bubble, so a dot stands for one *or more*.
+      return `${points.length.toLocaleString()} interactions${scope}, clustered by area. A numbered bubble counts the interactions under it; zoom in to split it.`;
     }
     if (view === 'heatmap') {
       return `Density of interactions${scope}, as a continuous field. Red is where interactions concentrate, blue where they thin out — relative only, so read the table below for counts.`;
@@ -375,8 +315,8 @@ export function RegionMap({
         {/* Both layers are always mounted. The overlay draws whichever regions the
             grouping resolved to — none, when nothing did — rather than being a view of
             its own, and the point layer draws only for the pins view. */}
-        <InteractionLayer view={view} points={points} />
         {view === 'heatmap' && <HeatmapLayer points={points} />}
+        {view === 'pins' && <PointLayer points={points} />}
       </GoogleMap>
       <p className="mt-2 text-xs text-neutral-500">{caption}</p>
       {truncated && view === 'pins' && (
