@@ -3,7 +3,7 @@
 import base64
 import json
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Any
 from unittest import mock
@@ -1385,3 +1385,75 @@ class ObjectAuditLogFilterTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertEqual([event.action for event in actions[0].events], ["shelter.update"])
         self.assertEqual(actions[0].field_changes["name"], ["Early", "Late"])
+
+
+class ObjectAuditLogQueryBudgetTestCase(TestCase):
+    """Query-count and SQL-pushdown guards (ADR 0004 §20, §10 performance note).
+
+    §20 requires that a representative busy object cost a *bounded* number of
+    queries — not one that tracks the object's history — and that label/date/
+    actor filters run in SQL rather than as a Python post-filter. §9c measured
+    that history size barely moves latency (H1/H2); these tests pin the
+    mechanism behind that result, so a refactor cannot quietly reintroduce an
+    N+1 or move filtering back into Python.
+    """
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Busy Shelter")
+
+    def _rename(self, count: int) -> None:
+        """Append *count* shelter updates, each its own context → its own action."""
+        for i in range(count):
+            with audit_context(user=self.user):
+                self.shelter.name = f"Rename {i}"
+                self.shelter.save()
+
+    def _log_and_count(self, **kwargs: Any) -> tuple[list[Any], list[dict[str, Any]]]:
+        with CaptureQueriesContext(connection) as captured:
+            page = object_audit_log(obj=self.shelter, target_type="SHELTER", **kwargs)
+        return page.results, list(captured.captured_queries)
+
+    # ── §20 query-count guard ────────────────────────────────────────────────
+
+    def test_query_count_does_not_scale_with_object_history(self) -> None:
+        self._rename(10)
+        small_actions, small = self._log_and_count()
+
+        self._rename(90)  # 100 events on the same object in total
+        large_actions, large = self._log_and_count()
+
+        self.assertTrue(small_actions and large_actions)
+        # Paging happens in SQL (the key query carries LIMIT), so the round-trip
+        # count is identical at 10 and at 100 events — it does not track history.
+        self.assertEqual(len(small), len(large))
+        self.assertLessEqual(len(large), 6)
+
+    def test_key_query_pages_in_sql(self) -> None:
+        """Pagination must be a LIMIT on the key query, not a slice in Python."""
+        self._rename(30)
+
+        _, queries = self._log_and_count(limit=5)
+
+        self.assertTrue(queries)
+        self.assertRegex(queries[0]["sql"], r"\bLIMIT\b")
+
+    # ── §10 filter pushdown ──────────────────────────────────────────────────
+
+    def test_filters_are_pushed_to_sql_and_short_circuit(self) -> None:
+        """Filters are predicates on the CTE, not a Python post-filter (§10, §21)."""
+        self._rename(5)
+
+        future = datetime.now(timezone.utc) + timedelta(days=1)
+        actions, queries = self._log_and_count(date_from=future, actor_id=self.user.pk)
+
+        # Nothing survives the window, so the selector must short-circuit after
+        # the key query — proof the predicate ran in SQL, since a Python-side
+        # filter would have had to fetch the rows before dropping them.
+        self.assertEqual(actions, [])
+        self.assertEqual(len(queries), 1)
+
+        sql = queries[0]["sql"]
+        self.assertIn("pgh_created_at", sql)
+        self.assertIn("actor_id", sql)
