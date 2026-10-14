@@ -14,6 +14,7 @@ import {
   RegionDimension,
   UnassignedReason,
 } from '@monorepo/ba-platform/types';
+import { CheckboxGroup } from '@monorepo/react/components';
 import { ChartCard, useNoAutofill } from '../../components';
 import {
   useInteractionMap,
@@ -133,6 +134,23 @@ export function LocationBreakdown({
   const controlsRef = useNoAutofill();
 
   const { dimensions, error: dimensionsError } = useRegionDimensions();
+
+  // Two rollups over the same dimension, because they answer different questions.
+  //
+  // `availableRegions` is unfiltered and exists to populate the region picker. A
+  // multi-select cannot be built from the filtered result: choosing district 1 would
+  // re-query for district 1 alone, the option list would collapse to that one row, and
+  // there would be no way to ever choose a second. That is exactly what went wrong.
+  //
+  // `rows` is scoped to the selection and is what the table, the figures and the map
+  // reflect.
+  const { rows: availableRegions } = useInteractionsByRegion({
+    organizationId,
+    dimension,
+    startDate,
+    endDate,
+  });
+
   const {
     rows,
     loading: rowsLoading,
@@ -190,6 +208,23 @@ export function LocationBreakdown({
     () => shown.filter((r) => !r.isUnassigned && r.count > 0),
     [shown],
   );
+
+  /**
+   * Sorted for reading, not for the API.
+   *
+   * Codes arrive in whatever order the database returns them, which for numeric codes is
+   * dictionary order — "1", "10", "11", "2" — and reads as unsorted. Numeric codes are
+   * therefore compared as numbers and everything else alphabetically, so ZIP codes and
+   * cities stay in a sensible order too.
+   */
+  function compareRegionCodes(a: string, b: string): number {
+    const an = Number(a);
+    const bn = Number(b);
+    if (!Number.isNaN(an) && !Number.isNaN(bn)) {
+      return an - bn;
+    }
+    return a.localeCompare(b);
+  }
   // `hasData` deliberately ignores `loading`: a refetch must not unmount the map.
   const hasData = assigned.length > 0;
 
@@ -197,13 +232,15 @@ export function LocationBreakdown({
   // has to hand ("district 13") and it is not what the label shows.
   const selectable = useMemo(() => {
     const needle = filter.trim().toLowerCase();
-    if (needle === '') {
-      return assigned;
-    }
-    return assigned.filter((row) =>
-      `${row.name} ${row.code}`.toLowerCase().includes(needle),
-    );
-  }, [assigned, filter]);
+    const pool = availableRegions.filter((row) => !row.isUnassigned && row.count > 0);
+    const matching =
+      needle === ''
+        ? pool
+        : pool.filter((row) =>
+            `${row.name} ${row.code}`.toLowerCase().includes(needle),
+          );
+    return [...matching].sort((a, b) => compareRegionCodes(a.code, b.code));
+  }, [availableRegions, filter]);
 
   const unassigned = useMemo(() => shown.filter((r) => r.isUnassigned), [shown]);
   // Resolved above the JSX rather than inline: the styleguide asks for `if`/`else`
@@ -313,68 +350,39 @@ export function LocationBreakdown({
       </div>
 
       {dimension !== undefined && (
-        <fieldset
-          key={dimension ?? 'all'}
-          className="mb-4 rounded border border-neutral-200 p-3"
-        >
-          <legend className="px-1 text-sm text-neutral-500">
-            Show ({selectedCodes.length === 0 ? 'all' : `${selectedCodes.length} selected`})
-          </legend>
-          {/* A plain checkbox list rather than antd's `Select mode="multiple"`: that
-              dropdown closes after every pick, so adding a second region meant reopening
-              it — and no amount of prop-fiddling made it behave. A list does not have a
-              state to get stuck in. */}
+        <div className="mb-4 rounded-lg border border-neutral-90 p-3">
+          <div className="mb-2 flex items-baseline justify-between">
+            <Text type="secondary">
+              Show {selectedCodes.length > 0 ? `(${selectedCodes.length} selected)` : '(all)'}
+            </Text>
+          </div>
           <Input
             allowClear
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
             placeholder={`Filter ${dimensionName.toLowerCase()}s by name or code`}
-            style={{ maxWidth: 320, marginBottom: 8 }}
+            className="mb-2 max-w-xs"
           />
-          {/* Keyed by dimension so switching regroups from a clean tree. The codes alone
-              are not stable identities: "1" is a ZIP, a city, a council district, an SPA
-              and a CoC, so a list keyed only by code can keep rows from the dimension the
-              reader just left — which showed as two checkboxes for one district, where
-              clicking either toggled the same value twice. */}
-          <div className="max-h-44 overflow-y-auto">
-            {selectable.length === 0 ? (
-              <Text type="secondary">
-                {assigned.length === 0
-                  ? 'No interactions in this range.'
-                  : 'Nothing matches that filter.'}
-              </Text>
-            ) : (
-              selectable.map((row) => (
-                <label key={row.code} className="flex cursor-pointer items-center gap-2 py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={selectedCodes.includes(row.code)}
-                    onChange={(event) =>
-                      setSelectedCodes((current) =>
-                        event.target.checked
-                          ? [...current, row.code]
-                          : current.filter((code) => code !== row.code),
-                      )
-                    }
-                  />
-                  <span className="text-sm">
-                    {row.name || row.code}
-                    <span className="text-neutral-500"> ({row.count.toLocaleString()})</span>
-                  </span>
-                </label>
-              ))
-            )}
-          </div>
-          {selectedCodes.length > 0 && (
-            <button
-              type="button"
-              className="mt-2 text-sm text-neutral-600 underline"
-              onClick={() => setSelectedCodes([])}
-            >
-              Clear selection
-            </button>
+          {selectable.length === 0 ? (
+            <Text type="secondary">
+              {selectable.length === 0 && filter.trim() === ''
+                ? 'No interactions in this range.'
+                : 'Nothing matches that filter.'}
+            </Text>
+          ) : (
+            <div className="max-h-56 overflow-y-auto pr-1">
+              <CheckboxGroup
+                selectAll="All regions"
+                options={selectable.map((row) => ({
+                  value: row.code,
+                  label: `${row.name || row.code} (${row.count.toLocaleString()})`,
+                }))}
+                values={selectedCodes}
+                onChange={setSelectedCodes}
+              />
+            </div>
           )}
-        </fieldset>
+        </div>
       )}
 
       {rowsLoading && (
