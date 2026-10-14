@@ -158,6 +158,15 @@ export function LocationBreakdown({
     organizationId,
     startDate,
     endDate,
+    // The heatmap ignores the *grouping* — a group-by re-partitions the same interactions
+    // rather than selecting different ones, so it must not move the surface. It does
+    // honour the *drill-down*, because narrowing to SPA 4 and still seeing the whole
+    // county is the bug this fixes: no interaction should sit outside the shapes drawn.
+    //
+    // `dimension` travels with it because a code cannot be resolved without one, and the
+    // API rejects codes that arrive without it rather than guessing.
+    dimension,
+    regionCodes: selectedCodes.length > 0 ? selectedCodes : undefined,
   });
 
   // The last non-empty set of rows, kept so a refetch does not blank the panel.
