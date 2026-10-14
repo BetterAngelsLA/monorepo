@@ -60,17 +60,15 @@ WHERE %(kind)s IS NULL OR r.kind = %(kind)s
 def build_region_pieces(*, kind: str | None = None) -> int:
     """(Re)build the lookup geometry for one dimension, or all of them.
 
-    Called by ``import_regions`` after it replaces a dimension. Deliberately no
-    longer called from ``Region.save``: that put a bulk derived-data write behind a
-    single-row save, which is the shape that produced two separate defects here (a
-    quadratic piece count, and a NULL-geometry insert), and it put business logic on
-    the model. Nothing needs it now -- the assignment builder in ``selectors`` falls
-    back to the full boundary when a region has no pieces, so a region created
-    outside the importer resolves slower rather than being invisible.
+    Called by ``import_regions`` after it replaces a dimension. Not called from
+    ``Region.save``: a bulk derived-data write does not belong behind a single-row
+    save. The assignment builder falls back to the full boundary for a region with
+    no pieces, so a region created outside the importer resolves slower rather than
+    being invisible.
 
-    The DELETE-and-INSERT is the whole point: a bare INSERT accumulated duplicates
-    when called twice, and because the lookup dedupes on region the counts stayed
-    correct, so the damage was a bloating GiST index and a longer per-location sort
+    DELETE-then-INSERT, not a bare INSERT. Calling an INSERT twice accumulates
+    duplicate pieces, and because the lookup dedupes on region the counts stay
+    correct — the damage is a bloating GiST index and a longer per-location sort,
     with nothing to show for it.
     """
     with transaction.atomic(), connection.cursor() as cursor:
@@ -228,10 +226,10 @@ class RegionPiece(models.Model):
 
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="pieces")
     # Denormalised from the parent so a lookup can filter to one dimension without
-    # joining Region first. Two writers keep it consistent — ``import_regions``
-    # (which deletes and recreates the whole dimension, so pieces cascade) and
-    # ``Region.save`` (which rebuilds this row's pieces on create). Both write
-    # ``kind`` from the parent, so they cannot disagree.
+    # joining Region first. ``import_regions`` is the only writer: it deletes and
+    # recreates a whole dimension, so pieces cascade and are rebuilt from the same
+    # source row. Nothing else writes this table, so a piece cannot disagree with
+    # its parent's ``kind``.
     #
     # Known gap: updating an existing region's ``geom`` or ``kind`` does not rebuild
     # its pieces, so the rollup keeps using the old geometry. Re-run

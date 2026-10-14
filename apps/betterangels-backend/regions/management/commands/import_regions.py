@@ -44,36 +44,11 @@ from django.db import transaction
 from regions.models import DISPLAY_SIMPLIFY_DEGREES, Region, RegionKind, build_region_pieces
 from regions.selectors import ensure_location_regions
 
-# Subdivision is gated: only regions above the threshold are chopped.
-SUBDIVIDE_VERTEX_THRESHOLD = 2000
-# Passed to ST_Subdivide as the target size, NOT a guaranteed ceiling. The docs
-# say it divides with rectilinear lines so that each part contains "no more than
-# max_vertices" — but a compact ring with more vertices than the target cannot be
-# cut smaller, and measured output here reaches ~1900 vertices on the heavy
-# layers. The win comes from smaller *bounding boxes*, which is what the GiST
-# index scans; it is not a vertex count cap. Do not describe it as one.
-SUBDIVIDE_MAX_VERTICES = 256
-# Wider envelope for layers fetched slightly beyond the guard, so edge polygons
-# county so edge polygons are complete rather than clipped.
+# Envelope for the guard that catches a silently-skipped reprojection. Padded
+# because LA County legitimately reaches latitude ~32.80 (Catalina and San
+# Clemente islands), so an envelope tight to the mainland would reject real
+# county data.
 LA_BBOX_PADDED = (-119.5, 32.4, -117.0, 35.2)
-
-SUBDIVIDE_VERTEX_THRESHOLD = 2000
-# Passed to ST_Subdivide as the target size, NOT a guaranteed ceiling. The docs
-# say it divides with rectilinear lines so that each part contains "no more than
-# max_vertices" — but a compact ring with more vertices than the target cannot be
-# cut smaller, and measured output here reaches ~1900 vertices on the heavy
-# layers. The win comes from smaller *bounding boxes*, which is what the GiST
-# index scans; it is not a vertex count cap. Do not describe it as one.
-SUBDIVIDE_MAX_VERTICES = 256
-# Wider envelope for layers fetched slightly beyond the guard, so edge polygons
-# county so edge polygons are complete rather than clipped.
-LA_BBOX_PADDED = (-119.5, 32.4, -117.0, 35.2)
-
-# LA County, for clipping national layers to the county instead of a rectangle.
-# TIGERweb State_County layer 1; FIPS 06/037.
-LA_COUNTY_ENDPOINT = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query"
-LA_COUNTY_STATE_FIPS = "06"
-LA_COUNTY_FIPS = "037"
 
 
 @dataclass(frozen=True)

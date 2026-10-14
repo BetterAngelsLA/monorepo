@@ -58,7 +58,6 @@ function densityShade(max: number, count: number): string {
 }
 
 /**
- * Draws interaction locations: individual pins, or the density grid./**
  * Draws interaction locations: individual pins, or the density grid.
  *
  * Both go through the map's Data layer, so this is one `setStyle` pass over N
