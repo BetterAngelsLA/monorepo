@@ -1506,7 +1506,11 @@ retention is not a latency fix — it is a storage and compliance-boundary fix, 
 it has to be a real `DELETE`, because a query-side date filter cannot bound the work
 (H3). `DELETE` is available precisely because §9b narrowed the guard to `UPDATE`.
 
-[common/management/commands/purge_audit_log.py](apps/betterangels-backend/common/management/commands/purge_audit_log.py)
+It lives in the **audit** app, not `common` (§Phase 2): the scheduled read-event
+retention needs the audit app's `AuditReadEvent`, and `common` → `audit` would
+invert the layering (`shelters` already imports `common`).
+
+[audit/management/commands/purge_audit_log.py](apps/betterangels-backend/audit/management/commands/purge_audit_log.py)
 deletes in batches behind a safety floor:
 
 ```bash
@@ -1523,7 +1527,7 @@ python manage.py purge_audit_log --before 2024-01-01 --dry-run  # report what wo
   with `NOT EXISTS` across every event table, so context rows do not accumulate as
   an orphan shadow of the purged events.
 
-Tests in [common/tests/test_purge_audit_log.py](apps/betterangels-backend/common/tests/test_purge_audit_log.py)
+Tests in [audit/tests/test_purge_audit_log.py](apps/betterangels-backend/audit/tests/test_purge_audit_log.py)
 cover the retention floor, `--dry-run`, orphan-context cleanup, and that still-referenced
 contexts survive. The remaining work is operational: choose the window, schedule it
 via Celery beat, and watch bloat from the batched deletes (§Future considerations).
