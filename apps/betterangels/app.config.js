@@ -185,7 +185,13 @@ export default {
       // Without it the export writes root-absolute `/_expo/...` URLs while the
       // files live under the branch path, so every asset 403s and the page is
       // blank.
-      baseUrl: process.env.EXPO_BASE_URL || '',
+      //
+      // Trimmed the way `@expo/cli` trims this value everywhere else
+      // (`getBaseUrlFromExpoConfig`); its `instantiateMetro` is the one reader that
+      // does not, raw-joining it into asset URLs — so a root deploy's `/` shipped
+      // `//assets/...` (protocol-relative, i.e. a host called `assets`). Branch
+      // paths carry no trailing slash and were already fine.
+      baseUrl: (process.env.EXPO_BASE_URL || '').trim().replace(/\/+$/, ''),
     },
   },
 };
