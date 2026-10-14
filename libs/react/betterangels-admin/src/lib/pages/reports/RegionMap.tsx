@@ -2,7 +2,7 @@
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
 import { HeatmapLayer } from './HeatmapLayer';
 import { Alert, Radio, Spin } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { mergeCss } from '@monorepo/react/shared';
 import {
@@ -155,6 +155,8 @@ function RegionLayer({
   maxDensity: number;
 }) {
   const map = useMap();
+  // One automatic fit per mount; after that the viewport belongs to the reader.
+  const hasFittedRef = useRef(false);
 
   const countsByCode = useMemo(() => {
     const m = new Map<string, number>();
@@ -259,15 +261,24 @@ function RegionLayer({
     const overListener = layer.addListener('mouseover', onOver);
     const outListener = layer.addListener('mouseout', onOut);
 
-    const bounds = new google.maps.LatLngBounds();
-    layer.forEach((f: google.maps.Data.Feature) => {
-      const featureBounds = new google.maps.LatLngBounds();
-      f.getGeometry()?.forEachLatLng((ll: google.maps.LatLng) =>
-        featureBounds.extend(ll),
-      );
-      if (!featureBounds.isEmpty()) bounds.union(featureBounds);
-    });
-    if (!bounds.isEmpty()) map.fitBounds(bounds, 32);
+    // Fit the viewport to the boundaries, but **only the first time**. Re-fitting on
+    // every dimension change resets the zoom the reader chose, and for a county-wide
+    // dimension such as SPA it zooms out far enough to make the map useless for
+    // reading density — which is what it did before.
+    if (!hasFittedRef.current) {
+      const bounds = new google.maps.LatLngBounds();
+      layer.forEach((f: google.maps.Data.Feature) => {
+        const featureBounds = new google.maps.LatLngBounds();
+        f.getGeometry()?.forEachLatLng((ll: google.maps.LatLng) =>
+          featureBounds.extend(ll),
+        );
+        if (!featureBounds.isEmpty()) bounds.union(featureBounds);
+      });
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, 32);
+        hasFittedRef.current = true;
+      }
+    }
 
     return () => {
       google.maps.event.removeListener(overListener);
