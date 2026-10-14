@@ -45,7 +45,7 @@ function shade(max: number, count: number): string {
 }
 
 /** The map's views. Heatmap is the default; see `RegionMap` below. */
-export type MapView = 'heatmap' | 'regions' | 'pins';
+export type MapView = 'heatmap' | 'pins';
 
 /**
  * Draws interaction locations as individual pins.
@@ -61,7 +61,8 @@ function InteractionLayer({ view, points }: { view: MapView; points: Interaction
   const map = useMap();
 
   useEffect(() => {
-    if (!map || view === 'regions') {
+    // The heatmap draws itself on a canvas; this layer only serves the pins.
+    if (!map || view === 'heatmap') {
       return;
     }
 
@@ -113,12 +114,10 @@ function InteractionLayer({ view, points }: { view: MapView; points: Interaction
 function RegionLayer({
   rows,
   regions,
-  view,
   focusCodes,
 }: {
   rows: RegionCountType[];
   regions: RegionGeometryType[];
-  view: MapView;
   /** Region codes the reader narrowed to; the viewport frames these when set. */
   focusCodes: string[];
 }) {
@@ -186,14 +185,15 @@ function RegionLayer({
       }
 
       const count = featureNumber(feature, 'count');
+      // Context, not a chart: a light tint so the selected regions read as areas, with
+      // outlines strong enough to survive being underneath a dense field. Shading by
+      // count is what the table is for.
       return {
         fillColor: shade(max, count),
-        // Dimmed while a point view is on, so the pins read against the geography
-        // rather than competing with it.
-        fillOpacity: view === 'regions' ? (count > 0 ? 0.75 : 0.15) : 0.08,
+        fillOpacity: count > 0 ? 0.12 : 0.04,
         strokeColor: '#1B3A5C',
-        strokeWeight: view === 'regions' ? 0.8 : 0.5,
-        strokeOpacity: view === 'regions' ? 0.6 : 0.35,
+        strokeWeight: 0.7,
+        strokeOpacity: 0.55,
       };
     });
 
@@ -251,7 +251,7 @@ function RegionLayer({
       layer.forEach((f: google.maps.Data.Feature) => layer.remove(f));
       map.getDiv().removeAttribute('title');
     };
-  }, [map, regions, countsByCode, max, view, focusCodes]);
+  }, [map, regions, countsByCode, max, focusCodes]);
 
   return null;
 }
@@ -303,14 +303,13 @@ export function RegionMap({
     if (view === 'heatmap') {
       return `Density of interactions${scope}, as a continuous field. Red is where interactions concentrate, blue where they thin out — relative only, so read the table below for counts.`;
     }
-    return `Regions shaded by interaction count${scope}. Areas with no shading had no interactions in this range.`;
+    return `Interactions in this range${scope}.`;
   }, [view, points.length, filteredTo]);
-  const codes = useMemo(
-    () => rows.filter((r) => !r.isUnassigned && r.count > 0).map((r) => r.code),
-    [rows],
-  );
-
-  const { regions, loading, error } = useRegionMap({ dimension, codes });
+  // The overlay shows exactly what was narrowed to, so the geometry request follows the
+  // *selection* rather than every region that happens to have interactions. Ungrouped and
+  // unselected therefore draws nothing, which is the intended resting state: the map is
+  // for the data, and the boundaries only appear once they mean something.
+  const { regions, loading, error } = useRegionMap({ dimension, codes: focusCodes });
 
   useEffect(() => {
     if (error) {
@@ -357,7 +356,6 @@ export function RegionMap({
           buttonStyle="solid"
           options={[
             { label: 'Heatmap', value: 'heatmap' },
-            { label: 'Regions', value: 'regions' },
             { label: 'Interactions', value: 'pins' },
           ]}
         />
@@ -372,12 +370,12 @@ export function RegionMap({
         <RegionLayer
           rows={rows}
           regions={regions}
-          view={view}
           focusCodes={focusCodes}
         />
-        {view !== 'heatmap' && (
-          <InteractionLayer view={view} points={points} />
-        )}
+        {/* Both layers are always mounted. The overlay draws whichever regions the
+            grouping resolved to — none, when nothing did — rather than being a view of
+            its own, and the point layer draws only for the pins view. */}
+        <InteractionLayer view={view} points={points} />
         {view === 'heatmap' && <HeatmapLayer points={points} />}
       </GoogleMap>
       <p className="mt-2 text-xs text-neutral-500">{caption}</p>
