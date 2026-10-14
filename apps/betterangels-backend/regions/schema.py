@@ -159,7 +159,6 @@ class Query:
             scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=scoped_codes)
 
         return interaction_map_data(
-            kind=dimension.value if dimension else None,
             start=start,
             end=end,
             organization_id=org.id,

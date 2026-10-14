@@ -26,7 +26,6 @@ from .selectors import (
     interaction_points,
     region_counts,
     region_totals_without_boundaries,
-    scope_notes_to_regions,
 )
 from .types import (
     InteractionMapType,
@@ -287,26 +286,21 @@ def region_rollup(
 
 def interaction_map_data(
     *,
-    kind: str,
     start: datetime,
     end: datetime,
     organization_id: int,
     notes: "QuerySet[Note]",
     limit: int,
-    region_codes: Sequence[str] | None = None,
 ) -> InteractionMapType:
     """The interaction points for the given scope, as map pins.
 
-    ``notes`` arrives already permission-filtered; this narrows it further by region
-    when asked, then asks each selector for its own projection.
+    ``notes`` arrives already permission-filtered **and already region-scoped** — the
+    resolver applies the drill-down before calling this, because the same scoped queryset
+    also feeds the shell queries beside it. Re-applying it here would be a second copy of
+    the rule that could drift from the first.
     """
-    scoped = notes
-    codes = list(region_codes or [])
-    if codes:
-        scoped = scope_notes_to_regions(scoped, kind=kind, codes=codes)
-
     points, truncated = interaction_points(
-        start=start, end=end, organization_id=organization_id, limit=limit, notes=scoped
+        start=start, end=end, organization_id=organization_id, limit=limit, notes=notes
     )
     return InteractionMapType(
         points=[InteractionPointType(**row) for row in points],
