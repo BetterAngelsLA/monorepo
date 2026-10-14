@@ -167,15 +167,19 @@ export function LocationBreakdown({
     // however the map is filtered.
     regionCodes: selectedCode === undefined ? undefined : [selectedCode],
   });
-  // The pins the heatmap is drawn from. The dimension does not apply to the geometry,
-  // because an interaction's location is the same point whichever way regions are cut —
-  // but it does apply to `regionCodes`, which is why that is passed.
+  // The heatmap is deliberately **not** scoped by the grouping. A group-by re-partitions
+  // the same interactions; it does not select a different set of them, so letting it
+  // change the surface implies the underlying data moved when nothing did. It would also
+  // defeat the view: picking a dimension would narrow the map from 431 regions to a
+  // dozen and throw away the county-wide picture the heatmap exists to show.
+  //
+  // The grouping drives the boundaries drawn *over* the surface instead, which is the
+  // usual separation: the gradient encodes a continuous quantity, the boundaries encode a
+  // categorical one.
   const { points, truncated, error: mapError } = useInteractionMap({
     organizationId,
     startDate,
     endDate,
-    dimension,
-    regionCodes: selectedCode === undefined ? undefined : [selectedCode],
   });
 
   // The last non-empty set of rows, kept so a refetch does not blank the panel.
