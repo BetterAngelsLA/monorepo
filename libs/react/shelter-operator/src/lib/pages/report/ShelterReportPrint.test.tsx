@@ -42,16 +42,19 @@ const ALL_METRICS: ExportMetric[] = [
 // Realistic rendered heights (chart card ~610px, stat tray ~110px, counts card
 // ~230px). jsdom has no layout, so without this every unit would measure 0 and
 // the packing logic would never be exercised.
-const UNIT_HEIGHTS = {
-  chart: 610,
-  counts: 230,
+const UNIT_HEIGHTS_BY_KEY: Record<string, number> = {
+  'bed-status': 610,
+  'daily-occupancy': 610,
+  'bed-counts': 230,
+  'room-counts': 230,
   stats: 110,
-} as const;
+};
 
 function stubUnitHeights() {
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
     function (this: HTMLElement) {
-      const height = unitHeight(this);
+      const height =
+        UNIT_HEIGHTS_BY_KEY[this.getAttribute('data-report-unit') ?? ''] ?? 0;
       return {
         height,
         width: 720,
@@ -65,13 +68,6 @@ function stubUnitHeights() {
       } as DOMRect;
     },
   );
-}
-
-/** Classifies a measured unit node by the markup it wraps. */
-function unitHeight(node: HTMLElement): number {
-  if (node.querySelector('[data-testid$="-chart"]')) return UNIT_HEIGHTS.chart;
-  if (node.querySelector('h2')) return UNIT_HEIGHTS.counts;
-  return UNIT_HEIGHTS.stats;
 }
 
 /** Only the real pages — the off-canvas measurement pass is not one. */
@@ -176,8 +172,21 @@ describe('ShelterReportPrint', () => {
     );
   });
 
-  it('uses a compact header (no "Operational Summary" title) on later pages', () => {
-    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
+  it('does not keep the off-canvas measurement pass mounted once measurements land', () => {
+    const { container } = render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
+
+    // Each chart would otherwise mount twice (once to measure, once on its
+    // page) and render a second canvas chart for the life of the report.
+    expect(container.querySelectorAll('[data-report-unit]')).toHaveLength(0);
+    expect(
+      container.querySelectorAll('[data-testid="bed-status-chart"]'),
+    ).toHaveLength(1);
+    expect(
+      container.querySelectorAll('[data-testid="daily-occupancy-chart"]'),
+    ).toHaveLength(1);
+  });
+
+  it('uses a compact header (no "Operational Summary" title) on later pages', () => {    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
 
     const pagesWithTitle = reportPages().filter(
       (page) => within(page).queryAllByText('Operational Summary').length > 0,

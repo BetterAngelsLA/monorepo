@@ -340,8 +340,15 @@ export function ShelterReportPrint({
   const rootRef = useRef<HTMLDivElement>(null);
   const [heights, setHeights] = useState<number[]>([]);
 
-  // Measure each unit, then pack pages from the measurements. Runs after every
-  // render so a metric change (or a late data arrival) repaginates.
+  // Only the units still missing a measurement are rendered off-canvas, so a
+  // chart is never mounted twice once the layout has settled.
+  const pendingKeys = units
+    .filter((_, i) => heights[i] === undefined)
+    .map((unit) => unit.key);
+
+  // Measure each pending unit, then pack pages from the measurements. Runs
+  // after every render so a metric change (or a late data arrival)
+  // repaginates.
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -349,13 +356,26 @@ export function ShelterReportPrint({
     const nodes = Array.from(
       root.querySelectorAll<HTMLElement>('[data-report-unit]'),
     );
-    const measured = nodes.map((node) => node.getBoundingClientRect().height);
-    setHeights((prev) =>
-      prev.length === measured.length &&
-      prev.every((h, i) => Math.abs(h - measured[i]) < 0.5)
-        ? prev
-        : measured,
+    if (nodes.length === 0) return;
+
+    const byKey = new Map(
+      nodes.map((node) => [
+        node.getAttribute('data-report-unit') ?? '',
+        node.getBoundingClientRect().height,
+      ]),
     );
+
+    setHeights((prev) => {
+      const next = units.map((unit, i) => byKey.get(unit.key) ?? prev[i]);
+      // Keep waiting until every unit has been measured once.
+      if (next.some((h) => h === undefined)) return prev;
+
+      const settled = next as number[];
+      return prev.length === settled.length &&
+        prev.every((h, i) => Math.abs(h - settled[i]) < 0.5)
+        ? prev
+        : settled;
+    });
   }, [units]);
 
   const pages = useMemo(() => {
@@ -415,11 +435,13 @@ export function ShelterReportPrint({
         className="pointer-events-none absolute -left-[99999px] top-0 flex flex-col bg-white"
         style={{ width: PAGE_WIDTH - PAGE_PADDING * 2 }}
       >
-        {units.map((unit) => (
-          <div key={unit.key} data-report-unit="true">
-            {unit.node}
-          </div>
-        ))}
+        {units
+          .filter((unit) => pendingKeys.includes(unit.key))
+          .map((unit) => (
+            <div key={unit.key} data-report-unit={unit.key}>
+              {unit.node}
+            </div>
+          ))}
       </div>
 
       {pages.map((pageKeys, pageIndex) => (
