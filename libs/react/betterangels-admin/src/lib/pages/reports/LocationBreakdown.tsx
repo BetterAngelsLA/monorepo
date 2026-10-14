@@ -116,17 +116,14 @@ export function LocationBreakdown({
   hasMapsKey = true,
   className = '',
 }: LocationBreakdownProps) {
-  // `undefined` is "All": the rollup then counts every dimension at once and each
-  // bucket carries its own `kind`. Codes are meaningless across dimensions, so the
-  // drill-down is disabled in that state rather than silently ignored.
-  const [dimension, setDimension] = useState<RegionDimension | undefined>(
-    RegionDimension.CouncilDistrict,
-  );
+  // `undefined` is "All dimensions", and it is the default: the page opens on the whole
+  // picture rather than on one arbitrary grouping. The rollup then counts every dimension
+  // at once and each bucket carries its own `kind`. Codes are meaningless across
+  // dimensions, so the drill-down stays disabled until one is chosen.
+  const [dimension, setDimension] = useState<RegionDimension | undefined>(undefined);
 
-  // A single region to narrow the map to — "show me the SPA 4 visits". Empty means
-  // every interaction in range. Single rather than multi: the rollup already shows
-  // all regions, so this control exists to drill into one, and a multi-select on a
-  // map reads as "highlight these", which the map does not do.
+  // Regions to narrow the map to — "show me the SPA 4 visits". Empty means the whole
+  // dimension.
   // A list rather than one code: comparing two districts side by side is the common
   // question ("where are we strong in 8 versus 9?"), and the plumbing is already a list
   // the whole way down to the API, so single-select was an artificial restriction.
@@ -206,7 +203,7 @@ export function LocationBreakdown({
 
   // Used for prose only ("Loading city council district data"). Absent means the rollup
   // spans every dimension, so there is no single name to interpolate.
-  const dimensionName = dimension ? DIMENSION_LABELS[dimension] : 'region';
+  const dimensionName = dimension ? DIMENSION_LABELS[dimension] : 'all dimensions';
 
   // Selecting a different dimension invalidates the codes: "4" is an SPA and also a Long
   // Beach council district, so a selection cannot carry across.
