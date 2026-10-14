@@ -1,6 +1,6 @@
 /// <reference types="google.maps" />
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
-import { HeatmapLayer } from './HeatmapLayer';
+import { HEATMAP_RAMP_CSS, HeatmapLayer } from './HeatmapLayer';
 import { PointLayer } from './PointLayer';
 import { Alert, Radio, Spin } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -311,7 +311,7 @@ export function RegionMap({
       </div>
       <GoogleMap
         id="admin-region-map"
-        style={{ width: '100%', height: 420, borderRadius: 6 }}
+        style={{ width: '100%', height: 560, borderRadius: 6 }}
         defaultCenter={LA_CENTER}
         defaultZoom={LA_ZOOM}
         gestureHandling="cooperative"
@@ -326,6 +326,30 @@ export function RegionMap({
             its own, and the point layer draws only for the pins view. */}
         {view === 'heatmap' && <HeatmapLayer points={points} />}
         {view === 'pins' && <PointLayer points={points} />}
+        {/* On the map rather than beside it: the ramp is meaningless without knowing it is
+            absolute, and a reader looking at a gradient should not have to hunt for its
+            key. Positioned bottom-left, clear of the map's own controls. */}
+        {view === 'heatmap' && (
+          <div
+            className="pointer-events-none absolute bottom-3 left-3 rounded bg-white/90 px-2 py-1 shadow"
+            // Placed inside the map container via the GoogleMap child slot; the map's own
+            // DOM is a sibling, so absolute positioning is relative to this wrapper.
+            style={{ position: 'absolute', zIndex: 5 }}
+          >
+            <div className="mb-1 text-[10px] font-medium text-neutral-600">
+              Interaction density
+            </div>
+            <div className="h-2 w-32 rounded-sm" style={{ background: HEATMAP_RAMP_CSS }} />
+            <div className="mt-0.5 flex w-32 justify-between text-[10px] text-neutral-500">
+              <span>fewer</span>
+              <span>more</span>
+            </div>
+            {/* "everywhere" would be a lie about zoom: the kernel radius changes with
+                zoom, so the reference is per-zoom. It is fixed against *panning*, which
+                is the thing that was wrong. */}
+            <div className="mt-0.5 text-[10px] text-neutral-500">fixed when you pan</div>
+          </div>
+        )}
       </GoogleMap>
       <p className="mt-2 text-xs text-neutral-500">{caption}</p>
       {truncated && view === 'pins' && (

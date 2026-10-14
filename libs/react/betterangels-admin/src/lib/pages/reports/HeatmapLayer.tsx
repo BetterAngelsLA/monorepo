@@ -55,6 +55,17 @@ const RAMP = [
 ];
 
 /**
+ * The ramp as a CSS gradient, derived from the same stops the canvas paints with.
+ *
+ * Exported so the legend cannot drift from the map: a legend maintained separately is a
+ * second source of truth, and the failure mode — a key that describes colours the map no
+ * longer produces — is worse than having no key at all.
+ */
+export const HEATMAP_RAMP_CSS = `linear-gradient(to right, ${RAMP.map(
+  ({ stop, color }) => `rgb(${color.join(',')}) ${(stop * 100).toFixed(0)}%`,
+).join(', ')})`;
+
+/**
  * Radius in pixels at each zoom, interpolated between. Wide when zoomed out so nearby
  * points merge into a cluster; tight when zoomed in so structure is visible rather than
  * smeared.
@@ -84,6 +95,100 @@ function radiusForZoom(zoom: number): number {
     }
   }
   return last[1];
+}
+
+/** Weight per point, matching the draw pass. */
+function weightFor(count: number, intensity: number): number {
+  return intensity / Math.max(1, Math.sqrt(count));
+}
+
+/**
+ * The intensity scale, fixed against panning.
+ *
+ * The draw pass accumulates into the viewport buffer, so the largest value in that buffer
+ * is the hottest spot *currently on screen*. Normalising by it makes the colour scale a
+ * property of the viewport: pan toward a dense area and everything else cools, pan away and
+ * the midrange flares — the same place changes colour without its data changing.
+ *
+ * So the scale is taken from elsewhere. Because each point contributes
+ * `weight * (1 - d²/r²)²` and those contributions simply add, the peak over the *whole*
+ * dataset is an upper bound on any pixel of any viewport. Using it as the normalising
+ * constant makes the ramp a pure function of the data — no pan can move it — with the
+ * density of any one area expressed relative to the dataset's busiest.
+ *
+ * A **geographic** grid finds it: points are bucketed at roughly the kernel's footprint and
+ * the fullest bucket is the reference. That is one pass per zoom over the points, rather
+ * than walking every point's kernel over a buffer, and it is what makes the scale
+ * independent of where the viewport happens to be.
+ */
+/** Zoom levels the scale reference is computed for; matches the map's usable range. */
+const ZOOM_LEVELS = Array.from({ length: 14 }, (_, i) => i + 6);
+
+function computeReferencePeaks(
+  points: HeatPoint[],
+  intensity: number,
+  zoomLevels: number[],
+): Map<number, number> {
+  const peaks = new Map<number, number>();
+  const weight = weightFor(points.length, intensity);
+  if (points.length === 0) {
+    return peaks;
+  }
+
+  for (const zoom of zoomLevels) {
+    // The kernel's footprint in degrees at this zoom, so the reference is in the same units
+    // as the accumulation. Web Mercator is ~156,543 m/px at the equator at z0, so a pixel
+    // spans `156543 * cos(lat) * 2^-zoom` metres; LA is ~34°N. Without this the kernel's
+    // geographic size would be ignored and every zoom would be scaled differently.
+    const metresPerPixel = (156543 * Math.cos((34 * Math.PI) / 180)) / Math.pow(2, zoom);
+    const cell = Math.max((radiusForZoom(zoom) * metresPerPixel) / 111320, 1e-9);
+
+    // Weighted point count per cell. A kernel is several cells wide, so a bucket that falls
+    // inside many kernels accumulates many cells' worth — that accumulation *is* the
+    // intensity, and the fullest cell is the reference.
+    const buckets = new Map<string, number>();
+    for (const point of points) {
+      const key = `${Math.floor(point.longitude / cell)}:${Math.floor(point.latitude / cell)}`;
+      buckets.set(key, (buckets.get(key) ?? 0) + weight);
+    }
+
+    // Cells the kernel shape actually covers, by distance in cell units.
+    const span = 3;
+    const offsets: [number, number, number][] = [];
+    for (let dy = -span; dy <= span; dy++) {
+      for (let dx = -span; dx <= span; dx++) {
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d <= span) {
+          // Quartic kernel, `(1 - d²/r²)²`, with r = span cells.
+          const t = 1 - (d * d) / (span * span);
+          offsets.push([dx, dy, t * t]);
+        }
+      }
+    }
+
+    let peak = 0;
+    for (const [key, own] of buckets) {
+      const [cx, cy] = key.split(':').map(Number);
+      let value = 0;
+      for (const [dx, dy, shape] of offsets) {
+        const neighbour = buckets.get(`${cx + dx}:${cy + dy}`);
+        if (neighbour) {
+          value += neighbour * shape;
+        }
+      }
+      // `own` is included above; the guard keeps a lone cell from reading as zero.
+      if (value <= 0) {
+        value = own;
+      }
+      if (value > peak) {
+        peak = value;
+      }
+    }
+
+    peaks.set(zoom, peak);
+  }
+
+  return peaks;
 }
 
 /**
@@ -123,6 +228,11 @@ type HeatmapLayerProps = {
 export function HeatmapLayer({ points, intensity = 0.55 }: HeatmapLayerProps) {
   const map = useMap();
   const pointsRef = useRef<HeatPoint[]>(points);
+  // Fixed for a given dataset, so a pan cannot rescale the ramp.
+  // Scale reference per zoom, from the dataset rather than the viewport.
+  const referenceRef = useRef(
+    computeReferencePeaks(points, intensity, ZOOM_LEVELS),
+  );
   const drawRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -185,7 +295,7 @@ export function HeatmapLayer({ points, intensity = 0.55 }: HeatmapLayerProps) {
       const radiusSq = radius * radius;
       // Divided by the point count so a dense set does not simply saturate; the
       // normalisation below rescales to whatever range results.
-      const weight = intensity / Math.max(1, Math.sqrt(current.length));
+      const weight = weightFor(current.length, intensity);
 
       for (const point of current) {
         const pixel = projection.fromLatLngToContainerPixel(
@@ -221,16 +331,24 @@ export function HeatmapLayer({ points, intensity = 0.55 }: HeatmapLayerProps) {
         }
       }
 
-      let max = 0;
+      // The fixed reference for this zoom, not `Math.max(...acc)`. The buffer only holds
+      // what is on screen, so using its own peak would make the ramp a function of the
+      // viewport and the colours would swim as the map is panned.
+      const reference = referenceRef.current.get(Math.round(zoom)) ?? 0;
+      let viewportMax = 0;
       for (let i = 0; i < acc.length; i++) {
-        if (acc[i] > max) {
-          max = acc[i];
+        if (acc[i] > viewportMax) {
+          viewportMax = acc[i];
         }
       }
-      if (max <= 0) {
+      if (viewportMax <= 0) {
         ctx.clearRect(0, 0, width, height);
         return;
       }
+      // Deliberately **not** `Math.max(reference, viewportMax)`: letting the visible data
+      // raise the scale re-introduces exactly the viewport dependence this removes. A
+      // value above the reference clamps and saturates, which is what a fixed ramp does.
+      const max = reference > 0 ? reference : viewportMax;
 
       const image = ctx.createImageData(width, height);
       const data = image.data;
@@ -265,11 +383,13 @@ export function HeatmapLayer({ points, intensity = 0.55 }: HeatmapLayerProps) {
     };
   }, [map, intensity]);
 
-  // Repaint when the data changes without the viewport moving.
+  // Repaint when the data changes without the viewport moving, and recompute the scale
+  // reference — it is derived from the points, so it moves with them.
   useEffect(() => {
     pointsRef.current = points;
+    referenceRef.current = computeReferencePeaks(points, intensity, ZOOM_LEVELS);
     drawRef.current?.();
-  }, [points]);
+  }, [points, intensity]);
 
   return null;
 }
