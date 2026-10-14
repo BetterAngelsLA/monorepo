@@ -11,11 +11,11 @@ from datetime import datetime
 from typing import Any, Iterable, Sequence
 
 from django.db import connection
-from django.db.models import Count, Q, QuerySet
+from django.db.models import Count, Exists, OuterRef, Q, QuerySet
 
 from notes.models import Note
 
-from .models import Region, RegionKind
+from .models import LocationRegion, Region, RegionKind
 
 
 def region_counts(
@@ -147,39 +147,13 @@ POINT_LIMIT_MAX = 50_000
 DENSITY_GRID_DEGREES = 0.01
 
 
-def _region_scope_clause(kind: str, region_codes: Sequence[str] | None, params: dict[str, Any]) -> str:
-    """Restrict to interactions whose location falls in one of ``region_codes``.
-
-    Uses the stored assignment rather than a spatial test, so this is an indexed
-    lookup on ``regions_locationregion``.
-
-    ``kind`` is required, not optional. Codes are **not** unique across dimensions —
-    ``"4"`` is both SPA 4 and Long Beach council district 4 — so filtering on the code
-    alone matches the other dimension's region as well. That is a silent wrong answer
-    rather than an error, which is why the kind is a parameter rather than something
-    the caller is trusted to have already accounted for.
-    """
-    if not region_codes:
-        return ""
-    params["region_kind"] = kind
-    params["region_codes"] = list(region_codes)
-    return (
-        "AND EXISTS (SELECT 1 FROM regions_locationregion lr "
-        "JOIN regions_region rr ON rr.id = lr.region_id "
-        "WHERE lr.location_id = n.location_id AND lr.kind = %(region_kind)s "
-        "AND rr.code = ANY(%(region_codes)s))"
-    )
-
-
 def interaction_points(
     *,
-    kind: str,
     start: datetime,
     end: datetime,
     organization_id: int | None = None,
     limit: int = POINT_LIMIT,
     notes: "QuerySet[Note] | None" = None,
-    region_codes: Sequence[str] | None = None,
 ) -> tuple[list[dict[str, Any]], bool]:
     """Individual interaction locations, for map pins.
 
@@ -200,7 +174,6 @@ def interaction_points(
     if notes is not None:
         notes_clause = "AND n.id = ANY(%(note_ids)s)"
         params["note_ids"] = list(notes.values_list("id", flat=True))
-    region_clause = _region_scope_clause(kind, region_codes, params)
     org_clause = ""
     if organization_id is not None:
         org_clause = "AND n.organization_id = %(org_id)s"
@@ -217,7 +190,6 @@ def interaction_points(
           AND n.location_id IS NOT NULL
           {org_clause}
           {notes_clause}
-          {region_clause}
         ORDER BY n.interacted_at DESC
         LIMIT %(limit)s
     """
@@ -233,13 +205,11 @@ def interaction_points(
 
 def interaction_density(
     *,
-    kind: str,
     start: datetime,
     end: datetime,
     organization_id: int | None = None,
     cell_degrees: float = DENSITY_GRID_DEGREES,
     notes: "QuerySet[Note] | None" = None,
-    region_codes: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Interaction counts on a fixed grid, for the density view.
 
@@ -253,7 +223,6 @@ def interaction_density(
     if notes is not None:
         notes_clause = "AND n.id = ANY(%(note_ids)s)"
         params["note_ids"] = list(notes.values_list("id", flat=True))
-    region_clause = _region_scope_clause(kind, region_codes, params)
     org_clause = ""
     if organization_id is not None:
         org_clause = "AND n.organization_id = %(org_id)s"
@@ -270,7 +239,6 @@ def interaction_density(
           AND n.location_id IS NOT NULL
           {org_clause}
           {notes_clause}
-          {region_clause}
         GROUP BY 1, 2
         ORDER BY count DESC, 1, 2
     """
@@ -280,3 +248,25 @@ def interaction_density(
             {"latitude": float(lat), "longitude": float(lon), "count": int(count)}
             for lat, lon, count in cursor.fetchall()
         ]
+
+
+def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[str]) -> QuerySet[Note]:
+    """Narrow a note queryset to those whose location falls in one of ``codes``.
+
+    ``Exists`` rather than a reverse-relation join: a join yields one row per matching
+    assignment and would need ``.distinct()``, which a semi-join cannot need.
+
+    ``kind`` is required because codes are **not** unique across dimensions — in this
+    data ``"1"`` is simultaneously a council district, an SPA and a supervisorial
+    district — so filtering on the code alone returns up to three dimensions' worth of
+    interactions, labelled as the one the caller asked for.
+    """
+    return notes.filter(
+        Exists(
+            LocationRegion.objects.filter(
+                location=OuterRef("location_id"),
+                kind=kind,
+                region__code__in=list(codes),
+            )
+        )
+    )

@@ -25,6 +25,7 @@ from regions.selectors import (
     region_counts,
     region_features,
     region_totals_without_boundaries,
+    scope_notes_to_regions,
 )
 
 from .helpers import assign_locations
@@ -266,9 +267,14 @@ class InteractionMapTestCase(TestCase):
             location=None if not location else baker.make(Location, point=Point(lon, lat, srid=4326)),
         )
 
+    def _notes(self, *, org: Any = None) -> Any:
+        """The notes in range, the way the resolver hands them to the selectors."""
+        return Note.objects.filter(
+            organization=org or self.org, interacted_at__gte=self.start, interacted_at__lt=self.end
+        )
+
     def _points(self, **kwargs: Any) -> tuple[list[dict[str, Any]], bool]:
         return interaction_points(
-            kind=RegionKind.COUNCIL_DISTRICT.value,
             start=self.start,
             end=self.end,
             organization_id=self.org.id,
@@ -328,12 +334,11 @@ class InteractionMapTestCase(TestCase):
             kind=RegionKind.COUNCIL_DISTRICT, code=code, name=f"District {code}", geom=box(box_coords)
         )
 
-    def test_region_codes_narrow_the_points(self) -> None:
+    def test_scoping_by_region_narrows_the_points(self) -> None:
         """Filtering by region is the "show me the SPA 4 visits" case.
 
-        Reads the stored assignment, so this is an indexed lookup — and it must
-        actually narrow, not silently return everything the way an unwired filter
-        would.
+        Reads the stored assignment, so it is an indexed semi-join — and it must
+        actually narrow, not silently return everything an unwired filter would.
         """
         self._box_region("1", BOX_A)
         self._note_at(-118.24, 34.05)  # in region "1"
@@ -341,41 +346,29 @@ class InteractionMapTestCase(TestCase):
         self._note_at(*OUTSIDE)  # in neither
         assign_locations()
 
-        rows, _ = interaction_points(
-            kind=RegionKind.COUNCIL_DISTRICT.value,
-            start=self.start,
-            end=self.end,
-            organization_id=self.org.id,
-            region_codes=["1"],
-        )
+        scoped = scope_notes_to_regions(self._notes(), kind=RegionKind.COUNCIL_DISTRICT.value, codes=["1"])
+        rows, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id, notes=scoped)
         self.assertEqual(len(rows), 1, "the filter must narrow to the one note in region 1")
         self.assertAlmostEqual(rows[0]["latitude"], 34.05, places=4)
         self.assertAlmostEqual(rows[0]["longitude"], -118.24, places=4)
 
-    def test_region_codes_narrow_the_density_too(self) -> None:
+    def test_scoping_by_region_narrows_the_density_too(self) -> None:
         """Both views must narrow together, or the toggle changes the story."""
         self._box_region("1", BOX_A)
         self._note_at(-118.24, 34.05)
         self._note_at(-118.54, 34.35)
         assign_locations()
-        cells = interaction_density(
-            kind=RegionKind.COUNCIL_DISTRICT.value,
-            start=self.start,
-            end=self.end,
-            organization_id=self.org.id,
-            region_codes=["1"],
-        )
+        scoped = scope_notes_to_regions(self._notes(), kind=RegionKind.COUNCIL_DISTRICT.value, codes=["1"])
+        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id, notes=scoped)
         self.assertEqual(sum(c["count"] for c in cells), 1)
 
-    def test_no_region_codes_means_no_filter(self) -> None:
+    def test_no_scoping_means_no_filter(self) -> None:
         """Absent filter is not an empty filter — it must not match nothing."""
         self._box_region("1", BOX_A)
         self._note_at(-118.24, 34.05)
         self._note_at(-118.54, 34.35)
         assign_locations()
-        rows, _ = interaction_points(
-            kind=RegionKind.COUNCIL_DISTRICT.value, start=self.start, end=self.end, organization_id=self.org.id
-        )
+        rows, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id)
         self.assertEqual(len(rows), 2)
 
     def test_density_aggregates_to_a_grid(self) -> None:
@@ -383,9 +376,7 @@ class InteractionMapTestCase(TestCase):
         self._note_at(-118.2401, 34.0501)
         self._note_at(-118.2402, 34.0502)
         self._note_at(-118.30, 34.10)
-        cells = interaction_density(
-            kind=RegionKind.COUNCIL_DISTRICT.value, start=self.start, end=self.end, organization_id=self.org.id
-        )
+        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id)
         counts = sorted(cell["count"] for cell in cells)
         self.assertEqual(counts, [1, 2])
         self.assertEqual(sum(counts), 3)
@@ -395,9 +386,7 @@ class InteractionMapTestCase(TestCase):
         for i in range(4):
             self._note_at(-118.24 + i * 0.02, 34.05 + i * 0.02)
         points, _ = self._points()
-        cells = interaction_density(
-            kind=RegionKind.COUNCIL_DISTRICT.value, start=self.start, end=self.end, organization_id=self.org.id
-        )
+        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id)
         self.assertEqual(len(points), sum(cell["count"] for cell in cells))
 
 
@@ -486,25 +475,18 @@ class RegionCodeCollisionTestCase(TestCase):
             )
         assign_locations()
 
+    def _notes(self) -> Any:
+        return Note.objects.filter(organization=self.org, interacted_at__gte=self.start, interacted_at__lt=self.end)
+
     def test_a_code_does_not_match_the_other_dimension_regions(self) -> None:
         # setUp placed one note in BOX_A (council district "1") and one in BOX_B
         # (SPA "1"); only the first may match.
-        council, _ = interaction_points(
-            kind=RegionKind.COUNCIL_DISTRICT.value,
-            start=self.start,
-            end=self.end,
-            organization_id=self.org.id,
-            region_codes=["1"],
-        )
+        scoped = scope_notes_to_regions(self._notes(), kind=RegionKind.COUNCIL_DISTRICT.value, codes=["1"])
+        council, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id, notes=scoped)
         self.assertEqual(len(council), 1, "the SPA sharing this code must not be matched")
         self.assertAlmostEqual(council[0]["latitude"], 34.05, places=4)
 
     def test_the_density_view_narrows_by_the_same_dimension(self) -> None:
-        cells = interaction_density(
-            kind=RegionKind.COUNCIL_DISTRICT.value,
-            start=self.start,
-            end=self.end,
-            organization_id=self.org.id,
-            region_codes=["1"],
-        )
+        scoped = scope_notes_to_regions(self._notes(), kind=RegionKind.COUNCIL_DISTRICT.value, codes=["1"])
+        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id, notes=scoped)
         self.assertEqual(sum(c["count"] for c in cells), 1, "same scoping as the points view")

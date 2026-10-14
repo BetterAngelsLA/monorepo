@@ -23,7 +23,6 @@ from zoneinfo import ZoneInfo
 import strawberry
 import strawberry_django
 from django.core.exceptions import PermissionDenied
-from django.db.models import Exists, OuterRef
 from organizations.models import Organization
 from strawberry import ID
 from strawberry.types import Info
@@ -39,7 +38,6 @@ from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
 
-from .models import LocationRegion
 from .selectors import (
     POINT_LIMIT,
     available_kinds,
@@ -48,6 +46,7 @@ from .selectors import (
     region_counts,
     region_features,
     region_totals_without_boundaries,
+    scope_notes_to_regions,
 )
 
 # Sentinel code the client uses to ask for interactions that fall in no region.
@@ -303,34 +302,18 @@ class Query:
 
         scoped_codes = list(region_codes or [])
         if scoped_codes:
-            # `Exists`, not a join on the reverse relation plus `.distinct()`. A join
-            # produces one row per matching assignment, so it needs de-duplicating;
-            # a semi-join cannot produce duplicates in the first place.
-            #
-            # `region__kind` is required, not decorative: codes are not unique across
-            # dimensions, so `code__in=["4"]` alone also matches SPA 4 when the caller
-            # asked about council districts.
-            scoped_notes = scoped_notes.filter(
-                Exists(
-                    LocationRegion.objects.filter(
-                        location=OuterRef("location_id"),
-                        kind=dimension.value,
-                        region__code__in=scoped_codes,
-                    )
-                )
-            )
+            # One implementation, shared with the tests: see `scope_notes_to_regions`
+            # for why the kind is required and why this is a semi-join.
+            scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=scoped_codes)
 
         points, truncated = interaction_points(
-            kind=dimension.value,
             start=start,
             end=end,
             organization_id=org.id,
             limit=limit or POINT_LIMIT,
             notes=scoped_notes,
         )
-        density = interaction_density(
-            kind=dimension.value, start=start, end=end, organization_id=org.id, notes=scoped_notes
-        )
+        density = interaction_density(start=start, end=end, organization_id=org.id, notes=scoped_notes)
 
         return InteractionMapType(
             points=[
