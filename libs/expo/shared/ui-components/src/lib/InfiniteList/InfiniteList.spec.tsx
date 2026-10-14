@@ -5,14 +5,12 @@ import { InfiniteList } from './InfiniteList';
 /**
  * A list kept mounted but not on screen reads as "at the end" on every commit: on
  * the web deploy the clients list drained to "456 of 456" behind a pushed route.
+ *
+ * These drive `isFocused` directly, so they need no router. `FocusedInfiniteList`
+ * in the app supplies the prop from `useIsFocused`, and is covered there.
  */
 const mocks = vi.hoisted(() => ({
-  isFocused: true,
   props: undefined as { onEndReached?: () => void } | undefined,
-}));
-
-vi.mock('expo-router', () => ({
-  useIsFocused: () => mocks.isFocused,
 }));
 
 vi.mock('@shopify/flash-list', () => ({
@@ -30,14 +28,16 @@ type TProps = {
   hasMore?: boolean;
   loading?: boolean;
   loadingMore?: boolean;
+  isFocused?: boolean;
 };
 
-const list = (props: TProps = {}) => (
+const list = ({ isFocused = true, ...props }: TProps = {}) => (
   <InfiniteList
     data={rows}
     renderItem={() => null}
     keyExtractor={(item) => item.id}
     totalItems={100}
+    isFocused={isFocused}
     {...props}
   />
 );
@@ -46,15 +46,13 @@ const endReach = () => act(() => mocks.props?.onEndReached?.());
 
 describe('InfiniteList paging', () => {
   beforeEach(() => {
-    mocks.isFocused = true;
     mocks.props = undefined;
   });
 
   it('wires no handler while the screen is elsewhere', async () => {
     const loadMore = vi.fn();
-    mocks.isFocused = false;
 
-    await render(list({ loadMore, hasMore: true }));
+    await render(list({ loadMore, hasMore: true, isFocused: false }));
 
     expect(mocks.props?.onEndReached).toBeUndefined();
 
@@ -73,15 +71,47 @@ describe('InfiniteList paging', () => {
     expect(loadMore).toHaveBeenCalledTimes(1);
   });
 
-  it('handles an end-reach again once the screen comes back', async () => {
+  it('pages by default, for a caller with no focus signal to give', async () => {
     const loadMore = vi.fn();
-    mocks.isFocused = false;
 
-    const view = await render(list({ loadMore, hasMore: true }));
+    await render(
+      <InfiniteList
+        data={rows}
+        renderItem={() => null}
+        keyExtractor={(item) => item.id}
+        totalItems={100}
+        loadMore={loadMore}
+        hasMore
+      />,
+    );
+
+    expect(mocks.props?.onEndReached).toBeTypeOf('function');
+
+    await endReach();
+
+    expect(loadMore).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Covers re-attaching the handler, which is all a stubbed list can show. Whether
+   * the real FlashList then fires depends on its one-shot end latch, which this
+   * mock has none of: the latch is armed while a page fires and is re-armed only by
+   * a `data` identity change (`useBoundDetection.js:67-71`), so a list a user left at
+   * the end resumes paging on a scroll out of the threshold rather than on refocus
+   * alone. That is the accepted cost of withholding the handler — re-arming it by
+   * forcing a new `data` identity would re-run FlashList's data update on every
+   * refocus — and a stub cannot distinguish the two, so do not read this case as
+   * proof that the real list fires.
+   */
+  it('reattaches the end handler once the screen comes back', async () => {
+    const loadMore = vi.fn();
+
+    const view = await render(
+      list({ loadMore, hasMore: true, isFocused: false }),
+    );
     expect(mocks.props?.onEndReached).toBeUndefined();
 
-    mocks.isFocused = true;
-    await view.rerender(list({ loadMore, hasMore: true }));
+    await view.rerender(list({ loadMore, hasMore: true, isFocused: true }));
     await endReach();
 
     expect(loadMore).toHaveBeenCalledTimes(1);

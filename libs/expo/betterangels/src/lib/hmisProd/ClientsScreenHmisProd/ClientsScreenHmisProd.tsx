@@ -1,9 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  InfiniteList,
-  SearchBar,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { SearchBar, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../../ui-components/InfiniteList/FocusedInfiniteList';
 import { useRouter } from 'expo-router';
 import { ElementType, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -109,7 +106,7 @@ export function ClientsScreenHmisProd({ Logo }: { Logo: ElementType }) {
         )}
 
         {hasSearched && (
-          <InfiniteList
+          <FocusedInfiniteList
             modelName="client"
             data={clients}
             keyExtractor={(client) => client.id}

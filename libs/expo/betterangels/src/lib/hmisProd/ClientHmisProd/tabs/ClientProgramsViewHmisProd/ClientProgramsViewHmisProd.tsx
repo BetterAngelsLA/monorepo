@@ -1,5 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { InfiniteList, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../../../../ui-components/InfiniteList/FocusedInfiniteList';
 import { pagePaddingHorizontal } from '../../../../static';
 import { DebugRow } from '../../../components';
 import { useClientProgramsHmisProd } from '../../../hooks';
@@ -33,7 +34,7 @@ export function ClientProgramsViewHmisProd(props: TProps) {
         label="programs debug info"
       />
 
-      <InfiniteList
+      <FocusedInfiniteList
         data={items}
         keyExtractor={(item) => String(item.id)}
         renderResultsHeader={null}
