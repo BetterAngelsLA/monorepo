@@ -5,7 +5,6 @@ import { InfoIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   IconButton,
-  InfiniteList,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -17,6 +16,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { FocusedInfiniteList } from '../../../ui-components/InfiniteList/FocusedInfiniteList';
 import {
   OperationMessageKind,
   extractOperationInfoMessages,
@@ -312,7 +312,9 @@ function ReferralsContent({ client, clientId }: TContentProps) {
           it scrolls away and doesn't eat the history's vertical space. The
           header's Resume button stays pinned, so resuming is always one tap. */}
       {!loading && (hasDraft || referrals.length > 0) && (
-        <InfiniteList<ClientReferralsQuery['referrals']['results'][number]>
+        <FocusedInfiniteList<
+          ClientReferralsQuery['referrals']['results'][number]
+        >
           data={referrals}
           keyExtractor={(referral) => referral.id}
           renderItem={(referral) => <ReferralCard referral={referral} />}

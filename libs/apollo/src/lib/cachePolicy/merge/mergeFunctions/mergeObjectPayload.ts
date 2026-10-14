@@ -13,10 +13,12 @@
  *
  * Note: offset pagination degrades when items move between pages while
  * paginating (an insert/delete shifts the window, so pages can overlap or
- * skip). This merge intentionally does not sift items around to reconcile
- * that: leaving `undefined` holes behind makes Apollo unable to read the
- * field (readQuery returns null → blank list). Use cursor/Relay pagination
- * (`relayStylePagination`) if a list needs move-proof pagination.
+ * skip). A write at offset 0 is the one case this merge reconciles: it
+ * restarts the list, so rows the server no longer returns cannot survive at
+ * the tail. Deeper pages are still not sifted around, because leaving
+ * `undefined` holes behind makes Apollo unable to read the field (readQuery
+ * returns null → blank list). Use cursor/Relay pagination
+ * (`relayStylePagination`) if a list needs fully move-proof pagination.
  *
  * ---------------------------------------------------------------------------
  * Responsibilities
@@ -24,7 +26,9 @@
  * • Reads the existing cached data and the newly fetched page.
  * • Computes the correct target index for each incoming item based on the
  *   pagination offset or page number (via `resolvePaginationFn`).
- * • Places each incoming item at `offset + i`, replacing stale entries in place.
+ * • Places each incoming item at `offset + i`, replacing stale entries in
+ *   place — except at `offset === 0`, where the incoming page replaces the
+ *   cached array outright and becomes authoritative for the list.
  * • Updates the total count (if available) and returns a new merged object,
  *   copying only the containers along the written paths (the possibly frozen
  *   incoming data is never mutated).
@@ -125,7 +129,21 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
     const existingItems = readItems(existingObject) ?? [];
     const newItems = readItems(incomingObject) ?? [];
 
-    const mergedItems = existingItems.slice() as (TItem | undefined)[];
+    // A write at offset 0 restarts the list, so treat it as authoritative and
+    // discard what we held. Splicing it over the existing array instead leaves
+    // rows the server no longer returns stranded at the tail — a merged-away
+    // client profile keeps rendering while `totalCount` says otherwise, and
+    // every later page is off by the same amount. This mirrors Apollo's
+    // `relayStylePagination`, which replaces rather than appends when no
+    // `after`/`before` cursor is supplied.
+    //
+    // Deeper offsets still splice: a page-2 fetch says nothing about page 1.
+    let mergedItems: (TItem | undefined)[];
+    if (offset === 0) {
+      mergedItems = [];
+    } else {
+      mergedItems = existingItems.slice() as (TItem | undefined)[];
+    }
 
     for (let i = 0; i < newItems.length; i = i + 1) {
       const newItem = newItems[i] as TItem;
