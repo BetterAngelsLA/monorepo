@@ -5,6 +5,7 @@ from functools import cache
 from typing import Any
 
 import pghistory
+import pgtrigger
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
@@ -66,8 +67,10 @@ ACTIVE_RESERVATION_STATUSES = (
     pghistory.InsertEvent("shelter.add"),
     pghistory.UpdateEvent("shelter.update"),
     pghistory.DeleteEvent("shelter.remove"),
-    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelter_evt_obj_idx")]},
-    append_only=True,
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelter_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Shelter(OrgScoped, BaseModel):
     class perms(PermissionSet):
@@ -224,8 +227,10 @@ class Shelter(OrgScoped, BaseModel):
     pghistory.InsertEvent("bed.add"),
     pghistory.DeleteEvent("bed.remove"),
     pghistory.UpdateEvent("bed.update"),
-    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="bed_evt_obj_idx")]},
-    append_only=True,
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="bed_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Bed(CloneMixin, OrgScoped, BaseModel):
     org_via = ("shelter",)
@@ -307,8 +312,10 @@ class Bed(CloneMixin, OrgScoped, BaseModel):
     pghistory.InsertEvent("room.add"),
     pghistory.UpdateEvent("room.update"),
     pghistory.DeleteEvent("room.remove"),
-    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="room_evt_obj_idx")]},
-    append_only=True,
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="room_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Room(CloneMixin, OrgScoped, BaseModel):
     org_via = ("shelter",)
@@ -381,8 +388,10 @@ class Room(CloneMixin, OrgScoped, BaseModel):
     pghistory.InsertEvent("shelter.contact_info.add"),
     pghistory.UpdateEvent("shelter.contact_info.update"),
     pghistory.DeleteEvent("shelter.contact_info.remove"),
-    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="contactinfo_evt_obj_idx")]},
-    append_only=True,
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="contactinfo_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class ContactInfo(OrgScoped):
     org_via = ("shelter",)

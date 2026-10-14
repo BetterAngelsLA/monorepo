@@ -3,6 +3,7 @@
 from typing import Any, Optional
 
 import pghistory
+import pgtrigger
 from admin_async_upload.models import AsyncFileField
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
@@ -36,8 +37,10 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     pghistory.InsertEvent("shelter_photo.add"),
     pghistory.UpdateEvent("shelter_photo.update"),
     pghistory.DeleteEvent("shelter_photo.remove"),
-    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelterphoto_evt_obj_idx")]},
-    append_only=True,
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelterphoto_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class ShelterPhoto(OrgScoped, BaseModel):
     org_via = ("shelter",)
@@ -90,8 +93,10 @@ class ExteriorShelterPhoto(ShelterPhoto):
     pghistory.InsertEvent("video.add"),
     pghistory.UpdateEvent("video.update"),
     pghistory.DeleteEvent("video.remove"),
-    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="video_evt_obj_idx")]},
-    append_only=True,
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="video_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Video(OrgScoped, BaseModel):
     org_via = ("shelter",)
@@ -114,8 +119,10 @@ MEDIA_TYPE_VALIDATORS: dict[str, RegexValidator] = {
     pghistory.InsertEvent("media_link.add"),
     pghistory.UpdateEvent("media_link.update"),
     pghistory.DeleteEvent("media_link.remove"),
-    meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="medialink_evt_obj_idx")]},
-    append_only=True,
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="medialink_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class MediaLink(OrgScoped, BaseModel):
     org_via = ("shelter",)
