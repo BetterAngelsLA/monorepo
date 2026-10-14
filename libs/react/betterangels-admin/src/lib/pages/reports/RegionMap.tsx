@@ -339,7 +339,9 @@ export function RegionMap({
             key. Positioned bottom-left, clear of the map's own controls. */}
         {view === 'heatmap' && (
           <div
-            className="pointer-events-none absolute bottom-3 left-3 rounded bg-white/90 px-2 py-1 shadow"
+            // Lifted clear of Google's own attribution, which owns the bottom-left corner
+            // and must stay readable — it is a licence term, not decoration.
+            className="pointer-events-none absolute bottom-9 left-3 rounded bg-white/90 px-2 py-1 shadow"
             // Placed inside the map container via the GoogleMap child slot; the map's own
             // DOM is a sibling, so absolute positioning is relative to this wrapper.
             style={{ position: 'absolute', zIndex: 5 }}
@@ -347,15 +349,22 @@ export function RegionMap({
             <div className="mb-1 text-[10px] font-medium text-neutral-600">
               Interaction density
             </div>
-            <div className="h-2 w-32 rounded-sm" style={{ background: HEATMAP_RAMP_CSS }} />
-            <div className="mt-0.5 flex w-32 justify-between text-[10px] text-neutral-500">
-              <span>fewer</span>
-              <span>more</span>
+            <div className="h-2 w-40 rounded-sm" style={{ background: HEATMAP_RAMP_CSS }} />
+            {/* Numbers rather than "fewer"/"more". The ramp is normalised against the
+                busiest area in the whole selection, so the honest reading is a share of
+                that peak — not an absolute count, which the weighted sum is not. */}
+            <div className="mt-0.5 flex w-40 justify-between text-[10px] text-neutral-600">
+              <span>0</span>
+              <span>50</span>
+              <span>100%</span>
+            </div>
+            <div className="mt-0.5 w-40 text-[10px] text-neutral-500">
+              100% = the densest spot in this selection
             </div>
             {/* "everywhere" would be a lie about zoom: the kernel radius changes with
                 zoom, so the reference is per-zoom. It is fixed against *panning*, which
                 is the thing that was wrong. */}
-            <div className="mt-0.5 text-[10px] text-neutral-500">fixed when you pan</div>
+            <div className="text-[10px] text-neutral-500">fixed when you pan</div>
           </div>
         )}
       </GoogleMap>
