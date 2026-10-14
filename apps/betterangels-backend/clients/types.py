@@ -9,7 +9,7 @@ import strawberry_django
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import CharField, Exists, F, Func, Max, OuterRef, Q, QuerySet, Value
 from django.utils import timezone
-from strawberry import ID, Info, auto
+from strawberry import ID, Info, Maybe, auto
 
 from clients.enums import (
     AdaAccommodationEnum,
@@ -27,7 +27,6 @@ from common.graphql.types import (
     PhoneNumberType,
 )
 from common.models import Attachment, PhoneNumber
-from strawberry import Maybe
 
 from .models import (
     ClientContact,
