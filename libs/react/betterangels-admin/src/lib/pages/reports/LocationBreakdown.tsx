@@ -84,6 +84,16 @@ type LocationBreakdownProps = {
  * bar next to districts numbering in the dozens distorts the comparison — and shown
  * beneath it as their own figures.
  */
+/**
+ * Case-insensitive substring match on the option's searchable text.
+ *
+ * Matching the code as well as the name is the point: a reader looking for council
+ * district 13 types "13", not "Adrin Nazarian".
+ */
+function matches(text: string, input: string): boolean {
+  return text.toLowerCase().includes(input.trim().toLowerCase());
+}
+
 export function LocationBreakdown({
   organizationId,
   startDate,
@@ -218,6 +228,7 @@ export function LocationBreakdown({
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Text type="secondary">Group by</Text>
         <Select
+          showSearch
           value={dimension}
           onChange={setDimension}
           style={{ minWidth: 220 }}
@@ -225,18 +236,28 @@ export function LocationBreakdown({
             value: d,
             label: DIMENSION_LABELS[d] ?? d,
           }))}
+          filterOption={(input, option) =>
+            matches((option?.label as string) ?? '', input)
+          }
         />
         <Text type="secondary">Show</Text>
         <Select
           allowClear
+          showSearch
           value={selectedCode}
           onChange={(value) => setSelectedCode(value)}
           style={{ minWidth: 220 }}
           placeholder={`All ${dimensionName.toLowerCase()}s`}
           options={assigned.map((row) => ({
             value: row.code,
+            // Carries the code as well as the name, because `filterOption` searches
+            // the label and the code is what a reader usually has to hand.
             label: `${row.name || row.code} (${row.count.toLocaleString()})`,
+            searchText: `${row.name} ${row.code}`,
           }))}
+          filterOption={(input, option) =>
+            matches((option?.searchText as string) ?? '', input)
+          }
         />
       </div>
 
