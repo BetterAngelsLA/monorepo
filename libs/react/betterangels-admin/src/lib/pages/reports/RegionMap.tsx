@@ -2,8 +2,8 @@
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
 import { HEATMAP_RAMP_CSS, HeatmapLayer } from './HeatmapLayer';
 import { PointLayer } from './PointLayer';
-import { Alert, Radio, Spin } from 'antd';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Spin } from 'antd';
+import { useEffect, useMemo, useRef } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { mergeCss } from '@monorepo/react/shared';
 import {
@@ -245,6 +245,12 @@ type RegionMapProps = {
   focusCodes?: string[];
   /** The app owns the key; the lib only needs to know whether one exists. */
   hasMapsKey?: boolean;
+  /**
+   * Which rendering of the same data to draw. Owned by the caller so its toggle can sit in
+   * the card header rather than inside the map, and defaulted so a caller offering no
+   * choice does not have to pass one.
+   */
+  view?: MapView;
   className?: string;
 };
 
@@ -264,12 +270,11 @@ export function RegionMap({
   filteredTo,
   focusCodes = [],
   hasMapsKey = true,
+  view = 'heatmap',
   className = '',
 }: RegionMapProps) {
-  // Heatmap first: density over an area is the question this page is usually
-  // asked, and the choropleth is the same data once you know where to look.
-  const [view, setView] = useState<MapView>('heatmap');
-
+  // Heatmap first: density over an area is the question this page is usually asked, and
+  // the choropleth is the same data once you know where to look.
   const caption = useMemo(() => {
     const scope = filteredTo ? ` within ${filteredTo}` : '';
     if (view === 'clusters') {
@@ -330,18 +335,6 @@ export function RegionMap({
           <Spin size="small" /> loading boundaries...
         </div>
       )}
-      <div className="mb-2">
-        <Radio.Group
-          value={view}
-          onChange={(event) => setView(event.target.value)}
-          optionType="button"
-          buttonStyle="solid"
-          options={[
-            { label: 'Heatmap', value: 'heatmap' },
-            { label: 'Clusters', value: 'clusters' },
-          ]}
-        />
-      </div>
       <GoogleMap
         id="admin-region-map"
         style={{ width: '100%', height: 560, borderRadius: 6 }}

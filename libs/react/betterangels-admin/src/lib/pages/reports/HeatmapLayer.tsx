@@ -141,7 +141,11 @@ function computeReferencePeaks(
     // spans `156543 * cos(lat) * 2^-zoom` metres; LA is ~34°N. Without this the kernel's
     // geographic size would be ignored and every zoom would be scaled differently.
     const metresPerPixel = (156543 * Math.cos((34 * Math.PI) / 180)) / Math.pow(2, zoom);
-    const cell = Math.max((radiusForZoom(zoom) * metresPerPixel) / 111320, 1e-9);
+    // One cell per **pixel**, so the bucket grid is the accumulation grid. Using the
+    // kernel's own width here made the footprint three times too large, so the reference
+    // overshot the true peak by ~2-3x and the top of the ramp was never reached.
+    const cell = Math.max(metresPerPixel / 111320, 1e-12);
+    const pixels = radiusForZoom(zoom);
 
     // Weighted point count per cell. A kernel is several cells wide, so a bucket that falls
     // inside many kernels accumulates many cells' worth — that accumulation *is* the
@@ -152,17 +156,18 @@ function computeReferencePeaks(
       buckets.set(key, (buckets.get(key) ?? 0) + weight);
     }
 
-    // Cells the kernel shape actually covers, by distance in cell units.
-    const span = 3;
+    // Built once per zoom rather than per point — that was the bulk of the cost.
+    const span = Math.ceil(pixels);
+    const radiusSq = pixels * pixels;
     const offsets: [number, number, number][] = [];
     for (let dy = -span; dy <= span; dy++) {
       for (let dx = -span; dx <= span; dx++) {
-        const d = Math.sqrt(dx * dx + dy * dy);
-        if (d <= span) {
-          // Quartic kernel, `(1 - d²/r²)²`, with r = span cells.
-          const t = 1 - (d * d) / (span * span);
-          offsets.push([dx, dy, t * t]);
+        const d2 = dx * dx + dy * dy;
+        if (d2 > radiusSq) {
+          continue;
         }
+        const t = 1 - d2 / radiusSq;
+        offsets.push([dx, dy, t * t]);
       }
     }
 
@@ -229,10 +234,11 @@ export function HeatmapLayer({ points, intensity = 0.55 }: HeatmapLayerProps) {
   const map = useMap();
   const pointsRef = useRef<HeatPoint[]>(points);
   // Fixed for a given dataset, so a pan cannot rescale the ramp.
-  // Scale reference per zoom, from the dataset rather than the viewport.
-  const referenceRef = useRef(
-    computeReferencePeaks(points, intensity, ZOOM_LEVELS),
-  );
+  // Scale reference per zoom, from the dataset rather than the viewport. Computed
+  // asynchronously: it is exact and therefore not cheap (a few hundred ms), and blocking
+  // the first paint on it is worse than drawing once with the viewport's own peak as a
+  // fallback. Kept in a ref, so the redraw does not recreate the canvas.
+  const referenceRef = useRef<Map<number, number> | null>(null);
   const drawRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -334,7 +340,7 @@ export function HeatmapLayer({ points, intensity = 0.55 }: HeatmapLayerProps) {
       // The fixed reference for this zoom, not `Math.max(...acc)`. The buffer only holds
       // what is on screen, so using its own peak would make the ramp a function of the
       // viewport and the colours would swim as the map is panned.
-      const reference = referenceRef.current.get(Math.round(zoom)) ?? 0;
+      const reference = referenceRef.current?.get(Math.round(zoom)) ?? 0;
       let viewportMax = 0;
       for (let i = 0; i < acc.length; i++) {
         if (acc[i] > viewportMax) {
@@ -387,8 +393,29 @@ export function HeatmapLayer({ points, intensity = 0.55 }: HeatmapLayerProps) {
   // reference — it is derived from the points, so it moves with them.
   useEffect(() => {
     pointsRef.current = points;
-    referenceRef.current = computeReferencePeaks(points, intensity, ZOOM_LEVELS);
+    referenceRef.current = null;
     drawRef.current?.();
+
+    if (points.length === 0) {
+      return;
+    }
+
+    // Deferred so a slow reference never delays the map. The first draw falls back to the
+    // viewport peak, then the fixed scale arrives a frame later. `requestIdleCallback` is
+    // widely available; where it is not, the fallback is skipped and the initial scale
+    // simply stands, which is correct behaviour rather than a degraded one.
+    if (typeof requestIdleCallback !== 'function') {
+      return;
+    }
+    const handle = requestIdleCallback(
+      () => {
+        referenceRef.current = computeReferencePeaks(points, intensity, ZOOM_LEVELS);
+        drawRef.current?.();
+      },
+      { timeout: 2000 },
+    );
+
+    return () => cancelIdleCallback(handle);
   }, [points, intensity]);
 
   return null;

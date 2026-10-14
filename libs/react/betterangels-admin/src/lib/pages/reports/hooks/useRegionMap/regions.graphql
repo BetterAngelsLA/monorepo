@@ -16,6 +16,9 @@ query InteractionsByRegion(
     endDate: $endDate
     regionCodes: $regionCodes
   ) {
+    # Which dimension this bucket belongs to. A rollup can span every dimension, where the
+    # code alone is ambiguous, so the table has to be able to say which one a row came from.
+    kind
     code
     name
     count

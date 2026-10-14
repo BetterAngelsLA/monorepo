@@ -1,6 +1,6 @@
-import { Column } from '@ant-design/charts';
 import {
   Alert,
+  Radio,
   Select,
   Spin,
   Table,
@@ -20,7 +20,7 @@ import {
   useRegionDimensions,
   type RegionCountType,
 } from './hooks';
-import { RegionMap } from './RegionMap';
+import { RegionMap, type MapView } from './RegionMap';
 
 const { Text } = Typography;
 
@@ -128,6 +128,9 @@ export function LocationBreakdown({
   // question ("where are we strong in 8 versus 9?"), and the plumbing is already a list
   // the whole way down to the API, so single-select was an artificial restriction.
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  // Owned here so the toggle can sit in the card header, beside the title, rather than
+  // inside the map among the filters.
+  const [view, setView] = useState<MapView>('heatmap');
 
   const controlsRef = useNoAutofill();
 
@@ -202,10 +205,30 @@ export function LocationBreakdown({
   }, [rows, rowsLoading]);
 
   const shown = rowsLoading && rows.length === 0 ? settledRows : rows;
-  const assigned = useMemo(
-    () => shown.filter((r) => !r.isUnassigned && r.count > 0),
-    [shown],
-  );
+
+  /**
+   * Sorted for reading. Two things are wrong with the raw order.
+   *
+   * Within a dimension, codes arrive in database order, which for numbers is dictionary
+   * order — "1", "10", "11", "2". And across dimensions there is no order at all, so
+   * "All dimensions" interleaved a city, a ZIP and a CoC by count, which reads as an
+   * unsorted list of 133 rows across 14 pages. Grouping by dimension first makes that view
+   * navigable; within each dimension the count still decides, because that is the question.
+   */
+  const assigned = useMemo(() => {
+    const rowsWithCounts = shown.filter((r) => !r.isUnassigned && r.count > 0);
+    if (dimension !== undefined) {
+      return rowsWithCounts;
+    }
+    const order = (kind: string) => Object.values(RegionDimension).indexOf(kind as RegionDimension);
+    return [...rowsWithCounts].sort((a, b) => {
+      const byKind = order(a.kind) - order(b.kind);
+      if (byKind !== 0) {
+        return byKind;
+      }
+      return b.count - a.count;
+    });
+  }, [shown, dimension]);
 
   /**
    * Sorted for reading, not for the API.
@@ -322,7 +345,28 @@ export function LocationBreakdown({
   }
 
   return (
-    <ChartCard title="Interactions by Location" className={className}>
+    <ChartCard
+      title="Interactions by Location"
+      className={className}
+      // The view toggle changes *how* the map draws, not *what* it draws, so it sits in the
+      // header beside the title rather than in the row of filters — those are two different
+      // kinds of choice and stacking them implies they are one.
+      extra={
+        <Radio.Group
+          value={view}
+          onChange={(event) => setView(event.target.value)}
+          optionType="button"
+          buttonStyle="solid"
+          options={[
+            { label: 'Heatmap', value: 'heatmap' },
+            { label: 'Clusters', value: 'clusters' },
+          ]}
+        />
+      }
+    >
+      {/* Both filters live in the map card, directly above the map and table they affect.
+          They previously sat under the page's charts, ~640px from the map, so changing
+          them moved things the reader could not see. */}
       <div ref={controlsRef} className="mb-4 flex flex-wrap items-center gap-3">
         <Text type="secondary">Group by</Text>
         <Select
@@ -412,26 +456,25 @@ export function LocationBreakdown({
             hasMapsKey={hasMapsKey}
             filteredTo={filteredToName}
             focusCodes={selectedCodes}
+            view={view}
           />
         </div>
       )}
 
       {hasData && (
         <>
-          <Column
-            data={assigned.slice(0, 20)}
-            xField="name"
-            yField="count"
-            height={300}
-            xAxis={{ label: { autoRotate: true, style: { fontSize: 10 } } }}
-            yAxis={{ title: { text: 'Interactions' } }}
-            color="#1B3A5C"
-          />
+          {/* No bar chart above the table. It plotted `assigned.slice(0, 20)` — the same
+              rows the table below already shows, sortable and complete — so it added 300px
+              of scroll and no information, and its rotated 10px labels were unreadable. In
+              "All dimensions" it also put incomparable categories (a city, a ZIP, a CoC) on
+              one axis, which invites a comparison that has no meaning. */}
           <Table<RegionCountType>
             className="mt-4"
             size="small"
+            // Includes `kind`: unassigned rows share an empty code and reason, so without
+            // it the six dimensions collide on one key.
             rowKey={(row) =>
-              `${row.isUnassigned}-${row.unassignedReason ?? ''}-${row.code}`
+              `${row.kind}-${row.isUnassigned}-${row.unassignedReason ?? ''}-${row.code}`
             }
             columns={columns}
             dataSource={shown}
@@ -441,15 +484,25 @@ export function LocationBreakdown({
       )}
 
       {!rowsLoading && unassigned.length > 0 && (
-        <div className="mt-4 rounded border border-neutral-200 bg-neutral-50 p-3">
+        // Readable rather than grey-on-grey, which read as disabled. The dimension is shown
+        // because without it every row says the same thing: one unassigned row per
+        // dimension, all labelled "Outside all boundaries", so 23 and 291 looked like
+        // duplicates of each other instead of two different groupings.
+        <div className="mt-4 rounded border border-neutral-200 bg-white p-3">
           <Text strong>
             Not attributed to {dimension ? `a ${dimensionName.toLowerCase()}` : 'any region'}
           </Text>
-          <ul className="mt-2 mb-0 list-disc pl-5 text-sm text-neutral-600">
+          <ul className="mt-2 mb-0 list-none space-y-1 p-0 text-sm">
             {unassigned.map((row) => (
-              <li key={`${row.unassignedReason}-${row.code}`}>
-                {unassignedLabel(row)}:{' '}
-                <Text strong>{row.count.toLocaleString()}</Text>{' '}
+              <li
+                key={`${row.kind}-${row.unassignedReason ?? ''}-${row.code}`}
+                className="flex items-baseline gap-2"
+              >
+                {dimension === undefined && (
+                  <Tag className="m-0">{kindLabel(row.kind)}</Tag>
+                )}
+                <span className="text-neutral-700">{unassignedLabel(row)}</span>
+                <Text strong>{row.count.toLocaleString()}</Text>
                 <Text type="secondary">interactions</Text>
               </li>
             ))}
