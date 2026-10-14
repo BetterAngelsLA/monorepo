@@ -6,7 +6,9 @@ describe('retired printable-report URL', () => {
   // as a redirect in OperatorApp) so existing bookmarks keep working — this
   // pins the exact string so a rename can't silently break them.
   it('keeps the legacy pattern byte-for-byte identical to the old route', () => {
-    expect(paths.shelterReportLegacy).toBe('/operator/shelter/:shelterId/report');
+    expect(paths.shelterReportLegacy).toBe(
+      '/operator/shelter/:shelterId/report',
+    );
   });
 
   it('does not collide with the still-live printable routes', () => {

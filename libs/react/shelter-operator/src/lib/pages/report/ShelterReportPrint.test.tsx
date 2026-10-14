@@ -173,7 +173,9 @@ describe('ShelterReportPrint', () => {
   });
 
   it('does not keep the off-canvas measurement pass mounted once measurements land', () => {
-    const { container } = render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
+    const { container } = render(
+      <ShelterReportPrint {...baseProps(ALL_METRICS)} />,
+    );
 
     // Each chart would otherwise mount twice (once to measure, once on its
     // page) and render a second canvas chart for the life of the report.
@@ -186,7 +188,8 @@ describe('ShelterReportPrint', () => {
     ).toHaveLength(1);
   });
 
-  it('uses a compact header (no "Operational Summary" title) on later pages', () => {    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
+  it('uses a compact header (no "Operational Summary" title) on later pages', () => {
+    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
 
     const pagesWithTitle = reportPages().filter(
       (page) => within(page).queryAllByText('Operational Summary').length > 0,

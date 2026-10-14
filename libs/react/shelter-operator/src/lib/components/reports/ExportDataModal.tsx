@@ -93,11 +93,11 @@ export function ExportDataModal({
     );
     if (selectable.length === 0) return;
 
-    const currentIndex = selectable.findIndex(({ option }) => option === format);
+    const currentIndex = selectable.findIndex(
+      ({ option }) => option === format,
+    );
     const next =
-      selectable[
-        (currentIndex + step + selectable.length) % selectable.length
-      ];
+      selectable[(currentIndex + step + selectable.length) % selectable.length];
     if (!next) return;
 
     setFormat(next.option);
