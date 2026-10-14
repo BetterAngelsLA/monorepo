@@ -10,6 +10,7 @@ import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { HeaderSlot } from '../../../navigation';
 import { MainScrollContainer } from '../../../ui-components';
 import NoteLocationHmis from './NoteLocationHmis';
 import NoteServicesHmis from './NoteServicesHmis';
@@ -37,18 +38,20 @@ export function NoteViewHmis(props: TProps) {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TextButton
-          color={Colors.WHITE}
-          regular
-          title="Edit"
-          accessibilityHint="edit note form"
-          onPress={() =>
-            router.navigate({
-              pathname: `notes-hmis/${id}/edit`,
-              params: { clientId },
-            })
-          }
-        />
+        <HeaderSlot side="right">
+          <TextButton
+            color={Colors.WHITE}
+            regular
+            title="Edit"
+            accessibilityHint="edit note form"
+            onPress={() =>
+              router.navigate({
+                pathname: `notes-hmis/${id}/edit`,
+                params: { clientId },
+              })
+            }
+          />
+        </HeaderSlot>
       ),
     });
   }, [id, clientId, navigation, router]);
@@ -85,7 +88,7 @@ export function NoteViewHmis(props: TProps) {
 
         {!!clientName && <TextBold selectable>{clientName}</TextBold>}
 
-        {programName && (
+        {!!programName && (
           <View>
             <TextBold mb="xs">Program</TextBold>
             <TextRegular selectable>{programName}</TextRegular>

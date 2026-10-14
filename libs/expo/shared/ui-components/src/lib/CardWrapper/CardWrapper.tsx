@@ -20,7 +20,7 @@ export function CardWrapper({
 }) {
   return (
     <View style={styles.container}>
-      {title && (
+      {!!title && (
         <View
           style={{
             alignItems: 'center',
@@ -30,7 +30,7 @@ export function CardWrapper({
         >
           <View>
             <TextBold size="lg">{title}</TextBold>
-            {subtitle && <TextRegular size="sm">{subtitle}</TextRegular>}
+            {!!subtitle && <TextRegular size="sm">{subtitle}</TextRegular>}
           </View>
           {action}
         </View>

@@ -1,9 +1,15 @@
 import { isPermission } from '@monorepo/ba-platform/permissions';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 
 import {
+  pushActiveOrgSource,
   getActiveOrgId,
   setActiveOrgId as commitActiveOrgId,
   subscribeActiveOrgId,
@@ -32,15 +38,9 @@ export interface ActiveOrgState {
   /** Switch to a different org by its id. */
   setActiveOrgId: (orgId: string) => void;
   /**
-   * Whether the ACTIVE ORG can exercise *permission* — the org-scoped gate.
-   *
-   * The active org's entry is EFFECTIVE (the backend folds the global tier in
-   * only where it is enforceable per org — grant-only/dual domains — and adds
-   * the org-scoped grant/delegated/legacy arms), so this is the single
-   * membership test ADR 0001 §5.2 prescribes.  It deliberately does NOT consult
-   * the global list: a global holder must not see a legacy-only-domain control
-   * at an org whose ``PermissionGroup`` does not carry it, because the backend
-   * (``HasOrgPerm``) would refuse it (finding H2).
+   * Whether the ACTIVE ORG can exercise *permission* — the org-scoped gate. It
+   * deliberately does not consult the global list; see ``useActiveOrgState`` for
+   * why.
    */
   hasPermission: (permission: PermissionEnum) => boolean;
 }
@@ -48,9 +48,11 @@ export interface ActiveOrgState {
 /**
  * Active organization selection, backed by the active-org store.
  *
- * Owns *validation*: the store holds whatever it is told, and this is the only
- * thing that knows which organizations the user belongs to. Consumers can rely
- * on ``activeOrg`` alone — there is no readiness flag to wait on.
+ * Owns *validation*: the store holds what the user chose, and derives the
+ * effective id from the organizations passed here. Consumers can rely on
+ * ``activeOrg`` alone — there is no readiness flag to wait on. ``undefined``
+ * organizations mean the list is not known yet, which keeps the remembered id in
+ * play instead of treating the user as belonging to nothing.
  *
  * This hook is the ORG-SCOPED gate only.  ``hasPermission`` checks the active
  * org's EFFECTIVE entry, never a global list: org entries are enforcement-
@@ -71,40 +73,56 @@ export interface ActiveOrgState {
  * state (``activeOrg``/``organizations``) are sanitized the same way, so their
  * ``permissions`` hold only modeled permissions.
  */
-export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
-  // Reconcile during render, before the snapshot read below. NOT an effect:
-  // React runs effects child-before-parent, so a child would query before this
-  // provider had chosen an organization and the request would go out with no
-  // header. Safe here because it is idempotent and derived purely from props.
-  //
-  // An empty list means "not loaded yet", not "belongs to nothing" —
-  // UserProvider renders children before the user query resolves. Reconciling
-  // then would discard the organization restored from persistence and replace
-  // it with the first one once the list arrived.
-  const currentId = getActiveOrgId();
-  if (
-    organizations.length > 0 &&
-    !organizations.some((o) => o.id === currentId)
-  ) {
-    commitActiveOrgId(organizations[0].id);
-  }
-
-  const activeOrgId = useSyncExternalStore(
-    subscribeActiveOrgId,
-    getActiveOrgId,
-    getActiveOrgId,
-  );
-
+export function useActiveOrgState(
+  organizations: Org[] | undefined,
+): ActiveOrgState {
   // Exposed orgs carry only the permissions the frontend models: raw backend
   // ``app.codename`` strings are filtered once here, so ``activeOrg`` and
   // ``organizations`` never leak a permission ``hasPermission`` cannot check.
+  //
+  // The `?? []` is for *rendering* only — it does not decide the "list not loaded
+  // yet" case. The store is never handed this array while the list is unknown:
+  // the effect below pushes no source in that state. Keep both halves of that:
+  // pushing an empty list would read as "belongs to nothing" and would also
+  // shadow an outer provider's list, which is what keeps requests attributed
+  // during a refetch. Pinned by the "before the organization list is known",
+  // "before the org list loads" and "genuinely org-less user" tests.
   const cleanOrgs = useMemo(
     () =>
-      organizations.map((org) => ({
+      (organizations ?? []).map((org) => ({
         ...org,
         permissions: (org.permissions ?? []).filter(isPermission),
       })),
     [organizations],
+  );
+
+  // This is where the store learns who the user belongs to. `undefined` means
+  // "not known yet", which is not the same as belonging to nothing: requests keep
+  // the remembered id in that window rather than going out unattributed.
+  //
+  // A layout effect because a query issued from a child's passive effect has to
+  // see it, and layout effects all run before any of those. The push is legal
+  // here (an effect, not a render).
+  //
+  // Disposed from the cleanup, so an unmounting (or changing) provider restores
+  // whatever was installed beneath it — nesting is real: shelter-web mounts one
+  // provider around the app and another inside it on /operator.
+  useLayoutEffect(() => {
+    // Nothing to contribute while the list is unknown: leaving the slot alone
+    // lets an outer provider's list stay in play, which is what keeps requests
+    // attributed during a refetch.
+    if (organizations === undefined) return;
+
+    return pushActiveOrgSource(() => cleanOrgs);
+  }, [organizations, cleanOrgs]);
+
+  // No reconciliation: the store derives the id from the same two inputs this
+  // hook renders from, so a stale remembered id reads as the first organization
+  // here and in the request header alike. Choosing one is `setActiveOrgId`.
+  const activeOrgId = useSyncExternalStore(
+    subscribeActiveOrgId,
+    getActiveOrgId,
+    getActiveOrgId,
   );
 
   const activeOrg = useMemo(
@@ -119,8 +137,9 @@ export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
     [cleanOrgs],
   );
 
+  // Already filtered by ``cleanOrgs`` above.
   const permSet = useMemo(
-    () => new Set((activeOrg?.permissions ?? []).filter(isPermission)),
+    () => new Set(activeOrg?.permissions ?? []),
     [activeOrg?.permissions],
   );
 

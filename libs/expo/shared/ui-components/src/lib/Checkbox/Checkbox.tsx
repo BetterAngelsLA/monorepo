@@ -16,6 +16,7 @@ interface ICheckboxProps extends TMarginProps {
   onCheck: () => void;
   accessibilityLabel?: string;
   accessibilityHint: string;
+  accessibilityRole?: 'button' | 'checkbox';
   size?: 'sm' | 'md';
   hasBorder?: boolean;
   labelFirst?: boolean;
@@ -32,6 +33,7 @@ export function Checkbox(props: ICheckboxProps) {
     onCheck,
     accessibilityHint,
     accessibilityLabel,
+    accessibilityRole = 'button',
     size,
     hasBorder,
     labelFirst = true,
@@ -46,7 +48,9 @@ export function Checkbox(props: ICheckboxProps) {
     <Pressable
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
+      accessibilityState={{ checked: isChecked }}
+      aria-checked={isChecked}
       accessible
       style={[
         styles.container,

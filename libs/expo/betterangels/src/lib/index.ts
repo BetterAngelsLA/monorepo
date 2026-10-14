@@ -4,7 +4,6 @@ export * from './errors';
 export * from './helpers';
 export * from './hmisProd';
 export * from './hooks';
-export * from './maps';
 export * from './navigation';
 export * from './providers';
 export * from './screenRouting';

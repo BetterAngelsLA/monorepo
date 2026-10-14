@@ -1,6 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
+import { HeaderSlot } from './HeaderSlot';
 import { headerStyles } from './headerStyles';
 
 type TProps = {
@@ -23,14 +24,16 @@ export function HeaderLeftButton(props?: TProps) {
   const router = useRouter();
 
   return (
-    <TextButton
-      regular
-      color={color}
-      fontSize="md"
-      pressedBackgroundColor={pressedBackgroundColor}
-      accessibilityHint={accessibilityHint}
-      title={title}
-      onPress={onPress || router.back}
-    />
+    <HeaderSlot side="left">
+      <TextButton
+        regular
+        color={color}
+        fontSize="md"
+        pressedBackgroundColor={pressedBackgroundColor}
+        accessibilityHint={accessibilityHint}
+        title={title}
+        onPress={onPress || router.back}
+      />
+    </HeaderSlot>
   );
 }

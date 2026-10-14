@@ -47,7 +47,7 @@ export function ScreenHeaderCloseButton(props?: TProps) {
       accessibilityHint={accessibilityHint}
       testId={testId}
     >
-      {label && <TextBold color={color}>{label}</TextBold>}
+      {!!label && <TextBold color={color}>{label}</TextBold>}
 
       {!label && <PlusIcon size="md" color={color} rotate="45deg" />}
     </ScreenHeaderButton>

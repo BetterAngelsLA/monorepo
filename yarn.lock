@@ -5426,6 +5426,7 @@ __metadata:
     graphql: "npm:^16.13.2"
     haversine-distance: "npm:^1.2.3"
     html2canvas-pro: "npm:^2.0.4"
+    http-proxy-middleware: "npm:^3.0.7"
     i: "npm:^0.3.7"
     jiti: "npm:2.4.2"
     jotai: "npm:^2.12.5"
@@ -10470,6 +10471,15 @@ __metadata:
   version: 4.2.0
   resolution: "@types/http-cache-semantics@npm:4.2.0"
   checksum: 10/01ea0dc9c1852267f5f9a0190846ac158707994b8e325bca190385ec97aa773d4a99cd333e22e838bde3c9aba59e2b5a6ac399b494c203587c6d8f28d21d6326
+  languageName: node
+  linkType: hard
+
+"@types/http-proxy@npm:^1.17.15":
+  version: 1.17.17
+  resolution: "@types/http-proxy@npm:1.17.17"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10/893e46e12be576baa471cf2fc13a4f0e413eaf30a5850de8fdbea3040e138ad4171234c59b986cf7137ff20a1582b254bf0c44cfd715d5ed772e1ab94dd75cd1
   languageName: node
   linkType: hard
 
@@ -18689,6 +18699,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"http-proxy-middleware@npm:^3.0.7":
+  version: 3.0.7
+  resolution: "http-proxy-middleware@npm:3.0.7"
+  dependencies:
+    "@types/http-proxy": "npm:^1.17.15"
+    debug: "npm:^4.3.6"
+    http-proxy: "npm:^1.18.1"
+    is-glob: "npm:^4.0.3"
+    is-plain-object: "npm:^5.0.0"
+    micromatch: "npm:^4.0.8"
+  checksum: 10/a44135de721e55517b0fca596855e1e4da92b5fdad247425b4253a345fface37b2a800fcfe37dc28863e9021d8c56cf9cb33ebd20d63c9eca6918a46b39082d4
+  languageName: node
+  linkType: hard
+
 "http-proxy@npm:^1.18.1":
   version: 1.18.1
   resolution: "http-proxy@npm:1.18.1"
@@ -19279,7 +19303,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-plain-object@npm:^5.1.0":
+"is-plain-object@npm:^5.0.0, is-plain-object@npm:^5.1.0":
   version: 5.1.0
   resolution: "is-plain-object@npm:5.1.0"
   checksum: 10/100adc3c2a7ef53968957346aecd1ee427053e1cfa5a12a0b6e49466dd86703d9f52440772f0aa296539691ac164deadfdff5c24c7cadb8635c6a00a9fcaf7ba

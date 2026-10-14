@@ -5,6 +5,8 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useQuery } from '@apollo/client/react';
+import { HeaderLeftButton } from '../../navigation/HeaderLeftButton';
+import { HeaderSlot } from '../../navigation';
 import { MainScrollContainer } from '../../ui-components';
 import NoteByline from './NoteByline';
 import NoteClient from './NoteClient';
@@ -35,21 +37,28 @@ export default function Note({
     if (!note?.userCanEdit) return;
 
     navigation.setOptions({
+      headerLeft: () => (
+        // Same inset as the client screen's, so the back button does not shift
+        // between a client's map and the interaction it opens.
+        <HeaderLeftButton />
+      ),
       headerRight: () => (
-        <TextButton
-          color={Colors.WHITE}
-          regular
-          title="Edit"
-          accessibilityHint="goes to the edit interaction screen"
-          onPress={() =>
-            router.navigate({
-              pathname: `/note/${id}/edit`,
-              params: {
-                arrivedFrom,
-              },
-            })
-          }
-        />
+        <HeaderSlot side="right">
+          <TextButton
+            color={Colors.WHITE}
+            regular
+            title="Edit"
+            accessibilityHint="goes to the edit interaction screen"
+            onPress={() =>
+              router.navigate({
+                pathname: `/note/${id}/edit`,
+                params: {
+                  arrivedFrom,
+                },
+              })
+            }
+          />
+        </HeaderSlot>
       ),
     });
   }, [note?.userCanEdit, id, arrivedFrom, navigation, router]);
@@ -78,7 +87,7 @@ export default function Note({
         {note.location?.point && <NoteLocation note={note} />}
         {(note.providedServices.length > 0 ||
           note.requestedServices.length > 0) && <NoteServices note={note} />}
-        {note.publicDetails && <NotePublicNote note={note} />}
+        {!!note.publicDetails && <NotePublicNote note={note} />}
       </View>
     </MainScrollContainer>
   );

@@ -100,6 +100,10 @@ export const EnvironmentSwitcherProvider = ({
   // ---- Switch environment ----
   const switchEnvironment = useCallback(
     async (env: string) => {
+      // Refuse a name this build has no URL for — `+local` on a device without
+      // `EXPO_PUBLIC_LOCAL_API_URL` is the real case. `apiUrl` below falls back to
+      // `environments[0]`, so accepting it would sign in to production silently.
+      if (!environments.some((e) => e.name === env)) return;
       if (env === envName) return;
       await storage.setItem(storageKey, env);
       // Organization ids are per-environment — this one names a row in the
@@ -107,7 +111,9 @@ export const EnvironmentSwitcherProvider = ({
       clearActiveOrgId();
       setEnvName(env);
     },
-    [envName, storage, storageKey],
+    // `environments` is a stable reference by contract, so listing it here costs
+    // nothing and keeps the check honest if that ever stops being true.
+    [envName, environments, storage, storageKey],
   );
 
   // ---- Resolve base URL ----
