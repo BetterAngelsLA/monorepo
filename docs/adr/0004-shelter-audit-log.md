@@ -1533,10 +1533,13 @@ selected queryset of rows, not a date window, so a date-driven purge does not fi
 the action model; the management command is the primitive. An admin view/form
 could call the same function later if BA staff need a UI trigger.
 
-**Tension to note:** enabling `PGHISTORY_APPEND_ONLY = True` (tamper-evidence,
-Future considerations) blocks deletes, so retention and append-only are mutually
-exclusive as configured. No schedule is wired by default; enabling one is a
-deliberate ops choice.
+**Append-only interaction (settled):** the event tables are now append-only
+(§9b), so this command cannot delete event rows with a plain `.delete()` — the
+`Protect` trigger rejects it. The purge must therefore use a trigger-bypassing
+path: a partition drop (the tables are not partitioned today, so this is a
+prerequisite), or a role that is exempted from the trigger. Settle that mechanism
+when the command is written; no purge code exists yet. No Celery-beat schedule is
+wired by default — enabling one remains a deliberate ops choice.
 
 ---
 
