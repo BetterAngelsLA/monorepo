@@ -127,7 +127,10 @@ export function LocationBreakdown({
   // every interaction in range. Single rather than multi: the rollup already shows
   // all regions, so this control exists to drill into one, and a multi-select on a
   // map reads as "highlight these", which the map does not do.
-  const [selectedCode, setSelectedCode] = useState<string | undefined>(undefined);
+  // A list rather than one code: comparing two districts side by side is the common
+  // question ("where are we strong in 8 versus 9?"), and the plumbing is already a list
+  // the whole way down to the API, so single-select was an artificial restriction.
+  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const controlsRef = useNoAutofill();
 
   const { dimensions, error: dimensionsError } = useRegionDimensions();
@@ -143,7 +146,7 @@ export function LocationBreakdown({
     // The drill-down has to reach the rollup, not just the map: `RegionMap` draws the
     // polygons for the regions it is given, so without this the shapes never change
     // however the map is filtered.
-    regionCodes: selectedCode === undefined ? undefined : [selectedCode],
+    regionCodes: selectedCodes.length > 0 ? selectedCodes : undefined,
   });
   // The heatmap is deliberately **not** scoped by the grouping. A group-by re-partitions
   // the same interactions; it does not select a different set of them, so letting it
@@ -188,12 +191,16 @@ export function LocationBreakdown({
   // is a legitimate value the importer can produce, and `||` would silently swap in
   // the code instead.
   const filteredToName = useMemo(() => {
-    if (!selectedCode) {
+    if (selectedCodes.length === 0) {
       return undefined;
     }
-    const match = assigned.find((row) => row.code === selectedCode);
-    return match === undefined ? selectedCode : match.name || selectedCode;
-  }, [assigned, selectedCode]);
+    return selectedCodes
+      .map((code) => {
+        const match = assigned.find((row) => row.code === code);
+        return match === undefined ? code : match.name || code;
+      })
+      .join(', ');
+  }, [assigned, selectedCodes]);
   // Named regions with interactions, which is what the drill-down offers. The
   // unassigned buckets are excluded: they have no code to filter by.
 
@@ -201,10 +208,10 @@ export function LocationBreakdown({
   // spans every dimension, so there is no single name to interpolate.
   const dimensionName = dimension ? DIMENSION_LABELS[dimension] : 'region';
 
-  // Selecting a different dimension invalidates the code: "4" is an SPA and also a
-  // Long Beach council district.
+  // Selecting a different dimension invalidates the codes: "4" is an SPA and also a Long
+  // Beach council district, so a selection cannot carry across.
   useEffect(() => {
-    setSelectedCode(undefined);
+    setSelectedCodes([]);
   }, [dimension]);
   const queryError = error ?? dimensionsError ?? mapError;
 
@@ -271,7 +278,7 @@ export function LocationBreakdown({
           value={dimension}
           onChange={(value) => {
             setDimension(value);
-            setSelectedCode(undefined);
+            setSelectedCodes([]);
           }}
           style={{ minWidth: 220 }}
           placeholder="All dimensions"
@@ -290,8 +297,12 @@ export function LocationBreakdown({
           // Disabled rather than hidden, so the control does not jump around when the
           // grouping changes — and because a code without a dimension cannot be resolved.
           disabled={dimension === undefined}
-          value={selectedCode}
-          onChange={(value) => setSelectedCode(value)}
+          mode="multiple"
+          // Keeps the control from growing without bound as regions are added; the
+          // selected names are still visible in the caption and the table.
+          maxTagCount="responsive"
+          value={selectedCodes}
+          onChange={(value: string[]) => setSelectedCodes(value)}
           style={{ minWidth: 220 }}
           placeholder={dimension ? `All ${dimensionName.toLowerCase()}s` : 'Pick a dimension first'}
           options={assigned.map((row) => ({
@@ -329,6 +340,7 @@ export function LocationBreakdown({
             truncated={truncated}
             hasMapsKey={hasMapsKey}
             filteredTo={filteredToName}
+            focusCodes={selectedCodes}
           />
         </div>
       )}

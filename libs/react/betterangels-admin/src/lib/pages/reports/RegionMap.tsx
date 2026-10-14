@@ -114,10 +114,13 @@ function RegionLayer({
   rows,
   regions,
   view,
+  focusCodes,
 }: {
   rows: RegionCountType[];
   regions: RegionGeometryType[];
   view: MapView;
+  /** Region codes the reader narrowed to; the viewport frames these when set. */
+  focusCodes: string[];
 }) {
   const map = useMap();
   // One automatic fit per mount; after that the viewport belongs to the reader.
@@ -209,12 +212,21 @@ function RegionLayer({
     const overListener = layer.addListener('mouseover', onOver);
     const outListener = layer.addListener('mouseout', onOut);
 
-    // Fit the viewport to the boundaries, but **only the first time**. Re-fitting on
-    // every dimension change resets the zoom the reader chose, and for a county-wide
-    // dimension such as SPA it zooms out far enough to make the map unreadable.
-    if (!hasFittedRef.current) {
+    /**
+     * Frame a set of features, or everything when `codes` is empty.
+     *
+     * Fitting on a *selection* is right every time it changes — narrowing to two
+     * districts means the reader wants to look at those two. Fitting on the *whole*
+     * dimension is only right once: repeating it on every dimension change would reset
+     * the zoom the reader chose, and for a county-wide dimension such as SPA it zooms
+     * out far enough to make the map unreadable.
+     */
+    const frame = (codes: string[]) => {
       const bounds = new google.maps.LatLngBounds();
       layer.forEach((f: google.maps.Data.Feature) => {
+        if (codes.length > 0 && !codes.includes(featureString(f, 'code'))) {
+          return;
+        }
         const featureBounds = new google.maps.LatLngBounds();
         f.getGeometry()?.forEachLatLng((ll: google.maps.LatLng) =>
           featureBounds.extend(ll),
@@ -222,9 +234,15 @@ function RegionLayer({
         if (!featureBounds.isEmpty()) bounds.union(featureBounds);
       });
       if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, 32);
-        hasFittedRef.current = true;
+        map.fitBounds(bounds, 48);
       }
+    };
+
+    if (focusCodes.length > 0) {
+      frame(focusCodes);
+    } else if (!hasFittedRef.current) {
+      frame([]);
+      hasFittedRef.current = true;
     }
 
     return () => {
@@ -233,7 +251,7 @@ function RegionLayer({
       layer.forEach((f: google.maps.Data.Feature) => layer.remove(f));
       map.getDiv().removeAttribute('title');
     };
-  }, [map, regions, countsByCode, max, view]);
+  }, [map, regions, countsByCode, max, view, focusCodes]);
 
   return null;
 }
@@ -246,8 +264,10 @@ type RegionMapProps = {
   points?: InteractionPointType[];
   /** True when the point cap was reached and the pins are a subset. */
   truncated?: boolean;
-  /** Name of the single region the map is narrowed to, if any. */
+  /** Names of the regions the map is narrowed to, if any. */
   filteredTo?: string;
+  /** Region codes the reader narrowed to; the viewport frames these. */
+  focusCodes?: string[];
   /** The app owns the key; the lib only needs to know whether one exists. */
   hasMapsKey?: boolean;
   className?: string;
@@ -267,6 +287,7 @@ export function RegionMap({
   points = [],
   truncated = false,
   filteredTo,
+  focusCodes = [],
   hasMapsKey = true,
   className = '',
 }: RegionMapProps) {
@@ -352,6 +373,7 @@ export function RegionMap({
           rows={rows}
           regions={regions}
           view={view}
+          focusCodes={focusCodes}
         />
         {view !== 'heatmap' && (
           <InteractionLayer view={view} points={points} />
