@@ -440,6 +440,12 @@ class ObjectAuditLogQueryBudgetTestCase(TestCase):
     that history size barely moves latency (H1/H2); these tests pin the
     mechanism behind that result, so a refactor cannot quietly reintroduce an
     N+1 or move filtering back into Python.
+
+    Plan *shape* — which index the planner picks, and H4's seq-scan cliff on the
+    unanchored aggregate — is deliberately not asserted here: test fixtures are
+    far too small for the optimizer's choices to mean anything, so that is
+    measured by ``bench_audit_read`` against loaded tables (§9c) rather than
+    pinned in the unit suite.
     """
 
     def setUp(self) -> None:
