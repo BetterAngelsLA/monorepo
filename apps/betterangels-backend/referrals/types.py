@@ -1,11 +1,12 @@
 from typing import Optional
 
 import strawberry_django
+from strawberry import ID, auto
+
 from accounts.types import UserType
 from clients.types import ClientProfileType
 from referrals.enums import ReferralStatusEnum
 from shelters.types import ShelterType
-from strawberry import ID, auto
 
 from . import models
 

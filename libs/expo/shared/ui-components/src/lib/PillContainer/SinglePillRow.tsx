@@ -81,7 +81,7 @@ const HiddenMeasureRow = ({
           <Pill variant={pillVariant} label={label} />
         </View>
       ))}
-      {overflowProbe && (
+      {!!overflowProbe && (
         <View
           style={{ marginLeft: gap }}
           onLayout={(e) =>
@@ -317,7 +317,7 @@ export const SinglePillRow = React.memo(
           )}
 
         {/* Hidden measurer renders ONLY uncached labels (+ current overflow probe) */}
-        {(pillsToMeasure.length > 0 || overflowProbe) && (
+        {!!(pillsToMeasure.length > 0 || overflowProbe) && (
           <HiddenMeasureRow
             pillsToMeasure={pillsToMeasure}
             pillVariant={pillVariant}

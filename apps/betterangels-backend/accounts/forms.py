@@ -1,10 +1,10 @@
 from typing import Any, cast
 
-from common.org_types import REGISTRY
 from django import forms
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from organizations.models import Organization
 
+from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 
 from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, User
@@ -42,6 +42,11 @@ class OrganizationProfileForm(forms.ModelForm):
 
     ``org_types`` is declared explicitly because the default form field for an
     ``ArrayField`` is a comma-separated text input.
+
+    ``time_zone`` is not declared: the generated field already carries the model's
+    ``max_length``, ``blank``, ``help_text`` and ``validate_iana_time_zone``, and
+    ``ModelForm._post_clean`` runs ``full_clean`` regardless.  Only the label is
+    set here.
     """
 
     org_types = forms.MultipleChoiceField(
@@ -54,7 +59,8 @@ class OrganizationProfileForm(forms.ModelForm):
 
     class Meta:
         model = OrganizationProfile
-        fields = ("org_types",)
+        fields = ("org_types", "time_zone")
+        labels = {"time_zone": "Report time zone"}
 
     def clean_org_types(self) -> list[OrgTypeChoices]:
         """Return enum members, matching what the services write."""
@@ -74,7 +80,7 @@ class PermissionGroupInlineForm(forms.ModelForm):
 
     class Meta:
         model = PermissionGroup
-        fields = ("template", "name")
+        fields = ("template", "label")
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -156,6 +162,29 @@ class OrganizationMemberInviteForm(OrganizationRoleSelectionForm):
         self.order_fields(["organization", "email", "permission_templates"])
 
 
+class OrganizationOwnerTransferForm(forms.Form):
+    """Choose which member of *organization* becomes its owner.
+
+    Only members are offered, because ``organization_transfer_ownership`` refuses
+    anyone else — the choices and the rule agree rather than the form promising
+    something the service rejects.
+    """
+
+    new_owner = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        label="New owner",
+        help_text="The current owner keeps their membership and roles; they simply stop owning.",
+    )
+
+    def __init__(self, *args: Any, organization: Organization, current_owner: User | None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        members = User.objects.filter(organizations_organization=organization).order_by("email")
+        if current_owner is not None:
+            members = members.exclude(pk=current_owner.pk)
+        new_owner = cast(forms.ModelChoiceField, self.fields["new_owner"])
+        new_owner.queryset = members
+
+
 class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
     """Set which of *organization*'s invitable roles an existing member holds.
 
@@ -167,9 +196,11 @@ class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
 
     def __init__(self, *args: Any, organization: Organization, member: User, **kwargs: Any) -> None:
         super().__init__(*args, organization=organization, **kwargs)
-        held = sorted(
-            PermissionGroup.objects.filter(organization=organization, group__user=member).values_list("name", flat=True)
-        )
+        # Post-teardown (ADR 0001) the org-admin roles are grant-only — no
+        # PermissionGroup row exists — so merge the legacy + grant arms.
+        from .selectors import member_role_names
+
+        held = sorted(member_role_names(user_id=member.pk, organization_id=organization.pk))
         offered = set(self.role_names)
         self.locked_role_names = [name for name in held if name not in offered]
         # Clearing every role is a real state — it is what a member starts as

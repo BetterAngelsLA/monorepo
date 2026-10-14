@@ -14,6 +14,8 @@ would be circular. Import inside the function body instead.
 
 from django.core.exceptions import ValidationError
 
+from common.utils import can_match
+
 
 def validate_has_alphanumeric(value: str) -> None:
     """Raise unless *value* contains at least one alphanumeric character.
@@ -38,6 +40,9 @@ def validate_team_in_org(*, team_id: int | str | None, organization_id: int | No
 
     if organization_id is None:
         raise ValidationError("A team cannot be set on a record that has no organization.")
+
+    if not can_match(field=Team._meta.pk, value=team_id):
+        return
 
     if not Team.objects.filter(pk=team_id, organization_id=organization_id).exists():
         raise ValidationError("The selected team does not belong to this organization.")

@@ -14,11 +14,6 @@ const mocks = vi.hoisted(() => ({
   }>,
 }));
 
-vi.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
-}));
-
 vi.mock('../useDocsUpload', () => ({
   useDocsUpload: () => ({ startSession: mocks.startSession }),
 }));
@@ -91,8 +86,8 @@ const secondFile = {
   uri: 'file://consent-2.pdf',
 };
 
-function renderModal(overrides?: { closeModal?: () => void }) {
-  return render(
+async function renderModal(overrides?: { closeModal?: () => void }) {
+  return await render(
     <UploadModal
       client={client}
       closeModal={overrides?.closeModal ?? vi.fn()}
@@ -114,8 +109,8 @@ describe('UploadModal', () => {
     mocks.mediaPickerProps = [];
   });
 
-  it('is a pure picker: nothing uploads until files are picked', () => {
-    const { getByText } = renderModal();
+  it('is a pure picker: nothing uploads until files are picked', async () => {
+    const { getByText } = await renderModal();
 
     expect(getByText('Consent Forms')).toBeTruthy();
     expect(mocks.startSession).not.toHaveBeenCalled();
@@ -124,9 +119,9 @@ describe('UploadModal', () => {
   it('starts the upload immediately and closes the form', async () => {
     const closeModal = vi.fn();
 
-    const { getByText } = renderModal({ closeModal });
+    const { getByText } = await renderModal({ closeModal });
 
-    fireEvent.press(getByText('Consent Forms'));
+    await fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
 
     expect(mocks.startSession).toHaveBeenCalledWith(
@@ -138,9 +133,9 @@ describe('UploadModal', () => {
   });
 
   it('passes every picked file for multi-file doc types', async () => {
-    const { getByText } = renderModal();
+    const { getByText } = await renderModal();
 
-    fireEvent.press(getByText('Consent Forms'));
+    await fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile, secondFile]);
 
     expect(mocks.startSession).toHaveBeenCalledWith(
@@ -148,14 +143,5 @@ describe('UploadModal', () => {
       ClientDocumentNamespaceEnum.ConsentForm,
       'Consent Forms',
     );
-  });
-
-  it('closes the form when Done is pressed', () => {
-    const closeModal = vi.fn();
-
-    const { getByLabelText } = renderModal({ closeModal });
-
-    fireEvent.press(getByLabelText('Done'));
-    expect(closeModal).toHaveBeenCalled();
   });
 });

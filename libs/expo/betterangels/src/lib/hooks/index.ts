@@ -14,7 +14,8 @@ export * from './taskCount';
 export { useClientHmis } from './useClientHmis';
 export * from './useClientProgramsHmis';
 // user
+export { useUser } from '../providers/user/UserProvider';
 export { useInitialLocation } from './useInitialLocation';
 export { useOrgTeams } from './useOrgTeams/useOrgTeams';
+export { default as useClearLocalSession } from './user/useClearLocalSession';
 export { default as useSignOut } from './user/useSignOut';
-export { useUser } from '../providers/user/UserProvider';

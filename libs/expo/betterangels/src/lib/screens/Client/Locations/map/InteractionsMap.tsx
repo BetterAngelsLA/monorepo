@@ -54,11 +54,16 @@ export function InteractionsMap(props: TProps) {
     useInteractionPointFeatures(clientProfileId);
 
   // 2. Derive clusters
-  const { clusters, updateClustersForRegion, zoomToCluster } =
-    useClusters<TClusterInteraction>({
-      pointFeatures,
-      opts: interactionsClusterOptions,
-    });
+  const {
+    clusters,
+    updateClustersForRegion,
+    zoomToCluster,
+    canExpandFurther,
+    getClusterLeaves,
+  } = useClusters<TClusterInteraction>({
+    pointFeatures,
+    opts: interactionsClusterOptions,
+  });
 
   const mapRegion = useInteractionsMapRegion({
     interaction: interactions?.[0],
@@ -143,14 +148,20 @@ export function InteractionsMap(props: TProps) {
     });
   }
 
-  function onClusterPress(cluster: TClusterPoint) {
+  async function onClusterPress(cluster: TClusterPoint) {
     const { maxZoomLeaves } = cluster.properties;
 
-    // zoom in
-    zoomToCluster(cluster, mapRef);
+    // Ask the map where it is, rather than `mapState.region`: that is only filled
+    // by `onRegionChangeComplete`, and web does not fire it for a programmatic fit,
+    // so it can be absent or stale by the time a cluster is clicked.
+    const camera = await mapRef.current?.getCamera?.();
 
-    if (!maxZoomLeaves?.length) {
-      // clicked on cluster that will zoom in, so reset selected Interaction
+    // List what is inside when the cluster cannot be split at all, or when
+    // zooming would not separate it: fitting points that are already on screen
+    // moves nothing, and a click that only re-fits reads as having done nothing.
+    if (!maxZoomLeaves?.length && canExpandFurther(cluster, camera?.zoom)) {
+      void zoomToCluster(cluster, mapRef);
+
       setMapState((prev) => ({
         ...prev,
         selectedInteractions: [],
@@ -159,9 +170,13 @@ export function InteractionsMap(props: TProps) {
       return;
     }
 
-    // maxZoomLeaves means we cannot break down cluster any further
-    // so set mapState maxZoomLeaves as selectedInteractions
-    const selectedIntIds: string[] = maxZoomLeaves.map((leaf) =>
+    // Either it is already too dense to break up (`maxZoomLeaves`) or this click
+    // could not split it further; both mean "show the points it holds".
+    const leaves = maxZoomLeaves?.length
+      ? maxZoomLeaves
+      : getClusterLeaves(cluster);
+
+    const selectedIntIds: string[] = leaves.map((leaf) =>
       String(leaf.properties.id),
     );
 

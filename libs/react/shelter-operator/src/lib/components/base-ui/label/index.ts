@@ -1,1 +1,1 @@
-export { Label } from './label';
+export { Label, type TLabelProps } from './label';

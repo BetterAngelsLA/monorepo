@@ -14,7 +14,7 @@ import {
 } from '../../../ui-components/MainModal';
 import {
   ClientProfileDocument,
-  UpdateClientProfilePhotoDocument,
+  DeleteClientProfilePhotoDocument,
 } from '../__generated__/Client.generated';
 
 interface IProfilePhotoModalProps {
@@ -39,8 +39,8 @@ export function ProfilePhotoModal({
     }
   }, [isModalVisible]);
 
-  const [updateClientProfilePhoto] = useMutation(
-    UpdateClientProfilePhotoDocument,
+  const [deleteClientProfilePhoto] = useMutation(
+    DeleteClientProfilePhotoDocument,
     {
       refetchQueries: [
         { query: ClientProfileDocument, variables: { id: clientId } },
@@ -50,13 +50,8 @@ export function ProfilePhotoModal({
 
   const deleteFile = async () => {
     try {
-      await updateClientProfilePhoto({
-        variables: {
-          data: {
-            clientProfile: clientId,
-            photo: null,
-          },
-        },
+      await deleteClientProfilePhoto({
+        variables: { clientProfileId: clientId },
       });
     } catch (err) {
       console.error('Error deleting profile photo', err);

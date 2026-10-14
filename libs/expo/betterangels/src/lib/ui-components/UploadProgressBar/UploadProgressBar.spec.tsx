@@ -46,13 +46,13 @@ describe('UploadProgressBar', () => {
     resetUploadProgressAtoms();
   });
 
-  it('renders nothing when there are no active sessions', () => {
-    const { toJSON } = render(<UploadProgressBar />);
+  it('renders nothing when there are no active sessions', async () => {
+    const { toJSON } = await render(<UploadProgressBar />);
 
     expect(toJSON()).toBeNull();
   });
 
-  it('shows the aggregate progress of background sessions', () => {
+  it('shows the aggregate progress of background sessions', async () => {
     startUploadSession('s1', ['a.pdf', 'b.pdf'], {
       refIds: ['ref-0', 'ref-1'],
       clientId: 'client-1',
@@ -68,21 +68,21 @@ describe('UploadProgressBar', () => {
       status: 'done',
     });
 
-    const { getByText } = render(<UploadProgressBar />);
+    const { getByText } = await render(<UploadProgressBar />);
 
     expect(getByText('Uploading 1 of 2 files…')).toBeTruthy();
     expect(getByText('Details')).toBeTruthy();
   });
 
-  it('opens the upload screen in resume mode when tapped', () => {
+  it('opens the upload screen in resume mode when tapped', async () => {
     startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-0'],
       clientId: 'client-1',
     });
 
-    const { getByLabelText } = render(<UploadProgressBar />);
+    const { getByLabelText } = await render(<UploadProgressBar />);
 
-    fireEvent.press(getByLabelText('Uploading 0 of 1 files…. Details'));
+    await fireEvent.press(getByLabelText('Uploading 0 of 1 files…. Details'));
 
     expect(mocks.showModalScreen).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -92,31 +92,31 @@ describe('UploadProgressBar', () => {
     );
 
     const options = mocks.showModalScreen.mock.calls[0][0];
-    const modal = render(options.renderContent({ close: vi.fn() }));
+    const modal = await render(options.renderContent({ close: vi.fn() }));
     expect(modal.getByText('UploadStage')).toBeTruthy();
   });
 
-  it('shows the failure state for failed sessions', () => {
+  it('shows the failure state for failed sessions', async () => {
     startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-0'],
       clientId: 'client-1',
     });
     failUploadSession('s1', 'boom');
 
-    const { getByText } = render(<UploadProgressBar />);
+    const { getByText } = await render(<UploadProgressBar />);
 
     expect(getByText('Upload failed')).toBeTruthy();
     expect(getByText('Details')).toBeTruthy();
   });
 
-  it('hides while the upload screen is open', () => {
+  it('hides while the upload screen is open', async () => {
     startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-0'],
       clientId: 'client-1',
     });
     setUploadStageVisible(true);
 
-    const { toJSON } = render(<UploadProgressBar />);
+    const { toJSON } = await render(<UploadProgressBar />);
 
     expect(toJSON()).toBeNull();
   });

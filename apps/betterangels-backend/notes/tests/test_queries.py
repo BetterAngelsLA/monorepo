@@ -2,12 +2,14 @@ from typing import Any, Optional
 from unittest.mock import ANY
 
 import time_machine
-from accounts.models import User
-from accounts.tests.baker_recipes import organization_recipe
-from common.tests.utils import GraphQLBaseTestCase
 from deepdiff import DeepDiff
 from django.test import ignore_warnings
 from model_bakery import baker
+from unittest_parametrize import parametrize
+
+from accounts.models import User
+from accounts.tests.baker_recipes import organization_recipe
+from common.tests.utils import GraphQLBaseTestCase
 from notes.enums import ServiceRequestStatusEnum
 from notes.models import (
     Note,
@@ -17,7 +19,6 @@ from notes.models import (
 )
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
-from unittest_parametrize import parametrize
 
 
 @ignore_warnings(category=UserWarning)

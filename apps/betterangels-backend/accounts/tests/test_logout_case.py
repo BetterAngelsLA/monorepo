@@ -1,7 +1,8 @@
-from accounts.models import User
 from django.core.cache import cache
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
+
+from accounts.models import User
 from test_utils.mixins import GraphQLTestCaseMixin
 
 

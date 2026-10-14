@@ -4,28 +4,33 @@ Creating an organization in the admin used to produce one that could hold no
 roles and accept no members, and adding a member to it returned a 500.
 """
 
-from typing import cast
+from typing import Any, cast
 
-from accounts.admin import CustomOrganizationUserAdmin
-from accounts.groups import ORG_ADMIN
-from accounts.models import (
-    OrganizationProfile,
-    OrgTypeChoices,
-    PermissionGroup,
-    PermissionGroupTemplate,
-    User,
-)
-from accounts.services import invitation_role, member_add, reconcile_org_groups
 from django.contrib import admin
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import NoReverseMatch, reverse
 from model_bakery import baker
-from notes.groups import CASEWORKER
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
+
+from accounts.admin import CustomOrganizationUserAdmin
+from accounts.groups import ORG_ADMIN
+from accounts.models import (
+    Grant,
+    OrganizationProfile,
+    OrgTypeChoices,
+    PermissionGroup,
+    PermissionGroupTemplate,
+    Role,
+    User,
+)
+from accounts.seed import seed_permission_templates
+from accounts.services import invitation_role, member_add, reconcile_org_groups
+from common.permissions.config import TemplateConfig
+from notes.groups import CASEWORKER
 from shelters.groups import GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR
 
 from .baker_recipes import organization_recipe, permission_group_recipe
@@ -71,6 +76,14 @@ class OrganizationAdminTestCase(TestCase):
             "organization_users-INITIAL_FORMS": "0",
             "organization_users-MIN_NUM_FORMS": "0",
             "organization_users-MAX_NUM_FORMS": "1000",
+            "grants-TOTAL_FORMS": "0",
+            "grants-INITIAL_FORMS": "0",
+            "grants-MIN_NUM_FORMS": "0",
+            "grants-MAX_NUM_FORMS": "1000",
+            "delegated_grants-TOTAL_FORMS": "0",
+            "delegated_grants-INITIAL_FORMS": "0",
+            "delegated_grants-MIN_NUM_FORMS": "0",
+            "delegated_grants-MAX_NUM_FORMS": "1000",
         }
 
     def _change_payload(
@@ -101,11 +114,20 @@ class OrganizationAdminTestCase(TestCase):
             "organization_users-INITIAL_FORMS": "0",
             "organization_users-MIN_NUM_FORMS": "0",
             "organization_users-MAX_NUM_FORMS": "1000",
+            "grants-TOTAL_FORMS": "0",
+            "grants-INITIAL_FORMS": "0",
+            "grants-MIN_NUM_FORMS": "0",
+            "grants-MAX_NUM_FORMS": "1000",
+            "delegated_grants-TOTAL_FORMS": "0",
+            "delegated_grants-INITIAL_FORMS": "0",
+            "delegated_grants-MIN_NUM_FORMS": "0",
+            "delegated_grants-MAX_NUM_FORMS": "1000",
         }
+        pk_field = PermissionGroup._meta.pk.name
         for index, row in enumerate(rows):
-            payload[f"permission_groups-{index}-id"] = str(row.pk)
+            payload[f"permission_groups-{index}-{pk_field}"] = str(row.pk)
             payload[f"permission_groups-{index}-organization"] = str(organization.pk)
-            payload[f"permission_groups-{index}-name"] = row.name
+            payload[f"permission_groups-{index}-label"] = row.label
             payload[f"permission_groups-{index}-template"] = str(
                 template_id if row.pk == permission_group.pk else (row.template_id or "")
             )
@@ -120,12 +142,13 @@ class OrganizationAdminTestCase(TestCase):
 
         organization = Organization.objects.get(name="Outreach Org")
         self.assertEqual([t.value for t in organization.profile.org_types], ["outreach"])
+        # ORG_ADMIN/ORG_SUPERUSER are grant-only (no PermissionGroup rows).
         self.assertSetEqual(
             set(PermissionGroup.objects.filter(organization=organization).values_list("template__name", flat=True)),
-            {t.name for t in (CASEWORKER,)} | {"Organization Admin", "Organization Superuser"},
+            {t.name for t in (CASEWORKER,)},
         )
 
-    def test_the_form_does_not_offer_is_active(self) -> None:
+    def test_form_hides_is_active(self) -> None:
         """django-organizations' own field; nothing in this codebase filters on it."""
         organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
 
@@ -145,7 +168,7 @@ class OrganizationAdminTestCase(TestCase):
     def test_removing_an_org_type_deletes_its_groups_without_orphaning(self) -> None:
         organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
         shelter_group = PermissionGroup.objects.get(organization=organization, template__name=SHELTER_OPERATOR.name)
-        group_id = shelter_group.group_id
+        group_id = shelter_group.pk
 
         OrganizationProfile.objects.filter(organization=organization).update(org_types=[OrgTypeChoices.OUTREACH])
 
@@ -165,12 +188,12 @@ class OrganizationAdminTestCase(TestCase):
         template = PermissionGroupTemplate.objects.get(name=GLOBAL_SHELTER_OPERATOR.name)
         hand_granted = PermissionGroup.objects.create(organization=organization, template=template)
         member = baker.make(User)
-        member.groups.add(hand_granted.group)
+        member.groups.add(hand_granted)
 
         reconcile_org_groups(organization)
 
         self.assertTrue(PermissionGroup.objects.filter(pk=hand_granted.pk).exists())
-        self.assertTrue(member.groups.filter(pk=hand_granted.group_id).exists())
+        self.assertTrue(member.groups.filter(pk=hand_granted.pk).exists())
 
     def test_an_unconfigured_organization_still_has_its_permissions_synced(self) -> None:
         """No profile means no *derived* groups — not that config stops applying.
@@ -182,12 +205,12 @@ class OrganizationAdminTestCase(TestCase):
         organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
         template = PermissionGroupTemplate.objects.get(name=GLOBAL_SHELTER_OPERATOR.name)
         hand_granted = PermissionGroup.objects.create(organization=organization, template=template)
-        hand_granted.group.permissions.clear()
+        hand_granted.permissions.clear()
         OrganizationProfile.objects.filter(organization=organization).delete()
 
         reconcile_org_groups(organization)
 
-        granted = set(hand_granted.group.permissions.values_list("content_type__app_label", "codename"))
+        granted = set(hand_granted.permissions.values_list("content_type__app_label", "codename"))
         self.assertSetEqual(granted, {tuple(entry.split(".", 1)) for entry in GLOBAL_SHELTER_OPERATOR.permissions})
 
     def test_repointing_an_existing_rows_template_cannot_drop_its_members(self) -> None:
@@ -203,9 +226,9 @@ class OrganizationAdminTestCase(TestCase):
         """
         organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
         caseworker = PermissionGroup.objects.get(organization=organization, template__name=CASEWORKER.name)
-        group_id = caseworker.group_id
+        group_id = caseworker.pk
         member = baker.make(User)
-        member.groups.add(caseworker.group)
+        member.groups.add(caseworker)
         shelter_operator = PermissionGroupTemplate.objects.get(name=SHELTER_OPERATOR.name)
 
         payload = self._change_payload(organization, caseworker, template_id=shelter_operator.pk)
@@ -237,7 +260,7 @@ class OrganizationAdminTestCase(TestCase):
         """``group`` is created and torn down by code, so staff must not pick one.
 
         Binding a row to a group used for something else means deleting the row
-        takes that group's members with it.
+        deletes that group's members with it.
         """
         organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
 
@@ -271,7 +294,7 @@ class OrganizationAddMemberViewTestCase(TestCase):
         self.assertTrue(OrganizationUser.objects.filter(organization=self.organization, user=member).exists())
         self.assertSetEqual(
             set(
-                PermissionGroup.objects.filter(organization=self.organization, group__user=member).values_list(
+                PermissionGroup.objects.filter(organization=self.organization, user=member).values_list(
                     "template__name", flat=True
                 )
             ),
@@ -479,7 +502,7 @@ class OrganizationUserAddViewTestCase(TestCase):
         self.assertTrue(OrganizationUser.objects.filter(organization=self.organization, user=member).exists())
         self.assertSetEqual(
             set(
-                PermissionGroup.objects.filter(organization=self.organization, group__user=member).values_list(
+                PermissionGroup.objects.filter(organization=self.organization, user=member).values_list(
                     "template__name", flat=True
                 )
             ),
@@ -551,11 +574,15 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         self.organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
 
     def _roles_of(self, member: User) -> set[str]:
-        return set(
-            PermissionGroup.objects.filter(organization=self.organization, group__user=member).values_list(
+        """Role names at *self.organization*: dual-write PermissionGroup rows merged
+        with grant-only scoped Role Grants (ORG_ADMIN/ORG_SUPERUSER have no rows)."""
+        legacy = set(
+            PermissionGroup.objects.filter(organization=self.organization, user=member).values_list(
                 "template__name", flat=True
             )
         )
+        granted = set(member.grants.filter(scope_org=self.organization).values_list("role__name", flat=True))
+        return legacy | granted
 
     def test_inviting_with_two_roles_grants_both(self) -> None:
         with self.captureOnCommitCallbacks(execute=True):
@@ -661,12 +688,12 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
             permission_templates=(CASEWORKER,),
         )
         hand_granted = permission_group_recipe.make(organization=self.organization, template=None)
-        member.groups.add(hand_granted.group)
+        member.groups.add(hand_granted)
 
         url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
         self.client.post(url, {"permission_templates": [SHELTER_OPERATOR.name]})
 
-        self.assertTrue(member.groups.filter(pk=hand_granted.group_id).exists())
+        self.assertTrue(member.groups.filter(pk=hand_granted.pk).exists())
         self.assertNotIn(CASEWORKER.name, self._roles_of(member))
         self.assertIn(SHELTER_OPERATOR.name, self._roles_of(member))
 
@@ -711,12 +738,230 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         self.assertIn("permission_templates", response.context["form"].errors)
         self.assertSetEqual(
             set(
-                PermissionGroup.objects.filter(organization=outreach_only, group__user=member).values_list(
+                PermissionGroup.objects.filter(organization=outreach_only, user=member).values_list(
                     "template__name", flat=True
                 )
             ),
             {CASEWORKER.name},
         )
+
+
+class OrganizationRoleLossConfirmationTestCase(TestCase):
+    """A save that takes someone's role away has to say so first, by either route."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_orgtype_tests", email="admin_orgtype_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
+        self.url = reverse("admin:organizations_organization_change", args=[self.organization.pk])
+
+    def _rows(self) -> list[PermissionGroup]:
+        return list(PermissionGroup.objects.filter(organization=self.organization).order_by("pk"))
+
+    def _payload(self, org_types: list[str], **extra: str) -> dict:
+        rows = self._rows()
+        payload: dict = {
+            "name": self.organization.name,
+            "is_active": "on",
+            "profile-TOTAL_FORMS": "1",
+            "profile-INITIAL_FORMS": "1",
+            "profile-MIN_NUM_FORMS": "1",
+            "profile-MAX_NUM_FORMS": "1",
+            "profile-0-id": str(self.organization.profile.pk),
+            "profile-0-organization": str(self.organization.pk),
+            "profile-0-org_types": org_types,
+            "permission_groups-TOTAL_FORMS": str(len(rows)),
+            "permission_groups-INITIAL_FORMS": str(len(rows)),
+            "permission_groups-MIN_NUM_FORMS": "0",
+            "permission_groups-MAX_NUM_FORMS": "1000",
+            "organization_users-TOTAL_FORMS": "0",
+            "organization_users-INITIAL_FORMS": "0",
+            "organization_users-MIN_NUM_FORMS": "0",
+            "organization_users-MAX_NUM_FORMS": "1000",
+            "grants-TOTAL_FORMS": "0",
+            "grants-INITIAL_FORMS": "0",
+            "grants-MIN_NUM_FORMS": "0",
+            "grants-MAX_NUM_FORMS": "1000",
+            "delegated_grants-TOTAL_FORMS": "0",
+            "delegated_grants-INITIAL_FORMS": "0",
+            "delegated_grants-MIN_NUM_FORMS": "0",
+            "delegated_grants-MAX_NUM_FORMS": "1000",
+        }
+        pk_field = PermissionGroup._meta.pk.name
+        for index, row in enumerate(rows):
+            payload[f"permission_groups-{index}-{pk_field}"] = str(row.pk)
+            payload[f"permission_groups-{index}-organization"] = str(self.organization.pk)
+            payload[f"permission_groups-{index}-label"] = row.label
+            payload[f"permission_groups-{index}-template"] = str(row.template_id or "")
+        return payload | extra
+
+    def _tick_delete(self, template: TemplateConfig) -> dict[str, str]:
+        """The POST key the inline's Delete checkbox sends for *template*'s row."""
+        index = next(
+            index for index, row in enumerate(self._rows()) if row.template and row.template.name == template.name
+        )
+        return {f"permission_groups-{index}-DELETE": "on"}
+
+    def _member_holding(self, template: TemplateConfig, email: str) -> User:
+        return member_add(
+            email=email,
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(template,),
+        )
+
+    def _holds(self, member: User, template: TemplateConfig) -> bool:
+        return PermissionGroup.objects.filter(
+            organization=self.organization,
+            template__name=template.name,
+            user=member,
+        ).exists()
+
+    def _holds_shelter_operator(self) -> bool:
+        return PermissionGroup.objects.filter(
+            organization=self.organization,
+            template__name=SHELTER_OPERATOR.name,
+        ).exists()
+
+    def test_dropping_a_held_type_asks_first_and_changes_nothing(self) -> None:
+        self._member_holding(SHELTER_OPERATOR, "losesit@example.com")
+
+        response = self.client.post(self.url, self._payload(["outreach"]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, SHELTER_OPERATOR.name)
+        self.assertContains(response, "1 member")
+        self.assertTrue(self._holds_shelter_operator())
+
+    def test_confirming_goes_through(self) -> None:
+        member = self._member_holding(SHELTER_OPERATOR, "confirmed@example.com")
+
+        self.client.post(self.url, self._payload(["outreach"], _confirm_role_loss="1"))
+
+        self.assertFalse(self._holds_shelter_operator())
+        self.assertFalse(PermissionGroup.objects.filter(organization=self.organization, user=member).exists())
+
+    def test_dropping_a_type_nobody_holds_does_not_ask(self) -> None:
+        """A prompt that always fires stops being read."""
+        self.client.post(self.url, self._payload(["outreach"]))
+
+        self.assertFalse(self._holds_shelter_operator())
+
+    def test_a_role_the_remaining_type_keeps_is_not_named(self) -> None:
+        """Organization Admin belongs to both org types, so dropping one does not revoke it."""
+        self._member_holding(ORG_ADMIN, "stays_admin@example.com")
+        self._member_holding(SHELTER_OPERATOR, "loses_operator@example.com")
+
+        response = self.client.post(self.url, self._payload(["outreach"]))
+
+        # Against the context, not the HTML: the replayed POST carries every role
+        # name in a hidden field, so the page contains them either way.
+        losses = dict(response.context["losses"])
+        self.assertIn(SHELTER_OPERATOR.name, losses)
+        self.assertNotIn(ORG_ADMIN.name, losses)
+
+    def test_deleting_a_role_row_asks_first_and_changes_nothing(self) -> None:
+        """The quieter route: reconcile rebuilds the row, so the saved page looks untouched."""
+        member = self._member_holding(SHELTER_OPERATOR, "row_delete@example.com")
+
+        response = self.client.post(
+            self.url, self._payload(["outreach", "shelter"], **self._tick_delete(SHELTER_OPERATOR))
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, SHELTER_OPERATOR.name)
+        self.assertContains(response, "1 member")
+        self.assertTrue(self._holds(member, SHELTER_OPERATOR))
+
+    def test_confirming_a_row_deletion_goes_through(self) -> None:
+        member = self._member_holding(SHELTER_OPERATOR, "row_delete_ok@example.com")
+
+        self.client.post(
+            self.url,
+            self._payload(["outreach", "shelter"], _confirm_role_loss="1", **self._tick_delete(SHELTER_OPERATOR)),
+        )
+
+        self.assertFalse(self._holds(member, SHELTER_OPERATOR))
+
+    def test_a_view_only_staff_user_is_refused_rather_than_asked(self) -> None:
+        """The prompt must not answer a question Django is about to refuse."""
+        self._member_holding(SHELTER_OPERATOR, "viewonly_subject@example.com")
+        viewer = User.objects.create_user(username="orgtype_viewer", password="password", is_staff=True)
+        viewer.user_permissions.add(Permission.objects.get(codename="view_organization"))
+        self.client.force_login(viewer)
+
+        response = self.client.post(self.url, self._payload(["outreach"]))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertNotContains(response, SHELTER_OPERATOR.name, status_code=403)
+
+
+class OrganizationOwnershipTransferTestCase(TestCase):
+    """The owner cannot be removed, so there has to be a way to stop being one."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_owner_tests", email="admin_owner_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"])
+        self.owner_membership = OrganizationOwner.objects.get(organization=self.organization).organization_user
+        self.member = member_add(
+            email="successor@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+        self.url = reverse("admin:organizations_organization_transfer_ownership", args=[self.organization.pk])
+
+    def test_the_organization_page_offers_the_transfer(self) -> None:
+        page = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk])
+        ).content.decode()
+
+        self.assertIn(self.url, page)
+
+    def test_the_form_offers_members_but_not_the_current_owner(self) -> None:
+        response = self.client.get(self.url)
+
+        offered = set(response.context["form"].fields["new_owner"].queryset)
+        self.assertIn(self.member, offered)
+        self.assertNotIn(self.owner_membership.user, offered)
+
+    def test_an_organization_with_no_owner_offers_every_member(self) -> None:
+        """The shelter importer left 97 of 99 production organizations with no owner row."""
+        OrganizationOwner.objects.filter(organization=self.organization).delete()
+
+        response = self.client.get(self.url)
+
+        self.assertIn("Currently owned by nobody", response.context["help_text"])
+        offered = set(response.context["form"].fields["new_owner"].queryset)
+        self.assertIn(self.member, offered)
+        self.assertIn(self.owner_membership.user, offered)
+
+    def test_transferring_moves_ownership_and_frees_the_old_owner(self) -> None:
+        old_owner = self.owner_membership.user
+
+        response = self.client.post(self.url, {"new_owner": str(self.member.pk)})
+
+        self.assertRedirects(response, reverse("admin:organizations_organization_change", args=[self.organization.pk]))
+        self.assertEqual(
+            OrganizationOwner.objects.get(organization=self.organization).organization_user.user, self.member
+        )
+        # The old owner's row is now deletable, which it was not before.
+        old_membership = OrganizationUser.objects.get(organization=self.organization, user=old_owner)
+        deleted = self.client.post(
+            reverse("admin:organizations_organizationuser_delete", args=[old_membership.pk]),
+            {"post": "yes"},
+        )
+        self.assertEqual(deleted.status_code, 302)
+        self.assertFalse(OrganizationUser.objects.filter(pk=old_membership.pk).exists())
 
 
 class OrganizationMemberInlineQueryCountTestCase(TestCase):
@@ -752,7 +997,176 @@ class OrganizationMemberInlineQueryCountTestCase(TestCase):
         with CaptureQueriesContext(connection) as many:
             self.client.get(self.url)
 
-        self.assertEqual(len(many), len(few))
+        self.assertEqual(len(many) - len(few), 0)
+
+
+class OrganizationMemberInlineRoleDisplayTestCase(TestCase):
+    """The Members inline names every role, grant-only org-admin roles included.
+
+    ORG_ADMIN/ORG_SUPERUSER are grant-only after the teardown (ADR 0001): their
+    ``PermissionGroup`` rows are retired and the authority lives in a scoped
+    ``Grant``.  The inline reads the prefetch rather than
+    ``accounts.selectors.member_role_names`` — it renders a row per member — so it
+    has to read both arms.  Reading only the legacy arm showed a caseworker who is
+    also an org admin as just "Caseworker", and an admin-only member as "—".
+    """
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_inline_roles_tests",
+            email="admin_inline_roles_tests@example.com",
+            password="password",
+        )
+        self.client.force_login(self.superuser)
+
+    def _role_cell(self, organization: Organization, email: str) -> str:
+        """The Roles cell of *email*'s row in the org change page's Members inline."""
+        url = reverse("admin:organizations_organization_change", args=[organization.pk])
+        page = self.client.get(url).content.decode()
+        marker = page.index(email)
+        row = page[page.rindex("<tr", 0, marker) : page.index("</tr>", marker)]
+        cell_start = row.index("field-roles")
+        return row[cell_start : row.index("</td>", cell_start)]
+
+    def test_reports_org_admin_alongside_a_caseworker(self) -> None:
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        member_add(
+            email="admin_caseworker@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=organization,
+            permission_templates=(CASEWORKER, ORG_ADMIN),
+        )
+
+        cell = self._role_cell(organization, "admin_caseworker@example.com")
+
+        self.assertIn(CASEWORKER.name, cell)
+        self.assertIn(ORG_ADMIN.name, cell)
+
+    def test_reports_org_admin_alongside_a_shelter_operator(self) -> None:
+        organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
+        member_add(
+            email="admin_operator@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=organization,
+            permission_templates=(SHELTER_OPERATOR, ORG_ADMIN),
+        )
+
+        cell = self._role_cell(organization, "admin_operator@example.com")
+
+        self.assertIn(SHELTER_OPERATOR.name, cell)
+        self.assertIn(ORG_ADMIN.name, cell)
+
+    def test_reports_the_org_admin_left_after_the_editor_clears_the_member_role(self) -> None:
+        """ORG_ADMIN has no checkbox, so the editor can leave an admin-only member."""
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        member = member_add(
+            email="admin_only@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=organization,
+            permission_templates=(CASEWORKER, ORG_ADMIN),
+        )
+        editor_url = reverse("admin:organizations_organization_change_member_roles", args=[organization.pk, member.pk])
+        self.client.post(editor_url, {"permission_templates": []})
+
+        cell = self._role_cell(organization, "admin_only@example.com")
+
+        self.assertIn(ORG_ADMIN.name, cell)
+        self.assertNotIn(CASEWORKER.name, cell)
+
+
+class UserAdminGroupGrantMirrorTestCase(TestCase):
+    """Group edits on the user page must keep group and Grant in step.
+
+    The ``auth.Group`` picker bypasses ``OrgRoleManager``; the membership-edge
+    mirror (``accounts.signals``) keeps the two surfaces from drifting.
+    """
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_group_mirror_tests",
+            email="admin_group_mirror_tests@example.com",
+            password="password",
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        # Role rows are seeded at migrate (sync_roles), so the org's
+        # role-backed group maps to a scoped Role row.
+        self.group = PermissionGroup.objects.get(organization=self.organization, template__name=CASEWORKER.name)
+        self.role = Role.objects.get(name=CASEWORKER.name, is_global=False)
+        self.member = baker.make(User, username="userpage_member", email="userpage@example.com")
+
+    def _post_groups(self, group_ids: list[int]) -> Any:
+        url = reverse("admin:accounts_user_change", args=[self.member.pk])
+        return self.client.post(url, {"groups": [str(group_id) for group_id in group_ids]})
+
+    def _changelist_url(self) -> str:
+        return reverse("admin:accounts_user_changelist")
+
+    def test_adding_a_role_backed_group_mirrors_a_grant(self) -> None:
+        response = self._post_groups([self.group.pk])
+
+        self.assertRedirects(response, self._changelist_url())
+        self.assertTrue(self.member.groups.filter(pk=self.group.pk).exists())
+        self.assertTrue(
+            Grant.objects.filter(principal_user=self.member, role=self.role, scope_org=self.organization).exists()
+        )
+
+    def test_removing_a_role_backed_group_unmirrors_the_grant(self) -> None:
+        member_add(
+            email="userpage_revoke@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+        self.member = User.objects.get(email="userpage_revoke@example.com")
+        self.assertTrue(
+            Grant.objects.filter(principal_user=self.member, role=self.role, scope_org=self.organization).exists()
+        )
+
+        response = self._post_groups([])
+
+        self.assertRedirects(response, self._changelist_url())
+        self.assertFalse(self.member.groups.filter(pk=self.group.pk).exists())
+        self.assertFalse(
+            Grant.objects.filter(principal_user=self.member, role=self.role, scope_org=self.organization).exists()
+        )
+
+    def test_a_label_only_group_has_no_grant_to_mirror(self) -> None:
+        # Hand-made (label-only) PermissionGroups are legacy: nothing maps them
+        # to a Role, so adding one must not conjure a Grant.
+        hand_made = PermissionGroup.objects.create(organization=self.organization, label="Hand-made role")
+
+        response = self._post_groups([hand_made.pk])
+
+        self.assertRedirects(response, self._changelist_url())
+        self.assertTrue(self.member.groups.filter(pk=hand_made.pk).exists())
+        self.assertFalse(Grant.objects.filter(principal_user=self.member).exists())
+
+    def test_saving_without_touching_groups_changes_no_grants(self) -> None:
+        member_add(
+            email="userpage_stable@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+        self.member = User.objects.get(email="userpage_stable@example.com")
+
+        response = self._post_groups([self.group.pk])
+
+        self.assertRedirects(response, self._changelist_url())
+        self.assertEqual(
+            Grant.objects.filter(principal_user=self.member, role=self.role, scope_org=self.organization).count(), 1
+        )
 
 
 class OrganizationAdminLinksTestCase(TestCase):
@@ -886,7 +1300,7 @@ class OrganizationsGenericViewsNotRoutedTestCase(SimpleTestCase):
 
 
 class PermissionGroupDeleteWarningTestCase(TestCase):
-    """Deleting a permission group takes its auth.Group, and every member's role with it."""
+    """Deleting a permission group deletes its auth.Group, and every member's role with it."""
 
     def setUp(self) -> None:
         self.superuser = User.objects.create_superuser(
@@ -912,24 +1326,354 @@ class PermissionGroupDeleteWarningTestCase(TestCase):
 
         response = self.client.get(url)
 
-        self.assertContains(response, self.permission_group.group.name)
+        self.assertContains(response, self.permission_group.name)
         self.assertContains(response, "revoked from 2 members")
 
-    def test_the_bulk_delete_page_names_them_too(self) -> None:
-        """``delete_selected`` is the likelier route, and goes through the same hook."""
+    def test_the_bulk_delete_page_names_the_group_and_who_loses_it(self) -> None:
         response = self.client.post(
             reverse("admin:accounts_permissiongroup_changelist"),
             {"action": "delete_selected", "_selected_action": [str(self.permission_group.pk)]},
         )
 
-        self.assertContains(response, self.permission_group.group.name)
+        self.assertContains(response, self.permission_group.name)
         self.assertContains(response, "revoked from 2 members")
 
     def test_one_member_is_not_pluralised(self) -> None:
-        Group.objects.get(pk=self.permission_group.group_id).user_set.remove(
+        Group.objects.get(pk=self.permission_group.pk).user_set.remove(
             User.objects.get(email="operator_two@example.com")
         )
 
         response = self.client.get(reverse("admin:accounts_permissiongroup_delete", args=[self.permission_group.pk]))
 
-        self.assertContains(response, "revoked from 1 member<")
+        self.assertContains(response, "revoked from 1 member (")
+        self.assertNotContains(response, "revoked from 1 members")
+
+    def test_a_role_backed_group_says_mirrored_grants_are_not_revoked(self) -> None:
+        """Role-backed memberships mirror Grants; deleting the row does not.
+
+        Teardown retires the legacy row while the Grant stays the successor
+        authority, so the page must not read as revoking the capability.
+        """
+        response = self.client.get(reverse("admin:accounts_permissiongroup_delete", args=[self.permission_group.pk]))
+
+        self.assertContains(response, "mirrored Grants are NOT revoked")
+
+    def test_a_label_only_group_carries_no_grant_note(self) -> None:
+        hand_made = PermissionGroup.objects.create(organization=self.organization, label="Hand-made role")
+        Group.objects.get(pk=hand_made.pk).user_set.add(self.superuser)
+
+        response = self.client.get(reverse("admin:accounts_permissiongroup_delete", args=[hand_made.pk]))
+
+        self.assertNotContains(response, "mirrored Grants are NOT revoked")
+
+
+class PermissionGroupTemplateAdminTestCase(TestCase):
+    """A template is one row shared by every organization holding the role.
+
+    Two ways the admin implied otherwise: the organization page linked into the
+    template admin from a row that reads as belonging to that organization, and
+    the template admin let a role the code owns be edited or deleted, which
+    ``sync_group_permissions`` undoes on the next reconcile.
+    """
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="template_admin_tests", email="template_admin_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        self.code_owned = PermissionGroupTemplate.objects.get(name=ORG_ADMIN.name)
+        self.hand_defined = PermissionGroupTemplate.objects.create(name="Weekend Volunteers")
+
+    def test_the_organization_page_does_not_link_into_the_template_admin(self) -> None:
+        response = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk]),
+        )
+
+        for action in ("add", "change", "delete"):
+            self.assertNotContains(response, f"{action}_id_permission_groups-0-template")
+            self.assertNotContains(response, f"{action}_id_permission_groups-__prefix__-template")
+
+    def test_the_organization_page_still_lets_the_template_be_viewed(self) -> None:
+        """Read-only, not hidden -- what a role grants is worth being able to see."""
+        response = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk]),
+        )
+
+        self.assertContains(response, "view_id_permission_groups-0-template")
+
+    def test_a_role_the_code_owns_is_read_only(self) -> None:
+        response = self.client.get(
+            reverse("admin:accounts_permissiongrouptemplate_change", args=[self.code_owned.pk]),
+        )
+
+        self.assertNotContains(response, 'name="name"')
+        self.assertNotContains(response, 'name="permissions"')
+
+    def test_a_role_defined_in_the_admin_stays_editable(self) -> None:
+        response = self.client.get(
+            reverse("admin:accounts_permissiongrouptemplate_change", args=[self.hand_defined.pk]),
+        )
+
+        self.assertContains(response, 'name="name"')
+        self.assertContains(response, 'name="permissions"')
+
+    def test_a_role_the_code_owns_cannot_be_deleted(self) -> None:
+        response = self.client.post(
+            reverse("admin:accounts_permissiongrouptemplate_delete", args=[self.code_owned.pk]),
+            {"post": "yes"},
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(PermissionGroupTemplate.objects.filter(pk=self.code_owned.pk).exists())
+
+    def test_a_role_defined_in_the_admin_can_be_deleted(self) -> None:
+        response = self.client.post(
+            reverse("admin:accounts_permissiongrouptemplate_delete", args=[self.hand_defined.pk]),
+            {"post": "yes"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(PermissionGroupTemplate.objects.filter(pk=self.hand_defined.pk).exists())
+
+    def test_deleting_a_code_owned_role_breaks_the_next_reconcile(self) -> None:
+        """Why the guard is a refusal rather than a warning.
+
+        ORG_ADMIN/ORG_SUPERUSER are grant-only (ADR 0001 teardown) — reconcile no
+        longer creates their rows, so this guards a *dual-write* code-owned role
+        (CASEWORKER), which reconcile still provisions per org.  The delete
+        itself succeeds quietly -- ``SET_NULL`` leaves each row with its label and
+        members and no template, so reconciliation stops seeing it as derived.
+        ``post_migrate`` re-seeds the template, and the next reconcile collides
+        with the orphan on ``auth_group.name``.  Reached here by deleting
+        directly, which is what the admin guard now prevents.
+        """
+        template = PermissionGroupTemplate.objects.get(name=CASEWORKER.name)
+        row = PermissionGroup.objects.get(organization=self.organization, template=template)
+
+        template.delete()
+
+        row.refresh_from_db()
+        self.assertIsNone(row.template_id)
+        self.assertEqual(row.label, CASEWORKER.name)
+
+        seed_permission_templates()
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            reconcile_org_groups(self.organization)
+
+
+class GrantAdminRoleRestrictionTestCase(TestCase):
+    """The Grant admin surfaces must not offer global Roles (permissions.E002).
+
+    GrantAdmin / GrantInline / DelegatedGrantInline route the ``role`` picker
+    through ``_scoped_role_queryset`` — a global Role is held in user.groups
+    (global tier), never in a Grant, so the forms refuse it up front.
+    """
+
+    def test_role_picker_offers_only_scoped_roles(self) -> None:
+        from django.contrib.admin.options import BaseModelAdmin
+        from django.test import RequestFactory
+
+        from accounts.admin import DelegatedGrantInline, GrantAdmin, GrantInline
+        from accounts.models import Grant, Role
+        from accounts.services import sync_roles
+        from shelters.groups import SHELTER_OPERATOR_ROLE
+
+        sync_roles()
+        shelter_role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        self.assertTrue(Role.objects.filter(is_global=True).exists())  # guard against a vacuous pass
+        role_field = Grant._meta.get_field("role")
+        request = RequestFactory().get("/")
+
+        surfaces: list[BaseModelAdmin] = [GrantAdmin(Grant, admin.site)]
+        surfaces += [inline(Organization, admin.site) for inline in (GrantInline, DelegatedGrantInline)]
+
+        for surface in surfaces:
+            with self.subTest(admin=type(surface).__name__):
+                field = surface.formfield_for_foreignkey(role_field, request)
+                queryset = getattr(field, "queryset", None)
+                assert queryset is not None
+                self.assertIn(shelter_role, queryset)
+                self.assertFalse(queryset.filter(is_global=True).exists())
+
+
+class GrantAdminPermissionGuardsTestCase(TestCase):
+    """Grant/Role admins gate their writes hard — grants are the authz graph."""
+
+    def setUp(self) -> None:
+        from accounts.admin import GrantAdmin, RoleAdmin
+        from accounts.models import Grant, Role
+        from accounts.services import sync_roles
+
+        sync_roles()
+        self.grant_admin = GrantAdmin(Grant, admin.site)
+        self.role_admin = RoleAdmin(Role, admin.site)
+        self.superuser = User.objects.create_superuser(
+            username="grant_super", email="grant_super@example.com", password="password"
+        )
+        self.staff = User.objects.create_user(
+            username="grant_staff", email="grant_staff@example.com", password="password", is_staff=True
+        )
+        from django.contrib.auth.models import Permission
+
+        grant_perms = Permission.objects.filter(
+            content_type__app_label="accounts", codename__in=["add_grant", "change_grant", "delete_grant", "view_grant"]
+        )
+        self.staff.user_permissions.add(*grant_perms)
+
+    def _request(self, user: User) -> Any:
+        from django.test import RequestFactory
+
+        request = RequestFactory().get("/")
+        request.user = user
+        return request
+
+    def test_grant_writes_require_superuser(self) -> None:
+        staff = self._request(self.staff)
+        superuser = self._request(self.superuser)
+
+        self.assertFalse(self.grant_admin.has_add_permission(staff))
+        self.assertFalse(self.grant_admin.has_change_permission(staff))
+        self.assertFalse(self.grant_admin.has_delete_permission(staff))
+        self.assertTrue(self.grant_admin.has_add_permission(superuser))
+        self.assertTrue(self.grant_admin.has_change_permission(superuser))
+        self.assertTrue(self.grant_admin.has_delete_permission(superuser))
+
+    def test_role_admin_is_read_only_for_everyone(self) -> None:
+        request = self._request(self.superuser)
+
+        self.assertFalse(self.role_admin.has_add_permission(request))
+        self.assertFalse(self.role_admin.has_change_permission(request))
+        self.assertFalse(self.role_admin.has_delete_permission(request))
+
+    def test_grant_inlines_gate_writes_to_superuser(self) -> None:
+        """The Organization-page inlines share GrantAdmin's superuser gate.
+
+        Django inlines gate on the inline model's auth permissions rather than
+        on a sibling ModelAdmin's overrides, so a staff holder of
+        ``change_grant`` would otherwise write grants from the Organization page.
+        """
+        from accounts.admin import DelegatedGrantInline, GrantInline
+
+        staff = self._request(self.staff)
+        superuser = self._request(self.superuser)
+        for inline_class in (GrantInline, DelegatedGrantInline):
+            with self.subTest(inline=inline_class.__name__):
+                surface = inline_class(Organization, admin.site)
+                self.assertFalse(surface.has_add_permission(staff))
+                self.assertFalse(surface.has_change_permission(staff))
+                self.assertFalse(surface.has_delete_permission(staff))
+                self.assertTrue(surface.has_add_permission(superuser))
+                self.assertTrue(surface.has_change_permission(superuser))
+                self.assertTrue(surface.has_delete_permission(superuser))
+
+
+class GrantInlineWriteGuardsTestCase(TestCase):
+    """Grant inlines on the Organization page are superuser-only writes.
+
+    A staff user holding every Grant model permission (``add/change/delete/
+    view_grant``) plus org-admin perms still cannot write grants through the
+    Organization page: the inlines share ``GrantAdmin``'s superuser gate and
+    ``CustomOrganizationAdmin.save_related`` drops Grant formsets for
+    non-superusers.  Django does not re-check add permission for new inline
+    rows at save time, so the crafted POST below would write a grant if the
+    save-time backstop were missing.
+    """
+
+    PERMS = {
+        "organizations.add_organization",
+        "organizations.change_organization",
+        "organizations.view_organization",
+        "organizations.view_organizationuser",
+        "accounts.add_organizationprofile",
+        "accounts.change_organizationprofile",
+        "accounts.view_organizationprofile",
+        "accounts.add_grant",
+        "accounts.change_grant",
+        "accounts.delete_grant",
+        "accounts.view_grant",
+    }
+
+    def setUp(self) -> None:
+        from accounts.models import Role
+        from accounts.services import sync_roles
+
+        sync_roles()
+        self.organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
+        self.role = Role.objects.get(name=SHELTER_OPERATOR.name)
+        self.staff = User.objects.create_user(
+            username="grant_inline_staff", email="grant_inline_staff@example.com", password="password", is_staff=True
+        )
+        perms = Permission.objects.none()
+        for app_label, codename in (perm.split(".", 1) for perm in self.PERMS):
+            perms |= Permission.objects.filter(content_type__app_label=app_label, codename=codename)
+        self.staff.user_permissions.add(*perms)
+        self.url = reverse("admin:organizations_organization_change", args=[self.organization.pk])
+
+    def _grant_row(self) -> dict:
+        """A valid ``grants`` inline row granting *staff* Shelter Operator here."""
+        return {
+            "grants-0-principal_user": str(self.staff.pk),
+            "grants-0-principal_org": "",
+            "grants-0-role": str(self.role.pk),
+            "grants-0-scope_object_type": "",
+            "grants-0-scope_object_id": "",
+        }
+
+    def _payload(self, *, forged_row: bool) -> dict:
+        org = self.organization
+        payload = {
+            "name": org.name,
+            "profile-TOTAL_FORMS": "1",
+            "profile-INITIAL_FORMS": "1",
+            "profile-MIN_NUM_FORMS": "1",
+            "profile-MAX_NUM_FORMS": "1",
+            "profile-0-id": str(org.profile.pk),
+            "profile-0-organization": str(org.pk),
+            "profile-0-org_types": [t.value for t in org.profile.org_types],
+            "permission_groups-TOTAL_FORMS": "0",
+            "permission_groups-INITIAL_FORMS": "0",
+            "permission_groups-MIN_NUM_FORMS": "0",
+            "permission_groups-MAX_NUM_FORMS": "1000",
+            "organization_users-TOTAL_FORMS": "0",
+            "organization_users-INITIAL_FORMS": "0",
+            "organization_users-MIN_NUM_FORMS": "0",
+            "organization_users-MAX_NUM_FORMS": "1000",
+            "delegated_grants-TOTAL_FORMS": "0",
+            "delegated_grants-INITIAL_FORMS": "0",
+            "delegated_grants-MIN_NUM_FORMS": "0",
+            "delegated_grants-MAX_NUM_FORMS": "1000",
+            "grants-TOTAL_FORMS": "1" if forged_row else "0",
+            "grants-INITIAL_FORMS": "0",
+            "grants-MIN_NUM_FORMS": "0",
+            "grants-MAX_NUM_FORMS": "1000",
+        }
+        if forged_row:
+            payload |= self._grant_row()
+        return payload
+
+    def test_staff_cannot_forge_a_grant_through_the_org_page(self) -> None:
+        from accounts.models import Grant
+
+        self.client.force_login(self.staff)
+
+        response = self.client.post(self.url, self._payload(forged_row=True))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Grant.objects.filter(scope_org=self.organization).exists())
+
+    def test_superuser_can_write_a_grant_through_the_org_page(self) -> None:
+        from accounts.models import Grant
+
+        superuser = User.objects.create_superuser(
+            username="grant_inline_super", email="grant_inline_super@example.com", password="password"
+        )
+        self.client.force_login(superuser)
+
+        response = self.client.post(self.url, self._payload(forged_row=True))
+
+        self.assertEqual(response.status_code, 302)
+        grant = Grant.objects.get(scope_org=self.organization)
+        self.assertEqual(grant.principal_user, self.staff)
+        self.assertEqual(grant.role, self.role)
+        self.assertEqual(grant.scope_org, self.organization)

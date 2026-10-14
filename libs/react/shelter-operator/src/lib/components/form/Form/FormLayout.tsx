@@ -4,6 +4,7 @@ import { FormActions } from './FormActions';
 import { FormBlock } from './FormBlock';
 import { FormContent } from './FormContent';
 import { FormHeader } from './FormHeader';
+import { FormMeta } from './FormMeta';
 
 type TProps = {
   className?: string;
@@ -22,5 +23,6 @@ FormLayout.Actions = FormActions;
 FormLayout.Header = FormHeader;
 FormLayout.Content = FormContent;
 FormLayout.Block = FormBlock;
+FormLayout.Meta = FormMeta;
 
 export { FormLayout };

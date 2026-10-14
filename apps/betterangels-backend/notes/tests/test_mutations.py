@@ -1,13 +1,14 @@
 from unittest.mock import ANY, patch
 
 import time_machine
-from common.models import Location
 from django.test import ignore_warnings
 from django.utils import timezone
+from unittest_parametrize import parametrize
+
+from common.models import Location
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
-from unittest_parametrize import parametrize
 
 
 @ignore_warnings(category=UserWarning)
@@ -16,7 +17,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
 
-    @time_machine.travel("03-12-2024 10:11:12", tick=False)
+    @time_machine.travel("03-12-2024 10:11:12+00:00", tick=False)
     def test_create_note_mutation(self) -> None:
         expected_query_count = 33
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -46,7 +47,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(created_note, expected_note)
 
-    @time_machine.travel("03-12-2024 10:11:12", tick=False)
+    @time_machine.travel("03-12-2024 10:11:12+00:00", tick=False)
     def test_update_note_mutation(self) -> None:
         json_address_input, _ = self._get_address_inputs()
         location_input = {
@@ -97,7 +98,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(updated_note, expected_note)
 
-    @time_machine.travel("03-12-2024 10:11:12", tick=False)
+    @time_machine.travel("03-12-2024 10:11:12+00:00", tick=False)
     def test_partial_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
@@ -431,28 +432,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertIn(service_request, getattr(note, expected_type).all())
 
     def test_delete_note_mutation(self) -> None:
-        mutation = """
-            mutation DeleteNote($id: ID!) {
-                deleteNote(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on NoteType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": self.note["id"]}
-
-        expected_query_count = 21
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(mutation, variables)
-        self.assertIsNotNone(response["data"]["deleteNote"])
+            response = self._delete_note_fixture(self.note["id"])
+
+        self.assertEqual(
+            response["data"]["deleteNote"],
+            {"__typename": "NoteType", "id": self.note["id"]},
+        )
 
         with self.assertRaises(Note.DoesNotExist):
             Note.objects.get(id=self.note["id"])
@@ -1030,6 +1017,58 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Verify atomicity: the note should remain in its pre-revert state
         note = Note.objects.get(pk=note_id)
         self.assertEqual(note.purpose, "Discarded Purpose")
+
+
+class NoteUnmatchableIdTestCase(NoteGraphQLBaseTestCase):
+    """An id the column cannot hold names no row, so it is a miss, not a crash."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def test_create_note_rejects_an_unmatchable_team_id(self) -> None:
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 1 note",
+                "publicDetails": "Should not be created",
+                "clientProfile": self.client_profile_1.pk,
+                "teamId": "abc",
+            }
+        )
+
+        messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(len(messages), 1, messages)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "team")
+        self.assertIn("abc", messages[0]["message"])
+        self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
+
+    def test_create_note_rejects_an_unmatchable_team_id_on_a_nested_task(self) -> None:
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 1 note",
+                "publicDetails": "Should not be created",
+                "clientProfile": self.client_profile_1.pk,
+                "tasks": [{"summary": "Follow up", "teamId": "abc"}],
+            }
+        )
+
+        messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(len(messages), 1, messages)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "team")
+        self.assertIn("abc", messages[0]["message"])
+        self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
+
+    def test_update_note_denies_an_unmatchable_id(self) -> None:
+        unmatchable = self._update_note_fixture({"id": "abc", "purpose": "Amended"})
+        missing = self._update_note_fixture({"id": "99999999", "purpose": "Amended"})
+
+        self.assertEqual(
+            unmatchable["data"]["updateNote"]["messages"],
+            missing["data"]["updateNote"]["messages"],
+        )
+        self.assertEqual(unmatchable["data"]["updateNote"]["messages"][0]["kind"], "PERMISSION")
 
 
 class NoteTeamValidationMutationTestCase(NoteGraphQLBaseTestCase):

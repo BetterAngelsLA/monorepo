@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import type { ComponentProps } from 'react';
 import { ShelterReportPrint } from '../../pages/report/ShelterReportPrint';
 
 const meta: Meta<typeof ShelterReportPrint> = {
@@ -14,8 +15,12 @@ const DAYS = Array.from({ length: 21 }, (_, i) => {
   return date.toISOString().slice(0, 10);
 });
 
-const dailyBedStatus = DAYS.map((date, i) => ({
-  date,
+/** The generated types brand dates as `DateString` and require `__typename`. */
+type ReportProps = ComponentProps<typeof ShelterReportPrint>;
+
+const dailyBedStatus: ReportProps['dailyBedStatus'] = DAYS.map((date, i) => ({
+  __typename: 'DailyBedStatusMetricsType',
+  date: date as NonNullable<ReportProps['dailyBedStatus']>[number]['date'],
   occupied: 10 + (i % 8),
   available: 8 + (i % 6),
   reserved: 10 + (i % 5),
@@ -23,14 +28,15 @@ const dailyBedStatus = DAYS.map((date, i) => ({
   inTurnaround: 2 + (i % 3),
 }));
 
-const dailyOccupancy = DAYS.map((date, i) => ({
-  date,
+const dailyOccupancy: ReportProps['dailyOccupancy'] = DAYS.map((date, i) => ({
+  __typename: 'DailyOccupancyMetricsType',
+  date: date as NonNullable<ReportProps['dailyOccupancy']>[number]['date'],
   occupiedCount: 20 + (i % 12),
   totalBeds: 50,
   occupancyPct: 30 + ((i * 7) % 40),
 }));
 
-const baseArgs = {
+const baseArgs: Partial<ReportProps> = {
   shelterName: 'The Woodlands',
   shelterAddress: '20157 Ventura Bvld, Woodland Hills, CA, 91364',
   range: { from: new Date(2026, 6, 2), to: new Date(2026, 6, 8) },
@@ -41,7 +47,7 @@ const baseArgs = {
     checkInOverdueToCheckedIn: 1,
     cancelled: 7,
     checkInOverdue: 12,
-  },
+  } as const,
   avgDaysToOccupancy: 10,
   dailyBedStatus,
   dailyOccupancy,

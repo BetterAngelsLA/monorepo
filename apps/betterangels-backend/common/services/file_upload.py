@@ -13,7 +13,12 @@ authorization (permission checks, permission assignment) themselves.
 
 from typing import Any, Iterable
 
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+
 from accounts.models import User
+from common.files.utils import canonicalise_filename, infer_attachment_type
 from common.models import Attachment
 from common.services.exceptions import (
     InvalidContentTypeError,
@@ -30,14 +35,11 @@ from common.services.types import (
     AttachmentUploadConfig,
     AuthorizedPresignedUpload,
     AuthorizedPresignedUploadBatch,
-    UploadRequest,
     UploadConfirmation,
+    UploadRequest,
     ValidatedUpload,
 )
 from common.services.upload_token import create_upload_token, validate_upload_token
-from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
 
 
 def _validate_content_type(content_type: str, filename: str, allowed: frozenset[str]) -> None:
@@ -188,14 +190,15 @@ def create_attachment_records(
             attachment = Attachment(
                 file=item.file_path,
                 mime_type=item.mime_type,
-                original_filename=item.filename,
+                attachment_type=infer_attachment_type(item.mime_type),
+                original_filename=canonicalise_filename(item.mime_type, item.filename),
                 namespace=item.namespace,
                 content_type=content_type,
                 object_id=content_object.id,
                 uploaded_by=user,
             )
 
-            attachment.save(direct_upload=True)
+            attachment.save()
             attached.append(attachment)
 
     return attached

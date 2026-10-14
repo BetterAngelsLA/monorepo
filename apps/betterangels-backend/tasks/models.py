@@ -1,11 +1,12 @@
 import pghistory
-from accounts.models import User
-from common.models import BaseModel
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django_choices_field import IntegerChoicesField
 from organizations.models import Organization
+
+from accounts.models import User
+from common.models import BaseModel
 from teams.models import Team
 from teams.validators import validate_team_in_org
 
@@ -52,7 +53,7 @@ class Task(BaseModel):
     )
     status = IntegerChoicesField(Status, default=Status.TO_DO, db_index=True)
     summary = models.CharField(max_length=100, db_index=True)
-    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL, db_index=True)
+    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.RESTRICT, db_index=True)
 
     def __str__(self) -> str:
         return self.summary

@@ -3,6 +3,20 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
+from django.db.models import (
+    BooleanField,
+    Case,
+    Exists,
+    F,
+    OuterRef,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
+from strawberry import ID, Info, Maybe, auto
+from strawberry_django.utils.query import filter_for_user
+
 from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
@@ -15,21 +29,8 @@ from common.graphql.types import (
 )
 from common.models import Attachment
 from common.org_types import REGISTRY
-from django.db.models import (
-    BooleanField,
-    Case,
-    Exists,
-    F,
-    OuterRef,
-    Q,
-    QuerySet,
-    Value,
-    When,
-)
 from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
-from strawberry import ID, Info, Maybe, auto
-from strawberry_django.utils.query import filter_for_user
 from tasks.types import TaskType
 from teams.types import TeamType
 

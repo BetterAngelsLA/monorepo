@@ -14,12 +14,12 @@ export default function NoteTitleHmis({
 
   return (
     <View>
-      {hmisNote?.title && (
+      {!!hmisNote?.title && (
         <TextBold selectable size="lg" mb="xs">
           {hmisNote?.title}
         </TextBold>
       )}
-      {date && (
+      {!!date && (
         <TextRegular selectable mb="sm" size="sm">
           {date}
         </TextRegular>

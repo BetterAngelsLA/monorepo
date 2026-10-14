@@ -1,7 +1,7 @@
 import { MockedProvider } from '@apollo/client/testing/react';
 import type { MockLink } from '@apollo/client/testing';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
+import { OperatorShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { ShelterOccupancyMetricsDocument } from '../../hooks/useShelterOccupancyMetrics/__generated__/useShelterOccupancyMetrics.generated';
 import { ReportFilterBar } from './ReportFilterBar';
 
@@ -20,7 +20,7 @@ function pdfDataMocks(): MockLink.MockedResponse[] {
   return [
     {
       request: {
-        query: GetShelterSummaryDocument,
+        query: OperatorShelterSummaryDocument,
         variables: { id: SHELTER_ID },
       },
       result: {
@@ -292,7 +292,7 @@ describe('ReportFilterBar export', () => {
     renderFilterBar('7', [
       {
         request: {
-          query: GetShelterSummaryDocument,
+          query: OperatorShelterSummaryDocument,
           variables: { id: SHELTER_ID },
         },
         delay: Infinity,
@@ -332,7 +332,7 @@ describe('ReportFilterBar export', () => {
     renderFilterBar('7', [
       {
         request: {
-          query: GetShelterSummaryDocument,
+          query: OperatorShelterSummaryDocument,
           variables: { id: SHELTER_ID },
         },
         error: new Error('network error'),

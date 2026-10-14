@@ -1,7 +1,8 @@
-from accounts.tests.baker_recipes import organization_recipe
 from django.test import TestCase
 from model_bakery import baker
 
+from accounts.tests.baker_recipes import organization_recipe
+from common.tests.utils import revoke_grants
 from shelters.enums import ReservationStatusChoices, StatusChoices
 from shelters.models import Bed, Reservation, Room
 from shelters.tests.baker_recipes import shelter_recipe
@@ -58,7 +59,7 @@ class ReservationQueryTestCase(ReservationQueriesTestCase):
             notes="Test reservation",
         )
 
-        expected_query_count = 4
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.reservation_query, variables={"id": str(reservation.pk)})
         self.assertIsNone(response.get("errors"))
@@ -86,7 +87,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CHECKED_IN,
         )
 
-        expected_query_count = 5
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
@@ -113,7 +114,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CONFIRMED,
         )
 
-        expected_query_count = 5
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
@@ -141,7 +142,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CONFIRMED,
         )
 
-        expected_query_count = 5
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
@@ -165,7 +166,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CONFIRMED,
         )
 
-        expected_query_count = 5
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
@@ -195,7 +196,7 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
             status=ReservationStatusChoices.CONFIRMED,
         )
 
-        expected_query_count = 5
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
@@ -207,15 +208,18 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
         self.assertEqual(payload["totalCount"], 1)
 
     def test_reservations_query_without_permission_returns_empty(self) -> None:
-        self.operator.user_permissions.clear()
+        # The grant model reads permissions from the Role a Grant references,
+        # so removing access means deleting the operator's Grant (ADR 0001).
+        revoke_grants(self.operator)
 
-        expected_query_count = 4
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
                 variables={"pagination": {"offset": 0, "limit": 10}},
             )
 
+        self.assertIsNone(response.get("errors"))
         payload = response["data"]["reservations"]
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])

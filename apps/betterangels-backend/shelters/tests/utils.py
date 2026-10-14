@@ -1,9 +1,9 @@
+from model_bakery import baker
+
 from accounts.models import OrganizationProfile, OrgTypeChoices, User
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
-from model_bakery import baker
-
 from shelters.groups import SHELTER_OPERATOR
 
 

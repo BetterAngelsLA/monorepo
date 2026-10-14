@@ -2,11 +2,12 @@ from typing import TYPE_CHECKING, Annotated, Optional
 
 import strawberry
 import strawberry_django
+from django.db.models import Q
+from strawberry import ID, UNSET, Info, Maybe, auto
+
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.graphql.types import make_in_filter
-from django.db.models import Q
-from strawberry import ID, UNSET, Info, Maybe, auto
 from tasks.enums import TaskStatusEnum
 from teams.types import TeamType
 

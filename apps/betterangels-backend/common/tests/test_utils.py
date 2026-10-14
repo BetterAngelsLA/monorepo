@@ -1,6 +1,11 @@
-from common.files.utils import canonicalise_filename
+import uuid
+
 from django.test import TestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
+
+from common.files.utils import canonicalise_filename
+from common.utils import can_match, matchable_values
+from notes.models import Note, NoteImportRecord
 
 
 class CommonUtilsTestCase(ParametrizedTestCase, TestCase):
@@ -27,3 +32,35 @@ class CommonUtilsTestCase(ParametrizedTestCase, TestCase):
         else:
             with self.assertRaises(ValueError):
                 canonicalise_filename(mime_type, filename)
+
+
+class MatchableValuesTestCase(TestCase):
+    """An id is whatever the column says it is -- never assumed to be an integer."""
+
+    def test_keeps_values_an_integer_column_can_hold(self) -> None:
+        field = Note._meta.get_field("team")
+
+        self.assertEqual(matchable_values(field=field, values=["1", "2"]), ["1", "2"])
+
+    def test_drops_values_an_integer_column_cannot_hold(self) -> None:
+        field = Note._meta.get_field("team")
+
+        self.assertEqual(matchable_values(field=field, values=["1", "abc"]), ["1"])
+
+    def test_keeps_a_well_formed_uuid_for_a_uuid_column(self) -> None:
+        field = NoteImportRecord._meta.get_field("import_job")
+        job_id = str(uuid.uuid4())
+
+        self.assertEqual(matchable_values(field=field, values=[job_id]), [job_id])
+
+    def test_drops_a_malformed_uuid_for_a_uuid_column(self) -> None:
+        field = NoteImportRecord._meta.get_field("import_job")
+        job_id = str(uuid.uuid4())
+
+        self.assertEqual(matchable_values(field=field, values=[job_id, "abc"]), [job_id])
+
+    def test_can_match_answers_for_a_single_value(self) -> None:
+        field = Note._meta.get_field("team")
+
+        self.assertTrue(can_match(field=field, value="1"))
+        self.assertFalse(can_match(field=field, value="abc"))

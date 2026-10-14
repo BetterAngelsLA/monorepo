@@ -59,43 +59,57 @@ export function GoogleTranslateBtn(props: IProps) {
   }, []);
 
   useEffect(() => {
-    if (isOpen && buttonRef.current && dropdownRef.current) {
-      const buttonRect = buttonRef.current.getBoundingClientRect();
-      const dropdownWidth = dropdownRef.current.offsetWidth;
-
-      // Check available space on the right and left
-      const availableSpaceRight = window.innerWidth - buttonRect.right;
-      const availableSpaceLeft = buttonRect.left;
-
-      // Flip to the left if there's not enough space on the right
-      if (
-        availableSpaceRight < dropdownWidth &&
-        availableSpaceLeft >= dropdownWidth
-      ) {
-        setDropdownPosition('left');
-      } else {
-        setDropdownPosition('right');
-      }
-      const options = dropdownRef.current.querySelectorAll<HTMLLIElement>('li');
-      options.forEach((option) => {
-        const handleOptionClick = () => {
-          const selectElement =
-            document.querySelector<HTMLSelectElement>('.goog-te-combo');
-          if (selectElement) {
-            selectElement.value = option.id;
-            const event = new Event('change');
-            selectElement.dispatchEvent(event);
-          }
-          closeDropdown();
-        };
-        option.addEventListener('click', handleOptionClick);
-
-        // Cleanup event listener on unmount or when the dropdown closes
-        return () => {
-          option.removeEventListener('click', handleOptionClick);
-        };
-      });
+    if (!isOpen || !buttonRef.current || !dropdownRef.current) {
+      return;
     }
+
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const dropdownWidth = dropdownRef.current.offsetWidth;
+
+    // Check available space on the right and left
+    const availableSpaceRight = window.innerWidth - buttonRect.right;
+    const availableSpaceLeft = buttonRect.left;
+
+    // Flip to the left if there's not enough space on the right
+    if (
+      availableSpaceRight < dropdownWidth &&
+      availableSpaceLeft >= dropdownWidth
+    ) {
+      setDropdownPosition('left');
+    } else {
+      setDropdownPosition('right');
+    }
+
+    const options = dropdownRef.current.querySelectorAll<HTMLLIElement>('li');
+
+    const handlers = Array.from(options).map((option) => {
+      const handleOptionClick = () => {
+        const selectElement =
+          document.querySelector<HTMLSelectElement>('.goog-te-combo');
+
+        if (selectElement) {
+          selectElement.value = option.id;
+          const event = new Event('change');
+          selectElement.dispatchEvent(event);
+        }
+
+        closeDropdown();
+      };
+
+      option.addEventListener('click', handleOptionClick);
+
+      return {
+        option,
+        handleOptionClick,
+      };
+    });
+
+    // Cleanup event listener on unmount or when the dropdown closes
+    return () => {
+      handlers.forEach(({ option, handleOptionClick }) => {
+        option.removeEventListener('click', handleOptionClick);
+      });
+    };
   }, [isOpen]);
 
   return (

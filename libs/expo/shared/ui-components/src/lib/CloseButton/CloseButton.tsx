@@ -1,4 +1,4 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon, TIconSize } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { Pressable, StyleProp, ViewStyle } from 'react-native';
@@ -9,6 +9,8 @@ interface IProps {
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
   iconColor?: Colors;
+  iconSize?: TIconSize;
+  testId?: string;
 }
 
 export function CloseButton(props: IProps) {
@@ -17,12 +19,15 @@ export function CloseButton(props: IProps) {
     onClose,
     style,
     iconColor = Colors.BLACK,
+    iconSize = 'md',
+    testId,
     children,
   } = props;
 
   return (
     <Pressable
       onPress={onClose}
+      testID={testId}
       style={[
         {
           minWidth: 40,
@@ -36,7 +41,9 @@ export function CloseButton(props: IProps) {
       accessibilityHint={accessibilityHint || 'close'}
       accessibilityRole="button"
     >
-      {children || <PlusIcon size="md" color={iconColor} rotate="45deg" />}
+      {children || (
+        <PlusIcon size={iconSize} color={iconColor} rotate="45deg" />
+      )}
     </Pressable>
   );
 }

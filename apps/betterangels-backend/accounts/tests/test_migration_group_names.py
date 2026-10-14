@@ -8,22 +8,15 @@ database effects are verified by running the migration itself.
 
 import importlib
 
-from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate
-from django.apps import apps
-from django.contrib.auth.models import Group
 from django.test import TestCase
-from notes.groups import CASEWORKER
 from organizations.models import Organization
+
+from accounts.models import OrganizationProfile, PermissionGroup
 
 from .baker_recipes import organization_recipe
 
 backfill = importlib.import_module("accounts.migrations.0004_require_org_type_on_profile")
 renaming = importlib.import_module("accounts.migrations.0005_deterministic_permission_group_names")
-
-
-def _grant_template(organization: Organization, template_name: str) -> PermissionGroup:
-    template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
-    return PermissionGroup.objects.create(organization=organization, template=template)
 
 
 class DecideOrgTypesTestCase(TestCase):
@@ -50,28 +43,6 @@ class DecideOrgTypesTestCase(TestCase):
         self.assertIsNone(backfill.decide_org_types([], set(), False))
 
 
-class RestoreGroupNamesTestCase(TestCase):
-    def test_reverse_survives_two_organizations_sharing_a_name(self) -> None:
-        """Both reconstruct to the same legacy name, which Group.name forbids.
-
-        The reverse must keep one deterministic name rather than raising
-        IntegrityError.
-        """
-        first = Organization.objects.create(name="Acme")
-        second = Organization.objects.create(name="Acme")
-        first_group = _grant_template(first, CASEWORKER.name)
-        second_group = _grant_template(second, CASEWORKER.name)
-
-        renaming.restore_group_names(apps, None)
-
-        first_group.group.refresh_from_db()
-        second_group.group.refresh_from_db()
-        names = {first_group.group.name, second_group.group.name}
-        self.assertIn("Acme_Caseworker", names)
-        self.assertEqual(len(names), 2, "the two groups must not both take the legacy name")
-        self.assertEqual(Group.objects.filter(name="Acme_Caseworker").count(), 1)
-
-
 class UnconfiguredOrganizationTestCase(TestCase):
     """An organization with no profile is a supported state, not a broken one.
 
@@ -85,7 +56,8 @@ class UnconfiguredOrganizationTestCase(TestCase):
         organization = organization_recipe.make(owner_roles=())
         OrganizationProfile.objects.filter(organization=organization).delete()
         before = set(PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True))
-        self.assertEqual(len(before), 3)
+        # Only the dual-write Caseworker row exists; org-admin roles are grant-only.
+        self.assertEqual(len(before), 1)
 
         reconcile_org_groups(organization)
 

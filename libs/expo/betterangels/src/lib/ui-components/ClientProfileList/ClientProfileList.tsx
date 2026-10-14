@@ -1,6 +1,6 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { InfiniteList } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../InfiniteList/FocusedInfiniteList';
 import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
@@ -50,17 +50,26 @@ export function ClientProfileList({
   style,
   horizontalPadding = pagePaddingHorizontal,
 }: TProps) {
-  const { items, total, loading, reloading, loadMore, reload, hasMore, error } =
-    useInfiniteScrollQuery<
-      TClientProfile,
-      ClientProfilesQuery,
-      ClientProfilesQueryVariables
-    >({
-      document: ClientProfilesDocument,
-      queryFieldName: 'clientProfiles',
-      variables: { filters, ordering: ordering || undefined },
-      pageSize: paginationLimit,
-    });
+  const {
+    items,
+    total,
+    loading,
+    reloading,
+    loadMore,
+    reload,
+    hasMore,
+    error,
+    queryKey,
+  } = useInfiniteScrollQuery<
+    TClientProfile,
+    ClientProfilesQuery,
+    ClientProfilesQueryVariables
+  >({
+    document: ClientProfilesDocument,
+    queryFieldName: 'clientProfiles',
+    variables: { filters, ordering: ordering || undefined },
+    pageSize: paginationLimit,
+  });
 
   if (error) console.error(error);
 
@@ -71,7 +80,7 @@ export function ClientProfileList({
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<TClientProfile>
+      <FocusedInfiniteList<TClientProfile>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
@@ -81,6 +90,7 @@ export function ClientProfileList({
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="client"
+        scrollResetKey={queryKey}
         renderResultsHeader={(visible, totalItems) => (
           <View
             style={[

@@ -1,8 +1,9 @@
-from clients.enums import HmisAgencyEnum, PronounEnum
-from clients.models import ClientProfile, HmisProfile
 from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
+
+from clients.enums import HmisAgencyEnum, PronounEnum
+from clients.models import ClientProfile, HmisProfile
 
 
 class ClientProfileModelTestCase(TestCase):

@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
 import { ReportsView } from '../../components/reports/ReportsView';
-import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
+import { OperatorShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { shelterMgmtRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
@@ -20,7 +20,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
   const { shelterId } = useParams();
   const id = shelterId ?? '';
 
-  const { data: shelterData } = useQuery(GetShelterSummaryDocument, {
+  const { data: shelterData } = useQuery(OperatorShelterSummaryDocument, {
     variables: { id },
     skip: !id,
   });

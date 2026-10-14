@@ -76,7 +76,7 @@ export function ClientHeader(props: IClientHeaderProps) {
         )}
       </View>
       <ClientCaseManager client={client} />
-      {client?.residenceAddress && (
+      {!!client?.residenceAddress && (
         <View
           style={{
             flexDirection: 'row',

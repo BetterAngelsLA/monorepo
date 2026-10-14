@@ -6,11 +6,10 @@ from collections import Counter, defaultdict
 from itertools import groupby
 from typing import TYPE_CHECKING, cast
 
+import pghistory
 from django.db.models import Count, Q, TextField
 from django.db.models.functions import Cast
 from django.utils import timezone as django_timezone
-
-import pghistory
 from strawberry import ID
 
 from shelters.enums import BedStatusChoices, ReservationStatusChoices
@@ -52,7 +51,8 @@ def _bed_lifecycles(*, shelter: "Shelter", before: datetime.datetime) -> list[Be
 
     Expected index: ``(shelter_id, pgh_label, pgh_created_at)`` on BedEvent.
     """
-    from shelters.models import BedEvent  # type: ignore[attr-defined]  # pghistory event model; inline to avoid circular import
+    # pghistory event model; inline to avoid circular import
+    from shelters.models import BedEvent  # type: ignore[attr-defined]
 
     add_rows = BedEvent.objects.filter(
         shelter_id=shelter.pk,
@@ -299,7 +299,8 @@ def report_bed_status_counts(
     Raises:
         ValueError: if *end* is before *start*, or if either is naive.
     """
-    from shelters.models import BedEvent  # type: ignore[attr-defined]  # pghistory event model; inline to avoid circular import
+    # pghistory event model; inline to avoid circular import
+    from shelters.models import BedEvent  # type: ignore[attr-defined]
 
     if end < start:
         raise ValueError("end must be on or after start")
@@ -641,10 +642,14 @@ def avg_days_to_occupancy(
     last_free: dict[int, datetime.datetime] = {}  # per-bed: when last freed
     last_free_res: dict[int, int] = {}  # per-bed: which reservation freed it
 
-    for reservation_id, bed_id, before, after, created_at in rows:
+    for raw_reservation_id, raw_bed_id, before, after, created_at in rows:
+        if raw_bed_id is None or raw_reservation_id is None:
+            continue
+
         try:
-            bed_id = int(bed_id)
-        except TypeError, ValueError:
+            bed_id = int(raw_bed_id)
+            reservation_id = int(raw_reservation_id)
+        except ValueError:
             continue
 
         # "Free" event: exited checked_in → bed available for the next guest.
@@ -669,11 +674,12 @@ def shelter_metrics_window(
     """Resolve a reporting date range into the tz-aware window the selectors take.
 
     *end_date* is inclusive for callers; the returned *end* is exclusive. Missing
-    bounds default to the last 30 days in the shelter schedule timezone.
-    """
-    from shelters.types.filters import SHELTER_SCHEDULE_TIME_ZONE
+    bounds default to the last 30 days.
 
-    tz = SHELTER_SCHEDULE_TIME_ZONE
+    Days are cut on the site's zone rather than the viewer's: occupancy is a fact
+    about the shelter's days, not the reader's.
+    """
+    tz = django_timezone.get_default_timezone()
     end_date = end_date or django_timezone.now().astimezone(tz).date()
     start_date = start_date or (end_date - datetime.timedelta(days=29))
 

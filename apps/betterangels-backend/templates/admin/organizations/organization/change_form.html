@@ -8,6 +8,12 @@
       </a>
     </li>
     <li>
+      {# The owner cannot be removed, so there has to be a way to stop being one. #}
+      <a href="{% url 'admin:organizations_organization_transfer_ownership' original.pk %}" class="changelink">
+        Transfer ownership
+      </a>
+    </li>
+    <li>
       {# The Members inline renders every row; this list is filterable and paginated. #}
       <a href="{% url 'admin:organizations_organizationuser_changelist' %}?organization__id__exact={{ original.pk }}"
          class="viewlink">

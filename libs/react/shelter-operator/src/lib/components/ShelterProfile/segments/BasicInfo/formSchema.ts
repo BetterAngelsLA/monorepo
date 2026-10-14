@@ -1,4 +1,4 @@
-import { Regex } from '@monorepo/react/shared';
+import { isValidInstagramUrlOrHandle, Regex } from '@monorepo/react/shared';
 import { StatusChoices } from '@monorepo/react/shelter';
 import { z } from 'zod';
 import { ShelterProfileType } from '../../types';
@@ -26,7 +26,7 @@ export const formSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(Regex.phoneNumberLoose, 'Please enter a valid phone number')
+    .regex(Regex.phoneNumberLooseUS, 'Please enter a valid phone number')
     .optional()
     .or(z.literal('')),
   website: z
@@ -35,7 +35,25 @@ export const formSchema = z.object({
     .regex(Regex.url, 'Please enter a valid URL')
     .optional()
     .or(z.literal('')),
+  // Format-only: rejects values that don't resolve to an Instagram profile
+  // (another site, a bare domain, a malformed handle). It cannot tell whether
+  // the handle exists — Instagram returns 200 for missing profiles. Kept in the
+  // schema so it gates submit for the create and edit flows alike.
+  instagram: z
+    .string()
+    .trim()
+    .refine(
+      // Optional field: blank is allowed, anything present must be valid.
+      (value) => value === '' || isValidInstagramUrlOrHandle(value),
+      'Enter a valid Instagram handle or link',
+    ),
   isPrivate: z.boolean(),
+  // Create anchor (ADR 0001 §2.6): rendered and required only in the create
+  // form for global operators (enforced in CreateShelterProfile). Kept in the
+  // schema so server VALIDATION errors for this field (``field:
+  // organizationId``) map via ``formFieldNames``; edit flows ignore it — an
+  // existing shelter's organization cannot change.
+  organizationId: z.string().optional(),
 });
 
 export type BasicInfoFormData = z.infer<typeof formSchema>;
@@ -50,7 +68,9 @@ export const defaultFormValues: BasicInfoFormData = {
   email: '',
   phone: '',
   website: '',
+  instagram: '',
   isPrivate: false,
+  organizationId: '',
 };
 
 export function toFormData(shelter: ShelterProfileType): BasicInfoFormData {
@@ -68,6 +88,7 @@ export function toFormData(shelter: ShelterProfileType): BasicInfoFormData {
     email: shelter.email ?? '',
     phone: shelter.phone ?? '',
     website: shelter.website ?? '',
+    instagram: shelter.instagram ?? '',
     isPrivate: shelter.isPrivate,
   };
 }

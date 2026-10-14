@@ -47,36 +47,57 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 )
 
     @parametrize(
-        "user_label, should_succeed",
+        "user_label",
         [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", False),  # Other org CM should not succeed
-            ("non_case_manager_user", False),  # Non CM should not succeed
-            (None, False),  # Anonymous user should not succeed
+            ("org_1_case_manager_1",),
+            ("org_1_case_manager_2",),
         ],
     )
-    def test_delete_note_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
+    def test_delete_note_returns_the_deleted_note(self, user_label: str) -> None:
         self._handle_user_login(user_label)
-
         note_count = Note.objects.count()
-        mutation = """
-            mutation DeleteNote($id: ID!) {
-                deleteNote(data: { id: $id }) {
-                    ... on NoteType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": self.note["id"]}
-        self.execute_graphql(mutation, variables)
 
-        self.assertTrue(Note.objects.filter(id=self.note["id"]).exists() != should_succeed)
-        if should_succeed:
-            self.assertEqual(note_count - 1, Note.objects.count())
-        else:
-            self.assertEqual(note_count, Note.objects.count())
+        response = self._delete_note_fixture(self.note["id"])
+
+        self.assertEqual(
+            response["data"]["deleteNote"],
+            {"__typename": "NoteType", "id": self.note["id"]},
+        )
+        self.assertFalse(Note.objects.filter(id=self.note["id"]).exists())
+        self.assertEqual(note_count - 1, Note.objects.count())
+
+    @parametrize(
+        "user_label",
+        [
+            ("org_2_case_manager_1",),
+            ("non_case_manager_user",),
+        ],
+    )
+    def test_delete_note_denied_keeps_the_note(self, user_label: str) -> None:
+        self._handle_user_login(user_label)
+        note_count = Note.objects.count()
+
+        response = self._delete_note_fixture(self.note["id"])
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "deleteNote",
+            "You do not have permission to delete this interaction.",
+            kind="PERMISSION",
+            exact=True,
+        )
+        self.assertTrue(Note.objects.filter(id=self.note["id"]).exists())
+        self.assertEqual(note_count, Note.objects.count())
+
+    def test_delete_note_anonymous_is_unauthenticated(self) -> None:
+        self._handle_user_login(None)
+        note_count = Note.objects.count()
+
+        response = self._delete_note_fixture(self.note["id"])
+
+        self.assertGraphQLUnauthenticated(response)
+        self.assertTrue(Note.objects.filter(id=self.note["id"]).exists())
+        self.assertEqual(note_count, Note.objects.count())
 
     @parametrize(
         "user_label",

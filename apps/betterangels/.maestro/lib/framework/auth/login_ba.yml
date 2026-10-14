@@ -52,5 +52,21 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'ba-login-submit'
 
+# iOS may raise the AutoFill "Save Password?" alert after a successful
+# sign-in. It covers the app, so dismiss it here. iOS-only: Android has no
+# equivalent system alert.
+# NOTE: this is the ONLY place the alert is handled — nothing disables AutoFill
+# at the OS/simulator level — so local runs and CI exercise the same path.
+# `optional: true` because the alert only appears when iOS decides to offer
+# saving the credential; the following assertVisible still fails the flow if
+# the alert was missed and left covering the UI.
+- runFlow:
+    when:
+      platform: ios
+    commands:
+      - tapOn:
+          text: 'Not Now'
+          optional: true
+
 - assertVisible:
     id: clients-screen

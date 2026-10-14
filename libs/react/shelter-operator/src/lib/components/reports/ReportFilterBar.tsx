@@ -7,7 +7,7 @@ import { Button } from '../base-ui/buttons/buttons';
 import { Text } from '../base-ui/text/text';
 import { useToast } from '../base-ui/toast';
 import { dateRangeFilterAtom, type DateRange } from '../date-range-filter';
-import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
+import { OperatorShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { useShelterOccupancyMetrics } from '../../hooks/useShelterOccupancyMetrics';
 import { ShelterReportPrint } from '../../pages/report/ShelterReportPrint';
 import { useExportPdf } from '../../pages/report/useExportPdf';
@@ -96,7 +96,7 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
     data: shelterData,
     loading: isShelterDataLoading,
     error: shelterDataError,
-  } = useQuery(GetShelterSummaryDocument, {
+  } = useQuery(OperatorShelterSummaryDocument, {
     variables: { id: shelterId ?? '' },
     skip: !shelterId || !isExportOpen,
   });

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.14.6-trixie AS base
+FROM python:3.14.7-trixie AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
@@ -104,7 +104,7 @@ RUN --mount=type=cache,target=/var/cache/nodejs \
   && rm -rf /tmp/*
 
 # Install EAS CLI globally
-RUN npm install -g eas-cli@20.5.1
+RUN npm install -g eas-cli@24.8.0
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable

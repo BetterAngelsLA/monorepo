@@ -1,17 +1,18 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from django.test import TestCase
+from model_bakery import baker
+
 from clients.services.client_document import (
     CLIENT_DOCUMENT_CONFIG,
     create_presigned_uploads,
     resolve_upload,
 )
 from common.models import Attachment
-from common.services.file_upload import UploadRequest, UploadConfirmation
 from common.services.exceptions import InvalidUploadTokenError
-from common.services.types import AuthorizedPresignedUploadBatch, AuthorizedPresignedUpload
-from django.test import TestCase
-from model_bakery import baker
+from common.services.file_upload import UploadConfirmation, UploadRequest
+from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 
 
 class ValidateContentTypeTest(TestCase):
@@ -98,7 +99,7 @@ class ResolveUploadTest(TestCase):
         self.user: Any = baker.make("accounts.User")
         self.client_profile: Any = baker.make("clients.ClientProfile")
         self.permission_group = MagicMock()
-        self.permission_group.group = MagicMock()
+        self.permission_group = MagicMock()
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
@@ -173,12 +174,12 @@ class ResolveUploadTest(TestCase):
 
         self.assertEqual(mock_assign.call_count, 2)
         mock_assign.assert_any_call(
-            self.permission_group.group,
+            self.permission_group,
             att1,
             [Attachment.perms.DELETE, Attachment.perms.CHANGE],
         )
         mock_assign.assert_any_call(
-            self.permission_group.group,
+            self.permission_group,
             att2,
             [Attachment.perms.DELETE, Attachment.perms.CHANGE],
         )

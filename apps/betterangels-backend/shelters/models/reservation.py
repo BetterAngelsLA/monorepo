@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pghistory
-from common.models import BaseModel
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from django_choices_field import TextChoicesField
+
+from common.models import BaseModel, OrgScoped
 from shelters.enums import ReservationStatusChoices
 
 from .shelter import ACTIVE_RESERVATION_STATUSES, Bed, Room
@@ -21,7 +22,9 @@ if TYPE_CHECKING:
     pghistory.DeleteEvent("reservation.remove"),
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
 )
-class Reservation(BaseModel):
+class Reservation(OrgScoped, BaseModel):
+    org_via = ("bed", "room")
+
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     status = TextChoicesField(choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.CONFIRMED)

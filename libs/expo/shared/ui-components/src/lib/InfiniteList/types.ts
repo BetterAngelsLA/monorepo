@@ -35,6 +35,22 @@ type InfiniteListBaseProps<T> = {
   errorTitle?: string;
   errorMessage?: string;
   ErrorViewComponent?: ComponentType<unknown> | ReactElement | null;
+  /**
+   * When this value changes the list scrolls back to the top.
+   * Pass the stable identity of the data source — typically the `queryKey`
+   * returned by `useInfiniteScrollQuery` — so a shorter result set can never
+   * leave the viewport scrolled past its content (blank list).
+   */
+  scrollResetKey?: string;
+  /**
+   * Whether the list's screen is on screen. Paging is withheld while this is
+   * `false`, because a list kept mounted behind a pushed route re-checks "am I
+   * at the end?" on every commit and would page in its whole dataset.
+   *
+   * A prop rather than something the list reads for itself, so this library does
+   * not depend on the consuming app's router. Defaults to `true`.
+   */
+  isFocused?: boolean;
 };
 
 export type TInfiniteListProps<T> = InfiniteListBaseProps<T> &

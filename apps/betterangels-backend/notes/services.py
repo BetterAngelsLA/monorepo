@@ -2,6 +2,10 @@ from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional
 
 import pghistory
+from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
+
 from accounts.models import PermissionGroup, User
 from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
@@ -11,13 +15,10 @@ from common.permissions.utils import assign_object_permissions
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,
-    UploadRequest,
     UploadConfirmation,
+    UploadRequest,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
-from django.conf import settings
-from django.db import transaction
-from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
@@ -174,7 +175,7 @@ def service_request_create(
         )
 
         assign_object_permissions(
-            permission_group.group,
+            permission_group,
             sr,
             [
                 ServiceRequestPermissions.VIEW,
@@ -235,7 +236,7 @@ def note_create(
     user: User,
     permission_group: PermissionGroup,
     purpose: Optional[str] = None,
-    team_id: Optional[int] = None,
+    team_id: Optional[str] = None,
     public_details: str = "",
     private_details: str = "",
     client_profile_id: Optional[str] = None,
@@ -273,7 +274,7 @@ def note_create(
     note.save()
 
     assign_object_permissions(
-        permission_group.group,
+        permission_group,
         note,
         [
             NotePermissions.CHANGE,
@@ -361,7 +362,7 @@ def resolve_note_file_uploads(
 
         for att in attached:
             assign_object_permissions(
-                permission_group.group,
+                permission_group,
                 att,
                 [
                     Attachment.perms.DELETE,

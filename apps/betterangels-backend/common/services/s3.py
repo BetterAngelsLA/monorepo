@@ -169,7 +169,7 @@ def _get_s3_client_and_bucket(*, external: bool = False) -> tuple[S3Client, str]
             return s3_client, bucket_name
 
     # Use the storage's own connection which is configured with the
-    # internal endpoint_url (e.g. the Docker-network MinIO address).
+    # internal endpoint_url (e.g. the Docker-network local S3 address).
     s3_client = cast(S3Client, storage.connection.meta.client)
     return s3_client, bucket_name
 

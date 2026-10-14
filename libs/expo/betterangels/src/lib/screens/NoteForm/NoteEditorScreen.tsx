@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Colors } from '@monorepo/expo/shared/static';
 import { DiscardModal, TextButton } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
-import { useCallback, useEffect, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   DeleteNoteDocument,
@@ -11,6 +11,7 @@ import {
   ViewNoteDocument,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
+import { HeaderSlot } from '../../navigation';
 import { useUserTeamPreference } from '../../state';
 import { CreateNoteDocument } from '../../ui-components/CreateClientInteraction';
 import { InteractionsDocument } from '../../ui-components/InteractionList';
@@ -74,10 +75,14 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
   const { watch, setValue, getValues, reset, formState } = methods;
 
+  const hasSeededForm = useRef(false);
+
   useEffect(() => {
-    if (data?.note && !isCreateMode) {
-      reset(formDataFromNote(data.note));
+    if (hasSeededForm.current || !data?.note || isCreateMode) {
+      return;
     }
+    hasSeededForm.current = true;
+    reset(formDataFromNote(data.note));
   }, [data, isCreateMode, reset]);
 
   const form = watch();
@@ -101,25 +106,30 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: isCreateMode ? 'Add Interaction' : 'Edit Interaction',
+      // This screen supplies its own `headerLeft`, so it has to apply the same
+      // web inset every other screen gets from `HeaderLeftButton`; otherwise
+      // "Back" sits flush against the screen edge on the browser only.
       headerLeft: () => (
-        <DiscardModal
-          title={isCreateMode ? 'Discard interaction?' : 'Discard changes?'}
-          body={
-            isCreateMode
-              ? 'All data in this interaction will be lost.'
-              : 'Any unsaved changes to this interaction will be lost.'
-          }
-          onDiscard={goBack}
-          button={
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="discards changes and goes back"
-              title="Back"
-            />
-          }
-        />
+        <HeaderSlot side="left">
+          <DiscardModal
+            title={isCreateMode ? 'Discard interaction?' : 'Discard changes?'}
+            body={
+              isCreateMode
+                ? 'All data in this interaction will be lost.'
+                : 'Any unsaved changes to this interaction will be lost.'
+            }
+            onDiscard={goBack}
+            button={
+              <TextButton
+                regular
+                color={Colors.WHITE}
+                fontSize="md"
+                accessibilityHint="discards changes and goes back"
+                title="Back"
+              />
+            }
+          />
+        </HeaderSlot>
       ),
     });
   }, [arrivedFrom, isCreateMode, navigation, router, goBack]);

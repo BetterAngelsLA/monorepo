@@ -1,15 +1,18 @@
-from common.utils import get_fargate_task_ips
 from django.apps import AppConfig
 from django.conf import settings
 from django.db.models.fields import files
 from django.db.models.signals import post_migrate
 from strawberry_django.fields.types import field_type_map
 
+from common.utils import get_fargate_task_ips
+
 
 class CommonConfig(AppConfig):
     name = "common"
 
     def ready(self) -> None:
+        from common.permissions import checks as _permission_checks  # noqa: F401
+
         from .signals import enable_imgproxy_switch
 
         self._register_imgproxy_image_type()

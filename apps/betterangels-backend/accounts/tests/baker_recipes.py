@@ -1,10 +1,11 @@
 from typing import Any, Optional, Union, overload
 
-from accounts.models import PermissionGroup, PermissionGroupTemplate
 from django.contrib.auth.models import Group
 from model_bakery.random_gen import gen_string
 from model_bakery.recipe import Recipe, foreign_key
 from organizations.models import Organization
+
+from accounts.models import PermissionGroup, PermissionGroupTemplate
 
 from .helpers import make_org_with_presets
 
@@ -70,6 +71,6 @@ group_recipe = Recipe(
 
 permission_group_recipe = Recipe(
     PermissionGroup,
-    name=lambda: gen_string(50),
+    label=lambda: gen_string(50),
     organization=foreign_key(organization_recipe),
 )

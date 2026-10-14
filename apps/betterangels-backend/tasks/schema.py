@@ -2,25 +2,25 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import User
-from accounts.selectors import resolve_permission_group
-from clients.models import ClientProfile
-from common.constants import HMIS_SESSION_KEY_NAME
-from common.graphql.extensions import PermissionedQuerySet
-from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import maybe_int_value
-from common.permissions.utils import IsAuthenticated
-from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
-from hmis.models import HmisClientProfile, HmisNote
-from notes.groups import CASEWORKER
-from notes.models import Note
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
+
+from accounts.models import User
+from accounts.selectors import resolve_permission_group
+from clients.models import ClientProfile
+from common.constants import HMIS_SESSION_KEY_NAME
+from common.graphql.extensions import PermissionedQuerySet
+from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.utils import get_object_or_permission_error
+from common.permissions.utils import IsAuthenticated
+from hmis.models import HmisClientProfile, HmisNote
+from notes.groups import CASEWORKER
+from notes.models import Note
 from tasks.models import Task
 from tasks.services import task_create, task_delete, task_update
 
@@ -52,8 +52,6 @@ class Mutation:
         permission_group = resolve_permission_group(current_user, template=CASEWORKER)
 
         task_data = asdict(data)
-
-        task_data["team_id"] = maybe_int_value(data.team_id)
 
         # Resolve FK references
         note = None
@@ -91,13 +89,9 @@ class Mutation:
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
 
-        task: Task = qs.get(pk=data.id)
+        task = get_object_or_permission_error(qs, data.id)
 
         clean = asdict(data)
-        # Guarded on the input field so an unmentioned team stays unmentioned:
-        # assigning unconditionally would turn "not sent" into "set to null".
-        if data.team_id:
-            clean["team_id"] = maybe_int_value(data.team_id)
 
         task = task_update(task=task, data=clean)
 
@@ -107,14 +101,11 @@ class Mutation:
     def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         current_user = get_current_user(info)
 
-        try:
-            task = filter_for_user(
-                Task.objects.all(),
-                current_user,
-                [Task.perms.DELETE],
-            ).get(id=data.id)
-        except Task.DoesNotExist:
-            raise PermissionDenied("You do not have permission to delete this task.")
+        task = get_object_or_permission_error(
+            filter_for_user(Task.objects.all(), current_user, [Task.perms.DELETE]),
+            data.id,
+            "You do not have permission to delete this task.",
+        )
 
         deleted_id = task_delete(task=task)
 

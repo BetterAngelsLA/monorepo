@@ -54,7 +54,7 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
 
   return (
     <View style={{ alignItems: 'center' }} collapsable={false}>
-      {label && (
+      {!!label && (
         <View
           style={{
             paddingHorizontal: Spacings.sm,
