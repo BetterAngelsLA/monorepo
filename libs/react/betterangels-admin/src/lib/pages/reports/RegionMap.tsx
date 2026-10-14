@@ -79,7 +79,7 @@ function shade(max: number, count: number): string {
 }
 
 /** The map's views. Heatmap is the default; see `RegionMap` below. */
-export type MapView = 'heatmap' | 'pins';
+export type MapView = 'heatmap' | 'clusters';
 
 /**
  * Draws the choropleth. Must be a child of `<GoogleMap>`, which is what provides
@@ -237,7 +237,7 @@ type RegionMapProps = {
   rows: RegionCountType[];
   /** Individual interaction locations, from `interactionMap`. */
   points?: InteractionPointType[];
-  /** True when the point cap was reached and the pins are a subset. */
+  /** True when the point cap was reached and the clusters are a subset. */
   truncated?: boolean;
   /** Names of the regions the map is narrowed to, if any. */
   filteredTo?: string;
@@ -272,10 +272,10 @@ export function RegionMap({
 
   const caption = useMemo(() => {
     const scope = filteredTo ? ` within ${filteredTo}` : '';
-    if (view === 'pins') {
+    if (view === 'clusters') {
       // Not "each dot is one interaction" any more: points in the same screen cell are
       // merged into one bubble, so a dot stands for one *or more*.
-      return `${points.length.toLocaleString()} interactions${scope}, clustered by area. A numbered bubble counts the interactions under it; zoom in to split it.`;
+      return `${points.length.toLocaleString()} interactions${scope}, grouped into clusters. A numbered bubble counts the interactions under it; zoom in to split it.`;
     }
     if (view === 'heatmap') {
       return `Density of interactions${scope}, as a continuous field. Red is where interactions concentrate, blue where they thin out — relative only, so read the table below for counts.`;
@@ -338,7 +338,7 @@ export function RegionMap({
           buttonStyle="solid"
           options={[
             { label: 'Heatmap', value: 'heatmap' },
-            { label: 'Interactions', value: 'pins' },
+            { label: 'Clusters', value: 'clusters' },
           ]}
         />
       </div>
@@ -365,9 +365,9 @@ export function RegionMap({
         />
         {/* Both layers are always mounted. The overlay draws whichever regions the
             grouping resolved to — none, when nothing did — rather than being a view of
-            its own, and the point layer draws only for the pins view. */}
+            its own, and the point layer draws only for the clusters view. */}
         {view === 'heatmap' && <HeatmapLayer points={points} />}
-        {view === 'pins' && <PointLayer points={points} />}
+        {view === 'clusters' && <PointLayer points={points} />}
         {/* On the map rather than beside it: the ramp is meaningless without knowing it is
             absolute, and a reader looking at a gradient should not have to hunt for its
             key. Positioned bottom-left, clear of the map's own controls. */}
@@ -399,13 +399,13 @@ export function RegionMap({
         )}
       </GoogleMap>
       <p className="mt-2 text-xs text-neutral-500">{caption}</p>
-      {truncated && view === 'pins' && (
+      {truncated && view === 'clusters' && (
         <Alert
           className="mt-2"
           type="warning"
           showIcon
           message="Showing the most recent interactions only"
-          description="There are more interactions in this range than the map can plot, so the pins are a subset — the counts and table below are complete."
+          description="There are more interactions in this range than the map can plot, so these clusters are a subset — the counts and table below are complete."
         />
       )}
     </div>
