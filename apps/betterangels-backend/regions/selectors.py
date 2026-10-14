@@ -51,7 +51,6 @@ def region_counts(
     if organization_id is not None:
         notes = notes.filter(organization_id=organization_id)
 
-    # The assignment is reached through the FK, so this is an ordinary join.
     rows = notes.filter(location__region_assignments__kind=kind)
 
     if unassigned_only:
@@ -109,17 +108,14 @@ def region_totals_without_boundaries(*, start: datetime, end: datetime, organiza
 
 
 def available_kinds() -> list[str]:
-    """Dimensions that actually have boundaries loaded.
+    """Dimensions that actually have boundaries loaded, for the UI's picker.
 
-    The UI uses this to avoid offering a grouping the database cannot answer, so a
-    kind the GraphQL enum does not know is filtered out rather than allowed to make
-    ``regionDimensions`` fail wholesale — one unrecognised row used to break the
-    dimension picker for every user.
+    A kind the GraphQL enum does not know is filtered out rather than allowed to make
+    ``regionDimensions`` fail wholesale.
 
-    ``.order_by()`` is load-bearing for the same reason as in
-    ``ensure_location_regions``: the model's default ordering is appended to the
-    SELECT, so a bare ``.distinct()`` de-duplicates on ``(kind, code)`` and returns
-    one row per region.
+    ``.order_by()`` is load-bearing: the model's default ordering is appended to the
+    SELECT, so a bare ``.distinct()`` de-duplicates on ``(kind, code)`` and returns one
+    row per region. See ``services.ensure_location_regions``.
     """
     kinds = Region.objects.order_by().values_list("kind", flat=True).distinct()
     return sorted(kind for kind in kinds if kind in RegionKind._value2member_map_)
@@ -128,17 +124,11 @@ def available_kinds() -> list[str]:
 def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:
     """Region polygons as GeoJSON, for the map view.
 
-    Serves ``geom_display`` -- the boundary simplified once at import to a tolerance
-    below what the map can draw (see ``Region.geom_display``). Serving the
-    authoritative ``geom`` instead meant 21 MB across six dimensions, with ZIP alone
-    at 9,960 kB of detail rendering at 0.2 px.
+    Serves ``geom_display`` (see ``Region.geom_display``), falling back to ``geom``
+    where the importer has not set it, so a region is never invisible on the map.
 
-    Falls back to ``geom`` for any row where the importer has not set the display
-    copy, so a region is never invisible on the map merely because it was created
-    outside the importer.
-
-    ``ST_AsGeoJSON`` is asked for 6 decimal places (~10 cm), which is finer than the
-    simplification tolerance, so no precision is lost in serialisation.
+    6 decimal places is ~10 cm — finer than the simplification tolerance, so nothing
+    is lost in serialisation.
     """
     with connection.cursor() as cursor:
         cursor.execute(
@@ -148,10 +138,9 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
             WHERE kind = ANY(%(kinds)s)
               AND (%(codes)s IS NULL OR code = ANY(%(codes)s))
             """,
-            # `codes if codes is not None` rather than `codes or None`: an explicit
-            # empty list means "no codes", and must match nothing. Collapsing it to
-            # NULL removes the predicate entirely and returns the whole dimension —
-            # the same bug class as the unassigned sentinel.
+            # `is not None`, not `or None`: an explicit empty list means "no codes"
+            # and must match nothing, where collapsing to NULL drops the predicate and
+            # returns the whole dimension.
             {"kinds": list(kinds), "codes": list(codes) if codes is not None else None},
         )
         rows = cursor.fetchall()
@@ -159,17 +148,14 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
     return [{"kind": row[0], "code": row[1], "name": row[2] or "", "geometry": row[3]} for row in rows]
 
 
-# Cap on per-interaction points returned in one response. The map clusters them, so
-# past a few thousand the extra rows change nothing visible but do change the payload
-# — the same failure the boundary geometry had at 21 MB. The cap is reported back
-# (`truncated`) rather than silently applied, because a partial map that looks
-# complete is worse than a slow one.
+# Cap on points returned in one response. Past a few thousand the extra rows change
+# nothing visible but do change the payload. Truncation is reported rather than
+# silent: a partial map that looks complete is worse than a slow one.
 POINT_LIMIT = 10_000
 POINT_LIMIT_MAX = 50_000
 
-# Grid cell size for the density view, in degrees. 0.01 deg is ~1.1 km of latitude
-# and ~0.9 km of longitude at Los Angeles — roughly a walkable neighbourhood, which
-# is the granularity the density view is for.
+# Density grid cell size, in degrees. 0.01 deg is ~1.1 km by ~0.9 km at Los Angeles —
+# the granularity the density view is for.
 DENSITY_GRID_DEGREES = 0.01
 
 
@@ -202,22 +188,19 @@ def interaction_points(
 ) -> tuple[list[dict[str, Any]], bool]:
     """Individual interaction locations, for map pins.
 
-    **Coordinates and a timestamp, and nothing else.** Deliberately no client
-    name, client id, note id, address, or note content: this answers "where were
-    our interactions" without answering "who". `LocationType.point` already exposes
-    coordinates wherever a location is readable, and ADR 0002 makes read scope a
-    per-model choice, so this is consistent with existing behaviour rather than a
-    new class of disclosure — but it stays minimal anyway.
+    **Coordinates and a timestamp, and nothing else.** No client name, client id,
+    note id, address, or note content: this answers "where were our interactions"
+    without answering "who". `LocationType.point` is already readable wherever a
+    location is, so this is not a new class of disclosure, but it stays minimal.
 
-    Returns ``(rows, truncated)``. ``truncated`` says the cap was reached, so the
-    caller can tell the user the map is a subset rather than let them read it as
-    complete. Asking for one row more than the cap is what detects that.
+    Returns ``(rows, truncated)``. Asking for one row past the cap is what detects
+    truncation, so the caller can say the map is a subset rather than let it read as
+    complete.
     """
     limit = max(1, min(limit, POINT_LIMIT_MAX))
     params: dict[str, Any] = {"start": start, "end": end, "limit": limit + 1}
-    # `notes` is an already-permission-filtered queryset when the caller has one,
-    # which is how the map inherits the note read scope rather than inventing its
-    # own. `org_id` remains for callers that only scope by organization.
+    # `notes` is already permission-filtered by the caller, which is how the map
+    # inherits the note read scope rather than inventing its own.
     notes_clause = ""
     if notes is not None:
         notes_clause = "AND n.id = ANY(%(note_ids)s)"
@@ -269,8 +252,7 @@ def interaction_density(
     no interactions is simply absent; a caller draws only what it receives.
     """
     params: dict[str, Any] = {"start": start, "end": end, "cell": cell_degrees}
-    # `note_ids` is a bound array parameter, not interpolated text: the scoped
-    # queryset decides *which* ids, and the placeholder keeps them out of the SQL.
+    # Bound array, not interpolated: `note_ids` never reaches the SQL text.
     notes_clause = ""
     if notes is not None:
         notes_clause = "AND n.id = ANY(%(note_ids)s)"

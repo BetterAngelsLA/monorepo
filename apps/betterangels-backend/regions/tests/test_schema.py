@@ -198,14 +198,12 @@ INTERACTION_MAP_QUERY = """
 
 
 class InteractionMapPermissionTestCase(GraphQLBaseTestCase):
-    """Pins are note locations, so they carry the note read scope, not the report one.
+    """Pins carry the note read scope, not the report scope.
 
-    ``ORG_ADMIN`` holds ``reports.view_reports`` and **no** ``notes.view_note``
-    (``accounts/groups.py``) — it can read the aggregated rollup but not an individual
-    note, so it must not be gated on the report permission alone: that would hand
-    ``ORG_ADMIN`` exact per-interaction coordinates.
+    ``ORG_ADMIN`` holds ``reports.view_reports`` and no ``notes.view_note``
+    (``accounts/groups.py``), so it must not see coordinates.
 
-    Geometry is deliberately irrelevant here: the assertions are all or nothing.
+    Geometry is irrelevant here: the assertions are all or nothing.
     """
 
     def setUp(self) -> None:

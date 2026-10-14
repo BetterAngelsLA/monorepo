@@ -70,14 +70,9 @@ class RegionDimension(enum.Enum):
 class UnassignedReason(enum.Enum):
     """Why a bucket could not be attributed to a named region.
 
-    Two distinct conditions produce an unassigned bucket and they mean different
-    things operationally, so they are not merged:
-
-    * ``OUTSIDE_ALL_REGIONS`` — the interaction has a point, but no polygon of
-      this dimension contains it. A Beverly Hills address has no LA City council
-      district. This is a real coverage signal.
-    * ``NO_LOCATION`` — the interaction has no location recorded at all, so no
-      spatial join could ever classify it. This is a data-completeness signal.
+    Two conditions, kept distinct because they mean different things: a point that no
+    polygon contains is a coverage signal, and a note with no location at all is a
+    data-completeness signal.
     """
 
     OUTSIDE_ALL_REGIONS = "OUTSIDE_ALL_REGIONS"
@@ -98,9 +93,8 @@ class RegionCountType:
     name: str
     count: int
     is_unassigned: bool
-    # ``None`` for a named region. Set for the unassigned buckets, so a client
-    # can tell "outside every region" from "no location recorded" without
-    # parsing the display name.
+    # Set only on unassigned buckets, so a client can tell the two causes apart
+    # without parsing the display name.
     unassigned_reason: Optional[UnassignedReason]
 
 
@@ -216,16 +210,11 @@ class Query:
             start=start,
             end=end,
             organization_id=org.id,
-            # `wanted` passes through even when empty: `or None` would drop the code
-            # predicate and return the WHOLE dimension for `regionCodes: []`.
             codes=wanted if region_codes is not None else None,
             unassigned_only=unassigned_only,
-            # Real codes plus the sentinel: the predicate needs both arms, which
-            # is not expressible by putting the sentinel in the code list.
             include_unassigned=sentinel_requested and bool(wanted),
         )
 
-        # Named regions always come back; unassigned rows only when asked for.
         buckets = [
             RegionCountType(
                 code=row["code"] or "",
@@ -238,10 +227,10 @@ class Query:
             if row["code"] is not None or include_unassigned
         ]
 
-        # Notes with no location at all are invisible to a spatial rollup, so
-        # they get their own unassigned bucket rather than vanishing and making
-        # the total disagree with the KPI row. A distinct ``unassigned_reason``
-        # keeps the two unassigned buckets tellable apart — they share `code`.
+        # Notes with no location are invisible to a spatial rollup, so they get their
+        # own bucket rather than vanishing and making the total disagree with the KPI
+        # row. `unassigned_reason` keeps that bucket tellable from the other one —
+        # they share `code`.
         if include_locationless:
             locationless = region_totals_without_boundaries(start=start, end=end, organization_id=org.id)
             if locationless:
@@ -270,28 +259,19 @@ class Query:
     ) -> InteractionMapType:
         """Where the interactions happened: pins, and the same data as a density grid.
 
-        Authority is **the note read scope, not the report scope.** Unlike the
-        rollup beside it — which returns counts — this returns individual
-        coordinates, so it is gated on ``notes.view_note`` and every row is filtered
-        through ``filter_for_user``, the same call the ``notes`` query uses. A user
-        holding ``reports.view_reports`` but not ``notes.view_note`` sees no pins;
-        one who can read some notes in an org sees exactly those notes' locations.
+        Authority is **the note read scope, not the report scope.** This returns
+        individual coordinates, so it is gated on ``notes.view_note`` and filtered
+        through ``filter_for_user``. Gating on ``reports.view_reports`` alone would
+        widen the scope: ``LocationType.point`` is reached *through* a note, and
+        ``reports.view_reports`` is held by ``ORG_ADMIN``, which has no note
+        permission.
 
-        Gating this on ``reports.view_reports`` alone would widen the scope rather than
-        match it: ``LocationType.point`` is reached *through* a note, so it inherits
-        the note scope, and ``reports.view_reports`` is granted to ORG_ADMIN with no
-        note permission at all.
+        Pins and the density grid are returned together so the client can switch views
+        without a second round trip.
 
-        Both representations of one period are returned together so the client can
-        switch between them without a second round trip; the density grid is
-        aggregated in the database, so carrying both costs far less than a second
-        request would.
-
-        ``dimension`` + ``regionCodes`` narrow the map to interactions inside those
-        regions — the way a program manager asks "show me the SPA 4 visits" rather
-        than "show me every visit, coloured by SPA". ``regionCodes`` without a
-        dimension is ignored rather than guessed at, because a code such as ``"4"``
-        is ambiguous across dimensions.
+        ``dimension`` + ``regionCodes`` narrow the map to those regions. Codes without
+        a dimension are ignored rather than guessed at: ``"4"`` is ambiguous across
+        dimensions.
         """
         user = cast(AccountUser, get_current_user(info))
         org = _org_or_deny(organization_id)

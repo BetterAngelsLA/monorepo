@@ -1,12 +1,8 @@
 """Write operations for the regions app (DEV-2570 / DEV-2604).
 
-Both functions here write derived data, which is why they are services rather than
-selectors (read-only) or model methods. ``python.md`` puts business logic in
-``services.py`` and keeps models lean; a bulk derived-data write behind a
-single-row ``save()`` is exactly the shape that caused trouble before.
-
-They are also the only writers of their respective tables, so the invariants each
-depends on are stated in one place.
+These write derived data, which is why they are services: ``python.md`` keeps business
+logic out of selectors (read-only) and models. They are the only writers of their
+respective tables, so each invariant is stated in one place.
 """
 
 from __future__ import annotations
@@ -83,13 +79,10 @@ def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> 
 
     Returns the number of assignments written.
     """
-    # `.order_by()` is load-bearing. ``Region.Meta.ordering`` is ["kind", "code"], and
-    # a default ordering is added to the SELECT list and the ORDER BY — so a bare
-    # `.distinct()` de-duplicates on (kind, code) and returns one row PER REGION
-    # rather than one per kind. That silently turned a 6-iteration loop into 431
-    # iterations: measured, it made one rebuild take 260 s and report 2,155,000
-    # assignments (431 x 5,000) for 30,000 rows of actual work. Clearing the ordering
-    # is what makes DISTINCT mean what it reads as.
+    # `.order_by()` is load-bearing: `Region.Meta.ordering` is added to the SELECT
+    # list, so a bare `.distinct()` de-duplicates on (kind, code) and returns one row
+    # per region instead of one per kind — 431 scopes rather than 6, measured at 260 s
+    # for a rebuild that should take seconds.
     scopes = [kind] if kind else list(Region.objects.order_by().values_list("kind", flat=True).distinct())
     written = 0
 

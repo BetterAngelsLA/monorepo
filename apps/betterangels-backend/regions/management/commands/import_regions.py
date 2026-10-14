@@ -1,29 +1,21 @@
 # SPDX-License-Identifier: MIT
 """Import official LA region boundary layers into the ``Region`` table.
 
-Pulls each geographic dimension straight from its publisher's ArcGIS REST
-endpoint as GeoJSON, honours the declared CRS, normalises to
-``MultiPolygon / EPSG:4326``, and upserts on ``(kind, code)`` so re-running is
-idempotent.
+Pulls each dimension from its publisher's ArcGIS REST endpoint as GeoJSON, honours the
+declared CRS, normalises to ``MultiPolygon / EPSG:4326``, and upserts on ``(kind,
+code)`` so re-running is idempotent.
 
-    # everything published
-    python manage.py import_regions
-
-    # just the two the report needs first
+    python manage.py import_regions                        # everything
     python manage.py import_regions --kind council_district --kind spa
+    python manage.py import_regions --kind zip --dry-run   # verify, write nothing
 
-    # verify without writing
-    python manage.py import_regions --kind zip --dry-run
+Live REST rather than vendored shapefiles because the services declare their CRS in
+``?f=pjson`` — LA's own GeoJSON sometimes does not, declaring WGS84 while emitting
+State Plane feet. ``--source`` takes a local shapefile or GeoPackage for anything
+with no service.
 
-Why live REST rather than vendored shapefiles: the services declare their own
-CRS in ``?f=pjson`` (LA's GeoJSON files sometimes do not — ``data.lacity.org``
-declares WGS84 while emitting State Plane feet), the vintages are current, and
-there is no 13 MB blob to keep in git. ``--source`` accepts a local shapefile or
-GeoPackage for anything that has no service.
-
-Runs against the DB directly, so it needs the app's normal database settings.
-Do not call it from a request: ``gunicorn[gevent]`` patches the event loop, and a
-CPU-bound OGR parse would starve it. Use a Celery task or a one-off ECS task.
+Runs against the DB directly. Do not call it from a request: ``gunicorn[gevent]``
+patches the event loop and a CPU-bound OGR parse would starve it.
 """
 
 from __future__ import annotations
@@ -61,7 +53,7 @@ class RegionSource:
     code_field: str
     name_field: str
     vintage: str = ""
-    # Extra ArcGIS query parameters (a where clause, a spatial filter, ...).
+    # Extra ArcGIS query params (a where clause, a spatial filter, ...).
     params: dict[str, str] = field(default_factory=dict)
 
 
@@ -98,21 +90,15 @@ SOURCES: tuple[RegionSource, ...] = (
         name_field="CITY_LABEL",
         params={
             "outFields": "CITY_NAME,CITY_LABEL,FEAT_TYPE,CITY_TYPE",
-            # Two filters, both load-bearing:
-            #   FEAT_TYPE='Land'      — the layer splits each city into land,
-            #                           breakwater, water and pier pieces.
-            #   CITY_TYPE='City'      — the layer also carries 190 polygons of
-            #                           `Unincorporated` land, which is a legal
-            #                           *status* (the absence of a city), not a
-            #                           city. Loading it here put a pseudo-city
-            #                           holding two-thirds of the county's land
-            #                           into every "top cities" rollup.
+            # Both filters are load-bearing. FEAT_TYPE='Land' drops the breakwater,
+            # water and pier pieces of the same city. CITY_TYPE='City' drops the 190
+            # `Unincorporated` polygons: that is a legal *status* (the absence of a
+            # city), not a city, and loading it put a pseudo-city holding two-thirds
+            # of the county's land into every "top cities" rollup.
             #
-            # "Not in a city" is still available and needs no dimension: a point
-            # that falls in none of the 88 city polygons is unincorporated by
-            # definition, and the rollup already produces that bucket. Deriving it
-            # is also self-correcting — if the county annexes a pocket, the answer
-            # updates with no re-import, where a stored blob would go stale.
+            # "Not in a city" needs no dimension: a point falling in none of the 88
+            # is unincorporated by definition, and deriving it stays correct when the
+            # county annexes a pocket, where a stored blob would go stale.
             "where": "FEAT_TYPE = 'Land' AND CITY_TYPE = 'City'",
         },
     ),
@@ -131,12 +117,9 @@ SOURCES: tuple[RegionSource, ...] = (
     RegionSource(
         kind=RegionKind.COC,
         label="HUD Continuum of Care grantee areas (LA area)",
-        # HUD's OWN ArcGIS org (`VTyQ9soqVukalItT`, "Department of Housing and Urban
-        # Development"), not the copy we used before. That copy lived on
-        # `4yjifSiIG17X0gW4`, which is "Urban Observatory by Esri" — an Esri re-host
-        # whose own accessInformation points back at HUD — and it was frozen at
-        # 2022-04-14 with 21 obsolete CoC codes and 12 missing. This one is edited
-        # 2025-08-19.
+        # HUD's own ArcGIS org (`VTyQ9soqVukalItT`), edited 2025-08-19. The other
+        # public copy is an Esri re-host (`4yjifSiIG17X0gW4`, "Urban Observatory"),
+        # frozen at 2022-04-14 with 21 obsolete CoC codes and 12 missing.
         endpoint=(
             "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/"
             "Continuum_of_Care_Grantee_Areas/FeatureServer/0/query"
@@ -144,10 +127,9 @@ SOURCES: tuple[RegionSource, ...] = (
         code_field="COCNUM",
         name_field="COCNAME",
         vintage="HUD",
-        # LA is exactly four CoCs, and naming them is more correct than a
-        # spatial guess: an envelope wide enough to cover LA County also catches
-        # Ventura, Santa Barbara and San Diego, while the CoC polygon itself
-        # reaches past a tight envelope.
+        # Naming the four is more correct than a spatial guess: an envelope wide
+        # enough for LA County also catches Ventura, Santa Barbara and San Diego,
+        # while the CoC polygons themselves reach past a tight envelope.
         params={
             "outFields": "COCNUM,COCNAME,STUSAB",
             "where": "COCNUM IN ('CA-600','CA-606','CA-607','CA-612')",

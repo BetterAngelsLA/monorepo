@@ -1,7 +1,6 @@
 """Rollup, unassigned buckets, filtering and boundary serving (DEV-2570 / DEV-2604).
 
-Boundaries are created directly rather than downloaded: a unit test must not depend
-on the importer's network behaviour.
+Boundaries are created directly; a unit test must not depend on the importer's network.
 """
 
 from __future__ import annotations
@@ -187,19 +186,11 @@ class RegionModelTestCase(TestCase):
 
 
 class RegionReconciliationTestCase(TestCase):
-    """The rollup must not silently lose interactions.
+    """The buckets must sum to the notes in range, for all three shapes of note.
 
-    Three shapes of note can exist, and the report claims nothing is dropped.
-    All three are exercised here, and the buckets are asserted to sum to the
-    total number of notes in range — the property a client relies on when it
-    renders an "Unassigned" slice next to the KPI row.
-
-    A fourth shape — a ``Location`` row whose ``point`` is NULL — is deliberately
-    absent because it is impossible: ``common.Location.point`` is declared
-    non-null and the database enforces it, so the INSERT itself is rejected. That
-    is also why ``region_counts`` carries no ``point IS NOT NULL`` guard: it
-    would be unreachable. (An earlier revision had one; this test is what showed
-    it could never fire.)
+    The fourth shape — a ``Location`` with a NULL ``point`` — is impossible:
+    ``common.Location.point`` is non-null and the database enforces it, which is why
+    ``region_counts`` carries no ``point IS NOT NULL`` guard.
     """
 
     def setUp(self) -> None:
@@ -389,16 +380,11 @@ class InteractionMapTestCase(TestCase):
 class StaleAssignmentTestCase(RegionRollupTestCase):
     """A location created since the last import must still be counted.
 
-    The rollup joins the stored assignment rather than doing the spatial test
-    itself, so if it only counted rows already in that table, a location added since
-    the last import would be absent from **every** bucket — including the
-    outside-everything one. The report would then under-count silently: nothing
-    errors, the figures still look plausible, and the total quietly stops
-    reconciling against the KPI row.
-
-    ``_note_at_resolved_by_no_one`` is what creates that state: the note has a real
-    ``Location`` with a real point, and nothing has written an assignment for it,
-    because the normal helper resolves as it goes.
+    The rollup joins the stored assignment, so without a fill it would omit such a
+    location from every bucket — silently, with the total quietly no longer
+    reconciling against the KPI row. ``_note_at_resolved_by_no_one`` creates that
+    state: a real ``Location`` with no assignment, which the normal helper would have
+    resolved.
     """
 
     def _note_at_resolved_by_no_one(self, lon: float, lat: float) -> Note:
