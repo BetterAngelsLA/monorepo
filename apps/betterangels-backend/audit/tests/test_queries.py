@@ -9,6 +9,7 @@ from model_bakery import baker
 from audit.tests.utils import audit_context
 from shelters.enums import DemographicChoices, ReservationStatusChoices
 from shelters.models import Bed, Demographic, Reservation, ReservationClient, Shelter
+from test_utils.pghistory import backdate_event_rows
 
 _T1 = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
 _T2 = datetime(2026, 2, 1, 12, 0, tzinfo=timezone.utc)
@@ -165,9 +166,10 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         with audit_context(user=user):
             self.shelter.name = name
             self.shelter.save()
-        Shelter.pgh_event_model.objects.filter(
-            pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name
-        ).update(pgh_created_at=at)
+        backdate_event_rows(
+            Shelter.pgh_event_model.objects.filter(pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name),
+            pgh_created_at=at,
+        )
 
     def test_date_filters_narrow_the_log(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)

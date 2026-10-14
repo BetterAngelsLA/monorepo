@@ -36,6 +36,7 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     pghistory.UpdateEvent("shelter_photo.update"),
     pghistory.DeleteEvent("shelter_photo.remove"),
     meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelterphoto_evt_obj_idx")]},
+    append_only=True,
 )
 class ShelterPhoto(OrgScoped, BaseModel):
     org_via = ("shelter",)
@@ -89,6 +90,7 @@ class ExteriorShelterPhoto(ShelterPhoto):
     pghistory.UpdateEvent("video.update"),
     pghistory.DeleteEvent("video.remove"),
     meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="video_evt_obj_idx")]},
+    append_only=True,
 )
 class Video(OrgScoped, BaseModel):
     org_via = ("shelter",)
@@ -112,6 +114,7 @@ MEDIA_TYPE_VALIDATORS: dict[str, RegexValidator] = {
     pghistory.UpdateEvent("media_link.update"),
     pghistory.DeleteEvent("media_link.remove"),
     meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="medialink_evt_obj_idx")]},
+    append_only=True,
 )
 class MediaLink(OrgScoped, BaseModel):
     org_via = ("shelter",)

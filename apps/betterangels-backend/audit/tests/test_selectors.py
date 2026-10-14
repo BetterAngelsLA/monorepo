@@ -21,6 +21,7 @@ from audit.selectors import (
 from audit.tests.utils import audit_context, clear_history_context
 from shelters.enums import DemographicChoices, ReservationStatusChoices
 from shelters.models import Bed, Demographic, Reservation, Room, Shelter
+from test_utils.pghistory import backdate_event_rows
 
 
 def _action_with(actions: list[Any], value: Any) -> Any | None:
@@ -341,9 +342,10 @@ class ObjectAuditLogFilterTestCase(TestCase):
         with audit_context(user=user):
             self.shelter.name = name
             self.shelter.save()
-        Shelter.pgh_event_model.objects.filter(
-            pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name
-        ).update(pgh_created_at=at)
+        backdate_event_rows(
+            Shelter.pgh_event_model.objects.filter(pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name),
+            pgh_created_at=at,
+        )
 
     def _log(self, **kwargs: Any) -> list[Any]:
         return object_audit_log(obj=self.shelter, target_type="SHELTER", **kwargs)
@@ -417,8 +419,8 @@ class ObjectAuditLogFilterTestCase(TestCase):
             self.shelter.name = "Late"
             self.shelter.save()
         events = Shelter.pgh_event_model.objects.filter(pgh_obj_id=self.shelter.pk, pgh_label="shelter.update")
-        events.filter(name="Early").update(pgh_created_at=self.T1)
-        events.filter(name="Late").update(pgh_created_at=self.T2)
+        backdate_event_rows(events.filter(name="Early"), pgh_created_at=self.T1)
+        backdate_event_rows(events.filter(name="Late"), pgh_created_at=self.T2)
 
         self.assertEqual(len(self._log()[0].events), 2)
 

@@ -68,6 +68,9 @@ todos:
   - id: rds-proxy-pinning
     content: 'Phase 3: Record the RDS Proxy connection-pinning interaction and drop the selector cursor'
     status: pending
+  - id: append-only
+    content: 'Phase 1: Make the audit event tables append-only and add the tamper guard'
+    status: pending
 isProject: false
 ---
 
@@ -511,8 +514,96 @@ Extend [shelters/tests/test_models.py](apps/betterangels-backend/shelters/tests/
 - **Report regression:** `report_bed_status_counts` and `daily_occupancy` output is unchanged when a non-status `reservation.update` fires (and when a status+notes update fires). With the disjoint conditions (§2) a non-status `update` never carries a status, so the interval walk's `pgh_label__in=["reservation.add", "reservation.status_change"]` scope already excludes it; the test also asserts the directly-created path (`created_as`, no `status_change`) still counts, proving `reservation.add` is retained.
 - **Bed-reparent pin:** a test pinning the *current* (mis-attributed) occupancy behavior when a `reservation.update` changes `bed_id` without changing `status` (the interval does not close on the old bed — pre-existing). This keeps any future refactor of `_reservation_status_intervals` visible rather than silently altering an already-wrong path. The §2 label scope keeps the reparent out of the walk, so it stays latent but documented.
 - **§7b labels:** `seed_shelter_lookups()` (on cleared tables) yields events with `pgh_context` metadata `{"label": "seed"}` and no `user`; a `clone_view` POST yields events whose context has `label == "clone"` **and** the admin `user`; a CSV import yields `label == "import"`. The seed-exclusion vs clone/import-retention split is asserted in §20.
+- **Append-only guard (see §9b):** [test_append_only.py](apps/betterangels-backend/shelters/tests/test_append_only.py) asserts the eleven `append_only` triggers are declared *and* installed, that `UPDATE` and `DELETE` on an event row are both rejected, and that `INSERT` (a normal write) still succeeds.
 
 Run with the project convention: `pytest --reuse-db`.
+
+---
+
+## 9b. Append-only event tables (tamper protection)
+
+The event tables are **append-only**. Without this, nothing stopped a stray
+`.update()` — or a direct SQL edit — from rewriting the audit trail, so the
+"audit" log was only as trustworthy as the code that never touched it.
+
+`append_only=True` on each of the eleven Phase 1 trackers
+([shelter.py](apps/betterangels-backend/shelters/models/shelter.py),
+[availability.py](apps/betterangels-backend/shelters/models/availability.py),
+[media.py](apps/betterangels-backend/shelters/models/media.py),
+[schedule.py](apps/betterangels-backend/shelters/models/schedule.py),
+[reservation.py](apps/betterangels-backend/shelters/models/reservation.py))
+compiles to a `pgtrigger.Protect(name="append_only", operation=Update | Delete)`
+on the event table, i.e. a `BEFORE UPDATE OR DELETE` trigger that raises:
+
+```
+pgtrigger: Cannot update or delete rows from shelters_bedevent table
+```
+
+`INSERT` is deliberately **not** guarded — the audit trail is written by inserts,
+so guarding them would stop it entirely. Migrations:
+[shelters/migrations/0006](apps/betterangels-backend/shelters/migrations/0006_bedevent_append_only_contactinfoevent_append_only_and_more.py)
+(11 `AddTrigger` operations). Verified installed — all eleven present in
+`pg_trigger` — rather than assumed from a migration being generated, because a
+`makemigrations --dry-run` with no actual migration silently "tests" nothing.
+
+**Blast radius — corrected.** An earlier revision of this ADR claimed "9 call
+sites, 2 models, 1 file". That figure came from grepping for
+`Event.objects …update()`, which undercounts: the mutations also run through
+shared test helpers (`_make_bed`, `_remove_bed`, `_stay`, `_set_maintenance`,
+`_set_last_cleaned`, `_rename`, `_rename_at`) and through instance-level
+`save(update_fields=...)` on event rows. **Measured** with all eleven triggers
+live:
+
+| figure | value |
+| --- | --- |
+| tests broken | **66** — 58 in [shelters/tests/test_selectors.py](apps/betterangels-backend/shelters/tests/test_selectors.py) on the track-writes branch, plus 8 in the audit tests |
+| files affected | **3** — the above plus [audit/tests/test_selectors.py](apps/betterangels-backend/audit/tests/test_selectors.py) and [audit/tests/test_queries.py](apps/betterangels-backend/audit/tests/test_queries.py) |
+
+The audit tests pin `Shelter.pgh_event_model` timestamps through `_rename` /
+`_rename_at`, which is why the number grows once Phase 2+ is present.
+
+**The "freezegun-style" rationale was unsound.** An earlier revision suggested
+that freezing time would "both enable append-only and stop tests reaching into
+event tables". It cannot: event rows are stamped by the *database*, in the
+trigger's `INSERT ... NOW()` (`PGHISTORY_CREATED_AT_FUNCTION`), and Python-level
+time freezing (`time_machine`/`freezegun`) only affects Python-side defaults such
+as `auto_now_add` on ORM inserts. A trigger-generated row is always "now".
+Backdating a real event row therefore requires an `UPDATE`, which is exactly what
+append-only forbids.
+
+**The escape hatch** is
+[test_utils/pghistory.py](apps/betterangels-backend/test_utils/pghistory.py):
+
+```python
+backdate_event_rows(BedEvent.objects.filter(...), pgh_created_at=...)
+```
+
+It ignores the `append_only` trigger *by name* (`pgtrigger.ignore("<label>:append_only")`),
+never with a bare `pgtrigger.ignore()` — ignoring every trigger would also suppress
+the event-*creation* triggers, letting a fixture write no events while still
+appearing to. It asserts the trigger exists before ignoring it, so a mis-scoped
+call fails loudly instead of silently updating an unprotected table.
+
+This is **test-only**. `pgtrigger.ignore`'s teardown issues
+`set_config('pgtrigger.ignore', NULL, false)` — the session-scoped form §10
+("RDS Proxy interaction") prohibits on request paths, because it pins the
+connection.
+
+**Regression guard:** [test_append_only.py](apps/betterangels-backend/shelters/tests/test_append_only.py)
+asserts the triggers are declared *and* installed, that both `UPDATE` and
+`DELETE` on an event row are rejected, and that a normal write still succeeds
+(the `INSERT` positive control).
+
+**Caveats.**
+
+- *Coverage gap:* only these eleven are protected. The through-table proxies
+  (e.g. `TrackedBedDemographicEvent`), the tracked lookup tables, and
+  `Service`/`ServiceCategory` remain mutable. A shelter's log aggregates 27 event
+  models (§10), so ~16 of them are still rewritable — a follow-up, not covered here.
+- *Purge interaction:* because `DELETE` is blocked, the retention/purge job in
+  Future considerations cannot use a plain `.delete()`. It needs a
+  trigger-bypassing path — a partition drop, or a privileged role — and that must
+  be settled before the purge is written.
 
 ---
 
@@ -729,6 +820,7 @@ write path emits the transaction-local form and never a session-scoped
 | `nextval`/`setval` in SQL | No | Django uses server-side defaults + `RETURNING` |
 | Advisory locks | No | the merge path's `select_for_update()` is a row lock, not advisory |
 | Temp tables / `LISTEN` | No | no request-path usage |
+| `Protect` trigger (`append_only`, §9b) | Exempt — server-side | raises inside the database after the proxy has handed off the statement, so it is invisible to the proxy |
 
 **Measured: `objectAuditLog` exceeds the 16 KB pinning cliff by construction.**
 The statement the selector compiles is proportional to the number of event models
@@ -1322,9 +1414,6 @@ objectAuditLog(
 - **Org-level audit log** — a third query (`organizationAuditLog`) for the global tier. The selector is org-parameterized so this drops in later if needed. Note: `AuditEvent.organization_id` was dropped (§22), so when this query is scheduled it must (re-)specify how org-at-event-time is captured.
 - **List-read capture** — recording `operator_shelters`/`beds`/… list reads was deferred (§Decision) because those events have no `target_object_id` and no query to surface them. Schedule it alongside `organizationAuditLog` (or another list-scoped query) and re-specify org-at-event-time capture then.
 - **Admin read-only history view** — a read-only "History" tab on the Shelter/Bed/Room Django-admin change pages rendering the same selector output for BA staff. Deferred; the portal `objectAuditLog` covers operators.
-- **Append-only / tamper protection** — event rows are mutable today (pghistory's default); nothing prevents a stray `.update()` on an event table. This is a **deliberate deferral**, not an unexplored default: enabling `append_only=True` per tracker was measured and is close. It migrates cleanly (a normal `AddTrigger` emitting a `RAISE EXCEPTION` guard on `UPDATE OR DELETE`), it verifiably blocks both operations, and it broke nothing on `ShelterEvent` (`614 passed` with it on). Blast radius repo-wide is 9 call sites, 2 models, 1 file — all in
-  [shelters/tests/test_selectors.py](apps/betterangels-backend/shelters/tests/test_selectors.py)
-  (`BedEvent`/`ReservationEvent` `.update()` pins). So it can be adopted in two waves: (1) turn it on now for `Shelter`, `Room`, `ReservationClient`, `ContactInfo`, `Schedule`, `ShelterPhoto`, `Video`, `MediaLink` and the through-table proxies with **zero** test changes; (2) rework the `Bed`/`Reservation` fixtures (a `freezegun`-style approach would both enable append-only and stop tests reaching into event tables). Cost to adopt: one trigger migration plus those 9 call sites. Deferred because it is not required for the feature, but it should be a conscious decision to leave event rows mutable, not a default nobody revisited.
 - **Export** — CSV/JSON export of an object's history for compliance. `django-import-export` is already a dependency.
 - **Revert** — the event data already supports reverting an object to a prior event (the `NoteReverter` in [notes/utils/note_reverter_util.py](apps/betterangels-backend/notes/utils/note_reverter_util.py) demonstrates the pattern with `Events` + `Context`). Note this as a future capability; do not build it now.
 - **Deleted-object history** — "who deleted shelter 7?" is the single most common
@@ -1334,4 +1423,4 @@ objectAuditLog(
   after N days) or org/actor-at-event-time metadata recorded on the event context
   so the object can be authorized without a live row. Deletion events produced
   before that future change will be unrecoverable through this surface.
-- **Retention/purge policy** — read events are high-volume; define a retention window and a Celery-beat purge job before read-event volume becomes a storage concern.
+- **Retention/purge policy** — read events are high-volume; define a retention window and a Celery-beat purge job before read-event volume becomes a storage concern. Note that event rows are append-only (§9b), so `DELETE` is blocked: the purge must use a trigger-bypassing path (a partition drop, or a privileged role), not a plain `.delete()`.
