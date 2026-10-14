@@ -315,6 +315,14 @@ export function RegionMap({
         defaultCenter={LA_CENTER}
         defaultZoom={LA_ZOOM}
         gestureHandling="cooperative"
+        // The map is a fixed analytical view, not a place to explore. Street View and the
+        // map/satellite switch offer ways to look at *imagery* rather than at the data, and
+        // the satellite basemap in particular competes with the heatmap and the boundaries
+        // drawn over it. The zoom control stays — it is how you read the clusters.
+        streetViewControl={false}
+        mapTypeControl={false}
+        fullscreenControl={false}
+        rotateControl={false}
       >
         <RegionLayer
           rows={rows}
