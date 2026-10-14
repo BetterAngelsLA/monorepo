@@ -85,26 +85,14 @@ def region_counts(
 def region_totals_without_boundaries(*, start: datetime, end: datetime, organization_id: int | None = None) -> int:
     """Interactions in range that have no location at all.
 
-    Reported separately because ``region_counts`` can only classify notes that
-    carry a point; a note with no location would otherwise vanish from every
-    bucket and make the report totals disagree with the KPI row.
+    Separate from ``region_counts``, which can only classify notes that carry a point:
+    a note with no location would otherwise vanish from every bucket and make the
+    report totals disagree with the KPI row.
     """
-    params: dict[str, Any] = {"start": start, "end": end}
-    org_clause = ""
+    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end, location__isnull=True)
     if organization_id is not None:
-        org_clause = "AND n.organization_id = %(org_id)s"
-        params["org_id"] = organization_id
-
-    sql = f"""
-        SELECT count(*) FROM notes_note n
-        WHERE n.interacted_at >= %(start)s AND n.interacted_at < %(end)s
-          AND n.location_id IS NULL
-          {org_clause}
-    """
-    with connection.cursor() as cursor:
-        cursor.execute(sql, params)
-        row = cursor.fetchone()
-    return int(row[0]) if row else 0
+        notes = notes.filter(organization_id=organization_id)
+    return notes.count()
 
 
 def available_kinds() -> list[str]:

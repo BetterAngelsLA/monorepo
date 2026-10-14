@@ -47,37 +47,34 @@ class Region(BaseModel):
     # formats differ.
     code = models.CharField(max_length=32)
     name = models.CharField(max_length=255, blank=True, default="")
-    # Provenance, so a stale boundary set is identifiable after the fact.
+    # Provenance. Paired with `source_item_id` so a stale boundary set is identifiable.
     source_url = models.URLField(max_length=1024, blank=True, default="")
     source_vintage = models.CharField(max_length=32, blank=True, default="")
     # The publisher's own `copyrightText`, verbatim. Answers "is this authoritative?"
     # from the database. LA City council districts and the county city layer publish
     # none, so for those the service does not evidence authority.
     source_attribution = models.TextField(blank=True, default="")
-    # Identifies the exact hosted layer; URLs get reorganised, item ids do not.
+    # Item ids are stable; the URLs they came from are not.
     source_item_id = models.CharField(max_length=64, blank=True, default="")
 
-    # Authoritative, full resolution: area, exports, anything where the line matters.
     geom = MultiPolygonField(srid=4326)
 
-    # Simplified copy for the map, built once at import. Nullable: a region created
-    # directly (tests, admin, a script) may not set it, and `region_features` falls
-    # back to `geom`.
-    #
-    # Not derivable from `RegionPiece` — subdivision clips at subdivision boundaries,
-    # so reuniting a region from its pieces equals the parent for only 334 of 431.
+    # Nullable because a region created directly (tests, admin, a script) may not set
+    # it; `region_features` falls back to `geom`. Not derivable from `RegionPiece`:
+    # subdivision clips at subdivision boundaries, so reuniting a region from its
+    # pieces equals the parent for only 334 of 431.
     geom_display = MultiPolygonField(srid=4326, null=True, blank=True)
 
     objects = models.Manager()
 
     class Meta:
         constraints = [
-            # Makes the loader idempotent: a re-import cannot double every count.
+            # Makes the loader idempotent.
             models.UniqueConstraint(fields=["kind", "code"], name="regions_region_kind_code_uniq"),
         ]
-        # No explicit index on `kind`: `db_index=True` above already creates one, and
-        # declaring both produced two identical indexes. The GiST index on `geom`
-        # comes from `spatial_index=True`, the default.
+        # No explicit index on `kind`: `db_index=True` already creates one, and
+        # declaring both produced two identical indexes. The GiST index on `geom` is
+        # `spatial_index=True`, the default.
         ordering = ["kind", "code"]
 
     def __str__(self) -> str:
@@ -130,8 +127,8 @@ class RegionPiece(BaseModel):
     geom = MultiPolygonField(srid=4326)
 
     class Meta:
-        # No explicit indexes: the FK covers `region`, `db_index` covers `kind`, and
-        # the GiST index on `geom` (what the point lookup uses) is the default.
+        # The FK covers `region`, `db_index` covers `kind`, and the GiST index on
+        # `geom` is the default — see the note on `Region.Meta`.
         pass
 
     def __str__(self) -> str:
@@ -155,8 +152,7 @@ class LocationRegion(BaseModel):
     """
 
     location = models.ForeignKey("common.Location", on_delete=models.CASCADE, related_name="region_assignments")
-    # Denormalised from the region so a lookup filters to one dimension without
-    # joining first, the same way RegionPiece does it, and for the same reason.
+    # Denormalised from Region, as on RegionPiece, and for the same reason.
     kind = models.CharField(max_length=32, choices=RegionKind.choices, db_index=True)
     region = models.ForeignKey(Region, on_delete=models.CASCADE, null=True, blank=True, related_name="assignments")
 
