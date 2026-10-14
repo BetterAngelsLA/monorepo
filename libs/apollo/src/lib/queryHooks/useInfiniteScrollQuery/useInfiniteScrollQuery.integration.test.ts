@@ -13,6 +13,7 @@ import {
   InMemoryCache,
   Observable,
   gql,
+  type TypePolicies,
   type TypedDocumentNode,
 } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
@@ -23,6 +24,7 @@ import { generateCachePolicies } from '../../cachePolicy/generateCachePolicies';
 import { getQueryPolicyFactory } from '../../cachePolicy/queryPolicyConf/getQueryPolicyFactory';
 import { assemblePolicyRegistry } from '../../cachePolicy/queryPolicyConf/utils/assemblePolicyRegistry';
 import { createApolloCache } from '../../cacheStore/createApolloCache';
+import { registerQueryPolicyConfigs } from '../../cacheStore/utils/queryPolicyConfigRegistry';
 import { useInfiniteScrollQuery } from './useInfiniteScrollQuery';
 
 type TaskItem = { __typename?: 'TaskType'; id: string; title?: string };
@@ -110,6 +112,62 @@ function renderWithClient<T>(client: ApolloClient, callback: () => T) {
   return renderHook(callback, { wrapper: Wrapper });
 }
 
+// A link whose responses are delivered manually, so tests can control the
+// order in which a reload and an in-flight page request come back.
+const RACE_PAGE_SIZE = 3;
+const RACE_TOTAL = 9;
+const RACE_PAGES: Record<number, TaskItem[]> = {
+  0: [task('1'), task('2'), task('3')],
+  3: [task('4'), task('5'), task('6')],
+  6: [task('7'), task('8'), task('9')],
+};
+
+function makeDeferredLink() {
+  const queue: Array<{ offset: number; respond: () => void }> = [];
+
+  const link = new ApolloLink(
+    (operation) =>
+      new Observable((observer) => {
+        const offset =
+          (operation.variables as TasksVars).pagination?.offset ?? 0;
+
+        queue.push({
+          offset,
+          respond: () => {
+            observer.next({
+              data: {
+                tasks: {
+                  results: RACE_PAGES[offset] ?? [],
+                  totalCount: RACE_TOTAL,
+                },
+              },
+            });
+            observer.complete();
+          },
+        });
+      }),
+  );
+
+  const flush = (offset: number) => {
+    const index = queue.findIndex((request) => request.offset === offset);
+
+    if (index === -1) {
+      throw new Error(
+        `[test] nothing pending for offset ${offset}: [${queue
+          .map((request) => request.offset)
+          .join(', ')}]`,
+      );
+    }
+
+    const [request] = queue.splice(index, 1);
+    request.respond();
+  };
+
+  const queuedOffsets = () => queue.map((request) => request.offset);
+
+  return { link, flush, queuedOffsets };
+}
+
 describe('useInfiniteScrollQuery – end to end', () => {
   it('fetches, paginates and refetches through the real registry and cache', async () => {
     const fetchedOffsets: number[] = [];
@@ -171,6 +229,143 @@ describe('useInfiniteScrollQuery – end to end', () => {
     expect(fetchedOffsets[fetchedOffsets.length - 1]).toBe(0);
   });
 
+  it('does not skip a page when a loadMore races a manual reload', async () => {
+    const deferred = makeDeferredLink();
+    const { client } = makeClient(deferred.link);
+
+    const { result } = renderWithClient(client, () =>
+      useInfiniteScrollQuery<TaskItem, TasksData, TasksVars>({
+        document: TASKS_DOCUMENT,
+        queryFieldName: 'tasks',
+        variables: { filters: { q: 'x' }, ordering: [{ createdAt: 'DESC' }] },
+        pageSize: RACE_PAGE_SIZE,
+      }),
+    );
+
+    await waitFor(() => expect(deferred.queuedOffsets()).toEqual([0]));
+    deferred.flush(0);
+    await waitFor(() =>
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        '1',
+        '2',
+        '3',
+      ]),
+    );
+
+    await act(async () => {
+      result.current.loadMore();
+      await waitFor(() => expect(deferred.queuedOffsets()).toEqual([3]));
+      deferred.flush(3);
+    });
+    await waitFor(() => expect(result.current.items).toHaveLength(6));
+
+    // pull to refresh, with an eager onEndReached in the same frame (the
+    // Android pattern): the page fetch must be dropped before it starts
+    await act(async () => {
+      const reloadPromise = result.current.reload();
+      result.current.loadMore();
+      await waitFor(() => expect(deferred.queuedOffsets()).toEqual([0]));
+      deferred.flush(0);
+      await reloadPromise;
+    });
+    await waitFor(() => expect(result.current.items).toHaveLength(3));
+
+    // pagination continues from where the reset list ends - offset 3, not 6,
+    // which would skip the page that was discarded by the reload
+    await act(async () => {
+      result.current.loadMore();
+      await waitFor(() => expect(deferred.queuedOffsets()).toEqual([3]));
+      deferred.flush(3);
+    });
+    await waitFor(() =>
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+      ]),
+    );
+
+    await act(async () => {
+      result.current.loadMore();
+      await waitFor(() => expect(deferred.queuedOffsets()).toEqual([6]));
+      deferred.flush(6);
+    });
+    await waitFor(() =>
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+      ]),
+    );
+    expect(result.current.hasMore).toBe(false);
+  });
+
+  it('keeps pagination contiguous when a superseded page response lands after a reload', async () => {
+    const deferred = makeDeferredLink();
+    const { client } = makeClient(deferred.link);
+
+    const { result } = renderWithClient(client, () =>
+      useInfiniteScrollQuery<TaskItem, TasksData, TasksVars>({
+        document: TASKS_DOCUMENT,
+        queryFieldName: 'tasks',
+        variables: { filters: { q: 'x' }, ordering: [{ createdAt: 'DESC' }] },
+        pageSize: RACE_PAGE_SIZE,
+      }),
+    );
+
+    await waitFor(() => expect(deferred.queuedOffsets()).toEqual([0]));
+    deferred.flush(0);
+    await waitFor(() => expect(result.current.items).toHaveLength(3));
+
+    // a page request starts ...
+    await act(async () => {
+      result.current.loadMore();
+      await waitFor(() => expect(deferred.queuedOffsets()).toEqual([3]));
+    });
+
+    // ... and a pull-to-refresh lands before the page comes back
+    await act(async () => {
+      const reloadPromise = result.current.reload();
+      await waitFor(() => expect(deferred.queuedOffsets()).toEqual([3, 0]));
+      deferred.flush(0); // the reload lands first and supersedes the page
+      await reloadPromise;
+    });
+    await waitFor(() => expect(result.current.items).toHaveLength(3));
+
+    // the superseded page still merges (the merge happens in the cache, not
+    // in the hook) - it must stay contiguous instead of leaving a gap
+    await act(async () => {
+      deferred.flush(3);
+    });
+    await waitFor(() => expect(result.current.items).toHaveLength(6));
+    expect(result.current.items.map((item) => item.id)).toEqual([
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+    ]);
+
+    // the cursor derives from the list, so the next page continues at 6
+    await act(async () => {
+      result.current.loadMore();
+      await waitFor(() => expect(deferred.queuedOffsets()).toEqual([6]));
+      deferred.flush(6);
+    });
+    await waitFor(() => expect(result.current.items).toHaveLength(9));
+    expect(result.current.hasMore).toBe(false);
+  });
+
   it('throws an explicit error when the cache has no registered config', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn());
 
@@ -189,6 +384,46 @@ describe('useInfiniteScrollQuery – end to end', () => {
         }),
       ),
     ).toThrow(/No queryPolicyConfig found/);
+
+    errorSpy.mockRestore();
+  });
+
+  it('throws an explicit error for non-Offset pagination modes', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn());
+
+    const cache = new InMemoryCache();
+    const client = new ApolloClient({ link: makeLink([]), cache });
+
+    // Register a config whose pagination mode the hook cannot page through
+    // (PerPage exists on newer versions of the policy lib). The hook must
+    // fail fast instead of writing offset/limit variables the server won't
+    // use.
+    registerQueryPolicyConfigs(cache, {
+      Query: {
+        fields: {
+          tasks: {
+            __queryPolicyConfig: {
+              paginationMode: 'PER_PAGE',
+              itemsPath: ['results'],
+              totalCountPath: ['totalCount'],
+              paginationPagePath: ['pagination', 'page'],
+              paginationPerPagePath: ['pagination', 'perPage'],
+            },
+          },
+        },
+      },
+    } as unknown as TypePolicies);
+
+    expect(() =>
+      renderWithClient(client, () =>
+        useInfiniteScrollQuery<TaskItem, TasksData, TasksVars>({
+          document: TASKS_DOCUMENT,
+          queryFieldName: 'tasks',
+          variables: {},
+          pageSize: PAGE_SIZE,
+        }),
+      ),
+    ).toThrow(/only Offset\/Limit is supported/);
 
     errorSpy.mockRestore();
   });

@@ -1,45 +1,31 @@
 import type { OperationVariables } from '@apollo/client';
 import { withValueAtPath } from '../../../utils';
-import { readNumberAtPathOr } from '../../../utils/readNumberAtPathOr';
 
 type TNextPageProps<TVars> = {
-  previousVariables: TVars | undefined;
-  incrementBy: number; // how many we want to fetch next
+  /** Variables of the first page; everything — including the page limit — is carried over. */
+  baseVariables: TVars;
+  /** Cursor for the page being requested: the number of items already in the list. */
+  offset: number;
   paginationOffsetPath: string | readonly string[];
-  paginationLimitPath: string | readonly string[];
 };
 
+/**
+ * Moves the pagination cursor, keeping everything else from the base variables.
+ *
+ * Only the cursor changes between pages: `buildInitialVariables` resolved the
+ * page limit once, and every subsequent request reuses it (Apollo's `fetchMore`
+ * also merges these variables over the current ones).
+ */
 export function buildVariablesForPage<TVars extends OperationVariables>(
   args: TNextPageProps<TVars>,
 ): TVars {
-  const {
-    previousVariables,
-    incrementBy,
+  const { baseVariables, offset, paginationOffsetPath } = args;
+
+  // `withValueAtPath` copies only the containers along the path; the base is
+  // never mutated.
+  return withValueAtPath(
+    baseVariables as Record<string, unknown>,
     paginationOffsetPath,
-    paginationLimitPath,
-  } = args;
-
-  // `withValueAtPath` returns a new variables object and copies only the
-  // containers along the written path, so nested objects shared with the
-  // previous variables (e.g. the hook's page-1 variables used by reload())
-  // are never mutated.
-  let nextVars: Record<string, unknown> = previousVariables
-    ? (previousVariables as Record<string, unknown>)
-    : {};
-
-  const prevOffset = readNumberAtPathOr({
-    source: nextVars,
-    path: paginationOffsetPath,
-    fallback: 0,
-    min: 0,
-  });
-
-  nextVars = withValueAtPath(
-    nextVars,
-    paginationOffsetPath,
-    prevOffset + incrementBy,
-  );
-  nextVars = withValueAtPath(nextVars, paginationLimitPath, incrementBy);
-
-  return nextVars as TVars;
+    offset,
+  ) as TVars;
 }
