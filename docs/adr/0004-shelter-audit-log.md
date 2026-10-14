@@ -80,8 +80,8 @@ todos:
   - id: rds-proxy-pinning
     content: 'Phase 3: Record the RDS Proxy connection-pinning interaction and drop the selector cursor'
     status: pending
-  - id: append-only
-    content: 'Phase 1: Make the audit event tables append-only and add the tamper guard'
+  - id: update-guard
+    content: 'Phase 1: Guard the audit event tables against UPDATE (protect_updates); DELETE stays allowed for retention'
     status: pending
   - id: retention-command
     content: 'Retention: add purge_audit_log --before management command (event tables, Context, AuditReadEvent)'
@@ -534,37 +534,90 @@ Extend [shelters/tests/test_models.py](apps/betterangels-backend/shelters/tests/
 - **Report regression:** `report_bed_status_counts` and `daily_occupancy` output is unchanged when a non-status `reservation.update` fires (and when a status+notes update fires). With the disjoint conditions (§2) a non-status `update` never carries a status, so the interval walk's `pgh_label__in=["reservation.add", "reservation.status_change"]` scope already excludes it; the test also asserts the directly-created path (`created_as`, no `status_change`) still counts, proving `reservation.add` is retained.
 - **Bed-reparent pin:** a test pinning the *current* (mis-attributed) occupancy behavior when a `reservation.update` changes `bed_id` without changing `status` (the interval does not close on the old bed — pre-existing). This keeps any future refactor of `_reservation_status_intervals` visible rather than silently altering an already-wrong path. The §2 label scope keeps the reparent out of the walk, so it stays latent but documented.
 - **§7b labels:** `seed_shelter_lookups()` (on cleared tables) yields events with `pgh_context` metadata `{"label": "seed"}` and no `user`; a `clone_view` POST yields events whose context has `label == "clone"` **and** the admin `user`; a CSV import yields `label == "import"`. The seed-exclusion vs clone/import-retention split is asserted in §20.
-- **Append-only guard (see §9b):** [test_append_only.py](apps/betterangels-backend/shelters/tests/test_append_only.py) asserts the eleven `append_only` triggers are declared *and* installed, that `UPDATE` and `DELETE` on an event row are both rejected, and that `INSERT` (a normal write) still succeeds.
+- **Update guard (see §9b):** [test_event_update_protection.py](apps/betterangels-backend/shelters/tests/test_event_update_protection.py) asserts the eleven `protect_updates` triggers are declared *and* installed, that `UPDATE` on an event row is rejected, that `DELETE` is **allowed** (retention depends on it, §31), and that `INSERT` (a normal write) still succeeds.
 
 Run with the project convention: `pytest --reuse-db`.
 
 ---
 
-## 9b. Append-only event tables (tamper protection)
+## 9b. Update-protected event tables (not a security boundary)
 
-The event tables are **append-only**. Without this, nothing stopped a stray
+The event tables reject `UPDATE`. Without this, nothing stopped a stray
 `.update()` — or a direct SQL edit — from rewriting the audit trail, so the
 "audit" log was only as trustworthy as the code that never touched it.
 
-`append_only=True` on each of the eleven Phase 1 trackers
+An explicit UPDATE-only trigger on each of the eleven Phase 1 trackers
 ([shelter.py](apps/betterangels-backend/shelters/models/shelter.py),
 [availability.py](apps/betterangels-backend/shelters/models/availability.py),
 [media.py](apps/betterangels-backend/shelters/models/media.py),
 [schedule.py](apps/betterangels-backend/shelters/models/schedule.py),
 [reservation.py](apps/betterangels-backend/shelters/models/reservation.py))
-compiles to a `pgtrigger.Protect(name="append_only", operation=Update | Delete)`
-on the event table, i.e. a `BEFORE UPDATE OR DELETE` trigger that raises:
+carries
+
+```python
+meta={
+    "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="<model>_evt_obj_idx")],
+    "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+},
+```
+
+which compiles to a `pgtrigger.Protect(name="protect_updates", operation=Update)`
+on the event table, i.e. a `BEFORE UPDATE` trigger that raises:
 
 ```
-pgtrigger: Cannot update or delete rows from shelters_bedevent table
+pgtrigger: Cannot update rows from shelters_bedevent table
 ```
 
 `INSERT` is deliberately **not** guarded — the audit trail is written by inserts,
-so guarding them would stop it entirely. Migrations:
-[shelters/migrations/0006](apps/betterangels-backend/shelters/migrations/0006_bedevent_append_only_contactinfoevent_append_only_and_more.py)
-(11 `AddTrigger` operations). Verified installed — all eleven present in
-`pg_trigger` — rather than assumed from a migration being generated, because a
-`makemigrations --dry-run` with no actual migration silently "tests" nothing.
+so guarding them would stop it entirely — and `DELETE` is deliberately not guarded
+either: see "Why `DELETE` is allowed" below. Migrations:
+[shelters/migrations/0006](apps/betterangels-backend/shelters/migrations/0006_bedevent_protect_updates_and_more.py)
+(11 `AddTrigger` operations, `operation='UPDATE'`). Verified installed — all eleven
+present in `pg_trigger` — rather than assumed from a migration being generated,
+because a `makemigrations --dry-run` with no actual migration silently "tests"
+nothing.
+
+### What this buys, and what it does not
+
+It buys a **loud failure on an accidental rewrite** of recorded history. It is not a
+privilege boundary, and never was:
+
+- `pgtrigger.ignore` is just `set_config('pgtrigger.ignore', ..., true)`, and any role
+  can call `set_config` — so any SQL on the app's own connection can bypass the
+  guard. That is exactly how the test helper works; there is nothing special about
+  the test role.
+- `session_replication_role = replica` disables triggers for a session.
+- The table owner can `ALTER TABLE … DISABLE TRIGGER` (pgtrigger never emits
+  `ENABLE ALWAYS`).
+- `TRUNCATE` was never covered — `Truncate` is a separate pgtrigger operation.
+
+Independent of the bypasses, the surface this "protects" was already empty:
+
+- **No admin write surface.** No `*Event` model is registered in admin. The only
+  event admin is the auto-registered `pghistory.Events` aggregate, which pghistory
+  hard-wires read-only (`has_add_permission` / `has_change_permission` /
+  `has_delete_permission` all return `False`).
+- **No production code path.** Nothing in non-test code updates or deletes an event
+  row; the only `UPDATE` in the repo is the test-only `backdate_event_rows`.
+- **No cascade path.** Every event FK is `DO_NOTHING, db_constraint=False`, so
+  deleting a tracked row inserts a new event and retains the prior rows.
+- **Revert features do not rewrite history.** `NoteReverter` and the client-merge
+  undo replay by writing the *tracked* models, which produces new events.
+
+So the honest statement is: the guard stops accidental doctoring, not a determined
+actor. Against that reality, blocking `DELETE` as well was pure cost.
+
+### Why `DELETE` is allowed
+
+`pghistory.track(append_only=True)` compiles to `Protect(operation=Update | Delete)`
+and is the only knob pghistory offers — there is no UPDATE-only option. Blocking
+`DELETE` bought nothing beyond the bypassable `UPDATE` guard, but it did cost: it
+made every retention policy a partition project, because the only ways to expire
+rows became a partition drop or a privileged role.
+
+Narrowing to `UPDATE` keeps the failure that matters and frees `DELETE`, so
+retention is an ordinary batched delete (§31). Measurement (§9c) shows that is the
+*only* thing retention needs: a date filter alone does not bound the read cost.
 
 **Blast radius — corrected.** An earlier revision of this ADR claimed "9 call
 sites, 2 models, 1 file". That figure came from grepping for
@@ -591,7 +644,7 @@ trigger's `INSERT ... NOW()` (`PGHISTORY_CREATED_AT_FUNCTION`), and Python-level
 time freezing (`time_machine`/`freezegun`) only affects Python-side defaults such
 as `auto_now_add` on ORM inserts. A trigger-generated row is always "now".
 Backdating a real event row therefore requires an `UPDATE`, which is exactly what
-append-only forbids.
+the update guard forbids.
 
 **The escape hatch** is
 [test_utils/pghistory.py](apps/betterangels-backend/test_utils/pghistory.py):
@@ -600,7 +653,7 @@ append-only forbids.
 backdate_event_rows(BedEvent.objects.filter(...), pgh_created_at=...)
 ```
 
-It ignores the `append_only` trigger *by name* (`pgtrigger.ignore("<label>:append_only")`),
+It ignores the `protect_updates` trigger *by name* (`pgtrigger.ignore("<label>:protect_updates")`),
 never with a bare `pgtrigger.ignore()` — ignoring every trigger would also suppress
 the event-*creation* triggers, letting a fixture write no events while still
 appearing to. It asserts the trigger exists before ignoring it, so a mis-scoped
@@ -611,10 +664,10 @@ This is **test-only**. `pgtrigger.ignore`'s teardown issues
 ("RDS Proxy interaction") prohibits on request paths, because it pins the
 connection.
 
-**Regression guard:** [test_append_only.py](apps/betterangels-backend/shelters/tests/test_append_only.py)
-asserts the triggers are declared *and* installed, that both `UPDATE` and
-`DELETE` on an event row are rejected, and that a normal write still succeeds
-(the `INSERT` positive control).
+**Regression guard:** [test_event_update_protection.py](apps/betterangels-backend/shelters/tests/test_event_update_protection.py)
+asserts the triggers are declared *and* installed, that `UPDATE` on an event row is
+rejected, that `DELETE` **succeeds** (the retention contract, §31), and that a
+normal write still succeeds (the `INSERT` positive control).
 
 **Caveats.**
 
@@ -622,10 +675,53 @@ asserts the triggers are declared *and* installed, that both `UPDATE` and
   (e.g. `TrackedBedDemographicEvent`), the tracked lookup tables, and
   `Service`/`ServiceCategory` remain mutable. A shelter's log aggregates 27 event
   models (§10), so ~16 of them are still rewritable — a follow-up, not covered here.
-- *Purge interaction:* because `DELETE` is blocked, the retention/purge job in
-  Future considerations cannot use a plain `.delete()`. It needs a
-  trigger-bypassing path — a partition drop, or a privileged role — and that must
-  be settled before the purge is written.
+- *Purge interaction:* `DELETE` is intentionally allowed, so the retention job is a
+  plain batched `.delete()` (§31) with no trigger-bypassing path and no exempt role.
+
+## 9c. Measured read cost (why retention, and why it is just `DELETE`)
+
+Numbers from
+[audit/management/commands/bench_audit_read.py](apps/betterangels-backend/audit/management/commands/bench_audit_read.py)
+against the schema with all 11 `(pgh_obj, pgh_id)` indexes installed, reading
+`pgh_obj`-anchored page 1 with `limit=25`, median of 5 runs:
+
+| question | axis | result |
+| --- | --- | --- |
+| **H1** does page-1 cost grow with the *table*? | 2k → 160k rows | **flat**: p50 17.3 → 15.5 → 17.1 → 17.5 ms; exec 3.00 → 2.86 ms |
+| **H2** does it grow with the *object's own history*? | 100 → 8000 rows | **mild growth**: exec 2.67 → 2.88 → 3.40 → 4.76 ms |
+| **H3** does a date filter bound the work? | 5y vs 2y window | **no**: the predicate lands in the outer SELECT only, never in the CTE branches; p50 16.2 vs 15.7 ms |
+| **H4** what does the *unanchored* aggregate do? | all event tables | **149 `Seq Scan` nodes** vs the selector's 1; 29.4 ms for 50 rows |
+
+Index options, same object and data:
+
+| index on `shelters_shelterevent` | exec ms |
+| --- | --- |
+| `(pgh_obj_id, pgh_id)` — as shipped | **3.07** |
+| *(that index dropped)* | **20.00** |
+| `(pgh_obj_id, pgh_created_at DESC)` | 3.09 |
+| `+ BRIN(pgh_created_at)` | 2.94 |
+
+Bounded vs unbounded — 2000 events per object spread over 5 years:
+
+| configuration | p50 |
+| --- | --- |
+| full history (2000 rows) | 20.7 ms |
+| same, `date_from` = 2y, nothing purged | 18.9 ms |
+| after the retention `DELETE` (12 000 rows removed, 800 left) | 18.3 ms |
+
+Read the last table carefully: **a date filter buys nothing** (H3), and even after
+deleting 60% of the rows the page cost barely moves, because H2 is sub-linear and a
+fixed ~15 ms floor dominates (two round trips, the ~30-branch union, the context
+joins). Consequences:
+
+- The premise that an ever-growing event table makes the *object-anchored* page
+  slower is **refuted** at these scales (H1). The `(pgh_obj, pgh_id)` index anchors
+  every union branch, so total size does not matter — but drop that index and exec
+  time rises ~6.5x, so the index is load-bearing.
+- What *does* degrade with unbounded growth is the **unanchored** path — admin,
+  exports, `AuditWriteEvent.objects.count()` — which seq-scans every branch (H4).
+- Retention therefore has to be an actual `DELETE`; a query-side date filter cannot
+  substitute for it. That is precisely why §9b frees `DELETE`.
 
 ---
 
@@ -891,7 +987,7 @@ write path emits the transaction-local form and never a session-scoped
 | `nextval`/`setval` in SQL | No | Django uses server-side defaults + `RETURNING` |
 | Advisory locks | No | the merge path's `select_for_update()` is a row lock, not advisory |
 | Temp tables / `LISTEN` | No | no request-path usage |
-| `Protect` trigger (`append_only`, §9b) | Exempt — server-side | raises inside the database after the proxy has handed off the statement, so it is invisible to the proxy |
+| `Protect` trigger (`protect_updates`, §9b) | Exempt — server-side | raises inside the database after the proxy has handed off the statement, so it is invisible to the proxy |
 
 **Measured: `objectAuditLog` exceeds the 16 KB pinning cliff by construction.**
 The statement the selector compiles is proportional to the number of event models
@@ -1533,13 +1629,24 @@ selected queryset of rows, not a date window, so a date-driven purge does not fi
 the action model; the management command is the primitive. An admin view/form
 could call the same function later if BA staff need a UI trigger.
 
-**Append-only interaction (settled):** the event tables are now append-only
-(§9b), so this command cannot delete event rows with a plain `.delete()` — the
-`Protect` trigger rejects it. The purge must therefore use a trigger-bypassing
-path: a partition drop (the tables are not partitioned today, so this is a
-prerequisite), or a role that is exempted from the trigger. Settle that mechanism
-when the command is written; no purge code exists yet. No Celery-beat schedule is
-wired by default — enabling one remains a deliberate ops choice.
+**Guard interaction (settled):** §9b narrowed the guard to `UPDATE`, so `DELETE` is
+available and this command removes rows with an ordinary batched `.delete()` — no
+partition drop, no exempt role. Implemented in
+[common/management/commands/purge_audit_log.py](apps/betterangels-backend/common/management/commands/purge_audit_log.py):
+
+- `--before <YYYY-MM-DD>` — upper bound on `pgh_created_at`; rows strictly older are removed.
+- `MIN_RETENTION_DAYS = 730` — refuses a cutoff inside the last two years unless
+  `--force`, so a mistyped date cannot wipe recent history.
+- `--batch-size` (default 5000) — loops until drained, so no single statement takes a
+  long lock or one huge `DELETE` on the primary.
+- `--dry-run` — reports what would go, changes nothing.
+- Unreferenced `pghistory.Context` rows are removed afterwards with `NOT EXISTS`
+  across every event table, so context rows do not accumulate as an orphan shadow of
+  the purged events.
+
+Tests: [common/tests/test_purge_audit_log.py](apps/betterangels-backend/common/tests/test_purge_audit_log.py).
+No Celery-beat schedule is wired by default — enabling one remains a deliberate ops
+choice.
 
 ---
 
@@ -1592,4 +1699,5 @@ rendering §13/§14, full-state snapshot §13, retention command §31). These we
   after N days) or org/actor-at-event-time metadata recorded on the event context
   so the object can be authorized without a live row. Deletion events produced
   before that future change will be unrecoverable through this surface.
-- **Retention/purge policy** — implemented as the `purge_audit_log --before` command (§31). Wiring a Celery-beat retention window is the remaining ops decision. Because event rows are append-only (§9b), `DELETE` is blocked, so the purge must use a trigger-bypassing path rather than a plain `.delete()` (§31).
+- **Retention schedule** — `purge_audit_log --before` (§31) implements the purge; wiring a Celery-beat window is the remaining ops decision. Because the object-anchored read path does not slow down as the table grows (§9c), this is a storage/compliance boundary, not a latency fix.
+- **Partitioning (contingent)** — not needed at current scale (§9c). Revisit only if the unanchored path (admin/export/`count()`) becomes a real cost or purge batches start causing meaningful bloat; then partition `*Event` by `pgh_created_at` range and expire with `DROP PARTITION` instead of `DELETE`.
