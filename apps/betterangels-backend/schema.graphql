@@ -2140,7 +2140,7 @@ type Query {
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   interactionsByRegion(organizationId: ID!, dimension: RegionDimension!, startDate: Date = null, endDate: Date = null, regionCodes: [String!] = null): [RegionCountType!]!
-  interactionMap(organizationId: ID!, startDate: Date = null, endDate: Date = null, limit: Int = null, dimension: RegionDimension = null, regionCodes: [String!] = null): InteractionMapType!
+  interactionMap(organizationId: ID!, dimension: RegionDimension!, startDate: Date = null, endDate: Date = null, limit: Int = null, regionCodes: [String!] = null): InteractionMapType!
   regionDimensions: [RegionDimension!]!
   regions(dimension: RegionDimension!, codes: [String!] = null): [RegionType!]!
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!

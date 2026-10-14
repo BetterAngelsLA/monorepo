@@ -17,11 +17,8 @@ type UseInteractionMapArgs = {
   startDate: string;
   endDate: string;
   dimension: RegionDimension;
-  /**
-   * Narrow the map to these regions of `dimension` — "show me the SPA 4 visits".
-   * Empty means every interaction in range.
-   */
-  regionCodes: string[];
+  /** Narrow the map to these regions of `dimension` — "show me the SPA 4 visits". */
+  regionCodes?: string[];
 };
 
 /**
@@ -51,9 +48,7 @@ export function useInteractionMap({
       startDate,
       endDate,
       dimension,
-      // Undefined rather than [] so the backend sees "no filter" instead of an
-      // empty list, which would match nothing.
-      regionCodes: regionCodes.length > 0 ? regionCodes : undefined,
+      regionCodes,
     },
     skip: !organizationId,
   });

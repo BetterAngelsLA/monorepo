@@ -121,7 +121,7 @@ export function LocationBreakdown({
     startDate,
     endDate,
     dimension,
-    regionCodes: selectedCode ? [selectedCode] : [],
+    regionCodes: selectedCode === undefined ? undefined : [selectedCode],
   });
 
   const assigned = useMemo(

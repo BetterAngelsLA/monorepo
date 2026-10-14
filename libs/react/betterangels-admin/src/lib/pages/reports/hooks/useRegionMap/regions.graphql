@@ -35,10 +35,10 @@ query RegionsForMap($dimension: RegionDimension!, $codes: [String!]) {
 
 query InteractionMap(
   $organizationId: ID!
+  $dimension: RegionDimension!
   $startDate: Date
   $endDate: Date
   $limit: Int
-  $dimension: RegionDimension
   $regionCodes: [String!]
 ) {
   interactionMap(
