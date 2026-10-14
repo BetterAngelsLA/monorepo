@@ -1,5 +1,9 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import {
+  FlashList,
+  type FlashListRef,
+  type ViewToken,
+} from '@shopify/flash-list';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyListView } from './EmptyListView';
@@ -8,6 +12,18 @@ import { ItemSeparator as DefaultItemSeparator } from './ItemSeparator';
 import { LoadingListView } from './LoadingListView';
 import { ResultsHeader } from './ResultsHeader';
 import type { TInfiniteListProps } from './types';
+
+// The last row counts as viewable as soon as any part of it is on screen.
+//
+// `minimumViewTime: 0` is load bearing: FlashList's 250ms default only reports
+// an index set if it is still on screen when the timer fires, so a quick flick
+// past the end would never report.
+//
+// Module scope on purpose: FlashList builds its `ViewabilityHelper` once.
+const PAGING_VIEWABILITY_CONFIG = {
+  itemVisiblePercentThreshold: 0,
+  minimumViewTime: 0,
+};
 
 export function InfiniteList<T>(props: TInfiniteListProps<T>) {
   const {
@@ -29,7 +45,6 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     ListEmptyComponent,
     ListFooterComponent,
     loadingViewOptions,
-    onEndReachedThreshold = 0.05,
     renderResultsHeader,
     modelName,
     modelNamePlural,
@@ -39,6 +54,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     ErrorViewComponent,
     onRefresh,
     scrollResetKey,
+    viewabilityConfigCallbackPairs,
     ...rest
   } = props;
 
@@ -59,11 +75,26 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     [renderItem],
   );
 
-  const onEndReached = useCallback(() => {
-    if (!isAnyLoading && hasMore && loadMore) {
+  // Not `onEndReached`: that is a level signal, re-checked after every commit,
+  // whose `pendingEndReached` latch FlashList clears whenever `data` changes
+  // (`useBoundDetection`) — so the page that lands re-arms it. Viewability is per
+  // row (`ViewabilityHelper.isItemViewable`) and true once per arrival, which is
+  // the question this call site is asking.
+  const lastIndex = data.length - 1;
+
+  const pagingPair = {
+    viewabilityConfig: PAGING_VIEWABILITY_CONFIG,
+    onViewableItemsChanged: ({
+      viewableItems,
+    }: {
+      viewableItems: ViewToken<T>[];
+    }) => {
+      if (isAnyLoading || !hasMore || !loadMore) return;
+      if (!viewableItems.some((token) => token.index === lastIndex)) return;
+
       loadMore();
-    }
-  }, [isAnyLoading, hasMore, loadMore]);
+    },
+  };
 
   const ItemSeparator = useMemo(() => {
     if (ItemSeparatorComponent) {
@@ -135,8 +166,10 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
         ref={listRef}
         data={data}
         renderItem={renderItemStable}
-        onEndReached={onEndReached}
-        onEndReachedThreshold={onEndReachedThreshold}
+        viewabilityConfigCallbackPairs={[
+          pagingPair,
+          ...(viewabilityConfigCallbackPairs ?? []),
+        ]}
         ItemSeparatorComponent={ItemSeparator}
         extraData={stableExtraData}
         ListEmptyComponent={EmptyView}

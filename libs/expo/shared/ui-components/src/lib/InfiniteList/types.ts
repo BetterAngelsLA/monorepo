@@ -7,7 +7,11 @@ import { TRenderListResultsHeader } from './ResultsHeader';
 // FlashListProps to pass thru
 type ExtraFlashListProps<T> = Omit<
   Partial<FlashListProps<T>>,
-  'data' | 'renderItem' | 'ItemSeparatorComponent' | 'onEndReached'
+  | 'data'
+  | 'renderItem'
+  | 'ItemSeparatorComponent'
+  | 'onEndReached'
+  | 'onEndReachedThreshold'
 >;
 
 type LoadMoreProps = {
