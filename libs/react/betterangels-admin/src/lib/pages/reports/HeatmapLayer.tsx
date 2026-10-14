@@ -4,21 +4,32 @@ import { useMap } from '@vis.gl/react-google-maps';
 /**
  * A gradient heatmap of interaction locations.
  *
- * Drawn on a canvas positioned by `OverlayView`, not as map features. A heatmap is a
- * *continuous field*, and neither of the map's own primitives gives one: markers and
- * Data-layer circles stay discrete however much they overlap, which is what an earlier
- * attempt at this got wrong — it produced a density map wearing a heatmap's name.
+ * Drawn on a canvas, not as map features. A heatmap is a *continuous field*, and
+ * neither of the map's own primitives gives one: markers and Data-layer circles stay
+ * discrete however much they overlap, which is what a first attempt at this got wrong —
+ * it produced a density map wearing a heatmap's name.
  *
- * Two passes. Each point is painted as a soft radial gradient in an offscreen canvas,
- * so overlapping points accumulate into a density surface. The accumulated **alpha** is
- * then used as a mask: a colour ramp is drawn and kept only where the mask is opaque.
- * Concentrated areas come out red, sparse areas blue, and the result is continuous
- * rather than a scatter of shapes.
+ * Two passes. Each point is painted as a soft radial gradient, so overlapping points
+ * accumulate into a density surface. The accumulated **alpha** is then used as a mask:
+ * a colour ramp is drawn and kept only where the mask is opaque. Concentrated areas come
+ * out red, sparse areas blue, and the result is continuous rather than a scatter.
+ *
+ * ## Why the canvas is anchored to the map container
+ *
+ * The canvas is attached to the map's own div at its top-left, and points are projected
+ * with `fromLatLngToContainerPixel` — which is measured from that same top-left. Those
+ * two origins have to agree.
+ *
+ * The first version attached the canvas to `overlayLayer` and projected with
+ * `fromLatLngToDivPixel`. That is wrong: div-pixels are relative to the *panning* pane,
+ * which the map translates as you drag, so a canvas pinned at the pane's origin ends up
+ * offset by the current pan and the field slides away from the geography beneath it. The
+ * real mistake was mixing the two spaces at all — either both container or both pane.
  *
  * Deliberately not `visualization.HeatmapLayer`: Google **removed** it in Maps JS API
- * 3.65, so it is not an option at any point in future — and its bundled type
- * declaration is `constructor()` with no `setMap`, so it would need a cast the frontend
- * styleguide forbids even if it still existed.
+ * 3.65, so it is not an option at any point in future — and its bundled type declaration
+ * is `constructor()` with no `setMap`, so it would need a cast the frontend styleguide
+ * forbids even if it still existed.
  */
 
 /** Blue through cyan, green and yellow to red, as normalised intensity. */
@@ -63,8 +74,8 @@ type HeatmapLayerProps = {
 
 export function HeatmapLayer({ points, radius = 24 }: HeatmapLayerProps) {
   const map = useMap();
-  // Read inside `draw` so panning repaints against the current points without
-  // rebuilding the overlay.
+  // Read inside `draw`, so panning repaints against the current points without
+  // rebuilding anything.
   const pointsRef = useRef<HeatPoint[]>(points);
   const drawRef = useRef<(() => void) | null>(null);
 
@@ -79,37 +90,64 @@ export function HeatmapLayer({ points, radius = 24 }: HeatmapLayerProps) {
     canvas.style.top = '0';
     canvas.style.pointerEvents = 'none';
 
+    const host = map.getDiv();
+
     const overlay = new google.maps.OverlayView();
+    // Attach to the map's own div rather than an overlay pane, so the canvas origin and
+    // the container-pixel projection below share one origin. `onAdd` is where the map
+    // is ready. `getProjection()` is null until this point, which is why every draw
+    // waits on the overlay being set.
+    overlay.onAdd = () => {
+      host.appendChild(canvas);
+    };
+    overlay.draw = () => drawRef.current?.();
+    overlay.setMap(map);
 
     const draw = () => {
-      // A projection only exists once the overlay has been added to the map.
       const projection = overlay.getProjection();
       if (!projection) {
         return;
       }
-      const current = pointsRef.current;
-      const width = Math.max(1, Math.round(map.getDiv().clientWidth));
-      const height = Math.max(1, Math.round(map.getDiv().clientHeight));
+      const bounds = host.getBoundingClientRect();
+      const width = Math.max(1, Math.round(bounds.width));
+      const height = Math.max(1, Math.round(bounds.height));
+
+      // Assigning width/height clears the canvas, so only do it when the size actually
+      // changed — otherwise every frame is discarded twice and the field flickers.
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+      }
+
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         return;
       }
-
-      canvas.width = width;
-      canvas.height = height;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
       ctx.clearRect(0, 0, width, height);
+
+      const current = pointsRef.current;
       if (current.length === 0) {
         return;
       }
 
       // Pass 1: accumulate density as alpha, in a single hue.
       for (const point of current) {
-        const pixel = projection.fromLatLngToDivPixel(
+        const pixel = projection.fromLatLngToContainerPixel(
           new google.maps.LatLng(point.latitude, point.longitude),
         );
         if (!pixel) {
+          continue;
+        }
+        // Off-screen points cost a gradient each, and at county zoom most of a
+        // 3,000-point set is outside the viewport.
+        if (
+          pixel.x < -radius ||
+          pixel.y < -radius ||
+          pixel.x > width + radius ||
+          pixel.y > height + radius
+        ) {
           continue;
         }
         const gradient = ctx.createRadialGradient(pixel.x, pixel.y, 0, pixel.x, pixel.y, radius);
@@ -140,19 +178,7 @@ export function HeatmapLayer({ points, radius = 24 }: HeatmapLayerProps) {
     };
 
     drawRef.current = draw;
-
-    // `onAdd` is the only point at which the panes exist, and it is where a detached
-    // child element belongs. Attaching outside it silently does nothing.
-    overlay.onAdd = () => {
-      overlay.getPanes()?.overlayLayer.appendChild(canvas);
-    };
-    // OverlayView calls this on every map render, which is what keeps the field
-    // aligned while panning and zooming.
-    overlay.draw = draw;
-    overlay.onRemove = () => {
-      canvas.remove();
-    };
-    overlay.setMap(map);
+    draw();
 
     return () => {
       overlay.setMap(null);
@@ -161,8 +187,7 @@ export function HeatmapLayer({ points, radius = 24 }: HeatmapLayerProps) {
     };
   }, [map, radius]);
 
-  // Repaint when the data changes without the viewport moving. Assigning the ref here
-  // rather than during render keeps it out of the render phase, which React requires.
+  // Repaint when the data changes without the viewport moving.
   useEffect(() => {
     pointsRef.current = points;
     drawRef.current?.();
