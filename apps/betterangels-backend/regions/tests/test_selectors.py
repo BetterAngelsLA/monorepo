@@ -18,7 +18,6 @@ from notes.models import Note
 from regions.models import Region, RegionKind
 from regions.selectors import (
     available_kinds,
-    interaction_density,
     interaction_points,
     region_counts,
     region_features,
@@ -135,8 +134,19 @@ class RegionRollupTestCase(TestCase):
     def test_unrelated_dimension_is_not_counted(self) -> None:
         Region.objects.create(kind=RegionKind.SPA, code="4", name="Metro", geom=box(BOX_A))
         self._note_at(-118.24, 34.05)
-        rows = region_counts(kind=RegionKind.SPA, start=self.start, end=self.end, organization_id=self.org.id)
+        rows = region_counts(
+            # `.value`, not the enum member: the selector takes the wire/DB string, and
+            # an enum member stringifies to "RegionKind.SPA", which matches no row.
+            kind=RegionKind.SPA.value,
+            start=self.start,
+            end=self.end,
+            organization_id=self.org.id,
+        )
         self.assertEqual({r["code"]: r["count"] for r in rows}, {"4": 1})
+        # The selector always reports the kind, because it is the grouping key and a code
+        # alone is ambiguous across dimensions. Blanking it for a single-dimension rollup
+        # is `services.region_rollup`'s job, not this layer's.
+        self.assertEqual([r["kind"] for r in rows], [RegionKind.SPA.value])
 
 
 class RegionMetadataTestCase(TestCase):
@@ -222,7 +232,7 @@ class RegionReconciliationTestCase(TestCase):
 
 
 class InteractionMapTestCase(TestCase):
-    """The pins and density views (DEV-2570 / DEV-2604).
+    """The pins view (DEV-2570 / DEV-2604).
 
     The properties asserted here are the ones a reviewer would not see by
     reading the SQL: that neither view leaks client identity, that org scoping
@@ -329,16 +339,6 @@ class InteractionMapTestCase(TestCase):
         self.assertAlmostEqual(rows[0]["latitude"], 34.05, places=4)
         self.assertAlmostEqual(rows[0]["longitude"], -118.24, places=4)
 
-    def test_scoping_by_region_narrows_the_density_too(self) -> None:
-        """Both views must narrow together, or the toggle changes the story."""
-        self._box_region("1", BOX_A)
-        self._note_at(-118.24, 34.05)
-        self._note_at(-118.54, 34.35)
-        assign_locations()
-        scoped = scope_notes_to_regions(self._notes(), kind=RegionKind.COUNCIL_DISTRICT.value, codes=["1"])
-        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id, notes=scoped)
-        self.assertEqual(sum(c["count"] for c in cells), 1)
-
     def test_no_scoping_means_no_filter(self) -> None:
         """Absent filter is not an empty filter — it must not match nothing."""
         self._box_region("1", BOX_A)
@@ -348,23 +348,12 @@ class InteractionMapTestCase(TestCase):
         rows, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id)
         self.assertEqual(len(rows), 2)
 
-    def test_density_aggregates_to_a_grid(self) -> None:
-        # two points in one cell (~1km), one in another
-        self._note_at(-118.2401, 34.0501)
-        self._note_at(-118.2402, 34.0502)
-        self._note_at(-118.30, 34.10)
-        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id)
-        counts = sorted(cell["count"] for cell in cells)
-        self.assertEqual(counts, [1, 2])
-        self.assertEqual(sum(counts), 3)
-
-    def test_the_two_views_describe_the_same_interactions(self) -> None:
-        """Toggling pins/density must not change how many interactions there are."""
+    def test_every_interaction_in_scope_gets_a_point(self) -> None:
+        """The heatmap is drawn from these points, so none may be dropped."""
         for i in range(4):
             self._note_at(-118.24 + i * 0.02, 34.05 + i * 0.02)
         points, _ = self._points()
-        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id)
-        self.assertEqual(len(points), sum(cell["count"] for cell in cells))
+        self.assertEqual(len(points), 4)
 
 
 class StaleAssignmentTestCase(TestCase):
@@ -463,7 +452,3 @@ class RegionCodeCollisionTestCase(TestCase):
         self.assertEqual(len(council), 1, "the SPA sharing this code must not be matched")
         self.assertAlmostEqual(council[0]["latitude"], 34.05, places=4)
 
-    def test_the_density_view_narrows_by_the_same_dimension(self) -> None:
-        scoped = scope_notes_to_regions(self._notes(), kind=RegionKind.COUNCIL_DISTRICT.value, codes=["1"])
-        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id, notes=scoped)
-        self.assertEqual(sum(c["count"] for c in cells), 1, "same scoping as the points view")

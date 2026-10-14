@@ -79,19 +79,6 @@ class InteractionPointType:
 
 
 @strawberry.type
-class DensityCellType:
-    """Interactions counted on a fixed grid cell, for the density view.
-
-    Aggregated in the database, so the payload is bounded by the grid rather than
-    by the number of interactions.
-    """
-
-    latitude: float
-    longitude: float
-    count: int
-
-
-@strawberry.type
 class InteractionMapType:
     """Both views of the same interactions, so the client can toggle without refetching.
 
@@ -101,7 +88,6 @@ class InteractionMapType:
     """
 
     points: List[InteractionPointType]
-    density: List[DensityCellType]
     truncated: bool
 
 

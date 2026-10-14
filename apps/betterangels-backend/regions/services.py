@@ -23,14 +23,12 @@ from .models import (
     Region,
 )
 from .selectors import (
-    interaction_density,
     interaction_points,
     region_counts,
     region_totals_without_boundaries,
     scope_notes_to_regions,
 )
 from .types import (
-    DensityCellType,
     InteractionMapType,
     InteractionPointType,
     RegionCountType,
@@ -267,6 +265,10 @@ def region_rollup(
 
     buckets = [
         RegionCountType(
+            # Empty when the rollup is scoped to one dimension — the request already
+            # implies it, so repeating it on every row is noise. Populated when the
+            # rollup spans all of them, where it is what disambiguates a code.
+            kind="" if kind is not None else (row["kind"] or ""),
             code=row["code"] or "",
             name=row["name"] or "",
             count=row["count"],
@@ -308,7 +310,7 @@ def interaction_map_data(
     limit: int,
     region_codes: Sequence[str] | None = None,
 ) -> InteractionMapType:
-    """Points and a density grid for the same scope, so the toggle cannot change story.
+    """The interaction points for the given scope, as map pins.
 
     ``notes`` arrives already permission-filtered; this narrows it further by region
     when asked, then asks each selector for its own projection.
@@ -321,11 +323,7 @@ def interaction_map_data(
     points, truncated = interaction_points(
         start=start, end=end, organization_id=organization_id, limit=limit, notes=scoped
     )
-    density = interaction_density(
-        start=start, end=end, organization_id=organization_id, notes=scoped
-    )
     return InteractionMapType(
         points=[InteractionPointType(**row) for row in points],
-        density=[DensityCellType(**row) for row in density],
         truncated=truncated,
     )

@@ -149,15 +149,10 @@ export function LocationBreakdown({
     // however the map is filtered.
     regionCodes: selectedCode === undefined ? undefined : [selectedCode],
   });
-  // The pins and density views. Both come back in one request, so switching
-  // between them on the map costs nothing; the dimension does not apply, because
-  // an interaction's location is the same point whichever way the regions are cut.
-  const {
-    points,
-    density,
-    truncated,
-    error: mapError,
-  } = useInteractionMap({
+  // The pins the heatmap is drawn from. The dimension does not apply to the geometry,
+  // because an interaction's location is the same point whichever way regions are cut —
+  // but it does apply to `regionCodes`, which is why that is passed.
+  const { points, truncated, error: mapError } = useInteractionMap({
     organizationId,
     startDate,
     endDate,
@@ -306,7 +301,6 @@ export function LocationBreakdown({
             dimension={dimension}
             rows={shown}
             points={points}
-            density={density}
             truncated={truncated}
             hasMapsKey={hasMapsKey}
             filteredTo={filteredToName}

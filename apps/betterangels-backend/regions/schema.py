@@ -3,7 +3,7 @@
 Adds a ``RegionDimension`` enum and four queries:
 
 * ``interactionsByRegion`` — interaction counts per region of a dimension.
-* ``interactionMap`` — individual points and a density grid, for the map.
+* ``interactionMap`` — individual interaction points, for the map.
 * ``regionDimensions`` — which dimensions have boundaries loaded.
 * ``regions`` — the boundary polygons themselves, as GeoJSON.
 
@@ -119,7 +119,7 @@ class Query:
         dimension: Optional[RegionDimension] = None,
         region_codes: Optional[List[str]] = None,
     ) -> InteractionMapType:
-        """Where the interactions happened: pins, and the same data as a density grid.
+        """Where the interactions happened, as map pins.
 
         Authority is **the note read scope, not the report scope.** This returns
         individual coordinates, so it is gated on ``notes.view_note`` and filtered
@@ -127,9 +127,6 @@ class Query:
         widen the scope: ``LocationType.point`` is reached *through* a note, and
         ``reports.view_reports`` is held by ``ORG_ADMIN``, which has no note
         permission.
-
-        Pins and the density grid are returned together so the client can switch views
-        without a second round trip.
 
         ``dimension`` is required: codes are not unique across dimensions, so the
         dimension is what makes ``regionCodes`` meaningful. ``regionCodes`` then

@@ -53,11 +53,6 @@ query InteractionMap(
       latitude
       longitude
     }
-    density {
-      latitude
-      longitude
-      count
-    }
     truncated
   }
 }

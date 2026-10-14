@@ -9,9 +9,6 @@ import {
 
 /** One interaction location, as returned by `interactionMap`. */
 export type InteractionPointType = InteractionMapQuery['interactionMap']['points'][number];
-/** One occupied grid cell of the density view. */
-export type DensityCellType = InteractionMapQuery['interactionMap']['density'][number];
-
 type UseInteractionMapArgs = {
   organizationId: string;
   startDate: string;
@@ -22,12 +19,10 @@ type UseInteractionMapArgs = {
 };
 
 /**
- * Where the interactions were.
+ * Where the interactions were, as individual points.
  *
- * Returns both representations of the same period — individual points and a
- * density grid — in one round trip, so switching between them on the map does not
- * refetch. `truncated` says the point cap was reached, which the UI must surface:
- * a partial map that looks complete is worse than no map.
+ * `truncated` says the point cap was reached, which the UI must surface: a partial map
+ * that looks complete is worse than no map.
  *
  * Coordinates only. There is deliberately no client or note field on this query,
  * and it is authorized by the note read scope rather than the report scope alone.
@@ -57,11 +52,7 @@ export function useInteractionMap({
     () => data?.interactionMap?.points ?? [],
     [data],
   );
-  const density = useMemo(
-    () => data?.interactionMap?.density ?? [],
-    [data],
-  );
   const truncated = data?.interactionMap?.truncated ?? false;
 
-  return { points, density, truncated, loading, error };
+  return { points, truncated, loading, error };
 }

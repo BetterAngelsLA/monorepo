@@ -7,8 +7,7 @@ import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { mergeCss } from '@monorepo/react/shared';
 import {
   useRegionMap,
-  type DensityCellType,
-  type InteractionPointType,
+    type InteractionPointType,
   type RegionCountType,
   type RegionGeometryType,
 } from './hooks';
@@ -45,38 +44,20 @@ function shade(max: number, count: number): string {
   return `rgb(${r},${g},${b})`;
 }
 
-/** What the map is showing. Regions are always drawn, as context. */
-export type MapView = 'heatmap' | 'regions' | 'pins' | 'density';
-
-/** Warm ramp for density, deliberately distinct from the blue region shading. */
-function densityShade(max: number, count: number): string {
-  if (max <= 0) return '#FDE0C8';
-  const t = Math.sqrt(Math.max(0, count) / max);
-  const r = Math.round(0xfd + (0xd8 - 0xfd) * t);
-  const g = Math.round(0xe0 + (0x4a - 0xe0) * t);
-  const b = Math.round(0xc8 + (0x1a - 0xc8) * t);
-  return `rgb(${r},${g},${b})`;
-}
+/** The map's views. Heatmap is the default; see `RegionMap` below. */
+export type MapView = 'heatmap' | 'regions' | 'pins';
 
 /**
- * Draws interaction locations: individual pins, or the density grid.
+ * Draws interaction locations as individual pins.
  *
- * Both go through the map's Data layer, so this is one `setStyle` pass over N
+ * They go through the map's Data layer, so this is one `setStyle` pass over N
  * features rather than N React components. At the point cap that difference is the
  * whole reason the view is usable.
  *
  * `map.data` is one layer per map, shared with the choropleth — the two coordinate
  * by property name, and this component owns the cleanup for the features it adds.
  */
-function InteractionLayer({
-  view,
-  points,
-  density,
-}: {
-  view: MapView;
-  points: InteractionPointType[];
-  density: DensityCellType[];
-}) {
+function InteractionLayer({ view, points }: { view: MapView; points: InteractionPointType[] }) {
   const map = useMap();
 
   useEffect(() => {
@@ -101,20 +82,6 @@ function InteractionLayer({
           console.error('[RegionMap] could not plot a point', error);
         }
       });
-    } else {
-      density.forEach((cell, index) => {
-        try {
-          const feature = layer.add({
-            geometry: new google.maps.Data.Point(
-              new google.maps.LatLng(cell.latitude, cell.longitude),
-            ),
-            properties: { kind: 'density', count: cell.count, key: `cell-${index}` },
-          });
-          added.push(feature);
-        } catch (error) {
-          console.error('[RegionMap] could not plot a density cell', error);
-        }
-      });
     }
 
     return () => {
@@ -122,7 +89,7 @@ function InteractionLayer({
       // keeps the choropleth intact when the view changes.
       added.forEach((feature) => layer.remove(feature));
     };
-  }, [map, view, points, density]);
+  }, [map, view, points]);
 
   return null;
 }
@@ -147,12 +114,10 @@ function RegionLayer({
   rows,
   regions,
   view,
-  maxDensity,
 }: {
   rows: RegionCountType[];
   regions: RegionGeometryType[];
   view: MapView;
-  maxDensity: number;
 }) {
   const map = useMap();
   // One automatic fit per mount; after that the viewport belongs to the reader.
@@ -217,23 +182,6 @@ function RegionLayer({
         };
       }
 
-      if (kind === 'density') {
-        // Size carries the count as well as colour, so a dense cell reads as dense
-        // even where two cells overlap or the ramp is hard to judge.
-        const count = featureNumber(feature, 'count');
-        const weight = maxDensity > 0 ? Math.sqrt(count / maxDensity) : 0;
-        return {
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 8 + 14 * weight,
-            fillColor: densityShade(maxDensity, count),
-            fillOpacity: 0.8,
-            strokeColor: '#D84A1A',
-            strokeWeight: 0.6,
-          },
-        };
-      }
-
       const count = featureNumber(feature, 'count');
       return {
         fillColor: shade(max, count),
@@ -263,8 +211,7 @@ function RegionLayer({
 
     // Fit the viewport to the boundaries, but **only the first time**. Re-fitting on
     // every dimension change resets the zoom the reader chose, and for a county-wide
-    // dimension such as SPA it zooms out far enough to make the map useless for
-    // reading density — which is what it did before.
+    // dimension such as SPA it zooms out far enough to make the map unreadable.
     if (!hasFittedRef.current) {
       const bounds = new google.maps.LatLngBounds();
       layer.forEach((f: google.maps.Data.Feature) => {
@@ -286,7 +233,7 @@ function RegionLayer({
       layer.forEach((f: google.maps.Data.Feature) => layer.remove(f));
       map.getDiv().removeAttribute('title');
     };
-  }, [map, regions, countsByCode, max, view, maxDensity]);
+  }, [map, regions, countsByCode, max, view]);
 
   return null;
 }
@@ -296,8 +243,6 @@ type RegionMapProps = {
   rows: RegionCountType[];
   /** Individual interaction locations, from `interactionMap`. */
   points?: InteractionPointType[];
-  /** Occupied density cells for the same period. */
-  density?: DensityCellType[];
   /** True when the point cap was reached and the pins are a subset. */
   truncated?: boolean;
   /** Name of the single region the map is narrowed to, if any. */
@@ -319,7 +264,6 @@ export function RegionMap({
   dimension,
   rows,
   points = [],
-  density = [],
   truncated = false,
   filteredTo,
   hasMapsKey = true,
@@ -329,10 +273,6 @@ export function RegionMap({
   // asked, and the choropleth is the same data once you know where to look.
   const [view, setView] = useState<MapView>('heatmap');
 
-  const maxDensity = useMemo(
-    () => density.reduce((max, cell) => Math.max(max, cell.count), 0),
-    [density],
-  );
   const caption = useMemo(() => {
     const scope = filteredTo ? ` within ${filteredTo}` : '';
     if (view === 'pins') {
@@ -340,9 +280,6 @@ export function RegionMap({
     }
     if (view === 'heatmap') {
       return `Density of interactions${scope}, as a continuous field. Red is where interactions concentrate, blue where they thin out — relative only, so read the table below for counts.`;
-    }
-    if (view === 'density') {
-      return `Interactions${scope} aggregated into roughly 1 km cells; darker and larger means more.`;
     }
     return `Regions shaded by interaction count${scope}. Areas with no shading had no interactions in this range.`;
   }, [view, points.length, filteredTo]);
@@ -400,7 +337,6 @@ export function RegionMap({
             { label: 'Heatmap', value: 'heatmap' },
             { label: 'Regions', value: 'regions' },
             { label: 'Interactions', value: 'pins' },
-            { label: 'Density', value: 'density' },
           ]}
         />
       </div>
@@ -415,10 +351,9 @@ export function RegionMap({
           rows={rows}
           regions={regions}
           view={view}
-          maxDensity={maxDensity}
         />
         {view !== 'heatmap' && (
-          <InteractionLayer view={view} points={points} density={density} />
+          <InteractionLayer view={view} points={points} />
         )}
         {view === 'heatmap' && <HeatmapLayer points={points} />}
       </GoogleMap>

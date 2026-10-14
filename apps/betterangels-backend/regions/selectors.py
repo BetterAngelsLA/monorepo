@@ -65,7 +65,13 @@ def region_counts(
     if unassigned_only:
         rows = rows.filter(**{f"{assignments}__region__isnull": True})
     elif codes is not None:
+        # The kind has to be part of the predicate, not just a filter applied earlier:
+        # codes are not unique across dimensions — "1" is a council district, an SPA and
+        # a supervisorial district — so matching on the code alone pulls in regions from
+        # dimensions the caller did not ask for.
         codes_q = Q(**{f"{assignments}__region__code__in": list(codes)})
+        if kind is not None:
+            codes_q &= Q(**{f"{assignments}__kind": kind})
         if include_unassigned:
             # Joining on `region__code` already drops unassigned rows, so the
             # unassigned arm has to come from a separate query rather than an OR.
@@ -76,7 +82,11 @@ def region_counts(
     # supervisorial district 1 collapse into a single bucket.
     counts = (
         rows.values(f"{assignments}__kind", f"{assignments}__region__code")
-        .annotate(count=Count("id"))
+        # `distinct=True` counts *notes*, not join rows. A note can have more than one
+        # matching assignment — several regions of one kind covering its point, or every
+        # dimension when `kind` is None — and a plain `Count("id")` counts those rows, so
+        # a note on a shared boundary is reported twice.
+        .annotate(count=Count("id", distinct=True))
         .order_by()
     )
     buckets = [
@@ -159,11 +169,6 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
 POINT_LIMIT = 10_000
 POINT_LIMIT_MAX = 50_000
 
-# Density grid cell size, in degrees. 0.01 deg is ~1.1 km by ~0.9 km at Los Angeles —
-# the granularity the density view is for.
-DENSITY_GRID_DEGREES = 0.01
-
-
 def interaction_points(
     *,
     start: datetime,
@@ -218,53 +223,6 @@ def interaction_points(
         ]
     truncated = len(rows) > limit
     return rows[:limit], truncated
-
-
-def interaction_density(
-    *,
-    start: datetime,
-    end: datetime,
-    organization_id: int | None = None,
-    cell_degrees: float = DENSITY_GRID_DEGREES,
-    notes: "QuerySet[Note] | None" = None,
-) -> list[dict[str, Any]]:
-    """Interaction counts on a fixed grid, for the density view.
-
-    Aggregated in the database rather than in the browser, so the payload is
-    bounded by the grid rather than by the number of interactions. A grid cell with
-    no interactions is simply absent; a caller draws only what it receives.
-    """
-    params: dict[str, Any] = {"start": start, "end": end, "cell": cell_degrees}
-    # Bound array, not interpolated: `note_ids` never reaches the SQL text.
-    notes_clause = ""
-    if notes is not None:
-        notes_clause = "AND n.id = ANY(%(note_ids)s)"
-        params["note_ids"] = list(notes.values_list("id", flat=True))
-    org_clause = ""
-    if organization_id is not None:
-        org_clause = "AND n.organization_id = %(org_id)s"
-        params["org_id"] = organization_id
-
-    sql = f"""
-        SELECT ST_Y(ST_SnapToGrid(l.point::geometry, %(cell)s)) AS latitude,
-               ST_X(ST_SnapToGrid(l.point::geometry, %(cell)s)) AS longitude,
-               count(*) AS count
-        FROM notes_note n
-        JOIN common_location l ON l.id = n.location_id
-        WHERE n.interacted_at >= %(start)s
-          AND n.interacted_at < %(end)s
-          AND n.location_id IS NOT NULL
-          {org_clause}
-          {notes_clause}
-        GROUP BY 1, 2
-        ORDER BY count DESC, 1, 2
-    """
-    with connection.cursor() as cursor:
-        cursor.execute(sql, params)
-        return [
-            {"latitude": float(lat), "longitude": float(lon), "count": int(count)}
-            for lat, lon, count in cursor.fetchall()
-        ]
 
 
 def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[str]) -> QuerySet[Note]:

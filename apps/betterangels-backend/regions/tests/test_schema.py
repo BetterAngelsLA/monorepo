@@ -196,7 +196,6 @@ INTERACTION_MAP_QUERY = """
     ) {
         interactionMap(organizationId: $organizationId, dimension: $dimension, startDate: $startDate, endDate: $endDate, limit: $limit) {
             points { latitude longitude }
-            density { latitude longitude count }
             truncated
         }
     }
@@ -256,11 +255,6 @@ class InteractionMapPermissionTestCase(GraphQLBaseTestCase):
             result["points"],
             [],
             f"ORG_ADMIN has no notes.view_note but received {len(result['points'])} pin(s): {result['points'][:2]}",
-        )
-        self.assertEqual(
-            sum(cell["count"] for cell in result["density"]),
-            0,
-            "the density view leaked the same note the pins view withheld",
         )
 
     def test_the_rollup_still_works_for_that_role(self) -> None:
