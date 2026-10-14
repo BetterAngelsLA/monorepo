@@ -1,9 +1,7 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
-import {
-  InfiniteList,
-  TRenderListResultsHeader,
-} from '@monorepo/expo/shared/ui-components';
+import { TRenderListResultsHeader } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../InfiniteList/FocusedInfiniteList';
 import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
@@ -81,7 +79,7 @@ export function ListClientsHmis(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<HmisClientProfileType>
+      <FocusedInfiniteList<HmisClientProfileType>
         modelName="client"
         scrollResetKey={queryKey}
         data={items}

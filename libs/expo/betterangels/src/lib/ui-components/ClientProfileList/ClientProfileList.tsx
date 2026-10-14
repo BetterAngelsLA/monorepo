@@ -1,6 +1,6 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { InfiniteList } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../InfiniteList/FocusedInfiniteList';
 import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
@@ -80,7 +80,7 @@ export function ClientProfileList({
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<TClientProfile>
+      <FocusedInfiniteList<TClientProfile>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
