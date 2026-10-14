@@ -920,13 +920,6 @@ export type DemographicType = {
   name?: Maybe<DemographicChoices>;
 };
 
-export type DensityCellType = {
-  __typename: 'DensityCellType';
-  count: Scalars['Int']['output'];
-  latitude: Scalars['Float']['output'];
-  longitude: Scalars['Float']['output'];
-};
-
 export type DjangoFileType = {
   __typename: 'DjangoFileType';
   name: Scalars['String']['output'];
@@ -1447,7 +1440,6 @@ export type InteractionAuthorTypeOffsetPaginated = {
 
 export type InteractionMapType = {
   __typename: 'InteractionMapType';
-  density: Array<DensityCellType>;
   points: Array<InteractionPointType>;
   truncated: Scalars['Boolean']['output'];
 };
@@ -2750,7 +2742,7 @@ export type QueryInteractionMapArgs = {
 
 
 export type QueryInteractionsByRegionArgs = {
-  dimension: RegionDimension;
+  dimension?: InputMaybe<RegionDimension>;
   endDate?: InputMaybe<Scalars['Date']['input']>;
   organizationId: Scalars['ID']['input'];
   regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -2999,6 +2991,7 @@ export type RegionCountType = {
   code: Scalars['String']['output'];
   count: Scalars['Int']['output'];
   isUnassigned: Scalars['Boolean']['output'];
+  kind: Scalars['String']['output'];
   name: Scalars['String']['output'];
   unassignedReason?: Maybe<UnassignedReason>;
 };
