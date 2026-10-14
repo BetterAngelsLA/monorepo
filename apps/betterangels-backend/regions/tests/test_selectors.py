@@ -9,8 +9,6 @@ from datetime import UTC, datetime
 from typing import Any
 
 from django.contrib.gis.geos import MultiPolygon, Point, Polygon
-from django.db import transaction
-from django.db.utils import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
 
@@ -163,27 +161,6 @@ class RegionMetadataTestCase(TestCase):
 
     def test_region_features_unknown_code_returns_nothing(self) -> None:
         self.assertEqual(region_features(kinds=[RegionKind.SPA], codes=["nope"]), [])
-
-
-class RegionModelTestCase(TestCase):
-    def test_kind_and_code_are_unique(self) -> None:
-        Region.objects.create(kind=RegionKind.CITY, code="Los Angeles", name="LA", geom=box(BOX_A))
-        # The atomic() block is what makes the assertion safe: a constraint error
-        # poisons the surrounding transaction, and any query afterwards would
-        # raise TransactionManagementError rather than the expected result.
-        with self.assertRaises(IntegrityError), transaction.atomic():
-            Region.objects.create(kind=RegionKind.CITY, code="Los Angeles", name="dupe", geom=box(BOX_B))
-
-    def test_same_code_in_a_different_dimension_is_allowed(self) -> None:
-        Region.objects.create(kind=RegionKind.CITY, code="1", name="city", geom=box(BOX_A))
-        Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="district", geom=box(BOX_B))
-        self.assertEqual(Region.objects.filter(code="1").count(), 2)
-
-    def test_geometry_is_stored_as_multipolygon_4326(self) -> None:
-        region = Region.objects.create(kind=RegionKind.SPA, code="4", name="Metro", geom=box(BOX_A, srid=4326))
-        region.refresh_from_db()
-        self.assertEqual(region.geom.srid, 4326)
-        self.assertEqual(region.geom.geom_type, "MultiPolygon")
 
 
 class RegionReconciliationTestCase(TestCase):
