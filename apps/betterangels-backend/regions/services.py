@@ -74,9 +74,7 @@ def build_region_pieces(*, kind: str | None = None) -> int:
     """
     with transaction.atomic(), connection.cursor() as cursor:
         if kind is not None:
-            cursor.execute(
-                "DELETE FROM regions_regionpiece WHERE kind = %(kind)s", {"kind": kind}
-            )
+            cursor.execute("DELETE FROM regions_regionpiece WHERE kind = %(kind)s", {"kind": kind})
         else:
             cursor.execute("DELETE FROM regions_regionpiece")
         cursor.execute(
@@ -112,24 +110,16 @@ def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> 
     # list, so a bare `.distinct()` de-duplicates on (kind, code) and returns one row
     # per region instead of one per kind — 431 scopes rather than 6, measured at 260 s
     # for a rebuild that should take seconds.
-    scopes = (
-        [kind]
-        if kind
-        else list(Region.objects.order_by().values_list("kind", flat=True).distinct())
-    )
+    scopes = [kind] if kind else list(Region.objects.order_by().values_list("kind", flat=True).distinct())
     written = 0
 
     for scope in scopes:
         with transaction.atomic(), connection.cursor() as cursor:
             if force:
-                cursor.execute(
-                    "DELETE FROM regions_locationregion WHERE kind = %s", [scope]
-                )
+                cursor.execute("DELETE FROM regions_locationregion WHERE kind = %s", [scope])
             else:
                 # Nothing to resolve if this dimension has no regions loaded.
-                cursor.execute(
-                    "SELECT 1 FROM regions_region WHERE kind = %s LIMIT 1", [scope]
-                )
+                cursor.execute("SELECT 1 FROM regions_region WHERE kind = %s LIMIT 1", [scope])
                 if cursor.fetchone() is None:
                     continue
             cursor.execute(
@@ -233,8 +223,7 @@ def parse_region_code_filter(region_codes: Sequence[str] | None) -> RegionCodeFi
         unassigned_only=sentinel_requested and not wanted,
         query_unassigned=sentinel_requested and bool(wanted),
         keep_unassigned=region_codes is None or sentinel_requested,
-        include_locationless=(region_codes is None or sentinel_requested)
-        or (not sentinel_requested and not wanted),
+        include_locationless=(region_codes is None or sentinel_requested) or (not sentinel_requested and not wanted),
     )
 
 
@@ -273,18 +262,14 @@ def region_rollup(
             name=row["name"] or "",
             count=row["count"],
             is_unassigned=row["code"] is None,
-            unassigned_reason=(
-                UnassignedReason.OUTSIDE_ALL_REGIONS if row["code"] is None else None
-            ),
+            unassigned_reason=(UnassignedReason.OUTSIDE_ALL_REGIONS if row["code"] is None else None),
         )
         for row in rows
         if row["code"] is not None or codes.keep_unassigned
     ]
 
     if codes.include_locationless:
-        locationless = region_totals_without_boundaries(
-            start=start, end=end, organization_id=organization_id
-        )
+        locationless = region_totals_without_boundaries(start=start, end=end, organization_id=organization_id)
         if locationless:
             buckets.append(
                 RegionCountType(

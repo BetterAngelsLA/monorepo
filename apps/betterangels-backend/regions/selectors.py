@@ -169,6 +169,7 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
 POINT_LIMIT = 10_000
 POINT_LIMIT_MAX = 50_000
 
+
 def interaction_points(
     *,
     start: datetime,

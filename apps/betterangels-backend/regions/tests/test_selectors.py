@@ -451,4 +451,3 @@ class RegionCodeCollisionTestCase(TestCase):
         council, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id, notes=scoped)
         self.assertEqual(len(council), 1, "the SPA sharing this code must not be matched")
         self.assertAlmostEqual(council[0]["latitude"], 34.05, places=4)
-
