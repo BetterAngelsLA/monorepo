@@ -375,32 +375,18 @@ apps' geometry columns.
 
 ## 7a. How this is tested
 
-`apps/betterangels-backend/regions/tests/` — the suite for the shipped feature (see
-[README.md](README.md)), plus `mypy` and `ruff` clean. The table below describes the
-properties that mattered to the spike prototype; the same properties are what the shipped
-importer is built to preserve. Most assert *safety* properties rather than
-the happy path, because that is where a loader does damage:
+`apps/betterangels-backend/regions/tests/` holds the suite for the shipped feature —
+see [README.md](README.md). It asserts the properties that matter to a loader, and
+mostly *safety* properties rather than the happy path, because that is where a loader
+does damage: a point inside a region is counted in it; a point in no region comes back
+as an unassigned bucket rather than being dropped; a note with no location still
+reports, so the regional total reconciles against the KPI row; filtering by code
+narrows the rollup; boundaries are served as GeoJSON with the right SRID.
 
-| Property | Why it matters |
-|---|---|
-| `regions_mislabelled_crs.geojson` is **rejected** | Reproduces the real `data.lacity.org` defect: the file declares WGS84 lon/lat while holding EPSG:2229 State Plane feet. The bbox assertion must catch it and write nothing. |
-| A 3857 source is reprojected to the correct LA lon/lat | Guards the common case of LA layers published in Web Mercator or State Plane. |
-| Self-intersecting polygons are repaired | Bow-tie geometry is routine in real shapefiles and would otherwise fail the `MultiPolygon` insert. |
-| Geometry with no SRID raises | An undeclared CRS must never be guessed. |
-| Non-areal geometry raises | A point/line layer must not be silently coerced. |
-| Re-running an identical file is a no-op | Prevents duplicate regions on a scheduled refresh. |
-| An unknown field name fails loudly | Otherwise the table fills with NULL codes and no error is raised. |
-| Field lookup is case-insensitive | DBF headers are case-insensitive and truncated to 10 chars. |
-| A malformed `--layer` is rejected | Table names are interpolated into SQL; this is the injection guard. |
-| A malformed `--kind` is rejected | Same class of input. |
-| `--dry-run` writes nothing | Lets an operator validate before a destructive-ish reload. |
-| Missing file / unsupported extension are reported | Clear operator errors. |
-
-Three GeoJSON fixtures live in `common/tests/fixtures/`. GeoJSON is used for the fixtures
-rather than shapefiles so the CRS cases are expressible in a readable, diffable file — and
-because the loader accepts both.
-
-To run:
+The CRS traps in §7.1–§7.4 are guarded at import time rather than by fixtures: the
+importer refuses geometry with no SRID, rejects a bbox that contradicts the declared
+CRS (the real `data.lacity.org` defect in §7.3), and treats an unknown field name as a
+hard error rather than filling the table with NULL codes.
 
 ```bash
 python -m pytest regions/tests
@@ -408,45 +394,34 @@ python -m pytest regions/tests
 
 ---
 
-## 8. Recommended next steps
+## 8. Where this landed
 
-**Phase 0 — settle the two questions that change the design (½ day)**
-1. Confirm the **`postgis` extension** exists on dev/preview/prod RDS.
-2. Decide the **initial region set**. The epic names ZIP, council district, SPA, and
-   supervisorial district. Recommend shipping **council district + SPA** first: both are
-   officially published, both are few features, and together they answer the client-interaction
-   question for the outreach admin.
+The phases below were the spike's plan. They are recorded in outline because the
+*reasons* still hold, but the work is done — see [README.md](README.md) for how to run
+it and [admin-integration.md](admin-integration.md) for the UI.
 
-**Phase 1 — productionise the loader (1–2 days).**
-3. Move the command's `CREATE TABLE` into a real Django model + migration:
-   `Region(kind, code, name, source_url, source_vintage, geom)` with
-   `MultiPolygonField(srid=4326)` (geometry, per §7.1) and `CreateExtension("postgis")`.
-4. Add a `DatasetImport` row per load for provenance, and `pghistory` on the header only.
-5. Wire it to the existing **presigned-S3 / `django-admin-async-upload`** flow: upload the zip,
-   store the key, enqueue the import. `/vsizip/` means no unpack step.
-6. Run it as a Celery task on a new **`imports` queue** (`celery_worker_config` is a map keyed
-   by queue, so this is a config-only Terraform change).
-
-**Phase 2 — the report (the epic's actual deliverable).**
-7. Aggregate `Note` → `Location.point` by region, **including the "Unassigned" bucket** (§5).
-8. Expose it via Strawberry. Note the GraphQL schema has **no geometry type today** — serving
-   boundaries needs `ST_AsGeoJSON`.
-9. Tabular view first; the map view needs the `MultiPolygon` frontend work below.
-
-**Phase 3 — map view (needs separate frontend work).**
-10. **Do not use teovilla's `Polygon` on web** — I read the source and it discards the result of
-    `mapMouseEventToMapEvent(...)`, so `onPress` never fires, and it drops `holes`
-    (uses `path`, not `paths`) so holes render filled. Its sibling `polyline.tsx` does it
-    correctly, confirming it's a bug. Use `@react-google-maps/api`'s batched `<Data>` layer on
-    web; teovilla renders children inside `<GoogleMap>`, so the escape hatch works.
-11. `react-native-maps`' `<Geojson>` maps **every feature to its own native view**, so it is fine
-    for 15 districts and wrong for thousands of tracts. Simplify with **`ST_CoverageSimplify`**
-    (not `ST_SimplifyPreserveTopology`, which does not preserve *shared* boundaries and produces
-    visible slivers between adjacent polygons).
-
-**Phase 4 — derive what's hand-keyed.**
-12. Backfill `Shelter.city_council_district` / `supervisorial_district` via
-    `ST_Covers(region.geom, shelter.geolocation::geometry)` and keep new rows fresh.
+1. **Loader.** A real `Region` model and migration, not a `CREATE TABLE`. `geometry`,
+   not `geography` (§7.1). The command fetches live from the publishers' ArcGIS REST
+   services rather than importing a vendored blob.
+2. **`CreateExtension("postgis")` — do not do this**, which is the one recommendation
+   below that the implementation deliberately reverses. The extension is already
+   present, and creating it needs `rds_superuser` which the app's IAM role is not.
+   See §7.5.
+3. **Provenance.** Each region records `source_url`, `source_vintage`,
+   `source_attribution` (the publisher's own `copyrightText`) and `source_item_id`, so
+   "is this authoritative, and how current is it?" is answerable in SQL. There is no
+   separate `DatasetImport` table — the region rows carry it.
+4. **Scale.** `RegionPiece` subdivides boundaries and `LocationRegion` resolves each
+   location once, so a report is an indexed join rather than a spatial scan.
+5. **The report.** Shipped: `interactionsByRegion`, `regionDimensions`, `regions` and
+   `interactionMap`, rendered by `LocationBreakdown` on the admin Reports page.
+6. **Map view.** Built on `@vis.gl/react-google-maps` and the `google.maps.Data` layer,
+   not teovilla — for the reason §8 gives: it drops `holes` on web, so enclaves would
+   render filled. `ST_SimplifyPreserveTopology` is used for display geometry;
+   `ST_CoverageSimplify` would preserve *shared* boundaries better and is worth
+   revisiting if adjacent-region slivers ever show at a higher zoom.
+7. **Deriving shelter city district / supervisorial district** from the boundaries is
+   still open.
 
 ---
 

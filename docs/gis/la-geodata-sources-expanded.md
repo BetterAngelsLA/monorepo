@@ -499,12 +499,31 @@ Coordinate pairs counted from full-precision GeoJSON (`geometryPrecision=6`); "s
 - **LA County Catchment Areas (156,924)**, **Combined High Hazard Zones (85,567)**, **CAL FIRE SRA (20,499)**, **FHSZ LRA (9,752)** — hazard/utility geographies; wrong semantic for client bucketing.
 - **LA City `Landbase_Information` Tracts (28,723)** — stacked vintages; **silently double-counts**.
 
-### 5.3 Performance implications (concrete)
+### 5.3 Performance implications (concrete) — **PROPOSAL, SUPERSEDED**
+
+> **The implementation did not follow this section's schema and CRS advice, and the
+> advice below is kept only as the reasoning that led there.** Two recommendations were
+> reversed on purpose:
+>
+> * **CRS.** This proposed storing in **EPSG:2229**. The shipped `Region` stores
+>   **EPSG:4326**, because boundaries have to join against `Location.point` (which is
+>   4326) without a per-query reprojection. See [README.md](README.md).
+> * **Schema.** This proposed one `geography_boundary` table per tier plus a
+>   materialized `client_interaction_region` map. The shipped design is `Region` +
+>   `RegionPiece` (subdivided lookup) + `LocationRegion` (the resolved assignment) —
+>   the same idea, but with the assignment stored per location and kind rather than in
+>   a separate materialized table.
+>
+> What still holds below: **simplify before ingest** (the shipped code uses
+> `ST_SimplifyPreserveTopology` at 0.0005° for a display copy, keeping the authoritative
+> geometry full-precision), **`ST_Subdivide` the heavy layers** (that is exactly what
+> `RegionPiece` is for), **join on a stable code and never a display name**, and the
+> `maxRecordCount` pagination constraint.
 
 - **CRS: no single CRS exists** — 2229 (145 layers), 3857 (117), 3310, 4269, 4326, 6414, 6424, 26910/26911. **Store in EPSG:2229** (CA State Plane Zone 5, US survey feet): the plurality of authoritative LA County layers ship in it, it's projected (so area math and GiST indexing are sound), and it's the native SRID for the County's whole `Political_Boundaries` service. Reproject the 3857 City/LAHSA layers, the 3310 statewide layers (CalEnviroScreen 5.0, FHSZ LRA, CDT county/city boundaries, CEC DAC), the 6414 CEC DAC variant, and 4269 TIGER files on load.
 - **`maxRecordCount` throttling:** most services cap at 1000–2000 features/request. Pulling 91,626 blocks or 156,924 catchment areas over REST needs `resultOffset`/`resultRecordCount` pagination — **or better, use bulk download** where offered. LA County AGOL items expose GPKG/FileGDB/GeoJSON via `opendata.arcgis.com/api/download/v1/items/{id}/geoPackage` (etc.). **TIGERweb allows `maxRecordCount = 100000`** and LA County `Demographics` allows **3000** — the two most generous services.
 - **Simplification is the single biggest win.** `maxAllowableOffset=0.0001` cut Supervisorial Districts 3.4 MB → 137 KB (**25×**) and Community Plan Areas 1.26 MB → 89 KB (**14×**). Aggregation boundaries are never rendered at full precision — **simplify to ~10 m before ingest** and keep a full-precision copy only if legal boundary accuracy is required.
-- **`ST_Subdivide` these:** County Supervisorial (148k vertices / 5 features), ZIP parcel-accurate (426k / 313), CalEnviroScreen 5.0 (774k / 9,106), City Boundaries (325k / 345), CSA (297k / 374), HUD CoC (suspected very heavy). A single 148k-vertex polygon makes `ST_Contains` slow; subdividing to <256-vertex pieces + a GiST index typically takes point-in-polygon from ~100 ms to sub-millisecond.
+- **`ST_Subdivide` these:** County Supervisorial (148k vertices / 5 features), ZIP parcel-accurate (426k / 311), CalEnviroScreen 5.0 (774k / 9,106), City Boundaries (325k / 345), CSA (297k / 374), HUD CoC (suspected very heavy). A single 148k-vertex polygon makes `ST_Contains` slow; subdividing to <256-vertex pieces + a GiST index typically takes point-in-polygon from ~100 ms to sub-millisecond.
 - **Recommended schema:** one `geography_boundary` table per tier — `(id, geoid, district_code, name, tier, geom geometry(MultiPolygon, 2229))` with a GiST index — plus a materialized `client_interaction_region` mapping table holding resolved FK ids. Resolve point→region **once at interaction-insert time**; then all rollups are indexed integer joins.
 - **Always join on a stable code, never a display name.** LA City Council `NAME` = councilmember name (changes each election); use `District`. Prefer `GEOID` for Census geography.
 - **Watch the CRS mix on LA City:** `maps.lacity.org` serves the same `Boundaries` layers in EPSG:3857, while LADCP's ArcGIS Online services (`Community_Plan_Areas`, `Area_Planning_Commissions`, `LA_Times_Neighborhoods`, BIDs) are EPSG:2229 — the *same* city's geographies come in two CRSs depending on which host you pull from.

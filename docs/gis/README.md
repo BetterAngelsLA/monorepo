@@ -69,6 +69,23 @@ python manage.py import_regions --dry-run             # validate, write nothing
 Verified live: **431 regions** — 311 postal ZIP, 88 city, 15 council district, 8 SPA,
 5 supervisorial, 4 CoC.
 
+### Seeing it
+
+The importer populates the backend. To look at the data, the admin app renders a
+choropleth, a pins view and a density grid on the Reports page:
+
+1. Start the backend and the admin app, then sign in and open **`/reports`**.
+2. The panel sits under the existing charts and follows their date range.
+3. It needs a Google Maps key. The admin app falls back to shelter-web's
+   `VITE_SHELTER_GOOGLE_MAPS_API_KEY`; without any key the panel explains itself
+   rather than breaking the page.
+4. Browsing `localhost` versus `127.0.0.1` matters in local dev: the session cookie is
+   host-only, so the API host must match the host in your address bar. `config.ts`
+   handles this for you in development.
+
+See `admin-integration.md` for the GraphQL surface, the permission gates, and the
+codegen build-order gotcha.
+
 ### Where each dimension comes from, and whether that is the owner
 
 Every layer records the publisher's own attribution (`copyrightText`) at import, so
@@ -100,7 +117,7 @@ Two deliberate source choices worth knowing:
   deriving it is self-correcting when the county annexes a pocket.
 
 GraphQL: `interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes)`,
-plus `regionDimensions` (what is loaded) and `regions(dimension, codes)` (boundaries as
+plus `regionDimensions` (what is loaded), `regions(dimension, codes)` (boundaries as
 GeoJSON for the map).
 
 **Authorization differs deliberately by query.** `interactionsByRegion` carries client data
@@ -123,18 +140,13 @@ still served side by side.
 
 ## Open questions
 
-1. ~~Does the `postgis` extension exist on RDS?~~ **Settled, and the answer is that we must
-   not create it.** PostGIS is already present: `clients`, `common`, `hmis` and `shelters`
-   each declare geometry fields in their `0001_initial` migrations, which is impossible
-   without it. The `regions` migration therefore **deliberately does not** include
-   `CreateExtension("postgis")` — PostGIS is not a trusted extension, so creating it needs
-   `rds_superuser` (which the app's IAM role is not), and its reverse migration compiles to
-   `DROP EXTENSION IF EXISTS postgis`, which would try to drop it out from under four other
-   apps' columns.
-2. Which **region set** ships first? Council district + SPA is the recommendation.
-3. **LACDMH service areas have no public polygon layer** — needs a decision (extract from
+(The `postgis`-on-RDS question is settled: the migration deliberately does not create
+the extension, and says why. Not repeated here.)
+
+1. Which **region set** ships first? Council district + SPA is the recommendation.
+2. **LACDMH service areas have no public polygon layer** — needs a decision (extract from
    their web app, ask them, or adopt SPAs as the proxy).
-4. **The report UI is not in this PR.** The GraphQL surface is complete; the antd screens
-   still need building against it. Note `graphql-codegen` currently fails in this
-   environment on an ESM/CJS resolution error in `near-operation-file-preset`, which is
-   unrelated to these changes but blocks regenerating typed documents.
+3. **The Google Maps key is shared with shelter-web.** The admin map falls back to
+   `VITE_SHELTER_GOOGLE_MAPS_API_KEY` so evaluating this needs no new secret. It wants its
+   own key before production, since sharing one also shares its quotas and referrer
+   restrictions.

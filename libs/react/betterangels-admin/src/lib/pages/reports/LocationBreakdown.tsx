@@ -129,9 +129,19 @@ export function LocationBreakdown({
     [rows],
   );
   const unassigned = useMemo(() => rows.filter((r) => r.isUnassigned), [rows]);
+  // Resolved above the JSX rather than inline: the styleguide asks for `if`/`else`
+  // over a ternary whose branch is a call, and `??` rather than `||` — an empty name
+  // is a legitimate value the importer can produce, and `||` would silently swap in
+  // the code instead.
+  const filteredToName = useMemo(() => {
+    if (!selectedCode) {
+      return undefined;
+    }
+    const match = assigned.find((row) => row.code === selectedCode);
+    return match === undefined ? selectedCode : match.name || selectedCode;
+  }, [assigned, selectedCode]);
   // Named regions with interactions, which is what the drill-down offers. The
   // unassigned buckets are excluded: they have no code to filter by.
-  const named = useMemo(() => assigned, [assigned]);
 
   const dimensionName = DIMENSION_LABELS[dimension] ?? dimension;
 
@@ -201,7 +211,7 @@ export function LocationBreakdown({
           onChange={(value) => setSelectedCode(value)}
           style={{ minWidth: 220 }}
           placeholder={`All ${dimensionName.toLowerCase()}s`}
-          options={named.map((row) => ({
+          options={assigned.map((row) => ({
             value: row.code,
             label: `${row.name || row.code} (${row.count.toLocaleString()})`,
           }))}
@@ -229,11 +239,7 @@ export function LocationBreakdown({
             density={density}
             truncated={truncated}
             hasMapsKey={hasMapsKey}
-            filteredTo={
-              selectedCode
-                ? (named.find((r) => r.code === selectedCode)?.name || selectedCode)
-                : undefined
-            }
+            filteredTo={filteredToName}
           />
         </div>
       )}
