@@ -295,6 +295,75 @@ describe('ShelterReportPrint', () => {
     });
   });
 
+  describe('repagination when the metric selection changes', () => {
+    it('re-measures a section that shifts position instead of reusing its neighbour’s height', () => {
+      // Heights are keyed by section rather than by index, so deselecting the
+      // counts card cannot hand its much smaller height to the chart that
+      // shifts up into its place.
+      const { rerender } = render(
+        <ShelterReportPrint
+          {...baseProps(['reservation_metrics', 'daily_bed_status_metrics'])}
+          bedCounts={COUNTS}
+        />,
+      );
+
+      expect(pageHasText('Bed Summary')).toBe(true);
+
+      rerender(
+        <ShelterReportPrint
+          {...baseProps(['reservation_metrics', 'daily_bed_status_metrics'])}
+        />,
+      );
+
+      expect(pageHasText('Bed Summary')).toBe(false);
+      // The chart keeps the full page its own 610px height requires.
+      expect(pagesWithTestId('bed-status-chart')).toBe(1);
+      expect(reportPages()).toHaveLength(1);
+      expect(footers()).toEqual(['1 of 1']);
+    });
+
+    it('keeps every section on a page after the selection shrinks and grows again', () => {
+      const { rerender } = render(
+        <ShelterReportPrint
+          {...baseProps(ALL_METRICS)}
+          bedCounts={COUNTS}
+          roomCounts={COUNTS}
+        />,
+      );
+      const widePageCount = reportPages().length;
+
+      rerender(<ShelterReportPrint {...baseProps(['reservation_metrics'])} />);
+      expect(reportPages()).toHaveLength(1);
+
+      rerender(
+        <ShelterReportPrint
+          {...baseProps(ALL_METRICS)}
+          bedCounts={COUNTS}
+          roomCounts={COUNTS}
+        />,
+      );
+
+      // Back to the same layout, and no unit was dropped along the way.
+      expect(reportPages()).toHaveLength(widePageCount);
+      const placed = reportPages().flatMap((page) =>
+        Array.from(page.querySelectorAll('[data-report-unit-in-page]')),
+      );
+      const keys = placed.map((el) =>
+        el.getAttribute('data-report-unit-in-page'),
+      );
+      expect(new Set(keys).size).toBe(keys.length);
+      expect(keys).toEqual(
+        expect.arrayContaining([
+          'bed-counts',
+          'room-counts',
+          'stats',
+          'bed-status',
+          'daily-occupancy',
+        ]),
+      );
+    });
+  });
+
   describe('overflow handling', () => {
     it('adds pages instead of clipping when the content is taller than one page', () => {
       render(

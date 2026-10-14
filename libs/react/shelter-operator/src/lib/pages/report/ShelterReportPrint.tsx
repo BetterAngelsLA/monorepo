@@ -338,12 +338,15 @@ export function ShelterReportPrint({
   ]);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const [heights, setHeights] = useState<number[]>([]);
+  // Keyed by unit key, never by position: deselecting a metric shifts every
+  // later section down an index, and a positional list would then hand a
+  // chart the height of whatever used to sit at that index.
+  const [heights, setHeights] = useState<Record<string, number>>({});
 
   // Only the units still missing a measurement are rendered off-canvas, so a
   // chart is never mounted twice once the layout has settled.
   const pendingKeys = units
-    .filter((_, i) => heights[i] === undefined)
+    .filter((unit) => heights[unit.key] === undefined)
     .map((unit) => unit.key);
 
   // Measure each pending unit, then pack pages from the measurements. Runs
@@ -358,32 +361,33 @@ export function ShelterReportPrint({
     );
     if (nodes.length === 0) return;
 
-    const byKey = new Map(
-      nodes.map((node) => [
-        node.getAttribute('data-report-unit') ?? '',
-        node.getBoundingClientRect().height,
-      ]),
-    );
-
     setHeights((prev) => {
-      const next = units.map((unit, i) => byKey.get(unit.key) ?? prev[i]);
-      // Keep waiting until every unit has been measured once.
-      if (next.some((h) => h === undefined)) return prev;
+      let changed = false;
+      const next = { ...prev };
 
-      const settled = next as number[];
-      return prev.length === settled.length &&
-        prev.every((h, i) => Math.abs(h - settled[i]) < 0.5)
-        ? prev
-        : settled;
+      for (const node of nodes) {
+        const key = node.getAttribute('data-report-unit');
+        if (!key) continue;
+
+        const height = node.getBoundingClientRect().height;
+        if (prev[key] === undefined || Math.abs(prev[key] - height) >= 0.5) {
+          next[key] = height;
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
     });
   }, [units]);
 
   const pages = useMemo(() => {
     if (units.length === 0) return [] as string[][];
-    // Until measurements land, assume every unit needs its own page: that
+    // Until a unit's measurement lands, assume it needs a whole page: that
     // over-paginates rather than dropping content, and the next layout pass
     // settles it before any capture happens.
-    const measured = units.map((_, i) => heights[i] ?? PAGE_CONTENT_HEIGHT);
+    const measured = units.map(
+      (unit) => heights[unit.key] ?? PAGE_CONTENT_HEIGHT,
+    );
 
     const packed: string[][] = [];
     let current: string[] = [];
