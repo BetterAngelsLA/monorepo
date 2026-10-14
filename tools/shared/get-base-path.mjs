@@ -4,7 +4,8 @@ import { execSync } from 'child_process';
  * Computes the base path for the current context.
  *
  * - Dev server → "/"
- * - VITE_APP_BASE_PATH env (explicit override) → use as-is
+ * - VITE_APP_BASE_PATH env (explicit override) → use as-is (it must start with
+ *   `/`; without that, web asset URLs come out relative and the page is blank)
  * - Production configuration → "/"
  * - CI: BRANCH_NAME env → "/branches/{branch}"
  * - Git fallback → "/branches/{branch}"
