@@ -1,4 +1,4 @@
-import AntDesign from '@react-native-vector-icons/ant-design';
+import { ChatBubbleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   ActionModal,
@@ -41,7 +41,7 @@ export function FeedbackModalButton(props: TProps) {
           style,
         ]}
       >
-        <AntDesign name="comment" size={24} color={Colors.PRIMARY_EXTRA_DARK} />
+        <ChatBubbleIcon size={24} color={Colors.PRIMARY_EXTRA_DARK} />
         <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>Feedback</TextRegular>
       </Pressable>
 

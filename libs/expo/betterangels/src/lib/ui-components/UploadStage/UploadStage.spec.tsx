@@ -27,11 +27,6 @@ vi.mock('expo-crypto', () => ({
   randomUUID: () => 'session-generated',
 }));
 
-vi.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
-}));
-
 // The full providers index drags in expo-router and other native modules;
 // scope it to the upload-progress surface the stage actually uses.
 vi.mock('../../providers', async () => {
@@ -146,11 +141,11 @@ function failItem(sessionId: string, refId: string) {
   });
 }
 
-function renderStage(
+async function renderStage(
   resumeSessionIds: string[],
   closeModal: () => void = vi.fn(),
 ) {
-  return render(
+  return await render(
     <UploadStage closeModal={closeModal} resumeSessionIds={resumeSessionIds} />,
   );
 }
@@ -165,14 +160,14 @@ describe('UploadStage', () => {
     resetUploadProgressAtoms();
   });
 
-  it('renders the resumed session items with the uploading chrome', () => {
+  it('renders the resumed session items with the uploading chrome', async () => {
     startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-a'],
       clientId: 'client-1',
       cancellable: true,
     });
 
-    const { getByText, queryByText } = renderStage(['s1']);
+    const { getByText, queryByText } = await renderStage(['s1']);
 
     expect(getByText('a.pdf')).toBeTruthy();
     expect(getByText('Uploading…')).toBeTruthy();
@@ -180,7 +175,7 @@ describe('UploadStage', () => {
     expect(queryByText('Cancel upload')).toBeNull();
   });
 
-  it('previews the actual local file for items with uri and mime type', () => {
+  it('previews the actual local file for items with uri and mime type', async () => {
     startUploadSession('s1', ['photo.jpg'], {
       refIds: ['ref-a'],
       clientId: 'client-1',
@@ -188,26 +183,26 @@ describe('UploadStage', () => {
       files: [{ uri: 'file://photo.jpg', type: 'image/jpeg' }],
     });
 
-    renderStage(['s1']);
+    await renderStage(['s1']);
 
     expect(mocks.rows).toHaveLength(1);
     expect(mocks.rows[0].thumbnail).toBeTruthy();
   });
 
-  it('falls back to the default icon when no preview metadata exists', () => {
+  it('falls back to the default icon when no preview metadata exists', async () => {
     startUploadSession('s1', ['scan.pdf'], {
       refIds: ['ref-a'],
       clientId: 'client-1',
       cancellable: true,
     });
 
-    renderStage(['s1']);
+    await renderStage(['s1']);
 
     expect(mocks.rows).toHaveLength(1);
     expect(mocks.rows[0].thumbnail).toBeUndefined();
   });
 
-  it('shows Done and stays open until the user closes it', () => {
+  it('shows Done and stays open until the user closes it', async () => {
     startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-a'],
       clientId: 'client-1',
@@ -215,9 +210,9 @@ describe('UploadStage', () => {
     });
     const closeModal = vi.fn();
 
-    const { getByText, queryByText } = renderStage(['s1'], closeModal);
+    const { getByText, queryByText } = await renderStage(['s1'], closeModal);
 
-    act(() => {
+    await act(async () => {
       completeUploadSession('s1');
     });
 
@@ -227,7 +222,7 @@ describe('UploadStage', () => {
     expect(closeModal).not.toHaveBeenCalled();
   });
 
-  it('shows a failed state with Retry and no footer action', () => {
+  it('shows a failed state with Retry and no footer action', async () => {
     startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-a'],
       clientId: 'client-1',
@@ -236,9 +231,9 @@ describe('UploadStage', () => {
     });
     const closeModal = vi.fn();
 
-    const { getByText, queryByText } = renderStage(['s1'], closeModal);
+    const { getByText, queryByText } = await renderStage(['s1'], closeModal);
 
-    act(() => {
+    await act(async () => {
       failUploadSession('s1', 'boom');
     });
 
@@ -248,7 +243,7 @@ describe('UploadStage', () => {
     expect(closeModal).not.toHaveBeenCalled();
   });
 
-  it('closes when every file is cancelled individually', () => {
+  it('closes when every file is cancelled individually', async () => {
     startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-a'],
       clientId: 'client-1',
@@ -256,17 +251,17 @@ describe('UploadStage', () => {
     });
     const closeModal = vi.fn();
 
-    const { getByLabelText } = renderStage(['s1'], closeModal);
+    const { getByLabelText } = await renderStage(['s1'], closeModal);
 
-    act(() => {
-      fireEvent.press(getByLabelText('cancel-a.pdf'));
+    await act(async () => {
+      await fireEvent.press(getByLabelText('cancel-a.pdf'));
     });
 
     expect(store.get(uploadSessionsAtom)).toHaveLength(0);
     expect(closeModal).toHaveBeenCalled();
   });
 
-  it('retries a failed file in place, keeping one session', () => {
+  it('retries a failed file in place, keeping one session', async () => {
     const onRetryItems = vi.fn();
 
     startUploadSession('s1', ['a.pdf', 'b.pdf'], {
@@ -282,10 +277,10 @@ describe('UploadStage', () => {
     });
     failItem('s1', 'ref-a');
 
-    const { getByLabelText } = renderStage(['s1']);
+    const { getByLabelText } = await renderStage(['s1']);
 
-    act(() => {
-      fireEvent.press(getByLabelText('retry-a.pdf'));
+    await act(async () => {
+      await fireEvent.press(getByLabelText('retry-a.pdf'));
     });
 
     // No replacement session: the row the user tapped is the row that resets.
@@ -298,7 +293,7 @@ describe('UploadStage', () => {
     expect(onRetryItems).toHaveBeenCalledWith(['ref-a']);
   });
 
-  it('retries every failed file in one run', () => {
+  it('retries every failed file in one run', async () => {
     const onRetryItems = vi.fn();
 
     startUploadSession('s1', ['a.pdf', 'b.pdf', 'c.pdf'], {
@@ -315,10 +310,10 @@ describe('UploadStage', () => {
     failItem('s1', 'ref-a');
     failItem('s1', 'ref-c');
 
-    const { getByLabelText } = renderStage(['s1']);
+    const { getByLabelText } = await renderStage(['s1']);
 
-    act(() => {
-      fireEvent.press(getByLabelText('Retry all 2 failed files'));
+    await act(async () => {
+      await fireEvent.press(getByLabelText('Retry all 2 failed files'));
     });
 
     // One call carrying both files, not one call per file — each call is a
@@ -327,7 +322,7 @@ describe('UploadStage', () => {
     expect(onRetryItems).toHaveBeenCalledWith(['ref-a', 'ref-c']);
   });
 
-  it('offers no bulk retry when only one file failed', () => {
+  it('offers no bulk retry when only one file failed', async () => {
     startUploadSession('s1', ['a.pdf', 'b.pdf'], {
       refIds: ['ref-a', 'ref-b'],
       clientId: 'client-1',
@@ -336,13 +331,13 @@ describe('UploadStage', () => {
     });
     failItem('s1', 'ref-a');
 
-    const { queryByLabelText } = renderStage(['s1']);
+    const { queryByLabelText } = await renderStage(['s1']);
 
     expect(queryByLabelText('Retry all 1 failed files')).toBeNull();
     expect(queryByLabelText('retry-a.pdf')).toBeTruthy();
   });
 
-  it('shows every resumed session, not just the first one', () => {
+  it('shows every resumed session, not just the first one', async () => {
     startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-a'],
       clientId: 'client-1',
@@ -352,7 +347,7 @@ describe('UploadStage', () => {
       clientId: 'client-2',
     });
 
-    const { getByText } = renderStage(['s1', 's2']);
+    const { getByText } = await renderStage(['s1', 's2']);
 
     // Concurrent uploads used to be scoped away by the first session's
     // group id, so the bar counted files this screen never showed.
@@ -360,7 +355,7 @@ describe('UploadStage', () => {
     expect(getByText('b.pdf')).toBeTruthy();
   });
 
-  it('dismisses failed files and closes when nothing is left', () => {
+  it('dismisses failed files and closes when nothing is left', async () => {
     startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-a'],
       clientId: 'client-1',
@@ -369,14 +364,14 @@ describe('UploadStage', () => {
     });
     const closeModal = vi.fn();
 
-    const { getByLabelText } = renderStage(['s1'], closeModal);
+    const { getByLabelText } = await renderStage(['s1'], closeModal);
 
-    act(() => {
+    await act(async () => {
       failUploadSession('s1', 'boom');
     });
 
-    act(() => {
-      fireEvent.press(getByLabelText('Dismiss failed'));
+    await act(async () => {
+      await fireEvent.press(getByLabelText('Dismiss failed'));
     });
 
     // The only escape from a repeatedly-failing upload.
@@ -384,10 +379,10 @@ describe('UploadStage', () => {
     expect(closeModal).toHaveBeenCalled();
   });
 
-  it('closes immediately when the resumed sessions no longer exist', () => {
+  it('closes immediately when the resumed sessions no longer exist', async () => {
     const closeModal = vi.fn();
 
-    renderStage(['gone'], closeModal);
+    await renderStage(['gone'], closeModal);
 
     expect(closeModal).toHaveBeenCalled();
   });

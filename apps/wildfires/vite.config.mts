@@ -14,13 +14,13 @@ import {
 
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
+const WORKSPACE_ROOT = path.resolve(import.meta.dirname, '../..');
 
 export default defineConfig(({ mode }) => {
-  const isDev = mode === 'development';
   const basePath = getBranchBasePath();
   return {
     base: basePath,
-    root: __dirname,
+    root: import.meta.dirname,
     cacheDir: '../../node_modules/.vite/apps/wildfires',
 
     define: {
@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: SERVER_PORT,
       host: 'localhost',
+      fs: { allow: [WORKSPACE_ROOT] },
     },
 
     preview: {
@@ -46,14 +47,16 @@ export default defineConfig(({ mode }) => {
     ],
 
     resolve: {
-      alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')),
+      alias: monorepoTsconfigAliases(
+        path.resolve(import.meta.dirname, '../..'),
+      ),
     },
 
     css: {
       postcss: {
         plugins: [
           tailwindcss({
-            base: path.resolve(__dirname, '../..'),
+            base: path.resolve(import.meta.dirname, '../..'),
             optimize: mode === 'development' ? { minify: false } : undefined,
           }),
         ],

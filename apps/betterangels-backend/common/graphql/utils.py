@@ -1,8 +1,9 @@
 from typing import Any, TypeVar
 
-from common.utils import get_or_none
 from django.core.exceptions import PermissionDenied
 from django.db.models import Model, QuerySet
+
+from common.utils import get_or_none
 
 T = TypeVar("T", bound=Model)
 

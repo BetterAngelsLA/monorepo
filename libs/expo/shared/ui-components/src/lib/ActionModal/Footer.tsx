@@ -33,7 +33,7 @@ export default function ActionModalFooter({
         gap: Spacings.xs,
       }}
     >
-      {secondaryButtonTitle && (
+      {!!secondaryButtonTitle && (
         <View
           style={{
             alignItems: 'center',

@@ -19,16 +19,17 @@ These tests pin the contract:
 from datetime import datetime
 from typing import Any
 
-from accounts.groups import ORG_ADMIN
-from accounts.models import Grant, PermissionGroup, User
-from accounts.role_manager import OrgRoleManager
-from accounts.services import sync_roles
-from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.utils import timezone
 from model_bakery import baker
-from notes.models import Note
 from rest_framework.test import APIClient
+
+from accounts.groups import ORG_ADMIN
+from accounts.models import PermissionGroup, User
+from accounts.role_manager import OrgRoleManager
+from accounts.services import sync_roles
+from common.tests.utils import GraphQLBaseTestCase, make_legacy_only_holder
+from notes.models import Note
 
 REPORT_SUMMARY_QUERY = """
     query ReportSummary($organizationId: ID!, $startDate: Date, $endDate: Date) {
@@ -180,17 +181,22 @@ class ReportGrantAuthorityDeniedTestCase(ReportSummaryGraphQLGrantMixin, ReportE
         sync_roles()
 
     def test_legacy_only_org_admin_is_denied(self) -> None:
-        """A legacy PermissionGroup ORG_ADMIN with no Grant no longer reads reports."""
-        legacy_admin = baker.make(User)
-        self.org_1.add_user(legacy_admin)
-        group = PermissionGroup.objects.get(organization=self.org_1, template__name=ORG_ADMIN.name)
-        group.user_set.add(legacy_admin)
+        """A legacy PermissionGroup ORG_ADMIN with no Grant no longer reads reports.
+
+        Reconcile retires org-admin rows (ADR 0001 teardown) — this simulates a
+        stale leftover row; even if one exists it confers no report authority.
+        """
+        legacy_admin = make_legacy_only_holder(
+            user=baker.make(User), organization=self.org_1, template_name=ORG_ADMIN.name
+        )
         # Pin the premise: the denial below only proves revocation if the legacy
-        # group actually carries the permission it no longer grants.
+        # group actually carries the permission it no longer grants.  Reconcile
+        # no longer provisions org-admin rows (teardown), so seed the leftover
+        # row's permission directly to simulate the pre-cutover state.
+        group = PermissionGroup.objects.get(organization=self.org_1, template__name=ORG_ADMIN.name)
+        permission = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
+        group.permissions.add(permission)
         self.assertTrue(group.permissions.filter(content_type__app_label="reports", codename="view_reports").exists())
-        # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
-        # legacy-only holder has none — drop the mirror to model that state.
-        Grant.objects.filter(principal_user=legacy_admin).delete()
         self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
 
         self._assert_denied(self._read(legacy_admin, self.org_1))

@@ -14,10 +14,12 @@ import random
 from datetime import timedelta
 from typing import Any
 
-from accounts.models import User
-from clients.models import ClientProfile
 from django.core.management.base import BaseCommand, CommandParser
 from django.utils import timezone
+from organizations.models import Organization
+
+from accounts.models import User
+from clients.models import ClientProfile
 from notes.enums import ServiceRequestStatusEnum
 from notes.models import (
     Note,
@@ -25,7 +27,6 @@ from notes.models import (
     OrganizationServiceCategory,
     ServiceRequest,
 )
-from organizations.models import Organization
 from teams.models import Team
 
 PURPOSES = [

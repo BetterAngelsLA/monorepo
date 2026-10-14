@@ -1,0 +1,70 @@
+import { useApiConfig } from '@monorepo/ba-platform';
+import { useDebounce } from '@monorepo/react/shared';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import {
+  createApiClientHmisProd,
+  ErrorHmisProd,
+  HMIS_PROD_QUERY_KEY_ROOT,
+  resolveHmisProdBaseUrl,
+  type HmisProdRequestDebugInfo,
+} from '../api';
+
+const SEARCH_DEBOUNCE_MS = 200;
+
+export const getSearchClientsHmisProdQueryKey = (
+  baseUrl: string,
+  search: string,
+) => [HMIS_PROD_QUERY_KEY_ROOT, 'searchClients', baseUrl, search] as const;
+
+/**
+ * Search clients directly against HMIS (Clarity `/api1/clients/long`).
+ *
+ * - Debounces the search term (200 ms).
+ * - Disabled until the term is at least 2 characters.
+ * - Picks the HMIS host from the BA backend the app is actually talking to
+ *   (`useApiConfig().apiUrl`) — local and dev backends authenticate against
+ *   the sandbox HMIS, only the prod backend uses LA Clarity. This matches the
+ *   instance the logged-in user's `auth_token` belongs to; see
+ *   `resolveHmisProdBaseUrl`.
+ *
+ * Returns the query result with `data` unwrapped to the parsed response, plus
+ * `debugInfo` (full URL, status, auth context and raw response body) for the
+ * latest result or error — used by the debug copy button; `null` until there
+ * is something to report.
+ */
+export function useSearchClientsHmisProd(search: string) {
+  const { apiUrl: baEnvApiUrl } = useApiConfig();
+  const baseUrl = resolveHmisProdBaseUrl(baEnvApiUrl);
+  const debouncedSearch = useDebounce(search.trim(), SEARCH_DEBOUNCE_MS);
+
+  const apiClient = useMemo(() => createApiClientHmisProd(baseUrl), [baseUrl]);
+
+  const query = useQuery({
+    queryKey: getSearchClientsHmisProdQueryKey(baseUrl, debouncedSearch),
+    queryFn: () =>
+      apiClient.searchClients({
+        search: debouncedSearch,
+      }),
+    enabled: debouncedSearch.length > 1,
+    // Default retry (3x, ~7s backoff) only delays what are deterministic
+    // failures here — a missing/expired HMIS session or Clarity's CSRF guard —
+    // and sends repeat failed POSTs to Clarity. To retry, pull-to-refresh or
+    // change the search term (both create a fresh request).
+    retry: false,
+  });
+
+  // Prefer the error payload over any stale success data, so a failed
+  // request is what the debug button offers to copy.
+  const errorDebugInfo =
+    query.error instanceof ErrorHmisProd ? query.error.debugInfo : null;
+
+  const debugInfo: HmisProdRequestDebugInfo | null =
+    errorDebugInfo ?? query.data?.debugInfo ?? null;
+
+  return {
+    ...query,
+    data: query.data?.data,
+    debugInfo,
+  };
+}

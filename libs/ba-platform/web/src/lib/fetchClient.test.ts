@@ -75,6 +75,33 @@ describe('createWebFetchClient', () => {
     expect(headers.get('x-csrftoken')).toBe('csrf-abc');
   });
 
+  it('reads the namespaced token cookie behind a dev-proxy target', async () => {
+    // The proxy keeps each target's cookies apart, so the token for
+    // `/__api/demo` is `demo_csrftoken`, not `csrftoken`.
+    document.cookie = 'demo_csrftoken=csrf-demo; Path=/';
+
+    const fetchClient = createWebFetchClient('http://localhost:8081/__api/demo');
+    await fetchClient('/__api/demo/graphql', { method: 'POST' });
+
+    const fetchMock = global.fetch as vi.Mock;
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(new Headers(init.headers).get('x-csrftoken')).toBe('csrf-demo');
+  });
+
+  it('bootstraps the token under the target prefix', async () => {
+    const fetchClient = createWebFetchClient('http://localhost:8081/__api/demo');
+    await fetchClient('/__api/demo/graphql', { method: 'POST' });
+
+    // No token cookie to start with, so the interceptor mints one by GETting the
+    // login path — which has to stay inside the target, or it 404s through the
+    // dev server.
+    const fetchMock = global.fetch as vi.Mock;
+    const urls = fetchMock.mock.calls.map(([url]) => String(url));
+
+    expect(urls.some((u) => u.startsWith('/__api/demo/admin/login/'))).toBe(true);
+  });
+
   it('preserves existing custom headers', async () => {
     document.cookie = 'csrftoken=csrf-abc; Path=/';
 

@@ -6,9 +6,9 @@ and resolves them to the corresponding strawberry enum type.
 """
 
 import strawberry_django
-from common.graphql.types import PhoneNumberScalar
 from strawberry import ID, Maybe, auto
 
+from common.graphql.types import PhoneNumberScalar
 from shelters import models
 
 

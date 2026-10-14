@@ -8,7 +8,6 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#apis--serializers
 
 from typing import Any, cast
 
-from accounts.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from rest_framework import serializers
@@ -17,6 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
+from accounts.models import User
 from shelters.models import Shelter
 from shelters.selectors import shelter_get, shelter_metrics_window, shelter_occupancy_metrics
 from shelters.services.metrics_export import (

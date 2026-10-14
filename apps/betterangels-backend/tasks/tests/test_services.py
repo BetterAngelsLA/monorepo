@@ -1,10 +1,11 @@
 """Tests for task services — what the API rejects before it reaches Postgres."""
 
-from accounts.models import PermissionGroup, User
-from accounts.tests.baker_recipes import organization_recipe
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.models import PermissionGroup, User
+from accounts.tests.baker_recipes import organization_recipe
 from tasks.models import Task
 from tasks.services import task_create, task_update
 from teams.models import Team

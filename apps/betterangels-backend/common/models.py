@@ -1,9 +1,6 @@
 import json
 from typing import Any, ClassVar, Dict, Iterator, Optional, cast
 
-from common.enums import AttachmentType
-from common.files.utils import get_unique_file_path
-from common.permissions.utils import PermissionSet
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -15,6 +12,10 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
 
+from common.enums import AttachmentType
+from common.files.utils import get_unique_file_path
+from common.permissions.utils import PermissionSet
+
 
 class BaseModel(models.Model):
     class perms(PermissionSet):
@@ -25,6 +26,24 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+# Write tiers (RFC 0002 §Precondition / ADR 0001 §2.5).  ``can_obj`` consults a
+# model's write scope independently of ``org_via`` (its read scope).  ORG is the
+# derived default for any org-anchored model (``org_via`` not ``None``) and
+# needs no declaration; these constants are the explicit declarations a model
+# makes when the derived default is not what its writes need.
+WRITE_SHARED = "shared"
+"""Platform-shared write tier: any holder of the permission anywhere may act.
+
+"""
+
+WRITE_OBJECT = "object"
+"""Object-grant write tier: only an object ``Grant`` (or the global tier) may act.
+
+Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
+``permissions.E007`` refuses it until then.
+"""
 
 
 class OrgScoped(models.Model):
@@ -44,6 +63,17 @@ class OrgScoped(models.Model):
 
     org_via: ClassVar[tuple[str, ...] | None] = ()
     _org_paths: ClassVar[tuple[str, ...] | None] = None
+
+    write_tier: ClassVar[str | None] = None
+    """Write scope for :func:`common.permissions.selectors.can_obj` (RFC 0002).
+
+    ``None`` derives the safe default: ORG for an org-anchored model (the org
+    filter, unchanged from the pre-tier contract) and fail-closed for a
+    platform-shared model (``org_via = None``) — only the global tier may act
+    until the model declares a tier.  Declare :data:`WRITE_SHARED` on a
+    platform-shared model whose writes are shared-by-role-anywhere
+    (``ClientProfile`` today).
+    """
 
     class Meta:
         abstract = True

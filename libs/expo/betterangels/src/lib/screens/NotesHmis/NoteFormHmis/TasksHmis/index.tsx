@@ -64,7 +64,7 @@ export default function TasksHmis(props: TasksHmisProps) {
   return (
     <FieldCard
       mb="xs"
-      actionName=""
+      actionName={null}
       title="Follow-Up Tasks"
       setExpanded={() => {
         // If the list is empty, clicking the header/card opens the Add Modal

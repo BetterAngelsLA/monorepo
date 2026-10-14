@@ -1,3 +1,4 @@
+export * from './useBaPrivatePermissions';
 export * from './useBed';
 export * from './useBeds';
 export * from './useCloneBed';

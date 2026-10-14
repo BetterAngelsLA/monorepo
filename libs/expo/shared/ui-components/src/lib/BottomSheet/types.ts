@@ -20,6 +20,7 @@
 import { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { ComponentType, ReactNode } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
+import type { BottomSheetTopBarProps } from './core/BottomSheetTopBar';
 
 export type StackBehavior = BottomSheetModalProps['stackBehavior'];
 
@@ -29,15 +30,6 @@ export type BottomSheetProviderConfig = {
    * Can be overridden via showBottomSheet().
    */
   defaultOptions?: BottomSheetOptions;
-
-  /**
-   * When enabled, the provider renders a single shared backdrop
-   * instead of one backdrop per sheet.
-   *
-   * This is useful when using `FullWindowOverlay`, where multiple
-   * Gorhom backdrops can race and render above sheets.
-   */
-  enableSharedBackdrop?: boolean;
 
   /**
    * Enables the layout measurement system used to calculate
@@ -96,13 +88,26 @@ export type BottomSheetProviderOptions = {
    * - 'push': stack on top
    * - 'switch': replace only the top sheet
    * - 'replace': dismiss all existing sheets (default)
+   *
+   * Superseded sheets are dismissed, not unmounted on the spot: they stay
+   * mounted (animating out) until Gorhom reports the dismissal finished, so
+   * their native modal is always torn down by its owner.
    */
   stackBehavior?: StackBehavior;
 
   /**
-   * Optional callback invoked after the sheet is fully dismissed.
+   * Invoked when a sheet is dismissed, with the dismissed sheet's id.
+   *
+   * Timing:
+   * - user-initiated closes (backdrop tap / header X) fire at dismissal
+   *   REQUEST time, so controlled sheets can flip `isOpen` immediately and be
+   *   reopened during the dismiss animation;
+   * - gorhom-initiated closes (e.g. pan-down) fire when dismissal ENDS.
+   *
+   * Fires at most once per sheet. The id lets callers distinguish a current
+   * dismissal from a superseded one.
    */
-  onClose?: () => void;
+  onClose?: (id: string) => void;
 };
 
 /**
@@ -141,13 +146,19 @@ export type BottomSheetWrapperOptions = {
    * If undefined, resolved dynamically based on variant + snapPoints.
    */
   showHandle?: boolean;
+
+  /**
+   * Optional customization for the unified `BottomSheetTopBar` — styles, left
+   * slot, header, indicator style. Passed straight through as its props.
+   */
+  topBarProps?: BottomSheetTopBarProps;
 };
 
 /**
  * Header-Level Options
  *
- * These options control rendering of the `BottomSheetHeader`
- * component and do NOT belong to Gorhom.
+ * Content and appearance for the sheet's header region — the close button and
+ * the optional second row of `BottomSheetTopBar`. Not part of Gorhom's API.
  */
 export interface BottomSheetHeaderOptions {
   /**
@@ -235,6 +246,11 @@ export type BottomSheetRenderApi = {
    * Imperatively closes the current sheet.
    */
   closeSheet: () => void;
+
+  /**
+   * The provider-assigned id of this sheet.
+   */
+  id: string;
 };
 
 /**

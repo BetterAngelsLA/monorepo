@@ -1,8 +1,9 @@
 """Teams — per-organization team management."""
 
-from common.models import BaseModel, OrgScoped
 from django.db import models
 from django.db.models.functions import Lower
+
+from common.models import BaseModel, OrgScoped
 
 from .validators import validate_has_alphanumeric
 

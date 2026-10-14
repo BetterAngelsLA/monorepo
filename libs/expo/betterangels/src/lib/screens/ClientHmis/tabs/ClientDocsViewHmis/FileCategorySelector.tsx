@@ -73,7 +73,7 @@ export function FileCategorySelector(props: FileCategorySelectorProps) {
 
   return (
     <View style={style}>
-      {header && (
+      {!!header && (
         <TextOrNode textStyle={[styles.defaultHeaderText]}>{header}</TextOrNode>
       )}
 

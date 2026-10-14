@@ -215,14 +215,13 @@ export function UsersPage() {
 
   const handleRemoveMember = useCallback(
     async (member: OrganizationMemberType) => {
-      if (!organizationId) return;
+      if (!member.membershipId) return;
 
       try {
         await removeOrganizationMember({
           variables: {
             data: {
-              id: member.id,
-              organizationId,
+              membershipId: member.membershipId,
             },
           },
           refetchQueries: [OrganizationMembersDocument],
@@ -241,7 +240,7 @@ export function UsersPage() {
         setRemoveConfirmation({ isOpen: false, member: null });
       }
     },
-    [organizationId, removeOrganizationMember, showToast],
+    [removeOrganizationMember, showToast],
   );
 
   const handleAddSuccess = useCallback(() => {

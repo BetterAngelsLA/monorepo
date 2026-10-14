@@ -1,7 +1,10 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { LoadingView } from '@monorepo/expo/shared/ui-components';
+import { router } from 'expo-router';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer, TaskStatusBtn } from '../../ui-components';
+import { useUser } from '../../hooks';
 
 import { useQuery } from '@apollo/client/react';
 import TaskBody from './TaskBody';
@@ -24,7 +27,20 @@ export default function Task({
     nextFetchPolicy: 'cache-first',
   });
 
+  const { user } = useUser();
   const task = data?.task;
+  const clientProfileId = task?.clientProfile?.id;
+
+  const handleClientPress = useCallback(() => {
+    // `/client/[id]` resolves to the HMIS client screen for HMIS users; this
+    // row is a BACS client, so only navigate for non-HMIS users.
+    if (!clientProfileId || user?.isHmisUser) return;
+
+    router.navigate({
+      pathname: `/client/${clientProfileId}`,
+      params: { arrivedFrom: `/task/${id}` },
+    });
+  }, [clientProfileId, id, user?.isHmisUser]);
 
   if (loading) {
     return <LoadingView />;
@@ -35,12 +51,20 @@ export default function Task({
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <View accessibilityRole="button" style={styles.body}>
+      {/*
+        No `accessibilityRole="button"` on the card: react-native-web renders that
+        as a real <button>, and the client row inside it is its own press target —
+        a button nested in a button is invalid HTML. This wrapper has no onPress.
+      */}
+      <View style={styles.body}>
         <TaskHeader id={id} task={task} arrivedFrom={arrivedFrom} />
         <TaskUpdatedAt updatedAt={task.updatedAt} />
         <View>
           {task.clientProfile && (
-            <TaskClient clientProfile={task.clientProfile} />
+            <TaskClient
+              clientProfile={task.clientProfile}
+              onPress={handleClientPress}
+            />
           )}
           <TaskCreatedBy
             organization={task.organization}
@@ -48,7 +72,7 @@ export default function Task({
             team={task.team}
           />
         </View>
-        {task.description && <TaskBody description={task.description} />}
+        {!!(task.description) && <TaskBody description={task.description} />}
       </View>
       <TaskStatusBtn id={task.id} status={task.status} />
     </MainScrollContainer>

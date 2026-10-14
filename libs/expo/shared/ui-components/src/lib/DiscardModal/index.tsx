@@ -51,6 +51,7 @@ export default function DiscardModal({
           >
             <TextButton
               title="Keep Editing"
+              testId="discard-modal-cancel"
               accessibilityHint="dismiss the dialog and continue editing"
               color={Colors.PRIMARY}
               fontSize="sm"
@@ -60,6 +61,7 @@ export default function DiscardModal({
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
               title="Discard"
+              testID="discard-modal-confirm"
               accessibilityHint="discard unsaved changes"
               variant="primary"
               size="full"

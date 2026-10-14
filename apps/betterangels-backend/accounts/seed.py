@@ -16,7 +16,6 @@ admin.  Either way it is written onto the ``auth.Group`` that actually grants it
 from logging import getLogger
 from typing import Any, cast
 
-from common.org_types import REGISTRY
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
@@ -24,6 +23,7 @@ from django.db.models import Exists, ForeignKey, OuterRef
 from organizations.models import Organization
 
 from accounts.models import PermissionGroup, PermissionGroupTemplate
+from common.org_types import REGISTRY
 
 logger = getLogger(__name__)
 
@@ -209,9 +209,7 @@ def retire_superseded_phantom_permissions() -> None:
 
     Deletes every phantom Permission (model-less ContentType) whose codename
     also exists on a real ContentType in the same app, then drops the phantom
-    ContentTypes those retirements emptied.  Member-management portal codenames
-    (``organizations.*``) have no real twin, so their phantom rows are kept —
-    they are still the only rows those codenames live on.  Idempotent; runs at
+    ContentTypes those retirements emptied.  Idempotent; runs at
     ``post_migrate`` once roles/groups have converged onto the real rows.
 
     References held through the enumerated M2M throughs (user, group, role,
@@ -222,10 +220,10 @@ def retire_superseded_phantom_permissions() -> None:
     re-pointed and still cascade; extend ``permission_m2m_throughs`` if a
     domain that uses them gains a retirable phantom.
     """
-    from accounts.models import PermissionGroup, Role
-
     from django.contrib.auth import get_user_model
     from django.contrib.auth.models import Group, Permission
+
+    from accounts.models import PermissionGroup, Role
 
     user_cls = get_user_model()
 
@@ -287,3 +285,35 @@ def retire_superseded_phantom_permissions() -> None:
         if orphaned:
             ContentType.objects.filter(pk__in=orphaned).delete()
             logger.info("Retired %d phantom ContentTypes", len(orphaned))
+
+
+def seed_org_portal_permissions() -> None:
+    """Bind the member-management portal codenames to the org-root ContentType.
+
+    ``UserOrganizationPermissions`` (``organizations.add_org_member``, …) are
+    org-level *actions* — there is no monorepo-owned row model to hang them on;
+    the natural host is the org-root ``Organization`` model they act on (a Grant
+    scoped to org O is a grant ON org O; ``permissions.E005`` treats the root as
+    identity-scoped).  ``django-organizations`` is third-party, so the rows are
+    created here rather than via ``Meta.permissions``.
+
+    Must run before ``sync_roles``/``sync_group_permissions`` (so RoleDef and
+    template resolution bind the real rows) and before
+    :func:`retire_superseded_phantom_permissions` (which then retires the old
+    synthesized ``(organizations, member/…)`` phantoms now that a real twin
+    exists).  Idempotent.
+    """
+    from organizations.models import Organization
+
+    from accounts.permissions import UserOrganizationPermissions
+
+    ct = ContentType.objects.get_for_model(Organization)
+    existing = set(Permission.objects.filter(content_type=ct).values_list("codename", flat=True))
+    missing = [
+        Permission(codename=str(perm).rsplit(".", 1)[1], content_type=ct, name=str(perm.label))
+        for perm in UserOrganizationPermissions
+        if str(perm).rsplit(".", 1)[1] not in existing
+    ]
+    if missing:
+        Permission.objects.bulk_create(missing)
+        logger.info("Bound %d member-management codenames to the Organization ContentType", len(missing))

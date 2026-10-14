@@ -25,13 +25,14 @@ Per-feature CRUD and permission behavior lives in the app's other test modules
 that other domains mirror when they cut over (ADR 0001 §7).
 """
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.test import TestCase
+from model_bakery import baker
+
 from accounts.models import Role, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import grant_create, role_assign
 from accounts.tests.baker_recipes import organization_recipe
-from django.core.exceptions import ObjectDoesNotExist
-from django.test import TestCase
-from model_bakery import baker
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.selectors.operator import room_queryset, shelter_queryset

@@ -1,10 +1,13 @@
-import { ReactElement, ReactNode, useEffect, useState } from 'react';
-import { TAnswer, TConditionRule, TSurveyForm, TSurveyResults } from '../types';
+import { ReactNode, useState } from 'react';
+import { TAnswer, TSurveyForm, TSurveyResults } from '../types';
+import { validateConfig } from '../utils/validateConfig';
 import { validateForm } from '../utils/validateForm';
+import { resolveRoute } from '../utils/navigation';
 import { SurveyContext, TSurveyUi } from './SurveyContext';
 
 export type TSurveyProvider = {
   children: ReactNode;
+  /** Configuration is fixed for a session. Change the provider key to start a new survey. */
   surveyForms: TSurveyForm[];
   ui?: TSurveyUi;
   onSurveyEnd?: (results: TSurveyResults) => void;
@@ -12,160 +15,57 @@ export type TSurveyProvider = {
   onFormBack?: () => void;
 };
 
-export default function SurveyProvider(props: TSurveyProvider): ReactElement {
-  const { surveyForms, ui, onFormRender, onFormBack, onSurveyEnd, children } =
-    props;
-
-  const initialForm = surveyForms[0];
-
-  const [forms] = useState<TSurveyForm[]>(surveyForms);
-  const [formHistory, setFormHistory] = useState<TSurveyForm[]>([initialForm]);
-  const [currentForm, setCurrentForm] = useState<TSurveyForm | null>(
-    initialForm,
-  );
+export default function SurveyProvider({
+  surveyForms,
+  ui,
+  onFormRender,
+  onFormBack,
+  onSurveyEnd,
+  children,
+}: TSurveyProvider) {
+  const [forms] = useState(() => {
+    const errors = validateConfig(surveyForms);
+    if (errors.length) throw new Error(errors.join('\n'));
+    return surveyForms;
+  });
+  const [navigation, setNavigation] = useState({
+    history: [forms[0]],
+    complete: false,
+  });
   const [answers, setAnswers] = useState<TAnswer[]>([]);
+  const formHistory = navigation.history;
+  const currentForm = navigation.complete
+    ? null
+    : formHistory[formHistory.length - 1];
+  const validateCurrentForm = () =>
+    currentForm
+      ? validateForm({ questions: currentForm.questions, answers })
+      : [];
 
-  const validateCurrentForm = () => {
-    if (currentForm === null) {
-      return [];
-    }
-
-    return validateForm({
-      questions: currentForm.questions,
-      answers: answers,
-    });
-  };
-
-  const validateRule = (rule: TConditionRule): boolean => {
-    const answer = answers.find((a) => a.questionId === rule.questionId);
-
-    if (rule.type === 'answerExists') {
-      return !!answer;
-    }
-
-    if (rule.type === 'answerEquals') {
-      return answer?.result === rule.value;
-    }
-
-    if (rule.type === 'answerIncludes') {
-      return answer?.result.includes(rule.value) || false;
-    }
-
-    return false;
-  };
-
-  const shouldShowform = (form: TSurveyForm): boolean => {
-    const showConditions = form.showConditions;
-
-    if (!showConditions) {
-      return true;
-    }
-
-    if (showConditions.type === 'all') {
-      return showConditions.rules.every((rule) => validateRule(rule));
-    }
-
-    return false;
-  };
-
-  const findNextForm = (formId: string | null): TSurveyForm | null => {
-    const form = forms.find((f) => f.id === formId);
-
-    if (!form) {
-      return null;
-    }
-
-    if (shouldShowform(form)) {
-      return form;
-    }
-
-    const nextFormId = form.nextFormId;
-
-    if (!nextFormId) {
-      return null;
-    }
-
-    return findNextForm(nextFormId);
-  };
-
-  const setNextForm = () => {
-    if (!currentForm) {
-      return;
-    }
-
-    const errors = validateForm({
-      questions: currentForm.questions,
-      answers: answers,
-    });
-
-    if (errors.length) {
-      return;
-    }
-
-    const nextForm = findNextForm(currentForm.nextFormId);
-
-    if (!nextForm) {
-      // Exit Survey
-
-      if (onSurveyEnd) {
-        onSurveyEnd({
-          answers,
-        });
-      }
-
-      return setCurrentForm(null);
-    }
-
+  function setNextForm() {
+    if (!currentForm || validateCurrentForm().length) return;
+    const resolved = resolveRoute(forms, answers);
+    const nextForm =
+      resolved.route[
+        resolved.route.findIndex((form) => form.id === currentForm.id) + 1
+      ];
+    // Route resolution only removes answers; preserve identity if nothing changed.
+    if (resolved.answers.length !== answers.length)
+      setAnswers(resolved.answers);
     if (nextForm) {
-      setCurrentForm(nextForm);
-
-      if (onFormRender) {
-        onFormRender();
-      }
-
-      setFormHistory((prev) => {
-        return [...prev, nextForm];
-      });
+      setNavigation({ history: [...formHistory, nextForm], complete: false });
+      onFormRender?.();
+    } else {
+      setNavigation({ history: formHistory, complete: true });
+      onSurveyEnd?.({ answers: resolved.answers });
     }
-  };
+  }
 
-  const goBack = () => {
-    // TODO: reconcile events such as onFormRender and onFormBack
-    if (onFormBack) {
-      onFormBack();
-    }
-
-    popQuestionHistory();
-  };
-
-  const popQuestionHistory = () => {
-    if (!formHistory.length || formHistory.length < 2) {
-      return;
-    }
-
-    setFormHistory((prev) => {
-      const historyCopy = [...prev];
-
-      historyCopy.pop();
-
-      return historyCopy;
-    });
-  };
-
-  useEffect(() => {
-    if (!formHistory.length) {
-      // setCurrentForm(null);
-
-      // TODO: update next/back to work off of history - once have tests
-      // - run onFormRender here?
-
-      return;
-    }
-
-    const latestQuestion = formHistory[formHistory.length - 1];
-
-    setCurrentForm(latestQuestion);
-  }, [formHistory]);
+  function goBack() {
+    if (navigation.complete || formHistory.length < 2) return;
+    setNavigation({ history: formHistory.slice(0, -1), complete: false });
+    onFormBack?.();
+  }
 
   return (
     <SurveyContext.Provider

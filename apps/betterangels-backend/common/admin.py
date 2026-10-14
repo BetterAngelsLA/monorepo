@@ -2,7 +2,6 @@ from typing import Any
 
 import django.db.models
 from admin_async_upload.fields import make_resumable_admin_file_fields
-from common.models import Address, Attachment, Location
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
@@ -11,6 +10,8 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html_join
 from django.utils.safestring import SafeString, mark_safe
+
+from common.models import Address, Attachment, Location
 
 
 class AttachmentAdminMixin:

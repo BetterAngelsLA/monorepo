@@ -7,19 +7,19 @@ circular import with the model layer.
 
 from typing import TYPE_CHECKING
 
-from accounts.models import OrgTypeChoices
-from common.permissions.selectors import visible
-from common.utils import get_by_pk_or_not_found
 from django.db.models import QuerySet
 from organizations.models import Organization
 
+from accounts.models import OrgTypeChoices
+from common.permissions.selectors import visible
+from common.utils import get_by_pk_or_not_found
 from shelters.enums import StatusChoices
 
 if TYPE_CHECKING:
-    from accounts.models import User
     from django.contrib.auth.base_user import AbstractBaseUser
     from django.contrib.auth.models import AnonymousUser
 
+    from accounts.models import User
     from shelters.models import Bed, Reservation, Room, Shelter
 
 

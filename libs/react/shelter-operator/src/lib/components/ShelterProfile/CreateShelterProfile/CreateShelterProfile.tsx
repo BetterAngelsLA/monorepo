@@ -39,6 +39,7 @@ function toCreateInput(
     email: formData.email || undefined,
     phone: formData.phone || undefined,
     website: formData.website || undefined,
+    instagram: formData.instagram || undefined,
     isPrivate: formData.isPrivate,
     status: formData.status,
     organizationId,

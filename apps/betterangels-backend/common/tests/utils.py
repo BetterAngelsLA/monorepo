@@ -4,23 +4,25 @@ import json
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple, Union
 
-from accounts.models import User
-from accounts.role_manager import OrgRoleManager
-from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.contrib.sites.models import Site
 from django.test import TestCase
 from model_bakery import baker
-from test_utils.assert_mixins import GraphQLAssertionsMixin
-from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
+from accounts.models import User
+from accounts.role_manager import OrgRoleManager
+from accounts.tests.baker_recipes import organization_recipe
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.models import Address, Location
+from test_utils.assert_mixins import GraphQLAssertionsMixin
+from test_utils.mixins import GraphQLTestCaseMixin
 
 if TYPE_CHECKING:
     from organizations.models import Organization
+
+    from accounts.models import PermissionGroup
 
 
 # ---------------------------------------------------------------------------
@@ -163,6 +165,69 @@ class NumQueriesWithoutCacheMixin:
         return _MaxNumQueriesContext(self, max_query_count)
 
 
+# ---------------------------------------------------------------------------
+# Grant-model fixtures — leftover legacy rows and grantless members
+# ---------------------------------------------------------------------------
+
+
+def make_permission_group(*, organization: Organization, template_name: str) -> PermissionGroup:
+    """The org's ``PermissionGroup`` for *template_name*, created on demand.
+
+    Grant-only templates (ORG_ADMIN / ORG_SUPERUSER) are no longer provisioned
+    with these rows — reconcile retires them — so a test that models a
+    pre-cutover holder (or exercises group naming) recreates the row by hand.
+    Idempotent: template and org row are ``get_or_create``.
+    """
+    from accounts.models import PermissionGroup, PermissionGroupTemplate
+
+    template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
+    group, _ = PermissionGroup.objects.get_or_create(organization=organization, template=template)
+    return group
+
+
+def revoke_grants(user: User) -> None:
+    """Drop every ``Grant`` *user* holds — the grantless-org-member state.
+
+    Authority is the grant arm (ADR 0001): membership (or a leftover legacy
+    row) alone confers nothing, so a test that wants "no authority" removes
+    the grants.
+    """
+    from accounts.models import Grant
+
+    Grant.objects.filter(principal_user=user).delete()
+
+
+def add_legacy_membership(user: User, *, group: PermissionGroup) -> None:
+    """Give *user* the legacy group membership, WITHOUT the Grant mirror.
+
+    The ``User.groups`` m2m edge mirrors role-backed memberships as ``Grant``
+    rows (``accounts.signals``); a pre-cutover membership — the state the
+    backfills convert and the cutover denies — predates the mirror, so the
+    just-created Grant is dropped.
+
+    **Destructive: this deletes every Grant *user* holds, not only the one the
+    membership just mirrored.**  That is exact for the intended caller — a
+    freshly-baked user, where the mirror is the only Grant there is — and wrong
+    for a user who already has authority, which this would silently revoke.  If
+    you need pre-existing authority to survive, grant it *after* this call.
+    """
+    group.user_set.add(user)
+    revoke_grants(user)
+
+
+def make_legacy_only_holder(*, organization: Organization, template_name: str, user: User) -> User:
+    """A member whose only authority is a leftover legacy group row.
+
+    Adds *user* to *organization*, hangs the leftover ``PermissionGroup`` for
+    *template_name* off them, and drops the mirrored Grant — the pre-cutover
+    state the org-admin cutover treats as authority-less and the backfills
+    convert when they apply.
+    """
+    organization.add_user(user)
+    add_legacy_membership(user, group=make_permission_group(organization=organization, template_name=template_name))
+    return user
+
+
 class GraphQLBaseTestCase(
     GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase
 ):
@@ -216,7 +281,9 @@ class GraphQLBaseTestCase(
         OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_2, CASEWORKER)
         OrgRoleManager(self.org_2).add_roles(self.org_2_case_manager_1, CASEWORKER)
 
-        # Default organization for @HasOrgPerm-scoped mutations/queries.
+        # Default org for the deprecated X-Organization-ID header — still the
+        # read fallback while mobile's team pickers migrate (DEV-2566).  Every
+        # grant-only surface takes its org from the payload instead.
         self._set_active_org(self.org_1)
 
     def _set_active_org(self, org: Organization) -> None:
@@ -233,14 +300,13 @@ class GraphQLBaseTestCase(
     ) -> None:
         """Grant ``app_label.codename`` *perm* to *user* at *org* via a Grant.
 
-        Under the legacy model tests mutated a ``PermissionGroup`` so
-        ``HasOrgPerm``/``permissioned_queryset`` would see the permission at
-        query time.  The grant model (ADR 0001) reads the permission from the
-        ``Role`` a ``Grant`` references, so this creates a scoped test Role
-        carrying *perm* and grants it to *user* at *org*.  Idempotent.
+        The grant model (ADR 0001) reads the permission from the ``Role`` a
+        ``Grant`` references, so this creates a scoped test Role carrying *perm*
+        and grants it to *user* at *org*.  Idempotent.
         """
-        from accounts.models import Grant, Role
         from django.contrib.auth.models import Permission
+
+        from accounts.models import Grant, Role
 
         app_label, codename = perm.split(".")
         permission = Permission.objects.get(codename=codename, content_type__app_label=app_label)

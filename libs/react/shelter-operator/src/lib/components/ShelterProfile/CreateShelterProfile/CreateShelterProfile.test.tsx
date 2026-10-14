@@ -29,6 +29,7 @@ const FORM_DATA: BasicInfoFormData = {
   email: '',
   phone: '',
   website: '',
+  instagram: '',
   isPrivate: false,
   organizationId: '',
 };

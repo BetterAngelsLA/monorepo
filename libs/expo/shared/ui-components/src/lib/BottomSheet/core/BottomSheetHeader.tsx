@@ -24,7 +24,7 @@ export function BottomSheetHeader(props: BottomSheetHeaderProps) {
 
   return (
     <View style={[styles.container, style]}>
-      {children && <View style={styles.content}>{children}</View>}
+      {!!children && <View style={styles.content}>{children}</View>}
 
       {!!onClose && (
         <BottomSheetCloseButton

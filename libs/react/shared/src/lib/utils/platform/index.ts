@@ -1,0 +1,1 @@
+export { isIOSBrowser } from './isIOSBrowser';

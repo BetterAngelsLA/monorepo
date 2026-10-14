@@ -10,6 +10,7 @@ import { operatorPath, useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import {
+  BaPrivateGate,
   MgmtActionGate,
   PermissionGate,
 } from './components/guards/PermissionGate';
@@ -119,7 +120,11 @@ export function OperatorApp() {
               />
               <Route
                 path={profileRouteConfig.children.baPrivate}
-                element={<BaPrivatePage />}
+                element={
+                  <BaPrivateGate>
+                    <BaPrivatePage />
+                  </BaPrivateGate>
+                }
               />
             </Route>
             <Route

@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { SearchBar } from '@monorepo/expo/shared/ui-components';
-import { ElementType, useCallback, useState } from 'react';
+import { SearchBar, TextMedium } from '@monorepo/expo/shared/ui-components';
+import { ElementType, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { NoteType, toNoteFilter } from '../../apollo';
 import { TUser, useUser } from '../../providers/user/UserProvider';
@@ -10,9 +10,12 @@ import {
   InteractionList,
   ModelFilters,
   NoteCard,
+  SortButton,
   TModelFilters,
+  TSortDirection,
   toModelFilterValues,
 } from '../../ui-components';
+import { getInteractionOrder } from './getInteractionOrder';
 
 const paginationLimit = 10;
 
@@ -29,6 +32,19 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
     getInitialFilterValues(user),
   );
+  const [sortDirection, setSortDirection] =
+    useState<TSortDirection>('newestFirst');
+
+  const interactionOrder = useMemo(
+    () => getInteractionOrder(sortDirection),
+    [sortDirection],
+  );
+
+  const toggleSortDirection = useCallback(() => {
+    setSortDirection((prev) =>
+      prev === 'newestFirst' ? 'oldestFirst' : 'newestFirst',
+    );
+  }, []);
 
   function onFilterChange(selectedFilters: TModelFilters) {
     setCurrentFilters(selectedFilters);
@@ -86,8 +102,22 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
 
         <InteractionList
           filters={serverFilters}
+          order={interactionOrder}
           renderItem={renderInteractionItem}
           paginationLimit={paginationLimit}
+          renderHeader={(visible, total) => (
+            <View style={styles.listHeader}>
+              <TextMedium size="sm">
+                Displaying {visible} of {total ?? 0} interactions
+              </TextMedium>
+              {(total ?? 0) > 1 && (
+                <SortButton
+                  direction={sortDirection}
+                  onPress={toggleSortDirection}
+                />
+              )}
+            </View>
+          )}
         />
       </HorizontalContainer>
     </View>
@@ -104,5 +134,11 @@ const styles = StyleSheet.create({
   },
   searchRow: {
     marginBottom: Spacings.sm,
+  },
+  listHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacings.xs,
   },
 });

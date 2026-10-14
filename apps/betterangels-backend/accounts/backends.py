@@ -1,6 +1,5 @@
 from typing import Any, Optional
 
-from common.permissions.config import TemplateConfig
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
@@ -10,6 +9,8 @@ from django.utils.translation import gettext as _
 from organizations.backends.defaults import InvitationBackend
 from organizations.models import Organization, OrganizationInvitation
 from rest_framework.request import Request
+
+from common.permissions.config import TemplateConfig
 
 from .forms import UserCreationForm
 from .models import ExtendedOrganizationInvitation, User

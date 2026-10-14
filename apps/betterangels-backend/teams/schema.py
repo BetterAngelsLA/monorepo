@@ -4,6 +4,13 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
+from django.core.exceptions import PermissionDenied
+from django.db.models import QuerySet
+from organizations.models import Organization
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+from strawberry_django.pagination import OffsetPaginated
+
 from accounts.models import User as AccountUser
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import (
@@ -13,12 +20,6 @@ from common.permissions.utils import (
     require_can,
 )
 from common.utils import get_or_none
-from django.core.exceptions import PermissionDenied
-from django.db.models import QuerySet
-from organizations.models import Organization
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
-from strawberry_django.pagination import OffsetPaginated
 
 from .models import Team
 from .selectors import team_get, team_list
@@ -33,7 +34,7 @@ class Query:
         permission_classes=[IsAuthenticated],
     )
     def teams(self, info: Info, filters: Optional[TeamFilter] = None) -> QuerySet[Team]:
-        """List an organization's teams — grant-only (ADR 0001 §5.3).
+        """List an organization's teams — grant-only at the payload org.
 
         The org comes from the ``organizationId`` filter when provided; the
         ``X-Organization-ID`` header remains a deprecated fallback while the

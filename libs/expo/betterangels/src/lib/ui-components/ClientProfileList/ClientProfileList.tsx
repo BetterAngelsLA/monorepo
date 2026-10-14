@@ -50,17 +50,26 @@ export function ClientProfileList({
   style,
   horizontalPadding = pagePaddingHorizontal,
 }: TProps) {
-  const { items, total, loading, reloading, loadMore, reload, hasMore, error } =
-    useInfiniteScrollQuery<
-      TClientProfile,
-      ClientProfilesQuery,
-      ClientProfilesQueryVariables
-    >({
-      document: ClientProfilesDocument,
-      queryFieldName: 'clientProfiles',
-      variables: { filters, ordering: ordering || undefined },
-      pageSize: paginationLimit,
-    });
+  const {
+    items,
+    total,
+    loading,
+    reloading,
+    loadMore,
+    reload,
+    hasMore,
+    error,
+    queryKey,
+  } = useInfiniteScrollQuery<
+    TClientProfile,
+    ClientProfilesQuery,
+    ClientProfilesQueryVariables
+  >({
+    document: ClientProfilesDocument,
+    queryFieldName: 'clientProfiles',
+    variables: { filters, ordering: ordering || undefined },
+    pageSize: paginationLimit,
+  });
 
   if (error) console.error(error);
 
@@ -81,6 +90,7 @@ export function ClientProfileList({
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="client"
+        scrollResetKey={queryKey}
         renderResultsHeader={(visible, totalItems) => (
           <View
             style={[

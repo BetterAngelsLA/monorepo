@@ -7,9 +7,14 @@ from __future__ import annotations
 import secrets
 from typing import TYPE_CHECKING, Any, cast
 
+from django.contrib.contenttypes.models import ContentType
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
+from model_bakery import baker
+from organizations.models import Organization
+
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import HmisAgencyEnum
-from common.enums import AttachmentType
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.services.merge import (
     MergeValidationError,
@@ -17,17 +22,14 @@ from clients.services.merge import (
     merge_preview,
     merge_undo,
 )
+from common.enums import AttachmentType
 from common.models import Attachment, PhoneNumber
-from django.contrib.contenttypes.models import ContentType
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
-from model_bakery import baker
 from notes.models import Note, ServiceRequest
-from organizations.models import Organization
 from teams.models import Team
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import Group, Permission
+
     from shelters.models.reservation import Reservation
 
 
@@ -562,8 +564,9 @@ class GuardianPermissionTests(MergeServiceTests):
     @classmethod
     def setUpTestData(cls) -> None:
         super().setUpTestData()
-        from accounts.models import BigGroupObjectPermission, BigUserObjectPermission
         from django.contrib.auth.models import Group, Permission
+
+        from accounts.models import BigGroupObjectPermission, BigUserObjectPermission
 
         cls._group = baker.make(Group)
         cls._content_type = ContentType.objects.get_for_model(ClientProfile)

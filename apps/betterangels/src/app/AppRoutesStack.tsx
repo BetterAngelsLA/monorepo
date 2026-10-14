@@ -1,5 +1,6 @@
 import {
   getStackModalOptions,
+  HeaderSlot,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
 import { ArrowLeftIcon } from '@monorepo/expo/shared/icons';
@@ -32,14 +33,16 @@ export default function AppRoutesStack() {
         name="sign-in"
         options={{
           headerLeft: () => (
-            <IconButton
-              onPress={() => router.back()}
-              variant="transparent"
-              accessibilityLabel="goes to get started screen"
-              accessibilityHint="goes to get started screen"
-            >
-              <ArrowLeftIcon />
-            </IconButton>
+            <HeaderSlot side="left">
+              <IconButton
+                onPress={() => router.back()}
+                variant="transparent"
+                accessibilityLabel="goes to get started screen"
+                accessibilityHint="goes to get started screen"
+              >
+                <ArrowLeftIcon />
+              </IconButton>
+            </HeaderSlot>
           ),
           headerShadowVisible: false,
           title: '',

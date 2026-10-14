@@ -66,7 +66,7 @@ export function ClientCardHmis(props: IClientCardProps) {
           {alias && `(${alias})`}
         </TextBold>
 
-        {(birthDate || formattedHeight) && (
+        {!!(birthDate || formattedHeight) && (
           <View style={styles.row}>
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!birthDate && (

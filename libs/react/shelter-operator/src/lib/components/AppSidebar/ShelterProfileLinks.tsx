@@ -1,6 +1,5 @@
 import { Sidebar } from '@monorepo/react/components';
-import { useFeatureFlagActive } from '@monorepo/react/shared';
-import { FeatureFlags } from '@monorepo/react/shelter';
+import { useBaPrivatePermissions } from '../../hooks';
 import {
   isShelterProfileRoute,
   profileRouteConfig,
@@ -17,9 +16,7 @@ type IProps = {
 export function ShelterProfileLinks(props: IProps) {
   const { className, pathname, shelterId, isOpen } = props;
 
-  const showBaOnlyFields = useFeatureFlagActive(
-    FeatureFlags.SO_BA_ONLY_ADMIN_FIELDS,
-  );
+  const { canViewAny: canViewBaPrivate } = useBaPrivatePermissions();
 
   return (
     <Sidebar.NestedLinks
@@ -27,7 +24,7 @@ export function ShelterProfileLinks(props: IProps) {
       label="Shelter Profile"
       isActive={false} // style only child links as active/inactive
       collapsed={!isOpen}
-      defaultExpanded={true}
+      defaultExpanded={isShelterProfileRoute(pathname)}
     >
       <Sidebar.Content>
         <Sidebar.Link
@@ -115,7 +112,7 @@ export function ShelterProfileLinks(props: IProps) {
         >
           Media
         </Sidebar.Link>
-        {showBaOnlyFields && (
+        {canViewBaPrivate && (
           <Sidebar.Link
             to={shelterProfileRoute(
               shelterId,

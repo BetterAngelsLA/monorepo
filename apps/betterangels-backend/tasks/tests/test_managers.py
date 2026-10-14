@@ -1,7 +1,8 @@
+from model_bakery import baker
+
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from hmis.models import HmisClientProfile
-from model_bakery import baker
 from tasks.models import Task
 
 

@@ -5,6 +5,7 @@ import {
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
+import { stripEnvironmentTag } from '@monorepo/react/shared';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment, useUser } from '../../hooks';
@@ -37,15 +38,23 @@ export default function LoginFormHmis() {
     setErrorMsg('');
     setSubmitting(true);
     try {
-      const cleanedEmail = email.replace('+demo@', '@').toLowerCase().trim();
+      const cleanedEmail = stripEnvironmentTag(
+        email.toLowerCase().trim(),
+      );
       const { data, error } = await hmisLogin({
         variables: { email: cleanedEmail, password },
+      }).catch((mutationError) => {
+        console.error(mutationError);
+        // Rejected mutations (today: a bad HMIS password arrives as a raw
+        // "An error occurred: [...]" GraphQL error) must show the same
+        // generic failure as every other path — never the server text.
+        throw new Error('Sorry, login failed.');
       });
 
       const res = data?.hmisLogin;
       if (!res) {
         console.error('No response from server');
-        return;
+        throw new Error('Sorry, login failed.');
       }
       if (error) {
         console.error(error.message);
@@ -173,7 +182,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 14.5,
     color: Colors.PRIMARY_EXTRA_DARK,
-    fontFamily: 'Poppins',
-    fontWeight: 400,
+    // A `useFonts` key, not the bare family name; see FontLoader.
+    fontFamily: 'Poppins-Regular',
   },
 });

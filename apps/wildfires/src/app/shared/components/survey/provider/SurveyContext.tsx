@@ -1,9 +1,15 @@
-import { Dispatch, ElementType, SetStateAction, createContext } from 'react';
+import {
+  Dispatch,
+  ComponentType,
+  SetStateAction,
+  createContext,
+  useContext,
+} from 'react';
 import { ICheckboxProps } from '../../form/Checkbox';
 import { TAnswer, TSurveyForm } from '../types';
 
 export type TSurveyUi = {
-  Checkbox?: ElementType<ICheckboxProps>;
+  Checkbox?: ComponentType<ICheckboxProps>;
 };
 
 type TSurveyContext = {
@@ -23,3 +29,11 @@ type TSurveyContext = {
 export const SurveyContext = createContext<TSurveyContext | undefined>(
   undefined,
 );
+
+export function useSurvey() {
+  const context = useContext(SurveyContext);
+  if (!context) {
+    throw new Error('Survey components must be used within a SurveyProvider');
+  }
+  return context;
+}

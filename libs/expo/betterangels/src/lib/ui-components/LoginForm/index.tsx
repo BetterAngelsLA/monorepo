@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 14.5,
     color: Colors.PRIMARY_EXTRA_DARK,
-    fontFamily: 'Poppins',
-    fontWeight: 400,
+    // A `useFonts` key, not the bare family name; see FontLoader.
+    fontFamily: 'Poppins-Regular',
   },
 });

@@ -1,11 +1,12 @@
 """Tests for the grant write services (ADR 0001 §2.10)."""
 
-from accounts.models import Grant, Role, User
-from accounts.services import grant_create, grant_delegate, grant_delete, role_assign, role_remove, sync_roles
-from accounts.tests.baker_recipes import organization_recipe
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.models import Grant, Role, User
+from accounts.services import grant_create, grant_delegate, grant_delete, role_assign, role_remove, sync_roles
+from accounts.tests.baker_recipes import organization_recipe
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 
 
