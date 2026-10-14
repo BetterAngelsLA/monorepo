@@ -72,7 +72,7 @@ todos:
     content: 'Phase 1: Guard the audit event tables against UPDATE (protect_updates) instead of append-only'
     status: pending
   - id: retention-purge
-    content: 'Phase 1: Add purge_audit_log --before with a 730-day safety floor and wire a Celery-beat schedule'
+    content: 'Phase 2: Add purge_audit_log --before in the audit app with a 730-day safety floor; wire a Celery-beat schedule'
     status: pending
 isProject: false
 ---
