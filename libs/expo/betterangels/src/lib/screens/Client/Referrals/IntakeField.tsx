@@ -43,7 +43,7 @@ export function Field({
         </View>
       </View>
 
-      {f.help && (
+      {!!f.help && (
         <TextRegular size="xs" color={Colors.NEUTRAL} style={styles.help}>
           {f.help}
         </TextRegular>

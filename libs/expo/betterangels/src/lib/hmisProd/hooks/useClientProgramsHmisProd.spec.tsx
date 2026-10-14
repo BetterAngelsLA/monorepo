@@ -81,7 +81,7 @@ const debugInfo = (
 /** Lets pending effects and promise callbacks run before asserting. */
 const flushAsyncWork = () => act(async () => undefined);
 
-const renderPrograms = (id: string) => {
+const renderPrograms = async (id: string) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -90,7 +90,7 @@ const renderPrograms = (id: string) => {
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
-  return renderHook(() => useClientProgramsHmisProd(id), { wrapper });
+  return await renderHook(() => useClientProgramsHmisProd(id), { wrapper });
 };
 
 describe('useClientProgramsHmisProd', () => {
@@ -107,7 +107,7 @@ describe('useClientProgramsHmisProd', () => {
       debugInfo: requestDebugInfo,
     });
 
-    const { result } = renderPrograms('client-1');
+    const { result } = await renderPrograms('client-1');
 
     await waitFor(() => expect(result.current.data).toEqual({ items }));
 
@@ -129,7 +129,7 @@ describe('useClientProgramsHmisProd', () => {
       ),
     );
 
-    const { result } = renderPrograms('client-1');
+    const { result } = await renderPrograms('client-1');
 
     // Wait on `isError` — React Query initializes `error` to `null`, so an
     // `error` check would pass before the rejection lands.
@@ -141,7 +141,7 @@ describe('useClientProgramsHmisProd', () => {
   });
 
   it('stays disabled until an id is available', async () => {
-    renderPrograms('');
+    await renderPrograms('');
 
     await flushAsyncWork();
 

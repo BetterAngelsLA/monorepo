@@ -5,6 +5,7 @@ from unittest.mock import patch
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
+
 from referrals.management.commands.seed_referral_test_data import SCENARIOS, Command
 from referrals.models import Referral, ReferralTestShelter
 from shelters.enums import PetChoices, StatusChoices

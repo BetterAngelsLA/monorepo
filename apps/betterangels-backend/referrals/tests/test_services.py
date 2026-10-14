@@ -1,11 +1,12 @@
 from unittest.mock import patch
 
-from accounts.selectors import resolve_permission_group
-from clients.models import ClientProfile
-from common.tests.utils import GraphQLBaseTestCase
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from model_bakery import baker
+
+from accounts.selectors import resolve_permission_group
+from clients.models import ClientProfile
+from common.tests.utils import GraphQLBaseTestCase
 from notes.groups import CASEWORKER
 from referrals.models import Referral
 from referrals.selectors import referral_list

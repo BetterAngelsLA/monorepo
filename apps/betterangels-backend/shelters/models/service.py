@@ -4,10 +4,11 @@
 can add, rename, and reorder entries without a code deploy.
 """
 
-from common.models import BaseModel
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower
+
+from common.models import BaseModel
 
 
 class ServiceCategory(BaseModel):

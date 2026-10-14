@@ -1,9 +1,10 @@
 import pghistory
-from accounts.models import User
-from common.models import BaseModel
 from django.db import models
 from django_choices_field import IntegerChoicesField
 from organizations.models import Organization
+
+from accounts.models import User
+from common.models import BaseModel
 
 
 class ReferralTestShelter(BaseModel):

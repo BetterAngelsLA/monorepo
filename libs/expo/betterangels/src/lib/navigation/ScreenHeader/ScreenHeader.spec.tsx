@@ -29,21 +29,21 @@ describe('ScreenHeader', () => {
     mocks.back.mockClear();
   });
 
-  it('renders the title', () => {
-    render(<ScreenHeader title="Upload Files" />);
+  it('renders the title', async () => {
+    await render(<ScreenHeader title="Upload Files" />);
 
     expect(screen.getByText('Upload Files')).toBeTruthy();
   });
 
-  it('renders no buttons by default', () => {
-    render(<ScreenHeader title="Upload Files" />);
+  it('renders no buttons by default', async () => {
+    await render(<ScreenHeader title="Upload Files" />);
 
     expect(screen.queryByTestId('screen-header-close-btn')).toBeNull();
     expect(screen.queryByTestId('screen-header-back-btn')).toBeNull();
   });
 
-  it('renders the supplied left and right slots', () => {
-    render(
+  it('renders the supplied left and right slots', async () => {
+    await render(
       <ScreenHeader
         title="Upload Files"
         buttonLeft={<Text>Cancel</Text>}
@@ -55,8 +55,8 @@ describe('ScreenHeader', () => {
     expect(screen.getByText('Done')).toBeTruthy();
   });
 
-  it('pads for the status bar, and honours a topInset override', () => {
-    const { rerender } = render(
+  it('pads for the status bar, and honours a topInset override', async () => {
+    const { rerender } = await render(
       <ScreenHeader title="Upload Files" testID="header" />,
     );
 
@@ -64,7 +64,7 @@ describe('ScreenHeader', () => {
       expect.arrayContaining([expect.objectContaining({ paddingTop: 47 })]),
     );
 
-    rerender(
+    await rerender(
       <ScreenHeader title="Upload Files" testID="header" topInset={0} />,
     );
 
@@ -74,8 +74,8 @@ describe('ScreenHeader', () => {
   });
 
   describe('variants', () => {
-    it('uses the primary palette by default', () => {
-      render(<ScreenHeader title="Clients" testID="header" />);
+    it('uses the primary palette by default', async () => {
+      await render(<ScreenHeader title="Clients" testID="header" />);
 
       expect(screen.getByTestId('header').props.style).toEqual(
         expect.arrayContaining([
@@ -84,8 +84,8 @@ describe('ScreenHeader', () => {
       );
     });
 
-    it('uses the secondary palette for the secondary variant', () => {
-      render(
+    it('uses the secondary palette for the secondary variant', async () => {
+      await render(
         <ScreenHeader
           variant="secondary"
           title="Upload Files"
@@ -100,21 +100,21 @@ describe('ScreenHeader', () => {
       );
     });
 
-    it('closes via the router when a close button is supplied', () => {
-      render(
+    it('closes via the router when a close button is supplied', async () => {
+      await render(
         <ScreenHeader
           title="Upload Files"
           buttonRight={<ScreenHeaderCloseButton />}
         />,
       );
 
-      fireEvent.press(screen.getByTestId('screen-header-close-btn'));
+      await fireEvent.press(screen.getByTestId('screen-header-close-btn'));
 
       expect(mocks.back).toHaveBeenCalledTimes(1);
     });
 
-    it('renders a text label on the close button when one is given', () => {
-      render(
+    it('renders a text label on the close button when one is given', async () => {
+      await render(
         <ScreenHeader
           title="Upload Files"
           buttonRight={<ScreenHeaderCloseButton label="Done" />}

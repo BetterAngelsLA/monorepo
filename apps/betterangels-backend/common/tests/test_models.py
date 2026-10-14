@@ -1,22 +1,23 @@
 import json
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from common.enums import AttachmentType
-from common.models import Address, Attachment, Location, PhoneNumber
-from accounts.tests.baker_recipes import organization_recipe
-from common.admin import LocationAdmin
-from common.tests.utils import build_address_inputs
 from django.contrib.admin.sites import AdminSite
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from model_bakery import baker
+from unittest_parametrize import ParametrizedTestCase, parametrize
+
+from accounts.tests.baker_recipes import organization_recipe
+from common.admin import LocationAdmin
+from common.enums import AttachmentType
+from common.models import Address, Attachment, Location, PhoneNumber
+from common.tests.utils import build_address_inputs
 from notes.admin import NoteAdmin
 from notes.models import Note
 from tasks.models import Task
-from model_bakery import baker
-from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
 class LocationModelTestCase(ParametrizedTestCase, TestCase):

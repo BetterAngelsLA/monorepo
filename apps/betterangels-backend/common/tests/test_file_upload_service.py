@@ -1,28 +1,29 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from django.conf import settings
+from django.test import TestCase
+from model_bakery import baker
+
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.enums import AttachmentType
 from common.models import Attachment
-from common.services.file_upload import (
-    AttachmentUploadConfig,
-    UploadRequest,
-    UploadConfirmation,
-    _validate_content_type,
-    _validate_upload_item,
-    create_presigned_uploads,
-    create_attachment_records,
-    validate_upload_batch,
-)
 from common.services.exceptions import (
     InvalidContentTypeError,
     InvalidUploadTokenError,
     S3KeyNotFoundError,
 )
-from common.services.s3 import PresignedS3UploadResult, PresignedS3UploadBatchResult, PresignedS3UploadInput
-from django.conf import settings
-from django.test import TestCase
-from model_bakery import baker
+from common.services.file_upload import (
+    AttachmentUploadConfig,
+    UploadConfirmation,
+    UploadRequest,
+    _validate_content_type,
+    _validate_upload_item,
+    create_attachment_records,
+    create_presigned_uploads,
+    validate_upload_batch,
+)
+from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadInput, PresignedS3UploadResult
 
 # ---------------------------------------------------------------------------
 # Shared test config

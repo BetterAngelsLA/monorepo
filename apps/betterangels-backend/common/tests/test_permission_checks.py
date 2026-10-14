@@ -1,8 +1,14 @@
 """Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E007)."""
 
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from django.db import models as django_models
+from django.test import TestCase
+from model_bakery import baker
+
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import OrgScoped, WRITE_OBJECT, WRITE_SHARED
+from common.models import WRITE_OBJECT, WRITE_SHARED, OrgScoped
 from common.permissions.checks import (
     _org_via_errors_for_model,
     check_grant_never_references_global_role,
@@ -13,11 +19,6 @@ from common.permissions.checks import (
     check_scoped_role_never_in_user_groups,
     check_write_tier_declarations,
 )
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
-from django.db import models as django_models
-from django.test import TestCase
-from model_bakery import baker
 from notes.models import Note
 from shelters.models import Shelter
 

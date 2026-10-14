@@ -3,6 +3,11 @@ Integration tests for ``accounts.services`` and ``accounts.selectors``.
 """
 
 import pytest
+from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
+from model_bakery import baker
+from organizations.models import Organization, OrganizationOwner, OrganizationUser
+
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import (
     Grant,
@@ -23,11 +28,7 @@ from accounts.services import (
     organization_transfer_ownership,
     reactivate_user,
 )
-from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
-from model_bakery import baker
 from notes.groups import CASEWORKER
-from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from shelters.groups import SHELTER_OPERATOR
 
 # ── create_organization_with_presets ──────────────────────────────────

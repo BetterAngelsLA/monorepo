@@ -1,12 +1,12 @@
-from accounts.models import Role, User
-from accounts.role_manager import OrgRoleManager
-from accounts.services import grant_create, role_assign
-from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.test import TestCase
 from model_bakery import baker
 
+from accounts.models import Role, User
+from accounts.role_manager import OrgRoleManager
+from accounts.services import grant_create, role_assign
+from accounts.tests.baker_recipes import organization_recipe
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR
 from shelters.models import ContactInfo, Shelter
 from shelters.services.shelter import shelter_create, shelter_delete, shelter_update

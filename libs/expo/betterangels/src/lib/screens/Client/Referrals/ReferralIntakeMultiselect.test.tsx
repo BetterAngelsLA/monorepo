@@ -8,7 +8,6 @@
  *
  * Test-plan reference: referral-test-brief.md, cases T1 and T3.
  */
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import {
   act,
@@ -42,8 +41,8 @@ const createStore = (initial: unknown = null) =>
 beforeEach(() => {
   referralDraft = createStore();
 });
-function render(element: Parameters<typeof renderNative>[0]) {
-  return renderNative(element, {
+async function render(element: Parameters<typeof renderNative>[0]) {
+  return await renderNative(element, {
     wrapper: ({ children }) => (
       <ReferralDraftProvider store={referralDraft}>
         {children}
@@ -52,9 +51,9 @@ function render(element: Parameters<typeof renderNative>[0]) {
   });
 }
 
-function renderForm() {
+async function renderForm() {
   referralDraft.startNew(CLIENT_ID);
-  return render(
+  return await render(
     <ReferralIntakeForm
       onCancel={vi.fn()}
       onPause={vi.fn()}
@@ -72,8 +71,8 @@ const isOn = (field: string, value: string) =>
 afterEach(() => referralDraft.clear());
 
 describe('multi-select intake fields', () => {
-  it('offers one chip per value the shelter can hold', () => {
-    renderForm();
+  it('offers one chip per value the shelter can hold', async () => {
+    await renderForm();
 
     // All 7 pet values, not a yes/no pair.
     expect(screen.getByTestId(`pets-${PetChoices.Cats}-btn`)).toBeOnTheScreen();
@@ -81,46 +80,46 @@ describe('multi-select intake fields', () => {
     expect(screen.getByTestId('pets-DOGS_UNDER_25_LBS-btn')).toBeOnTheScreen();
   });
 
-  it('shows the human label rather than the stored value', () => {
-    renderForm();
+  it('shows the human label rather than the stored value', async () => {
+    await renderForm();
 
     expect(screen.getByText('Dogs (< 25 lbs)')).toBeOnTheScreen();
     expect(screen.queryByText('DOGS_UNDER_25_LBS')).toBeNull();
   });
 
-  it('selects a value on first tap', () => {
-    renderForm();
+  it('selects a value on first tap', async () => {
+    await renderForm();
     expect(isOn('pets', 'CATS')).toBe(false);
 
-    fireEvent.press(chip('pets', 'CATS'));
+    await fireEvent.press(chip('pets', 'CATS'));
 
     expect(isOn('pets', 'CATS')).toBe(true);
   });
 
-  it('deselects on a second tap', () => {
-    renderForm();
-    fireEvent.press(chip('pets', 'CATS'));
+  it('deselects on a second tap', async () => {
+    await renderForm();
+    await fireEvent.press(chip('pets', 'CATS'));
 
-    fireEvent.press(chip('pets', 'CATS'));
+    await fireEvent.press(chip('pets', 'CATS'));
 
     expect(isOn('pets', 'CATS')).toBe(false);
   });
 
-  it('keeps both when two values are chosen — the whole reason for the change', () => {
-    renderForm();
+  it('keeps both when two values are chosen — the whole reason for the change', async () => {
+    await renderForm();
 
-    fireEvent.press(chip('pets', 'CATS'));
-    fireEvent.press(chip('pets', 'SERVICE_ANIMALS'));
+    await fireEvent.press(chip('pets', 'CATS'));
+    await fireEvent.press(chip('pets', 'SERVICE_ANIMALS'));
 
     expect(isOn('pets', 'CATS')).toBe(true);
     expect(isOn('pets', 'SERVICE_ANIMALS')).toBe(true);
   });
 
-  it('writes the selection through to the draft so Pause keeps it', () => {
-    renderForm();
+  it('writes the selection through to the draft so Pause keeps it', async () => {
+    await renderForm();
 
-    fireEvent.press(chip('pets', 'CATS'));
-    fireEvent.press(chip('accessibility', 'WHEELCHAIR_ACCESSIBLE'));
+    await fireEvent.press(chip('pets', 'CATS'));
+    await fireEvent.press(chip('accessibility', 'WHEELCHAIR_ACCESSIBLE'));
 
     expect(referralDraft.getField('pets')).toEqual(['CATS']);
     expect(referralDraft.getField('accessibility')).toEqual([
@@ -128,11 +127,11 @@ describe('multi-select intake fields', () => {
     ]);
   });
 
-  it('rehydrates a resumed draft with its chips already on', () => {
+  it('rehydrates a resumed draft with its chips already on', async () => {
     referralDraft.startNew(CLIENT_ID);
     referralDraft.setField('pets', [PetChoices.Cats]);
 
-    render(
+    await render(
       <ReferralIntakeForm
         onCancel={vi.fn()}
         onPause={vi.fn()}
@@ -144,8 +143,8 @@ describe('multi-select intake fields', () => {
     expect(isOn('pets', 'SERVICE_ANIMALS')).toBe(false);
   });
 
-  it('converted the non-matching fields too, so nothing is still a bare boolean', () => {
-    renderForm();
+  it('converted the non-matching fields too, so nothing is still a bare boolean', async () => {
+    await renderForm();
 
     expect(screen.getByTestId('storage-AMNESTY_LOCKERS-btn')).toBeOnTheScreen();
     expect(
@@ -156,14 +155,14 @@ describe('multi-select intake fields', () => {
     ).toBeOnTheScreen();
   });
 
-  it('leaves self-care as yes/no, having no shelter counterpart to match', () => {
-    renderForm();
+  it('leaves self-care as yes/no, having no shelter counterpart to match', async () => {
+    await renderForm();
 
     expect(screen.getByTestId('selfcare-yes-btn')).toBeOnTheScreen();
     expect(screen.getByTestId('selfcare-no-btn')).toBeOnTheScreen();
   });
 
-  it('allows an older answer to be replaced without retired options blocking edits', () => {
+  it('allows an older answer to be replaced without retired options blocking edits', async () => {
     referralDraft = createStore({
       clientId: CLIENT_ID,
       step: 'intake',
@@ -172,7 +171,7 @@ describe('multi-select intake fields', () => {
       selectedShelterId: null,
       updatedAt: 1,
     });
-    render(
+    await render(
       <ReferralIntakeForm
         onCancel={vi.fn()}
         onPause={vi.fn()}
@@ -186,36 +185,36 @@ describe('multi-select intake fields', () => {
       'RETIRED_VALUE',
       'CATS',
     ]);
-    fireEvent.press(chip('pets', 'SERVICE_ANIMALS'));
+    await fireEvent.press(chip('pets', 'SERVICE_ANIMALS'));
     expect(referralDraft.getSnapshot()?.storedValues.pets).toEqual([
       'CATS',
       'SERVICE_ANIMALS',
     ]);
   });
 
-  it('reflects writes from another consumer and clears without keeping a stale local copy', () => {
-    renderForm();
-    act(() => {
+  it('reflects writes from another consumer and clears without keeping a stale local copy', async () => {
+    await renderForm();
+    await act(async () => {
       referralDraft.setField('pets', [PetChoices.Cats]);
     });
     expect(isOn('pets', 'CATS')).toBe(true);
-    act(() => {
+    await act(async () => {
       referralDraft.clear();
     });
     expect(isOn('pets', 'CATS')).toBe(false);
   });
 
-  it('keeps the existing empty-intake continuation policy for pending requirements', () => {
+  it('keeps the existing empty-intake continuation policy for pending requirements', async () => {
     referralDraft.startNew(CLIENT_ID);
     const onContinue = vi.fn();
-    render(
+    await render(
       <ReferralIntakeForm
         onCancel={vi.fn()}
         onPause={vi.fn()}
         onContinue={onContinue}
       />,
     );
-    fireEvent.press(screen.getByTestId('intake-next-btn'));
+    await fireEvent.press(screen.getByTestId('intake-next-btn'));
     expect(onContinue).toHaveBeenCalledOnce();
   });
 });

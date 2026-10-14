@@ -5,8 +5,6 @@ from functools import cache
 from typing import Any
 
 import pghistory
-from common.models import BaseModel, OrgScoped
-from common.permissions.utils import PermissionSet, perm
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
@@ -19,6 +17,8 @@ from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
 from places.fields import PlacesField
 
+from common.models import BaseModel, OrgScoped
+from common.permissions.utils import PermissionSet, perm
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,

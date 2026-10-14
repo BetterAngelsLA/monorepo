@@ -261,7 +261,7 @@ def check_write_tier_declarations(app_configs: Any, **kwargs: Any) -> list[Error
     """
     from django.apps import apps
 
-    from common.models import OrgScoped, WRITE_OBJECT, WRITE_SHARED
+    from common.models import WRITE_OBJECT, WRITE_SHARED, OrgScoped
 
     errors: list[Error] = []
     for model in apps.get_models():

@@ -1,8 +1,8 @@
-from accounts.tests.baker_recipes import organization_recipe
 from model_bakery import baker
-from notes.models import Note
 from unittest_parametrize import parametrize
 
+from accounts.tests.baker_recipes import organization_recipe
+from notes.models import Note
 from teams.models import Team
 
 from .utils import TeamGraphQLUtilsMixin

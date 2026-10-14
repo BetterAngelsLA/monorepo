@@ -11,7 +11,6 @@
  *
  * RVTM §7 Tier 2.
  */
-import '@testing-library/react-native/build/matchers/extend-expect';
 import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
@@ -70,7 +69,9 @@ const mocks = [
   },
 ];
 
-function renderPicker(props: Partial<Parameters<typeof ReferralForm>[0]> = {}) {
+async function renderPicker(
+  props: Partial<Parameters<typeof ReferralForm>[0]> = {},
+) {
   const onSelectShelter = vi.fn();
   function ControlledPicker() {
     const [selectedShelterId, setSelectedShelterId] = useState(
@@ -79,6 +80,7 @@ function renderPicker(props: Partial<Parameters<typeof ReferralForm>[0]> = {}) {
     return (
       <ReferralForm
         onCancel={vi.fn()}
+        onBack={vi.fn()}
         onSubmit={vi.fn().mockResolvedValue(true)}
         {...props}
         selectedShelterId={selectedShelterId}
@@ -89,7 +91,7 @@ function renderPicker(props: Partial<Parameters<typeof ReferralForm>[0]> = {}) {
       />
     );
   }
-  render(
+  await render(
     <MockedProvider cache={createTestApolloCache()} mocks={mocks}>
       <ControlledPicker />
     </MockedProvider>,
@@ -103,30 +105,30 @@ const isSelected = (i: number) =>
 
 describe('ReferralForm shelter selection', () => {
   it('lists the approved shelters returned by the query', async () => {
-    renderPicker();
+    await renderPicker();
 
     expect(await screen.findByText('Alpha House')).toBeOnTheScreen();
     expect(screen.getByText('Beta House')).toBeOnTheScreen();
   });
 
   it('selects a shelter on first tap', async () => {
-    const { onSelectShelter } = renderPicker();
+    const { onSelectShelter } = await renderPicker();
     await screen.findByText('Alpha House');
 
-    fireEvent.press(radios()[0]);
+    await fireEvent.press(radios()[0]);
 
     await waitFor(() => expect(isSelected(0)).toBe(true));
     expect(onSelectShelter).toHaveBeenLastCalledWith('s-1');
   });
 
   it('clears the selection when the selected shelter is tapped again', async () => {
-    const { onSelectShelter } = renderPicker();
+    const { onSelectShelter } = await renderPicker();
     await screen.findByText('Alpha House');
 
-    fireEvent.press(radios()[0]);
+    await fireEvent.press(radios()[0]);
     await waitFor(() => expect(isSelected(0)).toBe(true));
 
-    fireEvent.press(radios()[0]);
+    await fireEvent.press(radios()[0]);
 
     await waitFor(() => expect(isSelected(0)).toBe(false));
     // null, not undefined — the draft must record "cleared", not "untouched"
@@ -134,13 +136,13 @@ describe('ReferralForm shelter selection', () => {
   });
 
   it('moves the selection when a different shelter is tapped', async () => {
-    const { onSelectShelter } = renderPicker();
+    const { onSelectShelter } = await renderPicker();
     await screen.findByText('Alpha House');
 
-    fireEvent.press(radios()[0]);
+    await fireEvent.press(radios()[0]);
     await waitFor(() => expect(isSelected(0)).toBe(true));
 
-    fireEvent.press(radios()[1]);
+    await fireEvent.press(radios()[1]);
 
     await waitFor(() => expect(isSelected(1)).toBe(true));
     expect(isSelected(0)).toBe(false);
@@ -148,28 +150,43 @@ describe('ReferralForm shelter selection', () => {
   });
 
   it('disables Submit until a shelter is chosen, and again once cleared', async () => {
-    renderPicker();
+    await renderPicker();
     await screen.findByText('Alpha House');
     const submit = () => screen.getByTestId('submit-referral-btn');
 
     expect(submit().props.accessibilityState?.disabled).toBe(true);
 
-    fireEvent.press(radios()[0]);
+    await fireEvent.press(radios()[0]);
     await waitFor(() =>
       expect(submit().props.accessibilityState?.disabled).toBe(false),
     );
 
-    fireEvent.press(radios()[0]);
+    await fireEvent.press(radios()[0]);
     await waitFor(() =>
       expect(submit().props.accessibilityState?.disabled).toBe(true),
     );
   });
 
   it('seeds the selection from a resumed draft', async () => {
-    renderPicker({ selectedShelterId: 's-2' });
+    await renderPicker({ selectedShelterId: 's-2' });
     await screen.findByText('Beta House');
 
     expect(isSelected(1)).toBe(true);
     expect(screen.getByText('✓ Selected: Beta House')).toBeOnTheScreen();
+  });
+
+  it('offers Back to the intake step without cancelling or submitting', async () => {
+    const onBack = vi.fn();
+    const onCancel = vi.fn();
+    const onSubmit = vi.fn().mockResolvedValue(true);
+    await renderPicker({ onBack, onCancel, onSubmit });
+    await screen.findByText('Alpha House');
+
+    await fireEvent.press(screen.getByTestId('picker-back-btn'));
+
+    expect(onBack).toHaveBeenCalledOnce();
+    // Back is not an exit: nothing is discarded and no referral is sent.
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

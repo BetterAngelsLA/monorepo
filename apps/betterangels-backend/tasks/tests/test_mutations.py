@@ -1,11 +1,12 @@
 from unittest.mock import ANY
 
 import time_machine
+from django.test import ignore_warnings
+from model_bakery import baker
+
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import ignore_warnings
 from hmis.models import HmisNote
-from model_bakery import baker
 from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
@@ -21,7 +22,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.note = baker.make(Note, organization=self.org)
         self.hmis_note = baker.make(HmisNote)
 
-    @time_machine.travel("07-31-2025 10:11:12", tick=False)
+    @time_machine.travel("07-31-2025 10:11:12+00:00", tick=False)
     def test_create_task_mutation(self) -> None:
         client_profile = baker.make(ClientProfile)
         assert self.org
@@ -68,7 +69,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(created_task, expected_task)
         self.assertTrue(Task.objects.filter(id=created_task["id"]).exists())
 
-    @time_machine.travel("07-31-2025 10:11:12", tick=False)
+    @time_machine.travel("07-31-2025 10:11:12+00:00", tick=False)
     def test_update_task_mutation(self) -> None:
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
         assert self.org
@@ -147,7 +148,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             Task.objects.get(id=task_id)
             Task.objects.get(id=task_id)
 
-    @time_machine.travel("07-31-2025 10:11:12", tick=False)
+    @time_machine.travel("07-31-2025 10:11:12+00:00", tick=False)
     def test_create_task_mutation_with_hmis_note(self) -> None:
         """
         Verify we can create a task linked specifically to an HMIS Note.

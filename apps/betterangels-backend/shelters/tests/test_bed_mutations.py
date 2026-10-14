@@ -1,8 +1,9 @@
-from accounts.models import User
 from datetime import datetime, timezone
 
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.models import User
 from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,

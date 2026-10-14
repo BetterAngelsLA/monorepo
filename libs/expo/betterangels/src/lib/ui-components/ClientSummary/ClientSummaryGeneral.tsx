@@ -122,7 +122,7 @@ export default function ClientSummaryGeneral(
           }
         />
       </View>
-      {client.importantNotes && (
+      {!!client.importantNotes && (
         <PressablePanel style={{ marginTop: Spacings.sm }} variant="error">
           <View
             style={{

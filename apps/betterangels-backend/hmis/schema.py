@@ -2,6 +2,20 @@ from typing import Any, Dict, Iterable, cast
 
 import strawberry
 import strawberry_django
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as django_login
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
+from strawberry import ID, asdict
+from strawberry.permission import BasePermission
+from strawberry.schema_directive import Location as DirectiveLocation
+from strawberry.schema_directive import schema_directive
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+from strawberry_django.mutations import resolvers
+from strawberry_django.pagination import OffsetPaginated
+
 from accounts.selectors import resolve_permission_group
 from accounts.types import CurrentUserType
 from betterangels_backend import settings
@@ -13,25 +27,12 @@ from common.graphql.decorators import (
 from common.graphql.types import DeletedObjectType
 from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
-from django.contrib.auth import get_user_model
-from django.contrib.auth import login as django_login
-from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import transaction
 from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.groups import CASEWORKER
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
 from notes.utils.note_utils import get_service_args
-from strawberry import ID, asdict
-from strawberry.permission import BasePermission
-from strawberry.schema_directive import Location as DirectiveLocation
-from strawberry.schema_directive import schema_directive
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
-from strawberry_django.mutations import resolvers
-from strawberry_django.pagination import OffsetPaginated
 
 from .api_bridge import HmisApiBridge
 from .types import (

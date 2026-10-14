@@ -126,7 +126,7 @@ describe('FileScreenComponent (edit mode)', () => {
     };
     const client = createClient(deferred);
 
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <ApolloProvider client={client}>
         <FileScreenComponent
           id={DOCUMENT.id}

@@ -1,8 +1,7 @@
 from typing import Any, ClassVar, cast
+from zoneinfo import ZoneInfo
 
 import pghistory
-from accounts.managers import UserManager
-from common.models import BaseModel
 from django.contrib.auth.models import AbstractBaseUser, Group, Permission, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.contenttypes.models import ContentType
@@ -15,6 +14,9 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from strawberry_django.descriptors import model_property
+
+from accounts.managers import UserManager
+from common.models import BaseModel
 
 
 @pghistory.track(
@@ -426,6 +428,22 @@ class OrgTypeChoices(models.TextChoices):
     SHELTER = "shelter", "Shelter"
 
 
+def validate_iana_time_zone(value: str) -> None:
+    """Reject anything ``zoneinfo`` cannot resolve.
+
+    The calendar a report is cut on is stored, so a typo would otherwise sit in the
+    data and mislabel every period the organization reports on.  ``settings``
+    already carries an unvalidated ``TIME_ZONE``; this field does not have to
+    inherit that.
+    """
+    if not value:
+        return
+    try:
+        ZoneInfo(value)
+    except (ValueError, KeyError) as error:
+        raise ValidationError(f"{value!r} is not a known IANA time zone.") from error
+
+
 class OrganizationProfile(BaseModel):
     organization = models.OneToOneField(
         Organization,
@@ -434,6 +452,16 @@ class OrganizationProfile(BaseModel):
     )
     org_types = ArrayField(
         base_field=TextChoicesField(choices_enum=OrgTypeChoices),
+    )
+    time_zone = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        validators=[validate_iana_time_zone],
+        help_text=(
+            "IANA name for the calendar this organization's report days are cut on, "
+            "e.g. America/Los_Angeles. Blank falls back to the site's TIME_ZONE."
+        ),
     )
 
     objects = models.Manager()

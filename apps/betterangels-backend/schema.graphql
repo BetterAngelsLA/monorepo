@@ -391,11 +391,6 @@ input ClientProfileOrder {
   id: Ordering
 }
 
-input ClientProfilePhotoInput {
-  clientProfile: ID!
-  photo: Upload
-}
-
 type ClientProfileType {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
@@ -421,7 +416,6 @@ type ClientProfileType {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: DjangoImageType
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -431,6 +425,7 @@ type ClientProfileType {
   unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
+  profilePhoto: DjangoImageType
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
@@ -528,7 +523,6 @@ input CreateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -579,7 +573,6 @@ input CreateHmisClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   residenceAddress: String
@@ -1110,7 +1103,6 @@ type HmisClientProfileType {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: DjangoImageType
   pronouns: PronounEnum
   pronounsOther: String
   residenceAddress: String
@@ -1118,6 +1110,7 @@ type HmisClientProfileType {
   spokenLanguages: [LanguageEnum!]
   unhousedStartDate: Date
   id: ID!
+  profilePhoto: DjangoImageType
   hmisId: String
   personalId: String
   uniqueIdentifier: String
@@ -1541,7 +1534,6 @@ type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
-  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true) @deprecated(reason: "Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.")
   deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
@@ -3011,7 +3003,6 @@ input UpdateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -3029,8 +3020,6 @@ input UpdateClientProfileInput {
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
-
-union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union UpdateCurrentUserPayload = UserType | CurrentUserType | OperationInfo
 
@@ -3067,7 +3056,6 @@ input UpdateHmisClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   residenceAddress: String
@@ -3261,9 +3249,6 @@ input UpdateUserProfileInput {
 }
 
 union UpdateUserProfilePayload = CurrentUserType | OperationInfo
-
-"""Represents a file upload."""
-scalar Upload
 
 type UserType {
   firstName: NonBlankString

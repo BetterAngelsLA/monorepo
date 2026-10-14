@@ -5,9 +5,10 @@ declaration errors a model can make: a multi-valued hop and a hop onto a model
 that does not declare ``OrgScoped``.
 """
 
-from common.models import OrgScoped
 from django.db import models
 from django.test import TestCase
+
+from common.models import OrgScoped
 from shelters.models import Bed, Reservation, Room, Shelter, ShelterPhoto
 
 

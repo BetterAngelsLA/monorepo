@@ -3,12 +3,13 @@
 from typing import Any
 
 import strawberry
-from common.graphql.decorators import (
-    apply_schema_directives_and_permissions_to_all_fields,
-)
 from strawberry.permission import BasePermission
 from strawberry.schema_directive import Location as DirectiveLocation
 from strawberry.schema_directive import schema_directive
+
+from common.graphql.decorators import (
+    apply_schema_directives_and_permissions_to_all_fields,
+)
 
 
 # Test directive

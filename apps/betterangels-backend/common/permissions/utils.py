@@ -14,7 +14,6 @@ from strawberry_django.auth.utils import get_current_user
 
 from common.errors import UnauthenticatedGQLError
 
-
 # ── Permission enum registry (frontend codegen) ───────────────────────────────
 
 _permission_enum_registry: list[type[TextChoices]] = []

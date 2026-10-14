@@ -1,6 +1,16 @@
-import RNMapView from 'react-native-maps';
+import type RNMapView from 'react-native-maps';
 
-export { RNMapView as TMapView };
+// Type-only: a value re-export here is not erased by Babel, so it would pull
+// `react-native-maps` into bundles that only need the type.
+export type TMapView = RNMapView;
+
+/**
+ * Browser Maps JavaScript API key, installed once by the app through
+ * `configureWebMaps`. The native SDKs take theirs from the app config plugins.
+ */
+export type TWebMapsConfig = {
+  apiKey: string;
+};
 
 export type TMapLatLng = {
   lat: number;

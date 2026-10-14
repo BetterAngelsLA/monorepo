@@ -231,13 +231,11 @@ export default function NoteTasks(props: INoteTasksProps) {
   }
 
   // 2. Logic: If no tasks, show the card (in Edit/Create modes), but NO header action.
-  const actionName = '';
-
   return (
     <FieldCard
       scrollRef={scrollRef}
       mb="xs"
-      actionName={actionName}
+      actionName={null}
       title="Follow-Up Tasks"
       setExpanded={() => {
         // If the list is empty, clicking the header/card opens the Add Modal

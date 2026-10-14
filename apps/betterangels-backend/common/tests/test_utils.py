@@ -1,10 +1,11 @@
 import uuid
 
+from django.test import TestCase
+from unittest_parametrize import ParametrizedTestCase, parametrize
+
 from common.files.utils import canonicalise_filename
 from common.utils import can_match, matchable_values
-from django.test import TestCase
 from notes.models import Note, NoteImportRecord
-from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
 class CommonUtilsTestCase(ParametrizedTestCase, TestCase):

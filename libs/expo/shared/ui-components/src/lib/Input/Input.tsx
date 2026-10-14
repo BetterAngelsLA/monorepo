@@ -7,9 +7,10 @@ import {
   getMarginStyles,
   omitMarginProps,
 } from '@monorepo/expo/shared/static';
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import {
   Platform,
+  Pressable,
   StyleProp,
   StyleSheet,
   TextInput,
@@ -35,6 +36,19 @@ export interface IInputProps extends TMarginProps, TextInputProps {
   slotLeft?: TInputSlot;
   slotRight?: TInputSlot;
   asSelect?: boolean;
+  /**
+   * Fills the field row (input and slots), not the label or error line. An
+   * overlay can size itself with `100%`; anything it leaves uncovered stays
+   * interactive. The web date/time fields use it for their transparent `<input>`.
+   */
+  fieldOverlay?: ReactNode;
+  /**
+   * Makes the field a press target instead of something you type into (use it for
+   * a select): the input stays as display, leaves the tab order, and a target over
+   * the row reports the press. `Picker` opens its modal from this rather than from
+   * `onFocus`, which react-native-web's Modal re-fires on close.
+   */
+  onPress?: () => void;
 }
 
 const defaultAsSelectProps: TextInputProps = {
@@ -59,6 +73,8 @@ export function Input(props: IInputProps) {
     borderRadius = Radiuses.xs,
     errorMessage,
     asSelect,
+    fieldOverlay,
+    onPress,
     placeholderTextColor = Colors.NEUTRAL,
     ...rest
   } = props;
@@ -76,7 +92,7 @@ export function Input(props: IInputProps) {
 
   return (
     <View style={[styles.container, style, getMarginStyles(props)]}>
-      {label && <FormFieldLabel label={label} required={required} />}
+      {!!label && <FormFieldLabel label={label} required={required} />}
 
       <View
         style={[
@@ -108,9 +124,29 @@ export function Input(props: IInputProps) {
           autoCapitalize={autoCapitalize}
           placeholderTextColor={placeholderTextColor}
           value={value ?? ''}
+          // A press-target field is reached through the target below, so it must
+          // not be a second tab stop (or a focus entry point) of its own.
+          focusable={onPress ? false : undefined}
           {...asSelectProps}
           {...nonMarginOtherProps}
         />
+
+        {onPress && !disabled && (
+          <Pressable
+            style={styles.pressTarget}
+            onPress={onPress}
+            accessibilityRole="button"
+            // The value belongs in the label: react-native-web only emits
+            // `aria-valuetext` for value-bearing roles, not for a button.
+            accessibilityLabel={[
+              label,
+              value ? String(value) : rest.placeholder,
+            ]
+              .filter(Boolean)
+              .join(': ')}
+            accessibilityHint={`opens options for ${label || 'field'}`}
+          />
+        )}
 
         {showClear && (
           <InputSlot
@@ -131,9 +167,13 @@ export function Input(props: IInputProps) {
             {...slotRight}
           />
         )}
+
+        {!!fieldOverlay && (
+          <View style={styles.fieldOverlay}>{fieldOverlay}</View>
+        )}
       </View>
 
-      {errorMessage && <FormFieldError message={errorMessage} />}
+      {!!errorMessage && <FormFieldError message={errorMessage} />}
     </View>
   );
 }
@@ -142,6 +182,27 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     width: '100%',
+  },
+  /** Covers the field row; rendered before the slots so they keep their own taps. */
+  pressTarget: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  /**
+   * Spelled out rather than spread from `StyleSheet.absoluteFill`, which
+   * react-native-web compiles to a class map. `box-none` must come from the
+   * stylesheet: react-native-web polyfills it only through the atomic compiler.
+   */
+  fieldOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    pointerEvents: 'box-none',
   },
   input: {
     position: 'relative',
@@ -156,6 +217,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: FontSizes.xsm.fontSize,
     includeFontPadding: false,
-    ...Platform.select({ web: { outline: 'none' as const } }),
+    // `outlineWidth: 0`, not `outline: 'none'`: react-native-web's StyleSheet
+    // validator deletes CSS shorthands (dev only), and React Native's own types
+    // only allow 'solid' | 'dotted' | 'dashed' for `outlineStyle`, so a zero width
+    // is the type-safe way to drop the focus ring.
+    ...Platform.select({ web: { outlineWidth: 0 } }),
   },
 });

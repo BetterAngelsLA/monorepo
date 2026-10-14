@@ -31,8 +31,6 @@ export type Scalars = {
   /** Time (isoformat) */
   Time: { input: TimeString; output: TimeString; }
   UUID: { input: UUIDString; output: UUIDString; }
-  /** Represents a file upload. */
-  Upload: { input: any; output: any; }
 };
 
 export enum AccessibilityChoices {
@@ -397,11 +395,6 @@ export type ClientProfileOrder = {
   lastName?: InputMaybe<Ordering>;
 };
 
-export type ClientProfilePhotoInput = {
-  clientProfile: Scalars['ID']['input'];
-  photo?: InputMaybe<Scalars['Upload']['input']>;
-};
-
 export type ClientProfileType = {
   __typename: 'ClientProfileType';
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
@@ -538,7 +531,6 @@ export type CreateClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
@@ -579,7 +571,6 @@ export type CreateHmisClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   raceEthnicity?: InputMaybe<Array<HmisRaceEnum>>;
@@ -1605,8 +1596,6 @@ export type Mutation = {
   updateClientDocument: UpdateClientDocumentPayload;
   updateClientHouseholdMember: UpdateClientHouseholdMemberPayload;
   updateClientProfile: UpdateClientProfilePayload;
-  /** @deprecated Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal. */
-  updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
   updateHmisClientProfile: UpdateHmisClientProfilePayload;
   updateHmisNote: UpdateHmisNotePayload;
@@ -1940,11 +1929,6 @@ export type MutationUpdateClientHouseholdMemberArgs = {
 
 export type MutationUpdateClientProfileArgs = {
   data: UpdateClientProfileInput;
-};
-
-
-export type MutationUpdateClientProfilePhotoArgs = {
-  data: ClientProfilePhotoInput;
 };
 
 
@@ -3787,7 +3771,6 @@ export type UpdateClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
@@ -3800,8 +3783,6 @@ export type UpdateClientProfileInput = {
 };
 
 export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
-
-export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
 export type UpdateCurrentUserPayload = CurrentUserType | OperationInfo | UserType;
 
@@ -3834,7 +3815,6 @@ export type UpdateHmisClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   raceEthnicity: Array<HmisRaceEnum>;

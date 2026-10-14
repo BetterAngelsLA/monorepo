@@ -2,12 +2,13 @@
 
 from typing import Any
 
+from model_bakery import baker
+from organizations.models import Organization
+
 from accounts.groups import ORG_ADMIN
 from accounts.models import User
 from accounts.services import create_organization_with_presets
-from model_bakery import baker
 from notes.groups import CASEWORKER
-from organizations.models import Organization
 
 
 def make_org_with_presets(**attrs: Any) -> Organization:

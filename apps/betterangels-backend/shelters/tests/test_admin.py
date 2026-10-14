@@ -1,5 +1,6 @@
 from django.http import QueryDict
 from django.test import TestCase
+
 from shelters.admin import GroupedServiceWidget, ShelterForm, ShelterResource
 from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
 

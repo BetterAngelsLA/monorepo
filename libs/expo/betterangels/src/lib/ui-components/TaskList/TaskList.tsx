@@ -1,10 +1,10 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  InfiniteList,
   TRenderListResultsHeader,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../InfiniteList/FocusedInfiniteList';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, TaskFilter, TaskOrder, TaskType } from '../../apollo';
@@ -79,7 +79,7 @@ export function TaskList(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<TaskType>
+      <FocusedInfiniteList<TaskType>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}

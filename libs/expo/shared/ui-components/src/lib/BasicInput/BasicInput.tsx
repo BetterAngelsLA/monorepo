@@ -89,7 +89,7 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
 
     return (
       <View style={[styles.container, componentStyle, margins]}>
-        {label && (
+        {!!label && (
           <View style={styles.labelRow}>
             <Text style={styles.labelText}>{label}</Text>
             {required && <Text style={styles.required}>*</Text>}
@@ -107,7 +107,7 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
             },
           ]}
         >
-          {icon && <View style={styles.leftIconWrap}>{icon}</View>}
+          {!!icon && <View style={styles.leftIconWrap}>{icon}</View>}
 
           <TextInput
             ref={ref}
@@ -155,7 +155,7 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
           )}
         </View>
 
-        {errorMessage && (
+        {!!errorMessage && (
           <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
             {errorMessage}
           </TextRegular>

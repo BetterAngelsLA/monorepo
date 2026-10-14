@@ -46,8 +46,8 @@ from typing import Any
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from referrals.models import Referral, ReferralTestShelter
 
+from referrals.models import Referral, ReferralTestShelter
 from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,

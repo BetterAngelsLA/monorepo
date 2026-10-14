@@ -53,15 +53,15 @@ vi.mock('@monorepo/expo/shared/icons', () => ({
   PlusIcon: () => null,
 }));
 
-function renderSlot(slot: (() => ReactElement) | undefined) {
+async function renderSlot(slot: (() => ReactElement) | undefined) {
   if (!slot) {
     throw new Error('Expected a header slot to render');
   }
-  render(slot());
+  await render(slot());
 }
 
 describe('getStackScreenOptions', () => {
-  it('returns the primary screen header options with the given title', () => {
+  it('returns the primary screen header options with the given title', async () => {
     const options = getStackScreenOptions({ title: 'Settings' });
 
     expect(options).toMatchObject({
@@ -72,19 +72,19 @@ describe('getStackScreenOptions', () => {
     expect(typeof options.headerLeft).toBe('function');
   });
 
-  it('defaults the title to an empty string', () => {
+  it('defaults the title to an empty string', async () => {
     expect(getStackScreenOptions().title).toBe('');
   });
 
-  it('renders a Back button via headerLeft', () => {
-    render(getStackScreenOptions().headerLeft());
+  it('renders a Back button via headerLeft', async () => {
+    await render(getStackScreenOptions().headerLeft());
 
     expect(screen.getByText('Back')).toBeTruthy();
   });
 });
 
 describe('getStackModalOptions', () => {
-  it('defaults to a modal presentation with the secondary palette and a close button', () => {
+  it('defaults to a modal presentation with the secondary palette and a close button', async () => {
     const options = getStackModalOptions({
       title: 'Filter',
       onClose: () => undefined,
@@ -101,13 +101,13 @@ describe('getStackModalOptions', () => {
     expect(typeof options.headerRight).toBe('function');
     expect(options.headerLeft).toBeUndefined();
 
-    renderSlot(options.headerRight);
+    await renderSlot(options.headerRight);
     expect(screen.getByTestId('modal-screen-close-btn').props.iconColor).toBe(
       headerStyles.secondary.textColor,
     );
   });
 
-  it('uses the primary palette and a left Close button for a card presentation', () => {
+  it('uses the primary palette and a left Close button for a card presentation', async () => {
     const options = getStackModalOptions({
       presentation: 'card',
       onClose: () => undefined,
@@ -122,7 +122,7 @@ describe('getStackModalOptions', () => {
     expect(options.headerRight).toBeUndefined();
   });
 
-  it('uses the secondary palette for fullScreenModal', () => {
+  it('uses the secondary palette for fullScreenModal', async () => {
     const options = getStackModalOptions({
       presentation: 'fullScreenModal',
       onClose: () => undefined,
@@ -135,7 +135,7 @@ describe('getStackModalOptions', () => {
     expect(typeof options.headerRight).toBe('function');
   });
 
-  it("lets a header variant override the presentation's palette", () => {
+  it("lets a header variant override the presentation's palette", async () => {
     const options = getStackModalOptions({
       presentation: 'modal',
       header: { variant: 'primary' },
@@ -148,7 +148,7 @@ describe('getStackModalOptions', () => {
     });
   });
 
-  it('hides the native bar for a custom header mode', () => {
+  it('hides the native bar for a custom header mode', async () => {
     expect(
       getStackModalOptions({
         presentation: 'fullScreenModal',
@@ -160,7 +160,7 @@ describe('getStackModalOptions', () => {
     });
   });
 
-  it('hides the native bar for a none header mode', () => {
+  it('hides the native bar for a none header mode', async () => {
     expect(
       getStackModalOptions({
         presentation: 'modal',
@@ -172,32 +172,32 @@ describe('getStackModalOptions', () => {
     });
   });
 
-  it('renders no close button when onClose is omitted', () => {
+  it('renders no close button when onClose is omitted', async () => {
     const options = getStackModalOptions({ presentation: 'modal' }) as TOptions;
 
     expect(options.headerRight).toBeUndefined();
   });
 
-  it('threads the close label through to the close button', () => {
+  it('threads the close label through to the close button', async () => {
     const options = getStackModalOptions({
       presentation: 'fullScreenModal',
       header: { closeLabel: 'Done' },
       onClose: () => undefined,
     }) as TOptions;
 
-    renderSlot(options.headerRight);
+    await renderSlot(options.headerRight);
 
     expect(screen.getByText('Done')).toBeTruthy();
   });
 
-  it('renders a card Close button tinted by the resolved palette', () => {
+  it('renders a card Close button tinted by the resolved palette', async () => {
     const options = getStackModalOptions({
       presentation: 'card',
       header: { variant: 'secondary' },
       onClose: () => undefined,
     }) as TOptions;
 
-    renderSlot(options.headerLeft);
+    await renderSlot(options.headerLeft);
 
     const button = screen.getByTestId('text-button');
     expect(screen.getByText('Close')).toBeTruthy();
