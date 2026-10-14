@@ -209,7 +209,7 @@ export function DocumentMenuSheet({
       <BottomSheetModalControlled
         isOpen={modalState === 'menuOpen'}
         onClose={onClose}
-        options={{ showHandle: true, showCloseButton: true }}
+        options={{ showHandle: true }}
       >
         <DocumentMenu
           fileTypeLabel={fileTypeLabel}
