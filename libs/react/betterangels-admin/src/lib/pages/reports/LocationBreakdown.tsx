@@ -1,6 +1,7 @@
 import { Column } from '@ant-design/charts';
 import {
   Alert,
+  Input,
   Select,
   Spin,
   Table,
@@ -128,6 +129,7 @@ export function LocationBreakdown({
   // question ("where are we strong in 8 versus 9?"), and the plumbing is already a list
   // the whole way down to the API, so single-select was an artificial restriction.
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [filter, setFilter] = useState('');
   const controlsRef = useNoAutofill();
 
   const { dimensions, error: dimensionsError } = useRegionDimensions();
@@ -190,6 +192,18 @@ export function LocationBreakdown({
   );
   // `hasData` deliberately ignores `loading`: a refetch must not unmount the map.
   const hasData = assigned.length > 0;
+
+  // The checkbox list searches name *and* code, because a code is what a reader usually
+  // has to hand ("district 13") and it is not what the label shows.
+  const selectable = useMemo(() => {
+    const needle = filter.trim().toLowerCase();
+    if (needle === '') {
+      return assigned;
+    }
+    return assigned.filter((row) =>
+      `${row.name} ${row.code}`.toLowerCase().includes(needle),
+    );
+  }, [assigned, filter]);
 
   const unassigned = useMemo(() => shown.filter((r) => r.isUnassigned), [shown]);
   // Resolved above the JSX rather than inline: the styleguide asks for `if`/`else`
@@ -296,33 +310,72 @@ export function LocationBreakdown({
             matches((option?.label as string) ?? '', input)
           }
         />
-        <Text type="secondary">Show</Text>
-        <Select
-          allowClear
-          showSearch
-          // Disabled rather than hidden, so the control does not jump around when the
-          // grouping changes — and because a code without a dimension cannot be resolved.
-          disabled={dimension === undefined}
-          mode="multiple"
-          // Keeps the control from growing without bound as regions are added; the
-          // selected names are still visible in the caption and the table.
-          maxTagCount="responsive"
-          value={selectedCodes}
-          onChange={(value: string[]) => setSelectedCodes(value)}
-          style={{ minWidth: 220 }}
-          placeholder={dimension ? `All ${dimensionName.toLowerCase()}s` : 'Pick a dimension first'}
-          options={assigned.map((row) => ({
-            value: row.code,
-            // Carries the code as well as the name, because `filterOption` searches
-            // the label and the code is what a reader usually has to hand.
-            label: `${row.name || row.code} (${row.count.toLocaleString()})`,
-            searchText: `${row.name} ${row.code}`,
-          }))}
-          filterOption={(input, option) =>
-            matches((option?.searchText as string) ?? '', input)
-          }
-        />
       </div>
+
+      {dimension !== undefined && (
+        <fieldset
+          key={dimension ?? 'all'}
+          className="mb-4 rounded border border-neutral-200 p-3"
+        >
+          <legend className="px-1 text-sm text-neutral-500">
+            Show ({selectedCodes.length === 0 ? 'all' : `${selectedCodes.length} selected`})
+          </legend>
+          {/* A plain checkbox list rather than antd's `Select mode="multiple"`: that
+              dropdown closes after every pick, so adding a second region meant reopening
+              it — and no amount of prop-fiddling made it behave. A list does not have a
+              state to get stuck in. */}
+          <Input
+            allowClear
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
+            placeholder={`Filter ${dimensionName.toLowerCase()}s by name or code`}
+            style={{ maxWidth: 320, marginBottom: 8 }}
+          />
+          {/* Keyed by dimension so switching regroups from a clean tree. The codes alone
+              are not stable identities: "1" is a ZIP, a city, a council district, an SPA
+              and a CoC, so a list keyed only by code can keep rows from the dimension the
+              reader just left — which showed as two checkboxes for one district, where
+              clicking either toggled the same value twice. */}
+          <div className="max-h-44 overflow-y-auto">
+            {selectable.length === 0 ? (
+              <Text type="secondary">
+                {assigned.length === 0
+                  ? 'No interactions in this range.'
+                  : 'Nothing matches that filter.'}
+              </Text>
+            ) : (
+              selectable.map((row) => (
+                <label key={row.code} className="flex cursor-pointer items-center gap-2 py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={selectedCodes.includes(row.code)}
+                    onChange={(event) =>
+                      setSelectedCodes((current) =>
+                        event.target.checked
+                          ? [...current, row.code]
+                          : current.filter((code) => code !== row.code),
+                      )
+                    }
+                  />
+                  <span className="text-sm">
+                    {row.name || row.code}
+                    <span className="text-neutral-500"> ({row.count.toLocaleString()})</span>
+                  </span>
+                </label>
+              ))
+            )}
+          </div>
+          {selectedCodes.length > 0 && (
+            <button
+              type="button"
+              className="mt-2 text-sm text-neutral-600 underline"
+              onClick={() => setSelectedCodes([])}
+            >
+              Clear selection
+            </button>
+          )}
+        </fieldset>
+      )}
 
       {rowsLoading && (
         <div className="flex items-center gap-2 text-sm text-neutral-500">

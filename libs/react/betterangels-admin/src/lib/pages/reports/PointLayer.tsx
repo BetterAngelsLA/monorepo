@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 
 /**
@@ -76,8 +76,6 @@ export function PointLayer({ points, radius = 5 }: PointLayerProps) {
   const map = useMap();
   const pointsRef = useRef<InteractionPoint[]>(points);
   const drawRef = useRef<(() => void) | null>(null);
-  // Exposed so a test or a future interaction can read what was drawn.
-  const [clusterCount, setClusterCount] = useState(0);
 
   useEffect(() => {
     if (!map) {
@@ -121,7 +119,6 @@ export function PointLayer({ points, radius = 5 }: PointLayerProps) {
 
       const current = pointsRef.current;
       if (current.length === 0) {
-        setClusterCount(0);
         return;
       }
 
@@ -157,8 +154,6 @@ export function PointLayer({ points, radius = 5 }: PointLayerProps) {
       for (const bucket of buckets.values()) {
         clusters.push({ x: bucket.sx / bucket.n, y: bucket.sy / bucket.n, count: bucket.n });
       }
-      setClusterCount(clusters.length);
-
       // Draw smallest first so a dense cluster is not buried under its neighbours.
       clusters.sort((a, b) => a.count - b.count);
       ctx.lineWidth = 1;
@@ -198,7 +193,5 @@ export function PointLayer({ points, radius = 5 }: PointLayerProps) {
     drawRef.current?.();
   }, [points]);
 
-  // Nothing renders in the DOM; the count is surfaced for callers that want to label it.
-  void clusterCount;
   return null;
 }
