@@ -1,6 +1,6 @@
 ---
 name: Shelter audit log
-overview: Make every touch on a shelter-operator-portal object produce an auditable event (writes via pghistory, reads via a Strawberry extension in a dedicated audit app), and expose an operator-facing per-object audit-log query.
+overview: Make every write on a shelter-operator-portal object produce an auditable event (via pghistory) and expose an operator-facing per-object audit-log query. Read tracking (a Strawberry extension writing an AuditReadEvent) is specified in §22-§29 but deferred and not scheduled.
 todos:
   - id: freeze-write-actor
     content: 'Phase 1: freeze actor name/email on writes via HistoryMiddleware subclass'
@@ -155,12 +155,12 @@ riskier read mechanism is deferred.
 > (no condition) would fire on every `.save()` and render a phantom `updated_at`
 > diff. The `field_changes` rendering (§13) must therefore **exclude
 > `created_at`/`updated_at`** (and any `pgh_*` keys), the same way the aggregate
-> SQL already filters `pgh_*`. For the *new* event tables created in this phase,
+> SQL already filters `pgh_*`. For the _new_ event tables created in this phase,
 > alternatively pass `exclude=["created_at", "updated_at"]` to the decorator;
-> **do not** change the existing `Reservation` decorator's snapshot *shape* (it
+> **do not** change the existing `Reservation` decorator's snapshot _shape_ (it
 > would drop columns from `reservation.status_change`, which the report selectors
 > already consume). For `Reservation.update` the mechanical column is excluded
-> from the trigger *condition* instead — not the snapshot — so the trigger fires
+> from the trigger _condition_ instead — not the snapshot — so the trigger fires
 > only on real changes (§2). `pgh_created_at` is the event's own timestamp and is
 > unaffected either way.
 
@@ -192,7 +192,7 @@ In [shelters/models/reservation.py](apps/betterangels-backend/shelters/models/re
 
 `reservation.status_change` exists to feed the reporting selectors; `reservation.update` covers every other change. Because the conditions are mutually exclusive, a status change emits **one** event, not two, and each label carries its own diff.
 
-> **Why `updated_at` is excluded, not just `status`.** `AnyChange(exclude=["status"])` is *not* disjoint on its own: `BaseModel.updated_at` is `auto_now`, so it changes on every `save()`, and the generated condition `... OR OLD."updated_at" IS DISTINCT FROM NEW."updated_at"` matches every status change too. Excluding the mechanical column is what actually makes the pair mutually exclusive. (Only `updated_at` churns — `created_at` is `auto_now_add` and never changes on update.)
+> **Why `updated_at` is excluded, not just `status`.** `AnyChange(exclude=["status"])` is _not_ disjoint on its own: `BaseModel.updated_at` is `auto_now`, so it changes on every `save()`, and the generated condition `... OR OLD."updated_at" IS DISTINCT FROM NEW."updated_at"` matches every status change too. Excluding the mechanical column is what actually makes the pair mutually exclusive. (Only `updated_at` churns — `created_at` is `auto_now_add` and never changes on update.)
 
 **Reporting:** `_reservation_status_intervals`
 ([shelters/selectors/reports.py](apps/betterangels-backend/shelters/selectors/reports.py))
@@ -272,7 +272,7 @@ Extend [shelters/models/tracked.py](apps/betterangels-backend/shelters/models/tr
 
 **Proxy naming scheme (must be stated to avoid collisions):** four related models
 (`Accessibility`, `Demographic`, `Funder`, `Pet`) are M2M targets on Shelter, Bed,
-*and* Room, and the existing Shelter proxies already claim the unprefixed
+_and_ Room, and the existing Shelter proxies already claim the unprefixed
 `Tracked<Related>` names (`TrackedAccessibility`, `TrackedDemographic`,
 `TrackedFunder`, `TrackedPet` in
 [shelters/models/tracked.py](apps/betterangels-backend/shelters/models/tracked.py)).
@@ -308,11 +308,11 @@ Run `python manage.py makemigrations shelters` (from `apps/betterangels-backend`
 row trigger. That means routine, non-operator writes (lookup seeding, demo-data
 generation) would otherwise flood the event tables with hundreds of "system"
 rows per run and pollute every object's audit log. Each such source is wrapped
-in `pghistory.context(label=...)` so the events are *marked* with a reason. Two
+in `pghistory.context(label=...)` so the events are _marked_ with a reason. Two
 of the sources — admin clone and admin CSV import — are **operator** actions
 through the portal/admin, so their events must be **kept and rendered**
 ("system (clone)" / "system (import)", §11); only the two non-operator seed
-sources are **excluded** from the log. This split avoids both noise *and* a
+sources are **excluded** from the log. This split avoids both noise _and_ a
 silent audit hole where import/clone could mutate Shelter/Bed/Room/ShelterPhoto
 rows with no trail.
 
@@ -452,7 +452,7 @@ These writes run under the `HistoryMiddleware` context (so they already carry
   Both run inside the admin merge request
   ([clients/admin_merge.py:241](apps/betterangels-backend/clients/admin_merge.py)),
   so the middleware supplies `user` — this is not an attribution bug. Without a
-  label the operation renders as an ordinary user edit, which is *correct* but
+  label the operation renders as an ordinary user edit, which is _correct_ but
   loses the fact that a bulk reassignment moved reservations. `merge_execute`
   already takes `performed_by`, documented `# reserved for future audit logging`;
   if merge is later given its own label (as `clone`/`import` are, §7b.3/§7b.4),
@@ -532,9 +532,9 @@ Extend [shelters/tests/test_models.py](apps/betterangels-backend/shelters/tests/
 - The newly tracked admin/lookup models fire their add/remove events.
 - Bed/Room M2M `.set()` fires the new `bed.*.add/remove` and `room.*.add/remove` labels.
 - **Report regression:** `report_bed_status_counts` and `daily_occupancy` output is unchanged when a non-status `reservation.update` fires (and when a status+notes update fires). With the disjoint conditions (§2) a non-status `update` never carries a status, so the interval walk's `pgh_label__in=["reservation.add", "reservation.status_change"]` scope already excludes it; the test also asserts the directly-created path (`created_as`, no `status_change`) still counts, proving `reservation.add` is retained.
-- **Bed-reparent pin:** a test pinning the *current* (mis-attributed) occupancy behavior when a `reservation.update` changes `bed_id` without changing `status` (the interval does not close on the old bed — pre-existing). This keeps any future refactor of `_reservation_status_intervals` visible rather than silently altering an already-wrong path. The §2 label scope keeps the reparent out of the walk, so it stays latent but documented.
+- **Bed-reparent pin:** a test pinning the _current_ (mis-attributed) occupancy behavior when a `reservation.update` changes `bed_id` without changing `status` (the interval does not close on the old bed — pre-existing). This keeps any future refactor of `_reservation_status_intervals` visible rather than silently altering an already-wrong path. The §2 label scope keeps the reparent out of the walk, so it stays latent but documented.
 - **§7b labels:** `seed_shelter_lookups()` (on cleared tables) yields events with `pgh_context` metadata `{"label": "seed"}` and no `user`; a `clone_view` POST yields events whose context has `label == "clone"` **and** the admin `user`; a CSV import yields `label == "import"`. The seed-exclusion vs clone/import-retention split is asserted in §20.
-- **Update guard (see §9b):** [test_event_update_protection.py](apps/betterangels-backend/shelters/tests/test_event_update_protection.py) asserts the eleven `protect_updates` triggers are declared *and* installed, that `UPDATE` on an event row is rejected, that `DELETE` is **allowed** (retention depends on it, §31), and that `INSERT` (a normal write) still succeeds.
+- **Update guard (see §9b):** [test_event_update_protection.py](apps/betterangels-backend/shelters/tests/test_event_update_protection.py) asserts the eleven `protect_updates` triggers are declared _and_ installed, that `UPDATE` on an event row is rejected, that `DELETE` is **allowed** (retention depends on it, §31), and that `INSERT` (a normal write) still succeeds.
 
 Run with the project convention: `pytest --reuse-db`.
 
@@ -602,7 +602,7 @@ Independent of the bypasses, the surface this "protects" was already empty:
 - **No cascade path.** Every event FK is `DO_NOTHING, db_constraint=False`, so
   deleting a tracked row inserts a new event and retains the prior rows.
 - **Revert features do not rewrite history.** `NoteReverter` and the client-merge
-  undo replay by writing the *tracked* models, which produces new events.
+  undo replay by writing the _tracked_ models, which produces new events.
 
 So the honest statement is: the guard stops accidental doctoring, not a determined
 actor. Against that reality, blocking `DELETE` as well was pure cost.
@@ -617,7 +617,7 @@ rows became a partition drop or a privileged role.
 
 Narrowing to `UPDATE` keeps the failure that matters and frees `DELETE`, so
 retention is an ordinary batched delete (§31). Measurement (§9c) shows that is the
-*only* thing retention needs: a date filter alone does not bound the read cost.
+_only_ thing retention needs: a date filter alone does not bound the read cost.
 
 **Blast radius — corrected.** An earlier revision of this ADR claimed "9 call
 sites, 2 models, 1 file". That figure came from grepping for
@@ -626,10 +626,10 @@ shared test helpers (`_make_bed`, `_remove_bed`, `_stay`, `_set_maintenance`,
 `_set_last_cleaned`) and through instance-level `save(update_fields=...)` on
 event rows. **Measured** on this branch with all eleven triggers live:
 
-| figure | value |
-| --- | --- |
-| tests broken | **58**, all in [shelters/tests/test_selectors.py](apps/betterangels-backend/shelters/tests/test_selectors.py) |
-| files affected | **1** |
+| figure         | value                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------- |
+| tests broken   | **58**, all in [shelters/tests/test_selectors.py](apps/betterangels-backend/shelters/tests/test_selectors.py) |
+| files affected | **1**                                                                                                         |
 
 A separate report of "75 tests across 8 files" did **not** reproduce here — the
 other seven named files pass 116/116 — so the reproducible figure is the one
@@ -639,7 +639,7 @@ which would also cover the through-table proxies and the other pghistory apps).
 
 **The "freezegun-style" rationale was unsound.** An earlier revision suggested
 that freezing time would "both enable append-only and stop tests reaching into
-event tables". It cannot: event rows are stamped by the *database*, in the
+event tables". It cannot: event rows are stamped by the _database_, in the
 trigger's `INSERT ... NOW()` (`PGHISTORY_CREATED_AT_FUNCTION`), and Python-level
 time freezing (`time_machine`/`freezegun`) only affects Python-side defaults such
 as `auto_now_add` on ORM inserts. A trigger-generated row is always "now".
@@ -653,9 +653,9 @@ the update guard forbids.
 backdate_event_rows(BedEvent.objects.filter(...), pgh_created_at=...)
 ```
 
-It ignores the `protect_updates` trigger *by name* (`pgtrigger.ignore("<label>:protect_updates")`),
+It ignores the `protect_updates` trigger _by name_ (`pgtrigger.ignore("<label>:protect_updates")`),
 never with a bare `pgtrigger.ignore()` — ignoring every trigger would also suppress
-the event-*creation* triggers, letting a fixture write no events while still
+the event-_creation_ triggers, letting a fixture write no events while still
 appearing to. It asserts the trigger exists before ignoring it, so a mis-scoped
 call fails loudly instead of silently updating an unprotected table.
 
@@ -665,48 +665,48 @@ This is **test-only**. `pgtrigger.ignore`'s teardown issues
 connection.
 
 **Regression guard:** [test_event_update_protection.py](apps/betterangels-backend/shelters/tests/test_event_update_protection.py)
-asserts the triggers are declared *and* installed, that `UPDATE` on an event row is
+asserts the triggers are declared _and_ installed, that `UPDATE` on an event row is
 rejected, that `DELETE` **succeeds** (the retention contract, §31), and that a
 normal write still succeeds (the `INSERT` positive control).
 
 **Caveats.**
 
-- *Coverage gap:* only these eleven are protected. The through-table proxies
+- _Coverage gap:_ only these eleven are protected. The through-table proxies
   (e.g. `TrackedBedDemographicEvent`), the tracked lookup tables, and
   `Service`/`ServiceCategory` remain mutable. A shelter's log aggregates 27 event
   models (§10), so ~16 of them are still rewritable — a follow-up, not covered here.
-- *Purge interaction:* `DELETE` is intentionally allowed, so the retention job is a
+- _Purge interaction:_ `DELETE` is intentionally allowed, so the retention job is a
   plain batched `.delete()` (§31) with no trigger-bypassing path and no exempt role.
 
 ## 9c. Measured read cost (why retention, and why it is just `DELETE`)
 
-Numbers from
-[audit/management/commands/bench_audit_read.py](apps/betterangels-backend/audit/management/commands/bench_audit_read.py)
-against the schema with all 11 `(pgh_obj, pgh_id)` indexes installed, reading
+Numbers from a synthetic-events bench harness (the `bench_audit_read` command
+added on the audit-filters branch) run against a database with all 11
+`(pgh_obj, pgh_id)` indexes installed, reading
 `pgh_obj`-anchored page 1 with `limit=25`, median of 5 runs:
 
-| question | axis | result |
-| --- | --- | --- |
-| **H1** does page-1 cost grow with the *table*? | 2k → 160k rows | **flat**: p50 17.3 → 15.5 → 17.1 → 17.5 ms; exec 3.00 → 2.86 ms |
-| **H2** does it grow with the *object's own history*? | 100 → 8000 rows | **mild growth**: exec 2.67 → 2.88 → 3.40 → 4.76 ms |
-| **H3** does a date filter bound the work? | 5y vs 2y window | **no**: the predicate lands in the outer SELECT only, never in the CTE branches; p50 16.2 vs 15.7 ms |
-| **H4** what does the *unanchored* aggregate do? | all event tables | **149 `Seq Scan` nodes** vs the selector's 1; 29.4 ms for 50 rows |
+| question                                             | axis             | result                                                                                               |
+| ---------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
+| **H1** does page-1 cost grow with the _table_?       | 2k → 160k rows   | **flat**: p50 17.3 → 15.5 → 17.1 → 17.5 ms; exec 3.00 → 2.86 ms                                      |
+| **H2** does it grow with the _object's own history_? | 100 → 8000 rows  | **mild growth**: exec 2.67 → 2.88 → 3.40 → 4.76 ms                                                   |
+| **H3** does a date filter bound the work?            | 5y vs 2y window  | **no**: the predicate lands in the outer SELECT only, never in the CTE branches; p50 16.2 vs 15.7 ms |
+| **H4** what does the _unanchored_ aggregate do?      | all event tables | **149 `Seq Scan` nodes** vs the selector's 1; 29.4 ms for 50 rows                                    |
 
 Index options, same object and data:
 
-| index on `shelters_shelterevent` | exec ms |
-| --- | --- |
-| `(pgh_obj_id, pgh_id)` — as shipped | **3.07** |
-| *(that index dropped)* | **20.00** |
-| `(pgh_obj_id, pgh_created_at DESC)` | 3.09 |
-| `+ BRIN(pgh_created_at)` | 2.94 |
+| index on `shelters_shelterevent`    | exec ms   |
+| ----------------------------------- | --------- |
+| `(pgh_obj_id, pgh_id)` — as shipped | **3.07**  |
+| _(that index dropped)_              | **20.00** |
+| `(pgh_obj_id, pgh_created_at DESC)` | 3.09      |
+| `+ BRIN(pgh_created_at)`            | 2.94      |
 
 Bounded vs unbounded — 2000 events per object spread over 5 years:
 
-| configuration | p50 |
-| --- | --- |
-| full history (2000 rows) | 20.7 ms |
-| same, `date_from` = 2y, nothing purged | 18.9 ms |
+| configuration                                                | p50     |
+| ------------------------------------------------------------ | ------- |
+| full history (2000 rows)                                     | 20.7 ms |
+| same, `date_from` = 2y, nothing purged                       | 18.9 ms |
 | after the retention `DELETE` (12 000 rows removed, 800 left) | 18.3 ms |
 
 Read the last table carefully: **a date filter buys nothing** (H3), and even after
@@ -714,11 +714,11 @@ deleting 60% of the rows the page cost barely moves, because H2 is sub-linear an
 fixed ~15 ms floor dominates (two round trips, the ~30-branch union, the context
 joins). Consequences:
 
-- The premise that an ever-growing event table makes the *object-anchored* page
+- The premise that an ever-growing event table makes the _object-anchored_ page
   slower is **refuted** at these scales (H1). The `(pgh_obj, pgh_id)` index anchors
   every union branch, so total size does not matter — but drop that index and exec
   time rises ~6.5x, so the index is load-bearing.
-- What *does* degrade with unbounded growth is the **unanchored** path — admin,
+- What _does_ degrade with unbounded growth is the **unanchored** path — admin,
   exports, `AuditWriteEvent.objects.count()` — which seq-scans every branch (H4).
 - Retention therefore has to be an actual `DELETE`; a query-side date filter cannot
   substitute for it. That is precisely why §9b frees `DELETE`.
@@ -745,16 +745,35 @@ flowchart LR
 The audit feature gets its own app — `apps/betterangels-backend/audit/` — not
 `common` (which is for shared primitives like `Attachment`/`Address`) and not
 `shelters` (audit is a cross-cutting query surface, mirroring how `reports`
-lives in its own app and imports `notes`/`clients`/`teams`). The whole feature
-— model, extension, selector, and query — lives here, with a one-way
-dependency `audit` → `shelters` (for `*_get` helpers, event models, and the
-`THROUGH_EVENT_MAP`).
+lives in its own app and imports `notes`/`clients`/`teams`).
+
+The feature is deliberately split across three apps, each owning the layer it
+can own without inverting a dependency:
+
+- **`shelters`** — the `@pghistory.track` decorators and the generated event
+  tables (migrations `0004`-`0006`). Capture has to live with the models it
+  tracks.
+- **`common`** — [common/middleware/history.py](apps/betterangels-backend/common/middleware/history.py),
+  the `HistoryMiddleware` subclass that freezes the acting user's name/email on
+  writes (§8). The write path is shared infrastructure, so it belongs with the
+  other middleware.
+- **`audit`** — the `AuditWriteEvent` aggregate proxy, the write selector
+  (§10-§19), the GraphQL types and query (§17-§18), and the retention command
+  (§31). `audit` owns no tables: `audit/migrations/0001_initial.py` creates a
+  proxy of `pghistory.events` only.
+
+The edges are one-way: `audit` → `shelters` (the four target models and the
+reach-scoped `*_get` helpers in `shelters/selectors/operator.py`), `audit` →
+`common` (permissions), and `audit` → `accounts` (the user model). Event models
+are resolved by app-label string via `django.apps.apps`, not imported, so
+`THROUGH_EVENT_MAP` is local rendering metadata in `audit/selectors.py`. The
+read half (`AuditReadEvent` and `AuditViewExtension`, §22-§29) is deferred.
 
 **Naming (decided).** The write side is a proxy of pghistory's aggregate
 `Events` model; name it **`AuditWriteEvent`** (renamed from the earlier draft's
 `AuditEvent`, which over-claimed by covering only writes). The Phase 4 read model
 is **`AuditReadEvent`** — a durable table, not a proxy. The GraphQL
-`AuditEventType` remains the *unified* write+read shape backed by both (§17). The
+`AuditEventType` remains the _unified_ write+read shape backed by both (§17). The
 rename is folded into the (unmerged) initial migration
 [audit/migrations/0001_initial.py](apps/betterangels-backend/audit/migrations/0001_initial.py)
 rather than a follow-up `RenameModel`: the proxy is state-only, so regenerating
@@ -775,7 +794,7 @@ timestamp desc. It imports shelter models, `*_get` helpers, and event models
 # writes (all): MiddlewareEvents.objects.references(Shelter.objects.filter(pk=...))
 ```
 
-`references()` matches *every* field on any event model whose FK points at the
+`references()` matches _every_ field on any event model whose FK points at the
 target, and that already includes the target's own `pgh_obj` FK — because
 `pgh_obj` is a real `models.ForeignKey(tracked_model)` (`core.py:315`), and
 `references()`'s where-clause collects every field whose `related_model` equals
@@ -798,7 +817,7 @@ double-count every own event and every through event. `references()` alone is
 complete; `THROUGH_EVENT_MAP` is retained **only as rendering metadata** (§19),
 never as a second query source.
 
-**`references()` boundary to pin:** `references()` matches *every* event model
+**`references()` boundary to pin:** `references()` matches _every_ event model
 with an FK to the target, so the concrete per-target match set is broader than
 "the object's own event table." Enumerate and pin it per target, with a test
 asserting the exact match set so it can't drift:
@@ -854,7 +873,7 @@ so it cannot go stale.
 
 Unified fields: `timestamp`, `actor`, `kind`, `action` (pghistory label),
 `target_type`, `target_id`, and `field_changes` (rendered per the `field_changes`
-contract below, not naively from `pgh_diff`). `kind` is the write *operation*
+contract below, not naively from `pgh_diff`). `kind` is the write _operation_
 derived from the event label suffix — `.add` → `INSERT`, `.remove` → `DELETE`,
 anything else → `UPDATE` — so it is always one of `INSERT`/`UPDATE`/`DELETE` on
 the write side. §28 adds a `READ` value (a read/write axis) alongside these three
@@ -864,7 +883,7 @@ enum of four members.
 **Performance and pagination (decided).** `references()` widens the aggregate
 `Events` CTE to every event model with an FK to the target (a `UNION ALL` across
 ~30+ tables), each with a correlated `_prev_data` subquery (`models.py:461-468`).
-The naive implementation fetches *every* event for the object and then groups,
+The naive implementation fetches _every_ event for the object and then groups,
 sorts, and slices in Python, so page size scales with total history size rather
 than with the page. Instead, paginate actions in SQL with **two queries**:
 
@@ -916,14 +935,14 @@ scan needs. Each tracked model aggregated by the selector declares one in
 interleaved events across 2,000 objects (100 events for the probed object), with
 indexes toggled explicitly:
 
-| indexes | inner `_prev_data` query |
-| --- | --- |
-| `pgh_obj_idx` only | ~20.1 ms (`SORT`) |
-| `(pgh_obj, pgh_id)` composite | ~0.7 ms (no sort) |
-| none | ~1221 ms (`SORT`) |
+| indexes                       | inner `_prev_data` query |
+| ----------------------------- | ------------------------ |
+| `pgh_obj_idx` only            | ~20.1 ms (`SORT`)        |
+| `(pgh_obj, pgh_id)` composite | ~0.7 ms (no sort)        |
+| none                          | ~1221 ms (`SORT`)        |
 
 ~28x on the inner query at this scale, consistent with the direction of the
-7.1 s → 0.16 s figure above. Two gotchas when re-running: 20k *contiguous* events
+7.1 s → 0.16 s figure above. Two gotchas when re-running: 20k _contiguous_ events
 for one object lets the PK index win regardless, and
 `CREATE TABLE ... (LIKE ... INCLUDING INDEXES)` silently copies `shelter_evt_obj_idx`
 into both "variants", masking the difference.
@@ -954,7 +973,7 @@ new connection), so the audit feature must be read against the proxy's pinning
 rules.
 
 **The triggers are not the risk.** `pghistory`/`pgtrigger` install PostgreSQL
-triggers, which run server-side *after* the proxy has already handed the
+triggers, which run server-side _after_ the proxy has already handed the
 statement to the database. The proxy never sees the trigger, the per-model
 `*Event` tables, or the `INSERT INTO shelters_*event` the trigger performs.
 Write tracking in itself cannot break the proxy.
@@ -971,39 +990,39 @@ SELECT set_config('pghistory.context_id', %s, true),
 The third argument is `is_local = true`, i.e. `SET LOCAL` semantics, and AWS
 documents that `SET LOCAL` does **not** pin. pghistory's own performance note
 describes the mechanism more broadly ("session/connection-scoped GUC state …
-may create session pinning"), so this is recorded as *expected exempt*, and is
+may create session pinning"), so this is recorded as _expected exempt_, and is
 pinned by a regression test rather than an assumption (§20): the test asserts the
 write path emits the transaction-local form and never a session-scoped
 `set_config(..., false)`.
 
 **Pinning inventory for this codebase:**
 
-| Cause (per AWS) | Present? | Detail |
-| --- | --- | --- |
-| `SET LOCAL` / `set_config(..., true)` | Exempt | every write, via pghistory; contract-pinned by test |
-| `set_config(..., false)` / `SET SESSION` | **Dormant landmine** | `pgtrigger.ignore()` teardown issues `set_config('pgtrigger.ignore', NULL, false)`; unused today |
-| Server-side cursors (`DECLARE`) | **Yes** | `.iterator()` in the audit selector (removed, §20) |
-| Statement text > 16 KB | **Yes — by construction** | the `objectAuditLog` aggregate, see below |
-| `nextval`/`setval` in SQL | No | Django uses server-side defaults + `RETURNING` |
-| Advisory locks | No | the merge path's `select_for_update()` is a row lock, not advisory |
-| Temp tables / `LISTEN` | No | no request-path usage |
-| `Protect` trigger (`protect_updates`, §9b) | Exempt — server-side | raises inside the database after the proxy has handed off the statement, so it is invisible to the proxy |
+| Cause (per AWS)                            | Present?                  | Detail                                                                                                   |
+| ------------------------------------------ | ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `SET LOCAL` / `set_config(..., true)`      | Exempt                    | every write, via pghistory; contract-pinned by test                                                      |
+| `set_config(..., false)` / `SET SESSION`   | **Dormant landmine**      | `pgtrigger.ignore()` teardown issues `set_config('pgtrigger.ignore', NULL, false)`; unused today         |
+| Server-side cursors (`DECLARE`)            | **Yes**                   | `.iterator()` in the audit selector (removed, §20)                                                       |
+| Statement text > 16 KB                     | **Yes — by construction** | the `objectAuditLog` aggregate, see below                                                                |
+| `nextval`/`setval` in SQL                  | No                        | Django uses server-side defaults + `RETURNING`                                                           |
+| Advisory locks                             | No                        | the merge path's `select_for_update()` is a row lock, not advisory                                       |
+| Temp tables / `LISTEN`                     | No                        | no request-path usage                                                                                    |
+| `Protect` trigger (`protect_updates`, §9b) | Exempt — server-side      | raises inside the database after the proxy has handed off the statement, so it is invisible to the proxy |
 
 **Measured: `objectAuditLog` exceeds the 16 KB pinning cliff by construction.**
 The statement the selector compiles is proportional to the number of event models
 `references()` matches, and one `UNION ALL` branch plus a correlated `_prev_data`
 subquery is emitted per model:
 
-| target | matched event models | compiled statement |
-| --- | --- | --- |
-| `SHELTER` | 27 | ~72 KB |
-| `BED` / `ROOM` | 7 | ~19 KB |
-| `RESERVATION` | 2 | ~6.4 KB |
+| target         | matched event models | compiled statement |
+| -------------- | -------------------- | ------------------ |
+| `SHELTER`      | 27                   | ~72 KB             |
+| `BED` / `ROOM` | 7                    | ~19 KB             |
+| `RESERVATION`  | 2                    | ~6.4 KB            |
 
 RDS Proxy pins any statement over 16 KB, so **opening a shelter's or bed's audit
 log pins that client connection for the life of the connection** (up to
 `CONN_MAX_AGE = 300` on this deployment). This is the single largest pinning
-source in the feature, and it is a *structural* property of the `references()`
+source in the feature, and it is a _structural_ property of the `references()`
 design (§10), not something pagination fixes: pagination bounds the number of
 **rows** fetched, not the size of the **statement text**, since the aggregate CTE
 still names every matched event table. The real mitigation is narrowing the
@@ -1033,7 +1052,7 @@ unnoticed, and the 16 KB conflict is an accepted, documented trade-off because
 - Write events carry the actor via pghistory's `MiddlewareEvents.user` (populated by `HistoryMiddleware`); this is the same mechanism [shelters/admin.py](apps/betterangels-backend/shelters/admin.py) already uses for its `updated_by` annotation (`MiddlewareEvents.objects.tracks(qs)`). Display names come from the frozen `user_name`/`user_email` (§8), not a live `User` join.
 - `MiddlewareEvents` proxies only `user` and `url` from context (`pghistory/models.py` `MiddlewareEvents`), so the selector's aggregate model must add `ProxyField("pgh_context__user_name", ...)` / `ProxyField("pgh_context__user_email", ...)` (and `ProxyField("pgh_context__label", ...)` for §7b) so these are first-class filterable columns instead of hand-parsed JSON. **Declare the proxied fields `null=True`** (matching `MiddlewareEvents.user`/`url`): events written outside any context have no `pgh_context`, so their `label`/`user_name`/`user_email` are NULL. Verify `pgh_context__label` compiles correctly against the synthetic CTE column before relying on it in a filter.
 - A null actor is normal (system writes, data migrations, or events from before the middleware was attached) and must be **rendered as "system"** in the UI, not treated as a missing record.
-- **Label-based exclusion vs. attribution are distinct.** Only the non-operator `seed` label is *excluded* from the log (§7b). The operator labels `import`/`clone` are **kept** and rendered with `label` outranking `user` for display: "system (import)" / "system (clone)" even though an operator triggered them. "system (seed)" never appears because seed rows are filtered out. Unknown/null-actor events render plain "system".
+- **Label-based exclusion vs. attribution are distinct.** Only the non-operator `seed` label is _excluded_ from the log (§7b). The operator labels `import`/`clone` are **kept** and rendered with `label` outranking `user` for display: "system (import)" / "system (clone)" even though an operator triggered them. "system (seed)" never appears because seed rows are filtered out. Unknown/null-actor events render plain "system".
 - **Seed exclusion is applied in SQL** via `.exclude(pgh_context__label="seed")` on the aggregate queryset (not in Python), as a predicate on the aggregate CTE's outer SELECT before grouping (§10 performance note). Because Django only NULL-guards `.exclude()` for nullable fields, this requires the `label` proxy field to be declared `null=True` — otherwise `NOT (label = 'seed')` evaluates NULL for context-less rows and silently drops every NULL-context event, contradicting §12's singleton "system" action requirement.
 
 ## 12. Group write events into actions (`pgh_context_id`)
@@ -1076,8 +1095,8 @@ the operator portal, but document it explicitly rather than claiming "one action
 `pgh_diff` is **not** "only on UPDATE events." In pghistory 3.9.2 the aggregate
 `pgh_diff` is computed for _every_ event as the diff against the immediately
 preceding event of the same `pgh_obj_id` (**any label**, via the `_prev_data`
-subquery). It is NULL on INSERT (no preceding row), and *present but typically
-empty* on DELETE (the DELETE snapshots the OLD row, which normally equals the
+subquery). It is NULL on INSERT (no preceding row), and _present but typically
+empty_ on DELETE (the DELETE snapshots the OLD row, which normally equals the
 state from the last prior event). Derive `field_changes` from event _kind_, not
 from an assumption about `pgh_diff`:
 
@@ -1113,7 +1132,7 @@ needed for them.
 conditions (§2), so each label carries its own diff — `reservation.status_change`
 fires only for a status change (carrying the `status` `old → new` diff) and
 `reservation.update` fires for every other change (carrying that diff). When a
-single request performs both (a status change *and* a non-status edit — one save
+single request performs both (a status change _and_ a non-status edit — one save
 that sets both, or two `.save()` calls), both labels fire, each with its own
 diff, and the action-level diff is simply their union. Because the conditions are
 mutually exclusive there is no identical-snapshot pair and no empty-`pgh_diff`
@@ -1197,7 +1216,7 @@ field) for the parent, plus the multi-word cases (`medical_needs`, `exit_policy`
 With the disjoint update conditions (§2), a status change produces exactly one
 event — `reservation.status_change` — carrying the `status` `old → new` diff,
 and `reservation.update` covers every other change. The audit log **includes**
-`reservation.status_change`: it *is* the status-change event. There is no second
+`reservation.status_change`: it _is_ the status-change event. There is no second
 row to drop and no diff to lift from a sibling label.
 
 An earlier revision of this ADR excluded `reservation.status_change` and kept
@@ -1233,7 +1252,7 @@ objectAuditLog(
 
 `AuditTargetType` covers the primary operator objects (`SHELTER`, `ROOM`, `BED`, `RESERVATION`), each mapped to its model + content type + pghistory event model. `RESERVATION`'s write half is driven by `references()` (its `ReservationClient`, etc.), not by `THROUGH_EVENT_MAP` — `Reservation` has no M2M through tables (§19).
 
-**Naming note (decided).** The GraphQL `AuditEventType` is the *unified*
+**Naming note (decided).** The GraphQL `AuditEventType` is the _unified_
 write+read shape, backed by two Django models with distinct names:
 **`AuditWriteEvent`** (the pghistory aggregate proxy for writes — renamed from the
 earlier draft's `AuditEvent`, §10) and **`AuditReadEvent`** (§22, the durable read
@@ -1275,10 +1294,10 @@ avoiding the double-count described in §10.
 **Key and field-name rules (easy to get wrong):**
 
 - The map key is the **`_meta.label`** (`"shelters.TrackedDemographicEvent"`),
-  *not* a lowercased form — `pgh_model` is the class name, so a lowercase key
+  _not_ a lowercased form — `pgh_model` is the class name, so a lowercase key
   never matches and the M2M path silently drops every through row.
 - `related_fk_field` is the **through model's FK field name, which Django names
-  after the target model** (lowercased, underscores stripped) — *not* the M2M
+  after the target model** (lowercased, underscores stripped) — _not_ the M2M
   attribute name. Confirmed in the migration: `specialsituationrestriction_id`,
   `vaccinationrequirement_id`, `roomstyle_id`, `shelterprogram_id`,
   `entryrequirement_id`. So `medical_needs` → `medicalneed`, `exit_policy` →
@@ -1386,7 +1405,7 @@ per resolved field so a multi-object operation is not silently mis-attributed:
 - **Single-object fields** (`operator_shelter(pk)`, `bed(pk)`, `room(pk)`,
   `reservation(pk)`) each emit their own `AuditReadEvent` with that object's
   `target_object_id`. A single operation selecting `{ operatorShelter(pk: 7)
-  bed(pk: 3) }` therefore produces **two** events, one per object.
+bed(pk: 3) }` therefore produces **two** events, one per object.
 - **Aliases** of one field are distinct top-level fields and each emits its own
   event (same object, still one event per resolved field).
 
@@ -1508,7 +1527,7 @@ already calls `get_current_user(info)` at line 113).
 ### Failure isolation
 
 The insert must be wrapped in try/except so a logging failure can never fail the
-query (reads must stay non-failing). Because `resolve` runs per-field *during*
+query (reads must stay non-failing). Because `resolve` runs per-field _during_
 execution rather than once after, the "register last" ordering concern no longer
 applies; the requirement is simply that the extension never raises out of
 `resolve`.
@@ -1610,13 +1629,16 @@ objectAuditLog(
 
 ## 31. `purge_audit_log` command (decided)
 
-Retention is promoted from Future to scheduled. Add a management command
-`purge_audit_log --before <date>` (idempotent, batched) that deletes audit data
-older than the given date. Run it via
+Retention is promoted from Future to scheduled, and implemented as a management
+command `purge_audit_log --before <date>` (idempotent, batched) that deletes audit
+data older than the given date. It lives in the **audit** app, not `common`
+(§Phase 2): the read-event retention below needs the audit app's `AuditReadEvent`,
+and `common` → `audit` would invert the layering (`shelters` already imports
+`common`). Run it via
 `uv run python manage.py purge_audit_log --before YYYY-MM-DD`, or
 `nx run betterangels-backend:manage -- purge_audit_log --before YYYY-MM-DD`
 (the generic `manage` target in [project.json](apps/betterangels-backend/project.json)).
-A Celery-beat schedule makes retention automatic.
+A Celery-beat schedule can make retention automatic.
 
 Targets (all three, batched to avoid long locks):
 
@@ -1632,7 +1654,7 @@ could call the same function later if BA staff need a UI trigger.
 **Guard interaction (settled):** §9b narrowed the guard to `UPDATE`, so `DELETE` is
 available and this command removes rows with an ordinary batched `.delete()` — no
 partition drop, no exempt role. Implemented in
-[common/management/commands/purge_audit_log.py](apps/betterangels-backend/common/management/commands/purge_audit_log.py):
+[audit/management/commands/purge_audit_log.py](apps/betterangels-backend/audit/management/commands/purge_audit_log.py):
 
 - `--before <YYYY-MM-DD>` — upper bound on `pgh_created_at`; rows strictly older are removed.
 - `MIN_RETENTION_DAYS = 730` — refuses a cutoff inside the last two years unless
@@ -1644,7 +1666,7 @@ partition drop, no exempt role. Implemented in
   across every event table, so context rows do not accumulate as an orphan shadow of
   the purged events.
 
-Tests: [common/tests/test_purge_audit_log.py](apps/betterangels-backend/common/tests/test_purge_audit_log.py).
+Tests: [audit/tests/test_purge_audit_log.py](apps/betterangels-backend/audit/tests/test_purge_audit_log.py).
 No Celery-beat schedule is wired by default — enabling one remains a deliberate ops
 choice.
 
@@ -1687,7 +1709,7 @@ rendering §13/§14, full-state snapshot §13, retention command §31). These we
   each row back to its parent via `THROUGH_EVENT_MAP` — not just filter the
   object's own event table.
 - **Org-level audit log** — a third query (`organizationAuditLog`) for the global tier. The selector is org-parameterized so this drops in later if needed. Note: `AuditReadEvent.organization_id` was dropped (§22), so when this query is scheduled it must (re-)specify how org-at-event-time is captured.
-- **Multi-object / related-row union** — `references(*objs)` already accepts a list, so a stream spanning an object *and* its related rows (auditlog's `get_for_objects`) is a small selector extension. Schedule it with `organizationAuditLog`/`userAuditLog`; not built now.
+- **Multi-object / related-row union** — `references(*objs)` already accepts a list, so a stream spanning an object _and_ its related rows (auditlog's `get_for_objects`) is a small selector extension. Schedule it with `organizationAuditLog`/`userAuditLog`; not built now.
 - **List-read capture** — recording `operator_shelters`/`beds`/… list reads was deferred (§Decision) because those events have no `target_object_id` and no query to surface them. Schedule it alongside `organizationAuditLog` (or another list-scoped query) and re-specify org-at-event-time capture then.
 - **Admin read-only history view** — a read-only "History" tab on the Shelter/Bed/Room Django-admin change pages rendering the same selector output for BA staff. Deferred; the portal `objectAuditLog` covers operators.
 - **Export** — CSV/JSON export of an object's history for compliance. `django-import-export` is already a dependency.
