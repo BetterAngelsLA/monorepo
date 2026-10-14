@@ -78,7 +78,19 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
   // the user just submitted — see handlePdfExport.
   const [pdfMetrics, setPdfMetrics] = useState<ExportMetric[]>([]);
   const printRef = useRef<HTMLDivElement>(null);
+  const pdfAbortRef = useRef<AbortController | null>(null);
   const { exportPdf, isExporting: isPdfExporting } = useExportPdf(printRef);
+
+  // Closing the modal unmounts the off-screen report. Abort an in-flight
+  // capture so it stops touching a detached node, and so the pending promise
+  // settles instead of rejecting with an html2canvas-internal error.
+  useEffect(() => {
+    if (isExportOpen) return;
+    pdfAbortRef.current?.abort();
+    pdfAbortRef.current = null;
+  }, [isExportOpen]);
+
+  useEffect(() => () => pdfAbortRef.current?.abort(), []);
 
   const {
     data: shelterData,
@@ -125,10 +137,18 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
     // eslint-disable-next-line @eslint-react/dom-no-flush-sync
     flushSync(() => setPdfMetrics(selectedMetrics));
 
-    try {
-      const filename = `shelter-${shelterId}-report.pdf`;
-      const { blob } = await exportPdf(filename);
+    const filename = `shelter-${shelterId}-report.pdf`;
+    pdfAbortRef.current?.abort();
+    const controller = new AbortController();
+    pdfAbortRef.current = controller;
 
+    try {
+      // `null` means the export was cancelled (modal closed, report unmounted)
+      // rather than failed — nothing to download and nothing to report.
+      const result = await exportPdf(filename, { signal: controller.signal });
+      if (!result) return;
+
+      const { blob } = result;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -148,6 +168,8 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
         description:
           error instanceof Error ? error.message : 'Unable to export data.',
       });
+    } finally {
+      if (pdfAbortRef.current === controller) pdfAbortRef.current = null;
     }
   }
 
@@ -193,7 +215,7 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
         <ExportDataModal
           isOpen={isExportOpen}
           isExporting={isBackendExporting || isPdfExporting}
-          disableExport={isPdfDataUnavailable}
+          disablePdfExport={isPdfDataUnavailable}
           rangeLabel={rangeLabel(range)}
           onClose={() => setIsExportOpen(false)}
           onExport={handleExport}
@@ -211,6 +233,9 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
             shelterAddress={
               shelterData?.operatorShelter?.location?.place ?? undefined
             }
+            organizationName={shelterData?.operatorShelter?.organization?.name}
+            bedCounts={shelterData?.operatorShelter?.bedCounts}
+            roomCounts={shelterData?.operatorShelter?.roomCounts}
             range={{ from: range.from, to: range.to }}
             generatedAt={generatedAt}
             includedMetrics={pdfMetrics}

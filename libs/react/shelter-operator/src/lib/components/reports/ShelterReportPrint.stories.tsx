@@ -36,6 +36,7 @@ const baseArgs = {
   range: { from: new Date(2026, 6, 2), to: new Date(2026, 6, 8) },
   generatedAt: new Date(2026, 6, 9, 16, 57),
   metrics: {
+    __typename: 'ReservationMetricsType',
     checkedIn: 8,
     checkInOverdueToCheckedIn: 1,
     cancelled: 7,

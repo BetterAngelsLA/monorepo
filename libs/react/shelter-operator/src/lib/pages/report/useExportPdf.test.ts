@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
-import { useExportPdf } from './useExportPdf';
+import { useExportPdf, type IExportPdfResult } from './useExportPdf';
 
 // jsPDF and html2canvas-pro both need a real browser to do anything useful, so
 // the seams are mocked and the assertions are about the geometry/ordering the
@@ -89,7 +89,7 @@ describe('useExportPdf', () => {
   it('resolves with the blob and filename it was given', async () => {
     const { result } = renderExport(reportRoot(1));
 
-    let resolved: { blob: Blob; filename: string } | undefined;
+    let resolved: IExportPdfResult | null = null;
     await act(async () => {
       resolved = await result.current.exportPdf('shelter-5-report.pdf');
     });
@@ -161,6 +161,82 @@ describe('useExportPdf', () => {
 
     expect(result.current.isExporting).toBe(false);
     expect(mocks.output).not.toHaveBeenCalled();
+  });
+
+  describe('render settling', () => {
+    it('waits for the browser to paint before capturing', async () => {
+      const frames: FrameRequestCallback[] = [];
+      vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+        frames.push(cb);
+        return frames.length;
+      });
+
+      const { result } = renderExport(reportRoot(1));
+
+      let pending: Promise<unknown>;
+      act(() => {
+        pending = result.current.exportPdf('report.pdf');
+      });
+
+      // Two frames must elapse before the first synchronous snapshot, or the
+      // charts' canvas (created in a passive effect) would not exist yet.
+      await waitFor(() => expect(frames.length).toBeGreaterThan(0));
+      expect(mocks.html2canvas).not.toHaveBeenCalled();
+
+      await act(async () => {
+        while (frames.length) {
+          const next = frames.shift();
+          next?.(0);
+          await Promise.resolve();
+        }
+        await pending;
+      });
+
+      expect(mocks.html2canvas).toHaveBeenCalled();
+    });
+  });
+
+  describe('cancellation', () => {
+    it('returns null without capturing when the signal is already aborted', async () => {
+      const controller = new AbortController();
+      controller.abort();
+
+      const { result } = renderExport(reportRoot(1));
+
+      let resolved: unknown;
+      await act(async () => {
+        resolved = await result.current.exportPdf('report.pdf', {
+          signal: controller.signal,
+        });
+      });
+
+      expect(resolved).toBeNull();
+      expect(mocks.html2canvas).not.toHaveBeenCalled();
+    });
+
+    it('returns null instead of throwing when aborted mid-export', async () => {
+      const controller = new AbortController();
+      // Abort while the first capture is in flight.
+      mocks.html2canvas.mockImplementation(async () => {
+        controller.abort();
+        return stubCanvas();
+      });
+
+      const { result } = renderExport(reportRoot(3));
+
+      let resolved: unknown = 'unset';
+      await act(async () => {
+        resolved = await result.current.exportPdf('report.pdf', {
+          signal: controller.signal,
+        });
+      });
+
+      expect(resolved).toBeNull();
+      // Stopped at the first page rather than rasterizing the rest.
+      expect(mocks.html2canvas).toHaveBeenCalledTimes(1);
+      expect(mocks.output).not.toHaveBeenCalled();
+      expect(result.current.isExporting).toBe(false);
+    });
   });
 
   describe('pagination', () => {

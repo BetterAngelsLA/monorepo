@@ -91,12 +91,19 @@ export function BedStatusChart({
   data,
   showViewToggle = true,
   containerClassName,
+  forPrint = false,
 }: {
   data?: DailyBedStatusMetrics[];
   /** Hide the interactive Count/Percentage toggle — e.g. for the static PDF export. */
   showViewToggle?: boolean;
   /** Overrides the card's background/shadow — e.g. the grey PDF export tray instead of the white dashboard card. */
   containerClassName?: string;
+  /**
+   * Render for raster capture instead of interaction: disables the enter
+   * animation, which would otherwise be caught mid-flight and produce a PDF
+   * with missing or partial bars.
+   */
+  forPrint?: boolean;
 }) {
   const countData = useMemo(
     () => (data ? toBedStatusCountData(data) : []),
@@ -115,6 +122,7 @@ export function BedStatusChart({
       <BarChart
         chartTitle="Bed Status"
         showViewToggle={showViewToggle}
+        {...(forPrint ? { animate: false } : {})}
         onViewChange={(mode: ViewMode) =>
           mode === 'percentage'
             ? {
@@ -155,12 +163,19 @@ export function DailyOccupancyChart({
   data,
   showViewToggle = true,
   containerClassName,
+  forPrint = false,
 }: {
   data?: DailyOccupancyMetrics[];
   /** Hide the interactive Count/Percentage toggle — e.g. for the static PDF export. */
   showViewToggle?: boolean;
   /** Overrides the card's background/shadow — e.g. the grey PDF export tray instead of the white dashboard card. */
   containerClassName?: string;
+  /**
+   * Render for raster capture instead of interaction: disables the enter
+   * animation, which would otherwise be caught mid-flight and produce a PDF
+   * with missing or partial bars.
+   */
+  forPrint?: boolean;
 }) {
   const countData = useMemo(
     () => (data ? toDailyOccupancyCountData(data) : []),
@@ -179,6 +194,7 @@ export function DailyOccupancyChart({
       <BarChart
         chartTitle="Daily Occupancy"
         showViewToggle={showViewToggle}
+        {...(forPrint ? { animate: false } : {})}
         onViewChange={(mode: ViewMode) =>
           mode === 'percentage'
             ? {

@@ -19,6 +19,12 @@ export const paths = {
   users: '/operator/users',
   shelter: '/operator/shelter/:shelterId',
   shelterCreate: '/operator/shelter/create',
+  /**
+   * The standalone printable-report page was folded into the Reports tab's
+   * export modal, but this URL was linkable, so it is kept as a redirect
+   * target for existing bookmarks instead of 404ing.
+   */
+  shelterReportLegacy: '/operator/shelter/:shelterId/report',
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════

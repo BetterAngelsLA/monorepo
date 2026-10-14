@@ -5,6 +5,42 @@ export interface IExportPdfResult {
   filename: string;
 }
 
+export interface IExportPdfOptions {
+  /**
+   * Aborts an in-flight export. The off-screen report is unmounted when the
+   * export modal closes, so a capture that is still queued would otherwise
+   * rasterize a detached node and fail with an html2canvas-internal error.
+   */
+  signal?: AbortSignal;
+}
+
+/**
+ * Resolves once the browser has painted twice.
+ *
+ * The report's charts are canvas charts (`@ant-design/plots`/G2) whose
+ * `<canvas>` is only created inside the library's render, which runs from a
+ * React *passive* effect. `flushSync` commits the report's props to the DOM but
+ * does not flush passive effects, and `html2canvas-pro` snapshots the DOM
+ * synchronously — so capturing without yielding first can rasterize a report
+ * whose plot areas have no canvas at all. Two frames gives the effect chain
+ * (commit → passive effects → library render → paint) room to finish.
+ */
+function waitForNextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
+
+/** `requestAnimationFrame` in a background tab can stall, so cap the wait. */
+const MAX_PAINT_WAIT_MS = 250;
+
+function waitForPaint(): Promise<void> {
+  return Promise.race([
+    waitForNextPaint(),
+    new Promise<void>((resolve) => setTimeout(resolve, MAX_PAINT_WAIT_MS)),
+  ]);
+}
+
 /**
  * Captures each `[data-report-page="true"]` node under `targetRef` (see
  * ShelterReportPrint.tsx — one node per physical Letter page) via
@@ -18,7 +54,13 @@ export function useExportPdf(targetRef: RefObject<HTMLElement | null>) {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportPdf = useCallback(
-    async (filename: string): Promise<IExportPdfResult> => {
+    async (
+      filename: string,
+      options: IExportPdfOptions = {},
+    ): Promise<IExportPdfResult | null> => {
+      const { signal } = options;
+      if (signal?.aborted) return null;
+
       const root = targetRef.current;
       if (!root) {
         throw new Error('Nothing to export');
@@ -38,12 +80,22 @@ export function useExportPdf(targetRef: RefObject<HTMLElement | null>) {
           import('html2canvas-pro'),
           import('jspdf'),
         ]);
+        if (signal?.aborted) return null;
+
+        // Settle chart/font rendering before the first synchronous snapshot.
+        // `document.fonts` is optional: the Font Loading API is not universal.
+        await Promise.all([waitForPaint(), document.fonts?.ready]);
+        if (signal?.aborted) return null;
 
         const doc = new jsPDF({ unit: 'pt', format: 'letter' });
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
 
         for (let i = 0; i < pageNodes.length; i++) {
+          // Re-check each page: the modal can close mid-export, and that
+          // aborts the run before we touch a node it may have unmounted.
+          if (signal?.aborted) return null;
+
           const canvas = await html2canvas(pageNodes[i], {
             scale: 2,
             backgroundColor: '#ffffff',

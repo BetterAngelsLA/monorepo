@@ -55,8 +55,28 @@ query GetShelterSummary($id: ID!) {
   operatorShelter(pk: $id) {
     id
     name
+    organization {
+      id
+      name
+    }
     location {
       place
+    }
+    bedCounts {
+      available
+      inTurnaround
+      occupied
+      outOfService
+      reserved
+      total
+    }
+    roomCounts {
+      available
+      inTurnaround
+      occupied
+      outOfService
+      reserved
+      total
     }
   }
 }

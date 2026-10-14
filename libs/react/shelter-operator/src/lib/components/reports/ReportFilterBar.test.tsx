@@ -69,7 +69,7 @@ function renderFilterBar(
   mocks: MockLink.MockedResponse[] = pdfDataMocks(),
 ) {
   return render(
-    <MockedProvider mocks={mocks} addTypename={false}>
+    <MockedProvider mocks={mocks}>
       <ReportFilterBar shelterId={shelterId} />
     </MockedProvider>,
   );
@@ -286,7 +286,7 @@ describe('ReportFilterBar export', () => {
     expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
   });
 
-  it('disables Export while the off-screen PDF render data is still loading', () => {
+  it('keeps CSV export available while the PDF render data is still loading', () => {
     // A pending mock (no `result`) simulates the query never resolving
     // within the test, so isPdfDataUnavailable stays true throughout.
     renderFilterBar('7', [
@@ -311,14 +311,24 @@ describe('ReportFilterBar export', () => {
     ]);
     fireEvent.click(screen.getByRole('button', { name: /export data/i }));
 
+    // Only PDF depends on those queries, so the default (CSV) stays usable.
     const button = screen.getByRole('button', {
       name: /^export$/i,
     }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
 
-    expect(button.disabled).toBe(true);
+    // Selecting PDF surfaces the blocked state.
+    fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
+    expect(
+      (
+        screen.getByRole('button', {
+          name: /^export$/i,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
   });
 
-  it('disables Export when the off-screen PDF render data fails to load', async () => {
+  it('keeps CSV export available when the PDF render data fails to load', async () => {
     renderFilterBar('7', [
       {
         request: {
@@ -362,7 +372,19 @@ describe('ReportFilterBar export', () => {
       const button = screen.getByRole('button', {
         name: /^export$/i,
       }) as HTMLButtonElement;
-      expect(button.disabled).toBe(true);
+      // CSV is unaffected by the failed PDF queries...
+      expect(button.disabled).toBe(false);
     });
+
+    // ...but PDF is blocked, and says so.
+    fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
+    expect(
+      (
+        screen.getByRole('button', {
+          name: /^export$/i,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    expect(screen.getByText(/PDF isn’t ready yet/)).toBeTruthy();
   });
 });
