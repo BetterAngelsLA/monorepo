@@ -101,6 +101,7 @@ def _duration_minutes_expression() -> Case:
     pghistory.UpdateEvent("shelter.schedule.update"),
     pghistory.DeleteEvent("shelter.schedule.remove"),
     meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="schedule_evt_obj_idx")]},
+    append_only=True,
 )
 class Schedule(OrgScoped, BaseModel):
     org_via = ("shelter",)

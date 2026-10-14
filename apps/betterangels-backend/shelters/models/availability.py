@@ -14,6 +14,7 @@ from .shelter import Shelter
     pghistory.UpdateEvent("shelter.availability.update"),
     pghistory.DeleteEvent("shelter.availability.remove"),
     meta={"indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelteravail_evt_obj_idx")]},
+    append_only=True,
 )
 class ShelterAvailability(OrgScoped, BaseModel):
     org_via = ("shelter",)
