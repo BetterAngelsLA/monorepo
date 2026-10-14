@@ -1,12 +1,13 @@
 """GraphQL surface for region grouping (DEV-2570 / DEV-2604).
 
-Adds a ``RegionDimension`` enum and two queries:
+Adds a ``RegionDimension`` enum and four queries:
 
-* ``interactionsByRegion`` — the rollup the report needs: interaction counts per
-  region of a dimension, optionally filtered to specific region codes.
-* ``regions`` — the boundary polygons themselves, as GeoJSON, for the map view.
+* ``interactionsByRegion`` — interaction counts per region of a dimension.
+* ``interactionMap`` — individual points and a density grid, for the map.
+* ``regionDimensions`` — which dimensions have boundaries loaded.
+* ``regions`` — the boundary polygons themselves, as GeoJSON.
 
-Both sit alongside the existing ``reportSummary``. Note that GraphQL has no
+They sit alongside the existing ``reportSummary``. GraphQL has no
 native geometry type in this schema; polygons are returned as a GeoJSON string
 (``ST_AsGeoJSON``) which the client parses, rather than inventing a scalar.
 """
@@ -22,6 +23,7 @@ from zoneinfo import ZoneInfo
 import strawberry
 import strawberry_django
 from django.core.exceptions import PermissionDenied
+from django.db.models import Exists, OuterRef
 from organizations.models import Organization
 from strawberry import ID
 from strawberry.types import Info
@@ -37,6 +39,7 @@ from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
 
+from .models import LocationRegion
 from .selectors import (
     POINT_LIMIT,
     available_kinds,
@@ -251,10 +254,10 @@ class Query:
         self,
         info: Info,
         organization_id: ID,
+        dimension: RegionDimension,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         limit: Optional[int] = None,
-        dimension: Optional[RegionDimension] = None,
         region_codes: Optional[List[str]] = None,
     ) -> InteractionMapType:
         """Where the interactions happened: pins, and the same data as a density grid.
@@ -269,9 +272,9 @@ class Query:
         Pins and the density grid are returned together so the client can switch views
         without a second round trip.
 
-        ``dimension`` + ``regionCodes`` narrow the map to those regions. Codes without
-        a dimension are ignored rather than guessed at: ``"4"`` is ambiguous across
-        dimensions.
+        ``dimension`` is required: codes are not unique across dimensions, so the
+        dimension is what makes ``regionCodes`` meaningful. ``regionCodes`` then
+        narrows the map to those regions.
         """
         user = cast(AccountUser, get_current_user(info))
         org = _org_or_deny(organization_id)
@@ -298,19 +301,36 @@ class Query:
             [NotePermissions.VIEW],
         )
 
-        scoped_codes = list(region_codes or []) if dimension is not None else []
+        scoped_codes = list(region_codes or [])
         if scoped_codes:
-            # The assignment table makes this an indexed lookup, not a spatial test.
-            scoped_notes = scoped_notes.filter(location__region_assignments__region__code__in=scoped_codes).distinct()
+            # `Exists`, not a join on the reverse relation plus `.distinct()`. A join
+            # produces one row per matching assignment, so it needs de-duplicating;
+            # a semi-join cannot produce duplicates in the first place.
+            #
+            # `region__kind` is required, not decorative: codes are not unique across
+            # dimensions, so `code__in=["4"]` alone also matches SPA 4 when the caller
+            # asked about council districts.
+            scoped_notes = scoped_notes.filter(
+                Exists(
+                    LocationRegion.objects.filter(
+                        location=OuterRef("location_id"),
+                        kind=dimension.value,
+                        region__code__in=scoped_codes,
+                    )
+                )
+            )
 
         points, truncated = interaction_points(
+            kind=dimension.value,
             start=start,
             end=end,
             organization_id=org.id,
             limit=limit or POINT_LIMIT,
             notes=scoped_notes,
         )
-        density = interaction_density(start=start, end=end, organization_id=org.id, notes=scoped_notes)
+        density = interaction_density(
+            kind=dimension.value, start=start, end=end, organization_id=org.id, notes=scoped_notes
+        )
 
         return InteractionMapType(
             points=[

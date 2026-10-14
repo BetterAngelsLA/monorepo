@@ -187,8 +187,14 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
 
 
 INTERACTION_MAP_QUERY = """
-    query InteractionMap($organizationId: ID!, $startDate: Date, $endDate: Date, $limit: Int) {
-        interactionMap(organizationId: $organizationId, startDate: $startDate, endDate: $endDate, limit: $limit) {
+    query InteractionMap(
+        $organizationId: ID!
+        $dimension: RegionDimension!
+        $startDate: Date
+        $endDate: Date
+        $limit: Int
+    ) {
+        interactionMap(organizationId: $organizationId, dimension: $dimension, startDate: $startDate, endDate: $endDate, limit: $limit) {
             points { latitude longitude }
             density { latitude longitude count }
             truncated
@@ -228,6 +234,7 @@ class InteractionMapPermissionTestCase(GraphQLBaseTestCase):
             INTERACTION_MAP_QUERY,
             {
                 "organizationId": str(self.org_1.pk),
+                "dimension": "COUNCIL_DISTRICT",
                 "startDate": "2026-01-01",
                 "endDate": "2026-01-31",
             },

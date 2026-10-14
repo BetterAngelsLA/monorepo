@@ -267,7 +267,13 @@ class InteractionMapTestCase(TestCase):
         )
 
     def _points(self, **kwargs: Any) -> tuple[list[dict[str, Any]], bool]:
-        return interaction_points(start=self.start, end=self.end, organization_id=self.org.id, **kwargs)
+        return interaction_points(
+            kind=RegionKind.COUNCIL_DISTRICT.value,
+            start=self.start,
+            end=self.end,
+            organization_id=self.org.id,
+            **kwargs,
+        )
 
     def test_points_are_returned_with_coordinates(self) -> None:
         self._note_at(-118.24, 34.05)
@@ -335,7 +341,13 @@ class InteractionMapTestCase(TestCase):
         self._note_at(*OUTSIDE)  # in neither
         assign_locations()
 
-        rows, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id, region_codes=["1"])
+        rows, _ = interaction_points(
+            kind=RegionKind.COUNCIL_DISTRICT.value,
+            start=self.start,
+            end=self.end,
+            organization_id=self.org.id,
+            region_codes=["1"],
+        )
         self.assertEqual(len(rows), 1, "the filter must narrow to the one note in region 1")
         self.assertAlmostEqual(rows[0]["latitude"], 34.05, places=4)
         self.assertAlmostEqual(rows[0]["longitude"], -118.24, places=4)
@@ -346,7 +358,13 @@ class InteractionMapTestCase(TestCase):
         self._note_at(-118.24, 34.05)
         self._note_at(-118.54, 34.35)
         assign_locations()
-        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id, region_codes=["1"])
+        cells = interaction_density(
+            kind=RegionKind.COUNCIL_DISTRICT.value,
+            start=self.start,
+            end=self.end,
+            organization_id=self.org.id,
+            region_codes=["1"],
+        )
         self.assertEqual(sum(c["count"] for c in cells), 1)
 
     def test_no_region_codes_means_no_filter(self) -> None:
@@ -355,7 +373,9 @@ class InteractionMapTestCase(TestCase):
         self._note_at(-118.24, 34.05)
         self._note_at(-118.54, 34.35)
         assign_locations()
-        rows, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id)
+        rows, _ = interaction_points(
+            kind=RegionKind.COUNCIL_DISTRICT.value, start=self.start, end=self.end, organization_id=self.org.id
+        )
         self.assertEqual(len(rows), 2)
 
     def test_density_aggregates_to_a_grid(self) -> None:
@@ -363,7 +383,9 @@ class InteractionMapTestCase(TestCase):
         self._note_at(-118.2401, 34.0501)
         self._note_at(-118.2402, 34.0502)
         self._note_at(-118.30, 34.10)
-        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id)
+        cells = interaction_density(
+            kind=RegionKind.COUNCIL_DISTRICT.value, start=self.start, end=self.end, organization_id=self.org.id
+        )
         counts = sorted(cell["count"] for cell in cells)
         self.assertEqual(counts, [1, 2])
         self.assertEqual(sum(counts), 3)
@@ -373,11 +395,13 @@ class InteractionMapTestCase(TestCase):
         for i in range(4):
             self._note_at(-118.24 + i * 0.02, 34.05 + i * 0.02)
         points, _ = self._points()
-        cells = interaction_density(start=self.start, end=self.end, organization_id=self.org.id)
+        cells = interaction_density(
+            kind=RegionKind.COUNCIL_DISTRICT.value, start=self.start, end=self.end, organization_id=self.org.id
+        )
         self.assertEqual(len(points), sum(cell["count"] for cell in cells))
 
 
-class StaleAssignmentTestCase(RegionRollupTestCase):
+class StaleAssignmentTestCase(TestCase):
     """A location created since the last import must still be counted.
 
     The rollup joins the stored assignment, so without a fill it would omit such a
@@ -386,6 +410,21 @@ class StaleAssignmentTestCase(RegionRollupTestCase):
     state: a real ``Location`` with no assignment, which the normal helper would have
     resolved.
     """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make()
+        self.start = datetime(2026, 1, 1, tzinfo=UTC)
+        self.end = datetime(2026, 2, 1, tzinfo=UTC)
+        Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_A))
+
+    def _counts(self) -> dict[str | None, int]:
+        rows = region_counts(
+            kind=RegionKind.COUNCIL_DISTRICT,
+            start=self.start,
+            end=self.end,
+            organization_id=self.org.id,
+        )
+        return {row["code"]: row["count"] for row in rows}
 
     def _note_at_resolved_by_no_one(self, lon: float, lat: float) -> Note:
         """A note whose ``Location`` exists but has never been assigned."""
@@ -420,3 +459,52 @@ class StaleAssignmentTestCase(RegionRollupTestCase):
         second = self._counts()
         self.assertEqual(first, second, "a repeated read must not resolve again")
         self.assertEqual(second.get("1"), 1)
+
+
+class RegionCodeCollisionTestCase(TestCase):
+    """A code is not unique across dimensions, so the filter must be told which one.
+
+    ``"4"`` is both SPA 4 and Long Beach council district 4. Filtering on the code
+    alone matches the region in *both* dimensions, which returns interactions the
+    caller did not ask for and reports them under the code they did ask for — a wrong
+    answer rather than an error.
+    """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make()
+        self.start = datetime(2026, 1, 1, tzinfo=UTC)
+        self.end = datetime(2026, 2, 1, tzinfo=UTC)
+        # The same code in two dimensions, in disjoint places.
+        Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_A))
+        Region.objects.create(kind=RegionKind.SPA, code="1", name="SPA 1", geom=box(BOX_B))
+        for lon, lat in ((-118.24, 34.05), (-118.54, 34.35)):
+            baker.make(
+                Note,
+                organization=self.org,
+                location=baker.make(Location, point=Point(lon, lat, srid=4326)),
+                interacted_at=datetime(2026, 1, 15, tzinfo=UTC),
+            )
+        assign_locations()
+
+    def test_a_code_does_not_match_the_other_dimension_regions(self) -> None:
+        # setUp placed one note in BOX_A (council district "1") and one in BOX_B
+        # (SPA "1"); only the first may match.
+        council, _ = interaction_points(
+            kind=RegionKind.COUNCIL_DISTRICT.value,
+            start=self.start,
+            end=self.end,
+            organization_id=self.org.id,
+            region_codes=["1"],
+        )
+        self.assertEqual(len(council), 1, "the SPA sharing this code must not be matched")
+        self.assertAlmostEqual(council[0]["latitude"], 34.05, places=4)
+
+    def test_the_density_view_narrows_by_the_same_dimension(self) -> None:
+        cells = interaction_density(
+            kind=RegionKind.COUNCIL_DISTRICT.value,
+            start=self.start,
+            end=self.end,
+            organization_id=self.org.id,
+            region_codes=["1"],
+        )
+        self.assertEqual(sum(c["count"] for c in cells), 1, "same scoping as the points view")
