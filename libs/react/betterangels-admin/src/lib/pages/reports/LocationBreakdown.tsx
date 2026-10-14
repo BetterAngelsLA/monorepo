@@ -8,13 +8,12 @@ import {
   Typography,
   type TableColumnsType,
 } from 'antd';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { RefObject } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   RegionDimension,
   UnassignedReason,
 } from '@monorepo/ba-platform/types';
-import { ChartCard } from '../../components';
+import { ChartCard, useNoAutofill } from '../../components';
 import {
   useInteractionMap,
   useInteractionsByRegion,
@@ -95,27 +94,6 @@ type LocationBreakdownProps = {
  * bar next to districts numbering in the dozens distorts the comparison — and shown
  * beneath it as their own figures.
  */
-/**
- * Take the `autocomplete="new-password"` off a searchable antd `Select`.
- *
- * antd sets that attribute on any select with `showSearch`, deliberately, so browser
- * autofill cannot cover the option list. The side effect is that browsers and password
- * managers classify the control as a password field — Chrome offers to save it, and
- * 1Password/lastpass badges it — for what is a "group by" dropdown.
- *
- * It cannot be overridden through props: antd's `Select` does not forward
- * `autoComplete` (only the inner `BaseSelect` does), and the attribute is applied there.
- * So it is corrected on the rendered input instead.
- */
-function useSuppressAutofill(): RefObject<HTMLDivElement | null> {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const inputs = ref.current?.querySelectorAll('input');
-    inputs?.forEach((input) => input.setAttribute('autocomplete', 'off'));
-  }, []);
-  return ref;
-}
-
 /** Prose label for a bucket's `kind`; falls back to the raw value if it is unknown. */
 function kindLabel(kind: string): string {
   return KIND_LABELS[kind] ?? kind;
@@ -150,7 +128,7 @@ export function LocationBreakdown({
   // all regions, so this control exists to drill into one, and a multi-select on a
   // map reads as "highlight these", which the map does not do.
   const [selectedCode, setSelectedCode] = useState<string | undefined>(undefined);
-  const controlsRef = useSuppressAutofill();
+  const controlsRef = useNoAutofill();
 
   const { dimensions, error: dimensionsError } = useRegionDimensions();
   const {
