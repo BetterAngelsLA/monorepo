@@ -16,8 +16,8 @@ export default function BlockingScreenProvider(props: TBlockingScreenProvider) {
   const [visible, setVisible] = useState(false);
   const pendingUnsub = useRef<(() => void) | null>(null);
 
-  const blockScreen = () => setVisible(true);
-  const unblockScreen = () => setVisible(false);
+  const blockScreen = useCallback(() => setVisible(true), []);
+  const unblockScreen = useCallback(() => setVisible(false), []);
 
   const blockScreenUntilNextNavigation = useCallback(() => {
     if (pendingUnsub.current) {
@@ -40,7 +40,7 @@ export default function BlockingScreenProvider(props: TBlockingScreenProvider) {
       pendingUnsub.current?.();
       pendingUnsub.current = null;
     },
-    []
+    [],
   );
 
   return (
@@ -59,7 +59,7 @@ export default function BlockingScreenProvider(props: TBlockingScreenProvider) {
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.1)',

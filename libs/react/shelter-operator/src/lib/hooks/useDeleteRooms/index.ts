@@ -1,0 +1,1 @@
+export { useDeleteRooms } from './useDeleteRooms';

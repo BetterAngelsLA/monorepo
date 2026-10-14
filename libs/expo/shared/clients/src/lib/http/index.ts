@@ -1,4 +1,3 @@
-export * from './ApiConfigProvider';
 export * from './clientHmis';
 export { createClientHmis as default } from './clientHmis';
 export {

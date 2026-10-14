@@ -19,7 +19,7 @@ type TOption = { id: PreferredCommunicationEnum; label: string };
 const options: TOption[] = (
   Object.entries(enumDisplayPreferredCommunication) as [
     PreferredCommunicationEnum,
-    string
+    string,
   ][]
 ).map(([enumValue, displayValue]) => ({
   id: enumValue,
@@ -48,7 +48,7 @@ export default function PreferredCommunication() {
         labelKey="label"
         renderOption={(
           option,
-          { isChecked, onClick, accessibilityHint, testId }
+          { isChecked, onClick, accessibilityHint, testId },
         ) => (
           <Checkbox
             key={option.id}

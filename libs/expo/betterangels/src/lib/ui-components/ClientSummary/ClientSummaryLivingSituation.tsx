@@ -1,7 +1,6 @@
 import { HouseLineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  formatDateStatic,
   PressablePanel,
   TextBold,
   TextRegular,
@@ -10,13 +9,14 @@ import { formatDistanceToNow } from 'date-fns';
 import { View } from 'react-native';
 import { enumDisplayLivingSituation } from '../../static';
 import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 
 interface IClientSummaryIdentityProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
 }
 
 export default function ClientSummaryIdentity(
-  props: IClientSummaryIdentityProps
+  props: IClientSummaryIdentityProps,
 ) {
   const { client } = props;
 
@@ -54,12 +54,7 @@ export default function ClientSummaryIdentity(
               Approx. Date Homelessness Started
             </TextRegular>
             <TextBold size="sm">
-              {formatDateStatic({
-                date: client.unhousedStartDate,
-                inputFormat: 'yyyy-MM-dd',
-                outputFormat: 'MMM yyyy',
-              })}{' '}
-              (
+              {formatScalarDate(client.unhousedStartDate, 'MMM yyyy')} (
               {formatDistanceToNow(client.unhousedStartDate, {
                 addSuffix: false,
               })}

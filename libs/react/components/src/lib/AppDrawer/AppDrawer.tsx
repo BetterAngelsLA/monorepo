@@ -123,7 +123,11 @@ export function AppDrawer(props: IProps): ReactElement | null {
       onClick={handleMaskClick}
       className={maskCss}
     >
-      <div onClick={(e) => e.stopPropagation()} className={mergeCss(parentCss)}>
+      <div
+        role="presentation"
+        onClick={(e) => e.stopPropagation()}
+        className={mergeCss(parentCss)}
+      >
         {header && <AppDrawerHeader>{header}</AppDrawerHeader>}
 
         <div className={mergeCss(contentCss)}>{content}</div>

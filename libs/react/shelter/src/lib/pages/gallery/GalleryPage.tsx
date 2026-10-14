@@ -21,6 +21,7 @@ export function GalleryPage(props: TProps) {
   const [selectedImage, setSelectedImage] = useState<{
     name: string;
     url: string;
+    fullUrl: string;
   } | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<{
     videoId: string;
@@ -59,7 +60,13 @@ export function GalleryPage(props: TProps) {
           <div
             key={index}
             className="aspect-square overflow-hidden"
-            onClick={() => setSelectedImage(item.file)}
+            onClick={() =>
+              setSelectedImage({
+                name: item.file.name,
+                url: item.file.url,
+                fullUrl: item.file.fullUrl,
+              })
+            }
           >
             <img
               src={item.file.url}
@@ -102,7 +109,7 @@ export function GalleryPage(props: TProps) {
           contentClassName="w-[90vw] max-w-md aspect-square"
         >
           <img
-            src={selectedImage.url}
+            src={selectedImage.fullUrl}
             alt="Fullscreen"
             className="w-full h-full object-contain"
           />

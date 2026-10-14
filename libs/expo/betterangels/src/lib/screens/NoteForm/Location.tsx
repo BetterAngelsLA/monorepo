@@ -9,7 +9,11 @@ import {
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { LocationInput } from '../../apollo';
-import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
+import {
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
+} from '@monorepo/expo/shared/ui-components';
 import { useModalScreen } from '../../providers';
 import { useUserDefaultNoteLocation } from '../../state';
 import { LocationMapModal, TLocationData } from '../../ui-components';
@@ -144,24 +148,39 @@ export default function LocationComponent(props: ILocationProps) {
     autoFilledRef.current = true;
 
     const geocodeAndSave = async (lat: number, lng: number) => {
-      const geocodeResult = await places.reverseGeocode(lat, lng);
+      // A real API failure (denied key, quota) must not invent an address, and
+      // the point is saved either way; ZERO_RESULTS is the genuine "no address
+      // here" case. Caught here because `onRefine` fires this without awaiting,
+      // so a rejection would float. See useInitialLocation for the full rule.
+      let geocodeResult:
+        | Awaited<ReturnType<typeof places.reverseGeocode>>
+        | undefined;
+
+      try {
+        geocodeResult = await places.reverseGeocode(lat, lng);
+      } catch (err) {
+        console.error(
+          'Reverse geocode failed; saving the point without an address',
+          err,
+        );
+      }
 
       const newLocation: TLocation = {
         latitude: lat,
         longitude: lng,
-        address: geocodeResult.formattedAddress,
-        name: geocodeResult.shortAddress,
+        address: geocodeResult?.formattedAddress ?? null,
+        name: geocodeResult?.shortAddress ?? null,
       };
 
       setLocation(newLocation);
 
       onLocationChange({
         point: [lng, lat],
-        address: geocodeResult.formattedAddress
+        address: geocodeResult?.formattedAddress
           ? {
               formattedAddress: geocodeResult.formattedAddress,
               addressComponents: JSON.stringify(
-                geocodeResult.addressComponents ?? []
+                geocodeResult.addressComponents ?? [],
               ),
             }
           : undefined,
@@ -185,12 +204,12 @@ export default function LocationComponent(props: ILocationProps) {
         ) {
           await geocodeAndSave(
             defaultLocation.latitude,
-            defaultLocation.longitude
+            defaultLocation.longitude,
           );
         } else {
           await geocodeAndSave(
             coords?.latitude ?? INITIAL_LOCATION.latitude,
-            coords?.longitude ?? INITIAL_LOCATION.longitude
+            coords?.longitude ?? INITIAL_LOCATION.longitude,
           );
         }
       } catch (err) {
@@ -199,7 +218,7 @@ export default function LocationComponent(props: ILocationProps) {
     };
 
     void autoSetInitialLocation();
-  }, [point, address, places, onLocationChange, location]);
+  }, [point, address, places, onLocationChange, location, defaultLocation]);
 
   return (
     <FieldCard
@@ -243,7 +262,7 @@ export default function LocationComponent(props: ILocationProps) {
         (!location || (location && !location.address)) && !isLocation ? (
           <TextMedium size="sm">Add Location</TextMedium>
         ) : (
-          <TextMedium size="sm">
+          <TextMedium size="sm" testID="note-location-address">
             {location && location.latitude
               ? location?.name
                 ? location.name
@@ -253,7 +272,7 @@ export default function LocationComponent(props: ILocationProps) {
         )
       }
     >
-      {location && location.longitude && location.latitude && (
+      {!!(location && location.longitude && location.latitude) && (
         <View style={{ paddingBottom: Spacings.md }}>
           <MapView
             zoomEnabled={false}

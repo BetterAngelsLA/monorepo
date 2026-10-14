@@ -65,10 +65,10 @@ export function HouseholdMemberForm(props: TProps) {
   }, [clientProfile, relationId, setValue]);
 
   const [createHouseholdMember] = useMutation(
-    CreateClientHouseholdMemberDocument
+    CreateClientHouseholdMemberDocument,
   );
   const [updateHouseholdMember] = useMutation(
-    UpdateClientHouseholdMemberDocument
+    UpdateClientHouseholdMemberDocument,
   );
 
   const [reFetchClientProfile] = useLazyQuery(GetClientProfileDocument, {
@@ -112,7 +112,7 @@ export function HouseholdMemberForm(props: TProps) {
         getViewClientProfileRoute({
           id: clientProfileId,
           openCard: ClientProfileSectionEnum.Household,
-        })
+        }),
       );
     } catch (e) {
       console.error('Error during mutation:', e);
@@ -150,7 +150,7 @@ export function HouseholdMemberForm(props: TProps) {
                 label="Type of Household Member"
                 placeholder="Select type of household member"
                 items={Object.entries(clientHouseholdMemberEnumDisplay).map(
-                  ([value, displayValue]) => ({ value, displayValue })
+                  ([value, displayValue]) => ({ value, displayValue }),
                 )}
                 selectedValue={field.value}
                 onChange={(value) => field.onChange(value)}
@@ -181,7 +181,7 @@ export function HouseholdMemberForm(props: TProps) {
                 label="Gender"
                 placeholder="Select Gender"
                 items={Object.entries(enumDisplayGender).map(
-                  ([value, displayValue]) => ({ value, displayValue })
+                  ([value, displayValue]) => ({ value, displayValue }),
                 )}
                 selectedValue={value}
                 onChange={(value) => onChange(value)}

@@ -172,25 +172,25 @@ export const RaceIntMapHmis: Record<HmisRaceEnum, number> = {
 
 // mapping helpers
 export function toNameQualityIntHmis(
-  value?: HmisNameQualityEnum | string | null
+  value?: HmisNameQualityEnum | string | null,
 ): number | null {
   return NameQualityIntMapHmis[value as HmisNameQualityEnum] ?? null;
 }
 
 export function toSsnQualityEnumIntHmis(
-  value?: HmisSsnQualityEnum | string | null
+  value?: HmisSsnQualityEnum | string | null,
 ): number | null {
   return SsnQualityIntMapHmis[value as HmisSsnQualityEnum] ?? null;
 }
 
 export function toSuffixEnumIntHmis(
-  value?: HmisSuffixEnum | string | null
+  value?: HmisSuffixEnum | string | null,
 ): number | null {
   return NameSuffixIntMapHmis[value as HmisSuffixEnum] ?? null;
 }
 
 export function toDobQualityEnumIntHmis(
-  value?: HmisDobQualityEnum | string | null
+  value?: HmisDobQualityEnum | string | null,
 ): number | null {
   return DobQualityIntMapHmis[value as HmisDobQualityEnum] ?? null;
 }
@@ -200,19 +200,19 @@ export function toDobQualityIntHmis(value?: string | null): number | null {
 }
 
 export function toGenderEnumIntHmis(
-  value?: HmisGenderEnum | string | null
+  value?: HmisGenderEnum | string | null,
 ): number | null {
   return GenderIntMapHmis[value as HmisGenderEnum] ?? null;
 }
 
 export function toRaceEnumIntHmis(
-  value?: HmisRaceEnum | string | null
+  value?: HmisRaceEnum | string | null,
 ): number | null {
   return RaceIntMapHmis[value as HmisRaceEnum] ?? null;
 }
 
 export function toVeteranStatusEnumIntHmis(
-  value?: HmisVeteranStatusEnum | string | null
+  value?: HmisVeteranStatusEnum | string | null,
 ): number | null {
   return VeteranStatusEnumIntHmis[value as HmisVeteranStatusEnum] ?? null;
 }

@@ -37,7 +37,7 @@ export function useImagePicker(params: UseImagePickerParams) {
             name: asset.fileName || Date.now().toString(),
             type: asset.mimeType || 'image/jpeg',
           });
-        })
+        }),
       );
 
       return {

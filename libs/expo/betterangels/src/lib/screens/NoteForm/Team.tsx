@@ -1,27 +1,33 @@
+import { formatTeamDisplayName } from '@monorepo/ba-platform';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Picker } from '@monorepo/expo/shared/ui-components';
+import { useMemo } from 'react';
 import { View } from 'react-native';
-import { SelahTeamEnum } from '../../apollo';
-import { enumDisplaySelahTeam } from '../../static';
+import { useOrgTeams } from '../../hooks';
 
 interface ITeamProps {
-  team?: SelahTeamEnum | null;
-  onTeamChange: (value: SelahTeamEnum | null) => void;
+  teamId?: string | null;
+  onTeamChange: (value: string | null) => void;
 }
 
 export default function Team(props: ITeamProps) {
-  const { team, onTeamChange } = props;
+  const { teamId, onTeamChange } = props;
+  const { teams } = useOrgTeams();
+  const initialTeamId = useMemo(() => teamId, []);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
       <Picker
         allowSelectNone
         placeholder="Select Team"
-        selectedValue={team}
-        items={Object.entries(enumDisplaySelahTeam).map(
-          ([value, displayValue]) => ({ value, displayValue })
-        )}
-        onChange={(t) => onTeamChange(t as SelahTeamEnum | null)}
+        selectedValue={teamId ?? undefined}
+        items={teams
+          .filter((t) => t.isActive || t.id === initialTeamId)
+          .map((t) => ({
+            value: t.id,
+            displayValue: formatTeamDisplayName(t),
+          }))}
+        onChange={(t) => onTeamChange((t as string) || null)}
       />
     </View>
   );

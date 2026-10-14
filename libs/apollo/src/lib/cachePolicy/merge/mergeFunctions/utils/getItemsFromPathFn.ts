@@ -1,14 +1,14 @@
 import { readAtPath } from '../../../../utils';
 
 type TGetItemsFromPath<TItem> = (
-  incoming: unknown
+  incoming: unknown,
 ) => ReadonlyArray<TItem> | undefined;
 
 /**
  * Build a getItems function from a path like "items" or ["data","items"]
  */
 export function getItemsFromPathFn<TItem>(
-  path?: string | ReadonlyArray<string>
+  path?: string | ReadonlyArray<string>,
 ): TGetItemsFromPath<TItem> | undefined {
   if (!path) {
     return undefined;

@@ -1,18 +1,12 @@
-query ViewSheltersByOrganization(
-  $organizationId: ID!
-  $name: String
-  $offset: Int
-  $limit: Int
-  $properties: ShelterPropertyInput
+query OperatorShelters(
+  $pagination: OffsetPaginationInput
+  $filters: OperatorShelterFilter
+  $ordering: [ShelterOrder!]! = []
 ) {
-  adminShelters(
-    filters: {
-      organizations: [$organizationId]
-      name: $name
-      properties: $properties
-    }
-    ordering: [{ createdAt: DESC }]
-    pagination: { offset: $offset, limit: $limit }
+  operatorShelters(
+    filters: $filters
+    ordering: $ordering
+    pagination: $pagination
   ) {
     totalCount
     results {
@@ -21,26 +15,16 @@ query ViewSheltersByOrganization(
       location {
         place
       }
-      totalBeds
-      bedsByStatus {
+      status
+      bedCounts {
         available
+        inTurnaround
         occupied
-        reserved
         outOfService
+        reserved
+        total
       }
-      demographics {
-        name
-      }
-      specialSituationRestrictions {
-        name
-      }
-      shelterTypes {
-        name
-      }
-      city {
-        name
-      }
-      spa {
+      organization {
         id
         name
       }
@@ -48,9 +32,12 @@ query ViewSheltersByOrganization(
   }
 }
 
-query GetShelterName($id: ID!) {
-  shelter(pk: $id) {
+query OperatorShelterSummary($id: ID!) {
+  operatorShelter(pk: $id) {
     id
     name
+    location {
+      place
+    }
   }
 }

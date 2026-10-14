@@ -9,7 +9,7 @@ import {
 export async function canShowPromptAgain() {
   const minUpdateCheck = await passedTimeThreshold(
     LAST_UPDATE_CHECK_TS_KEY,
-    MIN_UPDATE_CHECK_INTERVAL_MS
+    MIN_UPDATE_CHECK_INTERVAL_MS,
   );
 
   if (!minUpdateCheck) {
@@ -18,13 +18,13 @@ export async function canShowPromptAgain() {
 
   return await passedTimeThreshold(
     UPDATE_DISMISSED_TS_KEY,
-    DO_NOT_REPEAT_INTERVAL_MS
+    DO_NOT_REPEAT_INTERVAL_MS,
   );
 }
 
 async function passedTimeThreshold(
   storageKey: string,
-  timeThresholdMs: number
+  timeThresholdMs: number,
 ) {
   const timestamp = await AsyncStorage.getItem(storageKey);
 

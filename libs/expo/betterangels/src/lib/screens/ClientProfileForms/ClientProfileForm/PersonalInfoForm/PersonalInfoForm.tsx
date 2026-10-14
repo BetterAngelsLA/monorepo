@@ -7,6 +7,7 @@ import {
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
+import { parseDateString, toDateString } from '@monorepo/shared/scalars';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Keyboard } from 'react-native';
@@ -30,7 +31,7 @@ const languageOptions = Object.entries(enumDisplayLanguage).map(
       value: enumValue,
       displayValue,
     };
-  }
+  },
 );
 
 const veteranStatusOptions = Object.entries(enumDisplayVeteranStatus).map(
@@ -39,7 +40,7 @@ const veteranStatusOptions = Object.entries(enumDisplayVeteranStatus).map(
       value: enumValue,
       displayValue,
     };
-  }
+  },
 );
 
 const livingSituationOptions = Object.entries(enumDisplayLivingSituation).map(
@@ -48,7 +49,7 @@ const livingSituationOptions = Object.entries(enumDisplayLivingSituation).map(
       value: enumValue,
       displayValue,
     };
-  }
+  },
 );
 
 export function PersonalInfoForm() {
@@ -84,12 +85,12 @@ export function PersonalInfoForm() {
   });
 
   const clientDedupeFeatureOn = useFeatureFlagActive(
-    FeatureFlags.CLIENT_DEDUPE_FF
+    FeatureFlags.CLIENT_DEDUPE_FF,
   );
 
   const uniqueCheckError = useCaliforniaIdUniqueCheck(
     californiaId as string,
-    id as string
+    id as string,
   );
 
   useEffect(() => {
@@ -164,14 +165,15 @@ export function PersonalInfoForm() {
       <Form.Field title="Date of Birth">
         <DatePicker
           type="numeric"
+          testId="datepicker-input"
           placeholder="Enter date"
           validRange={{
             endDate: new Date(),
             startDate: new Date('1900-01-01'),
           }}
-          value={dateOfBirth || undefined}
+          value={parseDateString(dateOfBirth)}
           onChange={(date) => {
-            setValue('dateOfBirth', date);
+            setValue('dateOfBirth', date ? toDateString(date) : null);
           }}
           onDelete={() => {
             setValue('dateOfBirth', null);
@@ -181,6 +183,7 @@ export function PersonalInfoForm() {
 
       <Form.Field title="Living Situation">
         <SingleSelect
+          testId="living-situation-select"
           placeholder="Select situation"
           items={livingSituationOptions}
           selectedValue={livingSituation || undefined}
@@ -192,6 +195,7 @@ export function PersonalInfoForm() {
 
       <Form.Field title="Veteran Status">
         <SingleSelect
+          testId="veteran-status-select"
           placeholder="Select veteran status"
           items={veteranStatusOptions}
           selectedValue={veteranStatus || undefined}
@@ -203,6 +207,7 @@ export function PersonalInfoForm() {
 
       <Form.Field title="Preferred Language">
         <SingleSelect
+          testId="preferred-language-select"
           placeholder="Select language"
           items={languageOptions}
           selectedValue={preferredLanguage || undefined}
@@ -220,9 +225,9 @@ export function PersonalInfoForm() {
             endDate: new Date(),
             startDate: new Date('1900-01-01'),
           }}
-          value={unhousedStartDate || undefined}
+          value={parseDateString(unhousedStartDate)}
           onChange={(date) => {
-            setValue('unhousedStartDate', date);
+            setValue('unhousedStartDate', date ? toDateString(date) : null);
           }}
           onDelete={() => {
             setValue('unhousedStartDate', null);

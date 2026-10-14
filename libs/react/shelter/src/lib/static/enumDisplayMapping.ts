@@ -1,43 +1,33 @@
 import {
-  AccessibilityChoices,
-  DemographicChoices,
   EntryRequirementChoices,
   ExitPolicyChoices,
   FunderChoices,
-  ParkingChoices,
-  PetChoices,
   ReferralRequirementChoices,
   RoomStyleChoices,
   ShelterChoices,
+  ShelterPhotoTypeChoices,
   ShelterProgramChoices,
-  SpecialSituationRestrictionChoices,
-  StorageChoices,
+  StatusChoices,
   VaccinationRequirementChoices,
 } from '../apollo';
 
-export const enumDisplayAccessibilityChoices: {
-  [key in AccessibilityChoices]: string;
-} = {
-  [AccessibilityChoices.AdaRooms]: 'ADA Rooms Available',
-  [AccessibilityChoices.MedicalEquipmentPermitted]:
-    'Medical Equipment Permitted',
-  [AccessibilityChoices.WheelchairAccessible]: 'Wheelchair Accessible',
+export const enumStatusChoices: Record<StatusChoices, string> = {
+  [StatusChoices.Draft]: 'Draft',
+  [StatusChoices.Pending]: 'Pending',
+  [StatusChoices.Approved]: 'Approved',
+  [StatusChoices.Inactive]: 'Inactive',
 };
 
-export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
-  {
-    [DemographicChoices.All]: 'All',
-    [DemographicChoices.Families]: 'Families',
-    [DemographicChoices.Couples]: 'Couples',
-    [DemographicChoices.LgbtqPlus]: 'LGBTQ+',
-    [DemographicChoices.Other]: 'Others',
-    [DemographicChoices.Seniors]: 'Seniors',
-    [DemographicChoices.SingleDads]: 'Single Dads',
-    [DemographicChoices.SingleMen]: 'Single Men',
-    [DemographicChoices.SingleMoms]: 'Single Moms',
-    [DemographicChoices.SingleWomen]: 'Single Women',
-    [DemographicChoices.TayTeen]: 'TAY/Teen',
-  };
+// Shared with the mobile app — labels live in @monorepo/ba-platform so the two
+// surfaces cannot drift; re-exported for existing imports.
+export {
+  enumDisplayAccessibilityChoices,
+  enumDisplayDemographics,
+  enumDisplayParkingChoices,
+  enumDisplayPetChoices,
+  enumDisplaySpecialSituationRestrictionChoices,
+  enumDisplayStorageChoices,
+} from '@monorepo/ba-platform';
 
 export const enumDisplayEntryRequirementChoices: {
   [key in EntryRequirementChoices]: string;
@@ -74,25 +64,6 @@ export const enumDisplayFunderChoices: { [key in FunderChoices]: string } = {
   [FunderChoices.Lahsa]: 'LAHSA',
   [FunderChoices.Other]: 'Other',
   [FunderChoices.Private]: 'Private',
-};
-
-export const enumDisplayParkingChoices: { [key in ParkingChoices]: string } = {
-  [ParkingChoices.Automobile]: 'Automobile',
-  [ParkingChoices.Bicycle]: 'Bicycle',
-  [ParkingChoices.Motorcycle]: 'Motorcycle',
-  [ParkingChoices.NoParking]: 'No Parking',
-  [ParkingChoices.Rv]: 'RV',
-  [ParkingChoices.Street]: 'Street Parking',
-};
-
-export const enumDisplayPetChoices: { [key in PetChoices]: string } = {
-  [PetChoices.Cats]: 'Cats',
-  [PetChoices.DogsOver_25Lbs]: 'Dogs (> 25 lbs)',
-  [PetChoices.DogsUnder_25Lbs]: 'Dogs (< 25 lbs)',
-  [PetChoices.Exotics]: 'Exotics',
-  [PetChoices.NoPetsAllowed]: 'No Pets Allowed',
-  [PetChoices.PetArea]: 'Pet Area',
-  [PetChoices.ServiceAnimals]: 'Service Animals',
 };
 
 export const enumDisplayReferralRequirementChoices: {
@@ -152,27 +123,6 @@ export const enumDisplayShelterProgramChoices: {
   [ShelterProgramChoices.WinterShelter]: 'Winter Shelter',
 };
 
-export const enumDisplaySpecialSituationRestrictionChoices: {
-  [key in SpecialSituationRestrictionChoices]: string;
-} = {
-  [SpecialSituationRestrictionChoices.DomesticViolence]: 'Domestic Violence',
-  [SpecialSituationRestrictionChoices.HarmReduction]: 'Harm Reduction',
-  [SpecialSituationRestrictionChoices.HivAids]: 'HIV/AIDS',
-  [SpecialSituationRestrictionChoices.HumanTrafficking]: 'Human Trafficking',
-  [SpecialSituationRestrictionChoices.JusticeSystems]: 'Justice Systems',
-  [SpecialSituationRestrictionChoices.None]: 'None',
-  [SpecialSituationRestrictionChoices.Veterans]: 'Veterans',
-};
-
-export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
-  [StorageChoices.AmnestyLockers]: 'Amnesty Lockers',
-  [StorageChoices.NoStorage]: 'No Storage',
-  [StorageChoices.SharedStorage]: 'Shared Storage',
-  [StorageChoices.StandardLockers]: 'Standard Lockers',
-  [StorageChoices.UnitStorage]: 'Unit-level Storage',
-  [StorageChoices.PersonalBin]: 'Personal Storage Bin',
-};
-
 export const enumDisplayVaccinationRequirementChoices: {
   [key in VaccinationRequirementChoices]: string;
 } = {
@@ -181,12 +131,19 @@ export const enumDisplayVaccinationRequirementChoices: {
   [VaccinationRequirementChoices.Covid_19]: 'COVID-19',
 };
 
+export const enumDisplayShelterPhotoTypeChoices: {
+  [key in ShelterPhotoTypeChoices]: string;
+} = {
+  [ShelterPhotoTypeChoices.Interior]: 'Interior',
+  [ShelterPhotoTypeChoices.Exterior]: 'Exterior',
+};
+
 /*
  * Must match CITY_COUNCIL_DISTRICT_CHOICES in apps/betterangels-backend/shelters/enums.py
  */
 export const CITY_COUNCIL_DISTRICT_UNINCORPORATED = 0;
 export function formatCityCouncilDistrict(
-  district: number | null | undefined
+  district: number | null | undefined,
 ): string {
   if (district == null) return '';
   if (district === CITY_COUNCIL_DISTRICT_UNINCORPORATED)

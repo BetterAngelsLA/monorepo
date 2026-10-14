@@ -10,6 +10,7 @@ import { IInputProps, Input } from '../Input';
 interface IControlledInputProps<T extends FieldValues = FieldValues>
   extends IInputProps {
   name: Path<T>;
+  testId?: string;
   control?: Control<T>;
   rules?: Omit<
     RegisterOptions<T, Path<T>>,
@@ -19,9 +20,9 @@ interface IControlledInputProps<T extends FieldValues = FieldValues>
 }
 
 export function ControlledInput<T extends FieldValues = FieldValues>(
-  props: IControlledInputProps<T>
+  props: IControlledInputProps<T>,
 ) {
-  const { rules, name, control, ...rest } = props;
+  const { rules, name, testId, control, ...rest } = props;
 
   const handleBlur = (onBlur: () => void) => {
     onBlur();
@@ -37,6 +38,7 @@ export function ControlledInput<T extends FieldValues = FieldValues>(
       rules={rules}
       render={({ field: { value, onBlur, onChange } }) => (
         <Input
+          testID={testId || name}
           onChangeText={onChange}
           value={value}
           onBlur={() => handleBlur(onBlur)}

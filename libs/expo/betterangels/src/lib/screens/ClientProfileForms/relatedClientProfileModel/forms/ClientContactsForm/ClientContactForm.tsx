@@ -1,5 +1,6 @@
 import { Colors, Regex } from '@monorepo/expo/shared/static';
 import {
+  type KeyboardAwareScrollViewRef,
   ControlledInput,
   Form,
   PhoneNumberInput,
@@ -10,7 +11,6 @@ import { useRouter } from 'expo-router';
 import { useRef } from 'react';
 import { Controller } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { useSnackbar } from '../../../../../hooks';
 import { clientRelevantContactEnumDisplay } from '../../../../../static';
 import AddressAutocomplete from '../../../../../ui-components/AddressField';
@@ -41,7 +41,7 @@ export function ClientContactForm(props: TProps) {
     isError,
     setValue,
     clearErrors,
-  } = useClientContactForm({ clientProfile, relationId, router, showSnackbar });
+  } = useClientContactForm({ clientProfile, relationId, showSnackbar });
 
   const isEditMode = !!relationId;
   const clientProfileId = clientProfile?.id;
@@ -79,7 +79,7 @@ export function ClientContactForm(props: TProps) {
                   label="Relevant contact type"
                   placeholder="Select the relevant contact type"
                   items={Object.entries(clientRelevantContactEnumDisplay).map(
-                    ([value, displayValue]) => ({ value, displayValue })
+                    ([value, displayValue]) => ({ value, displayValue }),
                   )}
                   selectedValue={value}
                   onChange={(value) => onChange(value)}

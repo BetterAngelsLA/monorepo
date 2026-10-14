@@ -11,8 +11,8 @@ import {
 import { ModalMask } from './ModalMask';
 
 export enum ModalAnimationEnum {
-  SLIDE_UP = 'animate-slideInUp',
-  EXPAND = 'animate-expandInOut',
+  SLIDE_UP = 'animate-slide-in-up',
+  EXPAND = 'animate-expand-in-out',
 }
 
 export type TModalType = 'drawer' | 'fullscreen' | 'default';
@@ -95,7 +95,13 @@ export function Modal(props: IModal): ReactElement | null {
     'overflow-y-auto',
   ];
 
-  const closeCss = ['ml-auto'];
+  const closeCss = [
+    'ml-auto',
+    'p-2',
+    'rounded-lg',
+    'transition-colors',
+    'active:bg-[#E8ECF2]',
+  ];
 
   const headerCss = ['flex', 'justify-between', 'align-center', 'mt-0', 'mb-4'];
 

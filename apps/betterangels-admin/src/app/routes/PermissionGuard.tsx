@@ -1,11 +1,9 @@
-import {
-  UserOrganizationPermissions,
-  useActiveOrg,
-} from '@monorepo/react/betterangels-admin';
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { Navigate } from 'react-router-dom';
 
 type IProps = {
-  permission: UserOrganizationPermissions;
+  permission: PermissionEnum;
   children: React.ReactNode;
 };
 
@@ -16,5 +14,5 @@ export function PermissionGuard({ permission, children }: IProps) {
     return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return children;
 }

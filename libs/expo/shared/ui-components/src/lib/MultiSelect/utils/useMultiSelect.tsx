@@ -27,33 +27,33 @@ export function useMultiSelect<T>({
 
   const isSelectAllOption = useCallback(
     (item: T) => selectAllEnabled && getId(item) === selectAllValue,
-    [selectAllEnabled, getId, selectAllValue]
+    [selectAllEnabled, getId, selectAllValue],
   );
 
   const selectables = useMemo(
     () => options.filter((o) => !isSelectAllOption(o)),
-    [options, isSelectAllOption]
+    [options, isSelectAllOption],
   );
 
   const selectedIdSet = useMemo(
     () => new Set(selected.map(getId)),
-    [selected, getId]
+    [selected, getId],
   );
 
   const selectableIdSet = useMemo(
     () => new Set(selectables.map(getId)),
-    [selectables, getId]
+    [selectables, getId],
   );
 
   // stable signature to identify value changes
   const signature = useMemo(
     () => [...selectedIdSet].sort().join('|'),
-    [selectedIdSet]
+    [selectedIdSet],
   );
 
   const isSelected = useCallback(
     (item: T) => selectedIdSet.has(getId(item)),
-    [selectedIdSet, getId]
+    [selectedIdSet, getId],
   );
 
   const allAreSelected = useCallback(() => {
@@ -71,7 +71,7 @@ export function useMultiSelect<T>({
       if (selectAllEnabled && itemId === selectAllValue) {
         if (allAreSelected()) {
           return onChange(
-            selected.filter((s) => !selectableIdSet.has(getId(s)))
+            selected.filter((s) => !selectableIdSet.has(getId(s))),
           );
         }
 
@@ -102,7 +102,7 @@ export function useMultiSelect<T>({
       selectedIdSet,
       selectables,
       selectableIdSet,
-    ]
+    ],
   );
 
   return {

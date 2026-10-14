@@ -33,7 +33,11 @@ export function NumberField({
   error,
   onBlur,
 }: NumberFieldProps) {
-  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
+  const messageId = error
+    ? `${id}-error`
+    : helperText
+      ? `${id}-helper`
+      : undefined;
 
   return (
     <FieldWrapper
@@ -53,7 +57,7 @@ export function NumberField({
         min={min}
         max={max}
         step={step}
-        onChange={event => {
+        onChange={(event) => {
           const next = event.target.value;
           onChange(next === '' ? null : Number(next));
         }}

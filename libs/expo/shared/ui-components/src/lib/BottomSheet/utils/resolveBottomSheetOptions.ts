@@ -56,7 +56,7 @@ function mergeViewStyles(
  */
 
 export function resolveBottomSheetOptions(
-  options?: BottomSheetOptions
+  options?: BottomSheetOptions,
 ): BottomSheetOptions {
   const user = options ?? {};
   const variant: BottomSheetVariant = user.variant ?? 'default';
@@ -73,17 +73,17 @@ export function resolveBottomSheetOptions(
     containerStyle: mergeViewStyles(
       base.containerStyle,
       variantOptions.containerStyle,
-      user.containerStyle
+      user.containerStyle,
     ),
     sheetStyle: mergeViewStyles(
       base.sheetStyle,
       variantOptions.sheetStyle,
-      user.sheetStyle
+      user.sheetStyle,
     ),
     contentStyle: mergeViewStyles(
       base.contentStyle,
       variantOptions.contentStyle,
-      user.contentStyle
+      user.contentStyle,
     ),
   };
 

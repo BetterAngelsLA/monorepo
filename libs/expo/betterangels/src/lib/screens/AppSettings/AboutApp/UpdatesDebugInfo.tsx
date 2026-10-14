@@ -98,7 +98,7 @@ export function UpdatesDebugInfo() {
 function formatTs(ts?: string) {
   try {
     return format(new Date(parseInt(ts || '')), 'MM/dd/yyyy hh:mm:ss');
-  } catch (e) {
+  } catch (_e) {
     return 'n/a';
   }
 }

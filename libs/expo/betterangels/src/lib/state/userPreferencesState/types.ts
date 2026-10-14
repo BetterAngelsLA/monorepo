@@ -1,7 +1,6 @@
-import { SelahTeamEnum } from '../../apollo';
 import { LocationDraft } from '../../screens/NotesHmis/NoteFormHmis';
 
 export type TUserPreferencesState = {
-  team: SelahTeamEnum | null;
+  teamId: string | null;
   location: LocationDraft | null;
 };

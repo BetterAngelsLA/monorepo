@@ -1,4 +1,4 @@
-import svg from '../../../../../../libs/expo/shared/icons/src/assets/third_party/pictogrammers/svg/mdi:hand-heart-outline.svg';
+import svg from '../../../../../../libs/expo/shared/icons/src/assets/third_party/pictogrammers/svg/mdi:hand-heart-outline.svg?raw';
 import { createSvgComponent } from '../../toComponent';
 
 export default createSvgComponent(svg);

@@ -13,6 +13,7 @@ export type TMainModalAction = {
   Icon: ElementType;
   route?: string;
   params?: Record<string, string>;
+  testId?: string;
   onPress?: () => void;
 };
 
@@ -83,13 +84,14 @@ export function MainModal({
             return <Fragment key={idx}>{action}</Fragment>;
           }
 
-          const { title, route, params, Icon, onPress } =
+          const { title, route, params, testId, Icon, onPress } =
             action as TMainModalAction;
 
           return (
             <MainModalActionBtn
               key={idx}
               title={title}
+              testId={testId}
               Icon={Icon}
               onPress={() => {
                 if (onPress) return onPress();

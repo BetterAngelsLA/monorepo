@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import { GET_SHELTERS_QUERY } from './shared/clients/apollo/queries/getShelters';
 
 // Temporary suppression to allow incremental cleanup without regressions.

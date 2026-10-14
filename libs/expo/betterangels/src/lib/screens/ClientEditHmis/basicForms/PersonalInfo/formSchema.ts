@@ -31,7 +31,7 @@ export const PersonalInfoFormSchema = z.object({
       },
       {
         message: 'Date is invalid.',
-      }
+      },
     ),
   dobQuality: z.enum(HmisDobQualityEnum).or(z.literal('')),
   unhousedStartDate: z.coerce
@@ -44,7 +44,7 @@ export const PersonalInfoFormSchema = z.object({
       },
       {
         message: 'Date is invalid.',
-      }
+      },
     ),
   veteran: z.enum(HmisVeteranStatusEnum).or(z.literal('')),
   livingSituation: z.enum(LivingSituationEnum).or(z.literal('')),
@@ -87,5 +87,5 @@ export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
       dobQuality: dobQuality === '' ? null : dobQuality,
       veteran: veteran === '' ? null : veteran,
     };
-  }
+  },
 );

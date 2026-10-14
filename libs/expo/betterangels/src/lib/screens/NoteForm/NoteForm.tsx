@@ -14,10 +14,11 @@ import {
   RequestedProvidedServices,
 } from '../../ui-components';
 import DateAndTime from './DateAndTime';
-import type { TNoteFormInputs } from './schema';
+import DeleteNote from './DeleteNote';
 import Location from './Location';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
+import type { TNoteFormInputs } from './schema';
 import Team from './Team';
 
 // ── Props ───────────────────────────────────────────────────────────────
@@ -41,6 +42,8 @@ export interface NoteFormProps {
   onSaveDraft: () => void;
   /** Called to submit. */
   onSubmit: () => void;
+  /** Called when user confirms deletion (edit mode only). */
+  onDelete?: () => Promise<void> | void;
 }
 
 export default function NoteForm(props: NoteFormProps) {
@@ -54,6 +57,7 @@ export default function NoteForm(props: NoteFormProps) {
     onCancel,
     onSaveDraft,
     onSubmit,
+    onDelete,
   } = props;
 
   const isEditMode = mode === 'edit';
@@ -102,8 +106,8 @@ export default function NoteForm(props: NoteFormProps) {
           scrollRef={scrollRef}
         />
         <Team
-          team={form.team}
-          onTeamChange={(v) => setValue('team', v, { shouldDirty: true })}
+          teamId={form.teamId}
+          onTeamChange={(v) => setValue('teamId', v, { shouldDirty: true })}
         />
         <Location
           point={
@@ -141,7 +145,7 @@ export default function NoteForm(props: NoteFormProps) {
           clientProfileId={clientProfileId}
           scrollRef={scrollRef}
           tasks={form.tasks}
-          team={form.team}
+          teamId={form.teamId}
           isDraftMode
           onDraftTasksChange={(v) =>
             setValue('tasks', v, { shouldDirty: true })
@@ -152,13 +156,12 @@ export default function NoteForm(props: NoteFormProps) {
           onPublicNoteChange={(v) =>
             setValue('publicNote', v, { shouldDirty: true })
           }
-          expanded={expanded}
-          setExpanded={setExpanded}
           scrollRef={scrollRef}
           purpose={form.purpose}
           providedServices={noteData?.providedServices}
           requestedServices={noteData?.requestedServices}
         />
+        {onDelete && <DeleteNote onDelete={onDelete} />}
       </MainScrollContainer>
       <BottomActions
         cancel={

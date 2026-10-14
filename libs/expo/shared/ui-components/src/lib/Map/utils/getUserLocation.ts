@@ -31,7 +31,7 @@ const DEFAULT_REFINE_THRESHOLD = 50;
  * Optionally refines with a fresh GPS fix in the background via `onRefine`.
  */
 export async function getUserLocation(
-  options?: TGetUserLocationOptions
+  options?: TGetUserLocationOptions,
 ): Promise<TGetUserLocationResponse | null> {
   try {
     const existingPerms = await getForegroundPermissionsAsync();
@@ -85,7 +85,7 @@ async function fetchLocation(): Promise<LocationObject> {
  */
 function scheduleRefine(
   initial: LocationObject,
-  options?: TGetUserLocationOptions
+  options?: TGetUserLocationOptions,
 ) {
   if (!options?.onRefine) return;
 

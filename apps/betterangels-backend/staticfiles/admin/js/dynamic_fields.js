@@ -22,7 +22,7 @@
 
         const dependentSelector = `.field-${mainFieldId.replace(
           'id_',
-          ''
+          '',
         )}_other`;
         const $dependentWrapper = $(dependentSelector);
 

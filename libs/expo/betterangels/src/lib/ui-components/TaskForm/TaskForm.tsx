@@ -4,14 +4,16 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { formatTeamDisplayName } from '@monorepo/ba-platform';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Controller,
   FormProvider,
   SubmitHandler,
   useForm,
 } from 'react-hook-form';
-import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
+import { useOrgTeams } from '../../hooks';
+import { enumDisplayTaskStatus } from '../../static';
 
 import DeleteTask from './DeleteTask';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
@@ -36,6 +38,9 @@ export function TaskForm(props: TProps) {
     defaultValues: { ...emptyState, ...initialValues },
     mode: 'onChange',
   });
+
+  const { teams } = useOrgTeams();
+  const initialTeamId = useMemo(() => initialValues?.teamId, []);
 
   const {
     control,
@@ -86,20 +91,24 @@ export function TaskForm(props: TProps) {
             />
 
             <Controller
-              name="team"
+              name="teamId"
               control={control}
               render={({ field }) => (
                 <SingleSelect
                   allowSelectNone={true}
                   label="Team"
+                  maxRadioItems={0}
                   placeholder="Select team"
                   disabled={isSubmitting}
-                  items={Object.entries(enumDisplaySelahTeam).map(
-                    ([value, displayValue]) => ({ value, displayValue })
-                  )}
+                  items={teams
+                    .filter((t) => t.isActive || t.id === initialTeamId)
+                    .map((t) => ({
+                      value: t.id,
+                      displayValue: formatTeamDisplayName(t),
+                    }))}
                   selectedValue={field.value}
                   onChange={(value) => field.onChange(value || '')}
-                  error={errors.team?.message}
+                  error={errors.teamId?.message}
                 />
               )}
             />
@@ -127,7 +136,7 @@ export function TaskForm(props: TProps) {
                   disabled={isSubmitting}
                   maxRadioItems={0}
                   items={Object.entries(enumDisplayTaskStatus).map(
-                    ([value, displayValue]) => ({ value, displayValue })
+                    ([value, displayValue]) => ({ value, displayValue }),
                   )}
                   selectedValue={field.value}
                   onChange={(value) => field.onChange(value || '')}

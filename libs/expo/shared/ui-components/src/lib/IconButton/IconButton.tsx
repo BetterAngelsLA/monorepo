@@ -107,6 +107,7 @@ export function IconButton(props: IIconButtonProps) {
     accessibilityHint,
     alignItems = 'center',
     borderRadius = Radiuses.xs,
+    ...rest
   } = props;
   return (
     <TouchableOpacity
@@ -135,6 +136,7 @@ export function IconButton(props: IIconButtonProps) {
         },
       ]}
       onPress={onPress}
+      {...rest}
     >
       {children}
     </TouchableOpacity>

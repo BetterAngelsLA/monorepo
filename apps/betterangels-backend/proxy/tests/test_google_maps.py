@@ -2,14 +2,14 @@ import json
 from typing import Any
 from unittest.mock import Mock, patch
 
-from accounts.models import User
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from model_bakery import baker
 
+from accounts.models import User
+
 
 class GoogleMapsApiViewTestCase(TestCase):
-
     def setUp(self) -> None:
         self.client = Client()
         self.user = baker.make(User)
@@ -37,7 +37,6 @@ class GoogleMapsApiViewTestCase(TestCase):
 
 
 class GooglePlacesApiNewViewTestCase(TestCase):
-
     def setUp(self) -> None:
         self.client = Client()
         self.user = baker.make(User)

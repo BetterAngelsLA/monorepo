@@ -3,7 +3,7 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/expo/shared/clients/src",
   "projectType": "library",
-  "tags": [],
+  "tags": ["type:util", "scope:shared"],
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
@@ -13,19 +13,40 @@
   "targets": {
     "generate-graphql-types": {
       "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/libs/expo/shared/clients/src/lib/apollo/graphql/__generated__/"
+      ],
       "options": {
         "cwd": "libs/expo/shared/clients",
         "command": "graphql-codegen --config codegen.ts"
-      },
-      "outputs": [
-        "{workspaceRoot}/libs/expo/shared/clients/src/lib/apollo/graphql/__generated__/"
-      ]
+      }
     },
     "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {},
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "coverage": true
+        }
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
       "options": {
-        "jestConfig": "libs/expo/shared/clients/jest.config.ts"
+        "cwd": "libs/expo/shared/clients",
+        "commands": [
+          {
+            "command": "tsc --noEmit -p tsconfig.lib.json"
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "options": {
+        "cwd": "libs/expo/shared/clients",
+        "command": "eslint ."
       }
     }
   }

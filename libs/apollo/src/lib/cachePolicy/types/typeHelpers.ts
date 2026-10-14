@@ -6,18 +6,14 @@ import {
 export type TDefaultResultsKey = typeof DEFAULT_QUERY_RESULTS_KEY;
 export type TDefaultTotalKey = typeof DEFAULT_QUERY_TOTAL_COUNT_KEY;
 
-type ItemFromContainer<C, RK extends string> = C extends Record<
-  RK,
-  ReadonlyArray<infer I> | Array<infer I>
->
-  ? I
-  : never;
+type ItemFromContainer<C, RK extends string> =
+  C extends Record<RK, ReadonlyArray<infer I> | Array<infer I>> ? I : never;
 
 /** Result item type from Q[F][RK]; supports unions and nullables on Q[F] */
 export type ResultItemOf<
   Q,
   F extends keyof Q,
-  RK extends string = TDefaultResultsKey
+  RK extends string = TDefaultResultsKey,
 > = ItemFromContainer<NonNullable<Q[F]>, RK>;
 
 /** Extract a string literal __typename if present */
@@ -37,4 +33,4 @@ export type AllowedKey<V> = Extract<keyof V, string>;
 export type KeyArgsFor<V> = readonly (
   | AllowedKey<V> // "filter" | "pagination" | "order" | ...
   | readonly string[]
-)[]; // ["search"], ["page", "perPage"], ...
+)[]; // ["search"], ["filters", "status"], ...

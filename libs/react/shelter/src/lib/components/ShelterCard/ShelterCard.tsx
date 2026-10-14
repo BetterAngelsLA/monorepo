@@ -1,8 +1,10 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
+import { useSetAtom } from 'jotai';
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TLatLng } from '../Map';
+import { savedMapViewportAtom } from '../../atoms';
+import { TLatLng, mapViewportFromMap } from '../Map';
 import { PrivateBadge } from '../PrivateBadge';
 import { DistanceAway } from './DistanceAway';
 import { ShelterCardHero } from './ShelterCardHero';
@@ -42,12 +44,22 @@ export function ShelterCard(props: TShelterCard) {
     footerClassName,
   } = props;
   const map = useMap();
+  const setSavedMapViewport = useSetAtom(savedMapViewportAtom);
 
   const navigate = useNavigate();
 
   const formattedAddress = location?.place.replace(/, USA$/, '');
 
-  const parentCss = ['flex', 'flex-col', 'cursor-pointer', className];
+  const parentCss = [
+    'flex',
+    'flex-col',
+    'cursor-pointer',
+    'rounded-lg',
+    'p-2',
+    'transition-colors',
+    'active:bg-[#E8ECF2]',
+    className,
+  ];
 
   const bodyCss = ['flex', 'flex-col', 'md:flex-row', 'overflow-hidden'];
 
@@ -56,14 +68,14 @@ export function ShelterCard(props: TShelterCard) {
   const footerCss = ['mt-4', 'md:mt-10', footerClassName];
 
   const onNavigate = () => {
-    sessionStorage.setItem(
-      'mapCenter',
-      JSON.stringify({
-        lat: location?.latitude,
-        lng: location?.longitude,
-        zoom: map?.getZoom(),
-      })
-    );
+    // Persist the exact map center + zoom so we can restore the identical
+    // viewport (and search results) when the user navigates back.
+    const viewport = map ? mapViewportFromMap(map) : null;
+
+    if (viewport) {
+      setSavedMapViewport(viewport);
+    }
+
     navigate(`/shelter/${id}`);
   };
 

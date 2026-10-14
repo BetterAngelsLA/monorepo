@@ -1,7 +1,9 @@
 from typing import Any, TypeVar
 
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import PermissionDenied
 from django.db.models import Model, QuerySet
+
+from common.utils import get_or_none
 
 T = TypeVar("T", bound=Model)
 
@@ -19,7 +21,9 @@ def get_object_or_permission_error(
     a DoesNotExist exception usually implies a permission denial (even if
     technically it could be a 404). Cross-org protection relies on this explicit error.
     """
-    try:
-        return qs.get(pk=pk)
-    except ObjectDoesNotExist:
+    obj = get_or_none(qs, pk)
+
+    if obj is None:
         raise PermissionDenied(error_message)
+
+    return obj

@@ -21,7 +21,7 @@ export function extractItemsAndTotalFromData<TData, TItem>(args: {
     totalCountPath = [DEFAULT_QUERY_TOTAL_COUNT_KEY],
   } = args;
 
-  const field = (data as any)?.[queryFieldName];
+  const field = (data as Record<string, unknown>)?.[queryFieldName];
 
   if (!field) {
     return { items: undefined, total: 0 };

@@ -11,6 +11,10 @@ query ViewShelter($id: ID!) {
       id
       url
     }
+    heroImageFull: heroImage(processingOptions: "rs:fit:1400:1400/q:85") {
+      id
+      url
+    }
     id
     instagram
     isPrivate
@@ -22,7 +26,6 @@ query ViewShelter($id: ID!) {
     otherServices
     addNotesShelterDetails
     addNotesSleepingDetails
-    overallRating
     phone
     programFees
     roomStylesOther
@@ -45,10 +48,6 @@ query ViewShelter($id: ID!) {
     accessibility {
       name
     }
-    additionalContacts {
-      contactName
-      contactNumber
-    }
     city {
       id
       name
@@ -64,7 +63,8 @@ query ViewShelter($id: ID!) {
       type
       file {
         name
-        url
+        url(preset: SHELTER_HERO)
+        fullUrl: url(processingOptions: "rs:fit:1400:1400/q:85")
       }
     }
     vaccinationRequirement {

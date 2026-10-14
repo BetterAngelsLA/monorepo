@@ -60,17 +60,17 @@ export const ScheduleField = memo(function ScheduleField({
     (index: number) => {
       onChange(value.filter((_, i) => i !== index));
     },
-    [value, onChange]
+    [value, onChange],
   );
 
   const updateEntry = useCallback(
     (index: number, patch: Partial<ScheduleFormEntry>) => {
       const next = value.map((entry, i) =>
-        i === index ? { ...entry, ...patch } : entry
+        i === index ? { ...entry, ...patch } : entry,
       );
       onChange(next);
     },
-    [value, onChange]
+    [value, onChange],
   );
 
   return (
@@ -123,7 +123,7 @@ const ScheduleRow = memo(function ScheduleRow({
         : [...entry.days, day];
       onUpdate({ days: next });
     },
-    [entry.days, onUpdate]
+    [entry.days, onUpdate],
   );
 
   return (

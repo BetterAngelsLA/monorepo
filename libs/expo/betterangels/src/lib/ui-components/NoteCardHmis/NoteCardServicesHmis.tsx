@@ -8,7 +8,7 @@ interface INoteCardServicesHmisProps {
 }
 
 export default function NoteCardServicesHmis(
-  props: INoteCardServicesHmisProps
+  props: INoteCardServicesHmisProps,
 ) {
   const { note } = props;
   return (
@@ -18,7 +18,7 @@ export default function NoteCardServicesHmis(
           maxVisible={5}
           pillVariant={'warning'}
           pills={note['requestedServices'].map(
-            (item) => item.service?.label || ''
+            (item) => item.service?.label || '',
           )}
           variant={'singleRow'}
         />
@@ -28,7 +28,7 @@ export default function NoteCardServicesHmis(
           maxVisible={5}
           pillVariant={'success'}
           pills={note['providedServices'].map(
-            (item) => item.service?.label || ''
+            (item) => item.service?.label || '',
           )}
           variant={'singleRow'}
         />

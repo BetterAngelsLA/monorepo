@@ -14,7 +14,10 @@ query Tasks(
       summary
       description
       status
-      team
+      team {
+        id
+        name
+      }
       organization {
         id
         name

@@ -1,0 +1,17 @@
+mutation UpdateRoom($data: UpdateRoomInput!) {
+  updateRoom(data: $data) {
+    ... on RoomType {
+      id
+      name
+      status
+      type
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+query AdminTeams($filters: TeamFilter, $pagination: OffsetPaginationInput) {
+  teams(filters: $filters, pagination: $pagination) {
+    results {
+      id
+      name
+      isActive
+      createdAt
+    }
+    totalCount
+  }
+}
+
+mutation CreateTeam($data: CreateTeamInput!) {
+  createTeam(data: $data) {
+    ... on TeamType {
+      id
+      name
+      isActive
+      createdAt
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation UpdateTeam($data: UpdateTeamInput!) {
+  updateTeam(data: $data) {
+    ... on TeamType {
+      id
+      name
+      isActive
+      createdAt
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation DeleteTeam($data: DeleteDjangoObjectInput!) {
+  deleteTeam(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

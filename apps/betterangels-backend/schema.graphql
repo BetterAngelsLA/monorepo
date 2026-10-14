@@ -70,79 +70,6 @@ type AddressType {
   zipCode: String
 }
 
-type AdminShelterType {
-  id: ID!
-  accessibility: [AccessibilityType!]!
-  additionalContacts: [ContactInfoType!]!
-  addNotesSleepingDetails: String
-  addNotesShelterDetails: String
-  bedFees: String
-  city: CityType
-  cityCouncilDistrict: Int
-  curfew: Time
-  demographics: [DemographicType!]!
-  demographicsOther: String
-  description: String!
-  email: String
-  entryInfo: String
-  entryRequirements: [EntryRequirementType!]!
-  exitPolicy: [ExitPolicyType!]!
-  exitPolicyOther: String
-  emergencySurge: Boolean
-  funders: [FunderType!]!
-  fundersOther: String
-  instagram: String
-  location: ShelterLocationType
-  maxStay: Int
-  name: String!
-  onSiteSecurity: Boolean
-  organization: OrganizationType
-  otherRules: String
-  otherServices: String
-  overallRating: Int
-  parking: [ParkingType!]!
-  pets: [PetType!]!
-  phone: PhoneNumber
-  programFees: String
-  referralRequirement: [ReferralRequirementType!]!
-  roomStyles: [RoomStyleType!]!
-  roomStylesOther: String
-  schedules: [ScheduleType!]!
-  services: [ServiceType!]!
-  shelterPrograms: [ShelterProgramType!]!
-  shelterProgramsOther: String
-  shelterTypes: [ShelterTypeType!]!
-  shelterTypesOther: String
-  spa: SPAType
-  specialSituationRestrictions: [SpecialSituationRestrictionType!]!
-  photos: [ShelterPhotoType!]!
-  isPrivate: Boolean!
-  status: StatusChoices!
-  storage: [StorageType!]!
-  subjectiveReview: String
-  supervisorialDistrict: Int
-  totalBeds: Int
-  updatedAt: DateTime!
-  vaccinationRequirement: [VaccinationRequirementType!]!
-  visitorsAllowed: Boolean
-  website: String
-  mediaLinks: [MediaLinkType!]!
-  HeroPhotos: [ShelterPhotoType!]
-  heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
-  distanceInMiles: Float
-  bedsByStatus: BedsByStatusType!
-}
-
-type AdminShelterTypeOffsetPaginated {
-  pageInfo: OffsetPaginationInfo!
-
-  """Total count of existing results."""
-  totalCount: Int!
-
-  """List of paginated results."""
-  results: [AdminShelterType!]!
-}
-
 interface AttachmentInterface {
   id: ID!
   file: DjangoFileType!
@@ -177,42 +104,61 @@ type AuthorizedPresignedS3UploadsType {
   uploads: [AuthorizedPresignedS3UploadType!]!
 }
 
+type BedCountType {
+  available: Int!
+  inTurnaround: Int!
+  occupied: Int!
+  outOfService: Int!
+  reserved: Int!
+  total: Int!
+}
+
 input BedFilter {
+  id: ID
+  maintenanceFlag: Boolean
+  shelterId: ID
   AND: BedFilter
   OR: BedFilter
   NOT: BedFilter
   DISTINCT: Boolean
-  bedType: [BedTypeChoices!]
+  type: [BedTypeChoices!]
   medicalNeeds: [MedicalNeedChoices!]
   status: [BedStatusChoices!]
 }
 
+input BedOrder {
+  name: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
+}
+
 enum BedStatusChoices {
   AVAILABLE
+  IN_TURNAROUND
   OCCUPIED
-  RESERVED
   OUT_OF_SERVICE
+  RESERVED
 }
 
 type BedType {
   id: ID!
-  shelter: ShelterType!
-  room: RoomType
-  bedName: String
-  status: BedStatusChoices
-  statusNotes: String
-  occupantId: ID
-  bedType: BedTypeChoices
-  demographics: [DemographicType!]!
   accessibility: [AccessibilityType!]!
-  funders: [FunderType!]!
-  pets: [PetType!]!
-  storage: Boolean!
-  maintenanceFlag: Boolean!
-  lastCleanedInspected: DateTime
-  medicalNeeds: MedicalNeedChoices
   b7: Boolean!
+  demographics: [DemographicType!]!
   fees: Int
+  funders: [FunderType!]!
+  lastCleanedInspected: DateTime
+  lastCleaned: DateTime
+  maintenanceFlag: Boolean!
+  medicalNeeds: [MedicalNeedType!]!
+  name: String
+  pets: [PetType!]!
+  room: RoomType
+  shelter: OperatorShelterType!
+  statusNotes: String
+  storage: Boolean!
+  type: BedTypeChoices
+  status: BedStatusChoices!
 }
 
 enum BedTypeChoices {
@@ -232,12 +178,20 @@ type BedTypeOffsetPaginated {
   results: [BedType!]!
 }
 
-type BedsByStatusType {
-  available: Int!
-  occupied: Int!
-  reserved: Int!
-  outOfService: Int!
+input BulkDeleteInput {
+  ids: [ID!]!
 }
+
+type BulkDeleteResult {
+  ids: [ID!]!
+}
+
+input ChangeOrganizationMemberRoleInput {
+  membershipId: ID!
+  permissionTemplate: PermissionTemplateEnum!
+}
+
+union ChangeOrganizationMemberRolePayload = OrganizationMemberType | OperationInfo
 
 type CityType {
   id: ID!
@@ -437,11 +391,6 @@ input ClientProfileOrder {
   id: Ordering
 }
 
-input ClientProfilePhotoInput {
-  clientProfile: ID!
-  photo: Upload
-}
-
 type ClientProfileType {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
@@ -467,7 +416,6 @@ type ClientProfileType {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: DjangoImageType
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -477,6 +425,7 @@ type ClientProfileType {
   unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
+  profilePhoto: DjangoImageType
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
@@ -508,6 +457,10 @@ input ClientSearchInput {
   middleName: String = null
 }
 
+union CloneBedPayload = BedType | OperationInfo
+
+union CloneRoomPayload = RoomType | OperationInfo
+
 enum ConditionChoices {
   HEAT
   FIRE
@@ -518,42 +471,28 @@ enum ConditionChoices {
   EMERGENCY_EVACUATION
 }
 
-type ContactInfoType {
-  id: ID!
-  contactName: String!
-  contactNumber: PhoneNumber!
-}
-
 input CreateBedInput {
   shelterId: ID!
   roomId: ID = null
-  status: BedStatusChoices = null
-  bedName: String = null
-  statusNotes: String = null
-  bedType: BedTypeChoices = null
-  demographics: [DemographicChoices!] = null
   accessibility: [AccessibilityChoices!] = null
-  funders: [FunderChoices!] = null
-  pets: [PetChoices!] = null
-  storage: Boolean = null
-  maintenanceFlag: Boolean = null
-  lastCleanedInspected: DateTime = null
-  medicalNeeds: MedicalNeedChoices = null
   b7: Boolean = null
+  demographics: [DemographicChoices!] = null
   fees: Int = null
+  funders: [FunderChoices!] = null
+  lastCleanedInspected: DateTime = null
+  lastCleaned: DateTime = null
+  maintenanceFlag: Boolean = null
+  medicalNeeds: [MedicalNeedChoices!] = null
+  name: String = null
+  pets: [PetChoices!] = null
+  statusNotes: String = null
+  storage: Boolean = null
+  type: BedTypeChoices = null
 }
 
 union CreateBedPayload = BedType | OperationInfo
 
 union CreateClientContactPayload = ClientContactType | OperationInfo
-
-input CreateClientDocumentInput {
-  clientProfile: ID!
-  file: Upload!
-  namespace: ClientDocumentNamespaceEnum!
-}
-
-union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 union CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo
 
@@ -584,7 +523,6 @@ input CreateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -635,7 +573,6 @@ input CreateHmisClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   residenceAddress: String
@@ -678,7 +615,7 @@ union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 
 input CreateNoteInput {
   purpose: String = null
-  team: SelahTeamEnum = null
+  teamId: ID
   publicDetails: String = ""
   privateDetails: String = ""
   clientProfile: ID = null
@@ -710,7 +647,17 @@ input CreateNoteTaskInput {
   summary: String!
   description: String = null
   status: Int = null
-  team: SelahTeamEnum = null
+  teamId: ID
+}
+
+input CreateOrganizationInput {
+  organizationName: NonEmptyString!
+  orgType: NonEmptyString!
+}
+
+type CreateOrganizationResponse {
+  user: UserType!
+  organization: OrganizationType!
 }
 
 input CreateProfileDataImportInput {
@@ -718,45 +665,65 @@ input CreateProfileDataImportInput {
   notes: String
 }
 
+input CreateReferralInput {
+  clientProfile: ID!
+  shelter: ID!
+  notes: String
+}
+
+union CreateReferralPayload = ReferralType | OperationInfo
+
+input CreateReservationInput {
+  roomId: ID = null
+  bedId: ID = null
+  checkedInAt: DateTime = null
+  checkedOutAt: DateTime = null
+  clients: [ReservationClientInput!]!
+  duration: Int = null
+  notes: String = null
+  startDate: Date = null
+  status: ReservationStatusChoices = null
+}
+
+union CreateReservationPayload = ReservationType | OperationInfo
+
 input CreateRoomInput {
   shelterId: ID!
-  roomIdentifier: String!
-  roomType: RoomStyleChoices = null
-  roomTypeOther: String = null
-  status: RoomStatusChoices = null
-  notes: String = null
+  accessibility: [AccessibilityChoices!] = null
   amenities: String = null
   demographics: [DemographicChoices!] = null
-  accessibility: [AccessibilityChoices!] = null
   funders: [FunderChoices!] = null
+  lastCleanedInspected: DateTime = null
+  maintenanceFlag: Boolean = null
+  medicalRespite: Boolean = false
+  name: String!
+  notes: String = null
   pets: [PetChoices!] = null
   storage: Boolean = null
-  maintenanceFlag: Boolean = null
-  occupants: [ID!] = null
-  medicalRespite: Boolean = false
-  lastCleanedInspected: DateTime = null
+  type: RoomStyleChoices = null
+  typeOther: String = null
 }
 
 union CreateRoomPayload = RoomType | OperationInfo
 
 input CreateShelterInput {
   name: String!
-  description: String!
-  accessibility: [AccessibilityChoices!]!
-  demographics: [DemographicChoices!]!
-  specialSituationRestrictions: [SpecialSituationRestrictionChoices!]!
-  shelterTypes: [ShelterChoices!]!
-  roomStyles: [RoomStyleChoices!]!
-  storage: [StorageChoices!]!
-  pets: [PetChoices!]!
-  parking: [ParkingChoices!]!
-  entryRequirements: [EntryRequirementChoices!]!
-  referralRequirement: [ReferralRequirementChoices!]!
-  vaccinationRequirement: [VaccinationRequirementChoices!]!
-  exitPolicy: [ExitPolicyChoices!]!
-  shelterPrograms: [ShelterProgramChoices!]!
-  funders: [FunderChoices!]!
-  organization: ID!
+  description: String = null
+  organizationId: ID = null
+  accessibility: [AccessibilityChoices!] = null
+  demographics: [DemographicChoices!] = null
+  specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
+  shelterTypes: [ShelterChoices!] = null
+  roomStyles: [RoomStyleChoices!] = null
+  storage: [StorageChoices!] = null
+  pets: [PetChoices!] = null
+  parking: [ParkingChoices!] = null
+  entryRequirements: [EntryRequirementChoices!] = null
+  referralRequirement: [ReferralRequirementChoices!] = null
+  vaccinationRequirement: [VaccinationRequirementChoices!] = null
+  exitPolicy: [ExitPolicyChoices!] = null
+  shelterPrograms: [ShelterProgramChoices!] = null
+  funders: [FunderChoices!] = null
   location: ShelterLocationInput = null
   schedules: [ScheduleInput!] = null
   services: [ServiceInput!] = null
@@ -804,16 +771,23 @@ input CreateTaskInput {
   note: ID
   hmisNote: ID
   summary: String!
-  team: SelahTeamEnum
+  teamId: ID
   status: TaskStatusEnum
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
 
+input CreateTeamInput {
+  name: String!
+  organizationId: ID!
+}
+
+union CreateTeamPayload = TeamType | OperationInfo
+
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  userPermissions: [UserOrganizationPermissions!]
+  permissions: [String!]!
 }
 
 type CurrentUserType {
@@ -825,9 +799,26 @@ type CurrentUserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [CurrentUserOrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
+  permissions: [String!]!
   isHmisUser: Boolean
+  isOutreachAuthorized: Boolean @deprecated(reason: "Use userPermissions check instead.")
+}
+
+type DailyBedStatusMetricsType {
+  date: Date!
+  available: Int!
+  occupied: Int!
+  reserved: Int!
+  outOfService: Int!
+  inTurnaround: Int!
+}
+
+type DailyOccupancyMetricsType {
+  date: Date!
+  occupiedCount: Int!
+  totalBeds: Int!
+  occupancyPct: Float!
 }
 
 """Date (isoformat)"""
@@ -851,6 +842,8 @@ enum DayOfWeekChoices {
   SUNDAY
 }
 
+union DeleteBedsPayload = BulkDeleteResult | OperationInfo
+
 union DeleteClientContactPayload = ClientContactType | OperationInfo
 
 union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
@@ -858,6 +851,8 @@ union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
 union DeleteClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo
 
 union DeleteClientProfilePayload = DeletedObjectType | OperationInfo
+
+union DeleteClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union DeleteCurrentUserPayload = DeletedObjectType | OperationInfo
 
@@ -871,11 +866,23 @@ union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
 
+union DeleteReferralPayload = DeletedObjectType | OperationInfo
+
+union DeleteReservationsPayload = BulkDeleteResult | OperationInfo
+
+union DeleteRoomsPayload = BulkDeleteResult | OperationInfo
+
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
+
+union DeleteShelterPayload = DeletedObjectType | OperationInfo
+
+union DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo
 
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 union DeleteTaskPayload = DeletedObjectType | OperationInfo
+
+union DeleteTeamPayload = DeletedObjectType | OperationInfo
 
 type DeletedObjectType {
   id: Int!
@@ -1008,6 +1015,20 @@ input GenerateClientProfilePhotoUploadInput {
 
 union GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo
 
+input GenerateNoteAttachmentUploadsInput {
+  noteId: ID!
+  uploads: [NoteAttachmentUploadItemInput!]!
+}
+
+union GenerateNoteFileUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
+
+input GenerateShelterPhotoUploadsInput {
+  shelterId: ID!
+  uploads: [ShelterPhotoUploadItemInput!]!
+}
+
+union GenerateShelterPhotoUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
+
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
@@ -1082,7 +1103,6 @@ type HmisClientProfileType {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: DjangoImageType
   pronouns: PronounEnum
   pronounsOther: String
   residenceAddress: String
@@ -1090,6 +1110,7 @@ type HmisClientProfileType {
   spokenLanguages: [LanguageEnum!]
   unhousedStartDate: Date
   id: ID!
+  profilePhoto: DjangoImageType
   hmisId: String
   personalId: String
   uniqueIdentifier: String
@@ -1340,7 +1361,7 @@ union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
 
 input ImportNoteDataInput {
   purpose: String
-  team: SelahTeamEnum
+  teamId: ID
   publicDetails: String
   privateDetails: String
   clientProfile: ID
@@ -1482,14 +1503,20 @@ enum MedicalNeedChoices {
   DIALYSIS
 }
 
+type MedicalNeedType {
+  name: MedicalNeedChoices
+}
+
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   updateUserProfile(data: UpdateUserProfileInput!): UpdateUserProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
-  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
-  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
+  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload!
+  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload!
+  createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
+  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload!
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1502,13 +1529,12 @@ type Mutation {
   createSocialMediaProfile(data: SocialMediaProfileInput!): CreateSocialMediaProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_socialmediaprofile"}], any: true)
   updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_socialmediaprofile"}], any: true)
   deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_socialmediaprofile"}], any: true)
-  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "change_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
-  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
+  deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
@@ -1525,21 +1551,44 @@ type Mutation {
   updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload! @hmisDirective @isHmisAuthenticated
   createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
   removeHmisNoteServiceRequest(data: RemoveHmisNoteServiceRequestInput!): RemoveHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
-  deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
+  generateNoteFileUploads(data: GenerateNoteAttachmentUploadsInput!): GenerateNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  resolveNoteFileUploads(data: ResolveNoteAttachmentUploadsInput!): ResolveNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
-  createBed(data: CreateBedInput!): CreateBedPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
-  createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
+  createTeam(data: CreateTeamInput!): CreateTeamPayload!
+  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload!
+  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload!
+  createShelter(data: CreateShelterInput!): CreateShelterPayload!
+  updateShelter(data: UpdateShelterInput!): UpdateShelterPayload!
+  deleteShelter(id: ID!): DeleteShelterPayload!
+  createRoom(data: CreateRoomInput!): CreateRoomPayload!
+  updateRoom(data: UpdateRoomInput!): UpdateRoomPayload!
+  cloneRoom(id: ID!): CloneRoomPayload!
+  deleteRooms(data: BulkDeleteInput!): DeleteRoomsPayload!
+  createBed(data: CreateBedInput!): CreateBedPayload!
+  updateBed(data: UpdateBedInput!): UpdateBedPayload!
+  cloneBed(id: ID!): CloneBedPayload!
+  deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload!
+  createReservation(data: CreateReservationInput!): CreateReservationPayload!
+  updateReservation(data: UpdateReservationInput!): UpdateReservationPayload!
+  deleteReservations(data: BulkDeleteInput!): DeleteReservationsPayload!
+  generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload!
+  resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload!
+  updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload!
+  deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload!
+  createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
+  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
+  deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
 }
 
 type NameCountType {
@@ -1554,6 +1603,33 @@ scalar NonBlankString
 
 """Rejects blank input. Use for required string fields."""
 scalar NonEmptyString
+
+input NoteAttachmentFromUploadInput {
+  presignedKey: String!
+  uploadToken: String!
+  filename: String!
+  contentType: String!
+}
+
+type NoteAttachmentType implements AttachmentInterface {
+  id: ID!
+  file: DjangoFileType!
+  attachmentType: AttachmentType!
+  mimeType: String!
+  originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input NoteAttachmentUploadItemInput {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+type NoteAttachmentUploadsType {
+  attachments: [NoteAttachmentType!]!
+}
 
 type NoteDataImportType {
   id: UUID!
@@ -1573,7 +1649,7 @@ input NoteFilter {
   DISTINCT: Boolean
   authors: [ID!]
   organizations: [ID!]
-  teams: [SelahTeamEnum!]
+  teamIds: [ID!]
   search: String
 }
 
@@ -1607,7 +1683,8 @@ type NoteType {
   purpose: String
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
-  team: SelahTeamEnum
+  team: TeamType
+  currentTeam: TeamType @deprecated(reason: "Use team instead")
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -1630,6 +1707,11 @@ type OffsetPaginationInfo {
 input OffsetPaginationInput {
   offset: Int! = 0
   limit: Int
+}
+
+input OpenNowInput {
+  scheduleType: [ScheduleTypeChoices!] = null
+  includeUnknown: Boolean = false
 }
 
 type OperationInfo {
@@ -1661,6 +1743,114 @@ enum OperationMessageKind {
   VALIDATION
 }
 
+input OperatorShelterFilter {
+  isPrivate: Boolean
+  AND: OperatorShelterFilter
+  OR: OperatorShelterFilter
+  NOT: OperatorShelterFilter
+  DISTINCT: Boolean
+  name: String
+  accessibility: [AccessibilityChoices!]
+  storage: [StorageChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
+  isAccessCenter: Boolean
+  maxStay: MaxStayInput
+  properties: ShelterPropertyInput
+  openNow: OpenNowInput
+  mapBounds: MapBoundsInput
+  geolocation: GeolocationInput
+  hasAvailableBeds: Boolean
+  spa: [ID!]
+  onSiteSecurity: Boolean
+  city: [ID!]
+  citiesServed: [ID!]
+  spasServed: [ID!]
+  services: [ID!]
+  organizations: [ID!]
+  search: String
+  status: [StatusChoices!]
+  cityCouncilDistrict: [Int!]
+  supervisorialDistrict: [Int!]
+  overallRating: [Int!]
+}
+
+type OperatorShelterType {
+  id: ID!
+  accessibility: [AccessibilityType!]!
+  addNotesSleepingDetails: String
+  addNotesShelterDetails: String
+  bedFees: String
+  city: CityType
+  citiesServed: [CityType!]!
+  cityCouncilDistrict: Int
+  curfew: Time
+  demographics: [DemographicType!]!
+  demographicsOther: String
+  description: String!
+  email: String
+  entryInfo: String
+  entryRequirements: [EntryRequirementType!]!
+  exitPolicy: [ExitPolicyType!]!
+  exitPolicyOther: String
+  emergencySurge: Boolean
+  funders: [FunderType!]!
+  fundersOther: String
+  instagram: String
+  location: ShelterLocationType
+  maxStay: Int
+  name: String!
+  onSiteSecurity: Boolean
+  organization: OrganizationType
+  otherRules: String
+  otherServices: String
+  overallRating: Int
+  parking: [ParkingType!]!
+  pets: [PetType!]!
+  phone: PhoneNumber
+  programFees: String
+  referralRequirement: [ReferralRequirementType!]!
+  roomStyles: [RoomStyleType!]!
+  roomStylesOther: String
+  schedules: [ScheduleType!]!
+  services: [ServiceType!]!
+  shelterPrograms: [ShelterProgramType!]!
+  shelterProgramsOther: String
+  shelterTypes: [ShelterTypeType!]!
+  shelterTypesOther: String
+  spa: SPAType
+  spasServed: [SPAType!]!
+  specialSituationRestrictions: [SpecialSituationRestrictionType!]!
+  photos: [ShelterPhotoType!]!
+  isPrivate: Boolean!
+  status: StatusChoices!
+  storage: [StorageType!]!
+  subjectiveReview: String
+  supervisorialDistrict: Int
+  totalBeds: Int
+  updatedAt: DateTime!
+  vaccinationRequirement: [VaccinationRequirementType!]!
+  visitorsAllowed: Boolean
+  website: String
+  mediaLinks: [MediaLinkType!]!
+  availability: ShelterAvailabilityType
+  HeroPhotos: [ShelterPhotoType!]
+  heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
+  distanceInMiles: Float
+  bedCounts: BedCountType!
+  roomCounts: RoomCountType!
+  additionalContacts: [ShelterContactInfoType!]!
+}
+
+type OperatorShelterTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [OperatorShelterType!]!
+}
+
 enum Ordering {
   ASC
   ASC_NULLS_FIRST
@@ -1676,12 +1866,18 @@ input OrgInvitationInput {
   middleName: String = null
   lastName: String!
   organizationId: ID!
+  permissionTemplate: PermissionTemplateEnum!
 }
 
 enum OrgRoleEnum {
   MEMBER
   ADMIN
   SUPERUSER
+}
+
+enum OrgTypeEnum {
+  OUTREACH
+  SHELTER
 }
 
 input OrganizationFilter {
@@ -1719,6 +1915,9 @@ type OrganizationMemberType {
   lastLogin: DateTime
   dateJoined: DateTime!
   memberRole: OrgRoleEnum!
+  isOrgOwner: Boolean!
+  permissionTemplates: [PermissionTemplateEnum!]!
+  membershipId: ID
 }
 
 type OrganizationMemberTypeOffsetPaginated {
@@ -1808,6 +2007,11 @@ type ParkingType {
   name: ParkingChoices
 }
 
+enum PermissionTemplateEnum {
+  CASEWORKER
+  SHELTER_OPERATOR
+}
+
 enum PetChoices {
   CATS
   DOGS_UNDER_25_LBS
@@ -1862,11 +2066,36 @@ enum PronounEnum {
   OTHER
 }
 
+input PublicShelterFilter {
+  isPrivate: Boolean
+  AND: PublicShelterFilter
+  OR: PublicShelterFilter
+  NOT: PublicShelterFilter
+  DISTINCT: Boolean
+  name: String
+  accessibility: [AccessibilityChoices!]
+  storage: [StorageChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
+  isAccessCenter: Boolean
+  maxStay: MaxStayInput
+  properties: ShelterPropertyInput
+  openNow: OpenNowInput
+  mapBounds: MapBoundsInput
+  geolocation: GeolocationInput
+  hasAvailableBeds: Boolean
+  spa: [ID!]
+  onSiteSecurity: Boolean
+  city: [ID!]
+  citiesServed: [ID!]
+  spasServed: [ID!]
+  services: [ID!]
+  organizations: [ID!]
+}
+
 type Query {
   currentUser: CurrentUserType!
-  caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
+  organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
+  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -1891,18 +2120,29 @@ type Query {
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  reportSummary(organizationId: ID = null, startDate: Date = null, endDate: Date = null): ReportSummaryType!
+  caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
+  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
-  adminShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): AdminShelterTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
+  teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
+  operatorShelter(pk: ID!): OperatorShelterType!
+  operatorShelters(pagination: OffsetPaginationInput, filters: OperatorShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated!
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
-  beds(pagination: OffsetPaginationInput, filters: BedFilter): BedTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
-  rooms(pagination: OffsetPaginationInput, filters: RoomFilter): RoomTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
+  shelters(pagination: OffsetPaginationInput, filters: PublicShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
+  bed(pk: ID!): BedType!
+  beds(pagination: OffsetPaginationInput, filters: BedFilter, ordering: [BedOrder!]! = []): BedTypeOffsetPaginated!
+  reservation(pk: ID!): ReservationType!
+  reservations(pagination: OffsetPaginationInput, filters: ReservationFilter, ordering: [ReservationOrder!]! = []): ReservationTypeOffsetPaginated!
+  room(pk: ID!): RoomType!
+  rooms(pagination: OffsetPaginationInput, filters: RoomFilter, ordering: [RoomOrder!]! = []): RoomTypeOffsetPaginated!
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
+  shelterOrganizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   shelterMaxStay: Int
+  shelterOccupancyMetrics(shelterId: ID!, startDate: Date = null, endDate: Date = null): ShelterOccupancyMetricsType!
+  referral(pk: ID!): ReferralType! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
+  referrals(filters: ReferralFilter, ordering: [ReferralOrder!]! = [], pagination: OffsetPaginationInput): ReferralTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
 }
 
 enum RaceEnum {
@@ -1915,6 +2155,23 @@ enum RaceEnum {
   OTHER
 }
 
+input ReferralFilter {
+  clientProfile: ID
+  createdBy: ID
+  status: ReferralStatusEnum
+  AND: ReferralFilter
+  OR: ReferralFilter
+  NOT: ReferralFilter
+  DISTINCT: Boolean
+}
+
+input ReferralOrder {
+  id: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
+  status: Ordering
+}
+
 enum ReferralRequirementChoices {
   REFERRAL_MATCHED
   REFERRAL_NONMATCHED
@@ -1925,6 +2182,33 @@ enum ReferralRequirementChoices {
 
 type ReferralRequirementType {
   name: ReferralRequirementChoices
+}
+
+enum ReferralStatusEnum {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+type ReferralType {
+  id: ID!
+  clientProfile: ClientProfileType
+  shelter: ShelterType
+  createdAt: DateTime!
+  createdBy: UserType
+  status: ReferralStatusEnum
+  notes: String
+  updatedAt: DateTime!
+}
+
+type ReferralTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ReferralType!]!
 }
 
 enum RelationshipTypeEnum {
@@ -1953,8 +2237,7 @@ input RemoveHmisNoteServiceRequestInput {
 union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
 
 input RemoveOrganizationMemberInput {
-  id: ID!
-  organizationId: ID!
+  membershipId: ID!
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
@@ -1972,6 +2255,77 @@ type ReportSummaryType {
   topRequestedServices: [NameCountType!]!
 }
 
+type ReservationClientAssignmentType {
+  id: ID!
+  clientProfile: ClientProfileType!
+  isPrimary: Boolean!
+}
+
+input ReservationClientInput {
+  clientProfileId: ID!
+  isPrimary: Boolean! = false
+}
+
+input ReservationFilter {
+  id: ID
+  roomId: ID
+  bedId: ID
+  AND: ReservationFilter
+  OR: ReservationFilter
+  NOT: ReservationFilter
+  DISTINCT: Boolean
+  status: [ReservationStatusChoices!]
+  shelterId: ID
+}
+
+type ReservationMetricsType {
+  checkInOverdue: Int!
+  cancelled: Int!
+  checkedIn: Int!
+  checkInOverdueToCheckedIn: Int!
+}
+
+input ReservationOrder {
+  startDate: Ordering
+  checkedInAt: Ordering
+  checkedOutAt: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
+}
+
+enum ReservationStatusChoices {
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  CHECK_IN_OVERDUE
+}
+
+type ReservationType {
+  id: ID!
+  bed: BedType
+  checkedInAt: DateTime
+  checkedOutAt: DateTime
+  duration: Int
+  notes: String
+  room: RoomType
+  startDate: Date
+  status: ReservationStatusChoices!
+  clients: [ReservationClientAssignmentType!]!
+  shelter: OperatorShelterType!
+  createdById: ID
+}
+
+type ReservationTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ReservationType!]!
+}
+
 input ResolveClientDocumentUploadsInput {
   clientProfileId: ID!
   documents: [ClientDocumentFromUploadsInput!]!
@@ -1987,6 +2341,20 @@ input ResolveClientProfilePhotoUploadInput {
 
 union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo
 
+input ResolveNoteAttachmentUploadsInput {
+  noteId: ID!
+  attachments: [NoteAttachmentFromUploadInput!]!
+}
+
+union ResolveNoteFileUploadsPayload = NoteAttachmentUploadsType | OperationInfo
+
+input ResolveShelterPhotoUploadsInput {
+  shelterId: ID!
+  photos: [ShelterPhotoFromUploadInput!]!
+}
+
+union ResolveShelterPhotoUploadsPayload = ShelterPhotoUploadsType | OperationInfo
+
 input RevertNoteInput {
   id: ID!
   revertBeforeTimestamp: DateTime!
@@ -1994,22 +2362,41 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
+type RoomCountType {
+  available: Int!
+  inTurnaround: Int!
+  occupied: Int!
+  outOfService: Int!
+  reserved: Int!
+  total: Int!
+}
+
 input RoomFilter {
+  id: ID
   medicalRespite: Boolean
+  shelterId: ID
   AND: RoomFilter
   OR: RoomFilter
   NOT: RoomFilter
   DISTINCT: Boolean
   amenities: String
-  roomType: [RoomStyleChoices!]
-  status: [RoomStatusChoices!]
+  type: [RoomStyleChoices!]
   numberOfBeds: Int
+  status: [RoomStatusChoices!]
+}
+
+input RoomOrder {
+  name: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
 }
 
 enum RoomStatusChoices {
   AVAILABLE
+  IN_TURNAROUND
+  OCCUPIED
+  OUT_OF_SERVICE
   RESERVED
-  NEEDS_MAINTENANCE
 }
 
 enum RoomStyleChoices {
@@ -2030,23 +2417,23 @@ type RoomStyleType {
 
 type RoomType {
   id: ID!
-  shelter: ShelterType!
-  roomIdentifier: String!
-  roomType: RoomStyleChoices
-  roomTypeOther: String
-  status: RoomStatusChoices
-  notes: String
-  amenities: String
-  demographics: [DemographicType!]!
   accessibility: [AccessibilityType!]!
+  amenities: String
+  beds(filters: BedFilter, ordering: [BedOrder!]! = []): [BedType!]!
+  demographics: [DemographicType!]!
   funders: [FunderType!]!
-  pets: [PetType!]!
-  storage: Boolean!
+  lastCleaned: DateTime
+  lastCleanedInspected: DateTime
   maintenanceFlag: Boolean!
   medicalRespite: Boolean!
-  lastCleanedInspected: DateTime
-  beds(filters: BedFilter): [BedType!]!
-  occupantIds: [ID!]!
+  name: String!
+  notes: String
+  pets: [PetType!]!
+  shelter: OperatorShelterType!
+  storage: Boolean!
+  type: RoomStyleChoices
+  typeOther: String
+  status: RoomStatusChoices!
 }
 
 type RoomTypeOffsetPaginated {
@@ -2112,24 +2499,6 @@ enum ScheduleTypeChoices {
   STAFF_AVAILABILITY
 }
 
-enum SelahTeamEnum {
-  BOWTIE_RIVERSIDE_OUTREACH
-  ECHO_PARK_ON_SITE
-  ECHO_PARK_OUTREACH
-  HOLLYWOOD_ON_SITE
-  HOLLYWOOD_OUTREACH
-  LA_RIVER_OUTREACH
-  LOS_FELIZ_OUTREACH
-  NORTHEAST_HOLLYWOOD_OUTREACH
-  SELAH_STAFF
-  SILVER_LAKE_OUTREACH
-  SLCC_ON_SITE
-  SUNDAY_SOCIAL_ATWATER_ON_SITE
-  SUNDAY_SOCIAL_ATWATER_OUTREACH
-  WDI_ON_SITE
-  WDI_OUTREACH
-}
-
 type ServiceCategoryType {
   id: ID!
   name: String!
@@ -2184,6 +2553,14 @@ type ServiceType {
   priority: Int!
 }
 
+type ShelterAvailabilityType {
+  id: ID!
+  nonRestrictedBeds: Int!
+  restrictedBeds: Int!
+  restrictionNotes: String!
+  updatedAt: DateTime!
+}
+
 enum ShelterChoices {
   ACCESS_CENTER
   BUILDING
@@ -2195,21 +2572,22 @@ enum ShelterChoices {
   OTHER
 }
 
-input ShelterFilter {
-  isPrivate: Boolean
-  AND: ShelterFilter
-  OR: ShelterFilter
-  NOT: ShelterFilter
-  DISTINCT: Boolean
-  isAccessCenter: Boolean
-  maxStay: MaxStayInput
-  name: String
-  organizations: [ID!]
-  properties: ShelterPropertyInput
-  openNow: Boolean
-  mapBounds: MapBoundsInput
-  geolocation: GeolocationInput
-  spa: [ID!]
+input ShelterContactInfoInput {
+  id: ID = null
+  contactName: NonEmptyString!
+  contactNumber: PhoneNumber!
+  contactEmail: NonBlankString = null
+  contactTitle: NonBlankString = null
+  isClaimant: Boolean = null
+}
+
+type ShelterContactInfoType {
+  id: ID!
+  contactName: String!
+  contactNumber: PhoneNumber!
+  contactEmail: String
+  contactTitle: String
+  isClaimant: Boolean!
 }
 
 type ShelterHeroImageType {
@@ -2229,9 +2607,30 @@ type ShelterLocationType {
   longitude: Float!
 }
 
+type ShelterOccupancyMetricsType {
+  shelterId: ID!
+  startDate: Date!
+  endDate: Date!
+  dailyOccupancy: [DailyOccupancyMetricsType!]!
+  dailyBedStatus: [DailyBedStatusMetricsType!]!
+  reservationMetrics: ReservationMetricsType!
+  avgDaysToOccupancy: Float
+}
+
 input ShelterOrder {
   name: Ordering
   createdAt: Ordering
+  status: Ordering
+  organization: Ordering
+  bedCount: Ordering
+}
+
+input ShelterPhotoFromUploadInput {
+  presignedKey: String!
+  uploadToken: String!
+  filename: String!
+  contentType: String!
+  photoType: ShelterPhotoTypeChoices!
 }
 
 type ShelterPhotoType {
@@ -2244,6 +2643,16 @@ type ShelterPhotoType {
 enum ShelterPhotoTypeChoices {
   INTERIOR
   EXTERIOR
+}
+
+input ShelterPhotoUploadItemInput {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+type ShelterPhotoUploadsType {
+  photos: [ShelterPhotoType!]!
 }
 
 enum ShelterProgramChoices {
@@ -2271,23 +2680,33 @@ type ShelterProgramType {
 
 input ShelterPropertyInput {
   pets: [PetChoices!] = null
+  petsIncludeNull: Boolean = false
   demographics: [DemographicChoices!] = null
+  demographicsIncludeNull: Boolean = false
   entryRequirements: [EntryRequirementChoices!] = null
+  entryRequirementsIncludeNull: Boolean = false
   referralRequirement: [ReferralRequirementChoices!] = null
+  referralRequirementIncludeNull: Boolean = false
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
+  specialSituationRestrictionsIncludeNull: Boolean = false
   shelterTypes: [ShelterChoices!] = null
+  shelterTypesIncludeNull: Boolean = false
   roomStyles: [RoomStyleChoices!] = null
+  roomStylesIncludeNull: Boolean = false
   parking: [ParkingChoices!] = null
+  parkingIncludeNull: Boolean = false
+  funders: [FunderChoices!] = null
+  fundersIncludeNull: Boolean = false
 }
 
 type ShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
-  additionalContacts: [ContactInfoType!]!
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
   bedFees: String
   city: CityType
+  citiesServed: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
   demographics: [DemographicType!]!
@@ -2324,6 +2743,7 @@ type ShelterType {
   shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: SPAType
+  spasServed: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   photos: [ShelterPhotoType!]!
   isPrivate: Boolean!
@@ -2337,10 +2757,12 @@ type ShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
+  availability: ShelterAvailabilityType
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
-  bedsByStatus: BedsByStatusType!
+  bedCounts: BedCountType!
+  roomCounts: RoomCountType!
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2446,7 +2868,7 @@ input TaskFilter {
   authors: [ID!]
   organizations: [ID!]
   status: [TaskStatusEnum!]
-  teams: [SelahTeamEnum!]
+  teamIds: [ID!]
   search: String
   clientProfileLookup: IDFilterLookup
   hmisClientProfileLookup: IDFilterLookup
@@ -2477,7 +2899,8 @@ type TaskType {
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String
-  team: SelahTeamEnum
+  team: TeamType
+  currentTeam: TeamType @deprecated(reason: "Use team instead")
   updatedAt: DateTime!
 }
 
@@ -2491,10 +2914,58 @@ type TaskTypeOffsetPaginated {
   results: [TaskType!]!
 }
 
+input TeamFilter {
+  isActive: Boolean
+  organizationId: ID
+  AND: TeamFilter
+  OR: TeamFilter
+  NOT: TeamFilter
+  DISTINCT: Boolean
+}
+
+type TeamType {
+  id: ID!
+  name: String!
+  isActive: Boolean
+  createdAt: DateTime!
+  slug: String @deprecated(reason: "Always null. Team.name is the only identifier.")
+}
+
+type TeamTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [TeamType!]!
+}
+
 """Time (isoformat)"""
 scalar Time
 
 scalar UUID
+
+input UpdateBedInput {
+  id: ID!
+  roomId: ID
+  accessibility: [AccessibilityChoices!]
+  b7: Boolean
+  demographics: [DemographicChoices!]
+  fees: Int
+  funders: [FunderChoices!]
+  lastCleaned: DateTime
+  lastCleanedInspected: DateTime
+  maintenanceFlag: Boolean
+  medicalNeeds: [MedicalNeedChoices!]
+  name: String
+  pets: [PetChoices!]
+  statusNotes: String
+  storage: Boolean
+  type: BedTypeChoices
+}
+
+union UpdateBedPayload = BedType | OperationInfo
 
 union UpdateClientContactPayload = ClientContactType | OperationInfo
 
@@ -2532,7 +3003,6 @@ input UpdateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -2550,8 +3020,6 @@ input UpdateClientProfileInput {
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
-
-union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union UpdateCurrentUserPayload = UserType | CurrentUserType | OperationInfo
 
@@ -2588,7 +3056,6 @@ input UpdateHmisClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   residenceAddress: String
@@ -2623,7 +3090,7 @@ union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 input UpdateNoteInput {
   id: ID!
   purpose: NonBlankString
-  team: SelahTeamEnum
+  teamId: ID
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
@@ -2643,17 +3110,128 @@ union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
 
+input UpdateReferralInput {
+  id: ID!
+  status: ReferralStatusEnum
+  notes: String
+}
+
+union UpdateReferralPayload = ReferralType | OperationInfo
+
+input UpdateReservationInput {
+  id: ID!
+  roomId: ID
+  bedId: ID
+  checkedInAt: DateTime
+  checkedOutAt: DateTime
+  clients: [ReservationClientInput!]
+  duration: Int
+  notes: String
+  startDate: Date
+  status: ReservationStatusChoices
+}
+
+union UpdateReservationPayload = ReservationType | OperationInfo
+
+input UpdateRoomInput {
+  id: ID!
+  accessibility: [AccessibilityChoices!]
+  amenities: String
+  demographics: [DemographicChoices!]
+  funders: [FunderChoices!]
+  lastCleaned: DateTime
+  lastCleanedInspected: DateTime
+  maintenanceFlag: Boolean
+  medicalRespite: Boolean
+  name: String
+  notes: String
+  pets: [PetChoices!]
+  storage: Boolean
+  type: RoomStyleChoices
+  typeOther: String
+}
+
+union UpdateRoomPayload = RoomType | OperationInfo
+
+input UpdateShelterInput {
+  id: ID!
+  name: String
+  status: StatusChoices
+  description: String
+  email: String
+  website: String
+  instagram: String
+  isPrivate: Boolean
+  heroImageId: ID
+  cityId: ID
+  spaId: ID
+  citiesServedIds: [ID!]
+  spasServedIds: [ID!]
+  phone: PhoneNumber
+  addNotesSleepingDetails: String
+  addNotesShelterDetails: String
+  maxStay: Int
+  onSiteSecurity: Boolean
+  visitorsAllowed: Boolean
+  exitPolicyOther: String
+  emergencySurge: Boolean
+  otherRules: String
+  otherServices: String
+  entryInfo: String
+  subjectiveReview: String
+  demographicsOther: String
+  shelterTypesOther: String
+  cityCouncilDistrict: Int
+  supervisorialDistrict: Int
+  fundersOther: String
+  accessibility: [AccessibilityChoices!]
+  demographics: [DemographicChoices!]
+  specialSituationRestrictions: [SpecialSituationRestrictionChoices!]
+  shelterTypes: [ShelterChoices!]
+  roomStyles: [RoomStyleChoices!]
+  storage: [StorageChoices!]
+  pets: [PetChoices!]
+  parking: [ParkingChoices!]
+  entryRequirements: [EntryRequirementChoices!]
+  referralRequirement: [ReferralRequirementChoices!]
+  vaccinationRequirement: [VaccinationRequirementChoices!]
+  exitPolicy: [ExitPolicyChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
+  funders: [FunderChoices!]
+  location: ShelterLocationInput
+  schedules: [ScheduleInput!]
+  services: [ServiceInput!]
+  additionalContacts: [ShelterContactInfoInput!]
+}
+
+union UpdateShelterPayload = ShelterType | OperationInfo
+
+input UpdateShelterPhotoInput {
+  id: ID!
+  photoType: ShelterPhotoTypeChoices!
+}
+
+union UpdateShelterPhotoPayload = ShelterPhotoType | OperationInfo
+
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 input UpdateTaskInput {
   id: ID!
   description: String
   summary: String
-  team: SelahTeamEnum
+  teamId: ID
   status: TaskStatusEnum
 }
 
 union UpdateTaskPayload = TaskType | OperationInfo
+
+input UpdateTeamInput {
+  id: ID!
+  name: String
+  isActive: Boolean
+}
+
+union UpdateTeamPayload = TeamType | OperationInfo
 
 input UpdateUserInput {
   firstName: NonBlankString
@@ -2672,18 +3250,6 @@ input UpdateUserProfileInput {
 
 union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
-"""Represents a file upload."""
-scalar Upload
-
-enum UserOrganizationPermissions {
-  ACCESS_ORG_PORTAL
-  ADD_ORG_MEMBER
-  CHANGE_ORG_MEMBER_ROLE
-  REMOVE_ORG_MEMBER
-  VIEW_ORG_MEMBERS
-  VIEW_REPORTS
-}
-
 type UserType {
   firstName: NonBlankString
   lastName: NonBlankString
@@ -2693,9 +3259,9 @@ type UserType {
   organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = []): [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isOutreachAuthorized: Boolean
   username: String
   isHmisUser: Boolean
+  isOutreachAuthorized: Boolean @deprecated(reason: "Use userPermissions check instead.")
 }
 
 enum VaccinationRequirementChoices {

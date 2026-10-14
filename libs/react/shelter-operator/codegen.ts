@@ -1,4 +1,8 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
+import {
+  SCALAR_IMPORT_PLUGIN,
+  SHARED_SCALAR_CONFIG,
+} from '../../../tools/codegen/scalars';
 
 const config: CodegenConfig = {
   overwrite: true,
@@ -9,25 +13,21 @@ const config: CodegenConfig = {
   ],
   ignoreNoDocuments: true,
   generates: {
-    'src/lib/apollo/graphql/__generated__/types.ts': {
-      plugins: ['typescript'],
-      config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
-      },
-    },
     'src/': {
       preset: 'near-operation-file',
-      plugins: ['typescript-operations', 'typed-document-node'],
+      plugins: [
+        SCALAR_IMPORT_PLUGIN,
+        'typescript-operations',
+        'typed-document-node',
+        '../../../tools/codegen/plugins/operation-meta-plugin.cjs',
+      ],
       config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
+        nonOptionalTypename: true,
+        ...SHARED_SCALAR_CONFIG,
         useTypeImports: true,
       },
       presetConfig: {
-        baseTypesPath: 'lib/apollo/graphql/__generated__/types.ts',
+        baseTypesPath: '~@monorepo/ba-platform/types',
         folder: '__generated__',
         importTypes: true,
       },

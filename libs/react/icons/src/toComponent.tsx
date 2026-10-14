@@ -18,7 +18,7 @@ export function createSvgComponent(svgContent: string): FC<SvgProps> {
     if (!svgElement) {
       svgDoc = parser.parseFromString(
         `<svg xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`,
-        'image/svg+xml'
+        'image/svg+xml',
       );
 
       svgElement = svgDoc.querySelector('svg');

@@ -16,9 +16,9 @@ import {
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 import { router, useNavigation } from 'expo-router';
-import { ReactNode, useEffect, useLayoutEffect, useState } from 'react';
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
 import useSnackbar from '../../hooks/snackbar/useSnackbar';
@@ -51,8 +51,14 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
   const [fileView, setFileView] = useState<TFileView | null>(null);
   const { data } = useQuery(ClientDocumentDocument, {
     variables: { id },
+    // Cached results can carry an expired signed `file.url`, which the
+    // thumbnail and PDF viewer cannot load. Refresh in the background, then
+    // serve cache so the refresh does not repeat on every re-render.
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
   });
   const [filename, setFilename] = useState('');
+  const hasFilename = useRef(false);
   const [updateClientDocument, { loading }] = useMutation(
     UpdateClientDocumentDocument,
     {
@@ -64,7 +70,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           },
         },
       ],
-    }
+    },
   );
 
   async function handleUpdateClientDocument() {
@@ -97,10 +103,11 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
   }, [data, navigation]);
 
   useEffect(() => {
-    if (!data?.clientDocument.originalFilename) {
+    if (hasFilename.current || !data?.clientDocument.originalFilename) {
       return;
     }
-    setFilename(data?.clientDocument.originalFilename);
+    hasFilename.current = true;
+    setFilename(data.clientDocument.originalFilename);
   }, [data]);
 
   if (!data) {
@@ -154,7 +161,9 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
               accessibilityHint="view pdf file"
               onPress={() =>
                 setFileView({
-                  content: <PdfViewer url={file.url} cache={true} />,
+                  content: (
+                    <PdfViewer url={file.url} cache={true} cacheKey={id} />
+                  ),
                   title: originalFilename || '',
                 })
               }
@@ -194,7 +203,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           )}
         </View>
         <TextRegular textAlign="right" size="sm">
-          Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
+          Uploaded on {formatScalarDate(createdAt, 'MM/dd/yyyy')}
         </TextRegular>
       </MainScrollContainer>
       {isEditing && (

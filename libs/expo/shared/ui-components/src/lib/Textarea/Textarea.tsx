@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 
 type TValidateFn = (
-  data: unknown
+  data: unknown,
 ) => boolean | string | Promise<boolean | string>;
 
 type TRules = {
@@ -38,7 +38,7 @@ type TRules = {
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 interface ITextareaProps extends TextInputProps {
   label?: string;
-  control: Control<any>;
+  control: Control;
   name: string;
   required?: boolean;
   disabled?: boolean;
@@ -96,7 +96,7 @@ export function Textarea(props: ITextareaProps) {
             },
           ]}
         >
-          {label && (
+          {!!label && (
             <View style={styles.label}>
               <Text style={styles.labelText}>{label}</Text>
               {required && <Text style={styles.required}>*</Text>}

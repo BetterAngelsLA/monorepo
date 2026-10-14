@@ -6,7 +6,7 @@ type TFindAnswerByQuestionId = {
 };
 
 export function findAnswerByQuestionId(
-  props: TFindAnswerByQuestionId
+  props: TFindAnswerByQuestionId,
 ): TAnswer | undefined {
   const { questionId, answers } = props;
 

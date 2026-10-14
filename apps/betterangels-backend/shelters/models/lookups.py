@@ -4,25 +4,27 @@ Small single-field models used as targets for Shelter's ManyToManyFields.
 Each wraps a TextChoicesField / IntegerChoicesField with ``unique=True``.
 """
 
-from common.models import BaseModel
-from common.permissions.utils import PermissionSet
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower
 from django_choices_field import IntegerChoicesField, TextChoicesField
-from shelters.deprecated.deprecated_enums import SPAChoices
+
+from common.models import BaseModel
+from common.permissions.utils import PermissionSet
 from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
     FunderChoices,
+    MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
     ShelterProgramChoices,
+    SPAChoices,
     SpecialSituationRestrictionChoices,
     StorageChoices,
     VaccinationRequirementChoices,
@@ -200,6 +202,16 @@ class ReferralRequirement(models.Model):
         pass
 
     name = TextChoicesField(choices_enum=ReferralRequirementChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class MedicalNeed(models.Model):
+    class perms(PermissionSet):
+        pass
+
+    name = TextChoicesField(choices_enum=MedicalNeedChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)

@@ -1,1 +1,1 @@
-export * from './cookies';
+export type { StorageAdapter } from './types';

@@ -11,7 +11,7 @@ import { FileThumbnail } from '../../../../ui-components';
 
 function useClientFileMetadata(
   file: ClientFile,
-  fileNameMap: Record<string, FileName>
+  fileNameMap: Record<string, FileName>,
 ) {
   return useMemo(() => {
     const label =
@@ -54,7 +54,7 @@ export const DocumentItemHmis = memo(
   }: DocumentItemHmisProps) => {
     const { label, createdAt, detectedMime } = useClientFileMetadata(
       file,
-      fileNameMap
+      fileNameMap,
     );
 
     const thumbnailUri =
@@ -79,5 +79,5 @@ export const DocumentItemHmis = memo(
         }
       />
     );
-  }
+  },
 );

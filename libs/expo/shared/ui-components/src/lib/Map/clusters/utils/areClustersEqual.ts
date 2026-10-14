@@ -2,7 +2,7 @@ import { ClusterOrPoint, IClusterGeoJson } from '../types';
 
 export function areClustersEqual<P extends IClusterGeoJson>(
   a: ClusterOrPoint<P>[],
-  b: ClusterOrPoint<P>[]
+  b: ClusterOrPoint<P>[],
 ): boolean {
   if (a.length !== b.length) {
     return false;

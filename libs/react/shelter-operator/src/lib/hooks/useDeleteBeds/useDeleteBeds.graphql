@@ -1,0 +1,14 @@
+mutation DeleteBeds($data: BulkDeleteInput!) {
+  deleteBeds(data: $data) {
+    ... on BulkDeleteResult {
+      ids
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

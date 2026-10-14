@@ -6,7 +6,7 @@ import { TCachePolicyConfig } from './types';
 type TKeyFields = TypePolicy['keyFields'];
 
 export function generateCachePolicies(
-  registry: TCachePolicyConfig
+  registry: TCachePolicyConfig,
 ): TypePolicies {
   const queryFieldPolicies: Record<string, FieldPolicy> = {};
   const policiesByTypename: Record<string, TypePolicy> = {};
@@ -19,7 +19,8 @@ export function generateCachePolicies(
       const finalFieldPolicy: FieldPolicy = { ...fieldPolicy };
 
       if (queryPolicyConfig) {
-        (finalFieldPolicy as any).__queryPolicyConfig = queryPolicyConfig;
+        (finalFieldPolicy as Record<string, unknown>)['__queryPolicyConfig'] =
+          queryPolicyConfig;
       }
 
       queryFieldPolicies[fieldName] = finalFieldPolicy;
@@ -41,8 +42,8 @@ export function generateCachePolicies(
       if (!isDeepEqual(existingKeyFields, desiredKeyFields)) {
         console.warn(
           `[generateCachePolicies] Conflicting keyFields for ${entityTypename}. existing=${JSON.stringify(
-            existingKeyFields
-          )}, ignored=${JSON.stringify(desiredKeyFields)}`
+            existingKeyFields,
+          )}, ignored=${JSON.stringify(desiredKeyFields)}`,
         );
       }
 

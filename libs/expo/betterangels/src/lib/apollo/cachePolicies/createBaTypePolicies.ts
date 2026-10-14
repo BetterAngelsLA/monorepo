@@ -75,8 +75,8 @@ export function createBaTypePolicies(isDevEnv: boolean): TypePolicies {
         if (isDevEnv && !urlKey) {
           console.warn(
             `[typePolicies: DjangoImageType] missing url keyField: ${JSON.stringify(
-              obj
-            )}`
+              obj,
+            )}`,
           );
         }
 
@@ -90,8 +90,8 @@ export function createBaTypePolicies(isDevEnv: boolean): TypePolicies {
         if (isDevEnv && !urlKey) {
           console.warn(
             `[typePolicies: DjangoFileType] missing url keyField: ${JSON.stringify(
-              obj
-            )}`
+              obj,
+            )}`,
           );
         }
 

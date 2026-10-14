@@ -1,9 +1,11 @@
+import { formatTimeString } from '@monorepo/shared/scalars';
 import { useAtom } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
 import { ScheduleTypeChoices, ShelterType } from '../../../apollo';
 import { ModalAnimationEnum, modalAtom } from '../../../components/Modal';
 import {
   AggregateStatus,
+  CLOCK_PATTERN,
   EffectiveWindow,
   getAggregateStatus,
   getOperatingStatus,
@@ -39,7 +41,7 @@ const TYPE_LABELS: Record<ScheduleTypeChoices, string> = {
 };
 
 function getInitialScheduleType(
-  scheduleTypes: ScheduleTypeChoices[]
+  scheduleTypes: ScheduleTypeChoices[],
 ): ScheduleTypeChoices {
   if (scheduleTypes.includes(ScheduleTypeChoices.Operating)) {
     return ScheduleTypeChoices.Operating;
@@ -49,19 +51,10 @@ function getInitialScheduleType(
 }
 
 function formatWindowRange(window: EffectiveWindow): string {
-  const start = new Date(`1970-01-01T${window.startTime}`);
-  const end = new Date(`1970-01-01T${window.endTime}`);
+  const start = formatTimeString(window.startTime, CLOCK_PATTERN);
+  const end = formatTimeString(window.endTime, CLOCK_PATTERN);
 
-  const startText = start.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-  const endText = end.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  return `${startText} - ${endText}`;
+  return `${start} - ${end}`;
 }
 
 function StatusLine({ status }: { status: OperatingStatus }) {
@@ -109,12 +102,12 @@ function OperatingHoursDialog({
   scheduleTypes: ScheduleTypeChoices[];
 }) {
   const [selectedType, setSelectedType] = useState<ScheduleTypeChoices>(
-    getInitialScheduleType(scheduleTypes)
+    getInitialScheduleType(scheduleTypes),
   );
 
   const selectedWeek = useMemo(
     () => getWeeklySchedule(schedules, selectedType),
-    [schedules, selectedType]
+    [schedules, selectedType],
   );
 
   const selectedStatus = useMemo(() => {
@@ -247,7 +240,7 @@ export function OperatingHours({
     return [
       ScheduleTypeChoices.Operating,
       ...types.filter(
-        (scheduleType) => scheduleType !== ScheduleTypeChoices.Operating
+        (scheduleType) => scheduleType !== ScheduleTypeChoices.Operating,
       ),
     ];
   }, [entries]);
@@ -260,7 +253,7 @@ export function OperatingHours({
 
   const aggregateStatus = useMemo(
     () => getAggregateStatus(entries, scheduleTypes, now),
-    [entries, scheduleTypes, now]
+    [entries, scheduleTypes, now],
   );
 
   const [_modal, setModal] = useAtom(modalAtom);

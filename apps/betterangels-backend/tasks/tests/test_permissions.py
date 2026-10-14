@@ -1,11 +1,12 @@
 from typing import Optional
 
+from model_bakery import baker
+from unittest_parametrize import parametrize
+
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
-from model_bakery import baker
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
-from unittest_parametrize import parametrize
 
 
 class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
@@ -19,9 +20,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "summary": "ba task",
                 "clientProfile": str(self.client_profile.pk),
             }
-        )[
-            "data"
-        ]["createTask"]["id"]
+        )["data"]["createTask"]["id"]
 
     @parametrize(
         "user_label, should_succeed",

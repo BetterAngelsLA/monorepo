@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 
 export type TRenderListResultsHeader = (
   visible: number,
-  total: number | undefined
+  total: number | undefined,
 ) => ReactNode | null;
 
 type TProps = {

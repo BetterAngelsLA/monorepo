@@ -172,7 +172,7 @@
     document.dispatchEvent(
       new CustomEvent('formset:added', {
         detail: { formsetName: PREFIX },
-      })
+      }),
     );
     return clone;
   }
@@ -181,7 +181,7 @@
     // Re-number all dynamic (new) inline forms so indices are contiguous.
     // Saved forms (has_original) occupy indices 0..N-1 and never change.
     var allForms = schedGroup.querySelectorAll(
-      '.inline-related:not(.empty-form)'
+      '.inline-related:not(.empty-form)',
     );
     var totalEl = document.getElementById('id_' + PREFIX + '-TOTAL_FORMS');
     var idx = 0;
@@ -205,7 +205,7 @@
         if (node.getAttribute('for'))
           node.setAttribute(
             'for',
-            node.getAttribute('for').replace(oldPfx, newPfx)
+            node.getAttribute('for').replace(oldPfx, newPfx),
           );
       }
       idx++;
@@ -234,7 +234,7 @@
       var active = !!activeDays[day];
       var label = el(
         'label',
-        'day-pill' + (active ? ' day-pill--checked' : '')
+        'day-pill' + (active ? ' day-pill--checked' : ''),
       );
       var inp = document.createElement('input');
       inp.type = 'checkbox';
@@ -303,7 +303,7 @@
         return function (e) {
           setHiddenField(fd, 'start_date', e.target.value);
         };
-      })(formDiv)
+      })(formDiv),
     );
     exFields.appendChild(sdInput);
 
@@ -318,7 +318,7 @@
         return function (e) {
           setHiddenField(fd, 'end_date', e.target.value);
         };
-      })(formDiv)
+      })(formDiv),
     );
     exFields.appendChild(edInput);
 
@@ -337,7 +337,7 @@
         return function (e) {
           setHiddenField(fd, 'condition', e.target.value);
         };
-      })(formDiv)
+      })(formDiv),
     );
     exFields.appendChild(condSelect);
 
@@ -357,7 +357,7 @@
       oldEls[r].parentNode.removeChild(oldEls[r]);
 
     var allForms = schedGroup.querySelectorAll(
-      '.inline-related:not(.empty-form)'
+      '.inline-related:not(.empty-form)',
     );
 
     // Categorise forms
@@ -413,8 +413,8 @@
         el(
           'span',
           'sched-type-badge sched-type-badge--' + first.schedType,
-          TYPE_LABELS[first.schedType] || first.schedType
-        )
+          TYPE_LABELS[first.schedType] || first.schedType,
+        ),
       );
 
       // Day pills
@@ -491,8 +491,8 @@
         el(
           'span',
           'sched-type-badge',
-          TYPE_LABELS[ex.schedType] || ex.schedType || 'Exception'
-        )
+          TYPE_LABELS[ex.schedType] || ex.schedType || 'Exception',
+        ),
       );
 
       // Editable date/condition fields
@@ -535,7 +535,7 @@
       var dayContainer = nf.formDiv.querySelector('.multi-day-checkbox');
       if (dayContainer) {
         var checked = dayContainer.querySelectorAll(
-          'input[type="checkbox"]:checked'
+          'input[type="checkbox"]:checked',
         );
         for (var ci = 0; ci < checked.length; ci++)
           newActive[checked[ci].value] = true;
@@ -630,7 +630,7 @@
     var addExBtn = el(
       'button',
       'sched-add-btn sched-add-btn--exception',
-      '+ Add Exception'
+      '+ Add Exception',
     );
     addExBtn.type = 'button';
     addExBtn.addEventListener('click', function () {

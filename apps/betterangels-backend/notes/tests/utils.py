@@ -1,8 +1,9 @@
 from typing import Any, Dict
 
+from model_bakery import baker
+
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
-from model_bakery import baker
 
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -16,6 +17,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             createdBy {
                 id
             }
+            team {
+                id
+                name
+            }
             interactedAt
             isSubmitted
             privateDetails
@@ -25,7 +30,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 id
                 summary
             }
-            team
             location {
                 id
                 address {
@@ -175,6 +179,27 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+    def _delete_note_fixture(self, note_id: str) -> Dict[str, Any]:
+        mutation: str = """
+            mutation DeleteNote($id: ID!) {
+                deleteNote(data: { id: $id }) {
+                    __typename
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                    }
+                }
+            }
+        """
+
+        return self.execute_graphql(mutation, {"id": note_id})
 
     def _delete_service_request_fixture(self, service_request_id: int) -> Dict[str, Any]:
         mutation: str = """

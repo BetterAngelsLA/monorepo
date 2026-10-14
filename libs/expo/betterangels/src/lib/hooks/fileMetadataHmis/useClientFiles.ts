@@ -26,7 +26,7 @@ export function useClientFiles(clientId?: string, hmisId?: string) {
         getClientFiles(hmisId, {
           ...params,
           fields: CLIENT_FILE_FIELDS,
-        })
+        }),
       );
     },
     enabled: isEnabled,

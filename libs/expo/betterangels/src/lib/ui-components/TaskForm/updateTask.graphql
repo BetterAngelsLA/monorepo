@@ -13,7 +13,10 @@ mutation UpdateTask($data: UpdateTaskInput!) {
       summary
       description
       status
-      team
+      team {
+        id
+        name
+      }
       updatedAt
     }
   }

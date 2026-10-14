@@ -1,19 +1,21 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { SearchBar } from '@monorepo/expo/shared/ui-components';
-import { ElementType, useCallback, useState } from 'react';
+import { SearchBar, TextMedium } from '@monorepo/expo/shared/ui-components';
+import { ElementType, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { NoteType, toNoteFilter } from '../../apollo';
-import useUser from '../../hooks/user/useUser';
-import { TUser } from '../../providers/user/UserContext';
+import { TUser, useUser } from '../../providers/user/UserProvider';
 import {
   Header,
   HorizontalContainer,
   InteractionList,
   ModelFilters,
   NoteCard,
+  SortButton,
   TModelFilters,
+  TSortDirection,
   toModelFilterValues,
 } from '../../ui-components';
+import { getInteractionOrder } from './getInteractionOrder';
 
 const paginationLimit = 10;
 
@@ -28,8 +30,21 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState<string>('');
   const [filtersKey, setFiltersKey] = useState(0);
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialFilterValues(user)
+    getInitialFilterValues(user),
   );
+  const [sortDirection, setSortDirection] =
+    useState<TSortDirection>('newestFirst');
+
+  const interactionOrder = useMemo(
+    () => getInteractionOrder(sortDirection),
+    [sortDirection],
+  );
+
+  const toggleSortDirection = useCallback(() => {
+    setSortDirection((prev) =>
+      prev === 'newestFirst' ? 'oldestFirst' : 'newestFirst',
+    );
+  }, []);
 
   function onFilterChange(selectedFilters: TModelFilters) {
     setCurrentFilters(selectedFilters);
@@ -47,7 +62,7 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
     (interaction: NoteType) => (
       <NoteCard note={interaction} variant="interactions" />
     ),
-    []
+    [],
   );
 
   const serverFilters = toNoteFilter({
@@ -81,14 +96,28 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
           key={filtersKey}
           selected={currentFilters}
           onChange={onFilterChange}
-          filters={['teams', 'authors', 'organizations']}
+          filters={['teamIds', 'authors', 'organizations']}
           style={styles.filters}
         />
 
         <InteractionList
           filters={serverFilters}
+          order={interactionOrder}
           renderItem={renderInteractionItem}
           paginationLimit={paginationLimit}
+          renderHeader={(visible, total) => (
+            <View style={styles.listHeader}>
+              <TextMedium size="sm">
+                Displaying {visible} of {total ?? 0} interactions
+              </TextMedium>
+              {(total ?? 0) > 1 && (
+                <SortButton
+                  direction={sortDirection}
+                  onPress={toggleSortDirection}
+                />
+              )}
+            </View>
+          )}
         />
       </HorizontalContainer>
     </View>
@@ -105,5 +134,11 @@ const styles = StyleSheet.create({
   },
   searchRow: {
     marginBottom: Spacings.sm,
+  },
+  listHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacings.xs,
   },
 });

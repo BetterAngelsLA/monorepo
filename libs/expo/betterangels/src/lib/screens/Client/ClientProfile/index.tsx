@@ -58,7 +58,7 @@ export default function ClientProfileView(props: ProfileProps) {
 
   return (
     <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <View>
+      <View testID="screen-client-profile">
         <ExpandableProfileContainer
           card={ClientProfileSectionEnum.FullName}
           openCard={expandedCard}

@@ -6,16 +6,20 @@ and resolves them to the corresponding strawberry enum type.
 """
 
 import strawberry_django
+from strawberry import ID, Maybe, auto
+
 from common.graphql.types import PhoneNumberScalar
 from shelters import models
-from strawberry import ID, Maybe, auto
 
 
 @strawberry_django.type(models.ContactInfo)
-class ContactInfoType:
+class ShelterContactInfoType:
     id: ID
     contact_name: auto
     contact_number: PhoneNumberScalar  # type: ignore
+    contact_email: auto
+    contact_title: auto
+    is_claimant: auto
 
 
 # Enum-backed M2M lookup types.
@@ -34,6 +38,11 @@ class CityType:
 
 @strawberry_django.type(models.Demographic)
 class DemographicType:
+    name: auto
+
+
+@strawberry_django.type(models.MedicalNeed)
+class MedicalNeedType:
     name: auto
 
 

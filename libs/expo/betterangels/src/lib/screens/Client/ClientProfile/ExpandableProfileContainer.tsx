@@ -5,6 +5,7 @@ import {
   ExpandableContainer,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { toTestId } from '@monorepo/expo/shared/utils';
 import { ReactElement } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
@@ -15,7 +16,11 @@ type TProps = {
   openCard: ClientProfileSectionEnum | null;
   children: ReactElement;
   onOpenCloseClick: (card: ClientProfileSectionEnum) => void;
-  onEditClick: (card: ClientProfileSectionEnum) => void;
+  /**
+   * Optional — without it the section renders read-only (no edit button),
+   * e.g. for the hmisProd demo screens.
+   */
+  onEditClick?: (card: ClientProfileSectionEnum) => void;
 };
 
 export function ExpandableProfileContainer(props: TProps) {
@@ -28,7 +33,7 @@ export function ExpandableProfileContainer(props: TProps) {
       card={card}
       isOpen={isOpen}
       onOpenCloseClick={() => onOpenCloseClick(card)}
-      onEditClick={() => onEditClick(card)}
+      onEditClick={onEditClick ? () => onEditClick(card) : undefined}
     />
   );
 
@@ -43,7 +48,7 @@ type THeader = {
   card: ClientProfileSectionEnum;
   isOpen?: boolean;
   onOpenCloseClick: () => void;
-  onEditClick: () => void;
+  onEditClick?: () => void;
 };
 
 function Header(props: THeader) {
@@ -63,9 +68,10 @@ function Header(props: THeader) {
         {title}
       </TextRegular>
 
-      {isOpen && (
+      {isOpen && onEditClick && (
         <EditButton
           onClick={onEditClick}
+          testId={toTestId(['edit', title])}
           style={styles.editButton}
           accessibilityHint={`edit ${ClientProfileCardTitles[card]}`}
         />
@@ -93,9 +99,12 @@ function OpenCloseButton(props: TOpenCloseButton) {
     ? `close ${title} section`
     : `open ${title} section`;
 
+  const testId = isOpen ? `collapse-${title}` : `expand-${title}`;
+
   return (
     <Pressable
       onPress={onClick}
+      testID={toTestId([testId])}
       accessible
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}

@@ -15,14 +15,14 @@ export function EcosystemInfo({
   shelter: ViewShelterQuery['shelter'];
 }) {
   const cityCouncilDistrict = formatCityCouncilDistrict(
-    shelter.cityCouncilDistrict
+    shelter.cityCouncilDistrict,
   );
 
   const funderItems = displayListWithOther(
     shelter?.funders as readonly { name?: FunderChoices.Other | null }[],
     shelter?.fundersOther,
     enumDisplayFunderChoices,
-    FunderChoices.Other
+    FunderChoices.Other,
   );
 
   const shelterPrograms = displayListWithOther(
@@ -31,7 +31,7 @@ export function EcosystemInfo({
     }[],
     shelter?.shelterProgramsOther,
     enumDisplayShelterProgramChoices,
-    ShelterProgramChoices.Other
+    ShelterProgramChoices.Other,
   );
 
   return (

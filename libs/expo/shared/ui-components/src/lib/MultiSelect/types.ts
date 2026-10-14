@@ -41,7 +41,7 @@ export type MultiSelectBaseProps<T> = {
   renderOption?: (
     option: T,
     props: TMultiSelectItem,
-    index: number
+    index: number,
   ) => ReactElement;
 
   ListEmptyComponent?: ReactElement | null;

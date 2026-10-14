@@ -1,3 +1,4 @@
+import type { Reference, StoreObject } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'expo-router';
 import { useSnackbar } from '../../../../hooks';
@@ -14,7 +15,7 @@ export function useDeleteClientProfile(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [deleteClientProfile, { loading }] = useMutation(
-    DeleteClientProfileDocument
+    DeleteClientProfileDocument,
   );
 
   const deleteProfile = async (id: string) => {
@@ -37,16 +38,18 @@ export function useDeleteClientProfile(props: TProps) {
 
                 const existingResults = existing.results ?? [];
 
-                const nextResults = existingResults.filter((ref: any) => {
-                  const refId = readField('id', ref);
+                const nextResults = existingResults.filter(
+                  (ref: StoreObject | Reference) => {
+                    const refId = readField('id', ref);
 
-                  // remove any dangling refs
-                  if (refId === null || refId === undefined) {
-                    return false;
-                  }
+                    // remove any dangling refs
+                    if (refId === null || refId === undefined) {
+                      return false;
+                    }
 
-                  return refId !== id;
-                });
+                    return refId !== id;
+                  },
+                );
 
                 const nextTotal =
                   typeof existing.totalCount === 'number'
@@ -83,7 +86,7 @@ export function useDeleteClientProfile(props: TProps) {
       }
     } catch (e) {
       console.error(
-        `Error deleting Client Profile Id ${clientProfileId}: ${e}`
+        `Error deleting Client Profile Id ${clientProfileId}: ${e}`,
       );
 
       showSnackbar({

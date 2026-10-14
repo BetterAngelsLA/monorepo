@@ -4,7 +4,7 @@ import { TResultMinimal, TResultWithError } from './types';
 import { isNonNullable, toFormValidationError } from './utils';
 
 export function extractResponseExtensions(
-  response?: TResultMinimal | TResultWithError | null
+  response?: TResultMinimal | TResultWithError | null,
 ): TFormValidationError[] | undefined {
   if (!response) {
     return undefined;

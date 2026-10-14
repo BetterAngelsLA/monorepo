@@ -15,7 +15,7 @@ const INITIAL_LOCATION = {
 export function useInitialLocation(
   editing: boolean | undefined,
   location: LocationDraft | undefined,
-  setValue?: (name: 'location', value: LocationDraft) => void
+  setValue?: (name: 'location', value: LocationDraft) => void,
 ) {
   const places = useGooglePlaces();
   const [userLocation, setUserLocation] = useState<LocationObject | null>(null);
@@ -44,18 +44,44 @@ export function useInitialLocation(
       } as LocationDraft);
     }
 
-    const geocodeAndSet = async (loc: LocationObject) => {
-      const { latitude, longitude } = loc.coords;
-      const geocodeResult = await places.reverseGeocode(latitude, longitude);
+    /**
+     * Records a point, with its address when the geocoder can supply one.
+     *
+     * `reverseGeocode` throws on a real API failure (a denied key, an exhausted
+     * quota) rather than returning coordinates as if they were an address; that
+     * path keeps the point and invents no address. ZERO_RESULTS is the genuine
+     * "no address here" case and still returns coordinates.
+     *
+     * The catch is here because `onRefine` fires this without awaiting, so a
+     * rejection would float.
+     */
+    const geocodeAndSet = async (latitude: number, longitude: number) => {
+      const base = { ...locationRef.current, longitude, latitude };
 
-      setValueRef.current?.('location', {
-        ...locationRef.current,
-        longitude,
-        latitude,
-        formattedAddress: geocodeResult.formattedAddress,
-        shortAddressName: geocodeResult.shortAddress,
-        components: geocodeResult.addressComponents,
-      } as LocationDraft);
+      try {
+        const geocodeResult = await places.reverseGeocode(latitude, longitude);
+
+        setValueRef.current?.('location', {
+          ...base,
+          formattedAddress: geocodeResult.formattedAddress,
+          shortAddressName: geocodeResult.shortAddress,
+          components: geocodeResult.addressComponents,
+        } as LocationDraft);
+      } catch (err) {
+        console.error(
+          'Reverse geocode failed; recording the point without an address',
+          err,
+        );
+
+        // Cleared explicitly: `base` carries the previous draft, whose address
+        // describes a different point.
+        setValueRef.current?.('location', {
+          ...base,
+          formattedAddress: undefined,
+          shortAddressName: undefined,
+          components: undefined,
+        } as LocationDraft);
+      }
     };
 
     const autoSetInitialLocation = async () => {
@@ -64,7 +90,7 @@ export function useInitialLocation(
           onRefine: (refined) => {
             setUserLocation(refined);
             if (!editingRef.current) {
-              geocodeAndSet(refined);
+              geocodeAndSet(refined.coords.latitude, refined.coords.longitude);
             }
           },
         });
@@ -75,29 +101,19 @@ export function useInitialLocation(
 
         if (editingRef.current || defaultLocation) return;
 
-        if (result?.location) {
-          await geocodeAndSet(result.location);
-        } else {
-          const geocodeResult = await places.reverseGeocode(
-            INITIAL_LOCATION.latitude,
-            INITIAL_LOCATION.longitude
-          );
-          setValueRef.current?.('location', {
-            ...locationRef.current,
-            longitude: INITIAL_LOCATION.longitude,
-            latitude: INITIAL_LOCATION.latitude,
-            formattedAddress: geocodeResult.formattedAddress,
-            shortAddressName: geocodeResult.shortAddress,
-            components: geocodeResult.addressComponents,
-          } as LocationDraft);
-        }
+        const coords = result?.location?.coords;
+
+        await geocodeAndSet(
+          coords?.latitude ?? INITIAL_LOCATION.latitude,
+          coords?.longitude ?? INITIAL_LOCATION.longitude,
+        );
       } catch (err) {
         console.error('Error auto-setting initial location', err);
       }
     };
 
     void autoSetInitialLocation();
-  }, [places]);
+  }, [places, defaultLocation]);
 
   return [userLocation];
 }

@@ -5,13 +5,12 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
 import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 interface INoteBylineProps {
   createdBy?: NoteSummaryQuery['note']['createdBy'];
   organization: NoteSummaryQuery['note']['organization'];
-  team?: NoteSummaryQuery['note']['team'];
+  team?: { name?: string | null } | null;
 }
 
 export default function NoteByline(props: INoteBylineProps) {
@@ -48,10 +47,10 @@ export default function NoteByline(props: INoteBylineProps) {
         </TextMedium>
         <TextRegular selectable size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
-          {team && (
+          {!!team?.name && (
             <TextRegular selectable size="xs">
               {' - '}
-              {enumDisplaySelahTeam[team]}
+              {team.name}
             </TextRegular>
           )}
         </TextRegular>

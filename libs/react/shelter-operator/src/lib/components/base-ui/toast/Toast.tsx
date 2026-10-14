@@ -24,7 +24,7 @@ export function Toast({
         'border-[#D3D9E3]',
         'p-5',
         'w-[340px]',
-        'animate-[slideInFromRight_300ms_ease-in-out_forwards]',
+        'animate-slide-in-from-right',
       ])}
       style={{ boxShadow: '0 4px 24px rgba(0, 0, 0, 0.10)' }}
     >

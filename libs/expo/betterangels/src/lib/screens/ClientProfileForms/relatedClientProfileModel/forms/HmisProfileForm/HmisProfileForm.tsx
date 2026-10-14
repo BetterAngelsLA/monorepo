@@ -75,9 +75,7 @@ export function HmisProfileForm(props: TProps) {
 
   const isEditMode = !!relationId;
 
-  const onSubmit: SubmitHandler<THmisProfileFormState> = async (
-    formState: any
-  ) => {
+  const onSubmit: SubmitHandler<THmisProfileFormState> = async (formState) => {
     if (!formIsValid) {
       return;
     }
@@ -196,7 +194,7 @@ export function HmisProfileForm(props: TProps) {
                 label="Type of HMIS ID"
                 placeholder="Select type of HMIS ID"
                 items={Object.entries(enumDisplayHmisAgency).map(
-                  ([value, displayValue]) => ({ value, displayValue })
+                  ([value, displayValue]) => ({ value, displayValue }),
                 )}
                 selectedValue={field.value}
                 onChange={(value) => field.onChange(value)}
@@ -237,7 +235,7 @@ export function HmisProfileForm(props: TProps) {
 }
 
 function isSuccessMutationResponse(
-  responseData: UpdateHmisProfileMutation | CreateHmisProfileMutation
+  responseData: UpdateHmisProfileMutation | CreateHmisProfileMutation,
 ): boolean {
   const modelTypename = 'HmisProfileType';
 
@@ -264,7 +262,7 @@ function hasUniquenessError(
   response: ApolloLink.Result<
     UpdateHmisProfileMutation | CreateHmisProfileMutation
   >,
-  key: 'updateHmisProfile' | 'createHmisProfile'
+  key: 'updateHmisProfile' | 'createHmisProfile',
 ): string | null {
   const operationInfo = extractOperationInfo(response, key);
 
@@ -278,7 +276,7 @@ function hasUniquenessError(
     'Constraint “unique_hmis_id_agency” is violated.';
 
   const uniquenessError = operationMessages.find(
-    (m) => m.message === uniquenessServerErrorMessage
+    (m) => m.message === uniquenessServerErrorMessage,
   );
 
   if (uniquenessError) {

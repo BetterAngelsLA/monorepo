@@ -1,6 +1,6 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, RefObject, useEffect, useState } from 'react';
+import { ReactNode, RefObject, useCallback, useEffect, useState } from 'react';
 import {
   Keyboard,
   Pressable,
@@ -25,6 +25,7 @@ interface IAccordionProps {
   mr?: TSpacing;
   expanded: string | undefined | null;
   setExpanded: () => void;
+  testId?: string;
   scrollRef?: RefObject<ScrollView | null>;
   bg?: string;
   borderWidth?: number;
@@ -45,6 +46,7 @@ export function Accordion(props: IAccordionProps) {
     mx,
     expanded,
     setExpanded,
+    testId,
     scrollRef,
     bg = Colors.NEUTRAL_EXTRA_LIGHT,
     borderWidth,
@@ -54,7 +56,7 @@ export function Accordion(props: IAccordionProps) {
   } = props;
   const [place, setPlace] = useState<null | number>(null);
 
-  const scrollToElement = () => {
+  const scrollToElement = useCallback(() => {
     if (!place || !scrollRef) return;
 
     scrollRef.current?.scrollTo({
@@ -62,12 +64,12 @@ export function Accordion(props: IAccordionProps) {
       y: place,
       animated: true,
     });
-  };
+  }, [place, scrollRef]);
 
   useEffect(() => {
     if (!place) return;
     scrollToElement();
-  }, [place]);
+  }, [place, scrollToElement]);
 
   return (
     <View
@@ -84,6 +86,7 @@ export function Accordion(props: IAccordionProps) {
         onPress={() => {
           setExpanded();
         }}
+        testID={testId}
         accessible
         accessibilityRole="button"
         accessibilityHint={`expands ${title} field`}

@@ -1,12 +1,8 @@
-/**
- * @jest-environment node
- */
-
 import { toNoteFilterHmis } from './toNoteFilterHmis';
 
 describe('toNoteFilterHmis', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('returns {} when called with an empty object', () => {

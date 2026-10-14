@@ -1,10 +1,10 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  InfiniteList,
   TRenderListResultsHeader,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../InfiniteList/FocusedInfiniteList';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, NoteFilter, NoteOrder, NoteType } from '../../apollo';
@@ -52,6 +52,7 @@ export function InteractionList(props: TProps) {
     reload,
     hasMore,
     error,
+    queryKey,
   } = useInfiniteScrollQuery<
     NoteType,
     InteractionsQuery,
@@ -68,7 +69,7 @@ export function InteractionList(props: TProps) {
 
   const renderItemFn = useCallback(
     (item: NoteType) => renderItem(item),
-    [renderItem]
+    [renderItem],
   );
 
   if (error) {
@@ -83,7 +84,7 @@ export function InteractionList(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<NoteType>
+      <FocusedInfiniteList<NoteType>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
@@ -94,6 +95,7 @@ export function InteractionList(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="interaction"
+        scrollResetKey={queryKey}
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}

@@ -6,12 +6,9 @@ import { FilterClients } from '../FilterClients';
 import { FilterClientsHmis } from '../FilterClientsHmis';
 import { FilterOrganizations } from '../FilterOrganizations';
 import { FilterStatic } from '../FilterStatic';
+import { FilterTeams } from '../FilterTeams/FilterTeams';
 import { FilterUsers } from '../FilterUsers';
-import {
-  modelFilterConfigDefault,
-  taskStatusOptions,
-  teamOptions,
-} from './constants';
+import { modelFilterConfigDefault, taskStatusOptions } from './constants';
 import {
   TModelFilterConfig,
   TModelFilterFullConfig,
@@ -65,7 +62,7 @@ export function ModelFilters(props: TProps) {
 
   function onFilterChange(
     filterType: TModelFilterType,
-    selectedOpts: TFilterOption[]
+    selectedOpts: TFilterOption[],
   ) {
     onChange({
       ...selected,
@@ -78,17 +75,14 @@ export function ModelFilters(props: TProps) {
       {filterConfigs.map((config) => {
         const { type, buttonLabel, headerTitle, searchPlaceholder } = config;
 
-        if (type === 'teams') {
+        if (type === 'teamIds') {
           return (
-            <FilterStatic
-              key="teams"
+            <FilterTeams
+              key="teamIds"
               title={headerTitle}
               buttonLabel={buttonLabel}
-              withLocalFilter
-              withSelectAll
-              options={teamOptions}
-              onChange={(next) => onFilterChange('teams', next)}
-              initialSelected={selected.teams}
+              onChange={(next) => onFilterChange('teamIds', next)}
+              initialSelected={selected.teamIds}
               searchPlaceholder={searchPlaceholder}
             />
           );

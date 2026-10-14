@@ -1,22 +1,13 @@
-import {
-  CarryOutOutlined,
-  FileSearchOutlined,
-  HomeOutlined,
-} from '@ant-design/icons';
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { Divider, Sidebar } from '@monorepo/react/components';
-import { UsersIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import {
-  isShelterManageRoute,
-  isShelterProfileRoute,
-  isShelterRoute,
-  paths,
-  shelterManageRoute,
-  shelterProfileRoute,
-} from '../../routing';
+import { isShelterRoute, paths } from '../../routing';
+import { ShelterMgmtLinks } from './ShelterMgmtLinks';
+import { ShelterProfileLinks } from './ShelterProfileLinks';
 
 type IProps = {
   className?: string;
@@ -25,63 +16,65 @@ type IProps = {
 export function AppSidebar(props: IProps) {
   const { className } = props;
 
-  const [isOpen, setIsOpen] = useState(false);
+  const initialOpenState = true;
+
+  const [isOpen, setIsOpen] = useState(initialOpenState);
   const location = useLocation();
   const { shelterId } = useParams<{ shelterId: string }>();
+  const { hasPermission } = useActiveOrg();
+  const canViewMembers = hasPermission(
+    UserOrganizationPermissions.ViewOrgMembers,
+  );
 
   const parentCss = ['bg-[#FAFAFA]', className];
 
   return (
-    <Sidebar className={mergeCss(parentCss)} onOpenChange={setIsOpen}>
+    <Sidebar
+      className={mergeCss(parentCss)}
+      onOpenChange={setIsOpen}
+      initialOpen={initialOpenState}
+      variant="basic"
+      theme={{
+        fontColor: '#747A82',
+        activeColor: '#008CEE',
+      }}
+    >
       <Sidebar.Content className="pt-6">
         <Sidebar.Link
           to={operatorPath}
           isActive={location.pathname === operatorPath}
           collapsed={!isOpen}
-          icon={(color: string) => (
-            <HomeOutlined className="w-4" style={{ color: color }} />
-          )}
         >
           Dashboard
         </Sidebar.Link>
 
-        <Sidebar.Link
-          to={paths.users}
-          isActive={location.pathname === paths.users}
-          collapsed={!isOpen}
-          icon={(color: string) => <UsersIcon className="w-4" fill={color} />}
-        >
-          Users
-        </Sidebar.Link>
+        {canViewMembers && (
+          <Sidebar.Link
+            to={paths.users}
+            isActive={location.pathname === paths.users}
+            collapsed={!isOpen}
+          >
+            Users
+          </Sidebar.Link>
+        )}
 
         {isShelterRoute(location.pathname) && shelterId && (
           <>
             <Divider
-              className="py-4"
-              label={isOpen ? 'shelter management' : ''}
+              className="my-4 h-6 text-[#747A82]"
+              lineClassName="bg-[#747A82]"
+              label={isOpen ? 'Shelter Operation' : ''}
             />
-
-            <Sidebar.Link
-              to={shelterManageRoute(shelterId)}
-              isActive={isShelterManageRoute(location.pathname)}
-              collapsed={!isOpen}
-              icon={(color: string) => (
-                <CarryOutOutlined className="w-4" style={{ color: color }} />
-              )}
-            >
-              Operations
-            </Sidebar.Link>
-
-            <Sidebar.Link
-              to={shelterProfileRoute(shelterId)}
-              isActive={isShelterProfileRoute(location.pathname)}
-              collapsed={!isOpen}
-              icon={(color: string) => (
-                <FileSearchOutlined className="w-4" style={{ color: color }} />
-              )}
-            >
-              Shelter Profile
-            </Sidebar.Link>
+            <ShelterProfileLinks
+              pathname={location.pathname}
+              shelterId={shelterId}
+              isOpen={isOpen}
+            />
+            <ShelterMgmtLinks
+              pathname={location.pathname}
+              shelterId={shelterId}
+              isOpen={isOpen}
+            />
           </>
         )}
       </Sidebar.Content>

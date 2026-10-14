@@ -2,7 +2,7 @@ import { toEnumValue } from './toEnumValue';
 
 export function toEnumArray<T extends string>(
   enumObject: Record<string, T>,
-  arr?: string[]
+  arr?: string[],
 ): T[] | undefined {
   if (!arr || !arr.length) {
     return undefined;

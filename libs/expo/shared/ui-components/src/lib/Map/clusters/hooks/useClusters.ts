@@ -71,10 +71,13 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
 
       updateClusters();
     },
-    [updateClusters]
+    [updateClusters],
   );
 
   // Load features whenever pointFeaturesHash changes
+  // pointFeaturesHash captures meaningful content changes;
+  // pointFeatures itself is intentionally omitted to avoid
+  // re-running on reference-only changes.
   useEffect(() => {
     if (!pointFeatures.length) {
       return;
@@ -84,12 +87,36 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
 
     // refresh clusters on map
     updateClusters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pointFeaturesHash, clusterManager, updateClusters]);
 
   const zoomToCluster = useCallback(
-    (c: TClusterPoint, mapRef: RefObject<TMapView | null>) =>
-      clusterManager.fitToCluster(c.properties.cluster_id, mapRef),
-    [clusterManager]
+    async (c: TClusterPoint, mapRef: RefObject<TMapView | null>) => {
+      const region = await clusterManager.fitToCluster(
+        c.properties.cluster_id,
+        mapRef,
+      );
+
+      // Recompute for where the fit ended up. Web fires no region callback for a
+      // programmatic move, so without this the layer keeps rendering the clusters
+      // it computed at the previous zoom — a cluster that no longer matches the
+      // map and cannot be opened.
+      if (region) updateClustersForRegion(region);
+    },
+    [clusterManager, updateClustersForRegion],
+  );
+
+  /** See `canExpandFurther` on the manager. */
+  const canExpandFurther = useCallback(
+    (c: TClusterPoint, currentZoom?: number) =>
+      clusterManager.canExpandFurther(c.properties.cluster_id, currentZoom),
+    [clusterManager],
+  );
+
+  /** The points inside `c`, for when the cluster cannot be broken up further. */
+  const getClusterLeaves = useCallback(
+    (c: TClusterPoint) => clusterManager.getLeaves(c.properties.cluster_id),
+    [clusterManager],
   );
 
   // cleanup
@@ -99,5 +126,7 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
     clusters,
     updateClustersForRegion,
     zoomToCluster,
+    canExpandFurther,
+    getClusterLeaves,
   };
 }

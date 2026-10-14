@@ -4,7 +4,7 @@ import { TFieldError } from './types';
 
 export function applyOperationFieldErrors<T extends FieldValues>(
   errors: TFieldError[] | OperationMessage[],
-  setError: UseFormSetError<T>
+  setError: UseFormSetError<T>,
 ) {
   errors.forEach(({ field, message }) => {
     if (!field) {

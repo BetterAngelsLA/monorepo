@@ -19,7 +19,7 @@ type DirtyFields = Partial<Record<keyof TNoteFormInputs, boolean | object>>;
 export function buildNotePayload(
   form: TNoteFormInputs,
   isSubmitted?: boolean,
-  dirtyFields?: DirtyFields
+  dirtyFields?: DirtyFields,
 ) {
   const include = (field: keyof TNoteFormInputs) =>
     !dirtyFields || !!dirtyFields[field];
@@ -28,19 +28,19 @@ export function buildNotePayload(
 
   if (include('purpose')) payload.purpose = form.purpose;
   if (include('interactedAt')) payload.interactedAt = form.interactedAt;
-  if (include('team')) payload.team = form.team;
+  if (include('teamId')) payload.teamId = form.teamId;
   if (include('publicNote')) {
     payload.publicDetails = form.publicNote || undefined;
   }
   if (include('location')) payload.location = form.location || undefined;
   if (include('providedServices')) {
     payload.providedServices = form.providedServices.map(
-      ({ label: _label, ...rest }) => rest
+      ({ label: _label, ...rest }) => rest,
     );
   }
   if (include('requestedServices')) {
     payload.requestedServices = form.requestedServices.map(
-      ({ label: _label, ...rest }) => rest
+      ({ label: _label, ...rest }) => rest,
     );
   }
   if (include('tasks')) {
@@ -48,7 +48,7 @@ export function buildNotePayload(
       summary: task.summary || '',
       description: task.description || undefined,
       status: task.status != null ? TASK_STATUS_TO_INT[task.status] : undefined,
-      team: task.team || undefined,
+      teamId: task.teamId || undefined,
     }));
   }
 
@@ -61,7 +61,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
   return {
     purpose: note.purpose,
     interactedAt: note.interactedAt,
-    team: note.team,
+    teamId: note.team?.id as string | undefined,
     publicNote: note.publicDetails || '',
     location: note.location?.point
       ? {
@@ -93,7 +93,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
         serviceOther: service.service?.category
           ? undefined
           : service.service?.label,
-      })
+      }),
     ),
     requestedServices: (note.requestedServices ?? []).map(
       (service: {
@@ -108,14 +108,14 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
         serviceOther: service.service?.category
           ? undefined
           : service.service?.label,
-      })
+      }),
     ),
     tasks: (note.tasks ?? []).map((task) => ({
       id: task.id,
       summary: task.summary ?? null,
       description: task.description ?? null,
       status: task.status ?? null,
-      team: task.team ?? null,
+      teamId: task.team?.id ?? null,
     })),
   };
 }

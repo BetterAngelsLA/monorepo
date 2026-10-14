@@ -1,12 +1,15 @@
 import { StarIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { PhoneNumberBtn } from '@monorepo/expo/shared/ui-components';
-import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
+import { Colors } from '@monorepo/expo/shared/static';
+import { TextBold } from '@monorepo/expo/shared/ui-components';
+import { toPhoneParts } from '@monorepo/shared/scalars';
 import { ReactElement } from 'react';
 import { View } from 'react-native';
+import useSnackbar from '../../../../../hooks/snackbar/useSnackbar';
+import { getPhoneActions } from './contactActions';
+import { ContactInfoRow } from './ContactInfoRow';
 
 type TPhoneNumber = {
-  number?: string;
+  number?: string | null;
   isPrimary?: boolean | null;
 };
 
@@ -49,25 +52,34 @@ export function PhoneNumberRows(props: TPhoneNumbers) {
 
 function PhoneNumberRow(props: TPhoneNumber) {
   const { number, isPrimary } = props;
+  const { showSnackbar } = useSnackbar();
 
-  const formattedNumber = number && formatPhoneNumber(number);
+  if (!number) {
+    return null;
+  }
 
-  if (!formattedNumber) {
+  const { display: displayText, dial: dialNumber } = toPhoneParts(number);
+
+  if (!displayText) {
     return null;
   }
 
   return (
-    <View
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        gap: Spacings.xs,
-        alignItems: 'center',
-      }}
+    <ContactInfoRow
+      menuTitle="Phone number"
+      triggerAccessibilityLabel={`Phone number ${displayText} actions`}
+      actions={getPhoneActions(displayText, dialNumber, { showSnackbar })}
+      suffix={
+        isPrimary ? (
+          <View>
+            <StarIcon color={Colors.WARNING} size="md" />
+          </View>
+        ) : null
+      }
     >
-      <PhoneNumberBtn number={formattedNumber} />
-
-      {isPrimary && <StarIcon color={Colors.WARNING} size="md" />}
-    </View>
+      <TextBold selectable size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
+        {displayText}
+      </TextBold>
+    </ContactInfoRow>
   );
 }

@@ -1,3 +1,8 @@
+import {
+  formatTimeString,
+  parseTimeString,
+  toTimeString,
+} from '@monorepo/shared/scalars';
 import { useEffect, useMemo, useState } from 'react';
 import { FieldWrapper } from './FieldWrapper';
 
@@ -17,49 +22,34 @@ type Selection = boolean[];
 const SLICES = 48; // 24 hours / 30 minute slices
 const MINUTES_PER_SLICE = 30;
 
-const pad = (value: number) => String(value).padStart(2, '0');
-
-const minutesTo24h = (minutes: number) => {
-  const total = Math.max(0, Math.min(24 * 60, minutes));
-  const hours = Math.floor(total / 60);
-  const mins = total % 60;
-  return `${pad(hours)}:${pad(mins)}:00`;
-};
-
-const minutesToDisplay = (minutes: number) => {
-  const total = minutes % (24 * 60);
-  const hours = Math.floor(total / 60);
-  const mins = total % 60;
-  const meridiem = hours >= 12 ? 'PM' : 'AM';
-  const twelveHour = hours % 12 === 0 ? 12 : hours % 12;
-  return `${twelveHour}:${pad(mins)} ${meridiem}`;
-};
-
-const parseTimeToMinutes = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const [hourRaw, minuteRaw = '0'] = trimmed.split(':');
-  const hour = Number(hourRaw);
-  const minute = Number(minuteRaw);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
-    return null;
-  }
-  return hour * 60 + minute;
-};
+const minutesToDisplay = (minutes: number) =>
+  formatTimeString(toTimeString(minutes), 'h:mm a');
 
 const parseValueToSelection = (value: string): Selection => {
   const selected = Array(SLICES).fill(false) as boolean[];
   if (!value) return selected;
 
-  value.split(',').forEach(rangeStr => {
-    const [startRaw, endRaw] = rangeStr.split('-').map(part => part?.trim() ?? '');
-    const startMinutes = parseTimeToMinutes(startRaw);
-    const endMinutes = parseTimeToMinutes(endRaw);
-    if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+  value.split(',').forEach((rangeStr) => {
+    const [startRaw, endRaw] = rangeStr
+      .split('-')
+      .map((part) => part?.trim() ?? '');
+    const startMinutes = parseTimeString(startRaw);
+    const endMinutes = parseTimeString(endRaw);
+    if (
+      startMinutes === undefined ||
+      endMinutes === undefined ||
+      endMinutes <= startMinutes
+    ) {
       return;
     }
-    const startIdx = Math.max(0, Math.min(SLICES - 1, Math.floor(startMinutes / MINUTES_PER_SLICE)));
-    const endIdx = Math.max(0, Math.min(SLICES, Math.ceil(endMinutes / MINUTES_PER_SLICE)));
+    const startIdx = Math.max(
+      0,
+      Math.min(SLICES - 1, Math.floor(startMinutes / MINUTES_PER_SLICE)),
+    );
+    const endIdx = Math.max(
+      0,
+      Math.min(SLICES, Math.ceil(endMinutes / MINUTES_PER_SLICE)),
+    );
     for (let i = startIdx; i < endIdx; i += 1) {
       selected[i] = true;
     }
@@ -83,7 +73,9 @@ const selectionToValue = (selection: Selection) => {
     const end = i;
     ranges.push([start * MINUTES_PER_SLICE, end * MINUTES_PER_SLICE]);
   }
-  return ranges.map(([start, end]) => `${minutesTo24h(start)}-${minutesTo24h(end)}`).join(',');
+  return ranges
+    .map(([start, end]) => `${toTimeString(start)}-${toTimeString(end)}`)
+    .join(',');
 };
 
 const selectionToFriendlyText = (selection: Selection) => {
@@ -99,26 +91,49 @@ const selectionToFriendlyText = (selection: Selection) => {
       i += 1;
     }
     const end = i;
-    ranges.push(`${minutesToDisplay(start * MINUTES_PER_SLICE)} – ${minutesToDisplay(end * MINUTES_PER_SLICE)}`);
+    ranges.push(
+      `${minutesToDisplay(start * MINUTES_PER_SLICE)} – ${minutesToDisplay(end * MINUTES_PER_SLICE)}`,
+    );
   }
 
   return ranges.length ? ranges.join(', ') : 'No hours selected';
 };
 
-export function TimeRangeField({ id, label, value, onChange, helperText, error, required }: TimeRangeFieldProps) {
-  const [selected, setSelected] = useState<Selection>(() => parseValueToSelection(value));
+export function TimeRangeField({
+  id,
+  label,
+  value,
+  onChange,
+  helperText,
+  error,
+  required,
+}: TimeRangeFieldProps) {
+  const [selected, setSelected] = useState<Selection>(() =>
+    parseValueToSelection(value),
+  );
   const [dragMode, setDragMode] = useState<'select' | 'deselect' | null>(null);
 
   useEffect(() => {
     setSelected(parseValueToSelection(value));
   }, [value]);
 
-  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
-  const friendlyText = useMemo(() => selectionToFriendlyText(selected), [selected]);
+  const messageId = error
+    ? `${id}-error`
+    : helperText
+      ? `${id}-helper`
+      : undefined;
+  const friendlyText = useMemo(
+    () => selectionToFriendlyText(selected),
+    [selected],
+  );
 
-  const updateSelection = (index: number, modeOverride?: 'select' | 'deselect') => {
+  const updateSelection = (
+    index: number,
+    modeOverride?: 'select' | 'deselect',
+  ) => {
     const next = [...selected];
-    const shouldSelect = modeOverride ?? (selected[index] ? 'deselect' : 'select');
+    const shouldSelect =
+      modeOverride ?? (selected[index] ? 'deselect' : 'select');
     next[index] = shouldSelect === 'select';
     setSelected(next);
     onChange(selectionToValue(next));
@@ -142,11 +157,17 @@ export function TimeRangeField({ id, label, value, onChange, helperText, error, 
   useEffect(() => {
     window.addEventListener('pointerup', handlePointerUp);
     return () => window.removeEventListener('pointerup', handlePointerUp);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <FieldWrapper label={label} htmlFor={id} helperText={helperText} error={error} messageId={messageId} required={required}>
+    <FieldWrapper
+      label={label}
+      htmlFor={id}
+      helperText={helperText}
+      error={error}
+      messageId={messageId}
+      required={required}
+    >
       <div className="flex flex-col gap-3 border border-gray-200 rounded-md p-3">
         <div className="flex items-center justify-between text-xs text-gray-600">
           <span>Click or drag across 30-minute blocks to add ranges.</span>
@@ -167,7 +188,9 @@ export function TimeRangeField({ id, label, value, onChange, helperText, error, 
                     onPointerDown={() => handlePointerDown(index)}
                     onPointerEnter={() => handlePointerEnter(index)}
                     className={`h-8 cursor-pointer transition-colors outline outline-[0.5px] outline-gray-300 ${
-                      isSelected ? 'bg-green-600' : 'bg-white hover:bg-green-100'
+                      isSelected
+                        ? 'bg-green-600'
+                        : 'bg-white hover:bg-green-100'
                     }`}
                     data-testid={`${id}-slice-${index}`}
                   />

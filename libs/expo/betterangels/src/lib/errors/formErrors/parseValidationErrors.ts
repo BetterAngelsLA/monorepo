@@ -3,7 +3,7 @@ import { API_ERROR_CODE_MESSAGES } from '../../constants';
 import { TFormValidationError } from './types';
 
 export function parseValidationErrors(
-  errors: TFormValidationError[]
+  errors: TFormValidationError[],
 ): Record<string, string> {
   const formErrors: Record<string, string> = {};
 

@@ -5,12 +5,14 @@ import {
   PetChoices,
   ReferralRequirementChoices,
   RoomStyleChoices,
+  ScheduleTypeChoices,
   ShelterChoices,
   SpecialSituationRestrictionChoices,
 } from '../../apollo';
 
 export type TShelterPropertyFilters = {
-  openNow?: boolean | null;
+  openNow?: ScheduleTypeChoices[] | null;
+  openNowIncludeUnknown?: boolean | null;
   isAccessCenter?: boolean | null;
   maxStay?: { days: number; includeNull: boolean };
   demographics?: DemographicChoices[] | null;

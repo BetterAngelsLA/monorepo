@@ -25,6 +25,7 @@ interface ISingleSelectProps extends TMarginProps {
   error?: string;
   maxRadioItems?: number;
   modalTitle?: string;
+  testId?: string;
 }
 
 export function SingleSelect(props: ISingleSelectProps) {
@@ -73,7 +74,7 @@ export function SingleSelect(props: ISingleSelectProps) {
         gap: Spacings.xs,
       }}
     >
-      {label && <FormFieldLabel label={label} required={required} />}
+      {!!label && <FormFieldLabel label={label} required={required} />}
 
       {items.map(({ displayValue, value }) => (
         <Radio
@@ -86,7 +87,7 @@ export function SingleSelect(props: ISingleSelectProps) {
         />
       ))}
 
-      {error && (
+      {!!error && (
         <TextRegular size="sm" color={Colors.ERROR}>
           {error}
         </TextRegular>

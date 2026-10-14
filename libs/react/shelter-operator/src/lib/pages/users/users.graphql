@@ -1,0 +1,45 @@
+query OrganizationMembers(
+  $organizationId: String!
+  $ordering: [OrganizationMemberOrdering!]! = []
+  $pagination: OffsetPaginationInput
+  $filters: OrganizationMemberFilter
+  $orgType: OrgTypeEnum
+) {
+  organizationMembers(
+    organizationId: $organizationId
+    pagination: $pagination
+    ordering: $ordering
+    filters: $filters
+    orgType: $orgType
+  ) {
+    totalCount
+    results {
+      email
+      firstName
+      id
+      membershipId
+      lastLogin
+      lastName
+      memberRole
+      middleName
+      dateJoined
+      isOrgOwner
+      permissionTemplates
+    }
+  }
+}
+
+mutation RemoveOrganizationMember($data: RemoveOrganizationMemberInput!) {
+  removeOrganizationMember(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on DeletedObjectType {
+      id
+    }
+  }
+}

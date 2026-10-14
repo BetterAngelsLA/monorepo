@@ -1,11 +1,14 @@
 import pghistory
-from accounts.models import User
-from common.enums import SelahTeamEnum
-from common.models import BaseModel
 from django.contrib.postgres.indexes import GinIndex
+from django.core.exceptions import ValidationError
 from django.db import models
-from django_choices_field import IntegerChoicesField, TextChoicesField
+from django_choices_field import IntegerChoicesField
 from organizations.models import Organization
+
+from accounts.models import User
+from common.models import BaseModel
+from teams.models import Team
+from teams.validators import validate_team_in_org
 
 from .managers import TaskManager
 
@@ -35,7 +38,7 @@ class Task(BaseModel):
         null=True,
         related_name="tasks",
     )
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="tasks")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
     description = models.TextField(blank=True, null=True)
     note = models.ForeignKey("notes.Note", on_delete=models.CASCADE, blank=True, null=True, related_name="tasks")
     hmis_note = models.ForeignKey(
@@ -45,14 +48,24 @@ class Task(BaseModel):
         Organization,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name="tasks",
     )
     status = IntegerChoicesField(Status, default=Status.TO_DO, db_index=True)
     summary = models.CharField(max_length=100, db_index=True)
-    team = TextChoicesField(SelahTeamEnum, null=True, blank=True, db_index=True)
+    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.RESTRICT, db_index=True)
 
     def __str__(self) -> str:
         return self.summary
+
+    def clean(self) -> None:
+        """Reject a team from another organization."""
+        super().clean()
+
+        try:
+            validate_team_in_org(team_id=self.team_id, organization_id=self.organization_id)
+        except ValidationError as exc:
+            raise ValidationError({"team": exc.messages}) from exc
 
     class Meta:
         ordering = ["-updated_at"]
@@ -72,6 +85,7 @@ class Task(BaseModel):
             models.CheckConstraint(
                 condition=models.Q(note__isnull=True) | models.Q(hmis_note__isnull=True),
                 name="task_single_parent_check",
+                violation_error_message="A task belongs to one note, not both a note and an HMIS note.",
             ),
             models.CheckConstraint(
                 condition=(
@@ -80,6 +94,7 @@ class Task(BaseModel):
                     | models.Q(client_profile__isnull=True, hmis_client_profile__isnull=True)
                 ),
                 name="task_only_one_client_link",
+                violation_error_message="A task belongs to one client, not both a client profile and an HMIS client profile.",
             ),
         ]
 

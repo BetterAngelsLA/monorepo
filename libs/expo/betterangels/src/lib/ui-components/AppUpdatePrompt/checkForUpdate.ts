@@ -9,7 +9,7 @@ export async function checkForUpdate() {
 
   try {
     return await checkForUpdateAsync();
-  } catch (e) {
+  } catch {
     return {} as Updates.UpdateCheckResult;
   }
 }

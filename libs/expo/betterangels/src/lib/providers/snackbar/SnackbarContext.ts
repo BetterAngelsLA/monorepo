@@ -6,5 +6,5 @@ export type TSnackbarContext = {
 };
 
 export const SnackbarContext = createContext<TSnackbarContext | undefined>(
-  undefined
+  undefined,
 );

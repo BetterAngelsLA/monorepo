@@ -1,4 +1,4 @@
-import svg from '../../../../../../libs/expo/shared/icons/src/assets/third_party/dave_gandy/svg/fa6-solid:chevron-up.svg';
+import svg from '../../../../../../libs/expo/shared/icons/src/assets/third_party/dave_gandy/svg/fa6-solid:chevron-up.svg?raw';
 
 import { createSvgComponent } from '../../toComponent';
 

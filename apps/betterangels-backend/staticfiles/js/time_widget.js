@@ -71,12 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
           `${toggleTime(
             interval.start % 1 === 0
               ? interval.start + ':00'
-              : parseInt(interval.start) + ':30'
+              : parseInt(interval.start) + ':30',
           )}-${toggleTime(
             interval.end % 1 === 0
               ? interval.end + ':00'
-              : parseInt(interval.end) + ':30'
-          )}`
+              : parseInt(interval.end) + ':30',
+          )}`,
       );
       input.value = formatted.join(', ');
     }
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const x = i * sliceWidth;
       const slice = document.createElementNS(
         'http://www.w3.org/2000/svg',
-        'rect'
+        'rect',
       );
       slice.setAttribute('x', x);
       slice.setAttribute('y', 0);
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const y = barHeight + 15;
       const text = document.createElementNS(
         'http://www.w3.org/2000/svg',
-        'text'
+        'text',
       );
       text.setAttribute('x', x);
       text.setAttribute('y', y);
@@ -196,8 +196,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ? '12A'
             : i + 'A'
           : i === 12
-          ? '12P'
-          : (i % 12) + 'P';
+            ? '12P'
+            : (i % 12) + 'P';
       clock.appendChild(text);
     }
 
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const x = i * (barWidth / segments);
       const line = document.createElementNS(
         'http://www.w3.org/2000/svg',
-        'line'
+        'line',
       );
       line.setAttribute('x1', x);
       line.setAttribute('y1', 0);
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add top and bottom border lines.
     const topLine = document.createElementNS(
       'http://www.w3.org/2000/svg',
-      'line'
+      'line',
     );
     topLine.setAttribute('x1', 0);
     topLine.setAttribute('y1', 0);
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const bottomLine = document.createElementNS(
       'http://www.w3.org/2000/svg',
-      'line'
+      'line',
     );
     bottomLine.setAttribute('x1', 0);
     bottomLine.setAttribute('y1', barHeight);

@@ -8,18 +8,7 @@ import TextMedium from '../TextMedium';
 import * as Crypto from 'expo-crypto';
 import { Directory, File, Paths } from 'expo-file-system';
 import { drop, filter, forEach, pipe, sortBy } from 'remeda';
-
-type TProps = {
-  url?: string;
-  /** Persist a copy under cacheDirectory keyed by URL (or cacheKey). Defaults to true. */
-  cache?: boolean;
-  /** Override the cache key (useful for signed/expiring URLs). */
-  cacheKey?: string;
-  onError?: (err?: unknown) => void;
-  headers?: Record<string, string>;
-  /** Max number of cached PDFs to keep (newest kept). Disabled if undefined. */
-  maxCacheEntries?: number;
-};
+import { TPdfViewerProps } from './types';
 
 export default function PdfViewer({
   url,
@@ -28,7 +17,7 @@ export default function PdfViewer({
   onError,
   headers,
   maxCacheEntries = 20,
-}: TProps) {
+}: TPdfViewerProps) {
   const [localUri, setLocalUri] = useState<string | null>(null);
   const [hasError, setHasError] = useState<boolean>(false);
 
@@ -63,7 +52,7 @@ export default function PdfViewer({
             cacheKey ??
             (await Crypto.digestStringAsync(
               Crypto.CryptoDigestAlgorithm.SHA256,
-              url
+              url,
             ));
 
           const finalFile = new File(cacheDir, `${key}.pdf`);
@@ -99,7 +88,7 @@ export default function PdfViewer({
           // temp (non-persistent) unique file
           const tempDir = ensureDir(new Directory(Paths.cache, 'pdf-temp'));
           const name = `pdf-${Date.now()}-${Math.floor(
-            Math.random() * 1e6
+            Math.random() * 1e6,
           )}.pdf`;
           const tmp = new File(tempDir, name);
           tempFileRef.current = tmp;
@@ -217,6 +206,6 @@ function enforceCacheLimit(dir: Directory, limit: number) {
         // eslint-disable-next-line no-console
         console.debug('Cache delete failed (ignored):', f.uri, e);
       }
-    })
+    }),
   );
 }

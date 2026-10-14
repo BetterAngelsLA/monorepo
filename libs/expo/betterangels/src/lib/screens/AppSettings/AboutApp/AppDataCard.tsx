@@ -14,7 +14,7 @@ export function AppDataCard(props: TProps) {
     <View style={styles.container}>
       <TextRegular>{label}</TextRegular>
 
-      {value && <TextBold>{value}</TextBold>}
+      {!!value && <TextBold>{value}</TextBold>}
     </View>
   );
 }

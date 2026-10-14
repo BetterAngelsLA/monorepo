@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useUser } from '../../hooks';
@@ -23,20 +23,16 @@ type TClientProfileHmis =
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
-    null
+    null,
   );
   const [search, setSearch] = useState('');
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
 
-  const renderClientItem = useCallback(
-    (client: TClientProfile) => (
-      <ClientCard
-        arrivedFrom="/"
-        client={client}
-        onMenuPress={setCurrentClient}
-      />
-    ),
-    [setCurrentClient]
+  // reset search query every time the screen regains focus
+  useFocusEffect(
+    useCallback(() => {
+      setSearch('');
+    }, []),
   );
 
   const handleClientPress = useCallback((id: string) => {
@@ -46,17 +42,31 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     });
   }, []);
 
-  const renderClientItemHmis = useCallback((client: TClientProfileHmis) => {
-    const { id } = client;
+  const renderClientItem = useCallback(
+    (client: TClientProfile) => (
+      <ClientCard
+        arrivedFrom="/"
+        client={client}
+        onMenuPress={setCurrentClient}
+      />
+    ),
+    [setCurrentClient],
+  );
 
-    if (!id) {
-      return null;
-    }
+  const renderClientItemHmis = useCallback(
+    (client: TClientProfileHmis) => {
+      const { id } = client;
 
-    return (
-      <ClientCardHmis onPress={() => handleClientPress(id)} client={client} />
-    );
-  }, []);
+      if (!id) {
+        return null;
+      }
+
+      return (
+        <ClientCardHmis onPress={() => handleClientPress(id)} client={client} />
+      );
+    },
+    [handleClientPress],
+  );
 
   return (
     <View style={styles.container} testID="clients-screen">
@@ -66,14 +76,15 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         <HorizontalContainer>
           <SearchBar
             value={search}
-            placeholder="Search by name clients"
+            placeholder="Search name, phone, DOB, HMIS ID"
+            testID="clients-search-input"
             onChange={(text) => setSearch(text)}
             onClear={() => setSearch('')}
             style={{ marginBottom: Spacings.xs }}
           />
         </HorizontalContainer>
 
-        {isHmisUser ? (
+        {user?.isHmisUser ? (
           <ListClientsHmis
             filters={{ search }}
             renderItem={renderClientItemHmis}

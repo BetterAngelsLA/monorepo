@@ -13,12 +13,17 @@ import type { QueryPolicyConfig } from './types';
 
 // mock the module we delegate to
 vi.mock('./merge', () => {
-  const generateMergeFn = vi.fn((_mergeOpts?: any, _paginationVars?: any) => {
-    // return a dummy merge function Apollo would call
-    return vi.fn((existing: any, incoming: any) => {
-      return incoming ?? existing;
-    });
-  });
+  const generateMergeFn = vi.fn(
+    (
+      _mergeOpts?: Record<string, unknown>,
+      _paginationVars?: Record<string, unknown>,
+    ) => {
+      // return a dummy merge function Apollo would call
+      return vi.fn((existing: unknown, incoming: unknown) => {
+        return incoming ?? existing;
+      });
+    },
+  );
 
   return { generateMergeFn };
 });
@@ -43,14 +48,6 @@ describe('generateFieldPolicy', () => {
     paginationLimitPath: ['pagination', 'limit'],
   };
 
-  const perPageQueryPolicy: QueryPolicyConfig = {
-    paginationMode: PaginationModeEnum.PerPage,
-    itemsPath: ['results'],
-    totalCountPath: ['totalCount'],
-    paginationPagePath: ['pagination', 'page'],
-    paginationPerPagePath: ['pagination', 'perPage'],
-  };
-
   it('keeps keyArgs (array) and wires merge with offset pagination', async () => {
     const policy = generateFieldPolicy({
       keyArgs: ['filters', 'order'],
@@ -59,7 +56,7 @@ describe('generateFieldPolicy', () => {
 
     expect(policy.keyArgs).toEqual(['filters', 'order']);
     expect(
-      typeof policy.merge === 'function' || typeof policy.merge === 'boolean'
+      typeof policy.merge === 'function' || typeof policy.merge === 'boolean',
     ).toBe(true);
 
     // use dynamic import so ESM/vitest is happy
@@ -76,32 +73,29 @@ describe('generateFieldPolicy', () => {
     });
   });
 
-  it('keeps keyArgs (false) and wires merge with per-page pagination', async () => {
+  it('keeps keyArgs (false) and wires merge with offset pagination', async () => {
     const policy = generateFieldPolicy({
       keyArgs: false,
-      queryPolicyConfig: perPageQueryPolicy,
+      queryPolicyConfig: offsetQueryPolicy,
     });
 
     expect(policy.keyArgs).toBe(false);
-    expect(
-      typeof policy.merge === 'function' || typeof policy.merge === 'boolean'
-    ).toBe(true);
 
     const mockedModule = await import('./merge');
     const mockedGenerateMergeFn =
       mockedModule.generateMergeFn as unknown as MockInstance;
 
     expect(mockedGenerateMergeFn.mock.calls[0][1]).toEqual({
-      mode: PaginationModeEnum.PerPage,
-      pagePath: ['pagination', 'page'],
-      perPagePath: ['pagination', 'perPage'],
+      mode: PaginationModeEnum.Offset,
+      offsetPath: ['pagination', 'offset'],
+      limitPath: ['pagination', 'limit'],
     });
   });
 
   it('forwards mergeOpts and uses pagination derived from queryPolicyConfig', async () => {
     const mergeOpts = {
       mode: 'ARRAY',
-    } as any;
+    } as Record<string, unknown>;
 
     const policy = generateFieldPolicy({
       keyArgs: ['filters'],
@@ -113,7 +107,11 @@ describe('generateFieldPolicy', () => {
 
     // narrow to callable (Apollo types allow true/false)
     if (typeof mergeFn === 'function') {
-      mergeFn({ results: [1] }, { results: [2] }, {} as any);
+      mergeFn(
+        { results: [1] },
+        { results: [2] },
+        {} as unknown as Parameters<typeof mergeFn>[2],
+      );
     } else {
       throw new Error('mergeFn was not a function');
     }
@@ -145,7 +143,7 @@ describe('generateFieldPolicy', () => {
     if (typeof mergeFn === 'function') {
       const result = mergeFn({ results: [1, 2, 3] }, [9, 8], {
         args: { offset: 0 },
-      } as any);
+      } as unknown as Parameters<typeof mergeFn>[2]);
 
       expect(result).toEqual([9, 8]);
     } else {

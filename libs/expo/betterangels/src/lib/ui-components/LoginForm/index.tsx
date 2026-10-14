@@ -1,4 +1,4 @@
-import { useApiConfig } from '@monorepo/expo/shared/clients';
+import { useApiConfig } from '@monorepo/ba-platform';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -9,8 +9,8 @@ import { useAllauthLogin } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment } from '../../hooks';
-import useUser from '../../hooks/user/useUser';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
+import { useUser } from '../../providers/user/UserProvider';
 
 export default function LoginForm() {
   const {
@@ -24,7 +24,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
 
-  const { fetchClient } = useApiConfig();
+  const { fetch } = useApiConfig();
   const { refetchUser } = useUser();
 
   const { isValidEmail, isPasswordLogin } = useEmailEnvironment(email);
@@ -40,7 +40,7 @@ export default function LoginForm() {
     handlePasswordLogin,
     resetStep,
   } = useAllauthLogin({
-    fetchClient,
+    fetch,
     onLoginSuccess: async () => {
       await persistOnSuccessfulSignIn(email);
       await refetchUser();
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 14.5,
     color: Colors.PRIMARY_EXTRA_DARK,
-    fontFamily: 'Poppins',
-    fontWeight: 400,
+    // A `useFonts` key, not the bare family name; see FontLoader.
+    fontFamily: 'Poppins-Regular',
   },
 });

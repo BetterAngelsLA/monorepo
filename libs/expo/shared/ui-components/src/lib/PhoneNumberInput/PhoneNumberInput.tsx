@@ -5,7 +5,7 @@ import { defaultFormatValues } from './utils/defaultFormatValues';
 import { defaultParseNumber } from './utils/defaultParseNumber';
 
 export function PhoneNumberInput<
-  TFieldValues extends FieldValues = FieldValues
+  TFieldValues extends FieldValues = FieldValues,
 >(props: TPhoneNumberInputProps<TFieldValues>) {
   const {
     control,

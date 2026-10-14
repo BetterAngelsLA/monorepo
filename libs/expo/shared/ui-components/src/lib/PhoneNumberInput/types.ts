@@ -10,7 +10,7 @@ export type TPhoneWithExtension = [string, string | undefined];
 
 type TControllerRules<
   TFieldValues extends FieldValues,
-  TName extends FieldPath<TFieldValues>
+  TName extends FieldPath<TFieldValues>,
 > = Omit<
   RegisterOptions<TFieldValues, TName>,
   'disabled' | 'valueAsNumber' | 'valueAsDate' | 'setValueAs'
@@ -20,7 +20,7 @@ type TControlledProps<
   TFieldValues extends FieldValues = FieldValues,
   TContext = unknown,
   TTransformedValues = TFieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 > = {
   control: Control<TFieldValues, TContext, TTransformedValues>;
   name: TName;
@@ -64,7 +64,7 @@ type TPhoneNumberInputSharedProps = TPhoneNumberInputDisplayProps &
   TPhoneNumberInputValueProps;
 
 export type TPhoneNumberInputProps<
-  TFieldValues extends FieldValues = FieldValues
+  TFieldValues extends FieldValues = FieldValues,
 > =
   | (TPhoneNumberInputSharedProps & TControlledProps<TFieldValues>)
   | (TPhoneNumberInputSharedProps & TUncontrolledProps);

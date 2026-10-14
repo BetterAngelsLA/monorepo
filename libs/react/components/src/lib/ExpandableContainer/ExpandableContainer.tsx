@@ -73,7 +73,12 @@ export function ExpandableContainer(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className={mergeCss(headerCss)} onClick={onExpanCollapse}>
+      <div
+        role="button"
+        aria-expanded={isOpen}
+        className={mergeCss(headerCss)}
+        onClick={onExpanCollapse}
+      >
         {!!header && header}
         <ChevronLeftIcon className={mergeCss(iconCss)} />
       </div>

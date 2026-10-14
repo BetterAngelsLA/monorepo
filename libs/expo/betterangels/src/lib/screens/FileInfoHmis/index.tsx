@@ -4,7 +4,7 @@ import {
 } from '@monorepo/expo/shared/clients';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 import { Image } from 'expo-image';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
@@ -59,7 +59,7 @@ export default function FileInfoScreenHmis(props: FileInfoHmisProps) {
       </View>
       {!!createdAt && (
         <TextRegular textAlign="right" size="sm">
-          Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
+          Uploaded on {formatScalarDate(createdAt, 'MM/dd/yyyy')}
         </TextRegular>
       )}
     </View>

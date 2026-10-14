@@ -13,7 +13,7 @@ interface IOtherCategoryProps {
       serviceOther: string | null;
       serviceRequestId: string | undefined;
       markedForDeletion?: boolean;
-    }[]
+    }[],
   ) => void;
 }
 

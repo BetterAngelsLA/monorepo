@@ -32,7 +32,11 @@ export function SelectField<T extends string | number | null>({
   error,
   required,
 }: SelectFieldProps<T>) {
-  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
+  const messageId = error
+    ? `${id}-error`
+    : helperText
+      ? `${id}-helper`
+      : undefined;
 
   return (
     <FieldWrapper
@@ -48,9 +52,9 @@ export function SelectField<T extends string | number | null>({
         name={name}
         className={clsx(INPUT_CLASS, error && INPUT_ERROR_CLASS)}
         value={value === null ? '' : (value as string | number)}
-        onChange={event => {
+        onChange={(event) => {
           const raw = event.target.value;
-          const match = options.find(option => {
+          const match = options.find((option) => {
             if (option.value === null) {
               return raw === '';
             }
@@ -69,7 +73,7 @@ export function SelectField<T extends string | number | null>({
             {placeholder}
           </option>
         ) : null}
-        {options.map(option => (
+        {options.map((option) => (
           <option key={String(option.value)} value={option.value ?? ''}>
             {option.label}
           </option>

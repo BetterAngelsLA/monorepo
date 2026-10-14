@@ -2,15 +2,17 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "allowJs": false,
-    "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "strict": true
   },
   "files": [],
-  "include": [],
+  "include": ["codegen.ts"],
   "references": [
     {
       "path": "./tsconfig.lib.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
     }
   ],
   "extends": "../../../tsconfig.base.json"

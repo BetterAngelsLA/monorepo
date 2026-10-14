@@ -1,5 +1,5 @@
 import { Card, ExpandableContainer } from '@monorepo/react/components';
-import { format, isValid, parse } from 'date-fns';
+import { formatTimeString } from '@monorepo/shared/scalars';
 import { ExitPolicyChoices } from '../../../apollo';
 import { WysiwygContainer } from '../../../components';
 import {
@@ -9,16 +9,6 @@ import {
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import { InlineList } from '../common';
 import { getRestrictionsFieldVisibility } from '../utils';
-
-function formatCurfewTime(curfew: string): string {
-  const parsedTime = parse(curfew.trim(), 'HH:mm:ss', new Date());
-
-  if (!isValid(parsedTime)) {
-    return curfew;
-  }
-
-  return format(parsedTime, 'h:mm a');
-}
 
 export function Restrictions({
   shelter,
@@ -30,7 +20,7 @@ export function Restrictions({
     shelter.exitPolicy as readonly { name?: ExitPolicyChoices.Other | null }[],
     shelter.exitPolicyOther,
     enumDisplayExitPolicyChoices,
-    ExitPolicyChoices.Other
+    ExitPolicyChoices.Other,
   );
 
   return (
@@ -50,7 +40,7 @@ export function Restrictions({
         {fieldVisibility.curfew && (
           <div className="flex gap-1">
             <strong>Curfew:</strong>
-            {shelter.curfew ? formatCurfewTime(shelter.curfew) : 'No'}
+            {shelter.curfew ? formatTimeString(shelter.curfew, 'h:mm a') : 'No'}
           </div>
         )}
 

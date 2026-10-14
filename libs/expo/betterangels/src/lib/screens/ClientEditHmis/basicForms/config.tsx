@@ -66,7 +66,7 @@ export const formConfigHmis = {
 >;
 
 export function parseAsSectionKeyHmis(
-  value: unknown
+  value: unknown,
 ): TFormSectionKeyHmis | null {
   if (typeof value === 'string' && value in formConfigHmis) {
     return value as TFormSectionKeyHmis;

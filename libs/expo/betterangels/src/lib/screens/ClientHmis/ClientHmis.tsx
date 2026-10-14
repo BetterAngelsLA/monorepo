@@ -31,6 +31,7 @@ const tabLabelsHmis: Record<ClientViewTabEnum, string> = {
   [ClientViewTabEnum.Interactions]: 'Notes',
   [ClientViewTabEnum.Locations]: ClientViewTabEnum.Locations,
   [ClientViewTabEnum.Tasks]: ClientViewTabEnum.Tasks,
+  [ClientViewTabEnum.Referrals]: ClientViewTabEnum.Referrals,
 };
 
 type TProps = {
@@ -70,7 +71,7 @@ export function ClientHmis(props: TProps) {
 
     const hasClientNotFoundError = hasGqlCombinedApiError(
       API_ERROR_CODES.NOT_FOUND,
-      error
+      error,
     );
 
     const message = hasClientNotFoundError

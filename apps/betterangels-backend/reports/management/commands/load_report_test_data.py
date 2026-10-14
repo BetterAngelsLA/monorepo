@@ -14,11 +14,12 @@ import random
 from datetime import timedelta
 from typing import Any
 
-from accounts.models import User
-from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
 from django.core.management.base import BaseCommand, CommandParser
 from django.utils import timezone
+from organizations.models import Organization
+
+from accounts.models import User
+from clients.models import ClientProfile
 from notes.enums import ServiceRequestStatusEnum
 from notes.models import (
     Note,
@@ -26,7 +27,7 @@ from notes.models import (
     OrganizationServiceCategory,
     ServiceRequest,
 )
-from organizations.models import Organization
+from teams.models import Team
 
 PURPOSES = [
     "Outreach",
@@ -150,7 +151,16 @@ LAST_NAMES = [
     "Martin",
 ]
 
-TEAMS = list(SelahTeamEnum)
+# Seed teams for local dev, created via get_or_create so the command is
+# self-contained and re-runnable.
+SEED_TEAMS = [
+    "Morning Outreach",
+    "Evening Outreach",
+    "Drop-in Center",
+    "Street Medicine",
+    "Housing Navigation",
+    "Shelter Operations",
+]
 
 
 class Command(BaseCommand):
@@ -191,6 +201,11 @@ class Command(BaseCommand):
             count, _ = Note.objects.filter(organization=org).delete()
             self.stdout.write(self.style.WARNING(f"Deleted {count} existing objects for test_org."))
 
+        teams = []
+        for team_name in SEED_TEAMS:
+            team, _ = Team.objects.get_or_create(name=team_name, organization=org)
+            teams.append(team)
+
         num_notes = options["notes"]
 
         # 1. Create service categories and services
@@ -218,7 +233,7 @@ class Command(BaseCommand):
             random_hours = random.randint(8, 20)  # business hours
             interaction_date = three_months_ago + timedelta(days=random_days, hours=random_hours)
 
-            team = random.choice(TEAMS)
+            team = random.choice(teams)
             purpose = random.choice(PURPOSES)
 
             note = Note.objects.create(
@@ -228,7 +243,7 @@ class Command(BaseCommand):
                 team=team,
                 purpose=purpose,
                 is_submitted=True,
-                public_details=f"Test interaction #{i + 1} - {purpose} by {team.label}",
+                public_details=f"Test interaction #{i + 1} - {purpose} by {team.name}",
                 client_profile=random.choice(clients),
             )
 
@@ -266,7 +281,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"\nDone! Created {notes_created} notes for test_org spanning the last 90 days.")
         )
         self.stdout.write(f"  Date range: {three_months_ago.date()} to {now.date()}")
-        self.stdout.write(f"  Teams used: {len(TEAMS)}")
+        self.stdout.write(f"  Teams used: {len(teams)}")
         self.stdout.write(f"  Purposes used: {len(PURPOSES)}")
         self.stdout.write(f"  Services available: {len(services)}")
         self.stdout.write(f"  Unique clients: {len(clients)}")

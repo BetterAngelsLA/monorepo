@@ -1,8 +1,8 @@
-import { OperationInfo } from '../__generated__/types';
+import { OperationInfo } from '@monorepo/ba-platform/types';
 
 export function extractOperationInfo(
   responseOrData: unknown,
-  queryKey: string
+  queryKey: string,
 ): OperationInfo | null {
   if (!responseOrData || typeof responseOrData !== 'object') {
     return null;

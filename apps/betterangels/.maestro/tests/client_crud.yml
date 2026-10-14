@@ -1,0 +1,104 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../lib/framework/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+- assertVisible: 'Clients'
+
+# visit create client profile page
+- tapOn:
+    id: 'main-plus-tab-btn'
+
+- tapOn: 'Add client'
+
+################################
+######## CREATE PROFILE ########
+################################
+- assertVisible: 'Create Client Profile'
+
+# generate unique test data
+- evalScript: ${output.runId = Date.now()}
+- evalScript: ${output.caId = String.fromCharCode(65 + Math.floor(Math.random() * 26)) + String(output.runId).slice(-7)}
+- evalScript: ${output.clientFirstName = "e2e-test-firstName-" + String(output.runId)}
+
+# fill out form
+- tapOn:
+    id: 'firstName'
+- inputText: ${output.clientFirstName}
+- hideKeyboard
+
+# Submit
+- tapOn:
+    id: 'action-btn-primary'
+- waitForAnimationToEnd
+
+- assertVisible: ${output.clientFirstName} # header
+- assertVisible: 'Full Name' # label
+- assertVisible: 'Profile' # tab
+
+# ####################################
+# ######## EDIT Personal Info ########
+# ####################################
+
+# Edit Personal Info
+- tapOn:
+    id: 'expand-personal-info'
+- waitForAnimationToEnd
+
+# numeric-datepicker-input
+
+- assertVisible:
+    id: 'expand-full-name' # Full Name section should be collapsed
+
+- tapOn:
+    id: 'edit-personal-info'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'californiaId'
+- inputText: ${output.caId}
+- hideKeyboard
+
+- tapOn:
+    id: 'datepicker-input'
+- inputText: '5/31/1992' # bypasses actual datepicker for now and just enters date
+- tapOn: 'Done'
+
+- tapOn:
+    id: 'living-situation-select'
+- waitForAnimationToEnd
+- tapOn: 'Tent'
+
+# Submit
+- tapOn:
+    id: 'action-btn-primary'
+- waitForAnimationToEnd
+
+- assertVisible: ${output.caId}
+- assertVisible: '05/31/1992'
+- scrollUntilVisible:
+    element:
+      text: 'Tent'
+- assertVisible: 'Tent'
+
+# ################################
+# ######## DELETE PROFILE ########
+# ################################
+- tapOn:
+    id: 'client-nav-menu-open-btn'
+
+- tapOn:
+    id: 'client-nav-menu-delete-profile-btn'
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: 'delete-modal-confirm-btn'
+    timeout: 3000
+- tapOn:
+    id: 'delete-modal-confirm-btn'
+- waitForAnimationToEnd
+
+- assertVisible: 'Clients'

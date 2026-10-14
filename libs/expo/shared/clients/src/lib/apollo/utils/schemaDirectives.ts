@@ -49,10 +49,10 @@ export function getOperationsByDirective(directiveName: string): Set<string> {
       filter(isQueryOrMutationDef),
       flatMap((def) => (def.fields ?? []) as readonly FieldDefinitionNode[]),
       filter((field): field is FieldDefinitionNode =>
-        hasDirectiveNamed(field, directiveName)
+        hasDirectiveNamed(field, directiveName),
       ),
-      map((field) => field.name.value)
-    )
+      map((field) => field.name.value),
+    ),
   );
 
   directiveCache.set(directiveName, ops);
@@ -67,7 +67,7 @@ export function getOperationsByDirective(directiveName: string): Set<string> {
  */
 export function operationHasDirective(
   operation: OperationDefinitionNode | undefined,
-  directiveName: string
+  directiveName: string,
 ): boolean {
   if (!operation?.selectionSet) return false;
 
@@ -75,6 +75,6 @@ export function operationHasDirective(
 
   return operation.selectionSet.selections.some(
     (selection) =>
-      selection.kind === Kind.FIELD && directiveOps.has(selection.name.value)
+      selection.kind === Kind.FIELD && directiveOps.has(selection.name.value),
   );
 }

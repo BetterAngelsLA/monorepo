@@ -25,7 +25,7 @@ export function ModalHeader(props: IProps) {
         paddingBottom: Spacings.xxs,
       }}
     >
-      {title && (
+      {!!title && (
         <TextMedium
           textAlign="center"
           size="md"

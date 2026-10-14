@@ -1,7 +1,0 @@
-appId: ${MAESTRO_APP_ID}
----
-- tapOn:
-    id: 'nav-menu-btn'
-
-- assertVisible:
-    id: 'nav-menu'

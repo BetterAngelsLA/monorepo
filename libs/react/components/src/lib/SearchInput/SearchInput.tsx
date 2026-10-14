@@ -32,7 +32,7 @@ export function SearchInput(props: TProps) {
 
   const debouncedChange = useMemo(
     () => debounce(onChange, debounceMs),
-    [onChange, debounceMs]
+    [onChange, debounceMs],
   );
 
   useEffect(() => {
@@ -48,9 +48,7 @@ export function SearchInput(props: TProps) {
       placeholder={placeholder}
       value={internalValue}
       error={error}
-      onChange={(e) => {
-        const text = e.target.value;
-
+      onChange={(text) => {
         setInternalValue(text);
 
         if (debounceMs > 0) {

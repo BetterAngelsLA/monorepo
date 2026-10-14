@@ -1,0 +1,52 @@
+query ClientReferrals(
+  $filters: ReferralFilter
+  $pagination: OffsetPaginationInput
+) {
+  referrals(filters: $filters, pagination: $pagination) {
+    results {
+      id
+      status
+      notes
+      createdAt
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+      shelter {
+        id
+        name
+        location {
+          place
+        }
+        pets {
+          name
+        }
+        demographics {
+          name
+        }
+        accessibility {
+          name
+        }
+      }
+    }
+    totalCount
+  }
+}
+
+mutation CreateReferral($data: CreateReferralInput!) {
+  createReferral(data: $data) {
+    # The consumer only checks the payload type and the returned id (the list is
+    # refetched), so nothing else is requested.
+    ... on ReferralType {
+      id
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

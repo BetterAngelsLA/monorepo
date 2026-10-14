@@ -3,7 +3,7 @@ import * as R from 'remeda';
 
 export function groupFilesByCategory(
   files: ClientFile[],
-  categories: FileCategory[]
+  categories: FileCategory[],
 ) {
   const categoriesById = R.indexBy(categories, (c) => c.id);
 
@@ -18,6 +18,6 @@ export function groupFilesByCategory(
         status: 0,
       },
       files: groupFiles,
-    }))
+    })),
   );
 }

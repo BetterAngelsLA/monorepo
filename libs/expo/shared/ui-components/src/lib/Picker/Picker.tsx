@@ -22,12 +22,16 @@ export default function Picker(props: IPickerProps) {
     disabled,
     modalTitle,
     placeholderTextColor,
+    testId,
   } = props;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const open = useCallback(() => {
     if (disabled) return;
+
+    // A field with the keyboard up would otherwise keep it while the modal is
+    // open. Nothing opens from focus, so there is no focus to hand back.
     Keyboard.dismiss();
     setIsModalVisible(true);
   }, [disabled]);
@@ -37,11 +41,12 @@ export default function Picker(props: IPickerProps) {
   const onSelect = useCallback(
     (newValue: string) => {
       Keyboard.dismiss();
-      setIsModalVisible(false);
+      close();
+
       if (newValue === NONE_VALUE) return onChange(null);
       onChange(newValue);
     },
-    [onChange]
+    [close, onChange],
   );
 
   return (
@@ -53,10 +58,11 @@ export default function Picker(props: IPickerProps) {
         placeholder={placeholder}
         placeholderTextColor={placeholderTextColor}
         selectedValue={selectedValue}
-        onFocus={open}
+        onOpen={open}
         items={items}
         label={label}
         error={error}
+        testId={testId}
       />
 
       <PickerModal

@@ -16,7 +16,8 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
-import { useActiveOrg, useApiConfig } from '../../providers';
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { formatBucketLabel } from './formatBucketLabel';
 import { ReportSummaryDocument } from './__generated__/reports.generated';
 
 const { RangePicker } = DatePicker;
@@ -32,7 +33,7 @@ function getDefaultRange(): [Dayjs, Dayjs] {
   return [start, end];
 }
 
-function formatDate(d: Dayjs): string {
+function formatScalarDate(d: Dayjs): string {
   return d.format('YYYY-MM-DD');
 }
 
@@ -43,25 +44,25 @@ const CHART_COLORS = {
 } as const;
 
 export default function Reports({ className = '' }: IProps) {
-  const { fetchClient } = useApiConfig();
   const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
-  const { download, isDownloading, error, clearError } =
-    useCSVDownload(fetchClient);
+  const { download, isDownloading, error, clearError } = useCSVDownload();
 
   const [startDate, endDate] = dateRange;
-  const startStr = formatDate(startDate);
-  const endStr = formatDate(endDate);
+  const startStr = formatScalarDate(startDate);
+  const endStr = formatScalarDate(endDate);
 
   const { data, loading } = useQuery(ReportSummaryDocument, {
     variables: {
-      organizationId: activeOrg?.id,
+      // reportSummary carries its org in the payload; '' is never sent because
+      // the query is skipped without an active org.
+      organizationId: activeOrg ? activeOrg.id : '',
       startDate: startStr,
       endDate: endStr,
     },
     skip: !activeOrg,
   });
-  const summary = data?.reportSummary ?? null;
+  const summary = data?.reportSummary;
 
   const orgName = activeOrg?.name ?? 'Your Organization';
 
@@ -75,7 +76,7 @@ export default function Reports({ className = '' }: IProps) {
   const handleDownload = () => download(startStr, endStr, activeOrg?.id);
 
   const totalServices =
-    summary?.topProvidedServices.reduce((s, x) => s + x.count, 0) ?? 0;
+    summary?.topProvidedServices?.reduce((s, x) => s + (x.count ?? 0), 0) ?? 0;
 
   return (
     <div className={`flex flex-col gap-6 ${className}`}>
@@ -146,7 +147,7 @@ export default function Reports({ className = '' }: IProps) {
               <Card>
                 <Statistic
                   title="Active Teams"
-                  value={summary.notesByTeam.length}
+                  value={summary.notesByTeam?.length ?? 0}
                 />
               </Card>
             </Col>
@@ -159,7 +160,7 @@ export default function Reports({ className = '' }: IProps) {
 
           {/* Charts */}
           <Row gutter={[16, 16]}>
-            {summary.notesByDate.length > 0 && (
+            {(summary.notesByDate?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Interactions Over Time">
                   <Column
@@ -168,13 +169,7 @@ export default function Reports({ className = '' }: IProps) {
                     yField="count"
                     height={300}
                     xAxis={{
-                      label: {
-                        autoRotate: true,
-                        formatter: (v: string) => {
-                          const d = new Date(v);
-                          return `${d.getMonth() + 1}/${d.getDate()}`;
-                        },
-                      },
+                      label: { autoRotate: true, formatter: formatBucketLabel },
                     }}
                     yAxis={{ title: { text: 'Interactions' } }}
                     color={CHART_COLORS.primary}
@@ -183,7 +178,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.uniqueClientsByDate.length > 0 && (
+            {(summary.uniqueClientsByDate?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Unique Clients Over Time">
                   <Column
@@ -192,13 +187,7 @@ export default function Reports({ className = '' }: IProps) {
                     yField="count"
                     height={300}
                     xAxis={{
-                      label: {
-                        autoRotate: true,
-                        formatter: (v: string) => {
-                          const d = new Date(v);
-                          return `${d.getMonth() + 1}/${d.getDate()}`;
-                        },
-                      },
+                      label: { autoRotate: true, formatter: formatBucketLabel },
                     }}
                     yAxis={{ title: { text: 'Clients' } }}
                     color="#6A1B9A"
@@ -207,7 +196,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.notesByTeam.length > 0 && (
+            {(summary.notesByTeam?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Interactions by Team">
                   <Column
@@ -225,7 +214,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.notesByPurpose.length > 0 && (
+            {(summary.notesByPurpose?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Top Purposes">
                   <Pie
@@ -242,7 +231,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.topProvidedServices.length > 0 && (
+            {(summary.topProvidedServices?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Top Provided Services">
                   <Column
@@ -260,7 +249,7 @@ export default function Reports({ className = '' }: IProps) {
               </Col>
             )}
 
-            {summary.topRequestedServices.length > 0 && (
+            {(summary.topRequestedServices?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Top Requested Services">
                   <Column

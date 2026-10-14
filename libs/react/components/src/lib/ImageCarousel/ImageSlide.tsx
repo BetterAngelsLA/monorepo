@@ -28,7 +28,7 @@ export function ImageSlide(props: TProps) {
   const imageCss = ['block', 'w-full', 'h-full', 'object-cover', imgClassName];
 
   return (
-    <div className={mergeCss(parentCss)} onClick={onClick}>
+    <div role="button" className={mergeCss(parentCss)} onClick={onClick}>
       <img
         src={imageSrc}
         className={mergeCss(imageCss)}

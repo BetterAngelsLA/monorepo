@@ -1,5 +1,5 @@
 import { RefObject } from 'react';
-import { EdgePadding } from 'react-native-maps';
+import { EdgePadding, Region } from 'react-native-maps';
 import Supercluster, {
   AnyProps,
   ClusterFeature,
@@ -71,7 +71,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
 
   getClusters(
     bbox: [number, number, number, number],
-    zoom: number
+    zoom: number,
   ): Array<ClusterOrPoint<P>> {
     const raw = this.clusterIndex.getClusters(bbox, zoom);
 
@@ -85,7 +85,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       const cluster = feat as TClusterPoint<P>;
 
       const expansion = this.clusterIndex.getClusterExpansionZoom(
-        cluster.properties.cluster_id
+        cluster.properties.cluster_id,
       );
 
       const clusterCanZoomMore = expansion < this.maxZoom;
@@ -120,7 +120,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
     return this.clusterIndex.getLeaves(
       clusterId,
       limit,
-      offset
+      offset,
     ) as PointFeature<P>[];
   }
 
@@ -128,8 +128,23 @@ export class MapClusterManager<P extends IClusterGeoJson> {
     return this.clusterIndex.getClusterExpansionZoom(clusterId);
   }
 
+  /**
+   * Whether zooming into this cluster would separate it from where the map is now.
+   * When it would not, a caller should show the cluster's contents instead of
+   * fitting leaves that are already on screen.
+   */
+  canExpandFurther(clusterId: number, currentZoom?: number): boolean {
+    if (currentZoom === undefined) {
+      return true;
+    }
+
+    // Half a level: `getClusterExpansionZoom` returns a whole level, and the
+    // map's own zoom is fractional.
+    return this.getClusterExpansionZoom(clusterId) > currentZoom + 0.5;
+  }
+
   getClusterChildren(
-    clusterId: number
+    clusterId: number,
   ): Array<PointFeature<P> | ClusterFeature<AnyProps>> {
     return this.clusterIndex.getChildren(clusterId);
   }
@@ -140,7 +155,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       paddingMultiplier?: number;
       animateDuration?: number;
       fallbackDelta?: number;
-    }
+    },
   ) {
     const { paddingMultiplier = 2, fallbackDelta = 0.02 } = options || {};
     const leaves = this.getLeaves(clusterId);
@@ -172,7 +187,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       paddingMultiplier?: number;
       fallbackDelta?: number;
       animateDuration?: number;
-    }
+    },
   ) {
     if (!mapRef.current) {
       return;
@@ -185,7 +200,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
 
     mapRef.current.animateToRegion(
       region,
-      options?.animateDuration ?? defaultAnimationDuration
+      options?.animateDuration ?? defaultAnimationDuration,
     );
   }
 
@@ -207,13 +222,22 @@ export class MapClusterManager<P extends IClusterGeoJson> {
     return sorted.find((b) => leavesCount <= b.max)?.padding ?? maxPadding;
   }
 
-  // alternative to animateToCluster (animateToRegion)
-  // animates to fit selected cluster leaves on map
-  fitToCluster(clusterId: number, mapRef: RefObject<TMapView | null>) {
+  /**
+   * Fit the map to a cluster's points, resolving with the region it settled at when
+   * the map can report one.
+   *
+   * Web fires no region callback for a programmatic fit, so without this the caller
+   * keeps the clusters it computed at the previous zoom. Native reports the move
+   * itself, so there the resolved region only saves the caller a round trip.
+   */
+  async fitToCluster(
+    clusterId: number,
+    mapRef: RefObject<TMapView | null>,
+  ): Promise<Region | undefined> {
     const map = mapRef.current;
 
     if (!map) {
-      return;
+      return undefined;
     }
 
     const leaves = this.getLeaves(clusterId);
@@ -229,5 +253,63 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       edgePadding: padding || defaultEdgePadding,
       animated: true,
     });
+
+    return waitForSettledRegion(map);
   }
+}
+
+type TMapBoundaries = {
+  northEast: { latitude: number; longitude: number };
+  southWest: { latitude: number; longitude: number };
+};
+
+function boundsToRegion(bounds: TMapBoundaries): Region {
+  const { northEast, southWest } = bounds;
+
+  return {
+    latitude: (northEast.latitude + southWest.latitude) / 2,
+    longitude: (northEast.longitude + southWest.longitude) / 2,
+    latitudeDelta: Math.abs(northEast.latitude - southWest.latitude),
+    longitudeDelta: Math.abs(northEast.longitude - southWest.longitude),
+  };
+}
+
+/**
+ * Poll the map's bounds until two reads agree — i.e. until the animated fit stops
+ * moving. `undefined` when the map cannot report bounds.
+ */
+async function waitForSettledRegion(
+  map: TMapView,
+  intervalMs = 100,
+  attempts = 20,
+): Promise<Region | undefined> {
+  const getBounds = (
+    map as TMapView & { getMapBoundaries?: () => Promise<TMapBoundaries> }
+  ).getMapBoundaries;
+
+  if (typeof getBounds !== 'function') {
+    return undefined;
+  }
+
+  let previous = '';
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+
+    const bounds = await getBounds().catch(() => undefined);
+
+    if (!bounds) {
+      continue;
+    }
+
+    const key = JSON.stringify(bounds);
+
+    if (key === previous) {
+      return boundsToRegion(bounds);
+    }
+
+    previous = key;
+  }
+
+  return undefined;
 }

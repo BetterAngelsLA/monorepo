@@ -5,7 +5,6 @@ type TProps = {
   content?: ReactNode;
   label?: string;
   className?: string;
-
   lineClassName?: string;
   labelClassName?: string;
 };

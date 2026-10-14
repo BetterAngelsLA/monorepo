@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import { SelahTeamEnum, TaskStatusEnum, UpdateTaskInput } from '../../apollo';
+import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { DraftTask as LocalDraftTask } from '../../screens/NotesHmis/NoteFormHmis/formSchema';
@@ -22,7 +22,7 @@ export interface TaskFormData {
   summary: string | null;
   description?: string | null;
   status?: TaskStatusEnum | null;
-  team?: SelahTeamEnum | null;
+  teamId?: string | null;
 }
 
 interface INoteTasksProps {
@@ -39,7 +39,7 @@ interface INoteTasksProps {
 
   // Live Handlers
   refetch?: () => void;
-  team?: SelahTeamEnum | null;
+  teamId?: string | null;
 
   // Visibility
   hideIfEmpty?: boolean;
@@ -54,7 +54,7 @@ export default function NoteTasks(props: INoteTasksProps) {
     tasks = [],
     scrollRef,
     refetch,
-    team,
+    teamId,
     isDraftMode = false,
     onDraftTasksChange,
     hideIfEmpty = false,
@@ -70,7 +70,7 @@ export default function NoteTasks(props: INoteTasksProps) {
     update(cache, { data }) {
       if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
         console.error(
-          `[DeleteTask] failed to delete Task __typename DeletedObjectType missing from response.`
+          `[DeleteTask] failed to delete Task __typename DeletedObjectType missing from response.`,
         );
 
         return;
@@ -94,16 +94,17 @@ export default function NoteTasks(props: INoteTasksProps) {
     if (!onDraftTasksChange) return;
 
     const newTask: LocalDraftTask = {
+      // eslint-disable-next-line react-hooks/purity -- Date.now() is called in event handler, not render
       id: existingId || `temp-${Date.now()}`,
       summary: data.summary,
       description: data.description || '',
       status: (data.status as TaskStatusEnum) || TaskStatusEnum.ToDo,
-      team: (data.team as SelahTeamEnum) || team || null,
+      teamId: data.teamId ?? teamId ?? null,
     };
 
     if (existingId) {
       const updatedList = (tasks as LocalDraftTask[]).map((t) =>
-        t.id === existingId ? newTask : t
+        t.id === existingId ? newTask : t,
       );
       onDraftTasksChange(updatedList);
     } else {
@@ -121,7 +122,7 @@ export default function NoteTasks(props: INoteTasksProps) {
   const handleLiveSave = async (data: TaskFormData, existingId?: string) => {
     try {
       const cleanStatus = data.status || undefined;
-      const cleanTeam = !data.team ? null : data.team;
+      const cleanTeamId = !data.teamId ? null : data.teamId;
 
       if (existingId) {
         await updateTask({
@@ -129,7 +130,7 @@ export default function NoteTasks(props: INoteTasksProps) {
             data: {
               ...data,
               status: cleanStatus,
-              team: cleanTeam,
+              teamId: cleanTeamId,
               id: existingId,
             },
           },
@@ -144,16 +145,17 @@ export default function NoteTasks(props: INoteTasksProps) {
               status: cleanStatus,
               clientProfile: clientProfileId,
               hmisClientProfile: hmisClientProfileId,
-              team: cleanTeam || team || null,
+              teamId: cleanTeamId ?? teamId ?? undefined,
               // Handle linking to either Note type
-              note: noteId || null,
-              hmisNote: hmisNoteId || null,
+              note: noteId ?? undefined,
+              hmisNote: hmisNoteId ?? undefined,
             },
           },
         });
       }
       refetch?.();
     } catch (err) {
+      console.error(err);
       showSnackbar({ message: 'Failed to save task', type: 'error' });
     }
   };
@@ -166,6 +168,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       refetch?.();
       showSnackbar({ message: 'Task deleted', type: 'success' });
     } catch (err) {
+      console.error(err);
       showSnackbar({ message: 'Failed to delete task', type: 'error' });
     }
   };
@@ -185,7 +188,7 @@ export default function NoteTasks(props: INoteTasksProps) {
           summary: taskToEdit.summary,
           description: taskToEdit.description || undefined,
           status: taskToEdit.status,
-          team: taskToEdit.team,
+          teamId: taskToEdit.teamId,
         } as UpdateTaskInput)
       : undefined;
 
@@ -199,7 +202,7 @@ export default function NoteTasks(props: INoteTasksProps) {
           noteId={noteId}
           hmisNoteId={hmisNoteId}
           task={taskProp}
-          team={team}
+          teamId={teamId}
           // ESLint Fix: async fallback
           refetch={refetch || (async () => undefined)}
           closeModal={close}
@@ -228,13 +231,11 @@ export default function NoteTasks(props: INoteTasksProps) {
   }
 
   // 2. Logic: If no tasks, show the card (in Edit/Create modes), but NO header action.
-  const actionName = '';
-
   return (
     <FieldCard
       scrollRef={scrollRef}
       mb="xs"
-      actionName={actionName}
+      actionName={null}
       title="Follow-Up Tasks"
       setExpanded={() => {
         // If the list is empty, clicking the header/card opens the Add Modal

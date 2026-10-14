@@ -53,7 +53,7 @@ export function DirectionsPopup(props: IDirectionsPopupProps) {
           <View style={styles.modalContainer}>
             <Pressable
               onPress={() => setChooseDirections(false)}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               accessibilityRole="button"
               accessibilityHint="Closes the map selection"
             />

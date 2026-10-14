@@ -10,7 +10,9 @@ export type InputDataType =
   | 'number'
   | 'email'
   | 'phone-number'
-  | 'time';
+  | 'time'
+  | 'date'
+  | 'url';
 export type InputVariant = 'default' | 'paragraph';
 
 type NativeAttrsOmit =
@@ -23,14 +25,16 @@ type NativeAttrsOmit =
 
 type SharedCustomProps = {
   label?: string;
+  labelSuffix?: string;
   error?: string;
   dataType?: InputDataType;
   className?: string;
+  labelSuffixClassName?: string;
   containerClassName?: string;
   inputClassName?: string;
   isActive?: boolean;
+  isViewMode?: boolean;
   showErrorIcon?: boolean;
-  isTouched?: boolean;
   /** Only applied when `variant` is `"paragraph"`. */
   rows?: number;
   onFocus?: (e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;

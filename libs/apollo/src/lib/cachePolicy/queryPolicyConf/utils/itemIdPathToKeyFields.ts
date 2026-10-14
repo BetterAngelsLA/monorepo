@@ -5,7 +5,7 @@ import { toPathArray } from '../../../utils';
  * Example: "meta.client.id" → ["id"]
  */
 export function itemIdPathToKeyFields(
-  itemIdPath?: string | ReadonlyArray<string>
+  itemIdPath?: string | ReadonlyArray<string>,
 ): string[] | undefined {
   if (!itemIdPath) {
     return undefined;

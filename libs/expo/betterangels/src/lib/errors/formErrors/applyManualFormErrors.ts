@@ -3,7 +3,7 @@ import { TFormValidationError } from './types';
 
 export function applyManualFormErrors<T>(
   errors: TFormValidationError[],
-  setError: (name: keyof T, error: { type: string; message: string }) => void
+  setError: (name: keyof T, error: { type: string; message: string }) => void,
 ) {
   const formErrors = parseValidationErrors(errors);
 

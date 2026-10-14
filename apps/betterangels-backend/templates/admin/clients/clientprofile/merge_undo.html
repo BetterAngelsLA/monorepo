@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content_title %}
+  <h1>Undo Merge</h1>
+  <p style="margin: 0 0 16px 0;">
+    This will restore the following profiles that were merged into
+    <strong>{{ target.full_name }}</strong> (ID: {{ target.pk }}):
+  </p>
+{% endblock %}
+
+{% block content %}
+
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>ID</th>
+      <th>Merged At</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for source in sources %}
+    <tr style="border-bottom: 1px solid #eee;">
+      <td><strong>{{ source.full_name }}</strong></td>
+      <td>{{ source.pk }}</td>
+      <td>{{ source.merged_at|date:"Y-m-d H:i" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; margin-bottom: 16px; border-radius: 4px;">
+  <strong>⚠️ What will happen:</strong>
+  <ul>
+    <li>All related objects (notes, contacts, documents, etc.) will be moved back to their original profiles.</li>
+    <li>Scalar fields (name, email, etc.) will be restored to their pre-merge values.</li>
+    <li>The source profiles will become active again.</li>
+  </ul>
+  <p style="margin-bottom: 0;"><strong>Note:</strong> If any related objects were deleted after the merge, they will be skipped.</p>
+</div>
+
+<form method="post" action="">
+  {% csrf_token %}
+  <button type="submit" name="confirm_undo" value="1" class="button default"
+          style="font-size: 14px; padding: 10px 20px; background: #dc3545;">
+    ↩️ Confirm Undo
+  </button>
+  <a href="{% url 'admin:clients_clientprofile_change' target.pk %}" class="button cancel-link"
+     style="margin-left: 10px;">Cancel</a>
+</form>
+{% endblock %}

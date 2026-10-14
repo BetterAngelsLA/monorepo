@@ -5,7 +5,7 @@ import {
 } from './formSchema';
 
 export function mapClientToDemographicSchema(
-  client: HmisClientProfileType
+  client: HmisClientProfileType,
 ): TDemographicInfoFormSchema {
   const {
     gender,

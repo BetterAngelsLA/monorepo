@@ -2,13 +2,14 @@ from typing import TYPE_CHECKING, Annotated, Optional
 
 import strawberry
 import strawberry_django
+from django.db.models import Q
+from strawberry import ID, UNSET, Info, Maybe, auto
+
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
-from common.enums import SelahTeamEnum
 from common.graphql.types import make_in_filter
-from django.db.models import Q
-from strawberry import ID, UNSET, Info, auto
 from tasks.enums import TaskStatusEnum
+from teams.types import TeamType
 
 from . import models
 
@@ -28,7 +29,7 @@ class TaskFilter:
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
     status = make_in_filter("status", TaskStatusEnum)
-    teams = make_in_filter("team", SelahTeamEnum)
+    team_ids = make_in_filter("team", ID)
 
     @strawberry_django.filter_field
     def search(self, info: Info, value: Optional[str], prefix: str) -> Q:
@@ -112,7 +113,10 @@ class TaskType:
     organization: Optional[OrganizationType]
     status: Optional[TaskStatusEnum]
     summary: Optional[str]
-    team: Optional[SelahTeamEnum]
+    team: Optional[TeamType]
+
+    # Deprecated alias for ``team`` — see ``NoteType.current_team``.
+    current_team: Optional[TeamType] = strawberry_django.field(field_name="team", deprecation_reason="Use team instead")
     updated_at: auto
 
 
@@ -124,14 +128,20 @@ class CreateTaskInput:
     note: Optional[ID]
     hmis_note: Optional[ID]
     summary: str
-    team: Optional[SelahTeamEnum]
+    team_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]
 
 
 @strawberry_django.input(models.Task, partial=True)
 class UpdateTaskInput:
+    """
+    Input for updating a task.
+    Omitted fields are left unchanged — UNSET for the plain ``Optional``
+    fields, absent (``None``) for the ``Maybe`` ones.
+    """
+
     id: ID
     description: auto
     summary: auto
-    team: Optional[SelahTeamEnum]
+    team_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]

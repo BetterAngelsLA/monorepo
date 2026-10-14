@@ -23,7 +23,10 @@ export const UPDATE_NOTE = gql`
       ... on NoteType {
         id
         purpose
-        team
+        team {
+          id
+          name
+        }
         publicDetails
         isSubmitted
         interactedAt

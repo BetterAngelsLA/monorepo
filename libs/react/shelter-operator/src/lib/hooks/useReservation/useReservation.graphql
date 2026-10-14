@@ -1,0 +1,27 @@
+query Reservation($id: ID!) {
+  reservation(pk: $id) {
+    id
+    status
+    startDate
+    notes
+    bed {
+      id
+      name
+    }
+    room {
+      id
+      name
+    }
+    clients {
+      id
+      isPrimary
+      clientProfile {
+        id
+        firstName
+        middleName
+        lastName
+        nickname
+      }
+    }
+  }
+}

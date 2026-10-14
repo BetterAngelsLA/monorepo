@@ -6,8 +6,22 @@ node_modules
 .yarn
 !.yarn/releases
 !.yarn/plugins
+# Yarn `patch:` resolutions are read during `yarn install`; the Dockerfile's
+# yarn stage copies .yarn, so dropping these breaks filesystem-context builds.
+!.yarn/patches
 dist
 reports
 **/.venv
 **/.mypy_cache
+**/.pytest_cache
+**/.ruff_cache
+**/__pycache__
 **/tmp
+logs/
+tmp/
+coverage/
+.coverage
+.github/
+**/*.md
+Dockerfile
+docker-compose*.yml

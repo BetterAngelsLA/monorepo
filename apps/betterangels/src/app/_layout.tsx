@@ -1,62 +1,31 @@
 import 'expo-dev-client';
+import { FontLoader } from '@monorepo/expo/shared/ui-components';
 
-import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import {
-  AppUpdatePrompt,
-  BaFeatureControlProvider,
-  BlockingScreenProvider,
-  createBaTypePolicies,
-  ErrorCrashView,
-  KeyboardToolbarProvider,
-  ModalScreenProvider,
-  NativePaperProvider,
-  SnackbarProvider,
-  useNewRelic,
-  UserProvider,
-} from '@monorepo/expo/betterangels';
-import {
-  ApiConfigProvider,
-  ApolloClientProvider,
-} from '@monorepo/expo/shared/clients';
-import {
-  BottomSheetModalProvider,
-  GooglePlacesProvider,
-} from '@monorepo/expo/shared/ui-components';
-import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, StyleSheet } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
+import { Platform } from 'react-native';
+
+import { EnvironmentSwitcherProvider } from '@monorepo/ba-platform';
+import {
+  AppUpdatePrompt,
+  ErrorCrashView,
+  useNewRelic,
+} from '@monorepo/expo/betterangels';
+import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
+
+import { apiUrl, demoApiUrl, localApiUrl } from '../../config';
+import { buildApiEnvironments } from '../apiEnvironments';
+import { buildFetchClient } from '../init';
+import { BaDataProviders } from '../providers/BaDataProviders';
+import { BaUiProviders } from '../providers/BaUiProviders';
 import AppRoutesStack from './AppRoutesStack';
 
-// Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients
-// (overlaps `nav-menu-btn`). No-op in production / store builds and on
-// Android. See helper for details.
-// TODO: Remove once on SDK 56+ — expo-dev-launcher gains a build-time
-// plugin option to hide the FAB on both platforms (PR expo/expo#44251).
-hideDevMenuFab();
+// ---------------------------------------------------------------------------
+// Static config
+// ---------------------------------------------------------------------------
 
-const isDevEnv = process.env['NODE_ENV'] === 'development';
-
-initApolloRuntimeConfig({
-  isDevEnv: false,
-});
-
-const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
-
-const reactQueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false, // need custom implementation for React Native
-    },
-  },
-});
-
+// Ensure that reloading on `/modal` keeps a back button present.
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
@@ -65,50 +34,44 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
 
+// The URLs below are the direct API URLs on native and in a deployed web build.
+// A web *dev* build gets the same-origin dev proxy instead, so the browser is not
+// crossing an origin (see `buildApiEnvironments`, and dev-api-proxy.js for the
+// server half). Module-level because the provider treats it as static config.
+const ENVIRONMENTS = buildApiEnvironments({
+  platform: Platform.OS,
+  isDev: __DEV__,
+  // Keyed on `Platform.OS`, not `typeof window`: React Native defines a global
+  // `window` without a `location`, so a `typeof window` guard dereferences
+  // `window.location.origin` on native and throws while this module is evaluated.
+  webOrigin: Platform.OS === 'web' ? window.location.origin : undefined,
+  apiUrl,
+  demoApiUrl,
+  localApiUrl,
+});
+
+// ---------------------------------------------------------------------------
+// Root layout
+// ---------------------------------------------------------------------------
+
 export default function RootLayout() {
   useNewRelic();
 
   return (
-    <GestureHandlerRootView style={styles.root}>
-      <BottomSheetModalProvider>
-        <NativePaperProvider>
-          <GooglePlacesProvider apiKey={googlePlacesApiKey}>
-            <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-              <QueryClientProvider client={reactQueryClient}>
-                <ApolloClientProvider typePolicies={baApolloTypePolicies}>
-                  <BaFeatureControlProvider>
-                    <KeyboardProvider>
-                      <KeyboardToolbarProvider>
-                        <SnackbarProvider>
-                          <UserProvider>
-                            <BlockingScreenProvider>
-                              <ModalScreenProvider>
-                                <AppUpdatePrompt />
-                                <StatusBar
-                                  style={
-                                    Platform.OS === 'ios' ? 'light' : 'auto'
-                                  }
-                                />
-                                <AppRoutesStack />
-                              </ModalScreenProvider>
-                            </BlockingScreenProvider>
-                          </UserProvider>
-                        </SnackbarProvider>
-                      </KeyboardToolbarProvider>
-                    </KeyboardProvider>
-                  </BaFeatureControlProvider>
-                </ApolloClientProvider>
-              </QueryClientProvider>
-            </ApiConfigProvider>
-          </GooglePlacesProvider>
-        </NativePaperProvider>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+    <FontLoader>
+      <BaUiProviders>
+        <EnvironmentSwitcherProvider
+          environments={ENVIRONMENTS}
+          storage={asyncStorageAdapter}
+          buildFetch={buildFetchClient}
+        >
+          <BaDataProviders>
+            <AppUpdatePrompt />
+            <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
+            <AppRoutesStack />
+          </BaDataProviders>
+        </EnvironmentSwitcherProvider>
+      </BaUiProviders>
+    </FontLoader>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-});

@@ -66,7 +66,7 @@ export function FullNameFormHmis() {
               placeholder="Select quality"
               maxRadioItems={0}
               items={Object.entries(enumNameQualityHmis).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
@@ -86,7 +86,7 @@ export function FullNameFormHmis() {
               placeholder="Select suffix"
               maxRadioItems={0}
               items={Object.entries(enumDisplaySuffixHmis).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}

@@ -1,5 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, RefObject, useEffect, useState } from 'react';
+import { ReactNode, RefObject, useCallback, useEffect, useState } from 'react';
 import {
   DimensionValue,
   Pressable,
@@ -16,6 +16,7 @@ interface IFieldCardProps {
   children: ReactNode;
   title: string;
   actionName: ReactNode;
+  testId?: string;
   required?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -32,10 +33,27 @@ interface IFieldCardProps {
   overflow?: 'hidden' | 'visible' | 'scroll' | undefined;
 }
 
+/**
+ * `ReactNode` admits a plain string, and a `View` cannot contain a text node —
+ * native throws outright and react-native-web logs "Unexpected text node". Render
+ * text the way every element call site already does, and treat an empty string as
+ * no action at all rather than as content.
+ *
+ * Exported for its own unit test: the empty case has no *native* symptom, so it
+ * cannot be pinned through a rendered tree.
+ */
+export function renderActionName(actionName: ReactNode): ReactNode {
+  if (typeof actionName !== 'string') return actionName;
+  if (actionName === '') return null;
+
+  return <TextMedium size="sm">{actionName}</TextMedium>;
+}
+
 export function FieldCard(props: IFieldCardProps) {
   const {
     children,
     title,
+    testId,
     mb,
     mt,
     mr,
@@ -54,7 +72,7 @@ export function FieldCard(props: IFieldCardProps) {
   } = props;
   const [place, setPlace] = useState<null | number>(null);
 
-  const scrollToElement = () => {
+  const scrollToElement = useCallback(() => {
     if (!place || !scrollRef) return;
 
     scrollRef.current?.scrollTo({
@@ -62,18 +80,19 @@ export function FieldCard(props: IFieldCardProps) {
       y: place,
       animated: true,
     });
-  };
+  }, [place, scrollRef]);
 
   useEffect(() => {
     if (!place) return;
     scrollToElement();
-  }, [place]);
+  }, [place, scrollToElement]);
 
   return (
     <Pressable
       onPress={() => {
         setExpanded();
       }}
+      testID={testId}
       onLayout={(event) => {
         const layout = event.nativeEvent.layout;
         expanded === title && scrollRef
@@ -82,9 +101,11 @@ export function FieldCard(props: IFieldCardProps) {
             }, 300)
           : setPlace(null);
       }}
-      accessible
-      accessibilityRole="button"
-      accessibilityHint={`expands ${title} field`}
+      // accessible - these a11y fields are commented out and
+      // accessible is set to FALSE pending: DEV-2513: Make FieldCard a11y compliant
+      // accessibilityRole="button"
+      // accessibilityHint={`expands ${title} field`}
+      accessible={false}
       style={({ pressed }) => [
         styles.container,
         {
@@ -110,9 +131,9 @@ export function FieldCard(props: IFieldCardProps) {
           {required && <TextRegular color={Colors.ERROR}>*</TextRegular>}
           {info && info}
         </View>
-        {actionName}
+        {renderActionName(actionName)}
       </View>
-      {error && (
+      {!!error && (
         <TextRegular mt="xs" color={Colors.ERROR}>
           {error}
         </TextRegular>

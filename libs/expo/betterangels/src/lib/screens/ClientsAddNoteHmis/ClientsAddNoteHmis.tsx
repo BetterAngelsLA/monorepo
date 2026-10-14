@@ -34,7 +34,7 @@ export function ClientsAddNoteHmis({ Logo }: { Logo: ElementType }) {
         <ClientCardHmis client={client} onPress={() => handleClientPress(id)} />
       );
     },
-    [handleClientPress]
+    [handleClientPress],
   );
 
   return (

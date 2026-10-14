@@ -18,7 +18,8 @@ export function RelevantContactsCard(props: TProps) {
   const caseManagers = clientContacts
     .filter(
       (contact) =>
-        contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
+        contact.relationshipToClient ===
+        RelationshipTypeEnum.CurrentCaseManager,
     )
     .sort((a, b) => {
       const dateA = new Date(a.updatedAt ?? 0).getTime();

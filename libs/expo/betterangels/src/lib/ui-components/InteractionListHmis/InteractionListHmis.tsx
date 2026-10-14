@@ -1,10 +1,10 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  InfiniteList,
   TRenderListResultsHeader,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../InfiniteList/FocusedInfiniteList';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
@@ -53,6 +53,7 @@ export function InteractionListHmis(props: TProps) {
     reload,
     hasMore,
     error,
+    queryKey,
   } = useInfiniteScrollQuery<
     HmisNoteType,
     InteractionListHmisQuery,
@@ -69,7 +70,7 @@ export function InteractionListHmis(props: TProps) {
 
   const renderItemFn = useCallback(
     (item: HmisNoteType) => renderItem(item),
-    [renderItem]
+    [renderItem],
   );
 
   if (error) {
@@ -84,7 +85,7 @@ export function InteractionListHmis(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<HmisNoteType>
+      <FocusedInfiniteList<HmisNoteType>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
@@ -95,6 +96,7 @@ export function InteractionListHmis(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="note"
+        scrollResetKey={queryKey}
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}

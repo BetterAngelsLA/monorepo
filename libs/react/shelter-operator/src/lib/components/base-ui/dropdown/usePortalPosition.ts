@@ -22,7 +22,7 @@ export function usePortalPosition(
   triggerRef: RefObject<HTMLElement | null>,
   isOpen: boolean,
   onClose: () => void,
-  menuRef: RefObject<HTMLElement | null>
+  menuRef: RefObject<HTMLElement | null>,
 ): MenuPosition {
   const [pos, setPos] = useState<MenuPosition>({ top: 0, left: 0, width: 0 });
 

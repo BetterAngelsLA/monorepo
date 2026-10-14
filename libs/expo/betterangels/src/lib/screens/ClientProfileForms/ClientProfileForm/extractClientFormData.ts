@@ -1,4 +1,3 @@
-import { parseToDate } from '@monorepo/expo/shared/ui-components';
 import { SocialMediaEnum } from '../../../apollo';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { GetClientProfileQuery } from './__generated__/clientProfile.generated';
@@ -25,7 +24,7 @@ const defaultSocialMedias = [
 
 export const extractClientFormData = (
   formType: keyof FormStateMapping,
-  clientProfile: GetClientProfileQuery['clientProfile']
+  clientProfile: GetClientProfileQuery['clientProfile'],
 ): Partial<FormStateMapping[typeof formType]> => {
   switch (formType) {
     case ClientProfileSectionEnum.FullName: {
@@ -50,32 +49,14 @@ export const extractClientFormData = (
         veteranStatus,
       } = clientProfile;
 
-      let dobAsDate: Date | null | undefined;
-
-      if (dateOfBirth) {
-        dobAsDate = parseToDate({
-          date: dateOfBirth,
-          inputFormat: 'yyyy-MM-dd',
-        });
-      }
-
-      let unhousedStartDateAsDate: Date | null | undefined;
-
-      if (unhousedStartDate) {
-        unhousedStartDateAsDate = parseToDate({
-          date: unhousedStartDate,
-          inputFormat: 'yyyy-MM-dd',
-        });
-      }
-
       return {
         id,
         californiaId,
-        dateOfBirth: dobAsDate,
+        dateOfBirth,
         livingSituation,
         preferredLanguage,
         profilePhoto,
-        unhousedStartDate: unhousedStartDateAsDate,
+        unhousedStartDate,
         veteranStatus,
       };
     }
@@ -112,7 +93,7 @@ export const extractClientFormData = (
       const updatedSocialMediaProfiles = defaultSocialMedias.map(
         (defaultProfile) => {
           const existingProfile = socialMediaProfiles?.find(
-            (profile) => profile.platform === defaultProfile.platform
+            (profile) => profile.platform === defaultProfile.platform,
           );
 
           if (existingProfile) {
@@ -121,7 +102,7 @@ export const extractClientFormData = (
           }
 
           return defaultProfile;
-        }
+        },
       );
 
       return {

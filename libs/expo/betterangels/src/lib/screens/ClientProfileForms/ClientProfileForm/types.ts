@@ -12,7 +12,11 @@ import {
   SocialMediaEnum,
   VeteranStatusEnum,
 } from '../../../apollo';
-import { ClientProfileSectionEnum } from '../../../screenRouting';
+import {
+  ClientProfileSectionEnum,
+  TStandardSection,
+} from '../../../screenRouting';
+import type { DateString } from '@monorepo/shared/scalars';
 
 export type ContactInfoState = {
   id: string;
@@ -78,13 +82,13 @@ type TProfilePhoto = {
 
 export type PersonalInfoState = {
   id: string;
-  dateOfBirth?: Date | null;
+  dateOfBirth?: DateString | null;
   californiaId?: string | null;
   preferredLanguage?: LanguageEnum | null;
   veteranStatus?: VeteranStatusEnum | null;
   livingSituation?: LivingSituationEnum | null;
   profilePhoto?: TProfilePhoto | null;
-  unhousedStartDate?: Date | null;
+  unhousedStartDate?: DateString | null;
 };
 
 export type RelevantContactState = {
@@ -102,7 +106,7 @@ export interface FormStateMapping {
 
 export interface IClientProfileForms {
   id: string;
-  componentName: string;
+  componentName: TStandardSection;
 }
 
 export type FormValues = FormStateMapping[keyof FormStateMapping];

@@ -19,7 +19,7 @@ export function RoomStyles({
     shelter?.roomStyles as readonly { name?: RoomStyleChoices.Other | null }[],
     shelter?.roomStylesOther,
     enumDisplayRoomStyles,
-    RoomStyleChoices.Other
+    RoomStyleChoices.Other,
   );
 
   return (

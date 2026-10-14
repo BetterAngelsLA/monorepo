@@ -1,0 +1,14 @@
+mutation DeleteShelterPhotos($data: BulkDeleteInput!) {
+  deleteShelterPhotos(data: $data) {
+    ... on BulkDeleteResult {
+      ids
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

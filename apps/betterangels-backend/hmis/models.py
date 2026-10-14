@@ -3,15 +3,17 @@ import uuid
 from typing import Any, Optional, cast
 
 import pghistory
-from accounts.models import User
-from clients.enums import PronounEnum
-from clients.models import AbstractClientProfile
-from common.models import BaseModel, Location
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Field, Model
 from django.utils.encoding import force_str
 from django_choices_field import IntegerChoicesField
+from strawberry_django.descriptors import model_property
+
+from accounts.models import User
+from clients.enums import PronounEnum
+from clients.models import AbstractClientProfile
+from common.models import BaseModel, Location
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -22,7 +24,6 @@ from hmis.enums import (
     HmisVeteranStatusEnum,
 )
 from notes.models import ServiceRequest
-from strawberry_django.descriptors import model_property
 
 
 def get_hmis_client_profile_photo_file_path(instance: Model, filename: str) -> str:
@@ -105,9 +106,9 @@ class HmisClientProfile(AbstractClientProfile):
         if not self.gender:
             return []
 
-        return [force_str(g.label) for g in self.gender if g is not HmisGenderEnum.DIFFERENT] + [
-            self.gender_identity_text
-        ]
+        labels = [force_str(g.label) for g in self.gender if g is not HmisGenderEnum.DIFFERENT]
+
+        return labels + [self.gender_identity_text] if self.gender_identity_text else labels
 
     def full_clean(self, exclude: Any = None, validate_unique: bool = True, validate_constraints: bool = True) -> None:
         """

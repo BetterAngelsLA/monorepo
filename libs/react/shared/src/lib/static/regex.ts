@@ -1,9 +1,16 @@
 export const Regex = {
-  empty: /^\s*\S.*$/,
+  nonBlank: /^\s*\S.*$/,
   date: /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/,
   time: /^(?:[01]\d|2[0-3]):[0-5]\d$/,
-  email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/,
   phoneNumber: /^[2-9]\d{2}[2-9]\d{6}$/,
   phoneNumberWithExtensionUS: /^[2-9]\d{2}[2-9]\d{6}(x\d+)?$/,
+  /** US phone with loose formatting: optional +1/1 prefix, spaces/dashes/dots/parens, a valid 10-digit NANP number, and optional x/ext/extension. */
+  phoneNumberLooseUS:
+    /^\+?1?[\s.-]*(?:\([2-9]\d{2}\)|[2-9]\d{2})[\s.-]*[2-9]\d{2}[\s.-]*\d{4}(?:\s*(?:x|ext|extension)\.?\s*\d+)?$/i,
   californiaId: /^[A-Z]\d{7}$/,
+  /** Bare domain with optional path/query — no scheme. Accepts google.com, example.org/path?a=1 */
+  domain: /^[\w.-]+\.[a-zA-Z]{2,63}(\/\S*)?(\?\S*)?$/i,
+  /** Full URL with http/https scheme. Accepts https://google.com, http://example.org/path?a=1 */
+  url: /^https?:\/\/[\w.-]+\.[a-zA-Z]{2,63}(\/\S*)?(\?\S*)?$/i,
 } as const;

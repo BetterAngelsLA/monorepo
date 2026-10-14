@@ -25,6 +25,6 @@ export const userPreferencesAtomFamily = atomFamily((userId: string) => {
   return atomWithStorage<TUserPreferencesState>(
     userPreferencesStorageKey,
     userPreferencesDefaultState,
-    jotaiStorage
+    jotaiStorage,
   );
 });

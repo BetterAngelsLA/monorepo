@@ -1,6 +1,6 @@
 import { ApolloClient, CombinedGraphQLErrors } from '@apollo/client';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
-import { Router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { UseFormSetError, useForm, useWatch } from 'react-hook-form';
 import {
@@ -28,12 +28,12 @@ import { TClientContactFormState, TFormKey } from './types';
 type TProps = {
   clientProfile?: TClientProfile;
   relationId?: string;
-  router: Router;
   showSnackbar: (props: TShowSnackbar) => void;
 };
 
 export function useClientContactForm(props: TProps) {
-  const { clientProfile, relationId, router, showSnackbar } = props;
+  const { clientProfile, relationId, showSnackbar } = props;
+  const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -55,7 +55,7 @@ export function useClientContactForm(props: TProps) {
     setValue('phoneNumber', phoneNumber);
     setValue('mailingAddress', mailingAddress);
     setValue('relationshipToClient', relationshipToClient);
-  }, [clientProfile, relationId, setValue, toFormState]);
+  }, [clientProfile, relationId, setValue]);
 
   const [email, phoneNumber, mailingAddress, relationshipToClient] = useWatch({
     control,
@@ -108,7 +108,7 @@ export function useClientContactForm(props: TProps) {
       const errorsApplied = applyValidationErrors(
         response,
         mutationKey,
-        setError
+        setError,
       );
 
       if (errorsApplied) {
@@ -125,7 +125,7 @@ export function useClientContactForm(props: TProps) {
         getViewClientProfileRoute({
           id: clientProfileId,
           openCard: ClientProfileSectionEnum.RelevantContacts,
-        })
+        }),
       );
 
       return true;
@@ -161,7 +161,7 @@ export function useClientContactForm(props: TProps) {
 function isSuccessMutationResponse(
   response: ApolloClient.MutateResult<
     UpdateClientContactMutation | CreateClientContactMutation
-  >
+  >,
 ): boolean {
   const responseData = response.data;
 
@@ -195,7 +195,7 @@ function applyValidationErrors(
     CreateClientContactMutation | UpdateClientContactMutation
   >,
   key: 'updateClientContact' | 'createClientContact',
-  setError: UseFormSetError<TClientContactFormState>
+  setError: UseFormSetError<TClientContactFormState>,
 ): boolean {
   let hasErrors = false;
 

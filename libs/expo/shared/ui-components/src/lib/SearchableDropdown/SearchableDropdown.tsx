@@ -59,7 +59,7 @@ export function SearchableDropdown({
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>(
-    'bottom'
+    'bottom',
   );
   const [value, setValue] = useState('');
   const inputRef = useRef<TextInput>(null);
@@ -134,7 +134,7 @@ export function SearchableDropdown({
           onBlur={handleBlur}
           onFocus={handleFocus}
         />
-        {value && (
+        {!!value && (
           <Pressable
             accessible
             accessibilityRole="button"
@@ -170,7 +170,7 @@ export function SearchableDropdown({
               <TextRegular>{item}</TextRegular>
             </TouchableOpacity>
           ))}
-          {extraTitle && (
+          {!!extraTitle && (
             <TouchableOpacity
               accessible
               accessibilityRole="button"

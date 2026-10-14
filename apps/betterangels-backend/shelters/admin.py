@@ -7,9 +7,6 @@ from urllib.parse import quote
 import places
 import requests
 from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
-from betterangels_backend import settings
-from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
-from common.models import Location
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -34,6 +31,11 @@ from import_export.results import RowResult
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
+
+from betterangels_backend import settings
+from common.images import build_img_url
+from common.models import Location
+from shelters.managers import BedQuerySet, RoomQuerySet
 
 from .enums import (
     AccessibilityChoices,
@@ -76,6 +78,7 @@ from .models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterAvailability,
     ShelterPhoto,
     ShelterProgram,
     ShelterType,
@@ -400,7 +403,7 @@ class ShelterForm(forms.ModelForm):
         if not self._pending_service_entries:
             return
 
-        from shelters.services import resolve_pending_service_entries
+        from shelters.services.shelter import resolve_pending_service_entries
 
         resolved = resolve_pending_service_entries(self._pending_service_entries)
         if resolved:
@@ -458,12 +461,7 @@ class BaseShelterPhotoInline(admin.TabularInline):
     def photo_preview(self, obj: ShelterPhoto) -> str:
         if not obj or not obj.file or not obj.file.name:
             return "—"
-        if is_imgproxy_enabled():
-            url = build_imgproxy_url(obj.file, preset=None, processing_options="f:jpg") or getattr(
-                obj.file, "url", None
-            )
-        else:
-            url = getattr(obj.file, "url", None)
+        url = build_img_url(obj.file, processing_options="f:jpg")
         if not url:
             return "—"
         return format_html('<img src="{}" alt="" style="max-height: 200px;" />', url)
@@ -606,7 +604,6 @@ class ServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 
 class ShelterResource(resources.ModelResource):
-
     organization = Field(
         column_name="organization", attribute="organization", widget=ForeignKeyWidget(Organization, "name")
     )
@@ -850,8 +847,8 @@ class ShelterResource(resources.ModelResource):
                         shelter=instance,
                         contact_name=name,
                         contact_number=number,
-                        email=email or None,
-                        title=title or None,
+                        contact_email=email or None,
+                        contact_title=title or None,
                     )
 
     # Skips any row that has an error, based on whether or not "jumpthis" columns was set to True during
@@ -919,12 +916,12 @@ class PhotoCountFilter(admin.ListFilter):
             if min_val is not None and min_val != "":
                 try:
                     queryset = queryset.filter(**{f"{count_field}__gte": int(str(min_val))})
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
             if max_val is not None and max_val != "":
                 try:
                     queryset = queryset.filter(**{f"{count_field}__lte": int(str(max_val))})
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
         return queryset
 
@@ -1171,7 +1168,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         permissions_map = {}
         for field in Shelter._meta.get_fields():
             if isinstance(field, models.ManyToManyField):
-                related_model = cast(Type[models.Model], field.related_model)
+                related_model = field.related_model
                 model_name = related_model._meta.model_name  # singular name
                 permission_codename = f"{action}_{model_name}"
                 permissions_map[field.name] = f"shelters.{permission_codename}"
@@ -1325,13 +1322,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     @admin.display(description="Current Hero Image")
     def display_hero_image(self, obj: Shelter) -> str:
         if obj.hero_image and obj.hero_image.file:
-            if is_imgproxy_enabled():
-                url = (
-                    build_imgproxy_url(obj.hero_image.file, preset=None, processing_options="f:jpg")
-                    or obj.hero_image.file.url
-                )
-            else:
-                url = obj.hero_image.file.url
+            url = build_img_url(obj.hero_image.file, processing_options="f:jpg")
             return mark_safe(f'<img src="{url}" style="max-height: 200px;" />')
 
         return "No hero image selected"
@@ -1353,7 +1344,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         uid = data.get("user_id")
         if not uid:
             return "No updates yet"
-        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        name = f"{(data.get('first') or '').strip()} {(data.get('last') or '').strip()}".strip()
         label = name or (data.get("username") or f"User {uid}")
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
@@ -1449,21 +1440,19 @@ class ShelterAdmin(ImportExportModelAdmin):
 
 @admin.register(Bed)
 class BedAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "bed_name", "status", "bed_type", "occupant", "created_at", "updated_at")
-    list_filter = ("status", "bed_type", "maintenance_flag")
-    search_fields = ("shelter__name", "occupant__first_name", "occupant__last_name")
-    autocomplete_fields = ["shelter", "occupant"]
+    list_display = ("id", "shelter", "name", "display_status", "type", "created_at", "updated_at")
+    list_filter = ("type", "maintenance_flag")
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter"]
     fieldsets = (
         (
             "Basic Information",
             {
                 "fields": (
                     "shelter",
-                    "bed_name",
-                    "status",
+                    "name",
                     "status_notes",
-                    "occupant",
-                    "bed_type",
+                    "type",
                 )
             },
         ),
@@ -1493,20 +1482,27 @@ class BedAdmin(admin.ModelAdmin):
         ),
     )
 
+    def get_queryset(self, request: HttpRequest) -> BedQuerySet:
+        qs = cast(BedQuerySet, super().get_queryset(request))
+        return qs.with_computed_status()
+
+    def display_status(self, obj: Bed) -> str:
+        return obj.computed_status
+
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "shelter",
-        "room_identifier",
-        "room_type",
-        "status",
+        "name",
+        "type",
+        "display_status",
         "medical_respite",
         "last_cleaned_inspected",
     )
-    list_filter = ("status", "room_type", "medical_respite")
-    search_fields = ("room_identifier", "shelter__name", "notes")
+    list_filter = ("type", "medical_respite")
+    search_fields = ("name", "shelter__name", "notes")
     autocomplete_fields = ["shelter"]
     fieldsets = (
         (
@@ -1514,10 +1510,9 @@ class RoomAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "shelter",
-                    "room_identifier",
-                    "room_type",
-                    "room_type_other",
-                    "status",
+                    "name",
+                    "type",
+                    "type_other",
                 )
             },
         ),
@@ -1533,6 +1528,13 @@ class RoomAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def get_queryset(self, request: HttpRequest) -> RoomQuerySet:
+        qs = cast(RoomQuerySet, super().get_queryset(request))
+        return qs.with_computed_status()
+
+    def display_status(self, obj: Room) -> str:
+        return obj.computed_status
 
 
 @admin.register(City)
@@ -1553,17 +1555,17 @@ class ReservationClientInline(admin.TabularInline):
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "status", "start_date", "duration", "created_by", "created_at")
+    list_display = ("id", "display_shelter", "status", "start_date", "duration", "created_by", "created_at")
     list_filter = ("status",)
     search_fields = ("shelter__name",)
-    autocomplete_fields = ["shelter", "room", "bed", "created_by"]
+    autocomplete_fields = ["room", "bed", "created_by"]
     inlines = [ReservationClientInline]
     fieldsets = (
         (
             "Reservation Details",
             {
                 "fields": (
-                    "shelter",
+                    "display_shelter",
                     "room",
                     "bed",
                     "status",
@@ -1587,3 +1589,75 @@ class ReservationAdmin(admin.ModelAdmin):
             {"fields": ("notes",)},
         ),
     )
+
+    def display_shelter(self, obj: Reservation) -> Optional[str]:
+        shelter = obj.bed.shelter if obj.bed else (obj.room.shelter if obj.room else None)
+
+        if shelter:
+            return f"{shelter.name} ({shelter.pk})"
+
+        return None
+
+
+@admin.register(ShelterAvailability)
+class ShelterAvailabilityAdmin(admin.ModelAdmin):
+    list_display = ("shelter", "non_restricted_beds", "restricted_beds", "updated_by", "updated_at", "created_at")
+    list_filter = ("updated_at",)
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter"]
+    readonly_fields = ("created_at", "updated_at", "updated_by")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "shelter",
+                    "non_restricted_beds",
+                    "restricted_beds",
+                    "restriction_notes",
+                ),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                ),
+            },
+        ),
+    )
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterAvailability]:
+        qs: QuerySet[ShelterAvailability] = super().get_queryset(request)
+        scoped_events = (
+            MiddlewareEvents.objects.tracks(qs)
+            .exclude(user__isnull=True)
+            .order_by("pgh_obj_id", "-pgh_created_at")
+            .distinct("pgh_obj_id")
+            .annotate(
+                obj=JSONObject(
+                    user_id=F("user_id"),
+                    first=F("user__first_name"),
+                    last=F("user__last_name"),
+                    username=F("user__username"),
+                )
+            )
+        )
+        return qs.annotate(
+            last_event=Subquery(
+                scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
+            ),
+        )
+
+    def updated_by(self, obj: ShelterAvailability) -> str:
+        data = getattr(obj, "last_event", None) or {}
+        uid = data.get("user_id")
+        if not uid:
+            return "No updates yet"
+        name = f"{(data.get('first') or '').strip()} {(data.get('last') or '').strip()}".strip()
+        label = name or (data.get("username") or f"User {uid}")
+        url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
+        return format_html('<a href="{}">{}</a>', url, label)

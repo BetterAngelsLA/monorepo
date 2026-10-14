@@ -3,7 +3,7 @@ import { extractOperationInfo } from './extractOperationInfo';
 
 export function extractOperationInfoMessage(
   response: ApolloLink.Result,
-  queryKey: string
+  queryKey: string,
 ): string | null {
   const operationInfo = extractOperationInfo(response, queryKey);
 

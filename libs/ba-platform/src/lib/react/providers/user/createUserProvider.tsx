@@ -1,0 +1,264 @@
+import { useQuery } from '@apollo/client/react';
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { ActiveOrgProvider } from '../activeOrg';
+import {
+  isPermission,
+  type PermissionEnum,
+} from '@monorepo/ba-platform/permissions';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** Standardised user state exposed via context and the ``useUser`` hook. */
+export interface UserState<TUser> {
+  user: TUser | undefined;
+  setUser: Dispatch<SetStateAction<TUser | undefined>>;
+  isLoading: boolean;
+  refetchUser: () => Promise<void>;
+  /**
+   * Whether the user holds *permission* on the GLOBAL tier
+   * (``currentUser.permissions`` — ADR 0001 §5.2, tier 1).  The tier-2
+   * counterpart is ``useActiveOrg().hasPermission``; the two tiers must never
+   * be unioned client-side (finding H2), so this reads only the global list
+   * and is ``false`` until the user has loaded.
+   */
+  hasGlobalPermission: (permission: PermissionEnum) => boolean;
+}
+
+/**
+ * Configuration for :func:`createUserProvider`.
+ *
+ * @typeParam TUser   App-specific user type (the value stored in context).
+ * @typeParam TQuery  The GraphQL operation result type
+ *   (e.g. ``CurrentOrgUserQuery``).
+ */
+export interface UserProviderConfig<TUser, TQuery> {
+  /** GraphQL document that fetches the current user. */
+  document: TypedDocumentNode<TQuery, Record<string, never>>;
+
+  /**
+   * Map the raw GraphQL ``currentUser`` (or ``undefined``) to the
+   * app-specific user object.
+   *
+   * ``prev`` is the user currently in context (``undefined`` on the first
+   * load).  It is passed so an implementation can merge a payload *over* the
+   * current user instead of replacing it: a read that was already in flight
+   * when the app wrote locally resolves afterwards still carrying the older
+   * server state, and applying it verbatim would undo the newer local truth.
+   */
+  parseUser: (data: unknown, prev: TUser | undefined) => TUser | undefined;
+
+  /**
+   * Return ``true`` when the errors indicate the session is expired or
+   * the user is not authenticated.
+   */
+  isUnauthenticated: (
+    errors:
+      | readonly { message: string; extensions?: Record<string, unknown> }[]
+      | undefined,
+  ) => boolean;
+
+  /**
+   * Optional custom mapping from user organizations to the
+   * :type:`Org` shape expected by :component:`ActiveOrgProvider`.
+   *
+   * Defaults to copying each org's ``permissions`` (filtered through
+   * ``isPermission`` — unknown backend permission strings are dropped before
+   * they can become gateable).
+   */
+  mapOrganizations?: (orgs: readonly OrgLike[]) => MappedOrg[];
+}
+
+/** Minimal org shape the provider accepts (raw backend ``permissions``). */
+export type OrgLike = {
+  id: string;
+  name: string;
+  permissions?: readonly string[];
+};
+
+/** The org shape passed to :component:`ActiveOrgProvider`. */
+export type MappedOrg = {
+  id: string;
+  name: string;
+  permissions: readonly string[];
+};
+
+/**
+ * Default user-organization → ``Org`` mapping, used when the config supplies no
+ * custom ``mapOrganizations``: copies each org and keeps only the permission
+ * strings the frontend models (``isPermission``), so an unknown backend
+ * permission can never become gateable.  ``useActiveOrgState`` filters again
+ * (defense in depth for providers that bypass this mapper).
+ */
+export const defaultMapOrganizations = (
+  orgs: readonly OrgLike[],
+): MappedOrg[] =>
+  orgs.map((org) => ({
+    id: org.id,
+    name: org.name,
+    permissions: (org.permissions ?? []).filter(isPermission),
+  }));
+
+// ---------------------------------------------------------------------------
+// Factory
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a fully-typed ``UserProvider`` component and accompanying
+ * ``useUser`` hook.
+ *
+ * The returned provider handles the Apollo query lifecycle,
+ * authentication-error detection, and automatically embeds
+ * :component:`ActiveOrgProvider` so that permission-aware components
+ * can call ``useActiveOrg().hasPermission()`` throughout the tree.
+ *
+ * ```ts
+ * const { UserProvider, useUser } = createUserProvider({
+ *   document: CurrentOrgUserDocument,
+ *   parseUser: (data) => data ? { id: data.id, ... } : undefined,
+ *   isUnauthenticated: (errors) =>
+ *     errors?.some((e) => e.message.includes('User is not logged in.')) ?? false,
+ * });
+ * ```
+ */
+export function createUserProvider<
+  TUser extends {
+    organizations?:
+      | readonly { id: string; name: string; permissions?: readonly string[] }[]
+      | null;
+    /** The user's GLOBAL permission list (ADR 0001, finding F24). */
+    permissions?: readonly string[];
+  },
+  TQuery extends { currentUser?: unknown },
+>(config: UserProviderConfig<TUser, TQuery>) {
+  const {
+    document,
+    parseUser,
+    isUnauthenticated,
+    mapOrganizations: customMapOrganizations,
+  } = config;
+
+  // ---- Helpers -------------------------------------------------------
+
+  const mapOrganizations = customMapOrganizations ?? defaultMapOrganizations;
+
+  // ---- Context -------------------------------------------------------
+
+  type ContextValue = UserState<TUser>;
+
+  const UserContext = createContext<ContextValue | undefined>(undefined);
+
+  // ---- Hook ----------------------------------------------------------
+
+  function useUser(): ContextValue {
+    const ctx = useContext(UserContext);
+    if (!ctx) {
+      throw new Error('useUser must be used within a UserProvider');
+    }
+    return ctx;
+  }
+
+  function UserProvider({ children }: { children: ReactNode }) {
+    const [user, setUser] = useState<TUser | undefined>();
+
+    const { data, loading, error, refetch } = useQuery(document, {
+      fetchPolicy: 'network-only',
+      errorPolicy: 'all',
+    });
+
+    const updateUser = useCallback(
+      (res: {
+        data?: TQuery;
+        errors?: readonly {
+          message: string;
+          extensions?: Record<string, unknown>;
+        }[];
+      }) => {
+        if (isUnauthenticated(res.errors)) {
+          setUser(undefined);
+        } else {
+          // Functional update so `parseUser` sees the user already in context:
+          // a read issued before a local write can resolve after it, and the
+          // app decides what wins rather than the resolution order doing so.
+          setUser((prev) => parseUser(res.data?.currentUser, prev));
+        }
+      },
+      // parseUser and isUnauthenticated are factory-level params — stable
+      // references captured once at module init — so the empty dep array is
+      // intentional.
+      [],
+    );
+
+    useEffect(() => {
+      if (!loading) {
+
+        // error is typed as ErrorLike but is an ApolloError at runtime
+        // with graphQLErrors — narrow via runtime check.
+        const gqlErrors =
+          error && 'graphQLErrors' in error
+            ? (error.graphQLErrors as readonly {
+                message: string;
+                extensions?: Record<string, unknown>;
+              }[])
+            : undefined;
+        updateUser({ data, errors: gqlErrors?.length ? gqlErrors : undefined });
+      }
+    }, [loading, data, error, updateUser]);
+
+    const organizations = useMemo(
+      () =>
+        user?.organizations ? mapOrganizations(user.organizations) : undefined,
+      [user, mapOrganizations],
+    );
+
+    const refetchUser = useCallback(async () => {
+      try {
+        const res = await refetch();
+        updateUser(res);
+      } catch {
+        setUser(undefined);
+      }
+    }, [refetch, updateUser]);
+
+    const hasGlobalPermission = useCallback(
+      (permission: PermissionEnum): boolean =>
+        user?.permissions?.includes(permission) ?? false,
+      [user],
+    );
+
+    const contextValue = useMemo<ContextValue>(
+      () => ({
+        user,
+        setUser,
+        isLoading: loading,
+        refetchUser,
+        hasGlobalPermission,
+      }),
+      [user, loading, refetchUser, hasGlobalPermission],
+    );
+
+    return (
+      <UserContext.Provider value={contextValue}>
+        <ActiveOrgProvider organizations={organizations}>
+          {children}
+        </ActiveOrgProvider>
+      </UserContext.Provider>
+    );
+  }
+
+  UserProvider.displayName = 'UserProvider';
+
+  return { UserProvider, useUser, UserContext } as const;
+}

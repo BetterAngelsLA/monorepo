@@ -1,5 +1,7 @@
 export * from './AppSettings';
 export { default as Client } from './Client';
+export { clearPersistedReferralDraft } from './Client/Referrals/referralDraftStorage';
+export { UploadResume } from './Client/Docs/UploadResume';
 export * from './ClientEditHmis';
 export * from './ClientHmis';
 export * from './ClientProfileForms';

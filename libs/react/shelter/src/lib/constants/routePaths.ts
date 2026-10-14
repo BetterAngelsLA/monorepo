@@ -2,6 +2,7 @@
 export const privacyPolicyPath = '/privacy-policy';
 export const shelterFiltersPath = '/filters';
 export const shelterHomePath = '/';
+export const shelterSearchPath = '/search';
 export const signInPath = '/sign-in';
 export const shelterDetailsPath = '/shelter/:id';
 export const shelterGalleryPath = '/shelter/:id/gallery';

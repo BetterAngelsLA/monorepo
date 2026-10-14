@@ -1,5 +1,5 @@
 import { TFieldError } from '../../../errors';
-import { OperationMessageKind } from '../__generated__/types';
+import { OperationMessageKind } from '@monorepo/ba-platform/types';
 import { extractOperationInfo } from './extractOperationInfo';
 
 type TProps<TData, TDataKey> = {
@@ -11,7 +11,7 @@ type TProps<TData, TDataKey> = {
 
 export function extractOperationFieldErrors<
   TData,
-  TDataKey extends keyof TData & string
+  TDataKey extends keyof TData & string,
 >(props: TProps<TData, TDataKey>): TFieldError[] {
   const {
     data,

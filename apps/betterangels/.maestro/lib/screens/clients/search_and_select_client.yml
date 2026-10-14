@@ -1,0 +1,30 @@
+# Searches for a client by name and taps it if found.
+# Requires: already on the clients screen.
+# Input env var: CLIENT_NAME
+# Output: output.clientFound — true/false
+
+appId: ${MAESTRO_APP_ID}
+---
+# Precondition: on the clients screen
+- assertVisible:
+    id: clients-screen
+
+- evalScript: ${output.clientFound = false}
+
+# Type the search
+- tapOn:
+    id: 'clients-search-input'
+
+- inputText: ${CLIENT_NAME}
+- hideKeyboard
+- waitForAnimationToEnd
+
+# find card by testID or check for `No Results` in search
+- runFlow:
+    when:
+      notVisible: 'No results'
+    commands:
+      - tapOn:
+          id: ${'client-card-' + CLIENT_NAME}
+      - waitForAnimationToEnd
+      - evalScript: ${output.clientFound = true}

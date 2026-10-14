@@ -10,7 +10,7 @@ export function useInteractionPointFeatures(clientProfileId: string) {
     {
       id: clientProfileId,
       ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],
-    }
+    },
   );
 
   const pointFeatures = useMemo<PointFeature<TClusterInteraction>[]>(() => {
@@ -21,12 +21,12 @@ export function useInteractionPointFeatures(clientProfileId: string) {
     return interactions.map((i, index) =>
       toPointFeature({
         id: String(i.id),
-        latitude: i.location!.point[1],
-        longitude: i.location!.point[0],
+        latitude: i.location.point[1],
+        longitude: i.location.point[0],
         interactedAt: new Date(i.interactedAt),
         // mostRecent prop is dependent on interactions NotesQuery sort order
         mostRecent: index === 0,
-      })
+      }),
     );
   }, [interactions]);
 

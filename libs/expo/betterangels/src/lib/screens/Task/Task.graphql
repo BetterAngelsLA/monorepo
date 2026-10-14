@@ -5,7 +5,10 @@ query Task($id: ID!) {
       summary
       description
       status
-      team
+      team {
+        id
+        name
+      }
       organization {
         id
         name

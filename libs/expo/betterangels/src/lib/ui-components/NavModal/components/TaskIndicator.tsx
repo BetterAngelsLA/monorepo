@@ -1,21 +1,21 @@
 import { Colors, Radiuses } from '@monorepo/expo/shared/static';
 import { StyleSheet } from 'react-native';
-import { SelahTeamEnum, TaskFilter, TaskStatusEnum } from '../../../apollo';
+import { TaskFilter, TaskStatusEnum } from '../../../apollo';
 import { TaskCountIndicator } from '../../TaskCountIndicator';
 
 type TProps = {
-  team: SelahTeamEnum | null;
+  teamId: string | null;
 };
 
 export function TaskIndicator(props: TProps) {
-  const { team } = props;
+  const { teamId } = props;
 
-  if (!team) {
+  if (!teamId) {
     return null;
   }
 
   const taskFilters: TaskFilter = {
-    teams: [team],
+    teamIds: [teamId],
     status: [TaskStatusEnum.InProgress, TaskStatusEnum.ToDo],
   };
 

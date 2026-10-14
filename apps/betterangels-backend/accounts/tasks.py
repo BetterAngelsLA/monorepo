@@ -1,10 +1,11 @@
 from typing import Optional
 
 from celery.utils.log import get_task_logger
-from common.celery import single_instance
 from django.db import connection as db_connection
 from post_office.mail import get_queued, send_queued
 from post_office.settings import get_celery_enabled
+
+from common.celery import single_instance
 
 logger = get_task_logger(__name__)
 
@@ -13,7 +14,7 @@ try:
         from celery import Task, shared_task
     else:
         raise ImportError()
-except (ImportError, NotImplementedError):
+except ImportError, NotImplementedError:
     # Fallback if Celery is not available or disabled
     def queued_mail_handler(sender: object, **kwargs: object) -> None:
         """

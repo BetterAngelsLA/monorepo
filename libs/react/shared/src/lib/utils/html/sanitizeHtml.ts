@@ -10,7 +10,7 @@ const defaultSanitizeOptions: SanitizeHtmlOptions = {
 
 export function sanitizeHtml(
   html?: string | null,
-  options: SanitizeHtmlOptions = defaultSanitizeOptions
+  options: SanitizeHtmlOptions = defaultSanitizeOptions,
 ): string {
   if (typeof html !== 'string') {
     return '';

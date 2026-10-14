@@ -193,7 +193,7 @@ export function Button(props: IButtonProps) {
         styles.container,
         containerStyle,
         {
-          height: HEIGHT[height],
+          minHeight: HEIGHT[height],
         },
       ]}
     >
@@ -214,22 +214,25 @@ export function Button(props: IButtonProps) {
             backgroundColor: disabled
               ? Colors.NEUTRAL_LIGHT
               : pressed
-              ? PRESSED_VARIANTS[variant].bg
-              : VARIANTS[variant].bg,
+                ? PRESSED_VARIANTS[variant].bg
+                : VARIANTS[variant].bg,
             borderColor: disabled
               ? Colors.NEUTRAL_LIGHT
               : borderColor
-              ? borderColor
-              : pressed
-              ? PRESSED_VARIANTS[variant].border
-              : VARIANTS[variant].border,
+                ? borderColor
+                : pressed
+                  ? PRESSED_VARIANTS[variant].border
+                  : VARIANTS[variant].border,
             marginBottom: mb && Spacings[mb],
             marginTop: mt && Spacings[mt],
             marginLeft: ml && Spacings[ml],
             marginRight: mr && Spacings[mr],
             marginHorizontal: mx && Spacings[mx],
             marginVertical: my && Spacings[my],
-            height: pressed ? PRESSED_HEIGHT[height] : HEIGHT[height],
+            // minHeight (not height) so multi-line labels expand the button
+            // instead of being clipped — keeps single-line rows at the same
+            // size while letting wrapped text stay vertically centered.
+            minHeight: pressed ? PRESSED_HEIGHT[height] : HEIGHT[height],
           },
         ]}
         onPress={onPress}

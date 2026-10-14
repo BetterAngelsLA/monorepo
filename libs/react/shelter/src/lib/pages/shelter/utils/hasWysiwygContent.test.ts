@@ -24,7 +24,7 @@ describe('hasWysiwygContent', () => {
 
     it(`${caseDescriptor || 'falsy'} returns ${testCase[1]}`, () => {
       const result = hasWysiwygContent(
-        testCase[0] as string | null | undefined
+        testCase[0] as string | null | undefined,
       );
 
       expect(result).toEqual(testCase[1]);

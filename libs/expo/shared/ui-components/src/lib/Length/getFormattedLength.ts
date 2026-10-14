@@ -20,9 +20,9 @@ export function getFormattedLength(props: TFormattedLength): string {
     const convertedLength = LENGTH_CONVERSIONS[inputUnit][outputUnit](length);
 
     return formatLength({ value: convertedLength, format });
-  } catch (e) {
+  } catch (_e) {
     console.error(
-      `getFormattedLength: could not format length [${length}] with inputUnit [${inputUnit}] outputUnit [${outputUnit}] format [${format}]`
+      `getFormattedLength: could not format length [${length}] with inputUnit [${inputUnit}] outputUnit [${outputUnit}] format [${format}]`,
     );
 
     return '';

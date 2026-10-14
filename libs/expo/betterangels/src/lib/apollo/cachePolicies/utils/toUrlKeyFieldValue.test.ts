@@ -1,4 +1,5 @@
 // toUrlKeyFieldValue.test.ts
+import { StoreValue } from '@apollo/client';
 import { toUrlKeyFieldValue } from './toUrlKeyFieldValue';
 
 type TCase = {
@@ -64,6 +65,6 @@ const cases: ReadonlyArray<TCase> = [
 
 describe('toUrlKeyFieldValue (table-driven)', () => {
   test.each(cases)('$name', ({ input, expected }) => {
-    expect(toUrlKeyFieldValue(input as any)).toBe(expected);
+    expect(toUrlKeyFieldValue(input as StoreValue)).toBe(expected);
   });
 });

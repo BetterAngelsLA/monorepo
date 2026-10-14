@@ -6,68 +6,19 @@ import type {
   TextareaHTMLAttributes,
 } from 'react';
 import { forwardRef, useId, useState } from 'react';
+import { Label } from '../label';
 import { Text } from '../text/text';
 import type { InputDataType, InputProps } from './types';
+import { normalizeUrlScheme } from './utils/normalizeUrlScheme';
 
-const validationPatterns: Record<InputDataType, RegExp> = {
-  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  'phone-number': /^[\d\s\-+()]*\d[\d\s\-+()]*$/,
-  number: /^-?\d+(\.\d+)?$/,
-  time: /^([01]\d|2[0-3]):([0-5]\d)$/,
-  string: /^.+$/, // Any non-empty string
-};
-
-const normalizeValue = (
-  value: string | number | readonly string[] | undefined
-): string => {
-  if (value === undefined) return '';
-  if (Array.isArray(value)) {
-    // For multi-value inputs, treat concatenated trimmed values as the content
-    return value.join('').trim();
-  }
-  return String(value).trim();
-};
-
-/** True when the value is non-empty for validation (treats `0` as present, unlike `!value`). */
-const hasContentForDataTypeCheck = (
-  value: string | number | readonly string[] | undefined
-): boolean => {
-  if (value === undefined) return false;
-  if (typeof value === 'number') return true;
-  return normalizeValue(value) !== '';
-};
-
-const dataTypeLabels: Partial<Record<InputDataType, string>> = {
-  'phone-number': 'phone number',
-  email: 'email',
+const inputTypeByDataType: Partial<Record<InputDataType, string>> = {
+  string: 'text',
   number: 'number',
+  email: 'email',
+  'phone-number': 'tel',
   time: 'time',
-  string: 'value',
-};
-
-const isValueValid = (
-  value: string | number | readonly string[] | undefined,
-  dataType?: InputDataType
-): boolean => {
-  if (!dataType || !hasContentForDataTypeCheck(value)) return true;
-  const stringValue = normalizeValue(value);
-  if (!stringValue) return false;
-  const pattern = validationPatterns[dataType];
-  return pattern.test(stringValue);
-};
-
-const getDefaultErrorMessage = (
-  dataType?: InputDataType,
-  isRequiredError?: boolean
-): string | undefined => {
-  if (isRequiredError) {
-    return 'This field is required';
-  }
-  if (dataType) {
-    const label = dataTypeLabels[dataType] ?? dataType;
-    return `Please enter a valid ${label}`;
-  }
-  return undefined;
+  date: 'date',
+  url: 'url',
 };
 
 export const Input = forwardRef<
@@ -77,69 +28,62 @@ export const Input = forwardRef<
   {
     id,
     label,
+    labelSuffix,
     error,
     dataType,
     variant = 'default',
+    isViewMode,
     rows,
     required = false,
     disabled = false,
     className,
+    labelSuffixClassName,
     containerClassName,
     inputClassName,
     isActive = false,
     showErrorIcon = true,
-    isTouched: controlledTouched,
     onFocus: externalOnFocus,
     onBlur: externalOnBlur,
     rightAdornment,
     value,
     ...inputProps
   },
-  ref
+  ref,
 ) {
-  const [internalTouched, setInternalTouched] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const isTouched = controlledTouched ?? internalTouched;
+  const isViewEditMode = typeof isViewMode === 'boolean';
   const isParagraph = variant === 'paragraph';
   const paragraphRows = rows ?? 3;
+  const inputType = (dataType && inputTypeByDataType[dataType]) ?? 'text';
 
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const messageId = `${inputId}-message`;
 
-  // Determine if there's a required validation error
-  const isRequiredError = required && !normalizeValue(value);
-
-  // Check if value fails dataType validation
-  const isDataTypeError = Boolean(
-    dataType &&
-      hasContentForDataTypeCheck(value) &&
-      !isValueValid(value, dataType)
-  );
-
-  // Generate error message: use custom error if provided, otherwise auto-generate
-  let displayError = error;
-  if (!displayError && isRequiredError) {
-    displayError = getDefaultErrorMessage(dataType, true);
-  } else if (!displayError && isDataTypeError) {
-    displayError = getDefaultErrorMessage(dataType, false);
-  }
-
-  const hasError = Boolean(displayError);
-  const shouldShowError = hasError && isTouched && !isFocused;
+  const shouldShowError = Boolean(error) && !isFocused;
 
   const handleFocus = (
-    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setIsFocused(true);
     externalOnFocus?.(e);
   };
 
   const handleBlur = (
-    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setIsFocused(false);
-    setInternalTouched(true);
+
+    // Auto-prepend https:// for url fields when no scheme is present
+    if (dataType === 'url') {
+      const url = normalizeUrlScheme(value as string);
+      if (url && url !== value) {
+        (inputProps.onChange as (e: { target: { value: string } }) => void)?.({
+          target: { value: url },
+        });
+      }
+    }
+
     externalOnBlur?.(e);
   };
 
@@ -151,17 +95,14 @@ export const Input = forwardRef<
       ])}
     >
       {label && (
-        <label htmlFor={inputId} className="text-sm text-gray-900">
-          <Text variant="body" className="text-gray-900">
-            {label}
-          </Text>
-          {required && (
-            <Text variant="body" className="text-red-500">
-              {' '}
-              *
-            </Text>
-          )}
-        </label>
+        <Label
+          label={label}
+          labelSuffix={labelSuffix}
+          suffixClassName={labelSuffixClassName}
+          inputId={inputId}
+          variant={isViewEditMode ? 'offset' : undefined}
+          required={required}
+        />
       )}
 
       <div
@@ -169,10 +110,14 @@ export const Input = forwardRef<
           isParagraph
             ? 'relative flex w-full rounded-[20px] border bg-white px-5 py-3 transition-colors duration-200'
             : 'relative flex h-12 w-full items-center rounded-full border bg-white px-5 transition-colors duration-200',
-          shouldShowError ? 'border-red-500' : 'border-gray-200',
-          !shouldShowError && isActive && 'border-gray-500',
-          !shouldShowError && 'focus-within:border-[#008CEE]',
-          disabled && 'cursor-not-allowed opacity-50',
+          isViewMode && 'border-transparent',
+          !isViewMode && shouldShowError && 'border-red-500',
+          !isViewMode && !shouldShowError && isActive && 'border-gray-500',
+          !isViewMode &&
+            !shouldShowError &&
+            !isActive &&
+            'border-gray-200 focus-within:border-[#008CEE]',
+          !isViewMode && disabled && 'cursor-not-allowed opacity-50',
           containerClassName,
         ])}
       >
@@ -183,7 +128,7 @@ export const Input = forwardRef<
             id={inputId}
             rows={paragraphRows}
             value={value}
-            disabled={disabled}
+            disabled={disabled || isViewMode}
             required={required}
             onFocus={handleFocus}
             onBlur={handleBlur}
@@ -199,8 +144,9 @@ export const Input = forwardRef<
             {...(inputProps as InputHTMLAttributes<HTMLInputElement>)}
             ref={ref as React.Ref<HTMLInputElement>}
             id={inputId}
+            type={inputType}
             value={value}
-            disabled={disabled}
+            disabled={disabled || isViewMode}
             required={required}
             onFocus={handleFocus}
             onBlur={handleBlur}
@@ -224,11 +170,11 @@ export const Input = forwardRef<
         ) : null}
       </div>
 
-      {shouldShowError ? (
+      {shouldShowError && (
         <Text id={messageId} variant="caption" className="text-red-500">
-          {displayError}
+          {error}
         </Text>
-      ) : null}
+      )}
     </div>
   );
 });

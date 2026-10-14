@@ -14,7 +14,7 @@ export function InteractionLocations(props: TProps) {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} testID="client-view-locations">
       <InteractionsMap clientProfileId={clientProfileId} />
       <InteractionLocationsModal />
     </View>

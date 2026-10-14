@@ -31,7 +31,7 @@ type TOption = { id: AdaAccommodationEnum; label: string };
 const options: TOption[] = (
   Object.entries(enumDisplayAdaAccommodationEnum) as [
     AdaAccommodationEnum,
-    string
+    string,
   ][]
 ).map(([enumValue, displayValue]) => ({
   id: enumValue,
@@ -53,7 +53,7 @@ export function DemographicInfoForm() {
         'hairColor',
         'maritalStatus',
       ],
-    }
+    },
   );
 
   const adaAccommodation = watch('adaAccommodation') || [];
@@ -65,7 +65,7 @@ export function DemographicInfoForm() {
           placeholder="Select gender"
           selectedValue={gender || undefined}
           items={Object.entries(enumDisplayGender).map(
-            ([value, displayValue]) => ({ value, displayValue })
+            ([value, displayValue]) => ({ value, displayValue }),
           )}
           onChange={(e) => setValue('gender', e as GenderEnum)}
         />
@@ -76,7 +76,7 @@ export function DemographicInfoForm() {
           placeholder="Select pronouns"
           selectedValue={pronouns || undefined}
           items={Object.entries(enumDisplayPronoun).map(
-            ([value, displayValue]) => ({ value, displayValue })
+            ([value, displayValue]) => ({ value, displayValue }),
           )}
           onChange={(e) => setValue('pronouns', e as PronounEnum)}
         />
@@ -87,7 +87,7 @@ export function DemographicInfoForm() {
           placeholder="Select race"
           selectedValue={race || undefined}
           items={Object.entries(enumDisplayRace).map(
-            ([value, displayValue]) => ({ value, displayValue })
+            ([value, displayValue]) => ({ value, displayValue }),
           )}
           onChange={(e) => setValue('race', e as RaceEnum)}
         />
@@ -109,7 +109,7 @@ export function DemographicInfoForm() {
           placeholder="Select eye color"
           selectedValue={eyeColor || undefined}
           items={Object.entries(enumDisplayEyeColor).map(
-            ([value, displayValue]) => ({ value, displayValue })
+            ([value, displayValue]) => ({ value, displayValue }),
           )}
           onChange={(e) => setValue('eyeColor', e as EyeColorEnum)}
         />
@@ -120,7 +120,7 @@ export function DemographicInfoForm() {
           placeholder="Select hair color"
           selectedValue={hairColor || undefined}
           items={Object.entries(enumDisplayHairColor).map(
-            ([value, displayValue]) => ({ value, displayValue })
+            ([value, displayValue]) => ({ value, displayValue }),
           )}
           onChange={(e) => setValue('hairColor', e as HairColorEnum)}
         />
@@ -131,7 +131,7 @@ export function DemographicInfoForm() {
           placeholder="Select marital status"
           selectedValue={maritalStatus || undefined}
           items={Object.entries(enumDisplayMaritalStatus).map(
-            ([value, displayValue]) => ({ value, displayValue })
+            ([value, displayValue]) => ({ value, displayValue }),
           )}
           onChange={(e) => setValue('maritalStatus', e as MaritalStatusEnum)}
         />

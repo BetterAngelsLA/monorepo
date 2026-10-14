@@ -1,16 +1,18 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Pressable, StyleSheet, View } from 'react-native';
+
 import {
   FieldCard,
   MapLocationPicker,
   PROVIDER_GOOGLE,
+  TextBold,
   TextMedium,
   TextRegular,
   TLocationData,
 } from '@monorepo/expo/shared/ui-components';
-import { StyleSheet, View } from 'react-native';
 import { useInitialLocation, useSnackbar } from '../../../hooks';
-import { MapView, Marker } from '../../../maps';
+import { MapView, Marker } from '@monorepo/expo/shared/ui-components';
 import { useModalScreen } from '../../../providers';
 import { useUserDefaultNoteLocation } from '../../../state';
 import { MainScrollContainer } from '../../../ui-components';
@@ -37,6 +39,15 @@ export function DefaultLocation() {
 
     showSnackbar({
       message: 'Default location is saved.',
+      type: 'success',
+    });
+  };
+
+  const handleClearLocation = () => {
+    setDefaultLocation(null);
+
+    showSnackbar({
+      message: 'Default location cleared.',
       type: 'success',
     });
   };
@@ -93,9 +104,12 @@ export function DefaultLocation() {
         title="Location "
         actionName={<TextMedium size="sm">{getLocationLabel()}</TextMedium>}
       >
-        {defaultLocation &&
+        {!!(
+          defaultLocation &&
           defaultLocation.longitude &&
-          defaultLocation.latitude && (
+          defaultLocation.latitude
+        ) && (
+          <>
             <View style={{ paddingBottom: Spacings.md }}>
               <MapView
                 zoomEnabled={false}
@@ -120,8 +134,22 @@ export function DefaultLocation() {
                 </Marker>
               </MapView>
             </View>
-          )}
+          </>
+        )}
       </FieldCard>
+      {defaultLocation && (
+        <Pressable
+          style={styles.container}
+          onPress={handleClearLocation}
+          testID="clear-default-location-btn"
+          accessibilityRole="button"
+          accessibilityHint="clears the default location"
+        >
+          <TextBold size="sm" color={Colors.ERROR}>
+            Clear default location
+          </TextBold>
+        </Pressable>
+      )}
     </MainScrollContainer>
   );
 }
@@ -133,5 +161,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: Colors.NEUTRAL_LIGHT,
+  },
+  container: {
+    alignItems: 'center',
+    marginTop: Spacings.sm,
   },
 });

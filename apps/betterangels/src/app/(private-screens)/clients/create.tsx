@@ -5,9 +5,9 @@ import {
 } from '@monorepo/expo/betterangels';
 
 export default function CreateClientProfileScreen() {
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
 
-  if (isHmisUser) {
+  if (user?.isHmisUser) {
     return <CreateClientProfileHmis />;
   }
 

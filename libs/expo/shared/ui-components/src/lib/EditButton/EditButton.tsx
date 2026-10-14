@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 
 type TProps = {
   onClick: () => void;
+  testId?: string;
   style?: ViewStyle;
   accessibilityHint?: string;
   pressedColor?: Colors;
@@ -13,6 +14,7 @@ type TProps = {
 export function EditButton(props: TProps) {
   const {
     onClick,
+    testId,
     accessibilityHint,
     pressedColor = Colors.GRAY_PRESSED,
     iconSize = 'md',
@@ -22,6 +24,7 @@ export function EditButton(props: TProps) {
   return (
     <Pressable
       onPress={onClick}
+      testID={testId}
       accessible
       style={({ pressed }) => [
         {

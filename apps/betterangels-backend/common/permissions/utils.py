@@ -1,14 +1,103 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any, Sequence, Tuple, Type
 
 import strawberry
-from common.errors import UnauthenticatedGQLError
 from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
 from django.db.models import Model, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
+from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
+
+from common.errors import UnauthenticatedGQLError
+
+# ── Permission enum registry (frontend codegen) ───────────────────────────────
+
+_permission_enum_registry: list[type[TextChoices]] = []
+
+
+def register_permission(cls: type[TextChoices]) -> type[TextChoices]:
+    """Decorator — registers in the frontend permission const registry.
+
+    Usage::
+
+        @register_permission
+        class UserOrganizationPermissions(models.TextChoices):
+            VIEW_ORG_MEMBERS = "organizations.view_org_members", ...
+    """
+    _permission_enum_registry.append(cls)
+    return cls
+
+
+def get_registered_permission_enums() -> list[type[TextChoices]]:
+    """Return all enums registered via :func:`register_permission`."""
+    return list(_permission_enum_registry)
+
+
+# Models identified as ``"<app_label>.<ModelName>"`` that must never emit grantable
+# permissions. Seed/dev-fixture-only models are not product surfaces: their
+# permissions would otherwise appear in the role/admin permission pickers, in
+# ``currentUser.permissions`` and in the generated frontend catalog.
+PERMISSION_EXCLUDED_MODELS: frozenset[str] = frozenset({"referrals.ReferralTestShelter"})
+
+
+def register_model_permissions() -> None:
+    """Auto-discover model PermissionSets and register them as TextChoices.
+
+    Call once after Django app registry is ready (e.g. in schema.py).
+    Models that declare an inner ``class perms(PermissionSet)`` are
+    automatically discovered and their permission values registered
+    for frontend codegen and the org permissions resolver.
+    Models listed in :data:`PERMISSION_EXCLUDED_MODELS` are skipped.
+    """
+    from django.apps import apps
+
+    for model in apps.get_models():
+        if f"{model._meta.app_label}.{model.__name__}" in PERMISSION_EXCLUDED_MODELS:
+            continue
+
+        perms_cls = getattr(model, "perms", None)
+        if perms_cls is None or not isinstance(perms_cls, type):
+            continue
+
+        members: list[tuple[str, str]] = []
+        for attr_name in dir(perms_cls):
+            if attr_name.startswith("_") or attr_name in ("contribute_to_class",):
+                continue
+            value = getattr(perms_cls, attr_name, None)
+            if isinstance(value, str) and "." in value:
+                members.append((attr_name, value))
+
+        if not members:
+            continue
+
+        name = f"{model.__name__}Permissions"
+        # Avoid duplicate registration
+        if any(e.__name__ == name for e in _permission_enum_registry):
+            continue
+
+        enum_cls = TextChoices(name, members)  # type: ignore[call-overload]
+        _permission_enum_registry.append(enum_cls)
+
+
+@lru_cache(maxsize=1)
+def modeled_permission_strings() -> frozenset[str]:
+    """The product-modeled permission strings — the catalog the FE gates on.
+
+    Union across the permission registry (``@register_permission`` enums plus
+    auto-discovered model ``PermissionSet``s) — the exact catalog
+    ``manage.py generate_permission_enums`` emits as the FE ``PermissionEnum``.
+    ``global_permissions`` bounds the global list to it so
+    ``currentUser.permissions`` never ships permissions the product cannot gate on.
+
+    Memoized; the registry is complete by query time (``@register_permission``
+    fires at import; model discovery runs on the first call here).
+    """
+    register_model_permissions()  # discover model PermissionSets (idempotent)
+    return frozenset(str(member.value) for enum_cls in get_registered_permission_enums() for member in enum_cls)
 
 
 def perm(codename: str, description: str) -> str:
@@ -139,6 +228,43 @@ class IsAuthenticated(strawberry.BasePermission):
             raise UnauthenticatedGQLError()
 
         return True
+
+
+def get_current_organization(info: Info) -> str:
+    """Return the organization ID from the ``X-Organization-ID`` header.
+
+    Kept only until mobile migrates its teams reads to the ``organizationId``
+    filter (DEV-2566) — every other org-scoped surface is header-free.  See the
+    ADR 0001 §5.3 strip checklist.
+
+    Raises ``PermissionDenied`` if the header is absent, or ``AttributeError``
+    if ``OrganizationMiddleware`` is not installed.
+    """
+    org_id = info.context.request.organization_id
+
+    if org_id is None:
+        raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
+
+    return str(org_id)
+
+
+#: The standard refusal for org-scoped authority checks — one string, so every
+#: refusal reads the same.
+PERMISSION_DENIED_MESSAGE = "You do not have permission to perform this action in this organization."
+
+
+def require_can(user: Any, perm: str, *, org: Any) -> None:
+    """PermissionDenied unless *user* can exercise *perm* at *org* (ADR 0001 §2.6).
+
+    The create gate: creates carry an explicit target organization and are
+    authorized by ``can`` — never by the read rule.  ``can`` never implies the
+    organization exists (finding F7), so callers that take an org from client
+    input must check existence separately (see ``shelter_create``).
+    """
+    from common.permissions.selectors import can
+
+    if not can(user, perm, org=org):
+        raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 
 
 def assign_object_permissions(

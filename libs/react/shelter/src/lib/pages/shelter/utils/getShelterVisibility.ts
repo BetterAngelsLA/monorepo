@@ -109,7 +109,7 @@ export function getShelterVisibility(shelter: ShelterData): ShelterVisibility {
 }
 
 export function getRestrictionsFieldVisibility(
-  shelter: ShelterData
+  shelter: ShelterData,
 ): RestrictionsFieldVisibility {
   return {
     maxStay: !!shelter.maxStay,

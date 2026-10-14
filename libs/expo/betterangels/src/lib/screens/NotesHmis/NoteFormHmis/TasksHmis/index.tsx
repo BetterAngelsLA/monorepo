@@ -28,7 +28,7 @@ export default function TasksHmis(props: TasksHmisProps) {
           summary: taskToEdit.summary,
           description: taskToEdit.description || '',
           status: taskToEdit.status,
-          team: taskToEdit.team,
+          teamId: taskToEdit.teamId,
           markedForDeletion: taskToEdit.markedForDeletion,
         } as DraftTask)
       : undefined;
@@ -53,7 +53,7 @@ export default function TasksHmis(props: TasksHmisProps) {
                         return { ...t, markedForDeletion: true };
                       }
                       return t;
-                    })
+                    }),
                   )
               : undefined
           }
@@ -64,7 +64,7 @@ export default function TasksHmis(props: TasksHmisProps) {
   return (
     <FieldCard
       mb="xs"
-      actionName=""
+      actionName={null}
       title="Follow-Up Tasks"
       setExpanded={() => {
         // If the list is empty, clicking the header/card opens the Add Modal

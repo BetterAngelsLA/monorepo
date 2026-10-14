@@ -4,6 +4,12 @@ from unittest.mock import ANY
 
 import time_machine
 import waffle
+from django.contrib.contenttypes.models import ContentType
+from django.test import override_settings
+from model_bakery import baker
+from unittest_parametrize import parametrize
+from waffle.testutils import override_switch
+
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
@@ -34,12 +40,7 @@ from clients.tests.utils import (
 from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS, MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from common.enums import ImagePresetEnum
 from common.imgproxy import IMGPROXY_SWITCH
-from django.contrib.contenttypes.models import ContentType
-from django.test import override_settings
-from model_bakery import baker
 from notes.models import Note
-from unittest_parametrize import parametrize
-from waffle.testutils import override_switch
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
@@ -160,7 +161,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     )
     @override_switch(IMGPROXY_SWITCH, active=True)
     def test_client_profiles_query_with_processed_photo(self) -> None:
-        self._update_client_profile_photo_fixture(self.client_profile_2["id"])
+        self._set_client_profile_photo(self.client_profile_2["id"])
 
         query = f"""
             query ($offset: Int, $limit: Int) {{
@@ -275,6 +276,15 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("HMISid", 2),  # hmis_id search matching two clients
             ("HMISidL", 1),  # hmis_id search matching one client
             ("HMISidP", 2),  # hmis_id search matching two clients
+            ("2125551212", 1),  # exact phone match on client 1
+            ("(212) 555-1212", 1),  # formatted phone match on client 1
+            ("212-555-1212", 1),  # hyphenated phone match on client 1
+            ("718", 1),  # partial phone match on client 1 secondary phone
+            ("347", 1),  # partial phone match on client 2 phone
+            ("5551212", 2),  # partial phone match on both clients
+            ("tod 5551212", 1),  # name + phone match on same client
+            ("tod 347", 0),  # phone term matches a different client than name term
+            ("pea 718", 0),  # phone term matches a different client than name term
         ],
     )
     def test_client_profiles_query_text_search(self, search_value: str, expected_client_profile_count: int) -> None:
@@ -296,6 +306,51 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables={"search": search_value})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+
+    @parametrize(
+        ("date_format, expected_client_profile_count"),
+        [
+            ("%m/%d/%Y", 1),  # MM/DD/YYYY matches client 1
+            ("%m-%d-%Y", 1),  # MM-DD-YYYY matches client 1
+        ],
+    )
+    def test_client_profiles_query_dob_search(self, date_format: str, expected_client_profile_count: int) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ($search: String) {
+                clientProfiles(filters: {search: $search}) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        search_value = self.date_of_birth.strftime(date_format)
+        response = self.execute_graphql(query, variables={"search": f"tod {search_value}"})
+
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+        if expected_client_profile_count:
+            self.assertEqual(response["data"]["clientProfiles"]["results"][0]["id"], self.client_profile_1["id"])
+
+    def test_client_profiles_query_dob_search_requires_all_terms_match(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ($search: String) {
+                clientProfiles(filters: {search: $search}) {
+                    totalCount
+                }
+            }
+        """
+
+        # "zzz" matches no field, so the dob-only match must not return client 1
+        search_value = f"zzz {self.date_of_birth.strftime('%m/%d/%Y')}"
+        response = self.execute_graphql(query, variables={"search": search_value})
+
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], 0)
 
     @parametrize(
         ("search_value, is_active, expected_client_profile_count"),
@@ -657,7 +712,6 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         super().setUp()
 
         self.file_name = "test%20file%20name"
-        self.file_content = b"Test file content"
         self.client_profile = baker.make(ClientProfile)
         self.content_type = ContentType.objects.get_for_model(ClientProfile)
 
@@ -667,9 +721,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_doc = self._create_client_document_fixture(
             str(self.client_profile.pk),
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            self.file_content,
             self.file_name,
-        )["data"]["createClientDocument"]
+        )
 
         query = """
             query ($id: ID!) {
@@ -698,9 +751,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self._create_client_document_fixture(
                 client_profile_id=str(self.client_profile.pk),
                 namespace=namespace.name,
-                file_content=self.file_content,
                 file_name=self.file_name,
-            )["data"]["createClientDocument"]["id"]
+            )["id"]
             for namespace in ClientDocumentNamespaceEnum
         ]
 
@@ -759,9 +811,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self._create_client_document_fixture(
                 client_profile_id=str(self.client_profile.pk),
                 namespace=namespace.name,
-                file_content=self.file_content,
                 file_name=self.file_name,
-            )["data"]["createClientDocument"]
+            )
             for namespace in ClientDocumentNamespaceEnum
         ]
 
@@ -790,9 +841,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self._create_client_document_fixture(
             client_profile_id=str(self.client_profile.pk),
             namespace=ClientDocumentNamespaceEnum.BIRTH_CERTIFICATE.name,
-            file_content=self.file_content,
             file_name=self.file_name,
-        )["data"]["createClientDocument"]
+        )
 
         query = """
             query ($clientId: String!){

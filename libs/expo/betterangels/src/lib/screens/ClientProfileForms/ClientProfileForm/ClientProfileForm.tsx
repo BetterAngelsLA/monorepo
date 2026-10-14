@@ -10,14 +10,14 @@ import {
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
-import { isValidClientProfileSectionEnum } from '../../../screenRouting';
+import { getViewClientProfileRoute } from '../../../screenRouting';
 import {
   GetClientProfileDocument,
   UpdateClientProfileDocument,
 } from './__generated__/clientProfile.generated';
 import { config } from './config';
 import { extractClientFormData } from './extractClientFormData';
-import { FormStateMapping, FormValues, IClientProfileForms } from './types';
+import { FormValues, IClientProfileForms } from './types';
 
 export default function ClientProfileForm(props: IClientProfileForms) {
   const { componentName, id } = props;
@@ -32,7 +32,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   });
 
   const [updateClientProfile, { loading: isUpdating }] = useMutation(
-    UpdateClientProfileDocument
+    UpdateClientProfileDocument,
   );
 
   const methods = useForm<FormValues>({
@@ -45,13 +45,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  if (!isValidClientProfileSectionEnum(componentName)) {
-    throw new Error(`Invalid componentName "${componentName}" provided.`);
-  }
-
-  const validComponentName = componentName as keyof FormStateMapping;
-
-  const { content, title: screenTitle } = config[validComponentName];
+  const { content, title: screenTitle } = config[componentName];
 
   useLayoutEffect(() => {
     if (screenTitle) {
@@ -68,7 +62,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
       const inputs = toUpdateClienProfileInputs(
         id,
         values,
-        methods.formState.dirtyFields
+        methods.formState.dirtyFields,
       );
 
       if (!inputs) {
@@ -113,7 +107,11 @@ export default function ClientProfileForm(props: IClientProfileForms) {
       // the query unmounts and refetch is cancelled.
       await refetch();
 
-      router.replace(`/client/${id}?openCard=${validComponentName}`);
+      // Through the route helper rather than a hand-built string: the helper owns
+      // the path, so a route change cannot leave this call site behind.
+      router.replace(
+        getViewClientProfileRoute({ id, openCard: componentName }),
+      );
     } catch (err) {
       console.error(`[updateClientProfile] error: ${err}`);
 
@@ -130,12 +128,12 @@ export default function ClientProfileForm(props: IClientProfileForms) {
     }
 
     const formData = extractClientFormData(
-      validComponentName,
-      fetchProfileData.clientProfile
+      componentName,
+      fetchProfileData.clientProfile,
     );
 
     methods.reset(formData);
-  }, [fetchProfileData, id]);
+  }, [fetchProfileData, id, methods, componentName]);
 
   if (isFetchingProfile) {
     return <LoadingView />;
@@ -165,15 +163,10 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   );
 }
 
-/** Format a Date as YYYY-MM-DD for API (avoids ISO datetime serialization). */
-function toDateOnlyString(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
-
 function toUpdateClienProfileInputs(
   id: string,
   values: FormValues,
-  dirtyFields?: Partial<Record<keyof FormValues, boolean>>
+  dirtyFields?: Partial<Record<keyof FormValues, boolean>>,
 ): UpdateClientProfileInput | null {
   if (!values || !id) {
     return null;
@@ -184,8 +177,8 @@ function toUpdateClienProfileInputs(
   // only update dates if touched/changed
   // this prevents clearing dates when the field wasn't intentionally modified
   if ('dateOfBirth' in values && dirtyFields && 'dateOfBirth' in dirtyFields) {
-    if (values.dateOfBirth instanceof Date) {
-      updatedInputs.dateOfBirth = toDateOnlyString(values.dateOfBirth);
+    if (values.dateOfBirth) {
+      updatedInputs.dateOfBirth = values.dateOfBirth;
     } else if (values.dateOfBirth === null) {
       updatedInputs.dateOfBirth = null;
     }
@@ -196,10 +189,8 @@ function toUpdateClienProfileInputs(
     dirtyFields &&
     'unhousedStartDate' in dirtyFields
   ) {
-    if (values.unhousedStartDate instanceof Date) {
-      updatedInputs.unhousedStartDate = toDateOnlyString(
-        values.unhousedStartDate
-      );
+    if (values.unhousedStartDate) {
+      updatedInputs.unhousedStartDate = values.unhousedStartDate;
     } else if (values.unhousedStartDate === null) {
       updatedInputs.unhousedStartDate = null;
     }
@@ -213,14 +204,6 @@ function toUpdateClienProfileInputs(
     ...values,
     ...updatedInputs,
   };
-
-  // Always send dates as YYYY-MM-DD when present (Date serializes as ISO datetime)
-  if (result.dateOfBirth instanceof Date) {
-    result.dateOfBirth = toDateOnlyString(result.dateOfBirth);
-  }
-  if (result.unhousedStartDate instanceof Date) {
-    result.unhousedStartDate = toDateOnlyString(result.unhousedStartDate);
-  }
 
   return result;
 }

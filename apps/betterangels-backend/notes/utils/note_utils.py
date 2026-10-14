@@ -1,8 +1,9 @@
 from typing import Any
 
 from django.core.exceptions import ValidationError
-from notes.models import OrganizationService
 from organizations.models import Organization
+
+from notes.models import OrganizationService
 
 
 def get_service_args(

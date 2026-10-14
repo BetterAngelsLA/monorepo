@@ -65,7 +65,7 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
       errorMessage,
       ...rest
     },
-    ref
+    ref,
   ) {
     const isControlled = value !== undefined;
     const color = disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK;
@@ -84,12 +84,12 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
         marginHorizontal: mx && Spacings[mx],
         marginVertical: my && Spacings[my],
       }),
-      [mb, mt, ml, mr, mx, my]
+      [mb, mt, ml, mr, mx, my],
     );
 
     return (
       <View style={[styles.container, componentStyle, margins]}>
-        {label && (
+        {!!label && (
           <View style={styles.labelRow}>
             <Text style={styles.labelText}>{label}</Text>
             {required && <Text style={styles.required}>*</Text>}
@@ -107,7 +107,7 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
             },
           ]}
         >
-          {icon && <View style={styles.leftIconWrap}>{icon}</View>}
+          {!!icon && <View style={styles.leftIconWrap}>{icon}</View>}
 
           <TextInput
             ref={ref}
@@ -155,14 +155,14 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
           )}
         </View>
 
-        {errorMessage && (
+        {!!errorMessage && (
           <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
             {errorMessage}
           </TextRegular>
         )}
       </View>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({

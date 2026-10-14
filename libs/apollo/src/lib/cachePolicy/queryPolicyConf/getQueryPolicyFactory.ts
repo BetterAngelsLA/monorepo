@@ -14,7 +14,7 @@
  *  - runs `generateQueryPolicyConfig(...)` to produce a *strict* QueryPolicyConfig
  *    (fills in default paths, normalizes strings to arrays, respects paginationMode
  *    and paginationVariables)
- *  - runs `getMergeOptions(...)` to prepare merge-time paths (items, totalCount, id)
+ *  - runs `getMergeOptions(...)` to prepare merge-time paths (items, totalCount)
  *  - runs `generateFieldPolicy(...)` to create the actual Apollo field policy,
  *    passing the normalized QueryPolicyConfig down to the merge layer
  *  - derives `keyFields` from `itemIdPath` when `entityIdFields` isn’t provided
@@ -44,11 +44,11 @@
  * >({
  *   key: 'hmisListClients',
  *   entityTypename: 'HmisClientType',
- *   cacheKeyVariables: ['filter', ['pagination', 'perPage']] as const,
+ *   cacheKeyVariables: ['filters'] as const,
  *   itemsPath: 'items',
  *   totalCountPath: ['meta', 'totalCount'],
  *   itemIdPath: 'personalId',
- *   paginationMode: PaginationModeEnum.PerPage,
+ *   paginationMode: PaginationModeEnum.Offset,
  *   // optional: paginationVariables can further override paths
  * });
  *
@@ -63,11 +63,11 @@
  *     fieldPolicy: { ...apolloFieldPolicy },
  *     // <- strict, normalized config the hook / runtime can read later
  *     queryPolicyConfig: {
- *       paginationMode: 'PER_PAGE',
+ *       paginationMode: 'OFFSET',
  *       itemsPath: ['items'],
  *       totalCountPath: ['meta', 'totalCount'],
- *       paginationPagePath: ['pagination', 'page'],
- *       paginationPerPagePath: ['pagination', 'perPage'],
+ *       paginationOffsetPath: ['pagination', 'offset'],
+ *       paginationLimitPath: ['pagination', 'limit'],
  *     },
  *   }),
  * }
@@ -83,7 +83,6 @@
  */
 
 import type { FieldPolicy, TypePolicy } from '@apollo/client';
-import { KeyArgsFunction } from '@apollo/client/cache/inmemory/policies';
 import {
   DEFAULT_QUERY_ID_KEY,
   DEFAULT_QUERY_RESULTS_KEY,
@@ -107,7 +106,7 @@ type TgetQueryPolicyFactory<
   TQuery,
   TVariables,
   TFieldKey extends keyof TQuery & string,
-  TItem = ResultItemOf<TQuery, TFieldKey>
+  TItem = ResultItemOf<TQuery, TFieldKey>,
 > = {
   /** query field on Query */
   key: TFieldKey;
@@ -123,7 +122,9 @@ type TgetQueryPolicyFactory<
    * variables that affect cache key
    * can accept KeyArgsFunction, but not fully tested here
    */
-  cacheKeyVariables: KeyArgsFor<TVariables> | KeyArgsFunction | false;
+  cacheKeyVariables:
+    | KeyArgsFor<TVariables>
+    | NonNullable<FieldPolicy['keyArgs']>;
 
   /** optional: tell Apollo how to identify the item type itself */
   entityIdFields?: TypePolicy['keyFields'];
@@ -151,7 +152,7 @@ export function getQueryPolicyFactory<
   TQuery,
   TVariables,
   TFieldKey extends keyof TQuery & string = keyof TQuery & string,
-  TItem = ResultItemOf<TQuery, TFieldKey>
+  TItem = ResultItemOf<TQuery, TFieldKey>,
 >({
   key,
   entityTypename,
@@ -163,19 +164,26 @@ export function getQueryPolicyFactory<
   paginationMode = PaginationModeEnum.Offset,
   paginationVariables,
   mergeOpts = { mode: MergeModeEnum.Object },
-}: TgetQueryPolicyFactory<TQuery, TVariables, TFieldKey, TItem>) {
+}: TgetQueryPolicyFactory<TQuery, TVariables, TFieldKey, TItem>): {
+  key: TFieldKey;
+  buildFn: () => {
+    entityTypename: [TItem] extends [never] ? string : TypenameOf<TItem>;
+    fieldPolicy: FieldPolicy;
+    keyFields: TypePolicy['keyFields'];
+    queryPolicyConfig: ReturnType<typeof generateQueryPolicyConfig>;
+  };
+} {
   const isArrayMergeMode = mergeOpts.mode === MergeModeEnum.Array;
 
   if (isArrayMergeMode) {
     console.warn(
-      '[getQueryPolicyFactory]: array mode is not yet fully supported.'
+      '[getQueryPolicyFactory]: array mode is not yet fully supported.',
     );
   }
 
   const resolvedMergeOptions = getMergeOptions(mergeOpts, {
     itemsPath,
     totalCountPath,
-    itemIdPath,
   });
 
   const queryPolicyConfig = generateQueryPolicyConfig({

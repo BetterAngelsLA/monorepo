@@ -1,17 +1,21 @@
-from typing import List, Optional, Tuple
+from __future__ import annotations
+
+from enum import Enum
+from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
+from django.db.models import Q, QuerySet
+from organizations.models import Organization
+from strawberry import ID, Info, auto
+from strawberry_django.auth.utils import get_current_user
+
 from accounts.enums import OrgRoleEnum
-from accounts.permissions import UserOrganizationPermissions
+from accounts.models import PermissionGroup
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import CharField, F, Q, QuerySet, Value
-from django.db.models.functions import Concat
-from organizations.models import Organization
-from strawberry import ID, Info, Maybe, auto
-from strawberry_django.auth.utils import get_current_user
+from common.org_types import REGISTRY
+from notes.groups import CASEWORKER
 
 from .models import User
 
@@ -98,34 +102,47 @@ class CurrentUserOrganizationType(OrganizationType):
         queryset: QuerySet[Organization],
         info: Info,
     ) -> QuerySet[Organization]:
+        """The FE org list / switcher for *info*'s user (ADR 0001 §5.2).
+
+        Builds from the FULL ``Organization`` table, not the caller's
+        queryset: the ``currentUser.organizationsOrganization`` field hands
+        this the user's membership relation, which is empty for a non-member
+        grant holder.  Returns the FINITE switchable set — membership, direct
+        grants, inherited delegations — the orgs the user can select as an
+        org-scoped context; it is never expanded to every org for a global
+        holder (their reach is unscoped reads + ``currentUser.permissions``,
+        ADR 0001 §5.2).  The per-org ``permissions`` field is EFFECTIVE
+        (global folded in) and resolved from
+        :func:`accounts.selectors.organization_effective_permissions`, so this
+        stays a lazy, annotation-free filter.
+        """
+        from common.permissions.selectors import switchable_orgs
+
         user = get_current_user(info)
-        if not user or not getattr(user, "pk", None):
-            return queryset
+        if not user or not user.is_authenticated:
+            return queryset.none()
+        return cast(QuerySet[Organization], Organization.objects.filter(pk__in=switchable_orgs(cast(User, user))))
 
-        qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
-            user_permissions=ArrayAgg(
-                Concat(
-                    F("permission_groups__group__permissions__content_type__app_label"),
-                    Value("."),
-                    F("permission_groups__group__permissions__codename"),
-                    output_field=CharField(),
-                ),
-                filter=Q(
-                    permission_groups__group__user=user,
-                ),
-                distinct=True,
-            )
-        )
+    @strawberry_django.field
+    def permissions(self, info: Info) -> List[str]:
+        """The EFFECTIVE permissions *user* can exercise at this org.
 
-        return qs
+        ``global_permissions(user) ∪ org-scoped(this org)`` — the global tier is
+        folded in server-side (ADR 0001 §5.2 refinement), so an org entry is the
+        complete "what can I do fully here" answer (a GSO who is also a
+        member/delegated at the org sees global ∪ its grants) and the FE gate is
+        a single membership test, never a client union.  Computed once per
+        request by :func:`accounts.selectors.organization_effective_permissions`
+        (memoized on the user), bounded to the finite switchable org set.
+        """
+        from accounts.selectors import organization_effective_permissions
 
-    def resolve_user_permissions(self, info: Info) -> List[UserOrganizationPermissions]:
-        perms: List[str] = getattr(self, "user_permissions", []) or []
-        return [UserOrganizationPermissions(perm) for perm in perms if perm in UserOrganizationPermissions.values]
-
-    user_permissions: Optional[List[UserOrganizationPermissions]] = strawberry_django.field(
-        resolver=resolve_user_permissions
-    )
+        user = cast(User, get_current_user(info))
+        if not user or not user.is_authenticated:
+            return []
+        # ``id`` is the declared strawberry field for the org pk (typed, unlike
+        # ``pk`` on this wrapper type); the report is keyed by int org id.
+        return organization_effective_permissions(user).get(int(str(self.id)), [])
 
 
 @strawberry_django.type(User)
@@ -142,7 +159,6 @@ class UserType(UserBaseType):
     organizations_organization: Optional[List[OrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
     @strawberry_django.field
@@ -151,6 +167,23 @@ class UserType(UserBaseType):
         session = request.session
 
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+    @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
+    def is_outreach_authorized(self, info: Info) -> Optional[bool]:
+        """Backwards-compatible field for old mobile clients.
+
+        Returns True if the user belongs to a Caseworker permission group
+        in any organization (i.e., they are an outreach worker).
+
+        TODO: Remove this field once mobile clients have migrated.
+        """
+        user = get_current_user(info)
+        if not user or not user.is_authenticated:
+            return None
+        return PermissionGroup.objects.filter(
+            user=user.pk,
+            template__name=CASEWORKER.name,
+        ).exists()
 
 
 @strawberry_django.type(User)
@@ -159,8 +192,25 @@ class CurrentUserType(UserBaseType):
     organizations_organization: Optional[List[CurrentUserOrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
+
+    @strawberry_django.field
+    def permissions(self, info: Info) -> List[str]:
+        """Global-tier permission list (ADR 0001 §2.4, finding F24).
+
+        The shared contract for gating global-tier features: a superuser holds
+        every PRODUCT-MODELED permission (the catalog the FE ``PermissionEnum``
+        is generated from — never the whole DB catalog); otherwise the union of
+        direct ``user_permissions`` and permissions carried by global Roles in
+        ``user.groups``, bounded to the modeled set.  Scoped (grant)
+        permissions are reported per organization instead.
+        """
+        from common.permissions.selectors import global_permissions
+
+        user = cast(User, get_current_user(info))
+        if not user or not user.is_authenticated:
+            return []
+        return global_permissions(user)
 
     @strawberry_django.field
     def is_hmis_user(self, info: Info) -> Optional[bool]:
@@ -168,6 +218,23 @@ class CurrentUserType(UserBaseType):
         session = request.session
 
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+    @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
+    def is_outreach_authorized(self, info: Info) -> Optional[bool]:
+        """Backwards-compatible field for old clients.
+
+        Returns True if the user belongs to a Caseworker permission group
+        in any organization (i.e., they are an outreach worker).
+
+        TODO: Remove this field once mobile clients have migrated.
+        """
+        user = get_current_user(info)
+        if not user or not user.is_authenticated:
+            return None
+        return PermissionGroup.objects.filter(
+            user=user.pk,
+            template__name=CASEWORKER.name,
+        ).exists()
 
 
 @strawberry_django.order_type(User, one_of=False)
@@ -205,6 +272,28 @@ class OrganizationMemberType(UserBaseType):
     def member_role(self, info: Info) -> OrgRoleEnum:
         return OrgRoleEnum(getattr(self, "_member_role", OrgRoleEnum.MEMBER.value))
 
+    @strawberry_django.field
+    def is_org_owner(self, info: Info) -> bool:
+        """Whether this member is the organization owner."""
+        return bool(getattr(self, "_is_org_owner", False))
+
+    @strawberry_django.field
+    def permission_templates(self, info: Info) -> list[PermissionTemplateEnum]:  # type: ignore[valid-type]
+        raw = getattr(self, "_permission_templates", None)
+        if not raw:
+            return []
+        return [PermissionTemplateEnum(v) for v in raw.split(", ")]
+
+    @strawberry_django.field
+    def membership_id(self, info: Info) -> Optional[ID]:
+        """The ``OrganizationUser`` row binding this member to the queried org.
+
+        The stable key the member mutations act on — the row names its org, so
+        ``removeOrganizationMember``/``changeOrganizationMemberRole`` authorize
+        there (ADR 0001 §5.3).  Set by the org-scoped resolvers.
+        """
+        return getattr(self, "_membership_id", None)
+
 
 @strawberry_django.input(User, partial=True)
 class CreateUserInput(UserBaseType):
@@ -218,6 +307,15 @@ class UpdateUserInput(UserBaseType):
     has_accepted_privacy_policy: auto
 
 
+PermissionTemplateEnum = strawberry.enum(
+    Enum("PermissionTemplateEnum", {n.upper().replace(" ", "_"): n for n in REGISTRY.invitable_template_names()}),
+)  # type: ignore[call-overload]
+
+OrgTypeEnum = strawberry.enum(
+    Enum("OrgTypeEnum", {n.upper(): n for n in REGISTRY.org_type_names()}),
+)  # type: ignore[call-overload]
+
+
 @strawberry.input
 class OrgInvitationInput:
     email: str
@@ -225,15 +323,44 @@ class OrgInvitationInput:
     middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
+    permission_template: PermissionTemplateEnum  # type: ignore[valid-type]
 
 
 @strawberry.input
 class UpdateUserProfileInput:
-    first_name: Maybe[NonEmptyString | None]
-    last_name: Maybe[NonEmptyString | None]
+    first_name: Optional[NonEmptyString] = strawberry.UNSET
+    last_name: Optional[NonEmptyString] = strawberry.UNSET
 
 
 @strawberry.input
 class RemoveOrganizationMemberInput:
-    id: ID
-    organization_id: ID
+    # The ``OrganizationUser`` row binding the member to their org — the row
+    # names its org, so remove authorizes there (mirrors teams' row-keyed
+    # update/delete).  No separate ``organizationId`` is needed.
+    membership_id: ID
+
+
+# ── Self-Signup ───────────────────────────────────────────────────────
+
+
+@strawberry.input
+class CreateOrganizationInput:
+    organization_name: NonEmptyString
+    org_type: NonEmptyString
+
+
+@strawberry.type
+class CreateOrganizationResponse:
+    user: UserType
+    organization: OrganizationType
+
+
+# ── Role Change ───────────────────────────────────────────────────────
+
+
+@strawberry.input
+class ChangeOrganizationMemberRoleInput:
+    # Keyed on the ``OrganizationUser`` membership row, whose org authorizes
+    # ``change_org_member_role`` (mirrors removeOrganizationMember).
+    membership_id: ID
+    permission_template: PermissionTemplateEnum  # type: ignore[valid-type]

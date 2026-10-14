@@ -1,5 +1,5 @@
 import { toNonEmptyStringOrUndefined } from '@monorepo/expo/shared/utils';
-import { HmisNoteFilter } from '../__generated__/types';
+import { HmisNoteFilter } from '@monorepo/ba-platform/types';
 
 function pruneFilter<T extends Record<string, unknown>>(filter: T): Partial<T> {
   const pruned: Partial<T> = {};

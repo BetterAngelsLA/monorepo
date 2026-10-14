@@ -51,7 +51,7 @@ export function PressablePanel({
   ...rest
 }: IPressablePanelProps) {
   const panelStyle = (
-    state: PressableStateCallbackType
+    state: PressableStateCallbackType,
   ): StyleProp<ViewStyle> => [
     styles.panel,
     VARIANTS[variant],

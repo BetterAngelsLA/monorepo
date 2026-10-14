@@ -24,7 +24,7 @@ export function ImportantNotesFormHmis() {
         onDelete={() => {
           setValue(
             'importantNotes',
-            importantNotesFormEmptyState.importantNotes
+            importantNotesFormEmptyState.importantNotes,
           );
         }}
         errorMessage={errors.importantNotes?.message}

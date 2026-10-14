@@ -1,0 +1,29 @@
+query GetShelterOperatorOverview($shelterId: ID!) {
+  operatorShelter(pk: $shelterId) {
+    id
+    name
+    organization {
+      id
+      name
+    }
+    location {
+      place
+    }
+    bedCounts {
+      available
+      inTurnaround
+      occupied
+      outOfService
+      reserved
+      total
+    }
+    roomCounts {
+      available
+      inTurnaround
+      occupied
+      outOfService
+      reserved
+      total
+    }
+  }
+}

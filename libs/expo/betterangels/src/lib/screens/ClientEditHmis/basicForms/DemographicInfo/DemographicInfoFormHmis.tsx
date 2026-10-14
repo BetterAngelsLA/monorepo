@@ -123,7 +123,7 @@ export function DemographicInfoFormHmis() {
           onDelete={() => {
             setValue(
               'additionalRaceEthnicityDetail',
-              emptyState.additionalRaceEthnicityDetail
+              emptyState.additionalRaceEthnicityDetail,
             );
           }}
           errorMessage={errors.additionalRaceEthnicityDetail?.message}
@@ -141,7 +141,7 @@ export function DemographicInfoFormHmis() {
               placeholder="Select pronouns"
               maxRadioItems={0}
               items={Object.entries(enumDisplayPronoun).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
@@ -188,7 +188,7 @@ export function DemographicInfoFormHmis() {
               disabled={isSubmitting}
               placeholder="Select eye color"
               items={Object.entries(enumDisplayEyeColor).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) =>
@@ -210,7 +210,7 @@ export function DemographicInfoFormHmis() {
               disabled={isSubmitting}
               placeholder="Select hair color"
               items={Object.entries(enumDisplayHairColor).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) =>
@@ -232,7 +232,7 @@ export function DemographicInfoFormHmis() {
               disabled={isSubmitting}
               placeholder="Select marital status"
               items={Object.entries(enumDisplayMaritalStatus).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) =>
@@ -253,7 +253,7 @@ export function DemographicInfoFormHmis() {
           onDelete={() =>
             setValue(
               'physicalDescription',
-              demographicInfoFormEmptyState.physicalDescription
+              demographicInfoFormEmptyState.physicalDescription,
             )
           }
           error={!!errors.physicalDescription}
@@ -267,7 +267,7 @@ export function DemographicInfoFormHmis() {
             ([key, value]) => ({
               id: key as AdaAccommodationEnum,
               label: value,
-            })
+            }),
           )}
           selected={adaAccommodationValues.map((val) => ({
             id: val,

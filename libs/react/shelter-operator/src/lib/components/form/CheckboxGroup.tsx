@@ -27,7 +27,11 @@ export function CheckboxGroup<Choice extends string = string>({
   error,
   required,
 }: CheckboxGroupProps<Choice>) {
-  const messageId = error ? `${name}-error` : helperText ? `${name}-helper` : undefined;
+  const messageId = error
+    ? `${name}-error`
+    : helperText
+      ? `${name}-helper`
+      : undefined;
 
   return (
     <FieldWrapper
@@ -42,11 +46,15 @@ export function CheckboxGroup<Choice extends string = string>({
         role="group"
         aria-describedby={messageId}
       >
-        {options.map(option => {
+        {options.map((option) => {
           const checked = values.includes(option.value);
           const id = `${name}-${option.value}`;
           return (
-            <label key={option.value} htmlFor={id} className={OPTION_ITEM_CLASS}>
+            <label
+              key={option.value}
+              htmlFor={id}
+              className={OPTION_ITEM_CLASS}
+            >
               <input
                 id={id}
                 name={name}
@@ -55,7 +63,7 @@ export function CheckboxGroup<Choice extends string = string>({
                 value={option.value}
                 onChange={() => {
                   const nextValues = checked
-                    ? values.filter(item => item !== option.value)
+                    ? values.filter((item) => item !== option.value)
                     : [...values, option.value];
                   onChange(nextValues);
                 }}

@@ -6,7 +6,7 @@ import {
 import { mapMediaLinksToVideos, mergeCss } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { groupBy } from 'remeda';
-import { ShelterPhotoTypeChoices } from '../../../../apollo/graphql/__generated__/types';
+import { ShelterPhotoTypeChoices } from '@monorepo/ba-platform/types';
 import { ImagePlaceholder, MediaLightbox } from '../../../../components';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
 
@@ -18,6 +18,7 @@ type TProps = {
 export function HeroCarousel(props: TProps) {
   const { shelter, className } = props;
   const heroImage = shelter.heroImage;
+  const heroImageFull = shelter.heroImageFull;
   const heroId = heroImage?.id;
 
   const nonHeroPhotos = shelter.photos.filter((p) => p.id !== heroId);
@@ -26,18 +27,28 @@ export function HeroCarousel(props: TProps) {
   const imageUrls = [
     ...(heroImage?.url ? [heroImage.url] : []),
     ...(photosByType[ShelterPhotoTypeChoices.Exterior] ?? []).map(
-      (p) => p.file.url
+      (p) => p.file.url,
     ),
     ...(photosByType[ShelterPhotoTypeChoices.Interior] ?? []).map(
-      (p) => p.file.url
+      (p) => p.file.url,
     ),
   ].filter((u): u is string => Boolean(u));
+
+  const fullUrlMap = new Map<string, string>();
+  if (heroImage?.url && heroImageFull?.url) {
+    fullUrlMap.set(heroImage.url, heroImageFull.url);
+  }
+  for (const photo of nonHeroPhotos) {
+    if (photo.file.url && photo.file.fullUrl) {
+      fullUrlMap.set(photo.file.url, photo.file.fullUrl);
+    }
+  }
 
   const youtubeVideos = mapMediaLinksToVideos(shelter.mediaLinks || []);
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<TYouTubeVideo | null>(
-    null
+    null,
   );
 
   const parentCss = ['bg-white', 'h-[200px]', className];
@@ -53,7 +64,7 @@ export function HeroCarousel(props: TProps) {
         imageUrls={imageUrls}
         youtubeVideos={youtubeVideos}
         className={mergeCss(parentCss)}
-        onImageClick={(src) => setSelectedImage(src)}
+        onImageClick={(src) => setSelectedImage(fullUrlMap.get(src) || src)}
         onVideoClick={(video) => setSelectedVideo(video)}
       />
 

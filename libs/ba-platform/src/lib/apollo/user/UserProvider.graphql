@@ -1,0 +1,15 @@
+query currentOrgUser {
+  currentUser {
+    id
+    username
+    firstName
+    lastName
+    email
+    permissions
+    organizations: organizationsOrganization {
+      id
+      name
+      permissions
+    }
+  }
+}

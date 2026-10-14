@@ -5,30 +5,34 @@ from functools import cache
 from typing import Any
 
 import pghistory
-from common.models import BaseModel
-from common.permissions.utils import PermissionSet, perm
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from django_choices_field import TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
+from model_clone import CloneMixin
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
 from places.fields import PlacesField
+
+from common.models import BaseModel, OrgScoped
+from common.permissions.utils import PermissionSet, perm
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
     BedStatusChoices,
     BedTypeChoices,
-    MedicalNeedChoices,
+    ReservationStatusChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
     StatusChoices,
 )
-from shelters.managers import AdminShelterManager, ShelterManager
-from shelters.selectors import shelters_open_at
+from shelters.managers import BedManager, RoomManager, ShelterManager
+from shelters.open_at import shelters_open_at
+from shelters.status import compute_bed_status, compute_room_status, get_last_completed_checkout
 
 from .lookups import (
     SPA,
@@ -38,6 +42,7 @@ from .lookups import (
     EntryRequirement,
     ExitPolicy,
     Funder,
+    MedicalNeed,
     Parking,
     Pet,
     ReferralRequirement,
@@ -50,19 +55,24 @@ from .lookups import (
 )
 from .service import Service
 
+ACTIVE_RESERVATION_STATUSES = (
+    ReservationStatusChoices.CHECKED_IN,
+    ReservationStatusChoices.CHECK_IN_OVERDUE,
+    ReservationStatusChoices.CONFIRMED,
+)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter.add"),
     pghistory.UpdateEvent("shelter.update"),
     pghistory.DeleteEvent("shelter.remove"),
 )
-class Shelter(BaseModel):
+class Shelter(OrgScoped, BaseModel):
     class perms(PermissionSet):
         CHANGE_IS_REVIEWED = perm("change_shelter_is_reviewed", "Can change shelter is reviewed")
         VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
 
     objects: ShelterManager = ShelterManager()
-    admin_objects: AdminShelterManager = AdminShelterManager()
 
     # Basic Information
     name = models.CharField(max_length=255)
@@ -72,7 +82,7 @@ class Shelter(BaseModel):
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-    instagram = models.URLField(blank=True, null=True)
+    instagram = models.CharField(max_length=255, blank=True, null=True)
 
     # Hero Image (explicit pick from this shelter's gallery photos)
     hero_image = models.ForeignKey(
@@ -84,7 +94,7 @@ class Shelter(BaseModel):
     )
 
     # Summary Information
-    description = CKEditor5Field()
+    description = CKEditor5Field(blank=True, default="")
     demographics = models.ManyToManyField(Demographic)
     demographics_other = models.CharField(max_length=255, blank=True, null=True)
     special_situation_restrictions = models.ManyToManyField(SpecialSituationRestriction)
@@ -193,7 +203,7 @@ class Shelter(BaseModel):
         return shelters_open_at(
             type(self).objects.filter(pk=self.pk),
             dt=dt,
-            schedule_type=schedule_type,
+            schedule_types=[schedule_type],
         ).exists()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
@@ -208,68 +218,152 @@ class Shelter(BaseModel):
         super().save(*args, **kwargs)
 
 
-class Bed(BaseModel):
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
-    room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
-    bed_name = models.CharField(max_length=255, blank=True, null=True)
-    status = TextChoicesField(choices_enum=BedStatusChoices, blank=True, null=True)
-    status_notes = models.TextField(blank=True, null=True)
-    occupant = models.ForeignKey(
-        "clients.ClientProfile",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="occupied_beds",
-    )
-    bed_type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
-    demographics = models.ManyToManyField(Demographic, blank=True)
+@pghistory.track(
+    pghistory.InsertEvent("bed.add"),
+    pghistory.DeleteEvent("bed.remove"),
+    pghistory.UpdateEvent("bed.update"),
+)
+class Bed(CloneMixin, OrgScoped, BaseModel):
+    org_via = ("shelter",)
+
+    objects = BedManager()
+
+    _clone_linked_m2m_fields = [
+        "accessibility",
+        "demographics",
+        "funders",
+        "medical_needs",
+        "pets",
+    ]
+    _clone_excluded_fields = [
+        # Excluded so cloned beds always start AVAILABLE (maintenance_flag=False).
+        "last_cleaned",
+        "last_cleaned_inspected",
+        "maintenance_flag",
+        "status_notes",
+    ]
+
     accessibility = models.ManyToManyField(Accessibility, blank=True)
-    funders = models.ManyToManyField(Funder, blank=True)
-    pets = models.ManyToManyField(Pet, blank=True)
-    storage = models.BooleanField(default=False, blank=True)
-    maintenance_flag = models.BooleanField(default=False, blank=True)
-    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
-    medical_needs = TextChoicesField(choices_enum=MedicalNeedChoices, blank=True, null=True)
     b7 = models.BooleanField(default=False, blank=True)
+    demographics = models.ManyToManyField(Demographic, blank=True)
     fees = models.PositiveIntegerField(blank=True, null=True)
+    funders = models.ManyToManyField(Funder, blank=True)
+    last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    last_cleaned = models.DateTimeField(blank=True, null=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    medical_needs = models.ManyToManyField(MedicalNeed, blank=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
+    pets = models.ManyToManyField(Pet, blank=True)
+    room = models.ForeignKey("Room", on_delete=models.SET_NULL, blank=True, null=True, related_name="beds")
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="beds")
+    status_notes = models.TextField(blank=True, null=True)
+    storage = models.BooleanField(default=False, blank=True)
+    type = TextChoicesField(choices_enum=BedTypeChoices, blank=True, null=True)
 
     class Meta:
         indexes = [
-            models.Index(fields=["shelter", "status"]),
+            models.Index(fields=["shelter"]),
         ]
 
+    def clean(self) -> None:
+        super().clean()
 
-class Room(BaseModel):
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="rooms")
-    room_identifier = models.CharField(max_length=255)
-    room_type = TextChoicesField(choices_enum=RoomStyleChoices, blank=True, null=True)
-    room_type_other = models.CharField(max_length=255, blank=True, null=True)
-    status = TextChoicesField(choices_enum=RoomStatusChoices, blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+        # A bed's room must live in the bed's own shelter — otherwise the bed's
+        # effective org (``shelter``) and its room's org would drift apart and a
+        # cross-org reparent via ``room_id`` could park an org-A bed in an org-B
+        # room with no authority at B (ADR 0001 §2.6).  An unknown room id is
+        # left for the FK to reject.
+        if self.room_id and self.shelter_id:
+            room = Room.objects.filter(pk=self.room_id).only("shelter_id").first()
+            if room is not None and room.shelter_id != self.shelter_id:
+                raise ValidationError({"room": "The selected room does not belong to this shelter."})
+
+    @property
+    def computed_status(self) -> BedStatusChoices:
+        """Return computed status.
+
+        List/detail querysets should use ``Bed.objects.with_computed_status()`` so
+        ``_computed_status`` is set via SQL annotation. Otherwise falls back to
+        pure-Python rules in ``status.py`` (single-object paths like tests).
+        """
+        annotated = getattr(self, "_computed_status", None)
+        if annotated is not None:
+            return BedStatusChoices(annotated)
+
+        active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
+        return compute_bed_status(
+            maintenance_flag=self.maintenance_flag,
+            last_cleaned=self.last_cleaned,
+            last_checkout=get_last_completed_checkout(self.reservations.all()),
+            active_reservation_statuses={r.status for r in active},
+        )
+
+
+class Room(CloneMixin, OrgScoped, BaseModel):
+    org_via = ("shelter",)
+
+    objects = RoomManager()
+
+    _clone_linked_m2m_fields = [
+        "accessibility",
+        "demographics",
+        "funders",
+        "pets",
+    ]
+    _clone_excluded_fields = [
+        # Excluded so cloned rooms start fresh (AVAILABLE, no operational state).
+        "last_cleaned",
+        "last_cleaned_inspected",
+        "maintenance_flag",
+        "notes",
+        "status_notes",
+    ]
+    accessibility = models.ManyToManyField(Accessibility, blank=True)
     amenities = models.TextField(blank=True, null=True)
     demographics = models.ManyToManyField(Demographic, blank=True)
-    accessibility = models.ManyToManyField(Accessibility, blank=True)
     funders = models.ManyToManyField(Funder, blank=True)
-    pets = models.ManyToManyField(Pet, blank=True)
-    storage = models.BooleanField(default=False, blank=True)
-    maintenance_flag = models.BooleanField(default=False, blank=True)
-    occupants = models.ManyToManyField("clients.ClientProfile", blank=True, related_name="occupied_rooms")
-    medical_respite = models.BooleanField(default=False, blank=True)
+    last_cleaned = models.DateTimeField(blank=True, null=True)
     last_cleaned_inspected = models.DateTimeField(blank=True, null=True)
+    maintenance_flag = models.BooleanField(default=False, blank=True)
+    medical_respite = models.BooleanField(default=False, blank=True)
+    name = models.CharField(max_length=255)
+    notes = models.TextField(blank=True, null=True)
+    pets = models.ManyToManyField(Pet, blank=True)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="rooms")
+    storage = models.BooleanField(default=False, blank=True)
+    type = TextChoicesField(choices_enum=RoomStyleChoices, blank=True, null=True)
+    type_other = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=["shelter", "room_identifier"],
+                fields=["shelter", "name"],
                 name="unique_room_per_shelter",
             )
         ]
-        indexes = [
-            models.Index(fields=["shelter", "status"]),
-        ]
 
     def __str__(self) -> str:
-        return f"{self.shelter.name} - {self.room_identifier}"
+        return f"{self.shelter.name} - {self.name}"
+
+    @property
+    def computed_status(self) -> RoomStatusChoices:
+        """Return computed status.
+
+        List/detail querysets should use ``Room.objects.with_computed_status()`` so
+        ``_computed_status`` is set via SQL annotation. Otherwise falls back to
+        pure-Python rules in ``status.py`` (single-object paths like tests).
+        """
+        annotated = getattr(self, "_computed_status", None)
+        if annotated is not None:
+            return RoomStatusChoices(annotated)
+
+        active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
+        return compute_room_status(
+            maintenance_flag=self.maintenance_flag,
+            last_cleaned=self.last_cleaned,
+            last_checkout=get_last_completed_checkout(self.reservations.all()),
+            active_reservation_statuses={r.status for r in active},
+        )
 
 
 @pghistory.track(
@@ -277,7 +371,9 @@ class Room(BaseModel):
     pghistory.UpdateEvent("shelter.contact_info.update"),
     pghistory.DeleteEvent("shelter.contact_info.remove"),
 )
-class ContactInfo(models.Model):
+class ContactInfo(OrgScoped):
+    org_via = ("shelter",)
+
     class perms(PermissionSet):
         pass
 

@@ -32,7 +32,11 @@ export function TextField({
   error,
   onBlur,
 }: TextFieldProps) {
-  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
+  const messageId = error
+    ? `${id}-error`
+    : helperText
+      ? `${id}-helper`
+      : undefined;
 
   return (
     <FieldWrapper
@@ -49,7 +53,7 @@ export function TextField({
         type={type}
         value={value}
         placeholder={placeholder}
-        onChange={event => onChange(event.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
         className={clsx(INPUT_CLASS, error && INPUT_ERROR_CLASS)}
         aria-invalid={error ? 'true' : undefined}

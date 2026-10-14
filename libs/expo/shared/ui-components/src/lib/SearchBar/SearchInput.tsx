@@ -34,7 +34,7 @@ export function SearchInput(props: TSearchInput) {
 
   const debouncedChange = useMemo(
     () => debounce(onChange, debounceMs),
-    [onChange, debounceMs]
+    [onChange, debounceMs],
   );
 
   useEffect(() => {

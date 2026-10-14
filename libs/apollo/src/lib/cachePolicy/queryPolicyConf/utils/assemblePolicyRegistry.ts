@@ -50,13 +50,13 @@
  */
 
 export function assemblePolicyRegistry<
-  const T extends readonly { key: string; buildFn: () => any }[]
+  const T extends readonly { key: string; buildFn: () => unknown }[],
 >(
   opts: T,
   options?: {
     isDevEnv?: boolean;
-  }
-) {
+  },
+): { [K in T[number] as K['key']]: ReturnType<K['buildFn']> } {
   // (Optional) dev-time duplicate-key warning
   if (options?.isDevEnv) {
     const seen = new Set<string>();
@@ -65,12 +65,16 @@ export function assemblePolicyRegistry<
       if (seen.has(key)) {
         // eslint-disable-next-line no-console
         console.warn(
-          `[apollo assemblePolicyRegistry] Duplicate key "${key}" – later one will override.`
+          `[apollo assemblePolicyRegistry] Duplicate key "${key}" – later one will override.`,
         );
       }
       seen.add(key);
     }
   }
 
-  return Object.fromEntries(opts.map(({ key, buildFn }) => [key, buildFn()]));
+  return Object.fromEntries(
+    opts.map(({ key, buildFn }) => [key, buildFn()]),
+  ) as {
+    [K in T[number] as K['key']]: ReturnType<K['buildFn']>;
+  };
 }

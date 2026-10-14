@@ -9,7 +9,7 @@ type TPrimitive =
 
 export function toggleValueInArray<T extends TPrimitive>(
   list: T[],
-  value: T
+  value: T,
 ): T[] {
   if (list.includes(value)) {
     return list.filter((item) => item !== value);

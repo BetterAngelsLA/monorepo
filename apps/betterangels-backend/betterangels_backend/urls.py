@@ -16,13 +16,16 @@ Including another URLconf
 """
 
 import admin_async_upload.views
-from betterangels_backend import settings
+from allauth.headless.constants import Client
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic.base import RedirectView
 from strawberry.django.views import GraphQLView
+
+from accounts.headless_views import AutoCreateRequestLoginCodeView
+from betterangels_backend import settings
 
 from .schema import schema
 
@@ -37,16 +40,26 @@ urlpatterns = [
         ensure_csrf_cookie(
             GraphQLView.as_view(
                 schema=schema,
-                # https://github.com/strawberry-graphql/strawberry/issues/3655#issuecomment-2386409153
-                multipart_uploads_enabled=True,
             )
         ),
     ),
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
     path("reports/", include("reports.urls"), name="reports"),
+    path("shelters/", include("shelters.urls"), name="shelters"),
     path("upload/", admin_async_upload.views.admin_resumable, name="admin_resumable"),
-    path("_allauth/", include("allauth.headless.urls")),
+    # Override code/request for browser and app clients BEFORE the headless
+    # include. Django resolves urlpatterns top-to-bottom (first match wins),
+    # so these explicit paths take precedence over the catch-all include below.
+    path(
+        "_allauth/browser/v1/auth/code/request",
+        AutoCreateRequestLoginCodeView.as_api_view(client=Client.BROWSER),
+    ),
+    path(
+        "_allauth/app/v1/auth/code/request",
+        AutoCreateRequestLoginCodeView.as_api_view(client=Client.APP),
+    ),
+    path("_allauth/", include("allauth.headless.urls", namespace="headless")),
 ]
 
 

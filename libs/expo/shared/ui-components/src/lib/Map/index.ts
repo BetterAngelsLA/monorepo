@@ -1,8 +1,9 @@
 import RNMapView, {
+  configureWebMaps,
   Marker,
   PROVIDER_GOOGLE,
   PROVIDER_DEFAULT,
-} from 'react-native-maps';
+} from './mapsApi';
 
 export * from './clusters';
 export * from './constants';
@@ -10,7 +11,13 @@ export { defaultMapRegion, regionDeltaMap } from './constants';
 export { MapViewport } from './MapViewport';
 export * from './types';
 export * from './utils';
-export { RNMapView as MapView, Marker, PROVIDER_GOOGLE, PROVIDER_DEFAULT };
+export {
+  RNMapView as MapView,
+  configureWebMaps,
+  Marker,
+  PROVIDER_GOOGLE,
+  PROVIDER_DEFAULT,
+};
 
 export { LocationMarker } from './LocationMarker';
 export { MapDirectionsActionSheet } from './MapDirectionsActionSheet';

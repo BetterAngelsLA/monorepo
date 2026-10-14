@@ -12,7 +12,7 @@ export default function NoteCardClientHmis(props: INoteCardClientHmisProps) {
   const { clientProfile } = props;
 
   const { thumbnailUri, headers } = useClientPhotoContentUriHmis(
-    clientProfile?.hmisId
+    clientProfile?.hmisId,
   );
 
   return (
@@ -32,7 +32,9 @@ export default function NoteCardClientHmis(props: INoteCardClientHmisProps) {
         headers={headers}
       />
       <TextMedium size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-        {clientProfile?.firstName} {clientProfile?.lastName}
+        {[clientProfile?.firstName, clientProfile?.lastName]
+          .filter(Boolean)
+          .join(' ')}
       </TextMedium>
     </View>
   );

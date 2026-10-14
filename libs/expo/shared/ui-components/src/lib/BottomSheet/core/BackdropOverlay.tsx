@@ -25,7 +25,7 @@ export function BackdropOverlay(props: TProps) {
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 1000,
   },
   overlay: {

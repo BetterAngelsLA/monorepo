@@ -1,12 +1,12 @@
 import { TFilterOption } from '@monorepo/expo/shared/ui-components';
-import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../../static';
+import { enumDisplayTaskStatus } from '../../../static';
 import { TModelFilterFullConfig, TModelFilterType } from './types';
 
 export const modelFilterConfigDefault: Record<
   TModelFilterType,
   Omit<TModelFilterFullConfig, 'type'>
 > = {
-  teams: {
+  teamIds: {
     buttonLabel: 'All Teams',
     headerTitle: 'Filter - Teams',
     searchPlaceholder: 'Search teams',
@@ -39,14 +39,7 @@ export const modelFilterConfigDefault: Record<
 };
 
 export const taskStatusOptions: TFilterOption[] = Object.entries(
-  enumDisplayTaskStatus
-).map(([key, value]) => ({
-  id: key,
-  label: value,
-}));
-
-export const teamOptions: TFilterOption[] = Object.entries(
-  enumDisplaySelahTeam
+  enumDisplayTaskStatus,
 ).map(([key, value]) => ({
   id: key,
   label: value,

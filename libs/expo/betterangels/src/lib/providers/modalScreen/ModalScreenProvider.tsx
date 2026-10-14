@@ -22,7 +22,6 @@ const SCREEN_PATH_NAME = '/modal-screen';
 const DEFAULT_MODAL_STATE: IModalScreenState = {
   presentation: DEFAULT_PRESENTATION,
   title: '',
-  hideHeader: false,
   renderContent: null,
 };
 
@@ -63,7 +62,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
 
     if (currentPath !== SCREEN_PATH_NAME) {
       console.warn(
-        `[ModalScreenProvider close] closing modal when pathname is ${currentPath}.`
+        `[ModalScreenProvider close] closing modal when pathname is ${currentPath}.`,
       );
     }
 
@@ -72,13 +71,13 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
 
   const showModalScreen = useCallback(
     (props: TShowModalScreenProps) => {
-      const { renderContent, presentation, title, hideHeader, onClose } = props;
+      const { renderContent, presentation, title, onClose, header } = props;
 
       setModal({
         renderContent,
         presentation: presentation ?? DEFAULT_PRESENTATION,
         title: title ?? '',
-        hideHeader: !!hideHeader,
+        header,
       });
 
       onCloseCallbackRef.current = onClose ?? null;
@@ -91,14 +90,14 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
 
       router.push(SCREEN_PATH_NAME);
     },
-    [router]
+    [router],
   );
 
   const api: TRenderContentApi = useMemo(
     () => ({
       close: closeModal,
     }),
-    [closeModal]
+    [closeModal],
   );
 
   const resolvedContent = useMemo(() => {
@@ -120,8 +119,8 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
         showModalScreen,
         presentation: modal.presentation,
         content: resolvedContent,
-        hideHeader: modal.hideHeader,
         title: modal.title,
+        header: modal.header,
       }}
     >
       {children}

@@ -22,7 +22,7 @@ export function useTextFilter<T>(props: TUseTextFilter<T>) {
 
   const normalizeString = useCallback(
     (s: string) => (caseSensitive ? s.trim() : s.toLowerCase().trim()),
-    [caseSensitive]
+    [caseSensitive],
   );
 
   const filtered = useMemo(() => {
@@ -33,14 +33,14 @@ export function useTextFilter<T>(props: TUseTextFilter<T>) {
     }
 
     return data.filter((item) =>
-      normalizeString(getSearchableText(item)).includes(q)
+      normalizeString(getSearchableText(item)).includes(q),
     );
   }, [data, query, normalizeString, getSearchableText]);
 
   // stable signature to minimize renders
   const signature = useMemo(
     () => `${filtered.length}|${normalizeString(query)}`,
-    [filtered.length, normalizeString, query]
+    [filtered.length, normalizeString, query],
   );
 
   return {

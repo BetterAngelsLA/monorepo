@@ -1,4 +1,3 @@
-import { formatDateStatic } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
 import { GenderEnum } from '../../../../../apollo';
 import {
@@ -10,6 +9,7 @@ import {
   TClientProfileCardItem,
 } from '../../../../../ui-components';
 import { TClientProfileHouseholdMemeber } from '../../types';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 
 type TProps = {
   member?: TClientProfileHouseholdMemeber;
@@ -26,10 +26,7 @@ export function HouseholdMemberCard(props: TProps) {
 
   const { name, dateOfBirth, relationshipToClient, gender } = member;
 
-  const formattedDob = formatDateStatic({
-    date: dateOfBirth,
-    inputFormat: 'yyyy-MM-dd',
-  });
+  const formattedDob = formatScalarDate(dateOfBirth, 'MM/dd/yyyy');
 
   const content: TClientProfileCardItem[] = [
     {

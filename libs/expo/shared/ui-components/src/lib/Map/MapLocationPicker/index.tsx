@@ -1,26 +1,18 @@
-import {
-  LocationArrowIcon,
-  LocationPinIcon,
-  SearchIcon,
-} from '@monorepo/expo/shared/icons';
+import { LocationPinIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { LocationObject } from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
-import RNMapView, {
-  MapPressEvent,
-  Marker,
-  PoiClickEvent,
-  PROVIDER_GOOGLE,
-} from 'react-native-maps';
+import type { MapPressEvent, PoiClickEvent } from 'react-native-maps';
 import openMap from 'react-native-open-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BasicInput from '../../BasicInput';
-import IconButton from '../../IconButton';
 import TextRegular from '../../TextRegular';
 import { useGooglePlaces } from '../../providers/GooglePlacesProvider';
 import { MapDirectionsActionSheet } from '../MapDirectionsActionSheet';
+import { MapLocateMeBtn } from '../MapLocateMeBtn';
+import RNMapView, { Marker, PROVIDER_GOOGLE } from '../mapsApi';
 import type { TMapView } from '../types';
-import { getUserLocation } from '../utils/getUserLocation';
 import { SelectedLocationPanel } from './SelectedLocationPanel';
 import { IMapLocationPickerProps, TLocationData } from './types';
 import { useLocationSearch } from './useLocationSearch';
@@ -33,23 +25,32 @@ export function MapLocationPicker({
   onSelectLocation,
   onClearLocation,
   onClose,
-  userLocation: propUserLocation,
+  userLocation,
 }: IMapLocationPickerProps) {
   const places = useGooglePlaces();
   const mapRef = useRef<TMapView>(null);
   const insets = useSafeAreaInsets();
 
   const [location, setLocation] = useState<TLocationData | null>(null);
-  const [userLocation, setUserLocation] = useState(propUserLocation ?? null);
+  const [showUserLocationDot, setShowUserLocationDot] =
+    useState(!!userLocation);
   const [minimized, setMinimized] = useState(false);
   const [showIosDirections, setShowIosDirections] = useState(false);
 
   const animateMap = useCallback((lat: number, lng: number) => {
     mapRef.current?.animateToRegion(
       { latitude: lat, longitude: lng, ...DELTA },
-      500
+      500,
     );
   }, []);
+
+  async function onCurrentLocationChange(location: LocationObject) {
+    const { latitude, longitude } = location.coords;
+
+    setLocation(await geocode(latitude, longitude));
+    setShowUserLocationDot(true);
+    setMinimized(false);
+  }
 
   // Search hook
   const {
@@ -90,8 +91,8 @@ export function MapLocationPicker({
   }, [initialLocation]);
 
   useEffect(() => {
-    if (propUserLocation) setUserLocation(propUserLocation);
-  }, [propUserLocation]);
+    setShowUserLocationDot(!!userLocation);
+  }, [userLocation]);
 
   // Geocode: POI click or map tap → full location data
   const geocode = useCallback(
@@ -99,7 +100,7 @@ export function MapLocationPicker({
       lat: number,
       lng: number,
       poiName?: string,
-      placeId?: string
+      placeId?: string,
     ): Promise<TLocationData> => {
       try {
         if (placeId) {
@@ -131,7 +132,7 @@ export function MapLocationPicker({
         };
       }
     },
-    [places]
+    [places],
   );
 
   // Handlers
@@ -149,7 +150,7 @@ export function MapLocationPicker({
       setLocation(await geocode(latitude, longitude, name, placeId));
       setMinimized(false);
     },
-    [geocode]
+    [geocode],
   );
 
   const clear = useCallback(() => {
@@ -167,21 +168,6 @@ export function MapLocationPicker({
     }
   }, [location, onSelectLocation, onClose]);
 
-  const goToUser = useCallback(async () => {
-    try {
-      let loc = userLocation;
-      if (!loc) {
-        const result = await getUserLocation();
-        loc = result?.location ?? null;
-        if (!loc) return;
-        setUserLocation(loc);
-      }
-      animateMap(loc.coords.latitude, loc.coords.longitude);
-    } catch (err) {
-      console.error('Error getting user location:', err);
-    }
-  }, [userLocation, animateMap]);
-
   const openDirections = useCallback(
     (provider: 'apple' | 'google') => {
       if (location) {
@@ -194,7 +180,7 @@ export function MapLocationPicker({
       }
       setShowIosDirections(false);
     },
-    [location]
+    [location],
   );
 
   return (
@@ -257,15 +243,14 @@ export function MapLocationPicker({
       {/* Bottom Panel */}
       <View style={styles.bottomPanel}>
         <View style={styles.userLocationBtn}>
-          <IconButton
-            onPress={goToUser}
-            style={styles.shadowBtn}
+          <MapLocateMeBtn
+            mapRef={mapRef}
+            regionDelta={DELTA}
+            variant="relative"
+            onLocated={onCurrentLocationChange}
             accessibilityLabel="My location"
             accessibilityHint="center map on your location"
-            variant="secondary"
-          >
-            <LocationArrowIcon color={Colors.PRIMARY} />
-          </IconButton>
+          />
         </View>
 
         {location && !minimized && (
@@ -291,7 +276,7 @@ export function MapLocationPicker({
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
-        showsUserLocation={!!userLocation}
+        showsUserLocation={showUserLocationDot}
         showsMyLocationButton={false}
         initialRegion={{ ...center, ...DELTA }}
         onPress={(e) => handleMapPress(e, false)}
@@ -310,7 +295,10 @@ export function MapLocationPicker({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, overflow: 'hidden' },
+  container: {
+    flex: 1,
+    overflow: 'hidden',
+  },
   map: { width: '100%', height: '100%' },
   searchBox: {
     position: 'absolute',
@@ -336,13 +324,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     paddingRight: Spacings.sm,
     marginBottom: Spacings.md,
-  },
-  shadowBtn: {
-    elevation: 5,
-    shadowColor: Colors.NEUTRAL_DARK,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
   safeAreaBottom: {
     backgroundColor: 'transparent',

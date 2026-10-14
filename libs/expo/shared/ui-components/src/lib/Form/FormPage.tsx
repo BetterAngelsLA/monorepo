@@ -1,7 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode, RefObject } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
+import { type KeyboardAwareScrollViewRef } from '../Keyboard';
 import KeyboardAwareScrollView from '../KeyboardAwareScrollView';
 import LoadingView from '../LoadingView';
 import { FormButtons, TFormButtons } from './FormButtons';
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255,255,255,0.6)',
     justifyContent: 'center',
     alignItems: 'center',

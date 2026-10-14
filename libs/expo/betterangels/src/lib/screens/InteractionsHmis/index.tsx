@@ -4,8 +4,7 @@ import { router } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { HmisNoteType, toNoteFilterHmis } from '../../apollo';
-import useUser from '../../hooks/user/useUser';
-import { TUser } from '../../providers/user/UserContext';
+import { TUser, useUser } from '../../providers/user/UserProvider';
 import {
   Header,
   HorizontalContainer,
@@ -29,7 +28,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState<string>('');
   const [filtersKey, setFiltersKey] = useState(0);
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialFilterValues(user)
+    getInitialFilterValues(user),
   );
 
   function onFilterChange(selectedFilters: TModelFilters) {
@@ -57,7 +56,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
         hmisNote={item}
       />
     ),
-    []
+    [],
   );
 
   const serverFilters = toNoteFilterHmis({

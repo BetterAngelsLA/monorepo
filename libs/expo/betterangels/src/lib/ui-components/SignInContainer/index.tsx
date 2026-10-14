@@ -1,11 +1,14 @@
-import { useApiConfig } from '@monorepo/expo/shared/clients';
+import { useEnvironment } from '@monorepo/ba-platform';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  RNKeyboardAwareScrollView,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useFeatureControls } from '@monorepo/react/shared';
 import { Link, router } from 'expo-router';
 import { ReactNode, useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
 
 type AuthLayoutProps = {
@@ -20,11 +23,16 @@ export default function SignInContainer({
   privacyPolicyUrl,
 }: AuthLayoutProps) {
   const { user } = useUser();
-  const { switchEnvironment, environment } = useApiConfig();
+  const { switchEnvironment, environment } = useEnvironment();
   const { refetchFeatureFlags } = useFeatureControls();
 
   // On mount, optionally switch env when unauthenticated.
   useEffect(() => {
+    // Web builds are pinned to their API at build time (EXPO_PUBLIC_API_URL per
+    // deployment), so this dev-client nudge is not just unnecessary — on a dev
+    // or preview deployment it would silently repoint the app at production.
+    if (Platform.OS === 'web') return;
+
     if (!user && environment !== 'production') {
       switchEnvironment('production');
     }
@@ -37,10 +45,13 @@ export default function SignInContainer({
       refetchFeatureFlags();
       router.replace(user.isOutreachAuthorized ? '/' : '/welcome');
     }
+    // refetchFeatureFlags is called only when user just became truthy (login).
+    // Adding it to deps could cause spurious refetches if not memoized upstream.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return (
-    <KeyboardAwareScrollView
+    <RNKeyboardAwareScrollView
       style={{ flex: 1, backgroundColor: Colors.WHITE }}
       contentContainerStyle={{
         flexGrow: 1,
@@ -85,7 +96,7 @@ export default function SignInContainer({
           </Text>
         ) : null}
       </View>
-    </KeyboardAwareScrollView>
+    </RNKeyboardAwareScrollView>
   );
 }
 

@@ -3,18 +3,36 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from accounts.groups import GroupTemplateNames
+from django.db.models import (
+    BooleanField,
+    Case,
+    Exists,
+    F,
+    OuterRef,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
+from strawberry import ID, Info, Maybe, auto
+from strawberry_django.utils.query import filter_for_user
+
 from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
-from common.enums import SelahTeamEnum
-from common.graphql.types import LocationInput, LocationType, NonBlankString, make_in_filter
-from django.db.models import BooleanField, Case, Exists, F, OuterRef, Q, QuerySet, Value, When
+from common.graphql.types import (
+    AttachmentInterface,
+    LocationInput,
+    LocationType,
+    NonBlankString,
+    make_in_filter,
+)
+from common.models import Attachment
+from common.org_types import REGISTRY
 from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
-from strawberry import ID, Info, Maybe, auto
-from strawberry_django.utils.query import filter_for_user
 from tasks.types import TaskType
+from teams.types import TeamType
 
 from . import models
 
@@ -86,7 +104,7 @@ class CreateNoteServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: ID
-    service_other: Maybe[str | None]
+    service_other: Optional[str]
     status: auto
     due_by: auto
 
@@ -112,7 +130,7 @@ class NoteFilter:
 
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
-    teams = make_in_filter("team", SelahTeamEnum)
+    team_ids = make_in_filter("team", ID)
 
     @strawberry_django.filter_field
     def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
@@ -152,7 +170,12 @@ class NoteType:
     purpose: auto
     requested_services: List[ServiceRequestType]
     tasks: list[TaskType]
-    team: Optional[SelahTeamEnum]
+    team: Optional[TeamType]
+
+    # Deprecated alias for ``team``.  Shipped app builds select
+    # ``currentTeam``, so both names resolve the same FK until those builds
+    # have rolled over.  Delete this field, not ``team``.
+    current_team: Optional[TeamType] = strawberry_django.field(field_name="team", deprecation_reason="Use team instead")
 
     @strawberry_django.field(
         annotate={
@@ -214,30 +237,31 @@ class CreateNoteTaskInput:
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
-    team: Optional[SelahTeamEnum] = None
+    team_id: Maybe[ID | None]
 
 
 @strawberry.input
 class UpdateNoteInput:
     """
     Input for updating a note with all nested relations.
-    Omitted fields are left unchanged. Nested relation fields use replace-all
-    semantics when provided (existing items are removed, new ones created).
+    Omitted fields are left unchanged — UNSET for the plain ``Optional``
+    fields, absent (``None``) for the ``Maybe`` ones. Nested relation fields
+    use replace-all semantics (existing items are removed, new ones created).
     """
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team: Maybe[SelahTeamEnum | None]
-    public_details: Maybe[str | None]
-    private_details: Maybe[str | None]
-    is_submitted: Maybe[bool]
-    interacted_at: Maybe[datetime | None]
+    team_id: Maybe[ID | None]
+    public_details: Optional[str] = strawberry.UNSET
+    private_details: Optional[str] = strawberry.UNSET
+    is_submitted: Optional[bool] = strawberry.UNSET
+    interacted_at: Optional[datetime] = strawberry.UNSET
 
     # Nested relations (replace-all when provided)
-    location: Maybe[LocationInput | None]
-    provided_services: Maybe[List[CreateNoteServiceInput] | None]
-    requested_services: Maybe[List[CreateNoteServiceInput] | None]
-    tasks: Maybe[List[CreateNoteTaskInput] | None]
+    location: Optional[LocationInput] = strawberry.UNSET
+    provided_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
+    requested_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
+    tasks: Optional[List[CreateNoteTaskInput]] = strawberry.UNSET
 
 
 @strawberry_django.input(models.Note)
@@ -262,7 +286,7 @@ class CreateNoteInput:
 
     # Core note fields
     purpose: Optional[str] = None
-    team: Optional[SelahTeamEnum] = None
+    team_id: Maybe[ID | None]
     public_details: Optional[str] = ""
     private_details: Optional[str] = ""
     client_profile: Optional[ID] = None
@@ -313,7 +337,7 @@ class InteractionAuthorType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet[User], info: Info) -> QuerySet[User]:
         # TODO: Make unit test for this function
-        authorized_permission_groups = [template.value for template in GroupTemplateNames]
+        authorized_permission_groups = REGISTRY.template_names()
 
         # Subquery to check if the user has any related permission group in an authorized group
         permission_group_exists = PermissionGroup.objects.filter(
@@ -333,7 +357,7 @@ class ImportNoteDataInput:
     """Core note fields used by the import pipeline."""
 
     purpose: auto
-    team: Optional[SelahTeamEnum]
+    team_id: Maybe[ID | None]
     public_details: auto
     private_details: auto
     client_profile: ID | None
@@ -376,3 +400,40 @@ class NoteImportRecordType:
     created_at: auto
     note: Optional[NoteType]
     raw_data: auto
+
+
+@strawberry_django.type(Attachment, pagination=True)
+class NoteAttachmentType(AttachmentInterface):
+    pass
+
+
+@strawberry.input
+class NoteAttachmentUploadItemInput:
+    ref_id: str
+    filename: str
+    content_type: str
+
+
+@strawberry.input
+class GenerateNoteAttachmentUploadsInput:
+    note_id: ID
+    uploads: list[NoteAttachmentUploadItemInput]
+
+
+@strawberry.input
+class NoteAttachmentFromUploadInput:
+    presigned_key: str
+    upload_token: str
+    filename: str
+    content_type: str
+
+
+@strawberry.type
+class NoteAttachmentUploadsType:
+    attachments: list[NoteAttachmentType]
+
+
+@strawberry.input
+class ResolveNoteAttachmentUploadsInput:
+    note_id: ID
+    attachments: list[NoteAttachmentFromUploadInput]

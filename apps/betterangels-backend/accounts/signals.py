@@ -1,107 +1,220 @@
 import logging
 from typing import Any
 
-from accounts.groups import GroupTemplateNames
-from accounts.utils import (
-    add_default_org_permissions_to_user,
-    create_default_org_permission_groups,
-    remove_org_group_permissions_from_user,
-    remove_organization_permission_group,
-)
 from django.conf import settings
-from django.db import transaction
-from django.db.models.signals import post_delete, post_migrate, post_save, pre_delete
-from django.dispatch import receiver
-from organizations.models import Organization, OrganizationUser
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import DatabaseError
+from organizations.models import Organization
 
-from .models import PermissionGroup, PermissionGroupTemplate, User
+from .models import User
 
 logger = logging.getLogger(__name__)
 
 
-@receiver(post_migrate)
-def create_superuser(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not User.objects.filter(username="admin").exists():
-        User.objects.create_superuser(username="admin", email="admin@example.com", password="password")
+# ── Local dev data setup ──────────────────────────────────────────────
+# Connected via AppConfig.ready() with sender=self — fires once, not per-app.
+
+TEST_ORG_NAME = "test_org"
 
 
-@receiver(post_migrate)
-def create_test_agent(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not User.objects.filter(username="agent").exists():
-        User.objects.create_user(
-            username="agent",
-            email="agent@example.com",
-            password="password",
-            first_name="Carolyn",
-        )
+def setup_local_dev_data(sender: object, **kwargs: object) -> None:
+    """Create test users and org — local dev only.
 
-
-@receiver(post_migrate)
-def create_test_organization(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
-        test_usernames = ["admin", "agent"]
-        test_users = User.objects.filter(username__in=test_usernames)
-        test_org = Organization.objects.create(name="test_org")
-        for test_user in test_users:
-            test_org.add_user(test_user)
-
-
-@receiver(pre_delete, sender=Organization)
-def handle_organization_removed(sender: Any, instance: Organization, **kwargs: Any) -> None:
-    remove_organization_permission_group(instance)
-    logger.info(f"Organization {instance.name} was removed.")
-
-
-@receiver(post_save, sender=OrganizationUser)
-def handle_organization_user_added(sender: Any, instance: OrganizationUser, created: bool, **kwargs: Any) -> None:
-    user: User = instance.user
-    organization: Organization = instance.organization
-    if created:
-        add_default_org_permissions_to_user(user, organization)
-    logger.info(f"User {user.username} was added to organization {organization.name}.")
-
-
-@receiver(post_save, sender=PermissionGroup)
-def handle_caseworker_perm_group_created(sender: Any, instance: PermissionGroup, created: bool, **kwargs: Any) -> None:
-    """Creates default Group and PermissionGroup for a Caseworker organization.
-
-    A "Caseworker organization" is any org that has an associated
-    PermissionGroup based on the Caseworker PermissionGroupTemplate.
-
-    Caseworker organizations need "Admin" and "Superuser" Groups. This facilitates the creation of those Groups.
-
-    NOTE: This is a temporary solution until organization tags are implemented.
-          Currently, the only way to distinguish between a cw and non-cw org is
-          via the presence of an associated PermissionGroup.
+    Role assignment is deferred to ``sync_all_org_permission_groups``
+    which runs after all migration app tables exist.  This avoids
+    ``PermissionGroup.DoesNotExist`` when the signal fires before
+    the accounts app is fully migrated.
     """
-    organization: Organization = instance.organization
+    if not settings.IS_LOCAL_DEV:
+        return
 
-    if created and instance.template == PermissionGroupTemplate.objects.get(name=GroupTemplateNames.CASEWORKER):
-        create_default_org_permission_groups(organization)
-
-
-@receiver(post_delete, sender=OrganizationUser)
-def handle_organization_user_removed(sender: Any, instance: OrganizationUser, **kwargs: Any) -> None:
-    user: User = instance.user
-    organization: Organization = instance.organization
-    remove_org_group_permissions_from_user(user, organization)
-    logger.info(f"User {user.username} was removed from organization {organization.name}.")
+    _ensure_test_users()
+    _ensure_test_org()
 
 
-@receiver(post_migrate)
-def update_group_permissions(sender: Any, **kwargs: Any) -> None:
-    template_names = [
-        GroupTemplateNames.CASEWORKER,
-        GroupTemplateNames.ORG_ADMIN,
-        GroupTemplateNames.ORG_SUPERUSER,
-    ]
+def _ensure_test_users() -> None:
+    """Idempotent: create admin + agent with known passwords."""
+    admin, _ = User.objects.get_or_create(
+        username="admin",
+        defaults={
+            "email": "admin@example.com",
+            "password": "password",
+            "first_name": "Admin",
+            "has_accepted_privacy_policy": True,
+            "has_accepted_tos": True,
+        },
+    )
+    User.objects.filter(username="admin").update(
+        is_superuser=True,
+        is_staff=True,
+        first_name="Admin",
+        has_accepted_privacy_policy=True,
+        has_accepted_tos=True,
+    )
+    if not admin.check_password("password"):
+        admin.set_password("password")
+        admin.save(update_fields=["password"])
 
-    with transaction.atomic():
-        templates = PermissionGroupTemplate.objects.filter(name__in=template_names).prefetch_related(
-            "permissions", "permissiongroup_set__group"
+    agent, _ = User.objects.get_or_create(
+        username="agent",
+        defaults={
+            "email": "agent@example.com",
+            "password": "password",
+            "first_name": "Carolyn",
+        },
+    )
+    if not agent.check_password("password"):
+        agent.set_password("password")
+        agent.save(update_fields=["password"])
+
+
+def _ensure_test_org() -> None:
+    """Idempotent: ensure test_org exists with presets and admin as owner.
+
+    Role assignment is handled later by sync_all_org_permission_groups.
+    Called on every post_migrate because the first signal may fire before
+    all apps' tables/permission templates are ready.
+    """
+    from accounts.services import create_organization_with_presets
+
+    # The idempotency this seeding relies on lives here, not in the service:
+    # create_organization_with_presets always creates, so that naming an existing
+    # organization cannot join it.
+    if Organization.objects.filter(name=TEST_ORG_NAME).exists():
+        return
+
+    create_organization_with_presets(
+        name=TEST_ORG_NAME,
+        preset_names=["shelter", "outreach"],
+        owner=User.objects.get(username="admin"),
+        owner_roles=(),  # roles assigned by sync_all_org_permission_groups
+    )
+
+
+# ── Permission sync (all environments) ────────────────────────────────
+# Connected via AppConfig.ready() with sender=self — fires once, not per-app.
+
+
+def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
+    """Reconcile every org's PermissionGroups against current presets.
+
+    Also assigns test-agent roles on local dev (safe to call repeatedly
+    — ``member_add`` is idempotent).
+    """
+    from accounts.services import member_add
+    from accounts.services import reconcile_org_groups as reconcile
+    from notes.groups import CASEWORKER
+    from shelters.groups import SHELTER_OPERATOR
+
+    # The accounts app tables may not be ready when this fires for other apps;
+    # skip gracefully until the final post_migrate run.  Scoped to DatabaseError
+    # so a logic error surfaces instead of silently abandoning reconciliation for
+    # every remaining organization.
+    try:
+        organizations = list(Organization.objects.all())
+    except DatabaseError:
+        logger.warning("Skipping org permission sync — accounts tables not ready yet.", exc_info=True)
+        return
+
+    for org in organizations:
+        reconcile(org)
+
+    if not settings.IS_LOCAL_DEV:
+        return
+
+    try:
+        from accounts.groups import ORG_ADMIN
+
+        test_org = Organization.objects.get(name=TEST_ORG_NAME)
+        admin = User.objects.get(username="admin")
+        agent = User.objects.get(username="agent")
+
+        member_add(
+            email=admin.email or "admin@example.com",
+            first_name="Admin",
+            last_name="User",
+            middle_name=None,
+            organization=test_org,
+            permission_templates=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
         )
+        member_add(
+            email=agent.email or "agent@example.com",
+            first_name=agent.first_name or "",
+            last_name=agent.last_name or "",
+            middle_name=None,
+            organization=test_org,
+            permission_templates=(SHELTER_OPERATOR, CASEWORKER),
+        )
+    except ObjectDoesNotExist, DatabaseError:
+        # The test org, its users, or its permission groups may not exist yet on an
+        # early post_migrate run.  Scoped like the reconcile guard above so a logic
+        # error here surfaces instead of leaving the dev fixtures silently roleless.
+        logger.warning("Skipping local dev role assignment — test org or users not ready yet.", exc_info=True)
 
-        for template in templates:
-            perms = list(template.permissions.all())
-            for pgt in template.permissiongroup_set.all():
-                pgt.group.permissions.set(perms)
+
+# ── Membership ↔ Grant mirror (ADR 0001 §4 phase 2) ─────────────────────
+
+
+def mirror_group_membership_grants(
+    sender: object,
+    instance: Any,
+    action: str,
+    reverse: bool,
+    pk_set: Any,
+    **kwargs: object,
+) -> None:
+    """Keep role-backed ``PermissionGroup`` memberships and Grants in step.
+
+    Wired to ``User.groups.through``, so every writer keeps the invariant —
+    the manager, the user admin, scripts, the shell — and reverse writes
+    (``permission_group.user_set.add/remove/clear``) are handled too.
+
+    A cascading delete of a ``PermissionGroup`` (teardown retiring a legacy
+    row) does **not** emit ``m2m_changed`` — Django fast-deletes the through
+    rows — so the Grants, the successor authority, outlive the legacy row.
+    That asymmetry is deliberate: membership edges revoke, teardown does not.
+    """
+    from accounts.models import PermissionGroup, User
+    from accounts.role_manager import mirror_membership_grants, unmirror_membership_grants
+
+    if action == "pre_clear":
+        # post_clear carries no pk_set; remember what is about to be cleared so
+        # the mirror is dropped for exactly those rows.
+        if reverse:
+            instance.__dict__["_grant_mirror_pre_clear_users"] = list(instance.user_set.all())
+        else:
+            # ``User.groups`` yields ``Group`` rows, not the ``PermissionGroup``
+            # children — resolve the role-backed subset explicitly.
+            group_ids = list(instance.groups.values_list("pk", flat=True))
+            instance.__dict__["_grant_mirror_pre_clear_groups"] = list(
+                PermissionGroup.objects.filter(pk__in=group_ids).select_related("template", "organization")
+            )
+        return
+
+    if action not in {"post_add", "post_remove", "post_clear"}:
+        return
+    if action != "post_clear" and not pk_set:
+        return
+
+    if reverse:
+        if not isinstance(instance, PermissionGroup):
+            return
+        if action == "post_clear":
+            users = instance.__dict__.pop("_grant_mirror_pre_clear_users", [])
+        else:
+            users = list(User.objects.filter(pk__in=pk_set or []))
+        groups = [instance]
+    else:
+        users = [instance]
+        if action == "post_clear":
+            groups = instance.__dict__.pop("_grant_mirror_pre_clear_groups", [])
+        else:
+            groups = list(
+                PermissionGroup.objects.filter(pk__in=pk_set or []).select_related("template", "organization")
+            )
+
+    for user in users:
+        if action == "post_add":
+            mirror_membership_grants(user, groups)
+        else:
+            unmirror_membership_grants(user, groups)

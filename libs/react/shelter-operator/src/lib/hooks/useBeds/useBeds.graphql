@@ -1,0 +1,16 @@
+query Beds($shelterId: ID!) {
+  beds(filters: { shelterId: $shelterId }) {
+    totalCount
+    results {
+      id
+      name
+      status
+      maintenanceFlag
+      type
+      room {
+        id
+        name
+      }
+    }
+  }
+}

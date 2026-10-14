@@ -30,7 +30,7 @@ The betterangels_backend is built on Django, a Python web framework. It also uti
 1. Install dependencies (if you just built the container, this step might already be done)
 
    ```bash
-   poetry install
+   uv sync
    ```
 
 1. Add/Update `.env.local` file in the `apps/betterangels-backend` project to manage `local-only` environment variables.
@@ -50,7 +50,6 @@ Once started, you can access the Django development server at
 - default address: [http://localhost:8000/admin/](http://localhost:8000/admin/)
   - or the port you've configured.
 - Login using creds
-
   - email: `admin@example.com`
   - psw: `password`
 
@@ -62,10 +61,10 @@ Once started, you can access the Django development server at
 
 #### Starting a Django Shell
 
-1. Activate a poetry shell
+1. Activate a uv shell
 
    ```bash
-   poetry shell
+   uv shell
    ```
 
 1. Navigate to `betterangels-backend` app directory
@@ -96,9 +95,25 @@ To run an individual test, add the full path of the test in dot notation. Exampl
 yarn nx test betterangels-backend accounts.tests.UsersManagersTests.test_create_user
 ```
 
+#### Working in more than one checkout
+
+The test database name comes from `POSTGRES_NAME`, so every worktree and every
+container shell shares one `test_postgres`. Running with `--create-db` in one
+drops it under the others, which surfaces as large numbers of failures in apps
+you did not touch.
+
+When that is a risk, name a database for the run:
+
+```bash
+POSTGRES_TEST_NAME=test_myworktree uv run pytest -q --create-db
+```
+
+Per command, not in `.env` — the shared database stays the default so that
+running the suite by hand behaves the same way everywhere.
+
 #### Debugging Tests
 
-To run tests with breakpoints via the terminal, you'll need to use a `poetry shell` as described in the section above, then:
+To run tests with breakpoints via the terminal, you'll need to use a `uv shell` as described in the section above, then:
 
 1. Add any breakpoint to your code/tests:
 
@@ -108,10 +123,10 @@ To run tests with breakpoints via the terminal, you'll need to use a `poetry she
    from IPython import embed; embed()
    ```
 
-1. Run tests using `python manage.py test`. Example:
+1. Run tests using `uv run pytest`. Example:
 
    ```bash
-   python manage.py test accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
+   uv run pytest accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
    ```
 
 To use VSCode's debugger:
@@ -182,41 +197,40 @@ POST_OFFICE_EMAIL_BACKEND=django_ses.SESBackend
 
 Sending & Receiving: With the above configuration, any emails sent from the application will now be dispatched through Amazon SES.
 
-### Local File Storage (MinIO)
+### Local File Storage (SeaweedFS)
 
-We use [MinIO](https://min.io/) as a local S3-compatible object store so that file uploads work the same way locally as they do in production (where we use AWS S3). MinIO runs automatically as part of the Docker Compose stack — no extra setup is required.
+We use [SeaweedFS](https://github.com/seaweedfs/seaweedfs) as a local S3-compatible object store so that file uploads work the same way locally as they do in production (where we use AWS S3). SeaweedFS runs automatically as part of the Docker Compose stack — no extra setup is required.
 
 #### How It Works
 
-- **MinIO** provides an S3-compatible API on port `9000` and an admin console on port `9001`.
-- When `IS_LOCAL_DEV=True` (set in `.compose/local.shared.env`), Django uses the `LocalS3Storage` backend (`common/storage.py`) instead of the production `S3Storage`. This backend signs read URLs with the public MinIO endpoint (`localhost:9000`) so your browser/device can access files, while Django itself talks to MinIO over the Docker network (`minio:9000`).
-- The `minio-setup` service automatically creates the `betterangels-local` bucket on first startup.
+- **SeaweedFS** (`weed mini`) provides an S3-compatible API. Inside Docker it listens on port `8333`; on the host it is published as port `9000` (IPv4-only for Android emulator `adb reverse`).
+- When `IS_LOCAL_DEV=True` (set in `.compose/local.shared.env`), Django uses the `LocalS3Storage` backend (`common/storage.py`) instead of the production `S3Storage`. This backend signs read URLs with the public endpoint (`localhost:9000`) so your browser/device can access files, while Django itself talks to SeaweedFS over the Docker network (`s3:8333`).
+- The `betterangels-local` bucket is created automatically on startup via the `S3_BUCKET` environment variable.
 
-#### MinIO Admin Console
+#### Browser UIs
 
-You can browse uploaded files and manage buckets via the MinIO web console:
+SeaweedFS exposes local-only management UIs (IPv4 localhost):
 
-- **URL:** [http://localhost:9001](http://localhost:9001)
-- **Username:** `admin`
-- **Password:** `password`
+- **Filer UI** (browse buckets/files): [http://localhost:8888](http://localhost:8888)
+- **Admin UI** (cluster/ops): [http://localhost:23646](http://localhost:23646)
 
 #### Environment Variables
 
-All MinIO-related environment variables are committed in `.compose/local.shared.env` and applied automatically:
+All local S3-related environment variables are committed in `.compose/local.shared.env` and applied automatically:
 
 | Variable                         | Value                   | Purpose                                                 |
 | -------------------------------- | ----------------------- | ------------------------------------------------------- |
 | `AWS_S3_STORAGE_BUCKET_NAME`     | `betterangels-local`    | Local bucket name                                       |
-| `LOCAL_S3_INTERNAL_ENDPOINT_URL` | `http://minio:9000`     | Docker-internal MinIO endpoint (used by Django)         |
-| `LOCAL_S3_PUBLIC_ENDPOINT_URL`   | `http://localhost:9000` | Browser-reachable MinIO endpoint (used for signed URLs) |
-| `AWS_ACCESS_KEY_ID`              | `admin`                 | MinIO root user                                         |
-| `AWS_SECRET_ACCESS_KEY`          | `password`              | MinIO root password                                     |
+| `LOCAL_S3_INTERNAL_ENDPOINT_URL` | `http://s3:8333`        | Docker-internal S3 endpoint (used by Django)            |
+| `LOCAL_S3_PUBLIC_ENDPOINT_URL`   | `http://localhost:9000` | Browser-reachable S3 endpoint (used for signed URLs)    |
+| `AWS_ACCESS_KEY_ID`              | `admin`                 | Local S3 access key                                     |
+| `AWS_SECRET_ACCESS_KEY`          | `password`              | Local S3 secret key                                     |
 
-You do **not** need to add any MinIO variables to your `.env.local` unless you want to override the defaults (e.g., to point at a real AWS bucket).
+You do **not** need to add any of these variables to your `.env.local` unless you want to override the defaults (e.g., to point at a real AWS bucket).
 
 #### Android Emulator Access
 
-If you are running the Android emulator, you need to forward port `9000` so the emulator can reach MinIO on `localhost`:
+If you are running the Android emulator, you need to forward port `9000` so the emulator can reach the local S3 API on `localhost`:
 
 ```bash
 adb reverse tcp:9000 tcp:9000
@@ -303,7 +317,7 @@ randomized multi-select values, 1–10 photos, varied schedules, contacts, etc.)
 
 ```bash
 cd apps/betterangels-backend/shelters/scripts/
-poetry run python seed_shelters.py 10
+uv run python seed_shelters.py 10
 ```
 
 ##### Reseeding from scratch
@@ -312,12 +326,18 @@ To clear all existing shelters and reseed:
 
 ```bash
 cd apps/betterangels-backend/shelters/scripts/
-poetry run python seed_shelters.py 20 --clear
+uv run python seed_shelters.py 20 --clear
 ```
 
 The `--clear` flag deletes every existing `Shelter` (and cascaded relations)
 before creating new ones. This is useful when the schema changes or you want
 a clean slate without resetting the full database.
+
+---
+
+### Additional Documentation
+
+- **[GraphQL Error Handling](../apps/betterangels-backend/docs/graphql_errors.md)** — how the backend produces `OperationInfo` / `GraphQLError` responses
 
 ### Troubleshooting
 

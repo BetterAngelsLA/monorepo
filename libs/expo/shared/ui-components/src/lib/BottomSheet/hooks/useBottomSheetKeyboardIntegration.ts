@@ -23,7 +23,7 @@ type FocusEvent = {
 };
 
 export function useBottomSheetKeyboardIntegration<T extends TNativeHandle>(
-  ref: RefObject<T>
+  ref: RefObject<T>,
 ) {
   const { animatedKeyboardState, textInputNodesRef } = useBottomSheetInternal();
 
@@ -36,7 +36,7 @@ export function useBottomSheetKeyboardIntegration<T extends TNativeHandle>(
         };
       });
     },
-    [animatedKeyboardState]
+    [animatedKeyboardState],
   );
 
   const handleOnBlur = useCallback(() => {
@@ -76,8 +76,10 @@ export function useBottomSheetKeyboardIntegration<T extends TNativeHandle>(
 
     textInputNodesRef.current.add(nodeHandle);
 
+    const nodesRef = textInputNodesRef.current;
+
     return () => {
-      textInputNodesRef.current.delete(nodeHandle);
+      nodesRef.delete(nodeHandle);
     };
   }, [ref, textInputNodesRef]);
 

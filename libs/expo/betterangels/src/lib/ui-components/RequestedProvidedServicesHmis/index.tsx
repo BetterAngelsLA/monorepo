@@ -30,7 +30,7 @@ type IRequestedServicesProps =
     };
 
 export default function HmisRequestedProvidedServices(
-  props: IRequestedServicesProps
+  props: IRequestedServicesProps,
 ) {
   const { services: selectedServices, type } = props;
   const { showModalScreen } = useModalScreen();
@@ -65,9 +65,7 @@ export default function HmisRequestedProvidedServices(
                 />
               ))}
           </View>
-        ) : (
-          ''
-        )
+        ) : null
       }
       mb="xs"
       title={`${enumDisplayServiceType[type]} Services`}
@@ -82,7 +80,7 @@ export default function HmisRequestedProvidedServices(
                 setValue(
                   'services',
                   { ...current, ...e },
-                  { shouldDirty: true }
+                  { shouldDirty: true },
                 );
               }}
               close={close}
@@ -93,6 +91,7 @@ export default function HmisRequestedProvidedServices(
         })
       }
     >
+      {/* FieldCard requires children */}
       <></>
     </FieldCard>
   );

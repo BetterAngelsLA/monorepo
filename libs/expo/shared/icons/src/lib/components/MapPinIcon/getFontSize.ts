@@ -12,7 +12,7 @@ export type TFontsizes = {
 
 export function getFontSize(
   size: TMapPinIconSize,
-  subscriptAfter?: boolean
+  subscriptAfter?: boolean,
 ): TFontsizes {
   const defaultSize = fontSizeMap[size];
 

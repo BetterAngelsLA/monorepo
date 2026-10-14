@@ -1,7 +1,7 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TaskType, toTaskFilter } from '../../apollo';
 import { useUser } from '../../hooks';
@@ -9,21 +9,36 @@ import { useUserTeamPreference } from '../../state';
 import { pagePaddingHorizontal } from '../../static';
 import {
   ModelFilters,
+  SortButton,
+  TClientProfileKind,
   TModelFilters,
+  TSortDirection,
   TaskCard,
   TaskList,
+  TaskListHeader,
   toModelFilterValues,
 } from '../../ui-components';
 import { getInitialTaskFilters } from './getInitialTaskFilters';
+import { getTaskOrder } from './getTaskOrder';
 
 export default function Tasks() {
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
   const [teamPreference] = useUserTeamPreference();
   const [search, setSearch] = useState('');
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialTaskFilters({ teamPreference })
+    getInitialTaskFilters({ teamId: teamPreference }),
   );
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
+  const [sortDirection, setSortDirection] =
+    useState<TSortDirection>('newestFirst');
+
+  const taskOrder = useMemo(() => getTaskOrder(sortDirection), [sortDirection]);
+
+  const toggleSortDirection = useCallback(() => {
+    setSortDirection((prev) =>
+      prev === 'newestFirst' ? 'oldestFirst' : 'newestFirst',
+    );
+  }, []);
 
   const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
@@ -32,9 +47,29 @@ export default function Tasks() {
     });
   }, []);
 
+  const handleClientPress = useCallback(
+    (clientProfileId: string, kind: TClientProfileKind) => {
+      // `/client/[id]` resolves to the HMIS client screen for HMIS users, so
+      // only navigate when the row's client kind matches the user's mode.
+      if ((kind === 'hmisClientProfile') !== Boolean(user?.isHmisUser)) return;
+
+      router.navigate({
+        pathname: `/client/${clientProfileId}`,
+        params: { arrivedFrom: '/tasks' },
+      });
+    },
+    [user?.isHmisUser],
+  );
+
   const renderTaskItem = useCallback(
-    (task: TaskType) => <TaskCard task={task} onPress={handleTaskPress} />,
-    [handleTaskPress]
+    (task: TaskType) => (
+      <TaskCard
+        task={task}
+        onPress={handleTaskPress}
+        onClientPress={handleClientPress}
+      />
+    ),
+    [handleTaskPress, handleClientPress],
   );
 
   function onFilterChange(selectedFilters: TModelFilters) {
@@ -43,7 +78,7 @@ export default function Tasks() {
 
   function onFilterReset() {
     setSearch('');
-    setCurrentFilters(getInitialTaskFilters({ teamPreference }));
+    setCurrentFilters(getInitialTaskFilters({ teamId: teamPreference }));
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
@@ -73,15 +108,34 @@ export default function Tasks() {
         onChange={onFilterChange}
         style={styles.filters}
         filters={[
-          isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
-          'teams',
+          user?.isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
+          'teamIds',
           'taskStatus',
           'authors',
           'organizations',
         ]}
       />
 
-      <TaskList filters={serverFilters} renderItem={renderTaskItem} />
+      <TaskList
+        filters={serverFilters}
+        order={taskOrder}
+        renderItem={renderTaskItem}
+        renderHeader={(visible, total) => (
+          <TaskListHeader
+            style={styles.listHeader}
+            visibleTasks={visible}
+            totalTasks={total ?? 0}
+            actionItem={
+              (total ?? 0) > 1 ? (
+                <SortButton
+                  direction={sortDirection}
+                  onPress={toggleSortDirection}
+                />
+              ) : null
+            }
+          />
+        )}
+      />
     </View>
   );
 }
@@ -98,6 +152,9 @@ const styles = StyleSheet.create({
   },
   filters: {
     marginBottom: Spacings.sm,
+  },
+  listHeader: {
+    marginBottom: Spacings.xs,
   },
   resultsHeader: {
     marginVertical: Spacings.sm,

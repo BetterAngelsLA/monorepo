@@ -35,7 +35,7 @@ const TabItem = <T extends string | number>(props: TabItemProps<T>) => {
 };
 
 export const Tab = memo(TabItem) as <T extends string | number>(
-  p: TabItemProps<T>
+  p: TabItemProps<T>,
 ) => ReactElement;
 
 const styles = StyleSheet.create({

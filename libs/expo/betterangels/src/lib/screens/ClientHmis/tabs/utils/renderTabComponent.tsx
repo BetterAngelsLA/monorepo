@@ -35,7 +35,7 @@ const tabRendererMap: Partial<
 
 export function renderTabComponent(
   tabKey: ClientViewTabEnum,
-  args: RenderArgs
+  args: RenderArgs,
 ): ReactElement | null {
   const Component = tabRendererMap[tabKey];
 

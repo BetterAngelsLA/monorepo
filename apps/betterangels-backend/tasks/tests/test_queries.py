@@ -1,9 +1,9 @@
 from unittest.mock import ANY
 
-from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
-from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
+
+from clients.models import ClientProfile
+from common.tests.utils import GraphQLBaseTestCase
 from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
@@ -26,7 +26,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "description": "task description",
                 "note": str(self.note.pk),
                 "summary": "task summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
+                "teamId": str(self.org_1_team_1.pk),
             }
         )["data"]["createTask"]
 
@@ -60,6 +60,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "description": "task description",
             "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
@@ -69,7 +70,6 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             },
             "status": TaskStatusEnum.TO_DO.name,
             "summary": "task summary",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "updatedAt": ANY,
         }
 
@@ -82,7 +82,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "description": "task 2 description",
                 "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
+                "teamId": str(self.org_1_team_1.pk),
             }
         )["data"]["createTask"]
 
@@ -103,6 +103,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "description": "task description",
             "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
@@ -112,7 +113,6 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             },
             "status": TaskStatusEnum.TO_DO.name,
             "summary": "task summary",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "updatedAt": ANY,
         }
 
@@ -215,16 +215,75 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
+    def test_task_query_legacy_team_selection_still_resolves(self) -> None:
+        """The exact selection shipped in native app builds must keep validating.
+
+        See the note counterpart: ``currentTeam`` and ``slug`` are removed together
+        in #2342, because every shipped block selects both.
+        """
+        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(self.org_1_team_1.pk)})["data"][
+            "createTask"
+        ]["id"]
+
+        query = """
+            query ($id: ID!) {
+                task(pk: $id) {
+                    team { id name }
+                    currentTeam { id slug name }
+                }
+            }
+        """
+        response = self.execute_graphql(query, {"id": task_id})
+
+        task = response["data"]["task"]
+        self.assertEqual(task["team"], {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name})
+        self.assertEqual(
+            task["currentTeam"],
+            {"id": str(self.org_1_team_1.pk), "slug": None, "name": self.org_1_team_1.name},
+        )
+
+    def test_tasks_query_teams_filter_ignores_an_unmatchable_id(self) -> None:
+        task_id = self.create_task_fixture(
+            {
+                "clientProfile": str(self.client_profile.pk),
+                "summary": "task 2 summary",
+                "teamId": str(self.org_1_team_2.pk),
+            }
+        )["data"]["createTask"]["id"]
+
+        response = self.execute_graphql(
+            self.get_tasks_query("id"),
+            {"filters": {"teamIds": [str(self.org_1_team_2.pk), "abc"]}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
+        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
+
+    def test_tasks_query_teams_filter_of_only_unmatchable_ids_matches_nothing(self) -> None:
+        self.create_task_fixture(
+            {
+                "clientProfile": str(self.client_profile.pk),
+                "summary": "task 2 summary",
+                "teamId": str(self.org_1_team_2.pk),
+            }
+        )
+
+        response = self.execute_graphql(self.get_tasks_query("id"), {"filters": {"teamIds": ["abc"]}})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["tasks"]["totalCount"], 0)
+
     def test_tasks_query_teams_filter(self) -> None:
         task_id = self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),
                 "summary": "task 2 summary",
-                "team": SelahTeamEnum.SLCC_ON_SITE.name,
+                "teamId": str(self.org_1_team_2.pk),
             }
         )["data"]["createTask"]["id"]
 
-        filters = {"teams": [SelahTeamEnum.SLCC_ON_SITE.name]}
+        filters = {"teamIds": [self.org_1_team_2.pk]}
         variables = {"filters": filters}
 
         expected_query_count = 4

@@ -1,18 +1,19 @@
 from typing import Optional
 from unittest.mock import patch
 
-from accounts.tests.baker_recipes import permission_group_recipe
+from unittest_parametrize import parametrize
+
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
-from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile
+from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.tests.utils import (
     ClientContactBaseTestCase,
     ClientHouseholdMemberBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
+    SocialMediaProfileBaseTestCase,
 )
 from common.models import Attachment
-from common.tests.utils import GraphQLBaseTestCase
-from unittest_parametrize import parametrize
+from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
 
 
 class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
@@ -206,65 +207,69 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self.client_document = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"This is a test file",
             "test.txt",
-        )["data"]["createClientDocument"]
+        )
         self.graphql_client.logout()
 
-    @parametrize(
-        "user_label, should_succeed",
-        [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("non_case_manager_user", False),  # Non-CM user should not succeed
-            (None, False),  # Anonymous user should not succeed
-        ],
-    )
-    def test_create_client_document_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
-        self._handle_user_login(user_label)
-        response = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"This is a test file",
-            "test.txt",
-        )
-
-        if user_label is None:
-            self.assertGraphQLUnauthenticated(response)
-        else:
-            attachment_id = response.get("data", {}).get("createClientDocument", {}).get("id")
-            if should_succeed:
-                self.assertIsNotNone(attachment_id)
-            else:
-                self.assertIsNone(attachment_id)
-
-    @parametrize(
-        "user_label, should_succeed",
-        [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", False),  # CM in a different org should not succeed
-            ("non_case_manager_user", False),  # Non-CM user should not succeed
-            (None, False),  # Anonymous user should not succeed
-        ],
-    )
-    def test_delete_client_document_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
+    def _create_client_document_as_owner(self) -> str:
         self._handle_user_login("org_1_case_manager_1")
-        response = self._create_client_document_fixture(
+        document = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"Test file content",
         )
-        client_document_id = response["data"]["createClientDocument"]["id"]
+        document_id: str = document["id"]
+
+        return document_id
+
+    @parametrize(
+        "user_label",
+        [
+            ("org_1_case_manager_1",),
+            ("org_1_case_manager_2",),
+        ],
+    )
+    def test_delete_client_document_returns_the_deleted_document(self, user_label: str) -> None:
+        client_document_id = self._create_client_document_as_owner()
 
         self._handle_user_login(user_label)
-        delete_response = self._delete_client_document_fixture(client_document_id)
+        response = self._delete_client_document_fixture(client_document_id)
 
-        self.assertTrue(Attachment.objects.filter(id=client_document_id).exists() != should_succeed)
+        self.assertEqual(
+            response["data"]["deleteClientDocument"],
+            {"__typename": "ClientDocumentType", "id": client_document_id},
+        )
+        self.assertFalse(Attachment.objects.filter(id=client_document_id).exists())
 
-        if user_label is None:
-            self.assertGraphQLUnauthenticated(delete_response)
+    @parametrize(
+        "user_label",
+        [
+            ("org_2_case_manager_1",),
+            ("non_case_manager_user",),
+        ],
+    )
+    def test_delete_client_document_denied_keeps_the_document(self, user_label: str) -> None:
+        client_document_id = self._create_client_document_as_owner()
+
+        self._handle_user_login(user_label)
+        response = self._delete_client_document_fixture(client_document_id)
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "deleteClientDocument",
+            "You do not have permission to delete this document.",
+            kind="PERMISSION",
+            exact=True,
+        )
+        self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
+
+    def test_delete_client_document_anonymous_is_unauthenticated(self) -> None:
+        client_document_id = self._create_client_document_as_owner()
+
+        self._handle_user_login(None)
+        response = self._delete_client_document_fixture(client_document_id)
+
+        self.assertGraphQLUnauthenticated(response)
+        self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
     @parametrize(
         "user_label, should_succeed",
@@ -382,19 +387,22 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     )
     def test_generate_client_document_uploads_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
-        with patch(
-            "clients.services.client_document.generate_s3_presigned_upload_urls",
-            return_value={
-                "uploads": [
-                    {
-                        "ref_id": "ref-1",
-                        "key": "media/attachments/test.pdf",
-                        "url": "https://s3.example.com/upload",
-                        "fields": {"Policy": "test"},
-                    }
-                ]
-            },
-        ), patch("clients.services.client_document.create_upload_token", return_value="mock-token"):
+        with (
+            patch(
+                "common.services.file_upload.generate_s3_presigned_upload_urls",
+                return_value=PresignedS3UploadBatchResult(
+                    uploads=[
+                        PresignedS3UploadResult(
+                            ref_id="ref-1",
+                            key="media/attachments/test.pdf",
+                            url="https://s3.example.com/upload",
+                            fields={"Policy": "test"},
+                        )
+                    ]
+                ),
+            ),
+            patch("common.services.file_upload.create_upload_token", return_value="mock-token"),
+        ):
             response = self._generate_client_document_uploads_fixture(
                 self.client_profile_1["id"],
                 [{"refId": "ref-1", "filename": "test.pdf", "contentType": "application/pdf"}],
@@ -421,11 +429,14 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     )
     def test_resolve_client_document_uploads_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
-        with patch("clients.services.client_document.validate_upload_token", return_value=True), patch(
-            "clients.services.client_document.assign_object_permissions"
-        ), patch("clients.services.client_document.s3_key_exists", return_value=True), patch(
-            "clients.services.client_document.strip_storage_location",
-            side_effect=lambda key: key.removeprefix("media/"),
+        with (
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("clients.services.client_document.assign_object_permissions"),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
+            patch(
+                "common.services.file_upload.strip_storage_location",
+                side_effect=lambda key: key.removeprefix("media/"),
+            ),
         ):
             response = self._resolve_client_document_uploads_fixture(
                 self.client_profile_1["id"],
@@ -463,19 +474,22 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self, user_label: Optional[str], should_succeed: bool
     ) -> None:
         self._handle_user_login(user_label)
-        with patch(
-            "clients.services.client_profile_photo.generate_s3_presigned_upload_urls",
-            return_value={
-                "uploads": [
-                    {
-                        "ref_id": "ref-photo",
-                        "key": "media/client_profile_photos/test.jpg",
-                        "url": "https://s3.example.com/upload",
-                        "fields": {"Policy": "test"},
-                    }
-                ]
-            },
-        ), patch("clients.services.client_profile_photo.create_upload_token", return_value="mock-token"):
+        with (
+            patch(
+                "common.services.file_upload.generate_s3_presigned_upload_urls",
+                return_value=PresignedS3UploadBatchResult(
+                    uploads=[
+                        PresignedS3UploadResult(
+                            ref_id="ref-photo",
+                            key="media/client_profile_photos/test.jpg",
+                            url="https://s3.example.com/upload",
+                            fields={"Policy": "test"},
+                        )
+                    ]
+                ),
+            ),
+            patch("common.services.file_upload.create_upload_token", return_value="mock-token"),
+        ):
             response = self._generate_client_profile_photo_upload_fixture(
                 client_profile_id=self.client_profile_1["id"],
                 ref_id="ref-photo",
@@ -506,8 +520,9 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self, user_label: Optional[str], should_succeed: bool
     ) -> None:
         self._handle_user_login(user_label)
-        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True), patch(
-            "clients.services.client_profile_photo.s3_key_exists", return_value=True
+        with (
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
         ):
             response = self._resolve_client_profile_photo_upload_fixture(
                 client_profile_id=self.client_profile_1["id"],
@@ -523,6 +538,32 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertIsNotNone(profile_id)
             else:
                 self.assertIsNone(profile_id)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("non_case_manager_user", False),
+            (None, False),
+        ],
+    )
+    def test_delete_client_profile_photo_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+        response = self._delete_client_profile_photo_fixture(
+            client_profile_id=self.client_profile_1["id"],
+        )
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
+            return
+
+        result = response.get("data", {}) or {}
+        self.assertEqual(
+            "deleteClientProfilePhoto" in result and "id" in (result.get("deleteClientProfilePhoto") or {}),
+            should_succeed,
+        )
 
 
 class ClientContactPermissionTestCase(ClientContactBaseTestCase):
@@ -1029,43 +1070,44 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             )
 
 
-class OrganizationPermissionTestCase(GraphQLBaseTestCase):
+class SocialMediaProfilePermissionTestCase(SocialMediaProfileBaseTestCase):
     @parametrize(
-        "user_label, should_succeed",
+        "user_label",
         [
-            ("org_1_case_manager_1", True),  # Case Manager should succeed
-            ("non_case_manager_user", False),  # Non CM should not succeed
-            (None, False),  # Anonymous user should not succeed
+            ("org_1_case_manager_1",),
+            ("org_1_case_manager_2",),
+            ("org_2_case_manager_1",),
         ],
     )
-    def test_view_caseworker_organizations_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
+    def test_delete_social_media_profile_returns_the_deleted_profile(self, user_label: str) -> None:
         self._handle_user_login(user_label)
+        profile_id = self.social_media_profile_1["id"]
 
-        # This recipe creates an organization in the process. Including this here because even though
-        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
-        permission_group_recipe.make(name="Caseworker")
+        response = self._delete_fixture(object="SocialMediaProfile", object_id=profile_id)
 
-        query = """
-            query CaseworkerOrganizations($pagination: OffsetPaginationInput) {
-                caseworkerOrganizations(pagination: $pagination) {
-                    totalCount
-                    results {
-                        id
-                        name
-                    }
-                    pageInfo {
-                        offset
-                        limit
-                    }
-                }
-            }
-        """
-        variables = {"pagination": {"offset": 0, "limit": 10}}
-        response = self.execute_graphql(query, variables=variables)
+        self.assertEqual(response["data"]["deleteSocialMediaProfile"], {"id": profile_id})
+        self.assertFalse(SocialMediaProfile.objects.filter(id=profile_id).exists())
 
-        if should_succeed:
-            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) > 0)
-        elif user_label is None:
-            self.assertGraphQLUnauthenticated(response)
-        else:
-            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) == 0)
+    def test_delete_social_media_profile_denied_keeps_the_profile(self) -> None:
+        self._handle_user_login("non_case_manager_user")
+        profile_id = self.social_media_profile_1["id"]
+
+        response = self._delete_fixture(object="SocialMediaProfile", object_id=profile_id)
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "deleteSocialMediaProfile",
+            "You don't have permission to access this app.",
+            kind="PERMISSION",
+            exact=True,
+        )
+        self.assertTrue(SocialMediaProfile.objects.filter(id=profile_id).exists())
+
+    def test_delete_social_media_profile_anonymous_is_unauthenticated(self) -> None:
+        self._handle_user_login(None)
+        profile_id = self.social_media_profile_1["id"]
+
+        response = self._delete_fixture(object="SocialMediaProfile", object_id=profile_id)
+
+        self.assertGraphQLUnauthenticated(response)
+        self.assertTrue(SocialMediaProfile.objects.filter(id=profile_id).exists())

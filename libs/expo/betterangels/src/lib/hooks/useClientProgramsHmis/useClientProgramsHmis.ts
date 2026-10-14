@@ -82,7 +82,7 @@ export function useClientProgramsHmis(props: TProps) {
       totalProgramsFromNetwork > MAX_PROGRAMS_TO_FETCH
     ) {
       console.warn(
-        `useClientProgramsHmis: hmis client [${clientId}] has ${totalProgramsFromNetwork} clientProgram clientPrograms (exceeds ${MAX_PROGRAMS_TO_FETCH})`
+        `useClientProgramsHmis: hmis client [${clientId}] has ${totalProgramsFromNetwork} clientProgram clientPrograms (exceeds ${MAX_PROGRAMS_TO_FETCH})`,
       );
     }
 
@@ -92,7 +92,7 @@ export function useClientProgramsHmis(props: TProps) {
       if (clientProgram.__typename !== 'HmisClientProgramType') {
         console.warn(
           `[useClientProgramsHmis]: invalid clientProgram for clientId [${clientId}]`,
-          clientProgram
+          clientProgram,
         );
         continue;
       }
@@ -141,7 +141,7 @@ export function useClientProgramsHmis(props: TProps) {
 
       return enrollmentIdToProjectNameMap.get(refClientProgram);
     },
-    [enrollmentIdToProjectNameMap]
+    [enrollmentIdToProjectNameMap],
   );
 
   return {

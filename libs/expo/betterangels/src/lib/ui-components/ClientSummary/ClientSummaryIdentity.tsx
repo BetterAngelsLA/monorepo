@@ -13,7 +13,7 @@ interface IClientSummaryIdentityProps {
 }
 
 export default function ClientSummaryIdentity(
-  props: IClientSummaryIdentityProps
+  props: IClientSummaryIdentityProps,
 ) {
   const { client } = props;
 

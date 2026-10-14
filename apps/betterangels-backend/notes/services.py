@@ -1,15 +1,26 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 import pghistory
-from accounts.models import PermissionGroup, User
-from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
-from common.models import Location
-from common.permissions.utils import assign_object_permissions
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+
+from accounts.models import PermissionGroup, User
+from accounts.selectors import resolve_permission_group
+from clients.models import ClientProfile
+from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
+from common.models import Attachment, Location
+from common.permissions.utils import assign_object_permissions
+from common.services import file_upload
+from common.services.file_upload import (
+    AttachmentUploadConfig,
+    UploadConfirmation,
+    UploadRequest,
+)
+from common.services.types import AuthorizedPresignedUploadBatch
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.permissions import (
     NotePermissions,
@@ -79,6 +90,7 @@ def note_update(
             note.location = location
 
         # Single save for core fields + location to produce one pghistory event.
+        note.full_clean()
         note.save()
 
         # --- Provided services (replace-all) ---
@@ -163,7 +175,7 @@ def service_request_create(
         )
 
         assign_object_permissions(
-            permission_group.group,
+            permission_group,
             sr,
             [
                 ServiceRequestPermissions.VIEW,
@@ -224,7 +236,7 @@ def note_create(
     user: User,
     permission_group: PermissionGroup,
     purpose: Optional[str] = None,
-    team: Optional[SelahTeamEnum] = None,
+    team_id: Optional[str] = None,
     public_details: str = "",
     private_details: str = "",
     client_profile_id: Optional[str] = None,
@@ -246,9 +258,9 @@ def note_create(
     if location_data:
         location = Location.get_or_create_location(location_data)
 
-    note = Note.objects.create(
+    note = Note(
         purpose=purpose,
-        team=team,
+        team_id=team_id,
         public_details=public_details or "",
         private_details=private_details or "",
         client_profile_id=client_profile_id,
@@ -258,9 +270,11 @@ def note_create(
         created_by=user,
         organization=permission_group.organization,
     )
+    note.full_clean()
+    note.save()
 
     assign_object_permissions(
-        permission_group.group,
+        permission_group,
         note,
         [
             NotePermissions.CHANGE,
@@ -297,3 +311,63 @@ def note_create(
         )
 
     return note
+
+
+NOTE_ATTACHMENT_CONFIG = AttachmentUploadConfig(
+    upload_path="note_attachments",
+    service_name="note_attachment",
+    allowed_content_types=DEFAULT_DOCUMENT_CONTENT_TYPES | DEFAULT_IMAGE_CONTENT_TYPES,
+    max_file_size=settings.NOTE_ATTACHMENT_MAX_FILE_SIZE,
+)
+
+
+def create_note_attachment_presigned_uploads(
+    *,
+    user: User,
+    uploads: Iterable[UploadRequest],
+) -> AuthorizedPresignedUploadBatch:
+    """Generate presigned S3 URLs and upload tokens for note attachments (Phase 1)."""
+    return file_upload.create_presigned_uploads(
+        user=user,
+        uploads=uploads,
+        config=NOTE_ATTACHMENT_CONFIG,
+    )
+
+
+def resolve_note_file_uploads(
+    *,
+    user: User,
+    note: Note,
+    attachments: Iterable[UploadConfirmation],
+) -> list[Attachment]:
+    """Validate tokens + S3 → create Attachment rows for a note (Phase 3).
+
+    Uses the note's organization to resolve the permission group, so
+    object-level permissions are scoped to the correct org even when
+    the user belongs to multiple organizations.
+    """
+    permission_group = resolve_permission_group(
+        user,
+        template=CASEWORKER,
+        organization_id=str(note.organization_id),
+    )
+
+    with transaction.atomic():
+        attached = file_upload.create_attachment_records(
+            user=user,
+            content_object=note,
+            uploads=attachments,
+            config=NOTE_ATTACHMENT_CONFIG,
+        )
+
+        for att in attached:
+            assign_object_permissions(
+                permission_group,
+                att,
+                [
+                    Attachment.perms.DELETE,
+                    Attachment.perms.CHANGE,
+                ],
+            )
+
+    return attached

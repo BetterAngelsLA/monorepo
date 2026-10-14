@@ -91,7 +91,7 @@ export const useClientHmis = () => {
         fields: fieldsParam,
       });
     },
-    [clientHmis]
+    [clientHmis],
   );
 
   /**
@@ -104,7 +104,7 @@ export const useClientHmis = () => {
     (props: UploadClientFileParams): Promise<ClientFileUploadResponse> => {
       return clientHmis.uploadClientFile(props);
     },
-    [clientHmis]
+    [clientHmis],
   );
 
   /**
@@ -123,24 +123,24 @@ export const useClientHmis = () => {
   const getClientFiles = useCallback(
     (
       clientId: string | number,
-      params?: ClientFilesListParams
+      params?: ClientFilesListParams,
     ): Promise<ClientFilesResponse> => {
       return clientHmis.getClientFiles(clientId, params);
     },
-    [clientHmis]
+    [clientHmis],
   );
   const getFileCategories = useCallback(
     (params?: HttpQueryParamsHmis): Promise<FileCategoriesResponse> => {
       return clientHmis.getFileCategories(params);
     },
-    [clientHmis]
+    [clientHmis],
   );
 
   const getFileNames = useCallback(
     (params?: HttpQueryParamsHmis): Promise<FileNamesResponse> => {
       return clientHmis.getFileNames(params);
     },
-    [clientHmis]
+    [clientHmis],
   );
 
   /**
@@ -163,7 +163,7 @@ export const useClientHmis = () => {
       categoryId: number,
       fileNameId: number,
       file?: { content: string; name: string; mimeType: string } | null,
-      isPrivate?: boolean | null
+      isPrivate?: boolean | null,
     ): Promise<ClientFileUploadResponse> => {
       return clientHmis.updateClientFile(
         clientId,
@@ -171,10 +171,10 @@ export const useClientHmis = () => {
         categoryId,
         fileNameId,
         file,
-        isPrivate
+        isPrivate,
       );
     },
-    [clientHmis]
+    [clientHmis],
   );
 
   /**
@@ -187,7 +187,7 @@ export const useClientHmis = () => {
     (clientId: string | number, fileId: string | number): Promise<void> => {
       return clientHmis.deleteClientFile(clientId, fileId);
     },
-    [clientHmis]
+    [clientHmis],
   );
 
   /**
@@ -202,11 +202,11 @@ export const useClientHmis = () => {
   const uploadClientPhoto = useCallback(
     (
       clientId: string | number,
-      formData: FormData
+      formData: FormData,
     ): Promise<ClientPhotoUploadResponse> => {
       return clientHmis.uploadClientPhoto(clientId, formData);
     },
-    [clientHmis]
+    [clientHmis],
   );
 
   return {

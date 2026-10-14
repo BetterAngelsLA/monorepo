@@ -8,7 +8,7 @@ type TProps<T extends AnyProps = AnyProps> = {
 } & T;
 
 export function toPointFeature<T extends AnyProps>(
-  props: TProps<T>
+  props: TProps<T>,
 ): TGeoPoint<T> {
   const { id, latitude, longitude, ...rest } = props;
 

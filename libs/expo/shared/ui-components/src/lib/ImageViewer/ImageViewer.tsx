@@ -14,9 +14,7 @@ export function ImageViewer(props: TProps) {
     return null;
   }
 
-  const source = headers
-    ? { uri: url, headers }
-    : { uri: url };
+  const source = headers ? { uri: url, headers } : { uri: url };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

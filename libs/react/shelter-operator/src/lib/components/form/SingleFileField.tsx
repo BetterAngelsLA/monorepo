@@ -26,12 +26,14 @@ export function SingleFileField({
         name={name}
         type="file"
         accept={accept}
-        onChange={event => {
+        onChange={(event) => {
           const file = event.target.files?.[0] ?? null;
           onChange(file);
         }}
       />
-      {value ? <p className="text-sm text-gray-600">Selected: {value.name}</p> : null}
+      {value ? (
+        <p className="text-sm text-gray-600">Selected: {value.name}</p>
+      ) : null}
     </FieldWrapper>
   );
 }

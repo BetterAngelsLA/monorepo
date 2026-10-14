@@ -9,7 +9,10 @@ interface IShowToastParams {
   title: string;
   description?: string;
   action?: IToastAction;
+  /** Auto-dismiss duration in ms. Defaults to AUTO_DISMISS_MS. Ignored if `persistent` is true. */
   duration?: number;
+  /** If true, the toast stays visible until the user dismisses it. */
+  persistent?: boolean;
 }
 
 let toastCounter = 0;
@@ -20,20 +23,22 @@ export function useToast() {
   const closeToast = useCallback(
     (id: string) => {
       setToasts((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, visible: false } : t))
+        prev.map((t) => (t.id === id ? { ...t, visible: false } : t)),
       );
 
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
       }, CLOSE_ANIMATION_MS);
     },
-    [setToasts]
+    [setToasts],
   );
 
   const showToast = useCallback(
     (params: IShowToastParams) => {
       const id = `toast-${++toastCounter}`;
-      const duration = params.duration ?? AUTO_DISMISS_MS;
+      const duration = params.persistent
+        ? 0
+        : (params.duration ?? AUTO_DISMISS_MS[params.status]);
 
       setToasts((prev) => [
         ...prev,
@@ -53,7 +58,7 @@ export function useToast() {
 
       return id;
     },
-    [setToasts, closeToast]
+    [setToasts, closeToast],
   );
 
   return { showToast, closeToast };

@@ -20,14 +20,9 @@ export { default as CloseButton } from './CloseButton';
 export { BaseContainer } from './Container';
 export { default as ControlledInput } from './ControlledInput';
 export { default as Copy } from './Copy';
+export * from './CopyButton';
 export { default as CTAButton } from './CTAButton';
 export { DataTable, TDataTable, TDataTableItem } from './DataTable';
-export {
-  DateLocal,
-  formatDateLocal,
-  formatDateStatic,
-  parseToDate,
-} from './Date';
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
 export { default as DirectionsPopup } from './DirectionsPopup';
@@ -36,6 +31,7 @@ export { default as Divider } from './Divider';
 export { default as EditButton } from './EditButton';
 export { default as EmailBtn } from './EmailBtn';
 export { default as ExpandableContainer } from './ExpandableContainer';
+export { default as FontLoader } from './Fonts/FontLoader';
 export { default as FieldCard } from './FieldCard';
 export { default as FileCard } from './FileCard';
 export * from './Filters';
@@ -47,6 +43,10 @@ export { default as IconButton } from './IconButton';
 export { default as ImageViewer } from './ImageViewer';
 export * from './InfiniteList';
 export * from './Input';
+// The keyboard seam (`KeyboardProvider`, `KeyboardToolbar`, `KeyboardEvents`,
+// `RNKeyboardAwareScrollView`). No collision with the styled wrapper below: the
+// seam exposes the raw component as `RNKeyboardAwareScrollView`.
+export * from './Keyboard';
 export { default as KeyboardAwareScrollView } from './KeyboardAwareScrollView';
 export {
   feetInchesToInches,
@@ -98,3 +98,5 @@ export { default as TextMedium } from './TextMedium';
 export { default as TextOrNode } from './TextOrNode';
 export { default as TextRegular } from './TextRegular';
 export * from './types';
+export { UploadItemRow } from './UploadItemRow/UploadItemRow';
+export type { TUploadItemRowStatus } from './UploadItemRow/UploadItemRow';

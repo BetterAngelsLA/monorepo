@@ -1,0 +1,8 @@
+query ShelterOrganizations {
+  shelterOrganizations(pagination: { limit: 1000 }, ordering: [{ name: ASC }]) {
+    results {
+      id
+      name
+    }
+  }
+}

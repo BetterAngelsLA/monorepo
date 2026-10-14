@@ -1,12 +1,15 @@
-import { ArrowRight, Pencil, Trash2 } from 'lucide-react';
+import { mergeCss } from '@monorepo/react/shared';
+import { ArrowRight, Check, Pencil, Trash2 } from 'lucide-react';
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Text } from '../text/text';
 
 export type ButtonVariant =
   | 'floating'
+  | 'floating-inverse'
   | 'primary'
   | 'primary-sm'
   | 'trash'
+  | 'confirm'
   | 'edit'
   | 'right-arrow';
 
@@ -20,28 +23,36 @@ interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const ICON_ONLY_VARIANTS = new Set<ButtonVariant>([
+  'confirm',
   'edit',
   'trash',
   'right-arrow',
 ]);
 
 const variantBaseClasses: Record<ButtonVariant, string> = {
+  confirm: 'size-10 p-0 rounded-lg justify-center',
+  edit: 'size-10 p-0 rounded-lg justify-center',
   floating:
+    'text-[22px] py-3 px-6 rounded-full shadow-lg gap-2 w-fit justify-between',
+  'floating-inverse':
     'text-[22px] py-3 px-6 rounded-full shadow-lg gap-2 w-fit justify-between',
   primary: 'border py-2 px-4 rounded-full gap-2 w-fit justify-between',
   'primary-sm': 'border py-1 px-3 rounded-full gap-2 w-fit justify-between',
-  edit: 'size-10 p-0 rounded-lg justify-center',
   trash: 'size-10 p-0 rounded-lg justify-center',
   'right-arrow': 'size-11 p-0 rounded-full justify-center',
 };
 
 const variantColorDefaults: Record<ButtonVariant, string> = {
-  floating: 'bg-[#008CEE] hover:bg-[#0071C0] text-white',
+  confirm:
+    'bg-white hover:bg-[#E8FFF0] active:bg-[#BFFFD7] text-black hover:text-[#087608]',
+  edit: 'bg-white hover:bg-[#F4F6FD] active:bg-[#D3D9E3]',
+  floating: 'bg-[#008CEE] hover:bg-[#0071C0] disabled:bg-[#D3D9E3] text-white',
+  'floating-inverse':
+    'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
   primary:
     'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
   'primary-sm':
     'bg-white hover:bg-[#F4F6FD] disabled:bg-[#D3D9E3] border-[#D3D9E3] text-[#747A82]',
-  edit: 'bg-white hover:bg-[#F4F6FD] active:bg-[#D3D9E3]',
   trash:
     'bg-white hover:bg-[#FFECE8] active:bg-[#FFC5BF] text-black hover:text-[#CB0808]',
   'right-arrow': 'bg-[#FFF82E]',
@@ -71,6 +82,7 @@ const colorSchemes: Record<
 };
 
 const defaultIcons: Partial<Record<ButtonVariant, ReactNode>> = {
+  confirm: <Check size={22} stroke="black" />,
   edit: <Pencil size={22} stroke="black" />,
   trash: <Trash2 size={22} color="currentColor" />,
   'right-arrow': <ArrowRight size={24} stroke="black" />,
@@ -97,17 +109,15 @@ export function Button(props: IButtonProps) {
   const textVariant = variant === 'primary-sm' ? 'body' : 'btn';
 
   const buttonCss = [
-    'focus:outline-hidden inline-flex items-center whitespace-nowrap transition-all',
-    isIconOnly ? '' : 'h-fit',
+    'focus:outline-hidden inline-flex items-center whitespace-nowrap transition-all cursor-pointer disabled:cursor-not-allowed',
+    !isIconOnly && 'h-fit',
     variantBaseClasses[variant],
     colorClass,
     className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  ];
 
   return (
-    <button type={type} className={buttonCss} {...rest} style={style}>
+    <button type={type} className={mergeCss(buttonCss)} {...rest} style={style}>
       {leftIcon && (
         <span className={isIconOnly ? 'flex items-center justify-center' : ''}>
           {leftIcon}

@@ -1,0 +1,173 @@
+import re
+from typing import TYPE_CHECKING, Any, Dict, cast
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
+
+from common.permissions.utils import require_can
+from common.utils import get_by_pk_or_not_found
+from shelters.models import Room, Shelter
+from shelters.selectors import room_get, room_queryset, shelter_get
+from shelters.services.utils import _ROOM_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
+
+if TYPE_CHECKING:
+    from accounts.models import User
+
+
+@transaction.atomic
+def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
+    """Create a new Room associated with an existing Shelter.
+
+    Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
+    ``view_shelter`` permission (reach-scoped), then checks create authority
+    with ``can(user, Room.perms.ADD, org)`` where the org is the parent
+    shelter's (ADR 0001 §2.6).
+
+    Raises:
+        ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add rooms.
+        ``django.core.exceptions.ValidationError`` on invalid data.
+    """
+    data = dict(data)
+    shelter_id = data.pop("shelter_id")
+
+    shelter = shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        permission=Shelter.perms.VIEW,
+    )
+
+    require_can(user, Room.perms.ADD, org=shelter.organization_id)
+
+    m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
+
+    _validate_subset_attributes(shelter, m2m_data)
+
+    # Drop None values so model defaults apply
+    scalar_data = {k: v for k, v in data.items() if v is not None}
+
+    room = Room(shelter=shelter, **scalar_data)
+    room.full_clean()
+    room.save()
+    _set_m2m_from_enums(room, m2m_data)
+    return room
+
+
+@transaction.atomic
+def room_update(*, user: "User", data: Dict[str, Any]) -> Room:
+    """Update an existing room, including M2M relationships when provided.
+
+    Resolves *room* via :func:`~shelters.selectors.room_get` with
+    ``change_room`` permission — reach-scoped by the user's grants.
+
+    Only keys present in *data* are applied; ``None`` scalar values are
+    skipped.
+
+    Raises:
+        ``django.core.exceptions.ObjectDoesNotExist`` when the room is not found.
+        ``django.core.exceptions.ValidationError`` on invalid data.
+    """
+    data = dict(data)
+    room_id = data.pop("id")
+
+    room = room_get(
+        user=user,
+        room_id=room_id,
+        permission=Room.perms.CHANGE,
+    )
+
+    m2m_data: Dict[str, Any] = {
+        k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and k in data and data[k] is not None
+    }
+
+    _validate_subset_attributes(room.shelter, m2m_data)
+
+    for key, value in data.items():
+        if value is not None:
+            setattr(room, key, value)
+
+    room.full_clean()
+    room.save()
+
+    if m2m_data:
+        _set_m2m_from_enums(room, m2m_data)
+
+    return room
+
+
+def _copy_number_pattern(name: str | None) -> re.Pattern[str]:
+    if name:
+        return re.compile(rf"^{re.escape(name)} \(Copy(?: (\d+))?\)$")
+    return re.compile(r"^\(Copy(?: (\d+))?\)$")
+
+
+def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
+    """Return a clone name that is unique within the shelter."""
+    primary = _clone_label(name, default="(Copy)")
+    prefix = f"{name} (Copy" if name else "(Copy"
+    pattern = _copy_number_pattern(name)
+
+    existing_names = Room.objects.filter(shelter_id=shelter_id, name__startswith=prefix).values_list("name", flat=True)
+    if primary not in existing_names:
+        return primary
+
+    max_copy_number = 1
+    for existing_name in existing_names:
+        match = pattern.fullmatch(existing_name)
+        if match:
+            max_copy_number = max(max_copy_number, int(match.group(1) or 1))
+
+    next_number = max_copy_number + 1
+    base = name or ""
+    return f"{base} (Copy {next_number})" if base else f"(Copy {next_number})"
+
+
+@transaction.atomic
+def room_delete(*, user: "User", room_ids: list[int]) -> list[int]:
+    """Delete rooms and return the deleted IDs.
+
+    The queryset is reach-scoped by the user's grants.
+
+    Unmatched or inaccessible IDs are silently skipped; only successfully
+    deleted IDs are returned, in the order they were requested (duplicates
+    collapsed) — the response must not depend on the DB's row order.
+
+    Raises:
+        ``django.core.exceptions.ObjectDoesNotExist`` when no matching rooms exist.
+    """
+    qs = room_queryset(user=user, permission=Room.perms.DELETE).filter(pk__in=room_ids)
+    deletable_ids = set(qs.values_list("pk", flat=True))
+    if not deletable_ids:
+        raise ObjectDoesNotExist("No matching rooms found.")
+    qs.delete()
+    return [room_id for room_id in dict.fromkeys(room_ids) if room_id in deletable_ids]
+
+
+@transaction.atomic
+def room_clone(*, user: "User", room_id: str) -> Room:
+    """Clone an existing room, including all M2M relationships.
+
+    The source is resolved reach-scoped and the create org is taken from the
+    source shelter.  Beds are not copied.
+    Cloning creates a new room, so it follows the create convention (ADR 0001
+    §2.6): the source is resolved with view authority and create authority is
+    checked with ``can(user, Room.perms.ADD, org)``.
+
+    Raises:
+        ``ObjectDoesNotExist`` when the room is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add rooms.
+        ``django.core.exceptions.ValidationError`` on invalid data.
+    """
+    qs = room_queryset(
+        Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
+        user=user,
+        permission=Room.perms.VIEW,
+    )
+    source = get_by_pk_or_not_found(qs, pk=room_id)
+
+    require_can(user, Room.perms.ADD, org=source.shelter.organization_id)
+
+    return cast(
+        Room,
+        source.make_clone(attrs={"name": _unique_clone_name(shelter_id=source.shelter.pk, name=source.name)}),
+    )

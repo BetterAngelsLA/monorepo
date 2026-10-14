@@ -1,19 +1,29 @@
+from __future__ import annotations
+
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple, Union
 
-from accounts.models import User
-from accounts.tests.baker_recipes import organization_recipe
-from common.constants import HMIS_SESSION_KEY_NAME
-from common.models import Address, Location
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.contrib.sites.models import Site
 from django.test import TestCase
 from model_bakery import baker
+from unittest_parametrize import ParametrizedTestCase
+
+from accounts.models import User
+from accounts.role_manager import OrgRoleManager
+from accounts.tests.baker_recipes import organization_recipe
+from common.constants import HMIS_SESSION_KEY_NAME
+from common.models import Address, Location
 from test_utils.assert_mixins import GraphQLAssertionsMixin
 from test_utils.mixins import GraphQLTestCaseMixin
-from unittest_parametrize import ParametrizedTestCase
+
+if TYPE_CHECKING:
+    from organizations.models import Organization
+
+    from accounts.models import PermissionGroup
+
 
 # ---------------------------------------------------------------------------
 # Shared address fixture builder
@@ -105,8 +115,34 @@ class SupportsAssertNumQueries(Protocol):
     def assertNumQueries(self, num: int, func: Any = None, *args: Any, **kwargs: Any) -> Any: ...
 
 
-class NumQueriesWithoutCacheMixin:
+class _MaxNumQueriesContext:
+    """Context manager that asserts the number of queries does not exceed a maximum."""
 
+    def __init__(self, test_case: Any, max_queries: int) -> None:
+        self.test_case = test_case
+        self.max_queries = max_queries
+        self.captured: Any = None
+
+    def __enter__(self) -> "_MaxNumQueriesContext":
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        self.captured = CaptureQueriesContext(connection)
+        self.captured.__enter__()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.captured.__exit__(exc_type, exc_val, exc_tb)
+        if exc_type is None:
+            num = len(self.captured)
+            self.test_case.assertLessEqual(
+                num,
+                self.max_queries,
+                f"Expected at most {self.max_queries} queries, but {num} were executed.",
+            )
+
+
+class NumQueriesWithoutCacheMixin:
     def assertNumQueriesWithoutCache(self: Any, query_count: int) -> Any:
         """
         Resets all caches that may prevent query execution.
@@ -118,6 +154,78 @@ class NumQueriesWithoutCacheMixin:
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
         return self.assertNumQueries(query_count)
+
+    def assertMaxNumQueriesWithoutCache(self: Any, max_query_count: int) -> _MaxNumQueriesContext:
+        """
+        Like assertNumQueriesWithoutCache but asserts the query count does not
+        exceed *max_query_count* rather than requiring an exact match.
+        """
+        ContentType.objects.clear_cache()
+        Site.objects.clear_cache()
+        return _MaxNumQueriesContext(self, max_query_count)
+
+
+# ---------------------------------------------------------------------------
+# Grant-model fixtures — leftover legacy rows and grantless members
+# ---------------------------------------------------------------------------
+
+
+def make_permission_group(*, organization: Organization, template_name: str) -> PermissionGroup:
+    """The org's ``PermissionGroup`` for *template_name*, created on demand.
+
+    Grant-only templates (ORG_ADMIN / ORG_SUPERUSER) are no longer provisioned
+    with these rows — reconcile retires them — so a test that models a
+    pre-cutover holder (or exercises group naming) recreates the row by hand.
+    Idempotent: template and org row are ``get_or_create``.
+    """
+    from accounts.models import PermissionGroup, PermissionGroupTemplate
+
+    template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
+    group, _ = PermissionGroup.objects.get_or_create(organization=organization, template=template)
+    return group
+
+
+def revoke_grants(user: User) -> None:
+    """Drop every ``Grant`` *user* holds — the grantless-org-member state.
+
+    Authority is the grant arm (ADR 0001): membership (or a leftover legacy
+    row) alone confers nothing, so a test that wants "no authority" removes
+    the grants.
+    """
+    from accounts.models import Grant
+
+    Grant.objects.filter(principal_user=user).delete()
+
+
+def add_legacy_membership(user: User, *, group: PermissionGroup) -> None:
+    """Give *user* the legacy group membership, WITHOUT the Grant mirror.
+
+    The ``User.groups`` m2m edge mirrors role-backed memberships as ``Grant``
+    rows (``accounts.signals``); a pre-cutover membership — the state the
+    backfills convert and the cutover denies — predates the mirror, so the
+    just-created Grant is dropped.
+
+    **Destructive: this deletes every Grant *user* holds, not only the one the
+    membership just mirrored.**  That is exact for the intended caller — a
+    freshly-baked user, where the mirror is the only Grant there is — and wrong
+    for a user who already has authority, which this would silently revoke.  If
+    you need pre-existing authority to survive, grant it *after* this call.
+    """
+    group.user_set.add(user)
+    revoke_grants(user)
+
+
+def make_legacy_only_holder(*, organization: Organization, template_name: str, user: User) -> User:
+    """A member whose only authority is a leftover legacy group row.
+
+    Adds *user* to *organization*, hangs the leftover ``PermissionGroup`` for
+    *template_name* off them, and drops the mirrored Grant — the pre-cutover
+    state the org-admin cutover treats as authority-less and the backfills
+    convert when they apply.
+    """
+    organization.add_user(user)
+    add_legacy_membership(user, group=make_permission_group(organization=organization, template_name=template_name))
+    return user
 
 
 class GraphQLBaseTestCase(
@@ -150,13 +258,64 @@ class GraphQLBaseTestCase(
         self.non_case_manager_user = self.user_map["non_case_manager_user"]
 
     def _setup_groups_and_permissions(self) -> None:
+        from notes.groups import CASEWORKER
+        from teams.models import Team
+
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
-        # A "caseworker" permission group is automatically created for an org when its first user is added
-        # see: apps/betterangels-backend/accounts/signals.py -> handle_organization_user_added
+
+        # Two in org_1 so a multi-value ``teamIds`` filter has something to sort;
+        # one in org_2 for cross-org tests.
+        self.org_1_team_1 = baker.make(Team, organization=self.org_1)
+        self.org_1_team_2 = baker.make(Team, organization=self.org_1)
+        self.org_2_team_1 = baker.make(Team, organization=self.org_2)
+
+        # Permission groups are created by create_organization_with_presets
+        # (via the recipe helper). Roles are assigned explicitly instead of
+        # relying on the deleted handle_organization_user_added signal.
         self.org_1.add_user(self.org_1_case_manager_1)
         self.org_1.add_user(self.org_1_case_manager_2)
         self.org_2.add_user(self.org_2_case_manager_1)
+
+        OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_1, CASEWORKER)
+        OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_2, CASEWORKER)
+        OrgRoleManager(self.org_2).add_roles(self.org_2_case_manager_1, CASEWORKER)
+
+        # Default org for the deprecated X-Organization-ID header — still the
+        # read fallback while mobile's team pickers migrate (DEV-2566).  Every
+        # grant-only surface takes its org from the payload instead.
+        self._set_active_org(self.org_1)
+
+    def _set_active_org(self, org: Organization) -> None:
+        """Set the X-Organization-ID header for the current test client."""
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(org.id)
+
+    def _grant_permission(
+        self,
+        user: User,
+        perm: str,
+        org: Organization,
+        *,
+        role_name: Optional[str] = None,
+    ) -> None:
+        """Grant ``app_label.codename`` *perm* to *user* at *org* via a Grant.
+
+        The grant model (ADR 0001) reads the permission from the ``Role`` a
+        ``Grant`` references, so this creates a scoped test Role carrying *perm*
+        and grants it to *user* at *org*.  Idempotent.
+        """
+        from django.contrib.auth.models import Permission
+
+        from accounts.models import Grant, Role
+
+        app_label, codename = perm.split(".")
+        permission = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        role, _ = Role.objects.get_or_create(
+            name=role_name or f"{self.__class__.__name__} Viewer",
+            is_global=False,
+        )
+        role.permissions.add(permission)
+        Grant.objects.get_or_create(principal_user=user, role=role, scope_org=org)
 
     def _setup_hmis_session(self) -> None:
         """

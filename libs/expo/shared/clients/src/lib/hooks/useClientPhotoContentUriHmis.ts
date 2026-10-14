@@ -2,7 +2,7 @@ import { useClientPhotoVersionHmis } from './useClientPhotoVersionHmis';
 import { useFileHeadersHmis } from './useFileHeadersHmis';
 
 export function useClientPhotoContentUriHmis(
-  clientId: string | number | null | undefined
+  clientId: string | number | null | undefined,
 ) {
   const { headers, baseUrl } = useFileHeadersHmis();
 

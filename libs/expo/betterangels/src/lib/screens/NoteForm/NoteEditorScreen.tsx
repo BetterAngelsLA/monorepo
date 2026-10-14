@@ -3,14 +3,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Colors } from '@monorepo/expo/shared/static';
 import { DiscardModal, TextButton } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
-import { useEffect, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  SelahTeamEnum,
+  DeleteNoteDocument,
   UpdateNoteDocument,
   ViewNoteDocument,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
+import { HeaderSlot } from '../../navigation';
+import { useUserTeamPreference } from '../../state';
 import { CreateNoteDocument } from '../../ui-components/CreateClientInteraction';
 import { InteractionsDocument } from '../../ui-components/InteractionList';
 import NoteForm from './NoteForm';
@@ -26,11 +28,19 @@ type NoteEditorScreenProps = {
   noteId?: string;
   arrivedFrom?: string;
   clientProfileId?: string;
-  team?: string;
+  teamId?: string;
 };
 
 export default function NoteEditorScreen(props: NoteEditorScreenProps) {
-  const { mode, noteId, arrivedFrom, clientProfileId, team } = props;
+  const {
+    mode,
+    noteId,
+    arrivedFrom,
+    clientProfileId,
+    teamId: routeTeamId,
+  } = props;
+  const [teamPreference] = useUserTeamPreference();
+  const teamId = routeTeamId || teamPreference || undefined;
 
   const router = useRouter();
   const navigation = useNavigation();
@@ -52,22 +62,27 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
   const [updateNote, { error: updateError }] = useMutation(UpdateNoteDocument);
   const [createNote] = useMutation(CreateNoteDocument);
+  const [deleteNote] = useMutation(DeleteNoteDocument);
 
   const methods = useForm<TNoteFormInputs>({
     resolver: zodResolver(NoteFormSchema),
     defaultValues: {
       ...NOTE_FORM_EMPTY_STATE,
-      team: (team as SelahTeamEnum) || undefined,
+      teamId: teamId || undefined,
     },
     mode: 'onSubmit',
   });
 
   const { watch, setValue, getValues, reset, formState } = methods;
 
+  const hasSeededForm = useRef(false);
+
   useEffect(() => {
-    if (data?.note && !isCreateMode) {
-      reset(formDataFromNote(data.note));
+    if (hasSeededForm.current || !data?.note || isCreateMode) {
+      return;
     }
+    hasSeededForm.current = true;
+    reset(formDataFromNote(data.note));
   }, [data, isCreateMode, reset]);
 
   const form = watch();
@@ -80,39 +95,44 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
     ? `/client/${resolvedClientProfileId}`
     : '/';
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     if (isCreateMode) {
       arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } else {
       router.back();
     }
-  };
+  }, [isCreateMode, arrivedFrom, router]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       title: isCreateMode ? 'Add Interaction' : 'Edit Interaction',
+      // This screen supplies its own `headerLeft`, so it has to apply the same
+      // web inset every other screen gets from `HeaderLeftButton`; otherwise
+      // "Back" sits flush against the screen edge on the browser only.
       headerLeft: () => (
-        <DiscardModal
-          title={isCreateMode ? 'Discard interaction?' : 'Discard changes?'}
-          body={
-            isCreateMode
-              ? 'All data in this interaction will be lost.'
-              : 'Any unsaved changes to this interaction will be lost.'
-          }
-          onDiscard={goBack}
-          button={
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="discards changes and goes back"
-              title="Back"
-            />
-          }
-        />
+        <HeaderSlot side="left">
+          <DiscardModal
+            title={isCreateMode ? 'Discard interaction?' : 'Discard changes?'}
+            body={
+              isCreateMode
+                ? 'All data in this interaction will be lost.'
+                : 'Any unsaved changes to this interaction will be lost.'
+            }
+            onDiscard={goBack}
+            button={
+              <TextButton
+                regular
+                color={Colors.WHITE}
+                fontSize="md"
+                accessibilityHint="discards changes and goes back"
+                title="Back"
+              />
+            }
+          />
+        </HeaderSlot>
       ),
     });
-  }, [arrivedFrom, isCreateMode, navigation, router]);
+  }, [arrivedFrom, isCreateMode, navigation, router, goBack]);
 
   async function saveNote(isSubmitted?: boolean) {
     const dirty = isCreateMode ? undefined : formState.dirtyFields;
@@ -169,6 +189,26 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
   const isSubmitted = isCreateMode ? false : !!data?.note.isSubmitted;
 
+  async function handleDeleteNote() {
+    try {
+      await deleteNote({
+        variables: { data: { id: noteId as string } },
+      });
+
+      await apolloClient.refetchQueries({
+        include: [InteractionsDocument],
+      });
+
+      router.dismissTo(clientProfileUrl);
+    } catch (err) {
+      console.error(err);
+      showSnackbar({
+        message: 'Failed to delete interaction.',
+        type: 'error',
+      });
+    }
+  }
+
   return (
     <NoteForm
       form={form}
@@ -180,6 +220,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
       onCancel={goBack}
       onSaveDraft={() => saveNote()}
       onSubmit={() => saveNote(true)}
+      onDelete={isCreateMode ? undefined : handleDeleteNote}
     />
   );
 }

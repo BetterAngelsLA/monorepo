@@ -5,5 +5,5 @@ const cacheKey = 'wildfireSurveyResults';
 
 export const surveyResultsAtom = atomWithStorage<TSurveyResults | null>(
   cacheKey,
-  null
+  null,
 );

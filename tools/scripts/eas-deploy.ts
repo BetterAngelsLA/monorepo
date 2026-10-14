@@ -54,10 +54,10 @@ import {
 
 interface BuildInfo {
   id: string;
-  project: { slug: string; id: string };
+  app: { slug: string; id: string };
   distribution: string;
   buildProfile: string;
-  runtimeVersion: string;
+  runtime: { version: string };
   appVersion: string;
   gitCommitHash: string;
 }
@@ -113,7 +113,7 @@ function checkOrTriggerBuild(
   project: string,
   profile: string,
   runtimeVersion: string,
-  platforms: string[]
+  platforms: string[],
 ): {
   slug: string;
   projectId: string;
@@ -121,8 +121,8 @@ function checkOrTriggerBuild(
 } {
   console.log(
     `\n=== Checking/triggering ${profile} builds for platforms: ${platforms.join(
-      ', '
-    )} ===`
+      ', ',
+    )} ===`,
   );
 
   const builds: Record<string, PlatformBuildResult> = {};
@@ -135,28 +135,29 @@ function checkOrTriggerBuild(
     let buildData: BuildInfo[];
     try {
       buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${runtimeVersion} --limit 1 --json --interactive false`
+        `yarn nx run ${project}:build-list --platform ${platform} --build-profile ${profile} --runtime-version ${runtimeVersion} --limit 1 --json --non-interactive`,
       );
     } catch {
       buildData = [];
     }
 
+    // Skip if existing build found — avoid redundant CI builds
     if (buildData.length > 0) {
       console.log(
-        `Found existing ${platform} build for runtime ${runtimeVersion}.`
+        `Found existing ${platform} build for runtime ${runtimeVersion}, skipping.`,
       );
     } else {
       console.log(
-        `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`
+        `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`,
       );
       buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`
+        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json --no-wait`,
       );
     }
 
     const info = buildData[0];
-    slug = info.project.slug;
-    projectId = info.project.id;
+    slug = info.app.slug;
+    projectId = info.app.id;
     builds[platform] = toBuildResult(info, slug);
   }
 
@@ -169,7 +170,7 @@ function toBuildResult(info: BuildInfo, slug: string): PlatformBuildResult {
     buildLink: `https://expo.dev/accounts/${EAS_ACCOUNT}/projects/${slug}/builds/${info.id}`,
     distribution: info.distribution,
     buildProfile: info.buildProfile,
-    runtimeVersion: info.runtimeVersion,
+    runtimeVersion: info.runtime.version,
     appVersion: info.appVersion,
     gitCommit: info.gitCommitHash,
   };
@@ -183,7 +184,7 @@ function performEasUpdate(
   project: string,
   branch: string,
   slug: string,
-  projectId: string
+  projectId: string,
 ): {
   updates: DeployResults['updates'];
   groupId: string;
@@ -191,7 +192,7 @@ function performEasUpdate(
   console.log(`\n=== Performing EAS Update on branch: ${branch} ===`);
 
   const updateData = runJson<UpdateResult[]>(
-    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --interactive false`
+    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --non-interactive`,
   );
   const updates: DeployResults['updates'] = {};
   let groupId = '';
@@ -224,7 +225,7 @@ async function postPrComment(results: DeployResults): Promise<void> {
 
   if (!token || !repo || !prNumber) {
     console.log(
-      'Skipping PR comment (missing GITHUB_TOKEN, GITHUB_REPOSITORY, or PR_NUMBER)'
+      'Skipping PR comment (missing GITHUB_TOKEN, GITHUB_REPOSITORY, or PR_NUMBER)',
     );
     return;
   }
@@ -309,7 +310,7 @@ Update QR   | <a href="${androidUpdate?.qrUrl ?? ''}"><img src="${
   const listRes = await fetch(listUrl, { method: 'GET', headers });
   if (listRes.status !== 200) {
     console.error(
-      `Failed to list comments: ${listRes.status} ${await listRes.text()}`
+      `Failed to list comments: ${listRes.status} ${await listRes.text()}`,
     );
     return;
   }
@@ -331,7 +332,7 @@ Update QR   | <a href="${androidUpdate?.qrUrl ?? ''}"><img src="${
       console.error(
         `Failed to update comment: ${
           updateRes.status
-        } ${await updateRes.text()}`
+        } ${await updateRes.text()}`,
       );
     } else {
       console.log('Updated existing PR comment');
@@ -347,7 +348,7 @@ Update QR   | <a href="${androidUpdate?.qrUrl ?? ''}"><img src="${
       console.error(
         `Failed to create comment: ${
           createRes.status
-        } ${await createRes.text()}`
+        } ${await createRes.text()}`,
       );
     } else {
       console.log('Created new PR comment');
@@ -419,7 +420,7 @@ async function postSlackNotification(results: DeployResults): Promise<void> {
 
   if (res.status !== 200) {
     console.error(
-      `Slack notification failed: ${res.status} ${await res.text()}`
+      `Slack notification failed: ${res.status} ${await res.text()}`,
     );
   } else {
     console.log('Slack notification sent');
@@ -447,7 +448,7 @@ async function main(): Promise<void> {
     project,
     profile,
     runtimeVersion,
-    buildPlatforms
+    buildPlatforms,
   );
 
   // 3. Simulator build (preview only)
@@ -457,7 +458,7 @@ async function main(): Promise<void> {
       project,
       'development-simulator',
       runtimeVersion,
-      ['ios']
+      ['ios'],
     );
     simulatorBuilds = simResult.builds;
   }
@@ -467,7 +468,7 @@ async function main(): Promise<void> {
     project,
     branchName,
     slug,
-    projectId
+    projectId,
   );
 
   const results: DeployResults = {

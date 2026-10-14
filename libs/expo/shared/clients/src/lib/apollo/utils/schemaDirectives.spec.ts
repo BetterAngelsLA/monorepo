@@ -25,8 +25,8 @@ describe('Schema directive utilities', () => {
       expect(
         operationHasDirective(
           createHmisOp as OperationDefinitionNode,
-          'hmisDirective'
-        )
+          'hmisDirective',
+        ),
       ).toBe(true);
     });
 
@@ -41,8 +41,8 @@ describe('Schema directive utilities', () => {
       expect(
         operationHasDirective(
           hmisClientProfilesOp as OperationDefinitionNode,
-          'hmisDirective'
-        )
+          'hmisDirective',
+        ),
       ).toBe(true);
 
       const hmisNoteOp = parse(`
@@ -55,8 +55,8 @@ describe('Schema directive utilities', () => {
       expect(
         operationHasDirective(
           hmisNoteOp as OperationDefinitionNode,
-          'hmisDirective'
-        )
+          'hmisDirective',
+        ),
       ).toBe(true);
     });
 
@@ -71,8 +71,8 @@ describe('Schema directive utilities', () => {
       expect(
         operationHasDirective(
           nonHmisOp as OperationDefinitionNode,
-          'hmisDirective'
-        )
+          'hmisDirective',
+        ),
       ).toBe(false);
 
       const notesOp = parse(`
@@ -85,8 +85,8 @@ describe('Schema directive utilities', () => {
       expect(
         operationHasDirective(
           notesOp as OperationDefinitionNode,
-          'hmisDirective'
-        )
+          'hmisDirective',
+        ),
       ).toBe(false);
     });
   });

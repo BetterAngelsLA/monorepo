@@ -25,7 +25,7 @@ export function SelectedLocationPanel({
   const [copyField, setCopyField] = useState<'address' | 'coords' | null>(null);
 
   const coordsDisplay = `${location.latitude.toFixed(
-    7
+    7,
   )} ${location.longitude.toFixed(7)}`;
   const coordsCopy = `${location.longitude} ${location.latitude}`;
 
