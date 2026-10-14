@@ -14,7 +14,6 @@ native geometry type in this schema; polygons are returned as a GeoJSON string
 
 from __future__ import annotations
 
-import enum
 import json
 from datetime import date, datetime, time, timedelta
 from typing import List, Optional, cast
@@ -38,116 +37,24 @@ from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
 
-from .selectors import (
-    POINT_LIMIT,
-    available_kinds,
-    interaction_density,
-    interaction_points,
-    region_counts,
-    region_features,
-    region_totals_without_boundaries,
-    scope_notes_to_regions,
+from .selectors import POINT_LIMIT, available_kinds, region_features
+from .services import interaction_map_data, region_rollup
+from .types import (
+    InteractionMapType,
+    RegionCountType,
+    RegionDimension,
+    RegionType,
+    UnassignedReason,
 )
 
-# Sentinel code the client uses to ask for interactions that fall in no region.
-UNASSIGNED = "__unassigned__"
 
-
-@strawberry.enum
-class RegionDimension(enum.Enum):
-    """The geographic dimensions interactions can be grouped or filtered by.
-
-    Values mirror ``RegionKind`` so the enum, the DB and the loader agree.
-    """
-
-    ZIP = "zip"
-    CITY = "city"
-    COUNCIL_DISTRICT = "council_district"
-    SUPERVISORIAL_DISTRICT = "supervisorial_district"
-    SPA = "spa"
-    COC = "coc"
-
-
-@strawberry.enum
-class UnassignedReason(enum.Enum):
-    """Why a bucket could not be attributed to a named region.
-
-    Two conditions, kept distinct because they mean different things: a point that no
-    polygon contains is a coverage signal, and a note with no location at all is a
-    data-completeness signal.
-    """
-
-    OUTSIDE_ALL_REGIONS = "OUTSIDE_ALL_REGIONS"
-    NO_LOCATION = "NO_LOCATION"
-
-
-@strawberry.type
-class RegionCountType:
-    """One bucket of the rollup.
-
-    Exactly one bucket per ``code``, plus at most one bucket of each
-    ``unassigned_reason``. ``code`` is empty for an unassigned bucket; use
-    ``is_unassigned``/``unassigned_reason`` to identify it, never ``code`` alone
-    — there can be two unassigned buckets in a single response.
-    """
-
-    code: str
-    name: str
-    count: int
-    is_unassigned: bool
-    # Set only on unassigned buckets, so a client can tell the two causes apart
-    # without parsing the display name.
-    unassigned_reason: Optional[UnassignedReason]
-
-
-@strawberry.type
-class InteractionPointType:
-    """One interaction's location, for a map pin.
-
-    Coordinates and a timestamp only. There is deliberately no client, note, or
-    address field: the map answers "where were our interactions", not "who".
-    """
-
-    latitude: float
-    longitude: float
-    interacted_at: datetime
-
-
-@strawberry.type
-class DensityCellType:
-    """Interactions counted on a fixed grid cell, for the density view.
-
-    Aggregated in the database, so the payload is bounded by the grid rather than
-    by the number of interactions.
-    """
-
-    latitude: float
-    longitude: float
-    count: int
-
-
-@strawberry.type
-class InteractionMapType:
-    """Both views of the same interactions, so the client can toggle without refetching.
-
-    ``truncated`` is set when the point cap was reached — the map is then a subset
-    of the period's interactions and the UI must say so, because a partial map that
-    looks complete is worse than no map.
-    """
-
-    points: List[InteractionPointType]
-    density: List[DensityCellType]
-    truncated: bool
-
-
-@strawberry.type
-class RegionType:
-    """A boundary polygon, as GeoJSON text."""
-
-    kind: RegionDimension
-    code: str
-    name: str
-    geometry: str
+def _resolve_dates(org: Organization, start_date: Optional[date], end_date: Optional[date]) -> tuple[date, date]:
+    """Fill in whichever end of the range the caller omitted, from the org's default."""
+    if start_date is None or end_date is None:
+        default_start, default_end = report_default_date_range(org=org)
+        start_date = start_date or default_start
+        end_date = end_date or default_end
+    return start_date, end_date
 
 
 def _aware_range(start_date: date, end_date: date, tz: ZoneInfo) -> tuple[datetime, datetime]:
@@ -188,65 +95,16 @@ class Query:
         org = _org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
-        if start_date is None or end_date is None:
-            default_start, default_end = report_default_date_range(org=org)
-            start_date = start_date or default_start
-            end_date = end_date or default_end
+        start_date, end_date = _resolve_dates(org, start_date, end_date)
+        start, end = _aware_range(start_date, end_date, report_calendar_time_zone(org))
 
-        tz = report_calendar_time_zone(org)
-        start, end = _aware_range(start_date, end_date, tz)
-
-        # `regionCodes` has three shapes and the first two must not be conflated:
-        #   absent            -> unfiltered: every region + both unassigned buckets
-        #   `["__unassigned__"]` alone -> only rows matching no region, both causes
-        #   real codes (+ sentinel)    -> those regions, plus unassigned when asked
-        requested_codes = list(region_codes or [])
-        sentinel_requested = UNASSIGNED in requested_codes
-        wanted = [c for c in requested_codes if c != UNASSIGNED]
-        unassigned_only = sentinel_requested and not wanted
-        include_unassigned = region_codes is None or sentinel_requested
-        include_locationless = include_unassigned or (not sentinel_requested and not wanted)
-
-        rows = region_counts(
+        return region_rollup(
             kind=dimension.value,
             start=start,
             end=end,
             organization_id=org.id,
-            codes=wanted if region_codes is not None else None,
-            unassigned_only=unassigned_only,
-            include_unassigned=sentinel_requested and bool(wanted),
+            region_codes=region_codes,
         )
-
-        buckets = [
-            RegionCountType(
-                code=row["code"] or "",
-                name=row["name"] or "",
-                count=row["count"],
-                is_unassigned=row["code"] is None,
-                unassigned_reason=(UnassignedReason.OUTSIDE_ALL_REGIONS if row["code"] is None else None),
-            )
-            for row in rows
-            if row["code"] is not None or include_unassigned
-        ]
-
-        # Notes with no location are invisible to a spatial rollup, so they get their
-        # own bucket rather than vanishing and making the total disagree with the KPI
-        # row. `unassigned_reason` keeps that bucket tellable from the other one —
-        # they share `code`.
-        if include_locationless:
-            locationless = region_totals_without_boundaries(start=start, end=end, organization_id=org.id)
-            if locationless:
-                buckets.append(
-                    RegionCountType(
-                        code="",
-                        name="No location recorded",
-                        count=locationless,
-                        is_unassigned=True,
-                        unassigned_reason=UnassignedReason.NO_LOCATION,
-                    )
-                )
-
-        return buckets
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def interaction_map(
@@ -278,57 +136,27 @@ class Query:
         user = cast(AccountUser, get_current_user(info))
         org = _org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
-        # The pins are note locations, so the note permission is required too. The
-        # org-level check below is the coarse gate; `filter_for_user` narrows it to
-        # the rows this user may actually read.
+        # Pins are note locations, so the note permission is required too. The org
+        # check above is the coarse gate; `filter_for_user` narrows it to the rows
+        # this user may actually read.
         require_can(user, NotePermissions.VIEW, org=org)
 
-        if start_date is None or end_date is None:
-            default_start, default_end = report_default_date_range(org=org)
-            start_date = start_date or default_start
-            end_date = end_date or default_end
+        start_date, end_date = _resolve_dates(org, start_date, end_date)
+        start, end = _aware_range(start_date, end_date, report_calendar_time_zone(org))
 
-        tz = report_calendar_time_zone(org)
-        start, end = _aware_range(start_date, end_date, tz)
-
-        # The same filter the `notes` query applies: org scoping plus any
-        # object-level grants. `organization_id` is still passed so the common case
-        # does not depend on the filter's SQL shape.
         scoped_notes = filter_for_user(
             Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end),
             user,
             [NotePermissions.VIEW],
         )
-
-        scoped_codes = list(region_codes or [])
-        if scoped_codes:
-            # One implementation, shared with the tests: see `scope_notes_to_regions`
-            # for why the kind is required and why this is a semi-join.
-            scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=scoped_codes)
-
-        points, truncated = interaction_points(
+        return interaction_map_data(
+            kind=dimension.value,
             start=start,
             end=end,
             organization_id=org.id,
-            limit=limit or POINT_LIMIT,
             notes=scoped_notes,
-        )
-        density = interaction_density(start=start, end=end, organization_id=org.id, notes=scoped_notes)
-
-        return InteractionMapType(
-            points=[
-                InteractionPointType(
-                    latitude=row["latitude"],
-                    longitude=row["longitude"],
-                    interacted_at=row["interacted_at"],
-                )
-                for row in points
-            ],
-            density=[
-                DensityCellType(latitude=row["latitude"], longitude=row["longitude"], count=row["count"])
-                for row in density
-            ],
-            truncated=truncated,
+            limit=limit or POINT_LIMIT,
+            region_codes=region_codes,
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])

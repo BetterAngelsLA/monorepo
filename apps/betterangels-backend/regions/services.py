@@ -1,11 +1,19 @@
-"""Write operations for the regions app (DEV-2570 / DEV-2604).
+"""Business logic for the regions app (DEV-2570 / DEV-2604).
 
-These write derived data, which is why they are services: ``python.md`` keeps business
-logic out of selectors (read-only) and models. They are the only writers of their
-respective tables, so each invariant is stated in one place.
+``python.md`` puts business logic in services rather than in models, signals or GraphQL
+resolvers. Two kinds live here:
+
+* the **write** side of derived data — subdividing boundaries and resolving
+  locations to regions, each with an invariant stated next to it;
+* the **report queries** — interpreting ``regionCodes`` and assembling a rollup or a
+  map payload, which is a decision about what to count rather than a thin passthrough.
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from typing import TYPE_CHECKING, Sequence
 
 from django.db import connection, transaction
 
@@ -14,6 +22,25 @@ from .models import (
     SUBDIVIDE_VERTEX_THRESHOLD,
     Region,
 )
+from .selectors import (
+    interaction_density,
+    interaction_points,
+    region_counts,
+    region_totals_without_boundaries,
+    scope_notes_to_regions,
+)
+from .types import (
+    DensityCellType,
+    InteractionMapType,
+    InteractionPointType,
+    RegionCountType,
+    UnassignedReason,
+)
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+
+    from notes.models import Note
 
 _BUILD_PIECES_SQL = """
 INSERT INTO regions_regionpiece (region_id, kind, geom)
@@ -145,3 +172,140 @@ def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> 
             written += cursor.rowcount or 0
 
     return written
+
+
+# ---------------------------------------------------------------------------
+# Report queries
+#
+# The resolvers in ``schema.py`` parse inputs, check permissions and delegate here.
+# What lives below is the part that decides *what* to count, which is business logic
+# and therefore not the API layer's job (``python.md``).
+# ---------------------------------------------------------------------------
+
+
+# Sentinel code the client sends to ask for interactions that fall in no region. It is
+# not a real code: a location's `code` is NULL when it resolved to nothing.
+UNASSIGNED = "__unassigned__"
+
+
+@dataclass(frozen=True)
+class RegionCodeFilter:
+    """``regionCodes`` interpreted for one dimension.
+
+    Three shapes, and conflating the first two is the bug this exists to prevent:
+
+    * ``regionCodes`` absent               -> unfiltered
+    * ``["__unassigned__"]`` alone         -> only rows matching no region
+    * real codes (with or without sentinel) -> those regions, plus unassigned if asked
+
+    ``query_unassigned`` and ``keep_unassigned`` are deliberately separate.
+    ``region_counts`` only needs the unassigned arm when real codes are *also* being
+    asked for (it is an OR arm); the result filter keeps unassigned rows whenever the
+    rollup is unfiltered or the sentinel was sent. One flag for both silently drops
+    every unassigned bucket from an unfiltered rollup.
+    """
+
+    codes: list[str] | None
+    unassigned_only: bool
+    query_unassigned: bool
+    keep_unassigned: bool
+    include_locationless: bool
+
+
+def parse_region_code_filter(region_codes: Sequence[str] | None) -> RegionCodeFilter:
+    requested = list(region_codes or [])
+    sentinel_requested = UNASSIGNED in requested
+    wanted = [code for code in requested if code != UNASSIGNED]
+    return RegionCodeFilter(
+        # `is not None`, not `or None`: an explicit empty list means "no codes" and
+        # must match nothing.
+        codes=wanted if region_codes is not None else None,
+        unassigned_only=sentinel_requested and not wanted,
+        query_unassigned=sentinel_requested and bool(wanted),
+        keep_unassigned=region_codes is None or sentinel_requested,
+        include_locationless=(region_codes is None or sentinel_requested) or (not sentinel_requested and not wanted),
+    )
+
+
+def region_rollup(
+    *,
+    kind: str,
+    start: datetime,
+    end: datetime,
+    organization_id: int,
+    region_codes: Sequence[str] | None = None,
+) -> list[RegionCountType]:
+    """Interaction counts per region, ready to return from the resolver.
+
+    Includes a "no location recorded" row when in scope, because those notes are
+    invisible to a spatial rollup and would otherwise make the report total disagree
+    with the KPI row above it.
+    """
+    codes = parse_region_code_filter(region_codes)
+    rows = region_counts(
+        kind=kind,
+        start=start,
+        end=end,
+        organization_id=organization_id,
+        codes=codes.codes,
+        unassigned_only=codes.unassigned_only,
+        include_unassigned=codes.query_unassigned,
+    )
+
+    buckets = [
+        RegionCountType(
+            code=row["code"] or "",
+            name=row["name"] or "",
+            count=row["count"],
+            is_unassigned=row["code"] is None,
+            unassigned_reason=(UnassignedReason.OUTSIDE_ALL_REGIONS if row["code"] is None else None),
+        )
+        for row in rows
+        if row["code"] is not None or codes.keep_unassigned
+    ]
+
+    if codes.include_locationless:
+        locationless = region_totals_without_boundaries(start=start, end=end, organization_id=organization_id)
+        if locationless:
+            buckets.append(
+                RegionCountType(
+                    code="",
+                    name="No location recorded",
+                    count=locationless,
+                    is_unassigned=True,
+                    unassigned_reason=UnassignedReason.NO_LOCATION,
+                )
+            )
+
+    return buckets
+
+
+def interaction_map_data(
+    *,
+    kind: str,
+    start: datetime,
+    end: datetime,
+    organization_id: int,
+    notes: "QuerySet[Note]",
+    limit: int,
+    region_codes: Sequence[str] | None = None,
+) -> InteractionMapType:
+    """Points and a density grid for the same scope, so the toggle cannot change story.
+
+    ``notes`` arrives already permission-filtered; this narrows it further by region
+    when asked, then asks each selector for its own projection.
+    """
+    scoped = notes
+    codes = list(region_codes or [])
+    if codes:
+        scoped = scope_notes_to_regions(scoped, kind=kind, codes=codes)
+
+    points, truncated = interaction_points(
+        start=start, end=end, organization_id=organization_id, limit=limit, notes=scoped
+    )
+    density = interaction_density(start=start, end=end, organization_id=organization_id, notes=scoped)
+    return InteractionMapType(
+        points=[InteractionPointType(**row) for row in points],
+        density=[DensityCellType(**row) for row in density],
+        truncated=truncated,
+    )
