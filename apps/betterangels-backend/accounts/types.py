@@ -7,7 +7,7 @@ import strawberry
 import strawberry_django
 from django.db.models import Q, QuerySet
 from organizations.models import Organization
-from strawberry import ID, Info, auto
+from strawberry import ID, Info, Maybe, auto
 from strawberry_django.auth.utils import get_current_user
 
 from accounts.enums import OrgRoleEnum
@@ -328,8 +328,8 @@ class OrgInvitationInput:
 
 @strawberry.input
 class UpdateUserProfileInput:
-    first_name: Optional[NonEmptyString] = strawberry.UNSET
-    last_name: Optional[NonEmptyString] = strawberry.UNSET
+    first_name: Maybe[NonEmptyString | None]
+    last_name: Maybe[NonEmptyString | None]
 
 
 @strawberry.input
