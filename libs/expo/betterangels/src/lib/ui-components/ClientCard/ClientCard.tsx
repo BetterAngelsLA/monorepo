@@ -21,9 +21,8 @@ export interface IClientCardProps extends TMarginProps {
   arrivedFrom?: string;
   type?: 'modal' | 'card';
   onMenuPress?: (client: TClientProfile) => void;
-  // Parent-defined tap action; the clients list only passes one while the
-  // referrals flag is on. Without it the card opens the legacy Profile Summary
-  // modal — the flagged-off production path (OUT-203 tracks removing it).
+  // Parent-defined tap action. Without it the card opens the Profile Summary
+  // modal, which is how the clients list presents a tapped client.
   onPress?: () => void;
 }
 
