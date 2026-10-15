@@ -15,6 +15,7 @@ from shelters.models import (
 from shelters.selectors import report_bed_status_counts, reservation_status_change_counts
 from shelters.selectors.reports import DailyBedCounts
 from shelters.types.reporting import DailyOccupancyMetricsType
+from test_utils.pghistory import backdate_event_rows
 
 ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
 BedEvent = Bed.pgh_event_model  # type: ignore[attr-defined]
@@ -71,10 +72,13 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     def _set_event_dates(self, reservation: Reservation, dt: datetime.datetime) -> None:
         """Pin all of a reservation's status-change events to ``dt``."""
-        ReservationEvent.objects.filter(
-            pgh_obj_id=reservation.pk,
-            pgh_label="reservation.status_change",
-        ).update(pgh_created_at=dt)
+        backdate_event_rows(
+            ReservationEvent.objects.filter(
+                pgh_obj_id=reservation.pk,
+                pgh_label="reservation.status_change",
+            ),
+            pgh_created_at=dt,
+        )
 
     def _in_range(self) -> datetime.datetime:
         return _aware(2026, 1, 15)
@@ -238,13 +242,19 @@ class DailyOccupancyTestCase(TestCase):
 
     def _make_bed(self, *, shelter: Shelter | None = None, name: str = "Bed") -> Bed:
         bed: Bed = baker.make(Bed, shelter=shelter or self.shelter, name=name)
-        BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.add").update(pgh_created_at=self.bed_added_at)
+        backdate_event_rows(
+            BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.add"),
+            pgh_created_at=self.bed_added_at,
+        )
         return bed
 
     def _remove_bed(self, bed: Bed, *, at: datetime.datetime) -> None:
         bed_pk = bed.pk
         bed.delete()
-        BedEvent.objects.filter(pgh_obj_id=bed_pk, pgh_label="bed.remove").update(pgh_created_at=at)
+        backdate_event_rows(
+            BedEvent.objects.filter(pgh_obj_id=bed_pk, pgh_label="bed.remove"),
+            pgh_created_at=at,
+        )
 
     def _stay(
         self,
@@ -264,8 +274,9 @@ class DailyOccupancyTestCase(TestCase):
         """
         if created_as is not None:
             reservation = Reservation.objects.create(bed=bed, status=created_as)
-            ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add").update(
-                pgh_created_at=created_at
+            backdate_event_rows(
+                ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add"),
+                pgh_created_at=created_at,
             )
             return reservation
 
@@ -277,13 +288,17 @@ class DailyOccupancyTestCase(TestCase):
             reservation.save()
 
         first_when = events[0][1]
-        ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add").update(
-            pgh_created_at=first_when - datetime.timedelta(seconds=1)
+        backdate_event_rows(
+            ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add"),
+            pgh_created_at=first_when - datetime.timedelta(seconds=1),
         )
         for status, when in events:
-            ReservationEvent.objects.filter(
-                pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=status
-            ).update(pgh_created_at=when)
+            backdate_event_rows(
+                ReservationEvent.objects.filter(
+                    pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=status
+                ),
+                pgh_created_at=when,
+            )
         return reservation
 
     def _occupancy(self, start: datetime.datetime, end: datetime.datetime) -> dict[str, DailyOccupancyMetricsType]:
@@ -395,6 +410,64 @@ class DailyOccupancyTestCase(TestCase):
         self.assertEqual(rows["2026-01-10"].occupied_count, 1)
         self.assertEqual(rows["2026-01-11"].occupied_count, 1)
 
+    def test_non_status_update_does_not_change_occupancy(self) -> None:
+        # A non-status write fires only ``reservation.update`` (ADR 0004 §2, the
+        # update triggers are disjoint), which the interval walk scopes out; it
+        # must not open or close an interval.
+        bed = self._make_bed()
+        reservation = self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 11))])
+
+        reservation.notes = "checked out early"
+        reservation.save()
+
+        s, e = self._dt_range(2026, 1, 10, 15)
+        rows = self._occupancy(s, e)
+
+        self.assertEqual([rows[d].occupied_count for d in sorted(rows)], [1, 0, 0, 0, 0, 0])
+
+    def test_created_directly_as_checked_in_stays_occupied(self) -> None:
+        # The add snapshot opens the interval for a reservation created directly
+        # in a target status; no status_change event is written.
+        bed = self._make_bed()
+        self._stay(bed, events=[], created_as=self.CI, created_at=self._utc(2026, 1, 10))
+
+        s, e = self._dt_range(2026, 1, 10, 12)
+        rows = self._occupancy(s, e)
+
+        self.assertEqual(rows["2026-01-10"].occupied_count, 1)
+        self.assertEqual(rows["2026-01-11"].occupied_count, 1)
+        self.assertEqual(rows["2026-01-12"].occupied_count, 1)
+
+    def test_reparent_without_status_change_pins_current_behaviour(self) -> None:
+        """Pins a known mis-attribution when an active reservation moves beds.
+
+        A ``reservation.update`` that changes ``bed_id`` without changing
+        ``status`` carries the *new* bed in its snapshot, but the interval walk
+        is scoped to ``reservation.add``/``reservation.status_change`` (ADR 0004
+        §2), so the move is invisible to reporting: the interval stays open on
+        the **old** bed and never opens on the new one. Latent and pre-existing;
+        asserted here so a future refactor of ``_reservation_status_intervals``
+        renders the change visible instead of silently altering a wrong path.
+        """
+        from shelters.selectors.reports import _reservation_status_intervals
+
+        bed_a = self._make_bed(name="A")
+        bed_b = self._make_bed(name="B")
+        reservation = self._stay(bed_a, events=[(self.CI, self._utc(2026, 1, 10))])
+
+        reservation.bed = bed_b
+        reservation.save()
+
+        intervals = _reservation_status_intervals(
+            bed_ids={bed_a.pk, bed_b.pk},
+            before=self._utc(2026, 1, 20),
+            target_statuses=frozenset({"checked_in"}),
+        )
+
+        self.assertEqual(len(intervals.get(bed_a.pk, [])), 1)
+        self.assertIsNone(intervals[bed_a.pk][0].freed)
+        self.assertNotIn(bed_b.pk, intervals)
+
     def test_total_beds_reflects_add_and_remove(self) -> None:
         self._make_bed(name="A")
         bed_b = self._make_bed(name="B")
@@ -496,7 +569,10 @@ class AvgDaysToOccupancyTestCase(TestCase):
 
     def _make_bed(self, *, shelter: Shelter | None = None, name: str = "Bed") -> Bed:
         bed: Bed = baker.make(Bed, shelter=shelter or self.shelter, name=name)
-        BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.add").update(pgh_created_at=self.bed_added_at)
+        backdate_event_rows(
+            BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.add"),
+            pgh_created_at=self.bed_added_at,
+        )
         return bed
 
     def _stay(self, bed: Bed, *, events: list[tuple[ReservationStatusChoices, datetime.datetime]]) -> Reservation:
@@ -514,13 +590,17 @@ class AvgDaysToOccupancyTestCase(TestCase):
             reservation.save()
 
         first_when = events[0][1]
-        ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add").update(
-            pgh_created_at=first_when - datetime.timedelta(seconds=1)
+        backdate_event_rows(
+            ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add"),
+            pgh_created_at=first_when - datetime.timedelta(seconds=1),
         )
         for status, when in events:
-            ReservationEvent.objects.filter(
-                pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=status
-            ).update(pgh_created_at=when)
+            backdate_event_rows(
+                ReservationEvent.objects.filter(
+                    pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=status
+                ),
+                pgh_created_at=when,
+            )
         return reservation
 
     def _avg(self, start: datetime.datetime, end: datetime.datetime) -> float | None:
@@ -602,21 +682,23 @@ class AvgDaysToOccupancyTestCase(TestCase):
         ]:
             reservation.status = status
             reservation.save()
-        ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add").update(
-            pgh_created_at=self._utc(2026, 1, 8) - datetime.timedelta(seconds=1)
+        backdate_event_rows(
+            ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add"),
+            pgh_created_at=self._utc(2026, 1, 8) - datetime.timedelta(seconds=1),
         )
         checkins = list(
             ReservationEvent.objects.filter(
                 pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=self.CI
             ).order_by("pgh_id")
         )
-        checkins[0].pgh_created_at = self._utc(2026, 1, 8)
-        checkins[0].save(update_fields=["pgh_created_at"])
-        checkins[1].pgh_created_at = self._utc(2026, 1, 13)
-        checkins[1].save(update_fields=["pgh_created_at"])
-        ReservationEvent.objects.filter(
-            pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=self.DONE
-        ).update(pgh_created_at=self._utc(2026, 1, 10))
+        backdate_event_rows(ReservationEvent.objects.filter(pk=checkins[0].pk), pgh_created_at=self._utc(2026, 1, 8))
+        backdate_event_rows(ReservationEvent.objects.filter(pk=checkins[1].pk), pgh_created_at=self._utc(2026, 1, 13))
+        backdate_event_rows(
+            ReservationEvent.objects.filter(
+                pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=self.DONE
+            ),
+            pgh_created_at=self._utc(2026, 1, 10),
+        )
 
         self.assertIsNone(self._avg(self._dt_la(2026, 1, 1), self._dt_la(2026, 2, 1)))
 
@@ -727,7 +809,10 @@ class BedStatusCountsTestCase(TestCase):
         """Create a bed and optionally pin its ``bed.add`` event timestamp."""
         bed: Bed = baker.make(Bed, shelter=shelter or self.shelter, name=name)
         if added_at is not None:
-            BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.add").update(pgh_created_at=added_at)
+            backdate_event_rows(
+                BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.add"),
+                pgh_created_at=added_at,
+            )
         return bed
 
     def _set_maintenance(self, bed: Bed, flag: bool, *, at: datetime.datetime) -> None:
@@ -737,16 +822,14 @@ class BedStatusCountsTestCase(TestCase):
         evt = BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.update", maintenance_flag=flag).latest(
             "pgh_created_at"
         )
-        evt.pgh_created_at = at
-        evt.save(update_fields=["pgh_created_at"])
+        backdate_event_rows(BedEvent.objects.filter(pk=evt.pk), pgh_created_at=at)
 
     def _set_last_cleaned(self, bed: Bed, dt: datetime.datetime | None, *, at: datetime.datetime) -> None:
         """Set *last_cleaned* and pin the resulting ``bed.update`` event."""
         bed.last_cleaned = dt
         bed.save()
         evt = BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.update").latest("pgh_created_at")
-        evt.pgh_created_at = at
-        evt.save(update_fields=["pgh_created_at"])
+        backdate_event_rows(BedEvent.objects.filter(pk=evt.pk), pgh_created_at=at)
 
     def _stay(
         self,
@@ -766,13 +849,17 @@ class BedStatusCountsTestCase(TestCase):
             reservation.save()
 
         first_when = events[0][1]
-        ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add").update(
-            pgh_created_at=first_when - datetime.timedelta(seconds=1)
+        backdate_event_rows(
+            ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add"),
+            pgh_created_at=first_when - datetime.timedelta(seconds=1),
         )
         for status, when in events:
-            ReservationEvent.objects.filter(
-                pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=status
-            ).update(pgh_created_at=when)
+            backdate_event_rows(
+                ReservationEvent.objects.filter(
+                    pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=status
+                ),
+                pgh_created_at=when,
+            )
         return reservation
 
     def _counts(self, start: datetime.datetime, end: datetime.datetime) -> dict[datetime.date, DailyBedCounts]:
@@ -835,6 +922,25 @@ class BedStatusCountsTestCase(TestCase):
         self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
         self.assertEqual(counts[datetime.date(2026, 1, 11)].occupied, 1)
         self.assertEqual(counts[datetime.date(2026, 1, 12)].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].available, 1)
+
+    def test_non_status_update_does_not_change_status_counts(self) -> None:
+        """A non-status write's ``reservation.update`` must not register occupancy.
+
+        ADR 0004 §2 makes the two update triggers disjoint, so it carries no
+        status change; the label filter in ``_reservation_status_intervals``
+        keeps it out of the walk regardless.
+        """
+        bed = self._make_bed(added_at=self._utc(2025, 12, 1))
+        reservation = self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 11))])
+
+        reservation.notes = "checked out early"
+        reservation.save()
+
+        counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 14))
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].occupied, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].occupied, 0)
         self.assertEqual(counts[datetime.date(2026, 1, 13)].available, 1)
 
     def test_out_of_service_overrides_occupied(self) -> None:
@@ -934,11 +1040,14 @@ class BedStatusCountsTestCase(TestCase):
             events=[(self.CI, self._utc(2026, 1, 9)), (self.DONE, self._utc(2026, 1, 11))],
         )
         # Pin the checked_out_at on the COMPLETED status_change event.
-        ReservationEvent.objects.filter(
-            pgh_obj_id__in=Reservation.objects.filter(bed=bed).values_list("pk", flat=True),
-            pgh_label="reservation.status_change",
-            status=self.DONE,
-        ).update(checked_out_at=self._utc(2026, 1, 11))
+        backdate_event_rows(
+            ReservationEvent.objects.filter(
+                pgh_obj_id__in=Reservation.objects.filter(bed=bed).values_list("pk", flat=True),
+                pgh_label="reservation.status_change",
+                status=self.DONE,
+            ),
+            checked_out_at=self._utc(2026, 1, 11),
+        )
 
         counts = self._counts(self._dt_la(2026, 1, 9), self._dt_la(2026, 1, 14))
         self.assertEqual(counts[datetime.date(2026, 1, 9)].occupied, 1)
@@ -955,11 +1064,14 @@ class BedStatusCountsTestCase(TestCase):
             bed,
             events=[(self.CI, self._utc(2026, 1, 9)), (self.DONE, self._utc(2026, 1, 11))],
         )
-        ReservationEvent.objects.filter(
-            pgh_obj_id__in=Reservation.objects.filter(bed=bed).values_list("pk", flat=True),
-            pgh_label="reservation.status_change",
-            status=self.DONE,
-        ).update(checked_out_at=self._utc(2026, 1, 11))
+        backdate_event_rows(
+            ReservationEvent.objects.filter(
+                pgh_obj_id__in=Reservation.objects.filter(bed=bed).values_list("pk", flat=True),
+                pgh_label="reservation.status_change",
+                status=self.DONE,
+            ),
+            checked_out_at=self._utc(2026, 1, 11),
+        )
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 14))
         self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
@@ -975,11 +1087,14 @@ class BedStatusCountsTestCase(TestCase):
             bed,
             events=[(self.CI, self._utc(2026, 1, 9)), (self.DONE, self._utc(2026, 1, 11))],
         )
-        ReservationEvent.objects.filter(
-            pgh_obj_id__in=Reservation.objects.filter(bed=bed).values_list("pk", flat=True),
-            pgh_label="reservation.status_change",
-            status=self.DONE,
-        ).update(checked_out_at=self._utc(2026, 1, 11))
+        backdate_event_rows(
+            ReservationEvent.objects.filter(
+                pgh_obj_id__in=Reservation.objects.filter(bed=bed).values_list("pk", flat=True),
+                pgh_label="reservation.status_change",
+                status=self.DONE,
+            ),
+            checked_out_at=self._utc(2026, 1, 11),
+        )
         # Clean the bed after checkout on Jan 12 — clears turnaround.
         self._set_last_cleaned(bed, self._utc(2026, 1, 12, 0), at=self._utc(2026, 1, 12, 0))
 

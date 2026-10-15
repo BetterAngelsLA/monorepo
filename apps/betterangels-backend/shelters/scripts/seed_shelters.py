@@ -7,6 +7,7 @@ from typing import Any
 from urllib.parse import quote
 
 import django
+import pghistory
 import requests
 from django.conf import settings
 from django.core.files import File
@@ -199,7 +200,9 @@ def main() -> None:
         print("GOOGLE_MAPS_API_KEY is required when --use-places is passed.")
         sys.exit(1)
 
-    with transaction.atomic():
+    # Tag these non-operator demo writes as seed so they are excluded from the
+    # audit log (ADR 0004 §7b.2). Everything written in this block is seed data.
+    with pghistory.context(label="seed"), transaction.atomic():
         if clear_existing:
             print("Clearing existing shelters...")
             Shelter.objects.all().delete()
