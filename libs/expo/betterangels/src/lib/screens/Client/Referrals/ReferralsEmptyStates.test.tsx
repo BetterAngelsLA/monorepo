@@ -19,7 +19,8 @@ import { randomUUID } from 'node:crypto';
  */
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
-import { render, screen } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
+import * as notesAdapter from './referralIntakeSidecar';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { ReferralsTab } from './ReferralsTab';
 import { ClientReferralsDocument } from './__generated__/Referrals.generated';
@@ -164,6 +165,66 @@ describe('empty referral history', () => {
 
     expect(screen.getByLabelText('create new referral')).toBeOnTheScreen();
   });
+});
+
+it('does not reparse saved referrals when draft answers change, while draft controls stay live', async () => {
+  const store = createStore();
+  const decode = vi.spyOn(notesAdapter, 'decodeReferralNotes');
+  try {
+    await render(
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={[
+          {
+            ...emptyReferrals[0],
+            result: {
+              data: {
+                referrals: {
+                  __typename: 'ReferralTypeOffsetPaginated',
+                  totalCount: 1,
+                  results: [
+                    {
+                      __typename: 'ReferralType',
+                      id: 'saved-1',
+                      status: 'PENDING',
+                      createdAt: '2026-10-14T12:00:00Z',
+                      notes: 'Saved observation',
+                      createdBy: null,
+                      shelter: null,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ]}
+      >
+        <ReferralsTab client={client} draftStore={store} />
+      </MockedProvider>,
+    );
+    await screen.findByText('Notes: Saved observation');
+    const parsed = decode.mock.calls.length;
+    expect(parsed).toBeGreaterThan(0);
+    await act(() => {
+      store.startNew(CLIENT_ID);
+    });
+    expect(screen.getByTestId('resume-referral-btn')).toBeOnTheScreen();
+    for (const value of ['F', 'Fi', 'Fictional observation']) {
+      await act(() => {
+        store.setField('notes', value);
+      });
+    }
+    expect(decode).toHaveBeenCalledTimes(parsed);
+    expect(screen.getByTestId('referral-draft-card')).toBeOnTheScreen();
+    await act(() => {
+      store.clear();
+    });
+    expect(screen.getByTestId('create-referral-btn')).toBeOnTheScreen();
+    expect(screen.queryByTestId('referral-draft-card')).toBeNull();
+    expect(decode).toHaveBeenCalledTimes(parsed);
+  } finally {
+    decode.mockRestore();
+  }
 });
 
 describe('sparse client profile in the intake form', () => {

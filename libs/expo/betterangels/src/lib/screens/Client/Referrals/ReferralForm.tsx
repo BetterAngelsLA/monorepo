@@ -212,6 +212,12 @@ export function ReferralForm({
       </TextRegular>
 
       <FocusedInfiniteList
+        testID="shelter-choice-group"
+        accessibilityRole="radiogroup"
+        accessibilityLabel="Shelter choices"
+        accessibilityHint="select one shelter using its radio; links open shelter details separately"
+        // Keep child radios and directory links separately reachable.
+        accessible={false}
         style={styles.body}
         data={!loading && !error ? shelters : []}
         keyExtractor={(shelter) => shelter.id}
@@ -323,7 +329,7 @@ export function ReferralForm({
           const isSelected = shelter.id === selectedShelterId;
           return (
             <Pressable
-              testID="shelter-option"
+              testID={`shelter-option-row-${shelter.id}`}
               style={[
                 styles.shelterCard,
                 isSelected && styles.shelterCardSelected,
@@ -340,11 +346,10 @@ export function ReferralForm({
               accessible={false}
             >
               <View style={styles.shelterRow}>
-                {/* testID sits on the radio, not the row: the row also
-                      contains the directory link, and a centre-tap would open
-                      the browser instead of selecting. */}
+                {/* Automation targets the radio, not the whole row: a centre
+                    tap on the row can hit its separate directory link. */}
                 <Pressable
-                  testID="shelter-option-radio"
+                  testID={`shelter-option-radio-${shelter.id}`}
                   onPress={() =>
                     onSelectShelter(isSelected ? null : shelter.id)
                   }
@@ -353,6 +358,7 @@ export function ReferralForm({
                   accessibilityRole="radio"
                   accessibilityState={{
                     selected: isSelected,
+                    checked: isSelected,
                     disabled: submitting,
                   }}
                   accessibilityLabel={shelter.name}

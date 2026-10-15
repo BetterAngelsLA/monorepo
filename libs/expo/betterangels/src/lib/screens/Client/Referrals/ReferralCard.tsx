@@ -11,6 +11,7 @@ import { ShelterCard, TagRow } from './ShelterCard';
 import { needLabelsFromIntake } from './clientNeeds';
 import { decodeReferralNotes, summarizeIntake } from './referralIntakeSidecar';
 import { shelterAttributeLabels } from './shelterAttributes';
+import { formatReferralDate } from './referralPresentation';
 
 // A card reads the intake answers stored on the referral (in the shelter's own
 // vocabulary — see clientNeeds.ts), so it reflects the needs as they were
@@ -35,9 +36,7 @@ export function ReferralCard({
       }`.trim()
     : 'Unknown';
 
-  const dateStr = referral.createdAt
-    ? new Date(referral.createdAt).toLocaleDateString()
-    : '';
+  const dateStr = formatReferralDate(referral.createdAt);
 
   const statusColor =
     referral.status === 'ACCEPTED'

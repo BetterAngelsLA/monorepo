@@ -81,7 +81,6 @@ const mocks = [
               __typename: 'ShelterType',
               id: 's-1',
               name: 'Alpha House',
-              phone: null,
               location: null,
               pets: [],
               demographics: [],
@@ -91,7 +90,6 @@ const mocks = [
               __typename: 'ShelterType',
               id: 's-2',
               name: 'Beta House',
-              phone: null,
               location: null,
               pets: [],
               demographics: [],
@@ -162,7 +160,7 @@ describe('shared create-flow state', () => {
     });
     await fireEvent.press(screen.getByTestId('intake-next-btn'));
     await screen.findByText('Alpha House');
-    await fireEvent.press(screen.getAllByTestId('shelter-option-radio')[0]);
+    await fireEvent.press(screen.getAllByRole('radio')[0]);
     expect(store.getSnapshot()?.selectedShelterId).toBe('s-1');
     await act(() => {
       store.setField('notes', 'Latest observation');

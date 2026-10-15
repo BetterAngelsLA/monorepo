@@ -73,7 +73,6 @@ const shelter: SheltersQuery['shelters']['results'][number] = {
   __typename: 'ShelterType',
   id: 's-1',
   name: 'Alpha House',
-  phone: null,
   location: null,
   pets: [],
   demographics: [],
@@ -302,7 +301,7 @@ async function openPicker() {
   );
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   await screen.findByText('Alpha House');
-  await fireEvent.press(screen.getByTestId('shelter-option-radio'));
+  await fireEvent.press(screen.getByRole('radio'));
 }
 
 async function submit(requests: PendingSubmission[], expectedCount = 1) {
@@ -560,7 +559,7 @@ it('revalidates on resume, preserves intake when the selected shelter disappears
   expect(store.getSnapshot()).toBe(before);
   await fireEvent.press(screen.getByTestId('submit-referral-btn'));
   expect(requests).toHaveLength(0);
-  await fireEvent.press(screen.getByTestId('shelter-option-radio'));
+  await fireEvent.press(screen.getByRole('radio'));
   const request = await submit(requests);
   expect(request.variables).toEqual({
     data: { clientProfile: 'client-1', shelter: 's-2', notes },
@@ -614,9 +613,7 @@ it('copies a saved referral into an independent draft, resets consent/notes/shel
     screen.getByRole('checkbox', { name: /Client gave consent/ }),
   );
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
-  await fireEvent.press(
-    (await screen.findAllByTestId('shelter-option-radio'))[0],
-  );
+  await fireEvent.press((await screen.findAllByRole('radio'))[0]);
   const request = await submit(requests);
   expect(request.operationName).toBe('CreateReferral');
   expect(decodeReferralNotes(request.variables.data.notes)).toMatchObject({

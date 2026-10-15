@@ -5,6 +5,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { isNonNullish } from 'remeda';
 import haversine from 'haversine-distance';
+import { compareReferralLabels } from './referralPresentation';
 import {
   AccessibilityChoices,
   DemographicChoices,
@@ -132,7 +133,8 @@ export function matchTags(
   // first so a consumer can collapse the tail without re-sorting. See
   // ShelterCard.
   return [
-    ...attributes
+    ...[...offered]
+      .sort(compareReferralLabels)
       .filter((label) => needed.has(label))
       .map((label) => ({
         label,
@@ -140,7 +142,8 @@ export function matchTags(
         kind: 'match' as const,
         variant: 'solid' as const,
       })),
-    ...desired
+    ...[...needed]
+      .sort(compareReferralLabels)
       .filter((label) => !offered.has(label))
       .map((label) => {
         const confirmed = isConfirmedGap(label);
@@ -151,7 +154,8 @@ export function matchTags(
           variant: confirmed ? ('solid' as const) : ('outline' as const),
         };
       }),
-    ...attributes
+    ...[...offered]
+      .sort(compareReferralLabels)
       .filter((label) => !needed.has(label))
       .map((label) => ({
         label,
@@ -245,7 +249,7 @@ export function rankShelters<T>(
         return a.metres - b.metres;
       if (a.metres != null && b.metres == null) return -1;
       if (a.metres == null && b.metres != null) return 1;
-      return nameOf(a.shelter).localeCompare(nameOf(b.shelter));
+      return compareReferralLabels(nameOf(a.shelter), nameOf(b.shelter));
     })
     .map(({ shelter }) => shelter);
 }

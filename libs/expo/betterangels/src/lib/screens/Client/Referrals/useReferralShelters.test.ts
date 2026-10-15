@@ -4,7 +4,6 @@ const shelter = (id: number): SheltersQuery['shelters']['results'][number] => ({
   __typename: 'ShelterType',
   id: String(id),
   name: `Shelter ${id}`,
-  phone: null,
   location: null,
   pets: [],
   demographics: [],

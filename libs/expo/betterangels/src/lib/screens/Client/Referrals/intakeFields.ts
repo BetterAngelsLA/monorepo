@@ -9,6 +9,7 @@ import {
   enumDisplayStorageChoices,
 } from '../../../static';
 import type { SheltersQuery } from './__generated__/Shelters.generated';
+import { compareReferralLabels } from './referralPresentation';
 
 export type IntakeOption<TValue extends string = string> = {
   readonly value: TValue;
@@ -22,7 +23,7 @@ function optionsFrom<TValue extends string>(
   for (const value in labels) {
     options.push({ value, label: labels[value] });
   }
-  return options.sort((a, b) => a.label.localeCompare(b.label));
+  return options.sort((a, b) => compareReferralLabels(a.label, b.label));
 }
 
 // Only destinations supported by the current notes adapter are expressible.

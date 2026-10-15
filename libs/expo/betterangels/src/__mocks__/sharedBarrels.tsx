@@ -161,6 +161,11 @@ export const uiComponents = () => ({
 // Renders items synchronously; virtualization itself is FlashList's job and is
 // not under test here. Keeps header/empty/footer rendering observable.
 type InfiniteListStubProps = {
+  testID?: string;
+  accessible?: boolean;
+  accessibilityRole?: import('react-native').ViewProps['accessibilityRole'];
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
   data?: readonly unknown[];
   renderItem?: (item: never) => ReactNode;
   keyExtractor?: (item: never) => string;
@@ -172,6 +177,11 @@ type InfiniteListStubProps = {
 };
 
 const InfiniteListStub = ({
+  testID,
+  accessible,
+  accessibilityRole,
+  accessibilityLabel,
+  accessibilityHint,
   data = [],
   renderItem,
   keyExtractor,
@@ -181,7 +191,13 @@ const InfiniteListStub = ({
   hasMore,
   loadMore,
 }: InfiniteListStubProps) => (
-  <View>
+  <View
+    testID={testID}
+    accessible={accessible}
+    accessibilityRole={accessibilityRole}
+    accessibilityLabel={accessibilityLabel}
+    accessibilityHint={accessibilityHint}
+  >
     {ListHeaderComponent}
     {data.length === 0
       ? typeof ListEmptyComponent === 'function'

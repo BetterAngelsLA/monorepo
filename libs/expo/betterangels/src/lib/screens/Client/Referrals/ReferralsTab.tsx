@@ -41,6 +41,7 @@ import { DraftRecoveryNotice } from './DraftRecoveryNotice';
 import {
   ReferralDraftProvider,
   useReferralDraft,
+  useReferralDraftStore,
 } from './ReferralDraftProvider';
 import { ReferralsHelp } from './ReferralsHelp';
 import type { ReferralDraftStore } from './referralDraft';
@@ -148,7 +149,7 @@ function ReferralsContent({
   client,
   clientId,
 }: Pick<TProps, 'client'> & { clientId: string }) {
-  const { draft, recovery, store } = useReferralDraft();
+  const store = useReferralDraftStore();
   const apolloClient = useApolloClient();
   const { showSnackbar } = useSnackbar();
   const runDraftAction = useLocalDraftAction();
@@ -188,8 +189,6 @@ function ReferralsContent({
     apolloClient.cache.gc();
     reload();
   });
-  const hasDraft = draft?.clientId === clientId;
-
   const openReferralForm = () => {
     const draftId = store.getSnapshot()?.id;
     if (!draftId) return;
@@ -316,7 +315,7 @@ function ReferralsContent({
 
   return (
     <View style={styles.container} testID="referrals-screen">
-      {recovery && <DraftRecoveryNotice />}
+      <DraftRecoveryNotice />
       {/* Header row */}
       <View style={styles.headerRow}>
         <View style={styles.headerCount}>
@@ -336,31 +335,11 @@ function ReferralsContent({
             <InfoIcon size="md" color={Colors.PRIMARY} />
           </Pressable>
         </View>
-        {hasDraft ? (
-          <Pressable
-            testID="resume-referral-btn"
-            onPress={openReferralForm}
-            style={styles.resumeBtn}
-            accessibilityRole="button"
-            accessibilityLabel="resume referral draft"
-            accessibilityHint="reopens your in-progress referral"
-          >
-            <TextBold size="sm" color={Colors.PRIMARY}>
-              Resume
-            </TextBold>
-          </Pressable>
-        ) : !recovery ? (
-          <IconButton
-            testID="create-referral-btn"
-            variant="secondary"
-            borderColor={Colors.WHITE}
-            accessibilityLabel="create new referral"
-            accessibilityHint="opens referral form"
-            onPress={startNewReferral}
-          >
-            <PlusIcon />
-          </IconButton>
-        ) : null}
+        <DraftHeaderActions
+          clientId={clientId}
+          onResume={openReferralForm}
+          onCreate={startNewReferral}
+        />
       </View>
 
       {/* Loading state */}
@@ -382,26 +361,10 @@ function ReferralsContent({
         </View>
       )}
 
-      {/* Empty state */}
-      {!loading &&
-        !error &&
-        referrals.length === 0 &&
-        !hasDraft &&
-        !recovery && (
-          <View style={styles.emptyState}>
-            <TextBold size="sm" color={Colors.NEUTRAL_DARK}>
-              No referrals yet
-            </TextBold>
-            <TextRegular size="sm" color={Colors.NEUTRAL}>
-              Tap + to refer this client to a shelter.
-            </TextRegular>
-          </View>
-        )}
-
       {/* Referral list — the draft rides at the top of the list (not pinned) so
           it scrolls away and doesn't eat the history's vertical space. The
           header's Resume button stays pinned, so resuming is always one tap. */}
-      {!loading && (hasDraft || referrals.length > 0) && (
+      {!loading && (
         <FocusedInfiniteList<
           ClientReferralsQuery['referrals']['results'][number]
         >
@@ -429,16 +392,15 @@ function ReferralsContent({
           refreshing={reloading}
           itemGap={0}
           ListHeaderComponent={
-            hasDraft ? (
-              <DraftCard
-                updatedAt={draft?.updatedAt}
-                status={draft?.submission.status ?? 'idle'}
-                onResume={openReferralForm}
-                onDiscard={confirmDiscardDraft}
-              />
-            ) : null
+            <DraftListHeader
+              clientId={clientId}
+              onResume={openReferralForm}
+              onDiscard={confirmDiscardDraft}
+            />
           }
-          ListEmptyComponent={hasDraft ? NoListItems : undefined}
+          ListEmptyComponent={
+            error ? <NoListItems /> : <EmptyReferralList clientId={clientId} />
+          }
         />
       )}
 
@@ -467,6 +429,85 @@ function DraftModal({
 }
 
 const NoListItems = () => null;
+
+// Only draft-dependent controls subscribe. Saved-history parsing/matching and
+// the paginated list remain untouched when an answer changes in the modal.
+function DraftHeaderActions({
+  clientId,
+  onResume,
+  onCreate,
+}: {
+  clientId: string;
+  onResume: () => void;
+  onCreate: () => void;
+}) {
+  const { draft, recovery } = useReferralDraft();
+  if (draft?.clientId === clientId) {
+    return (
+      <Pressable
+        testID="resume-referral-btn"
+        onPress={onResume}
+        style={styles.resumeBtn}
+        accessibilityRole="button"
+        accessibilityLabel="resume referral draft"
+        accessibilityHint="reopens your in-progress referral"
+      >
+        <TextBold size="sm" color={Colors.PRIMARY}>
+          Resume
+        </TextBold>
+      </Pressable>
+    );
+  }
+  if (recovery) return null;
+  return (
+    <IconButton
+      testID="create-referral-btn"
+      variant="secondary"
+      borderColor={Colors.WHITE}
+      accessibilityLabel="create new referral"
+      accessibilityHint="opens referral form"
+      onPress={onCreate}
+    >
+      <PlusIcon />
+    </IconButton>
+  );
+}
+
+function DraftListHeader({
+  clientId,
+  onResume,
+  onDiscard,
+}: {
+  clientId: string;
+  onResume: () => void;
+  onDiscard: () => void;
+}) {
+  const { draft } = useReferralDraft();
+  if (!draft || draft.clientId !== clientId) return null;
+  return (
+    <DraftCard
+      updatedAt={draft.updatedAt}
+      status={draft.submission.status}
+      onResume={onResume}
+      onDiscard={onDiscard}
+    />
+  );
+}
+
+function EmptyReferralList({ clientId }: { clientId: string }) {
+  const { draft, recovery } = useReferralDraft();
+  if (draft?.clientId === clientId || recovery) return null;
+  return (
+    <View style={styles.emptyState}>
+      <TextBold size="sm" color={Colors.NEUTRAL_DARK}>
+        No referrals yet
+      </TextBold>
+      <TextRegular size="sm" color={Colors.NEUTRAL}>
+        Tap + to refer this client to a shelter.
+      </TextRegular>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {

@@ -6,18 +6,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { ReferralSubmission } from './referralDraft';
-
-// Compact "edited" suffix: time for today's draft, date for older ones.
-function formatEdited(updatedAt?: number): string {
-  if (!updatedAt) return '';
-  const d = new Date(updatedAt);
-  const isToday = d.toDateString() === new Date().toDateString();
-  return ` · ${
-    isToday
-      ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-      : d.toLocaleDateString()
-  }`;
-}
+import { formatReferralEdited } from './referralPresentation';
 
 // The in-progress local draft, made visible in the list (tap to resume). Styled
 // unmistakably as a not-yet-submitted, on-device draft — dashed edge + badge.
@@ -85,7 +74,7 @@ export function DraftCard({
               ? 'Save outcome unknown. Check the referral list.'
               : status === 'saved'
                 ? 'Saved. Local draft cleanup needed.'
-                : `On this device · not submitted${formatEdited(updatedAt)}`}
+                : `On this device · not submitted${formatReferralEdited(updatedAt)}`}
         </TextRegular>
         <DiscardModal
           title="Discard draft?"

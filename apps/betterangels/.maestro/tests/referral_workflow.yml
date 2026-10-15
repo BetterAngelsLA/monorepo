@@ -158,10 +158,10 @@ appId: ${MAESTRO_APP_ID}
       - assertVisible:
           id: shelter-picker-screen
       - assertNotVisible:
-          id: shelter-option-radio
+          id: 'shelter-option-radio-.*'
           selected: true
       - tapOn:
-          id: shelter-option-radio
+          id: 'shelter-option-radio-.*'
           index: 1
       - tapOn:
           id: submit-referral-btn

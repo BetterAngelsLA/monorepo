@@ -13,9 +13,6 @@ import {
 const START = '\n\n<<<referral-intake:v1>>>\n';
 const END = '\n<<<end-referral-intake>>>';
 
-export const PII_KEYS = INTAKE_FIELDS.filter((field) => field.sensitive).map(
-  (field) => field.key,
-);
 export type Intake = StoredIntake;
 
 // Preserve the v1 convention: false and empty collections mean unanswered.
@@ -157,10 +154,6 @@ export function buildReferralNotes(
   pickerNotes?: string,
 ): string | undefined {
   return encodeReferralNotes(pickerNotes ?? '', intakeValues) || undefined;
-}
-
-export function stripSidecar(raw: string | null | undefined): string {
-  return decodeReferralNotes(raw).humanNotes;
 }
 
 function editableEnvelope(raw: string | null | undefined) {

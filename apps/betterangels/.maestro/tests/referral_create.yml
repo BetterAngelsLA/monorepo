@@ -101,7 +101,7 @@ appId: ${MAESTRO_APP_ID}
 # tap the radio, not the row — the row also contains the "View in Shelter
 # Directory" link, and a centre-tap on the row opens the browser instead
 - tapOn:
-    id: shelter-option-radio
+    id: 'shelter-option-radio-.*'
     index: 0
 
 - tapOn:

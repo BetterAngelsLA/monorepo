@@ -15,7 +15,8 @@ import {
   PetChoices,
   StorageChoices,
 } from '../../../apollo';
-import { MATCHED_INTAKE_KEYS, needLabelsFromIntake } from './clientNeeds';
+import { needLabelsFromIntake } from './clientNeeds';
+import { INTAKE_FIELDS } from './intakeFields';
 import { matchTags } from './shelterAttributes';
 
 describe('needLabelsFromIntake', () => {
@@ -74,11 +75,11 @@ describe('needLabelsFromIntake', () => {
 
 describe('vocabularies excluded from matching', () => {
   it('names only the three the shelter query returns', () => {
-    expect(MATCHED_INTAKE_KEYS).toEqual([
-      'pets',
-      'demographics',
-      'accessibility',
-    ]);
+    expect(
+      INTAKE_FIELDS.filter((field) => 'matching' in field).map(
+        (field) => field.key,
+      ),
+    ).toEqual(['pets', 'demographics', 'accessibility']);
   });
 
   it('produces no need from storage, parking or special situations', () => {

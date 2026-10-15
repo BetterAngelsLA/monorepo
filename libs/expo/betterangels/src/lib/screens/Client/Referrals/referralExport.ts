@@ -1,5 +1,6 @@
 import type { ClientReferralsQuery } from './__generated__/Referrals.generated';
 import { INTAKE_FIELDS, isIntakeControlValue } from './intakeFields';
+import { formatReferralTimestamp } from './referralPresentation';
 import {
   canEditReferralNotes,
   decodeReferralNotes,
@@ -8,20 +9,6 @@ import {
 export type ExportReferral =
   ClientReferralsQuery['referrals']['results'][number];
 export type ReferralTextCopy = { title: string; text: string };
-
-function timestamp(value: string | undefined): string {
-  const date = value ? new Date(value) : null;
-  if (!date || Number.isNaN(date.getTime())) return 'Not recorded';
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'UTC',
-    timeZoneName: 'short',
-  });
-}
 
 /** A readable copy of this saved referral, never the client's active draft. */
 export function buildReferralTextCopy({
@@ -60,10 +47,10 @@ export function buildReferralTextCopy({
     `Client (current profile name): ${clientName.trim() || 'Not recorded'}`,
     `Shelter: ${referral.shelter?.name || 'Not recorded'}`,
     `Shelter address: ${referral.shelter?.location?.place || 'Not recorded'}`,
-    `Created: ${timestamp(referral.createdAt)}`,
+    `Created: ${formatReferralTimestamp(referral.createdAt)}`,
     `Referrer: ${referrer}`,
     `Recorded outcome: ${status}`,
-    `Copy generated: ${timestamp(generatedAt)}`,
+    `Copy generated: ${formatReferralTimestamp(generatedAt)}`,
     '',
     'This copy does not confirm shelter receipt, a bed or a reservation. Contact the shelter to confirm availability and arrangements.',
     '',

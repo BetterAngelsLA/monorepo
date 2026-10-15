@@ -46,7 +46,6 @@ const shelter = (
   __typename: 'ShelterType' as const,
   id,
   name,
-  phone: null,
   location: {
     __typename: 'ShelterLocationType' as const,
     place: `${id} Main St`,
@@ -112,7 +111,7 @@ async function renderPicker(
   return { onSelectShelter };
 }
 
-const radios = () => screen.getAllByTestId('shelter-option-radio');
+const radios = () => screen.getAllByRole('radio');
 const isSelected = (i: number) =>
   screen.getAllByRole('radio')[i].props.accessibilityState?.selected === true;
 
@@ -121,6 +120,29 @@ beforeEach(() => {
 });
 
 describe('ReferralForm shelter selection', () => {
+  it('exposes distinct radios and directory links without grouping away the child controls', async () => {
+    await renderPicker();
+    await screen.findByText('Alpha House');
+    expect(screen.getByTestId('shelter-choice-group').props).toMatchObject({
+      accessibilityRole: 'radiogroup',
+      accessibilityLabel: 'Shelter choices',
+      accessible: false,
+    });
+    expect(screen.getByTestId('shelter-option-row-s-1').props.accessible).toBe(
+      false,
+    );
+    expect(screen.getByTestId('shelter-option-row-s-2')).toBeOnTheScreen();
+    const first = screen.getByRole('radio', { name: 'Alpha House' });
+    expect(first.props.testID).toBe('shelter-option-radio-s-1');
+    expect(screen.getByRole('radio', { name: 'Beta House' }).props.testID).toBe(
+      'shelter-option-radio-s-2',
+    );
+    expect(screen.getAllByRole('link')).toHaveLength(2);
+    expect(first).not.toBeChecked();
+    await fireEvent.press(first);
+    expect(screen.getByRole('radio', { name: 'Alpha House' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Beta House' })).not.toBeChecked();
+  });
   it('lists the approved shelters returned by the query', async () => {
     await renderPicker();
 
@@ -320,7 +342,7 @@ describe('ReferralForm opt-in distance', () => {
     },
   };
   const firstShelter = () =>
-    within(screen.getAllByTestId('shelter-option')[0]).getByText(
+    within(screen.getAllByTestId(/^shelter-option-row-/)[0]).getByText(
       /^(Alpha|Beta) House$/,
     ).props.children;
 
@@ -456,7 +478,7 @@ it('finds and ranks a saved shelter on a later page before enabling Submit', asy
   expect(screen.getByText('✓ Selected: Zebra House')).toBeOnTheScreen();
   await fireEvent.press(screen.getByTestId('submit-referral-btn'));
   expect(onSubmit).toHaveBeenCalledWith('last', undefined);
-  expect(screen.getAllByTestId('shelter-option')).toHaveLength(101);
+  expect(screen.getAllByTestId(/^shelter-option-row-/)).toHaveLength(101);
   expect(screen.getAllByRole('radio')[0].props.accessibilityLabel).toBe(
     'Zebra House',
   );

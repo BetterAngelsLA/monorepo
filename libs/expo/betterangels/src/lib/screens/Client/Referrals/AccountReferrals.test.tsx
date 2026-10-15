@@ -120,7 +120,6 @@ const shelter = {
   __typename: 'ShelterType',
   id: 's-1',
   name: 'Fictional House',
-  phone: null,
   location: null,
   pets: [],
   demographics: [],
@@ -307,7 +306,7 @@ async function openPicker() {
   );
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   await screen.findByText('Fictional House');
-  await fireEvent.press(screen.getByTestId('shelter-option-radio'));
+  await fireEvent.press(screen.getByRole('radio'));
 }
 
 beforeEach(() => {
@@ -527,7 +526,7 @@ it('retains saved answers and the current step when field or navigation writes f
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   await screen.findByText('Fictional House');
   fault.operation = 'write';
-  await fireEvent.press(screen.getByTestId('shelter-option-radio'));
+  await fireEvent.press(screen.getByRole('radio'));
   expectWriteFailure();
   expect(screen.getByTestId('submit-referral-btn')).toBeDisabled();
   await fireEvent.press(screen.getByTestId('picker-back-btn'));
