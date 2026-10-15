@@ -2,7 +2,7 @@
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
 import { HEATMAP_RAMP_CSS, HeatmapLayerWithScale } from './HeatmapLayer';
 import { PointLayer } from './PointLayer';
-import { parseColor } from './mapColors';
+import { mixRgb } from './mapColors';
 import { Alert, theme } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
@@ -148,13 +148,11 @@ function shade(
   max: number,
   count: number,
 ): string {
-  const [r0, g0, b0] = parseColor(empty);
-  const [r1, g1, b1] = parseColor(full);
-  if (max <= 0) {
-    return `rgb(${r0},${g0},${b0})`;
-  }
-  const t = Math.sqrt(Math.max(0, count) / max);
-  return `rgb(${Math.round(r0 + (r1 - r0) * t)},${Math.round(g0 + (g1 - g0) * t)},${Math.round(b0 + (b1 - b0) * t)})`;
+  // `mixRgb` is the same linear blend the heatmap's ramp does; only the *input* mapping
+  // differs (sqrt over a count, rather than an already-normalised intensity), so that part
+  // stays here and the colour maths lives in one place.
+  const t = max <= 0 ? 0 : Math.sqrt(Math.max(0, count) / max);
+  return mixRgb(empty, full, t);
 }
 
 /**

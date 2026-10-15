@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
+import { lerpRgb, type Rgb } from './mapColors';
 
 /**
  * A gradient heatmap of interaction locations.
@@ -46,7 +47,10 @@ import { useMap } from '@vis.gl/react-google-maps';
  */
 
 /** Blue through cyan, green and yellow to red, as normalised intensity. */
-const RAMP = [
+/** One stop on the colour ramp: a normalised intensity and the colour it maps to. */
+type RampStop = { stop: number; color: Rgb };
+
+const RAMP: RampStop[] = [
   { stop: 0.0, color: [40, 60, 200] },
   { stop: 0.3, color: [0, 190, 255] },
   { stop: 0.5, color: [0, 210, 90] },
@@ -238,17 +242,13 @@ function rampColor(t: number): [number, number, number] {
   const clamped = Math.max(0, Math.min(1, t));
   const upper = RAMP.findIndex((stop) => clamped <= stop.stop);
   if (upper <= 0) {
-    return RAMP[0].color as [number, number, number];
+    return RAMP[0].color;
   }
   const hi = RAMP[upper];
   const lo = RAMP[upper - 1];
   const span = hi.stop - lo.stop || 1;
-  const f = (clamped - lo.stop) / span;
-  return [
-    Math.round(lo.color[0] + (hi.color[0] - lo.color[0]) * f),
-    Math.round(lo.color[1] + (hi.color[1] - lo.color[1]) * f),
-    Math.round(lo.color[2] + (hi.color[2] - lo.color[2]) * f),
-  ];
+  // Shared with the choropleth's `shade`, which blends between two tokens the same way.
+  return lerpRgb(lo.color, hi.color, (clamped - lo.stop) / span);
 }
 
 export type HeatPoint = { latitude: number; longitude: number };

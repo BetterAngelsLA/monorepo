@@ -141,24 +141,23 @@ export function LocationBreakdown({
 
   const { dimensions, error: dimensionsError } = useRegionDimensions();
 
-  // Two rollups over the same dimension, because they answer different questions.
-  //
-  // `availableRegions` is unfiltered and exists to populate the region picker. A
-  // multi-select cannot be built from the filtered result: choosing district 1 would
-  // re-query for district 1 alone, the option list would collapse to that one row, and
-  // there would be no way to ever choose a second. That is exactly what went wrong.
-  //
-  // `rows` is scoped to the selection and is what the table, the figures and the map
-  // reflect.
-  const { rows: availableRegions } = useInteractionsByRegion({
-    organizationId,
-    dimension,
-    startDate,
-    endDate,
-  });
-
+  /**
+   * **One rollup, unfiltered.** The drill-down is applied locally below.
+   *
+   * This used to be two `interactionsByRegion` calls over the same dimension — one
+   * unfiltered for the picker, one scoped to `selectedCodes` for the table and figures.
+   * The scoped call was redundant: `region_rollup` with codes returns exactly the subset
+   * of the unfiltered buckets whose code was asked for (`keep_unassigned` is false when
+   * codes are given, so nothing extra is added), so the same rows were already in hand.
+   * Two round trips per drill-down became none.
+   *
+   * The picker still needs the *unfiltered* set — a multi-select built from the filtered
+   * result collapses to the one region chosen and can never select a second, which is the
+   * bug that motivated the second query in the first place. Keeping the unfiltered rollup
+   * as the single source satisfies both: `availableRegions` is it, `shown` is a view of it.
+   */
   const {
-    rows,
+    rows: availableRegions,
     loading: rowsLoading,
     error,
   } = useInteractionsByRegion({
@@ -166,10 +165,6 @@ export function LocationBreakdown({
     dimension,
     startDate,
     endDate,
-    // The drill-down has to reach the rollup, not just the map: `RegionMap` draws the
-    // polygons for the regions it is given, so without this the shapes never change
-    // however the map is filtered.
-    regionCodes: selectedCodes.length > 0 ? selectedCodes : undefined,
   });
   // The heatmap is deliberately **not** scoped by the grouping. A group-by re-partitions
   // the same interactions; it does not select a different set of them, so letting it
@@ -199,21 +194,32 @@ export function LocationBreakdown({
     regionCodes: selectedCodes.length > 0 ? selectedCodes : undefined,
   });
 
-  // The last non-empty set of rows, kept so a refetch does not blank the panel.
-  //
-  // `loading` goes true on every variable change, and rendering a spinner instead of
-  // the content unmounts `RegionMap` — which tears down and rebuilds the Google map —
-  // and collapses the page height, so the reader's scroll position jumps. Holding the
-  // previous rows keeps the layout stable and the map alive; the spinner becomes an
-  // inline affordance rather than a replacement for everything.
-  const [settledRows, setSettledRows] = useState<RegionCountType[]>([]);
-  useEffect(() => {
-    if (!rowsLoading && rows.length > 0) {
-      setSettledRows(rows);
+  /**
+   * The reader's selection applied to the one rollup.
+   *
+   * No "hold the last good rows while loading" state machine any more: that existed to stop
+   * a refetch blanking the panel and unmounting `RegionMap` (which tears down and rebuilds
+   * the Google map, jumping the reader's scroll position). Changing the selection no longer
+   * triggers a fetch at all, and `availableRegions` keeps its previous value while a real
+   * refetch is in flight, so the layout is stable without it.
+   */
+  const shown = useMemo(() => {
+    if (selectedCodes.length === 0) {
+      return availableRegions;
     }
-  }, [rows, rowsLoading]);
-
-  const shown = rowsLoading && rows.length === 0 ? settledRows : rows;
+    // Two predicates, both mirroring `region_rollup` so the local view cannot drift from
+    // what the API would have returned for the same codes:
+    //
+    // 1. keep only the named buckets asked for (the `region__code__in` arm);
+    // 2. **drop the unassigned buckets.** They are not regions and have no code, so they
+    //    cannot match a selection — and the backend drops them too, because
+    //    `keep_unassigned` is false whenever codes are given. Filtering on `code` alone
+    //    would keep them, which reads as "outside all boundaries: 291" beside a
+    //    drill-down into two districts.
+    return availableRegions.filter(
+      (row) => !row.isUnassigned && selectedCodes.includes(row.code),
+    );
+  }, [availableRegions, selectedCodes]);
 
   /**
    * Sorted for reading. Two things are wrong with the raw order.

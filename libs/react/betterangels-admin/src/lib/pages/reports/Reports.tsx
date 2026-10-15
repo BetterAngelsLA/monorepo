@@ -15,6 +15,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useActiveOrg } from '@monorepo/ba-platform';
+import { toDateString } from '@monorepo/shared/scalars';
 import { mergeCss } from '@monorepo/react/shared';
 import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
@@ -36,10 +37,6 @@ function getDefaultRange(): [Dayjs, Dayjs] {
   const start = now.subtract(1, 'month').startOf('month');
   const end = now.subtract(1, 'month').endOf('month');
   return [start, end];
-}
-
-function formatScalarDate(d: Dayjs): string {
-  return d.format('YYYY-MM-DD');
 }
 
 /**
@@ -171,8 +168,12 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
   } = useCSVDownload();
 
   const [startDate, endDate] = dateRange;
-  const startStr = formatScalarDate(startDate);
-  const endStr = formatScalarDate(endDate);
+  // `YYYY-MM-DD` is the `Date` scalar's wire format. Named for what it produces rather than
+  // recycling the shared `formatScalarDate`, which takes a *scalar string* and returns a
+  // *display* string — the opposite direction, and it was shadowed by a local of that name
+  // here, so the two were easy to confuse.
+  const startStr = toDateString(startDate.toDate());
+  const endStr = toDateString(endDate.toDate());
 
   const organizationId = activeOrg?.id ?? '';
   const { summary, loading, error } = useReportSummary({
