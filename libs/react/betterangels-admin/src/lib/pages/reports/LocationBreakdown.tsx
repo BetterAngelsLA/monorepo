@@ -320,7 +320,14 @@ export function LocationBreakdown({
       key: 'name',
       render: renderRegionName,
     },
-    { title: 'Code', dataIndex: 'code', key: 'code' },
+    {
+      title: 'Code',
+      dataIndex: 'code',
+      key: 'code',
+      // antd's data-format spec: show `-` when there is no value. An unassigned bucket has
+      // no code, and a blank cell there is indistinguishable from a failed render.
+      render: (code: string) => (code ? code : <Text type="secondary">-</Text>),
+    },
     {
       title: 'Interactions',
       dataIndex: 'count',
@@ -461,13 +468,33 @@ export function LocationBreakdown({
         </div>
       )}
 
-      {hasData && (
+      {hasData && dimension === undefined && (
+        /*
+         * One item, because a *table* of every dimension cannot be read as a total.
+         *
+         * The six dimensions partition the same interactions, so their rows are six views of
+         * one population rather than six groups of it. Summing them gave 6,588 against a true
+         * total of 1,098 — six times over — and listing 133 rows invited exactly that
+         * addition. The count of unassigned interactions is the same trap: 318 is six partial
+         * counts (council district 291, city 23, and 1 each for the other four), not one
+         * bucket.
+         *
+         * So this asks the reader to choose a dimension rather than showing them a number
+         * that cannot be added up. The total lives in the KPI above, and the map is already
+         * showing every located interaction.
+         */
+        <div className="mt-4 rounded border border-neutral-200 bg-white p-4">
+          <Text strong>Choose a grouping for the regional breakdown</Text>
+          <p className="mt-1 mb-0 text-sm text-neutral-600">
+            Each dimension covers the same interactions a different way, so their rows can
+            not be added together. Pick one to see its regions, or leave it as “All
+            dimensions” for the map and totals above.
+          </p>
+        </div>
+      )}
+
+      {hasData && dimension !== undefined && (
         <>
-          {/* No bar chart above the table. It plotted `assigned.slice(0, 20)` — the same
-              rows the table below already shows, sortable and complete — so it added 300px
-              of scroll and no information, and its rotated 10px labels were unreadable. In
-              "All dimensions" it also put incomparable categories (a city, a ZIP, a CoC) on
-              one axis, which invites a comparison that has no meaning. */}
           <Table<RegionCountType>
             className="mt-4"
             size="small"
@@ -483,14 +510,14 @@ export function LocationBreakdown({
         </>
       )}
 
-      {!rowsLoading && unassigned.length > 0 && (
+      {!rowsLoading && dimension !== undefined && unassigned.length > 0 && (
         // Readable rather than grey-on-grey, which read as disabled. The dimension is shown
         // because without it every row says the same thing: one unassigned row per
         // dimension, all labelled "Outside all boundaries", so 23 and 291 looked like
         // duplicates of each other instead of two different groupings.
         <div className="mt-4 rounded border border-neutral-200 bg-white p-3">
           <Text strong>
-            Not attributed to {dimension ? `a ${dimensionName.toLowerCase()}` : 'any region'}
+            Not attributed to a {dimensionName.toLowerCase()}
           </Text>
           <ul className="mt-2 mb-0 list-none space-y-1 p-0 text-sm">
             {unassigned.map((row) => (
@@ -498,9 +525,6 @@ export function LocationBreakdown({
                 key={`${row.kind}-${row.unassignedReason ?? ''}-${row.code}`}
                 className="flex items-baseline gap-2"
               >
-                {dimension === undefined && (
-                  <Tag className="m-0">{kindLabel(row.kind)}</Tag>
-                )}
                 <span className="text-neutral-700">{unassignedLabel(row)}</span>
                 <Text strong>{row.count.toLocaleString()}</Text>
                 <Text type="secondary">interactions</Text>

@@ -211,6 +211,9 @@ export function PointLayer({ points, radius = 5 }: PointLayerProps) {
     canvas.style.left = '0';
     canvas.style.top = '0';
     canvas.style.pointerEvents = 'none';
+    // Decorative: the interaction figures are in the table beside the map, so this is
+    // hidden from assistive tech rather than announced as an empty graphic.
+    canvas.setAttribute('aria-hidden', 'true');
 
     const host = map.getDiv();
 

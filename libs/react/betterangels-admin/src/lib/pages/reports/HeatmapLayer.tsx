@@ -346,6 +346,9 @@ export function HeatmapLayer({ points, intensity = 0.55, onScale }: HeatmapLayer
     canvas.style.left = '0';
     canvas.style.top = '0';
     canvas.style.pointerEvents = 'none';
+    // Decorative: the interaction figures are in the table beside the map, so this is
+    // hidden from assistive tech rather than announced as an empty graphic.
+    canvas.setAttribute('aria-hidden', 'true');
 
     const host = map.getDiv();
     // One channel of accumulated intensity, reused across draws so a pan does not

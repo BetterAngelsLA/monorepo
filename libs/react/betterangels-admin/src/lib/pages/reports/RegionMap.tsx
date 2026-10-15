@@ -341,10 +341,15 @@ export function RegionMap({
           <Spin size="small" /> loading boundaries...
         </div>
       )}
-      <GoogleMap
-        id="admin-region-map"
-        style={{ width: '100%', height: 560, borderRadius: 6 }}
-        defaultCenter={LA_CENTER}
+      {/* The map is a picture of data that the table states in full, so it is marked
+          decorative rather than read out as an empty container — the same treatment a purely
+          ornamental image gets. `GoogleMap` does not forward aria attributes, so the marker
+          has to sit on a wrapper. */}
+      <div aria-hidden="true">
+        <GoogleMap
+          id="admin-region-map"
+          style={{ width: '100%', height: 560, borderRadius: 6 }}
+          defaultCenter={LA_CENTER}
         defaultZoom={LA_ZOOM}
         gestureHandling="cooperative"
         styles={DATA_FOCUSED_STYLES}
@@ -381,31 +386,36 @@ export function RegionMap({
             // DOM is a sibling, so absolute positioning is relative to this wrapper.
             style={{ position: 'absolute', zIndex: 5 }}
           >
-            <div className="mb-1 text-[10px] font-medium text-neutral-600">
+            {/* 12px is the floor for legible secondary text, and #8c8c8c on white is only
+                3.36:1 against a 4.5:1 requirement. These use the 12px/`neutral-700` pairing,
+                which measures 10.7:1 — the legend is the only key to the colour scale, so
+                leaving it at the least readable size on the page was backwards. */}
+            <div className="mb-1 text-xs font-medium text-neutral-700">
               Interaction density
             </div>
-            <div className="h-2 w-40 rounded-sm" style={{ background: HEATMAP_RAMP_CSS }} />
+            <div className="h-2 w-44 rounded-sm" style={{ background: HEATMAP_RAMP_CSS }} />
             {/* Numbers rather than "fewer"/"more". The ramp is normalised against the
                 busiest area in the whole selection, so the honest reading is a share of
                 that peak — not an absolute count, which the weighted sum is not. */}
-            <div className="mt-0.5 flex w-40 justify-between text-[10px] text-neutral-600">
+            <div className="mt-0.5 flex w-44 justify-between text-xs text-neutral-700">
               <span>0</span>
               <span>50</span>
               <span>100%</span>
             </div>
-            <div className="mt-0.5 w-40 text-[10px] text-neutral-500">
+            <div className="mt-0.5 w-44 text-xs text-neutral-700">
               {scale
                 ? `100% = ${scale.count.toLocaleString()} interactions in the densest area`
                 : '100% = the densest area in this selection'}
             </div>
             {/* The reference is per-zoom, because the kernel radius is in pixels. Saying so
                 is the difference between a scale and a scale that quietly changes. */}
-            <div className="text-[10px] text-neutral-400">
+            <div className="text-xs text-neutral-600">
               scale set for this zoom level
             </div>
           </div>
         )}
-      </GoogleMap>
+        </GoogleMap>
+      </div>
       <p className="mt-2 text-xs text-neutral-500">{caption}</p>
       {truncated && view === 'clusters' && (
         <Alert
