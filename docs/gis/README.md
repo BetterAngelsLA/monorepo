@@ -151,14 +151,36 @@ Boundaries are **not** served over GraphQL: the map draws them as vector tiles f
 layers and a tile in view is a few kB, so the tiles are the whole reason the map does not pull
 a whole layer to draw a corner of it.
 
+Interactions are served the same way, as a **density grid**:
+`/regions/tiles/density/<z>/<x>/<y>.mvt`, with `organizationId` required and
+`start`/`end`/`dimension`/`codes` optional. Each non-empty cell of a fixed grid over the tile
+is one polygon carrying its `count`, so the map draws an area rather than a point cloud. The
+cell is a fraction of the tile — 64 across, so 8 px at deck.gl's 512 px tile size at every
+zoom — which keeps the grid aligned with tile edges and makes one cell the same number of
+screen pixels however far in the reader is. On the LA County fixture an 8 px cell at z9 gives
+~1,250 non-empty cells and **30 kB** for a county-scale tile, against **1 MB** for the same
+month's points through `interactionMap`. It is computed on the fly from `Note` and `Location`;
+nothing is stored, so there is no migration and nothing to keep fresh. A tile with no cells is
+a **204**, because deck.gl reads an empty body with a success status as a malformed tile.
+
 **Authorization differs deliberately by query.** `interactionMap` returns coordinates and
 carries two gates: `reports.view_reports` at the payload org, and the note read scope via
 `filter_for_user(..., [NotePermissions.VIEW])` — a pin is a note's location, so it inherits
-the note scope, and `ORG_ADMIN` holds the report permission with none of the note one.
-`interactionsByRegion` returns counts and carries `reports.view_reports` alone, the same
-authority as `reportSummary` beside it. `regionDimensions` requires only an authenticated
-session, and so does the tile endpoint: both serve public reference boundaries, identical for
-every tenant, and neither selects an org- or client-scoped column.
+the note scope, and `ORG_ADMIN` holds the report permission with none of the note one. The
+**density tile carries the same two gates**, because a filled cell is still a note's location;
+it aggregates the permission-scoped queryset rather than a count taken first and filtered
+later, so it cannot emit a cell the points query would refuse. `interactionsByRegion` returns
+counts and carries `reports.view_reports` alone, the same authority as `reportSummary` beside
+it. `regionDimensions` requires only an authenticated session, and so does the boundary tile
+endpoint: both serve public reference boundaries, identical for every tenant, and neither
+selects an org- or client-scoped column.
+
+`codes` scopes the grid to regions of `dimension`, and is refused without one — a code is
+ambiguous across dimensions. Region membership is answered against the same
+`regions_regionlookup` view the rollup reads, but with the **boundaries driving** and the
+points probed: the correlated `EXISTS` in `selectors.scope_notes_to_regions` is the same
+question asked note-by-note, and on the live fixture it costs 2,600 ms a tile against 2 ms
+written this way.
 
 ### Sources that look right but are not
 
