@@ -1,8 +1,15 @@
 import { MockedProvider } from '@apollo/client/testing/react';
+import { ActiveOrgProvider } from '@monorepo/ba-platform';
 import { Alert } from '@monorepo/react/components';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { CreateTeamDocument } from './__generated__/teams.generated';
 import { TeamFormDrawer } from './TeamFormDrawer';
+
+const ORG = {
+  id: 'org-1',
+  name: 'Test Org',
+  permissions: [],
+};
 
 const DUPLICATE_MESSAGE =
   'A team named "Drop-in Center" already exists in this organization.';
@@ -10,7 +17,7 @@ const DUPLICATE_MESSAGE =
 const duplicateNameMock = {
   request: {
     query: CreateTeamDocument,
-    variables: { data: { name: 'Drop-in Center' } },
+    variables: { data: { name: 'Drop-in Center', organizationId: ORG.id } },
   },
   result: {
     data: {
@@ -32,12 +39,14 @@ const duplicateNameMock = {
 describe('TeamFormDrawer', () => {
   it('shows the message the server sent, not a generic one', async () => {
     render(
-      <MockedProvider mocks={[duplicateNameMock]}>
-        <>
-          <TeamFormDrawer onSuccess={() => undefined} />
-          <Alert />
-        </>
-      </MockedProvider>,
+      <ActiveOrgProvider organizations={[ORG]}>
+        <MockedProvider mocks={[duplicateNameMock]}>
+          <>
+            <TeamFormDrawer onSuccess={() => undefined} />
+            <Alert />
+          </>
+        </MockedProvider>
+      </ActiveOrgProvider>,
     );
 
     fireEvent.change(screen.getByPlaceholderText('e.g. Outreach Team Alpha'), {

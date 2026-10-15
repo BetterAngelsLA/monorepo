@@ -101,6 +101,14 @@ export const depConstraints = [
       'scope:shared',
     ],
   },
+  {
+    sourceTag: 'scope:wildfires',
+    onlyDependOnLibsWithTags: [
+      'scope:wildfires',
+      'scope:ba-platform',
+      'scope:shared',
+    ],
+  },
 ];
 
 export default [
@@ -184,6 +192,28 @@ export default [
             'tools/codegen/.*',
           ],
           depConstraints,
+        },
+      ],
+    },
+  },
+
+  // Packages that must never be imported directly: `react-native-keyboard-controller`
+  // is native-only and breaks the web bundle before React renders. Import it through
+  // the Keyboard seam instead, which resolves its `.web.tsx` twin; the seam's native
+  // half disables this rule inline.
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-native-keyboard-controller',
+              message:
+                "Import from '@monorepo/expo/shared/ui-components' (the Keyboard seam) instead. The package is native-only and is not bundled for web.",
+            },
+          ],
         },
       ],
     },

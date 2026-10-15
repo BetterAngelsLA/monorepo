@@ -29,6 +29,25 @@
           "coverage": true
         }
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/expo/shared/clients",
+        "commands": [
+          {
+            "command": "tsc --noEmit -p tsconfig.lib.json"
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "options": {
+        "cwd": "libs/expo/shared/clients",
+        "command": "eslint ."
+      }
     }
   }
 }

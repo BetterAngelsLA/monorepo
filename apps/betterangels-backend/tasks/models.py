@@ -1,11 +1,12 @@
 import pghistory
-from accounts.models import User
-from common.models import BaseModel
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django_choices_field import IntegerChoicesField
 from organizations.models import Organization
+
+from accounts.models import User
+from common.models import BaseModel
 from teams.models import Team
 from teams.validators import validate_team_in_org
 

@@ -2,14 +2,15 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
+from django.conf import settings
+from django.test import TestCase
+from storages.backends.s3 import S3Storage
+
 from common.services.s3 import (
     PresignedS3UploadInput,
     generate_s3_presigned_upload_urls,
     s3_key_exists,
 )
-from django.conf import settings
-from django.test import TestCase
-from storages.backends.s3 import S3Storage
 
 TEST_BUCKET = "betterangels-local"
 

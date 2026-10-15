@@ -2,7 +2,6 @@ import { ApolloLink, HttpLink } from '@apollo/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import {
   ApolloClientProvider,
@@ -19,9 +18,14 @@ import {
   UploadResume,
   UserProvider,
 } from '@monorepo/expo/betterangels';
-import { createErrorLink, loggerLink } from '@monorepo/expo/shared/clients';
+import {
+  createErrorLink,
+  isApiDebug,
+  loggerLink,
+} from '@monorepo/expo/shared/clients';
+import { KeyboardProvider } from '@monorepo/expo/shared/ui-components';
 
-import { baTypePolicies, isGqlDebug, reactQueryClient } from '../init';
+import { baTypePolicies, reactQueryClient } from '../init';
 
 /**
  * Data + auth providers — lives inside ``EnvironmentSwitcherProvider``
@@ -38,7 +42,7 @@ export function BaDataProviders({ children }: { children: ReactNode }) {
       fetch: rawFetch,
     });
     const links = [createErrorLink({ authPath: '/auth' }), httpLink];
-    if (isGqlDebug) links.unshift(loggerLink);
+    if (isApiDebug) links.unshift(loggerLink);
     return ApolloLink.from(links);
   }, [apiUrl, rawFetch]);
 

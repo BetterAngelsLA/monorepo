@@ -5,6 +5,7 @@ import type { UseFormSetError } from 'react-hook-form';
 import {
   updateShelterProfileMeta,
   useShelterOperatorProfile,
+  useShelterPermissions,
   useUpdateShelterProfile,
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
@@ -45,6 +46,7 @@ export function ShelterPolicies(props: TProps) {
   const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
+  const { canEditShelter } = useShelterPermissions();
 
   async function onSubmit(
     data: PoliciesFormData,
@@ -105,7 +107,7 @@ export function ShelterPolicies(props: TProps) {
       values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}
-      onEditClick={() => setEditMode(true)}
+      onEditClick={canEditShelter ? () => setEditMode(true) : undefined}
       onCancel={onCancel}
     />
   );

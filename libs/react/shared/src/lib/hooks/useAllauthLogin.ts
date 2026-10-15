@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import { stripEnvironmentTag } from '../utils/stripEnvironmentTag';
+
 export type FetchFn = (
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -40,15 +42,6 @@ interface UseAllauthLoginReturn {
  * All flows use allauth's headless browser API directly — no custom GraphQL mutations needed.
  */
 
-/**
- * Strip the "+demo" email tag used by the frontend to select the demo
- * environment.  The tag is only a client-side routing signal and must never
- * reach the backend, which would fail to find the user.
- */
-function stripDemoTag(email: string): string {
-  return email.replace('+demo@', '@');
-}
-
 export function useAllauthLogin({
   fetch,
   onLoginSuccess,
@@ -81,7 +74,7 @@ export function useAllauthLogin({
 
   const handleSendCode = useCallback(
     async (email: string) => {
-      const cleaned = stripDemoTag(email.toLowerCase().trim());
+      const cleaned = stripEnvironmentTag(email.toLowerCase().trim());
       setSendingCode(true);
       setErrorMsg('');
 
@@ -151,7 +144,7 @@ export function useAllauthLogin({
       setErrorMsg('');
 
       try {
-        const cleaned = stripDemoTag(email.toLowerCase().trim());
+        const cleaned = stripEnvironmentTag(email.toLowerCase().trim());
         const res = await post('/_allauth/browser/v1/auth/login', {
           email: cleaned,
           password,

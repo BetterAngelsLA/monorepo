@@ -12,24 +12,14 @@
  *  - Ensures `paginationMode` and its variable paths are consistent
  *  - Validates that `itemsPath` is non-empty
  *
- * Depending on `paginationMode`, it returns one of two shapes:
+ * It returns the normalized Offset/Limit shape, e.g.:
  *
- * - **Offset mode**
  *   {
  *     paginationMode: 'OFFSET',
  *     itemsPath: ['results'],
  *     totalCountPath: ['totalCount'],
  *     paginationOffsetPath: ['pagination', 'offset'],
  *     paginationLimitPath: ['pagination', 'limit'],
- *   }
- *
- * - **Per-page mode**
- *   {
- *     paginationMode: 'PER_PAGE',
- *     itemsPath: ['results'],
- *     totalCountPath: ['totalCount'],
- *     paginationPagePath: ['pagination', 'page'],
- *     paginationPerPagePath: ['pagination', 'perPage'],
  *   }
  *
  * This function is **strict by design** — it will throw if an invalid
@@ -42,6 +32,7 @@
 
 import { toPathArray, toPathArrayStrict } from '../../../utils';
 import {
+  DEFAULT_OFFSET_PAGINATION_VARS,
   DEFAULT_QUERY_RESULTS_KEY,
   DEFAULT_QUERY_TOTAL_COUNT_KEY,
   PaginationModeEnum,
@@ -50,7 +41,6 @@ import {
   QueryPolicyConfig,
   QueryPolicyConfigInput,
 } from '../../types/queryPolicyConfig';
-import { getPaginationVarsPerMode } from './getPaginationVarsPerMode';
 
 export function generateQueryPolicyConfig(
   input: QueryPolicyConfigInput,
@@ -59,7 +49,7 @@ export function generateQueryPolicyConfig(
     itemsPath = [DEFAULT_QUERY_RESULTS_KEY],
     paginationMode = PaginationModeEnum.Offset,
     totalCountPath = [DEFAULT_QUERY_TOTAL_COUNT_KEY],
-    paginationVariables = { mode: paginationMode },
+    paginationVariables,
   } = input;
 
   const resolvedItemsPath = toPathArray(itemsPath);
@@ -72,31 +62,17 @@ export function generateQueryPolicyConfig(
 
   const resolvedTotalCountPath = toPathArray(totalCountPath);
 
-  const paginationVars = getPaginationVarsPerMode(
-    paginationMode,
-    paginationVariables,
-  );
-
-  if (paginationVars.mode === PaginationModeEnum.Offset) {
-    const { mode, offsetPath, limitPath } = paginationVars;
-
-    return {
-      paginationMode: mode,
-      itemsPath: resolvedItemsPath,
-      totalCountPath: resolvedTotalCountPath,
-      paginationOffsetPath: toPathArrayStrict(offsetPath),
-      paginationLimitPath: toPathArrayStrict(limitPath),
-    };
-  }
-
-  // mode === PaginationModeEnum.PerPage
-  const { mode, pagePath, perPagePath } = paginationVars;
+  const offsetPath =
+    paginationVariables?.offsetPath ??
+    DEFAULT_OFFSET_PAGINATION_VARS.offsetPath;
+  const limitPath =
+    paginationVariables?.limitPath ?? DEFAULT_OFFSET_PAGINATION_VARS.limitPath;
 
   return {
-    paginationMode: mode,
+    paginationMode,
     itemsPath: resolvedItemsPath,
     totalCountPath: resolvedTotalCountPath,
-    paginationPagePath: toPathArrayStrict(pagePath),
-    paginationPerPagePath: toPathArrayStrict(perPagePath),
+    paginationOffsetPath: toPathArrayStrict(offsetPath),
+    paginationLimitPath: toPathArrayStrict(limitPath),
   };
 }

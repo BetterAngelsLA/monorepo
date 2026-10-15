@@ -12,8 +12,9 @@ imports *this* module for its field validators, so a top-level model import
 would be circular. Import inside the function body instead.
 """
 
-from common.utils import can_match
 from django.core.exceptions import ValidationError
+
+from common.utils import can_match
 
 
 def validate_has_alphanumeric(value: str) -> None:

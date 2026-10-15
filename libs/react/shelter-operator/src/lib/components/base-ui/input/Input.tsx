@@ -28,6 +28,7 @@ export const Input = forwardRef<
   {
     id,
     label,
+    labelSuffix,
     error,
     dataType,
     variant = 'default',
@@ -36,6 +37,7 @@ export const Input = forwardRef<
     required = false,
     disabled = false,
     className,
+    labelSuffixClassName,
     containerClassName,
     inputClassName,
     isActive = false,
@@ -95,6 +97,8 @@ export const Input = forwardRef<
       {label && (
         <Label
           label={label}
+          labelSuffix={labelSuffix}
+          suffixClassName={labelSuffixClassName}
           inputId={inputId}
           variant={isViewEditMode ? 'offset' : undefined}
           required={required}

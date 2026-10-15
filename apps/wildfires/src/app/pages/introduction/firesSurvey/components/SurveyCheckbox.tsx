@@ -69,6 +69,9 @@ export function SurveyCheckbox(props: IProps): ReactElement {
 
   return (
     <button
+      type="button"
+      role="checkbox"
+      aria-checked={!!checked}
       className={mergeCss(parentCss)}
       onClick={handleChange}
       disabled={disabled}

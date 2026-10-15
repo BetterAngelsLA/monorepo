@@ -31,8 +31,6 @@ export type Scalars = {
   /** Time (isoformat) */
   Time: { input: TimeString; output: TimeString; }
   UUID: { input: UUIDString; output: UUIDString; }
-  /** Represents a file upload. */
-  Upload: { input: any; output: any; }
 };
 
 export enum AccessibilityChoices {
@@ -191,9 +189,8 @@ export type BulkDeleteResult = {
 };
 
 export type ChangeOrganizationMemberRoleInput = {
-  organizationId: Scalars['ID']['input'];
+  membershipId: Scalars['ID']['input'];
   permissionTemplate: PermissionTemplateEnum;
-  userId: Scalars['ID']['input'];
 };
 
 export type ChangeOrganizationMemberRolePayload = OperationInfo | OrganizationMemberType;
@@ -398,11 +395,6 @@ export type ClientProfileOrder = {
   lastName?: InputMaybe<Ordering>;
 };
 
-export type ClientProfilePhotoInput = {
-  clientProfile: Scalars['ID']['input'];
-  photo?: InputMaybe<Scalars['Upload']['input']>;
-};
-
 export type ClientProfileType = {
   __typename: 'ClientProfileType';
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
@@ -483,13 +475,6 @@ export enum ConditionChoices {
   Wind = 'WIND'
 }
 
-export type ContactInfoType = {
-  __typename: 'ContactInfoType';
-  contactName: Scalars['String']['output'];
-  contactNumber: Scalars['PhoneNumber']['output'];
-  id: Scalars['ID']['output'];
-};
-
 export type CreateBedInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   b7?: InputMaybe<Scalars['Boolean']['input']>;
@@ -512,14 +497,6 @@ export type CreateBedInput = {
 export type CreateBedPayload = BedType | OperationInfo;
 
 export type CreateClientContactPayload = ClientContactType | OperationInfo;
-
-export type CreateClientDocumentInput = {
-  clientProfile: Scalars['ID']['input'];
-  file: Scalars['Upload']['input'];
-  namespace: ClientDocumentNamespaceEnum;
-};
-
-export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
@@ -554,7 +531,6 @@ export type CreateClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
@@ -595,7 +571,6 @@ export type CreateHmisClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   raceEthnicity?: InputMaybe<Array<HmisRaceEnum>>;
@@ -761,6 +736,7 @@ export type CreateShelterInput = {
   maxStay?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
   overallRating?: InputMaybe<Scalars['Int']['input']>;
@@ -808,6 +784,7 @@ export type CreateTaskPayload = OperationInfo | TaskType;
 
 export type CreateTeamInput = {
   name: Scalars['String']['input'];
+  organizationId: Scalars['ID']['input'];
 };
 
 export type CreateTeamPayload = OperationInfo | TeamType;
@@ -832,6 +809,7 @@ export type CurrentUserType = {
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
+  permissions: Array<Scalars['String']['output']>;
   username?: Maybe<Scalars['String']['output']>;
 };
 
@@ -907,6 +885,8 @@ export type DeleteReservationsPayload = BulkDeleteResult | OperationInfo;
 export type DeleteRoomsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
+
+export type DeleteShelterPayload = DeletedObjectType | OperationInfo;
 
 export type DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo;
 
@@ -1557,7 +1537,6 @@ export type Mutation = {
   cloneRoom: CloneRoomPayload;
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
-  createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
@@ -1591,6 +1570,7 @@ export type Mutation = {
   deleteReservations: DeleteReservationsPayload;
   deleteRooms: DeleteRoomsPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
+  deleteShelter: DeleteShelterPayload;
   deleteShelterPhotos: DeleteShelterPhotosPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
@@ -1616,8 +1596,6 @@ export type Mutation = {
   updateClientDocument: UpdateClientDocumentPayload;
   updateClientHouseholdMember: UpdateClientHouseholdMemberPayload;
   updateClientProfile: UpdateClientProfilePayload;
-  /** @deprecated Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal. */
-  updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
   updateHmisClientProfile: UpdateHmisClientProfilePayload;
   updateHmisNote: UpdateHmisNotePayload;
@@ -1664,11 +1642,6 @@ export type MutationCreateBedArgs = {
 
 export type MutationCreateClientContactArgs = {
   data: ClientContactInput;
-};
-
-
-export type MutationCreateClientDocumentArgs = {
-  data: CreateClientDocumentInput;
 };
 
 
@@ -1833,6 +1806,11 @@ export type MutationDeleteServiceRequestArgs = {
 };
 
 
+export type MutationDeleteShelterArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteShelterPhotosArgs = {
   data: BulkDeleteInput;
 };
@@ -1931,7 +1909,6 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateBedArgs = {
   data: UpdateBedInput;
-  id: Scalars['ID']['input'];
 };
 
 
@@ -1952,11 +1929,6 @@ export type MutationUpdateClientHouseholdMemberArgs = {
 
 export type MutationUpdateClientProfileArgs = {
   data: UpdateClientProfileInput;
-};
-
-
-export type MutationUpdateClientProfilePhotoArgs = {
-  data: ClientProfilePhotoInput;
 };
 
 
@@ -2002,13 +1974,11 @@ export type MutationUpdateReferralArgs = {
 
 export type MutationUpdateReservationArgs = {
   data: UpdateReservationInput;
-  id: Scalars['ID']['input'];
 };
 
 
 export type MutationUpdateRoomArgs = {
   data: UpdateRoomInput;
-  id: Scalars['ID']['input'];
 };
 
 
@@ -2206,13 +2176,44 @@ export enum OperationMessageKind {
   Warning = 'WARNING'
 }
 
+export type OperatorShelterFilter = {
+  AND?: InputMaybe<OperatorShelterFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OperatorShelterFilter>;
+  OR?: InputMaybe<OperatorShelterFilter>;
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
+  citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  city?: InputMaybe<Array<Scalars['ID']['input']>>;
+  cityCouncilDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
+  geolocation?: InputMaybe<GeolocationInput>;
+  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
+  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  openNow?: InputMaybe<OpenNowInput>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
+  overallRating?: InputMaybe<Array<Scalars['Int']['input']>>;
+  properties?: InputMaybe<ShelterPropertyInput>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  services?: InputMaybe<Array<Scalars['ID']['input']>>;
+  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
+  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  status?: InputMaybe<Array<StatusChoices>>;
+  storage?: InputMaybe<Array<StorageChoices>>;
+  supervisorialDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
 export type OperatorShelterType = {
   __typename: 'OperatorShelterType';
   HeroPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
-  additionalContacts: Array<ContactInfoType>;
+  additionalContacts: Array<ShelterContactInfoType>;
   availability?: Maybe<ShelterAvailabilityType>;
   bedCounts: BedCountType;
   bedFees?: Maybe<Scalars['String']['output']>;
@@ -2354,6 +2355,7 @@ export type OrganizationMemberType = {
   lastLogin?: Maybe<Scalars['DateTime']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   memberRole: OrgRoleEnum;
+  membershipId?: Maybe<Scalars['ID']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   permissionTemplates: Array<PermissionTemplateEnum>;
 };
@@ -2516,6 +2518,32 @@ export enum PronounEnum {
   TheyThemTheirs = 'THEY_THEM_THEIRS'
 }
 
+export type PublicShelterFilter = {
+  AND?: InputMaybe<PublicShelterFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<PublicShelterFilter>;
+  OR?: InputMaybe<PublicShelterFilter>;
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
+  citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  city?: InputMaybe<Array<Scalars['ID']['input']>>;
+  geolocation?: InputMaybe<GeolocationInput>;
+  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
+  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  openNow?: InputMaybe<OpenNowInput>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
+  properties?: InputMaybe<ShelterPropertyInput>;
+  services?: InputMaybe<Array<Scalars['ID']['input']>>;
+  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
+  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  storage?: InputMaybe<Array<StorageChoices>>;
+};
+
 export type Query = {
   __typename: 'Query';
   bed: BedType;
@@ -2559,6 +2587,7 @@ export type Query = {
   shelterCities: CityTypeOffsetPaginated;
   shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterOccupancyMetrics: ShelterOccupancyMetricsType;
+  shelterOrganizations: OrganizationTypeOffsetPaginated;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelterSpas: SpaTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
@@ -2703,7 +2732,7 @@ export type QueryOperatorShelterArgs = {
 
 
 export type QueryOperatorSheltersArgs = {
-  filters?: InputMaybe<ShelterFilter>;
+  filters?: InputMaybe<OperatorShelterFilter>;
   ordering?: Array<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2739,6 +2768,7 @@ export type QueryReferralsArgs = {
 
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId: Scalars['ID']['input'];
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2796,6 +2826,13 @@ export type QueryShelterOccupancyMetricsArgs = {
 };
 
 
+export type QueryShelterOrganizationsArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
+  ordering?: Array<OrganizationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryShelterServiceCategoriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2807,7 +2844,7 @@ export type QueryShelterSpasArgs = {
 
 
 export type QuerySheltersArgs = {
-  filters?: InputMaybe<ShelterFilter>;
+  filters?: InputMaybe<PublicShelterFilter>;
   ordering?: Array<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2933,8 +2970,7 @@ export type RemoveHmisNoteServiceRequestInput = {
 export type RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo;
 
 export type RemoveOrganizationMemberInput = {
-  id: Scalars['ID']['input'];
-  organizationId: Scalars['ID']['input'];
+  membershipId: Scalars['ID']['input'];
 };
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
@@ -3285,22 +3321,23 @@ export enum ShelterChoices {
   TinyHomes = 'TINY_HOMES'
 }
 
-export type ShelterFilter = {
-  AND?: InputMaybe<ShelterFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ShelterFilter>;
-  OR?: InputMaybe<ShelterFilter>;
-  geolocation?: InputMaybe<GeolocationInput>;
-  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
-  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
-  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
-  mapBounds?: InputMaybe<MapBoundsInput>;
-  maxStay?: InputMaybe<MaxStayInput>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  openNow?: InputMaybe<OpenNowInput>;
-  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
-  properties?: InputMaybe<ShelterPropertyInput>;
-  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+export type ShelterContactInfoInput = {
+  contactEmail?: InputMaybe<Scalars['NonBlankString']['input']>;
+  contactName: Scalars['NonEmptyString']['input'];
+  contactNumber: Scalars['PhoneNumber']['input'];
+  contactTitle?: InputMaybe<Scalars['NonBlankString']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  isClaimant?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ShelterContactInfoType = {
+  __typename: 'ShelterContactInfoType';
+  contactEmail?: Maybe<Scalars['String']['output']>;
+  contactName: Scalars['String']['output'];
+  contactNumber: Scalars['PhoneNumber']['output'];
+  contactTitle?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  isClaimant: Scalars['Boolean']['output'];
 };
 
 export type ShelterHeroImageType = {
@@ -3334,8 +3371,11 @@ export type ShelterOccupancyMetricsType = {
 };
 
 export type ShelterOrder = {
+  bedCount?: InputMaybe<Ordering>;
   createdAt?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
+  organization?: InputMaybe<Ordering>;
+  status?: InputMaybe<Ordering>;
 };
 
 export type ShelterPhotoFromUploadInput = {
@@ -3399,6 +3439,8 @@ export type ShelterPropertyInput = {
   demographicsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   entryRequirementsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
+  funders?: InputMaybe<Array<FunderChoices>>;
+  fundersIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   parkingIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;
@@ -3419,7 +3461,6 @@ export type ShelterType = {
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
-  additionalContacts: Array<ContactInfoType>;
   availability?: Maybe<ShelterAvailabilityType>;
   bedCounts: BedCountType;
   bedFees?: Maybe<Scalars['String']['output']>;
@@ -3646,6 +3687,7 @@ export type TeamFilter = {
   NOT?: InputMaybe<TeamFilter>;
   OR?: InputMaybe<TeamFilter>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type TeamType = {
@@ -3673,6 +3715,7 @@ export type UpdateBedInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   fees?: InputMaybe<Scalars['Int']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  id: Scalars['ID']['input'];
   lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3728,7 +3771,6 @@ export type UpdateClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
@@ -3741,8 +3783,6 @@ export type UpdateClientProfileInput = {
 };
 
 export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
-
-export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
 export type UpdateCurrentUserPayload = CurrentUserType | OperationInfo | UserType;
 
@@ -3775,7 +3815,6 @@ export type UpdateHmisClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   raceEthnicity: Array<HmisRaceEnum>;
@@ -3848,6 +3887,7 @@ export type UpdateReservationInput = {
   checkedOutAt?: InputMaybe<Scalars['DateTime']['input']>;
   clients?: InputMaybe<Array<ReservationClientInput>>;
   duration?: InputMaybe<Scalars['Int']['input']>;
+  id: Scalars['ID']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
   roomId?: InputMaybe<Scalars['ID']['input']>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
@@ -3861,6 +3901,7 @@ export type UpdateRoomInput = {
   amenities?: InputMaybe<Scalars['String']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  id: Scalars['ID']['input'];
   lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3879,6 +3920,7 @@ export type UpdateShelterInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
+  additionalContacts?: InputMaybe<Array<ShelterContactInfoInput>>;
   citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   cityId?: InputMaybe<Scalars['ID']['input']>;
@@ -3895,6 +3937,7 @@ export type UpdateShelterInput = {
   fundersOther?: InputMaybe<Scalars['String']['input']>;
   heroImageId?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
+  instagram?: InputMaybe<Scalars['String']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;

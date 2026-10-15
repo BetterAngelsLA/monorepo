@@ -1,9 +1,10 @@
 import logging
 from typing import Optional
 
+from django.db.models.fields.files import FieldFile
+
 from common.enums import ImagePresetEnum
 from common.imgproxy import build_imgproxy_url
-from django.db.models.fields.files import FieldFile
 
 logger = logging.getLogger(__name__)
 

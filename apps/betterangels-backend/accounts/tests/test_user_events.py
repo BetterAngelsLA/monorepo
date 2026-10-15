@@ -1,5 +1,6 @@
-from accounts.models import User
 from django.test import TestCase
+
+from accounts.models import User
 
 
 class UserEventsTestCase(TestCase):

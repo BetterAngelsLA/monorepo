@@ -4,6 +4,10 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 from urllib.parse import urlsplit
 
+from django.test import TestCase, override_settings
+from unittest_parametrize import ParametrizedTestCase, parametrize
+from waffle.testutils import override_switch
+
 from common.enums import ImagePresetEnum
 from common.imgproxy import (
     IMGPROXY_SWITCH,
@@ -15,9 +19,6 @@ from common.imgproxy import (
     build_imgproxy_url,
     is_imgproxy_enabled,
 )
-from django.test import TestCase, override_settings
-from unittest_parametrize import ParametrizedTestCase, parametrize
-from waffle.testutils import override_switch
 
 TEST_KEY = "736563726574"
 TEST_SALT = "68656C6C6F"

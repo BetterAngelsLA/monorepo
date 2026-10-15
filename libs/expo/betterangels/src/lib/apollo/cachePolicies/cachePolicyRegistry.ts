@@ -8,6 +8,14 @@ import {
   ClientProfilesHmisQueryVariables,
 } from '../../ui-components/ClientProfileList/__generated__/ListClientsHmis.generated';
 import {
+  ClientReferralsQuery,
+  ClientReferralsQueryVariables,
+} from '../../screens/Client/Referrals/__generated__/Referrals.generated';
+import {
+  SheltersQuery,
+  SheltersQueryVariables,
+} from '../../screens/Client/Referrals/__generated__/Shelters.generated';
+import {
   FilterClientProfilesQuery,
   FilterClientProfilesQueryVariables,
 } from '../../ui-components/Filters/FilterClients/__generated__/filterClientProfiles.generated';
@@ -79,6 +87,16 @@ const policyFactoryList = [
     key: 'hmisClientProfiles',
     entityTypename: 'HmisClientProfileType',
     cacheKeyVariables: ['filters', 'ordering'] as const,
+  }),
+  getQueryPolicyFactory<ClientReferralsQuery, ClientReferralsQueryVariables>({
+    key: 'referrals',
+    entityTypename: 'ReferralType',
+    cacheKeyVariables: ['filters'] as const,
+  }),
+  getQueryPolicyFactory<SheltersQuery, SheltersQueryVariables>({
+    key: 'shelters',
+    entityTypename: 'ShelterType',
+    cacheKeyVariables: [] as const,
   }),
 ] as const;
 

@@ -35,6 +35,13 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     }, []),
   );
 
+  const handleClientPress = useCallback((id: string) => {
+    router.navigate({
+      pathname: `/client/${id}`,
+      params: { arrivedFrom: '/' },
+    });
+  }, []);
+
   const renderClientItem = useCallback(
     (client: TClientProfile) => (
       <ClientCard
@@ -45,13 +52,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     ),
     [setCurrentClient],
   );
-
-  const handleClientPress = useCallback((id: string) => {
-    router.navigate({
-      pathname: `/client/${id}`,
-      params: { arrivedFrom: '/' },
-    });
-  }, []);
 
   const renderClientItemHmis = useCallback(
     (client: TClientProfileHmis) => {

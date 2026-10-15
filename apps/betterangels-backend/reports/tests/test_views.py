@@ -1,34 +1,63 @@
-"""Tests for report views (DRF export) and GraphQL report summary query."""
+"""Tests for report views (DRF export) and GraphQL report summary query.
 
-from datetime import datetime
+Reports authorize via grants (ADR 0001 §5.3, reports cutover): ``can()`` over
+role-backed ORG_ADMIN/ORG_SUPERUSER backfilled Grants or a direct-grant holder,
+or the global tier.  The legacy ``PermissionGroup`` arm is not consulted, so the
+fixture below grants through a scoped ``Role`` + ``Grant``.
+"""
+
+import csv
+import io
+from datetime import UTC, datetime
 
 import pytest
 import time_machine
-from accounts.models import PermissionGroup, PermissionGroupTemplate, User
-from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
-from notes.models import Note, OrganizationService, ServiceRequest
 from organizations.models import Organization
-from reports.models import ScheduledReport
 from rest_framework.test import APIClient
+
+from accounts.models import Role, User
+from accounts.services import grant_create
+from common.tests.utils import GraphQLBaseTestCase
+from notes.admin import NoteResource
+from notes.models import Note, OrganizationService, ServiceRequest
+from reports.models import ScheduledReport
 from teams.models import Team
+from test_utils.timezones import SITE_TIME_ZONE, SITE_TZ
 
 
 def grant_view_reports(user: User, org: Organization) -> None:
-    """Grant view_reports permission to a user for an org via PermissionGroup."""
+    """Grant ``reports.view_reports`` at *org* via a scoped Role + Grant.
+
+    Mirrors the production authority: the permission rides a scoped Role
+    (bound to ``ScheduledReport``'s real ContentType), and the user holds a
+    Grant at *org*.
+    """
     ct = ContentType.objects.get_for_model(ScheduledReport)
     perm, _ = Permission.objects.get_or_create(
         codename="view_reports", content_type=ct, defaults={"name": "Can view reports"}
     )
-    template, _ = PermissionGroupTemplate.objects.get_or_create(name="_test_report_viewer")
-    template.permissions.add(perm)
-    pg, _ = PermissionGroup.objects.get_or_create(organization=org, template=template)
-    pg.permissions.add(perm)
-    user.groups.add(pg)
+    role, _ = Role.objects.get_or_create(name="_test_report_viewer", is_global=False)
+    role.permissions.add(perm)
+    grant_create(user=user, role=role, scope_org=org)
+
+
+def summary_variables(org: Organization, **overrides: object) -> dict[str, object]:
+    """Variables for REPORT_SUMMARY_QUERY — the org is carried in the payload.
+
+    Defaults to a fixed January 2025 window; tests override via *overrides*.
+    """
+    variables: dict[str, object] = {
+        "organizationId": str(org.pk),
+        "startDate": "2025-01-01",
+        "endDate": "2025-01-31",
+    }
+    variables.update(overrides)
+    return variables
 
 
 @pytest.fixture
@@ -280,10 +309,34 @@ class TestExportInteractionDataView:
         response = api_client.get(f"/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id={other_org.id}")
         assert response.status_code == 403
 
+    def test_export_unknown_org_fails_closed(self, api_client: APIClient, org: Organization) -> None:
+        """An org id that does not exist denies cleanly (no DoesNotExist crash)."""
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        grant_view_reports(user, org)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id=999999999")
+        assert response.status_code == 403
+
+    def test_export_non_numeric_org_id_fails_closed(self, api_client: APIClient, org: Organization) -> None:
+        """A non-numeric org id denies cleanly (no ValueError crash)."""
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        grant_view_reports(user, org)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id=not-a-number")
+        assert response.status_code == 403
+
 
 REPORT_SUMMARY_QUERY = """
-    query ReportSummary($startDate: Date, $endDate: Date) {
-        reportSummary(startDate: $startDate, endDate: $endDate) {
+    query ReportSummary($organizationId: ID!, $startDate: Date, $endDate: Date) {
+        reportSummary(organizationId: $organizationId, startDate: $startDate, endDate: $endDate) {
             totalNotes
             uniqueClients
             startDate
@@ -317,6 +370,92 @@ REPORT_SUMMARY_QUERY = """
 """
 
 
+@pytest.mark.django_db
+class TestExportIgnoresTheRequestTimeZone:
+    """``django_timezone`` is a display signal; it must not move a report boundary.
+
+    A report is an organization record.  If the cookie could shift the range, the
+    same month would contain different rows for different viewers, and a download
+    would disagree with the scheduled email covering the same period.
+    """
+
+    # 2025-02-01 05:30 UTC is 2025-01-31 21:30 in Los Angeles but 2025-02-01 14:30
+    # in Tokyo, so the two calendars disagree about which day this note is on.
+    INSTANT = datetime(2025, 2, 1, 5, 30, tzinfo=UTC)
+
+    def _january_rows(self, api_client: APIClient, org: Organization) -> list[str]:
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-01-31")
+        assert response.status_code == 200
+        lines = [line for line in response.content.decode("utf-8").strip().split("\n") if line.strip()]
+        return lines[1:]
+
+    def test_a_late_evening_note_falls_in_january_on_the_site_calendar(
+        self, api_client: APIClient, user_with_access: User, org: Organization
+    ) -> None:
+        """With no cookie the request is cut on the site's calendar."""
+        baker.make(Note, organization=org, interacted_at=self.INSTANT)
+        api_client.force_authenticate(user=user_with_access)
+
+        rows = self._january_rows(api_client, org)
+
+        assert len(rows) == 1
+        assert "01/31/2025" in rows[0]
+
+    def test_the_export_names_the_calendar_it_used(
+        self, api_client: APIClient, user_with_access: User, org: Organization
+    ) -> None:
+        """The download states which calendar its dates are on, and the instant."""
+        baker.make(Note, organization=org, interacted_at=self.INSTANT)
+        api_client.force_authenticate(user=user_with_access)
+
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-01-31")
+        # Parsed rather than split: the service columns contain commas.
+        row = next(csv.DictReader(io.StringIO(response.content.decode("utf-8"))))
+
+        assert row["Interacted At"] == "01/31/2025"
+        assert row["Interacted At (UTC)"] == "2025-02-01T05:30:00Z"
+        assert row["Interacted At Time Zone"] == SITE_TIME_ZONE
+
+    def _january_csv(self, api_client: APIClient, org: Organization, viewer_time_zone: str) -> str:
+        api_client.cookies["django_timezone"] = viewer_time_zone
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-01-31")
+        assert response.status_code == 200
+        content: str = response.content.decode("utf-8")
+        return content
+
+    def test_two_viewers_receive_the_same_file(
+        self, api_client: APIClient, user_with_access: User, org: Organization
+    ) -> None:
+        """Downloads for one period are identical whichever cookie asked for them.
+
+        Byte-identical rather than merely equal in row count: the dates, the
+        named calendar and the instant all have to match, or a filed export could
+        not be compared with the same month's scheduled email.
+        """
+        baker.make(Note, organization=org, interacted_at=self.INSTANT)
+        api_client.force_authenticate(user=user_with_access)
+
+        from_los_angeles = self._january_csv(api_client, org, "America/Los_Angeles")
+        from_tokyo = self._january_csv(api_client, org, "Asia/Tokyo")
+
+        assert from_los_angeles == from_tokyo
+
+
+class TestNoArgResourceInstantiation:
+    """The Django admin builds ``NoteResource`` with no arguments — keep it building.
+
+    ``NoteAdmin`` sets ``resource_class``, and import_export instantiates it with an
+    empty kwargs dict (``get_export_resource_kwargs`` has no override, so it returns
+    ``{}``).  A required ``time_zone`` therefore fails when a staff member clicks
+    Export — a surface nothing else in this suite touches, so it would ship green.
+    """
+
+    def test_the_resource_still_constructs_with_no_arguments(self) -> None:
+        resource = NoteResource()
+
+        assert resource.time_zone == SITE_TZ
+
+
 @ignore_warnings(category=UserWarning)
 class TestReportSummaryGraphQL(GraphQLBaseTestCase):
     """Tests for the reportSummary GraphQL query."""
@@ -333,14 +472,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_unauthenticated_returns_error(self) -> None:
         org = baker.make(Organization, name="Test Org")
-        self._set_active_org(org)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertGraphQLUnauthenticated(response)
 
     def test_user_without_permission_gets_error(self) -> None:
@@ -349,15 +481,8 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         user.set_password("testpass")
         user.save()
         org.add_user(user)
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertTrue(response.get("errors") is not None or response["data"]["reportSummary"] is None)
 
     def test_summary_returns_correct_data(self) -> None:
@@ -380,15 +505,8 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             team=team_dropin,
             _quantity=2,
         )
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
         self.assertEqual(data["totalNotes"], 5)
@@ -401,6 +519,33 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertIsInstance(data["topRequestedServices"], list)
         self.assertIsInstance(data["uniqueClients"], int)
         self.assertIsInstance(data["uniqueClientsByDate"], list)
+
+    def test_summary_boundaries_ignore_the_requests_time_zone(self) -> None:
+        """The chart buckets the same way whatever zone the viewer's cookie claims.
+
+        2025-02-01 05:30 UTC is 21:30 on 31 January in Los Angeles but 14:30 on
+        1 February in Tokyo.  Which day it lands on is a fact about the record; the
+        cookie must not be able to change it, or two viewers reading the same month
+        would be looking at different data.  The assertion is deliberately between
+        the two responses rather than against a fixed day — the site's own calendar
+        is covered by ``TestReportTimeZoneBoundaries`` and the export tests.
+        """
+        org, user = self._setup_org_user_with_access()
+        baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 5, 30, tzinfo=UTC))
+        self._set_active_org(org)
+        self.graphql_client.force_login(user)
+        january = summary_variables(org)
+
+        self.graphql_client.cookies["django_timezone"] = "Asia/Tokyo"
+        in_tokyo = self.execute_graphql(REPORT_SUMMARY_QUERY, january)["data"]["reportSummary"]
+
+        self.graphql_client.cookies["django_timezone"] = "America/Los_Angeles"
+        in_los_angeles = self.execute_graphql(REPORT_SUMMARY_QUERY, january)["data"]["reportSummary"]
+
+        self.assertEqual(in_tokyo["notesByDate"], in_los_angeles["notesByDate"])
+        self.assertEqual(in_tokyo["totalNotes"], in_los_angeles["totalNotes"])
+        # The range covers the note on the site's calendar, so it is counted once.
+        self.assertEqual(in_tokyo["totalNotes"], 1)
 
     def test_summary_top_services_return_service_label_and_note_count(self) -> None:
         """topProvidedServices and topRequestedServices name each service by its label."""
@@ -418,15 +563,8 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         first.provided_services.add(baker.make(ServiceRequest, service=shower))
         first.requested_services.add(baker.make(ServiceRequest, service=shower))
 
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
 
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
@@ -438,14 +576,9 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_empty_range(self) -> None:
         org, user = self._setup_org_user_with_access()
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2024-06-01",
-                "endDate": "2024-06-30",
-            },
+            REPORT_SUMMARY_QUERY, summary_variables(org, startDate="2024-06-01", endDate="2024-06-30")
         )
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
@@ -470,24 +603,16 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             interacted_at=timezone.make_aware(datetime(2025, 1, 15, 12, 0, 0)),
             _quantity=5,
         )
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org))
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
         self.assertEqual(data["totalNotes"], 2)
 
     def test_summary_defaults_when_no_dates(self) -> None:
         org, user = self._setup_org_user_with_access()
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(REPORT_SUMMARY_QUERY, {})
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, {"organizationId": str(org.pk)})
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
         self.assertIsNotNone(data["startDate"])
@@ -495,7 +620,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertIsInstance(data["totalNotes"], int)
 
     def test_user_targets_org_without_view_reports_gets_error(self) -> None:
-        """User belongs to two orgs but only has view_reports on one; HasOrgPerm rejects the other."""
+        """User holds reports at one org only; naming the other org is denied."""
         org_with_access = baker.make(Organization, name="Authorized Org")
         org_without_access = baker.make(Organization, name="Unauthorized Org")
         user = baker.make(User)
@@ -506,14 +631,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         grant_view_reports(user, org_with_access)
         # No view_reports on org_without_access
 
-        self._set_active_org(org_without_access)
         self.graphql_client.force_login(user)
-        response = self.execute_graphql(
-            REPORT_SUMMARY_QUERY,
-            {
-                "startDate": "2025-01-01",
-                "endDate": "2025-01-31",
-            },
-        )
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org_without_access))
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)

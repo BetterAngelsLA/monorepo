@@ -1,7 +1,8 @@
-from accounts.tests.baker_recipes import organization_recipe
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.tests.baker_recipes import organization_recipe
 from teams.models import Team
 from teams.validators import validate_team_in_org
 

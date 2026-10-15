@@ -3,15 +3,14 @@
 from shelters.selectors.operator import (
     bed_get,
     bed_queryset,
-    operator_shelter_list,
     reservation_get,
     reservation_queryset,
     room_get,
     room_queryset,
     shelter_get,
     shelter_list,
+    shelter_organization_list,
     shelter_queryset,
-    user_shelter_list,
 )
 from shelters.selectors.reports import (
     avg_days_to_occupancy,

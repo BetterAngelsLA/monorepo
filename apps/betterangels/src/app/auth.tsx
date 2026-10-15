@@ -1,7 +1,10 @@
-import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
+import {
+  AuthContainer,
+  clearPersistedReferralDraft,
+  useClearLocalSession,
+} from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
-import CookieManager from '@preeternal/react-native-cookie-manager';
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
@@ -18,18 +21,22 @@ const SHARED_BUTTON_PROPS = {
 
 export default function Auth() {
   const router = useRouter();
-  const { setUser } = useUser();
+  const clearLocalSession = useClearLocalSession();
   const nativeVersion = Application.nativeApplicationVersion;
   const otaId = Updates.updateId;
   const otaVersion = otaId ? otaId.slice(0, 7) : 'N/A';
 
-  // Clear local user data when landing on this screen
-  // apolloProvider has no access to UserProvider so cannot really reset
-  // user on 401 errors
+  // Clear local user data when landing on this screen — also covers sessions
+  // that ended without a sign-out (expired session, 401 redirect, app restart).
   useEffect(() => {
-    setUser(undefined);
-    CookieManager.clearAll();
-  }, [setUser]);
+    // This screen is where an expired/401 session lands, which bypasses
+    // useSignOut. The referral draft can hold sensitive answers, so it is wiped
+    // on every session teardown, not only on an explicit sign-out — and before
+    // the await below, which can reject. `clearLocalSession` clears everything
+    // else (cookies, HMIS storage pointers, cached queries, active org).
+    clearPersistedReferralDraft();
+    void clearLocalSession();
+  }, [clearLocalSession]);
 
   return (
     <AuthContainer header={<Logo width={216} height={33} />}>

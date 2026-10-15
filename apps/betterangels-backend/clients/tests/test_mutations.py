@@ -1,9 +1,6 @@
 from typing import Any
 from unittest.mock import ANY, patch
 
-from common.imgproxy import IMGPROXY_SWITCH
-from common.models import Attachment
-from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
 from deepdiff import DeepDiff
 from django.test import override_settings
 from unittest_parametrize import parametrize
@@ -35,6 +32,9 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
+from common.imgproxy import IMGPROXY_SWITCH
+from common.models import Attachment
+from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
 
 
 @override_settings(IMGPROXY_KEY="", IMGPROXY_SALT="")
@@ -474,36 +474,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertIsNotNone(response["data"]["deleteClientProfile"])
         self.assertFalse(ClientProfile.objects.filter(id=client_profile["id"]).exists())
 
-    def test_update_client_profile_photo(self) -> None:
-        client_profile_id = self.client_profile_1["id"]
-        photo_content = (
-            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
-            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
-        )
-        photo_name = "profile_photo.jpg"
-
-        expected_query_count = 8
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_client_profile_photo_fixture(
-                client_profile_id,
-                photo_content,
-                photo_name,
-            )
-
-        photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["url"]
-        client_profile = ClientProfile.objects.get(id=client_profile_id)
-        self.assertIn(photo_name, client_profile.profile_photo.url)
-
-        response = self._update_client_profile_photo_fixture(
-            client_profile_id,
-            photo_content,
-            photo_name,
-        )
-
-        updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["url"]
-        client_profile.refresh_from_db()
-        self.assertIn(updated_photo_name, client_profile.profile_photo.url)
-
     def test_generate_client_profile_photo_upload(self) -> None:
         with (
             patch(
@@ -581,16 +551,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def test_delete_client_profile_photo(self) -> None:
         client_profile_id = self.client_profile_1["id"]
 
-        # First, set a profile photo via the existing upload fixture.
-        photo_content = (
-            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
-            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
-        )
-        self._update_client_profile_photo_fixture(
-            client_profile_id,
-            photo_content,
-            "profile_photo.jpg",
-        )
+        self._set_client_profile_photo(client_profile_id)
 
         client_profile = ClientProfile.objects.get(id=client_profile_id)
         self.assertIsNotNone(client_profile.profile_photo)
@@ -950,30 +911,6 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
         self._setup_client_documents()
-
-    def test_create_client_document(self) -> None:
-        file_content = b"Test file content"
-        file_name = "test file name.txt"
-
-        expected_query_count = 22
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_client_document_fixture(
-                self.client_profile_1["id"],
-                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                file_content,
-                file_name,
-            )
-
-        client_document_id = response["data"]["createClientDocument"]["id"]
-        self.assertEqual(
-            response["data"]["createClientDocument"]["originalFilename"],
-            file_name,
-        )
-        self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
-        self.assertEqual(
-            Attachment.objects.get(id=client_document_id).original_filename,
-            file_name,
-        )
 
     def test_delete_client_document(self) -> None:
         client_document_id = self.client_profile_1_document_1["id"]

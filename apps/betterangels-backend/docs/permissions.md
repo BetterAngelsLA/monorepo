@@ -2,67 +2,48 @@
 
 ## Two-Layer Model
 
-BetterAngels uses a **two-layer permission model** — org-scoped permissions gate access at the organization level, and object-level permissions (via django-guardian) provide fine-grained per-object access control.
+BetterAngels uses a **two-layer permission model** — org-scoped authority gates access at the organization level, and object-level permissions provide fine-grained per-object access control.
 
-| Layer            | Mechanism                                          | Scope                                               | Used for                                            |
-| ---------------- | -------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
-| **Org-scoped**   | `HasOrgPerm` extension + `permissioned_queryset()` | "Can this user perform action X in organization Y?" | Mutations, operator queries (shelters, rooms, beds) |
-| **Object-level** | django-guardian + `HasRetvalPerm`                  | "Can this user access this specific object?"        | Notes, tasks, referrals, client documents           |
+| Layer            | Mechanism                                                        | Scope                                               | Used for                                            |
+| ---------------- | ---------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| **Org-scoped**   | Grants: `can()` / `require_can()` / `scopes()` / `visible()`     | "Can this user perform action X in organization Y?" | Teams, reports, member management, shelters, operator queries |
+| **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm in progress) | "Can this user access this specific object?"        | Notes, tasks, referrals, client documents           |
 
-Both layers are backed by Django's permission system (Groups + Permissions), but they ask different questions and are checked independently.
+Both layers sit on Django's permission primitives, but they ask different questions and are checked independently.  **ADR 0001 is the source of truth** for the target model — this page describes the current backend wiring.
 
-## How Org-Scoped Permissions Work
+## How Org-Scoped Authority Works
 
-### Header-based organization context
+### Where the org comes from
 
-A custom `OrganizationMiddleware` (in `common/middleware/organization.py`) reads the `X-Organization-ID` header from incoming requests and sets `request.organization_id`. This value is the canonical source of "which organization are we operating in?" for every request.
+Prefer the **payload**: query filters and mutation inputs carry the organization (`TeamFilter.organizationId`, `CreateTeamInput.organizationId`), and row-scoped mutations derive it from the row they name.  The `X-Organization-ID` header (set by `OrganizationMiddleware` in `common/middleware/organization.py`) survives in exactly one place — the *teams list read* keeps it as a deprecated fallback so mobile's `useOrgTeams` callers (still sending only `{ isActive }`) keep working until they pass `organizationId` (DEV-2566).  Every other cut-over surface is header-free.
 
-### `HasOrgPerm` — the gatekeeper
+### Grants — the authority
 
-`accounts/extensions.py` defines a `HasOrgPerm` Strawberry extension that replaces the old `@HasPerm(global)` + `get_user_permitted_org()` pattern:
+`OrgRoleManager` (`accounts/role_manager.py`) is the mechanical add/remove/clear/replace API for org roles:
 
-```python
-@strawberry_django.mutation(
-    permission_classes=[IsAuthenticated],
-    extensions=[HasOrgPerm(Shelter.perms.ADD)],
-)
-def create_shelter(self, info, data):
-    ...
-```
+- A **`Role`** carries the permission bundle; org-scoped roles are built from a `TemplateConfig` via `RoleDef.from_template()` (e.g. `ORG_ADMIN_ROLE` in `accounts/groups.py`), so the grant bundle cannot drift from the template.
+- A **`Grant`** binds a `principal` (user) to a `Role` at a `scope` (org) — and on the object arm, optionally to a specific row.
+- Dual-write templates keep their legacy `PermissionGroup` membership, and the `User.groups` m2m edge mirrors it to a `Grant` (`accounts/signals.py`) so every writer — the role manager, Django admin, scripts — stays consistent.  `legacy_inert` templates (ORG_ADMIN / ORG_SUPERUSER, whose apps are all in `LEGACY_INERT_APPS`) are grant-only: no `PermissionGroup` row is created, assigned, or consulted.
 
-How it validates:
+### Checking authority
 
-1. Reads `info.context.request.organization_id` (set by middleware).
-2. If `None`, raises `DjangoNoPermission` immediately.
-3. Delegates to `permissioned_queryset(Organization.objects.all(), ...)` with `organization_field="pk"` — checking that the user belongs to the org AND holds the required permission(s) via their `PermissionGroup` → `Group` → `Permission` chain.
-4. Fails fast with `fail_silently=False` (default).
+`common/permissions/selectors.py`:
 
-### `permissioned_queryset()` — single source of truth
+- `can(user, perm, org=…)` — does the user hold the permission at the org?
+- `scopes(user, perm)` — the orgs where the user holds it (finite list).
+- `visible(qs, perm, …)` / `can_obj(user, perm, obj)` — the object arm: filter/check rows by grant (guardian fallback while domains migrate).
+- `switchable_orgs(user)` — the finite org set the frontend may switch into.
 
-`common/permissions/utils.py` provides `permissioned_queryset(qs, *, user, organization_id, perms=None, any_perm=True, organization_field="organization_id")`:
+`common/permissions/utils.py`:
 
-- Filters `qs` to records in `organization_id`.
-- If `perms` is `None`, only checks org membership (user belongs to org).
-- If `perms` is provided, also verifies the user holds those permissions through their org's `PermissionGroup` → `Group` → `Permission` chain.
-- `organization_field` controls the FK path: use `"organization_id"` for direct-FK models (Shelter), `"shelter__organization_id"` for indirect (Bed, Room), or `"pk"` for Organization itself.
+- `require_can(user, perm, org=…)` — the write gate: raises `PermissionDenied(PERMISSION_DENIED_MESSAGE)` when `can()` is false.  Creates carry an explicit target org and are authorized by `can()`; `can()` never implies the org exists, so resolvers validate the org first (the `_org_or_deny` pattern).
+- `IsAuthenticated` — the custom strawberry permission class (raises `UnauthenticatedGQLError`).
 
-This single function is shared by:
-
-- **`HasOrgPerm.resolve_for_user`** — permission validation at the GraphQL extension level.
-- **`shelter_queryset` / `room_queryset` / `bed_queryset`** — selector wrappers that scope list queries and entity lookups.
-- **`OperatorShelterType.get_queryset`** — the `strawberry_django` type hook that scopes returned data.
-
-### `_perm_q()` — reusable ORM permission path
-
-`common/permissions/utils.py` provides `_perm_q(app_label, codename, *, prefix="permission_groups__group__permissions")`:
-
-- Default `prefix` resolves `Organization` → `PermissionGroup` → `Group` → `Permission` → `ContentType`.
-- Pass `prefix="group__permissions"` when querying `PermissionGroup` directly (e.g., in `permission_annotations()`).
-- Used by `HasOrgPerm`, `permission_annotations()`, and `get_user_permitted_org()`.
+The old `HasOrgPerm` extension and the `permissioned_queryset()` / `perm_filter()` / `_perm_q()` helpers are **deleted** — org-scoped surfaces authorize through the selectors above.
 
 ## Overview
 
-Permission group templates define a **set of Django permissions** that can be assigned to users within an organization. A user's effective permissions are the **union of all templates** assigned to them for that org.
+Permission group templates define a **set of Django permissions** that can be assigned to users within an organization. A user's effective authority is the **union of the roles/Grants** they hold at that org — the template defines the bundle (mirrored by `RoleDef.from_template()`), and cut-over domains read the `Grant` arm while legacy-only domains (notes/clients) still read the template-backed `PermissionGroup` rows.
 
 This composable model means you never need a single monolithic role — you combine templates to build the desired access level.
 
@@ -72,12 +53,12 @@ Each `OrgTypeConfig` exposes a `member_template` field that identifies the defau
 
 ### Organization (app-agnostic)
 
-| Template                   | Config source        | Permissions                                                                                              |
-| -------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
-| **Organization Superuser** | `accounts/groups.py` | `ACCESS_ORG_PORTAL`, `ADD_ORG_MEMBER`, `CHANGE_ORG_MEMBER_ROLE`, `REMOVE_ORG_MEMBER`, `VIEW_ORG_MEMBERS` |
-| **Organization Admin**     | `accounts/groups.py` | `ACCESS_ORG_PORTAL`, `ADD_ORG_MEMBER`, `REMOVE_ORG_MEMBER`, `VIEW_ORG_MEMBERS`                           |
+| Template                   | Config source        | Permissions                                                                                                                    |
+| -------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Organization Superuser** | `accounts/groups.py` | Org Admin bundle + `CHANGE_ORG_MEMBER_ROLE`                                                                                    |
+| **Organization Admin**     | `accounts/groups.py` | `ACCESS_ORG_PORTAL`, `ADD_ORG_MEMBER`, `REMOVE_ORG_MEMBER`, `VIEW_ORG_MEMBERS`, `reports.view_reports`, `teams.add/change/delete/view` |
 
-Both use the `UserOrganizationPermissions` enum directly — org-level permissions are not tied to a specific model's `model.perms`.
+Both use the `UserOrganizationPermissions` enum directly for the org-level codenames — org-level permissions are not tied to a specific model's `model.perms`.  Both are also `legacy_inert=True`: role-backed (`ORG_ADMIN_ROLE` / `ORG_SUPERUSER_ROLE`, built via `RoleDef.from_template`) and **grant-only** — no `PermissionGroup` row is created, assigned, or consulted (ADR 0001 §5.3).
 
 ### Outreach
 
@@ -133,7 +114,7 @@ Each `groups.py` imports `TemplateConfig` and defines one or more template confi
 ### Permission sources
 
 - **Django model CRUD**: `model.perms.ADD`, `model.perms.CHANGE`, etc. — auto-generated by `PermissionSet` via `BaseModel`
-- **GraphQL domain perms**: `UserOrganizationPermissions` enum (`@strawberry.enum`), resolved via `GrantedPermissions` factory
+- **GraphQL domain perms**: enums marked `@register_permission` (e.g. `UserOrganizationPermissions` in `accounts/permissions.py`, `ReportPermissions` in `reports/permissions.py`) — registered in `common/permissions/utils.py` for frontend codegen
 
 ### Template ↔ permission binding
 
@@ -141,31 +122,30 @@ Each `groups.py` imports `TemplateConfig` and defines one or more template confi
 
 ## Key Files
 
-| File                                | Purpose                                                                               |
-| ----------------------------------- | ------------------------------------------------------------------------------------- |
-| `common/permissions/utils.py`       | `permissioned_queryset()`, `_perm_q()`, `PermissionSet`, `get_current_organization()` |
-| `accounts/extensions.py`            | `HasOrgPerm` Strawberry extension                                                     |
-| `accounts/permissions.py`           | `get_user_permitted_org()`, `permission_annotations()`, `GrantedPermissions` factory  |
-| `common/middleware/organization.py` | `OrganizationMiddleware` — sets `request.organization_id`                             |
-| `shelters/selectors/operator.py`    | `shelter_queryset`, `room_queryset`, `bed_queryset` wrappers; `_get` selectors        |
-| `shelters/selectors/reports.py`     | Report aggregation functions                                                          |
-| `shelters/selectors/__init__.py`    | Re-exports from operator.py and reports.py                                            |
-| `shelters/open_at.py`               | `shelters_open_at` helper (extracted from models to break circular imports)           |
-| `shelters/schema.py`                | GraphQL Query/Mutation — thin layer delegating to services + `HasOrgPerm`             |
-| `shelters/services/`                | Business logic (shelter/room/bed create/update/delete/clone)                          |
-| `shelters/types/outputs.py`         | `OperatorShelterType` with `get_queryset` hook                                        |
+| File                                | Purpose                                                                                              |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `common/permissions/selectors.py`   | `can()`, `scopes()`, `visible()`, `can_obj()`, `switchable_orgs()` — grant authority                  |
+| `common/permissions/utils.py`       | `require_can()`, `IsAuthenticated`, `register_permission()`, `PERMISSION_DENIED_MESSAGE`              |
+| `common/permissions/config.py`      | `TemplateConfig`, `RoleDef` (incl. `from_template()`)                                                 |
+| `common/permissions/domain.py`      | `LEGACY_INERT_APPS` / `GLOBAL_TIER_ORG_APPS` — which domains are grant-only                           |
+| `accounts/groups.py`                | `ORG_ADMIN` / `ORG_SUPERUSER` templates + role definitions                                            |
+| `accounts/role_manager.py`          | `OrgRoleManager` — add/remove/clear/replace org roles; grant-only mirroring for `legacy_inert` roles  |
+| `accounts/signals.py`               | `User.groups` m2m edge — mirrors dual-write memberships to `Grant` rows                               |
+| `accounts/permissions.py`           | `UserOrganizationPermissions` enum + Django-admin-only `OrganizationAdminPermissions`                 |
+| `common/middleware/organization.py` | `OrganizationMiddleware` — kept only for the teams-read fallback (strip = DEV-2566)                   |
+| `shelters/selectors/operator.py`    | `shelter_queryset`, `room_queryset`, `bed_queryset` wrappers; `_get` selectors                        |
+| `shelters/selectors/reports.py`     | Report aggregation functions                                                                          |
+| `shelters/selectors/__init__.py`    | Re-exports from operator.py and reports.py                                                            |
+| `shelters/open_at.py`               | `shelters_open_at` helper (extracted from models to break circular imports)                           |
+| `shelters/schema.py`                | GraphQL Query/Mutation — thin layer delegating to services + `require_can()`                          |
+| `shelters/services/`                | Business logic (shelter/room/bed create/update/delete/clone)                                          |
+| `shelters/types/outputs.py`         | `OperatorShelterType` with `get_queryset` hook                                                        |
 
 ## Testing
 
-`accounts/tests/test_extensions.py::HasOrgPermTestCase` tests the `HasOrgPerm` extension in isolation (no GraphQL round-trips), covering:
+Grant authority is pinned per domain in `tests/test_grant_authorization.py` (teams, reports, member management, clients): scoped Grant holders pass, stale legacy-only holders are denied, cross-org grants are denied, and the global tier applies only where `GLOBAL_TIER_ORG_APPS` says so.  The org-admin backfill conversions are covered in `accounts/tests/test_roles.py`.
 
-- Happy path (valid org + permission)
-- Missing `X-Organization-ID` header
-- User not a member of the organization
-- User is a member but lacks the required permission
-- Unauthenticated user
-
-`GraphQLBaseTestCase` (`common/tests/utils.py`) provides `execute_graphql()` which accepts `**extra` kwargs (e.g., `HTTP_X_ORGANIZATION_ID=str(org_id)`) forwarded to Django's test client for header-based testing.
+`GraphQLBaseTestCase` (`common/tests/utils.py`) provides `execute_graphql()` plus `_set_active_org()` — the latter feeds the deprecated `X-Organization-ID` fallback that the teams-read tests still pin until DEV-2566.
 
 ## Adding templates or permissions
 
@@ -191,5 +171,5 @@ The frontend `hasPermission()` helper checks across all domains with O(1) lookup
 
 - `accounts/group_names.py` contains `GroupTemplateNames` — a registry of template name strings. This enum is intentionally thin and may eventually be replaced by each app registering its own names independently, removing the need for `accounts` to know about downstream apps.
 - `shelters/permissions.py` is a 3-line bridge that delegates to `Shelter.perms.as_text_choices()` for GraphQL schema generation — `model.perms` is the single source of truth.
-- The old `AdminShelterManager`/`AdminShelterQuerySet` and `Shelter.admin_objects` manager were removed — they've been replaced by `permissioned_queryset()` + selectors + `HasOrgPerm`, which provide the same org-scoping in a single, shared function.
+- The old `AdminShelterManager`/`AdminShelterQuerySet` and `Shelter.admin_objects` manager were removed — org-scoping now lives in the per-domain selectors (`visible()` / `can()` on the grant arm, with guardian fallback while domains migrate) and `require_can()` at the write boundary.
 - The `adminShelters`/`adminShelter` GraphQL queries have been renamed to `operatorShelters`/`operatorShelter` and `AdminShelterType` → `OperatorShelterType` to reflect their role as operator-facing endpoints.

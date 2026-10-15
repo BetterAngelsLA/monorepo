@@ -4,16 +4,13 @@ from unittest.mock import ANY
 
 import time_machine
 import waffle
-from accounts.tests.baker_recipes import organization_recipe
-from common.enums import ImagePresetEnum
-from common.imgproxy import IMGPROXY_SWITCH
 from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from model_bakery import baker
-from notes.models import Note
 from unittest_parametrize import parametrize
 from waffle.testutils import override_switch
 
+from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentGroupEnum,
@@ -41,6 +38,9 @@ from clients.tests.utils import (
     SocialMediaProfileBaseTestCase,
 )
 from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS, MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
+from common.enums import ImagePresetEnum
+from common.imgproxy import IMGPROXY_SWITCH
+from notes.models import Note
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
@@ -161,7 +161,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     )
     @override_switch(IMGPROXY_SWITCH, active=True)
     def test_client_profiles_query_with_processed_photo(self) -> None:
-        self._update_client_profile_photo_fixture(self.client_profile_2["id"])
+        self._set_client_profile_photo(self.client_profile_2["id"])
 
         query = f"""
             query ($offset: Int, $limit: Int) {{
@@ -712,7 +712,6 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         super().setUp()
 
         self.file_name = "test%20file%20name"
-        self.file_content = b"Test file content"
         self.client_profile = baker.make(ClientProfile)
         self.content_type = ContentType.objects.get_for_model(ClientProfile)
 
@@ -722,9 +721,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_doc = self._create_client_document_fixture(
             str(self.client_profile.pk),
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            self.file_content,
             self.file_name,
-        )["data"]["createClientDocument"]
+        )
 
         query = """
             query ($id: ID!) {
@@ -753,9 +751,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self._create_client_document_fixture(
                 client_profile_id=str(self.client_profile.pk),
                 namespace=namespace.name,
-                file_content=self.file_content,
                 file_name=self.file_name,
-            )["data"]["createClientDocument"]["id"]
+            )["id"]
             for namespace in ClientDocumentNamespaceEnum
         ]
 
@@ -814,9 +811,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self._create_client_document_fixture(
                 client_profile_id=str(self.client_profile.pk),
                 namespace=namespace.name,
-                file_content=self.file_content,
                 file_name=self.file_name,
-            )["data"]["createClientDocument"]
+            )
             for namespace in ClientDocumentNamespaceEnum
         ]
 
@@ -845,9 +841,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self._create_client_document_fixture(
             client_profile_id=str(self.client_profile.pk),
             namespace=ClientDocumentNamespaceEnum.BIRTH_CERTIFICATE.name,
-            file_content=self.file_content,
             file_name=self.file_name,
-        )["data"]["createClientDocument"]
+        )
 
         query = """
             query ($clientId: String!){

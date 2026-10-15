@@ -38,15 +38,19 @@ class ScheduledReportAdmin(admin.ModelAdmin):
             return
 
         for report in queryset:
-            send_scheduled_report.delay(report.pk, recipient_override=user_email)
+            send_scheduled_report.delay(report.pk, due_at=report.next_run_at, recipient_override=user_email)
 
         self.message_user(request, f"Queued {queryset.count()} test reports sent to {user_email}.")
 
     @admin.action(description="Run schedule now (sends to real recipients)")
     def run_schedule_now(self, request: HttpRequest, queryset: QuerySet[ScheduledReport]) -> None:
-        """Run the selected reports immediately, updating the schedule."""
+        """Run the selected reports immediately, updating the schedule.
+
+        Each send is fixed to the due instant on the schedule now, so it covers the
+        same period the next scheduled send would have.
+        """
         for report in queryset:
-            send_scheduled_report.delay(report.pk)
+            send_scheduled_report.delay(report.pk, due_at=report.next_run_at)
 
         self.message_user(request, f"Queued {queryset.count()} reports for immediate execution.")
 

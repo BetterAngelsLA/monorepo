@@ -1,10 +1,10 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  InfiniteList,
   TRenderListResultsHeader,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../InfiniteList/FocusedInfiniteList';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, TaskFilter, TaskOrder, TaskType } from '../../apollo';
@@ -24,7 +24,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<TaskFilter>;
-  order?: TaskOrder | null;
+  order?: TaskOrder | TaskOrder[] | null;
   paginationLimit?: number;
   headerStyle?: ViewStyle;
   renderHeader?: TRenderListResultsHeader;
@@ -42,16 +42,25 @@ export function TaskList(props: TProps) {
     style,
   } = props;
 
-  const { items, total, loading, loadMore, reload, reloading, hasMore, error } =
-    useInfiniteScrollQuery<TaskType, TasksQuery, TasksQueryVariables>({
-      document: TasksDocument,
-      queryFieldName: 'tasks',
-      variables: {
-        filters,
-        ordering: order || undefined,
-      },
-      pageSize: paginationLimit,
-    });
+  const {
+    items,
+    total,
+    loading,
+    loadMore,
+    reload,
+    reloading,
+    hasMore,
+    error,
+    queryKey,
+  } = useInfiniteScrollQuery<TaskType, TasksQuery, TasksQueryVariables>({
+    document: TasksDocument,
+    queryFieldName: 'tasks',
+    variables: {
+      filters,
+      ordering: order || undefined,
+    },
+    pageSize: paginationLimit,
+  });
 
   const renderItemFn = useCallback(
     (item: TaskType) => renderItem(item),
@@ -70,7 +79,7 @@ export function TaskList(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<TaskType>
+      <FocusedInfiniteList<TaskType>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
@@ -80,6 +89,7 @@ export function TaskList(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="task"
+        scrollResetKey={queryKey}
         renderResultsHeader={renderHeader}
         onRefresh={reload}
         refreshing={reloading}

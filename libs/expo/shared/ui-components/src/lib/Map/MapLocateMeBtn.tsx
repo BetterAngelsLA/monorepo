@@ -1,18 +1,35 @@
 import { showOpenSettingsAlert } from '@monorepo/expo/shared/utils';
+import { LocationObject } from 'expo-location';
 import { RefObject, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, ViewStyle } from 'react-native';
 import LocateMeButton from '../LocateMeButton';
 import { TMapDeltaLatLng, TMapView } from './types';
 import { goToUserLocation } from './utils';
+
+type TVariant = 'absolute' | 'relative';
 
 type TProps = {
   mapRef: RefObject<TMapView | null>;
   regionDelta?: TMapDeltaLatLng;
   duration?: number;
+  onLocated?: (location: LocationObject) => void;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  variant?: TVariant;
+  style?: ViewStyle;
 };
 
 export function MapLocateMeBtn(props: TProps) {
-  const { mapRef, regionDelta, duration } = props;
+  const {
+    mapRef,
+    regionDelta,
+    duration,
+    onLocated,
+    accessibilityLabel,
+    accessibilityHint,
+    variant = 'absolute',
+    style,
+  } = props;
 
   const [disabled, setDisabled] = useState(false);
 
@@ -27,12 +44,16 @@ export function MapLocateMeBtn(props: TProps) {
     setDisabled(true);
 
     try {
-      await goToUserLocation({
+      const newLocation = await goToUserLocation({
         mapRef,
         regionDelta,
         duration,
         onPermissionDenied,
       });
+
+      if (newLocation) {
+        onLocated?.(newLocation);
+      }
 
       setDisabled(false);
     } catch (e) {
@@ -44,18 +65,26 @@ export function MapLocateMeBtn(props: TProps) {
 
   return (
     <LocateMeButton
-      style={styles.locateMeButton}
+      style={[
+        styles.container,
+        variant === 'absolute' ? styles.absolutePosition : undefined,
+        style,
+      ]}
       disabled={disabled}
       onPress={onPress}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  locateMeButton: {
+  container: {
+    zIndex: 10,
+  },
+  absolutePosition: {
     position: 'absolute',
     right: 16,
     bottom: '15%',
-    zIndex: 10,
   },
 });

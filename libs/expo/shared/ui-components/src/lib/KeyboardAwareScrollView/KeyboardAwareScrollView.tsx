@@ -2,9 +2,9 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode, forwardRef } from 'react';
 import { StyleSheet } from 'react-native';
 import {
-  KeyboardAwareScrollView as RNKeyboardAwareScrollView,
-  KeyboardAwareScrollViewRef,
-} from 'react-native-keyboard-controller';
+  RNKeyboardAwareScrollView,
+  type KeyboardAwareScrollViewRef,
+} from '../Keyboard';
 
 interface IKeyboardAwareScrollView {
   children: ReactNode;

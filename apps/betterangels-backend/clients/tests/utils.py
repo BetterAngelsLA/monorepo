@@ -1,8 +1,8 @@
-from typing import Any, Dict
+from typing import Any, Dict, cast
+from unittest.mock import patch
 
-from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.base import ContentFile
 from django.test import override_settings
 from django.utils import timezone
 
@@ -23,6 +23,9 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
+from clients.models import ClientProfile
+from common.images import build_img_url
+from common.tests.utils import GraphQLBaseTestCase
 
 
 # TODO: This is a temporary solution while we refactor the client profile and tests.
@@ -284,9 +287,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "veteranStatus": VeteranStatusEnum.NO.name,
             }
         )["data"]["createClientProfile"]
-        self.client_profile_1_photo_url = self._update_client_profile_photo_fixture(self.client_profile_1["id"])[
-            "data"
-        ]["updateClientProfilePhoto"]["profilePhoto"]["url"]
+        self.client_profile_1_photo_url = self._set_client_profile_photo(self.client_profile_1["id"])
         self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "adaAccommodation": [],
@@ -329,67 +330,58 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         self.client_profile_1_document_1 = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"Client 1 license front",
             "client_profile_1_document_1.txt",
-        )["data"]["createClientDocument"]
+        )
         self.client_profile_1_document_2 = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK.name,
-            b"Client 1 license back",
             "client_profile_1_document_2.txt",
-        )["data"]["createClientDocument"]
+        )
         self.client_profile_1_document_3 = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.HMIS_FORM.name,
-            b"Client 1 hmis form",
             "client_profile_1_document_3.txt",
-        )["data"]["createClientDocument"]
+        )
         self.client_profile_1_document_4 = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
-            b"Client 1 other doc",
             "client_profile_1_document_4.txt",
-        )["data"]["createClientDocument"]
+        )
 
     def _create_client_document_fixture(
         self,
         client_profile_id: str,
         namespace: str,
-        file_content: bytes,
         file_name: str = "test_file.txt",
+        content_type: str = "text/plain",
     ) -> Dict[str, Any]:
-        file = SimpleUploadedFile(name=file_name, content=file_content)
-        response = self.execute_graphql(
-            """
-            mutation CreateClientDocument($clientProfileId: ID!, $namespace: ClientDocumentNamespaceEnum!, $file: Upload!) {  # noqa: B950
-                createClientDocument(data: { clientProfile: $clientProfileId, namespace: $namespace, file: $file }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
+        """Create one client document through the presigned pipeline.
+
+        Token validation and the S3 key check are stubbed: callers use this to get
+        a document row to act on, not to exercise the upload itself.
+        """
+        with (
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
+            patch(
+                "common.services.file_upload.strip_storage_location",
+                side_effect=lambda key: key.removeprefix("media/"),
+            ),
+        ):
+            response = self._resolve_client_document_uploads_fixture(
+                client_profile_id,
+                [
+                    {
+                        "presignedKey": f"media/attachments/{file_name}",
+                        "uploadToken": "valid-token",
+                        "filename": file_name,
+                        "contentType": content_type,
+                        "namespace": namespace,
                     }
-                    ... on ClientDocumentType {
-                        id
-                        attachmentType
-                        mimeType
-                        file {
-                            name
-                        }
-                        originalFilename
-                        namespace
-                    }
-                }
-            }
-            """,
-            variables={
-                "clientProfileId": client_profile_id,
-                "namespace": namespace,
-            },
-            files={"file": file},
-        )
-        return response
+                ],
+            )
+
+        return cast(Dict[str, Any], response["data"]["resolveClientDocumentUploads"]["documents"][0])
 
     def _delete_client_document_fixture(self, document_id: str) -> Dict[str, Any]:
         response = self.execute_graphql(
@@ -440,39 +432,15 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _update_client_profile_photo_fixture(
+    def _set_client_profile_photo(
         self,
         client_profile_id: str,
-        photo_content: bytes = b"test photo content",
         photo_name: str = "test_photo.jpg",
-    ) -> Dict[str, Any]:
-        photo = SimpleUploadedFile(name=photo_name, content=photo_content)
+    ) -> str:
+        client_profile = ClientProfile.objects.get(id=client_profile_id)
+        client_profile.profile_photo.save(photo_name, ContentFile(b"test photo content"), save=True)
 
-        return self.execute_graphql(
-            """
-            mutation UpdateClientProfilePhoto($clientProfileId: ID!, $photo: Upload!) {  # noqa: B950
-                updateClientProfilePhoto(data: { clientProfile: $clientProfileId, photo: $photo }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on ClientProfileType {
-                        id
-                        profilePhoto {
-                            url
-                        }
-                    }
-                }
-            }
-            """,
-            variables={
-                "clientProfileId": client_profile_id,
-            },
-            files={"photo": photo},
-        )
+        return build_img_url(client_profile.profile_photo)
 
     def _generate_client_document_uploads_fixture(
         self,
@@ -532,6 +500,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                             file {
                                 name
                             }
+                            attachmentType
                             originalFilename
                             namespace
                             mimeType

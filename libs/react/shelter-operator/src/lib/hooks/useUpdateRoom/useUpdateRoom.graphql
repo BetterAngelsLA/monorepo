@@ -1,5 +1,5 @@
-mutation UpdateRoom($id: ID!, $data: UpdateRoomInput!) {
-  updateRoom(id: $id, data: $data) {
+mutation UpdateRoom($data: UpdateRoomInput!) {
+  updateRoom(data: $data) {
     ... on RoomType {
       id
       name

@@ -1,13 +1,14 @@
 from typing import Any
 
-from accounts.models import User
-from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from waffle import (
     get_waffle_flag_model,
     get_waffle_sample_model,
     get_waffle_switch_model,
 )
+
+from accounts.models import User
+from common.tests.utils import GraphQLBaseTestCase
 
 
 class FeatureControlDataTestCase(GraphQLBaseTestCase):

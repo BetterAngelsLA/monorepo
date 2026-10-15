@@ -5,6 +5,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 from pghistory.models import Events
 from places import Places
+
 from shelters.enums import (
     ConditionChoices,
     DayOfWeekChoices,

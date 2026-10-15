@@ -1,14 +1,10 @@
 from unittest.mock import ANY, patch
 
 import time_machine
-from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
-from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
-from notes.groups import CASEWORKER
 from organizations.models import OrganizationUser
-from shelters.groups import SHELTER_OPERATOR
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from accounts.enums import OrgRoleEnum
@@ -16,6 +12,10 @@ from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
 from accounts.role_manager import OrgRoleManager
+from common.tests.utils import GraphQLBaseTestCase
+from hmis.tests.test_mutations import LOGIN_MUTATION
+from notes.groups import CASEWORKER
+from shelters.groups import SHELTER_OPERATOR
 
 from .baker_recipes import organization_recipe, permission_group_recipe
 
@@ -218,7 +218,12 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             }
         """
 
-        expected_query_count = 2
+        # EFFECTIVE per-org report (ADR 0001 §5.2): user fetch + finite
+        # switchable-org-list filter + organization_effective_permissions()
+        # (switchable org_ids materialize + the batched four-query scoped report
+        # + the memoized two-query global probe).  Bounded and flat in the org
+        # count — computed once per request and memoized on the user instance.
+        expected_query_count = 9
 
         if templates:
             omb.add_roles(user, *templates)
@@ -263,7 +268,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         another_org = organization_recipe.make(name="another_org")
         another_org.add_user(baker.make(User))
 
-    @time_machine.travel("07-22-2025 10:00:00", tick=False)
+    @time_machine.travel("07-22-2025 10:00:00+00:00", tick=False)
     def test_organization_member_query(self) -> None:
         self.graphql_client.force_login(self.org_member)
         self.graphql_client.logout()
@@ -288,7 +293,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             "userId": str(self.org_admin.pk),
         }
 
-        with self.assertNumQueriesWithoutCache(5):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(query, variables)
 
         expected_member = {
@@ -353,7 +358,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         variables = {"organizationId": str(self.org.pk)}
 
-        with self.assertNumQueriesWithoutCache(6):
+        with self.assertNumQueriesWithoutCache(7):
             response = self.execute_graphql(query, variables)
 
         expected_members = zip(

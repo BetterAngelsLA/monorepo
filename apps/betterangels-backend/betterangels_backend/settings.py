@@ -70,6 +70,7 @@ env = environ.Env(
     SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
+    TIME_ZONE=(str, "America/Los_Angeles"),
     ACCOUNT_LOGIN_BY_CODE_ENABLED=(bool, False),
     ACCOUNT_LOGIN_BY_CODE_TIMEOUT=(int, 300),
     USE_IAM_AUTH=(bool, False),
@@ -317,7 +318,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+# The calendar to use when nobody supplied one: Celery, shelter hours, and any
+# request without a django_timezone cookie.  USE_TZ is what keeps storage UTC.
+TIME_ZONE = env("TIME_ZONE")
 
 USE_I18N = True
 

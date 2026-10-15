@@ -2,13 +2,14 @@
 
 from unittest.mock import Mock, patch
 
-from common.permissions.config import TemplateConfig
 from django.test import TestCase, override_settings
 from model_bakery import baker
-from notes.groups import CASEWORKER
-from shelters.groups import SHELTER_OPERATOR
 from organizations.models import Organization, OrganizationInvitation
 from post_office.models import Email
+
+from common.permissions.config import TemplateConfig
+from notes.groups import CASEWORKER
+from shelters.groups import SHELTER_OPERATOR
 
 from ..backends import CustomInvitations
 from ..emails import base_url_for

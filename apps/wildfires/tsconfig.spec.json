@@ -2,10 +2,11 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "module": "commonjs",
+    "module": "esnext",
     "types": [
       "node",
       "vitest/globals",
+      "vite/client",
       "@nx/react/typings/cssmodule.d.ts",
       "@nx/react/typings/image.d.ts"
     ]

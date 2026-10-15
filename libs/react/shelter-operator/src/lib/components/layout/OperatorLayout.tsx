@@ -1,3 +1,4 @@
+import { AppDrawer } from '@monorepo/react/components';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from '../AppSidebar';
 import { NavBar } from '../NavBar';
@@ -16,6 +17,7 @@ export function OperatorLayout() {
         </main>
 
         <ToastContainer />
+        <AppDrawer />
       </div>
     </div>
   );

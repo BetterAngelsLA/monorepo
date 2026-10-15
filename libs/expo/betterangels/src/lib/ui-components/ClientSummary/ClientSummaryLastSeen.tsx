@@ -9,7 +9,11 @@ import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format, formatDistanceToNow, isToday } from 'date-fns';
 import { StyleSheet, View } from 'react-native';
 import { Ordering } from '../../apollo';
-import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
+import {
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
+} from '@monorepo/expo/shared/ui-components';
 import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
 import { InteractionsDocument } from '../InteractionList';
 

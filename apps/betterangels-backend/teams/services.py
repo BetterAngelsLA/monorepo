@@ -54,7 +54,10 @@ def team_update(
     """Update a Team's name and/or active flag."""
     if name is not None:
         name = name.strip()
-        _validate_name_is_unique(name=name, organization=team.organization, exclude_pk=team.pk)
+        # The manual check exists for its message; a name that does not change
+        # cannot introduce a duplicate, so skip its lookup.
+        if name.lower() != team.name.lower():
+            _validate_name_is_unique(name=name, organization=team.organization, exclude_pk=team.pk)
         team.name = name
 
     if is_active is not None:

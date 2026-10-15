@@ -1,5 +1,5 @@
-mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {
-  updateBed(id: $id, data: $data) {
+mutation UpdateBed($data: UpdateBedInput!) {
+  updateBed(data: $data) {
     ... on BedType {
       id
       name

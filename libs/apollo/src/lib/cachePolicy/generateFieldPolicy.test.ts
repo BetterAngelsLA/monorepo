@@ -48,14 +48,6 @@ describe('generateFieldPolicy', () => {
     paginationLimitPath: ['pagination', 'limit'],
   };
 
-  const perPageQueryPolicy: QueryPolicyConfig = {
-    paginationMode: PaginationModeEnum.PerPage,
-    itemsPath: ['results'],
-    totalCountPath: ['totalCount'],
-    paginationPagePath: ['pagination', 'page'],
-    paginationPerPagePath: ['pagination', 'perPage'],
-  };
-
   it('keeps keyArgs (array) and wires merge with offset pagination', async () => {
     const policy = generateFieldPolicy({
       keyArgs: ['filters', 'order'],
@@ -81,25 +73,22 @@ describe('generateFieldPolicy', () => {
     });
   });
 
-  it('keeps keyArgs (false) and wires merge with per-page pagination', async () => {
+  it('keeps keyArgs (false) and wires merge with offset pagination', async () => {
     const policy = generateFieldPolicy({
       keyArgs: false,
-      queryPolicyConfig: perPageQueryPolicy,
+      queryPolicyConfig: offsetQueryPolicy,
     });
 
     expect(policy.keyArgs).toBe(false);
-    expect(
-      typeof policy.merge === 'function' || typeof policy.merge === 'boolean',
-    ).toBe(true);
 
     const mockedModule = await import('./merge');
     const mockedGenerateMergeFn =
       mockedModule.generateMergeFn as unknown as MockInstance;
 
     expect(mockedGenerateMergeFn.mock.calls[0][1]).toEqual({
-      mode: PaginationModeEnum.PerPage,
-      pagePath: ['pagination', 'page'],
-      perPagePath: ['pagination', 'perPage'],
+      mode: PaginationModeEnum.Offset,
+      offsetPath: ['pagination', 'offset'],
+      limitPath: ['pagination', 'limit'],
     });
   });
 

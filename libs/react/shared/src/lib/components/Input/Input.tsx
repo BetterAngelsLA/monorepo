@@ -38,7 +38,7 @@ export function Input(props: InputProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      {label && (
+      {!!label && (
         <label htmlFor={id} className={mergeCss(labelCss)}>
           {label}
 
@@ -48,7 +48,7 @@ export function Input(props: InputProps) {
 
       <input className={mergeCss(inputCss)} id={id} {...rest} />
 
-      {error && <div className={mergeCss(errorCss)}>{error}</div>}
+      {!!error && <div className={mergeCss(errorCss)}>{error}</div>}
     </div>
   );
 }

@@ -3,7 +3,12 @@ import { reactNative } from 'vitest-native';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [reactNative()],
+  plugins: [
+    reactNative({
+      transform: ['sanitize-html', 'htmlparser2'],
+      hotRuntime: false,
+    }),
+  ],
   resolve: { tsconfigPaths: true },
   test: {
     globals: true,

@@ -70,7 +70,7 @@ export function PressablePanelContainer({
           <TextBold color={Colors.NEUTRAL_EXTRA_DARK} size="sm">
             {title}
           </TextBold>
-          {extension && (
+          {!!extension && (
             <TextBold color={Colors.NEUTRAL_EXTRA_DARK} size="sm">
               {`ext. ${extension}`}
             </TextBold>

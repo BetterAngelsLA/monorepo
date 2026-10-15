@@ -5,6 +5,7 @@ import datetime
 from django.test import TestCase
 from django.utils import timezone
 from model_bakery import baker
+
 from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.status import compute_bed_status, compute_room_status

@@ -1,5 +1,5 @@
 import { ReactNode, RefObject } from 'react';
-import { Marker } from 'react-native-maps';
+import { Marker } from '../mapsApi';
 import { TMapView } from '../types';
 import {
   ClusterOrPoint,
