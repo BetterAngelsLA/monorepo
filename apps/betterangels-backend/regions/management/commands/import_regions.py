@@ -34,7 +34,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from regions.models import Region, RegionKind
-from regions.services import build_region_pieces, ensure_location_regions
+from regions.services import build_region_pieces
 
 # Envelope for the guard that catches a silently-skipped reprojection. Padded
 # because LA County legitimately reaches latitude ~32.80 (Catalina and San
@@ -407,13 +407,11 @@ class Command(BaseCommand):
             Region.objects.filter(kind=source.kind).delete()
             Region.objects.bulk_create(regions, batch_size=200)
             pieces = build_region_pieces(kind=source.kind)
-            # Boundaries just changed, so every stored location-to-region answer for
-            # this dimension is suspect. `force` clears and recomputes rather than
-            # trying to work out which ones moved.
-            assignments = ensure_location_regions(kind=source.kind, force=True)
 
+        # Nothing else to derive. The rollup reads `Region` and `RegionPiece` directly, so
+        # replacing the boundary and its pieces is the whole update — there is no crosswalk
+        # to rebuild and no location-to-region answer left over from the old geometry.
         self.stdout.write(f"  pieces    : {pieces}")
-        self.stdout.write(f"  assigned  : {assignments} location(s)")
         return len(regions)
 
     @staticmethod

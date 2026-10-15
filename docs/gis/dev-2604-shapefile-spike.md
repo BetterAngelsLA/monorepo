@@ -410,8 +410,9 @@ it and [admin-integration.md](admin-integration.md) for the UI.
    `source_attribution` (the publisher's own `copyrightText`) and `source_item_id`, so
    "is this authoritative, and how current is it?" is answerable in SQL. There is no
    separate `DatasetImport` table — the region rows carry it.
-4. **Scale.** `RegionPiece` subdivides boundaries and `LocationRegion` resolves each
-   location once, so a report is an indexed join rather than a spatial scan.
+4. **Scale.** `RegionPiece` subdivides the boundaries, and the rollup joins them against
+   an indexed `Location.point_geom` with the boundaries on the driving side. Subdivision is
+   the load-bearing part (45 ms against 4,950 ms); the point→region answer is *not* stored.
 5. **The report.** Shipped: `interactionsByRegion`, `regionDimensions`, `regions` and
    `interactionMap`, rendered by `LocationBreakdown` on the admin Reports page.
 6. **Map view.** Built on `@vis.gl/react-google-maps` and the `google.maps.Data` layer,

@@ -52,8 +52,19 @@ Tests: `apps/betterangels-backend/regions/tests/`
   would silently drop them.
 - **The heavy layers need subdivided lookup geometry.** One city multipolygon has ~310k
   vertices in one row, so the GiST index prunes nothing and the rollup took 10.6 s at
-  20k interactions. `RegionPiece` holds subdivided parts; the rollup joins that and runs
-  in 375 ms. See `dev-2604-shapefile-spike.md` §7a.
+  20k interactions. `RegionPiece` holds subdivided parts and the rollup joins that: **45 ms**,
+  against 4,950 ms with the whole boundaries. See `dev-2604-shapefile-spike.md` §7a.
+- **There is no crosswalk and no backfill.** An earlier revision stored the point→region answer
+  per location in a `LocationRegion` table. It is gone: the rollup does the spatial join live,
+  written boundaries-first so it probes the GiST index on `Location.point_geom`. That costs
+  39 ms against 22 ms for the stored version at 20k interactions, and **210 ms against 211 ms
+  at 500k** — it tracks distinct locations rather than interactions, so the gap closes as a
+  report window grows. What it buys back is a derived table, a management command, a migration
+  backfill, a write performed on the read path, and a whole class of staleness bugs.
+- **Adding `Location.point_geom` rewrites `common_location` once.** A stored generated column
+  cannot be added without a table rewrite, and it holds an `ACCESS EXCLUSIVE` lock for the
+  duration. Plan a window, or use the expression-index alternative noted in
+  `spatial-implementation-audit.md`.
 
 ## Region grouping (backend, shipped)
 

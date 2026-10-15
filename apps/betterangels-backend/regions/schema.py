@@ -153,13 +153,16 @@ class Query:
         # deliberately so — it is the same scope the Notes pages themselves apply.
         scoped_notes = filter_for_user(scoped_notes, user, [NotePermissions.VIEW])
 
-        scoped_codes = list(region_codes or [])
-        if scoped_codes:
+        # `is not None`, not truthiness: `regionCodes: []` asks for no codes and must match
+        # nothing, exactly as it does in `interactionsByRegion`. Read as "absent", the
+        # predicate is dropped and the caller receives every pin in the organization while
+        # believing it filtered. An *absent* list is what means "no restriction".
+        if region_codes is not None:
             if dimension is None:
                 # Refused, not ignored. A code cannot be resolved without a dimension:
                 # "1" is a council district, an SPA and a supervisorial district.
                 raise ValueError("regionCodes requires a dimension")
-            scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=scoped_codes)
+            scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=region_codes)
 
         return interaction_map_data(
             start=start,

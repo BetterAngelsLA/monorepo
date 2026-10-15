@@ -7,15 +7,19 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
+from unittest import mock
 
 from django.contrib.gis.geos import MultiPolygon, Point, Polygon
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
 
 from accounts.tests.baker_recipes import organization_recipe
 from common.models import Location
 from notes.models import Note
-from regions.models import LocationRegion, Region, RegionKind
+from regions import selectors
+from regions.models import Region, RegionKind
 from regions.selectors import (
     available_kinds,
     interaction_points,
@@ -25,9 +29,8 @@ from regions.selectors import (
     region_totals_without_boundaries,
     scope_notes_to_regions,
 )
-from regions.services import ensure_location_regions
 
-from .helpers import assign_locations
+from .helpers import build_pieces
 
 # Two disjoint boxes: "A" around downtown LA, "B" well to the north-west.
 BOX_A = ((-118.30, 34.02), (-118.18, 34.02), (-118.18, 34.12), (-118.30, 34.12), (-118.30, 34.02))
@@ -58,8 +61,8 @@ class RegionRollupTestCase(TestCase):
     ) -> Note:
         """A note in this org. ``lon``/``lat`` are ignored when ``location`` is False.
 
-        Assignments are rebuilt here, after the location exists, because the rollup
-        reads them rather than doing the spatial join itself.
+        No resolution step: the rollup does the spatial join itself, so a location is
+        counted the moment it exists.
         """
         note = baker.make(
             Note,
@@ -67,8 +70,6 @@ class RegionRollupTestCase(TestCase):
             interacted_at=when or datetime(2026, 1, 15, tzinfo=UTC),
             location=None if not location else baker.make(Location, point=Point(lon, lat, srid=4326)),
         )
-        if location:
-            assign_locations()
         return note
 
     def _counts(self, *, kind: str = RegionKind.COUNCIL_DISTRICT.value, **kwargs: Any) -> dict[str | None, int]:
@@ -266,7 +267,6 @@ class RegionReconciliationTestCase(TestCase):
 
         # The rollup reads the stored assignment, so resolve the two located notes
         # (the locationless one has nothing to resolve) before asserting anything.
-        assign_locations()
 
     def test_every_note_lands_in_exactly_one_bucket(self) -> None:
         rows = region_counts(
@@ -376,9 +376,30 @@ class InteractionMapTestCase(TestCase):
         self.assertFalse(truncated, "exactly at the cap is not truncated")
 
     def test_limit_is_clamped(self) -> None:
-        self._note_at(-118.24, 34.05)
-        rows, _ = self._points(limit=10**9)
+        """A client-supplied limit cannot exceed the cap, and truncation says so.
+
+        Asserted against a **patched** cap rather than by asking for a huge one: with fewer
+        notes than the cap, a clamped limit and no clamp return the same rows, so the
+        original version of this test passed whether or not the clamp existed — and the
+        resolver passes the client's ``limit`` straight through, which made the clamp the
+        only thing bounding the payload.
+        """
+        for i in range(4):
+            self._note_at(-118.24 + i * 0.01, 34.05)
+
+        with mock.patch.object(selectors, "POINT_LIMIT_MAX", 3):
+            rows, truncated = self._points(limit=10**9)
+
+        self.assertEqual(len(rows), 3, "the request exceeded the cap and was not clamped")
+        self.assertTrue(truncated, "truncation must be reported, not silent")
+
+    def test_a_limit_below_one_is_raised_to_one(self) -> None:
+        """The floor of the clamp, which the original test also never reached."""
+        for i in range(3):
+            self._note_at(-118.24 + i * 0.01, 34.05)
+        rows, truncated = self._points(limit=0)
         self.assertEqual(len(rows), 1)
+        self.assertTrue(truncated)
 
     def _box_region(self, code: str, box_coords: Any) -> None:
         """This class has no regions by default; the filter tests need one."""
@@ -396,7 +417,6 @@ class InteractionMapTestCase(TestCase):
         self._note_at(-118.24, 34.05)  # in region "1"
         self._note_at(-118.54, 34.35)  # in region "2"
         self._note_at(*OUTSIDE)  # in neither
-        assign_locations()
 
         scoped = scope_notes_to_regions(self._notes(), kind=RegionKind.COUNCIL_DISTRICT.value, codes=["1"])
         rows, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id, notes=scoped)
@@ -409,7 +429,6 @@ class InteractionMapTestCase(TestCase):
         self._box_region("1", BOX_A)
         self._note_at(-118.24, 34.05)
         self._note_at(-118.54, 34.35)
-        assign_locations()
         rows, _ = interaction_points(start=self.start, end=self.end, organization_id=self.org.id)
         self.assertEqual(len(rows), 2)
 
@@ -421,27 +440,22 @@ class InteractionMapTestCase(TestCase):
         self.assertEqual(len(points), 4)
 
 
-class StaleAssignmentTestCase(TestCase):
-    """A location created since the last import must still be counted — once filled.
+class LiveSpatialJoinTestCase(TestCase):
+    """The rollup reads the boundaries live — there is no crosswalk to keep fresh.
 
-    The rollup joins the stored assignment, so a location with no assignment is absent
-    from every bucket. ``_note_at_resolved_by_no_one`` creates that state: a real
-    ``Location`` with no assignment.
-
-    **The fill is explicit.** It used to happen inside ``region_counts``, which made a
-    read open transactions and INSERT for every location in the database — a selector
-    doing a global write (``docs/styleguides/python.md``). The fill now belongs to
-    ``manage.py backfill_location_regions`` (same ``ensure_location_regions`` service, and
-    ``import_regions``), and the read path tops it up on demand — see
-    ``test_a_read_fills_the_gap_it_found``. The alternative was a Celery beat job, which buys
-    nothing the incremental fill does not and adds a staleness window.
+    This replaces ``StaleAssignmentTestCase``, which pinned the opposite design: a
+    ``LocationRegion`` row per (location, dimension), resolved once and topped up from the
+    read path. Nothing here needs a fill step, and that is the point — a location created
+    between two imports is counted by the very next read, with no write anywhere.
     """
 
     def setUp(self) -> None:
         self.org = organization_recipe.make()
         self.start = datetime(2026, 1, 1, tzinfo=UTC)
         self.end = datetime(2026, 2, 1, tzinfo=UTC)
-        Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_A))
+        self.region = Region.objects.create(
+            kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_A)
+        )
 
     def _counts(self) -> dict[str | None, int]:
         rows = region_counts(
@@ -452,8 +466,7 @@ class StaleAssignmentTestCase(TestCase):
         )
         return {row["code"]: row["count"] for row in rows}
 
-    def _note_at_resolved_by_no_one(self, lon: float, lat: float) -> Note:
-        """A note whose ``Location`` exists but has never been assigned."""
+    def _note_at(self, lon: float, lat: float) -> Note:
         return baker.make(
             Note,
             organization=self.org,
@@ -461,71 +474,94 @@ class StaleAssignmentTestCase(TestCase):
             interacted_at=datetime(2026, 1, 15, tzinfo=UTC),
         )
 
-    def test_a_read_fills_the_gap_it_found(self) -> None:
-        """A location created since the last import is counted, because the read fills it.
+    def test_a_location_created_after_the_boundaries_is_counted_with_no_fill(self) -> None:
+        """The contract that replaces "the read tops up a derived index"."""
+        note = self._note_at(-118.24, 34.05)
 
-        This is the contract that replaced "a selector must not write". The write is bounded
-        by design — ``ensure_location_regions`` only considers locations with no assignment —
-        so the read can do it and forget about it, with no schedule and no staleness window.
+        self.assertEqual(self._counts().get("1"), 1)
+        self.assertIsNotNone(note.location_id)
 
-        Asserted on the *count*, from a starting state where the assignment genuinely does not
-        exist, so it fails if the fill stops happening rather than merely changing shape.
+    def test_a_read_writes_nothing(self) -> None:
+        """The property the stored crosswalk could not have, and why it is gone.
+
+        Asserted on the statements the rollup actually executed rather than on a row count:
+        the failure this guards against is a selector that INSERTs, which a row-count
+        assertion would only catch for tables it knew to look at.
         """
-        note = self._note_at_resolved_by_no_one(-118.24, 34.05)
-        location_id = note.location_id
-        assert location_id is not None  # the helper always sets one
+        self._note_at(-118.24, 34.05)
 
-        self.assertFalse(
-            LocationRegion.objects.filter(location_id=location_id).exists(),
-            "precondition: the location is unresolved before the read",
-        )
+        with CaptureQueriesContext(connection) as captured:
+            self._counts()
 
-        self.assertEqual(self._counts().get("1"), 1, "the read must resolve it and count it")
+        wrote = [
+            query["sql"]
+            for query in captured.captured_queries
+            if not query["sql"].lstrip().upper().startswith("SELECT")
+        ]
+        self.assertEqual(wrote, [], f"the rollup executed a write: {wrote}")
 
-    def test_the_fill_resolves_a_location_it_has_never_seen(self) -> None:
-        """The command's service does what the selector used to do on the side."""
-        self._note_at_resolved_by_no_one(-118.24, 34.05)  # inside BOX_A
+    def test_a_region_with_no_pieces_resolves_through_the_lookup_view(self) -> None:
+        """The fallback arm of ``regions_regionlookup``: a region with no pieces.
 
-        ensure_location_regions(kind=RegionKind.COUNCIL_DISTRICT)
-        counts = self._counts()
-        self.assertEqual(counts.get("1"), 1, "a fresh location must land in its region")
-        self.assertNotIn(None, counts, "it resolved, so it is not unassigned")
-
-    def test_an_unresolvable_fresh_location_is_still_reported(self) -> None:
-        self._note_at_resolved_by_no_one(-118.24, 34.05)  # BOX_A
-        self._note_at_resolved_by_no_one(*OUTSIDE)  # no region
-
-        ensure_location_regions(kind=RegionKind.COUNCIL_DISTRICT)
-        counts = self._counts()
-        self.assertEqual(counts.get("1"), 1)
-        self.assertEqual(counts.get(None), 1, "the outside note is reported, not dropped")
-        self.assertEqual(sum(counts.values()), 2, "buckets must reconcile to the total")
-
-    def test_repeated_reads_do_not_double_count(self) -> None:
-        """The fill is idempotent, so a second read must not inflate the number.
-
-        The read now writes, so this is the failure mode that matters: every report load
-        resolving the same location again would double-count it.
+        Every other test in this module creates regions this way, so this is the arm they
+        all exercise. Worth naming, because it is **not** the one production uses.
         """
-        self._note_at_resolved_by_no_one(-118.24, 34.05)
+        self.assertFalse(self.region.pieces.exists(), "precondition: no pieces were built")
 
-        first = self._counts()
-        second = self._counts()
-        self.assertEqual(first, second)
-        self.assertEqual(second.get("1"), 1)
-        self.assertEqual(LocationRegion.objects.filter(kind=RegionKind.COUNCIL_DISTRICT).count(), 1)
+        self._note_at(-118.24, 34.05)
 
-    def test_repeated_fills_do_not_double_count(self) -> None:
-        """Filling must be idempotent, or every import inflates the report."""
-        self._note_at_resolved_by_no_one(-118.24, 34.05)
+        self.assertEqual(self._counts().get("1"), 1)
 
-        ensure_location_regions(kind=RegionKind.COUNCIL_DISTRICT)
-        first = self._counts()
-        ensure_location_regions(kind=RegionKind.COUNCIL_DISTRICT)
-        second = self._counts()
-        self.assertEqual(first, second, "a repeated fill must not write a second assignment")
-        self.assertEqual(second.get("1"), 1)
-        self.assertEqual(LocationRegion.objects.filter(kind=RegionKind.COUNCIL_DISTRICT).count(), 1)
+    def test_a_region_with_pieces_resolves_through_them(self) -> None:
+        """The production arm, which ``import_regions`` always creates.
+
+        Without this test the piece branch of the lookup is never executed by the suite —
+        only the parent-boundary fallback is — so a defect in the subdivided geometry, the
+        one thing ``RegionPiece`` exists for, would ship green.
+        """
+        build_pieces(kind=RegionKind.COUNCIL_DISTRICT)
+        self.assertTrue(self.region.pieces.exists(), "precondition: pieces were built")
+
+        self._note_at(-118.24, 34.05)
+
+        self.assertEqual(self._counts().get("1"), 1)
+
+    def test_subdivision_does_not_change_the_answer(self) -> None:
+        """The invariant the whole table rests on: a piece is *the same* region.
+
+        Both arms are run over the same notes and must agree. A point a hair inside the
+        boundary is the case that would break if pieces were clipped rather than
+        partitioned.
+        """
+        self._note_at(-118.24, 34.05)  # inside
+        self._note_at(-118.29, 34.03)  # inside, a hair east of BOX_A's western edge
+        self._note_at(-118.31, 34.03)  # outside, a hair west of the same edge
+        before = self._counts()
+
+        build_pieces(kind=RegionKind.COUNCIL_DISTRICT)
+
+        self.assertEqual(self._counts(), before, "subdividing changed the rollup")
+
+    def test_repeated_reads_do_not_change_the_answer(self) -> None:
+        """Reads are pure, so a second load cannot inflate the first."""
+        self._note_at(-118.24, 34.05)
+        self.assertEqual(self._counts(), self._counts())
+
+    def test_the_unassigned_bucket_is_the_remainder_of_located_interactions(self) -> None:
+        """``unassigned = interactions with a location - interactions a boundary contains``.
+
+        Computed rather than queried, which is what keeps the bucket off the spatial path:
+        written as a spatial anti-join it measured 3.2 s on 20,000 interactions.
+        """
+        self._note_at(-118.24, 34.05)  # in BOX_A
+        self._note_at(-118.24, 34.06)  # in BOX_A
+        self._note_at(*OUTSIDE)  # located, in no region
+
+        counts = self._counts()
+
+        self.assertEqual(counts["1"], 2)
+        self.assertEqual(counts[None], 1, "the located-but-outside note is reported, not dropped")
+        self.assertEqual(sum(counts.values()), 3, "buckets must reconcile to located interactions")
 
 
 class RegionCodeCollisionTestCase(TestCase):
@@ -551,7 +587,6 @@ class RegionCodeCollisionTestCase(TestCase):
                 location=baker.make(Location, point=Point(lon, lat, srid=4326)),
                 interacted_at=datetime(2026, 1, 15, tzinfo=UTC),
             )
-        assign_locations()
 
     def _notes(self) -> Any:
         return Note.objects.filter(organization=self.org, interacted_at__gte=self.start, interacted_at__lt=self.end)

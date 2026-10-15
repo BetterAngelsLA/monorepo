@@ -26,8 +26,6 @@ from notes.groups import CASEWORKER
 from notes.models import Note
 from regions.models import Region, RegionKind
 
-from .helpers import assign_locations
-
 BOX_A = ((-118.30, 34.02), (-118.18, 34.02), (-118.18, 34.12), (-118.30, 34.12), (-118.30, 34.02))
 BOX_B = ((-118.60, 34.30), (-118.48, 34.30), (-118.48, 34.40), (-118.60, 34.40), (-118.60, 34.30))
 OUTSIDE = (-118.41, 34.07)
@@ -84,7 +82,6 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
                 location=baker.make(Location, point=point),
             )
         baker.make(Note, organization=self.org_1, interacted_at=when, location=None)
-        assign_locations()
 
     def _query(self, codes: Any = None) -> list[dict[str, Any]]:
         self.graphql_client.force_login(self.reader)
@@ -190,12 +187,20 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
 INTERACTION_MAP_QUERY = """
     query InteractionMap(
         $organizationId: ID!
-        $dimension: RegionDimension!
+        $dimension: RegionDimension
         $startDate: Date
         $endDate: Date
         $limit: Int
+        $regionCodes: [String!]
     ) {
-        interactionMap(organizationId: $organizationId, dimension: $dimension, startDate: $startDate, endDate: $endDate, limit: $limit) {
+        interactionMap(
+            organizationId: $organizationId
+            dimension: $dimension
+            startDate: $startDate
+            endDate: $endDate
+            limit: $limit
+            regionCodes: $regionCodes
+        ) {
             points { latitude longitude }
             truncated
         }
@@ -234,7 +239,6 @@ class InteractionMapBaseTestCase(GraphQLBaseTestCase):
         shared_location = baker.make(Location, point=Point(-118.24, 34.05, srid=4326))
         self.note_here = baker.make(Note, organization=self.org_1, interacted_at=when, location=shared_location)
         self.note_there = baker.make(Note, organization=self.org_2, interacted_at=when, location=shared_location)
-        assign_locations()
 
     def caseworker(self) -> User:
         """A real caseworker: legacy ``notes.view_note`` AND a grant for the report gate.
@@ -349,3 +353,190 @@ class InteractionMapOrgConfinementTestCase(InteractionMapBaseTestCase):
         result = self._map(self.caseworker(), org_id="99999999")
         self.assertIn("errors", result)
         self.assertNotIn("DoesNotExist", str(result["errors"]))
+
+
+UNGROUPED_ROLLUP_QUERY = """
+    query UngroupedRollup(
+        $organizationId: ID!
+        $startDate: Date
+        $endDate: Date
+    ) {
+        interactionsByRegion(organizationId: $organizationId, startDate: $startDate, endDate: $endDate) {
+            kind
+            code
+            name
+            count
+            isUnassigned
+            unassignedReason
+        }
+    }
+"""
+
+REGION_METADATA_QUERY = """
+    query RegionMetadata($dimension: RegionDimension!) {
+        regionDimensions
+        regions(dimension: $dimension) {
+            kind
+            code
+            name
+        }
+    }
+"""
+
+
+class InteractionMapRegionFilterTestCase(InteractionMapBaseTestCase):
+    """``interactionMap(regionCodes: …)`` — the argument the suite never exercised.
+
+    The map's query carried no ``regionCodes`` at all, so the resolver's whole region
+    branch could be deleted and every test still passed. It is also the argument whose
+    empty-list meaning is easiest to get backwards: read as "absent", the predicate is
+    dropped and a caller who asked for no regions receives every pin in the organization.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        when = datetime(2026, 1, 15, tzinfo=UTC)
+        # A second note in org_1, well outside BOX_A.
+        baker.make(
+            Note,
+            organization=self.org_1,
+            interacted_at=when,
+            location=baker.make(Location, point=Point(*OUTSIDE, srid=4326)),
+        )
+
+    def test_region_codes_narrow_the_pins(self) -> None:
+        user = self.caseworker()
+
+        unfiltered = self._map(user)
+        self.assertNotIn("errors", unfiltered, unfiltered.get("errors"))
+        self.assertEqual(len(unfiltered["points"]), 2, "precondition: both notes are pins")
+
+        filtered = self._map(user, regionCodes=["1"])
+        self.assertNotIn("errors", filtered, filtered.get("errors"))
+        self.assertEqual(len(filtered["points"]), 1, "only the note inside BOX_A may remain")
+        self.assertAlmostEqual(filtered["points"][0]["latitude"], 34.05, places=4)
+
+    def test_a_code_with_no_region_returns_no_pins(self) -> None:
+        result = self._map(self.caseworker(), regionCodes=["does-not-exist"])
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertEqual(result["points"], [])
+
+    def test_an_empty_code_list_returns_no_pins_rather_than_every_pin(self) -> None:
+        """``[]`` asks for no regions, matching ``interactionsByRegion``.
+
+        Truthiness here means "absent": the filter is skipped and the caller gets the whole
+        organization while believing it asked for nothing.
+        """
+        result = self._map(self.caseworker(), regionCodes=[])
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertEqual(result["points"], [], "an empty code list leaked every pin")
+
+    def test_region_codes_without_a_dimension_are_refused(self) -> None:
+        """A code is ambiguous across dimensions, so guessing one is the bug.
+
+        ``"1"`` is a council district, an SPA and a supervisorial district in this data;
+        returning any of them would be an answer the caller did not ask for.
+        """
+        result = self._map(self.caseworker(), dimension=None, regionCodes=["1"])
+        self.assertIn("errors", result, "a code without a dimension must be refused, not guessed")
+
+
+class UngroupedRollupTestCase(GraphQLBaseTestCase):
+    """``interactionsByRegion`` with no dimension: every dimension in one response.
+
+    Every other rollup test names a dimension, so the ``(kind, code)`` grouping — the reason
+    the ungrouped rollup exists — was never executed. Codes are not unique across
+    dimensions; drop the kind from the grouping and three unrelated regions merge into one
+    bucket with a summed count and one arbitrary name.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+        self.reader = baker.make(User)
+        self.org_1.add_user(self.reader)
+        OrgRoleManager(self.org_1).add_roles(self.reader, ORG_ADMIN)
+
+        # The same code, "1", in two dimensions, in disjoint places.
+        Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_A))
+        Region.objects.create(kind=RegionKind.SPA, code="1", name="SPA 1", geom=box(BOX_B))
+
+        when = datetime(2026, 1, 15, tzinfo=UTC)
+        for point in (Point(-118.24, 34.05, srid=4326), Point(-118.54, 34.35, srid=4326)):
+            baker.make(Note, organization=self.org_1, interacted_at=when, location=baker.make(Location, point=point))
+
+    def test_the_same_code_in_two_dimensions_is_two_buckets(self) -> None:
+        self.graphql_client.force_login(self.reader)
+        response = self.execute_graphql(
+            UNGROUPED_ROLLUP_QUERY,
+            {
+                "organizationId": str(self.org_1.pk),
+                "startDate": "2026-01-01",
+                "endDate": "2026-01-31",
+            },
+        )
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+
+        rows = response["data"]["interactionsByRegion"]
+        named = {(row["kind"], row["code"]): row for row in rows if not row["isUnassigned"]}
+        self.assertEqual(
+            set(named),
+            {("council_district", "1"), ("spa", "1")},
+            f"a code must not merge across dimensions: {sorted(named)}",
+        )
+        self.assertEqual(named[("council_district", "1")]["count"], 1)
+        self.assertEqual(named[("spa", "1")]["count"], 1)
+        self.assertEqual(named[("council_district", "1")]["name"], "District 1")
+        self.assertEqual(named[("spa", "1")]["name"], "SPA 1")
+
+        # Each note is inside one dimension's boundary and outside the other, so each
+        # dimension also reports the note it could not place — per dimension, not once for
+        # the whole response. Grouping on the code alone would collapse these two into one.
+        unassigned = {(row["kind"], row["unassignedReason"]) for row in rows if row["isUnassigned"]}
+        self.assertEqual(
+            unassigned,
+            {("council_district", "OUTSIDE_ALL_REGIONS"), ("spa", "OUTSIDE_ALL_REGIONS")},
+            f"unassigned buckets must be per dimension: {sorted(unassigned)}",
+        )
+
+
+class RegionMetadataQueryTestCase(GraphQLBaseTestCase):
+    """``regionDimensions`` and ``regions`` through the resolvers, not just the selectors.
+
+    Both were untested at the GraphQL layer: a resolver returning ``[]``, dropping ``codes``,
+    or failing to build the enum would have shipped green.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+        self.reader = baker.make(User)
+        self.org_1.add_user(self.reader)
+        Region.objects.create(kind=RegionKind.CITY, code="1", name="City 1", geom=box(BOX_A))
+        Region.objects.create(kind=RegionKind.CITY, code="2", name="City 2", geom=box(BOX_B))
+
+    def test_dimensions_report_what_is_loaded(self) -> None:
+        self.graphql_client.force_login(self.reader)
+        response = self.execute_graphql(REGION_METADATA_QUERY, {"dimension": "CITY"})
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+        self.assertEqual(response["data"]["regionDimensions"], ["CITY"])
+
+    def test_regions_returns_the_boundaries_of_the_dimension(self) -> None:
+        self.graphql_client.force_login(self.reader)
+        response = self.execute_graphql(REGION_METADATA_QUERY, {"dimension": "CITY"})
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+
+        regions = response["data"]["regions"]
+        self.assertEqual(
+            [(r["kind"], r["code"], r["name"]) for r in regions],
+            [
+                ("CITY", "1", "City 1"),
+                ("CITY", "2", "City 2"),
+            ],
+        )
+
+    def test_an_unloaded_dimension_returns_no_boundaries(self) -> None:
+        self.graphql_client.force_login(self.reader)
+        response = self.execute_graphql(REGION_METADATA_QUERY, {"dimension": "COC"})
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+        self.assertEqual(response["data"]["regions"], [])
