@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import List, Optional
 
 import strawberry
+from strawberry.scalars import JSON
 
 from common.graphql.types import LatitudeScalar, LongitudeScalar
 
@@ -83,9 +84,19 @@ class InteractionMapType:
 
 @strawberry.type
 class RegionType:
-    """A boundary polygon, as GeoJSON text."""
+    """A boundary polygon, as GeoJSON coordinate data.
+
+    ``geometry`` is the ``coordinates`` member of a GeoJSON MultiPolygon — a nested list of
+    ``[lng, lat]`` pairs — carried by the ``JSON`` scalar, so a client reads it directly
+    instead of parsing a string that contains JSON.
+
+    It is not the ``MultiPolygon`` scalar strawberry-django registers, deliberately: that
+    serializer converts one level only and is guarded on the exact GEOS type, so a
+    single-part polygon (which ``ST_ReducePrecision`` returns) reaches the JSON encoder as a
+    raw GEOS object. See ``selectors.region_features``.
+    """
 
     kind: RegionKind
     code: str
     name: str
-    geometry: str
+    geometry: JSON

@@ -182,13 +182,30 @@ class RegionMetadataTestCase(TestCase):
     def test_available_kinds_reports_only_loaded_dimensions(self) -> None:
         self.assertEqual(sorted(available_kinds()), ["council_district", "spa"])
 
-    def test_region_features_returns_geojson(self) -> None:
+    def test_region_features_returns_multipolygon_coordinates(self) -> None:
+        """``geometry`` is the coordinates of a MultiPolygon, at 6 decimal places.
+
+        Asserted on the *shape* rather than by spot-checking a vertex: the contract is
+        ``[[[lng, lat], …]]`` for every row regardless of how many parts the polygon has,
+        because the column is a MultiPolygon and a single-part result must not change the
+        response shape.
+        """
         rows = region_features(kinds=[RegionKind.SPA])
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["code"], "4")
-        # ST_AsGeoJSON gives a geometry object; the schema serialises it.
-        geometry = rows[0]["geometry"]
-        self.assertIn("coordinates", geometry if isinstance(geometry, dict) else {})
+
+        coordinates = rows[0]["geometry"]
+        self.assertIsInstance(coordinates, tuple, "coordinates, not a GeoJSON document")
+
+        # [[[ (lng, lat), … ]]] — walk to the first coordinate pair.
+        ring = coordinates[0][0]
+        self.assertEqual(len(ring[0]), 2, "a coordinate is a (lng, lat) pair")
+        for lng, lat in ring[:5]:
+            self.assertIsInstance(lng, float)
+            self.assertIsInstance(lat, float)
+            # 6 dp, because the grid is 1e-6: full precision measured 1.58x the payload.
+            self.assertLessEqual(len(str(lng).split(".")[-1]), 6)
+            self.assertLessEqual(len(str(lat).split(".")[-1]), 6)
 
     def test_region_features_can_filter_by_code(self) -> None:
         rows = region_features(kinds=[RegionKind.SPA], codes=["4"])

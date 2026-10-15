@@ -21,7 +21,6 @@ a string hands over after one ``JSON.parse`` rather than after a bespoke scalar'
 
 from __future__ import annotations
 
-import json
 from datetime import date
 from typing import List, Optional, cast
 
@@ -207,7 +206,9 @@ class Query:
                 kind=RegionKind(row["kind"]),
                 code=row["code"],
                 name=row["name"],
-                geometry=json.dumps(row["geometry"]),
+                # Already GeoJSON coordinates — the selector rounds and promotes them. No
+                # serialisation here: the `JSON` scalar carries the structure as-is.
+                geometry=row["geometry"],
             )
             for row in rows
         ]

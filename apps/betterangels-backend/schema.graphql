@@ -2248,7 +2248,7 @@ type RegionType {
   kind: RegionDimension!
   code: String!
   name: String!
-  geometry: String!
+  geometry: JSON!
 }
 
 enum RelationshipTypeEnum {
