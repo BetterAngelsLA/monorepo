@@ -65,13 +65,31 @@ The divergence risk therefore runs the other way: adopting `ST_CoverageSimplify`
 production and fails locally until the image is upgraded. **The image is the thing to change**,
 and doing so brings local up to what RDS already runs rather than ahead of it.
 
-Two caveats, recorded rather than assumed:
+**The engine version is confirmed.** The AWS infrastructure lives in a separate repository
+(`/workspaces/infrastructure` in the infra container, not this one), and
+`modules/services/betterangels-backend/database.tf` declares:
 
-- The RDS engine version is not in this repository — the AWS infrastructure lives elsewhere — so
-  "we are on 17" is an assumption. `SELECT postgis_full_version();` against the real instance
-  settles it in one query and is worth running before the fix is written.
-- Aurora PostgreSQL is documented separately and was not checked. If this ever moves to Aurora,
-  re-verify.
+```hcl
+engine         = "postgres"
+engine_version = "17.9"
+family         = "postgres17"
+major_engine_version = "17"
+```
+
+That is **RDS, not Aurora**, and PostgreSQL **17.9** — past the 17.0 that brought GEOS 3.13.0. No
+environment overrides `engine_version`, and the infra repository is clean, so the declared value is
+the deployed one.
+
+Two things that remain unverified, and why:
+
+- **The PostGIS version on the instance** is not pinned anywhere in Terraform — `CREATE EXTENSION`
+  happens at runtime, and AWS lists up to 3.5.6 for RDS PostgreSQL 17. Which version is actually
+  installed there is not knowable from this repository.
+- **The GEOS build on the instance** is inferred from AWS's release notes (3.13.0 as of 17.0),
+  not observed. The AWS credentials in the infra container are an expired SSO session whose
+  refresh token is also rejected, so no live query was possible. `SELECT postgis_full_version();`
+  against the instance settles both points in one query and remains worth running before the fix
+  is written — it would turn the inference into a fact.
 
 ## Defect 1 — independent simplification breaks shared edges
 
