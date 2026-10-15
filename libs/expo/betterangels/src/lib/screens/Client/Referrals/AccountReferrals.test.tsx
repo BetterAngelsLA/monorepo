@@ -17,7 +17,7 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, View } from 'react-native';
 import { Observable } from 'rxjs';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import UserProvider, { useUser } from '../../../providers/user/UserProvider';
@@ -30,6 +30,35 @@ import {
   releaseReferralDraftSession,
 } from './referralDraftStorage';
 import { buildReferralNotes } from './referralIntakeSidecar';
+
+const imageSharing = vi.hoisted(() => ({
+  capture: vi.fn(),
+  available: vi.fn(),
+  handoff: vi.fn(),
+  directory: vi.fn(),
+}));
+vi.mock('expo-sharing', () => ({
+  isAvailableAsync: imageSharing.available,
+  shareAsync: imageSharing.handoff,
+}));
+vi.mock('expo-file-system', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('expo-file-system')>()),
+  Paths: { cache: '/cache' },
+  Directory: imageSharing.directory,
+  File: vi.fn(),
+}));
+vi.mock('./ReferralImagePreview', () => ({
+  ReferralImagePreview: ({
+    onReady,
+  }: {
+    onReady: (capture: () => Promise<string>) => void;
+  }) => (
+    <View
+      testID="pending-image-preview"
+      onLayout={() => onReady(imageSharing.capture)}
+    />
+  ),
+}));
 
 const { backing, fault, showSnackbar } = vi.hoisted(() => ({
   backing: new Map<string, Map<string, string>>(),
@@ -321,6 +350,10 @@ beforeEach(() => {
   fault.operation = '';
   fault.storage = 'referral-drafts-v2';
   showSnackbar.mockClear();
+  imageSharing.capture.mockReset();
+  imageSharing.available.mockReset().mockResolvedValue(true);
+  imageSharing.handoff.mockReset().mockResolvedValue(undefined);
+  imageSharing.directory.mockReset();
   vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
 });
 afterEach(async () => {
@@ -394,6 +427,57 @@ it.each(['organization', 'account', 'environment', 'logout'] as const)(
     expect(
       screen.getByLabelText('Staff Observations / Notes'),
     ).toHaveDisplayValue('Retained local notes');
+  },
+);
+
+it.each(['organization', 'account', 'environment', 'logout'] as const)(
+  'does not write or hand off a pending PNG after %s changes, even after the original account returns',
+  async (boundary) => {
+    let finish!: (png: string) => void;
+    imageSharing.capture.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const app = await setup({ history: true });
+    await fireEvent.press(await screen.findByTestId('share-referral-saved-1'));
+    await fireEvent.press(screen.getByTestId('referral-share-include-private'));
+    await fireEvent.press(screen.getByTestId('referral-image-mode'));
+    await fireEvent(screen.getByTestId('pending-image-preview'), 'layout');
+    await fireEvent.press(screen.getByTestId('referral-share-png'));
+    await waitFor(() => expect(imageSharing.capture).toHaveBeenCalledOnce());
+    await act(() => {
+      if (boundary === 'organization')
+        app.organization().setActiveOrgId('org-2');
+      if (boundary === 'account')
+        app.account().setUser({ ...user, id: 'user-2' });
+      if (boundary === 'environment') app.changeApi('https://other.invalid');
+      if (boundary === 'logout') app.account().setUser(undefined);
+    });
+    await waitFor(() =>
+      expect(screen.queryByTestId('pending-image-preview')).toBeNull(),
+    );
+    await act(() => {
+      app.changeApi(scope.apiUrl);
+      app.account().setUser(user);
+    });
+    await act(() => app.organization().setActiveOrgId('org-1'));
+    await fireEvent.press(await screen.findByTestId('share-referral-saved-1'));
+    expect(
+      screen.getByTestId('referral-share-include-private').props
+        .accessibilityState.checked,
+    ).toBe(false);
+    expect(screen.getByTestId('referral-share-preview')).toBeOnTheScreen();
+    await act(async () =>
+      finish(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRz8AAAAASUVORK5CYII=',
+      ),
+    );
+    // Real PNG helper, real account/provider key changes; no file API or
+    // native handoff may be reached by the old capture's valid result.
+    expect(imageSharing.directory).not.toHaveBeenCalled();
+    expect(imageSharing.handoff).not.toHaveBeenCalled();
+    expect(Alert.alert).not.toHaveBeenCalled();
   },
 );
 

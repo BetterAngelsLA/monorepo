@@ -58,7 +58,9 @@ const referral: ExportReferral = {
 const open = async () =>
   await fireEvent.press(screen.getByTestId('share-referral-r1'));
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.mocked(shareReferralText).mockReset().mockResolvedValue(undefined);
+  vi.mocked(shareReferralTextFile).mockReset().mockResolvedValue(undefined);
+  vi.mocked(shareReferralPng).mockReset().mockResolvedValue(undefined);
 });
 
 it('includes profile accommodations in the reviewed copy and file only while the sensitive option is checked', async () => {
@@ -186,6 +188,96 @@ it('offers the complete text copy instead of truncating a summary too large for 
     'W'.repeat(20001),
   );
 });
+
+it('locks duplicate PNG taps and privacy changes, recovers from a capture failure, and permits a fresh retry and text fallback', async () => {
+  const alert = vi.spyOn(Alert, 'alert').mockImplementation(vi.fn());
+  const warning = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
+  try {
+    let fail!: (error: Error) => void;
+    vi.mocked(shareReferralPng).mockReturnValueOnce(
+      new Promise((_, reject) => {
+        fail = reject;
+      }),
+    );
+    await render(
+      <ReferralShare referral={referral} clientName="Test Client" />,
+    );
+    await open();
+    await fireEvent.press(screen.getByTestId('referral-image-mode'));
+    await fireEvent(screen.getByTestId('mock-image-preview'), 'layout');
+    await fireEvent.press(screen.getByTestId('referral-share-png'));
+    await fireEvent.press(screen.getByTestId('referral-share-png'));
+    expect(shareReferralPng).toHaveBeenCalledOnce();
+    expect(screen.getByTestId('referral-share-png')).toBeDisabled();
+    expect(screen.getByTestId('referral-image-mode')).toBeDisabled();
+    expect(screen.getByTestId('referral-share-include-private')).toBeDisabled();
+    await act(async () => fail(new Error('Synthetic capture failure')));
+    expect(alert).toHaveBeenCalledExactlyOnceWith(
+      'Could not open sharing',
+      expect.any(String),
+    );
+    expect(screen.getByTestId('referral-share-png')).toBeEnabled();
+    await fireEvent.press(screen.getByTestId('referral-share-png'));
+    await waitFor(() => expect(shareReferralPng).toHaveBeenCalledTimes(2));
+    await fireEvent.press(screen.getByTestId('referral-image-mode'));
+    await fireEvent.press(screen.getByRole('button', { name: 'Share text' }));
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Share text file (.txt)' }),
+    );
+    expect(shareReferralText).toHaveBeenCalledOnce();
+    expect(shareReferralTextFile).toHaveBeenCalledOnce();
+  } finally {
+    alert.mockRestore();
+    warning.mockRestore();
+  }
+});
+
+it.each(['close', 'unmount'] as const)(
+  'revokes an in-flight PNG on %s and suppresses late error UI',
+  async (boundary) => {
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation(vi.fn());
+    const warning = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
+    try {
+      let fail!: (error: Error) => void;
+      vi.mocked(shareReferralPng).mockReturnValueOnce(
+        new Promise((_, reject) => {
+          fail = reject;
+        }),
+      );
+      const view = await render(
+        <ReferralShare referral={referral} clientName="Test Client" />,
+      );
+      await open();
+      await fireEvent.press(
+        screen.getByTestId('referral-share-include-private'),
+      );
+      await fireEvent.press(screen.getByTestId('referral-image-mode'));
+      await fireEvent(screen.getByTestId('mock-image-preview'), 'layout');
+      await fireEvent.press(screen.getByTestId('referral-share-png'));
+      const isCurrent = vi.mocked(shareReferralPng).mock.calls[0][1];
+      expect(isCurrent()).toBe(true);
+      if (boundary === 'close')
+        await fireEvent.press(screen.getByTestId('referral-share-close'));
+      else await view.unmount();
+      expect(isCurrent()).toBe(false);
+      await act(async () => fail(new Error('Late native failure')));
+      expect(alert).not.toHaveBeenCalled();
+      if (boundary === 'close') {
+        await open();
+        expect(
+          screen.getByTestId('referral-share-include-private').props
+            .accessibilityState.checked,
+        ).toBe(false);
+        expect(screen.getByTestId('referral-share-preview')).toBeOnTheScreen();
+        expect(screen.queryByTestId('mock-image-preview')).toBeNull();
+        expect(isCurrent()).toBe(false);
+      }
+    } finally {
+      alert.mockRestore();
+      warning.mockRestore();
+    }
+  },
+);
 
 it('previews before sharing, uses exactly the reviewed text, and resets private inclusion on reopening', async () => {
   await render(<ReferralShare referral={referral} clientName="Test Client" />);

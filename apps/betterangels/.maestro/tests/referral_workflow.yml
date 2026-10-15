@@ -100,7 +100,7 @@ appId: ${MAESTRO_APP_ID}
           direction: UP
           timeout: 30000
 
-      # Default copy omits staff notes; explicit inclusion changes the reviewed copy.
+      # Check text privacy and PNG native choosers for this exact saved record.
       - scrollUntilVisible:
           element:
             id: 'share-referral-.*'
@@ -116,18 +116,7 @@ appId: ${MAESTRO_APP_ID}
             id: 'referral-card-.*'
             containsDescendants:
               - text: '${"Notes: " + output.editedMarker}'
-      - assertVisible: 'Review referral summary'
-      - assertNotVisible: ${'(?s).*' + output.editedMarker + '.*'}
-      - tapOn:
-          id: referral-share-include-private
-      - scrollUntilVisible:
-          element:
-            text: ${'(?s).*' + output.editedMarker + '.*'}
-          direction: DOWN
-          timeout: 30000
-          visibilityPercentage: 10
-      - tapOn:
-          id: referral-share-close
+      - runFlow: ../steps/referrals/check_summary_sharing.yml
 
       # Reuse is a new referral: review notice, blank staff notes, no shelter chosen.
       - scrollUntilVisible:

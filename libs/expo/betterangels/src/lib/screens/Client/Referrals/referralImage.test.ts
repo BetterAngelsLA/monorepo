@@ -9,6 +9,30 @@ import {
   type ExportReferral,
 } from './referralExport';
 import { encodeReferralNotes } from './referralIntakeSidecar';
+import { AdaAccommodationEnum } from '../../../apollo';
+import { INTAKE_FIELDS } from './intakeFields';
+
+const privateFields = INTAKE_FIELDS.filter(
+  (field) => field.sensitive || field.backend.mode === 'direct',
+).map((field) => {
+  const value =
+    field.control === 'multiselect'
+      ? [field.options[0].value]
+      : `Fictional private ${field.key}`;
+  const displayed =
+    field.control === 'multiselect'
+      ? field.options[0].label
+      : `Fictional private ${field.key}`;
+  return {
+    label: `${field.label} [Sensitive]`,
+    displayed,
+    notes: encodeReferralNotes(
+      field.backend.mode === 'direct' ? displayed : '',
+      field.backend.mode === 'direct' ? {} : { [field.key]: value },
+    ),
+    profile: undefined,
+  };
+});
 
 const source = {
   referral: {
@@ -25,6 +49,55 @@ const source = {
   clientName: 'Ana Muñoz',
   generatedAt: '2026-10-15T12:30:00Z',
 };
+
+it('keeps the approved private intake fields in the export matrix if metadata changes', () => {
+  expect(privateFields.map((field) => field.label)).toEqual(
+    expect.arrayContaining([
+      'Substances [Sensitive]',
+      'Special Situations [Sensitive]',
+      'Staff Observations / Notes [Sensitive]',
+    ]),
+  );
+});
+
+describe.each([false, true])(
+  'complete export privacy matrix, inclusion %s',
+  (includePrivate) => {
+    it.each([
+      ...privateFields,
+      {
+        label: 'Accommodations [Sensitive]',
+        displayed: 'Mobility',
+        notes: null,
+        profile: { adaAccommodation: [AdaAccommodationEnum.Mobility] },
+      },
+    ])(
+      'protects $label in both text and image output',
+      ({ label, displayed, notes, profile }) => {
+        const input = {
+          ...source,
+          referral: { ...source.referral, notes },
+          profile,
+          includePrivate,
+        };
+        const before = JSON.stringify(input);
+        const document = buildReferralDocumentCopy(input);
+        const value = includePrivate ? displayed : 'Excluded (sensitive)';
+        expect(document.blocks).toContainEqual({ kind: 'field', label, value });
+        expect(buildReferralTextCopy(input).text).toContain(
+          `${label}: ${value}`,
+        );
+        // Inspect the full image's answer column, not just the shared model.
+        const imageValues = layoutReferralImage(document)
+          .lines.filter((line) => line.fontWeight === '400')
+          .map((line) => line.text)
+          .join('');
+        expect(imageValues.includes(displayed)).toBe(includePrivate);
+        expect(JSON.stringify(input)).toBe(before);
+      },
+    );
+  },
+);
 
 it.each([false, true])(
   'uses the same reviewed information and privacy labels in image and text, inclusion %s',
