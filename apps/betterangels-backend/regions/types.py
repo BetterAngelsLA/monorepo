@@ -11,11 +11,8 @@ from datetime import datetime
 from typing import List, Optional
 
 import strawberry
-from django.contrib.gis.geos import MultiPolygon
 
 from common.graphql.types import LatitudeScalar, LongitudeScalar
-
-from .models import RegionKind
 
 
 @strawberry.enum
@@ -80,22 +77,3 @@ class InteractionMapType:
 
     points: List[InteractionPointType]
     truncated: bool
-
-
-@strawberry.type
-class RegionType:
-    """A boundary polygon.
-
-    ``geometry`` is the built-in ``MultiPolygon`` scalar. Its serialiser converts one level and
-    is guarded on the exact GEOS type — ``v.tuple if isinstance(v, MultiPolygon) else v`` — so
-    it only yields coordinates for a real ``MultiPolygon``. PostGIS returns ``POLYGON`` for a
-    single-part result, so this depends on ``selectors.region_features`` declaring
-    ``output_field=MultiPolygonField()``; without it the ``else v`` branch hands the JSON
-    encoder a raw GEOS object and the client gets a WKT string, not an error. Pinned by
-    ``test_region_geometry_is_a_multipolygon``.
-    """
-
-    kind: RegionKind
-    code: str
-    name: str
-    geometry: MultiPolygon  # type: ignore[valid-type]

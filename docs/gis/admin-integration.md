@@ -5,13 +5,16 @@ afternoon to.
 
 ## What ships
 
-**Backend — four queries:**
+**Backend — three queries and a tile endpoint:**
 
 ```graphql
 interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes): [RegionCountType!]!
-regionDimensions: [RegionDimension!]!
-regions(dimension, codes): [RegionType!]!
 interactionMap(organizationId, startDate, endDate, limit, dimension, regionCodes): InteractionMapType!
+regionDimensions: [RegionDimension!]!
+```
+
+```http
+GET /regions/tiles/<kind>/<z>/<x>/<y>.mvt
 ```
 
 `RegionCountType` carries `kind`, `code`, `name`, `count`, `isUnassigned`, and
@@ -38,7 +41,7 @@ the same legacy path the Notes pages use.
 
 `interactionsByRegion` returns counts rather than coordinates, so it carries
 `reports.view_reports` alone — the same authority as `reportSummary`, which it sits beside.
-`regions` and `regionDimensions` serve public reference boundaries and need only an
+`regionDimensions` and the tile endpoint serve public reference boundaries and need only an
 authenticated user.
 
 **Frontend.** `LocationBreakdown` renders on the Reports page beneath the existing charts
@@ -50,8 +53,9 @@ KPIs above. It provides:
   the map can answer "show me the SPA 4 visits" rather than only "every visit, coloured
   by SPA";
 - a **region table** with the unassigned buckets labelled by cause;
-- `RegionMap`, which draws region boundaries when a grouping is chosen, with a **Heatmap** /
-  **Clusters** toggle in its card header and a `filteredTo` caption when the map is narrowed.
+- `RegionMap`, which draws region boundaries from the tile endpoint when a grouping is chosen,
+  with a **Heatmap** / **Clusters** toggle in its card header and a `filteredTo` caption when
+  the map is narrowed.
 
 The map needs `VITE_SHELTER_GOOGLE_MAPS_API_KEY` (or its own
 `VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`). Without it the panel degrades to an
