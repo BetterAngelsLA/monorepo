@@ -108,17 +108,45 @@ function useChartColors() {
       warning: token.colorWarning,
       purple: token.colorInfo,
     }),
-    [token.colorPrimary, token.colorSuccess, token.colorWarning, token.colorInfo],
+    [
+      token.colorPrimary,
+      token.colorSuccess,
+      token.colorWarning,
+      token.colorInfo,
+    ],
   );
 }
 
-/** Static axis config, hoisted for the same reason: a new object re-inits the chart. */
+/**
+ * Axis config, hoisted so a re-render does not hand the chart a new object and re-init it.
+ *
+ * **`axis={{ x, y }}`, not `xAxis`/`yAxis`.** The v1 props are dead in `@ant-design/charts` v2
+ * exactly as `color` is: `@antv/g2`'s mark spec has no `xAxis`/`yAxis` member (only `axis`), and
+ * `@ant-design/plots`' option map — the same table that turns `colorField` into `encode.color` —
+ * has no mapping for either name. Confirmed by grep: neither string occurs anywhere in
+ * `@ant-design/plots/es` or `@antv/g2/lib`. So the previous `xAxis={...}`/`yAxis={...}` silently
+ * did nothing, and every axis title, the auto-rotated labels and `formatBucketLabel` never
+ * reached the chart — the formatter had a unit test that only ever tested the function.
+ * The house wrapper shows the working form: `BarChart.tsx` passes `axis: { x, y }`.
+ *
+ * `axis.x` / `axis.y` are positional channels, so they stay correct when the chart's
+ * orientation changes; the `countAxis` helper builds the shared "title only" number axis.
+ */
 const countAxis = (title: string) => ({ title: { text: title } });
 const Y_AXIS_INTERACTIONS = countAxis('Interactions');
 const Y_AXIS_CLIENTS = countAxis('Clients');
 const Y_AXIS_COUNT = countAxis('Count');
-const X_AXIS_DATES = { label: { autoRotate: true, formatter: formatBucketLabel } };
+const X_AXIS_DATES = {
+  label: { autoRotate: true, formatter: formatBucketLabel },
+};
 const X_AXIS_NAMES = { label: { autoRotate: true, style: { fontSize: 11 } } };
+/** `Column`/`Pie` take the pair as one prop; `axis.x`/`axis.y` match `xField`/`yField`. */
+const axisFor = (x: object, y: object) => ({ x, y });
+
+/** The three pairings the page uses, hoisted so the objects stay referentially stable. */
+const AXIS_DATES_INTERACTIONS = axisFor(X_AXIS_DATES, Y_AXIS_INTERACTIONS);
+const AXIS_DATES_CLIENTS = axisFor(X_AXIS_DATES, Y_AXIS_CLIENTS);
+const AXIS_NAMES_COUNT = axisFor(X_AXIS_NAMES, Y_AXIS_COUNT);
 
 export function Reports({ className = '', hasMapsKey = true }: IProps) {
   const CHART_COLORS = useChartColors();
@@ -235,7 +263,11 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
             {[0, 1, 2, 3].map((i) => (
               <Col key={i} xs={24} sm={6}>
                 <Card>
-                  <Skeleton active paragraph={{ rows: 1 }} title={{ width: '60%' }} />
+                  <Skeleton
+                    active
+                    paragraph={{ rows: 1 }}
+                    title={{ width: '60%' }}
+                  />
                 </Card>
               </Col>
             ))}
@@ -306,8 +338,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="date"
                     yField="count"
                     height={300}
-                    xAxis={X_AXIS_DATES}
-                    yAxis={Y_AXIS_INTERACTIONS}
+                    axis={AXIS_DATES_INTERACTIONS}
                     style={CHART_STYLE.primary}
                   />
                 </ChartCard>
@@ -322,8 +353,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="date"
                     yField="count"
                     height={300}
-                    xAxis={X_AXIS_DATES}
-                    yAxis={Y_AXIS_CLIENTS}
+                    axis={AXIS_DATES_CLIENTS}
                     style={CHART_STYLE.purple}
                   />
                 </ChartCard>
@@ -338,8 +368,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="name"
                     yField="count"
                     height={300}
-                    xAxis={X_AXIS_NAMES}
-                    yAxis={Y_AXIS_COUNT}
+                    axis={AXIS_NAMES_COUNT}
                     style={CHART_STYLE.primary}
                   />
                 </ChartCard>
@@ -390,8 +419,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="name"
                     yField="count"
                     height={300}
-                    xAxis={X_AXIS_NAMES}
-                    yAxis={Y_AXIS_COUNT}
+                    axis={AXIS_NAMES_COUNT}
                     style={CHART_STYLE.success}
                   />
                 </ChartCard>
@@ -406,8 +434,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="name"
                     yField="count"
                     height={300}
-                    xAxis={X_AXIS_NAMES}
-                    yAxis={Y_AXIS_COUNT}
+                    axis={AXIS_NAMES_COUNT}
                     style={CHART_STYLE.warning}
                   />
                 </ChartCard>

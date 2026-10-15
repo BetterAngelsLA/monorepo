@@ -8,7 +8,8 @@ import {
 } from './__generated__/regions.generated';
 
 /** One interaction location, as returned by `interactionMap`. */
-export type InteractionPointType = InteractionMapQuery['interactionMap']['points'][number];
+export type InteractionPointType =
+  InteractionMapQuery['interactionMap']['points'][number];
 type UseInteractionMapArgs = {
   organizationId: string;
   startDate: string;
@@ -49,10 +50,7 @@ export function useInteractionMap({
     skip: !organizationId,
   });
 
-  const points = useMemo(
-    () => data?.interactionMap?.points ?? [],
-    [data],
-  );
+  const points = useMemo(() => data?.interactionMap?.points ?? [], [data]);
   const truncated = data?.interactionMap?.truncated ?? false;
 
   return { points, truncated, loading, error };

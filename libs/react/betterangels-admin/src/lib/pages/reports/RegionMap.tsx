@@ -2,18 +2,36 @@
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
 import { HEATMAP_RAMP_CSS, HeatmapLayerWithScale } from './HeatmapLayer';
 import { PointLayer } from './PointLayer';
+import { parseColor } from './mapColors';
 import { Alert, theme } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
+import { LA_COUNTY_CENTER } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import {
   useRegionMap,
-    type InteractionPointType,
+  type InteractionPointType,
   type RegionCountType,
   type RegionGeometryType,
 } from './hooks';
 
-const LA_CENTER = { lat: 34.05, lng: -118.35 };
+/**
+ * The map's home view: LA County, fitted to the county rather than to one address.
+ *
+ * The **centre** comes from the shared map module (`LA_COUNTY_CENTER`, re-exported from
+ * `@monorepo/react/components`) so this map and the shelter maps agree on where LA is; it is
+ * converted from the shared `{ latitude, longitude }` shape to the
+ * `{ lat, lng }` literal `@vis.gl/react-google-maps` wants.
+ *
+ * The **zoom** is deliberately local. `DEFAULT_MAP_ZOOM` (13) is the shared default for a map
+ * centred on a single location; this map is a county-wide analytical surface, and 13 shows a
+ * few neighbourhoods of it. 9 frames the county, which is the scale the six dimensions are
+ * read at.
+ */
+const LA_CENTER: google.maps.LatLngLiteral = {
+  lat: LA_COUNTY_CENTER.latitude,
+  lng: LA_COUNTY_CENTER.longitude,
+};
 
 /**
  * Strip the basemap back to what the data needs.
@@ -35,17 +53,41 @@ const LA_CENTER = { lat: 34.05, lng: -118.35 };
 const DATA_FOCUSED_STYLES: google.maps.MapTypeStyle[] = [
   // Everything the reader is not measuring.
   { featureType: 'poi', elementType: 'all', stylers: [{ visibility: 'off' }] },
-  { featureType: 'transit', elementType: 'all', stylers: [{ visibility: 'off' }] },
+  {
+    featureType: 'transit',
+    elementType: 'all',
+    stylers: [{ visibility: 'off' }],
+  },
   // The green "Mt San Antonio" badge survives the `poi` rule because it is a *terrain*
   // label, not a point of interest — it lives under `landscape.natural`. Terrain names are
   // orientation at the scale of a whole county, which this map is never read at.
-  { featureType: 'landscape.natural', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  {
+    featureType: 'landscape.natural',
+    elementType: 'labels',
+    stylers: [{ visibility: 'off' }],
+  },
   // Icons and shields multiply the noise on their own, even where labels are useful.
-  { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-  { featureType: 'administrative', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  {
+    featureType: 'road',
+    elementType: 'labels.icon',
+    stylers: [{ visibility: 'off' }],
+  },
+  {
+    featureType: 'administrative',
+    elementType: 'labels.icon',
+    stylers: [{ visibility: 'off' }],
+  },
   // Softened so the basemap sits behind the heatmap instead of beside it.
-  { featureType: 'landscape', elementType: 'geometry', stylers: [{ saturation: -40 }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ saturation: -60 }, { lightness: 15 }] },
+  {
+    featureType: 'landscape',
+    elementType: 'geometry',
+    stylers: [{ saturation: -40 }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ saturation: -60 }, { lightness: 15 }],
+  },
 ];
 const LA_ZOOM = 9;
 
@@ -53,12 +95,18 @@ const LA_ZOOM = 9;
  * `google.maps.Data.Feature` properties are typed `unknown`, so the two readers
  * narrow them instead of casting at every call site.
  */
-function featureNumber(feature: google.maps.Data.Feature, name: string): number {
+function featureNumber(
+  feature: google.maps.Data.Feature,
+  name: string,
+): number {
   const value = feature.getProperty(name);
   return typeof value === 'number' ? value : 0;
 }
 
-function featureString(feature: google.maps.Data.Feature, name: string): string {
+function featureString(
+  feature: google.maps.Data.Feature,
+  name: string,
+): string {
   const value = feature.getProperty(name);
   return typeof value === 'string' ? value : '';
 }
@@ -84,22 +132,6 @@ function useMapColors() {
   } as const;
 }
 
-/** Parse `#rrggbb` or `rgb(r,g,b)` into components; antd tokens come as either. */
-function parseColor(color: string): [number, number, number] {
-  const hex = color.trim().match(/^#([0-9a-f]{6})$/i);
-  if (hex) {
-    const n = parseInt(hex[1], 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  }
-  const rgb = color.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
-  if (rgb) {
-    return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
-  }
-  // A token we cannot read (a CSS var, say) — a mid grey keeps the map legible rather than
-  // throwing away the whole overlay.
-  return [128, 128, 128];
-}
-
 /**
  * Choropleth ramp: low counts pale, high counts saturated. Deliberately a single hue — this
  * is one series (interaction count), and a multi-hue scale would imply categories that do not
@@ -110,7 +142,12 @@ function parseColor(color: string): [number, number, number] {
  * saturated end is its heading text colour. They were `#DCE3EA` and `#1B3A5C` — Material
  * values — which meant the choropleth ignored the theme entirely.
  */
-function shade(empty: string, full: string, max: number, count: number): string {
+function shade(
+  empty: string,
+  full: string,
+  max: number,
+  count: number,
+): string {
   const [r0, g0, b0] = parseColor(empty);
   const [r1, g1, b1] = parseColor(full);
   if (max <= 0) {
@@ -144,7 +181,10 @@ function RegionOverlay({
     markStroke: string;
   };
 }) {
-  const { regions, loading, error } = useRegionMap({ dimension, codes: focusCodes });
+  const { regions, loading, error } = useRegionMap({
+    dimension,
+    codes: focusCodes,
+  });
 
   useEffect(() => {
     if (error) {
@@ -212,6 +252,8 @@ function RegionLayer({
 }) {
   const map = useMap();
   // One automatic fit per mount; after that the viewport belongs to the reader.
+  // `false` rather than a derived value: an argument to `useRef` is evaluated on every
+  // render, so deriving it here would recompute on each one and keep only the first.
   const hasFittedRef = useRef(false);
 
   const countsByCode = useMemo(() => {
@@ -346,6 +388,12 @@ type RegionMapProps = {
   /** The app owns the key; the lib only needs to know whether one exists. */
   hasMapsKey?: boolean;
   /**
+   * The point query was refused or failed. Rendered as an in-place notice rather than
+   * thrown, because the rollup beside it is a separate query that may well have succeeded —
+   * see `LocationBreakdown`. The boundaries and the table stay useful without pins.
+   */
+  failed?: boolean;
+  /**
    * Which rendering of the same data to draw. Owned by the caller so its toggle can sit in
    * the card header rather than inside the map, and defaulted so a caller offering no
    * choice does not have to pass one.
@@ -370,6 +418,7 @@ export function RegionMap({
   filteredTo,
   focusCodes = [],
   hasMapsKey = true,
+  failed = false,
   view = 'heatmap',
   className = '',
 }: RegionMapProps) {
@@ -379,7 +428,9 @@ export function RegionMap({
   // under the densest kernel, because a pixel's intensity is `count * weight`.
   // Reported by the heatmap, which sits inside the map and can see the zoom. Nothing here
   // needs to know how the scale is derived.
-  const [scale, setScale] = useState<{ zoom: number; count: number } | null>(null);
+  const [scale, setScale] = useState<{ zoom: number; count: number } | null>(
+    null,
+  );
   const mapColors = useMapColors();
 
   const caption = useMemo(() => {
@@ -394,6 +445,21 @@ export function RegionMap({
     }
     return `Interactions in this range${scope}.`;
   }, [view, points.length, filteredTo]);
+  if (failed) {
+    // A refusal, not a fault: the note read scope is a different permission from the report
+    // scope, so a reader can be entitled to the breakdown and not to the pins. Said plainly
+    // rather than as "something went wrong", and the table below carries the same data.
+    return (
+      <Alert
+        className={mergeCss(className)}
+        type="info"
+        showIcon
+        message="Map unavailable"
+        description="Your role can read the regional breakdown but not individual interactions, so the pins are not shown. The table below has the same figures per region."
+      />
+    );
+  }
+
   if (!hasMapsKey) {
     return (
       <Alert
@@ -417,89 +483,99 @@ export function RegionMap({
           id="admin-region-map"
           style={{ width: '100%', height: 560, borderRadius: 6 }}
           defaultCenter={LA_CENTER}
-        defaultZoom={LA_ZOOM}
-        gestureHandling="cooperative"
-        styles={DATA_FOCUSED_STYLES}
-        // The map is a fixed analytical view, not a place to explore. Street View and the
-        // map/satellite switch offer ways to look at *imagery* rather than at the data, and
-        // the satellite basemap in particular competes with the heatmap and the boundaries
-        // drawn over it. The zoom control stays — it is how you read the clusters.
-        streetViewControl={false}
-        mapTypeControl={false}
-        fullscreenControl={false}
-        rotateControl={false}
-      >
-        {dimension !== undefined && (
-          <RegionOverlay
-            dimension={dimension}
-            rows={rows}
-            focusCodes={focusCodes}
-            overlay={mapColors}
-          />
-        )}
-        {/* Both layers are always mounted. The overlay draws whichever regions the
+          defaultZoom={LA_ZOOM}
+          gestureHandling="cooperative"
+          styles={DATA_FOCUSED_STYLES}
+          // The map is a fixed analytical view, not a place to explore. Street View and the
+          // map/satellite switch offer ways to look at *imagery* rather than at the data, and
+          // the satellite basemap in particular competes with the heatmap and the boundaries
+          // drawn over it. The zoom control stays — it is how you read the clusters.
+          streetViewControl={false}
+          mapTypeControl={false}
+          fullscreenControl={false}
+          rotateControl={false}
+        >
+          {dimension !== undefined && (
+            <RegionOverlay
+              dimension={dimension}
+              rows={rows}
+              focusCodes={focusCodes}
+              overlay={mapColors}
+            />
+          )}
+          {/* Both layers are always mounted. The overlay draws whichever regions the
             grouping resolved to — none, when nothing did — rather than being a view of
             its own, and the point layer draws only for the clusters view. */}
-        {view === 'heatmap' && (
-          <HeatmapLayerWithScale points={points} onScale={setScale} />
-        )}
-        {view === 'clusters' && (
-          <PointLayer
-            points={points}
-            markFill={mapColors.markFill}
-            markStroke={mapColors.markStroke}
-          />
-        )}
-        {/* On the map rather than beside it: the ramp is meaningless without knowing it is
+          {view === 'heatmap' && (
+            <HeatmapLayerWithScale points={points} onScale={setScale} />
+          )}
+          {view === 'clusters' && (
+            <PointLayer
+              points={points}
+              markFill={mapColors.markFill}
+              markStroke={mapColors.markStroke}
+            />
+          )}
+          {/* On the map rather than beside it: the ramp is meaningless without knowing it is
             absolute, and a reader looking at a gradient should not have to hunt for its
             key. Positioned bottom-left, clear of the map's own controls. */}
-        {view === 'heatmap' && (
-          <div
-            // Lifted clear of Google's own attribution, which owns the bottom-left corner
-            // and must stay readable — it is a licence term, not decoration.
-            className="pointer-events-none absolute bottom-9 left-3 rounded bg-white/90 px-2 py-1 shadow"
-            // Placed inside the map container via the GoogleMap child slot; the map's own
-            // DOM is a sibling, so absolute positioning is relative to this wrapper.
-            style={{ position: 'absolute', zIndex: 5 }}
-          >
-            {/* 12px is the floor for legible secondary text, and #8c8c8c on white is only
+          {view === 'heatmap' && (
+            <div
+              // Lifted clear of Google's own attribution, which owns the bottom-left corner
+              // and must stay readable — it is a licence term, not decoration.
+              className="pointer-events-none absolute bottom-9 left-3 rounded bg-white/90 px-2 py-1 shadow"
+              // Placed inside the map container via the GoogleMap child slot; the map's own
+              // DOM is a sibling, so absolute positioning is relative to this wrapper.
+              style={{ position: 'absolute', zIndex: 5 }}
+            >
+              {/* 12px is the floor for legible secondary text, and #8c8c8c on white is only
                 3.36:1 against a 4.5:1 requirement. These use the 12px/`neutral-700` pairing,
                 which measures 10.7:1 — the legend is the only key to the colour scale, so
                 leaving it at the least readable size on the page was backwards. */}
-            <div className="mb-1 text-xs font-medium text-neutral-700">
-              Interaction density
-            </div>
-            <div className="h-2 w-44 rounded-sm" style={{ background: HEATMAP_RAMP_CSS }} />
-            {/* Numbers rather than "fewer"/"more". The ramp is normalised against the
+              <div className="mb-1 text-xs font-medium text-neutral-700">
+                Interaction density
+              </div>
+              <div
+                className="h-2 w-44 rounded-sm"
+                style={{ background: HEATMAP_RAMP_CSS }}
+              />
+              {/* Numbers rather than "fewer"/"more". The ramp is normalised against the
                 busiest area in the whole selection, so the honest reading is a share of
                 that peak — not an absolute count, which the weighted sum is not. */}
-            <div className="mt-0.5 flex w-44 justify-between text-xs text-neutral-700">
-              <span>0</span>
-              <span>50</span>
-              <span>100%</span>
-            </div>
-            <div className="mt-0.5 w-44 text-xs text-neutral-700">
-              {scale
-                ? `100% = ${scale.count.toLocaleString()} interactions in the densest area`
-                : '100% = the densest area in this selection'}
-            </div>
-            {/* The reference is per-zoom, because the kernel radius is in pixels. Saying so
+              <div className="mt-0.5 flex w-44 justify-between text-xs text-neutral-700">
+                <span>0</span>
+                <span>50</span>
+                <span>100%</span>
+              </div>
+              <div className="mt-0.5 w-44 text-xs text-neutral-700">
+                {scale
+                  ? `100% = ${scale.count.toLocaleString()} interactions in the densest area`
+                  : '100% = the densest area in this selection'}
+              </div>
+              {/* The reference is per-zoom, because the kernel radius is in pixels. Saying so
                 is the difference between a scale and a scale that quietly changes. */}
-            <div className="text-xs text-neutral-600">
-              scale set for this zoom level
+              <div className="text-xs text-neutral-600">
+                scale set for this zoom level
+              </div>
             </div>
-          </div>
-        )}
+          )}
         </GoogleMap>
       </div>
       <p className="mt-2 text-xs text-neutral-500">{caption}</p>
-      {truncated && view === 'clusters' && (
+      {/* Both views plot the same capped point set, so both have to say when it is a subset.
+          The heatmap is the default view, so gating this on `clusters` meant the warning was
+          hidden in exactly the case most readers saw. */}
+      {truncated && (
         <Alert
           className="mt-2"
           type="warning"
           showIcon
           message="Showing the most recent interactions only"
-          description="There are more interactions in this range than the map can plot, so these clusters are a subset — the counts and table below are complete."
+          description={
+            view === 'clusters'
+              ? 'There are more interactions in this range than the map can plot, so these clusters are a subset — the counts and table below are complete.'
+              : 'There are more interactions in this range than the map can plot, so this field is drawn from a subset — the counts and table below are complete.'
+          }
         />
       )}
     </div>

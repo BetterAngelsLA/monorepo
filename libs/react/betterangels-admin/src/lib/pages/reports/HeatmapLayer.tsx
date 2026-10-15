@@ -146,7 +146,8 @@ function computeReferencePeaks(
     // as the accumulation. Web Mercator is ~156,543 m/px at the equator at z0, so a pixel
     // spans `156543 * cos(lat) * 2^-zoom` metres; LA is ~34°N. Without this the kernel's
     // geographic size would be ignored and every zoom would be scaled differently.
-    const metresPerPixel = (156543 * Math.cos((34 * Math.PI) / 180)) / Math.pow(2, zoom);
+    const metresPerPixel =
+      (156543 * Math.cos((34 * Math.PI) / 180)) / Math.pow(2, zoom);
     // One cell per **pixel**, so the bucket grid is the accumulation grid. Using the
     // kernel's own width here made the footprint three times too large, so the reference
     // overshot the true peak by ~2-3x and the top of the ramp was never reached.
@@ -218,7 +219,10 @@ function computeReferencePeaks(
     const a = peaks.get(lower) as number;
     const b = peaks.get(upper) as number;
     const t = (zoom - lower) / (upper - lower);
-    interpolated.set(zoom, Math.exp(Math.log(a) + (Math.log(b) - Math.log(a)) * t));
+    interpolated.set(
+      zoom,
+      Math.exp(Math.log(a) + (Math.log(b) - Math.log(a)) * t),
+    );
   }
 
   return interpolated;
@@ -309,23 +313,32 @@ export function HeatmapLayerWithScale({
     onScaleRef.current = onScale;
   });
 
-  const handleScale = useCallback((reference: Map<number, number>, weight: number) => {
-    const live = mapRef.current;
-    const zoom = live ? Math.round(live.getZoom() ?? 10) : undefined;
-    if (zoom === undefined || weight <= 0) {
-      return;
-    }
-    const current = reference.get(zoom);
-    if (current === undefined) {
-      return;
-    }
-    onScaleRef.current?.({ zoom, count: Math.round(current / weight) });
-  }, []);
+  const handleScale = useCallback(
+    (reference: Map<number, number>, weight: number) => {
+      const live = mapRef.current;
+      const zoom = live ? Math.round(live.getZoom() ?? 10) : undefined;
+      if (zoom === undefined || weight <= 0) {
+        return;
+      }
+      const current = reference.get(zoom);
+      if (current === undefined) {
+        return;
+      }
+      onScaleRef.current?.({ zoom, count: Math.round(current / weight) });
+    },
+    [],
+  );
 
-  return <HeatmapLayer points={points} intensity={intensity} onScale={handleScale} />;
+  return (
+    <HeatmapLayer points={points} intensity={intensity} onScale={handleScale} />
+  );
 }
 
-export function HeatmapLayer({ points, intensity = 0.55, onScale }: HeatmapLayerProps) {
+export function HeatmapLayer({
+  points,
+  intensity = 0.55,
+  onScale,
+}: HeatmapLayerProps) {
   const map = useMap();
   const pointsRef = useRef<HeatPoint[]>(points);
   // Fixed for a given dataset, so a pan cannot rescale the ramp.
@@ -410,7 +423,12 @@ export function HeatmapLayer({ points, intensity = 0.55, onScale }: HeatmapLayer
         }
         const cx = pixel.x;
         const cy = pixel.y;
-        if (cx < -radius || cy < -radius || cx > width + radius || cy > height + radius) {
+        if (
+          cx < -radius ||
+          cy < -radius ||
+          cx > width + radius ||
+          cy > height + radius
+        ) {
           continue;
         }
         const x0 = Math.max(0, Math.floor(cx - radius));
@@ -472,7 +490,10 @@ export function HeatmapLayer({ points, intensity = 0.55, onScale }: HeatmapLayer
         data[o + 2] = b;
         // Alpha follows intensity too, so the edge of the field dissolves into the map
         // rather than sitting on a hard boundary.
-        data[o + 3] = Math.min(255, Math.round(235 * Math.pow(normalised, 0.45)));
+        data[o + 3] = Math.min(
+          255,
+          Math.round(235 * Math.pow(normalised, 0.45)),
+        );
       }
       ctx.putImageData(image, 0, 0);
     };
@@ -507,7 +528,11 @@ export function HeatmapLayer({ points, intensity = 0.55, onScale }: HeatmapLayer
     }
     const handle = requestIdleCallback(
       () => {
-        referenceRef.current = computeReferencePeaks(points, intensity, SAMPLED_LEVELS);
+        referenceRef.current = computeReferencePeaks(
+          points,
+          intensity,
+          SAMPLED_LEVELS,
+        );
         onScale?.(referenceRef.current, weightFor(points.length, intensity));
         drawRef.current?.();
       },

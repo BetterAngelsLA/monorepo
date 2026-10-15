@@ -49,7 +49,10 @@ export function useRegionMap({ dimension, codes }: UseRegionMapArgs) {
   });
 
   const regions = useMemo(
-    () => (data?.regions ?? []).filter((region) => (region.geometry ?? '').length > 0),
+    () =>
+      (data?.regions ?? []).filter(
+        (region) => (region.geometry ?? '').length > 0,
+      ),
     [data],
   );
 

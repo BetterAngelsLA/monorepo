@@ -15,7 +15,12 @@ export function ChartCard({
   extra?: ReactNode;
 }) {
   return (
-    <Card size="small" title={title} extra={extra} className={mergeCss(className)}>
+    <Card
+      size="small"
+      title={title}
+      extra={extra}
+      className={mergeCss(className)}
+    >
       {children}
     </Card>
   );

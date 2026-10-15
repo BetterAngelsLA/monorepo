@@ -9,10 +9,7 @@ import {
   type TableColumnsType,
 } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  RegionDimension,
-  UnassignedReason,
-} from '@monorepo/ba-platform/types';
+import { RegionDimension, UnassignedReason } from '@monorepo/ba-platform/types';
 import { ChartCard, useNoAutofill } from '../../components';
 import {
   useInteractionMap,
@@ -27,11 +24,15 @@ const { Text } = Typography;
 const GENERIC_ERROR_MESSAGE = 'Sorry, something went wrong. Please try again.';
 
 /**
- * Display names for the dimensions. The enum values are GraphQL identifiers
- * (COUNCIL_DISTRICT); these are what a program manager reads.
+ * Display names for the dimensions, keyed by the **wire** value (`council_district`).
+ *
+ * One map, not two. There were previously two — this one and a
+ * `Record<RegionDimension, string>` — holding the same six strings, so a rename had to be
+ * made twice or the table and the dropdown would disagree. String-keyed rather than keyed by
+ * the enum because a bucket's `kind` arrives off the wire as a plain string and may be a
+ * value this build does not know; an unknown key falls back to the raw value.
  */
-/** Enum value (`council_district`) -> prose label. Keys are the wire values. */
-const KIND_LABELS: Record<string, string> = {
+const DIMENSION_LABELS: Record<string, string> = {
   zip: 'ZIP Code',
   city: 'City',
   council_district: 'City Council District',
@@ -50,15 +51,6 @@ const KIND_LABELS: Record<string, string> = {
 const KIND_ORDER = new Map<string, number>(
   Object.values(RegionDimension).map((dimension, index) => [dimension, index]),
 );
-
-const DIMENSION_LABELS: Record<RegionDimension, string> = {
-  [RegionDimension.Zip]: 'ZIP Code',
-  [RegionDimension.City]: 'City',
-  [RegionDimension.CouncilDistrict]: 'City Council District',
-  [RegionDimension.SupervisorialDistrict]: 'Supervisorial District',
-  [RegionDimension.Spa]: 'Service Planning Area',
-  [RegionDimension.Coc]: 'Continuum of Care',
-};
 
 /**
  * Clients with no address on file, versus clients outside every boundary we load.
@@ -107,7 +99,7 @@ type LocationBreakdownProps = {
  */
 /** Prose label for a bucket's `kind`; falls back to the raw value if it is unknown. */
 function kindLabel(kind: string): string {
-  return KIND_LABELS[kind] ?? kind;
+  return DIMENSION_LABELS[kind] ?? kind;
 }
 
 /**
@@ -131,7 +123,9 @@ export function LocationBreakdown({
   // picture rather than on one arbitrary grouping. The rollup then counts every dimension
   // at once and each bucket carries its own `kind`. Codes are meaningless across
   // dimensions, so the drill-down stays disabled until one is chosen.
-  const [dimension, setDimension] = useState<RegionDimension | undefined>(undefined);
+  const [dimension, setDimension] = useState<RegionDimension | undefined>(
+    undefined,
+  );
 
   // Regions to narrow the map to — "show me the SPA 4 visits". Empty means the whole
   // dimension.
@@ -186,7 +180,11 @@ export function LocationBreakdown({
   // The grouping drives the boundaries drawn *over* the surface instead, which is the
   // usual separation: the gradient encodes a continuous quantity, the boundaries encode a
   // categorical one.
-  const { points, truncated, error: mapError } = useInteractionMap({
+  const {
+    points,
+    truncated,
+    error: mapError,
+  } = useInteractionMap({
     organizationId,
     startDate,
     endDate,
@@ -233,7 +231,8 @@ export function LocationBreakdown({
     }
     // A lookup keyed by a string, so no cast: a bucket's `kind` is a plain string off the
     // wire, and an unexpected one sorts last rather than throwing.
-    const order = (kind: string) => KIND_ORDER.get(kind) ?? Number.MAX_SAFE_INTEGER;
+    const order = (kind: string) =>
+      KIND_ORDER.get(kind) ?? Number.MAX_SAFE_INTEGER;
     return [...rowsWithCounts].sort((a, b) => {
       const byKind = order(a.kind) - order(b.kind);
       if (byKind !== 0) {
@@ -276,7 +275,10 @@ export function LocationBreakdown({
     [pickable],
   );
 
-  const unassigned = useMemo(() => shown.filter((r) => r.isUnassigned), [shown]);
+  const unassigned = useMemo(
+    () => shown.filter((r) => r.isUnassigned),
+    [shown],
+  );
   // Resolved above the JSX rather than inline: the styleguide asks for `if`/`else`
   // over a ternary whose branch is a call, and `??` rather than `||` — an empty name
   // is a legitimate value the importer can produce, and `||` would silently swap in
@@ -297,36 +299,60 @@ export function LocationBreakdown({
 
   // Used for prose only ("Loading city council district data"). Absent means the rollup
   // spans every dimension, so there is no single name to interpolate.
-  const dimensionName = dimension ? DIMENSION_LABELS[dimension] : 'all dimensions';
+  const dimensionName = dimension
+    ? DIMENSION_LABELS[dimension]
+    : 'all dimensions';
 
   // Selecting a different dimension invalidates the codes: "4" is an SPA and also a Long
   // Beach council district, so a selection cannot carry across.
   useEffect(() => {
     setSelectedCodes([]);
   }, [dimension]);
-  const queryError = error ?? dimensionsError ?? mapError;
+
+  /**
+   * **Two error states, not one.** The rollup and the map are separate queries with separate
+   * authorities, so one failing must not take the other down.
+   *
+   * `interactionMap` returns individual coordinates and is gated on the note read scope, so it
+   * is *expected* to be refused for a role that may read the report but not notes — the
+   * backend's own test asserts that refusal. Folding it into the panel-wide `queryError` (as
+   * this did) replaced the whole card — rollup, chart, table — with "Something went wrong" for
+   * exactly that role, hiding data the reader was entitled to. The map now degrades in place,
+   * the way a missing Maps key already did.
+   *
+   * `dimensionsError` *is* panel-wide: without the dimension list there is no grouping to
+   * choose, which is the panel's reason to exist.
+   */
+  const panelError = dimensionsError ?? error;
+  const mapFailed = mapError !== undefined;
 
   // Backend error bodies are not user-facing copy: log the real error and show a
   // generic message instead.
   useEffect(() => {
-    if (queryError) {
-      console.error(queryError);
+    if (panelError) {
+      console.error(panelError);
     }
-  }, [queryError]);
+  }, [panelError]);
+
+  useEffect(() => {
+    if (mapError) {
+      console.error(mapError);
+    }
+  }, [mapError]);
 
   const columns: TableColumnsType<RegionCountType> = [
-      // Only when the rollup spans every dimension. A code is ambiguous without it, so
-      // two rows both named "1" would otherwise be indistinguishable.
-      ...(dimension === undefined
-        ? [
-            {
-              title: 'Grouped by',
-              dataIndex: 'kind' as const,
-              key: 'kind',
-              render: (kind: string) => kindLabel(kind),
-            },
-          ]
-        : []),
+    // Only when the rollup spans every dimension. A code is ambiguous without it, so
+    // two rows both named "1" would otherwise be indistinguishable.
+    ...(dimension === undefined
+      ? [
+          {
+            title: 'Grouped by',
+            dataIndex: 'kind' as const,
+            key: 'kind',
+            render: (kind: string) => kindLabel(kind),
+          },
+        ]
+      : []),
     {
       title: dimension ? dimensionName : 'Region',
       dataIndex: 'name',
@@ -351,7 +377,7 @@ export function LocationBreakdown({
     },
   ];
 
-  if (queryError) {
+  if (panelError) {
     return (
       <ChartCard title="Interactions by Location" className={className}>
         <Alert
@@ -399,20 +425,20 @@ export function LocationBreakdown({
           <Text type="secondary">Group by</Text>
           <Select
             showSearch
-          // Clears to "All" — the rollup then spans every dimension, and each row
-          // carries its own `kind` so the table can say which it came from.
-          allowClear
-          value={dimension}
-          onChange={(value) => {
-            setDimension(value);
-            setSelectedCodes([]);
-          }}
-          style={{ minWidth: 220 }}
-          placeholder="All dimensions"
-          options={dimensions.map((d) => ({
-            value: d,
-            label: DIMENSION_LABELS[d] ?? d,
-          }))}
+            // Clears to "All" — the rollup then spans every dimension, and each row
+            // carries its own `kind` so the table can say which it came from.
+            allowClear
+            value={dimension}
+            onChange={(value) => {
+              setDimension(value);
+              setSelectedCodes([]);
+            }}
+            style={{ minWidth: 220 }}
+            placeholder="All dimensions"
+            options={dimensions.map((d) => ({
+              value: d,
+              label: DIMENSION_LABELS[d] ?? d,
+            }))}
             filterOption={(input, option) =>
               matches((option?.label as string) ?? '', input)
             }
@@ -427,33 +453,33 @@ export function LocationBreakdown({
               are both now fixed: the options were derived from the *filtered* rollup, so
               choosing one region deleted the others from the list, and the dropdown itself
               closes on select in multiple mode. */}
-          <Select
-            mode="multiple"
-            showSearch
-            allowClear
-            // The options come from the unfiltered rollup, so choosing one never removes
-            // the others from the list.
-            options={selectable.map((row) => ({
-              value: row.code,
-              label: `${row.name || row.code} (${row.count.toLocaleString()})`,
-              searchText: `${row.name} ${row.code}`,
-            }))}
-            value={selectedCodes}
-            onChange={setSelectedCodes}
-            // Keeps the pills from growing without bound; the overflow is the "+N" chip.
-            // A fixed cap rather than `responsive`: antd's responsive mode renders the
-            // overflow chip even when nothing is hidden, so three selected regions showed a
-            // stray "+ 0 ..." beside them. Capping at two is also more honest — a "+N" that
-            // always means N things you cannot see.
-            maxTagCount={2}
-            placeholder={`All ${dimensionName.toLowerCase()}s`}
-            style={{ width: '100%' }}
-            // Searches the name *and* the code, because a reader usually has the code in
-            // hand ("district 13") and it is not what the label starts with.
-            filterOption={(input, option) =>
-              matches((option?.searchText as string) ?? '', input)
-            }
-          />
+            <Select
+              mode="multiple"
+              showSearch
+              allowClear
+              // The options come from the unfiltered rollup, so choosing one never removes
+              // the others from the list.
+              options={selectable.map((row) => ({
+                value: row.code,
+                label: `${row.name || row.code} (${row.count.toLocaleString()})`,
+                searchText: `${row.name} ${row.code}`,
+              }))}
+              value={selectedCodes}
+              onChange={setSelectedCodes}
+              // Keeps the pills from growing without bound; the overflow is the "+N" chip.
+              // A fixed cap rather than `responsive`: antd's responsive mode renders the
+              // overflow chip even when nothing is hidden, so three selected regions showed a
+              // stray "+ 0 ..." beside them. Capping at two is also more honest — a "+N" that
+              // always means N things you cannot see.
+              maxTagCount={2}
+              placeholder={`All ${dimensionName.toLowerCase()}s`}
+              style={{ width: '100%' }}
+              // Searches the name *and* the code, because a reader usually has the code in
+              // hand ("district 13") and it is not what the label starts with.
+              filterOption={(input, option) =>
+                matches((option?.searchText as string) ?? '', input)
+              }
+            />
             <div className="text-xs text-neutral-500">
               {selectedCodes.length === 0
                 ? `No selection means every ${dimensionName.toLowerCase()} in range.`
@@ -484,6 +510,7 @@ export function LocationBreakdown({
             points={points}
             truncated={truncated}
             hasMapsKey={hasMapsKey}
+            failed={mapFailed}
             filteredTo={filteredToName}
             focusCodes={selectedCodes}
             view={view}
@@ -509,9 +536,9 @@ export function LocationBreakdown({
         <div className="mt-4 rounded border border-neutral-200 bg-white p-4">
           <Text strong>Choose a grouping for the regional breakdown</Text>
           <p className="mt-1 mb-0 text-sm text-neutral-600">
-            Each dimension covers the same interactions a different way, so their rows can
-            not be added together. Pick one to see its regions, or leave it as “All
-            dimensions” for the map and totals above.
+            Each dimension covers the same interactions a different way, so
+            their rows can not be added together. Pick one to see its regions,
+            or leave it as “All dimensions” for the map and totals above.
           </p>
         </div>
       )}
@@ -538,14 +565,23 @@ export function LocationBreakdown({
         </>
       )}
 
-      {!rowsLoading && dimension !== undefined && unassigned.length > 0 && (
-        // Readable rather than grey-on-grey, which read as disabled. The dimension is shown
-        // because without it every row says the same thing: one unassigned row per
-        // dimension, all labelled "Outside all boundaries", so 23 and 291 looked like
-        // duplicates of each other instead of two different groupings.
+      {/* Reachable in both views. The guard used to be `dimension !== undefined && …`, which
+          was dead: the only sibling that renders this is inside `hasData && dimension !==
+          undefined`, and the ungrouped branch above returns a prompt instead. The effect was
+          that an ungrouped reader — the default view — never saw that 318 interactions could
+          not be attributed to anything. It is one figure and it does not invite the
+          cross-dimension sum the table was removed for, so it belongs here too. */}
+      {!rowsLoading && unassigned.length > 0 && (
+        // Readable rather than grey-on-grey, which read as disabled. The dimension is named
+        // when there is one, because without it every row says the same thing: one unassigned
+        // row per dimension, all labelled "Outside all boundaries", so 23 and 291 looked like
+        // duplicates of each other instead of two different groupings. Ungrouped, each row
+        // names its own dimension instead (see `unassignedLabel` and the row below).
         <div className="mt-4 rounded border border-neutral-200 bg-white p-3">
           <Text strong>
-            Not attributed to a {dimensionName.toLowerCase()}
+            {dimension !== undefined
+              ? `Not attributed to a ${dimensionName.toLowerCase()}`
+              : 'Not attributed to a region'}
           </Text>
           <ul className="mt-2 mb-0 list-none space-y-1 p-0 text-sm">
             {unassigned.map((row) => (
@@ -553,7 +589,14 @@ export function LocationBreakdown({
                 key={`${row.kind}-${row.unassignedReason ?? ''}-${row.code}`}
                 className="flex items-baseline gap-2"
               >
-                <span className="text-neutral-700">{unassignedLabel(row)}</span>
+                {/* Ungrouped, the same label repeats once per dimension, so the kind is what
+                    tells the rows apart — 23 and 291 are different populations, not a dupe. */}
+                <span className="text-neutral-700">
+                  {unassignedLabel(row)}
+                  {dimension === undefined && row.kind
+                    ? ` (${kindLabel(row.kind)})`
+                    : ''}
+                </span>
                 <Text strong>{row.count.toLocaleString()}</Text>
                 <Text type="secondary">interactions</Text>
               </li>
