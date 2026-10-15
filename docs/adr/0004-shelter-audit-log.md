@@ -1081,11 +1081,26 @@ parent-object edit they represent.
 migrations, management commands, shell writes, or any script not wrapped per
 §7b — have `pgh_context_id = NULL`. In SQL, `GROUP BY pgh_context_id` treats all
 NULLs as one group, so every such "system" event would merge into a single
-spurious action. Define the grouping key as a composite — e.g.
-`COALESCE(pgh_context_id::text, 'system-' || pgh_id)` — or treat each
-NULL-context event as its own singleton action. This composite key is also the
-SQL pagination key (§10): the action-key query groups on it and orders by
-`max(pgh_created_at)`, then the row fetch selects the keys on the current page.
+spurious action. The grouping key is therefore a composite:
+`COALESCE(pgh_context_id::text, pgh_slug)`, i.e. each NULL-context event becomes
+its own singleton action.
+
+The fallback must be `pgh_slug`, not `pgh_id`. `pgh_id` is the event table's own
+`AutoField`, so it is only unique *within* one table; the aggregate is a
+`UNION ALL` across every event model, and each table's sequence starts at 1. Two
+context-less writes in different tables would collide on `system-<pgh_id>` and
+render as one action. `pgh_slug` is pghistory's own `'<event_model>:<pgh_id>'`
+primary key on the aggregate `Events` model — unique across all event tables.
+
+This composite key is also the SQL pagination key (§10): the action-key query
+groups on it and orders by `max(pgh_created_at)`, then the row fetch selects the
+keys on the current page.
+
+**Tie-break (§10):** action timestamps tie whenever the events are written in one
+transaction (`NOW()` is constant), so pagination orders by
+`(max(pgh_created_at), max(pgh_id), action_key)` descending and the Python
+re-sort uses the identical tuple. `max(pgh_id)` alone is not a total order (again,
+per-table), so `action_key` is the final, unique tie-break.
 
 **Granularity caveat:** `pgh_context_id` is per-_request_ (the top-level
 `pghistory.context()` entered by `HistoryMiddleware`), not per-mutation. Two
@@ -1131,6 +1146,41 @@ changes (see the Phase 1 "snapshot noise" note). `pgh_*` keys are already
 excluded from both `pgh_data` and `pgh_diff` by the aggregate CTE
 (`WHERE key NOT LIKE 'pgh_%'`, pghistory `models.py`), so no extra filtering is
 needed for them.
+
+**Exclude the primary key:** the pk is present in `pgh_data` for INSERT/REMOVE
+but can never change (the UPDATE branch renders `pgh_diff`, which never contains
+it), so it is dropped from those two branches rather than rendered as
+`{id: [null, 7]}`.
+
+**Keying — duplicate `verbose_name` (decided).** Field names render their
+`verbose_name`, but a model may give several fields the *same* `verbose_name`:
+`Shelter` has three ("Additional Notes": `add_notes_sleeping_details`,
+`add_notes_shelter_details`, `other_services`). Keying a `field_changes` or
+`snapshot` dict by display name would collapse them and silently drop all but the
+last — an audit log under-reporting an edit, and a snapshot that is not the full
+object state (contradicting the "never dropped" guarantee above). Changes are
+therefore keyed internally by the field's raw **attname** and rendered to display
+names at the edges; a display name shared by more than one field of a model falls
+back to the raw field name, computed from the model's whole field set so a
+field's key never varies between events of the same model.
+
+**Action-level key shape (decided).** `_build_action` merges each row's changes
+into one action, keyed by `(owner model, row id, display name)`. The row id is
+part of the key because a single action can write *several rows of the same
+model* — the `label="import"` CSV import wraps its whole dataset in one
+`pghistory.context()` (§7b.4), so keying by field name alone would render a
+50-object import as a single `name: [None, "<last>"]` create. At flatten time the
+key is rendered with one stable shape:
+
+- the **anchored** object's own changes stay bare (`name`, `status`) — the action
+  is about that one row, so there is no ambiguity;
+- a **related** row's changes are always qualified as `"<Model verbose_name>
+  <row id> <field>"` (e.g. `Bed 7 name`), because `references()` (§10) spans the
+  target's neighbors and one action can touch several of them.
+
+The qualifier is applied unconditionally, not only when a name happens to clash
+within that action, so a key's shape does not depend on what else the request
+touched.
 
 **`reservation` update labels:** the two update triggers have disjoint
 conditions (§2), so each label carries its own diff — `reservation.status_change`
@@ -1363,9 +1413,13 @@ hand-written literal, which is the stronger guard because it cannot follow a
 - **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted against a **hand-written literal** per target (`_EXPECTED_SHELTER_REFERENCES` and the Bed/Room equivalents), so any change to what `references()` reaches — a newly tracked model, a dropped branch — fails loudly. The literal, not a set derived from `event_models()` at assert time, is the stronger pin: a derived set would silently track a `references()` regression instead of catching it. Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
 - **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` but **not** in `objectAuditLog(ROOM)`/`(BED)` (the target-scoped blocklist, §10); a room/bed configuration change still appears.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request renders both the `status` and `notes` field changes (before/after diff), not just one winner row.
-- **Cross-model action-level diff:** one action writing two different tracked models that share a display name (e.g. a Shelter and a Bed, both rendering `name`) keeps them as separate before→after pairs (`Shelter name` / `Bed name`) rather than merging them into one false pair; a non-colliding name stays bare, so the wire shape is unchanged in the common case.
+- **Cross-model action-level diff:** one action writing two different tracked models (e.g. a Shelter and a Bed) keeps them as separate before→after pairs — the anchored Shelter's change stays bare (`name`) and the related Bed's is qualified (`Bed 7 name`) — rather than merging into one false pair.
+- **Same-model multi-row action:** one action touching two rows of the *same* model (two beds renamed in one context, standing in for a bulk `label="import"` write) keeps a separate before→after per row, keyed by row id — not one collapsed pair (§13).
+- **Duplicate `verbose_name`:** a model with two fields sharing a `verbose_name` (the three `Shelter` "Additional Notes" fields) renders each edit under its own (raw) key in both `field_changes` and `snapshot`, so neither is silently dropped (§13).
+- **Cross-table context-less writes:** two context-less writes in different event tables render as two distinct singleton actions, with the `pgh_id` collision pinned explicitly so the test does not rely on sequence coincidence (§12).
 - **INSERT/REMOVE pk exclusion:** the model pk (`id`) is absent from an `.add` event's `field_changes` — it is in `pgh_data` but can never change — and (unit-tested) from the `.remove` branch too (§13).
 - **Total-order pagination:** with tied timestamps (one transaction — `NOW()` is constant), paging one action at a time returns each action exactly once, newest-first, so the tie-break is total *and* chronological (§10).
+- **`RETAINED_LABELS` covers the reports (§31):** the labels `shelters/selectors/reports.py` reads are derived from its source and asserted to be a subset of `RETAINED_LABELS`, so a new report label cannot be added without also being retained (the other retention tests import the same constant the command uses, which cannot catch that).
 - **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that label/date/actor filters are pushed to SQL (§10 performance note), not applied in Python after fetching.
 - **No server-side cursor:** `objectAuditLog` must not emit a `DECLARE` (Django's `.iterator()`), which RDS Proxy pins. Assert the captured queries contain no `DECLARE` (§10 RDS Proxy note).
 - **Connection-pinning guards:** (a) the write path's injected SQL uses the transaction-local `set_config(..., true)` form and never a session-scoped `set_config(..., false)`; (b) the statement the selector **actually issues** (the max over its grouped key query and page query, measured as interpolated SQL) stays within the documented per-target ceilings, recording the >16 KB reality from §10 rather than asserting a bound the design cannot meet.
@@ -1683,6 +1737,14 @@ truth (a snapshot/rollup table, or a materialized view over the events) so the
 event rows become purgable; until then, this partial fix trades unbounded growth
 for report correctness. Tracked as the follow-up to this ADR, not scheduled.
 
+**Retention vs. the admin `updated_by` column (display-only).** The admin's
+`updated_by` annotation is built from `MiddlewareEvents.objects.tracks(qs)`
+([shelters/admin.py](apps/betterangels-backend/shelters/admin.py)). Once a row's
+only surviving event is purged, that object shows no `updated_by` — correct, in
+that the event is gone, but worth noting: retention changes what the admin's
+"last updated by" column can show for very old records. Display-only; no stored
+data depends on it.
+
 **Decision: no admin "purge before" action.** Django admin actions operate on a
 selected queryset of rows, not a date window, so a date-driven purge does not fit
 the action model; the management command is the primitive. An admin view/form
@@ -1712,8 +1774,10 @@ partition drop, no exempt role. Implemented in
 
 Tests: [audit/tests/test_purge_audit_log.py](apps/betterangels-backend/audit/tests/test_purge_audit_log.py)
 — deletion/retention scope, multi-batch draining, dry-run accuracy (events and
-contexts), orphan-context cleanup, and a regression test asserting
-`report_bed_status_counts` / `daily_occupancy` are unchanged across a purge.
+contexts), orphan-context cleanup, a regression test asserting
+`report_bed_status_counts` / `daily_occupancy` are unchanged across a purge, and a
+test deriving the labels `reports.py` reads and asserting `RETAINED_LABELS` covers
+them (so a new report label cannot be added without being retained).
 No Celery-beat schedule is wired by default — enabling one remains a deliberate ops
 choice.
 

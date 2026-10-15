@@ -11,15 +11,13 @@ from model_bakery import baker
 from pghistory.core import event_models
 
 from accounts.models import User
-from audit.models import AuditWriteEvent
 from audit.selectors import (
     _EXCLUDED_EVENT_MODELS,
-    _LabelResolver,
-    _SCOPED_EXCLUSIONS,
-    _scalar_changes,
     LABEL_FIELD,
     MAX_LIMIT,
     THROUGH_EVENT_MAP,
+    _LabelResolver,
+    _scalar_changes,
     object_audit_log,
 )
 from audit.tests.utils import audit_context, clear_history_context

@@ -160,14 +160,10 @@ class Command(BaseCommand):
         One predicate per event table beats probing each candidate context per
         table. Table names come from model metadata, not user input.
         """
-        tables = sorted(
-            {model._meta.db_table for model in event_models() if hasattr(model, "pgh_context_id")}
-        )
+        tables = sorted({model._meta.db_table for model in event_models() if hasattr(model, "pgh_context_id")})
         if not tables:
             return None
-        return " AND ".join(
-            f'NOT EXISTS (SELECT 1 FROM "{table}" e WHERE e.pgh_context_id = c.id)' for table in tables
-        )
+        return " AND ".join(f'NOT EXISTS (SELECT 1 FROM "{table}" e WHERE e.pgh_context_id = c.id)' for table in tables)
 
     @staticmethod
     def _orphan_context_ids(before: datetime.datetime, limit: int) -> list[Any]:

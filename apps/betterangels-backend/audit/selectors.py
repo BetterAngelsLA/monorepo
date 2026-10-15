@@ -387,10 +387,6 @@ def _m2m_meta(pgh_model: str) -> tuple[str, str, str] | None:
 
 
 def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
-    """Render a non-M2M row's own changes (§13, §14)."""
-    label = row.pgh_label
-    data = row.pgh_data or {}
-def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
     """Render a non-M2M row's own changes, keyed by **raw column name** (§13).
 
     Raw (attname) keys keep the dict lossless: two fields that share a
@@ -628,9 +624,7 @@ def _build_action(
     # name alone identifies a change. ``_action_change_key`` flattens the key
     # with a stable shape (the anchor bare, related rows qualified).
     scalar_changes: dict[tuple[str, Any, str], list[Any]] = {}
-    m2m_changes: dict[tuple[str, Any, str], dict[str, list[_Ref]]] = defaultdict(
-        lambda: {"removed": [], "added": []}
-    )
+    m2m_changes: dict[tuple[str, Any, str], dict[str, list[_Ref]]] = defaultdict(lambda: {"removed": [], "added": []})
     events: list[AuditEventData] = []
 
     for row in rows:

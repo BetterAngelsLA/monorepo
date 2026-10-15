@@ -110,7 +110,9 @@ class PurgeAuditLogTestCase(TestCase):
         call_command("purge_audit_log", before=_CUTOFF)
 
         self.assertFalse(ShelterEvent.objects.filter(pk=old_event.pk).exists())
-        self.assertEqual(set(ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).values_list("pk", flat=True)), surviving)
+        self.assertEqual(
+            set(ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).values_list("pk", flat=True)), surviving
+        )
 
     def test_retains_report_critical_labels_and_deletes_the_rest(self) -> None:
         """The blast radius is pinned: report-critical labels survive, the rest go."""
@@ -157,9 +159,7 @@ class PurgeAuditLogTestCase(TestCase):
     def test_drains_more_rows_than_one_batch(self) -> None:
         """Batching must drain the whole set, not stop after ``--batch-size`` rows."""
         shelters = [Shelter.objects.create(name=f"Batch Shelter {i}") for i in range(5)]
-        ids = list(
-            ShelterEvent.objects.filter(pgh_obj_id__in=[s.pk for s in shelters]).values_list("pk", flat=True)
-        )
+        ids = list(ShelterEvent.objects.filter(pgh_obj_id__in=[s.pk for s in shelters]).values_list("pk", flat=True))
         self.assertGreater(len(ids), 2)
         backdate_event_rows(ShelterEvent.objects.filter(pk__in=ids), pgh_created_at=_OLD)
 
@@ -190,9 +190,7 @@ class PurgeAuditLogTestCase(TestCase):
     def test_dry_run_total_is_not_truncated_at_one_batch(self) -> None:
         """A dry run must count the whole set, not just the first batch."""
         shelters = [Shelter.objects.create(name=f"Accurate {i}") for i in range(4)]
-        ids = list(
-            ShelterEvent.objects.filter(pgh_obj_id__in=[s.pk for s in shelters]).values_list("pk", flat=True)
-        )
+        ids = list(ShelterEvent.objects.filter(pgh_obj_id__in=[s.pk for s in shelters]).values_list("pk", flat=True))
         self.assertGreater(len(ids), 2)
         backdate_event_rows(ShelterEvent.objects.filter(pk__in=ids), pgh_created_at=_OLD)
 
@@ -249,6 +247,7 @@ class PurgeAuditLogTestCase(TestCase):
 
         call_command("purge_audit_log", before=_CUTOFF)
         self.assertFalse(Context.objects.filter(pk=context.pk).exists())
+
     # ── interaction with the reporting selectors ─────────────────────────────
 
     def test_purge_leaves_report_output_unchanged(self) -> None:
