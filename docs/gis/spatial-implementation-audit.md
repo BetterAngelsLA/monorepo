@@ -4,16 +4,18 @@ What the GIS code does, whether it follows documented practice, and the two defe
 measurement found. Written against the implementation in `regions/`, plus the one other spatial
 consumer (`shelters`).
 
-## Version parity: RDS runs ahead of local, not behind
+## Version parity
 
-Every version that matters is *newer* on RDS than in the dev/CI image, which is the opposite of
-the usual dev/prod divergence risk.
+The dev/CI image was originally `nickblah/postgis:17.5-bullseye-postgis-3.5` — Debian 11, PostGIS
+3.5.2, **GEOS 3.9.0** — which is why `ST_CoverageSimplify` failed locally while working on RDS.
+It now runs `nickblah/postgis:17.11-trixie-postgis-3.6.4`: Debian 13, PostGIS 3.6.4, **GEOS
+3.14.1**. Both capabilities are present on both sides.
 
-| | dev / CI (`nickblah/postgis:17.5-bullseye-postgis-3.5`) | Amazon RDS for PostgreSQL 17 |
+| | dev / CI (`nickblah/postgis:17.11-trixie-postgis-3.6.4`) | Amazon RDS for PostgreSQL 17 |
 |---|---|---|
-| PostGIS | 3.5.2 | up to **3.5.6** |
-| GEOS | **3.9.0** | **3.13.0** (since 17.0) |
-| `ST_CoverageSimplify` | unavailable — needs GEOS 3.12 | **available** |
+| PostGIS | 3.6.4 | up to **3.5.6** |
+| GEOS | **3.14.1** | **3.13.0** (since 17.0) |
+| `ST_CoverageSimplify` | **available** (needs GEOS 3.12) | **available** |
 | `ST_TileEnvelope`, `ST_AsMVT`, `feature_id_name` | available (PostGIS ≥ 3.0) | available |
 | `ST_ReducePrecision` | available (PostGIS ≥ 3.0) | available |
 
@@ -41,9 +43,9 @@ in the dev environment rather than production:
 
 ## `ST_CoverageSimplify` works on RDS; the dev image is what is behind
 
-The function requires `GEOSCoverageSimplifyVW` from **GEOS 3.12**. Our dev/CI image
+The function requires `GEOSCoverageSimplifyVW` from **GEOS 3.12**. The original dev/CI image
 (`nickblah/postgis:17.5-bullseye-postgis-3.5`, PostGIS 3.5.2) was compiled against **GEOS 3.9.0**
-and cannot run it — verified by calling it:
+and could not run it — verified by calling it:
 
 ```
 The GEOS version this PostGIS binary was compiled against (30900) doesn't support
@@ -61,9 +63,12 @@ The GEOS version this PostGIS binary was compiled against (30900) doesn't suppor
 The capability arrived with RDS PostgreSQL 17.0, well past the 3.12 required. RDS for PostgreSQL
 17 offers PostGIS up to 3.5.6, against 3.5.2 locally.
 
-The divergence risk therefore runs the other way: adopting `ST_CoverageSimplify` works in
-production and fails locally until the image is upgraded. **The image is the thing to change**,
-and doing so brings local up to what RDS already runs rather than ahead of it.
+The divergence risk therefore ran the other way: `ST_CoverageSimplify` worked in production and
+failed locally. The image was the thing to change, and it has been — see the parity section above
+for the new versions.
+
+**Resolved.** The image was bumped to `nickblah/postgis:17.11-trixie-postgis-3.6.4` and
+`ST_CoverageSimplify` verified against the real layers: the 36 gaps become **0**.
 
 **The engine version is confirmed.** The AWS infrastructure lives in a separate repository
 (`/workspaces/infrastructure` in the infra container, not this one), and

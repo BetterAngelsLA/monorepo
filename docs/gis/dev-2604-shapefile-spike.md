@@ -100,7 +100,7 @@ This matters because it makes the job much smaller than it looks.
 
 | | |
 |---|---|
-| Database | PostGIS already — `ENGINE = common.backends.iam_dbauth.postgis`; image `nickblah/postgis:17.5-bullseye-postgis-3.5` |
+| Database | PostGIS already — `ENGINE = common.backends.iam_dbauth.postgis`; image `nickblah/postgis:17.11-trixie-postgis-3.6.4` |
 | Django | 6.1, Python 3.14, psycopg 3.3.4. `django.contrib.gis` **already installed** |
 | GDAL | `gdal-bin` **already in the production image** (`Dockerfile:127`) |
 | Geometry today | Exactly **four point fields**, all `PointField(srid=4326, geography=True)` (`Shelter.geolocation`, `ClientProfile.residence_geolocation`, HMIS, `common.Location.point`). **No polygon field anywhere.** |
