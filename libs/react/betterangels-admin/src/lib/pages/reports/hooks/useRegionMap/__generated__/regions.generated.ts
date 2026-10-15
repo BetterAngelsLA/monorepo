@@ -24,7 +24,7 @@ export type RegionsForMapQueryVariables = Types.Exact<{
 }>;
 
 
-export type RegionsForMapQuery = { __typename: 'Query', regions: Array<{ __typename: 'RegionType', kind: Types.RegionDimension, code: string, name: string, geometry: string }> };
+export type RegionsForMapQuery = { __typename: 'Query', regions: Array<{ __typename: 'RegionType', kind: Types.RegionDimension, code: string, name: string, geometry: any }> };
 
 export type InteractionMapQueryVariables = Types.Exact<{
   organizationId: Types.Scalars['ID']['input'];
