@@ -11,7 +11,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useApiConfig } from '@monorepo/ba-platform';
 import { HEATMAP_RADIUS_PX, RAMP, type HeatPoint } from './heatmapMath';
-import { clusterPoints, clusterRadius, type Cluster } from './clusterPoints';
+import {
+  buildClusterIndex,
+  clusterRadius,
+  clustersForZoom,
+  type Cluster,
+} from './clusterPoints';
 import { clustersToBinary, pointsToBinary } from './deckData';
 import { parseColor } from './mapColors';
 
@@ -242,11 +247,13 @@ export function DeckMapLayers({
   const [zoom, setZoom] = useState<number>(10);
   // Binning is the expensive part of the cluster view, so it is done once per (points, zoom)
   // rather than inside every layer rebuild.
+  // The tree is built once per dataset — it is a property of the data, and building it is the
+  // expensive half. The per-zoom query against it is sub-millisecond.
+  const clusterIndex = useMemo(() => buildClusterIndex(points), [points]);
   const clusters = useMemo(
-    // Only binned when the view that draws them is showing. The heatmap does not need them,
-    // and binning ten thousand points for a view nobody is looking at is work for nothing.
-    () => (view === 'clusters' ? clusterPoints(points, zoom) : NO_CLUSTERS),
-    [points, zoom, view],
+    // Only queried when the view that draws them is showing: the heatmap has no use for them.
+    () => (view === 'clusters' ? clustersForZoom(clusterIndex, zoom) : NO_CLUSTERS),
+    [clusterIndex, zoom, view],
   );
   const { apiUrl } = useApiConfig();
   const overlayRef = useRef<GoogleMapsOverlay | null>(null);

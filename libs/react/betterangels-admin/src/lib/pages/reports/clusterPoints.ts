@@ -1,82 +1,110 @@
 /**
- * Screen-space clustering for the map's "Clusters" view.
+ * Clustering for the map's "Clusters" view.
  *
- * Points are binned on a Web Mercator pixel grid at the current zoom, and each bin becomes
- * one bubble carrying the number of interactions inside it. The grid is in *pixels*, so a bin
- * covers the same amount of screen at every level: zooming in splits a bubble into the
- * bubbles underneath it, which is the behaviour the view's caption promises ("a numbered
- * bubble counts the interactions under it; zoom in to split it").
+ * The tree comes from **`supercluster`**, built once from the data in Web Mercator space, and
+ * queried per zoom. That structure is the point:
  *
- * Deliberately not `@googlemaps/markerclusterer`. That renders one DOM node per marker, and
- * with the map's point cap at 10,000 that is 10,000 nodes the browser has to lay out. This is
- * arithmetic over a typed array, and deck.gl draws the result on the GPU.
+ * - A cluster keeps its identity and its count as the reader zooms, and zooming in *subdivides*
+ *   it rather than replacing it with an unrelated set.
+ * - Because the tree is anchored to the geography and not to the viewport, panning cannot
+ *   re-partition the data or make a count jump.
+ *
+ * A previous version of this file binned points into **screen-space cells** at the current zoom.
+ * That is the approach an earlier iteration of this feature already rejected, in as many words:
+ * "the grid is anchored to the viewport, so every zoom step — and every pan — re-partitions the
+ * whole dataset from scratch. A cluster's count would jump for no geographic reason, and zooming
+ * in did not subdivide a cluster, it replaced it." Rebuilding it that way reintroduced exactly
+ * that bug; the tests here only covered a fixed zoom, which is why they passed.
+ *
+ * `supercluster` is a root dependency and is what the Expo map's `MapClusterManager` uses, at
+ * the same radius, so the two maps in the product cluster at the same scale.
  */
+
+import Supercluster from 'supercluster';
 
 export type ClusterPoint = { latitude: number; longitude: number };
 export type Cluster = { latitude: number; longitude: number; count: number };
 
-/** Web Mercator pixel space at a zoom, the projection the bins are cut in. */
-function project(
-  latitude: number,
-  longitude: number,
-  zoom: number,
-): [number, number] {
-  const worldPx = 256 * Math.pow(2, zoom);
-  const x = ((longitude + 180) / 360) * worldPx;
-  const clamped = Math.max(-85.05112878, Math.min(85.05112878, latitude));
-  const sin = Math.sin((clamped * Math.PI) / 180);
-  const y = (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * worldPx;
-  return [x, y];
+/** Where clustering stops: above this every interaction draws alone. */
+export const MAX_CLUSTER_ZOOM = 19;
+
+/**
+ * Cluster radius in pixels, matching the Expo map's `MapClusterManager` default.
+ *
+ * Deliberately the same number: two maps in one product that cluster at different scales look
+ * like they disagree about the data.
+ */
+export const CLUSTER_RADIUS_PX = 50;
+
+/**
+ * A cluster of two, drawn as a bubble labelled "2", reads as data where it is really two
+ * interactions that happened to land within the merge radius. Three is where a bubble starts
+ * saying something, so supercluster leaves pairs as separate points.
+ */
+const MIN_CLUSTER_POINTS = 3;
+
+/** `supercluster` wants `[westLng, southLat, eastLng, northLat]`; this is the whole world. */
+const WORLD_BBOX: [number, number, number, number] = [-180, -85, 180, 85];
+
+type PointProps = { id: number };
+type ClusterProps = { id: number };
+
+export type ClusterIndex = Supercluster<ClusterProps, PointProps>;
+
+/**
+ * Build the clustering tree. The property of the **data**, so it belongs in a memo keyed on the
+ * points — never in the per-zoom path. Measured in the previous implementation at ~25 ms for
+ * 5,000 points.
+ */
+export function buildClusterIndex(points: ClusterPoint[]): ClusterIndex {
+  const index = new Supercluster<ClusterProps, PointProps>({
+    radius: CLUSTER_RADIUS_PX,
+    maxZoom: MAX_CLUSTER_ZOOM,
+    // Set explicitly rather than left to the default, so the intent is reviewable.
+    minZoom: 0,
+    minPoints: MIN_CLUSTER_POINTS,
+  });
+  index.load(
+    points.map((point, id) => ({
+      type: 'Feature' as const,
+      properties: { id },
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [point.longitude, point.latitude],
+      },
+    })),
+  );
+  return index;
 }
 
 /**
- * Default bin edge, in pixels.
+ * The bubbles to draw at `zoom`.
  *
- * Roughly the diameter of a bubble at its largest, so two bubbles that would overlap are
- * already the same bubble.
+ * Sub-millisecond, so it is recomputed on every zoom rather than cached. Returns every cluster
+ * in the world box, not only the visible ones — supercluster's own tree decides what merges, and
+ * narrowing the query to the viewport is what would make the set depend on where you are looking.
  */
-export const CLUSTER_CELL_PX = 64;
-
-export function clusterPoints(
-  points: ClusterPoint[],
-  zoom: number,
-  cellPx: number = CLUSTER_CELL_PX,
-): Cluster[] {
-  if (points.length === 0) {
-    return [];
-  }
-  const cell = Math.max(1, cellPx);
-  const bins = new Map<string, { lat: number; lon: number; count: number }>();
-
-  for (const point of points) {
-    const [x, y] = project(point.latitude, point.longitude, zoom);
-    const key = `${Math.floor(x / cell)}:${Math.floor(y / cell)}`;
-    const bin = bins.get(key);
-    if (bin) {
-      // The mean of the members, so a bubble sits in the middle of what it stands for
-      // rather than at whichever point happened to land first.
-      bin.lat += point.latitude;
-      bin.lon += point.longitude;
-      bin.count += 1;
-    } else {
-      bins.set(key, { lat: point.latitude, lon: point.longitude, count: 1 });
-    }
-  }
-
-  return [...bins.values()].map((bin) => ({
-    latitude: bin.lat / bin.count,
-    longitude: bin.lon / bin.count,
-    count: bin.count,
-  }));
+export function clustersForZoom(index: ClusterIndex, zoom: number): Cluster[] {
+  return index.getClusters(WORLD_BBOX, Math.round(zoom)).map((feature) => {
+    const [longitude, latitude] = feature.geometry.coordinates;
+    const properties = feature.properties as {
+      cluster?: boolean;
+      point_count?: number;
+    };
+    return {
+      latitude,
+      longitude,
+      count: properties.cluster ? (properties.point_count ?? 1) : 1,
+    };
+  });
 }
 
 /**
  * Bubble radius in pixels, from the number of interactions it stands for.
  *
- * Square root, so the bubble's *area* tracks the count — doubling the radius of a circle
- * quadruples the ink, and a linear radius makes a busy bubble swallow the map. Clamped at
- * both ends: a lone interaction still needs to be clickable, and one bin must not cover the
- * viewport.
+ * Square root, so the bubble's *area* tracks the count — a linear radius makes a busy bubble
+ * swallow the map. Clamped at both ends: a lone interaction still needs to be visible, and one
+ * bin must not cover the viewport.
  */
 export function clusterRadius(count: number): number {
   return Math.min(38, 7 + Math.sqrt(Math.max(1, count)) * 2.2);
