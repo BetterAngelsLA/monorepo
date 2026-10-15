@@ -7,11 +7,14 @@ work — deciding which region covers a point — happens once on the write side
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from typing import Any, Iterable, Sequence
 
-from django.db import connection
-from django.db.models import Count, Exists, OuterRef, Q, QuerySet
+from django.contrib.gis.db.models import GeometryField
+from django.contrib.gis.db.models.functions import AsGeoJSON
+from django.db.models import Count, Exists, FloatField, Func, OuterRef, Q, QuerySet
+from django.db.models.functions import Cast, Coalesce
 
 from notes.models import Note
 
@@ -172,23 +175,33 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
     6 decimal places is ~10 cm — finer than the simplification tolerance, so nothing
     is lost in serialisation.
     """
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT kind, code, name, ST_AsGeoJSON(COALESCE(geom_display, geom), 6)::json
-            FROM regions_region
-            WHERE kind = ANY(%(kinds)s)
-              AND (%(codes)s IS NULL OR code = ANY(%(codes)s))
-            """,
-            # An empty list collapses to NULL deliberately: with no codes asked for, the
-            # whole dimension is the answer (see the docstring). If this ever needs to
-            # mean "match nothing" instead, it is `list(codes) if codes else None` that
-            # has to change *and* `useRegionMap`'s normalisation, together.
-            {"kinds": list(kinds), "codes": list(codes) if codes else None},
-        )
-        rows = cursor.fetchall()
+    # An empty list means "no restriction", so it is normalised away before the filter —
+    # see the docstring. If this ever needs to mean "match nothing", this line and
+    # `useRegionMap`'s normalisation have to change together.
+    queryset = Region.objects.filter(kind__in=list(kinds))
+    if codes:
+        queryset = queryset.filter(code__in=list(codes))
 
-    return [{"kind": row[0], "code": row[1], "name": row[2] or "", "geometry": row[3]} for row in rows]
+    # `AsGeoJSON` is Django's own wrapper for `ST_AsGeoJSON`; `Coalesce` expresses the
+    # `geom_display` fallback. This replaced a raw `SELECT … ST_AsGeoJSON(…)::json` that
+    # bought nothing — there was no plan to hand-tune, and the ORM version cannot drift
+    # from the model's field names.
+    rows = queryset.annotate(geometry=AsGeoJSON(Coalesce("geom_display", "geom"), precision=6)).values(
+        "kind", "code", "name", "geometry"
+    )
+
+    # `AsGeoJSON` returns the geometry as **text**, and the callers want the object: the
+    # schema serialises it back to a string for the client either way, so parsing here and
+    # letting the resolver hand the same shape on is one conversion rather than two.
+    return [
+        {
+            "kind": row["kind"],
+            "code": row["code"],
+            "name": row["name"] or "",
+            "geometry": json.loads(row["geometry"]) if isinstance(row["geometry"], str) else row["geometry"],
+        }
+        for row in rows
+    ]
 
 
 # Cap on points returned in one response. Past a few thousand the extra rows change
@@ -229,36 +242,63 @@ def interaction_points(
     complete.
     """
     limit = max(1, min(limit, POINT_LIMIT_MAX))
-    params: dict[str, Any] = {"start": start, "end": end, "limit": limit + 1, "org_id": organization_id}
-    # `notes` carries the note read scope. `organization_id` above carries the org scope.
-    # Two independent controls, both applied, neither trusted to imply the other.
-    notes_clause = ""
-    if notes is not None:
-        notes_clause = "AND n.id = ANY(%(note_ids)s)"
-        params["note_ids"] = list(notes.values_list("id", flat=True))
 
-    sql = f"""
-        SELECT ST_Y(l.point::geometry) AS latitude,
-               ST_X(l.point::geometry) AS longitude,
-               n.interacted_at
-        FROM notes_note n
-        JOIN common_location l ON l.id = n.location_id
-        WHERE n.interacted_at >= %(start)s
-          AND n.interacted_at < %(end)s
-          AND n.location_id IS NOT NULL
-          AND n.organization_id = %(org_id)s
-          {notes_clause}
-        ORDER BY n.interacted_at DESC
-        LIMIT %(limit)s
-    """
-    with connection.cursor() as cursor:
-        cursor.execute(sql, params)
-        rows = [
-            {"latitude": float(lat), "longitude": float(lon), "interacted_at": when}
-            for lat, lon, when in cursor.fetchall()
-        ]
-    truncated = len(rows) > limit
-    return rows[:limit], truncated
+    # Two independent controls, both applied, neither trusted to imply the other:
+    # `organization_id` is the org scope, `notes` carries the note read scope.
+    #
+    # `notes` is folded in as a **subquery**, not as a materialised list of ids. The
+    # previous version did `list(notes.values_list("id", flat=True))` and shipped the ids
+    # back as a bind parameter — one round trip to read every id in the window, an
+    # unbounded parameter list, and the whole thing thrown away again to answer the same
+    # question the database could have answered inline. `__in=<queryset>` lets Postgres
+    # plan it as a semi-join against the query the caller already built.
+    queryset = Note.objects.filter(
+        organization_id=organization_id,
+        interacted_at__gte=start,
+        interacted_at__lt=end,
+        location__isnull=False,
+    )
+    if notes is not None:
+        queryset = queryset.filter(pk__in=notes.values("pk"))
+
+    # Coordinates come out of the geography point via `ST_AsGeoJSON`, then JSON path
+    # extraction — **not** `ST_X`/`ST_Y`, which Django does not wrap: its function set is
+    # Area, AsGeoJSON, Centroid, Distance, Envelope, Length, Transform, Union and so on,
+    # and the only `ST_X`/`ST_Y` in the codebase is Oracle-specific. `AsGeoJSON` is the
+    # supported path, and `__0`/`__1` are the lon/lat of its `coordinates` array.
+    #
+    # `point` is `geography=True` (common/models.py); geography coordinates are lon/lat
+    # degrees, so index 0 is the longitude and 1 the latitude.
+    # `ST_X`/`ST_Y` are called through `Func` because Django ships **no** wrapper for
+    # either — its GeoDjango function set is Area, AsGeoJSON, Centroid, Distance,
+    # Envelope, Length, Transform, Union and similar, and the only `ST_X`/`ST_Y` in the
+    # codebase is Oracle-specific.
+    #
+    # The `Cast(…, GeometryField())` is **required, not cosmetic**: `point` is
+    # `geography=True` (common/models.py) and PostGIS defines `ST_X`/`ST_Y` only for
+    # geometry, so without it the query fails on the live database with
+    # `function st_x(geography) does not exist`. There is no implicit
+    # geography→geometry cast, which is the same reason the raw SQL this replaced wrote
+    # `l.point::geometry`, and the same reason ``ensure_location_regions`` still does.
+    point_geometry = Cast("location__point", GeometryField())
+    rows = (
+        queryset.annotate(
+            latitude=Func(point_geometry, function="ST_Y", output_field=FloatField()),
+            longitude=Func(point_geometry, function="ST_X", output_field=FloatField()),
+        )
+        .order_by("-interacted_at")
+        .values("latitude", "longitude", "interacted_at")[: limit + 1]
+    )
+
+    # One row past the cap is what detects truncation. `.values()` yields a TypedDict, and
+    # the function's contract is plain dicts (`InteractionPointType(**row)` unpacks them),
+    # so the rows are materialised explicitly rather than relying on that being structural.
+    fetched: list[dict[str, Any]] = [
+        {"latitude": row["latitude"], "longitude": row["longitude"], "interacted_at": row["interacted_at"]}
+        for row in rows
+    ]
+    truncated = len(fetched) > limit
+    return fetched[:limit], truncated
 
 
 def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[str]) -> QuerySet[Note]:

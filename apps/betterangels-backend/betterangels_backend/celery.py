@@ -34,4 +34,12 @@ app.conf.beat_schedule = {
         "task": "reports.tasks.process_scheduled_reports",
         "schedule": crontab(minute=0),
     },
+    # Resolve locations created since the last run to their regions. `interactionsByRegion`
+    # reads the stored assignment rather than a spatial join — that is what keeps the rollup
+    # an indexed read — so without this the regional table under-counts every interaction
+    # recorded since the last import, while the map (which reads notes live) shows it.
+    "fill_location_regions": {
+        "task": "regions.tasks.fill_location_regions",
+        "schedule": crontab(minute=15),
+    },
 }

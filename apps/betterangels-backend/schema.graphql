@@ -1416,8 +1416,8 @@ type InteractionMapType {
 }
 
 type InteractionPointType {
-  latitude: Float!
-  longitude: Float!
+  latitude: LatitudeScalar!
+  longitude: LongitudeScalar!
   interactedAt: DateTime!
 }
 

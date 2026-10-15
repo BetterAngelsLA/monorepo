@@ -12,19 +12,9 @@ from typing import List, Optional
 
 import strawberry
 
+from common.graphql.types import LatitudeScalar, LongitudeScalar
 
-class RegionDimension(enum.Enum):
-    """The geographic dimensions interactions can be grouped or filtered by.
-
-    Values mirror ``RegionKind`` so the enum, the DB and the loader agree.
-    """
-
-    ZIP = "zip"
-    CITY = "city"
-    COUNCIL_DISTRICT = "council_district"
-    SUPERVISORIAL_DISTRICT = "supervisorial_district"
-    SPA = "spa"
-    COC = "coc"
+from .models import RegionKind
 
 
 @strawberry.enum
@@ -73,8 +63,8 @@ class InteractionPointType:
     address field: the map answers "where were our interactions", not "who".
     """
 
-    latitude: float
-    longitude: float
+    latitude: LatitudeScalar
+    longitude: LongitudeScalar
     interacted_at: datetime
 
 
@@ -95,7 +85,7 @@ class InteractionMapType:
 class RegionType:
     """A boundary polygon, as GeoJSON text."""
 
-    kind: RegionDimension
+    kind: RegionKind
     code: str
     name: str
     geometry: str

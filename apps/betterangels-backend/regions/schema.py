@@ -1,15 +1,22 @@
 """GraphQL surface for region grouping (DEV-2570 / DEV-2604).
 
-Adds a ``RegionDimension`` enum and four queries:
+Adds the ``RegionDimension`` enum (``models.RegionKind``) and four queries:
 
 * ``interactionsByRegion`` — interaction counts per region of a dimension.
 * ``interactionMap`` — individual interaction points, for the map.
 * ``regionDimensions`` — which dimensions have boundaries loaded.
 * ``regions`` — the boundary polygons themselves, as GeoJSON.
 
-They sit alongside the existing ``reportSummary``. GraphQL has no
-native geometry type in this schema; polygons are returned as a GeoJSON string
-(``ST_AsGeoJSON``) which the client parses, rather than inventing a scalar.
+They sit alongside the existing ``reportSummary``.
+
+**Polygons are returned as a GeoJSON string the client parses**, via ``AsGeoJSON``. This is
+a payload decision, not a schema limitation: strawberry-django *does* register geometry
+scalars (``schema.graphql`` already publishes ``scalar Point`` for ``LocationType.point``,
+and ``strawberry_django/fields/types.py`` registers ``MultiPolygon`` alongside it), so a
+scalar was available. It was not used because the native scalar serialises the full vertex
+set — the six-dimension payload is 21 MB unsimplified against 817 kB for the simplified
+``geom_display`` this serves — and because the client needs the geometry as an object, which
+a string hands over after one ``JSON.parse`` rather than after a bespoke scalar's shape.
 """
 
 from __future__ import annotations
@@ -35,12 +42,12 @@ from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
 
+from .models import RegionKind
 from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, region_features, scope_notes_to_regions
 from .services import interaction_map_data, region_rollup
 from .types import (
     InteractionMapType,
     RegionCountType,
-    RegionDimension,
     RegionType,
     UnassignedReason,
 )
@@ -62,7 +69,7 @@ class Query:
         self,
         info: Info,
         organization_id: ID,
-        dimension: Optional[RegionDimension] = None,
+        dimension: Optional[RegionKind] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         region_codes: Optional[List[str]] = None,
@@ -103,7 +110,7 @@ class Query:
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         limit: Optional[int] = None,
-        dimension: Optional[RegionDimension] = None,
+        dimension: Optional[RegionKind] = None,
         region_codes: Optional[List[str]] = None,
     ) -> InteractionMapType:
         """Where the interactions happened, as map pins.
@@ -167,7 +174,7 @@ class Query:
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def region_dimensions(self, info: Info) -> List[RegionDimension]:
+    def region_dimensions(self, info: Info) -> List[RegionKind]:
         """Dimensions that actually have boundaries loaded.
 
         Lets the report offer only groupable dimensions instead of presenting a
@@ -176,13 +183,13 @@ class Query:
         ``IsAuthenticated`` only, like ``regions`` and for the same reason: this
         exposes which boundary sets exist, not any client data.
         """
-        return [RegionDimension(kind) for kind in available_kinds()]
+        return [RegionKind(kind) for kind in available_kinds()]
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def regions(
         self,
         info: Info,
-        dimension: RegionDimension,
+        dimension: RegionKind,
         codes: Optional[List[str]] = None,
     ) -> List[RegionType]:
         """Boundary polygons as GeoJSON, for the map view.
@@ -197,13 +204,13 @@ class Query:
         rows = region_features(kinds=[dimension.value], codes=codes)
         return [
             RegionType(
-                kind=RegionDimension(row["kind"]),
+                kind=RegionKind(row["kind"]),
                 code=row["code"],
                 name=row["name"],
-                geometry=row["geometry"] if isinstance(row["geometry"], str) else json.dumps(row["geometry"]),
+                geometry=json.dumps(row["geometry"]),
             )
             for row in rows
         ]
 
 
-__all__ = ["Query", "RegionCountType", "RegionDimension", "RegionType", "UnassignedReason"]
+__all__ = ["Query", "RegionCountType", "RegionKind", "RegionType", "UnassignedReason"]

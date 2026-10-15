@@ -31,15 +31,21 @@ def backfill(apps, schema_editor):  # type: ignore[no-untyped-def]
     display update is total, and ``ensure_location_regions(force=True)`` clears first
     — so a half-applied run is safe to repeat.
     """
+    from regions.models import DISPLAY_SIMPLIFY_DEGREES
     from regions.services import build_region_pieces, ensure_location_regions
 
     build_region_pieces()
+    # The tolerance is the model's constant, not a literal. It was `0.0005` here and
+    # `DISPLAY_SIMPLIFY_DEGREES` in `import_regions`, so changing the constant would have
+    # left every already-migrated database simplified at the old tolerance with nothing to
+    # say so.
     schema_editor.execute(
         """
         UPDATE regions_region
-        SET geom_display = ST_Multi(ST_SimplifyPreserveTopology(geom, 0.0005))
+        SET geom_display = ST_Multi(ST_SimplifyPreserveTopology(geom, %s))
         WHERE geom IS NOT NULL
-        """
+        """,
+        [DISPLAY_SIMPLIFY_DEGREES],
     )
     ensure_location_regions(force=True)
 

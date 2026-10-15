@@ -39,6 +39,18 @@ if TYPE_CHECKING:
 
     from notes.models import Note
 
+# This is raw SQL because Django cannot express it, for two independent reasons — both
+# verified against Django 6.1, so a future reviewer does not "clean this up":
+#
+# 1. `ST_Subdivide` is **set-returning** and appears in `LEFT JOIN LATERAL … AS p(geom)`.
+#    Django has no `ST_Subdivide` wrapper (there is no `Subdivide` anywhere in
+#    `django/contrib/gis/`), no `LATERAL`, and no set-returning `Func`; `django-cte` is not
+#    installed and `django.db.models` exports no `Union` or `CTE` expression.
+# 2. `ST_Subdivide` on a MULTIPOLYGON yields **POLYGON**, and the column is
+#    `MultiPolygonField`. Measured on the three largest regions:
+#    `GeometryType(ST_Subdivide(geom, 256)) = 'POLYGON'` against `'MULTIPOLYGON'` after
+#    `ST_Multi` — so the `ST_Multi` wrapper is load-bearing, and Django has no wrapper for
+#    `ST_Multi` either.
 _BUILD_PIECES_SQL = """
 INSERT INTO regions_regionpiece (region_id, kind, geom, created_at, updated_at)
 SELECT r.id, r.kind,
@@ -121,6 +133,22 @@ def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> 
                 cursor.execute("SELECT 1 FROM regions_region WHERE kind = %s LIMIT 1", [scope])
                 if cursor.fetchone() is None:
                     continue
+            # Raw SQL for the same reason as `_BUILD_PIECES_SQL`, plus a measured one.
+            #
+            # `ST_Covers(src.geom, l.point::geometry)` — **the cast is a PostGIS
+            # overload-resolution requirement, not a micro-optimisation.** `Location.point`
+            # is `geography=True` (common/models.py), `geography → geometry` is an explicit-only
+            # cast, and `geometry → geography` is implicit. So a mixed call silently resolves
+            # to the spheroidal geography overload, and `ST_X(geography)` does not exist at
+            # all. Do not remove the casts.
+            #
+            # The ORM form measures ~650x slower on real data (3,000 locations / 5,685
+            # pieces): `ST_Covers(p.geom, l.point::geometry)` gives
+            # `Index Scan using regions_regionpiece_geom, 0.30 ms`, while the ORM
+            # `geom__covers` orientation gives `Filter: st_covers((geom)::geography, …)`
+            # with 2,840 rows removed and 196.5 ms. The ORM also cannot carry the
+            # `UNION ALL` piece-less fallback below — `QuerySet.union()` requires matching
+            # `values()`, and the two arms select different columns.
             cursor.execute(
                 """
                 INSERT INTO regions_locationregion (location_id, kind, region_id, created_at, updated_at)
