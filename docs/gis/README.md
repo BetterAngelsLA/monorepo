@@ -71,8 +71,9 @@ Verified live: **431 regions** — 311 postal ZIP, 88 city, 15 council district,
 
 ### Seeing it
 
-The importer populates the backend. To look at the data, the admin app renders a
-choropleth, a pins view and a density grid on the Reports page:
+The importer populates the backend. To look at the data, the admin app renders the region
+boundaries over a heatmap, with a clustered view of the individual interactions, on the
+Reports page:
 
 1. Start the backend and the admin app, then sign in and open **`/reports`**.
 2. The panel sits under the existing charts and follows their date range.

@@ -14,12 +14,13 @@ regions(dimension, codes): [RegionType!]!
 interactionMap(organizationId, startDate, endDate, limit, dimension, regionCodes): InteractionMapType!
 ```
 
-`RegionCountType` carries `code`, `name`, `count`, `isUnassigned`, and
-`unassignedReason` (`OUTSIDE_ALL_REGIONS` | `NO_LOCATION`). `RegionDimension` is
+`RegionCountType` carries `kind`, `code`, `name`, `count`, `isUnassigned`, and
+`unassignedReason` (`OUTSIDE_ALL_REGIONS` | `NO_LOCATION`). `kind` is present because a
+rollup can span every dimension at once, where a code alone is ambiguous — `"1"` is
+simultaneously a council district, an SPA and a supervisorial district. `RegionDimension` is
 `ZIP | CITY | COUNCIL_DISTRICT | SUPERVISORIAL_DISTRICT | SPA | COC`.
 
-`interactionMap` returns points, a ~1 km density grid, and a truncation flag, so the
-map renders from one round trip rather than three.
+`interactionMap` returns points and a truncation flag.
 
 **Authorization.** `interactionsByRegion` and `interactionMap` need
 `reports.view_reports` **and** `notes.view_note`, and the rows are then passed through
@@ -37,8 +38,8 @@ geographic figures always match the KPIs above. It provides:
   the map can answer "show me the SPA 4 visits" rather than only "every visit, coloured
   by SPA";
 - a **region table** with the unassigned buckets labelled by cause;
-- `RegionMap`, a choropleth of the region polygons with a pins view and a density grid,
-  and a `filteredTo` caption when the map is narrowed.
+- `RegionMap`, which draws region boundaries when a grouping is chosen, with a **Heatmap** /
+  **Clusters** toggle in its card header and a `filteredTo` caption when the map is narrowed.
 
 The map needs `VITE_SHELTER_GOOGLE_MAPS_API_KEY` (or its own
 `VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`). Without it the panel degrades to an
@@ -81,9 +82,9 @@ misleading "please provide a schema" error.
 **Geometry editing.** Boundaries are imported, not edited. There is no UI to adjust a
 region or draw a new one, and the importer replaces a whole dimension at a time.
 
-**A gradient heatmap.** Google removed `visualization.HeatmapLayer` in Maps JS API
-3.65, so this needs a third-party library or custom canvas work — a dependency decision
-that has not been made. The density grid covers the need with legible counts.
+**A third-party heatmap library.** Google removed `visualization.HeatmapLayer` in Maps JS
+API 3.65. The gradient is drawn on a canvas instead, which needs no dependency; deck.gl remains
+the alternative if a standard implementation is wanted later.
 
 **The unincorporated-communities dimension.** Documented in
 `unincorporated-communities.md`, not implemented.
