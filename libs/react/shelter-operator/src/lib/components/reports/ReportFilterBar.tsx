@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { Download } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Button } from '../base-ui/buttons/buttons';
 import {
   DateRangeCalendar,
@@ -34,10 +34,10 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [previewCustom, setPreviewCustom] = useState(false);
 
-  function handleCalendarOpenChange(open: boolean) {
+  const handleCalendarOpenChange = useCallback((open: boolean) => {
     setIsCalendarOpen(open);
     if (!open) setPreviewCustom(false);
-  }
+  }, []);
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">

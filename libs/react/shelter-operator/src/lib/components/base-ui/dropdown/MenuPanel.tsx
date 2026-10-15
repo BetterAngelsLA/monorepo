@@ -14,6 +14,12 @@ type MenuPanelProps = {
    * - `'right'`: menu right edge = trigger right edge, menu sizes to content.
    */
   align?: 'left' | 'left-auto' | 'right';
+  /**
+   * Skip the full-screen click-catcher. Use when the trigger itself has to stay
+   * interactive while the panel is open (the catcher would cover it); the caller
+   * is then responsible for closing on outside clicks.
+   */
+  hideBackdrop?: boolean;
 };
 
 /**
@@ -22,7 +28,15 @@ type MenuPanelProps = {
  * `ButtonDropdown` (action menu).
  */
 export function MenuPanel(props: MenuPanelProps) {
-  const { menuRef, menuPos, onClose, children, id, align = 'left' } = props;
+  const {
+    menuRef,
+    menuPos,
+    onClose,
+    children,
+    id,
+    align = 'left',
+    hideBackdrop = false,
+  } = props;
 
   const positionStyle = {
     position: 'fixed' as const,
@@ -37,11 +51,13 @@ export function MenuPanel(props: MenuPanelProps) {
 
   return (
     <>
-      <div
-        className="fixed inset-0"
-        style={{ zIndex: Z_BACKDROP }}
-        onClick={onClose}
-      />
+      {!hideBackdrop && (
+        <div
+          className="fixed inset-0"
+          style={{ zIndex: Z_BACKDROP }}
+          onClick={onClose}
+        />
+      )}
       <div
         ref={menuRef}
         id={id}

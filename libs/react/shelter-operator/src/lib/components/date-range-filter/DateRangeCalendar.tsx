@@ -1,7 +1,14 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { startOfMonth } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '../base-ui/buttons';
 import { MenuPanel } from '../base-ui/dropdown/MenuPanel';
@@ -51,6 +58,7 @@ function DateField({
     <input
       type="text"
       inputMode="numeric"
+      autoComplete="off"
       aria-label={label}
       aria-invalid={invalid}
       placeholder="MM/DD/YYYY"
@@ -101,6 +109,27 @@ export function DateRangeCalendar({
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
+  // Seed the draft on every closed->open transition rather than in the toggle
+  // handler, so openings driven by the controlled `open` prop (e.g. choosing
+  // "Custom" in the preset dropdown) start from the committed range too.
+  const wasOpenRef = useRef(false);
+  // Set while closing so the blur triggered by moving focus back to the toggle
+  // does not report the dismissed edit as dirty.
+  const suppressCommitRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (open && !wasOpenRef.current) {
+      const seeded = toRdp(value);
+      const [left, right] = defaultMonths(seeded);
+      setDraft(seeded);
+      setLeftMonth(left);
+      setRightMonth(right);
+      setYearGridSide(null);
+      suppressCommitRef.current = false;
+    }
+    wasOpenRef.current = open;
+  }, [open, value]);
+
   useEffect(() => {
     const src = open ? draft : toRdp(value);
     setFromText(src?.from ? formatDate(src.from) : '');
@@ -117,20 +146,15 @@ export function DateRangeCalendar({
     [isControlled, onOpenChange]
   );
 
-  function openPopover() {
-    const seeded = toRdp(value);
-    const [left, right] = defaultMonths(seeded);
-    setDraft(seeded);
-    setLeftMonth(left);
-    setRightMonth(right);
-    setYearGridSide(null);
-    setOpen(true);
-  }
-
   const close = useCallback(() => {
+    suppressCommitRef.current = true;
     setYearGridSide(null);
     setOpen(false);
   }, [setOpen]);
+
+  function openPopover() {
+    setOpen(true);
+  }
 
   // The date fields sit outside the popover, so Escape has to be caught at the
   // document rather than on the panel.
@@ -145,6 +169,20 @@ export function DateRangeCalendar({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, close]);
 
+  // The control renders no backdrop because its fields have to stay clickable
+  // while the popover is open, so outside clicks are detected here instead.
+  useEffect(() => {
+    if (!open) return;
+    const handleMouseDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (anchorRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      close();
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [open, close]);
+
   const handleSelect = useCallback(
     (range: RdpDateRange | undefined) => {
       setDraft(range);
@@ -154,6 +192,11 @@ export function DateRangeCalendar({
   );
 
   const commitTyped = useCallback(() => {
+    if (suppressCommitRef.current) {
+      suppressCommitRef.current = false;
+      return;
+    }
+
     const result = computeFieldCommit(fromText, toText, value);
     setFromError(result.fromError);
     setToError(result.toError);
@@ -202,6 +245,26 @@ export function DateRangeCalendar({
 
   const menuPos = usePortalPosition(anchorRef, open, close, menuRef);
 
+  const dialogId = useId();
+
+  // The panel sizes to its content, so on narrow screens it can extend past the
+  // right edge. Measure it and pull it back inside the viewport.
+  const [panelLeft, setPanelLeft] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    if (!open) {
+      setPanelLeft(null);
+      return;
+    }
+    const el = menuRef.current;
+    if (!el) return;
+    const { width } = el.getBoundingClientRect();
+    const maxLeft = Math.max(8, window.innerWidth - width - 8);
+    const next = Math.min(menuPos.left, maxLeft);
+    setPanelLeft((prev) => (prev === next ? prev : next));
+  }, [open, menuPos.left, yearGridSide, leftMonth, rightMonth]);
+
+  const panelPos = { ...menuPos, left: panelLeft ?? menuPos.left };
+
   const hasError = fromError || toError;
 
   const panes = {
@@ -224,6 +287,7 @@ export function DateRangeCalendar({
     return yearGridSide === side ? (
       <YearGrid
         selectedYear={pane.month.getFullYear()}
+        anchorYear={pane.month.getFullYear()}
         onSelect={pane.selectYear}
         className="w-[18rem]"
       />
@@ -272,7 +336,9 @@ export function DateRangeCalendar({
           ref={toggleRef}
           type="button"
           aria-label="Toggle calendar"
+          aria-haspopup="dialog"
           aria-expanded={open}
+          aria-controls={open ? dialogId : undefined}
           onClick={() => (open ? close() : openPopover())}
           className="ml-auto shrink-0"
         >
@@ -284,11 +350,13 @@ export function DateRangeCalendar({
         createPortal(
           <MenuPanel
             menuRef={menuRef}
-            menuPos={menuPos}
+            menuPos={panelPos}
             onClose={close}
             align="left-auto"
+            hideBackdrop
           >
             <div
+              id={dialogId}
               role="dialog"
               aria-label="Select date range"
               className="flex flex-col gap-3 p-3"

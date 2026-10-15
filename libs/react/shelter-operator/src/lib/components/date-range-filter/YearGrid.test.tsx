@@ -34,6 +34,17 @@ describe('YearGrid', () => {
     expect(screen.queryByRole('button', { name: '2021' })).toBeNull();
   });
 
+  it('centres the window on the anchor year independently of the current year', () => {
+    renderGrid({ anchorYear: 2018, currentYear: 2026 });
+
+    // 2026 - 5 = 2021 would be the first cell if the window followed the
+    // current year; 2018 - 5 = 2013 proves it follows the anchor instead.
+    expect(screen.getByRole('button', { name: '2013' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '2036' })).toBeNull();
+    // The current-year marker still tracks the real current year.
+    expect(yearButton(CURRENT_YEAR).getAttribute('aria-current')).toBe('date');
+  });
+
   it('marks only the selected year as pressed', () => {
     renderGrid({ selectedYear: 2024 });
 

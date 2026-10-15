@@ -66,7 +66,7 @@ describe('defaultMonths', () => {
     const [left, right] = defaultMonths(undefined);
     const now = new Date();
     expect(left).toEqual(new Date(now.getFullYear(), now.getMonth(), 1));
-    expect(right.getMonth()).toBe((now.getMonth() + 1) % 12);
+    expect(right).toEqual(new Date(now.getFullYear(), now.getMonth() + 1, 1));
   });
 });
 
