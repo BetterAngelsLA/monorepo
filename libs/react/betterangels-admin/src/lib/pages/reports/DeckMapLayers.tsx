@@ -85,6 +85,8 @@ export type DeckMapLayersProps = {
   regionKind: string | null;
   /** Region counts by code, joined from the rollup. Drives the choropleth fill. */
   counts: Map<string, number>;
+  /** Regions the reader has drilled into. Empty means every region is in scope. */
+  focusCodes: string[];
   /** Highest count across the rows, for the choropleth ramp. */
   maxCount: number;
   /** Design-system colours, resolved from antd tokens by the caller. */
@@ -105,6 +107,7 @@ type BuildLayersArgs = {
   view: 'heatmap' | 'clusters';
   regionKind: string | null;
   counts: Map<string, number>;
+  focusCodes: string[];
   tileUrl: string | null;
   maxCount: number;
   overlay: {
@@ -129,6 +132,7 @@ function buildLayers({
   view,
   regionKind,
   counts,
+  focusCodes,
   tileUrl,
   maxCount,
   overlay,
@@ -149,28 +153,43 @@ function buildLayers({
         maxZoom: 16,
         filled: true,
         stroked: true,
-        // The bounds are the grouping's geography and have to stay readable *through* the
-        // heat, so the fill is a light tint and the outline carries the shape.
+        // Every boundary is drawn even when the reader has drilled into one district: tiles
+        // cannot be filtered by a code list — a tile URL is a template and `codes` is not part
+        // of it — and a single district with nothing around it loses the geography that makes
+        // it locatable. Focus is shown by emphasis instead of omission.
         getFillColor: (feature) => {
           const code = String(
             (feature.properties as { code?: string })?.code ?? '',
           );
           const count = counts.get(code) ?? 0;
           const t = maxCount > 0 ? Math.sqrt(Math.max(0, count) / maxCount) : 0;
-          return hexToRgba(
-            overlay.fullFill,
-            count > 0 ? 0.18 * t + 0.06 : 0.06,
-          );
+          const alpha = count > 0 ? 0.18 * t + 0.06 : 0.06;
+          const faded = focusCodes.length > 0 && !focusCodes.includes(code);
+          return hexToRgba(overlay.fullFill, faded ? alpha * 0.35 : alpha);
         },
-        getLineColor: hexToRgba(overlay.stroke, 0.85),
-        getLineWidth: 1.4,
+        getLineColor: (feature) => {
+          const code = String(
+            (feature.properties as { code?: string })?.code ?? '',
+          );
+          const faded = focusCodes.length > 0 && !focusCodes.includes(code);
+          return hexToRgba(overlay.stroke, faded ? 0.3 : 0.85);
+        },
+        // The focused districts get a heavier outline, which is what carries the drill-down now
+        // that the layer is not narrowed to them.
+        getLineWidth: (feature) => {
+          const code = String(
+            (feature.properties as { code?: string })?.code ?? '',
+          );
+          return focusCodes.includes(code) ? 2.4 : 1.4;
+        },
         lineWidthUnits: 'pixels',
         pickable: false,
         // Tiles arrive after the rollup does, so the fill has to be recomputed when the counts
         // land — otherwise every tile is drawn at the empty shade and never repainted.
         updateTriggers: {
-          getFillColor: [maxCount, overlay.fullFill, counts],
-          getLineColor: [overlay.stroke],
+          getFillColor: [maxCount, overlay.fullFill, counts, focusCodes],
+          getLineColor: [overlay.stroke, focusCodes],
+          getLineWidth: [focusCodes],
         },
       }),
     );
@@ -234,6 +253,7 @@ export function DeckMapLayers({
   view,
   regionKind,
   counts,
+  focusCodes,
   maxCount,
   overlay,
   reference,
@@ -257,6 +277,7 @@ export function DeckMapLayers({
         view,
         regionKind,
         counts,
+        focusCodes,
         tileUrl,
         maxCount,
         overlay,
@@ -268,6 +289,7 @@ export function DeckMapLayers({
       view,
       regionKind,
       counts,
+      focusCodes,
       tileUrl,
       maxCount,
       overlay,
@@ -318,6 +340,7 @@ export function DeckMapLayers({
           view,
           regionKind,
           counts,
+          focusCodes,
           tileUrl,
           maxCount,
           overlay,
@@ -333,6 +356,7 @@ export function DeckMapLayers({
     view,
     regionKind,
     counts,
+    focusCodes,
     tileUrl,
     maxCount,
     overlay,
