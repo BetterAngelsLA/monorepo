@@ -373,11 +373,19 @@ export function LocationBreakdown({
     >
       {/* Both filters live in the map card, directly above the map and table they affect.
           They previously sat under the page's charts, ~640px from the map, so changing
-          them moved things the reader could not see. */}
-      <div ref={controlsRef} className="mb-4 flex flex-wrap items-center gap-3">
-        <Text type="secondary">Group by</Text>
-        <Select
-          showSearch
+          them moved things the reader could not see.
+          
+          Side by side once there is room, stacked below that: they are two halves of one
+          question ("grouped how, showing which"), and a column of them wastes a wide screen
+          while a row of them would crush the controls on a narrow one. */}
+      <div
+        ref={controlsRef}
+        className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-6"
+      >
+        <div className="flex shrink-0 flex-col gap-1">
+          <Text type="secondary">Group by</Text>
+          <Select
+            showSearch
           // Clears to "All" — the rollup then spans every dimension, and each row
           // carries its own `kind` so the table can say which it came from.
           allowClear
@@ -392,15 +400,16 @@ export function LocationBreakdown({
             value: d,
             label: DIMENSION_LABELS[d] ?? d,
           }))}
-          filterOption={(input, option) =>
-            matches((option?.label as string) ?? '', input)
-          }
-        />
-      </div>
+            filterOption={(input, option) =>
+              matches((option?.label as string) ?? '', input)
+            }
+          />
+        </div>
 
-      {dimension !== undefined && (
-        <div className="mb-4 max-w-2xl">
-          {/* A searchable multi-select with the selection kept visible as removable pills.
+        {dimension !== undefined && (
+          <div className="flex min-w-0 flex-1 flex-col gap-1 lg:max-w-xl">
+            <Text type="secondary">Show</Text>
+            {/* A searchable multi-select with the selection kept visible as removable pills.
               The earlier attempt at this collapsed after every pick, for two reasons that
               are both now fixed: the options were derived from the *filtered* rollup, so
               choosing one region deleted the others from the list, and the dropdown itself
@@ -432,13 +441,14 @@ export function LocationBreakdown({
               matches((option?.searchText as string) ?? '', input)
             }
           />
-          <div className="mt-1 text-xs text-neutral-500">
-            {selectedCodes.length === 0
-              ? `No selection means every ${dimensionName.toLowerCase()} in range.`
-              : `${selectedCodes.length} of ${pickable.length} selected — clear the control to show all.`}
+            <div className="text-xs text-neutral-500">
+              {selectedCodes.length === 0
+                ? `No selection means every ${dimensionName.toLowerCase()} in range.`
+                : `${selectedCodes.length} of ${pickable.length} selected — clear the control to show all.`}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {rowsLoading && (
         <div className="flex items-center gap-2 text-sm text-neutral-500">
