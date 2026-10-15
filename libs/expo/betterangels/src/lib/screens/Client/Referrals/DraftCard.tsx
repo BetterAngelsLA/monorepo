@@ -5,6 +5,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
+import type { ReferralSubmission } from './referralDraft';
 
 // Compact "edited" suffix: time for today's draft, date for older ones.
 function formatEdited(updatedAt?: number): string {
@@ -24,10 +25,12 @@ export function DraftCard({
   updatedAt,
   onResume,
   onDiscard,
+  status = 'idle',
 }: {
   updatedAt?: number;
   onResume: () => void;
   onDiscard: () => void;
+  status?: ReferralSubmission['status'];
 }) {
   return (
     <Pressable
@@ -76,15 +79,27 @@ export function DraftCard({
           numberOfLines={1}
           style={styles.draftGrow}
         >
-          On this device · not submitted{formatEdited(updatedAt)}
+          {status === 'pending'
+            ? 'Saving. You can pause and return.'
+            : status === 'uncertain'
+              ? 'Save outcome unknown. Check the referral list.'
+              : status === 'saved'
+                ? 'Saved. Local draft cleanup needed.'
+                : `On this device · not submitted${formatEdited(updatedAt)}`}
         </TextRegular>
         <DiscardModal
           title="Discard draft?"
-          body="This deletes the in-progress referral and cannot be undone."
+          body={
+            status === 'uncertain'
+              ? 'This removes only the local draft. A saved referral may already exist; check the list before creating another.'
+              : 'This removes the local draft. Existing saved referrals are not changed.'
+          }
           onDiscard={onDiscard}
           button={
             <Pressable
               testID="draft-discard-btn"
+              disabled={status === 'pending'}
+              accessibilityState={{ disabled: status === 'pending' }}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="discard referral draft"

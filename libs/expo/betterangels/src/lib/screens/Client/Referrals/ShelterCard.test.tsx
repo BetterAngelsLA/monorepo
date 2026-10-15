@@ -9,12 +9,10 @@
  */
 import { Colors } from '@monorepo/expo/shared/static';
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { openBrowserAsync } from 'expo-web-browser';
+import * as WebBrowser from 'expo-web-browser';
 import { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ShelterCard } from './ShelterCard';
-
-afterEach(() => vi.unstubAllEnvs());
 
 // The shared barrels re-export every native-backed component (maps, PDF,
 // pickers), so importing even TextBold loads chains whose native halves don't
@@ -34,6 +32,19 @@ vi.mock('@monorepo/expo/shared/icons', () => ({
 }));
 
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
+const { apiConfig } = vi.hoisted(() => ({
+  apiConfig: { apiUrl: 'https://api.prod.betterangels.la' },
+}));
+vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
+  useApiConfig: () => apiConfig,
+}));
+
+beforeEach(() => {
+  vi.unstubAllEnvs();
+  vi.mocked(WebBrowser.openBrowserAsync).mockReset();
+  apiConfig.apiUrl = 'https://api.prod.betterangels.la';
+});
 
 // react-test-renderer ships no type declarations, so take the node type from
 // the query itself rather than adding a dependency for one annotation.
@@ -93,31 +104,56 @@ describe('ShelterCard', () => {
     expect(screen.queryByText('1946 Venice Blvd')).not.toBeOnTheScreen();
   });
 
-  it('offers the shelter directory link when a directory URL is configured', async () => {
-    vi.stubEnv('EXPO_PUBLIC_SHELTER_WEB_URL', 'https://shelter.example');
-    await render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
+  it('opens the web directory for the active environment and follows environment changes', async () => {
+    const { rerender } = await render(
+      <ShelterCard id="s-1" name="Jackson Foundation Haven" />,
+    );
 
     expect(screen.getByText('View in Shelter Directory')).toBeOnTheScreen();
-  });
-
-  it('opens the directory detail route for the specific shelter', async () => {
-    // trailing slash must not double up before the route
-    vi.stubEnv('EXPO_PUBLIC_SHELTER_WEB_URL', 'https://shelter.example/');
-    await render(<ShelterCard id="s-42" name="Jackson Foundation Haven" />);
-
-    await fireEvent.press(screen.getByText('View in Shelter Directory'));
-
-    expect(openBrowserAsync).toHaveBeenCalledWith(
-      'https://shelter.example/shelter/s-42',
+    await fireEvent.press(screen.getByRole('link'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenLastCalledWith(
+      'https://shelter.betterangels.la/shelter/s-1',
+    );
+    apiConfig.apiUrl = 'https://api.dev.betterangels.la';
+    await rerender(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
+    await fireEvent.press(screen.getByRole('link'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenLastCalledWith(
+      'https://shelter.dev.betterangels.la/shelter/s-1',
     );
   });
 
-  it('hides the link when no directory URL is configured', async () => {
-    await render(<ShelterCard id="s-1" name="Jackson Foundation Haven" />);
+  it('keeps local IDs out of the live directory until the local directory is configured', async () => {
+    apiConfig.apiUrl = 'http://localhost:8001';
+    vi.stubEnv('EXPO_PUBLIC_SHELTER_WEB_URL', '');
+    const { rerender } = await render(
+      <ShelterCard id="9" name="Test Shelter" />,
+    );
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
+    vi.stubEnv('EXPO_PUBLIC_SHELTER_WEB_URL', 'http://localhost:8083');
+    await rerender(<ShelterCard id="9" name="Test Shelter" />);
+    await fireEvent.press(screen.getByRole('link'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledExactlyOnceWith(
+      'http://localhost:8083/shelter/9',
+    );
+  });
 
+  it('explains browser-open failure and allows trying the same link again', async () => {
+    vi.mocked(WebBrowser.openBrowserAsync).mockRejectedValueOnce(
+      new Error('Browser unavailable'),
+    );
+    await render(<ShelterCard id="81" name="Test Shelter" />);
+    await fireEvent.press(screen.getByRole('link'));
+    await screen.findByText(
+      'Could not open shelter details. Please try the link again.',
+    );
+    await fireEvent.press(screen.getByRole('link'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledTimes(2);
     expect(
-      screen.queryByText('View in Shelter Directory'),
-    ).not.toBeOnTheScreen();
+      screen.queryByText(
+        'Could not open shelter details. Please try the link again.',
+      ),
+    ).toBeNull();
   });
 
   it('renders each attribute as a tag', async () => {

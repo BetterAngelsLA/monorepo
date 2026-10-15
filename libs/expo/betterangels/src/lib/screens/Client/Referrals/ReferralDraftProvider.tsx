@@ -27,5 +27,9 @@ export function useReferralDraft() {
   if (!store)
     throw new Error('useReferralDraft requires ReferralDraftProvider');
   const draft = useSyncExternalStore(store.subscribe, store.getSnapshot);
-  return { draft, store };
+  const recovery = useSyncExternalStore(
+    store.subscribe,
+    store.getRecoveryState,
+  );
+  return { draft, recovery, store };
 }

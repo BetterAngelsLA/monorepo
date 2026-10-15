@@ -16,6 +16,14 @@ import { Pressable, Text } from 'react-native';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import UserProfile from './index';
 
+vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
+  useApiConfig: () => ({ apiUrl: 'https://profile-test.invalid' }),
+}));
+vi.mock('@monorepo/react/shared', () => ({
+  useFeatureFlagActive: () => false,
+}));
+
 /**
  * Deleting the account is refused while it still owns an organization.  The
  * mutation reports that as an ``OperationInfo`` payload, which resolves rather

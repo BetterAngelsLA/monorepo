@@ -1,9 +1,11 @@
+import { Pressable, View } from 'react-native';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import type { ComponentProps } from 'react';
 import { ReferralForm } from './ReferralForm';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { useReferralDraft } from './ReferralDraftProvider';
 import { needLabelsFromIntake } from './clientNeeds';
-import { buildReferralNotes } from './referralIntakeSidecar';
+import { useLocalDraftAction } from './useLocalDraftAction';
 
 // Two-step create flow: Required-Info intake (prototype) → shelter picker.
 export function ReferralCreateFlow({
@@ -17,19 +19,71 @@ export function ReferralCreateFlow({
   clientId: string;
   onCancel: () => void;
   onPause: () => void;
-  onSubmit: (shelterId: string, notes: string | undefined) => Promise<boolean>;
+  onSubmit: () => Promise<boolean>;
   profile?: ComponentProps<typeof ReferralIntakeForm>['profile'];
   onEditProfile?: () => void;
 }) {
   const { draft, store } = useReferralDraft();
+  const runDraftAction = useLocalDraftAction();
   if (!draft || draft.clientId !== clientId) return null;
 
+  if (draft.submission.status === 'saved') {
+    return (
+      <View>
+        <TextRegular>
+          This referral was saved. Its local draft still needs to be cleared.
+        </TextRegular>
+        <Pressable accessibilityRole="button" onPress={onPause}>
+          <TextRegular>Close</TextRegular>
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={onCancel}>
+          <TextRegular>Clear saved draft</TextRegular>
+        </Pressable>
+      </View>
+    );
+  }
+  if (draft.submission.status === 'uncertain') {
+    return (
+      <View testID="referral-uncertain-screen">
+        <TextRegular>
+          We could not confirm whether this referral was saved. Close this form
+          and check the referral list before trying again.
+        </TextRegular>
+        <Pressable accessibilityRole="button" onPress={onPause}>
+          <TextRegular>Check referral list</TextRegular>
+        </Pressable>
+        <Pressable
+          testID="confirm-referral-retry-btn"
+          accessibilityRole="button"
+          onPress={() =>
+            runDraftAction(() => store.acknowledgeUncertainSubmission(draft.id))
+          }
+        >
+          <TextRegular>I checked — allow another attempt</TextRegular>
+        </Pressable>
+      </View>
+    );
+  }
+  if (draft.source?.kind === 'edit' && draft.submission.status === 'pending') {
+    return (
+      <View>
+        <TextRegular>Saving changes…</TextRegular>
+        <Pressable accessibilityRole="button" onPress={onPause}>
+          <TextRegular>Pause</TextRegular>
+        </Pressable>
+      </View>
+    );
+  }
   if (draft.step === 'intake') {
     return (
       <ReferralIntakeForm
         onCancel={onCancel}
         onPause={onPause}
-        onContinue={() => store.setStep('picker')}
+        editing={draft.source?.kind === 'edit'}
+        onContinue={() => {
+          if (draft.source?.kind === 'edit') void onSubmit();
+          else runDraftAction(() => store.setStep('picker'));
+        }}
         profile={profile}
         onEditProfile={onEditProfile}
       />
@@ -38,21 +92,12 @@ export function ReferralCreateFlow({
   return (
     <ReferralForm
       onCancel={onCancel}
+      onBack={() => runDraftAction(() => store.setStep('intake'))}
       onPause={onPause}
-      // Lossless: setStep rewrites only step/updatedAt, so the answers and the
-      // selection survive.
-      onBack={() => store.setStep('intake')}
+      submitting={draft.submission.status === 'pending'}
       selectedShelterId={draft.selectedShelterId}
-      onSelectShelter={(id) => store.setShelter(id)}
-      onSubmit={(shelterId, pickerNotes) => {
-        const current = store.getSnapshot();
-        if (!current || current.clientId !== clientId)
-          return Promise.resolve(false);
-        return onSubmit(
-          shelterId,
-          buildReferralNotes(current.storedValues, pickerNotes),
-        );
-      }}
+      onSelectShelter={(id) => runDraftAction(() => store.setShelter(id))}
+      onSubmit={onSubmit}
       desiredAttributes={needLabelsFromIntake(draft.storedValues)}
     />
   );

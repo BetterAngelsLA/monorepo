@@ -11,10 +11,12 @@ export function CancelReferralButton({
   testID,
   style,
   onCancel,
+  disabled = false,
 }: {
   testID: string;
   style?: StyleProp<ViewStyle>;
   onCancel: () => void;
+  disabled?: boolean;
 }) {
   return (
     <DiscardModal
@@ -24,6 +26,8 @@ export function CancelReferralButton({
       button={
         <Pressable
           testID={testID}
+          disabled={disabled}
+          accessibilityState={{ disabled }}
           style={style}
           accessibilityRole="button"
           accessibilityLabel="cancel referral"

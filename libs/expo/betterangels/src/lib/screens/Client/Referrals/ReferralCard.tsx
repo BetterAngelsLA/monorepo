@@ -4,7 +4,8 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { ReferralShare } from './ReferralShare';
 import { ClientReferralsQuery } from './__generated__/Referrals.generated';
 import { ShelterCard, TagRow } from './ShelterCard';
 import { needLabelsFromIntake } from './clientNeeds';
@@ -15,11 +16,19 @@ import { shelterAttributeLabels } from './shelterAttributes';
 // vocabulary — see clientNeeds.ts), so it reflects the needs as they were
 // recorded at the time rather than whatever is on screen now.
 
-type ReferralCardProps = {
+export type ReferralCardProps = {
   referral: ClientReferralsQuery['referrals']['results'][number];
+  clientName: string;
+  onEdit: () => void;
+  onReferAgain: () => void;
 };
 
-export function ReferralCard({ referral }: ReferralCardProps) {
+export function ReferralCard({
+  referral,
+  clientName,
+  onEdit,
+  onReferAgain,
+}: ReferralCardProps) {
   const referrerName = referral.createdBy
     ? `${referral.createdBy.firstName ?? ''} ${
         referral.createdBy.lastName ?? ''
@@ -87,11 +96,28 @@ export function ReferralCard({ referral }: ReferralCardProps) {
           Notes: {humanNotes}
         </TextRegular>
       ) : null}
+      <View style={styles.cardTopRow}>
+        <Pressable
+          testID={`edit-referral-${referral.id}`}
+          accessibilityRole="button"
+          onPress={onEdit}
+        >
+          <TextBold color={Colors.PRIMARY}>Edit referral</TextBold>
+        </Pressable>
+        <Pressable
+          testID={`reuse-referral-${referral.id}`}
+          accessibilityRole="button"
+          onPress={onReferAgain}
+        >
+          <TextBold color={Colors.PRIMARY}>Refer to another shelter</TextBold>
+        </Pressable>
+      </View>
       {intakeSummary ? (
         <TextRegular size="xs" color={Colors.NEUTRAL}>
           Intake (temporary): {intakeSummary}
         </TextRegular>
       ) : null}
+      <ReferralShare referral={referral} clientName={clientName} />
     </View>
   );
 }

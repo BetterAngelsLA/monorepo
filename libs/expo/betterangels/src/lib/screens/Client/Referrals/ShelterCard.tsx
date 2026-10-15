@@ -1,4 +1,5 @@
 import { ExternalLinkOutlinedIcon } from '@monorepo/expo/shared/icons';
+import { useApiConfig } from '@monorepo/ba-platform';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import * as WebBrowser from 'expo-web-browser';
@@ -6,6 +7,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { partition } from 'remeda';
 import { matchTags, type TTag } from './shelterAttributes';
+import { shelterDirectoryUrl as directoryUrl } from './shelterDirectory';
 
 // Reusable shelter sub-elements shared by the shelter picker and the
 // referral card (the wireframe draws them as separate screens, but the
@@ -33,18 +35,27 @@ export function ShelterHeader({
 
 // directory link row (attribute tags render in their own wrapping row below)
 export function ShelterDetailsRow({ shelterId }: { shelterId: string }) {
-  const url = shelterDirectoryUrl(shelterId);
+  const [error, setError] = useState(false);
+  const { apiUrl } = useApiConfig();
+  const url = directoryUrl(
+    apiUrl,
+    shelterId,
+    process.env['EXPO_PUBLIC_SHELTER_WEB_URL'],
+  );
   if (!url) return null;
 
   return (
     <View style={styles.detailsRow}>
       <Pressable
         style={styles.directoryLink}
-        onPress={() =>
-          // in-app browser sheet (repo pattern, see WebBrowserLink) so the
-          // referral flow isn't abandoned.
-          WebBrowser.openBrowserAsync(url)
-        }
+        onPress={async () => {
+          setError(false);
+          try {
+            await WebBrowser.openBrowserAsync(url);
+          } catch {
+            setError(true);
+          }
+        }}
         accessibilityRole="link"
       >
         <TextRegular size="sm" color={Colors.PRIMARY}>
@@ -52,6 +63,11 @@ export function ShelterDetailsRow({ shelterId }: { shelterId: string }) {
         </TextRegular>
         <ExternalLinkOutlinedIcon size="sm" color={Colors.PRIMARY} />
       </Pressable>
+      {error && (
+        <TextRegular accessibilityLiveRegion="polite">
+          Could not open shelter details. Please try the link again.
+        </TextRegular>
+      )}
     </View>
   );
 }
@@ -68,7 +84,7 @@ export function ShelterDetailsRow({ shelterId }: { shelterId: string }) {
 export function shelterDirectoryUrl(shelterId: string): string | null {
   const baseUrl = process.env['EXPO_PUBLIC_SHELTER_WEB_URL'];
   if (!baseUrl) return null;
-  return `${baseUrl.replace(/\/$/, '')}/shelter/${shelterId}`;
+  return directoryUrl('http://localhost', shelterId, baseUrl);
 }
 
 // container for one-or-more tags (referral status, outcomes, shelter

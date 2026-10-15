@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   PetChoices,
   StorageChoices,
@@ -6,7 +7,6 @@ import {
 import {
   createReferralDraftStore,
   type DraftPersistence,
-  type ReferralDraft,
 } from './referralDraft';
 import type { IntakeFieldKey } from './intakeFields';
 import {
@@ -18,7 +18,7 @@ const CLIENT = 'client-1';
 const oldDraft = (
   fields: Record<string, unknown> = {},
   pii: Record<string, unknown> = {},
-): ReferralDraft => ({
+) => ({
   clientId: CLIENT,
   step: 'intake',
   fields,
@@ -41,8 +41,8 @@ function harness(initial: unknown = null) {
   };
   return {
     persistence,
-    store: createReferralDraftStore(persistence),
-    reload: () => createReferralDraftStore(persistence),
+    store: createReferralDraftStore(persistence, randomUUID),
+    reload: () => createReferralDraftStore(persistence, randomUUID),
   };
 }
 
@@ -197,10 +197,13 @@ describe('legacy persistence boundary', () => {
     expect(Object.keys(persistence.load() as object).sort()).toEqual([
       'clientId',
       'fields',
+      'id',
       'pii',
       'selectedShelterId',
       'step',
+      'submission',
       'updatedAt',
+      'version',
     ]);
     store.clear();
     expect(reload().getSnapshot()).toBeNull();
@@ -290,5 +293,91 @@ describe('snapshot ownership and subscriptions', () => {
     );
     expect(store.getSnapshot()).toBe(before);
     expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+describe('unreadable storage and session release', () => {
+  it.each([42, { ...oldDraft(), version: 99 }, { ...oldDraft(), fields: [] }])(
+    'blocks replacement of an unreadable draft until explicitly discarded',
+    (initial) => {
+      const { store, persistence } = harness(initial);
+      expect(store.getRecoveryState()).toBe('unreadable');
+      expect(store.startNew(CLIENT)).toBe(false);
+      expect(store.beginSubmission('anything')).toBeNull();
+      expect(persistence.load()).toEqual(initial);
+      expect(store.discardUnreadable()).toBe(true);
+      expect(store.getRecoveryState()).toBeNull();
+      expect(store.startNew(CLIENT)).toBe(true);
+    },
+  );
+
+  it('handles malformed JSON and read failures without crashing or deleting data', () => {
+    const persistence = {
+      load: vi.fn(() => {
+        throw new SyntaxError('bad JSON');
+      }),
+      save: vi.fn(),
+      remove: vi.fn(),
+    };
+    const store = createReferralDraftStore(persistence, randomUUID);
+    expect(store.getRecoveryState()).toBe('unreadable');
+    expect(store.startNew(CLIENT)).toBe(false);
+    persistence.load.mockImplementation(() => {
+      throw new Error('storage unavailable');
+    });
+    expect(store.retryLoad()).toBe(false);
+    expect(store.getRecoveryState()).toBe('read-error');
+    expect(persistence.remove).not.toHaveBeenCalled();
+  });
+
+  it('recovers after a temporary read error and preserves its saved answers', () => {
+    let unavailable = true;
+    const store = createReferralDraftStore(
+      {
+        load: () => {
+          if (unavailable) throw new Error('unavailable');
+          return oldDraft({ notes: 'Kept' });
+        },
+        save: vi.fn(),
+        remove: vi.fn(),
+      },
+      randomUUID,
+    );
+    const listener = vi.fn();
+    store.subscribe(listener);
+    unavailable = false;
+    expect(store.retryLoad()).toBe(true);
+    expect(store.getSnapshot()?.answers.notes).toBe('Kept');
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
+  it('retains the recovery warning if explicit deletion fails', () => {
+    const { store, persistence } = harness(42);
+    vi.mocked(persistence.remove).mockImplementation(() => {
+      throw new Error('disk failure');
+    });
+    expect(() => store.discardUnreadable()).toThrow();
+    expect(store.getRecoveryState()).toBe('unreadable');
+    expect(store.startNew(CLIENT)).toBe(false);
+  });
+
+  it('revokes old callbacks without rewriting a pending draft on disk', () => {
+    const { store, persistence, reload } = harness();
+    store.startNew(CLIENT);
+    store.setField('notes', 'Keep this');
+    const attempt = store.beginSubmission(store.getSnapshot()?.id ?? '');
+    if (!attempt) throw new Error('Expected a pending attempt');
+    const saved = persistence.load();
+    store.release();
+    expect(store.getSnapshot()).toBeNull();
+    expect(store.startNew(CLIENT)).toBe(false);
+    expect(store.finishSubmission(attempt, 'success')).toBe(false);
+    expect(store.setField('notes', 'wrong session')).toBe(false);
+    expect(store.retryLoad()).toBe(false);
+    expect(persistence.load()).toEqual(saved);
+    expect(reload().getSnapshot()).toMatchObject({
+      answers: { notes: 'Keep this' },
+      submission: { status: 'uncertain' },
+    });
   });
 });

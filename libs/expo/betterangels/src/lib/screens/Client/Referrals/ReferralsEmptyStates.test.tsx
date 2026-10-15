@@ -1,3 +1,7 @@
+import { VeteranStatusEnum } from '@monorepo/ba-platform/types';
+import { createApolloCache } from '@monorepo/apollo';
+import { createBaTypePolicies } from '../../../apollo/cachePolicies';
+import { randomUUID } from 'node:crypto';
 /**
  * T4 — the first screen a brand-new client shows.
  *
@@ -13,20 +17,25 @@
  *
  * Test-plan reference: referral-test-brief.md, case T4.
  */
-import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { render, screen } from '@testing-library/react-native';
-import { AdaAccommodationEnum, VeteranStatusEnum } from '../../../apollo';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { ReferralsTab } from './ReferralsTab';
-import { REFERRALS_PAGE_SIZE } from './constants';
 import { ClientReferralsDocument } from './__generated__/Referrals.generated';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,
 } from './referralDraft';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
+vi.mock('expo-crypto', async () => ({
+  randomUUID: (await import('node:crypto')).randomUUID,
+}));
+vi.mock('../../../providers/user/UserProvider', () => ({
+  useUser: () => {
+    throw new Error('Injected draft tests must not read account context');
+  },
+}));
 
 // See sharedBarrels.tsx: the shared barrels pull in native-backed components
 // whose native halves don't exist under test. `static` stays real.
@@ -46,11 +55,14 @@ vi.mock('../../../providers', () => ({
 }));
 
 const createStore = () =>
-  createReferralDraftStore({
-    load: () => null,
-    save: vi.fn(),
-    remove: vi.fn(),
-  });
+  createReferralDraftStore(
+    {
+      load: () => null,
+      save: vi.fn(),
+      remove: vi.fn(),
+    },
+    randomUUID,
+  );
 let draftStore: ReferralDraftStore;
 
 const CLIENT_ID = 'c-1';
@@ -61,7 +73,7 @@ const emptyReferrals = [
       query: ClientReferralsDocument,
       variables: {
         filters: { clientProfile: CLIENT_ID },
-        pagination: { offset: 0, limit: REFERRALS_PAGE_SIZE },
+        pagination: { offset: 0, limit: 25 },
       },
     },
     result: {
@@ -93,7 +105,10 @@ describe('empty referral history', () => {
 
   it('says there are no referrals yet instead of showing a blank screen', async () => {
     await render(
-      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -103,7 +118,10 @@ describe('empty referral history', () => {
 
   it('tells the user how to create the first one', async () => {
     await render(
-      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -115,7 +133,10 @@ describe('empty referral history', () => {
 
   it('shows a spinner first, then replaces it with the empty message', async () => {
     await render(
-      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -132,7 +153,10 @@ describe('empty referral history', () => {
 
   it('still offers the + button so an empty history is not a dead end', async () => {
     await render(
-      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -160,7 +184,7 @@ describe('sparse client profile in the intake form', () => {
   it('marks every absent field "Not on file" rather than leaving it blank', async () => {
     await renderIntake({});
 
-    // Name, Gender, Age, Accommodations, Veteran — five of the six rows.
+    // Name, Gender, Age (DOB), Mobility, Veteran — five of the six rows.
     expect(screen.getAllByText('Not on file')).toHaveLength(5);
   });
 
@@ -190,15 +214,18 @@ describe('sparse client profile in the intake form', () => {
     await renderIntake({
       firstName: 'Client',
       lastName: 'One',
-      veteranStatus: VeteranStatusEnum.PreferNotToSay,
-      adaAccommodation: [AdaAccommodationEnum.Mobility],
+      veteranStatus: VeteranStatusEnum.Yes,
     });
 
     expect(screen.getByText('Client One')).toBeOnTheScreen();
-    // Enum values render as their display labels, not the wire names.
-    expect(screen.getByText('Prefer not to say')).toBeOnTheScreen();
-    expect(screen.getByText('Mobility')).toBeOnTheScreen();
-    // Gender and Age are still absent.
-    expect(screen.getAllByText('Not on file')).toHaveLength(2);
+    expect(screen.getAllByText('Yes').length).toBeGreaterThan(0);
+    // Gender, DOB and Mobility are still absent.
+    expect(screen.getAllByText('Not on file')).toHaveLength(3);
   });
 });
+
+// These component fixtures use production-shaped IDs and the corresponding directory.
+vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
+  useApiConfig: () => ({ apiUrl: 'https://api.prod.betterangels.la' }),
+}));

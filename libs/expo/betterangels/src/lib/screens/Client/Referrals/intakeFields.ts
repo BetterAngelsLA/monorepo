@@ -1,3 +1,4 @@
+import { parseDateString, toDateString } from '@monorepo/shared/scalars';
 import type { CreateReferralInput } from '../../../apollo';
 import {
   enumDisplayAccessibilityChoices,
@@ -47,8 +48,9 @@ type FieldMetadata = {
   readonly label: string;
   readonly section: 'needs' | 'additional';
   readonly sensitive: boolean;
+  readonly reuse: 'prefill' | 'review' | 'reset';
   readonly persistence: { readonly localDraft: boolean };
-  // Pending requirements retain their marker but do not block the prototype.
+  // Pending means requiredness is under review; answering is currently optional.
   readonly requirement: 'optional' | 'pending' | 'required';
   readonly help?: string;
 };
@@ -63,6 +65,7 @@ export type IntakeFieldDefinition = FieldMetadata &
         // Direct notes accept text; structured answers need the sidecar.
         readonly backend: Exclude<IntakeBackendMapping, { mode: 'direct' }>;
       } & (
+        | { readonly control: 'date' }
         | { readonly control: 'yesno' }
         | { readonly control: 'checkbox'; readonly checkboxLabel: string }
         | {
@@ -83,6 +86,7 @@ export type IntakeFieldDefinition = FieldMetadata &
 export const INTAKE_FIELDS = [
   {
     key: 'substances',
+    reuse: 'review',
     label: 'Substances',
     section: 'needs',
     control: 'text',
@@ -94,6 +98,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'pets',
+    reuse: 'prefill',
     label: 'Animals with the client',
     section: 'needs',
     control: 'multiselect',
@@ -107,6 +112,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'demographics',
+    reuse: 'prefill',
     label: 'Household / demographic fit',
     section: 'needs',
     control: 'multiselect',
@@ -124,6 +130,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'accessibility',
+    reuse: 'prefill',
     label: 'Accessibility needs',
     section: 'needs',
     control: 'multiselect',
@@ -141,6 +148,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'storage',
+    reuse: 'prefill',
     label: 'Storage needed',
     section: 'needs',
     control: 'multiselect',
@@ -152,6 +160,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'transportation',
+    reuse: 'prefill',
     label: 'Vehicle needing parking',
     section: 'needs',
     control: 'multiselect',
@@ -168,6 +177,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'selfcare',
+    reuse: 'review',
     label: 'Able to practice self-care',
     section: 'needs',
     control: 'yesno',
@@ -179,6 +189,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'special',
+    reuse: 'review',
     label: 'Special Situations',
     section: 'needs',
     control: 'multiselect',
@@ -189,7 +200,24 @@ export const INTAKE_FIELDS = [
     backend: { mode: 'notesSidecar', field: 'notes', payloadKey: 'special' },
   },
   {
+    key: 'requestedArrivalDate',
+    label: 'Requested arrival date',
+    section: 'additional',
+    control: 'date',
+    sensitive: false,
+    reuse: 'review',
+    requirement: 'optional',
+    help: 'When the client hopes to arrive. This does not confirm a bed or reservation.',
+    persistence: { localDraft: true },
+    backend: {
+      mode: 'notesSidecar',
+      field: 'notes',
+      payloadKey: 'requestedArrivalDate',
+    },
+  },
+  {
     key: 'consent',
+    reuse: 'reset',
     label: 'DHS data-sharing consent',
     section: 'additional',
     control: 'checkbox',
@@ -202,6 +230,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'notes',
+    reuse: 'reset',
     label: 'Staff Observations / Notes',
     section: 'additional',
     control: 'textarea',
@@ -259,6 +288,13 @@ export function isIntakeControlValue(
   value: unknown,
 ): value is IntakeControlValue {
   switch (field.control) {
+    case 'date': {
+      if (value === '') return true;
+      if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value))
+        return false;
+      const date = parseDateString(value);
+      return !!date && toDateString(date) === value;
+    }
     case 'checkbox':
       return typeof value === 'boolean';
     case 'yesno':
@@ -306,12 +342,23 @@ export function readIntakeAnswers(
   return Object.freeze(answers);
 }
 
+export function isRequiredIntakeField(field: IntakeFieldDefinition): boolean {
+  return field.requirement === 'required';
+}
+
+export function intakeRequirementLabel(field: IntakeFieldDefinition): string {
+  if (isRequiredIntakeField(field)) return 'Required';
+  return field.requirement === 'pending'
+    ? 'Optional · requirement under review'
+    : 'Optional';
+}
+
 export function missingRequiredIntakeFields(
   values: StoredIntake,
   definitions: readonly IntakeFieldDefinition[] = INTAKE_FIELDS,
 ): IntakeFieldDefinition[] {
   return definitions.filter((field) => {
-    if (field.requirement !== 'required') return false;
+    if (!isRequiredIntakeField(field)) return false;
     const value = values[field.key];
     if (!isIntakeControlValue(field, value)) return true;
     if (typeof value === 'string') return value.trim().length === 0;

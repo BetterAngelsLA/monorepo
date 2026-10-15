@@ -17,6 +17,7 @@ import { IWheelDatePickerProps } from './types';
 export function WheelDatePicker(props: IWheelDatePickerProps) {
   const {
     label,
+    testId,
     onChange,
     error,
     style,
@@ -42,6 +43,7 @@ export function WheelDatePicker(props: IWheelDatePickerProps) {
       ]}
     >
       <Input
+        testID={testId}
         asSelect
         value={value ? dateFnsFormat(value, format) : undefined}
         label={label}

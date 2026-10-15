@@ -1,4 +1,9 @@
-import { useApolloClient, useMutation } from '@apollo/client/react';
+import { useApolloClient } from '@apollo/client/react';
+import { FocusedInfiniteList } from '../../../ui-components/InfiniteList/FocusedInfiniteList';
+import { DraftCard } from './DraftCard';
+import { ReferralCard, type ReferralCardProps } from './ReferralCard';
+import { useActiveOrg, useApiConfig } from '@monorepo/ba-platform';
+import { useUser } from '../../../providers/user/UserProvider';
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { useRouter } from 'expo-router';
 import { InfoIcon, PlusIcon } from '@monorepo/expo/shared/icons';
@@ -8,7 +13,14 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useReducer,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,33 +28,37 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { FocusedInfiniteList } from '../../../ui-components/InfiniteList/FocusedInfiniteList';
-import {
-  OperationMessageKind,
-  extractOperationInfoMessages,
-} from '../../../apollo';
-import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { pagePaddingHorizontal } from '../../../static';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ClientViewTabEnum } from '../ClientTabs';
-import { DraftCard } from './DraftCard';
-import { ReferralCard } from './ReferralCard';
+import { useSnackbar } from '../../../hooks';
+import { referralDraftSeed } from './referralDraftSeed';
+import { useReferralSubmission } from './useReferralSubmission';
+import { useLocalDraftAction } from './useLocalDraftAction';
 import { ReferralCreateFlow } from './ReferralCreateFlow';
+import { DraftRecoveryNotice } from './DraftRecoveryNotice';
 import {
   ReferralDraftProvider,
   useReferralDraft,
 } from './ReferralDraftProvider';
 import { ReferralsHelp } from './ReferralsHelp';
 import type { ReferralDraftStore } from './referralDraft';
-import { getPersistentReferralDraft } from './referralDraftStorage';
-import { REFERRALS_PAGE_SIZE } from './constants';
+import {
+  getPersistentReferralDraft,
+  hasLegacyReferralDraft,
+  recoverLegacyReferralDraft,
+} from './referralDraftStorage';
 import {
   ClientReferralsDocument,
   ClientReferralsQuery,
   ClientReferralsQueryVariables,
-  CreateReferralDocument,
 } from './__generated__/Referrals.generated';
+
+// Client needs now come from the intake form, in the shelter's own vocabulary —
+// see clientNeeds.ts. The picker reads the in-progress draft; a saved referral
+// reads the answers stored on that referral, so a card always reflects the needs
+// as they were recorded at the time rather than whatever is on screen now.
 
 type TProps = {
   client: ClientProfileQuery | undefined;
@@ -50,40 +66,112 @@ type TProps = {
 };
 
 export function ReferralsTab({ client, draftStore }: TProps) {
-  const clientId = client?.clientProfile.id;
-  if (!clientId) {
-    throw new Error('Something went wrong. Please try again.');
-  }
-
+  if (!client) return <ActivityIndicator />;
+  if (!draftStore) return <PersistentReferralsTab client={client} />;
   return (
-    <ReferralDraftProvider store={draftStore ?? getPersistentReferralDraft()}>
+    <ReferralDraftProvider store={draftStore}>
+      <ReferralsContent client={client} clientId={client.clientProfile.id} />
+    </ReferralDraftProvider>
+  );
+}
+
+function PersistentReferralsTab({ client }: Pick<TProps, 'client'>) {
+  const { showSnackbar } = useSnackbar();
+  const { user } = useUser();
+  const { activeOrg } = useActiveOrg();
+  const { apiUrl } = useApiConfig();
+  const [, refresh] = useReducer((value: number) => value + 1, 0);
+  const clientId = client?.clientProfile.id;
+  const currentScope = useRef('');
+  const scopeIdentity = JSON.stringify([
+    apiUrl,
+    user?.id,
+    activeOrg?.id,
+    clientId,
+  ]);
+  useLayoutEffect(() => {
+    currentScope.current = scopeIdentity;
+    return () => {
+      currentScope.current = '';
+    };
+  }, [scopeIdentity]);
+  if (!user?.id || !activeOrg?.id || !clientId) return <ActivityIndicator />;
+  const scope = {
+    apiUrl,
+    userId: user.id,
+    organizationId: activeOrg.id,
+    clientId,
+  };
+  const store = getPersistentReferralDraft(scope);
+  return (
+    <ReferralDraftProvider key={JSON.stringify(scope)} store={store}>
+      {!store.getSnapshot() &&
+        !store.getRecoveryState() &&
+        hasLegacyReferralDraft(clientId) && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              Alert.alert(
+                'Recover an older draft?',
+                'An older app version saved a draft for this client without recording its account or environment. Recover it only if it belongs to your current work.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Recover',
+                    onPress: () => {
+                      if (currentScope.current !== scopeIdentity) return;
+                      try {
+                        recoverLegacyReferralDraft(scope);
+                      } catch {
+                        showSnackbar({
+                          message:
+                            'Could not finish recovering the older draft. Its saved answers have been kept. Check the draft shown here before trying again.',
+                          type: 'error',
+                        });
+                      }
+                      refresh();
+                    },
+                  },
+                ],
+              )
+            }
+          >
+            <TextRegular>Recover older local draft</TextRegular>
+          </Pressable>
+        )}
       <ReferralsContent client={client} clientId={clientId} />
     </ReferralDraftProvider>
   );
 }
 
-type TContentProps = {
-  client: ClientProfileQuery | undefined;
-  clientId: string;
-};
-
-function ReferralsContent({ client, clientId }: TContentProps) {
-  const { draft, store } = useReferralDraft();
+function ReferralsContent({
+  client,
+  clientId,
+}: Pick<TProps, 'client'> & { clientId: string }) {
+  const { draft, recovery, store } = useReferralDraft();
+  const apolloClient = useApolloClient();
   const { showSnackbar } = useSnackbar();
+  const runDraftAction = useLocalDraftAction();
+  const modalSession = useRef<symbol | null>(null);
   const { showModalScreen } = useModalScreen();
   const [helpVisible, setHelpVisible] = useState(false);
   const router = useRouter();
-  const apolloClient = useApolloClient();
+  useEffect(
+    () => () => {
+      modalSession.current = null;
+    },
+    [],
+  );
 
   const {
     items: referrals,
-    total,
+    total: totalCount,
     loading,
-    loadingMore,
-    hasMore,
     error,
-    loadMore,
     reload,
+    hasMore,
+    loadMore,
+    loadingMore,
     reloading,
   } = useInfiniteScrollQuery<
     ClientReferralsQuery['referrals']['results'][number],
@@ -93,147 +181,142 @@ function ReferralsContent({ client, clientId }: TContentProps) {
     document: ClientReferralsDocument,
     queryFieldName: 'referrals',
     variables: { filters: { clientProfile: clientId } },
-    pageSize: REFERRALS_PAGE_SIZE,
+    pageSize: 25,
   });
-
-  const [createReferral] = useMutation(CreateReferralDocument);
-
+  const submit = useReferralSubmission(store, () => {
+    apolloClient.cache.evict({ fieldName: 'referrals' });
+    apolloClient.cache.gc();
+    reload();
+  });
   const hasDraft = draft?.clientId === clientId;
-  const totalCount = total ?? 0;
-
-  const onSubmit = async (
-    shelterId: string,
-    notes: string | undefined,
-    closeForm: () => void,
-  ): Promise<boolean> => {
-    try {
-      const result = await createReferral({
-        variables: {
-          data: {
-            clientProfile: clientId,
-            shelter: shelterId,
-            notes,
-          },
-        },
-      });
-
-      const referral = result.data?.createReferral;
-      if (referral?.__typename === 'OperationInfo') {
-        // Only validation/permission messages are user-facing (see
-        // apps/betterangels-backend/docs/graphql_errors.md). `Error` is the
-        // catch-all kind and can carry raw exception text, so it is not shown.
-        const operationErrors = extractOperationInfoMessages(
-          result,
-          'createReferral',
-          [OperationMessageKind.Validation, OperationMessageKind.Permission],
-        );
-
-        showSnackbar({
-          message: operationErrors?.length
-            ? operationErrors.map((e) => e.message).join(', ')
-            : 'Error creating referral. Please try again.',
-          type: 'error',
-        });
-        return false;
-      }
-
-      // A missing payload does not confirm creation. Keep the draft available
-      // until the server returns an identifiable referral.
-      if (referral?.__typename !== 'ReferralType' || !referral.id) {
-        showSnackbar({
-          message: 'Error creating referral. Please try again.',
-          type: 'error',
-        });
-        return false;
-      }
-
-      showSnackbar({
-        message: 'Referral submitted successfully!',
-        type: 'success',
-      });
-
-      store.clear();
-      closeForm();
-      // Rebuild the list instead of paging into a shifted one. The field is
-      // offset-merged (keyArgs ['filters']) and the shared merge drops rows when
-      // the list shifts under it (proven at mergeObjectPayload level; the
-      // refetch path currently comes out clean, so this is cheap insurance and
-      // a guard against Apollo's merge semantics changing). The merge itself is
-      // being fixed separately, with its own shifted-page tests.
-      apolloClient.cache.evict({ fieldName: 'referrals' });
-      apolloClient.cache.gc();
-      reload();
-      return true;
-    } catch (e) {
-      showSnackbar({
-        message: 'Error creating referral. Please try again.',
-        type: 'error',
-      });
-      console.error(e);
-      return false;
-    }
-  };
 
   const openReferralForm = () => {
+    const draftId = store.getSnapshot()?.id;
+    if (!draftId) return;
+    const session = Symbol();
+    modalSession.current = session;
     showModalScreen({
+      onClose: () => {
+        if (modalSession.current === session) modalSession.current = null;
+      },
       presentation: 'fullScreenModal',
       // in-form Cancel / Pause row is the single, consistent set of exits —
       // drop the redundant header "x" (keeps the "Refer to Shelter" title bar)
       header: { mode: 'custom', buttonRight: null },
-      renderContent: ({ close }) => (
-        <ReferralDraftProvider store={store}>
-          <ReferralCreateFlow
-            clientId={clientId}
-            onCancel={() => {
-              store.clear();
-              close();
-            }}
-            onPause={close}
-            onSubmit={(shelterId, notes) => onSubmit(shelterId, notes, close)}
-            profile={client?.clientProfile}
-            onEditProfile={() => {
-              // Open the full profile VIEW (Profile tab) so any section is editable,
-              // not just Personal Info. The draft is saved on-device and returns as
-              // a resumable card in the referral list.
-              close();
-              router.navigate({
-                pathname: `/client/${clientId}`,
-                params: { newTab: ClientViewTabEnum.Profile },
-              });
-            }}
-          />
-        </ReferralDraftProvider>
-      ),
-      title: 'Refer to Shelter',
+      renderContent: ({ close }) => {
+        const closeCurrent = () => {
+          if (modalSession.current !== session) return;
+          modalSession.current = null;
+          close();
+        };
+        return (
+          <ReferralDraftProvider store={store}>
+            <DraftModal draftId={draftId} onClose={closeCurrent}>
+              <ReferralCreateFlow
+                clientId={clientId}
+                onCancel={() => {
+                  if (runDraftAction(() => store.clear(draftId)))
+                    closeCurrent();
+                }}
+                onPause={() => {
+                  closeCurrent();
+                  if (store.getSnapshot()?.submission.status === 'uncertain')
+                    reload();
+                }}
+                onSubmit={() =>
+                  modalSession.current === session
+                    ? submit(draftId)
+                    : Promise.resolve(false)
+                }
+                profile={client?.clientProfile}
+                onEditProfile={() => {
+                  closeCurrent();
+                  router.navigate({
+                    pathname: `/client/${clientId}`,
+                    params: { newTab: ClientViewTabEnum.Profile },
+                  });
+                }}
+              />
+            </DraftModal>
+          </ReferralDraftProvider>
+        );
+      },
+      title:
+        store.getSnapshot()?.source?.kind === 'edit'
+          ? 'Edit Referral'
+          : 'Refer to Shelter',
     });
   };
 
-  const beginNewReferral = () => {
-    store.startNew(clientId);
-    openReferralForm();
+  const startNewReferral = () => {
+    if (runDraftAction(() => store.startNew(clientId))) openReferralForm();
   };
 
-  const startNewReferral = () => {
-    // The device keeps a single draft. Starting a new one for another client
-    // silently replaced the old draft before, so confirm first.
-    const current = store.getSnapshot();
-    if (current && current.clientId !== clientId) {
-      Alert.alert(
-        'Replace the in-progress referral?',
-        'You have an unsent referral for another client. Starting a new one will replace it.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Replace', style: 'destructive', onPress: beginNewReferral },
-        ],
-      );
+  const startFromReferral = (
+    referral: ReferralCardProps['referral'],
+    mode: 'edit' | 'reuse',
+  ) => {
+    if (store.getRecoveryState()) {
+      showSnackbar({
+        message: 'Resolve the unreadable local draft before starting another.',
+        type: 'error',
+      });
       return;
     }
+    const seed = referralDraftSeed(referral, mode);
+    if (!seed) {
+      showSnackbar({
+        message:
+          'This referral contains information this app version cannot read. Its saved information has been left intact.',
+        type: 'error',
+      });
+      return;
+    }
+    const begin = () => {
+      if (runDraftAction(() => store.startNew(clientId, seed)))
+        openReferralForm();
+    };
+    const existing = store.getSnapshot();
+    if (!existing) {
+      begin();
+      return;
+    }
+    if (existing.submission.status !== 'idle') {
+      openReferralForm();
+      return;
+    }
+    Alert.alert(
+      'A draft already exists for this client',
+      'Resume it, or discard it to start from the selected referral.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Resume draft', onPress: openReferralForm },
+        {
+          text: 'Discard and start',
+          style: 'destructive',
+          onPress: () => {
+            // Replace in one persisted write: failure must retain the old draft.
+            const current = store.getSnapshot();
+            if (
+              current?.id === existing.id &&
+              current.submission.status === 'idle'
+            )
+              begin();
+          },
+        },
+      ],
+    );
+  };
 
-    beginNewReferral();
+  const confirmDiscardDraft = () => {
+    const current = store.getSnapshot();
+    if (current && current.submission.status !== 'pending')
+      runDraftAction(() => store.clear(current.id));
   };
 
   return (
     <View style={styles.container} testID="referrals-screen">
+      {recovery && <DraftRecoveryNotice />}
       {/* Header row */}
       <View style={styles.headerRow}>
         <View style={styles.headerCount}>
@@ -266,7 +349,7 @@ function ReferralsContent({ client, clientId }: TContentProps) {
               Resume
             </TextBold>
           </Pressable>
-        ) : (
+        ) : !recovery ? (
           <IconButton
             testID="create-referral-btn"
             variant="secondary"
@@ -277,7 +360,7 @@ function ReferralsContent({ client, clientId }: TContentProps) {
           >
             <PlusIcon />
           </IconButton>
-        )}
+        ) : null}
       </View>
 
       {/* Loading state */}
@@ -288,25 +371,32 @@ function ReferralsContent({ client, clientId }: TContentProps) {
       )}
 
       {/* Error state */}
-      {error && referrals.length === 0 && (
+      {error && (
         <View style={styles.centered}>
           <TextRegular color={Colors.ERROR}>
             Error loading referrals. Please try again.
           </TextRegular>
+          <Pressable accessibilityRole="button" onPress={reload}>
+            <TextBold>Retry</TextBold>
+          </Pressable>
         </View>
       )}
 
       {/* Empty state */}
-      {!loading && !error && referrals.length === 0 && !hasDraft && (
-        <View style={styles.emptyState}>
-          <TextBold size="sm" color={Colors.NEUTRAL_DARK}>
-            No referrals yet
-          </TextBold>
-          <TextRegular size="sm" color={Colors.NEUTRAL}>
-            Tap + to refer this client to a shelter.
-          </TextRegular>
-        </View>
-      )}
+      {!loading &&
+        !error &&
+        referrals.length === 0 &&
+        !hasDraft &&
+        !recovery && (
+          <View style={styles.emptyState}>
+            <TextBold size="sm" color={Colors.NEUTRAL_DARK}>
+              No referrals yet
+            </TextBold>
+            <TextRegular size="sm" color={Colors.NEUTRAL}>
+              Tap + to refer this client to a shelter.
+            </TextRegular>
+          </View>
+        )}
 
       {/* Referral list — the draft rides at the top of the list (not pinned) so
           it scrolls away and doesn't eat the history's vertical space. The
@@ -317,7 +407,19 @@ function ReferralsContent({ client, clientId }: TContentProps) {
         >
           data={referrals}
           keyExtractor={(referral) => referral.id}
-          renderItem={(referral) => <ReferralCard referral={referral} />}
+          renderItem={(referral) => (
+            <ReferralCard
+              referral={referral}
+              clientName={[
+                client?.clientProfile.firstName,
+                client?.clientProfile.lastName,
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onEdit={() => startFromReferral(referral, 'edit')}
+              onReferAgain={() => startFromReferral(referral, 'reuse')}
+            />
+          )}
           totalItems={totalCount}
           renderResultsHeader={null}
           loadMore={loadMore}
@@ -330,12 +432,12 @@ function ReferralsContent({ client, clientId }: TContentProps) {
             hasDraft ? (
               <DraftCard
                 updatedAt={draft?.updatedAt}
+                status={draft?.submission.status ?? 'idle'}
                 onResume={openReferralForm}
-                onDiscard={() => store.clear()}
+                onDiscard={confirmDiscardDraft}
               />
             ) : null
           }
-          // The draft card already explains the state when only a draft exists.
           ListEmptyComponent={hasDraft ? NoListItems : undefined}
         />
       )}
@@ -348,8 +450,22 @@ function ReferralsContent({ client, clientId }: TContentProps) {
   );
 }
 
-// When only a draft exists the draft card above already explains the state, so
-// the list itself renders nothing.
+function DraftModal({
+  draftId,
+  onClose,
+  children,
+}: {
+  draftId: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const { draft } = useReferralDraft();
+  useEffect(() => {
+    if (!draft || draft.id !== draftId) onClose();
+  }, [draft, draftId, onClose]);
+  return draft?.id === draftId ? children : null;
+}
+
 const NoListItems = () => null;
 
 const styles = StyleSheet.create({

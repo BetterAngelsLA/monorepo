@@ -1,14 +1,25 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import {
+  RNKeyboardAwareScrollView,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
+import { Alert, Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CancelReferralButton } from './CancelReferralButton';
 import { DeferredFieldsCard } from './DeferredFieldsCard';
 import { Field } from './IntakeField';
 import { MemoryIcon, PiiTag } from './IntakeFieldMarkers';
 import { ProfileCard, type ProfileCardData } from './ProfileCard';
 import { useReferralDraft } from './ReferralDraftProvider';
+import { useLocalDraftAction } from './useLocalDraftAction';
 import { GREEN, RED, styles } from './intakeFormStyles';
-import { INTAKE_FIELDS, missingRequiredIntakeFields } from './intakeFields';
+import {
+  INTAKE_FIELDS,
+  getIntakeField,
+  isRequiredIntakeField,
+  missingRequiredIntakeFields,
+} from './intakeFields';
 
 const NEEDS_FIELDS = INTAKE_FIELDS.filter((field) => field.section === 'needs');
 const ADDITIONAL_FIELDS = INTAKE_FIELDS.filter(
@@ -19,6 +30,7 @@ type TProps = {
   onCancel: () => void;
   onPause: () => void;
   onContinue: () => void;
+  editing?: boolean;
   profile?: ProfileCardData | null;
   onEditProfile?: () => void;
 };
@@ -27,10 +39,13 @@ export function ReferralIntakeForm({
   onCancel,
   onPause,
   onContinue,
+  editing = false,
   profile,
   onEditProfile,
 }: TProps) {
   const { draft, store } = useReferralDraft();
+  const insets = useSafeAreaInsets();
+  const runDraftAction = useLocalDraftAction();
   const continueToShelters = () => {
     const missing = missingRequiredIntakeFields(draft?.answers ?? {});
     if (missing.length) {
@@ -44,12 +59,16 @@ export function ReferralIntakeForm({
   };
 
   return (
-    <View style={styles.container} testID="referral-intake-screen">
+    <View
+      style={[styles.container, { paddingBottom: insets.bottom }]}
+      testID="referral-intake-screen"
+    >
       <View style={styles.header}>
         <CancelReferralButton
           testID="intake-cancel-btn"
           style={[styles.headerBtn, styles.headerBtnFlex]}
           onCancel={onCancel}
+          disabled={draft?.submission.status === 'pending'}
         />
         <Pressable
           testID="intake-pause-btn"
@@ -68,20 +87,32 @@ export function ReferralIntakeForm({
           style={[styles.headerBtn, styles.headerBtnFlex]}
           onPress={continueToShelters}
           accessibilityRole="button"
-          accessibilityLabel="continue to shelter picker"
-          accessibilityHint="proceeds to select a shelter"
+          accessibilityLabel={
+            editing ? 'save referral changes' : 'continue to shelter picker'
+          }
+          accessibilityHint={
+            editing
+              ? 'saves changes to this referral only'
+              : 'proceeds to select a shelter'
+          }
         >
           <TextBold size="sm" color={Colors.PRIMARY}>
-            Next
+            {editing
+              ? 'Save changes'
+              : draft?.source?.kind === 'reuse'
+                ? 'Reviewed — Next'
+                : 'Next'}
           </TextBold>
         </Pressable>
       </View>
 
-      <ScrollView
+      <RNKeyboardAwareScrollView
+        testID="referral-intake-fields"
         style={styles.body}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
+        bottomOffset={24}
+        extraKeyboardSpace={24}
       >
         {/* Dev aid: explains how each answer is stored. Hidden in release builds. */}
         {__DEV__ && (
@@ -121,17 +152,53 @@ export function ReferralIntakeForm({
           </View>
         )}
 
+        {draft?.source?.kind === 'reuse' && (
+          <View style={styles.field} testID="referral-reuse-review">
+            <TextBold>Review the copied information</TextBold>
+            <TextRegular>
+              Confirm these answers with the client before continuing. Consent
+              and staff notes need new answers.
+            </TextRegular>
+            {!!draft.source.reviewKeys.length && (
+              <TextRegular>
+                Review:{' '}
+                {draft.source.reviewKeys
+                  .map((key) => getIntakeField(key)?.label ?? key)
+                  .join(', ')}
+              </TextRegular>
+            )}
+            {!!draft.source.skippedKeys.length && (
+              <TextRegular>
+                Some older answers could not be copied completely. Review the
+                form and fill in anything missing.
+              </TextRegular>
+            )}
+          </View>
+        )}
+        {editing && (
+          <TextRegular>
+            Changes apply only to this referral. To choose another shelter,
+            create a new referral.
+          </TextRegular>
+        )}
         <ProfileCard profile={profile} onEditProfile={onEditProfile} />
 
         <TextBold size="sm" style={styles.sectionLabel}>
-          Required Information for Referral
+          Referral information
         </TextBold>
+        <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+          {INTAKE_FIELDS.some(isRequiredIntakeField)
+            ? 'Complete fields marked Required. All other intake fields are optional.'
+            : 'All referral intake fields are currently optional.'}
+        </TextRegular>
         {NEEDS_FIELDS.map((f) => (
           <Field
             key={f.key}
             f={f}
             value={draft?.answers[f.key]}
-            onChange={(v) => store.setControlValue(f.key, v)}
+            onChange={(v) =>
+              runDraftAction(() => store.setControlValue(f.key, v))
+            }
           />
         ))}
 
@@ -146,12 +213,14 @@ export function ReferralIntakeForm({
             key={f.key}
             f={f}
             value={draft?.answers[f.key]}
-            onChange={(v) => store.setControlValue(f.key, v)}
+            onChange={(v) =>
+              runDraftAction(() => store.setControlValue(f.key, v))
+            }
           />
         ))}
 
         <View style={styles.footerSpace} />
-      </ScrollView>
+      </RNKeyboardAwareScrollView>
     </View>
   );
 }
