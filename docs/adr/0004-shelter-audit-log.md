@@ -769,9 +769,10 @@ can own without inverting a dependency:
 The edges are one-way: `audit` → `shelters` (the four target models and the
 reach-scoped `*_get` helpers in `shelters/selectors/operator.py`), `audit` →
 `common` (permissions), and `audit` → `accounts` (the user model). Event models
-are resolved by app-label string via `django.apps.apps`, not imported, so
-`THROUGH_EVENT_MAP` is local rendering metadata in `audit/selectors.py`. The
-read half (`AuditReadEvent` and `AuditViewExtension`, §22-§29) is deferred.
+are resolved by app-label string via `django.apps.apps`, not imported, so the
+through-table rendering metadata is local to `audit/selectors.py` and derived at
+run time (§19). The read half (`AuditReadEvent` and `AuditViewExtension`,
+§22-§29) is deferred.
 
 **Naming (decided).** The write side is a proxy of pghistory's aggregate
 `Events` model; name it **`AuditWriteEvent`** (renamed from the earlier draft's
@@ -812,14 +813,14 @@ selects any event model with such a field (`core.py:720-728`). Concretely,
 - every `Tracked*Event` via its `shelter` FK (`TrackedDemographicEvent.shelter`,
   etc. — confirmed in [shelters/migrations/0001_initial.py](apps/betterangels-backend/shelters/migrations/0001_initial.py)).
 
-**Do not add `tracks()` or the `THROUGH_EVENT_MAP` direct query alongside it.**
+**Do not add `tracks()` or a through-table direct query alongside it.**
 `tracks()` is a strict subset of `references()` (it filters only `pgh_obj`), and
-the `THROUGH_EVENT_MAP` query re-fetches rows `references()` already returns.
+a direct through-table query re-fetches rows `references()` already returns.
 `EventsQueryCompiler._validate()` even forbids mixing `tracks()` and
 `references()` on one queryset (`models.py:296-297`), so a merged union would
 double-count every own event and every through event. `references()` alone is
-complete; `THROUGH_EVENT_MAP` is retained **only as rendering metadata** (§19),
-never as a second query source.
+complete; the derived through-table metadata (§19) is **only rendering
+metadata**, never a second query source.
 
 **`references()` boundary to pin:** `references()` matches _every_ event model
 with an FK to the target, so the concrete per-target match set is broader than
@@ -1086,7 +1087,7 @@ spurious action. The grouping key is therefore a composite:
 its own singleton action.
 
 The fallback must be `pgh_slug`, not `pgh_id`. `pgh_id` is the event table's own
-`AutoField`, so it is only unique *within* one table; the aggregate is a
+`AutoField`, so it is only unique _within_ one table; the aggregate is a
 `UNION ALL` across every event model, and each table's sequence starts at 1. Two
 context-less writes in different tables would collide on `system-<pgh_id>` and
 render as one action. `pgh_slug` is pghistory's own `'<event_model>:<pgh_id>'`
@@ -1128,9 +1129,10 @@ holds scalars for single-value columns, but a multi-value change (e.g. one actio
 that adds two `demographics` rows and removes one) cannot collapse into two
 scalars. For those fields the value is a 2-element list of lists —
 `{field: [[removed...], [added...]]}` — where `removed`/`added` are lists of
-display labels (either may be empty), resolved through `LABEL_FIELD` (§14). This
-is the same shape §15's per-through-row events merge into, and it is what the
-action-level before/after set (the preferred approach below) produces naturally:
+display labels (either may be empty), resolved through the derived label
+attribute (§14). This is the same shape §15's per-through-row events merge into,
+and it is what the action-level before/after set (the preferred approach below)
+produces naturally:
 a `.set()` replacing full membership yields one entry per related field, with
 `added` = new members and `removed` = old members — not one entry per through
 row.
@@ -1153,7 +1155,7 @@ it), so it is dropped from those two branches rather than rendered as
 `{id: [null, 7]}`.
 
 **Keying — duplicate `verbose_name` (decided).** Field names render their
-`verbose_name`, but a model may give several fields the *same* `verbose_name`:
+`verbose_name`, but a model may give several fields the _same_ `verbose_name`:
 `Shelter` has three ("Additional Notes": `add_notes_sleeping_details`,
 `add_notes_shelter_details`, `other_services`). Keying a `field_changes` or
 `snapshot` dict by display name would collapse them and silently drop all but the
@@ -1166,8 +1168,8 @@ field's key never varies between events of the same model.
 
 **Action-level key shape (decided).** `_build_action` merges each row's changes
 into one action, keyed by `(owner model, row id, display name)`. The row id is
-part of the key because a single action can write *several rows of the same
-model* — the `label="import"` CSV import wraps its whole dataset in one
+part of the key because a single action can write _several rows of the same
+model_ — the `label="import"` CSV import wraps its whole dataset in one
 `pghistory.context()` (§7b.4), so keying by field name alone would render a
 50-object import as a single `name: [None, "<last>"]` create. At flatten time the
 key is rendered with one stable shape:
@@ -1175,7 +1177,7 @@ key is rendered with one stable shape:
 - the **anchored** object's own changes stay bare (`name`, `status`) — the action
   is about that one row, so there is no ambiguity;
 - a **related** row's changes are always qualified as `"<Model verbose_name>
-  <row id> <field>"` (e.g. `Bed 7 name`), because `references()` (§10) spans the
+<row id> <field>"` (e.g. `Bed 7 name`), because `references()` (§10) spans the
   target's neighbors and one action can touch several of them.
 
 The qualifier is applied unconditionally, not only when a name happens to clash
@@ -1225,12 +1227,16 @@ snapshot is complete, this also unblocks the deferred Revert capability
 
 `pgh_data`/`pgh_diff` store FK fields as ids (`shelter_id`, `demographic_id`,
 `funder_id`, …). Render these as the related object's natural key so the log is
-human-readable: a small `LABEL_FIELD` map (model → display attribute, e.g.
-`Demographic → "name"`, `SPA → "short_name"`, `Service → "display_name"`) plus a
+human-readable: a **derived** display attribute — the first of `display_name` →
+`name` present on the related model, with three explicit product overrides
+(`SPA → "short_name"`, `ClientProfile → "full_name"`, `User → "email"`) — plus a
 batched resolver (one lookup per model type per page) that falls back to the
-raw id when the row is gone. Labels are the _current_ name, not a historical
-snapshot — triggers capture only the FK id, so a renamed related object
-re-renders under its new name. Acceptable for stable lookup values.
+raw id when the row is gone. No `LABEL_FIELD` list is maintained; `str(obj)` is
+deliberately not used because `Room.__str__` dereferences `self.shelter` (an N+1
+in the batched resolver) and `Bed.__str__` returns `"Bed object (pk)"`. Labels
+are the _current_ name, not a historical snapshot — triggers capture only the FK
+id, so a renamed related object re-renders under its new name. Acceptable for
+stable lookup values.
 
 Extended (decided, §13) to non-FK display rendering: scalar choice/enum fields
 resolve to their display label, and raw field names resolve to their
@@ -1249,9 +1255,10 @@ there is no `pgh_obj_id` to diff against), so their `pgh_diff` is NULL and their
 contract in §13 therefore does **not** apply to M2M rows; they need a distinct
 path.
 
-For each through-table row (identified by `pgh_model` via `THROUGH_EVENT_MAP`,
-§19), derive the change from the related FK column (`{related_fk_field}_id`)
-plus the event label, resolving the label through the same `LABEL_FIELD` map.
+For each through-table row (identified by `pgh_model` via the derived
+through-table metadata, §19), derive the change from the related FK column
+(`{related_fk_field}_id`) plus the event label, resolving the label through the
+same derived display attribute (§14).
 Per-row, `*.add` contributes that label to the related field's `added` list and
 `*.remove` contributes it to `removed`; these per-row contributions are **not**
 emitted as `[None, label]` / `[label, None]` singletons — emitting one entry per
@@ -1304,7 +1311,7 @@ objectAuditLog(
 - Wire it into the top-level schema: import `AuditQuery` and add it to the `queries` tuple in [betterangels_backend/schema.py](apps/betterangels-backend/betterangels_backend/schema.py), next to `ReportsQuery`.
 - **Regenerate `schema.graphql`.** The repo enforces the checked-in SDL — the `validate-graphql-schema` nx target diffs `manage.py export_schema betterangels_backend.schema` against [schema.graphql](apps/betterangels-backend/schema.graphql). Adding `objectAuditLog` therefore requires running `nx run betterangels-backend:generate-graphql-schema` (or `uv run python manage.py export_schema betterangels_backend.schema > schema.graphql`) in the same change, or CI fails.
 
-`AuditTargetType` covers the primary operator objects (`SHELTER`, `ROOM`, `BED`, `RESERVATION`), each mapped to its model + content type + pghistory event model. `RESERVATION`'s write half is driven by `references()` (its `ReservationClient`, etc.), not by `THROUGH_EVENT_MAP` — `Reservation` has no M2M through tables (§19).
+`AuditTargetType` covers the primary operator objects (`SHELTER`, `ROOM`, `BED`, `RESERVATION`), each mapped to its model + content type + pghistory event model. `RESERVATION`'s write half is driven by `references()` (its `ReservationClient`, etc.), not by the derived through-table metadata — `Reservation` has no M2M through tables (§19).
 
 **Naming note (decided).** The GraphQL `AuditEventType` is the _unified_
 write+read shape, backed by two Django models with distinct names:
@@ -1336,14 +1343,21 @@ Event models follow pghistory's `<Proxy>Event` naming (confirmed in
 `TrackedDemographicEvent` (table `shelters_trackeddemographicevent`, parent column `shelter_id`),
 `TrackedCityEvent`, `TrackedPetEvent`, etc.
 
-`THROUGH_EVENT_MAP` is **rendering metadata only, not a query source**. It maps
+The through-table rendering metadata is **derived at run time** — `references()`
+is the only query source (§10). `_through_event_meta()` (in `audit/selectors.py`)
+introspects pghistory: each event model carries `pgh_tracked_model` (set by
+`create_event_model`, `pghistory/core.py`), so for every auto-created M2M through
+table it recovers the two FK fields (parent column and related FK), finds the
+parent's `many_to_many` whose `through` is that table, and reads the M2M's
+`verbose_name` (the display field) and the related/parent `_meta.label`. It maps
 the event's `pgh_model` (the capitalized `_meta.label`, emitted verbatim as
-`'{event_model._meta.label}'` in `models.py:482`) → (`parent_col`,
-`related_fk_field`), so the selector can (a) recognize a through-table row in
-the `references()` result set by its `pgh_model`, (b) confirm which parent
-column attributed it, and (c) drive the M2M-specific `field_changes` rendering
-(§15). This keeps a new M2M field from silently dropping out of the log while
-avoiding the double-count described in §10.
+`'{event_model._meta.label}'` in `models.py:482`) → that metadata, so the
+selector can (a) recognize a through-table row in the `references()` result set
+by its `pgh_model`, (b) confirm which parent column attributed it, and (c) drive
+the M2M-specific `field_changes` rendering (§15). This keeps a new M2M field from
+silently dropping out of the log while avoiding the double-count described in
+§10 — and, unlike the earlier hand-maintained map, a new M2M join needs **no**
+change here at all.
 
 **Key and field-name rules (easy to get wrong):**
 
@@ -1358,19 +1372,14 @@ avoiding the double-count described in §10.
   `exitpolicy`, `referral_requirement` → `referralrequirement`. The column (and
   thus the JSON key in `pgh_data`) is `{related_fk_field}_id`.
 
-```python
-THROUGH_EVENT_MAP = {
-    "shelters.TrackedDemographicEvent": ("shelter_id", "demographic"),
-    "shelters.TrackedCityEvent": ("shelter_id", "city"),
-    "shelters.TrackedExitPolicyEvent": ("shelter_id", "exitpolicy"),   # Shelter M2M, not Bed
-    "shelters.TrackedBedMedicalNeedEvent": ("bed_id", "medicalneed"),
-    "shelters.TrackedBedAccessibilityEvent": ("bed_id", "accessibility"),
-    "shelters.TrackedRoomAccessibilityEvent": ("room_id", "accessibility"),
-    # ... every Shelter/Bed/Room M2M proxy event -> (parent_col, related_fk_field)
-    # RESERVATION has no M2M through tables — its related rows (ReservationClient)
-    # are concrete models covered by references() (§10).
-}
-```
+The derivation yields the same shape the selector consumes, e.g.
+`shelters.TrackedBedMedicalNeedEvent → (_ThroughMeta(parent_col="bed_id",
+related_fk_field="medicalneed", display_name="medical needs",
+related_model_label="shelters.MedicalNeed", parent_model_label="shelters.Bed"))`
+and `shelters.TrackedExitPolicyEvent → parent_col="shelter_id"` (a Shelter M2M,
+not Bed). `RESERVATION` has no M2M through tables — its related rows
+(`ReservationClient`) are concrete models covered by `references()` (§10) — so
+the derivation returns nothing for it.
 
 Note the parent prefix follows §6's naming scheme: `exit_policy` is a Shelter M2M
 (`TrackedExitPolicy`, parent `shelter_id`), while the shared related models
@@ -1378,47 +1387,46 @@ Note the parent prefix follows §6's naming scheme: `exit_policy` is a Shelter M
 `Tracked<Parent><Related>` (`TrackedBedAccessibility`, `TrackedRoomAccessibility`,
 …).
 
-This map is unit-tested (one test per parent column) asserting the
+This path is unit-tested (one test per parent column) asserting the
 `field_changes` rendering path resolves the correct parent column and related
 label, using the real field names for the multi-word M2Ms (§20). Those per-entry
-tests cannot catch a **missing** entry, so add a completeness assertion. It must
-(a) filter to **through** event models only, and (b) union across all four
-targets, since `THROUGH_EVENT_MAP` is a single global dict while
-`event_models(references_model=<target>)` is per-target and also returns the
-non-through models (`ShelterEvent`, `BedEvent`, `ContactInfoEvent`, …). Concretely:
-for each target in `{Shelter, Bed, Room, Reservation}`, take
+tests cannot catch a **missing** entry, so the suite also asserts completeness:
+for each target in `{Shelter, Bed, Room}`, take
 `event_models(references_model=<target>)`, keep only models lacking a `pgh_obj`
 (`hasattr(model, "pgh_obj_id")` is `False` for through event models — verified),
-and assert the union of their `_meta.label` keys equals `set(THROUGH_EVENT_MAP)`.
-A §6 through event model absent from the map still flows through `references()`
+and assert the union of their `_meta.label` keys equals the derived map's keys.
+A §6 through event model the derivation misses still flows through `references()`
 but falls into the non-M2M rendering path, silently reproducing the exact "M2M
-field drops out of the log" failure the map exists to prevent. Deriving the
-expected set here (rather than hand-listing it) suits a purely mechanical
-mapping; the §20 `references()` boundary pin, by contrast, is deliberately a
-hand-written literal, which is the stronger guard because it cannot follow a
-`references()` change.
+field drops out of the log" failure this metadata exists to prevent.
+
+Because the map is now _derived_ from the same model registry, a completeness
+assertion alone could pass while the derivation itself changes shape (e.g. swaps
+the parent and related FK), so the derived `(parent_col, related_fk_field)` pairs
+are additionally pinned in a **hand-written literal** (`_EXPECTED_THROUGH_EVENT_META`),
+mirroring the §20 `references()` boundary pins: a literal cannot follow a
+derivation regression, so it is the stronger guard.
 
 ## 20. Tests (Phase 2)
 
 - `objectAuditLog` returns write events for the object (grouped into actions), renders a status change as a single `reservation.status_change` event (§16), includes M2M changes attributed to the parent, and fails closed for a cross-org object.
 - Global tier can read any object's log; scoped tier cannot.
-- **No double-count:** a single write (e.g. one `shelter.save()`) produces exactly **one** output row/action, and a single M2M `.set()` produces exactly **one** action — not the 2-3 that a `tracks()`+`references()`+`THROUGH_EVENT_MAP` union would emit (§10). This is the core guard against the double-counting regression.
+- **No double-count:** a single write (e.g. one `shelter.save()`) produces exactly **one** output row/action, and a single M2M `.set()` produces exactly **one** action — not the 2-3 that a `tracks()`+`references()`+through-table union would emit (§10). This is the core guard against the double-counting regression.
 - **Seed/import/clone retention split:** a seed run produces **no** visible audit actions (label `seed` excluded in SQL, §11); a `clone_view` POST and a CSV import each produce **visible**, attributed actions rendered "system (clone)"/"system (import)" — never silently dropped.
 - **NULL-context grouping:** events written outside any `pghistory.context()` (e.g. `objects.create()` with no middleware) each render as their own singleton action, not one merged "system" action.
 - **NULL-context + seed filter:** a NULL-context event **survives** the seed `.exclude(pgh_context__label="seed")` (i.e. the `label` proxy field is nullable, §11), so out-of-band system writes are never silently dropped.
 - **M2M field_changes:** a Bed `.set()` on `medical_needs` renders the exact `medical_needs` field change as a single multi-value entry `{medical_needs: [[removed], [added]]}` via the through-table path (§13, §15) — asserting **one entry per related field**, not one per through row — with the multi-word M2Ms asserting the correct related FK column — `medical_needs`→`medicalneed` (Bed), `exit_policy`→`exitpolicy` and `referral_requirement`→`referralrequirement` (both Shelter) — so the FK-field naming (§19) can't silently regress.
-- **`THROUGH_EVENT_MAP` completeness:** for each target in `{Shelter, Bed, Room, Reservation}`, derive the through models from `event_models(references_model=<target>)` (keep only models lacking `pgh_obj`, i.e. `hasattr(model, "pgh_obj_id")` is `False`) and assert the **union** across targets equals `set(THROUGH_EVENT_MAP)`, so a new M2M field cannot fall out of the map and silently render through the non-M2M path (§19).
+- **Through-metadata coverage + pin:** for each target in `{Shelter, Bed, Room}`, derive the through models from `event_models(references_model=<target>)` (keep only models lacking `pgh_obj`, i.e. `hasattr(model, "pgh_obj_id")` is `False`) and assert the **union** across targets equals the derived map's keys, so a new M2M field cannot fall out of the M2M rendering path (§19). Because the map is _derived_, its `(parent_col, related_fk_field)` pairs are additionally pinned in a hand-written literal (`_EXPECTED_THROUGH_EVENT_META`) so a derivation regression is caught, not followed.
 - **`reservation` status change:** a status change renders as a single `reservation.status_change` action whose `field_changes` include the `status` old→new diff — the disjoint conditions (§2) mean no paired `reservation.update` row exists to reconcile.
 - **`references()` attribution:** a reservation's `objectAuditLog` includes `ReservationClient` add/remove (client assignments) attributed through `references()` — the most sensitive part of a reservation's history; a shelter's log includes `ShelterPhoto`/`MediaLink`/`Video`/`Schedule`/`ContactInfo`/`ShelterAvailability` changes.
 - **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted against a **hand-written literal** per target (`_EXPECTED_SHELTER_REFERENCES` and the Bed/Room equivalents), so any change to what `references()` reaches — a newly tracked model, a dropped branch — fails loudly. The literal, not a set derived from `event_models()` at assert time, is the stronger pin: a derived set would silently track a `references()` regression instead of catching it. Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
 - **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` but **not** in `objectAuditLog(ROOM)`/`(BED)` (the target-scoped blocklist, §10); a room/bed configuration change still appears.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request renders both the `status` and `notes` field changes (before/after diff), not just one winner row.
 - **Cross-model action-level diff:** one action writing two different tracked models (e.g. a Shelter and a Bed) keeps them as separate before→after pairs — the anchored Shelter's change stays bare (`name`) and the related Bed's is qualified (`Bed 7 name`) — rather than merging into one false pair.
-- **Same-model multi-row action:** one action touching two rows of the *same* model (two beds renamed in one context, standing in for a bulk `label="import"` write) keeps a separate before→after per row, keyed by row id — not one collapsed pair (§13).
+- **Same-model multi-row action:** one action touching two rows of the _same_ model (two beds renamed in one context, standing in for a bulk `label="import"` write) keeps a separate before→after per row, keyed by row id — not one collapsed pair (§13).
 - **Duplicate `verbose_name`:** a model with two fields sharing a `verbose_name` (the three `Shelter` "Additional Notes" fields) renders each edit under its own (raw) key in both `field_changes` and `snapshot`, so neither is silently dropped (§13).
 - **Cross-table context-less writes:** two context-less writes in different event tables render as two distinct singleton actions, with the `pgh_id` collision pinned explicitly so the test does not rely on sequence coincidence (§12).
 - **INSERT/REMOVE pk exclusion:** the model pk (`id`) is absent from an `.add` event's `field_changes` — it is in `pgh_data` but can never change — and (unit-tested) from the `.remove` branch too (§13).
-- **Total-order pagination:** with tied timestamps (one transaction — `NOW()` is constant), paging one action at a time returns each action exactly once, newest-first, so the tie-break is total *and* chronological (§10).
+- **Total-order pagination:** with tied timestamps (one transaction — `NOW()` is constant), paging one action at a time returns each action exactly once, newest-first, so the tie-break is total _and_ chronological (§10).
 - **`RETAINED_LABELS` covers the reports (§31):** the labels `shelters/selectors/reports.py` reads are derived from its source and asserted to be a subset of `RETAINED_LABELS`, so a new report label cannot be added without also being retained (the other retention tests import the same constant the command uses, which cannot catch that).
 - **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that label/date/actor filters are pushed to SQL (§10 performance note), not applied in Python after fetching.
 - **No server-side cursor:** `objectAuditLog` must not emit a `DECLARE` (Django's `.iterator()`), which RDS Proxy pins. Assert the captured queries contain no `DECLARE` (§10 RDS Proxy note).
@@ -1715,13 +1723,13 @@ reporting selectors in [shelters/selectors/reports.py](apps/betterangels-backend
 reconstruct bed existence, maintenance state, and occupancy intervals from these
 event rows with **no lower bound**:
 
-| Label | Why it must survive |
-| --- | --- |
-| `bed.add` | bed existence and `added_at` (`_bed_lifecycles`) |
-| `bed.remove` | `removed_at` (`_bed_lifecycles`) |
-| `bed.update` | maintenance state (`bed_snapshots` in `daily_occupancy`) |
-| `reservation.add` | opens occupancy intervals |
-| `reservation.status_change` | occupancy intervals, composite metrics, `report_*` |
+| Label                       | Why it must survive                                      |
+| --------------------------- | -------------------------------------------------------- |
+| `bed.add`                   | bed existence and `added_at` (`_bed_lifecycles`)         |
+| `bed.remove`                | `removed_at` (`_bed_lifecycles`)                         |
+| `bed.update`                | maintenance state (`bed_snapshots` in `daily_occupancy`) |
+| `reservation.add`           | opens occupancy intervals                                |
+| `reservation.status_change` | occupancy intervals, composite metrics, `report_*`       |
 
 `RETAINED_LABELS` in
 [audit/management/commands/purge_audit_log.py](apps/betterangels-backend/audit/management/commands/purge_audit_log.py)
@@ -1765,7 +1773,7 @@ partition drop, no exempt role. Implemented in
   statement and pin the RDS Proxy connection).
 - `--dry-run` — reports what would go, changes nothing. Counts are the full totals
   under the run's predicate (not one batch), for both events and orphan contexts. The
-  context count reflects the state *right now*: a context is only orphaned once no
+  context count reflects the state _right now_: a context is only orphaned once no
   event row references it, so a real run can orphan further contexts after it deletes
   the events that referenced them.
 - Unreferenced `pghistory.Context` rows are removed afterwards with `NOT EXISTS`
@@ -1817,8 +1825,8 @@ rendering §13/§14, full-state snapshot §13, retention command §31). These we
   now). Note for when it returns: through-table events (Phase 1 §6, §19) carry
   their actor via pghistory's `MiddlewareEvents` join on `pgh_context`, so a
   per-user query must join those event tables on the acting user and attribute
-  each row back to its parent via `THROUGH_EVENT_MAP` — not just filter the
-  object's own event table.
+  each row back to its parent via the derived through-table metadata (§19) —
+  not just filter the object's own event table.
 - **Org-level audit log** — a third query (`organizationAuditLog`) for the global tier. The selector is org-parameterized so this drops in later if needed. Note: `AuditReadEvent.organization_id` was dropped (§22), so when this query is scheduled it must (re-)specify how org-at-event-time is captured.
 - **Multi-object / related-row union** — `references(*objs)` already accepts a list, so a stream spanning an object _and_ its related rows (auditlog's `get_for_objects`) is a small selector extension. Schedule it with `organizationAuditLog`/`userAuditLog`; not built now.
 - **List-read capture** — recording `operator_shelters`/`beds`/… list reads was deferred (§Decision) because those events have no `target_object_id` and no query to surface them. Schedule it alongside `organizationAuditLog` (or another list-scoped query) and re-specify org-at-event-time capture then.
