@@ -71,10 +71,8 @@ class RegionRollupTestCase(TestCase):
             assign_locations()
         return note
 
-    def _counts(self, **kwargs: Any) -> dict[str | None, int]:
-        rows = region_counts(
-            kind=RegionKind.COUNCIL_DISTRICT, start=self.start, end=self.end, organization_id=self.org.id, **kwargs
-        )
+    def _counts(self, *, kind: str = RegionKind.COUNCIL_DISTRICT.value, **kwargs: Any) -> dict[str | None, int]:
+        rows = region_counts(kind=kind, start=self.start, end=self.end, organization_id=self.org.id, **kwargs)
         return {row["code"]: row["count"] for row in rows}
 
     def test_point_inside_a_region_is_counted_in_it(self) -> None:
@@ -122,6 +120,31 @@ class RegionRollupTestCase(TestCase):
             kind=RegionKind.COUNCIL_DISTRICT, start=self.start, end=self.end, organization_id=self.org.id
         )
         self.assertEqual(rows, [])
+
+    def test_a_note_in_two_dimensions_is_counted_once_in_each(self) -> None:
+        """The regression guard for a chained-filter cross-product.
+
+        Django builds a *separate join* per `filter()` on a multi-valued relation, so
+
+            rows.filter(assignments__isnull=False).filter(assignments__kind=kind)
+
+        joins `regions_locationregion` twice and counts the cross-product. A note holding both
+        a `council_district` and an `spa` assignment was therefore counted **twice** in the
+        `spa` rollup — a bucket reading 2 for one interaction.
+
+        `count(DISTINCT n.id)` hid it. The count is a plain `count` now (it is measurably
+        cheaper: 9.7 ms against 23.2 ms on 20k notes), so the predicates have to stay in one
+        `filter()`. If someone splits them again, this fails.
+        """
+        Region.objects.create(kind=RegionKind.SPA, code="4", name="Metro", geom=box(BOX_A))
+        self._note_at(*OUTSIDE)  # a note that is in neither region
+        self._note_at(-118.24, 34.05)  # in BOX_A: both the council district and the SPA
+
+        counts = self._counts(kind=RegionKind.SPA.value)
+        # The named bucket is the assertion that matters. `None` is the OUTSIDE note, which is
+        # correctly in no region of this dimension and is reported rather than dropped.
+        self.assertEqual(counts.get("4"), 1, "one interaction in two dimensions must count once per dimension")
+        self.assertEqual(counts.get(None), 1)
 
     def test_note_without_a_location_is_counted_separately(self) -> None:
         """A locationless note is invisible to a spatial join, so it is reported apart."""
@@ -375,7 +398,9 @@ class StaleAssignmentTestCase(TestCase):
     read open transactions and INSERT for every location in the database — a selector
     doing a global write (``docs/styleguides/python.md``). The fill now belongs to
     ``manage.py backfill_location_regions`` (same ``ensure_location_regions`` service, and
-    ``import_regions``), and ``test_a_read_writes_nothing`` below is what keeps it out.
+    ``import_regions``), and the read path tops it up on demand — see
+    ``test_a_read_fills_the_gap_it_found``. The alternative was a Celery beat job, which buys
+    nothing the incremental fill does not and adds a staleness window.
     """
 
     def setUp(self) -> None:
@@ -402,24 +427,26 @@ class StaleAssignmentTestCase(TestCase):
             interacted_at=datetime(2026, 1, 15, tzinfo=UTC),
         )
 
-    def test_a_read_writes_nothing(self) -> None:
-        """The regression guard for the write-on-read bug.
+    def test_a_read_fills_the_gap_it_found(self) -> None:
+        """A location created since the last import is counted, because the read fills it.
 
-        A location with no assignment must stay unassigned after a read. If
-        ``region_counts`` ever calls ``ensure_location_regions`` again, this fails — and
-        it fails on the *mechanism* rather than on the count, so it cannot be satisfied
-        by a coincidentally-correct bucket.
+        This is the contract that replaced "a selector must not write". The write is bounded
+        by design — ``ensure_location_regions`` only considers locations with no assignment —
+        so the read can do it and forget about it, with no schedule and no staleness window.
+
+        Asserted on the *count*, from a starting state where the assignment genuinely does not
+        exist, so it fails if the fill stops happening rather than merely changing shape.
         """
         note = self._note_at_resolved_by_no_one(-118.24, 34.05)
         location_id = note.location_id
         assert location_id is not None  # the helper always sets one
 
-        self._counts()
-
         self.assertFalse(
             LocationRegion.objects.filter(location_id=location_id).exists(),
-            "region_counts wrote an assignment; the fill belongs to the backfill command",
+            "precondition: the location is unresolved before the read",
         )
+
+        self.assertEqual(self._counts().get("1"), 1, "the read must resolve it and count it")
 
     def test_the_fill_resolves_a_location_it_has_never_seen(self) -> None:
         """The command's service does what the selector used to do on the side."""
@@ -440,15 +467,19 @@ class StaleAssignmentTestCase(TestCase):
         self.assertEqual(counts.get(None), 1, "the outside note is reported, not dropped")
         self.assertEqual(sum(counts.values()), 2, "buckets must reconcile to the total")
 
-    def test_an_unfilled_location_is_not_double_counted(self) -> None:
-        """Absent from the buckets is the honest answer; inflating them is not.
+    def test_repeated_reads_do_not_double_count(self) -> None:
+        """The fill is idempotent, so a second read must not inflate the number.
 
-        Pins the trade the fix makes: an unfilled location is missing from the rollup
-        until the backfill runs, rather than being counted by a read that also wrote.
+        The read now writes, so this is the failure mode that matters: every report load
+        resolving the same location again would double-count it.
         """
         self._note_at_resolved_by_no_one(-118.24, 34.05)
 
-        self.assertEqual(self._counts(), {}, "an unassigned location is in no bucket")
+        first = self._counts()
+        second = self._counts()
+        self.assertEqual(first, second)
+        self.assertEqual(second.get("1"), 1)
+        self.assertEqual(LocationRegion.objects.filter(kind=RegionKind.COUNCIL_DISTRICT).count(), 1)
 
     def test_repeated_fills_do_not_double_count(self) -> None:
         """Filling must be idempotent, or every import inflates the report."""

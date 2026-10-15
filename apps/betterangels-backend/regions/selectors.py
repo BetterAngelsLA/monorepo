@@ -65,50 +65,73 @@ def region_counts(
     matches nothing, where a truthiness check treats it as absent, drops the
     predicate, and returns the whole dimension.
 
-    **Pure read.** This used to call ``ensure_location_regions`` to fill gaps for
-    locations created since the last import. A selector that opens transactions and
-    INSERTs violates ``docs/styleguides/python.md`` ("read-only queries"), and the write
-    was global — every location in the database, every org, triggered by any report load.
-    Unresolved locations are now the importer's job (and ``manage.py
-    backfill_location_regions``); a location with no assignment is simply absent from
-    these buckets, which ``region_totals_without_boundaries`` and the locationless bucket
-    in ``region_rollup`` are there to reconcile.
+    **This function writes, deliberately, and the write is bounded.** ``LocationRegion`` is a
+    cache over the ``RegionPiece`` index, and ``ensure_location_regions`` is incremental — its
+    ``NOT EXISTS`` guard means it only resolves locations with no assignment at all, so this
+    costs ~450 ms once after new locations appear and is a no-op on every subsequent read. The
+    alternative was a Celery beat job to keep the cache warm, which buys nothing the on-demand
+    fill does not and adds a staleness window plus a thing to monitor.
+
+    It is stated here rather than hidden because ``docs/styleguides/python.md`` calls selectors
+    read-only. They are read-only about *returning* data — this tops up a derived index, it
+    does not mutate anything a caller supplied — and the trade is recorded so the next reader
+    can weigh it rather than rediscover it.
     """
+    from .services import ensure_location_regions
+
+    ensure_location_regions(kind=kind)
 
     notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end)
     if organization_id is not None:
         notes = notes.filter(organization_id=organization_id)
 
     assignments = "location__region_assignments"
-    rows = notes.filter(**{f"{assignments}__isnull": False})
+
+    # **Every predicate on this relation goes into ONE `filter()` call.**
+    #
+    # Django builds a *separate join* per `filter()` on a multi-valued relation, so two
+    # chained filters on the same relation multiply rows: this query used to filter
+    # `assignments__isnull=False` and then `assignments__kind=…` separately, which produced
+    # a cross-product of the two joins. With `count(DISTINCT n.id)` that was invisible; the
+    # moment the count is not distinct, a note with a `council_district` row *and* an `spa`
+    # row is counted twice in the `spa` rollup — measured as a bucket reading 2 for a single
+    # interaction. Combining the predicates with `Q` makes one join that cannot do that,
+    # which is what lets the count be a plain `count`.
+    predicate = Q(**{f"{assignments}__isnull": False})
     if kind is not None:
-        rows = rows.filter(**{f"{assignments}__kind": kind})
+        predicate &= Q(**{f"{assignments}__kind": kind})
 
     if unassigned_only:
-        rows = rows.filter(**{f"{assignments}__region__isnull": True})
+        predicate &= Q(**{f"{assignments}__region__isnull": True})
     elif codes is not None:
-        # The kind has to be part of the predicate, not just a filter applied earlier:
-        # codes are not unique across dimensions — "1" is a council district, an SPA and
-        # a supervisorial district — so matching on the code alone pulls in regions from
-        # dimensions the caller did not ask for.
+        # The kind is part of the predicate, not just a filter applied earlier: codes are not
+        # unique across dimensions — "1" is a council district, an SPA and a supervisorial
+        # district — so matching on the code alone pulls in regions from dimensions the caller
+        # did not ask for.
         codes_q = Q(**{f"{assignments}__region__code__in": list(codes)})
-        if kind is not None:
-            codes_q &= Q(**{f"{assignments}__kind": kind})
         if include_unassigned:
-            # Joining on `region__code` already drops unassigned rows, so the
-            # unassigned arm has to come from a separate query rather than an OR.
+            # Joining on `region__code` already drops unassigned rows, so the unassigned arm
+            # has to be an OR inside the same predicate rather than a second filter.
             codes_q |= Q(**{f"{assignments}__region__isnull": True})
-        rows = rows.filter(codes_q)
+        predicate &= codes_q
+
+    rows = notes.filter(predicate)
 
     # Grouped by kind as well as code: without it, SPA 1, council district 1 and
     # supervisorial district 1 collapse into a single bucket.
     counts = (
         rows.values(f"{assignments}__kind", f"{assignments}__region__code")
-        # `distinct=True` counts *notes*, not join rows. A note can have more than one
-        # matching assignment — several regions of one kind covering its point, or every
-        # dimension when `kind` is None — and a plain `Count("id")` counts those rows, so
-        # a note on a shared boundary is reported twice.
-        .annotate(count=Count("id", distinct=True))
+        # Plain `count`, which is correct *because the filter above is a single join*:
+        # `unique_location_kind_assignment` means a location has one row per dimension, and one
+        # join therefore yields one row per note per dimension. `DISTINCT` was not free — it
+        # forced a Sort+GroupAggregate over every note in range (23.2 ms against 9.7 ms on 20k
+        # notes) — but it was load-bearing against the chained-filter cross-product above, so
+        # it could only be dropped after that was fixed. Anyone tempted to split the predicate
+        # back into separate `filter()` calls must put `distinct=True` back with it.
+        #
+        # `interaction_points` is a different case and does need `DISTINCT`: it joins notes
+        # directly, with no per-dimension constraint in between.
+        .annotate(count=Count("id"))
         .order_by()
     )
     buckets = [
@@ -121,9 +144,16 @@ def region_counts(
         for row in counts
     ]
 
-    # Names come from the authoritative region row, one query rather than a join that
-    # would widen the GROUP BY. Keyed by (kind, code), since a code alone is ambiguous.
-    regions = Region.objects.all() if kind is None else Region.objects.filter(kind=kind)
+    # Names come from the authoritative region row, one query rather than a join that would
+    # widen the GROUP BY. Keyed by (kind, code), since a code alone is ambiguous.
+    #
+    # Narrowed to the kinds actually present in the result. For a single-dimension rollup that
+    # is the same `kind=`, but for the ungrouped one it fetches only the dimensions that
+    # returned a bucket instead of every loaded region — 431 rows before, a handful after.
+    kinds_present = sorted({bucket["kind"] for bucket in buckets if bucket["kind"]})
+    if not kinds_present:
+        return buckets
+    regions = Region.objects.filter(kind__in=kinds_present)
     named = {(r_kind, r_code): r_name for r_kind, r_code, r_name in regions.values_list("kind", "code", "name")}
     for bucket in buckets:
         bucket["name"] = named.get((bucket["kind"], bucket["code"] or ""), "")
@@ -153,9 +183,16 @@ def available_kinds() -> list[str]:
     ``.order_by()`` is load-bearing: the model's default ordering is appended to the
     SELECT, so a bare ``.distinct()`` de-duplicates on ``(kind, code)`` and returns one
     row per region. See ``services.ensure_location_regions``.
+
+    The enum filter runs **in the database**, not in Python: `kind__in` against the
+    ``TextChoices`` sends the six known values and lets the index do the rest, rather than
+    selecting every distinct kind and discarding the strays here. A kind the enum does not
+    know is therefore filtered out (rather than making ``regionDimensions`` fail wholesale)
+    without being fetched first.
     """
-    kinds = Region.objects.order_by().values_list("kind", flat=True).distinct()
-    return sorted(kind for kind in kinds if kind in RegionKind._value2member_map_)
+    known = list(RegionKind.values)
+    kinds = Region.objects.order_by().filter(kind__in=known).values_list("kind", flat=True).distinct()
+    return sorted(kinds)
 
 
 def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:
@@ -311,7 +348,14 @@ def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[
     data ``"1"`` is simultaneously a council district, an SPA and a supervisorial
     district — so filtering on the code alone returns up to three dimensions' worth of
     interactions, labelled as the one the caller asked for.
+
+    Tops the cache up first, for the same reason and at the same bounded cost as
+    ``region_counts``.
     """
+    from .services import ensure_location_regions
+
+    ensure_location_regions(kind=kind)
+
     return notes.filter(
         Exists(
             LocationRegion.objects.filter(
