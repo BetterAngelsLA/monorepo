@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -11,18 +11,27 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  buildReferralTextCopy,
+  buildReferralDocumentCopy,
   type ExportReferral,
-  type ReferralTextCopy,
+  type ReferralDocumentCopy,
 } from './referralExport';
-import { shareReferralText, shareReferralTextFile } from './shareReferralText';
+import {
+  shareReferralPng,
+  shareReferralText,
+  shareReferralTextFile,
+} from './shareReferralText';
+import type { ProfileCardData } from './referralProfile';
+import { ReferralImagePreview } from './ReferralImagePreview';
+import { layoutReferralImage } from './referralImage';
 
 export function ReferralShare({
   referral,
   clientName,
+  profile,
 }: {
   referral: ExportReferral;
   clientName: string;
+  profile?: ProfileCardData | null;
 }) {
   const insets = useSafeAreaInsets();
   const session = useRef<symbol | null>(null);
@@ -30,9 +39,14 @@ export function ReferralShare({
   const sharing = useRef(false);
   const [busy, setBusy] = useState(false);
   const [includePrivate, setIncludePrivate] = useState(false);
+  const [imageMode, setImageMode] = useState(false);
+  const [imageCapture, setImageCapture] = useState<{
+    copy: ReferralDocumentCopy;
+    capture: () => Promise<string>;
+  } | null>(null);
   const [preview, setPreview] = useState<{
-    standard: ReferralTextCopy;
-    full: ReferralTextCopy;
+    standard: ReferralDocumentCopy;
+    full: ReferralDocumentCopy;
   } | null>(null);
   useEffect(() => {
     mounted.current = true;
@@ -44,6 +58,8 @@ export function ReferralShare({
   const close = () => {
     session.current = null;
     setPreview(null);
+    setImageMode(false);
+    setImageCapture(null);
   };
   const open = () => {
     if (sharing.current) return;
@@ -51,14 +67,17 @@ export function ReferralShare({
       const source = {
         referral,
         clientName,
+        profile,
         generatedAt: new Date().toISOString(),
       };
       const copies = {
-        standard: buildReferralTextCopy(source),
-        full: buildReferralTextCopy({ ...source, includePrivate: true }),
+        standard: buildReferralDocumentCopy(source),
+        full: buildReferralDocumentCopy({ ...source, includePrivate: true }),
       };
       session.current = Symbol();
       setIncludePrivate(false);
+      setImageMode(false);
+      setImageCapture(null);
       setPreview(copies);
     } catch {
       Alert.alert(
@@ -68,15 +87,33 @@ export function ReferralShare({
     }
   };
   const copy = includePrivate ? preview?.full : preview?.standard;
-  const share = async (asFile: boolean) => {
+  const image = useMemo(() => {
+    if (!imageMode || !copy) return null;
+    try {
+      return { layout: layoutReferralImage(copy), error: null };
+    } catch {
+      return {
+        layout: null,
+        error:
+          'This summary is too large for one PNG image. Use text sharing for the complete copy.',
+      };
+    }
+  }, [copy, imageMode]);
+  const canShareImage = !!image?.layout && imageCapture?.copy === copy;
+  const share = async (format: 'text' | 'txt' | 'png') => {
     if (!copy || !session.current || sharing.current) return;
+    if (format === 'png' && !canShareImage) return;
     const current = session.current;
     const isCurrent = () => session.current === current;
     sharing.current = true;
     setBusy(true);
     try {
-      if (asFile) await shareReferralTextFile(copy, isCurrent);
-      else await shareReferralText(copy);
+      const textCopy = { title: copy.title, text: copy.text };
+      if (format === 'png' && imageCapture)
+        await shareReferralPng(imageCapture.capture, isCurrent);
+      else if (format === 'txt')
+        await shareReferralTextFile(textCopy, isCurrent);
+      else await shareReferralText(textCopy);
     } catch (error) {
       if (__DEV__)
         console.warn(
@@ -126,55 +163,118 @@ export function ReferralShare({
             </Pressable>
           </View>
           <TextRegular>
-            Review the copy, then choose an app or destination. Sharing does not
-            change the referral's status or confirm delivery.
+            Review saved intake answers and current profile details. Missing
+            answers are marked Not recorded. Sharing does not confirm delivery.
           </TextRegular>
           <Pressable
             testID="referral-share-include-private"
             style={styles.action}
             disabled={busy}
-            onPress={() => setIncludePrivate(!includePrivate)}
+            onPress={() => setIncludePrivate((included) => !included)}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: includePrivate, disabled: busy }}
-            accessibilityLabel="Include sensitive intake and staff notes"
-            accessibilityHint="changes which saved information appears in this copy"
+            accessibilityLabel="Include sensitive information and staff notes"
+            accessibilityHint="adds profile accommodations, sensitive intake answers, and staff notes; client identity and basic profile facts remain in both copies"
           >
             <TextRegular>
-              {includePrivate ? '☑' : '☐'} Include sensitive intake and staff
-              notes
+              {includePrivate ? '☑' : '☐'} Include sensitive information and
+              staff notes
             </TextRegular>
           </Pressable>
+          <TextRegular
+            testID="referral-share-privacy-status"
+            accessibilityLiveRegion="polite"
+          >
+            {includePrivate
+              ? 'Sensitive details included where recorded.'
+              : 'Sensitive details excluded. Client identity remains included.'}
+          </TextRegular>
           <ScrollView style={styles.preview}>
-            <TextRegular
-              testID="referral-share-preview"
-              selectable
-              color={Colors.PRIMARY_EXTRA_DARK}
-            >
-              {copy?.text}
-            </TextRegular>
+            {imageMode && copy && image?.layout ? (
+              <ReferralImagePreview
+                key={includePrivate ? 'inclusive' : 'standard'}
+                layout={image.layout}
+                onReady={(capture) => setImageCapture({ copy, capture })}
+              />
+            ) : imageMode ? (
+              <TextRegular testID="referral-image-error">
+                {image?.error}
+              </TextRegular>
+            ) : (
+              <TextRegular
+                testID="referral-share-preview"
+                selectable
+                color={Colors.PRIMARY_EXTRA_DARK}
+              >
+                {copy?.text}
+              </TextRegular>
+            )}
           </ScrollView>
           <Pressable
+            testID="referral-image-mode"
             style={styles.action}
             disabled={busy}
-            accessibilityState={{ disabled: busy }}
             accessibilityRole="button"
+            accessibilityState={{ disabled: busy }}
             onPress={() => {
-              void share(false);
+              setImageMode((active) => !active);
+              setImageCapture(null);
             }}
           >
-            <TextBold color={Colors.PRIMARY}>Share text</TextBold>
+            <TextBold color={Colors.PRIMARY}>
+              {imageMode ? 'Back to text preview' : 'Preview image (.png)'}
+            </TextBold>
           </Pressable>
-          <Pressable
-            style={styles.action}
-            disabled={busy}
-            accessibilityState={{ disabled: busy }}
-            accessibilityRole="button"
-            onPress={() => {
-              void share(true);
-            }}
-          >
-            <TextBold color={Colors.PRIMARY}>Share text file (.txt)</TextBold>
-          </Pressable>
+          {imageMode && (
+            <>
+              <TextRegular size="sm">
+                PNG is an image, not searchable text. Use text sharing for a
+                copyable version.
+              </TextRegular>
+              <Pressable
+                testID="referral-share-png"
+                style={styles.action}
+                disabled={busy || !canShareImage}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: busy || !canShareImage }}
+                onPress={() => {
+                  void share('png');
+                }}
+              >
+                <TextBold color={Colors.PRIMARY}>
+                  {busy ? 'Preparing image…' : 'Share image (.png)'}
+                </TextBold>
+              </Pressable>
+            </>
+          )}
+          {!imageMode && (
+            <>
+              <Pressable
+                style={styles.action}
+                disabled={busy}
+                accessibilityState={{ disabled: busy }}
+                accessibilityRole="button"
+                onPress={() => {
+                  void share('text');
+                }}
+              >
+                <TextBold color={Colors.PRIMARY}>Share text</TextBold>
+              </Pressable>
+              <Pressable
+                style={styles.action}
+                disabled={busy}
+                accessibilityState={{ disabled: busy }}
+                accessibilityRole="button"
+                onPress={() => {
+                  void share('txt');
+                }}
+              >
+                <TextBold color={Colors.PRIMARY}>
+                  Share text file (.txt)
+                </TextBold>
+              </Pressable>
+            </>
+          )}
         </View>
       </Modal>
     </>

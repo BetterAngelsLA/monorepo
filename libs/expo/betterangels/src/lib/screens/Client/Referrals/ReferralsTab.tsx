@@ -378,6 +378,7 @@ function ReferralsContent({
           renderItem={(referral) => (
             <ReferralCard
               referral={referral}
+              profile={client?.clientProfile}
               clientName={[
                 client?.clientProfile.firstName,
                 client?.clientProfile.lastName,

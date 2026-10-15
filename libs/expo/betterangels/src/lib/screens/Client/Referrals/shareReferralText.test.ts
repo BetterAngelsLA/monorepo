@@ -1,5 +1,9 @@
 import { Share } from 'react-native';
-import { shareReferralText, shareReferralTextFile } from './shareReferralText';
+import {
+  shareReferralPng,
+  shareReferralText,
+  shareReferralTextFile,
+} from './shareReferralText';
 
 const native = vi.hoisted(() => ({
   files: new Map<string, { text: string; modified: number }>(),
@@ -28,9 +32,12 @@ vi.mock('expo-file-system', () => {
       if (native.fault === 'create') throw new Error('Create failed');
       native.files.set(this.uri, { text: '', modified: Date.now() });
     }
-    write(text: string) {
+    write(text: string, options?: { encoding?: string }) {
       if (native.fault === 'write') throw new Error('Write failed');
-      native.files.set(this.uri, { text, modified: Date.now() });
+      native.files.set(this.uri, {
+        text: options?.encoding === 'base64' ? atob(text) : text,
+        modified: Date.now(),
+      });
     }
     delete() {
       native.files.delete(this.uri);
@@ -59,6 +66,66 @@ const copy = {
   title: 'Referral summary',
   text: 'Ana Muñoz\nA readable fictional referral',
 };
+const png =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRz8AAAAASUVORK5CYII=';
+
+it('writes real PNG bytes using the existing file API and hands off an image, not base64 text', async () => {
+  await shareReferralPng(
+    async () => png,
+    () => true,
+  );
+  expect(
+    native.files.get('/cache/referral-exports/referral-new-id.png')?.text,
+  ).toBe(atob(png));
+  expect(native.handoff).toHaveBeenCalledWith(
+    '/cache/referral-exports/referral-new-id.png',
+    expect.objectContaining({ mimeType: 'image/png', UTI: 'public.png' }),
+  );
+});
+
+it('discards a delayed image if the preview or account closes during capture', async () => {
+  let current = true;
+  await shareReferralPng(
+    async () => {
+      current = false;
+      return png;
+    },
+    () => current,
+  );
+  expect(native.files.size).toBe(0);
+  expect(native.handoff).not.toHaveBeenCalled();
+});
+
+it.each(['not a PNG', 'iVBORw0KGgo'])(
+  'rejects invalid capture results without creating a misleading attachment: %s',
+  async (value) => {
+    await expect(
+      shareReferralPng(
+        async () => value,
+        () => true,
+      ),
+    ).rejects.toThrow(/valid PNG/);
+    expect(native.files.size).toBe(0);
+    expect(native.handoff).not.toHaveBeenCalled();
+  },
+);
+
+it('cleans up failed image handoffs and never captures if sharing is unavailable', async () => {
+  native.handoff.mockRejectedValueOnce(new Error('Synthetic failure'));
+  await expect(
+    shareReferralPng(
+      async () => png,
+      () => true,
+    ),
+  ).rejects.toThrow('Synthetic failure');
+  expect(native.files.size).toBe(0);
+  native.available.mockResolvedValueOnce(false);
+  const capture = vi.fn(async () => png);
+  await expect(shareReferralPng(capture, () => true)).rejects.toThrow(
+    /unavailable/,
+  );
+  expect(capture).not.toHaveBeenCalled();
+});
 beforeEach(() => {
   native.files.clear();
   native.fault = '';

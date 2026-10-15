@@ -12,6 +12,7 @@ import { needLabelsFromIntake } from './clientNeeds';
 import { decodeReferralNotes, summarizeIntake } from './referralIntakeSidecar';
 import { shelterAttributeLabels } from './shelterAttributes';
 import { formatReferralDate } from './referralPresentation';
+import type { ProfileCardData } from './referralProfile';
 
 // A card reads the intake answers stored on the referral (in the shelter's own
 // vocabulary — see clientNeeds.ts), so it reflects the needs as they were
@@ -20,6 +21,7 @@ import { formatReferralDate } from './referralPresentation';
 export type ReferralCardProps = {
   referral: ClientReferralsQuery['referrals']['results'][number];
   clientName: string;
+  profile?: ProfileCardData | null;
   onEdit: () => void;
   onReferAgain: () => void;
 };
@@ -27,6 +29,7 @@ export type ReferralCardProps = {
 export function ReferralCard({
   referral,
   clientName,
+  profile,
   onEdit,
   onReferAgain,
 }: ReferralCardProps) {
@@ -116,7 +119,11 @@ export function ReferralCard({
           Intake (temporary): {intakeSummary}
         </TextRegular>
       ) : null}
-      <ReferralShare referral={referral} clientName={clientName} />
+      <ReferralShare
+        referral={referral}
+        clientName={clientName}
+        profile={profile}
+      />
     </View>
   );
 }

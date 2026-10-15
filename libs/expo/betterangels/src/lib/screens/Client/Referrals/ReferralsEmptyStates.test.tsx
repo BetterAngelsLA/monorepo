@@ -1,4 +1,7 @@
-import { VeteranStatusEnum } from '@monorepo/ba-platform/types';
+import {
+  AdaAccommodationEnum,
+  VeteranStatusEnum,
+} from '@monorepo/ba-platform/types';
 import { createApolloCache } from '@monorepo/apollo';
 import { createBaTypePolicies } from '../../../apollo/cachePolicies';
 import { randomUUID } from 'node:crypto';
@@ -19,7 +22,7 @@ import { randomUUID } from 'node:crypto';
  */
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
-import { act, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as notesAdapter from './referralIntakeSidecar';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { ReferralsTab } from './ReferralsTab';
@@ -243,6 +246,65 @@ it('does not reparse saved referrals when draft answers change, while draft cont
   } finally {
     decode.mockRestore();
   }
+});
+
+it('passes current profile details through the saved card to its reviewed export', async () => {
+  if (!client) throw new Error('Missing fictional client fixture');
+  const fullClient = {
+    ...client,
+    clientProfile: {
+      ...client.clientProfile,
+      age: 35,
+      displayGender: 'Woman',
+      adaAccommodation: [AdaAccommodationEnum.Mobility],
+    },
+  };
+  await render(
+    <MockedProvider
+      cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+      mocks={[
+        {
+          ...emptyReferrals[0],
+          result: {
+            data: {
+              referrals: {
+                __typename: 'ReferralTypeOffsetPaginated',
+                totalCount: 1,
+                results: [
+                  {
+                    __typename: 'ReferralType',
+                    id: 'profile-export',
+                    status: 'PENDING',
+                    createdAt: '2026-10-15T12:00:00Z',
+                    notes: null,
+                    createdBy: null,
+                    shelter: null,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ]}
+    >
+      <ReferralsTab client={fullClient} draftStore={createStore()} />
+    </MockedProvider>,
+  );
+  await screen.findByTestId('share-referral-profile-export');
+  await fireEvent.press(screen.getByTestId('share-referral-profile-export'));
+  expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
+    /Age: 35/,
+  );
+  expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
+    /Gender: Woman/,
+  );
+  expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
+    /Accommodations \[Sensitive\]: Excluded \(sensitive\)/,
+  );
+  await fireEvent.press(screen.getByTestId('referral-share-include-private'));
+  expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
+    /Accommodations \[Sensitive\]: Mobility/,
+  );
 });
 
 describe('sparse client profile in the intake form', () => {

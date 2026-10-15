@@ -16,11 +16,46 @@ export async function shareReferralTextFile(
   copy: ReferralTextCopy,
   isCurrent: () => boolean,
 ) {
+  await shareReferralFile(() => copy.text, 'txt', isCurrent);
+}
+
+/** Capture only the reviewed SVG, never the phone screen or surrounding UI. */
+export async function shareReferralPng(
+  capture: () => Promise<string>,
+  isCurrent: () => boolean,
+) {
+  await shareReferralFile(
+    async () => {
+      const base64 = (await capture()).replace(/\s/g, '');
+      if (
+        base64.length < 44 ||
+        base64.length > 16 * 1024 * 1024 ||
+        !/^iVBORw0KGgo[A-Za-z0-9+/]*={0,2}$/.test(base64) ||
+        base64.length % 4 !== 0
+      ) {
+        throw new Error(
+          'The renderer did not return a valid PNG image. Try text sharing.',
+        );
+      }
+      return base64;
+    },
+    'png',
+    isCurrent,
+  );
+}
+
+async function shareReferralFile(
+  content: () => string | Promise<string>,
+  format: 'txt' | 'png',
+  isCurrent: () => boolean,
+) {
   // Static imports match the app's existing document sharing. Metro's lazy
   // native-module chunks do not resolve reliably from this monorepo app root.
   if (!isCurrent()) return;
   if (!(await Sharing.isAvailableAsync()))
     throw new Error('File sharing is unavailable');
+  if (!isCurrent()) return;
+  const data = await content();
   if (!isCurrent()) return;
   const directory = new Directory(Paths.cache, 'referral-exports');
   directory.create({ idempotent: true, intermediates: true });
@@ -35,14 +70,17 @@ export async function shareReferralTextFile(
     )
       item.delete();
   }
-  const file = new File(directory, `referral-${randomUUID()}.txt`);
+  const file = new File(directory, `referral-${randomUUID()}.${format}`);
   try {
     file.create();
-    file.write(copy.text);
+    file.write(data, { encoding: format === 'png' ? 'base64' : 'utf8' });
     await Sharing.shareAsync(file.uri, {
-      mimeType: 'text/plain',
-      UTI: 'public.plain-text',
-      dialogTitle: 'Save or share referral text file',
+      mimeType: format === 'png' ? 'image/png' : 'text/plain',
+      UTI: format === 'png' ? 'public.png' : 'public.plain-text',
+      dialogTitle:
+        format === 'png'
+          ? 'Save or share referral image'
+          : 'Save or share referral text file',
     });
   } catch (error) {
     if (file.exists) file.delete();
