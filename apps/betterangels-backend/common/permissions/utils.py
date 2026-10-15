@@ -277,7 +277,8 @@ def require_can(user: Any, perm: str, *, org: Any) -> None:
     The create gate: creates carry an explicit target organization and are
     authorized by ``can`` — never by the read rule.  ``can`` never implies the
     organization exists (finding F7), so callers that take an org from client
-    input must check existence separately (see ``shelter_create``).
+    input must check existence separately: pass a resolved organization, which
+    ``common.graphql.utils.org_or_deny`` returns and refuses without.
     """
     from common.permissions.selectors import can
 

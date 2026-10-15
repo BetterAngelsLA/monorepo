@@ -13,8 +13,8 @@ from typing import Any, Iterable, Sequence
 from django.contrib.gis.db.models import GeometryField, MultiPolygonField
 from django.contrib.gis.db.models.functions import GeomOutputGeoFunc
 from django.contrib.gis.geos import MultiPolygon
-from django.db.models import Count, Exists, FloatField, Func, OuterRef, Q, QuerySet, Value
-from django.db.models.functions import Cast, Coalesce
+from django.db.models import Count, Exists, F, FloatField, Func, OuterRef, Q, QuerySet, Value
+from django.db.models.functions import Cast
 
 from notes.models import Note
 
@@ -65,10 +65,12 @@ def region_counts(
     matches nothing, where a truthiness check treats it as absent, drops the
     predicate, and returns the whole dimension.
 
-    **This writes, deliberately.** ``ensure_location_regions`` is incremental, so the fill is
-    ~450 ms once after new locations appear and a no-op afterwards. ``python.md`` calls
-    selectors read-only; this tops up a derived index without mutating anything a caller
-    passed, and the alternative (a beat job) buys nothing but a staleness window.
+    **This writes, deliberately.** ``ensure_location_regions`` is incremental — its
+    ``NOT EXISTS`` guard considers only locations with no assignment — so the fill is
+    9.2 ms for a steady-state cache (all six dimensions, measured) and a no-op when nothing
+    is new. ``python.md`` calls selectors read-only; this tops up a derived index without
+    mutating anything a caller passed, and the alternative (a beat job) buys nothing but a
+    staleness window.
     """
     from .services import ensure_location_regions
 
@@ -169,20 +171,20 @@ def available_kinds() -> list[str]:
     The ``kind__in`` filter runs in the database, so a kind the GraphQL enum does not know is
     excluded rather than making ``regionDimensions`` fail wholesale.
 
-    ``.order_by()`` is load-bearing: the model's default ordering is appended to the SELECT, so
-    a bare ``.distinct()`` de-duplicates on ``(kind, code)`` and returns one row per region. See
-    ``services.ensure_location_regions``.
+    ``Region`` carries no ``Meta.ordering``, so this de-duplicates on ``kind`` alone. It used
+    to need an explicit ``.order_by()`` to defeat a model-level ordering that widened the
+    ``DISTINCT`` to ``(kind, code)``; that ordering is gone, so the call is not.
     """
     known = list(RegionKind.values)
-    kinds = Region.objects.order_by().filter(kind__in=known).values_list("kind", flat=True).distinct()
+    kinds = Region.objects.filter(kind__in=known).values_list("kind", flat=True).distinct()
     return sorted(kinds)
 
 
 def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:
     """Region polygons as GEOS geometry, for the map view.
 
-    Serves ``geom_display`` (see ``Region.geom_display``), falling back to ``geom`` where the
-    importer has not set it, so a region is never invisible on the map.
+    Serves ``geom_display`` (see ``Region.geom_display``), which is a generated column, so it
+    is always present for a row with geometry and there is nothing to fall back to.
 
     ``codes`` of ``None`` or ``[]`` both mean "no restriction". ``parse_region_code_filter``
     reads an empty list the other way for the rollup, so the two are not interchangeable.
@@ -199,10 +201,10 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
     if codes:
         queryset = queryset.filter(code__in=list(codes))
 
-    # `Coalesce` expresses the `geom_display` fallback, and `ReducePrecision` rounds in the
-    # database rather than in Python.
+    # `ReducePrecision` rounds in the database rather than in Python. No `Coalesce`: since
+    # `geom_display` became a generated column it cannot be NULL where `geom` is not.
     rows = (
-        queryset.annotate(geometry=ReducePrecision(Coalesce("geom_display", "geom"), Value(GEOJSON_PRECISION_GRID)))
+        queryset.annotate(geometry=ReducePrecision(F("geom_display"), Value(GEOJSON_PRECISION_GRID)))
         .values("kind", "code", "name", "geometry")
         .order_by("kind", "code")
     )
