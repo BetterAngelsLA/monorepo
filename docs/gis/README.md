@@ -155,9 +155,13 @@ still served side by side.
 
 ## Open questions
 
-1. **LACDMH service areas have no public polygon layer** — needs a decision (extract from
-   their web app, ask them, or adopt SPAs as the proxy).
-2. **The Google Maps key is shared with shelter-web.** The admin map falls back to
-   `VITE_SHELTER_GOOGLE_MAPS_API_KEY` so evaluating this needs no new secret. It wants its
-   own key before production, since sharing one also shares its quotas and referrer
-   restrictions.
+1. **LACDMH service areas have no public polygon layer.** The "adopt SPAs as the proxy"
+   option was taken for now — the shipped `spa` dimension is LA County Dept. of Public
+   Health's Service Planning Areas, which is a *health* geography, not DMH's. If DMH
+   service areas are ever needed, that is a new dimension with its own source
+   (`la-geodata-sources-expanded.md` records the search that found no canonical layer).
+2. **The admin's Maps key needs a repository secret.** The code reads
+   `VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY` and does not fall back to shelter-web's
+   (sharing one key shares its quota and referrer restrictions across two origins). Until
+   the secret exists the map panel degrades with its own message and the rest of the page
+   is unaffected.

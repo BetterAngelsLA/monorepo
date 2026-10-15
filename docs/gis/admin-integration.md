@@ -57,9 +57,8 @@ KPIs above. It provides:
   with a **Heatmap** / **Clusters** toggle in its card header and a `filteredTo` caption when
   the map is narrowed.
 
-The map needs `VITE_SHELTER_GOOGLE_MAPS_API_KEY` (or its own
-`VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`). Without it the panel degrades to an
-explanatory message rather than taking the page down — see
+The map needs `VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`. Without it the panel degrades to
+an explanatory message rather than taking the page down — see
 `apps/betterangels-admin/config.ts`.
 
 ## The Maps key is the admin's own
