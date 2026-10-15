@@ -90,11 +90,15 @@ describe('useOrgTeams', () => {
   // So a test that doesn't install its own storage still starts empty.
   beforeEach(() => configureActiveOrgStorage(createSyncStorage()));
 
-  async function renderWith(organizations: readonly (typeof ORG)[]) {
+  async function renderWith(
+    organizations: readonly (typeof ORG)[] | undefined,
+  ) {
     const { client, operations } = createRecordingClient();
     const wrapper = ({ children }: { children: ReactNode }) => (
       <ApolloProvider client={client}>
-        <ActiveOrgProvider organizations={[...organizations]}>
+        <ActiveOrgProvider
+          organizations={organizations ? [...organizations] : undefined}
+        >
           {children}
         </ActiveOrgProvider>
       </ApolloProvider>
@@ -131,12 +135,12 @@ describe('useOrgTeams', () => {
   });
 
   it('queries with the remembered org before the org list has loaded', async () => {
-    // UserProvider renders children with organizations={[]} while the user
-    // query resolves. The store already holds the remembered organization, so
-    // the request carries it anyway.
+    // UserProvider renders children with no organizations until its user query
+    // resolves. The store already holds the remembered organization, so the
+    // request names it anyway.
     configureActiveOrgStorage(createSyncStorage('org-1'));
 
-    const { operations } = await renderWith([]);
+    const { operations } = await renderWith(undefined);
 
     await waitFor(() => expect(operations.length).toBeGreaterThan(0));
     expect(operations.every((op) => op.organizationId === 'org-1')).toBe(true);

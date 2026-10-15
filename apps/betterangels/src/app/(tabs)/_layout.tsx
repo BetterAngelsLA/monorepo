@@ -126,35 +126,6 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
-          name="drawerPlaceholder"
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              setIsModalVisible(true);
-            },
-          }}
-          options={{
-            href: hmisProdDemoEnabled ? null : undefined,
-            title: '',
-            tabBarIcon: () => (
-              <View style={styles.plusButtonWrapper}>
-                <Pressable
-                  testID="main-plus-tab-btn"
-                  accessibilityRole="button"
-                  accessibilityHint="Opening homepage main modal"
-                  onPress={() => setIsModalVisible(true)}
-                  style={({ pressed }) => [
-                    styles.plusButton,
-                    pressed && styles.plusButtonPressed,
-                  ]}
-                >
-                  <PlusIcon color={Colors.WHITE} />
-                </Pressable>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="interactions"
           options={{
             href: hmisProdDemoEnabled ? null : undefined,
@@ -171,6 +142,40 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
+
+      {/*
+        Deliberately not a tab: as a `Tabs.Screen` it depended on cancelling the
+        tab press, which web cannot do — the tab bar wraps every tab in an <a>, so
+        the navigation won and landed on an empty screen. A plain Pressable never
+        participates in navigation on either platform.
+
+        `pointerEvents` is load-bearing: without `box-none` this wrapper swallows
+        every tap in its square, so the ring around the button eats presses meant
+        for the tab bar underneath.
+
+        It has to come from the `StyleSheet.create` entry, not the inline style
+        beside it: react-native-web polyfills `box-none` only in the atomic
+        compiler, while the inline path drops the value and leaves it `auto`.
+      */}
+      {!hmisProdDemoEnabled && (
+        <View
+          style={[styles.plusButtonOverlay, { bottom: insets.bottom + 24 }]}
+        >
+          <Pressable
+            testID="main-plus-tab-btn"
+            accessibilityRole="button"
+            accessibilityLabel="Add"
+            accessibilityHint="Opening homepage main modal"
+            onPress={() => setIsModalVisible(true)}
+            style={({ pressed }) => [
+              styles.plusButton,
+              pressed && styles.plusButtonPressed,
+            ]}
+          >
+            <PlusIcon color={Colors.WHITE} />
+          </Pressable>
+        </View>
+      )}
 
       <MainPlusModal
         closeModal={() => setIsModalVisible(false)}
@@ -207,15 +212,22 @@ const styles = StyleSheet.create({
   labelText: {
     textAlign: 'center',
   },
-  plusButtonWrapper: {
-    position: 'relative',
-    bottom: 36,
+  /**
+   * The "add" button, floated over the tab bar. Absolute rather than a tab slot,
+   * because it is not a destination — see the comment at its render site.
+   */
+  plusButtonOverlay: {
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -40,
     height: 80,
     width: 80,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.WHITE,
+    // See the note above the element: `box-none` only works from here.
+    pointerEvents: 'box-none',
   },
   plusButton: {
     height: 66,

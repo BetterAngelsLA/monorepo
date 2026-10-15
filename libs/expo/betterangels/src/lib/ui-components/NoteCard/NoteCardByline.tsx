@@ -47,7 +47,7 @@ export default function NoteCardByline(props: INoteCardBylineProps) {
 
         <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
-          {team?.name && (
+          {!!(team?.name) && (
             <TextRegular size="xs">
               {' - '}
               {team.name}

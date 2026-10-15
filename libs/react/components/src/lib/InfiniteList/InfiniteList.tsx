@@ -144,6 +144,8 @@ export function InfiniteList<T>(props: InfiniteListProps<T>) {
 
         {isError && ErrorView}
 
+        {/* The sentinel must be intersecting, so a covered list never pages and
+            needs no gate. The Expo list has no such trigger; it gates on focus. */}
         {hasMore && !error && (
           <InfiniteScrollTrigger onLoadMore={onLoadMore} enabled={hasMore} />
         )}

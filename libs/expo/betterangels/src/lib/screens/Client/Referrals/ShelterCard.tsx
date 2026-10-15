@@ -160,7 +160,7 @@ export function ShelterCard({
       <ShelterHeader name={name} place={place} />
       <ShelterDetailsRow shelterId={id} />
 
-      {notice && (
+      {!!notice && (
         <TextRegular size="xxs" color={Colors.NEUTRAL_DARK}>
           {notice}
         </TextRegular>

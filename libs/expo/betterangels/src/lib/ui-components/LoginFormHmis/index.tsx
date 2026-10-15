@@ -5,6 +5,7 @@ import {
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
+import { stripEnvironmentTag } from '@monorepo/react/shared';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment, useUser } from '../../hooks';
@@ -37,7 +38,9 @@ export default function LoginFormHmis() {
     setErrorMsg('');
     setSubmitting(true);
     try {
-      const cleanedEmail = email.replace('+demo@', '@').toLowerCase().trim();
+      const cleanedEmail = stripEnvironmentTag(
+        email.toLowerCase().trim(),
+      );
       const { data, error } = await hmisLogin({
         variables: { email: cleanedEmail, password },
       }).catch((mutationError) => {
@@ -179,7 +182,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 14.5,
     color: Colors.PRIMARY_EXTRA_DARK,
-    fontFamily: 'Poppins',
-    fontWeight: 400,
+    // A `useFonts` key, not the bare family name; see FontLoader.
+    fontFamily: 'Poppins-Regular',
   },
 });

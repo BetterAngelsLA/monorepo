@@ -98,6 +98,7 @@ import { DEFAULT_QUERY_PAGE_SIZE } from '../../cachePolicy/constants';
 import { getQueryPolicyConfigFromCache } from '../../cacheStore/utils/queryPolicyConfigRegistry';
 import { toErrorLike } from '../../errors';
 import { getApolloRuntimeConfig } from '../../runtime';
+import { withValueAtPath } from '../../utils';
 import {
   buildInitialVariables,
   buildVariablesForPage,
@@ -291,11 +292,22 @@ export function useInfiniteScrollQuery<
       fallback: pageSize,
     });
 
-    const nextVariables = buildVariablesForPage<TVars>({
-      previousVariables: baseVariables,
-      incrementBy: nextPageSize,
-      ...queryPolicyConfig,
-    });
+    // Page from where the data we actually hold ends, not from where the last
+    // request ended. The two diverge whenever the cache is rebuilt underneath
+    // us — a row merged away or deleted server-side shortens the list — and
+    // paging from the stale base would skip straight past the rows in between,
+    // which would then never render. Deriving the offset from the cached length
+    // is the `offset: data.feed.length` form from Apollo's fetchMore docs.
+    // `buildVariablesForPage` still supplies the limit.
+    const nextVariables = withValueAtPath(
+      buildVariablesForPage<TVars>({
+        previousVariables: baseVariables,
+        incrementBy: nextPageSize,
+        ...queryPolicyConfig,
+      }),
+      queryPolicyConfig.paginationOffsetPath,
+      currentItemCount,
+    );
 
     fetchMore({ variables: nextVariables })
       .then(() => {
@@ -319,7 +331,14 @@ export function useInfiniteScrollQuery<
         fetchMoreErrorRef.current = toErrorLike(err);
         isFetchMoreInFlightRef.current = false;
       });
-  }, [hasMore, isAnyLoading, queryPolicyConfig, pageSize, fetchMore]);
+  }, [
+    hasMore,
+    isAnyLoading,
+    queryPolicyConfig,
+    pageSize,
+    fetchMore,
+    currentItemCount,
+  ]);
 
   return {
     items: stableItems,

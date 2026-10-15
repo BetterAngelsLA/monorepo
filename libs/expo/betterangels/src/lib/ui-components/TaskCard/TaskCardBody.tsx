@@ -14,7 +14,7 @@ export default function TaskCardBody(props: TaskCardBodyProps) {
 
   return (
     <View>
-      {description && (
+      {description ? (
         <>
           <TextRegular size="xs">Description</TextRegular>
           <TextBold
@@ -27,7 +27,7 @@ export default function TaskCardBody(props: TaskCardBodyProps) {
             {description}
           </TextBold>
         </>
-      )}
+      ) : null}
       <TextRegular color={Colors.NEUTRAL_DARK} size="sm">
         {formatScalarDate(createdAt, 'MM/dd/yyyy')}
       </TextRegular>
