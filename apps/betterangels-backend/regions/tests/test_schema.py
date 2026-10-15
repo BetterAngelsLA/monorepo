@@ -368,14 +368,9 @@ UNGROUPED_ROLLUP_QUERY = """
     }
 """
 
-REGION_METADATA_QUERY = """
-    query RegionMetadata($dimension: RegionDimension!) {
+REGION_DIMENSIONS_QUERY = """
+    query RegionDimensions {
         regionDimensions
-        regions(dimension: $dimension) {
-            kind
-            code
-            name
-        }
     }
 """
 
@@ -493,11 +488,11 @@ class UngroupedRollupTestCase(GraphQLBaseTestCase):
         )
 
 
-class RegionMetadataQueryTestCase(GraphQLBaseTestCase):
+class RegionDimensionsQueryTestCase(GraphQLBaseTestCase):
     """``regionDimensions`` and ``regions`` through the resolvers, not just the selectors.
 
-    ``regionDimensions`` reports only the dimensions that have boundaries loaded, and
-    ``regions`` returns that dimension's boundaries with their codes and names.
+    ``regionDimensions`` reports only the dimensions that have boundaries loaded, so the
+    report's picker offers a control that returns rows.
     """
 
     def setUp(self) -> None:
@@ -506,30 +501,9 @@ class RegionMetadataQueryTestCase(GraphQLBaseTestCase):
         self.reader = baker.make(User)
         self.org_1.add_user(self.reader)
         Region.objects.create(kind=RegionKind.CITY, code="1", name="City 1", geom=box(BOX_A))
-        Region.objects.create(kind=RegionKind.CITY, code="2", name="City 2", geom=box(BOX_B))
 
     def test_dimensions_report_what_is_loaded(self) -> None:
         self.graphql_client.force_login(self.reader)
-        response = self.execute_graphql(REGION_METADATA_QUERY, {"dimension": "CITY"})
+        response = self.execute_graphql(REGION_DIMENSIONS_QUERY)
         self.assertIsNone(response.get("errors"), response.get("errors"))
         self.assertEqual(response["data"]["regionDimensions"], ["CITY"])
-
-    def test_regions_returns_the_boundaries_of_the_dimension(self) -> None:
-        self.graphql_client.force_login(self.reader)
-        response = self.execute_graphql(REGION_METADATA_QUERY, {"dimension": "CITY"})
-        self.assertIsNone(response.get("errors"), response.get("errors"))
-
-        regions = response["data"]["regions"]
-        self.assertEqual(
-            [(r["kind"], r["code"], r["name"]) for r in regions],
-            [
-                ("CITY", "1", "City 1"),
-                ("CITY", "2", "City 2"),
-            ],
-        )
-
-    def test_an_unloaded_dimension_returns_no_boundaries(self) -> None:
-        self.graphql_client.force_login(self.reader)
-        response = self.execute_graphql(REGION_METADATA_QUERY, {"dimension": "COC"})
-        self.assertIsNone(response.get("errors"), response.get("errors"))
-        self.assertEqual(response["data"]["regions"], [])

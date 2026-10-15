@@ -1518,9 +1518,6 @@ type MedicalNeedType {
   name: MedicalNeedChoices
 }
 
-"""A geographical object that contains multiple polygons."""
-scalar MultiPolygon
-
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -2138,7 +2135,6 @@ type Query {
   interactionsByRegion(organizationId: ID!, dimension: RegionDimension = null, startDate: Date = null, endDate: Date = null, regionCodes: [String!] = null): [RegionCountType!]!
   interactionMap(organizationId: ID!, startDate: Date = null, endDate: Date = null, limit: Int = null, dimension: RegionDimension = null, regionCodes: [String!] = null): InteractionMapType!
   regionDimensions: [RegionDimension!]!
-  regions(dimension: RegionDimension!, codes: [String!] = null): [RegionType!]!
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
@@ -2245,13 +2241,6 @@ enum RegionDimension {
   SUPERVISORIAL_DISTRICT
   SPA
   COC
-}
-
-type RegionType {
-  kind: RegionDimension!
-  code: String!
-  name: String!
-  geometry: MultiPolygon!
 }
 
 enum RelationshipTypeEnum {

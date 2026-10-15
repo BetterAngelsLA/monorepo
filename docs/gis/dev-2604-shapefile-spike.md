@@ -414,8 +414,9 @@ it and [admin-integration.md](admin-integration.md) for the UI.
 4. **Scale.** `RegionPiece` subdivides the boundaries, and the rollup joins them against
    an indexed `Location.point_geom` with the boundaries on the driving side. Subdivision is
    the load-bearing part (45 ms against 4,950 ms); the point→region answer is *not* stored.
-5. **The report.** Shipped: `interactionsByRegion`, `regionDimensions`, `regions` and
-   `interactionMap`, rendered by `LocationBreakdown` on the admin Reports page.
+5. **The report.** Shipped: `interactionsByRegion`, `interactionMap` and `regionDimensions`,
+   with boundaries drawn from the vector-tile endpoint, rendered by `LocationBreakdown` on the
+   admin Reports page.
 6. **Map view.** Built on `@vis.gl/react-google-maps` and the `google.maps.Data` layer,
    not teovilla — for the reason §8 gives: it drops `holes` on web, so enclaves would
    render filled. `ST_SimplifyPreserveTopology` is used for display geometry;

@@ -10,13 +10,10 @@ Nothing derived is stored, so a read writes nothing and there is nothing to keep
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
-from django.contrib.gis.db.models import MultiPolygonField
-from django.contrib.gis.db.models.functions import GeomOutputGeoFunc
-from django.contrib.gis.geos import MultiPolygon
 from django.db import connection
-from django.db.models import BooleanField, F, FloatField, Func, QuerySet, Value
+from django.db.models import BooleanField, FloatField, Func, QuerySet
 from django.db.models.expressions import RawSQL
 
 from common.models import Location
@@ -237,94 +234,6 @@ def available_kinds() -> list[str]:
     known = list(RegionKind.values)
     kinds = Region.objects.filter(kind__in=known).values_list("kind", flat=True).distinct()
     return sorted(kinds)
-
-
-def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:
-    """Region polygons as GEOS geometry, for the map view.
-
-    Serves ``geom_display`` (see ``Region.geom_display``), which is a generated column, so it
-    is always present for a row with geometry and there is nothing to fall back to.
-
-    ``codes`` of ``None`` or ``[]`` both mean "no restriction". ``parse_region_code_filter``
-    reads an empty list the other way for the rollup, so the two are not interchangeable.
-
-    ``ST_ReducePrecision`` keeps coordinates at 6 dp (~10 cm) **in the database**: GEOS
-    serialises at full IEEE-754 precision, measured at 1.58x the payload.
-
-    The ``output_field`` below is load-bearing too; see ``RegionType.geometry``.
-    """
-    # An empty list means "no restriction", so it is normalised away before the filter —
-    # see the docstring. If this ever needs to mean "match nothing", this line and
-    # `useRegionMap`'s normalisation have to change together.
-    queryset = Region.objects.filter(kind__in=list(kinds))
-    if codes:
-        queryset = queryset.filter(code__in=list(codes))
-
-    # `ReducePrecision` rounds in the database rather than in Python. No `Coalesce`:
-    # `geom_display` is a generated column, so it cannot be NULL where `geom` is not.
-    rows = (
-        queryset.annotate(geometry=ReducePrecision(F("geom_display"), Value(GEOJSON_PRECISION_GRID)))
-        .values("kind", "code", "name", "geometry")
-        .order_by("kind", "code")
-    )
-
-    # The GEOS object goes on as-is; the schema's `MultiPolygon` scalar turns it into
-    # coordinates. Converting here would defeat it — the scalar's serializer checks
-    # `isinstance(v, MultiPolygon)` and passes anything else through untouched, so a tuple of
-    # coordinates would be treated as an opaque value.
-    return [
-        {
-            "kind": row["kind"],
-            "code": row["code"],
-            "name": row["name"] or "",
-            "geometry": _as_multipolygon(row["geometry"]),
-        }
-        for row in rows
-    ]
-
-
-def _as_multipolygon(geometry: Any) -> Any:
-    """The row's geometry as a ``MultiPolygon``, which is what the scalar requires.
-
-    The annotation declares ``MultiPolygonField``, so the ORM coerces even a single-part
-    result — which PostGIS returns as ``POLYGON`` — to a ``MultiPolygon``. Asserted for every
-    loaded dimension by ``test_region_geometry_is_a_multipolygon``.
-
-    This is not a defensive branch but a tripwire on a one-word dependency: without
-    ``output_field`` the value is a ``Polygon``, the scalar's ``isinstance`` guard fails, and
-    the raw GEOS object reaches the JSON encoder — which surfaces as a WKT *string* rather
-    than an error, so nothing else would catch it.
-    """
-    assert isinstance(geometry, MultiPolygon), (
-        f"expected a MultiPolygon from the annotation, got {type(geometry).__name__}; "
-        "check that ReducePrecision still declares output_field=MultiPolygonField()"
-    )
-    return geometry
-
-
-# Coordinate grid for region geometry, in degrees. `1e-6` is ~10 cm — finer than the
-# simplification tolerance (`models.DISPLAY_SIMPLIFY_DEGREES`), so nothing visible is lost —
-# and it is what holds the payload to six decimal places. GEOS serialises at full double
-# precision otherwise, which measured 1.58x the size.
-GEOJSON_PRECISION_GRID = 1e-6
-
-
-class ReducePrecision(GeomOutputGeoFunc):
-    """``ST_ReducePrecision(geometry, gridSize)`` — rounds coordinates onto a grid.
-
-    A subclass rather than a call with ``function=``: ``GeomOutputGeoFunc`` resolves the SQL
-    name from the class attribute, so passing it as a keyword emits a call to
-    ``st_geomoutputgeofunc(...)`` instead. Django has no wrapper for this function, which is
-    why it is declared here — the same reason ``ST_Multi`` and ``ST_Subdivide`` are raw SQL
-    in ``services``.
-
-    ``output_field`` is explicit so the ORM knows the result is a MultiPolygon rather than
-    inferring it from the arguments.
-    """
-
-    function = "ST_ReducePrecision"
-    arity = 2
-    output_field = MultiPolygonField()
 
 
 # Cap on points returned in one response. Past a few thousand the extra rows change

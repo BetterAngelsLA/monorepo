@@ -5,15 +5,12 @@ Adds the ``RegionDimension`` enum (``models.RegionKind``) and four queries:
 * ``interactionsByRegion`` — interaction counts per region of a dimension.
 * ``interactionMap`` — individual interaction points, for the map.
 * ``regionDimensions`` — which dimensions have boundaries loaded.
-* ``regions`` — the boundary polygons themselves, as geometry.
 
 They sit alongside the existing ``reportSummary``.
 
-Polygons are returned as ``MultiPolygon`` values, using strawberry-django's built-in geometry
-scalar — the same mechanism as ``LocationType.point``. What bounds the payload is the
-server-side simplification (``Region.geom_display``), not the choice of scalar:
-``ST_ReducePrecision`` keeps the rounded form at parity with a GeoJSON string. See
-``RegionType.geometry`` for the one caveat the scalar carries.
+**Boundaries are not served here.** The map draws them as vector tiles from
+``regions/views.py``, which is what keeps a dimension's polygons off the GraphQL payload —
+measured at 1.25 MB across the five LA layers, against a few kB for the tiles in view.
 """
 
 from __future__ import annotations
@@ -39,12 +36,11 @@ from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
 
 from .models import RegionKind
-from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, region_features, scope_notes_to_regions
+from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, scope_notes_to_regions
 from .services import interaction_map_data, region_rollup
 from .types import (
     InteractionMapType,
     RegionCountType,
-    RegionType,
     UnassignedReason,
 )
 
@@ -184,34 +180,5 @@ class Query:
         """
         return [RegionKind(kind) for kind in available_kinds()]
 
-    @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def regions(
-        self,
-        info: Info,
-        dimension: RegionKind,
-        codes: Optional[List[str]] = None,
-    ) -> List[RegionType]:
-        """Boundary polygons for the map view, as ``MultiPolygon`` values.
 
-        ``IsAuthenticated`` only, deliberately — unlike ``interactionsByRegion``.
-        These are public reference boundaries, identical for every tenant; the SELECT
-        returns ``kind, code, name`` and the rounded geometry, and no org- or client-scoped
-        column. Requiring ``reports.view_reports`` here would mean the map could not render
-        for a signed-in user who may see the report's charts but not its boundary layer, with
-        no confidentiality gained.
-        """
-        rows = region_features(kinds=[dimension.value], codes=codes)
-        return [
-            RegionType(
-                kind=RegionKind(row["kind"]),
-                code=row["code"],
-                name=row["name"],
-                # Coordinates, rounded in SQL. The scalar needs a `MultiPolygon`-shaped
-                # value, which is what `region_features` returns.
-                geometry=row["geometry"],
-            )
-            for row in rows
-        ]
-
-
-__all__ = ["Query", "RegionCountType", "RegionKind", "RegionType", "UnassignedReason"]
+__all__ = ["Query", "RegionCountType", "RegionKind", "UnassignedReason"]

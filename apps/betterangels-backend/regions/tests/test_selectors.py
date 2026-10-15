@@ -25,7 +25,6 @@ from regions.selectors import (
     interaction_points,
     org_notes_in_range,
     region_counts,
-    region_features,
     region_totals_without_boundaries,
     scope_notes_to_regions,
 )
@@ -174,55 +173,6 @@ class RegionMetadataTestCase(TestCase):
 
     def test_available_kinds_reports_only_loaded_dimensions(self) -> None:
         self.assertEqual(sorted(available_kinds()), ["council_district", "spa"])
-
-    def test_region_geometry_is_a_multipolygon(self) -> None:
-        """Every row's geometry is a ``MultiPolygon``, at 6 decimal places.
-
-        **This is the load-bearing test for the schema's ``MultiPolygon`` scalar.** That
-        scalar's serializer is ``lambda v: v.tuple if isinstance(v, geos.MultiPolygon) else v``
-        — guarded on the exact GEOS type, one level deep. PostGIS returns ``POLYGON`` for a
-        single-part result, so without ``output_field=MultiPolygonField()`` on the annotation
-        the guard fails, ``else v`` passes a raw GEOS object to the JSON encoder, and the
-        client receives a WKT *string*. Nothing raises, so only an assertion like this catches
-        it.
-
-        Run over **every loaded dimension**, because the failing case is the single-part
-        polygon and which dimensions have those is a property of the boundary data, not of
-        this code.
-        """
-        checked = 0
-        for kind in RegionKind.values:
-            with self.subTest(kind=kind):
-                rows = region_features(kinds=[kind])
-                if not rows:
-                    # Not every dimension is loaded in this fixture, and which ones are is a
-                    # property of the boundary data rather than of this code. The interesting
-                    # case is a *single-part* polygon, so loop over whatever is present.
-                    continue
-                checked += 1
-                for row in rows:
-                    geometry = row["geometry"]
-                    self.assertIsInstance(
-                        geometry,
-                        MultiPolygon,
-                        f"{kind}/{row['code']}: the MultiPolygon scalar would serialise this as WKT",
-                    )
-
-                # 6 dp, because the grid is 1e-6: full precision measured 1.58x the payload.
-                ring = rows[0]["geometry"].coords[0][0]
-                for lng, lat in ring[:5]:
-                    self.assertLessEqual(len(str(lng).split(".")[-1]), 6)
-                    self.assertLessEqual(len(str(lat).split(".")[-1]), 6)
-
-        # Without this the test passes vacuously if the fixture stops loading regions.
-        self.assertGreaterEqual(checked, 1, "no dimension had regions to check")
-
-    def test_region_features_can_filter_by_code(self) -> None:
-        rows = region_features(kinds=[RegionKind.SPA], codes=["4"])
-        self.assertEqual([row["code"] for row in rows], ["4"])
-
-    def test_region_features_unknown_code_returns_nothing(self) -> None:
-        self.assertEqual(region_features(kinds=[RegionKind.SPA], codes=["nope"]), [])
 
 
 class RegionReconciliationTestCase(TestCase):

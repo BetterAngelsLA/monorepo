@@ -129,17 +129,22 @@ Two deliberate source choices worth knowing:
   deriving it is self-correcting when the county annexes a pocket.
 
 GraphQL: `interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes)`,
-plus `regionDimensions` (what is loaded), `regions(dimension, codes)` (boundaries as
-GeoJSON for the map).
+`interactionMap(organizationId, startDate, endDate, limit, dimension, regionCodes)`, and
+`regionDimensions` (which dimensions have boundaries loaded).
+
+Boundaries are **not** served over GraphQL: the map draws them as vector tiles from
+`/regions/tiles/<kind>/<z>/<x>/<y>.mvt`. A dimension's polygons are 1.25 MB across the five LA
+layers and a tile in view is a few kB, so the tiles are the whole reason the map does not pull
+a whole layer to draw a corner of it.
 
 **Authorization differs deliberately by query.** `interactionMap` returns coordinates and
 carries two gates: `reports.view_reports` at the payload org, and the note read scope via
 `filter_for_user(..., [NotePermissions.VIEW])` — a pin is a note's location, so it inherits
 the note scope, and `ORG_ADMIN` holds the report permission with none of the note one.
 `interactionsByRegion` returns counts and carries `reports.view_reports` alone, the same
-authority as `reportSummary` beside it. `regionDimensions` and `regions` require only an
-authenticated session: they serve public reference boundaries, identical for every tenant,
-and their SELECT touches no org- or client-scoped column.
+authority as `reportSummary` beside it. `regionDimensions` requires only an authenticated
+session, and so does the tile endpoint: both serve public reference boundaries, identical for
+every tenant, and neither selects an org- or client-scoped column.
 
 ### Sources that look right but are not
 
