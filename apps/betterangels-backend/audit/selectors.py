@@ -6,7 +6,8 @@ groups events into actions, and orders actions newest-first (ADR 0004 §10–§1
 The write source is a single ``AuditWriteEvent.objects.references(obj)`` query
 (§10): it already aggregates the object's own events (via ``pgh_obj``) and every
 event model with an FK to the object — including the §6 through-table proxies.
-``THROUGH_EVENT_MAP`` is rendering metadata only, never a second query source.
+``_through_event_meta()`` is rendering metadata (derived from pghistory
+introspection) only, never a second query source.
 
 Pagination is applied in SQL (§10): the page's action keys are selected with a
 grouped ``LIMIT``/``OFFSET`` query, then only those keys' rows are fetched, so
@@ -17,12 +18,14 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Any
 
 from django.apps import apps
-from django.db.models import Max, TextField
+from django.db.models import Max, Model, TextField
 from django.db.models.functions import Cast, Coalesce
 from django.utils import timezone
+from pghistory.core import event_models
 
 from audit.models import AuditWriteEvent
 from shelters.models import Bed, Room, Shelter
@@ -53,69 +56,80 @@ _SCOPED_EXCLUSIONS: dict[str, tuple[str, ...]] = {
 # Labels that are recorded but rendered as a reason rather than an actor (§11).
 _SYSTEM_REASON_LABELS = frozenset({"import", "clone"})
 
-# Through-table rendering metadata (§19): event ``_meta.label`` ->
-# (parent column, related FK field on the through model). The related FK field is
-# Django's auto-generated name (the related model, lowercased, underscores
-# stripped). Verified against the migration and by introspection.
-THROUGH_EVENT_MAP: dict[str, tuple[str, str]] = {
-    "shelters.TrackedAccessibilityEvent": ("shelter_id", "accessibility"),
-    "shelters.TrackedCityEvent": ("shelter_id", "city"),
-    "shelters.TrackedDemographicEvent": ("shelter_id", "demographic"),
-    "shelters.TrackedEntryRequirementEvent": ("shelter_id", "entryrequirement"),
-    "shelters.TrackedExitPolicyEvent": ("shelter_id", "exitpolicy"),
-    "shelters.TrackedFunderEvent": ("shelter_id", "funder"),
-    "shelters.TrackedParkingEvent": ("shelter_id", "parking"),
-    "shelters.TrackedPetEvent": ("shelter_id", "pet"),
-    "shelters.TrackedReferralRequirementEvent": ("shelter_id", "referralrequirement"),
-    "shelters.TrackedSPAEvent": ("shelter_id", "spa"),
-    "shelters.TrackedServiceEvent": ("shelter_id", "service"),
-    "shelters.TrackedShelterProgramEvent": ("shelter_id", "shelterprogram"),
-    "shelters.TrackedShelterTypeEvent": ("shelter_id", "sheltertype"),
-    "shelters.TrackedSpecialSituationRestrictionEvent": ("shelter_id", "specialsituationrestriction"),
-    "shelters.TrackedStorageEvent": ("shelter_id", "storage"),
-    "shelters.TrackedVaccinationRequirementEvent": ("shelter_id", "vaccinationrequirement"),
-    "shelters.TrackedBedAccessibilityEvent": ("bed_id", "accessibility"),
-    "shelters.TrackedBedDemographicEvent": ("bed_id", "demographic"),
-    "shelters.TrackedBedFunderEvent": ("bed_id", "funder"),
-    "shelters.TrackedBedMedicalNeedEvent": ("bed_id", "medicalneed"),
-    "shelters.TrackedBedPetEvent": ("bed_id", "pet"),
-    "shelters.TrackedRoomAccessibilityEvent": ("room_id", "accessibility"),
-    "shelters.TrackedRoomDemographicEvent": ("room_id", "demographic"),
-    "shelters.TrackedRoomFunderEvent": ("room_id", "funder"),
-    "shelters.TrackedRoomPetEvent": ("room_id", "pet"),
-    "shelters.TrackedRoomStyleEvent": ("shelter_id", "roomstyle"),
-}
 
-# Related-model display attribute (§14). Falls back to the raw id when absent.
-LABEL_FIELD: dict[str, str] = {
-    "shelters.Demographic": "name",
-    "shelters.SpecialSituationRestriction": "name",
-    "shelters.ShelterType": "name",
-    "shelters.RoomStyle": "name",
-    "shelters.Accessibility": "name",
-    "shelters.Storage": "name",
-    "shelters.Pet": "name",
-    "shelters.Parking": "name",
-    "shelters.EntryRequirement": "name",
-    "shelters.VaccinationRequirement": "name",
-    "shelters.ShelterProgram": "name",
-    "shelters.Funder": "name",
-    "shelters.ExitPolicy": "name",
-    "shelters.ReferralRequirement": "name",
-    "shelters.MedicalNeed": "name",
-    "shelters.City": "name",
-    "shelters.SPA": "short_name",
-    "shelters.Service": "display_name",
-    "shelters.ServiceCategory": "display_name",
-    "organizations.Organization": "name",
-    "clients.ClientProfile": "full_name",
-    "shelters.Shelter": "name",
-    "shelters.Room": "name",
-    "shelters.Bed": "name",
-    "accounts.User": "email",
-}
+# Through-table rendering metadata (§19). Derived at runtime from pghistory's
+# ``pgh_tracked_model`` introspection — never a hand-maintained list and never a
+# query source (``references()`` is the only query source; §10). For each
+# auto-created M2M through table we recover the parent FK column
+# (``shelter_id``/``bed_id``/``room_id``), the related FK field, the M2M's
+# ``verbose_name`` (the display field), and both model labels.
+@dataclass(frozen=True)
+class _ThroughMeta:
+    parent_col: str
+    related_fk_field: str
+    display_name: str
+    related_model_label: str
+    parent_model_label: str
 
-_PARENT_MODELS = {"shelter_id": Shelter, "bed_id": Bed, "room_id": Room}
+
+@lru_cache(maxsize=1)
+def _through_event_meta() -> dict[str, _ThroughMeta]:
+    """``event _meta.label`` -> rendering metadata, for every parent M2M join."""
+    result: dict[str, _ThroughMeta] = {}
+    for event_model in event_models():
+        tracked = getattr(event_model, "pgh_tracked_model", None)
+        if tracked is None:
+            continue
+        through = tracked._meta.concrete_model
+        if not through._meta.auto_created:
+            continue
+        fks = [f for f in through._meta.fields if f.is_relation and f.many_to_one]
+        for parent_fk in fks:
+            parent = parent_fk.related_model
+            if parent not in (Shelter, Bed, Room):
+                continue
+            for m2m in parent._meta.many_to_many:
+                if m2m.remote_field.through._meta.concrete_model is through:
+                    related_fk = next(f for f in fks if f is not parent_fk)
+                    result[event_model._meta.label] = _ThroughMeta(
+                        parent_col=parent_fk.attname,
+                        related_fk_field=related_fk.name,
+                        display_name=str(m2m.verbose_name),
+                        related_model_label=m2m.related_model._meta.label,
+                        parent_model_label=parent._meta.label,
+                    )
+    return result
+
+
+# Related-model display attribute (§14). Presentation-only: the resolver falls
+# back to the raw id when the attribute is absent, so the default is a
+# ``display_name`` -> ``name`` chain, with a few product-specific overrides.
+# ``str(obj)`` is deliberately not used: ``Room.__str__`` dereferences
+# ``self.shelter`` (an N+1 in the batched resolver) and ``Bed.__str__`` returns
+# ``"Bed object (pk)"``.
+_LABEL_FIELD_OVERRIDES: dict[str, str] = {
+    "shelters.SPA": "short_name",  # ``name`` is an int-choices field
+    "clients.ClientProfile": "full_name",  # ``__str__`` appends "(pk)"
+    "accounts.User": "email",  # ``__str__`` is name-or-pk
+}
+_LABEL_FIELD_DEFAULT_CHAIN = ("display_name", "name")
+
+
+_LABEL_FIELD_CACHE: dict[str, str | None] = {}
+
+
+def _label_field(model: type[Model]) -> str | None:
+    """The display attribute for a related model, or ``None`` for the raw id."""
+    label = model._meta.label
+    if label in _LABEL_FIELD_CACHE:
+        return _LABEL_FIELD_CACHE[label]
+    if label in _LABEL_FIELD_OVERRIDES:
+        result: str | None = _LABEL_FIELD_OVERRIDES[label]
+    else:
+        names = {f.name for f in model._meta.fields}
+        result = next((c for c in _LABEL_FIELD_DEFAULT_CHAIN if c in names), None)
+    _LABEL_FIELD_CACHE[label] = result
+    return result
 
 
 @dataclass
@@ -167,7 +181,6 @@ class _LabelResolver:
 
     def fetch(self) -> None:
         for model_label, ids in self._ids.items():
-            attr = LABEL_FIELD.get(model_label)
             try:
                 model = apps.get_model(model_label)
             except LookupError:
@@ -175,6 +188,7 @@ class _LabelResolver:
                     self._cache[(model_label, pk)] = str(pk)
                 continue
 
+            attr = _label_field(model)
             rows = model._default_manager.filter(pk__in=ids)
             for obj in rows:
                 value = getattr(obj, attr, None) if attr else None
@@ -367,23 +381,9 @@ def _actor(row: Any) -> str:
     return "system"
 
 
-def _m2m_meta(pgh_model: str) -> tuple[str, str, str] | None:
-    """Return ``(field_display_name, related_model_label, parent_model_label)``
-    for a through event."""
-    entry = THROUGH_EVENT_MAP.get(pgh_model)
-    if entry is None:
-        return None
-    parent_col, related_fk_field = entry
-    parent_model = _PARENT_MODELS[parent_col]
-    for m2m in parent_model._meta.many_to_many:
-        through = m2m.remote_field.through
-        if through is None:
-            continue
-        for f in through._meta.fields:
-            if f.name == related_fk_field and f.is_relation:
-                display_name = str(getattr(m2m, "verbose_name", None) or m2m.name)
-                return display_name, m2m.related_model._meta.label, parent_model._meta.label
-    return None
+def _m2m_meta(pgh_model: str) -> _ThroughMeta | None:
+    """The through-table rendering metadata for a through event, if any (§19)."""
+    return _through_event_meta().get(pgh_model)
 
 
 def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
@@ -630,12 +630,10 @@ def _build_action(
     for row in rows:
         meta = _m2m_meta(row.pgh_model)
         if meta is not None:
-            field_name, related_model_label, parent_label = meta
-            parent_col, related_fk_field = THROUGH_EVENT_MAP[row.pgh_model]
-            parent_pk = (row.pgh_data or {}).get(parent_col)
-            related_pk = (row.pgh_data or {}).get(f"{related_fk_field}_id")
-            ref = resolver.ref(related_model_label, related_pk)
-            bucket = m2m_changes[(parent_label, parent_pk, field_name)]
+            parent_pk = (row.pgh_data or {}).get(meta.parent_col)
+            related_pk = (row.pgh_data or {}).get(f"{meta.related_fk_field}_id")
+            ref = resolver.ref(meta.related_model_label, related_pk)
+            bucket = m2m_changes[(meta.parent_model_label, parent_pk, meta.display_name)]
             if row.pgh_label.endswith(".remove"):
                 bucket["removed"].append(ref)
             else:
@@ -650,7 +648,7 @@ def _build_action(
                     action=row.pgh_label,
                     target_type=target_type,
                     target_id=target_id,
-                    field_changes={field_name: single},
+                    field_changes={meta.display_name: single},
                 )
             )
             continue

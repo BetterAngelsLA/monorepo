@@ -4,6 +4,7 @@ import re
 from types import SimpleNamespace
 from typing import Any
 
+from django.apps import apps
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
@@ -13,11 +14,13 @@ from pghistory.core import event_models
 from accounts.models import User
 from audit.selectors import (
     _EXCLUDED_EVENT_MODELS,
-    LABEL_FIELD,
+    _LABEL_FIELD_OVERRIDES,
     MAX_LIMIT,
-    THROUGH_EVENT_MAP,
+    _label_field,
     _LabelResolver,
+    _m2m_meta,
     _scalar_changes,
+    _through_event_meta,
     object_audit_log,
 )
 from audit.tests.utils import audit_context, clear_history_context
@@ -534,7 +537,9 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
     # ── §19 through-map completeness / §10 references boundary ───────────────
 
-    def test_through_event_map_covers_every_through_event_model(self) -> None:
+    def test_through_metadata_is_derived_and_matches_the_pinned_map(self) -> None:
+        # The derived map must cover every through event model in ``references()``
+        # (a new M2M field cannot fall out of the M2M rendering path, §19)...
         expected: set[str] = set()
         for model in (Shelter, Bed, Room):
             expected |= {
@@ -543,16 +548,52 @@ class ObjectAuditLogSelectorTestCase(TestCase):
                 if not hasattr(event_model, "pgh_obj_id")
             }
 
-        self.assertEqual(set(THROUGH_EVENT_MAP), expected)
-        for parent_col, related_fk_field in THROUGH_EVENT_MAP.values():
-            self.assertIn(parent_col, {"shelter_id", "bed_id", "room_id"})
-            self.assertTrue(related_fk_field)
+        derived = _through_event_meta()
+        self.assertEqual(set(derived), expected)
 
-    def test_label_field_covers_every_m2m_related_model(self) -> None:
+        # ...and, because the map is now derived rather than hand-maintained, pin
+        # its full contents literally (the stronger guard, mirroring the
+        # ``_EXPECTED_*_REFERENCES`` boundary pins below): the introspection that
+        # produces it must not silently change how a row is attributed/rendered.
+        self.assertEqual(
+            {label: (meta.parent_col, meta.related_fk_field) for label, meta in derived.items()},
+            _EXPECTED_THROUGH_EVENT_META,
+        )
+        for meta in derived.values():
+            self.assertIn(meta.parent_col, {"shelter_id", "bed_id", "room_id"})
+            self.assertTrue(meta.related_fk_field)
+            self.assertTrue(meta.display_name)
+            self.assertTrue(meta.related_model_label)
+
+        # A non-through event resolves to no M2M metadata; a multi-word through FK
+        # resolves to its ``m2m.verbose_name``.
+        self.assertIsNone(_m2m_meta("shelters.ShelterEvent"))
+        medical_need_meta = _m2m_meta("shelters.TrackedBedMedicalNeedEvent")
+        self.assertIsNotNone(medical_need_meta)
+        assert medical_need_meta is not None
+        self.assertEqual(medical_need_meta.display_name, "medical needs")
+
+    def test_label_field_derives_defaults_and_pins_overrides(self) -> None:
+        # The default ``display_name`` -> ``name`` chain reproduces every label
+        # except three product-specific overrides (§14) — no hand-maintained list.
+        self.assertEqual(
+            _LABEL_FIELD_OVERRIDES,
+            {
+                "shelters.SPA": "short_name",  # ``name`` is an int-choices field
+                "clients.ClientProfile": "full_name",
+                "accounts.User": "email",
+            },
+        )
+        self.assertEqual(_label_field(apps.get_model("shelters.Demographic")), "name")
+        self.assertEqual(_label_field(apps.get_model("shelters.Service")), "display_name")
+        self.assertEqual(_label_field(apps.get_model("shelters.SPA")), "short_name")
+
+        # Every M2M related model resolves to some label field, never the raw id.
         related_models = {
             m2m.related_model._meta.label for model in (Shelter, Bed, Room) for m2m in model._meta.many_to_many
         }
-        self.assertTrue(related_models <= set(LABEL_FIELD), related_models - set(LABEL_FIELD))
+        unresolved = {label for label in related_models if _label_field(apps.get_model(label)) is None}
+        self.assertFalse(unresolved, unresolved)
 
     def test_references_boundary_for_shelter_minus_the_blocklist(self) -> None:
         labels = {event_model._meta.label for event_model in event_models(references_model=Shelter)}
@@ -660,6 +701,40 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
             self.assertLessEqual(size, self._STATEMENT_CEILINGS[target_type], f"{target_type} statement grew to {size}")
 
+
+# §19 through-table rendering metadata, pinned literally. The map is *derived*
+# at run time from pghistory introspection, so this literal is what catches a
+# derivation regression (a changed parent column or related FK field), mirroring
+# the ``references()`` boundary pins below. Values are ``(parent_col,
+# related_fk_field)``.
+_EXPECTED_THROUGH_EVENT_META = {
+    "shelters.TrackedAccessibilityEvent": ("shelter_id", "accessibility"),
+    "shelters.TrackedBedAccessibilityEvent": ("bed_id", "accessibility"),
+    "shelters.TrackedBedDemographicEvent": ("bed_id", "demographic"),
+    "shelters.TrackedBedFunderEvent": ("bed_id", "funder"),
+    "shelters.TrackedBedMedicalNeedEvent": ("bed_id", "medicalneed"),
+    "shelters.TrackedBedPetEvent": ("bed_id", "pet"),
+    "shelters.TrackedCityEvent": ("shelter_id", "city"),
+    "shelters.TrackedDemographicEvent": ("shelter_id", "demographic"),
+    "shelters.TrackedEntryRequirementEvent": ("shelter_id", "entryrequirement"),
+    "shelters.TrackedExitPolicyEvent": ("shelter_id", "exitpolicy"),
+    "shelters.TrackedFunderEvent": ("shelter_id", "funder"),
+    "shelters.TrackedParkingEvent": ("shelter_id", "parking"),
+    "shelters.TrackedPetEvent": ("shelter_id", "pet"),
+    "shelters.TrackedReferralRequirementEvent": ("shelter_id", "referralrequirement"),
+    "shelters.TrackedRoomAccessibilityEvent": ("room_id", "accessibility"),
+    "shelters.TrackedRoomDemographicEvent": ("room_id", "demographic"),
+    "shelters.TrackedRoomFunderEvent": ("room_id", "funder"),
+    "shelters.TrackedRoomPetEvent": ("room_id", "pet"),
+    "shelters.TrackedRoomStyleEvent": ("shelter_id", "roomstyle"),
+    "shelters.TrackedSPAEvent": ("shelter_id", "spa"),
+    "shelters.TrackedServiceEvent": ("shelter_id", "service"),
+    "shelters.TrackedShelterProgramEvent": ("shelter_id", "shelterprogram"),
+    "shelters.TrackedShelterTypeEvent": ("shelter_id", "sheltertype"),
+    "shelters.TrackedSpecialSituationRestrictionEvent": ("shelter_id", "specialsituationrestriction"),
+    "shelters.TrackedStorageEvent": ("shelter_id", "storage"),
+    "shelters.TrackedVaccinationRequirementEvent": ("shelter_id", "vaccinationrequirement"),
+}
 
 _EXPECTED_SHELTER_REFERENCES = {
     "shelters.ShelterEvent",
