@@ -39,6 +39,8 @@ export function CurrentLocationBtn(props: TProps) {
     <ControlBtnWrapper className={className}>
       <CurrentLocation
         className={innerCss}
+        label="Show my location"
+        testId="map-show-my-location"
         onChange={onLocationChange}
         onError={onLocationError}
       >

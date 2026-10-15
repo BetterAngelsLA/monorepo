@@ -22,7 +22,6 @@ import {
   SearchMapAreaButton,
   ZoomControls,
 } from './controls';
-import { useFitMapToPlaceViewport } from './useFitMapToPlaceViewport';
 import {
   TLatLng,
   TMapBounds,
@@ -30,6 +29,7 @@ import {
   TMapGestureHandling,
   TMarker,
 } from './types.maps';
+import { useFitMapToPlaceViewport } from './useFitMapToPlaceViewport';
 import { toGoogleLatLng } from './utils/toGoogleLatLng';
 import { toMapBounds } from './utils/toMapBounds';
 
@@ -166,6 +166,18 @@ export function Map(props: TMap) {
               onLocationSuccess={handleCenterToUserLocation}
             />
           )}
+          {/*
+            The camera is not otherwise readable from the DOM: the maps API
+            renders into its own container, and our own controls are icon-only.
+            Exposed here (hidden, so no layout impact) for the e2e suite to
+            assert zoom and centre without reaching into Google's internals.
+          */}
+          <div
+            hidden
+            data-testid="map-camera"
+            data-zoom={camera.zoom}
+            data-center={`${camera.center.lat},${camera.center.lng}`}
+          />
         </div>
       </MapControl>
     </GoogleMap>

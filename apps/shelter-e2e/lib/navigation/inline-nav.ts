@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { NAV_LINKS } from './constants';
-import { expectedHref, navLink, navToggle } from './elements';
+import { expectedHref, navLink, navToggle } from './queries';
 
 /**
  * The header at `lg` (1152px) and up: every link is inline, points where it

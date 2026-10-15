@@ -1,10 +1,10 @@
 import type { Locator, Page } from '@playwright/test';
-import type { NavTarget } from './constants';
+import { NAV_TOGGLE_LABEL, type NavTarget } from './constants';
 
 /**
- * How the header's elements are addressed: the locators, the labels they are
- * addressed by, and the `href` each link should carry. What must be true of
- * them lives in the band files.
+ * How the suite asks the header questions: where its links and controls are, and
+ * what each link should point at. What must be true of them lives in the band
+ * files.
  */
 
 /**
@@ -17,12 +17,6 @@ import type { NavTarget } from './constants';
 export function navLink(scope: Locator, label: string): Locator {
   return scope.getByRole('link').filter({ hasText: label });
 }
-
-/**
- * The accessible name the app gives the header's hamburger — an icon-only
- * button, so `aria-label` is what names it.
- */
-export const NAV_TOGGLE_LABEL = 'Open navigation';
 
 /**
  * The header control that opens the flyout.

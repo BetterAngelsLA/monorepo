@@ -55,3 +55,9 @@ export const FLYOUT_LINKS: readonly NavTarget[] = [
   ...NAV_LINKS,
   ...FLYOUT_ONLY_LINKS,
 ];
+
+/**
+ * The accessible name the app gives the header's hamburger — an icon-only
+ * button, so `aria-label` is what names it.
+ */
+export const NAV_TOGGLE_LABEL = 'Open navigation';

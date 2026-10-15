@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { FLYOUT_LINKS, NAV_LINKS } from './constants';
-import { expectedHref, navLink, navToggle } from './elements';
+import { expectedHref, navLink, navToggle } from './queries';
 
 /**
  * The header below `lg` (1152px): the inline links are `hidden`, and a
