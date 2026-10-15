@@ -13,7 +13,7 @@ import {
 } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useActiveOrg } from '@monorepo/ba-platform';
 import { mergeCss } from '@monorepo/react/shared';
 import { ChartCard } from '../../components';
@@ -98,16 +98,41 @@ function DownloadIcon({ isDownloading }: { isDownloading: boolean }) {
  */
 function useChartColors() {
   const { token } = theme.useToken();
-  return {
-    primary: token.colorPrimary,
-    success: token.colorSuccess,
-    warning: token.colorWarning,
-    purple: token.colorInfo,
-  } as const;
+  // Memoised: `@ant-design/charts` re-initialises when a prop's *identity* changes, and a
+  // fresh object literal on every render made all five charts re-init on every keystroke,
+  // loading flip and date change — which is what made switching datasets feel jerky.
+  return useMemo(
+    () => ({
+      primary: token.colorPrimary,
+      success: token.colorSuccess,
+      warning: token.colorWarning,
+      purple: token.colorInfo,
+    }),
+    [token.colorPrimary, token.colorSuccess, token.colorWarning, token.colorInfo],
+  );
 }
+
+/** Static axis config, hoisted for the same reason: a new object re-inits the chart. */
+const countAxis = (title: string) => ({ title: { text: title } });
+const Y_AXIS_INTERACTIONS = countAxis('Interactions');
+const Y_AXIS_CLIENTS = countAxis('Clients');
+const Y_AXIS_COUNT = countAxis('Count');
+const X_AXIS_DATES = { label: { autoRotate: true, formatter: formatBucketLabel } };
+const X_AXIS_NAMES = { label: { autoRotate: true, style: { fontSize: 11 } } };
 
 export function Reports({ className = '', hasMapsKey = true }: IProps) {
   const CHART_COLORS = useChartColors();
+  // The fill objects too: `style={{ fill }}` inline was a new object on every render, which
+  // re-initialised the chart just as the colours did.
+  const CHART_STYLE = useMemo(
+    () => ({
+      primary: { fill: CHART_COLORS.primary },
+      purple: { fill: CHART_COLORS.purple },
+      success: { fill: CHART_COLORS.success },
+      warning: { fill: CHART_COLORS.warning },
+    }),
+    [CHART_COLORS],
+  );
   const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
   const {
@@ -281,11 +306,9 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="date"
                     yField="count"
                     height={300}
-                    xAxis={{
-                      label: { autoRotate: true, formatter: formatBucketLabel },
-                    }}
-                    yAxis={{ title: { text: 'Interactions' } }}
-                    style={{ fill: CHART_COLORS.primary }}
+                    xAxis={X_AXIS_DATES}
+                    yAxis={Y_AXIS_INTERACTIONS}
+                    style={CHART_STYLE.primary}
                   />
                 </ChartCard>
               </Col>
@@ -299,11 +322,9 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="date"
                     yField="count"
                     height={300}
-                    xAxis={{
-                      label: { autoRotate: true, formatter: formatBucketLabel },
-                    }}
-                    yAxis={{ title: { text: 'Clients' } }}
-                    style={{ fill: CHART_COLORS.purple }}
+                    xAxis={X_AXIS_DATES}
+                    yAxis={Y_AXIS_CLIENTS}
+                    style={CHART_STYLE.purple}
                   />
                 </ChartCard>
               </Col>
@@ -317,11 +338,9 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="name"
                     yField="count"
                     height={300}
-                    xAxis={{
-                      label: { autoRotate: true, style: { fontSize: 11 } },
-                    }}
-                    yAxis={{ title: { text: 'Count' } }}
-                    style={{ fill: CHART_COLORS.primary }}
+                    xAxis={X_AXIS_NAMES}
+                    yAxis={Y_AXIS_COUNT}
+                    style={CHART_STYLE.primary}
                   />
                 </ChartCard>
               </Col>
@@ -371,11 +390,9 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="name"
                     yField="count"
                     height={300}
-                    xAxis={{
-                      label: { autoRotate: true, style: { fontSize: 10 } },
-                    }}
-                    yAxis={{ title: { text: 'Count' } }}
-                    style={{ fill: CHART_COLORS.success }}
+                    xAxis={X_AXIS_NAMES}
+                    yAxis={Y_AXIS_COUNT}
+                    style={CHART_STYLE.success}
                   />
                 </ChartCard>
               </Col>
@@ -389,11 +406,9 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     xField="name"
                     yField="count"
                     height={300}
-                    xAxis={{
-                      label: { autoRotate: true, style: { fontSize: 10 } },
-                    }}
-                    yAxis={{ title: { text: 'Count' } }}
-                    style={{ fill: CHART_COLORS.warning }}
+                    xAxis={X_AXIS_NAMES}
+                    yAxis={Y_AXIS_COUNT}
+                    style={CHART_STYLE.warning}
                   />
                 </ChartCard>
               </Col>
