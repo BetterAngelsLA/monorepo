@@ -49,19 +49,15 @@ const apiUrl = resolveApiUrl(configuredApiUrl ?? '');
 /**
  * Google Maps key for the region map on the Reports page.
  *
- * Read from the shelter-web variable for now, so no new secret is needed to
- * evaluate this. It should become its own
- * `VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY` once the map is wanted in
- * production — sharing the key also shares its quotas and HTTP-referrer
- * restrictions, which are not the same for the two apps.
+ * Its own key, not shelter-web's: a Maps key carries HTTP-referrer restrictions and a quota,
+ * and the two apps are served from different origins — so one key cannot be correctly
+ * referrer-restricted for both, and a busy admin report would spend shelter-web's quota.
  *
- * Deliberately not `throw`n when absent, unlike `apiUrl` above: the rest of the
- * admin app works without a map, so a missing key should degrade the one panel
- * rather than take down the page. `RegionMap` checks for this and says so.
+ * Deliberately not `throw`n when absent, unlike `apiUrl` above: the rest of the admin app works
+ * without a map, so a missing key should degrade the one panel rather than take down the page.
+ * `RegionMap` checks for this and says so.
  */
 const googleMapsApiKey =
-  import.meta.env.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY ||
-  import.meta.env.VITE_SHELTER_GOOGLE_MAPS_API_KEY ||
-  '';
+  import.meta.env.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY || '';
 
 export { apiUrl, googleMapsApiKey };

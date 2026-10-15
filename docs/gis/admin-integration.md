@@ -41,17 +41,20 @@ geographic figures always match the KPIs above. It provides:
 - `RegionMap`, which draws region boundaries when a grouping is chosen, with a **Heatmap** /
   **Clusters** toggle in its card header and a `filteredTo` caption when the map is narrowed.
 
-The map needs `VITE_SHELTER_GOOGLE_MAPS_API_KEY` (or its own
-`VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`). Without it the panel degrades to an
-explanatory message rather than taking the page down — see
+The map needs `VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`. Without it the panel degrades to
+an explanatory message rather than taking the page down — see
 `apps/betterangels-admin/config.ts`.
 
-## The Google Maps key is shared, and that is temporary
+## The Maps key is the admin's own
 
-The admin app currently falls back to shelter-web's `VITE_SHELTER_GOOGLE_MAPS_API_KEY`
-so that evaluating this needs no new secret. It should get its own key before this is
-relied on in production: sharing one key also shares its quotas and its HTTP-referrer
-restrictions, and the two apps have different referrers.
+`VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`, plumbed through `.github/workflows/default.yml`
+and `docker-compose-ci.yml`. It is deliberately not shelter-web's: one key shares its quotas and
+its HTTP-referrer restrictions, and the two apps are served from different origins, so no single
+referrer list can be correct for both.
+
+**This needs a repository secret of the same name before the map renders in preview or
+production**, with the key's referrer restrictions covering the admin's origins. Absent, the map
+panel shows its own message and the rest of the page is unaffected.
 
 ## The build-order detail
 
