@@ -35,35 +35,30 @@ Tests: `apps/betterangels-backend/regions/tests/`
 
 ## The short version
 
-- **PostGIS, GeoDjango and `gdal-bin` are already in place.** No new infrastructure is
-  needed. There is no polygon column anywhere yet — boundaries are greenfield.
-- **Interactions already carry a point** (`Note.location` → `common.Location.point`), so
-  the work is *load polygons, then spatially join*, not "capture more geometry".
-- **Use `geometry(MultiPolygon, 4326)`, not `geography`,** for boundary columns. Measured:
-  Django's `within` lookup appends `::geometry` to a geography lhs, which discards the
-  GiST index.
+- **PostGIS, GeoDjango and `gdal-bin` are already in place** — no new infrastructure. Boundaries
+  are `geometry(MultiPolygon, 4326)`, and interactions already carry a point
+  (`Note.location` → `common.Location.point`), so grouping is a spatial join rather than a
+  data-capture problem.
 - **CRS is the biggest data hazard.** LA's native projection is EPSG:2229 (State Plane V,
   *feet*); CalEnviroScreen is 3310; TIGER is 4269; HUD is 3857. `data.lacity.org`'s GeoJSON
-  export declares WGS84 lon/lat while emitting State Plane feet. The importer asserts an
-  LA bounding box to catch that class of failure.
-- **Any single boundary set leaves coverage gaps.** In a seeded 32-interaction sample, 8
-  fell outside every council district (they were in Beverly Hills and Santa Monica, i.e.
-  outside city limits), so the API returns an explicit unassigned bucket — an inner join
-  would silently drop them.
-- **The heavy layers need subdivided lookup geometry.** One city multipolygon has ~310k
-  vertices in one row, so the GiST index prunes nothing: the rollup takes 4,950 ms at 20k
-  interactions against the whole boundaries. `RegionPiece` holds subdivided parts and the
-  rollup joins that: **45 ms**. See `dev-2604-shapefile-spike.md` §7a.
-- **The rollup is a live spatial join; nothing is precomputed.** It is written boundaries-first
-  so it probes the GiST index on `Location.point_geom`: 45 ms against 22 ms for a stored
-  crosswalk at 20k interactions, and **210 ms against 211 ms at 500k**. It tracks distinct
-  locations rather than interactions, so it converges on the stored figure as a report window
-  grows — and a stored answer would cost a derived table, a backfill, a management command and
-  a write on the read path.
-- **Adding `Location.point_geom` rewrites `common_location` once.** A stored generated column
-  cannot be added without a table rewrite, and it holds an `ACCESS EXCLUSIVE` lock for the
-  duration. Plan a window, or use the expression-index alternative noted in
-  `spatial-implementation-audit.md`.
+  export declares WGS84 lon/lat while emitting State Plane feet. The importer asserts an LA
+  bounding box to catch that class of failure.
+- **Every boundary set leaves coverage gaps**, so the API returns an explicit unassigned bucket
+  rather than dropping interactions that fall outside every region.
+- **The heavy layers need subdivided lookup geometry.** One city multipolygon has ~310k vertices
+  in one row, so the GiST index prunes nothing: the rollup takes 4,950 ms at 20k interactions
+  against the whole boundaries. `RegionPiece` holds subdivided parts and the rollup joins that —
+  **45 ms**. See `dev-2604-shapefile-spike.md` §7a.
+- **The rollup is a live spatial join; nothing is precomputed and nothing is backfilled.** It is
+  written boundaries-first so it probes the GiST index on `Location.point_geom`. Its cost tracks
+  *distinct locations* rather than interactions, so a wider report window does not widen it:
+  **45 ms** at 20k interactions and **210 ms** at 500k.
+- **Adding `Location.point_geom` rewrites `common_location` once**, under an `ACCESS EXCLUSIVE`
+  lock. Plan a window, or use the expression index instead — see
+  `common/migrations/0002_location_point_geom.py`.
+
+`spatial-implementation-audit.md` carries the measurements behind each of these, and the two
+known defects.
 
 ## Region grouping (backend, shipped)
 
@@ -148,8 +143,8 @@ every tenant, and neither selects an org- or client-scoped column.
 
 ### Sources that look right but are not
 
-- **LAHSA *does* publish SPA geometry** (a live polygon layer, updated 2026-09). The earlier
-  "publishes no geometry" note was wrong; only their *counts* are tables.
+- **LAHSA *does* publish SPA geometry** — a live polygon layer, updated 2026-09. Only their
+  *counts* are tables.
 - **The CA state DCAT feed is nearly useless for this work** — 3,950 datasets but exactly
   **one** LA-relevant boundary layer. Use the Geoportal search API
   (`gis.data.ca.gov/api/search/v1/collections/dataset/items?q=...`) instead.
@@ -161,10 +156,9 @@ still served side by side.
 
 ## Open questions
 
-1. Which **region set** ships first? Council district + SPA is the recommendation.
-2. **LACDMH service areas have no public polygon layer** — needs a decision (extract from
+1. **LACDMH service areas have no public polygon layer** — needs a decision (extract from
    their web app, ask them, or adopt SPAs as the proxy).
-3. **The Google Maps key is shared with shelter-web.** The admin map falls back to
+2. **The Google Maps key is shared with shelter-web.** The admin map falls back to
    `VITE_SHELTER_GOOGLE_MAPS_API_KEY` so evaluating this needs no new secret. It wants its
    own key before production, since sharing one also shares its quotas and referrer
    restrictions.
