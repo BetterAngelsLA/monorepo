@@ -239,6 +239,33 @@ def _display_field_name(field_name: str, model_field: Any) -> str:
     return str(verbose_name) if verbose_name else field_name
 
 
+def _model_verbose_name(model_label: str) -> str:
+    """Human name for a tracked model, used only to disambiguate colliding keys."""
+    if model_label in _VERBOSE_NAME_CACHE:
+        return _VERBOSE_NAME_CACHE[model_label]
+    try:
+        name = str(apps.get_model(model_label)._meta.verbose_name).capitalize()
+    except LookupError:
+        name = model_label.rsplit(".", 1)[-1]
+    _VERBOSE_NAME_CACHE[model_label] = name
+    return name
+
+
+_VERBOSE_NAME_CACHE: dict[str, str] = {}
+
+
+def _qualified_name(name: str, owner: str, owners_by_name: dict[str, set[str]]) -> str:
+    """The action-level key for a change.
+
+    ``name`` alone, unless two different tracked models render the same display
+    name in this action, in which case it is prefixed with the owning model's
+    verbose name so the two do not merge into one false before/after pair (§13).
+    """
+    if len(owners_by_name.get(name, ())) < 2:
+        return name
+    return f"{_model_verbose_name(owner)} {name}"
+
+
 def _display_value(model_field: Any, value: Any) -> Any:
     """Render a stored scalar as its choice/enum label (§13).
 
@@ -296,8 +323,9 @@ def _actor(row: Any) -> str:
     return "system"
 
 
-def _m2m_meta(pgh_model: str) -> tuple[str, str] | None:
-    """Return ``(field_display_name, related_model_label)`` for a through event."""
+def _m2m_meta(pgh_model: str) -> tuple[str, str, str] | None:
+    """Return ``(field_display_name, related_model_label, parent_model_label)``
+    for a through event."""
     entry = THROUGH_EVENT_MAP.get(pgh_model)
     if entry is None:
         return None
@@ -310,7 +338,7 @@ def _m2m_meta(pgh_model: str) -> tuple[str, str] | None:
         for f in through._meta.fields:
             if f.name == related_fk_field and f.is_relation:
                 display_name = str(getattr(m2m, "verbose_name", None) or m2m.name)
-                return display_name, m2m.related_model._meta.label
+                return display_name, m2m.related_model._meta.label, parent_model._meta.label
     return None
 
 
@@ -367,13 +395,17 @@ def _snapshot(row: Any, resolver: _LabelResolver) -> dict[str, Any]:
     return snapshot
 
 
-def _merge_scalar(target: dict[str, list[Any]], changes: dict[str, list[Any]]) -> None:
-    """Merge row diffs keeping the earliest old and the latest new (§13)."""
+def _merge_scalar(
+    target: dict[tuple[str, str], list[Any]], owner: str, changes: dict[str, list[Any]]
+) -> None:
+    """Merge one row's changes into the action, keeping the earliest old and the
+    latest new per ``(owner model, display name)`` (§13)."""
     for field_name, (old, new) in changes.items():
-        if field_name in target:
-            target[field_name][1] = new
+        key = (owner, field_name)
+        if key in target:
+            target[key][1] = new
         else:
-            target[field_name] = [old, new]
+            target[key] = [old, new]
 
 
 def _finalize(value: Any, resolver: _LabelResolver) -> Any:
@@ -482,18 +514,29 @@ def _build_action(
     rows.sort(key=lambda r: (r.pgh_created_at, r.pgh_id))
 
     actor = _actor(rows[0])
-    action_changes: dict[str, Any] = {}
-    m2m_changes: dict[str, dict[str, list[_Ref]]] = defaultdict(lambda: {"removed": [], "added": []})
+    # Action-level changes are keyed by ``(owner_model_label, display_name)`` so an
+    # action that writes two different tracked models which share a display name
+    # (e.g. a Shelter and a Bed both rendering "name") does not merge their
+    # before/after pairs into one false diff (§13). ``references()`` deliberately
+    # spans the target plus every related row, so this is reachable from one
+    # request. The key is flattened to the bare display name unless there is a
+    # genuine collision, so the wire shape is unchanged in the common case.
+    scalar_changes: dict[tuple[str, str], list[Any]] = {}
+    m2m_changes: dict[tuple[str, str], dict[str, list[_Ref]]] = defaultdict(
+        lambda: {"removed": [], "added": []}
+    )
     events: list[AuditEventData] = []
+    owners_by_name: dict[str, set[str]] = defaultdict(set)
 
     for row in rows:
         meta = _m2m_meta(row.pgh_model)
         if meta is not None:
-            field_name, related_model_label = meta
+            field_name, related_model_label, parent_label = meta
             related_fk_field = THROUGH_EVENT_MAP[row.pgh_model][1]
             related_pk = (row.pgh_data or {}).get(f"{related_fk_field}_id")
             ref = resolver.ref(related_model_label, related_pk)
-            bucket = m2m_changes[field_name]
+            owners_by_name[field_name].add(parent_label)
+            bucket = m2m_changes[(parent_label, field_name)]
             if row.pgh_label.endswith(".remove"):
                 bucket["removed"].append(ref)
             else:
@@ -514,7 +557,10 @@ def _build_action(
             continue
 
         changes = _scalar_changes(row, resolver)
-        _merge_scalar(action_changes, changes)
+        owner = row.pgh_obj_model
+        for name in changes:
+            owners_by_name[name].add(owner)
+        _merge_scalar(scalar_changes, owner, changes)
 
         events.append(
             AuditEventData(
@@ -529,15 +575,19 @@ def _build_action(
             )
         )
 
+    action_changes: dict[str, Any] = {}
+    for (owner, name), scalar_pair in scalar_changes.items():
+        action_changes[_qualified_name(name, owner, owners_by_name)] = scalar_pair
+
     # M2M changes: cancel an add/remove of the same related row, then merge the
     # action-level multi-value entry (§13, §15).
-    for field_name, bucket in m2m_changes.items():
+    for (owner, field_name), bucket in m2m_changes.items():
         added_keys = set(bucket["added"])
         removed_keys = set(bucket["removed"])
         both = added_keys & removed_keys
         added = [r for r in bucket["added"] if r not in both]
         removed = [r for r in bucket["removed"] if r not in both]
-        action_changes[field_name] = [removed, added]
+        action_changes[_qualified_name(field_name, owner, owners_by_name)] = [removed, added]
 
     timestamp = rows[-1].pgh_created_at if rows else timezone.now()
     return AuditActionData(

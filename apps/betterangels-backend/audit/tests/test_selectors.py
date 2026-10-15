@@ -98,6 +98,28 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         # First old / last new, so the action reads as a single before→after.
         self.assertEqual(renames[0].field_changes["name"], ["Audit Shelter", "Second Rename"])
 
+    def test_one_action_writing_two_models_does_not_conflate_shared_field_names(self) -> None:
+        """Two tracked models rendering the same display name keep separate pairs (§13).
+
+        ``references()`` spans the target plus its related rows, so one action can
+        write a Shelter and a Bed. Both render ``"name"``; merging them by display
+        name alone would produce a false ``Audit Shelter -> Renamed Bed`` pair.
+        """
+        with audit_context(user=self.user):
+            self.shelter.name = "Renamed Shelter"
+            self.shelter.save()
+            self.bed.name = "Renamed Bed"
+            self.bed.save()
+
+        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        changes = actions[0].field_changes
+        # Only a genuine collision is qualified; each pair is its own model's.
+        self.assertNotIn("name", changes)
+        self.assertEqual(changes["Shelter name"], ["Audit Shelter", "Renamed Shelter"])
+        self.assertEqual(changes["Bed name"], ["Bed A", "Renamed Bed"])
+
     def test_m2m_set_is_one_action_with_one_multi_value_entry(self) -> None:
         with audit_context(user=self.user):
             self.shelter.demographics.set([self.demographic_couples, self.demographic_families])
