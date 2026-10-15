@@ -1,9 +1,15 @@
 import { GeoJsonLayer } from '@deck.gl/layers';
+// The package's only exported entry re-exports Tile3DLayer, which imports
+// @deck.gl/mesh-layers at module scope — so that peer has to be installed even though no 3D
+// layer is used. It is a resolution requirement, not a runtime one; tree-shaking keeps it
+// out of the build.
+import { MVTLayer } from '@deck.gl/geo-layers';
 import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { GoogleMapsOverlay } from '@deck.gl/google-maps';
 import type { Layer } from '@deck.gl/core';
 import { useEffect, useMemo, useRef } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
+import { useApiConfig } from '@monorepo/ba-platform';
 import { RADIUS_BY_ZOOM, RAMP, type HeatPoint } from './heatmapMath';
 import { parseColor } from './mapColors';
 
@@ -75,8 +81,10 @@ export type DeckMapLayersProps = {
   points: HeatPoint[];
   /** Which of the two point renderings to draw. */
   view: 'heatmap' | 'clusters';
-  /** Region polygons as GeoJSON Features, with `count` on each feature's properties. */
-  regionFeatures: GeoJSON.Feature[];
+  /** Dimension whose boundaries to draw, or `null` when nothing is grouped. */
+  regionKind: string | null;
+  /** Region counts by code, joined from the rollup. Drives the choropleth fill. */
+  counts: Map<string, number>;
   /** Highest count across the rows, for the choropleth ramp. */
   maxCount: number;
   /** Design-system colours, resolved from antd tokens by the caller. */
@@ -95,7 +103,9 @@ export type DeckMapLayersProps = {
 type BuildLayersArgs = {
   points: HeatPoint[];
   view: 'heatmap' | 'clusters';
-  regionFeatures: GeoJSON.Feature[];
+  regionKind: string | null;
+  counts: Map<string, number>;
+  tileUrl: string | null;
   maxCount: number;
   overlay: {
     emptyFill: string;
@@ -117,7 +127,9 @@ type BuildLayersArgs = {
 function buildLayers({
   points,
   view,
-  regionFeatures,
+  regionKind,
+  counts,
+  tileUrl,
   maxCount,
   overlay,
   reference,
@@ -125,18 +137,25 @@ function buildLayers({
 }: BuildLayersArgs): Layer[] {
   const layers: Layer[] = [];
 
-  if (regionFeatures.length > 0) {
+  if (regionKind && tileUrl) {
     layers.push(
-      new GeoJsonLayer({
-        id: 'region-boundaries',
-        data: regionFeatures as never,
+      new MVTLayer({
+        id: `region-boundaries-${regionKind}`,
+        // `{z}/{x}/{y}` are substituted per tile. deck.gl fetches only the tiles in view, so
+        // the client no longer receives a whole dimension: measured, `coc` is 1281 B for a
+        // DTLA tile against 769 kB for the entire layer.
+        data: tileUrl,
+        minZoom: 0,
+        maxZoom: 16,
         filled: true,
         stroked: true,
-        // The boundaries are the grouping's geography and have to stay readable *through* the
+        // The bounds are the grouping's geography and have to stay readable *through* the
         // heat, so the fill is a light tint and the outline carries the shape.
         getFillColor: (feature) => {
-          const count =
-            (feature.properties as { count?: number } | null)?.count ?? 0;
+          const code = String(
+            (feature.properties as { code?: string })?.code ?? '',
+          );
+          const count = counts.get(code) ?? 0;
           const t = maxCount > 0 ? Math.sqrt(Math.max(0, count) / maxCount) : 0;
           return hexToRgba(
             overlay.fullFill,
@@ -147,8 +166,10 @@ function buildLayers({
         getLineWidth: 1.4,
         lineWidthUnits: 'pixels',
         pickable: false,
+        // Tiles arrive after the rollup does, so the fill has to be recomputed when the counts
+        // land — otherwise every tile is drawn at the empty shade and never repainted.
         updateTriggers: {
-          getFillColor: [maxCount, overlay.fullFill, overlay.stroke],
+          getFillColor: [maxCount, overlay.fullFill, counts],
           getLineColor: [overlay.stroke],
         },
       }),
@@ -211,14 +232,22 @@ function buildLayers({
 export function DeckMapLayers({
   points,
   view,
-  regionFeatures,
+  regionKind,
+  counts,
   maxCount,
   overlay,
   reference,
   onZoomChange,
 }: DeckMapLayersProps) {
   const map = useMap();
+  const { apiUrl } = useApiConfig();
   const overlayRef = useRef<GoogleMapsOverlay | null>(null);
+
+  // Absolute because deck.gl's TileLayer fetches the template directly; a relative template
+  // would resolve against the page origin rather than the API's.
+  const tileUrl = regionKind
+    ? `${apiUrl}/regions/tiles/${regionKind}/{z}/{x}/{y}.mvt`
+    : null;
   const zoomRef = useRef<number | null>(null);
 
   const layers = useMemo(
@@ -226,13 +255,25 @@ export function DeckMapLayers({
       buildLayers({
         points,
         view,
-        regionFeatures,
+        regionKind,
+        counts,
+        tileUrl,
         maxCount,
         overlay,
         reference,
         zoom: map?.getZoom() ?? 10,
       }),
-    [points, view, regionFeatures, maxCount, overlay, reference, map],
+    [
+      points,
+      view,
+      regionKind,
+      counts,
+      tileUrl,
+      maxCount,
+      overlay,
+      reference,
+      map,
+    ],
   );
 
   // One overlay per map, reused across renders. deck.gl diffs the layer array itself, so the
@@ -275,7 +316,9 @@ export function DeckMapLayers({
         layers: buildLayers({
           points,
           view,
-          regionFeatures,
+          regionKind,
+          counts,
+          tileUrl,
           maxCount,
           overlay,
           reference,
@@ -288,7 +331,9 @@ export function DeckMapLayers({
     map,
     points,
     view,
-    regionFeatures,
+    regionKind,
+    counts,
+    tileUrl,
     maxCount,
     overlay,
     reference,

@@ -10,6 +10,7 @@ import { DeckMapLayers } from './DeckMapLayers';
 import { Alert, theme } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
+
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import {
@@ -17,6 +18,8 @@ import {
   type InteractionPointType,
   type RegionCountType,
 } from './hooks';
+/** Stable identity, so the ungrouped map does not rebuild its layers on every render. */
+const EMPTY_COUNTS = new Map<string, number>();
 
 /**
  * The map's home view: LA County, fitted to the county rather than to one address.
@@ -150,7 +153,7 @@ function RegionOverlay({
   reference: Map<number, number> | null;
   onZoomChange: (zoom: number) => void;
 }) {
-  const { regions, loading, error } = useRegionMap({
+  const { loading, error } = useRegionMap({
     dimension,
     codes: focusCodes,
   });
@@ -171,18 +174,6 @@ function RegionOverlay({
     return map;
   }, [rows]);
 
-  const regionFeatures = useMemo(
-    () =>
-      regions.map((feature) => ({
-        ...feature,
-        properties: {
-          ...feature.properties,
-          count: counts.get(String(feature.properties?.code ?? '')) ?? 0,
-        },
-      })),
-    [regions, counts],
-  );
-
   const maxCount = useMemo(
     () =>
       rows.reduce(
@@ -202,7 +193,8 @@ function RegionOverlay({
       <DeckMapLayers
         points={points}
         view={view}
-        regionFeatures={regionFeatures}
+        regionKind={dimension}
+        counts={counts}
         maxCount={maxCount}
         overlay={overlay}
         reference={reference}
@@ -388,7 +380,8 @@ export function RegionMap({
             <DeckMapLayers
               points={points}
               view={view}
-              regionFeatures={[]}
+              regionKind={null}
+              counts={EMPTY_COUNTS}
               maxCount={0}
               overlay={mapColors}
               reference={reference}
