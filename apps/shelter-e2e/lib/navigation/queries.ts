@@ -33,19 +33,35 @@ export function navToggle(page: Page): Locator {
  * The `href` a link should carry.
  *
  * Internal routes are matched as a suffix, because deployed builds are served
- * from `/branches/<branch>/`: the same link renders `/video` locally and
- * `/branches/<branch>/video` there, while the home link is the base path
- * itself, which ends in a slash either way. Absolute targets match exactly —
+ * from a base path (`/branches/<branch>/`): the same link renders `/video`
+ * locally and `/branches/<branch>/video` there. Absolute targets match exactly —
  * they're the one thing that doesn't move with the base path.
+ *
+ * The home link is the base path itself, and React Router renders `to="/"` as
+ * that base *without* its trailing slash: `/branches/<branch>` when deployed,
+ * `/` at the root. Its expectation is therefore read from `document.baseURI`
+ * (the app injects `<base href>` at build time) rather than restated here — the
+ * suite doesn't need to know the branch, and a mismatch is what the assertion is
+ * for.
  */
-export function expectedHref(target: NavTarget): string | RegExp {
+export async function expectedHref(
+  page: Page,
+  target: NavTarget,
+): Promise<string | RegExp> {
   if ('url' in target) {
     return target.url;
   }
 
   if (target.path === '/') {
-    return /\/$/;
+    const { pathname } = new URL(await page.evaluate(() => document.baseURI));
+
+    return new RegExp(`^${escapeRegExp(pathname.replace(/\/$/, '')) || '/'}$`);
   }
 
   return new RegExp(`(?:^|/)${target.path.slice(1)}/?$`);
+}
+
+/** Branch names can carry regex metacharacters (a `.` is common). */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

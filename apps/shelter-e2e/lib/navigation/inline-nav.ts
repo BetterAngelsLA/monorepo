@@ -22,7 +22,7 @@ export async function assertInlineNav(page: Page): Promise<void> {
 
     await expect(item).toBeVisible();
     await expect(item).toHaveText(link.label);
-    await expect(item).toHaveAttribute('href', expectedHref(link));
+    await expect(item).toHaveAttribute('href', await expectedHref(page, link));
   }
 
   await expect(navToggle(page)).toBeHidden();

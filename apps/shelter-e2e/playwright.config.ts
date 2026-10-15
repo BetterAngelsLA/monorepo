@@ -67,6 +67,14 @@ export default defineConfig({
    * @nx/playwright derives its per-file targets from this same pattern.
    */
   testMatch: '**/*.spec.ts',
+  /*
+   * One retry in CI, none locally, stated rather than inherited: the preset
+   * defaults to two, and a deterministic failure then costs three runs of every
+   * failing test before the run goes red. One still absorbs a transient blip
+   * from the dev API or the maps API, and it is what makes `on-first-retry`
+   * below produce a trace at all — with no retries there is no trace to read.
+   */
+  retries: process.env['CI'] ? 1 : 0,
   /* Start the local dev server unless a deployed BASE_URL is used. */
   ...(webServer ? { webServer } : {}),
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

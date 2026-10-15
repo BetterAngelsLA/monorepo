@@ -17,9 +17,10 @@ import { expect, test } from '@playwright/test';
  *   "0 of 0 locations" + "(based on map area)"    — search done, none found
  *   "N of M locations" + "(based on map area)"    — search done, N found
  *
- * The exact empty-state copy ("0 of 0 locations" / "No results" / "Try
- * searching for something else.") is data-dependent and only asserted against
- * deployed environments via `BASE_URL` (see the last test).
+ * The empty-state copy is not asserted here: whether an area has public shelters
+ * is data, not code, and asserting it made the suite depend on what the dev API
+ * happens to hold. The empty state belongs to a component test with a mocked
+ * response; this file asserts the panel's shape, which holds either way.
  *
  * Size-agnostic: pins no viewport.
  */
@@ -61,22 +62,25 @@ test('renders the results panel with a count and source line', async ({
   ).toBeVisible();
 });
 
-test('shows the empty results state', async ({ page }) => {
+test('serves the build under the base path it was deployed to', async ({
+  page,
+}) => {
+  const deployedBaseUrl = process.env['BASE_URL'];
+
   test.skip(
-    !process.env['BASE_URL'],
-    'Asserts data-dependent copy — runs against deployed environments via BASE_URL.',
+    !deployedBaseUrl,
+    'Deployed-only: the base path is baked into the bundle at build time.',
   );
 
   await page.goto('./');
 
-  // Deployed environments complete the auto-search for the initial map
-  // bounds; with no public shelters in the area the panel settles empty.
-  await expect(page.getByText('0 of 0 locations')).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(page.getByText('(based on map area)')).toBeVisible();
-  await expect(page.getByText('No results')).toBeVisible();
-  await expect(
-    page.getByText('Try searching for something else.'),
-  ).toBeVisible();
+  // The build carries the base path it was built with as `<base href>`. If that
+  // disagrees with the URL under test, every asset and route resolves from the
+  // wrong root — the failure this suite exists to catch, which is why it's
+  // asserted rather than assumed. (A mismatch is also the cheapest possible
+  // signal that BASE_URL reached the suite at all.)
+  const expected = new URL(deployedBaseUrl as string).pathname;
+  const actual = new URL(await page.evaluate(() => document.baseURI)).pathname;
+
+  expect(actual).toBe(expected.endsWith('/') ? expected : `${expected}/`);
 });
