@@ -150,9 +150,19 @@ class RegionPiece(BaseModel):
     recheck saves. **All four produce identical answers** — subdivision is exact, so this
     is purely a performance dial. Re-measure before changing it.
 
-    Read through ``regions_regionlookup`` (see ``0004``), never directly: the view adds
-    the parent boundary back for a region that has no piece, so a region created outside
-    ``import_regions`` resolves slower rather than disappearing from the rollup.
+    ``SUBDIVIDE_VERTEX_THRESHOLD`` is the other half of the tuning, and the less obvious one:
+    **only** regions above it are subdivided at all. Subdividing everything instead — the same
+    256-vertex target, no threshold — is 1,867 ms against 39 ms for the rollup, on 8,156
+    pieces against 5,685. A region that is already a handful of vertices is not worth
+    splitting, and the pieces the split produces cost more to search than the single original
+    did. This is why "the boundaries are slow, subdivide more" is the wrong instinct twice
+    over.
+
+    Read through ``regions_regionlookup`` (see ``0004``), never directly. The view adds the
+    parent boundary back for a region that has no piece, so a region created outside
+    ``import_regions`` resolves slower rather than disappearing from the rollup — and it is
+    also what keeps the planner driving from the boundaries rather than from the notes, which
+    is worth 3x on a selective window.
     """
 
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="pieces")
