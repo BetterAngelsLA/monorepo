@@ -5,6 +5,8 @@ Replaces RunPython data migrations. Called by post_migrate signal.
 
 from logging import getLogger
 
+import pghistory
+
 from shelters.models.lookups import SPA
 
 logger = getLogger(__name__)
@@ -243,6 +245,10 @@ def seed_services() -> None:
 
 
 def seed_shelter_lookups() -> None:
-    seed_spas()
-    seed_cities()
-    seed_services()
+    # Mark these non-operator writes as seed so they can be excluded from the
+    # audit log (ADR 0004 §7b.1). Callers with no useful actor label, e.g.
+    # `common/management/commands/seed_data.py`, intentionally inherit it.
+    with pghistory.context(label="seed"):
+        seed_spas()
+        seed_cities()
+        seed_services()
