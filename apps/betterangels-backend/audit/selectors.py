@@ -310,18 +310,6 @@ def _model_verbose_name(model_label: str) -> str:
 _VERBOSE_NAME_CACHE: dict[str, str] = {}
 
 
-def _qualified_name(name: str, owner: str, owners_by_name: dict[str, set[str]]) -> str:
-    """The action-level key for a change.
-
-    ``name`` alone, unless two different tracked models render the same display
-    name in this action, in which case it is prefixed with the owning model's
-    verbose name so the two do not merge into one false before/after pair (§13).
-    """
-    if len(owners_by_name.get(name, ())) < 2:
-        return name
-    return f"{_model_verbose_name(owner)} {name}"
-
-
 def _display_value(model_field: Any, value: Any) -> Any:
     """Render a stored scalar as its choice/enum label (§13).
 
@@ -461,13 +449,37 @@ def _snapshot(row: Any, resolver: _LabelResolver) -> dict[str, Any]:
     return snapshot
 
 
+def _action_change_key(owner: str, obj_id: Any, display_name: str, target_model_label: str | None) -> str:
+    """The action-level key for one row's change (§13).
+
+    The anchored object's own changes stay bare: the action is about that one
+    row, so ``name`` is unambiguous. A *related* row — reachable because
+    ``references()`` spans the target's neighbors — is qualified with its model
+    and id, because a single action can touch several such rows (a bulk import,
+    or several objects saved in one request). The qualifier is applied
+    unconditionally rather than only on a name clash, so a key's shape does not
+    depend on what else the request happened to touch.
+    """
+    if target_model_label is not None and owner == target_model_label:
+        return display_name
+    return f"{_model_verbose_name(owner)} {obj_id} {display_name}"
+
+
 def _merge_scalar(
-    target: dict[tuple[str, str], list[Any]], owner: str, changes: dict[str, list[Any]]
+    target: dict[tuple[str, Any, str], list[Any]],
+    owner: str,
+    obj_id: Any,
+    changes: dict[str, list[Any]],
 ) -> None:
     """Merge one row's changes into the action, keeping the earliest old and the
-    latest new per ``(owner model, display name)`` (§13)."""
+    latest new per ``(owner model, row id, display name)`` (§13).
+
+    The row id is part of the key, so an action that writes several rows of the
+    same model keeps a separate before/after per row instead of collapsing them
+    into one pair.
+    """
     for field_name, (old, new) in changes.items():
-        key = (owner, field_name)
+        key = (owner, obj_id, field_name)
         if key in target:
             target[key][1] = new
         else:
@@ -573,12 +585,14 @@ def object_audit_log(
         grouped[row.action_key].append(row)
 
     resolver = _LabelResolver()
+    target_model_label = obj._meta.label
     actions = [
         _build_action(
             action_rows,
             target_type=target_type,
             target_id=target_id,
             resolver=resolver,
+            target_model_label=target_model_label,
             include_snapshot=include_snapshot,
         )
         for action_rows in grouped.values()
@@ -602,34 +616,32 @@ def _build_action(
     target_type: str,
     target_id: str,
     resolver: _LabelResolver,
+    target_model_label: str | None = None,
     include_snapshot: bool = False,
 ) -> AuditActionData:
     rows.sort(key=lambda r: (r.pgh_created_at, r.pgh_id))
 
     actor = _actor(rows[0])
-    # Action-level changes are keyed by ``(owner_model_label, display_name)`` so an
-    # action that writes two different tracked models which share a display name
-    # (e.g. a Shelter and a Bed both rendering "name") does not merge their
-    # before/after pairs into one false diff (§13). ``references()`` deliberately
-    # spans the target plus every related row, so this is reachable from one
-    # request. The key is flattened to the bare display name unless there is a
-    # genuine collision, so the wire shape is unchanged in the common case.
-    scalar_changes: dict[tuple[str, str], list[Any]] = {}
-    m2m_changes: dict[tuple[str, str], dict[str, list[_Ref]]] = defaultdict(
+    # Action-level changes are keyed by ``(owner model, row id, display name)``:
+    # ``references()`` spans the target plus its related rows, and one action can
+    # write several rows of the same model, so neither the model nor the field
+    # name alone identifies a change. ``_action_change_key`` flattens the key
+    # with a stable shape (the anchor bare, related rows qualified).
+    scalar_changes: dict[tuple[str, Any, str], list[Any]] = {}
+    m2m_changes: dict[tuple[str, Any, str], dict[str, list[_Ref]]] = defaultdict(
         lambda: {"removed": [], "added": []}
     )
     events: list[AuditEventData] = []
-    owners_by_name: dict[str, set[str]] = defaultdict(set)
 
     for row in rows:
         meta = _m2m_meta(row.pgh_model)
         if meta is not None:
             field_name, related_model_label, parent_label = meta
-            related_fk_field = THROUGH_EVENT_MAP[row.pgh_model][1]
+            parent_col, related_fk_field = THROUGH_EVENT_MAP[row.pgh_model]
+            parent_pk = (row.pgh_data or {}).get(parent_col)
             related_pk = (row.pgh_data or {}).get(f"{related_fk_field}_id")
             ref = resolver.ref(related_model_label, related_pk)
-            owners_by_name[field_name].add(parent_label)
-            bucket = m2m_changes[(parent_label, field_name)]
+            bucket = m2m_changes[(parent_label, parent_pk, field_name)]
             if row.pgh_label.endswith(".remove"):
                 bucket["removed"].append(ref)
             else:
@@ -654,9 +666,7 @@ def _build_action(
         # ``verbose_name`` stay distinct because ``_display_keys`` falls back to
         # the raw field name for them (§13).
         changes = _render_keys(_scalar_changes(row, resolver), owner)
-        for name in changes:
-            owners_by_name[name].add(owner)
-        _merge_scalar(scalar_changes, owner, changes)
+        _merge_scalar(scalar_changes, owner, row.pgh_obj_id, changes)
 
         events.append(
             AuditEventData(
@@ -672,18 +682,18 @@ def _build_action(
         )
 
     action_changes: dict[str, Any] = {}
-    for (owner, name), scalar_pair in scalar_changes.items():
-        action_changes[_qualified_name(name, owner, owners_by_name)] = scalar_pair
+    for (owner, obj_id, name), scalar_pair in scalar_changes.items():
+        action_changes[_action_change_key(owner, obj_id, name, target_model_label)] = scalar_pair
 
     # M2M changes: cancel an add/remove of the same related row, then merge the
     # action-level multi-value entry (§13, §15).
-    for (owner, field_name), bucket in m2m_changes.items():
+    for (owner, obj_id, field_name), bucket in m2m_changes.items():
         added_keys = set(bucket["added"])
         removed_keys = set(bucket["removed"])
         both = added_keys & removed_keys
         added = [r for r in bucket["added"] if r not in both]
         removed = [r for r in bucket["removed"] if r not in both]
-        action_changes[_qualified_name(field_name, owner, owners_by_name)] = [removed, added]
+        action_changes[_action_change_key(owner, obj_id, field_name, target_model_label)] = [removed, added]
 
     timestamp = rows[-1].pgh_created_at if rows else timezone.now()
     return AuditActionData(

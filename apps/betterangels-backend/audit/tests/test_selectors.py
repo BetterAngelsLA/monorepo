@@ -119,10 +119,34 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
         self.assertEqual(len(actions), 1)
         changes = actions[0].field_changes
-        # Only a genuine collision is qualified; each pair is its own model's.
-        self.assertNotIn("name", changes)
-        self.assertEqual(changes["Shelter name"], ["Audit Shelter", "Renamed Shelter"])
-        self.assertEqual(changes["Bed name"], ["Bed A", "Renamed Bed"])
+        # The anchored shelter's own change stays bare; the related bed is
+        # qualified with its model and id, so the two never merge.
+        self.assertEqual(changes["name"], ["Audit Shelter", "Renamed Shelter"])
+        self.assertEqual(changes[f"Bed {self.bed.pk} name"], ["Bed A", "Renamed Bed"])
+
+    def test_one_action_touching_two_rows_of_a_model_keeps_them_separate(self) -> None:
+        """Two rows of the *same* model must not merge into one pair (§13).
+
+        A bulk write (e.g. the ``label="import"`` CSV import) saves many rows under
+        one context. Keying the action rollup by field name alone would render a
+        50-object import as a single ``name: [None, "<last>"]`` create.
+        """
+        with audit_context(label="seed"):
+            other_bed = Bed.objects.create(shelter=self.shelter, name="Bed B")
+
+        with audit_context(user=self.user):
+            self.bed.name = "Renamed Bed A"
+            self.bed.save()
+            other_bed.name = "Renamed Bed B"
+            other_bed.save()
+
+        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        changes = actions[0].field_changes
+        # Each bed keeps its own before/after, keyed by row id.
+        self.assertEqual(changes[f"Bed {self.bed.pk} name"], ["Bed A", "Renamed Bed A"])
+        self.assertEqual(changes[f"Bed {other_bed.pk} name"], ["Bed B", "Renamed Bed B"])
 
     def test_m2m_set_is_one_action_with_one_multi_value_entry(self) -> None:
         with audit_context(user=self.user):
@@ -237,10 +261,11 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.bed.save()
 
         actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
-        bed_actions = [a for a in actions if a.field_changes.get("room")]
+        bed_key = f"Bed {self.bed.pk} room"
+        bed_actions = [a for a in actions if a.field_changes.get(bed_key)]
 
         self.assertEqual(len(bed_actions), 1)
-        self.assertEqual(bed_actions[0].field_changes["room"], [None, "Room A"])
+        self.assertEqual(bed_actions[0].field_changes[bed_key], [None, "Room A"])
 
     # ── §11 seed / import / clone attribution ────────────────────────────────
 

@@ -95,7 +95,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         client_profile = baker.make(ClientProfile, first_name="Grace", last_name="Hopper")
         with audit_context(user=self.org_1_case_manager_1):
-            ReservationClient.objects.create(
+            reservation_client = ReservationClient.objects.create(
                 reservation=self.reservation, client_profile=client_profile, is_primary=True
             )
 
@@ -104,7 +104,10 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["events"][0]["action"], "reservation_client.add")
-        self.assertEqual(actions[0]["fieldChanges"]["client profile"], [None, "Grace Hopper"])
+        # The reservation is the anchor; the client row is a related model, so its
+        # action-level key is qualified with the model and row id (§13).
+        key = f"Reservation client {reservation_client.pk} client profile"
+        self.assertEqual(actions[0]["fieldChanges"][key], [None, "Grace Hopper"])
 
     # ── authorization (§18) ──────────────────────────────────────────────────
 
