@@ -52,7 +52,10 @@ describe('the layer stack deck.gl is given', () => {
     const layer = new HeatmapLayer({
       id: 'interaction-heatmap',
       data: POINTS,
-      getPosition: (p: { longitude: number; latitude: number }) => [p.longitude, p.latitude],
+      getPosition: (p: { longitude: number; latitude: number }) => [
+        p.longitude,
+        p.latitude,
+      ],
       colorDomain: colorDomainFor(new Map([[11, 349]]), 11) ?? undefined,
     });
     // The viewport would give `undefined` here; ours is the dataset peak.
@@ -60,7 +63,11 @@ describe('the layer stack deck.gl is given', () => {
   });
 
   it('omits colorDomain before the reference exists, so deck.gl uses its default', () => {
-    const layer = new HeatmapLayer({ id: 'h', data: POINTS, colorDomain: colorDomainFor(null, 11) ?? undefined });
+    const layer = new HeatmapLayer({
+      id: 'h',
+      data: POINTS,
+      colorDomain: colorDomainFor(null, 11) ?? undefined,
+    });
     expect(layer.props.colorDomain).toBeUndefined();
   });
 
@@ -83,7 +90,10 @@ describe('the layer stack deck.gl is given', () => {
     // the import would throw in any non-browser context (SSR, tests).
     expect(DeckMapLayers).toBeTypeOf('function');
     expect(
-      new GeoJsonLayer({ id: 'g', data: { type: 'FeatureCollection', features: [] } }),
+      new GeoJsonLayer({
+        id: 'g',
+        data: { type: 'FeatureCollection', features: [] },
+      }),
     ).toBeDefined();
   });
 });
