@@ -97,9 +97,16 @@ type LocationBreakdownProps = {
  * bar next to districts numbering in the dozens distorts the comparison — and shown
  * beneath it as their own figures.
  */
-/** Prose label for a bucket's `kind`; falls back to the raw value if it is unknown. */
+/**
+ * Prose label for a dimension. Accepts either spelling.
+ *
+ * The wire `kind` is lowercase (`council_district`) and `RegionDimension` spells the same
+ * dimension uppercase (`COUNCIL_DISTRICT`), so both have to resolve — the map is keyed by the
+ * wire value. Unknown keys fall back to the raw value, so a dimension this build has never
+ * heard of still renders.
+ */
 function kindLabel(kind: string): string {
-  return DIMENSION_LABELS[kind] ?? kind;
+  return DIMENSION_LABELS[kind] ?? DIMENSION_LABELS[kind.toLowerCase()] ?? kind;
 }
 
 /**
@@ -188,9 +195,13 @@ export function LocationBreakdown({
     // honour the *drill-down*, because narrowing to SPA 4 and still seeing the whole
     // county is the bug this fixes: no interaction should sit outside the shapes drawn.
     //
-    // `dimension` travels with it because a code cannot be resolved without one, and the
-    // API rejects codes that arrive without it rather than guessing.
-    dimension,
+    // `dimension` travels with the drill-down only, for the same reason: a code cannot be
+    // resolved without one, and the API rejects codes that arrive without it rather than
+    // guessing. Sending it when nothing is selected would contradict the paragraph above —
+    // it changes the query's variables without changing its answer, so Apollo re-fetches a
+    // 10,000-point page (1 MB) for a result that is byte-for-byte identical, on every
+    // group-by. Measured against the live backend.
+    dimension: selectedCodes.length > 0 ? dimension : undefined,
     regionCodes: selectedCodes.length > 0 ? selectedCodes : undefined,
   });
 
@@ -305,9 +316,7 @@ export function LocationBreakdown({
 
   // Used for prose only ("Loading city council district data"). Absent means the rollup
   // spans every dimension, so there is no single name to interpolate.
-  const dimensionName = dimension
-    ? DIMENSION_LABELS[dimension]
-    : 'all dimensions';
+  const dimensionName = dimension ? kindLabel(dimension) : 'all dimensions';
 
   // Selecting a different dimension invalidates the codes: "4" is an SPA and also a Long
   // Beach council district, so a selection cannot carry across.
@@ -443,7 +452,7 @@ export function LocationBreakdown({
             placeholder="All dimensions"
             options={dimensions.map((d) => ({
               value: d,
-              label: DIMENSION_LABELS[d] ?? d,
+              label: kindLabel(d),
             }))}
             filterOption={(input, option) =>
               matches((option?.label as string) ?? '', input)

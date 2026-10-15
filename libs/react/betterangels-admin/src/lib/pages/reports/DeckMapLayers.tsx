@@ -149,6 +149,11 @@ function buildLayers({
         // the client no longer receives a whole dimension: measured, `coc` is 1281 B for a
         // DTLA tile against 769 kB for the entire layer.
         data: tileUrl,
+        // The tile endpoint is on the API's origin, not the app's, and it needs the session.
+        // deck.gl's own fetch does not send cookies cross-origin, so every tile came back
+        // 403 {"detail":"Authentication credentials were not provided."} and the boundary
+        // layer drew nothing at all. Apollo's credentials interceptor does not reach here.
+        loadOptions: { fetch: { credentials: 'include' } },
         minZoom: 0,
         maxZoom: 16,
         filled: true,
@@ -265,8 +270,12 @@ export function DeckMapLayers({
 
   // Absolute because deck.gl's TileLayer fetches the template directly; a relative template
   // would resolve against the page origin rather than the API's.
+  // Lowercased: `RegionDimension` spells the dimension uppercase (`COUNCIL_DISTRICT`) and the
+  // endpoint matches the wire `kind`, which is lowercase. Sending the enum as-is made every
+  // tile 404 — measured, `COUNCIL_DISTRICT/8/43/102` 404 against `council_district/8/43/102`
+  // 200 with 4.4 kB of geometry — so the boundary layer drew nothing at all.
   const tileUrl = regionKind
-    ? `${apiUrl}/regions/tiles/${regionKind}/{z}/{x}/{y}.mvt`
+    ? `${apiUrl}/regions/tiles/${regionKind.toLowerCase()}/{z}/{x}/{y}.mvt`
     : null;
   const zoomRef = useRef<number | null>(null);
 
