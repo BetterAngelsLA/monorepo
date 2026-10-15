@@ -722,6 +722,10 @@ joins). Consequences:
   exports, `AuditWriteEvent.objects.count()` — which seq-scans every branch (H4).
 - Retention therefore has to be an actual `DELETE`; a query-side date filter cannot
   substitute for it. That is precisely why §9b frees `DELETE`.
+- One caveat on scope: §31 retains the report-critical `bed.*` / `reservation.*`
+  labels regardless of age, because the reporting selectors rebuild state from them.
+  Retention shrinks the tables, but those rows keep growing until reporting owns its
+  own source of truth (§31).
 
 ---
 
@@ -1339,8 +1343,10 @@ and assert the union of their `_meta.label` keys equals `set(THROUGH_EVENT_MAP)`
 A §6 through event model absent from the map still flows through `references()`
 but falls into the non-M2M rendering path, silently reproducing the exact "M2M
 field drops out of the log" failure the map exists to prevent. Deriving the
-expected set (not hand-listing it) mirrors the §20 `references()` boundary pin so
-a newly added M2M cannot diverge silently.
+expected set here (rather than hand-listing it) suits a purely mechanical
+mapping; the §20 `references()` boundary pin, by contrast, is deliberately a
+hand-written literal, which is the stronger guard because it cannot follow a
+`references()` change.
 
 ## 20. Tests (Phase 2)
 
@@ -1354,12 +1360,15 @@ a newly added M2M cannot diverge silently.
 - **`THROUGH_EVENT_MAP` completeness:** for each target in `{Shelter, Bed, Room, Reservation}`, derive the through models from `event_models(references_model=<target>)` (keep only models lacking `pgh_obj`, i.e. `hasattr(model, "pgh_obj_id")` is `False`) and assert the **union** across targets equals `set(THROUGH_EVENT_MAP)`, so a new M2M field cannot fall out of the map and silently render through the non-M2M path (§19).
 - **`reservation` status change:** a status change renders as a single `reservation.status_change` action whose `field_changes` include the `status` old→new diff — the disjoint conditions (§2) mean no paired `reservation.update` row exists to reconcile.
 - **`references()` attribution:** a reservation's `objectAuditLog` includes `ReservationClient` add/remove (client assignments) attributed through `references()` — the most sensitive part of a reservation's history; a shelter's log includes `ShelterPhoto`/`MediaLink`/`Video`/`Schedule`/`ContactInfo`/`ShelterAvailability` changes.
-- **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted by deriving the expected set from `event_models(references_model=<target>)` minus the `referrals.ReferralEvent` blocklist (not a hand-written literal, so a newly tracked model can't silently diverge) — Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
+- **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted against a **hand-written literal** per target (`_EXPECTED_SHELTER_REFERENCES` and the Bed/Room equivalents), so any change to what `references()` reaches — a newly tracked model, a dropped branch — fails loudly. The literal, not a set derived from `event_models()` at assert time, is the stronger pin: a derived set would silently track a `references()` regression instead of catching it. Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
 - **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` but **not** in `objectAuditLog(ROOM)`/`(BED)` (the target-scoped blocklist, §10); a room/bed configuration change still appears.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request renders both the `status` and `notes` field changes (before/after diff), not just one winner row.
+- **Cross-model action-level diff:** one action writing two different tracked models that share a display name (e.g. a Shelter and a Bed, both rendering `name`) keeps them as separate before→after pairs (`Shelter name` / `Bed name`) rather than merging them into one false pair; a non-colliding name stays bare, so the wire shape is unchanged in the common case.
+- **INSERT/REMOVE pk exclusion:** the model pk (`id`) is absent from an `.add` event's `field_changes` — it is in `pgh_data` but can never change — and (unit-tested) from the `.remove` branch too (§13).
+- **Total-order pagination:** with tied timestamps (one transaction — `NOW()` is constant), paging one action at a time returns each action exactly once, newest-first, so the tie-break is total *and* chronological (§10).
 - **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that label/date/actor filters are pushed to SQL (§10 performance note), not applied in Python after fetching.
 - **No server-side cursor:** `objectAuditLog` must not emit a `DECLARE` (Django's `.iterator()`), which RDS Proxy pins. Assert the captured queries contain no `DECLARE` (§10 RDS Proxy note).
-- **Connection-pinning guards:** (a) the write path's injected SQL uses the transaction-local `set_config(..., true)` form and never a session-scoped `set_config(..., false)`; (b) the selector's compiled statement stays within the documented per-target ceilings, recording the >16 KB reality from §10 rather than asserting a bound the design cannot meet.
+- **Connection-pinning guards:** (a) the write path's injected SQL uses the transaction-local `set_config(..., true)` form and never a session-scoped `set_config(..., false)`; (b) the statement the selector **actually issues** (the max over its grouped key query and page query, measured as interpolated SQL) stays within the documented per-target ceilings, recording the >16 KB reality from §10 rather than asserting a bound the design cannot meet.
 
 ---
 
@@ -1640,11 +1649,39 @@ and `common` → `audit` would invert the layering (`shelters` already imports
 (the generic `manage` target in [project.json](apps/betterangels-backend/project.json)).
 A Celery-beat schedule can make retention automatic.
 
-Targets (all three, batched to avoid long locks):
+Targets (batched to avoid long locks):
 
-- pghistory `*Event` tables (the per-model write event rows).
+- pghistory `*Event` tables (the per-model write event rows), **except the
+  report-critical labels in `RETAINED_LABELS`** (below).
 - `pghistory.Context` rows with no remaining referencing events.
 - `AuditReadEvent` (Phase 4) once it exists.
+
+**Retained labels (report-critical rows are not audit-only storage).** The
+reporting selectors in [shelters/selectors/reports.py](apps/betterangels-backend/shelters/selectors/reports.py)
+reconstruct bed existence, maintenance state, and occupancy intervals from these
+event rows with **no lower bound**:
+
+| Label | Why it must survive |
+| --- | --- |
+| `bed.add` | bed existence and `added_at` (`_bed_lifecycles`) |
+| `bed.remove` | `removed_at` (`_bed_lifecycles`) |
+| `bed.update` | maintenance state (`bed_snapshots` in `daily_occupancy`) |
+| `reservation.add` | opens occupancy intervals |
+| `reservation.status_change` | occupancy intervals, composite metrics, `report_*` |
+
+`RETAINED_LABELS` in
+[audit/management/commands/purge_audit_log.py](apps/betterangels-backend/audit/management/commands/purge_audit_log.py)
+holds exactly that set and is excluded from every batch delete. Purging them
+would silently zero `report_bed_status_counts`, `daily_occupancy`, the composite
+metrics query, and `shelters/services/metrics_export.py`. Retained rows keep
+their `Context` referenced, so `_purge_orphan_contexts` leaves it alone.
+
+**Known limitation (accepted, with a follow-up).** Excluding these labels means
+those rows grow unbounded — retention no longer bounds the `bed.*` /
+`reservation.*` tables. The durable fix is for reporting to own its own source of
+truth (a snapshot/rollup table, or a materialized view over the events) so the
+event rows become purgable; until then, this partial fix trades unbounded growth
+for report correctness. Tracked as the follow-up to this ADR, not scheduled.
 
 **Decision: no admin "purge before" action.** Django admin actions operate on a
 selected queryset of rows, not a date window, so a date-driven purge does not fit
@@ -1660,13 +1697,23 @@ partition drop, no exempt role. Implemented in
 - `MIN_RETENTION_DAYS = 730` — refuses a cutoff inside the last two years unless
   `--force`, so a mistyped date cannot wipe recent history.
 - `--batch-size` (default 5000) — loops until drained, so no single statement takes a
-  long lock or one huge `DELETE` on the primary.
-- `--dry-run` — reports what would go, changes nothing.
+  long lock or one huge `DELETE` on the primary. Each pass re-runs the same filter;
+  once a pass deletes rows they no longer match, so the `LIMIT` slice already
+  advances and no growing `pk__in` exclusion is needed (which would bloat the
+  statement and pin the RDS Proxy connection).
+- `--dry-run` — reports what would go, changes nothing. Counts are the full totals
+  under the run's predicate (not one batch), for both events and orphan contexts. The
+  context count reflects the state *right now*: a context is only orphaned once no
+  event row references it, so a real run can orphan further contexts after it deletes
+  the events that referenced them.
 - Unreferenced `pghistory.Context` rows are removed afterwards with `NOT EXISTS`
   across every event table, so context rows do not accumulate as an orphan shadow of
   the purged events.
 
-Tests: [audit/tests/test_purge_audit_log.py](apps/betterangels-backend/audit/tests/test_purge_audit_log.py).
+Tests: [audit/tests/test_purge_audit_log.py](apps/betterangels-backend/audit/tests/test_purge_audit_log.py)
+— deletion/retention scope, multi-batch draining, dry-run accuracy (events and
+contexts), orphan-context cleanup, and a regression test asserting
+`report_bed_status_counts` / `daily_occupancy` are unchanged across a purge.
 No Celery-beat schedule is wired by default — enabling one remains a deliberate ops
 choice.
 
