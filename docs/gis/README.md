@@ -9,6 +9,7 @@ supervisorial district, …).
 | Document | What it is |
 |---|---|
 | [dev-2604-shapefile-spike.md](dev-2604-shapefile-spike.md) | **The spike deliverable.** Picks one region, names the official source, and shows the verified load + query process end to end. Read this first. |
+| [spatial-implementation-audit.md](spatial-implementation-audit.md) | **What the GIS code does and where it falls short** — the documented-practice choices, plus two measured defects (broken shared edges between adjacent regions, and nothing enforcing geometry validity). Read before changing anything spatial. |
 | [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) | **The source inventory** — 283 services probed live, 266 real feature counts, 228 verified URLs, plus 33 supersessions and 19 dead/empty sources. Read this before importing anything. |
 
 ## The code
