@@ -1,2 +1,2 @@
-export * from './useRegionMap';
+export * from './regionReports';
 export * from './useReportSummary';

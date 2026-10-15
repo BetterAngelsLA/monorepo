@@ -2,7 +2,6 @@
 
 import type { RegionDimensionsQuery } from './regions.generated';
 import type { InteractionsByRegionQuery } from './regions.generated';
-import type { RegionsForMapQuery } from './regions.generated';
 import type { InteractionMapQuery } from './regions.generated';
 
 export const regionDimensionsOperationKey: keyof Omit<RegionDimensionsQuery, '__typename'> = 'regionDimensions';
@@ -18,19 +17,6 @@ export const interactionsByRegionSuccessTypename: Extract<
 export const interactionsByRegionMeta = {
   operationKey: interactionsByRegionOperationKey,
   successTypename: interactionsByRegionSuccessTypename,
-} as const;
-
-export const regionsForMapOperationKey: keyof Omit<RegionsForMapQuery, '__typename'> = 'regions';
-export const regionsForMapSuccessTypename: Extract<
-  NonNullable<RegionsForMapQuery['regions']> extends readonly (infer _T)[]
-    ? _T
-    : NonNullable<RegionsForMapQuery['regions']>,
-  { __typename: 'RegionType' }
->['__typename'] = 'RegionType';
-
-export const regionsForMapMeta = {
-  operationKey: regionsForMapOperationKey,
-  successTypename: regionsForMapSuccessTypename,
 } as const;
 
 export const interactionMapOperationKey: keyof Omit<InteractionMapQuery, '__typename'> = 'interactionMap';
