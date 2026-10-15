@@ -242,6 +242,44 @@ def _display_field_name(field_name: str, model_field: Any) -> str:
     return str(verbose_name) if verbose_name else field_name
 
 
+def _display_keys(model_label: str) -> dict[str, str]:
+    """Map every tracked field's attname -> its rendered key for a model (§13).
+
+    Normally the ``verbose_name``. But a model may give several fields the *same*
+    ``verbose_name`` (``Shelter`` has three "Additional Notes"), and keying a
+    dict by that would silently drop all but the last — reporting an edit as if
+    it had not happened. When a display name is shared, fall back to the raw
+    field name (``add_notes_sleeping_details``) so every field keeps its own key.
+
+    Computed from the model's whole field set, not the row's present keys, so a
+    field's key never changes between events of the same model.
+    """
+    if model_label in _DISPLAY_KEYS_CACHE:
+        return _DISPLAY_KEYS_CACHE[model_label]
+
+    try:
+        model = apps.get_model(model_label)
+    except LookupError:
+        _DISPLAY_KEYS_CACHE[model_label] = {}
+        return {}
+
+    fields = model._meta.fields
+    counts: dict[str, int] = defaultdict(int)
+    for f in fields:
+        counts[_display_field_name(f.attname, f)] += 1
+
+    result: dict[str, str] = {}
+    for f in fields:
+        display_name = _display_field_name(f.attname, f)
+        # A unique display name reads better; only collisions need the raw name.
+        result[f.attname] = f.name if counts[display_name] > 1 else display_name
+    _DISPLAY_KEYS_CACHE[model_label] = result
+    return result
+
+
+_DISPLAY_KEYS_CACHE: dict[str, dict[str, str]] = {}
+
+
 def _pk_attname(model_label: str) -> str | None:
     """The tracked model's primary-key attname, or ``None`` if unresolvable."""
     if model_label in _PK_ATTNAME_CACHE:
@@ -364,6 +402,16 @@ def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
     """Render a non-M2M row's own changes (§13, §14)."""
     label = row.pgh_label
     data = row.pgh_data or {}
+def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
+    """Render a non-M2M row's own changes, keyed by **raw column name** (§13).
+
+    Raw (attname) keys keep the dict lossless: two fields that share a
+    ``verbose_name`` are distinct here even though they render to the same label.
+    ``_display_keys`` maps them to display names at the edges (per-event
+    ``field_changes``, the action rollup, the snapshot).
+    """
+    label = row.pgh_label
+    data = row.pgh_data or {}
     obj_model = row.pgh_obj_model
     fk_fields = _fk_fields(obj_model)
     fields = _field_meta(obj_model)
@@ -378,24 +426,18 @@ def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
     hidden = _MECHANICAL_FIELDS | ({pk_attname} if pk_attname else set())
 
     if label.endswith(".add"):
-        return {
-            _display_field_name(f, fields.get(f)): [None, render(f, v)]
-            for f, v in data.items()
-            if v is not None and f not in hidden
-        }
+        return {f: [None, render(f, v)] for f, v in data.items() if v is not None and f not in hidden}
     if label.endswith(".remove"):
-        return {
-            _display_field_name(f, fields.get(f)): [render(f, v), None]
-            for f, v in data.items()
-            if v is not None and f not in hidden
-        }
+        return {f: [render(f, v), None] for f, v in data.items() if v is not None and f not in hidden}
 
     diff = row.pgh_diff or {}
-    return {
-        _display_field_name(f, fields.get(f)): [render(f, old), render(f, new)]
-        for f, (old, new) in diff.items()
-        if f not in _MECHANICAL_FIELDS
-    }
+    return {f: [render(f, old), render(f, new)] for f, (old, new) in diff.items() if f not in _MECHANICAL_FIELDS}
+
+
+def _render_keys(changes: dict[str, Any], model_label: str) -> dict[str, Any]:
+    """Re-key a raw-``attname`` change map to display names (§13)."""
+    keys = _display_keys(model_label)
+    return {keys.get(f, f): value for f, value in changes.items()}
 
 
 def _snapshot(row: Any, resolver: _LabelResolver) -> dict[str, Any]:
@@ -409,13 +451,13 @@ def _snapshot(row: Any, resolver: _LabelResolver) -> dict[str, Any]:
     obj_model = row.pgh_obj_model
     fk_fields = _fk_fields(obj_model)
     fields = _field_meta(obj_model)
+    keys = _display_keys(obj_model)
 
     snapshot: dict[str, Any] = {}
     for field_name, value in data.items():
         if field_name in _MECHANICAL_FIELDS or field_name.startswith("pgh_"):
             continue
-        name = _display_field_name(field_name, fields.get(field_name))
-        snapshot[name] = _render_value(field_name, value, fk_fields, fields, resolver)
+        snapshot[keys.get(field_name, field_name)] = _render_value(field_name, value, fk_fields, fields, resolver)
     return snapshot
 
 
@@ -602,8 +644,11 @@ def _build_action(
             )
             continue
 
-        changes = _scalar_changes(row, resolver)
         owner = row.pgh_obj_model
+        # Render the raw attname keys to display names here. Two fields sharing a
+        # ``verbose_name`` stay distinct because ``_display_keys`` falls back to
+        # the raw field name for them (§13).
+        changes = _render_keys(_scalar_changes(row, resolver), owner)
         for name in changes:
             owners_by_name[name].add(owner)
         _merge_scalar(scalar_changes, owner, changes)

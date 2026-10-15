@@ -310,6 +310,37 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertNotIn("created_at", snapshot)
         self.assertNotIn("updated_at", snapshot)
 
+    def test_fields_sharing_a_verbose_name_are_not_collapsed(self) -> None:
+        """Fields that share a ``verbose_name`` must each keep their own key (§13).
+
+        ``Shelter`` gives three tracked fields ``verbose_name="Additional Notes"``
+        (``add_notes_sleeping_details``, ``add_notes_shelter_details``,
+        ``other_services``). Keying the change/snapshot dicts by display name would
+        collapse them, silently dropping all but the last — the one failure an
+        audit log must not have. Those fields fall back to their raw names.
+        """
+        with audit_context(user=self.user):
+            self.shelter.add_notes_sleeping_details = "Sleeping detail"
+            self.shelter.add_notes_shelter_details = "Shelter detail"
+            self.shelter.save()
+
+        actions = object_audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+
+        self.assertEqual(len(actions), 1)
+        changes = actions[0].field_changes
+        # Both edits survive, under their own (raw) keys — not one collapsed pair.
+        self.assertEqual(changes["add_notes_sleeping_details"], [None, "Sleeping detail"])
+        self.assertEqual(changes["add_notes_shelter_details"], [None, "Shelter detail"])
+        self.assertNotIn("Additional Notes", changes)
+
+        # The snapshot is the full object state, so it carries all three fields.
+        snapshot = actions[0].events[0].snapshot
+        self.assertIsNotNone(snapshot)
+        assert snapshot is not None
+        self.assertIn("add_notes_sleeping_details", snapshot)
+        self.assertIn("add_notes_shelter_details", snapshot)
+        self.assertIn("other_services", snapshot)
+
     def test_offset_beyond_range_returns_no_actions(self) -> None:
         with audit_context(user=self.user):
             self.shelter.name = "Only Rename"
