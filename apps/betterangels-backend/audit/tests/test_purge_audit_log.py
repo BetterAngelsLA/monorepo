@@ -1,6 +1,7 @@
 """Tests for the `purge_audit_log` retention command (ADR 0004 §31)."""
 
 import datetime
+from io import StringIO
 
 import pghistory
 from django.core.management import call_command
@@ -130,20 +131,103 @@ class PurgeAuditLogTestCase(TestCase):
         # The recent context is still referenced by a surviving event row.
         self.assertTrue(Context.objects.filter(pk=recent_context.pk).exists())
 
-    def test_dry_run_deletes_nothing(self) -> None:
-        shelter = baker.make(Shelter, name="Dry Run Shelter")
-        bed = baker.make(Bed, shelter=shelter, name="Dry Run Bed")
-        event = BedEvent.objects.filter(pgh_obj_id=bed.pk).first()
-        self.assertIsNotNone(event)
-        backdate_event_rows(BedEvent.objects.filter(pk=event.pk), pgh_created_at=_OLD)
+    # ── batching ─────────────────────────────────────────────────────────────
 
-        before_count = BedEvent.objects.count()
+    def test_drains_more_rows_than_one_batch(self) -> None:
+        """Batching must drain the whole set, not stop after ``--batch-size`` rows."""
+        shelters = [Shelter.objects.create(name=f"Batch Shelter {i}") for i in range(5)]
+        ids = list(
+            ShelterEvent.objects.filter(pgh_obj_id__in=[s.pk for s in shelters]).values_list("pk", flat=True)
+        )
+        self.assertGreater(len(ids), 2)
+        backdate_event_rows(ShelterEvent.objects.filter(pk__in=ids), pgh_created_at=_OLD)
 
-        call_command("purge_audit_log", before=_CUTOFF, dry_run=True)
+        # A batch smaller than the row count, so draining needs several passes.
+        call_command("purge_audit_log", before=_CUTOFF, batch_size=2)
 
-        self.assertEqual(BedEvent.objects.count(), before_count)
-        self.assertTrue(BedEvent.objects.filter(pk=event.pk).exists())
+        self.assertFalse(ShelterEvent.objects.filter(pk__in=ids).exists())
 
+    # ── dry-run accounting ───────────────────────────────────────────────────
+
+    def test_dry_run_reports_without_deleting(self) -> None:
+        shelter = Shelter.objects.create(name="Dry Run Shelter")
+        shelter.name = "Renamed Dry Run Shelter"
+        shelter.save()
+        old_event = ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).order_by("pk").first()
+        self.assertIsNotNone(old_event)
+        backdate_event_rows(ShelterEvent.objects.filter(pk=old_event.pk), pgh_created_at=_OLD)
+
+        before_count = ShelterEvent.objects.count()
+        out = StringIO()
+
+        call_command("purge_audit_log", before=_CUTOFF, dry_run=True, stdout=out)
+
+        self.assertEqual(ShelterEvent.objects.count(), before_count)
+        self.assertTrue(ShelterEvent.objects.filter(pk=old_event.pk).exists())
+        self.assertIn("would delete 1 event rows", out.getvalue())
+
+    def test_dry_run_total_is_not_truncated_at_one_batch(self) -> None:
+        """A dry run must count the whole set, not just the first batch."""
+        shelters = [Shelter.objects.create(name=f"Accurate {i}") for i in range(4)]
+        ids = list(
+            ShelterEvent.objects.filter(pgh_obj_id__in=[s.pk for s in shelters]).values_list("pk", flat=True)
+        )
+        self.assertGreater(len(ids), 2)
+        backdate_event_rows(ShelterEvent.objects.filter(pk__in=ids), pgh_created_at=_OLD)
+
+        out = StringIO()
+        call_command("purge_audit_log", before=_CUTOFF, dry_run=True, batch_size=1, stdout=out)
+
+        # With ``batch_size=1`` the old per-batch accounting reported "1"; the
+        # dry run must equal what the real run then deletes.
+        self.assertIn(f"would delete {len(ids)} event rows", out.getvalue())
+        self.assertTrue(ShelterEvent.objects.filter(pk__in=ids).exists())
+
+        call_command("purge_audit_log", before=_CUTOFF, batch_size=1)
+
+        self.assertFalse(ShelterEvent.objects.filter(pk__in=ids).exists())
+
+    def test_dry_run_orphan_context_count_is_not_truncated(self) -> None:
+        """A dry run counts every orphan context, not just the first batch."""
+        contexts = []
+        for index in range(4):
+            with pghistory.context(label=f"orphan-{index}"):
+                Shelter.objects.create(name=f"Orphan {index}")
+            contexts.append(Context.objects.get(metadata__label=f"orphan-{index}"))
+
+        # Make them true orphans: a context is only orphaned once no event row
+        # references it, which in a real run happens *after* the events go.
+        for context in contexts:
+            for model in event_models():
+                if hasattr(model, "pgh_context_id"):
+                    model._default_manager.filter(pgh_context_id=context.pk).delete()
+        Context.objects.filter(pk__in=[c.pk for c in contexts]).update(created_at=_OLD)
+
+        out = StringIO()
+        call_command("purge_audit_log", before=_CUTOFF, dry_run=True, batch_size=1, stdout=out)
+
+        # With ``batch_size=1`` the old per-batch accounting reported "1".
+        self.assertIn("4 orphan contexts", out.getvalue())
+        self.assertEqual(Context.objects.filter(pk__in=[c.pk for c in contexts]).count(), 4)
+
+    def test_dry_run_context_count_reflects_state_before_events_are_deleted(self) -> None:
+        """Aged contexts whose events are still present are not orphans *yet*.
+
+        The dry run reports what matches at run time; a real run can orphan
+        further contexts once it deletes the events that reference them (§31).
+        """
+        with pghistory.context(label="not-yet-orphan"):
+            Shelter.objects.create(name="Not Yet Orphan")
+        context = Context.objects.get(metadata__label="not-yet-orphan")
+        Context.objects.filter(pk=context.pk).update(created_at=_OLD)
+        _backdate_guarded_events_for_context(context, _OLD)
+
+        out = StringIO()
+        call_command("purge_audit_log", before=_CUTOFF, dry_run=True, stdout=out)
+        self.assertIn("0 orphan contexts", out.getvalue())
+
+        call_command("purge_audit_log", before=_CUTOFF)
+        self.assertFalse(Context.objects.filter(pk=context.pk).exists())
     # ── interaction with the reporting selectors ─────────────────────────────
 
     def test_purge_leaves_report_output_unchanged(self) -> None:

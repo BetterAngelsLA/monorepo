@@ -61,7 +61,14 @@ class Command(BaseCommand):
             default=5000,
             help="Rows deleted per transaction. Smaller batches hold locks for less time.",
         )
-        parser.add_argument("--dry-run", action="store_true", help="Report what would be deleted, then stop.")
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help=(
+                "Report what would be deleted, then stop. Counts are for the state right now: "
+                "a real run can orphan further contexts once it deletes the events that reference them."
+            ),
+        )
         parser.add_argument(
             "--force",
             action="store_true",
@@ -100,28 +107,28 @@ class Command(BaseCommand):
 
     @staticmethod
     def _purge_event_model(model: Any, before: datetime.datetime, batch_size: int, dry_run: bool) -> int:
+        rows = model._default_manager.filter(pgh_created_at__lt=before).exclude(pgh_label__in=RETAINED_LABELS)
+
+        if dry_run:
+            # Count the whole set. Returning after the first batch would report at
+            # most ``batch_size`` rows no matter how much is older than the cutoff,
+            # and this total is the only pre-flight signal before an irreversible
+            # delete.
+            return rows.count()
+
         deleted_total = 0
-        seen: set[Any] = set()
         while True:
-            # Rebuild the queryset each pass so the slice re-queries.
-            batch = (
-                model._default_manager.filter(pgh_created_at__lt=before)
-                .exclude(pgh_label__in=RETAINED_LABELS)
-                .values_list("pk", flat=True)
-            )
-            if seen:
-                batch = batch.exclude(pk__in=seen)
-            ids = list(batch[:batch_size])
+            # Rebuild the slice each pass so it re-queries. Rows deleted in the
+            # previous pass no longer match the filter, so the slice already
+            # advances; a growing ``pk__in`` exclusion is unnecessary and would
+            # bloat the statement (and pin the RDS Proxy connection).
+            ids = list(rows.values_list("pk", flat=True)[:batch_size])
             if not ids:
                 return deleted_total
-
-            if dry_run:
-                return deleted_total + len(ids)
 
             with transaction.atomic():
                 deleted, _ = model._default_manager.filter(pk__in=ids).delete()
             deleted_total += deleted
-            seen.update(ids)
             if deleted == 0:
                 # Nothing removed this pass; stop rather than spin.
                 return deleted_total
@@ -130,13 +137,14 @@ class Command(BaseCommand):
 
     @staticmethod
     def _purge_orphan_contexts(before: datetime.datetime, batch_size: int, dry_run: bool) -> int:
+        if dry_run:
+            return Command._count_orphan_contexts(before)
+
         deleted_total = 0
         while True:
             ids = Command._orphan_context_ids(before, batch_size)
             if not ids:
                 return deleted_total
-            if dry_run:
-                return deleted_total + len(ids)
             with transaction.atomic():
                 deleted, _ = Context.objects.filter(pk__in=ids).delete()
             deleted_total += deleted
@@ -146,26 +154,37 @@ class Command(BaseCommand):
                 return deleted_total
 
     @staticmethod
-    def _orphan_context_ids(before: datetime.datetime, limit: int) -> list[Any]:
-        """Context ids older than the cutoff that no surviving event row uses.
+    def _orphan_context_where() -> str | None:
+        """``NOT EXISTS`` over every event table, or ``None`` if there are none.
 
-        One query with a ``NOT EXISTS`` per event table beats probing each
-        candidate context per table. Table names come from model metadata, not
-        user input.
+        One predicate per event table beats probing each candidate context per
+        table. Table names come from model metadata, not user input.
         """
         tables = sorted(
             {model._meta.db_table for model in event_models() if hasattr(model, "pgh_context_id")}
         )
         if not tables:
-            return []
-
-        not_referenced = " AND ".join(
+            return None
+        return " AND ".join(
             f'NOT EXISTS (SELECT 1 FROM "{table}" e WHERE e.pgh_context_id = c.id)' for table in tables
         )
-        sql = (
-            f'SELECT c.id FROM "{Context._meta.db_table}" c '
-            f"WHERE c.created_at < %s AND {not_referenced} LIMIT %s"
-        )
+
+    @staticmethod
+    def _orphan_context_ids(before: datetime.datetime, limit: int) -> list[Any]:
+        where = Command._orphan_context_where()
+        if where is None:
+            return []
+        sql = f'SELECT c.id FROM "{Context._meta.db_table}" c WHERE c.created_at < %s AND {where} LIMIT %s'
         with connection.cursor() as cursor:
             cursor.execute(sql, [before, limit])
             return [row[0] for row in cursor.fetchall()]
+
+    @staticmethod
+    def _count_orphan_contexts(before: datetime.datetime) -> int:
+        where = Command._orphan_context_where()
+        if where is None:
+            return 0
+        sql = f'SELECT COUNT(*) FROM "{Context._meta.db_table}" c WHERE c.created_at < %s AND {where}'
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [before])
+            return int(cursor.fetchone()[0])
