@@ -40,6 +40,7 @@ from shelters.models import (
     Room,
     Shelter,
 )
+from test_utils.pghistory import backdate_event_rows
 
 
 def _action_with(actions: list[Any], value: Any) -> Any | None:
@@ -280,6 +281,44 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertNotEqual(first, second)
         assert first is not None
         self.assertEqual(first.actor, "system")
+
+    def test_context_less_writes_in_different_tables_are_distinct_actions(self) -> None:
+        """The context-less key must be unique across event tables (§12).
+
+        The action key falls back to the event's pghistory slug, not ``pgh_id``:
+        the latter is a per-table AutoField, so two context-less writes in
+        different tables whose sequences both start at 1 would otherwise share a
+        key and merge into one spurious action.
+        """
+        shelter_events = Shelter.pgh_event_model  # type: ignore[attr-defined]
+        bed_events = Bed.pgh_event_model  # type: ignore[attr-defined]
+
+        clear_history_context()
+        self.shelter.name = "Shelter No Context"
+        self.shelter.save()
+        self.bed.name = "Bed No Context"
+        self.bed.save()
+
+        # The two tables' AutoFields are independent, so a collision is possible
+        # but not guaranteed by test order; pin one, so the assertion actually
+        # exercises the key's uniqueness rather than sequence coincidence.
+        shared_pgh_id = 2_000_000_000
+        for model, obj_pk, label in (
+            (shelter_events, self.shelter.pk, "shelter.update"),
+            (bed_events, self.bed.pk, "bed.update"),
+        ):
+            row = model._default_manager.filter(pgh_obj_id=obj_pk, pgh_label=label).latest("pgh_id")
+            backdate_event_rows(model._default_manager.filter(pk=row.pk), pgh_id=shared_pgh_id)
+
+        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+
+        # Both writes are in the shelter's log (references() spans its beds) but
+        # they are two separate actions, not one merged "system" action.
+        shelter_action = _action_with(actions, "Shelter No Context")
+        bed_action = _action_with(actions, "Bed No Context")
+        self.assertIsNotNone(shelter_action)
+        self.assertIsNotNone(bed_action)
+        self.assertNotEqual(shelter_action, bed_action)
 
     def test_actor_prefers_frozen_name_over_the_live_user(self) -> None:
         with audit_context(user=self.user):

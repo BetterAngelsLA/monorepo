@@ -20,8 +20,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from django.apps import apps
-from django.db.models import Max, TextField, Value
-from django.db.models.functions import Cast, Coalesce, Concat
+from django.db.models import Max, TextField
+from django.db.models.functions import Cast, Coalesce
 from django.utils import timezone
 
 from audit.models import AuditWriteEvent
@@ -488,11 +488,16 @@ def _action_key_expr() -> Any:
     """SQL action-grouping key (§12): context id, else a per-event singleton.
 
     ``GROUP BY`` treats all NULL ``pgh_context_id`` rows as one group, so
-    context-less events get ``system-<pgh_id>`` to keep them distinct.
+    context-less events fall back to ``pgh_slug``. That is pghistory's own
+    ``"<event_model>:<pgh_id>"`` primary key on the aggregate ``Events`` model, so
+    it is unique across *every* event table. ``pgh_id`` alone is not: it is a
+    per-table ``AutoField``, so two context-less writes in different tables with
+    the same id (each table's sequence starts at 1) would merge into one spurious
+    action.
     """
     return Coalesce(
         Cast("pgh_context_id", TextField()),
-        Concat(Value("system-"), Cast("pgh_id", TextField())),
+        "pgh_slug",
         output_field=TextField(),
     )
 
