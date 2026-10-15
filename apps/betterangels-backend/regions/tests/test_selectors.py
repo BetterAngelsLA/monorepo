@@ -182,30 +182,47 @@ class RegionMetadataTestCase(TestCase):
     def test_available_kinds_reports_only_loaded_dimensions(self) -> None:
         self.assertEqual(sorted(available_kinds()), ["council_district", "spa"])
 
-    def test_region_features_returns_multipolygon_coordinates(self) -> None:
-        """``geometry`` is the coordinates of a MultiPolygon, at 6 decimal places.
+    def test_region_geometry_is_a_multipolygon(self) -> None:
+        """Every row's geometry is a ``MultiPolygon``, at 6 decimal places.
 
-        Asserted on the *shape* rather than by spot-checking a vertex: the contract is
-        ``[[[lng, lat], …]]`` for every row regardless of how many parts the polygon has,
-        because the column is a MultiPolygon and a single-part result must not change the
-        response shape.
+        **This is the load-bearing test for the schema's ``MultiPolygon`` scalar.** That
+        scalar's serializer is ``lambda v: v.tuple if isinstance(v, geos.MultiPolygon) else v``
+        — guarded on the exact GEOS type, one level deep. PostGIS returns ``POLYGON`` for a
+        single-part result, so without ``output_field=MultiPolygonField()`` on the annotation
+        the guard fails, ``else v`` passes a raw GEOS object to the JSON encoder, and the
+        client receives a WKT *string*. Nothing raises, so only an assertion like this catches
+        it.
+
+        Run over **every loaded dimension**, because the failing case is the single-part
+        polygon and which dimensions have those is a property of the boundary data, not of
+        this code.
         """
-        rows = region_features(kinds=[RegionKind.SPA])
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["code"], "4")
+        checked = 0
+        for kind in RegionKind.values:
+            with self.subTest(kind=kind):
+                rows = region_features(kinds=[kind])
+                if not rows:
+                    # Not every dimension is loaded in this fixture, and which ones are is a
+                    # property of the boundary data rather than of this code. The interesting
+                    # case is a *single-part* polygon, so loop over whatever is present.
+                    continue
+                checked += 1
+                for row in rows:
+                    geometry = row["geometry"]
+                    self.assertIsInstance(
+                        geometry,
+                        MultiPolygon,
+                        f"{kind}/{row['code']}: the MultiPolygon scalar would serialise this as WKT",
+                    )
 
-        coordinates = rows[0]["geometry"]
-        self.assertIsInstance(coordinates, tuple, "coordinates, not a GeoJSON document")
+                # 6 dp, because the grid is 1e-6: full precision measured 1.58x the payload.
+                ring = rows[0]["geometry"].coords[0][0]
+                for lng, lat in ring[:5]:
+                    self.assertLessEqual(len(str(lng).split(".")[-1]), 6)
+                    self.assertLessEqual(len(str(lat).split(".")[-1]), 6)
 
-        # [[[ (lng, lat), … ]]] — walk to the first coordinate pair.
-        ring = coordinates[0][0]
-        self.assertEqual(len(ring[0]), 2, "a coordinate is a (lng, lat) pair")
-        for lng, lat in ring[:5]:
-            self.assertIsInstance(lng, float)
-            self.assertIsInstance(lat, float)
-            # 6 dp, because the grid is 1e-6: full precision measured 1.58x the payload.
-            self.assertLessEqual(len(str(lng).split(".")[-1]), 6)
-            self.assertLessEqual(len(str(lat).split(".")[-1]), 6)
+        # Without this the test passes vacuously if the fixture stops loading regions.
+        self.assertGreaterEqual(checked, 1, "no dimension had regions to check")
 
     def test_region_features_can_filter_by_code(self) -> None:
         rows = region_features(kinds=[RegionKind.SPA], codes=["4"])

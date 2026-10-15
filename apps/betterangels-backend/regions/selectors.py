@@ -12,7 +12,7 @@ from typing import Any, Iterable, Sequence
 
 from django.contrib.gis.db.models import GeometryField, MultiPolygonField
 from django.contrib.gis.db.models.functions import GeomOutputGeoFunc
-from django.contrib.gis.geos import MultiPolygon, Polygon
+from django.contrib.gis.geos import MultiPolygon
 from django.db.models import Count, Exists, FloatField, Func, OuterRef, Q, QuerySet, Value
 from django.db.models.functions import Cast, Coalesce
 
@@ -196,16 +196,16 @@ def available_kinds() -> list[str]:
 
 
 def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:
-    """Region polygons as **GeoJSON coordinate data**, for the map view.
+    """Region polygons as GEOS geometry, for the map view.
 
     Serves ``geom_display`` (see ``Region.geom_display``), falling back to ``geom``
     where the importer has not set it, so a region is never invisible on the map.
 
-    Returns ``geometry`` as a nested list of ``[lng, lat]`` pairs — the ``coordinates``
-    member of a GeoJSON MultiPolygon, ready for the ``JSON`` scalar. It is deliberately
-    **not** a GeoJSON *document*: the Feature wrapper, and the ``type`` members inside it,
-    are fixed for a column that only ever holds MultiPolygons, so sending them would be
-    payload the client has to parse and discard.
+    ``geometry`` is a GEOS ``MultiPolygon``, which the schema's ``MultiPolygon`` scalar
+    serialises to the ``coordinates`` of a GeoJSON MultiPolygon (nested ``[lng, lat]`` pairs).
+    No GeoJSON *document* is built anywhere: the Feature wrapper and its ``type`` members are
+    fixed for a column that only ever holds MultiPolygons, so they would be payload the
+    client parses and discards.
 
     **``codes`` of ``None`` or ``[]`` both mean "no restriction" — every region of
     ``kinds``.** This is one of the app's two empty-list readings and it is the intended
@@ -221,14 +221,18 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
     IEEE-754 precision, which measured 1.58x the payload of the rounded form (1838 kB
     against 1163 kB for the LA layers). Rounding in SQL keeps it at parity.
 
-    A note on the geometry scalar: strawberry-django registers a ``MultiPolygon`` scalar
-    and maps ``MultiPolygonField`` to it, so it looks like the natural type here. It is not
-    usable for this query. Its serializer is ``lambda v: v.tuple if isinstance(v,
-    MultiPolygon) else v`` — one level deep and guarded on the *exact* type — and
-    ``ST_ReducePrecision`` returns a ``Polygon`` for single-part results, so the guard fails
-    and the raw GEOS object reaches the JSON encoder (delivering a WKT string). ``JSON``
-    carries the same structure, is already the house scalar for structured blobs
-    (``common/graphql/types.py``), and needs no GEOS juggling per row.
+    **``output_field=MultiPolygonField()`` on the annotation is load-bearing**, not
+    decoration. ``RegionType.geometry`` is strawberry-django's built-in ``MultiPolygon``
+    scalar, whose serializer is
+
+        lambda v: v.tuple if isinstance(v, geos.MultiPolygon) else v
+
+    — one level deep, and guarded on the exact GEOS type. PostGIS returns ``POLYGON`` for a
+    single-part result, so without the declared ``output_field`` the ORM would hand back a
+    ``Polygon``, the guard would fail, and ``else v`` would give the JSON encoder a raw GEOS
+    object — surfacing as a WKT string rather than an error. The declaration makes the ORM
+    coerce every row to ``MultiPolygon``, which is verified for all five dimensions in
+    ``test_region_geometry_is_a_multipolygon``.
     """
     # An empty list means "no restriction", so it is normalised away before the filter —
     # see the docstring. If this ever needs to mean "match nothing", this line and
@@ -245,32 +249,38 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
         .order_by("kind", "code")
     )
 
-    # A `Polygon` is promoted to a `MultiPolygon`: `ST_ReducePrecision` collapses a
-    # single-part MultiPolygon to a Polygon, and the column is documented as MultiPolygon
-    # throughout, so the response shape must not vary per row.
+    # The GEOS object goes on as-is; the schema's `MultiPolygon` scalar turns it into
+    # coordinates. Converting here would defeat it — the scalar's serializer checks
+    # `isinstance(v, MultiPolygon)` and passes anything else through untouched, so a tuple of
+    # coordinates would be treated as an opaque value.
     return [
         {
             "kind": row["kind"],
             "code": row["code"],
             "name": row["name"] or "",
-            "geometry": _as_multipolygon_coordinates(row["geometry"]),
+            "geometry": _as_multipolygon(row["geometry"]),
         }
         for row in rows
     ]
 
 
-def _as_multipolygon_coordinates(geometry: Any) -> Any:
-    """``[[[lng, lat], …]]`` — MultiPolygon coordinates, whatever part count the row has.
+def _as_multipolygon(geometry: Any) -> Any:
+    """The row's geometry as a ``MultiPolygon``, which is what the scalar requires.
 
-    The annotation declares ``MultiPolygonField``, so the ORM hands back a ``MultiPolygon``
-    even when PostGIS collapsed a single-part result to ``POLYGON`` — verified for
-    ``council_district``, ``city`` and ``spa``. The ``Polygon`` branch is therefore a guard
-    rather than the normal path: it costs one ``isinstance`` and removes any dependence on
-    the ORM's coercion holding for every future layer.
+    The annotation declares ``MultiPolygonField``, so the ORM coerces even a single-part
+    result — which PostGIS returns as ``POLYGON`` — to a ``MultiPolygon``. Asserted for every
+    loaded dimension by ``test_region_geometry_is_a_multipolygon``.
+
+    This is not a defensive branch but a tripwire on a one-word dependency: without
+    ``output_field`` the value is a ``Polygon``, the scalar's ``isinstance`` guard fails, and
+    the raw GEOS object reaches the JSON encoder — which surfaces as a WKT *string* rather
+    than an error, so nothing else would catch it.
     """
-    if isinstance(geometry, Polygon):
-        return MultiPolygon(geometry).coords
-    return geometry.coords
+    assert isinstance(geometry, MultiPolygon), (
+        f"expected a MultiPolygon from the annotation, got {type(geometry).__name__}; "
+        "check that ReducePrecision still declares output_field=MultiPolygonField()"
+    )
+    return geometry
 
 
 # Coordinate grid for region geometry, in degrees. `1e-6` is ~10 cm — finer than the

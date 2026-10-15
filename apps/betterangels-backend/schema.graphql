@@ -1518,6 +1518,9 @@ type MedicalNeedType {
   name: MedicalNeedChoices
 }
 
+"""A geographical object that contains multiple polygons."""
+scalar MultiPolygon
+
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
@@ -2248,7 +2251,7 @@ type RegionType {
   kind: RegionDimension!
   code: String!
   name: String!
-  geometry: JSON!
+  geometry: MultiPolygon!
 }
 
 enum RelationshipTypeEnum {

@@ -206,8 +206,8 @@ class Query:
                 kind=RegionKind(row["kind"]),
                 code=row["code"],
                 name=row["name"],
-                # Already GeoJSON coordinates — the selector rounds and promotes them. No
-                # serialisation here: the `JSON` scalar carries the structure as-is.
+                # Coordinates, rounded in SQL. The scalar needs a `MultiPolygon`-shaped
+                # value, which is what `region_features` returns.
                 geometry=row["geometry"],
             )
             for row in rows

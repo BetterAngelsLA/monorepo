@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import List, Optional
 
 import strawberry
-from strawberry.scalars import JSON
+from django.contrib.gis.geos import MultiPolygon
 
 from common.graphql.types import LatitudeScalar, LongitudeScalar
 
@@ -84,19 +84,26 @@ class InteractionMapType:
 
 @strawberry.type
 class RegionType:
-    """A boundary polygon, as GeoJSON coordinate data.
+    """A boundary polygon.
 
-    ``geometry`` is the ``coordinates`` member of a GeoJSON MultiPolygon — a nested list of
-    ``[lng, lat]`` pairs — carried by the ``JSON`` scalar, so a client reads it directly
-    instead of parsing a string that contains JSON.
+    ``geometry`` uses strawberry-django's built-in ``MultiPolygon`` scalar — the same one
+    ``LocationType.point`` uses via ``Point`` — so the schema says what the field is rather
+    than publishing an opaque ``JSON!``. It serialises to the ``coordinates`` of a GeoJSON
+    MultiPolygon as nested ``[lng, lat]`` pairs, which a client reads directly.
 
-    It is not the ``MultiPolygon`` scalar strawberry-django registers, deliberately: that
-    serializer converts one level only and is guarded on the exact GEOS type, so a
-    single-part polygon (which ``ST_ReducePrecision`` returns) reaches the JSON encoder as a
-    raw GEOS object. See ``selectors.region_features``.
+    **The scalar's serialiser is one level deep and guarded on the exact GEOS type:**
+
+        lambda v: v.tuple if isinstance(v, geos.MultiPolygon) else v
+
+    so it only produces coordinates when the value really is a ``MultiPolygon``. PostGIS
+    returns ``POLYGON`` for a single-part result, so correctness rests on
+    ``selectors.region_features`` declaring ``output_field=MultiPolygonField()``, which makes
+    the ORM coerce the row to a ``MultiPolygon`` regardless. Drop that and the ``else v``
+    branch hands a raw GEOS object to the JSON encoder. ``test_region_geometry_is_a_multipolygon``
+    pins it, because the failure is a WKT string rather than an error.
     """
 
     kind: RegionKind
     code: str
     name: str
-    geometry: JSON
+    geometry: MultiPolygon  # type: ignore[valid-type]
