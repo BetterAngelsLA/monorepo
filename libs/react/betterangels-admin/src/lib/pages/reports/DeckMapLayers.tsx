@@ -12,6 +12,7 @@ import { useMap } from '@vis.gl/react-google-maps';
 import { useApiConfig } from '@monorepo/ba-platform';
 import { HEATMAP_RADIUS_PX, RAMP, type HeatPoint } from './heatmapMath';
 import { clusterPoints, clusterRadius, type Cluster } from './clusterPoints';
+import { clustersToBinary, pointsToBinary } from './deckData';
 import { parseColor } from './mapColors';
 
 /**
@@ -168,13 +169,20 @@ function buildLayers({
     layers.push(
       new HeatmapLayer<HeatPoint>({
         id: 'interaction-heatmap',
-        data: points,
-        getPosition: (point: HeatPoint) => [point.longitude, point.latitude],
+        // Binary, not an accessor over objects: the accessor returned a fresh tuple per point,
+        // so every update allocated ten thousand arrays for a buffer deck could have been handed
+        // directly. `positionFormat` pairs with the `size: 2` in the buffer.
+        data: pointsToBinary(points) as never,
+        positionFormat: 'XY',
         // Gaussian KDE on the GPU, replacing the hand-rolled quartic kernel.
         aggregation: 'SUM',
         // The zoomed-out end of the radius table: deck.gl scales the kernel with zoom itself,
         // so this is a reference radius rather than a per-level table.
         radiusPixels: HEATMAP_RADIUS_PX,
+        // deck defaults this to 2048, which builds a 2048-wide weight texture every aggregation
+        // for a viewport a fraction of that. 1024 is the documented perf knob for a smaller
+        // canvas and the difference is not visible at this kernel radius.
+        weightsTextureSize: 1024,
         colorRange: COLOR_RANGE,
         // No `colorDomain`: deck derives it from the data, which is stable across pans and
         // on the same scale as the aggregation it is applied to. See `heatmapMath.ts`.
@@ -187,11 +195,10 @@ function buildLayers({
     layers.push(
       new ScatterplotLayer<Cluster>({
         id: 'interaction-clusters',
-        data: clusters,
-        getPosition: (cluster: Cluster) => [cluster.longitude, cluster.latitude],
-        // Radius from the count, in pixels: the bubble stands for *n* interactions and its
-        // area says how many, so a lone interaction is still a visible dot.
-        getRadius: (cluster: Cluster) => clusterRadius(cluster.count),
+        // Position and radius baked into buffers. Radius comes from the count, so it is a
+        // cheap function of data already in hand — no reason to run an accessor per cluster.
+        data: clustersToBinary(clusters, clusterRadius) as never,
+        positionFormat: 'XY',
         radiusUnits: 'pixels',
         filled: true,
         stroked: true,
