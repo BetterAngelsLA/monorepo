@@ -1,11 +1,5 @@
 const configuredApiUrl = import.meta.env.VITE_BETTERANGELS_ADMIN_API_URL;
 
-if (!configuredApiUrl) {
-  throw new Error(
-    'VITE_BETTERANGELS_ADMIN_API_URL is not defined in your environment variables.',
-  );
-}
-
 /**
  * In local development, point the API at whichever hostname the page is being
  * browsed on.
@@ -50,7 +44,7 @@ function resolveApiUrl(configured: string): string {
   }
 }
 
-const apiUrl = resolveApiUrl(configuredApiUrl);
+const apiUrl = resolveApiUrl(configuredApiUrl ?? '');
 
 /**
  * Google Maps key for the region map on the Reports page.

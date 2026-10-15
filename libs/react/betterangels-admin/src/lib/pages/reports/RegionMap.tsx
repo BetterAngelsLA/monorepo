@@ -339,7 +339,7 @@ export function RegionMap({
         type="info"
         showIcon
         message="Map unavailable"
-        description="No Google Maps API key is configured for the admin app. Set VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY (it currently falls back to VITE_SHELTER_GOOGLE_MAPS_API_KEY). The chart and table below are unaffected."
+        description="No Google Maps API key is configured for the admin app. Set VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY. The chart and table below are unaffected."
       />
     );
   }
