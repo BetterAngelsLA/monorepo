@@ -12,12 +12,12 @@ export type RegionGeometryType = RegionsForMapQuery['regions'][number];
 
 type UseRegionMapArgs = {
   /**
-   * Required by the query, and rightly so: without a dimension there is nothing to draw.
-   * "All" means every dimension at once, and overlaying six sets of boundaries — 431
-   * polygons, many nested inside each other — would be unreadable rather than
-   * informative. So the request is skipped and the map shows the heatmap alone.
+   * Required, because the query requires it: without a dimension there is nothing to draw.
+   * "All" would mean overlaying six sets of boundaries — 431 polygons, many nested inside each
+   * other — which is unreadable rather than informative. The caller fetches only when it has a
+   * dimension, so this is not optional and no call site needs to assert it.
    */
-  dimension?: RegionDimension;
+  dimension: RegionDimension;
   /**
    * Which regions of `dimension` to draw. Empty means **all of them**, matching the way
    * an empty list is read everywhere else in this feature: no restriction, rather than no
@@ -41,16 +41,15 @@ export function useRegionMap({ dimension, codes }: UseRegionMapArgs) {
     RegionsForMapQueryVariables
   >(RegionsForMapDocument, {
     variables: {
-      dimension: dimension as RegionDimension,
+      dimension,
+      // An empty list means "all of this dimension", matching how an absent code list is
+      // read everywhere else here. Sending `[]` literally would match nothing.
       codes: codes.length > 0 ? codes : undefined,
     },
-    // Only the *dimension* gates this. An empty `codes` means "all of this dimension",
-    // so skipping on it — as this did — drew nothing at all until a region was picked.
-    skip: dimension === undefined,
   });
 
   const regions = useMemo(
-    () => (data?.regions ?? []).filter((region) => region.geometry.length > 0),
+    () => (data?.regions ?? []).filter((region) => (region.geometry ?? '').length > 0),
     [data],
   );
 

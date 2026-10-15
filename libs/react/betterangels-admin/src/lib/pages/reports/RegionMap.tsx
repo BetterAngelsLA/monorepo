@@ -2,7 +2,7 @@
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
 import { HEATMAP_RAMP_CSS, HeatmapLayerWithScale } from './HeatmapLayer';
 import { PointLayer } from './PointLayer';
-import { Alert, Spin, theme } from 'antd';
+import { Alert, theme } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { mergeCss } from '@monorepo/react/shared';
@@ -118,6 +118,55 @@ function shade(empty: string, full: string, max: number, count: number): string 
   }
   const t = Math.sqrt(Math.max(0, count) / max);
   return `rgb(${Math.round(r0 + (r1 - r0) * t)},${Math.round(g0 + (g1 - g0) * t)},${Math.round(b0 + (b1 - b0) * t)})`;
+}
+
+/**
+ * Fetches the grouping's boundaries and draws them.
+ *
+ * Split out so the query can require a dimension — the API refuses a code without one,
+ * because a code is ambiguous across dimensions — without every call site asserting it. This
+ * only mounts when a grouping is chosen, so the requirement is carried by the component tree.
+ */
+function RegionOverlay({
+  dimension,
+  rows,
+  focusCodes,
+  overlay,
+}: {
+  dimension: RegionDimension;
+  rows: RegionCountType[];
+  focusCodes: string[];
+  overlay: {
+    emptyFill: string;
+    fullFill: string;
+    stroke: string;
+    markFill: string;
+    markStroke: string;
+  };
+}) {
+  const { regions, loading, error } = useRegionMap({ dimension, codes: focusCodes });
+
+  useEffect(() => {
+    if (error) {
+      console.error(error);
+    }
+  }, [error]);
+
+  return (
+    <>
+      {loading && (
+        <div className="pointer-events-none absolute top-2 left-2 z-10 rounded bg-white/90 px-2 py-1 text-xs text-neutral-600">
+          loading boundaries...
+        </div>
+      )}
+      <RegionLayer
+        rows={rows}
+        regions={regions}
+        focusCodes={focusCodes}
+        overlay={overlay}
+      />
+    </>
+  );
 }
 
 /** The map's views. Heatmap is the default; see `RegionMap` below. */
@@ -345,23 +394,6 @@ export function RegionMap({
     }
     return `Interactions in this range${scope}.`;
   }, [view, points.length, filteredTo]);
-  // The overlay is the *grouping's* geography, not the data's: choosing City Council
-  // District should show all fifteen districts, including the ones with no interactions
-  // in range. Driving this from the rollup's codes was wrong — it drew only the twelve
-  // that had data, so three districts silently vanished and the map no longer answered
-  // "where are the districts?".
-  //
-  // An empty list therefore means "all of this dimension", and only a drill-down narrows
-  // it. With no dimension at all the hook skips the request and nothing is drawn, which is
-  // the intended resting state.
-  const { regions, loading, error } = useRegionMap({ dimension, codes: focusCodes });
-
-  useEffect(() => {
-    if (error) {
-      console.error(error);
-    }
-  }, [error]);
-
   if (!hasMapsKey) {
     return (
       <Alert
@@ -374,25 +406,8 @@ export function RegionMap({
     );
   }
 
-  if (error) {
-    return (
-      <Alert
-        className={mergeCss(className)}
-        type="error"
-        showIcon
-        message="Sorry, something went wrong."
-        description="We could not load the region boundaries. The chart and table below are unaffected."
-      />
-    );
-  }
-
   return (
     <div className={mergeCss(['relative', className])}>
-      {loading && (
-        <div className="absolute top-2 right-2 z-10 rounded bg-white/90 px-2 py-1 text-xs text-neutral-600">
-          <Spin size="small" /> loading boundaries...
-        </div>
-      )}
       {/* The map is a picture of data that the table states in full, so it is marked
           decorative rather than read out as an empty container — the same treatment a purely
           ornamental image gets. `GoogleMap` does not forward aria attributes, so the marker
@@ -414,12 +429,14 @@ export function RegionMap({
         fullscreenControl={false}
         rotateControl={false}
       >
-        <RegionLayer
-          rows={rows}
-          regions={regions}
-          focusCodes={focusCodes}
-          overlay={mapColors}
-        />
+        {dimension !== undefined && (
+          <RegionOverlay
+            dimension={dimension}
+            rows={rows}
+            focusCodes={focusCodes}
+            overlay={mapColors}
+          />
+        )}
         {/* Both layers are always mounted. The overlay draws whichever regions the
             grouping resolved to — none, when nothing did — rather than being a view of
             its own, and the point layer draws only for the clusters view. */}

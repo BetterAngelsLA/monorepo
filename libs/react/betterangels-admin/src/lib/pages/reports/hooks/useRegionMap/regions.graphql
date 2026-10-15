@@ -27,6 +27,8 @@ query InteractionsByRegion(
   }
 }
 
+# `dimension` is non-null because the API refuses a code without one — a code is ambiguous
+# across dimensions. The map simply does not request boundaries when nothing is grouped.
 query RegionsForMap($dimension: RegionDimension!, $codes: [String!]) {
   regions(dimension: $dimension, codes: $codes) {
     kind

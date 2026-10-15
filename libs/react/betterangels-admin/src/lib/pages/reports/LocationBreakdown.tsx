@@ -40,6 +40,17 @@ const KIND_LABELS: Record<string, string> = {
   coc: 'Continuum of Care',
 };
 
+/**
+ * Dimension display order, as a string-keyed lookup.
+ *
+ * A `Record<RegionDimension, …>` forces a cast at the call site, because the `kind` on a
+ * bucket arrives as a plain string; keying by string keeps the lookup honest and tolerates a
+ * value the client does not know.
+ */
+const KIND_ORDER = new Map<string, number>(
+  Object.values(RegionDimension).map((dimension, index) => [dimension, index]),
+);
+
 const DIMENSION_LABELS: Record<RegionDimension, string> = {
   [RegionDimension.Zip]: 'ZIP Code',
   [RegionDimension.City]: 'City',
@@ -220,7 +231,9 @@ export function LocationBreakdown({
     if (dimension !== undefined) {
       return rowsWithCounts;
     }
-    const order = (kind: string) => Object.values(RegionDimension).indexOf(kind as RegionDimension);
+    // A lookup keyed by a string, so no cast: a bucket's `kind` is a plain string off the
+    // wire, and an unexpected one sorts last rather than throwing.
+    const order = (kind: string) => KIND_ORDER.get(kind) ?? Number.MAX_SAFE_INTEGER;
     return [...rowsWithCounts].sort((a, b) => {
       const byKind = order(a.kind) - order(b.kind);
       if (byKind !== 0) {
