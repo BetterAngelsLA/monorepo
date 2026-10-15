@@ -2,7 +2,7 @@
 import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
 import { HEATMAP_RAMP_CSS, HeatmapLayerWithScale } from './HeatmapLayer';
 import { PointLayer } from './PointLayer';
-import { Alert, Spin } from 'antd';
+import { Alert, Spin, theme } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { mergeCss } from '@monorepo/react/shared';
@@ -64,18 +64,60 @@ function featureString(feature: google.maps.Data.Feature, name: string): string 
 }
 
 /**
- * Choropleth ramp: low counts pale, high counts saturated. Deliberately a single
- * hue — this is one series (interaction count), and a multi-hue scale would imply
- * categories that do not exist. sqrt keeps the mid-range visible instead of letting
- * one dominant district flatten everything else to near-white.
+ * Choropleth colours from the design system.
+ *
+ * Read through `useToken` rather than importing hexes, so a theme change flows through — the
+ * values these replaced were Material palette entries that ignored the theme entirely.
  */
-function shade(max: number, count: number): string {
-  if (max <= 0) return '#DCE3EA';
+function useMapColors() {
+  const { token } = theme.useToken();
+  return {
+    // antd's neutral palette is defined to meet contrast on light and dark backgrounds, so
+    // the overlay stays legible over raster tiles.
+    emptyFill: token.colorFillSecondary,
+    fullFill: token.colorText,
+    stroke: token.colorText,
+    // The cluster marks use the error red: the palette's warm accent, and the one hue that
+    // reads against the basemap's greens and blues.
+    markFill: token.colorError,
+    markStroke: token.colorErrorActive ?? token.colorError,
+  } as const;
+}
+
+/** Parse `#rrggbb` or `rgb(r,g,b)` into components; antd tokens come as either. */
+function parseColor(color: string): [number, number, number] {
+  const hex = color.trim().match(/^#([0-9a-f]{6})$/i);
+  if (hex) {
+    const n = parseInt(hex[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const rgb = color.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+  if (rgb) {
+    return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+  }
+  // A token we cannot read (a CSS var, say) — a mid grey keeps the map legible rather than
+  // throwing away the whole overlay.
+  return [128, 128, 128];
+}
+
+/**
+ * Choropleth ramp: low counts pale, high counts saturated. Deliberately a single hue — this
+ * is one series (interaction count), and a multi-hue scale would imply categories that do not
+ * exist. sqrt keeps the mid-range visible instead of letting one dominant district flatten
+ * everything else to near-white.
+ *
+ * Both ends come from the design system: the pale end is antd's secondary fill and the
+ * saturated end is its heading text colour. They were `#DCE3EA` and `#1B3A5C` — Material
+ * values — which meant the choropleth ignored the theme entirely.
+ */
+function shade(empty: string, full: string, max: number, count: number): string {
+  const [r0, g0, b0] = parseColor(empty);
+  const [r1, g1, b1] = parseColor(full);
+  if (max <= 0) {
+    return `rgb(${r0},${g0},${b0})`;
+  }
   const t = Math.sqrt(Math.max(0, count) / max);
-  const r = Math.round(0xdc + (0x1b - 0xdc) * t);
-  const g = Math.round(0xe3 + (0x3a - 0xe3) * t);
-  const b = Math.round(0xea + (0x5c - 0xea) * t);
-  return `rgb(${r},${g},${b})`;
+  return `rgb(${Math.round(r0 + (r1 - r0) * t)},${Math.round(g0 + (g1 - g0) * t)},${Math.round(b0 + (b1 - b0) * t)})`;
 }
 
 /** The map's views. Heatmap is the default; see `RegionMap` below. */
@@ -101,7 +143,16 @@ function RegionLayer({
   rows,
   regions,
   focusCodes,
+  overlay,
 }: {
+  /** Colours for the choropleth and the cluster marks, from the design system. */
+  overlay: {
+    emptyFill: string;
+    fullFill: string;
+    stroke: string;
+    markFill: string;
+    markStroke: string;
+  };
   rows: RegionCountType[];
   regions: RegionGeometryType[];
   /**
@@ -164,9 +215,9 @@ function RegionLayer({
       // effectively invisible under a dense field and read as "the districts aren't
       // drawn at all". The fill stays a light tint; the outline carries the shape.
       return {
-        fillColor: shade(max, count),
+        fillColor: shade(overlay.emptyFill, overlay.fullFill, max, count),
         fillOpacity: count > 0 ? 0.18 : 0.06,
-        strokeColor: '#0F2438',
+        strokeColor: overlay.stroke,
         strokeWeight: 1.4,
         strokeOpacity: 0.85,
       };
@@ -226,7 +277,7 @@ function RegionLayer({
       layer.forEach((f: google.maps.Data.Feature) => layer.remove(f));
       map.getDiv().removeAttribute('title');
     };
-  }, [map, regions, countsByCode, max, focusCodes]);
+  }, [map, regions, countsByCode, max, focusCodes, overlay]);
 
   return null;
 }
@@ -280,6 +331,7 @@ export function RegionMap({
   // Reported by the heatmap, which sits inside the map and can see the zoom. Nothing here
   // needs to know how the scale is derived.
   const [scale, setScale] = useState<{ zoom: number; count: number } | null>(null);
+  const mapColors = useMapColors();
 
   const caption = useMemo(() => {
     const scope = filteredTo ? ` within ${filteredTo}` : '';
@@ -366,6 +418,7 @@ export function RegionMap({
           rows={rows}
           regions={regions}
           focusCodes={focusCodes}
+          overlay={mapColors}
         />
         {/* Both layers are always mounted. The overlay draws whichever regions the
             grouping resolved to — none, when nothing did — rather than being a view of
@@ -373,7 +426,13 @@ export function RegionMap({
         {view === 'heatmap' && (
           <HeatmapLayerWithScale points={points} onScale={setScale} />
         )}
-        {view === 'clusters' && <PointLayer points={points} />}
+        {view === 'clusters' && (
+          <PointLayer
+            points={points}
+            markFill={mapColors.markFill}
+            markStroke={mapColors.markStroke}
+          />
+        )}
         {/* On the map rather than beside it: the ramp is meaningless without knowing it is
             absolute, and a reader looking at a gradient should not have to hunt for its
             key. Positioned bottom-left, clear of the map's own controls. */}

@@ -7,8 +7,9 @@ import {
   Col,
   DatePicker,
   Row,
-  Spin,
+  Skeleton,
   Statistic,
+  theme,
 } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
@@ -80,13 +81,33 @@ function DownloadIcon({ isDownloading }: { isDownloading: boolean }) {
   return <DownloadOutlined />;
 }
 
-const CHART_COLORS: Record<'primary' | 'success' | 'warning', string> = {
-  primary: '#1B3A5C',
-  success: '#2E7D32',
-  warning: '#E65100',
-};
+/**
+ * Chart colours, from the design system rather than hand-picked.
+ *
+ * NOTE the prop: `@ant-design/charts` v2 colours marks through `style.fill`. A `color` prop is
+ * silently ignored — verified by setting it to magenta and watching the chart render its
+ * default blue regardless. Every chart on this page passed `color` and had therefore been
+ * using G2's default palette all along.
+ *
+ * These were Material palette values floating in a Tailwind + antd app — `#1B3A5C` is a 2018
+ * Material navy, `#2E7D32` is Material green 800. antd's colour spec is explicit that the
+ * product palette is *derived from* the system palette, so a re-theme would have moved every
+ * component except these four charts.
+ *
+ * Read through `useToken` rather than importing hexes, so a theme change flows through.
+ */
+function useChartColors() {
+  const { token } = theme.useToken();
+  return {
+    primary: token.colorPrimary,
+    success: token.colorSuccess,
+    warning: token.colorWarning,
+    purple: token.colorInfo,
+  } as const;
+}
 
 export function Reports({ className = '', hasMapsKey = true }: IProps) {
+  const CHART_COLORS = useChartColors();
   const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
   const {
@@ -181,10 +202,31 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
         />
       )}
 
-      {/* Loading */}
+      {/* Loading. Skeletons rather than a spinner: antd's data-format spec asks for them, and
+          they hold the page's shape so the content does not jump in when it arrives. */}
       {loading && (
-        <div className="flex items-center gap-2 text-sm text-neutral-500">
-          <Spin size="small" /> Loading report data...
+        <div className="flex flex-col gap-4">
+          <Row gutter={[16, 16]}>
+            {[0, 1, 2, 3].map((i) => (
+              <Col key={i} xs={24} sm={6}>
+                <Card>
+                  <Skeleton active paragraph={{ rows: 1 }} title={{ width: '60%' }} />
+                </Card>
+              </Col>
+            ))}
+          </Row>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} lg={12}>
+              <Card>
+                <Skeleton active paragraph={{ rows: 6 }} />
+              </Card>
+            </Col>
+            <Col xs={24} lg={12}>
+              <Card>
+                <Skeleton active paragraph={{ rows: 6 }} />
+              </Card>
+            </Col>
+          </Row>
         </div>
       )}
 
@@ -243,7 +285,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                       label: { autoRotate: true, formatter: formatBucketLabel },
                     }}
                     yAxis={{ title: { text: 'Interactions' } }}
-                    color={CHART_COLORS.primary}
+                    style={{ fill: CHART_COLORS.primary }}
                   />
                 </ChartCard>
               </Col>
@@ -261,7 +303,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                       label: { autoRotate: true, formatter: formatBucketLabel },
                     }}
                     yAxis={{ title: { text: 'Clients' } }}
-                    color="#6A1B9A"
+                    style={{ fill: CHART_COLORS.purple }}
                   />
                 </ChartCard>
               </Col>
@@ -279,7 +321,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                       label: { autoRotate: true, style: { fontSize: 11 } },
                     }}
                     yAxis={{ title: { text: 'Count' } }}
-                    color={CHART_COLORS.primary}
+                    style={{ fill: CHART_COLORS.primary }}
                   />
                 </ChartCard>
               </Col>
@@ -308,6 +350,8 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                       data={summary.notesByPurpose}
                       angleField="count"
                       colorField="name"
+                      // Multi-series: the categorical palette is the right answer here, and
+                      // `style.fill` would flatten every slice to one colour.
                       height={300}
                       radius={0.8}
                       innerRadius={0.5}
@@ -331,7 +375,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                       label: { autoRotate: true, style: { fontSize: 10 } },
                     }}
                     yAxis={{ title: { text: 'Count' } }}
-                    color={CHART_COLORS.success}
+                    style={{ fill: CHART_COLORS.success }}
                   />
                 </ChartCard>
               </Col>
@@ -349,7 +393,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                       label: { autoRotate: true, style: { fontSize: 10 } },
                     }}
                     yAxis={{ title: { text: 'Count' } }}
-                    color={CHART_COLORS.warning}
+                    style={{ fill: CHART_COLORS.warning }}
                   />
                 </ChartCard>
               </Col>

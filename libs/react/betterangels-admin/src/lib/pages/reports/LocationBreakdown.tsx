@@ -505,6 +505,11 @@ export function LocationBreakdown({
             }
             columns={columns}
             dataSource={shown}
+            // The table owns its own loading state rather than the page swapping in a
+            // spinner: replacing the content unmounts `RegionMap`, which tears down and
+            // rebuilds the Google map and collapses the page height, so the reader's scroll
+            // position jumps. `rowsLoading` also drives the inline indicator above.
+            loading={rowsLoading}
             pagination={{ pageSize: 10, hideOnSinglePage: true }}
           />
         </>

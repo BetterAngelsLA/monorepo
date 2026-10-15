@@ -175,17 +175,51 @@ function buildHierarchy(points: InteractionPoint[]): Map<number, Node[]> {
   return byLevel;
 }
 
-/** Mark colour: one hue so the map reads as a single quantity, warm against the tiles. */
-const MARK_FILL = '#C2185B';
-const MARK_STROKE = '#7B0F3A';
+/** Parse `#rrggbb` or `rgb(r,g,b)`; antd tokens come as either. */
+function parseColor(color: string): [number, number, number] {
+  const hex = color.trim().match(/^#([0-9a-f]{6})$/i);
+  if (hex) {
+    const n = parseInt(hex[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const rgb = color.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+  if (rgb) {
+    return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+  }
+  return [128, 128, 128];
+}
+
+/** A token with an alpha applied, whether it arrives as hex or as `rgb()`. */
+function withAlpha(color: string, alpha: number): string {
+  const [r, g, b] = parseColor(color);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/**
+ * Default mark colours, overridden by the caller with design-system tokens.
+ *
+ * One hue, so the map reads as a single quantity rather than categories, and warm against
+ * the basemap's greens and blues. `#C2185B` was a Material pink chosen by eye; `RegionMap`
+ * now supplies antd's error red instead, which is the palette's warm accent.
+ */
+const DEFAULT_MARK_FILL = '#C2185B';
+const DEFAULT_MARK_STROKE = '#7B0F3A';
 
 type PointLayerProps = {
   points: InteractionPoint[];
   /** Radius of a single point, in pixels. Clusters grow from here. */
   radius?: number;
+  /** Mark colours, from the design system. */
+  markFill?: string;
+  markStroke?: string;
 };
 
-export function PointLayer({ points, radius = 5 }: PointLayerProps) {
+export function PointLayer({
+  points,
+  radius = 5,
+  markFill = DEFAULT_MARK_FILL,
+  markStroke = DEFAULT_MARK_STROKE,
+}: PointLayerProps) {
   const map = useMap();
   const pointsRef = useRef<InteractionPoint[]>(points);
   const drawRef = useRef<(() => void) | null>(null);
@@ -294,9 +328,9 @@ export function PointLayer({ points, radius = 5 }: PointLayerProps) {
 
         ctx.beginPath();
         ctx.arc(pixel.x, pixel.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = cluster.count === 1 ? MARK_FILL : 'rgba(194,24,91,0.55)';
+        ctx.fillStyle = cluster.count === 1 ? markFill : withAlpha(markFill, 0.55);
         ctx.fill();
-        ctx.strokeStyle = MARK_STROKE;
+        ctx.strokeStyle = markStroke;
         ctx.stroke();
 
         if (cluster.count > 1 && r >= 11) {
@@ -317,7 +351,7 @@ export function PointLayer({ points, radius = 5 }: PointLayerProps) {
       drawRef.current = null;
       canvas.remove();
     };
-  }, [map, radius]);
+  }, [map, radius, markFill, markStroke]);
 
   return null;
 }
