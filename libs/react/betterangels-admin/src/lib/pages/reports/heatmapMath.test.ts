@@ -79,6 +79,13 @@ describe('weightFor', () => {
 });
 
 describe('computeReferencePeaks', () => {
+
+  // Every test here runs the real convolution over a few thousand points, and THE BOUND
+  // reimplements the draw's own accumulation to check the reference against it. Seconds of
+  // honest arithmetic, not a hang -- vitest's 5s default is a hang detector, and a shared CI
+  // runner is several times slower than a laptop. Only the wall clock is relaxed; every
+  // assertion is unchanged.
+  const COMPUTE_BUDGET_MS = 30_000;
   const points = makePoints(1500);
 
   it('returns a peak for every sampled zoom level it was asked for', () => {
@@ -86,7 +93,7 @@ describe('computeReferencePeaks', () => {
     for (const zoom of [6, 8, 10, 12]) {
       expect(peaks.get(zoom)).toBeGreaterThan(0);
     }
-  });
+  }, COMPUTE_BUDGET_MS);
 
   it('fills the gaps between sampled levels', () => {
     // The caller samples every second level for cost; the levels between must still be
@@ -95,7 +102,7 @@ describe('computeReferencePeaks', () => {
     for (const zoom of [6, 7, 8, 9, 10]) {
       expect(peaks.has(zoom)).toBe(true);
     }
-  });
+  }, COMPUTE_BUDGET_MS);
 
   it('returns nothing for an empty dataset rather than a zero scale', () => {
     // A zero reference would make every pixel the top of the ramp.
@@ -127,7 +134,7 @@ describe('computeReferencePeaks', () => {
       ) as number;
       expect(after / before).toBeLessThan(1.01);
     }
-  });
+  }, COMPUTE_BUDGET_MS);
 
   it('THE BOUND: the reference equals the field the draw actually produces', () => {
     // The reference is what the ramp is normalised against, so it must not be *below* any
@@ -175,7 +182,7 @@ describe('computeReferencePeaks', () => {
 
       expect(reference).toBeCloseTo(peak, 6);
     }
-  });
+  }, COMPUTE_BUDGET_MS);
 
   it('grows when density actually increases, so the ramp is not flat', () => {
     // The counterpart to the invariant above: making the busy area busier *must* move the
@@ -185,7 +192,7 @@ describe('computeReferencePeaks', () => {
     const sparseRef = computeReferencePeaks(sparse, [11]).get(11) as number;
     const denseRef = computeReferencePeaks(dense, [11]).get(11) as number;
     expect(denseRef).toBeGreaterThanOrEqual(sparseRef);
-  });
+  }, COMPUTE_BUDGET_MS);
 });
 
 describe('rampColor', () => {
