@@ -139,7 +139,10 @@ class AuditActionData:
     summary: str
     events: list[AuditEventData] = field(default_factory=list)
     field_changes: dict[str, Any] = field(default_factory=dict)
-    order: int = 0
+    # Total-order tie-break for the Python re-sort, mirroring the SQL page order
+    # (``pgh_id`` then the action key; see ``_action_order``). It is a string so
+    # both sorts share one comparison.
+    order: str = ""
 
 
 @dataclass(frozen=True)
@@ -237,6 +240,21 @@ def _display_field_name(field_name: str, model_field: Any) -> str:
         return field_name
     verbose_name = getattr(model_field, "verbose_name", None)
     return str(verbose_name) if verbose_name else field_name
+
+
+def _pk_attname(model_label: str) -> str | None:
+    """The tracked model's primary-key attname, or ``None`` if unresolvable."""
+    if model_label in _PK_ATTNAME_CACHE:
+        return _PK_ATTNAME_CACHE[model_label]
+    try:
+        attname: str | None = apps.get_model(model_label)._meta.pk.attname
+    except LookupError:
+        attname = None
+    _PK_ATTNAME_CACHE[model_label] = attname
+    return attname
+
+
+_PK_ATTNAME_CACHE: dict[str, str | None] = {}
 
 
 def _model_verbose_name(model_label: str) -> str:
@@ -353,17 +371,23 @@ def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
     def render(field_name: str, value: Any) -> Any:
         return _render_value(field_name, value, fk_fields, fields, resolver)
 
+    # The pk is present in ``pgh_data`` for insert/remove but can never change
+    # (the UPDATE branch renders ``pgh_diff``, which never contains it), so it is
+    # not a "change". Drop it so a create does not render ``ID: [None, 7]``.
+    pk_attname = _pk_attname(obj_model)
+    hidden = _MECHANICAL_FIELDS | ({pk_attname} if pk_attname else set())
+
     if label.endswith(".add"):
         return {
             _display_field_name(f, fields.get(f)): [None, render(f, v)]
             for f, v in data.items()
-            if v is not None and f not in _MECHANICAL_FIELDS
+            if v is not None and f not in hidden
         }
     if label.endswith(".remove"):
         return {
             _display_field_name(f, fields.get(f)): [render(f, v), None]
             for f, v in data.items()
-            if v is not None and f not in _MECHANICAL_FIELDS
+            if v is not None and f not in hidden
         }
 
     diff = row.pgh_diff or {}
@@ -431,6 +455,21 @@ def _action_key_expr() -> Any:
     )
 
 
+def _action_order(rows: list[Any]) -> str:
+    """The action's total-order key, shared by the SQL page query and the Python
+    re-sort (§10).
+
+    ``pgh_id`` is a per-table ``AutoField``, so it is only chronological *within*
+    an event table; two actions in different tables can tie on it, and they always
+    tie on ``pgh_created_at`` when they are written in one transaction (``NOW()``
+    is constant). Appending the (unique) action key makes the order total, so no
+    action can be skipped or duplicated across pages. Fixed-width zero padding
+    keeps its lexicographic order equal to numeric order.
+    """
+    last_id = max((row.pgh_id for row in rows), default=0)
+    return f"{last_id:012d}:{rows[0].action_key}"
+
+
 def object_audit_log(
     *,
     obj: Any,
@@ -459,11 +498,18 @@ def object_audit_log(
     key_expr = _action_key_expr()
 
     # 1) Action keys for the requested page, grouped and limited in SQL.
+    #    The keys are ``pgh_created_at`` (newest first), then ``pgh_id``, then the
+    #    unique action key. ``pgh_id`` alone is not a total order -- it is a
+    #    per-table AutoField, so two action keys in different event tables can tie
+    #    on it, and they always tie on ``pgh_created_at`` when written in one
+    #    transaction (``NOW()`` is constant). Without the final key an action could
+    #    be skipped or repeated across pages; the Python re-sort uses the same
+    #    tuple (see ``_action_order``).
     key_rows = (
         base.annotate(action_key=key_expr)
         .values("action_key")
         .annotate(last_event=Max("pgh_created_at"), last_id=Max("pgh_id"))
-        .order_by("-last_event", "-last_id")[offset : offset + limit]
+        .order_by("-last_event", "-last_id", "-action_key")[offset : offset + limit]
     )
     page_keys = [row["action_key"] for row in key_rows]
     if not page_keys:
@@ -596,5 +642,5 @@ def _build_action(
         summary=f"{actor} modified {target_type.lower()} {target_id}",
         events=events,
         field_changes=action_changes,
-        order=max((row.pgh_id for row in rows), default=0),
+        order=_action_order(rows),
     )

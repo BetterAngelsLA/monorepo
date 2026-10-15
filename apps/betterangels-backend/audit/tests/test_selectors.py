@@ -1,6 +1,7 @@
 """Tests for the object audit-log selector (ADR 0004 §20)."""
 
 import re
+from types import SimpleNamespace
 from typing import Any
 
 from django.db import connection
@@ -13,7 +14,9 @@ from accounts.models import User
 from audit.models import AuditWriteEvent
 from audit.selectors import (
     _EXCLUDED_EVENT_MODELS,
+    _LabelResolver,
     _SCOPED_EXCLUSIONS,
+    _scalar_changes,
     LABEL_FIELD,
     MAX_LIMIT,
     THROUGH_EVENT_MAP,
@@ -199,6 +202,34 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertNotIn("created_at", add_action.field_changes)
         self.assertNotIn("updated_at", add_action.field_changes)
 
+    def test_insert_omits_the_primary_key(self) -> None:
+        """The pk is in ``pgh_data`` but can never change, so it is not a change (§13).
+
+        The UPDATE branch renders ``pgh_diff``, which never contains it; without
+        this the insert branch alone would show ``id: [None, 7]``.
+        """
+        with audit_context(user=self.user):
+            reservation = Reservation.objects.create(bed=self.bed, status=ReservationStatusChoices.CANCELLED)
+
+        add_action = _action_with(object_audit_log(obj=reservation, target_type="RESERVATION"), "Cancelled")
+        self.assertIsNotNone(add_action)
+        assert add_action is not None
+        self.assertNotIn("id", add_action.field_changes)
+
+    def test_remove_rendering_omits_the_primary_key(self) -> None:
+        """The remove branch drops the pk as well (§13)."""
+        row = SimpleNamespace(
+            pgh_label="bed.remove",
+            pgh_obj_model="shelters.Bed",
+            pgh_data={"id": 7, "name": "Bed A", "created_at": None, "updated_at": None},
+            pgh_diff=None,
+        )
+
+        changes = _scalar_changes(row, _LabelResolver())
+
+        self.assertEqual(changes["name"], ["Bed A", None])
+        self.assertNotIn("id", changes)
+
     def test_fk_update_resolves_to_related_display_label(self) -> None:
         with audit_context(user=self.user):
             self.bed.room = self.room
@@ -310,6 +341,30 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
         self.assertEqual(len(page), 1)
         self.assertEqual(page[0].field_changes["name"], ["Page One", "Page Two"])
+
+    def test_pagination_is_deterministic_and_newest_first_when_timestamps_tie(self) -> None:
+        """Paging must not skip or repeat an action, even with tied timestamps (§10).
+
+        Every event in one test transaction shares ``NOW()``, so the action
+        timestamps tie and only the tie-break orders them. A tie-break that is not
+        a total, chronological order (e.g. per-table ``pgh_id``, or a lexicographic
+        context id where ``"9"`` sorts after ``"10"``) can drop or duplicate an
+        action across pages.
+        """
+        for name in ("Tie One", "Tie Two", "Tie Three"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+
+        seen: list[Any] = []
+        for offset in range(3):
+            seen.extend(object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, offset=offset))
+
+        # Exactly one action per page, none repeated, none missing...
+        self.assertEqual(len(seen), 3)
+        self.assertEqual(len({action.order for action in seen}), 3)
+        # ...and ordered newest-first, so the tie-break is chronological too.
+        self.assertEqual([action.field_changes["name"][1] for action in seen], ["Tie Three", "Tie Two", "Tie One"])
 
     def test_pagination_groups_and_limits_in_sql(self) -> None:
         for name in ("Alpha", "Beta", "Gamma"):
@@ -454,7 +509,11 @@ class ObjectAuditLogSelectorTestCase(TestCase):
     # this asserts the recorded ceiling rather than a bound the design cannot
     # meet. The target-scoped exclusions filter rows, not UNION branches, so
     # they barely change the statement size.
-    _STATEMENT_CEILINGS = {"SHELTER": 78_000, "BED": 21_000, "ROOM": 21_000, "RESERVATION": 7_500}
+    #
+    # Recorded from the interpolated SQL the selector actually issues (the max
+    # over its grouped key query and page query, measured by the test below),
+    # rounded up with ~5% headroom.
+    _STATEMENT_CEILINGS = {"SHELTER": 76_500, "BED": 20_600, "ROOM": 20_800, "RESERVATION": 7_150}
 
     def test_selector_issues_no_server_side_cursor(self) -> None:
         """``.iterator()`` would emit ``DECLARE``, which RDS Proxy pins (§10)."""
@@ -475,16 +534,36 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertIsNone(re.search(r"\bDECLARE\b", sql, re.IGNORECASE))
 
     def test_selector_statement_stays_within_the_recorded_ceiling(self) -> None:
-        """Guard the aggregate statement against growth (see the ADR §10 note)."""
+        """Guard the aggregate statement against growth (see the ADR §10 note).
+
+        Measured on the statements the selector actually issues — its grouped key
+        query plus the page query — not the bare ``references()`` queryset. The
+        annotate/``values``/``order_by`` slice is what ships, and its per-model
+        branch count is what grows. Sizes are the interpolated SQL captured at
+        run time (the same basis the ceilings were recorded from).
+        """
+        # A non-seed write, so the selector takes its full path (grouped key query
+        # plus the page query) instead of returning early on a seed-only history.
+        with audit_context(user=self.user):
+            self.shelter.name = "Ceiling Shelter"
+            self.shelter.save()
+            self.bed.name = "Ceiling Bed"
+            self.bed.save()
+            self.room.name = "Ceiling Room"
+            self.room.save()
+            self.reservation.notes = "Ceiling reservation"
+            self.reservation.save()
+
         for target_type, obj in (
             ("SHELTER", self.shelter),
             ("BED", self.bed),
             ("ROOM", self.room),
             ("RESERVATION", self.reservation),
         ):
-            excluded = (*_EXCLUDED_EVENT_MODELS, *_SCOPED_EXCLUSIONS.get(target_type, ()))
-            queryset = AuditWriteEvent.objects.references([obj]).exclude(pgh_model__in=excluded).exclude(label="seed")
-            size = len(str(queryset.query))
+            with CaptureQueriesContext(connection) as captured:
+                object_audit_log(obj=obj, target_type=target_type, limit=1, offset=0)
+
+            size = max((len(query["sql"]) for query in captured.captured_queries), default=0)
 
             self.assertLessEqual(size, self._STATEMENT_CEILINGS[target_type], f"{target_type} statement grew to {size}")
 
