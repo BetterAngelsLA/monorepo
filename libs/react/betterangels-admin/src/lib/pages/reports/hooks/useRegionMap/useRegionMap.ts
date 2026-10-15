@@ -1,6 +1,7 @@
 import { useQuery } from '@apollo/client/react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { useMemo } from 'react';
+import type { Feature } from 'geojson';
 import {
   RegionsForMapDocument,
   type RegionsForMapQuery,
@@ -48,13 +49,40 @@ export function useRegionMap({ dimension, codes }: UseRegionMapArgs) {
     },
   });
 
-  const regions = useMemo(
-    () =>
-      (data?.regions ?? []).filter(
-        (region) => (region.geometry ?? '').length > 0,
-      ),
-    [data],
-  );
+  /**
+   * Ready-to-draw GeoJSON Features, parsed **once** here rather than per render.
+   *
+   * The API sends `geometry` as a GeoJSON string (a payload decision — the simplified
+   * polygons are 817 kB against 21 MB unsimplified; see the backend's `regions/schema.py`).
+   * Parsing is cheap individually and wasteful collectively, so it happens once per query
+   * result and the renderer gets objects.
+   *
+   * `count` is not set here — the caller joins it from the rollup, because the two queries
+   * are deliberately separate: the boundaries are the grouping's geography, and drawing only
+   * the regions that happen to have interactions would silently drop the empty ones.
+   */
+  const regions = useMemo<Feature[]>(() => {
+    const features: Feature[] = [];
+    for (const region of data?.regions ?? []) {
+      const geometry = (region.geometry ?? '').trim();
+      if (!geometry) {
+        continue;
+      }
+      try {
+        features.push({
+          type: 'Feature',
+          properties: { code: region.code, name: region.name, count: 0 },
+          geometry: JSON.parse(geometry) as Feature['geometry'],
+        });
+      } catch {
+        // One malformed polygon must not blank the whole overlay.
+        console.warn(
+          `[useRegionMap] could not parse geometry for ${region.code}`,
+        );
+      }
+    }
+    return features;
+  }, [data]);
 
   return { regions, loading, error };
 }

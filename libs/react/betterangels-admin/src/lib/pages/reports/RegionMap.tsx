@@ -1,10 +1,14 @@
 /// <reference types="google.maps" />
-import { Map as GoogleMap, useMap } from '@vis.gl/react-google-maps';
-import { HEATMAP_RAMP_CSS, HeatmapLayerWithScale } from './HeatmapLayer';
-import { PointLayer } from './PointLayer';
-import { mixRgb } from './mapColors';
+import { Map as GoogleMap } from '@vis.gl/react-google-maps';
+import {
+  HEATMAP_RAMP_CSS,
+  SAMPLED_LEVELS,
+  computeReferencePeaks,
+  type HeatPoint,
+} from './heatmapMath';
+import { DeckMapLayers } from './DeckMapLayers';
 import { Alert, theme } from 'antd';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
@@ -12,7 +16,6 @@ import {
   useRegionMap,
   type InteractionPointType,
   type RegionCountType,
-  type RegionGeometryType,
 } from './hooks';
 
 /**
@@ -92,26 +95,6 @@ const DATA_FOCUSED_STYLES: google.maps.MapTypeStyle[] = [
 const LA_ZOOM = 9;
 
 /**
- * `google.maps.Data.Feature` properties are typed `unknown`, so the two readers
- * narrow them instead of casting at every call site.
- */
-function featureNumber(
-  feature: google.maps.Data.Feature,
-  name: string,
-): number {
-  const value = feature.getProperty(name);
-  return typeof value === 'number' ? value : 0;
-}
-
-function featureString(
-  feature: google.maps.Data.Feature,
-  name: string,
-): string {
-  const value = feature.getProperty(name);
-  return typeof value === 'string' ? value : '';
-}
-
-/**
  * Choropleth colours from the design system.
  *
  * Read through `useToken` rather than importing hexes, so a theme change flows through — the
@@ -133,40 +116,25 @@ function useMapColors() {
 }
 
 /**
- * Choropleth ramp: low counts pale, high counts saturated. Deliberately a single hue — this
- * is one series (interaction count), and a multi-hue scale would imply categories that do not
- * exist. sqrt keeps the mid-range visible instead of letting one dominant district flatten
- * everything else to near-white.
- *
- * Both ends come from the design system: the pale end is antd's secondary fill and the
- * saturated end is its heading text colour. They were `#DCE3EA` and `#1B3A5C` — Material
- * values — which meant the choropleth ignored the theme entirely.
- */
-function shade(
-  empty: string,
-  full: string,
-  max: number,
-  count: number,
-): string {
-  // `mixRgb` is the same linear blend the heatmap's ramp does; only the *input* mapping
-  // differs (sqrt over a count, rather than an already-normalised intensity), so that part
-  // stays here and the colour maths lives in one place.
-  const t = max <= 0 ? 0 : Math.sqrt(Math.max(0, count) / max);
-  return mixRgb(empty, full, t);
-}
-
-/**
- * Fetches the grouping's boundaries and draws them.
+ * Resolves the grouping's boundaries and hands everything to deck.gl.
  *
  * Split out so the query can require a dimension — the API refuses a code without one,
  * because a code is ambiguous across dimensions — without every call site asserting it. This
  * only mounts when a grouping is chosen, so the requirement is carried by the component tree.
+ *
+ * The two queries are joined here, on `code`: the rollup says how many interactions each
+ * region has, and the geometry says where the regions are. Driving the geometry from the
+ * rollup would draw only the regions that happen to have data and silently lose the rest.
  */
 function RegionOverlay({
   dimension,
   rows,
   focusCodes,
   overlay,
+  points,
+  view,
+  reference,
+  onZoomChange,
 }: {
   dimension: RegionDimension;
   rows: RegionCountType[];
@@ -176,8 +144,11 @@ function RegionOverlay({
     fullFill: string;
     stroke: string;
     markFill: string;
-    markStroke: string;
   };
+  points: HeatPoint[];
+  view: MapView;
+  reference: Map<number, number> | null;
+  onZoomChange: (zoom: number) => void;
 }) {
   const { regions, loading, error } = useRegionMap({
     dimension,
@@ -190,6 +161,37 @@ function RegionOverlay({
     }
   }, [error]);
 
+  const counts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of rows) {
+      if (!row.isUnassigned) {
+        map.set(row.code, row.count);
+      }
+    }
+    return map;
+  }, [rows]);
+
+  const regionFeatures = useMemo(
+    () =>
+      regions.map((feature) => ({
+        ...feature,
+        properties: {
+          ...feature.properties,
+          count: counts.get(String(feature.properties?.code ?? '')) ?? 0,
+        },
+      })),
+    [regions, counts],
+  );
+
+  const maxCount = useMemo(
+    () =>
+      rows.reduce(
+        (max, row) => (row.isUnassigned ? max : Math.max(max, row.count)),
+        0,
+      ),
+    [rows],
+  );
+
   return (
     <>
       {loading && (
@@ -197,11 +199,14 @@ function RegionOverlay({
           loading boundaries...
         </div>
       )}
-      <RegionLayer
-        rows={rows}
-        regions={regions}
-        focusCodes={focusCodes}
+      <DeckMapLayers
+        points={points}
+        view={view}
+        regionFeatures={regionFeatures}
+        maxCount={maxCount}
         overlay={overlay}
+        reference={reference}
+        onZoomChange={onZoomChange}
       />
     </>
   );
@@ -209,167 +214,6 @@ function RegionOverlay({
 
 /** The map's views. Heatmap is the default; see `RegionMap` below. */
 export type MapView = 'heatmap' | 'clusters';
-
-/**
- * Draws the choropleth. Must be a child of `<GoogleMap>`, which is what provides
- * the map context that `useMap()` reads.
- *
- * Uses the map's built-in Data layer (`map.data`) rather than one `<Polygon>` per
- * region, for two reasons:
- *
- * 1. The API returns GeoJSON, and `addGeoJson` consumes it directly.
- * 2. `google.maps.Data` handles **MultiPolygon** correctly. Regions with islands or
- *    enclaves (Long Beach, Santa Catalina, the unincorporated pockets) are
- *    multipolygons, and a naive one-polygon-per-feature render silently drops every
- *    ring but the first.
- *
- * `map.data` also sidesteps `useMapsLibrary`: Data is part of the core Maps API, not
- * a separately-loaded library, so there is no load-order race to wait on.
- */
-function RegionLayer({
-  rows,
-  regions,
-  focusCodes,
-  overlay,
-}: {
-  /** Colours for the choropleth and the cluster marks, from the design system. */
-  overlay: {
-    emptyFill: string;
-    fullFill: string;
-    stroke: string;
-    markFill: string;
-    markStroke: string;
-  };
-  rows: RegionCountType[];
-  regions: RegionGeometryType[];
-  /**
-   * Region codes to restrict to. Empty means every region of the dimension, so the
-   * grouping's full geography is shown; a drill-down narrows it to those regions.
-   */
-  focusCodes: string[];
-}) {
-  const map = useMap();
-  // One automatic fit per mount; after that the viewport belongs to the reader.
-  // `false` rather than a derived value: an argument to `useRef` is evaluated on every
-  // render, so deriving it here would recompute on each one and keep only the first.
-  const hasFittedRef = useRef(false);
-
-  const countsByCode = useMemo(() => {
-    const m = new Map<string, number>();
-    rows.forEach((r) => {
-      if (!r.isUnassigned) m.set(r.code, r.count);
-    });
-    return m;
-  }, [rows]);
-
-  const max = useMemo(
-    () =>
-      rows.reduce((acc, r) => {
-        if (r.isUnassigned) return acc;
-        return Math.max(acc, r.count);
-      }, 0),
-    [rows],
-  );
-
-  useEffect(() => {
-    if (!map || regions.length === 0) return;
-
-    // `map.data` is one shared layer per map. Clear it first so switching dimension
-    // does not stack the previous dimension's polygons underneath the new ones.
-    const layer = map.data;
-    layer.forEach((f: google.maps.Data.Feature) => layer.remove(f));
-
-    regions.forEach((region) => {
-      try {
-        layer.addGeoJson({
-          type: 'Feature',
-          properties: {
-            code: region.code,
-            name: region.name,
-            count: countsByCode.get(region.code) ?? 0,
-          },
-          geometry: JSON.parse(region.geometry),
-        });
-      } catch {
-        // One malformed polygon must not blank the whole map.
-        console.warn(`[RegionMap] could not parse geometry for ${region.code}`);
-      }
-    });
-
-    layer.setStyle((feature: google.maps.Data.Feature) => {
-      // Only region polygons live on the Data layer now; points are drawn on a canvas.
-      const count = featureNumber(feature, 'count');
-      // These are the grouping's boundaries, so they have to be readable *through* the
-      // heatmap — an earlier pass used 0.04-0.12 fill and 0.55 stroke, which was
-      // effectively invisible under a dense field and read as "the districts aren't
-      // drawn at all". The fill stays a light tint; the outline carries the shape.
-      return {
-        fillColor: shade(overlay.emptyFill, overlay.fullFill, max, count),
-        fillOpacity: count > 0 ? 0.18 : 0.06,
-        strokeColor: overlay.stroke,
-        strokeWeight: 1.4,
-        strokeOpacity: 0.85,
-      };
-    });
-
-    const onOver = (event: google.maps.Data.MouseEvent) => {
-      const name = featureString(event.feature, 'name');
-      const count = featureNumber(event.feature, 'count');
-      layer.overrideStyle(event.feature, { strokeWeight: 2, fillOpacity: 0.9 });
-      // A native tooltip: it follows the cursor and needs no info-window wiring.
-      map.getDiv().setAttribute('title', `${name}: ${count.toLocaleString()}`);
-    };
-    const onOut = (event: google.maps.Data.MouseEvent) => {
-      layer.revertStyle(event.feature);
-      map.getDiv().removeAttribute('title');
-    };
-
-    const overListener = layer.addListener('mouseover', onOver);
-    const outListener = layer.addListener('mouseout', onOut);
-
-    /**
-     * Frame a set of features, or everything when `codes` is empty.
-     *
-     * Fitting on a *selection* is right every time it changes — narrowing to two
-     * districts means the reader wants to look at those two. Fitting on the *whole*
-     * dimension is only right once: repeating it on every dimension change would reset
-     * the zoom the reader chose, and for a county-wide dimension such as SPA it zooms
-     * out far enough to make the map unreadable.
-     */
-    const frame = (codes: string[]) => {
-      const bounds = new google.maps.LatLngBounds();
-      layer.forEach((f: google.maps.Data.Feature) => {
-        if (codes.length > 0 && !codes.includes(featureString(f, 'code'))) {
-          return;
-        }
-        const featureBounds = new google.maps.LatLngBounds();
-        f.getGeometry()?.forEachLatLng((ll: google.maps.LatLng) =>
-          featureBounds.extend(ll),
-        );
-        if (!featureBounds.isEmpty()) bounds.union(featureBounds);
-      });
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, 48);
-      }
-    };
-
-    if (focusCodes.length > 0) {
-      frame(focusCodes);
-    } else if (!hasFittedRef.current) {
-      frame([]);
-      hasFittedRef.current = true;
-    }
-
-    return () => {
-      google.maps.event.removeListener(overListener);
-      google.maps.event.removeListener(outListener);
-      layer.forEach((f: google.maps.Data.Feature) => layer.remove(f));
-      map.getDiv().removeAttribute('title');
-    };
-  }, [map, regions, countsByCode, max, focusCodes, overlay]);
-
-  return null;
-}
 
 type RegionMapProps = {
   /** Absent when the report is not grouped by geography; then no polygons are drawn. */
@@ -422,13 +266,43 @@ export function RegionMap({
 }: RegionMapProps) {
   // Heatmap first: density over an area is the question this page is usually asked, and
   // the choropleth is the same data once you know where to look.
-  // What 100% means, in interactions. `reference / weight` is the number of interactions
-  // under the densest kernel, because a pixel's intensity is `count * weight`.
-  // Reported by the heatmap, which sits inside the map and can see the zoom. Nothing here
-  // needs to know how the scale is derived.
-  const [scale, setScale] = useState<{ zoom: number; count: number } | null>(
-    null,
-  );
+  //
+  // The colour scale's reference, computed here rather than inside the renderer because
+  // deck.gl's `colorDomain` needs it as a prop and the legend needs to state it. It is the
+  // per-zoom peak over the **whole dataset** — the property that stops the ramp swimming as
+  // you pan — and it is accumulated at weight 1, so the value at a zoom *is* the number of
+  // interactions under the densest kernel. That is what "100% = N interactions" claims.
+  //
+  // Asynchronous and off the first paint: it is exact and therefore not cheap (hundreds of
+  // ms on a full county-month), and blocking the map on it would be worse than drawing once
+  // with deck.gl's viewport default.
+  const [reference, setReference] = useState<Map<number, number> | null>(null);
+  const [zoom, setZoom] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (points.length === 0) {
+      setReference(null);
+      return;
+    }
+    let cancelled = false;
+    const handle = requestIdleCallback(() => {
+      if (!cancelled) {
+        setReference(computeReferencePeaks(points, SAMPLED_LEVELS));
+      }
+    });
+    return () => {
+      cancelled = true;
+      cancelIdleCallback(handle);
+    };
+  }, [points]);
+
+  const scale = useMemo(() => {
+    if (!reference || zoom === null) {
+      return null;
+    }
+    const count = reference.get(Math.round(zoom));
+    return count === undefined ? null : { zoom, count };
+  }, [reference, zoom]);
   const mapColors = useMapColors();
 
   const caption = useMemo(() => {
@@ -493,25 +367,32 @@ export function RegionMap({
           fullscreenControl={false}
           rotateControl={false}
         >
+          {/* deck.gl draws both the boundaries and the points, in one overlay. The
+              boundaries are the grouping's geography — all of them, including the ones
+              with no interactions — and the points layer draws only for the chosen view. */}
           {dimension !== undefined && (
             <RegionOverlay
               dimension={dimension}
               rows={rows}
               focusCodes={focusCodes}
               overlay={mapColors}
+              points={points}
+              view={view}
+              reference={reference}
+              onZoomChange={setZoom}
             />
           )}
-          {/* Both layers are always mounted. The overlay draws whichever regions the
-            grouping resolved to — none, when nothing did — rather than being a view of
-            its own, and the point layer draws only for the clusters view. */}
-          {view === 'heatmap' && (
-            <HeatmapLayerWithScale points={points} onScale={setScale} />
-          )}
-          {view === 'clusters' && (
-            <PointLayer
+          {dimension === undefined && points.length > 0 && (
+            // Ungrouped there are no boundaries to draw, but the field still is: the
+            // heatmap answers "where were the interactions" without a grouping.
+            <DeckMapLayers
               points={points}
-              markFill={mapColors.markFill}
-              markStroke={mapColors.markStroke}
+              view={view}
+              regionFeatures={[]}
+              maxCount={0}
+              overlay={mapColors}
+              reference={reference}
+              onZoomChange={setZoom}
             />
           )}
           {/* On the map rather than beside it: the ramp is meaningless without knowing it is
