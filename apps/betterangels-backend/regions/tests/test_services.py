@@ -1,9 +1,8 @@
 """Region-code interpretation (DEV-2570 / DEV-2604).
 
-`regionCodes` has three shapes and two of them are easy to conflate — an empty list
-means "no codes", not "no filter". These assert the interpretation directly, with no
-database, because it is a pure function and the expensive version of these tests is
-already covered end-to-end in ``test_schema.py``.
+`regionCodes` has four shapes and several are easy to conflate — an empty list means
+"no codes", not "no filter". These assert the interpretation directly: it is a pure
+function, so no database is involved.
 """
 
 from __future__ import annotations
@@ -26,9 +25,9 @@ def box(coords: tuple[tuple[float, float], ...]) -> MultiPolygon:
     return MultiPolygon(Polygon(coords, srid=4326), srid=4326)
 
 
-# A ring with more vertices than SUBDIVIDE_VERTEX_THRESHOLD, so the subdivision branch
-# is genuinely exercised. A small ring is stored whole — which is why a first attempt at
-# this test asserted nothing: it was below the threshold and never hit the code path.
+# A ring with more vertices than SUBDIVIDE_VERTEX_THRESHOLD, so the subdivision branch is
+# genuinely exercised. A small ring is stored whole, so a fixture built from one asserts
+# nothing about subdivision however it is written.
 COMPLEX = tuple(
     (
         round(-118.24 + 0.05 * math.cos(2 * math.pi * i / 2400), 6),
@@ -72,42 +71,26 @@ class ParseRegionCodeFilterTestCase(SimpleTestCase):
             parsed.keep_unassigned,
             "naming regions is not a request for a whole-period no-location bucket",
         )
-        self.assertFalse(parsed.query_unassigned)
 
     def test_the_sentinel_alone_returns_only_unassigned(self) -> None:
         parsed = self._parse([UNASSIGNED])
         self.assertEqual(parsed.codes, [])
         self.assertTrue(parsed.unassigned_only)
         self.assertTrue(parsed.keep_unassigned)
-        self.assertFalse(parsed.query_unassigned, "no real codes, so there is no OR arm")
 
     def test_sentinel_with_real_codes_asks_for_both_arms(self) -> None:
         parsed = self._parse(["13", UNASSIGNED])
         self.assertEqual(parsed.codes, ["13"])
         self.assertFalse(parsed.unassigned_only)
         self.assertTrue(parsed.keep_unassigned)
-        self.assertTrue(parsed.query_unassigned, "the unassigned rows need their own OR arm here")
-
-    def test_the_two_unassigned_flags_are_not_the_same_flag(self) -> None:
-        """The bug this guards: folding them drops both buckets from an unfiltered rollup.
-
-        `region_counts` only needs the unassigned arm when real codes are *also* asked
-        for, while the result filter keeps unassigned rows whenever the rollup is
-        unfiltered or the sentinel was sent.
-        """
-        unfiltered = self._parse(None)
-        self.assertFalse(unfiltered.query_unassigned)
-        self.assertTrue(unfiltered.keep_unassigned)
 
 
 class BuildRegionPiecesTestCase(TestCase):
     """`build_region_pieces` writes with raw SQL, which bypasses the model layer.
 
     That matters for anything Django would otherwise fill in itself: `auto_now_add` and
-    `auto_now` never run on a hand-written INSERT, so a NOT NULL column added to the
-    model breaks this path while the model still looks fine. Nothing else caught it —
-    the importer is not exercised by the suite, and the first symptom was a failed
-    `import_regions` against a real database.
+    `auto_now` never run on a hand-written INSERT, so a NOT NULL column added to the model
+    breaks this path while the model still looks fine.
     """
 
     def test_it_writes_pieces_without_violating_not_null(self) -> None:
@@ -124,7 +107,7 @@ class BuildRegionPiecesTestCase(TestCase):
         self.assertGreater(RegionPiece.objects.count(), 1, "a heavy ring should be chopped")
 
     def test_every_region_ends_up_with_at_least_one_piece(self) -> None:
-        """A simple region gets one piece that is a copy, so the lookup has no branch."""
+        """Every region gets a piece, so the lookup finds it without the parent fallback."""
         Region.objects.create(kind=RegionKind.SPA, code="1", name="SPA 1", geom=box(SIMPLE))
         Region.objects.create(kind=RegionKind.SPA, code="2", name="SPA 2", geom=box(SIMPLE))
         build_region_pieces(kind=RegionKind.SPA.value)
@@ -133,7 +116,10 @@ class BuildRegionPiecesTestCase(TestCase):
             self.assertEqual(region.pieces.count(), 1, "a simple region is not chopped")
 
     def test_it_is_idempotent(self) -> None:
-        """DELETE-then-INSERT: a second run must not accumulate duplicate pieces."""
+        """DELETE-then-INSERT: a second run must not accumulate duplicate pieces.
+
+        A duplicated piece would join a note once per copy and inflate the count.
+        """
         Region.objects.create(kind=RegionKind.SPA, code="1", name="SPA 1", geom=box(SIMPLE))
         build_region_pieces(kind=RegionKind.SPA.value)
         first = RegionPiece.objects.count()

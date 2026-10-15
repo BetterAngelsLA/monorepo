@@ -34,7 +34,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from regions.models import Region, RegionKind
-from regions.services import build_region_pieces, ensure_location_regions
+from regions.services import build_region_pieces
 
 # Envelope for the guard that catches a silently-skipped reprojection. Padded
 # because LA County legitimately reaches latitude ~32.80 (Catalina and San
@@ -93,8 +93,8 @@ SOURCES: tuple[RegionSource, ...] = (
             # Both filters are load-bearing. FEAT_TYPE='Land' drops the breakwater,
             # water and pier pieces of the same city. CITY_TYPE='City' drops the 190
             # `Unincorporated` polygons: that is a legal *status* (the absence of a
-            # city), not a city, and loading it put a pseudo-city holding two-thirds
-            # of the county's land into every "top cities" rollup.
+            # city), not a city, and loading it would put a pseudo-city holding
+            # two-thirds of the county's land into every "top cities" rollup.
             #
             # "Not in a city" needs no dimension: a point falling in none of the 88
             # is unincorporated by definition, and deriving it stays correct when the
@@ -373,9 +373,8 @@ class Command(BaseCommand):
                     source_item_id=metadata["item_id"],
                     geom=geometry,
                     # `geom_display` is not set here: it is a generated column
-                    # (`Region.geom_display`), so the database derives it from `geom`.
-                    # Writing it was what made this importer responsible for keeping a
-                    # derived value in step; that responsibility is now Postgres's.
+                    # (`Region.geom_display`), so the database derives it from `geom` and
+                    # there is nothing for this importer to keep in step.
                 )
             )
 
@@ -407,13 +406,10 @@ class Command(BaseCommand):
             Region.objects.filter(kind=source.kind).delete()
             Region.objects.bulk_create(regions, batch_size=200)
             pieces = build_region_pieces(kind=source.kind)
-            # Boundaries just changed, so every stored location-to-region answer for
-            # this dimension is suspect. `force` clears and recomputes rather than
-            # trying to work out which ones moved.
-            assignments = ensure_location_regions(kind=source.kind, force=True)
 
+        # Nothing else to derive. The rollup reads `Region` and `RegionPiece` directly, so
+        # replacing the boundary and its pieces is the whole update.
         self.stdout.write(f"  pieces    : {pieces}")
-        self.stdout.write(f"  assigned  : {assignments} location(s)")
         return len(regions)
 
     @staticmethod

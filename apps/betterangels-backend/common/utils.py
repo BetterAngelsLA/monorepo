@@ -91,11 +91,10 @@ def day_end(day: date, tz: tzinfo) -> datetime:
 def aware_range(start_date: date, end_date: date, tz: tzinfo) -> tuple[datetime, datetime]:
     """Two **inclusive** calendar dates → a half-open ``[start, end)`` pair of instants.
 
-    The canonical form of a conversion that had been written out four times (``reports``,
-    ``regions``, and twice in ``shelters``) with three different spellings. Centralised
-    because getting it subtly wrong is invisible: an off-by-one-day bound still returns
-    rows, just the wrong ones, and the report's totals stop reconciling against its
-    buckets.
+    The one form of this conversion for every report that needs it — ``reports``,
+    ``regions`` and ``shelters``. Centralised because getting it subtly wrong is
+    invisible: an off-by-one-day bound still returns rows, just the wrong ones, and the
+    report's totals stop reconciling against its buckets.
 
     Three decisions worth keeping in one place:
 

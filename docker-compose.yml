@@ -11,7 +11,17 @@ services:
       - venv:/workspace/.venv
       - .bash_aliases:/home/betterangels/.bash_aliases
   db:
-    image: nickblah/postgis:17.5-bullseye-postgis-3.5
+    # Debian 13 (trixie) for GEOS >= 3.12 and PostGIS 3.6, i.e. dev/prod version parity:
+    # RDS for PostgreSQL has had GEOS 3.13 since 17.0. **Nothing in the codebase needs the
+    # newer version.** Of every PostGIS function the backend calls — `ST_Subdivide`,
+    # `ST_AsMVT`, `ST_AsMVTGeom`, `ST_TileEnvelope`, `ST_ReducePrecision`, `ST_Covers`,
+    # `ST_Multi`, `ST_NPoints`, `ST_Transform`, `ST_X`, `ST_Y` — all date from PostGIS 3.0 or
+    # earlier. `ST_CoverageSimplify` is the only one the old bullseye image could not run, and
+    # no code calls it: it was evaluated as an alternative for `geom_display` and not adopted.
+    # So this is a dev-environment chore riding along with the regions work rather than a
+    # requirement of it, and it reverts on its own without touching any of it. See
+    # docs/gis/spatial-implementation-audit.md for the parity table.
+    image: nickblah/postgis:17.11-trixie-postgis-3.6.4
     ports:
       - '5432:5432'
     environment:

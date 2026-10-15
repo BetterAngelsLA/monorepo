@@ -100,7 +100,7 @@ This matters because it makes the job much smaller than it looks.
 
 | | |
 |---|---|
-| Database | PostGIS already — `ENGINE = common.backends.iam_dbauth.postgis`; image `nickblah/postgis:17.5-bullseye-postgis-3.5` |
+| Database | PostGIS already — `ENGINE = common.backends.iam_dbauth.postgis`; image `nickblah/postgis:17.11-trixie-postgis-3.6.4` |
 | Django | 6.1, Python 3.14, psycopg 3.3.4. `django.contrib.gis` **already installed** |
 | GDAL | `gdal-bin` **already in the production image** (`Dockerfile:127`) |
 | Geometry today | Exactly **four point fields**, all `PointField(srid=4326, geography=True)` (`Shelter.geolocation`, `ClientProfile.residence_geolocation`, HMIS, `common.Location.point`). **No polygon field anywhere.** |
@@ -255,8 +255,8 @@ geography caveat that makes this non-obvious.
 ## 6. Sample code
 
 **`apps/betterangels-backend/regions/management/commands/import_regions.py`** — the shipped
-loader (the spike prototype that follows was `load_region_boundaries`, now deleted) — complete,
-runnable, and used to produce every result in this document. Core loop:
+loader. The listing below is the spike prototype, not the shipped command; it is complete,
+runnable, and produced every result in this document. Core loop:
 
 ```python
 from django.contrib.gis.gdal import DataSource
@@ -360,11 +360,12 @@ dataset compared with census tracts. Simplification is not optional at the next 
 
 ### 7.5 `postgis` extension — RESOLVED: already present, and we must not create it
 
-**RESOLVED: already present, and we must not create it.** That
-premise was wrong: `clients`, `common`, `hmis` and `shelters` each declare geometry fields in
-their `0001_initial` migrations, and those migrations cannot apply without the extension.
+**RESOLVED: already present, and we must not create it.** The spike's premise — that the
+extension had to be created alongside the boundary tables — was wrong: `clients`, `common`,
+`hmis` and `shelters` each declare geometry fields in their `0001_initial` migrations, and
+those migrations cannot apply without the extension.
 
-It was removed, and should not be re-added. PostGIS is **not** a trusted extension, so
+**Do not add a `CreateExtension`.** PostGIS is **not** a trusted extension, so
 `CREATE EXTENSION postgis` needs superuser or `rds_superuser` — which the app's IAM-minted
 role is not — and `CreateExtension`'s *reverse* migration compiles to
 `DROP EXTENSION IF EXISTS postgis`, which would try to drop it out from under four other
@@ -410,8 +411,9 @@ it and [admin-integration.md](admin-integration.md) for the UI.
    `source_attribution` (the publisher's own `copyrightText`) and `source_item_id`, so
    "is this authoritative, and how current is it?" is answerable in SQL. There is no
    separate `DatasetImport` table — the region rows carry it.
-4. **Scale.** `RegionPiece` subdivides boundaries and `LocationRegion` resolves each
-   location once, so a report is an indexed join rather than a spatial scan.
+4. **Scale.** `RegionPiece` subdivides the boundaries, and the rollup joins them against
+   an indexed `Location.point_geom` with the boundaries on the driving side. Subdivision is
+   the load-bearing part (45 ms against 4,950 ms); the point→region answer is *not* stored.
 5. **The report.** Shipped: `interactionsByRegion`, `regionDimensions`, `regions` and
    `interactionMap`, rendered by `LocationBreakdown` on the admin Reports page.
 6. **Map view.** Built on `@vis.gl/react-google-maps` and the `google.maps.Data` layer,

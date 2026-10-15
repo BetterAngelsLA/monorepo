@@ -3,8 +3,9 @@
 ``python.md`` puts business logic in services rather than in models, signals or GraphQL
 resolvers. Two kinds live here:
 
-* the **write** side of derived data — subdividing boundaries and resolving
-  locations to regions, each with an invariant stated next to it;
+* the **write** side — subdividing boundaries into the point-lookup geometry, with the
+  invariant stated next to it. This is the only derived data the app keeps, and it is
+  rebuilt from ``Region.geom`` by the importer rather than maintained incrementally;
 * the **report queries** — interpreting ``regionCodes`` and assembling a rollup or a
   map payload, which is a decision about what to count rather than a thin passthrough.
 """
@@ -20,7 +21,6 @@ from django.db import connection, transaction
 from .models import (
     SUBDIVIDE_MAX_VERTICES,
     SUBDIVIDE_VERTEX_THRESHOLD,
-    Region,
 )
 from .selectors import (
     interaction_points,
@@ -52,8 +52,8 @@ if TYPE_CHECKING:
 #    `ST_Multi` — so the `ST_Multi` wrapper is load-bearing, and Django has no wrapper for
 #    `ST_Multi` either.
 _BUILD_PIECES_SQL = """
-INSERT INTO regions_regionpiece (region_id, kind, geom, created_at, updated_at)
-SELECT r.id, r.kind,
+INSERT INTO regions_regionpiece (region_id, geom, created_at, updated_at)
+SELECT r.id,
        -- COALESCE is load-bearing: ST_Subdivide is set-returning and may yield
        -- ZERO rows for a degenerate ring, and with the LEFT JOIN's ON predicate
        -- true that produces a NULL-extended row which the CASE would select --
@@ -70,22 +70,29 @@ WHERE %(kind)s IS NULL OR r.kind = %(kind)s
 
 
 def build_region_pieces(*, kind: str | None = None) -> int:
-    """(Re)build the lookup geometry for one dimension, or all of them.
+    """(Re)build the point-lookup geometry for one dimension, or all of them.
 
     Called by ``import_regions`` after it replaces a dimension. Not called from
-    ``Region.save``: a bulk derived-data write does not belong behind a single-row
-    save. The assignment builder falls back to the full boundary for a region with
-    no pieces, so a region created outside the importer resolves slower rather than
-    being invisible.
+    ``Region.save``: a bulk derived-data write does not belong behind a single-row save.
 
-    DELETE-then-INSERT, not a bare INSERT. Calling an INSERT twice accumulates
-    duplicate pieces, and because the lookup dedupes on region the counts stay
-    correct — the damage is a bloating GiST index and a longer per-location sort,
-    with nothing to show for it.
+    A region with no piece is not invisible — ``regions_regionlookup`` falls back to its
+    parent boundary — but the importer writes at least one piece for every region, so that
+    arm only fires for a region created outside it.
+
+    DELETE-then-INSERT, and the DELETE is **load-bearing**. The rollup is a plain join
+    against the lookup view, so a duplicated piece would join a note twice and double-count
+    it. (It also bloats the GiST index.) Rebuilding a dimension is therefore safe to repeat,
+    which is what lets the importer replace a dimension and rebuild in one transaction.
     """
     with transaction.atomic(), connection.cursor() as cursor:
         if kind is not None:
-            cursor.execute("DELETE FROM regions_regionpiece WHERE kind = %(kind)s", {"kind": kind})
+            # Scoped through `region_id`, because the piece carries no kind of its own —
+            # reading it from `Region` is what keeps a rename from orphaning pieces.
+            cursor.execute(
+                "DELETE FROM regions_regionpiece WHERE region_id IN "
+                "(SELECT id FROM regions_region WHERE kind = %(kind)s)",
+                {"kind": kind},
+            )
         else:
             cursor.execute("DELETE FROM regions_regionpiece")
         cursor.execute(
@@ -99,116 +106,6 @@ def build_region_pieces(*, kind: str | None = None) -> int:
         return int(cursor.rowcount or 0)
 
 
-def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> int:
-    """Resolve locations to regions and store the answer.
-
-    The write side of the trade :class:`LocationRegion` describes: spatial work once, then an
-    ordinary indexed join.
-
-    **Incremental, and that is the point.** Without ``force`` the scan is guarded by
-    ``NOT EXISTS`` per kind, so only locations with no assignment are considered — cost tracks
-    *new* locations, not table size. Measured on 20k notes over 4,000 locations: ~450 ms once,
-    then a no-op. That is why the read path can call it and forget it, with no schedule.
-
-    A location that resolved to nothing is stored with a NULL ``region_id`` so it is not
-    re-resolved forever — the NULL is an answer, not a gap.
-
-    ``force`` clears the scope first, which is what the importer wants after replacing a
-    dimension: the boundaries moved, so every prior answer for that kind may be wrong.
-
-    Returns the number of assignments written.
-    """
-    # `Region` has no `Meta.ordering`, so `.distinct()` here de-duplicates on `kind` alone.
-    # When the model *did* carry an ordering it was appended to the SELECT list, making this
-    # de-duplicate on `(kind, code)` — 431 scopes instead of 6, measured at 260 s for a rebuild
-    # that should take seconds. The ordering was removed rather than worked around; the
-    # `.order_by()` that used to be required for correctness is no longer needed.
-    scopes = [kind] if kind else list(Region.objects.values_list("kind", flat=True).distinct())
-    written = 0
-
-    for scope in scopes:
-        with transaction.atomic(), connection.cursor() as cursor:
-            if force:
-                cursor.execute("DELETE FROM regions_locationregion WHERE kind = %s", [scope])
-            else:
-                # Nothing to resolve if this dimension has no regions loaded.
-                cursor.execute("SELECT 1 FROM regions_region WHERE kind = %s LIMIT 1", [scope])
-                if cursor.fetchone() is None:
-                    continue
-            # Raw SQL for the same reason as `_BUILD_PIECES_SQL`, plus a measured one.
-            #
-            # `ST_Covers(src.geom, l.point::geometry)` — **the cast is a PostGIS
-            # overload-resolution requirement, not a micro-optimisation.** `Location.point`
-            # is `geography=True` (common/models.py), `geography → geometry` is an explicit-only
-            # cast, and `geometry → geography` is implicit. So a mixed call silently resolves
-            # to the spheroidal geography overload, and `ST_X(geography)` does not exist at
-            # all. Do not remove the casts.
-            #
-            # The ORM form measures ~650x slower on real data (3,000 locations / 5,685
-            # pieces): `ST_Covers(p.geom, l.point::geometry)` gives
-            # `Index Scan using regions_regionpiece_geom, 0.30 ms`, while the ORM
-            # `geom__covers` orientation gives `Filter: st_covers((geom)::geography, …)`
-            # with 2,840 rows removed and 196.5 ms. The ORM also cannot carry the
-            # `UNION ALL` piece-less fallback below — `QuerySet.union()` requires matching
-            # `values()`, and the two arms select different columns.
-            cursor.execute(
-                """
-                INSERT INTO regions_locationregion (location_id, kind, region_id, created_at, updated_at)
-                SELECT l.id,
-                       %(kind)s,
-                       (
-                         -- Prefers the subdivided pieces, because that is what makes
-                         -- this fast on a real layer; falls back to the whole boundary
-                         -- when a region has no pieces (a region created directly by a
-                         -- test, the admin, or a script). Without the fallback the
-                         -- caller would silently get NULL — "in no region" — for a
-                         -- region that plainly contains the point.
-                         SELECT src.region_id
-                         FROM (
-                           SELECT p.region_id, p.geom
-                           FROM regions_regionpiece p
-                           WHERE p.kind = %(kind)s
-                           UNION ALL
-                           SELECT rr.id, rr.geom
-                           FROM regions_region rr
-                           WHERE rr.kind = %(kind)s
-                             AND NOT EXISTS (SELECT 1 FROM regions_regionpiece q WHERE q.region_id = rr.id)
-                         ) src
-                         JOIN regions_region rr ON rr.id = src.region_id
-                         WHERE ST_Covers(src.geom, l.point::geometry)
-                         -- Deterministic on a shared boundary. Ordered by `code`
-                         -- rather than id: ids follow creation order, so ordering on
-                         -- them re-attributes boundary coordinates whenever a
-                         -- dimension is re-imported.
-                         ORDER BY rr.code, rr.id
-                         -- LIMIT 1 is load-bearing, not tidiness. Without it the
-                         -- subquery returns one row per overlapping piece instead of
-                         -- the single winning region: measured 2,843 rows per location
-                         -- against the city layer, which both inflated `rowcount` to
-                         -- 431x the truth and made the whole assignment take minutes.
-                         LIMIT 1
-                       ),
-                       NOW(),
-                       NOW()
-                FROM common_location l
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM regions_locationregion lr
-                    WHERE lr.location_id = l.id AND lr.kind = %(kind)s
-                )
-                -- Belt and braces with the NOT EXISTS above: `unique_location_kind_assignment`
-                -- is the real guarantee, and this makes a concurrent or repeated fill a
-                -- no-op instead of an IntegrityError. This function is reachable from a
-                -- management command and from the importer, both of which can overlap with
-                -- each other or with a re-run.
-                ON CONFLICT ON CONSTRAINT unique_location_kind_assignment DO NOTHING
-                """,
-                {"kind": scope},
-            )
-            written += cursor.rowcount or 0
-
-    return written
-
-
 # ---------------------------------------------------------------------------
 # Report queries
 #
@@ -218,8 +115,8 @@ def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> 
 # ---------------------------------------------------------------------------
 
 
-# Sentinel code the client sends to ask for interactions that fall in no region. It is
-# not a real code: a location's `code` is NULL when it resolved to nothing.
+# Sentinel code the client sends to ask for interactions that fall in no region. It is not a
+# real code: a bucket standing for one comes back with a NULL ``code``.
 UNASSIGNED = "__unassigned__"
 
 
@@ -227,21 +124,25 @@ UNASSIGNED = "__unassigned__"
 class RegionCodeFilter:
     """``regionCodes`` interpreted for one dimension.
 
-    Three shapes, and conflating the first two is the bug this prevents:
+    Four shapes, and conflating any two of them is the failure to avoid:
 
-    * absent                                -> unfiltered
-    * ``["__unassigned__"]`` alone          -> only rows matching no region
+    * absent                                -> unfiltered, including unassigned and
+                                               locationless
+    * ``[]``                                -> **matches nothing**, including those buckets
+    * ``["__unassigned__"]`` alone          -> only rows matching no region, both causes
     * real codes (with or without sentinel) -> those regions, plus unassigned if asked
 
-    ``query_unassigned`` and ``keep_unassigned`` are separate on purpose: the query needs the
-    unassigned arm only when real codes are *also* requested, while the result filter keeps
-    unassigned rows whenever the rollup is unfiltered or the sentinel was sent. One flag for
-    both silently drops every unassigned bucket from an unfiltered rollup.
+    ``keep_unassigned`` is the single answer to "is the unassigned bucket in scope": it is
+    both what ``region_counts`` emits on and what the caller reads back.
+
+    ``include_locationless`` is separate again, because "notes with no location" is a third
+    bucket with a third reason to be in or out of scope. It is true for an absent list and
+    for the sentinel, and false for everything else — an empty list asks for no regions and
+    must not smuggle in a bucket a real code filter would have excluded.
     """
 
     codes: list[str] | None
     unassigned_only: bool
-    query_unassigned: bool
     keep_unassigned: bool
     include_locationless: bool
 
@@ -255,8 +156,13 @@ def parse_region_code_filter(region_codes: Sequence[str] | None) -> RegionCodeFi
         # must match nothing.
         codes=wanted if region_codes is not None else None,
         unassigned_only=sentinel_requested and not wanted,
-        query_unassigned=sentinel_requested and bool(wanted),
         keep_unassigned=region_codes is None or sentinel_requested,
+        # True for an absent list **and** for an explicitly empty one, deliberately, and the
+        # opposite reading from `keep_unassigned` directly above: a note with no location was
+        # never attributable to a region, so a filter asking for no regions still cannot
+        # exclude it. `test_an_empty_list_matches_nothing_rather_than_everything` pins the
+        # pair. It does make `[]` and `["does-not-exist"]` differ — the second matches nothing
+        # at all, this one reports the locationless total — so change it only with that test.
         include_locationless=(region_codes is None or sentinel_requested) or (not sentinel_requested and not wanted),
     )
 
@@ -283,7 +189,7 @@ def region_rollup(
         organization_id=organization_id,
         codes=codes.codes,
         unassigned_only=codes.unassigned_only,
-        include_unassigned=codes.query_unassigned,
+        include_unassigned=codes.keep_unassigned,
     )
 
     buckets = [
@@ -299,7 +205,6 @@ def region_rollup(
             unassigned_reason=(UnassignedReason.OUTSIDE_ALL_REGIONS if row["code"] is None else None),
         )
         for row in rows
-        if row["code"] is not None or codes.keep_unassigned
     ]
 
     if codes.include_locationless:

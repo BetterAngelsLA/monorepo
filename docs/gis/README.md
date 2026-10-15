@@ -9,6 +9,7 @@ supervisorial district, …).
 | Document | What it is |
 |---|---|
 | [dev-2604-shapefile-spike.md](dev-2604-shapefile-spike.md) | **The spike deliverable.** Picks one region, names the official source, and shows the verified load + query process end to end. Read this first. |
+| [spatial-implementation-audit.md](spatial-implementation-audit.md) | **What the GIS code does and where it falls short** — the documented-practice choices, plus two measured defects (broken shared edges between adjacent regions, and nothing enforcing geometry validity). Read before changing anything spatial. |
 | [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) | **The source inventory** — 283 services probed live, 266 real feature counts, 228 verified URLs, plus 33 supersessions and 19 dead/empty sources. Read this before importing anything. |
 
 ## The code
@@ -50,9 +51,19 @@ Tests: `apps/betterangels-backend/regions/tests/`
   outside city limits), so the API returns an explicit unassigned bucket — an inner join
   would silently drop them.
 - **The heavy layers need subdivided lookup geometry.** One city multipolygon has ~310k
-  vertices in one row, so the GiST index prunes nothing and the rollup took 10.6 s at
-  20k interactions. `RegionPiece` holds subdivided parts; the rollup joins that and runs
-  in 375 ms. See `dev-2604-shapefile-spike.md` §7a.
+  vertices in one row, so the GiST index prunes nothing: the rollup takes 4,950 ms at 20k
+  interactions against the whole boundaries. `RegionPiece` holds subdivided parts and the
+  rollup joins that: **45 ms**. See `dev-2604-shapefile-spike.md` §7a.
+- **The rollup is a live spatial join; nothing is precomputed.** It is written boundaries-first
+  so it probes the GiST index on `Location.point_geom`: 45 ms against 22 ms for a stored
+  crosswalk at 20k interactions, and **210 ms against 211 ms at 500k**. It tracks distinct
+  locations rather than interactions, so it converges on the stored figure as a report window
+  grows — and a stored answer would cost a derived table, a backfill, a management command and
+  a write on the read path.
+- **Adding `Location.point_geom` rewrites `common_location` once.** A stored generated column
+  cannot be added without a table rewrite, and it holds an `ACCESS EXCLUSIVE` lock for the
+  duration. Plan a window, or use the expression-index alternative noted in
+  `spatial-implementation-audit.md`.
 
 ## Region grouping (backend, shipped)
 
@@ -121,10 +132,14 @@ GraphQL: `interactionsByRegion(organizationId, dimension, startDate, endDate, re
 plus `regionDimensions` (what is loaded), `regions(dimension, codes)` (boundaries as
 GeoJSON for the map).
 
-**Authorization differs deliberately by query.** `interactionsByRegion` carries client data
-and requires `reports.view_reports` at the payload org. `regionDimensions` and `regions`
-require only an authenticated session: they serve public reference boundaries, identical for
-every tenant, and their SELECT touches no org- or client-scoped column.
+**Authorization differs deliberately by query.** `interactionMap` returns coordinates and
+carries two gates: `reports.view_reports` at the payload org, and the note read scope via
+`filter_for_user(..., [NotePermissions.VIEW])` — a pin is a note's location, so it inherits
+the note scope, and `ORG_ADMIN` holds the report permission with none of the note one.
+`interactionsByRegion` returns counts and carries `reports.view_reports` alone, the same
+authority as `reportSummary` beside it. `regionDimensions` and `regions` require only an
+authenticated session: they serve public reference boundaries, identical for every tenant,
+and their SELECT touches no org- or client-scoped column.
 
 ### Sources that look right but are not
 

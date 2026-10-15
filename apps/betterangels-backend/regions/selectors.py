@@ -1,8 +1,10 @@
-"""Read-only rollups over the stored region assignments (DEV-2570 / DEV-2604).
+"""Read-only rollups over the authoritative boundaries (DEV-2570 / DEV-2604).
 
-The rollup is an ordinary indexed ORM join against ``LocationRegion``. The spatial
-work — deciding which region covers a point — happens once on the write side, in
-``services``, not on every read.
+The rollup is a **live spatial join**: deciding which region covers a point happens on every
+read. That is affordable because the join is written in the one direction PostGIS can index —
+the subdivided boundaries drive, and the GiST index on ``Location.point_geom`` is probed.
+
+Nothing derived is stored, so a read writes nothing and there is nothing to keep fresh.
 """
 
 from __future__ import annotations
@@ -10,33 +12,118 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Iterable, Sequence
 
-from django.contrib.gis.db.models import GeometryField, MultiPolygonField
+from django.contrib.gis.db.models import MultiPolygonField
 from django.contrib.gis.db.models.functions import GeomOutputGeoFunc
 from django.contrib.gis.geos import MultiPolygon
-from django.db.models import Count, Exists, F, FloatField, Func, OuterRef, Q, QuerySet, Value
-from django.db.models.functions import Cast
+from django.db import connection
+from django.db.models import BooleanField, F, FloatField, Func, QuerySet, Value
+from django.db.models.expressions import RawSQL
 
+from common.models import Location
 from notes.models import Note
 
-from .models import LocationRegion, Region, RegionKind
+from .models import REGION_LOOKUP_VIEW, Region, RegionKind
+
+#: Table names interpolated into the raw SQL below. Taken from the models rather than
+#: written out, so a `db_table` override cannot leave the query pointing somewhere else.
+_NOTE_TABLE = Note._meta.db_table
+_LOCATION_TABLE = Location._meta.db_table
+_REGION_TABLE = Region._meta.db_table
 
 
 def org_notes_in_range(*, organization_id: int, start: datetime, end: datetime) -> QuerySet[Note]:
     """The organization's notes in a half-open instant range — every read's starting point.
 
     Deliberately one function so the org predicate has exactly one home. Both
-    client-data-bearing reads in this app start from this queryset. A caller that builds
-    its own ``Note.objects.filter(...)`` reproduces the hole this closes:
-    ``interactionMap`` once queried notes across **every** organization in the date window
-    and relied on a later SQL clause (``interaction_points``'s ``organization_id``) to
-    confine the result — which meant the note queryset handed to the permission filter was
-    cross-org, and the map materialised every organization's note ids per request.
+    client-data-bearing reads in this app start from this queryset, and it is org-confined
+    *before* the note permission filter sees it: ``filter_for_user`` is the note read scope
+    and has no organization notion, so confinement cannot come from there.
     """
     return Note.objects.filter(
         organization_id=organization_id,
         interacted_at__gte=start,
         interacted_at__lt=end,
     )
+
+
+def _rollup_sql(*, organization_id: int | None) -> str:
+    """The rollup statement, with the org predicate only when there is one.
+
+    Paths with no organization scope are the ungrouped report, and they must **not** be
+    spelled as a `%(organization_id)s IS NULL OR …` — that defeats the planner's ability
+    to use the column, and it puts the confinement decision inside a SQL expression
+    rather than at the call site.
+    """
+    org = "AND n.organization_id = %(organization_id)s" if organization_id is not None else ""
+    return f"""
+        SELECT rr.kind AS kind, rr.code AS code, count(n.id) AS count
+        FROM {REGION_LOOKUP_VIEW} lu
+        JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
+        JOIN {_LOCATION_TABLE} l ON ST_Covers(lu.geom, l.point_geom)
+        JOIN {_NOTE_TABLE} n ON n.location_id = l.id
+        WHERE n.interacted_at >= %(start)s
+          AND n.interacted_at < %(end)s
+          {org}
+        GROUP BY rr.kind, rr.code
+    """
+
+
+def _assigned_counts(*, start: datetime, end: datetime, organization_id: int | None) -> dict[str, dict[str, int]]:
+    """Interactions per ``(kind, code)`` that a boundary actually contains.
+
+    **The boundaries drive and the points are probed.** That is the whole trick: the scan is
+    over the lookup polygons and the GiST index on ``point_geom`` is probed for each, which
+    is the direction PostGIS can index — the plan shows
+    ``Index Cond: (point_geom @ lu.geom)``. Reversing it — a ``LATERAL`` keyed on the
+    interaction, asking "which region is this point in" — puts the points on the inner side
+    and probes them once per interaction instead.
+
+    Measured on the real LA layers (431 regions, 5,685 pieces, 4,000 locations), all six
+    dimensions at once: 45 ms for a 20,000-interaction window and 30 ms for a
+    2,041-interaction one. The spatial cost tracks *distinct locations* rather than
+    interactions, so it amortises as a report window grows.
+
+    **The view is what keeps the plan in this direction.** Pointed straight at
+    ``regions_regionpiece`` the planner flips the join round on a selective window and drives
+    from the notes instead; the view presents it one relation to drive from, which is what it
+    needs to pick the indexed side.
+
+    ``ST_Covers`` alone carries the index condition, so there is no explicit ``&&``. Adding
+    one measures *slower* (91 ms against 45 ms): the redundant predicate constrains the
+    join order the planner would otherwise pick for itself.
+
+    No ``kind`` predicate. One pass over every dimension's pieces costs about what one
+    dimension costs (45 ms against 28 ms), so a single-dimension rollup filters the same
+    result in Python instead of paying for a second query shape.
+
+    Grouped by kind **and** code: without the kind, SPA 1, council district 1 and
+    supervisorial district 1 collapse into one bucket.
+    """
+    params: dict[str, Any] = {"start": start, "end": end}
+    if organization_id is not None:
+        params["organization_id"] = organization_id
+
+    with connection.cursor() as cursor:
+        cursor.execute(_rollup_sql(organization_id=organization_id), params)
+        rows = cursor.fetchall()
+
+    counts: dict[str, dict[str, int]] = {}
+    for kind, code, count in rows:
+        counts.setdefault(kind, {})[code] = count
+    return counts
+
+
+def _notes_with_a_location(*, start: datetime, end: datetime, organization_id: int | None) -> int:
+    """Interactions in range that carry a point, whether or not a boundary contains it.
+
+    The minuend of the unassigned subtraction. A note's location either falls in exactly
+    one region of a dimension or in none, so ``unassigned = this - assigned`` — which is
+    why the unassigned bucket needs no spatial query of its own.
+    """
+    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end, location__isnull=False)
+    if organization_id is not None:
+        notes = notes.filter(organization_id=organization_id)
+    return notes.count()
 
 
 def region_counts(
@@ -57,98 +144,70 @@ def region_counts(
     returns the kind on every bucket. Grouping on the code alone would merge three
     unrelated regions into one row.
 
-    Reads the stored assignment, so a location in no region of this dimension comes
-    back with a NULL code rather than being dropped — an inner join to ``Region``
-    would silently lose every Beverly Hills address in a city-council report.
+    A location in no region of the dimension comes back as a bucket with ``code is None``
+    rather than being dropped — an inner join to ``Region`` would silently lose every
+    Beverly Hills address in a city-council report. That bucket is *computed*, not stored:
+    see ``_notes_with_a_location``.
 
     ``codes is not None`` throughout: an explicitly empty list means "no codes" and
-    matches nothing, where a truthiness check treats it as absent, drops the
-    predicate, and returns the whole dimension.
+    matches nothing, where a truthiness check treats it as absent, drops the predicate,
+    and returns the whole dimension.
 
-    **This writes, deliberately.** ``ensure_location_regions`` is incremental — its
-    ``NOT EXISTS`` guard considers only locations with no assignment — so the fill is
-    9.2 ms for a steady-state cache (all six dimensions, measured) and a no-op when nothing
-    is new. ``python.md`` calls selectors read-only; this tops up a derived index without
-    mutating anything a caller passed, and the alternative (a beat job) buys nothing but a
-    staleness window.
+    Narrowing by code happens here rather than in SQL. The rollup returns at most one row
+    per region — 431 for the whole fixture — so pushing a code list into the query would
+    buy nothing and cost a second statement shape to keep in step with this one.
+
+    Only dimensions with boundaries loaded are reported. A dimension with none has no
+    regions to bucket, and reporting every interaction as "unassigned" for it would be a
+    claim about coverage that has not been loaded.
     """
-    from .services import ensure_location_regions
+    loaded = set(Region.objects.values_list("kind", flat=True).distinct())
+    scopes = (sorted(loaded) if kind is None else [kind]) if (kind is None or kind in loaded) else []
+    scopes = [scope for scope in scopes if scope in loaded]
+    if not scopes:
+        return []
 
-    ensure_location_regions(kind=kind)
+    assigned = _assigned_counts(start=start, end=end, organization_id=organization_id)
+    codes_set = None if codes is None else set(codes)
 
-    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end)
-    if organization_id is not None:
-        notes = notes.filter(organization_id=organization_id)
+    buckets: list[dict[str, Any]] = []
+    if not unassigned_only:
+        for scope in scopes:
+            for code, count in assigned.get(scope, {}).items():
+                if codes_set is not None and code not in codes_set:
+                    continue
+                buckets.append({"kind": scope, "code": code, "name": "", "count": count})
 
-    assignments = "location__region_assignments"
-
-    # **Every predicate on this relation goes into ONE `filter()` call.**
-    #
-    # Django builds a *separate join* per `filter()` on a multi-valued relation, so chaining
-    # two filters on this one multiplies rows: a note with a `council_district` row *and* an
-    # `spa` row is counted twice in the `spa` rollup. Combining with `Q` makes one join, which
-    # is what lets the count below be a plain `count`.
-    predicate = Q(**{f"{assignments}__isnull": False})
-    if kind is not None:
-        predicate &= Q(**{f"{assignments}__kind": kind})
-
-    if unassigned_only:
-        predicate &= Q(**{f"{assignments}__region__isnull": True})
-    elif codes is not None:
-        # The kind is part of the predicate, not just a filter applied earlier: codes are not
-        # unique across dimensions — "1" is a council district, an SPA and a supervisorial
-        # district — so matching on the code alone pulls in regions from dimensions the caller
-        # did not ask for.
-        codes_q = Q(**{f"{assignments}__region__code__in": list(codes)})
-        if include_unassigned:
-            # Joining on `region__code` already drops unassigned rows, so the unassigned arm
-            # has to be an OR inside the same predicate rather than a second filter.
-            codes_q |= Q(**{f"{assignments}__region__isnull": True})
-        predicate &= codes_q
-
-    rows = notes.filter(predicate)
-
-    # Grouped by kind as well as code: without it, SPA 1, council district 1 and
-    # supervisorial district 1 collapse into a single bucket.
-    counts = (
-        rows.values(f"{assignments}__kind", f"{assignments}__region__code")
-        # Plain `count`, which is correct *because the filter above is a single join*:
-        # `unique_location_kind_assignment` means a location has one row per dimension, and one
-        # join therefore yields one row per note per dimension. `DISTINCT` was not free — it
-        # forced a Sort+GroupAggregate over every note in range (23.2 ms against 9.7 ms on 20k
-        # notes) — but it was load-bearing against the chained-filter cross-product above, so
-        # it could only be dropped after that was fixed. Anyone tempted to split the predicate
-        # back into separate `filter()` calls must put `distinct=True` back with it.
-        #
-        # `interaction_points` is a different case and does need `DISTINCT`: it joins notes
-        # directly, with no per-dimension constraint in between.
-        .annotate(count=Count("id"))
-        .order_by()
-    )
-    buckets = [
-        {
-            "kind": row[f"{assignments}__kind"],
-            "code": row[f"{assignments}__region__code"],
-            "name": "",
-            "count": row["count"],
-        }
-        for row in counts
-    ]
+    # `codes is None` means "no restriction", which is the one case that puts the unassigned
+    # bucket in scope without the caller asking for it by name.
+    if unassigned_only or include_unassigned or codes is None:
+        with_location = _notes_with_a_location(start=start, end=end, organization_id=organization_id)
+        for scope in scopes:
+            # Every point resolves to at most one region per dimension, which is what makes
+            # this a subtraction rather than a spatial query. Guarded with `> 0` rather than
+            # emitted unconditionally: if a dimension's boundaries were ever to overlap
+            # rather than partition, the total would exceed the number of points and a
+            # negative "unassigned" bucket is not the way to say so.
+            unassigned = with_location - sum(assigned.get(scope, {}).values())
+            if unassigned > 0:
+                buckets.append({"kind": scope, "code": None, "name": "", "count": unassigned})
 
     # Names come from the authoritative region row, one query rather than a join that would
     # widen the GROUP BY. Keyed by (kind, code), since a code alone is ambiguous.
-    #
-    # Narrowed to the kinds actually present in the result. For a single-dimension rollup that
-    # is the same `kind=`, but for the ungrouped one it fetches only the dimensions that
-    # returned a bucket instead of every loaded region — 431 rows before, a handful after.
     kinds_present = sorted({bucket["kind"] for bucket in buckets if bucket["kind"]})
-    if not kinds_present:
-        return buckets
-    regions = Region.objects.filter(kind__in=kinds_present)
-    named = {(r_kind, r_code): r_name for r_kind, r_code, r_name in regions.values_list("kind", "code", "name")}
-    for bucket in buckets:
-        bucket["name"] = named.get((bucket["kind"], bucket["code"] or ""), "")
+    if kinds_present:
+        named = {
+            (region_kind, region_code): region_name
+            for region_kind, region_code, region_name in Region.objects.filter(kind__in=kinds_present).values_list(
+                "kind", "code", "name"
+            )
+        }
+        for bucket in buckets:
+            bucket["name"] = named.get((bucket["kind"], bucket["code"] or ""), "")
 
+    # Sorted so the client gets a stable order: by dimension, named regions in code order,
+    # unassigned last. Without this the order is whatever the GROUP BY happened to produce.
+    buckets.sort(key=lambda bucket: (bucket["kind"], bucket["code"] is None, bucket["code"] or ""))
     return buckets
 
 
@@ -171,9 +230,9 @@ def available_kinds() -> list[str]:
     The ``kind__in`` filter runs in the database, so a kind the GraphQL enum does not know is
     excluded rather than making ``regionDimensions`` fail wholesale.
 
-    ``Region`` carries no ``Meta.ordering``, so this de-duplicates on ``kind`` alone. It used
-    to need an explicit ``.order_by()`` to defeat a model-level ordering that widened the
-    ``DISTINCT`` to ``(kind, code)``; that ordering is gone, so the call is not.
+    ``Region`` carries no ``Meta.ordering``, so this de-duplicates on ``kind`` alone. A
+    model-level ordering would be appended to the SELECT and widen the ``DISTINCT`` to
+    ``(kind, code)``.
     """
     known = list(RegionKind.values)
     kinds = Region.objects.filter(kind__in=known).values_list("kind", flat=True).distinct()
@@ -201,8 +260,8 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
     if codes:
         queryset = queryset.filter(code__in=list(codes))
 
-    # `ReducePrecision` rounds in the database rather than in Python. No `Coalesce`: since
-    # `geom_display` became a generated column it cannot be NULL where `geom` is not.
+    # `ReducePrecision` rounds in the database rather than in Python. No `Coalesce`:
+    # `geom_display` is a generated column, so it cannot be NULL where `geom` is not.
     rows = (
         queryset.annotate(geometry=ReducePrecision(F("geom_display"), Value(GEOJSON_PRECISION_GRID)))
         .values("kind", "code", "name", "geometry")
@@ -244,9 +303,9 @@ def _as_multipolygon(geometry: Any) -> Any:
 
 
 # Coordinate grid for region geometry, in degrees. `1e-6` is ~10 cm — finer than the
-# simplification tolerance (`models.DISPLAY_SIMPLIFY_DEGREES`), so nothing visible is lost,
-# and it is what keeps the payload at parity with the old `ST_AsGeoJSON(…, 6)`: GEOS
-# serialises at full double precision otherwise, which measured 1.58x the size.
+# simplification tolerance (`models.DISPLAY_SIMPLIFY_DEGREES`), so nothing visible is lost —
+# and it is what holds the payload to six decimal places. GEOS serialises at full double
+# precision otherwise, which measured 1.58x the size.
 GEOJSON_PRECISION_GRID = 1e-6
 
 
@@ -302,12 +361,10 @@ def interaction_points(
     # Two independent controls, both applied, neither trusted to imply the other:
     # `organization_id` is the org scope, `notes` carries the note read scope.
     #
-    # `notes` is folded in as a **subquery**, not as a materialised list of ids. The
-    # previous version did `list(notes.values_list("id", flat=True))` and shipped the ids
-    # back as a bind parameter — one round trip to read every id in the window, an
-    # unbounded parameter list, and the whole thing thrown away again to answer the same
-    # question the database could have answered inline. `__in=<queryset>` lets Postgres
-    # plan it as a semi-join against the query the caller already built.
+    # `notes` is folded in as a **subquery**, not as a materialised list of ids.
+    # `__in=<queryset>` lets Postgres plan it as a semi-join against the query the caller
+    # already built; reading the ids out first would cost a round trip, ship an unbounded
+    # bind parameter, and answer the same question a second time.
     queryset = Note.objects.filter(
         organization_id=organization_id,
         interacted_at__gte=start,
@@ -322,17 +379,16 @@ def interaction_points(
     # Transform, Union and similar, and the only `ST_X`/`ST_Y` in the codebase is
     # Oracle-specific.
     #
-    # The `Cast(…, GeometryField())` is **required, not cosmetic**: `point` is
-    # `geography=True` (common/models.py) and PostGIS defines `ST_X`/`ST_Y` only for
-    # geometry, so without it the query fails on the live database with
-    # `function st_x(geography) does not exist`. There is no implicit
-    # geography→geometry cast, which is the same reason the raw SQL this replaced wrote
-    # `l.point::geometry`, and the same reason ``ensure_location_regions`` still does.
-    point_geometry = Cast("location__point", GeometryField())
+    # They read the generated `point_geom`, not `point`, and that is load-bearing rather
+    # than tidiness: `point` is `geography=True` (common/models.py) and PostGIS defines
+    # `ST_X`/`ST_Y` only for geometry, so reading it directly fails on the live database
+    # with `function st_x(geography) does not exist` unless every call site remembers to
+    # cast. The generated column is already geometry, so the cast happens once per row
+    # written instead of once per row read.
     rows = (
         queryset.annotate(
-            latitude=Func(point_geometry, function="ST_Y", output_field=FloatField()),
-            longitude=Func(point_geometry, function="ST_X", output_field=FloatField()),
+            latitude=Func("location__point_geom", function="ST_Y", output_field=FloatField()),
+            longitude=Func("location__point_geom", function="ST_X", output_field=FloatField()),
         )
         .order_by("-interacted_at")
         .values("latitude", "longitude", "interacted_at")[: limit + 1]
@@ -352,25 +408,50 @@ def interaction_points(
 def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[str]) -> QuerySet[Note]:
     """Narrow a note queryset to those whose location falls in one of ``codes``.
 
-    ``Exists`` rather than a reverse-relation join: a join yields one row per matching
+    An ``EXISTS`` rather than a reverse-relation join: a join yields one row per matching
     assignment and would need the ``.distinct()`` a semi-join does not.
+
+    **Raw SQL, and not because the ORM cannot express it.** It can — this is equivalent and
+    builds the right statement::
+
+        Exists(RegionPiece.objects.filter(
+            region__kind=kind, region__code__in=codes,
+            geom__covers=OuterRef("location__point_geom")))
+
+    It is not used because it queries ``RegionPiece`` **directly**, and so answers a
+    slightly different question from ``_assigned_counts``: it would miss a region that has
+    no piece, which ``regions_regionlookup`` exists to cover. Matching the view in the ORM
+    means a second ``Exists`` over ``Region`` with ``pieces__isnull=True`` — two arms, in a
+    second place, that have to be kept in step with the view by hand. The rollup and the map
+    must agree on which regions contain a point, so the definition belongs in one place, and
+    that place is the view.
+
+    Correlated on the **note**, with the location reached through the note's own
+    ``location_id`` rather than by naming whatever alias Django happened to give a join.
+    That keeps the fragment independent of the queryset it is attached to.
 
     ``kind`` is required because codes are not unique across dimensions — ``"1"`` is a council
     district, an SPA and a supervisorial district here — so a code alone would return up to
     three dimensions' worth, labelled as the one the caller asked for.
 
-    Tops the cache up first; see ``region_counts``.
+    An empty ``codes`` matches nothing, and is short-circuited rather than sent to the
+    database: ``= ANY('{}')`` needs an array type Postgres cannot infer from an empty list,
+    and the answer is known without asking.
     """
-    from .services import ensure_location_regions
+    if not codes:
+        return notes.none()
 
-    ensure_location_regions(kind=kind)
-
-    return notes.filter(
-        Exists(
-            LocationRegion.objects.filter(
-                location=OuterRef("location_id"),
-                kind=kind,
-                region__code__in=list(codes),
-            )
+    sql = f"""
+        EXISTS (
+            SELECT 1
+            FROM {REGION_LOOKUP_VIEW} lu
+            JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
+            JOIN {_LOCATION_TABLE} l ON l.id = {_NOTE_TABLE}.location_id
+            WHERE rr.kind = %s
+              AND rr.code = ANY(%s)
+              AND ST_Covers(lu.geom, l.point_geom)
         )
+    """
+    return notes.annotate(_in_region=RawSQL(sql, (kind, list(codes)), output_field=BooleanField())).filter(
+        _in_region=True
     )

@@ -10,10 +10,10 @@ Adds the ``RegionDimension`` enum (``models.RegionKind``) and four queries:
 They sit alongside the existing ``reportSummary``.
 
 Polygons are returned as ``MultiPolygon`` values, using strawberry-django's built-in geometry
-scalar — the same mechanism as ``LocationType.point``. The payload argument that once justified
-sending a GeoJSON string was about simplified versus unsimplified vertices, not scalar versus
-string; the simplification is what bounds it, and ``ST_ReducePrecision`` keeps the rounded form
-at payload parity. See ``RegionType.geometry`` for the one caveat the scalar carries.
+scalar — the same mechanism as ``LocationType.point``. What bounds the payload is the
+server-side simplification (``Region.geom_display``), not the choice of scalar:
+``ST_ReducePrecision`` keeps the rounded form at parity with a GeoJSON string. See
+``RegionType.geometry`` for the one caveat the scalar carries.
 """
 
 from __future__ import annotations
@@ -153,13 +153,16 @@ class Query:
         # deliberately so — it is the same scope the Notes pages themselves apply.
         scoped_notes = filter_for_user(scoped_notes, user, [NotePermissions.VIEW])
 
-        scoped_codes = list(region_codes or [])
-        if scoped_codes:
+        # `is not None`, not truthiness: `regionCodes: []` asks for no codes and must match
+        # nothing, exactly as it does in `interactionsByRegion`. Read as "absent", the
+        # predicate is dropped and the caller receives every pin in the organization while
+        # believing it filtered. An *absent* list is what means "no restriction".
+        if region_codes is not None:
             if dimension is None:
                 # Refused, not ignored. A code cannot be resolved without a dimension:
                 # "1" is a council district, an SPA and a supervisorial district.
                 raise ValueError("regionCodes requires a dimension")
-            scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=scoped_codes)
+            scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=region_codes)
 
         return interaction_map_data(
             start=start,

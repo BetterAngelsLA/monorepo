@@ -49,10 +49,10 @@ class RegionAdmin(GISModelAdmin):
         return True
 
     def has_delete_permission(self, request: object, obj: object = None) -> bool:
-        # A delete would cascade to every ``RegionPiece`` and ``LocationRegion`` for the
-        # dimension, silently emptying that dimension's buckets in every report until the
-        # next import. Replacing a dimension is the importer's job, which does it in one
-        # transaction and rebuilds the derived rows.
+        # A delete would cascade to every ``RegionPiece`` for the dimension, leaving the
+        # lookup to fall back to the parent boundary for all of them — correct, but slower
+        # until the next import. Replacing a dimension is the importer's job, which does it
+        # in one transaction and rebuilds the pieces with it.
         return False
 
     def get_readonly_fields(self, request: object, obj: object = None) -> tuple[str, ...]:

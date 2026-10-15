@@ -1,11 +1,11 @@
 # Wiring region reports into betterangels-admin
 
-How the region queries meet the admin app, what ships in PR #2540, and the one build
-detail that is easy to lose an afternoon to.
+How the region queries meet the admin app, and the one build detail that is easy to lose an
+afternoon to.
 
 ## What ships
 
-**Backend — four queries, all tested:**
+**Backend — four queries:**
 
 ```graphql
 interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes): [RegionCountType!]!
@@ -22,16 +22,28 @@ simultaneously a council district, an SPA and a supervisorial district. `RegionD
 
 `interactionMap` returns points and a truncation flag.
 
-**Authorization.** `interactionsByRegion` and `interactionMap` need
-`reports.view_reports` **and** `notes.view_note`, and the rows are then passed through
-`filter_for_user(..., [NotePermissions.VIEW])`. `reports.view_reports` alone is not
-enough: it is held by roles that are not entitled to read notes, and `ORG_ADMIN` is one
-of them — it is **denied** in the tests. `regions` and `regionDimensions` are public
-reference data and need only an authenticated user.
+**Authorization differs by query, deliberately.**
 
-**Frontend — built, in this PR.** `LocationBreakdown` renders on the Reports page
-beneath the existing charts and inherits their `dateRange` and `activeOrg`, so the
-geographic figures always match the KPIs above. It provides:
+`interactionMap` returns coordinates, so it carries two gates: `reports.view_reports` at the
+payload org, **and** the note read scope, applied as
+`filter_for_user(..., [NotePermissions.VIEW])`. The second is not redundant — a pin is a
+note's location, so it inherits the note scope, and `ORG_ADMIN` holds `reports.view_reports`
+with no note permission at all. `test_org_admin_without_note_permission_is_denied` pins that
+it receives no pins.
+
+It is deliberately **not** `require_can(..., NotePermissions.VIEW)`: notes are a legacy
+domain, no `Role` carries `notes.view_note`, and a grant predicate on that codename
+resolves to an empty scope and denies every non-superuser. The scope is enforced through
+the same legacy path the Notes pages use.
+
+`interactionsByRegion` returns counts rather than coordinates, so it carries
+`reports.view_reports` alone — the same authority as `reportSummary`, which it sits beside.
+`regions` and `regionDimensions` serve public reference boundaries and need only an
+authenticated user.
+
+**Frontend.** `LocationBreakdown` renders on the Reports page beneath the existing charts
+and inherits their `dateRange` and `activeOrg`, so the geographic figures always match the
+KPIs above. It provides:
 
 - a **dimension selector** over all six, from `regionDimensions`;
 - a **drill-down selector** listing the regions that have interactions, with counts, so
@@ -59,15 +71,16 @@ panel shows its own message and the rest of the page is unaffected.
 ## The build-order detail
 
 `libs/ba-platform/codegen.ts` reads its schema from
-`../../apps/betterangels-backend/schema.graphql` — whatever is on the **current**
-branch. Codegen against a schema that lacks the region types does not fail loudly: it
-emits nothing for the new operations, so the hooks simply do not exist and the failure
-looks like a typo in an import.
+`../../apps/betterangels-backend/schema.graphql` — whatever is on the **current** branch.
+Codegen against a schema that lacks the region types does not fail loudly: it emits nothing
+for the new operations, so the hooks simply do not exist and the failure looks like a typo
+in an import.
 
-While this branch is unmerged, point codegen at its schema for one run:
+So when generating on a branch whose `schema.graphql` predates the region types, point
+codegen at the schema that has them for one run:
 
 ```bash
-# from the worktree that has the branch checked out
+# from the worktree that has the region types
 branch_root=$(git rev-parse --show-toplevel)
 cp apps/betterangels-backend/schema.graphql /tmp/schema.backup
 cp "$branch_root/apps/betterangels-backend/schema.graphql" apps/betterangels-backend/schema.graphql
@@ -75,10 +88,10 @@ cd libs/ba-platform && npx graphql-codegen --config codegen.ts
 cp /tmp/schema.backup apps/betterangels-backend/schema.graphql   # restore
 ```
 
-The generated types are a pure function of schema plus operations, so generating
-against the branch schema produces exactly what `main` will produce once merged. Run it
-from `libs/ba-platform`: from the repo root it fails to resolve the schema with a
-misleading "please provide a schema" error.
+The generated types are a pure function of schema plus operations, so generating against
+either schema produces the same output once the types are present. Run it from
+`libs/ba-platform`: from the repo root it fails to resolve the schema with a misleading
+"please provide a schema" error.
 
 ## Not built
 

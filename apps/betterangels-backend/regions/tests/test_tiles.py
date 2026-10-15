@@ -1,10 +1,11 @@
 from django.contrib.auth import get_user_model
+from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.test import TestCase
 from django.urls import reverse
 from model_bakery import baker
+
 from regions.models import Region, RegionKind
 from regions.tiles import MVT_CONTENT_TYPE
-from django.contrib.gis.geos import MultiPolygon, Polygon
 
 # A polygon covering the DTLA tile at z10/175/408.
 RING = [(-118.5, 34.0), (-118.2, 34.0), (-118.2, 34.2), (-118.5, 34.2), (-118.5, 34.0)]
@@ -31,7 +32,12 @@ class RegionTileViewTestCase(TestCase):
     def test_a_populated_tile_is_served_as_mvt(self) -> None:
         response = self.client.get(self._url())
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], MVT_CONTENT_TYPE)
+        # The literal, not `MVT_CONTENT_TYPE`: comparing against the constant imported from
+        # the module under test means changing the module to serve `application/json` keeps
+        # this green — and the docstring in `tiles.py` says that exact mistake surfaces to the
+        # client as deck.gl's "Unimplemented type: 4" rather than as anything readable.
+        self.assertEqual(response["Content-Type"], "application/vnd.mapbox-vector-tile")
+        self.assertEqual(MVT_CONTENT_TYPE, "application/vnd.mapbox-vector-tile")
         self.assertGreater(len(response.content), 0)
         self.assertIn(b"regions", response.content[:64], "the layer name is in the tile header")
 

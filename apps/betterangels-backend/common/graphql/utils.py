@@ -26,8 +26,8 @@ def org_or_deny(org_id: object) -> "Organization":
     ``require_can``/``can`` at the resolved org (ADR 0001 §2.6, finding F7 — ``can`` never
     implies the organization exists, so the two checks are separate and both required).
 
-    Lives here rather than in each schema module because it was copy-pasted into four of
-    them (``accounts``, ``reports``, ``regions``, ``teams``) with three different bodies.
+    Lives here so the four org-scoped schema modules (``accounts``, ``reports``,
+    ``regions``, ``teams``) share one refusal instead of four that can drift apart.
     Module-level rather than a method: strawberry-django resolvers are invoked unbound.
     """
     from organizations.models import Organization

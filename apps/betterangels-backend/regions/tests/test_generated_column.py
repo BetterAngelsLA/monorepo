@@ -18,11 +18,11 @@ class GeneratedColumnTestCase(TestCase):
         self.assertIn("st_simplifypreservetopology", expr)
 
     def test_a_region_written_without_it_gets_one(self) -> None:
-        """The importer no longer sets `geom_display`; the database must supply it.
+        """A region created without `geom_display` must still get one.
 
-        This is the contract the importer change rests on: `Region.objects.create(geom=...)`
-        with no `geom_display` has to come back with a simplified display geometry, or every
-        map read falls back to unsimplified geometry (or nothing).
+        The importer does not set it, so `Region.objects.create(geom=...)` is the contract:
+        the row has to come back with a simplified display geometry, or every map and tile
+        read serves unsimplified geometry.
         """
         ring = [(-118.3, 34.0), (-118.2, 34.0), (-118.2, 34.1), (-118.3, 34.1), (-118.3, 34.0)]
         region = Region.objects.create(

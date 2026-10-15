@@ -1,9 +1,9 @@
 """Mapbox Vector Tiles for region boundaries.
 
-The map used to receive every polygon of a dimension as coordinates — 1.25 MB across the five
-LA layers, with ``coc`` alone at 769 kB for 43 polygons — and clipped nothing, because LA County
-*is* the extent so a bounding-box filter would return everything. Tiles invert that: the client
-asks for what is on screen, and PostGIS generalises to the zoom as it encodes.
+Boundaries as coordinates are 1.25 MB across the five LA layers — ``coc`` alone is 769 kB for
+43 polygons — and a bounding-box filter prunes nothing, because LA County *is* the extent. Tiles
+invert that: the client asks for what is on screen, and PostGIS generalises to the zoom as it
+encodes.
 
 Measured on the real layers, DTLA at z10: ``coc`` 1281 B in 1.4 ms, ``city`` 3030 B in 1.9 ms,
 ``zip`` (densest) 13091 B in 5.2 ms. Against 769 kB / 292 kB / 291 kB for the whole dimensions.

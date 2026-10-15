@@ -57,7 +57,6 @@ PERMISSION_EXCLUDED_MODELS: frozenset[str] = frozenset(
         "referrals.ReferralTestShelter",
         "regions.Region",
         "regions.RegionPiece",
-        "regions.LocationRegion",
     }
 )
 

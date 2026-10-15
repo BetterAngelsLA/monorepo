@@ -1,9 +1,8 @@
 """Region boundary models (DEV-2570 / DEV-2604).
 
-``MultiPolygonField`` in EPSG:4326, so boundaries join ``Location.point`` with no
-per-query reprojection. Geometry rather than geography on purpose: Django's
-``within`` lookup appends ``::geometry`` to a geography operand, discarding the GiST
-index.
+``MultiPolygonField`` in EPSG:4326, so boundaries join ``Location.point_geom`` with no
+per-query reprojection. Geometry rather than geography on purpose: Django's ``within``
+lookup appends ``::geometry`` to a geography operand, discarding the GiST index.
 """
 
 from __future__ import annotations
@@ -62,7 +61,7 @@ class RegionKind(models.TextChoices):
 class Region(BaseModel):
     """One boundary polygon belonging to one geographic dimension."""
 
-    kind = models.CharField(max_length=32, choices=RegionKind.choices, db_index=True)
+    kind = models.CharField(max_length=32, choices=RegionKind.choices)
     # The stable identifier within `kind`: "13", "90012", "CA-600". Text because the
     # formats differ.
     code = models.CharField(max_length=32)
@@ -84,13 +83,8 @@ class Region(BaseModel):
     # (it cannot be NULL while `geom` is not). `ST_SimplifyPreserveTopology` is
     # IMMUTABLE, which is what makes this legal.
     #
-    # It was hand-maintained until this, kept in step by `import_regions`, with
-    # `region_features` coalescing back to `geom` for rows a test or script created
-    # without it. Verified byte-identical to what the importer used to write — 0 of 583
-    # rows differed — so the change is invisible to consumers.
-    #
     # Not derived from `RegionPiece`: subdivision clips at subdivision boundaries, so
-    # reuniting a region from its pieces equals the parent for only 334 of 431.
+    # reuniting a region from its pieces does not equal the parent.
     geom_display = models.GeneratedField(
         expression=SimplifyPreserveTopology(models.F("geom"), models.Value(DISPLAY_SIMPLIFY_DEGREES)),
         output_field=MultiPolygonField(srid=4326, null=True),
@@ -104,15 +98,15 @@ class Region(BaseModel):
             # Makes the loader idempotent.
             models.UniqueConstraint(fields=["kind", "code"], name="regions_region_kind_code_uniq"),
         ]
-        # No explicit index on `kind`: `db_index=True` already creates one, and
-        # declaring both produced two identical indexes. The GiST index on `geom` is
-        # `spatial_index=True`, the default.
+        # **One** index on `kind`, declared here rather than with `db_index=True`.
+        # `db_index=True` on a `CharField` also creates a `varchar_pattern_ops` twin for
+        # prefix `LIKE`s, which nothing in this app performs — two indexes where one is
+        # meant. The GiST index on `geom` is `spatial_index=True`, the default.
+        indexes = [models.Index(fields=["kind"], name="regions_region_kind_idx")]
         #
-        # **No model-level `ordering`, deliberately.** It is appended to every SELECT, so a
-        # bare `.distinct()` de-duplicates on `(kind, code)` and returns one row per region
-        # instead of one per kind — which silently broke two call sites, each of which now
-        # carries an `order_by()` plus a comment explaining it. Callers that want an order
-        # ask for one.
+        # **No model-level `ordering`, deliberately.** Django appends it to every SELECT, so a
+        # bare `.distinct()` de-duplicates on `(kind, code)` and yields one row per region
+        # instead of one per kind. Callers that want an order ask for one.
 
     def __str__(self) -> str:
         label = self.name or self.code
@@ -122,81 +116,62 @@ class Region(BaseModel):
 class RegionPiece(BaseModel):
     """A sub-polygon of a :class:`Region`, sized for fast point lookup.
 
-    ``Region.geom`` is the authoritative boundary: full resolution, used for
-    display, area and any geometry the caller actually reads. It is the wrong
-    thing to test a point against, though. A single city multipolygon can be
-    hundreds of thousands of vertices in one row, so the GiST index hands the
-    planner one enormous bounding box that matches nearly every point in Los
-    Angeles and the real work happens in the vertex recheck.
+    ``Region.geom`` is the authoritative boundary: full resolution, used for display,
+    area, and the vector tiles. It is the wrong thing to test a point against. A single
+    city multipolygon can be hundreds of thousands of vertices in one row, so the GiST
+    index hands the planner one enormous bounding box that matches nearly every point in
+    Los Angeles and the real work lands in the vertex recheck — measured at **4,950 ms**
+    for the supervisorial dimension against 20,000 interactions.
 
-    Measured on the real LA layers, 20,000 interactions, identical query shape both
-    sides, warm cache, three runs:
+    Subdivided, the same work is **45 ms**. PostGIS's own guidance is this one: *"when you
+    have very large polygons, but are doing queries in small areas, you 'denormalize' your
+    geometric data into smaller chunks so that the index can effectively subquery parts of
+    the object"* (Data Management §4.3.4.4, which points at ``ST_Subdivide``).
 
-        dimension                 full boundary    subdivided
-        supervisorial_district      9,153 ms        556 ms     (16x)
-        spa                         4,867 ms        601 ms      (8x)
-        city                        2,871 ms        723 ms      (4x)
-        coc                         1,264 ms        578 ms      (2x)
-        zip                           836 ms        887 ms      (-6%)
-        council_district              592 ms        614 ms      (-4%)
+    ``SUBDIVIDE_MAX_VERTICES`` is a tuned target, not a "smaller is better" knob. Measured
+    on the full rollup, all six dimensions:
 
-    Subdivision buys an order of magnitude where a dimension has a few very large
-    boundaries and costs a few percent where it is already many small polygons — a
-    ZIP's bounding box is already tight, so splitting it adds pieces without adding
-    discrimination. It is applied uniformly because the failing case is the tail: a
-    nine-second dimension makes the API unusable, and the price of protecting it is
-    single-digit percent elsewhere. Gate it on region size if that ever changes.
+        max_vertices     pieces     rollup
+        256 (this)        5,685      45 ms
+        128              11,149     210 ms
+        64               22,136     231 ms
+        32               44,719     250 ms
 
-    Every region gets at least one piece, including simple ones, so the lookup is one
-    uniform join with no "pieces if present, else parent" branch. The duplication is
-    a few hundred bytes.
+    Tighter pieces have smaller bounding boxes but there are more of them, and a point
+    falls inside more of their boxes; the extra index entries cost more than the thinner
+    recheck saves. **All four produce identical answers** — subdivision is exact, so this
+    is purely a performance dial. Re-measure before changing it.
+
+    ``SUBDIVIDE_VERTEX_THRESHOLD`` is the other half of the tuning, and the less obvious one:
+    **only** regions above it are subdivided at all. Subdividing everything instead — the same
+    256-vertex target, no threshold — is 1,867 ms against 39 ms for the rollup, on 8,156
+    pieces against 5,685. A region that is already a handful of vertices is not worth
+    splitting, and the pieces the split produces cost more to search than that region's own
+    geometry would. "The boundaries are slow, subdivide more" is the wrong instinct twice
+    over.
+
+    Read through ``regions_regionlookup`` (see ``0004``), never directly. The view adds the
+    parent boundary back for a region that has no piece, so a region created outside
+    ``import_regions`` resolves slower rather than disappearing from the rollup — and it is
+    also what keeps the planner driving from the boundaries rather than from the notes, which
+    is worth 3x on a selective window.
     """
 
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="pieces")
-    # Denormalised from the parent so a lookup filters to one dimension without
-    # joining Region. `import_regions` is the only writer, so a piece cannot
-    # disagree with its parent's `kind`.
-    #
-    # Known gap: changing an existing region's `geom` or `kind` does not rebuild its
-    # pieces, so the rollup keeps the old geometry. Re-run `import_regions`, or call
-    # `build_region_pieces` for that dimension.
-    kind = models.CharField(max_length=32, choices=RegionKind.choices, db_index=True)
     geom = MultiPolygonField(srid=4326)
 
     class Meta:
-        # The FK covers `region`, `db_index` covers `kind`, and the GiST index on
-        # `geom` is the default — see the note on `Region.Meta`.
+        # The FK covers `region`; the GiST index on `geom` is `spatial_index=True`, the
+        # default. There is deliberately **no** denormalised `kind`: every reader joins
+        # `Region` to read the code anyway, so a copy would add a second source of truth
+        # that can disagree with its parent.
         pass
 
     def __str__(self) -> str:
         return f"piece of {self.region_id}"
 
 
-class LocationRegion(BaseModel):
-    """Which region each location falls in, per dimension — resolved once, not per query.
-
-    Storing the answer turns the rollup into an ordinary indexed join. Django cannot
-    express the ``LATERAL`` spatial join it replaces, so this is also what lets the
-    read path be plain ORM.
-
-    ``region`` is nullable **on purpose**: NULL means "resolved, and in no region of
-    this dimension" — a real answer, since a Beverly Hills address has no LA city
-    council district. Recording it is what tells "already resolved, outside
-    everything" apart from "not resolved yet".
-
-    Derived state, so it is rebuilt when boundaries change (``import_regions``) and
-    ``ensure_location_regions`` fills gaps for locations created since.
-    """
-
-    location = models.ForeignKey("common.Location", on_delete=models.CASCADE, related_name="region_assignments")
-    # Denormalised from Region, as on RegionPiece, and for the same reason.
-    kind = models.CharField(max_length=32, choices=RegionKind.choices, db_index=True)
-    region = models.ForeignKey(Region, on_delete=models.CASCADE, null=True, blank=True, related_name="assignments")
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["location", "kind"], name="unique_location_kind_assignment"),
-        ]
-
-    def __str__(self) -> str:
-        return f"{self.kind} for location {self.location_id}"
+#: SQL name of the point-lookup view, which migration ``0004`` creates. Read with raw SQL
+#: (``selectors``), never through the ORM: the view has no primary key for a model to
+#: declare.
+REGION_LOOKUP_VIEW = "regions_regionlookup"
