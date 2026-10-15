@@ -11,10 +11,13 @@ services:
       - venv:/workspace/.venv
       - .bash_aliases:/home/betterangels/.bash_aliases
   db:
-    # Debian 13 (trixie) for GEOS >= 3.12, which ST_CoverageSimplify needs; bullseye shipped
-    # GEOS 3.9 and the function is unavailable there. RDS for PostgreSQL has had GEOS 3.13
-    # since 17.0, so this brings dev *up to* production rather than ahead of it — see
-    # docs/gis/spatial-implementation-audit.md.
+    # Debian 13 (trixie) for GEOS >= 3.12 and PostGIS 3.6, i.e. dev/prod version parity:
+    # RDS for PostgreSQL has had GEOS 3.13 since 17.0. **Nothing in the codebase needs the
+    # newer version.** `ST_CoverageSimplify` is the one function the old bullseye image could
+    # not run, and no code calls it — it was evaluated as an alternative for `geom_display`
+    # and not adopted. So this is a dev-environment chore riding along with the regions work
+    # rather than a requirement of it, and it can be reverted on its own without touching any
+    # of it. See docs/gis/spatial-implementation-audit.md for the parity table.
     image: nickblah/postgis:17.11-trixie-postgis-3.6.4
     ports:
       - '5432:5432'

@@ -1,7 +1,10 @@
-"""The Region schema: boundaries, subdivided lookup, and resolved assignments.
+"""The Region schema: boundaries and the subdivided point-lookup geometry.
 
 One migration. This app has never been deployed, so there is no schema history to
-preserve — see ``regions/models.py`` for what the three tables are for.
+preserve — see ``regions/models.py`` for what the two live tables are for. This revision
+also declares ``LocationRegion``, a point→region crosswalk that
+``0004_region_lookup_view`` deletes; the app has never been deployed, so the history is
+kept rather than rewritten.
 
 **No ``CreateExtension("postgis")``.** The extension is already present: ``clients``,
 ``common``, ``hmis`` and ``shelters`` each created geometry columns in their own
@@ -22,32 +25,46 @@ import django.db.models.deletion
 
 
 def backfill(apps, schema_editor):  # type: ignore[no-untyped-def]
-    """Populate the derived tables from whatever boundaries already exist.
+    """Populate the lookup geometry and the display geometry from existing boundaries.
 
-    Order matters: pieces before assignments, because the assignment builder reads
-    pieces; display geometry alongside pieces, because both derive from ``Region``.
+    **Self-contained SQL, deliberately — and the reason is a bug this file shipped.** It used
+    to call ``regions.services.build_region_pieces`` and ``ensure_location_regions``, i.e. live
+    module state. A later revision deleted the second of those, which turned this migration
+    into an ``ImportError`` on every *fresh* database while every test run stayed green under
+    ``--reuse-db``, because an already-applied migration is never re-run. A migration is a
+    historical document: it describes the schema as it was, and it must not call code that
+    describes the schema as it is. The subdivision parameters and the tolerance are therefore
+    literals here, frozen at the values ``models`` held at the time.
 
-    Each step is idempotent — ``build_region_pieces`` deletes before inserting, the
-    display update is total, and ``ensure_location_regions(force=True)`` clears first
-    — so a half-applied run is safe to repeat.
+    The order matters only in that both statements read ``regions_region``, which this
+    migration has just created; on a fresh database both are no-ops, because there is nothing
+    to derive from. It exists for a database that already has boundaries and wants the lookup
+    geometry populated without re-running the importer.
+
+    ``kind`` is inserted because the column exists at this point in the history —
+    ``0004_region_lookup_view`` is what drops it.
     """
-    from regions.models import DISPLAY_SIMPLIFY_DEGREES
-    from regions.services import build_region_pieces, ensure_location_regions
-
-    build_region_pieces()
-    # The tolerance is the model's constant, not a literal. It was `0.0005` here and
-    # `DISPLAY_SIMPLIFY_DEGREES` in `import_regions`, so changing the constant would have
-    # left every already-migrated database simplified at the old tolerance with nothing to
-    # say so.
+    schema_editor.execute(
+        """
+        INSERT INTO regions_regionpiece (region_id, kind, geom, created_at, updated_at)
+        SELECT r.id,
+               r.kind,
+               ST_Multi(COALESCE(CASE WHEN ST_NPoints(r.geom) > 2000 THEN p.geom END, r.geom)),
+               NOW(),
+               NOW()
+        FROM regions_region r
+        LEFT JOIN LATERAL ST_Subdivide(r.geom, 256) AS p(geom)
+               ON ST_NPoints(r.geom) > 2000
+        """
+    )
     schema_editor.execute(
         """
         UPDATE regions_region
         SET geom_display = ST_Multi(ST_SimplifyPreserveTopology(geom, %s))
         WHERE geom IS NOT NULL
         """,
-        [DISPLAY_SIMPLIFY_DEGREES],
+        [0.0005],
     )
-    ensure_location_regions(force=True)
 
 
 def unbackfill(apps, schema_editor):  # type: ignore[no-untyped-def]

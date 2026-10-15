@@ -35,14 +35,20 @@ in the dev environment rather than production:
 | `MultiPolygonField(srid=4326)`, **geometry not geography** | `regions/models.py` | geography would force a cast or a per-query reprojection; `models.py` records that Django's `within` lookup appends `::geometry` to a geography operand and discards the GiST index |
 | `ST_Subdivide` into `RegionPiece` | `services.build_region_pieces` | PostGIS's own guidance: *"denormalize your geometric data into smaller chunks so that the index can effectively subquery parts of the object"* (Data Management §4.3.4.4, which points at `ST_Subdivide`). Measured on this workload at **45 ms against 4,950 ms** without it — probe cost scales with vertices per piece, and many small pieces beat few dense ones |
 | `ST_Covers`, not `ST_Contains` | `selectors._assigned_counts` | PostGIS docs: *"Generally this function should be used instead of `ST_Contains`, since it has a simpler definition"*. It also carries the index condition on its own (`point_geom @ lu.geom`), so no explicit `&&` is needed |
-| **the boundaries drive, the points are probed** | `selectors._assigned_counts` | the one direction PostGIS can index for this join. The mirror query — "for each interaction, find its region" — measures **202 ms against 39 ms** for the same result. This is what makes the live join affordable, and it is why there is no crosswalk |
-| generated `Location.point_geom` | `common/migrations/0002` | the point as `geometry`, so the join has an indexable column: `geography → geometry` is an explicit-only cast, so testing `point` directly discards the geography GiST index. Casting the *boundaries* to geography instead measures **3,067 ms against 39 ms** |
+| **the boundaries drive, the points are probed** | `selectors._assigned_counts` | the one direction PostGIS can index for this join. The mirror query — "for each interaction, find its region" — measures **200 ms against 45 ms** for the same result. The `regions_regionlookup` view is what holds the plan there: pointed at `RegionPiece` directly the planner flips round on a small window (100 ms against 30 ms). This is what makes the live join affordable, and it is why there is no crosswalk |
+| generated `Location.point_geom` | `common/migrations/0002` | the point as `geometry`, so the join has an indexable column: `geography → geometry` is an explicit-only cast, so testing `point` directly discards the geography GiST index. Casting the *boundaries* to geography instead measures **3,067 ms against 45 ms** |
 | GiST via `spatial_index=True` (the default) | the `Region`, `RegionPiece` and `Location.point_geom` geometry columns | verified present on all three. `Region.kind` carries one named index rather than `db_index=True`, which would add a `varchar_pattern_ops` twin nothing uses |
 | `make_valid` on import | `import_regions.normalise` | self-intersections are routine in published boundaries; one ZIP source emits a ring self-intersection that is repaired on every load |
 | `&&` in the table's SRID, before any transform | `regions/tiles.py` | keeps the GiST index usable; transforming first would discard it |
 | two envelopes for tiles | `regions/tiles.py` | a margined envelope decides which rows to *consider* (so buffered features are fetched) and the plain one is what `ST_AsMVTGeom` clips against — PostGIS documents that a margin must not be passed there |
 
 ## `ST_CoverageSimplify` works on RDS; the dev image is what is behind
+
+**Nothing calls this function.** It was evaluated as a shared-edge-preserving alternative to
+`ST_SimplifyPreserveTopology` for `Region.geom_display` and not adopted, so the only
+consequence of the version gap is that the evaluation cannot be repeated on an old image.
+Treat the rest of this section as an argument for dev/prod parity, not as a description of
+something the code depends on.
 
 The function requires `GEOSCoverageSimplifyVW` from **GEOS 3.12**. The original dev/CI image
 (`nickblah/postgis:17.5-bullseye-postgis-3.5`, PostGIS 3.5.2) was compiled against **GEOS 3.9.0**
@@ -154,7 +160,7 @@ tile path would absorb it; a CHECK constraint would prevent it.
   bounded by `POINT_LIMIT`. Not worth changing.
 - **There is no crosswalk, and that is a deliberate reversal.** An earlier revision stored the
   point→region answer in a `LocationRegion` table, refreshed by `import_regions(force=True)` and
-  topped up incrementally on read. It was removed: the live join costs 39 ms against 22 ms for
+  topped up incrementally on read. It was removed: the live join costs 45 ms against 22 ms for
   the stored one at 20,000 interactions, and 210 ms against 211 ms at 500,000 — it tracks
   distinct locations rather than interactions, so it converges as a window grows. What the
   crosswalk bought was not worth a derived table, a backfill, a write on the read path and a

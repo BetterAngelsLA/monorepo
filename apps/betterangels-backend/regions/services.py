@@ -132,10 +132,11 @@ class RegionCodeFilter:
     * ``["__unassigned__"]`` alone          -> only rows matching no region, both causes
     * real codes (with or without sentinel) -> those regions, plus unassigned if asked
 
-    ``query_unassigned`` and ``keep_unassigned`` are separate on purpose: the query needs the
-    unassigned arm only when real codes are *also* requested, while the result filter keeps
-    unassigned rows whenever the rollup is unfiltered or the sentinel was sent. One flag for
-    both silently drops every unassigned bucket from an unfiltered rollup.
+    There used to be two flags here — ``query_unassigned`` and ``keep_unassigned`` — because
+    the stored crosswalk needed an extra ``OR`` arm in its join to reach unassigned rows, and
+    that arm was only wanted when real codes were *also* requested. The bucket is computed by
+    subtraction now, so there is no arm to gate and the two questions collapsed into one:
+    ``keep_unassigned`` is what ``region_counts`` emits on and what the caller reads back.
 
     ``include_locationless`` is separate again, because "notes with no location" is a third
     bucket with a third reason to be in or out of scope. It is true for an absent list and
@@ -145,7 +146,6 @@ class RegionCodeFilter:
 
     codes: list[str] | None
     unassigned_only: bool
-    query_unassigned: bool
     keep_unassigned: bool
     include_locationless: bool
 
@@ -159,7 +159,6 @@ def parse_region_code_filter(region_codes: Sequence[str] | None) -> RegionCodeFi
         # must match nothing.
         codes=wanted if region_codes is not None else None,
         unassigned_only=sentinel_requested and not wanted,
-        query_unassigned=sentinel_requested and bool(wanted),
         keep_unassigned=region_codes is None or sentinel_requested,
         # True for an absent list **and** for an explicitly empty one, deliberately, and the
         # opposite reading from `keep_unassigned` directly above: a note with no location was
@@ -193,7 +192,7 @@ def region_rollup(
         organization_id=organization_id,
         codes=codes.codes,
         unassigned_only=codes.unassigned_only,
-        include_unassigned=codes.query_unassigned,
+        include_unassigned=codes.keep_unassigned,
     )
 
     buckets = [
@@ -209,7 +208,6 @@ def region_rollup(
             unassigned_reason=(UnassignedReason.OUTSIDE_ALL_REGIONS if row["code"] is None else None),
         )
         for row in rows
-        if row["code"] is not None or codes.keep_unassigned
     ]
 
     if codes.include_locationless:

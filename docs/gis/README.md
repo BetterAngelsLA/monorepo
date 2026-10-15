@@ -57,7 +57,7 @@ Tests: `apps/betterangels-backend/regions/tests/`
 - **There is no crosswalk and no backfill.** An earlier revision stored the point→region answer
   per location in a `LocationRegion` table. It is gone: the rollup does the spatial join live,
   written boundaries-first so it probes the GiST index on `Location.point_geom`. That costs
-  39 ms against 22 ms for the stored version at 20k interactions, and **210 ms against 211 ms
+  45 ms against 22 ms for the stored version at 20k interactions, and **210 ms against 211 ms
   at 500k** — it tracks distinct locations rather than interactions, so the gap closes as a
   report window grows. What it buys back is a derived table, a management command, a migration
   backfill, a write performed on the read path, and a whole class of staleness bugs.

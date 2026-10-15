@@ -8,12 +8,12 @@ join live, written boundaries-first, so it probes the GiST index on ``Location.p
 (added in ``common/0002``). Measured on the real LA layers, all six dimensions:
 
     interactions      live join     stored crosswalk
-        20,000           39 ms            22 ms
+        20,000           45 ms            22 ms
        500,000          210 ms           211 ms
 
 The live join's cost tracks *distinct locations*, not interactions, so it converges on the
-crosswalk as a report window grows — and at the fixture's 20,000 interactions it is 1.8x
-rather than the ~25x the naive per-interaction query shape costs. What that buys is the
+crosswalk as a report window grows — and at the fixture's 20,000 interactions it is 2x
+rather than the ~4x the mirror query costs. What that buys is the
 removal of a derived table, its service, its management command, its migration backfill and
 its staleness class — and of a write performed from the read path on every report load.
 
@@ -28,7 +28,13 @@ anti-join over 431 regions measures 0.27 ms.
 
 Why the read direction matters, since it is what makes this affordable: the lookup polygons
 drive and the points are probed. The mirror query — "for each interaction, find its region"
-— measures 202 ms for the same result, and 4,950 ms with no subdivision at all.
+— measures 200 ms for the same result, and 4,950 ms with no subdivision at all.
+
+**This view is also what keeps the planner in that direction.** Pointed straight at
+``regions_regionpiece``, the planner flips the join round on a selective window and drives
+from the notes: 100 ms for a 2,041-interaction window against 30 ms through the view. It is
+not only a place to keep the piece-less fallback, it is the relation shape the good plan
+needs.
 """
 
 from django.db import migrations, models

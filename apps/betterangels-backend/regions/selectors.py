@@ -14,13 +14,12 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Iterable, Sequence
 
-from django.contrib.gis.db.models import GeometryField, MultiPolygonField
+from django.contrib.gis.db.models import MultiPolygonField
 from django.contrib.gis.db.models.functions import GeomOutputGeoFunc
 from django.contrib.gis.geos import MultiPolygon
 from django.db import connection
 from django.db.models import BooleanField, F, FloatField, Func, QuerySet, Value
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Cast
 
 from common.models import Location
 from notes.models import Note
@@ -85,24 +84,30 @@ def _assigned_counts(*, start: datetime, end: datetime, organization_id: int | N
     GiST index on `point_geom` for each, which is the direction PostGIS can index: the plan
     shows `Index Cond: (point_geom @ lu.geom)`.
 
-    Measured on the real LA layers (431 regions, 5,685 pieces, 4,000 locations, 20,000
-    interactions), all six dimensions at once:
+    Measured on the real LA layers (431 regions, 5,685 pieces, 4,000 locations), all six
+    dimensions at once:
 
-        this direction, no precomputation     39 ms
-        per-location LATERAL over pieces     202 ms
-        no subdivision at all              4,950 ms
+        window              this direction    per-location LATERAL    no subdivision
+        20,000 interactions      45 ms              200 ms              4,950 ms
+         2,041 interactions      30 ms               82 ms                    —
+
+    **The view is what keeps the plan in this direction.** Pointed straight at
+    ``regions_regionpiece`` instead, the planner flips the join round on a selective window
+    and drives from the notes — 100 ms for those same 2,041 interactions, against 30 ms
+    through the view. The view presents one relation to drive from, which is what the
+    planner needs to pick the indexed side.
 
     At 500,000 interactions it is 210 ms against 211 ms for the precomputed crosswalk this
     replaced — the spatial cost tracks *distinct locations*, not interactions, so it
-    amortises as a report window grows. It is ~2.4x slower at the 20,000-interaction
-    fixture, and that is the honest price of not maintaining a derived table.
+    amortises as a report window grows. It is ~2x slower at the 20,000-interaction fixture,
+    and that is the honest price of not maintaining a derived table.
 
     ``ST_Covers`` alone carries the index condition, so there is no explicit ``&&``. Adding
     one measures *slower* (91 ms against 45 ms): the redundant predicate constrains the
     join order the planner would otherwise pick for itself.
 
     No ``kind`` predicate. One pass over every dimension's pieces costs about what one
-    dimension costs (39 ms against 28 ms), so a single-dimension rollup filters the same
+    dimension costs (45 ms against 28 ms), so a single-dimension rollup filters the same
     result in Python instead of paying for a second query shape.
 
     Grouped by kind **and** code: without the kind, SPA 1, council district 1 and
@@ -391,16 +396,16 @@ def interaction_points(
     # Transform, Union and similar, and the only `ST_X`/`ST_Y` in the codebase is
     # Oracle-specific.
     #
-    # The `Cast(…, GeometryField())` is **required, not cosmetic**: `point` is
-    # `geography=True` (common/models.py) and PostGIS defines `ST_X`/`ST_Y` only for
-    # geometry, so without it the query fails on the live database with
-    # `function st_x(geography) does not exist`. The generated `point_geom` column would
-    # also serve, but `point` is what the caller wrote and this keeps the cast in one place.
-    point_geometry = Cast("location__point", GeometryField())
+    # They read the generated `point_geom` rather than `point`, which is what removes the
+    # `Cast(…, GeometryField())` this used to need: `point` is `geography=True`
+    # (common/models.py), PostGIS defines `ST_X`/`ST_Y` only for geometry, and the cast that
+    # resolved that was load-bearing — without it the query fails on the live database with
+    # `function st_x(geography) does not exist`. Now the column is already geometry, so the
+    # cast is the database's problem once per row written instead of ours once per read.
     rows = (
         queryset.annotate(
-            latitude=Func(point_geometry, function="ST_Y", output_field=FloatField()),
-            longitude=Func(point_geometry, function="ST_X", output_field=FloatField()),
+            latitude=Func("location__point_geom", function="ST_Y", output_field=FloatField()),
+            longitude=Func("location__point_geom", function="ST_X", output_field=FloatField()),
         )
         .order_by("-interacted_at")
         .values("latitude", "longitude", "interacted_at")[: limit + 1]
@@ -421,12 +426,26 @@ def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[
     """Narrow a note queryset to those whose location falls in one of ``codes``.
 
     An ``EXISTS`` rather than a reverse-relation join: a join yields one row per matching
-    assignment and would need the ``.distinct()`` a semi-join does not. Raw SQL because the
-    predicate is a spatial one against the lookup view, which has no ORM model.
+    assignment and would need the ``.distinct()`` a semi-join does not.
 
-    Correlated on the **note**, with the location reached through ``notes_note.location_id``
-    rather than by naming whatever alias Django happened to give the join. That keeps the
-    fragment independent of the queryset it is attached to.
+    **Raw SQL, and not because the ORM cannot express it.** It can — this is equivalent and
+    builds the right statement::
+
+        Exists(RegionPiece.objects.filter(
+            region__kind=kind, region__code__in=codes,
+            geom__covers=OuterRef("location__point_geom")))
+
+    It is not used because it queries ``RegionPiece`` **directly**, and so answers a
+    slightly different question from ``_assigned_counts``: it would miss a region that has
+    no piece, which ``regions_regionlookup`` exists to cover. Matching the view in the ORM
+    means a second ``Exists`` over ``Region`` with ``pieces__isnull=True`` — two arms, in a
+    second place, that have to be kept in step with the view by hand. The rollup and the map
+    must agree on which regions contain a point, so the definition belongs in one place, and
+    that place is the view.
+
+    Correlated on the **note**, with the location reached through the note's own
+    ``location_id`` rather than by naming whatever alias Django happened to give a join.
+    That keeps the fragment independent of the queryset it is attached to.
 
     ``kind`` is required because codes are not unique across dimensions — ``"1"`` is a council
     district, an SPA and a supervisorial district here — so a code alone would return up to

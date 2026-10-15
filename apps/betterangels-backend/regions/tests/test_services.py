@@ -72,32 +72,18 @@ class ParseRegionCodeFilterTestCase(SimpleTestCase):
             parsed.keep_unassigned,
             "naming regions is not a request for a whole-period no-location bucket",
         )
-        self.assertFalse(parsed.query_unassigned)
 
     def test_the_sentinel_alone_returns_only_unassigned(self) -> None:
         parsed = self._parse([UNASSIGNED])
         self.assertEqual(parsed.codes, [])
         self.assertTrue(parsed.unassigned_only)
         self.assertTrue(parsed.keep_unassigned)
-        self.assertFalse(parsed.query_unassigned, "no real codes, so there is no OR arm")
 
     def test_sentinel_with_real_codes_asks_for_both_arms(self) -> None:
         parsed = self._parse(["13", UNASSIGNED])
         self.assertEqual(parsed.codes, ["13"])
         self.assertFalse(parsed.unassigned_only)
         self.assertTrue(parsed.keep_unassigned)
-        self.assertTrue(parsed.query_unassigned, "the unassigned rows need their own OR arm here")
-
-    def test_the_two_unassigned_flags_are_not_the_same_flag(self) -> None:
-        """The bug this guards: folding them drops both buckets from an unfiltered rollup.
-
-        `region_counts` only needs the unassigned arm when real codes are *also* asked
-        for, while the result filter keeps unassigned rows whenever the rollup is
-        unfiltered or the sentinel was sent.
-        """
-        unfiltered = self._parse(None)
-        self.assertFalse(unfiltered.query_unassigned)
-        self.assertTrue(unfiltered.keep_unassigned)
 
 
 class BuildRegionPiecesTestCase(TestCase):
