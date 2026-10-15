@@ -1,4 +1,4 @@
-import { GeoJsonLayer } from '@deck.gl/layers';
+import { ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 // The package's only exported entry re-exports Tile3DLayer, which imports
 // @deck.gl/mesh-layers at module scope — so that peer has to be installed even though no 3D
 // layer is used. It is a resolution requirement, not a runtime one; tree-shaking keeps it
@@ -7,10 +7,11 @@ import { MVTLayer } from '@deck.gl/geo-layers';
 import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { GoogleMapsOverlay } from '@deck.gl/google-maps';
 import type { Layer } from '@deck.gl/core';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useApiConfig } from '@monorepo/ba-platform';
-import { RADIUS_BY_ZOOM, RAMP, type HeatPoint } from './heatmapMath';
+import { HEATMAP_RADIUS_PX, RAMP, type HeatPoint } from './heatmapMath';
+import { clusterPoints, clusterRadius, type Cluster } from './clusterPoints';
 import { parseColor } from './mapColors';
 
 /**
@@ -31,18 +32,6 @@ import { parseColor } from './mapColors';
  * constructed in an effect against the map from `useMap()`, which is the wrapper pattern
  * vis.gl documents.
  *
- * ## The colour scale
- *
- * `HeatmapLayer`'s default is to derive the maximum from **the current viewport**, which makes
- * the same place change colour as you pan — the exact problem the hand-rolled version solved.
- * deck.gl exposes the fix as a prop, documented for this purpose: "To obtain a stable color
- * mapping (e.g. for displaying a legend), you need to provide a custom `colorDomain`."
- *
- * So the tested `computeReferencePeaks` is retained for exactly one job: producing that domain.
- * The placement is deliberate. deck.gl's docs and its source disagree about `colorDomain`'s
- * units in `SUM` mode ("weight per square meter" against a source comment saying per pixel), so
- * the domain has to come from something this codebase can verify rather than from a documented
- * constant.
  */
 
 /** deck.gl colours are `[r, g, b]` or `[r, g, b, a]`, all channels 0-255. */
@@ -55,26 +44,6 @@ const hexToRgba = (color: string, alpha: number): RgbaTuple => {
   const [r, g, b] = parseColor(color);
   return [r, g, b, Math.round(alpha * 255)];
 };
-
-/**
- * The `colorDomain` for a zoom level, from the pre-computed reference peak.
- *
- * `null` when no reference is available yet, which hands the decision back to deck.gl's
- * viewport default for the first frame — better a briefly swimming scale than a wrong one.
- */
-export function colorDomainFor(
-  reference: Map<number, number> | null,
-  zoom: number,
-): [number, number] | null {
-  if (!reference) {
-    return null;
-  }
-  const value = reference.get(Math.round(zoom));
-  if (value === undefined || value <= 0) {
-    return null;
-  }
-  return [0, value];
-}
 
 export type DeckMapLayersProps = {
   /** Interaction locations. Empty when the reader has not grouped by anything. */
@@ -96,10 +65,6 @@ export type DeckMapLayersProps = {
     stroke: string;
     markFill: string;
   };
-  /** The per-zoom peak the ramp is normalised against. See `computeReferencePeaks`. */
-  reference: Map<number, number> | null;
-  /** Reported so the legend can state what 100% means at the current level. */
-  onZoomChange?: (zoom: number) => void;
 };
 
 type BuildLayersArgs = {
@@ -110,22 +75,21 @@ type BuildLayersArgs = {
   focusCodes: string[];
   tileUrl: string | null;
   maxCount: number;
+  /** Current map level. The cluster bins are cut in screen space, so this cuts them. */
+  zoom: number;
   overlay: {
     emptyFill: string;
     fullFill: string;
     stroke: string;
     markFill: string;
   };
-  reference: Map<number, number> | null;
-  zoom: number;
 };
 
 /**
- * One definition of the layer stack, used by the render and by the zoom handler.
+ * One definition of the layer stack.
  *
- * `zoom` is a parameter rather than read from the map inside, because `colorDomain` is derived
- * from it: the zoom handler rebuilds the layers for a level the map has *just* moved to, and
- * reading `getZoom()` again in here would race the event.
+ * `zoom` is a parameter because the cluster bins are cut in screen space: a bubble splits as
+ * the reader zooms in, and that is a property of the level, not of the data.
  */
 function buildLayers({
   points,
@@ -136,7 +100,6 @@ function buildLayers({
   tileUrl,
   maxCount,
   overlay,
-  reference,
   zoom,
 }: BuildLayersArgs): Layer[] {
   const layers: Layer[] = [];
@@ -210,41 +173,47 @@ function buildLayers({
         aggregation: 'SUM',
         // The zoomed-out end of the radius table: deck.gl scales the kernel with zoom itself,
         // so this is a reference radius rather than a per-level table.
-        radiusPixels: RADIUS_BY_ZOOM[0][1],
+        radiusPixels: HEATMAP_RADIUS_PX,
         colorRange: COLOR_RANGE,
-        // Anchored to the dataset rather than the viewport; see the module docblock.
-        colorDomain: colorDomainFor(reference, zoom) ?? undefined,
+        // No `colorDomain`: deck derives it from the data, which is stable across pans and
+        // on the same scale as the aggregation it is applied to. See `heatmapMath.ts`.
         pickable: false,
       }),
     );
   }
 
   if (points.length > 0 && view === 'clusters') {
+    const clusters = clusterPoints(points, zoom);
     layers.push(
-      new GeoJsonLayer({
-        id: 'interaction-points',
-        // One GeoJSON point per interaction. deck.gl batches them on the GPU, so this replaces
-        // the canvas cluster layer without the per-point DOM cost that
-        // `@googlemaps/markerclusterer`'s DefaultRenderer would incur.
-        data: {
-          type: 'FeatureCollection',
-          features: points.map((point, index) => ({
-            type: 'Feature' as const,
-            id: index,
-            properties: {},
-            geometry: {
-              type: 'Point' as const,
-              coordinates: [point.longitude, point.latitude],
-            },
-          })),
-        } as never,
-        pointType: 'circle',
+      new ScatterplotLayer<Cluster>({
+        id: 'interaction-clusters',
+        data: clusters,
+        getPosition: (cluster: Cluster) => [cluster.longitude, cluster.latitude],
+        // Radius from the count, in pixels: the bubble stands for *n* interactions and its
+        // area says how many, so a lone interaction is still a visible dot.
+        getRadius: (cluster: Cluster) => clusterRadius(cluster.count),
+        radiusUnits: 'pixels',
         filled: true,
         stroked: true,
         getFillColor: hexToRgba(overlay.markFill, 0.55),
         getLineColor: hexToRgba(overlay.stroke, 0.9),
-        getPointRadius: 5,
-        pointRadiusUnits: 'pixels',
+        pickable: false,
+      }),
+      new TextLayer<Cluster>({
+        id: 'interaction-cluster-counts',
+        data: clusters.filter((cluster: Cluster) => cluster.count > 1),
+        getPosition: (cluster: Cluster) => [cluster.longitude, cluster.latitude],
+        getText: (cluster: Cluster) => String(cluster.count),
+        // The count is the whole point of a bubble; a bin of one is just a dot and would be
+        // shouting "1" over the whole map.
+        getSize: 12,
+        sizeUnits: 'pixels',
+        getColor: [255, 255, 255],
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'center',
+        // No `fontFamily: 'inherit'`: the text layer bakes glyphs into a font atlas from a real
+        // font name, and a CSS keyword resolves to nothing — the bubbles drew with no numbers
+        // in them at all. deck's default face is the one it has an atlas for.
         pickable: false,
       }),
     );
@@ -261,10 +230,9 @@ export function DeckMapLayers({
   focusCodes,
   maxCount,
   overlay,
-  reference,
-  onZoomChange,
 }: DeckMapLayersProps) {
   const map = useMap();
+  const [zoom, setZoom] = useState<number>(10);
   const { apiUrl } = useApiConfig();
   const overlayRef = useRef<GoogleMapsOverlay | null>(null);
 
@@ -277,7 +245,6 @@ export function DeckMapLayers({
   const tileUrl = regionKind
     ? `${apiUrl}/regions/tiles/${regionKind.toLowerCase()}/{z}/{x}/{y}.mvt`
     : null;
-  const zoomRef = useRef<number | null>(null);
 
   const layers = useMemo(
     () =>
@@ -290,8 +257,7 @@ export function DeckMapLayers({
         tileUrl,
         maxCount,
         overlay,
-        reference,
-        zoom: map?.getZoom() ?? 10,
+        zoom,
       }),
     [
       points,
@@ -302,10 +268,24 @@ export function DeckMapLayers({
       tileUrl,
       maxCount,
       overlay,
-      reference,
-      map,
+      zoom,
     ],
   );
+
+  // The cluster bins are cut in screen space, so they are a function of the zoom level and
+  // nothing else. This is the listener the domain-driven version needed and no longer does;
+  // clustering is the only reason left to track a level at all.
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+    const listener = map.addListener('zoom_changed', () => {
+      setZoom(map.getZoom() ?? 10);
+    });
+    return () => {
+      listener.remove();
+    };
+  }, [map]);
 
   // One overlay per map, reused across renders. deck.gl diffs the layer array itself, so the
   // overlay is created once and updated with `setProps` — recreating it would throw away the
@@ -330,48 +310,6 @@ export function DeckMapLayers({
     },
     [],
   );
-
-  // Rebuild on zoom so `colorDomain` follows the level, and report the zoom for the legend.
-  useEffect(() => {
-    if (!map) {
-      return;
-    }
-    const listener = map.addListener('zoom_changed', () => {
-      const zoom = map.getZoom() ?? 10;
-      if (zoom === zoomRef.current) {
-        return;
-      }
-      zoomRef.current = zoom;
-      onZoomChange?.(zoom);
-      overlayRef.current?.setProps({
-        layers: buildLayers({
-          points,
-          view,
-          regionKind,
-          counts,
-          focusCodes,
-          tileUrl,
-          maxCount,
-          overlay,
-          reference,
-          zoom,
-        }),
-      });
-    });
-    return () => google.maps.event.removeListener(listener);
-  }, [
-    map,
-    points,
-    view,
-    regionKind,
-    counts,
-    focusCodes,
-    tileUrl,
-    maxCount,
-    overlay,
-    reference,
-    onZoomChange,
-  ]);
 
   return null;
 }

@@ -8,7 +8,7 @@ import {
   Typography,
   type TableColumnsType,
 } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RegionDimension, UnassignedReason } from '@monorepo/ba-platform/types';
 import { ChartCard, useNoAutofill } from '../../components';
 import {
@@ -182,6 +182,34 @@ export function LocationBreakdown({
   // The grouping drives the boundaries drawn *over* the surface instead, which is the
   // usual separation: the gradient encodes a continuous quantity, the boundaries encode a
   // categorical one.
+
+  // The map panel is below the fold and its point payload is the largest thing this page
+  // fetches, so the request waits until the reader is near it.
+  //
+  // The observed node is a wrapper that is rendered whether or not the map is: the map
+  // itself only appears once there is something to draw, so observing *it* would never fire
+  // and the points would never arrive. `rootMargin` starts the request a little early, so
+  // arriving at the map does not then mean waiting on the network.
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const [mapVisible, setMapVisible] = useState(false);
+
+  useEffect(() => {
+    const element = mapRef.current;
+    if (!element || mapVisible) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setMapVisible(true);
+        }
+      },
+      { rootMargin: '400px' },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [mapVisible]);
+
   const {
     points,
     truncated,
@@ -203,6 +231,7 @@ export function LocationBreakdown({
     // group-by. Measured against the live backend.
     dimension: selectedCodes.length > 0 ? dimension : undefined,
     regionCodes: selectedCodes.length > 0 ? selectedCodes : undefined,
+    enabled: mapVisible,
   });
 
   /**
@@ -517,6 +546,7 @@ export function LocationBreakdown({
         </p>
       )}
 
+      <div ref={mapRef}>
       {hasData && (
         <div className="mb-5">
           <RegionMap
@@ -532,6 +562,7 @@ export function LocationBreakdown({
           />
         </div>
       )}
+      </div>
 
       {hasData && dimension === undefined && (
         /*

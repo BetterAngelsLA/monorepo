@@ -16,6 +16,13 @@ type UseInteractionMapArgs = {
   endDate: string;
   /** Absent means every dimension at once; `regionCodes` is then not meaningful. */
   dimension?: RegionDimension;
+  /**
+   * False while the map is off screen, which holds the request back.
+   *
+   * The panel sits below the fold and its payload is the largest on the page, so fetching it
+   * on mount spends a megabyte on a panel the reader may never scroll to.
+   */
+  enabled?: boolean;
   /** Narrow the map to these regions of `dimension` — "show me the SPA 4 visits". */
   regionCodes?: string[];
 };
@@ -35,6 +42,7 @@ export function useInteractionMap({
   endDate,
   dimension,
   regionCodes,
+  enabled = true,
 }: UseInteractionMapArgs) {
   const { data, loading, error } = useQuery<
     InteractionMapQuery,
@@ -47,7 +55,7 @@ export function useInteractionMap({
       dimension,
       regionCodes,
     },
-    skip: !organizationId,
+    skip: !organizationId || !enabled,
   });
 
   const points = useMemo(() => data?.interactionMap?.points ?? [], [data]);

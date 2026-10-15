@@ -2,13 +2,11 @@
 import { Map as GoogleMap } from '@vis.gl/react-google-maps';
 import {
   HEATMAP_RAMP_CSS,
-  SAMPLED_LEVELS,
-  computeReferencePeaks,
   type HeatPoint,
 } from './heatmapMath';
 import { DeckMapLayers } from './DeckMapLayers';
 import { Alert, theme } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
@@ -134,8 +132,6 @@ function RegionOverlay({
   overlay,
   points,
   view,
-  reference,
-  onZoomChange,
 }: {
   dimension: RegionDimension;
   rows: RegionCountType[];
@@ -148,8 +144,6 @@ function RegionOverlay({
   };
   points: HeatPoint[];
   view: MapView;
-  reference: Map<number, number> | null;
-  onZoomChange: (zoom: number) => void;
 }) {
   const counts = useMemo(() => {
     const map = new Map<string, number>();
@@ -180,8 +174,6 @@ function RegionOverlay({
         focusCodes={focusCodes}
         maxCount={maxCount}
         overlay={overlay}
-        reference={reference}
-        onZoomChange={onZoomChange}
       />
     </>
   );
@@ -242,42 +234,6 @@ export function RegionMap({
   // Heatmap first: density over an area is the question this page is usually asked, and
   // the choropleth is the same data once you know where to look.
   //
-  // The colour scale's reference, computed here rather than inside the renderer because
-  // deck.gl's `colorDomain` needs it as a prop and the legend needs to state it. It is the
-  // per-zoom peak over the **whole dataset** — the property that stops the ramp swimming as
-  // you pan — and it is accumulated at weight 1, so the value at a zoom *is* the number of
-  // interactions under the densest kernel. That is what "100% = N interactions" claims.
-  //
-  // Asynchronous and off the first paint: it is exact and therefore not cheap (hundreds of
-  // ms on a full county-month), and blocking the map on it would be worse than drawing once
-  // with deck.gl's viewport default.
-  const [reference, setReference] = useState<Map<number, number> | null>(null);
-  const [zoom, setZoom] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (points.length === 0) {
-      setReference(null);
-      return;
-    }
-    let cancelled = false;
-    const handle = requestIdleCallback(() => {
-      if (!cancelled) {
-        setReference(computeReferencePeaks(points, SAMPLED_LEVELS));
-      }
-    });
-    return () => {
-      cancelled = true;
-      cancelIdleCallback(handle);
-    };
-  }, [points]);
-
-  const scale = useMemo(() => {
-    if (!reference || zoom === null) {
-      return null;
-    }
-    const count = reference.get(Math.round(zoom));
-    return count === undefined ? null : { zoom, count };
-  }, [reference, zoom]);
   const mapColors = useMapColors();
 
   const caption = useMemo(() => {
@@ -353,8 +309,6 @@ export function RegionMap({
               overlay={mapColors}
               points={points}
               view={view}
-              reference={reference}
-              onZoomChange={setZoom}
             />
           )}
           {dimension === undefined && points.length > 0 && (
@@ -368,8 +322,6 @@ export function RegionMap({
               focusCodes={EMPTY_FOCUS}
               maxCount={0}
               overlay={mapColors}
-              reference={reference}
-              onZoomChange={setZoom}
             />
           )}
           {/* On the map rather than beside it: the ramp is meaningless without knowing it is
@@ -404,14 +356,7 @@ export function RegionMap({
                 <span>100%</span>
               </div>
               <div className="mt-0.5 w-44 text-xs text-neutral-700">
-                {scale
-                  ? `100% = ${scale.count.toLocaleString()} interactions in the densest area`
-                  : '100% = the densest area in this selection'}
-              </div>
-              {/* The reference is per-zoom, because the kernel radius is in pixels. Saying so
-                is the difference between a scale and a scale that quietly changes. */}
-              <div className="text-xs text-neutral-600">
-                scale set for this zoom level
+                100% = the densest area in this selection
               </div>
             </div>
           )}
