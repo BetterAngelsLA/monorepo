@@ -14,7 +14,6 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         self.org = organization_recipe.make()
         self.org_user = self.org.users.first()
         self.graphql_client.force_login(self.org_user)
-        self._set_active_org(self.org)
 
     def test_create_team_mutation(self) -> None:
         variables = {"name": "team 1", "organizationId": self.org.pk}
