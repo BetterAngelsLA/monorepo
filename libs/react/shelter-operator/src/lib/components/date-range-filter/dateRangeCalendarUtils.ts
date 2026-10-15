@@ -1,5 +1,6 @@
 import {
   addMonths,
+  differenceInCalendarDays,
   format,
   isSameMonth,
   isValid,
@@ -13,6 +14,45 @@ import type { DateRange } from './types';
 export const DATE_FORMAT = 'MM/dd/yyyy';
 const FIELD_PATTERN = /^\d{2}\/\d{2}\/\d{4}$/;
 const MIN_YEAR = 1900;
+
+/** Which end of the range a control is editing. */
+export type RangeEndpoint = 'from' | 'to';
+
+/**
+ * Resolve a day click against an already-complete range.
+ *
+ * react-day-picker moves the end endpoint for any click after the start, so a
+ * click near the start of a completed range would otherwise collapse it from the
+ * wrong side. Instead:
+ *
+ * - a click beyond either edge extends that edge;
+ * - a click *inside* the range moves the endpoint of the calendar it came from,
+ *   so the "from" calendar only ever edits the start date and the "to" calendar
+ *   only ever edits the end date. Resolving inside clicks by distance instead
+ *   makes a click in one calendar silently rewrite the other's date whenever it
+ *   happens to land nearer that edge;
+ * - when no endpoint is supplied (single calendar), fall back to the nearer edge.
+ */
+export function resolveRangeSelection(
+  selected: RdpDateRange,
+  date: Date,
+  endpoint?: RangeEndpoint,
+): RdpDateRange {
+  const { from, to } = selected;
+  if (!from || !to) return { from, to };
+
+  if (differenceInCalendarDays(date, from) < 0) return { from: date, to };
+  if (differenceInCalendarDays(date, to) > 0) return { from, to: date };
+
+  if (endpoint === 'from') return { from: date, to };
+  if (endpoint === 'to') return { from, to: date };
+
+  const distanceToStart = Math.abs(differenceInCalendarDays(date, from));
+  const distanceToEnd = Math.abs(differenceInCalendarDays(date, to));
+  return distanceToStart < distanceToEnd
+    ? { from: date, to }
+    : { from, to: date };
+}
 
 export const formatDate = (date: Date) => format(date, DATE_FORMAT);
 
@@ -30,7 +70,7 @@ export function maskDateInput(value: string): string {
 export function coupleMonths(
   anchor: Date,
   other: Date,
-  edge: 'left' | 'right'
+  edge: 'left' | 'right',
 ): Date {
   const a = startOfMonth(anchor);
   const o = startOfMonth(other);
@@ -79,7 +119,7 @@ export interface FieldCommitResult {
 export function computeFieldCommit(
   fromText: string,
   toText: string,
-  committed?: DateRange
+  committed?: DateRange,
 ): FieldCommitResult {
   const from = parseField(fromText);
   const to = parseField(toText);
@@ -103,5 +143,13 @@ export function computeFieldCommit(
     (next?.from?.getTime() ?? null) !== (prev?.from?.getTime() ?? null) ||
     (next?.to?.getTime() ?? null) !== (prev?.to?.getTime() ?? null);
 
-  return { from, to, fromError: false, toError: false, valid: true, next, changed };
+  return {
+    from,
+    to,
+    fromError: false,
+    toError: false,
+    valid: true,
+    next,
+    changed,
+  };
 }

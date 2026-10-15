@@ -22,7 +22,7 @@ class NoopResizeObserver {
 function renderCalendar() {
   const onCommit = vi.fn();
   render(
-    <DateRangeCalendar value={{ from: null, to: null }} onCommit={onCommit} />
+    <DateRangeCalendar value={{ from: null, to: null }} onCommit={onCommit} />,
   );
   return {
     onCommit,
@@ -30,10 +30,24 @@ function renderCalendar() {
   };
 }
 
-const dialog = () => screen.queryByRole('dialog', { name: 'Select date range' });
+const dialog = () =>
+  screen.queryByRole('dialog', { name: 'Select date range' });
 
 const input = (label: string) =>
   screen.getByLabelText(label) as HTMLInputElement;
+
+/**
+ * Clicks the day button for an exact `YYYY-MM-DD` cell. Outside days repeat
+ * numbers across the two panes, so cells are addressed by `data-day` (which
+ * react-day-picker puts on the gridcell) rather than by visible text. The
+ * popover is portaled to `document.body`, so query there rather than the
+ * render container.
+ */
+function clickDay(iso: string) {
+  const cell = document.querySelector(`[data-day="${iso}"]`);
+  if (!cell) throw new Error(`no day cell for ${iso}`);
+  fireEvent.click(cell.querySelector('button') as HTMLButtonElement);
+}
 
 describe('DateRangeCalendar', () => {
   beforeEach(() => {
@@ -44,7 +58,9 @@ describe('DateRangeCalendar', () => {
     const { toggle } = renderCalendar();
 
     fireEvent.click(toggle);
-    expect(screen.getByRole('dialog', { name: 'Select date range' })).toBeTruthy();
+    expect(
+      screen.getByRole('dialog', { name: 'Select date range' }),
+    ).toBeTruthy();
 
     fireEvent.keyDown(document, { key: 'Escape' });
 
@@ -80,7 +96,7 @@ describe('DateRangeCalendar', () => {
         {...props}
         open={false}
         value={{ from: new Date(2026, 0, 10), to: new Date(2026, 0, 20) }}
-      />
+      />,
     );
 
     // The value changes while the popover is closed (e.g. a preset was picked)…
@@ -89,7 +105,7 @@ describe('DateRangeCalendar', () => {
         {...props}
         open={false}
         value={{ from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) }}
-      />
+      />,
     );
     // …then it is opened through the controlled prop, the way the toolbar's
     // preset dropdown opens it when "Custom" is chosen.
@@ -98,7 +114,7 @@ describe('DateRangeCalendar', () => {
         {...props}
         open
         value={{ from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) }}
-      />
+      />,
     );
 
     expect(input('Start date').value).toBe('06/01/2026');
@@ -149,7 +165,7 @@ describe('DateRangeCalendar', () => {
         value={{ from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) }}
         onCommit={vi.fn()}
         onDirty={onDirty}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
@@ -161,5 +177,55 @@ describe('DateRangeCalendar', () => {
 
     expect(onDirty).not.toHaveBeenCalled();
     expect(input('Start date').value).toBe('06/01/2026');
+  });
+
+  it('keeps each calendar editing its own end of the range', () => {
+    const onCommit = vi.fn();
+    // Panes open on December 2025 (from) and January 2026 (to).
+    render(
+      <DateRangeCalendar
+        value={{ from: new Date(2025, 11, 10), to: new Date(2026, 0, 15) }}
+        onCommit={onCommit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
+
+    // 1. A 2026 end date, picked in the to calendar.
+    clickDay('2026-01-20');
+    // 2. An earlier 2025 start date, picked in the from calendar.
+    clickDay('2025-12-05');
+    // 3. A later 2025 start date. It sits 24 days after the start and 22 days
+    //    before the end, so a distance heuristic sends it to the end date.
+    clickDay('2025-12-29');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onCommit).toHaveBeenCalledWith({
+      from: new Date(2025, 11, 29),
+      to: new Date(2026, 0, 20),
+    });
+  });
+
+  it('moves the end date for an inside click in the to calendar', () => {
+    const onCommit = vi.fn();
+    render(
+      <DateRangeCalendar
+        value={{ from: new Date(2025, 11, 10), to: new Date(2026, 0, 15) }}
+        onCommit={onCommit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
+
+    // Inside the range, and the to calendar must edit the end date even though
+    // a distance heuristic would agree here — this guards the routing itself.
+    clickDay('2026-01-06');
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onCommit).toHaveBeenCalledWith({
+      from: new Date(2025, 11, 10),
+      to: new Date(2026, 0, 6),
+    });
   });
 });

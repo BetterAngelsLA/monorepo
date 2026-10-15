@@ -90,13 +90,13 @@ export function DateRangeCalendar({
   const open = isControlled ? openProp : internalOpen;
 
   const [draft, setDraft] = useState<RdpDateRange | undefined>(() =>
-    toRdp(value)
+    toRdp(value),
   );
   const [leftMonth, setLeftMonth] = useState<Date>(
-    () => defaultMonths(toRdp(value))[0]
+    () => defaultMonths(toRdp(value))[0],
   );
   const [rightMonth, setRightMonth] = useState<Date>(
-    () => defaultMonths(toRdp(value))[1]
+    () => defaultMonths(toRdp(value))[1],
   );
   const [yearGridSide, setYearGridSide] = useState<Side | null>(null);
 
@@ -143,7 +143,7 @@ export function DateRangeCalendar({
       if (!isControlled) setInternalOpen(next);
       onOpenChange?.(next);
     },
-    [isControlled, onOpenChange]
+    [isControlled, onOpenChange],
   );
 
   const close = useCallback(() => {
@@ -188,7 +188,7 @@ export function DateRangeCalendar({
       setDraft(range);
       onDirty?.();
     },
-    [onDirty]
+    [onDirty],
   );
 
   const commitTyped = useCallback(() => {
@@ -233,14 +233,14 @@ export function DateRangeCalendar({
       changeLeftMonth(new Date(year, leftMonth.getMonth(), 1));
       setYearGridSide(null);
     },
-    [changeLeftMonth, leftMonth]
+    [changeLeftMonth, leftMonth],
   );
   const selectRightYear = useCallback(
     (year: number) => {
       changeRightMonth(new Date(year, rightMonth.getMonth(), 1));
       setYearGridSide(null);
     },
-    [changeRightMonth, rightMonth]
+    [changeRightMonth, rightMonth],
   );
 
   const menuPos = usePortalPosition(anchorRef, open, close, menuRef);
@@ -269,12 +269,14 @@ export function DateRangeCalendar({
 
   const panes = {
     left: {
+      endpoint: 'from' as const,
       month: leftMonth,
       onMonthChange: changeLeftMonth,
       openYear: openLeftYear,
       selectYear: selectLeftYear,
     },
     right: {
+      endpoint: 'to' as const,
       month: rightMonth,
       onMonthChange: changeRightMonth,
       openYear: openRightYear,
@@ -295,6 +297,7 @@ export function DateRangeCalendar({
       <Calendar
         selected={draft}
         onSelect={handleSelect}
+        endpoint={pane.endpoint}
         month={pane.month}
         onMonthChange={pane.onMonthChange}
         onMonthLabelClick={pane.openYear}
@@ -389,7 +392,7 @@ export function DateRangeCalendar({
               </div>
             </div>
           </MenuPanel>,
-          document.body
+          document.body,
         )}
     </div>
   );

@@ -5,6 +5,7 @@ import {
   formatDate,
   maskDateInput,
   parseField,
+  resolveRangeSelection,
   toDomain,
   toRdp,
 } from './dateRangeCalendarUtils';
@@ -145,6 +146,78 @@ describe('coupleMonths', () => {
 describe('formatDate', () => {
   it('formats to MM/dd/yyyy', () => {
     expect(formatDate(new Date(2026, 4, 8))).toBe('05/08/2026');
+  });
+});
+
+describe('resolveRangeSelection', () => {
+  // A completed range whose endpoints are close enough that the midpoint
+  // matters — the shape that made inside clicks land on the wrong date.
+  const range = { from: new Date(2025, 11, 5), to: new Date(2026, 0, 20) };
+
+  it('extends the start for a click before the range, whatever the endpoint', () => {
+    const clicked = new Date(2025, 11, 1);
+    expect(resolveRangeSelection(range, clicked, 'from')).toEqual({
+      from: clicked,
+      to: range.to,
+    });
+    expect(resolveRangeSelection(range, clicked, 'to')).toEqual({
+      from: clicked,
+      to: range.to,
+    });
+  });
+
+  it('extends the end for a click after the range, whatever the endpoint', () => {
+    const clicked = new Date(2026, 1, 3);
+    expect(resolveRangeSelection(range, clicked, 'from')).toEqual({
+      from: range.from,
+      to: clicked,
+    });
+    expect(resolveRangeSelection(range, clicked, 'to')).toEqual({
+      from: range.from,
+      to: clicked,
+    });
+  });
+
+  it('moves the start for an inside click from the from calendar', () => {
+    // 2025-12-29 is 24 days after `from` and 22 before `to`, so a distance
+    // heuristic would move the end date instead.
+    const clicked = new Date(2025, 11, 29);
+    expect(resolveRangeSelection(range, clicked, 'from')).toEqual({
+      from: clicked,
+      to: range.to,
+    });
+  });
+
+  it('moves the end for an inside click from the to calendar', () => {
+    const clicked = new Date(2026, 0, 4);
+    expect(resolveRangeSelection(range, clicked, 'to')).toEqual({
+      from: range.from,
+      to: clicked,
+    });
+  });
+
+  it('moves the start for an inside click nearer the end when told to', () => {
+    const clicked = new Date(2026, 0, 18);
+    expect(resolveRangeSelection(range, clicked, 'from')).toEqual({
+      from: clicked,
+      to: range.to,
+    });
+  });
+
+  it('falls back to the nearer edge when no endpoint is given', () => {
+    expect(
+      resolveRangeSelection(range, new Date(2025, 11, 9), undefined),
+    ).toEqual({ from: new Date(2025, 11, 9), to: range.to });
+    expect(
+      resolveRangeSelection(range, new Date(2026, 0, 16), undefined),
+    ).toEqual({ from: range.from, to: new Date(2026, 0, 16) });
+  });
+
+  it('returns the range unchanged for a partial selection', () => {
+    const partial = { from: new Date(2026, 0, 10), to: undefined };
+    expect(
+      resolveRangeSelection(partial, new Date(2026, 0, 12), 'from'),
+    ).toEqual(partial);
   });
 });
 

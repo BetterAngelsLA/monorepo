@@ -59,3 +59,38 @@ describe('Calendar range selection', () => {
     );
   });
 });
+
+describe('Calendar endpoint routing', () => {
+  const renderWithEndpoint = (endpoint: 'from' | 'to') => {
+    const onSelect = vi.fn();
+    render(
+      <Calendar
+        selected={RANGE}
+        onSelect={onSelect}
+        month={JUNE_2026}
+        endpoint={endpoint}
+      />
+    );
+    return onSelect;
+  };
+
+  it('moves the start even when the click is nearer the end', () => {
+    const onSelect = renderWithEndpoint('from');
+    // 2026-06-17 is one day from `to` and seven from `from`; without the
+    // endpoint hint this would rewrite the end date.
+    clickDay('17');
+    expect(onSelect).toHaveBeenCalledWith({
+      from: new Date(2026, 5, 17),
+      to: RANGE.to,
+    });
+  });
+
+  it('moves the end even when the click is nearer the start', () => {
+    const onSelect = renderWithEndpoint('to');
+    clickDay('12');
+    expect(onSelect).toHaveBeenCalledWith({
+      from: RANGE.from,
+      to: new Date(2026, 5, 12),
+    });
+  });
+});

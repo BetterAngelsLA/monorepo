@@ -1,5 +1,9 @@
 import { useAtom } from 'jotai';
-import { Dropdown, toDropdownOptions, toDropdownValue } from '../base-ui/dropdown';
+import {
+  Dropdown,
+  toDropdownOptions,
+  toDropdownValue,
+} from '../base-ui/dropdown';
 import type { DropdownOption } from '../base-ui/dropdown';
 import { dateRangeFilterAtom } from './dateRangeFilterAtom';
 import { PRESET_LABELS, resolvePreset } from './presets';
