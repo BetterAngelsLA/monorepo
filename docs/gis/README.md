@@ -83,9 +83,8 @@ Reports page:
 
 1. Start the backend and the admin app, then sign in and open **`/reports`**.
 2. The panel sits under the existing charts and follows their date range.
-3. It needs a Google Maps key. The admin app falls back to shelter-web's
-   `VITE_SHELTER_GOOGLE_MAPS_API_KEY`; without any key the panel explains itself
-   rather than breaking the page.
+3. It needs a Google Maps key (`VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`). Without
+   one the panel explains itself rather than breaking the page.
 4. Browsing `localhost` versus `127.0.0.1` matters in local dev: the session cookie is
    host-only, so the API host must match the host in your address bar. `config.ts`
    handles this for you in development.
