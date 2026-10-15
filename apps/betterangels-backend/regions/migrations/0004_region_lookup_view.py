@@ -1,25 +1,19 @@
 """Drop the point→region crosswalk, drop ``RegionPiece.kind``, and add the lookup view.
 
-**``LocationRegion`` is dropped.** The rollup computes the point→region join live instead,
-written boundaries-first so it probes the GiST index on ``Location.point_geom``
-(``common/0002``). On the real LA layers, all six dimensions, that join costs 45 ms over
-20,000 interactions and 210 ms over 500,000 — its cost tracks *distinct locations* rather
-than interactions, so a wider report window does not widen it. Nothing is stored, so the
-rollup needs no derived table, no backfill and no write on the read path.
+**``LocationRegion`` is dropped.** The rollup computes the point→region join live, written
+boundaries-first so it probes the GiST index on ``Location.point_geom`` (``common/0002``);
+``selectors._assigned_counts`` carries the reasoning and the measurements.
 
-**``RegionPiece.kind`` is dropped.** The rollup joins ``Region`` to read the code anyway, so
-the denormalised copy would add a second source of truth that can disagree with its parent.
+**``RegionPiece.kind`` is dropped.** The rollup joins ``Region`` to read the code anyway, so the
+denormalised copy would add a second source of truth that can disagree with its parent.
 
-**``regions_regionlookup`` is created.** It is the surface the rollup and the map's region
-filter both read: each region's subdivided pieces, plus the parent boundary for a region with
-no piece. The fallback lives here, once, instead of in every query. The importer writes at
-least one piece per region, so in practice the second arm is empty — the anti-join over 431
-regions measures 0.27 ms.
+**``regions_regionlookup`` is created.** It is the surface the rollup and the map's region filter
+both read: each region's subdivided pieces, plus the parent boundary for a region with no piece.
+The importer writes at least one piece per region, so in practice the second arm is empty.
 
 **Do not inline the view into its callers.** It is what holds the planner in the good join
 direction: pointed straight at ``regions_regionpiece`` the planner flips round on a selective
-window and drives from the notes — 100 ms for 2,041 interactions against 30 ms through the
-view. The mirror query over the same data costs 200 ms, and 4,950 ms with no subdivision.
+window and drives from the notes — 100 ms against 30 ms through the view.
 """
 
 from django.db import migrations, models

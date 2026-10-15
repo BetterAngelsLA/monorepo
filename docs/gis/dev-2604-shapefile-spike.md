@@ -115,12 +115,12 @@ two.** No new geometry needs to be captured from users.
 
 ## 4. The load process
 
-The command reproduced below is the spike prototype, `load_region_boundaries`; it has since
-been **deleted** and replaced by `regions/management/commands/import_regions.py` (§6), which
-writes the `regions` app's model rather than a caller-named table. The output is kept verbatim
-because it is the evidence the design rests on. It is deliberately
-**dependency-free** — it uses the GeoDjango/OGR bindings that ship with Django, so no new
-packages, no `ogr2ogr` subprocess, and no IAM-credential juggling.
+The command reproduced below is the spike prototype, `load_region_boundaries`. The shipped
+command is `regions/management/commands/import_regions.py` (§6), which writes the `regions`
+app's model rather than a caller-named table. The prototype's output is kept verbatim because
+it is the evidence the design rests on. It is deliberately **dependency-free** — it uses the
+GeoDjango/OGR bindings that ship with Django, so no new packages, no `ogr2ogr` subprocess, and
+no IAM-credential juggling.
 
 ```bash
 python manage.py load_region_boundaries \
@@ -360,10 +360,9 @@ dataset compared with census tracts. Simplification is not optional at the next 
 
 ### 7.5 `postgis` extension — RESOLVED: already present, and we must not create it
 
-**RESOLVED: already present, and we must not create it.** The spike's premise — that the
-extension had to be created alongside the boundary tables — was wrong: `clients`, `common`,
-`hmis` and `shelters` each declare geometry fields in their `0001_initial` migrations, and
-those migrations cannot apply without the extension.
+**RESOLVED: already present, and we must not create it.** `clients`, `common`, `hmis` and
+`shelters` each declare geometry fields in their `0001_initial` migrations, and those
+migrations cannot apply without the extension.
 
 **Do not add a `CreateExtension`.** PostGIS is **not** a trusted extension, so
 `CREATE EXTENSION postgis` needs superuser or `rds_superuser` — which the app's IAM-minted
