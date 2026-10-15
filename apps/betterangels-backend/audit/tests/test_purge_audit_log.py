@@ -1,7 +1,9 @@
 """Tests for the `purge_audit_log` retention command (ADR 0004 §31)."""
 
 import datetime
+import re
 from io import StringIO
+from pathlib import Path
 
 import pghistory
 from django.core.management import call_command
@@ -14,6 +16,7 @@ from pghistory.models import Context
 
 from audit.management.commands.purge_audit_log import RETAINED_LABELS
 from shelters.models import Bed, Shelter
+from shelters.selectors import reports as reports_selector
 from shelters.selectors.reports import daily_occupancy, report_bed_status_counts
 from test_utils.pghistory import UPDATE_GUARD, backdate_event_rows
 
@@ -56,6 +59,24 @@ def _event_rows_for_context(context: Context, *, retained: bool) -> set[tuple[st
 
 
 class PurgeAuditLogTestCase(TestCase):
+    def test_retained_labels_cover_every_label_the_reports_read(self) -> None:
+        """``RETAINED_LABELS`` must cover what ``reports.py`` reads (ADR 0004 §31).
+
+        The other retention tests import the same constant the command uses, so
+        they cannot catch a *new* report label that was never added to it. Derive
+        the set from the report source instead: a label read there but not
+        retained would be purged, silently zeroing a report.
+        """
+        source = Path(reports_selector.__file__).read_text()
+
+        labels = set(re.findall(r'pgh_label="([^"]+)"', source))
+        for group in re.findall(r"pgh_label__in=\[([^\]]*)\]", source, re.DOTALL):
+            labels.update(re.findall(r'"([^"]+)"', group))
+
+        # Guard against a vacuous pass: the patterns must actually match.
+        self.assertTrue(labels)
+        self.assertEqual(labels - RETAINED_LABELS, set(), "reports.py reads labels that are not retained")
+
     def test_refuses_to_purge_inside_the_retention_window(self) -> None:
         """A mistyped date must not truncate live audit history (ADR 0004 §31)."""
         recent = timezone.now().date().isoformat()
