@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import strawberry
 from django.contrib.gis.db.models import MultiPolygonField
+from django.contrib.gis.db.models.functions import GeomOutputGeoFunc
 from django.db import models
 
 from common.models import BaseModel
@@ -17,6 +18,21 @@ from common.models import BaseModel
 # ~46 m at Los Angeles: below what the map can draw, and it takes the six-dimension
 # payload from 21 MB to 817 kB.
 DISPLAY_SIMPLIFY_DEGREES = 0.0005
+
+
+class SimplifyPreserveTopology(GeomOutputGeoFunc):
+    """``ST_SimplifyPreserveTopology(geometry, tolerance)``.
+
+    Declared for the generated column below. A subclass rather than a call with
+    ``function=``: ``GeomOutputGeoFunc`` resolves the SQL name from the class attribute, so
+    passing it as a keyword emits a call to the class's own name — the same trap
+    ``selectors.ReducePrecision`` documents.
+    """
+
+    function = "ST_SimplifyPreserveTopology"
+    arity = 2
+    output_field = MultiPolygonField()
+
 
 SUBDIVIDE_VERTEX_THRESHOLD = 2000
 # A target for ST_Subdivide, not a ceiling: a compact ring with more vertices than
@@ -63,11 +79,23 @@ class Region(BaseModel):
 
     geom = MultiPolygonField(srid=4326)
 
-    # Nullable because a region created directly (tests, admin, a script) may not set
-    # it; `region_features` falls back to `geom`. Not derivable from `RegionPiece`:
-    # subdivision clips at subdivision boundaries, so reuniting a region from its
-    # pieces equals the parent for only 334 of 431.
-    geom_display = MultiPolygonField(srid=4326, null=True, blank=True)
+    # A **generated column**: the database derives and maintains it, so there is no
+    # backfill to run, no chance of it drifting from `geom`, and no fallback needed
+    # (it cannot be NULL while `geom` is not). `ST_SimplifyPreserveTopology` is
+    # IMMUTABLE, which is what makes this legal.
+    #
+    # It was hand-maintained until this, kept in step by `import_regions`, with
+    # `region_features` coalescing back to `geom` for rows a test or script created
+    # without it. Verified byte-identical to what the importer used to write — 0 of 583
+    # rows differed — so the change is invisible to consumers.
+    #
+    # Not derived from `RegionPiece`: subdivision clips at subdivision boundaries, so
+    # reuniting a region from its pieces equals the parent for only 334 of 431.
+    geom_display = models.GeneratedField(
+        expression=SimplifyPreserveTopology(models.F("geom"), models.Value(DISPLAY_SIMPLIFY_DEGREES)),
+        output_field=MultiPolygonField(srid=4326, null=True),
+        db_persist=True,
+    )
 
     objects = models.Manager()
 
@@ -79,7 +107,12 @@ class Region(BaseModel):
         # No explicit index on `kind`: `db_index=True` already creates one, and
         # declaring both produced two identical indexes. The GiST index on `geom` is
         # `spatial_index=True`, the default.
-        ordering = ["kind", "code"]
+        #
+        # **No model-level `ordering`, deliberately.** It is appended to every SELECT, so a
+        # bare `.distinct()` de-duplicates on `(kind, code)` and returns one row per region
+        # instead of one per kind — which silently broke two call sites, each of which now
+        # carries an `order_by()` plus a comment explaining it. Callers that want an order
+        # ask for one.
 
     def __str__(self) -> str:
         label = self.name or self.code

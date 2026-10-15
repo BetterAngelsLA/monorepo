@@ -118,11 +118,12 @@ def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> 
 
     Returns the number of assignments written.
     """
-    # `.order_by()` is load-bearing: `Region.Meta.ordering` is added to the SELECT
-    # list, so a bare `.distinct()` de-duplicates on (kind, code) and returns one row
-    # per region instead of one per kind — 431 scopes rather than 6, measured at 260 s
-    # for a rebuild that should take seconds.
-    scopes = [kind] if kind else list(Region.objects.order_by().values_list("kind", flat=True).distinct())
+    # `Region` has no `Meta.ordering`, so `.distinct()` here de-duplicates on `kind` alone.
+    # When the model *did* carry an ordering it was appended to the SELECT list, making this
+    # de-duplicate on `(kind, code)` — 431 scopes instead of 6, measured at 260 s for a rebuild
+    # that should take seconds. The ordering was removed rather than worked around; the
+    # `.order_by()` that used to be required for correctness is no longer needed.
+    scopes = [kind] if kind else list(Region.objects.values_list("kind", flat=True).distinct())
     written = 0
 
     for scope in scopes:

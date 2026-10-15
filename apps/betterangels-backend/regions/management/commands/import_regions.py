@@ -33,7 +33,7 @@ from django.contrib.gis.geos import MultiPolygon
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from regions.models import DISPLAY_SIMPLIFY_DEGREES, Region, RegionKind
+from regions.models import Region, RegionKind
 from regions.services import build_region_pieces, ensure_location_regions
 
 # Envelope for the guard that catches a silently-skipped reprojection. Padded
@@ -372,12 +372,10 @@ class Command(BaseCommand):
                     source_attribution=metadata["attribution"],
                     source_item_id=metadata["item_id"],
                     geom=geometry,
-                    # Built here, once, rather than simplified per request: the map
-                    # serves this, and simplifying on every request measured 310 ms
-                    # for the ZIP dimension. `preserve_topology` is required — a plain
-                    # simplify can drop a ring or make a polygon self-intersect, which
-                    # Google Maps then refuses to draw.
-                    geom_display=normalise(geometry.simplify(DISPLAY_SIMPLIFY_DEGREES, preserve_topology=True)),
+                    # `geom_display` is not set here: it is a generated column
+                    # (`Region.geom_display`), so the database derives it from `geom`.
+                    # Writing it was what made this importer responsible for keeping a
+                    # derived value in step; that responsibility is now Postgres's.
                 )
             )
 
