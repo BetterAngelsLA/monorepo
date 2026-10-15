@@ -45,6 +45,7 @@ urlpatterns = [
     ),
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
+    path("regions/", include("regions.urls"), name="regions"),
     path("reports/", include("reports.urls"), name="reports"),
     path("shelters/", include("shelters.urls"), name="shelters"),
     path("upload/", admin_async_upload.views.admin_resumable, name="admin_resumable"),
