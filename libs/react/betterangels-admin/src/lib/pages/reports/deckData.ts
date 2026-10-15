@@ -18,31 +18,11 @@
  * `point_geom` keeps full precision and this is only how it reaches the GPU.
  */
 
-import type { ClusterPoint } from './clusterPoints';
-
 /** The shape deck.gl expects for binary `data`. */
 export type BinaryData = {
   length: number;
   attributes: Record<string, { value: Float32Array; size: number }>;
 };
-
-/**
- * Points as a packed XY position buffer.
- *
- * `size: 2` is what pairs with `positionFormat: 'XY'` on the layer — deck's default format is
- * `'XYZ'`, which would read a third component that is not there and place every point wrongly.
- */
-export function pointsToBinary(points: ClusterPoint[]): BinaryData {
-  const positions = new Float32Array(points.length * 2);
-  for (let i = 0; i < points.length; i++) {
-    positions[i * 2] = points[i].longitude;
-    positions[i * 2 + 1] = points[i].latitude;
-  }
-  return {
-    length: points.length,
-    attributes: { getPosition: { value: positions, size: 2 } },
-  };
-}
 
 /**
  * Clusters as position and radius buffers, for the bubble layer.

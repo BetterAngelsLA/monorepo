@@ -17,7 +17,7 @@ import {
   clustersForZoom,
   type Cluster,
 } from './clusterPoints';
-import { clustersToBinary, pointsToBinary } from './deckData';
+import { clustersToBinary } from './deckData';
 import { parseColor } from './mapColors';
 
 /**
@@ -174,11 +174,8 @@ function buildLayers({
     layers.push(
       new HeatmapLayer<HeatPoint>({
         id: 'interaction-heatmap',
-        // Binary, not an accessor over objects: the accessor returned a fresh tuple per point,
-        // so every update allocated ten thousand arrays for a buffer deck could have been handed
-        // directly. `positionFormat` pairs with the `size: 2` in the buffer.
-        data: pointsToBinary(points) as never,
-        positionFormat: 'XY',
+        data: points,
+        getPosition: (point: HeatPoint) => [point.longitude, point.latitude],
         // Gaussian KDE on the GPU, replacing the hand-rolled quartic kernel.
         aggregation: 'SUM',
         // The zoomed-out end of the radius table: deck.gl scales the kernel with zoom itself,
