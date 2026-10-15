@@ -17,7 +17,7 @@ dependencies = [
     "cryptography>=50.0.2,<51",
     "deepdiff>=8.6.1,<9",
     "dj-places>=5.2.1,<6",
-    "django>=6.1,<7",
+    "django>=6.1.2,<7",
     "django-admin-async-upload",
     "django-admin-interface>=0.32.0,<1",
     "django-admin-rangefilter>=0.13.5,<0.14",
