@@ -17,11 +17,39 @@ consumer (`shelters`).
 | `&&` in the table's SRID, before any transform | `regions/tiles.py` | keeps the GiST index usable; transforming first would discard it |
 | two envelopes for tiles | `regions/tiles.py` | a margined envelope decides which rows to *consider* (so buffered features are fetched) and the plain one is what `ST_AsMVTGeom` clips against — PostGIS documents that a margin must not be passed there |
 
-**No `ST_CoverageSimplify`.** It is the correct tool for the defect below and this build cannot
-run it: PostGIS 3.5.2 here was compiled against **GEOS 3.9.0**, and the function requires
-`GEOSCoverageSimplifyVW` from GEOS 3.12. Verified by calling it:
-`The GEOS version this PostGIS binary was compiled against (30900) doesn't support
-'GEOSCoverageSimplifyVW'`.
+## `ST_CoverageSimplify` works on RDS; the dev image is what is behind
+
+The function requires `GEOSCoverageSimplifyVW` from **GEOS 3.12**. Our dev/CI image
+(`nickblah/postgis:17.5-bullseye-postgis-3.5`, PostGIS 3.5.2) was compiled against **GEOS 3.9.0**
+and cannot run it — verified by calling it:
+
+```
+The GEOS version this PostGIS binary was compiled against (30900) doesn't support
+'GEOSCoverageSimplifyVW' function (3.12)
+```
+
+**Amazon RDS for PostgreSQL does not have this problem.** From AWS's own release notes:
+
+| RDS release | GEOS |
+|---|---|
+| PostgreSQL 15.3 (deprecated) | 3.11.2 |
+| **PostgreSQL 17.0** | **3.13.0** |
+| PostgreSQL 18.4 | 3.14.1 |
+
+The capability arrived with RDS PostgreSQL 17.0, well past the 3.12 required. RDS for PostgreSQL
+17 offers PostGIS up to 3.5.6, against 3.5.2 locally.
+
+The divergence risk therefore runs the other way: adopting `ST_CoverageSimplify` works in
+production and fails locally until the image is upgraded. **The image is the thing to change**,
+and doing so brings local up to what RDS already runs rather than ahead of it.
+
+Two caveats, recorded rather than assumed:
+
+- The RDS engine version is not in this repository — the AWS infrastructure lives elsewhere — so
+  "we are on 17" is an assumption. `SELECT postgis_full_version();` against the real instance
+  settles it in one query and is worth running before the fix is written.
+- Aurora PostgreSQL is documented separately and was not checked. If this ever moves to Aurora,
+  re-verify.
 
 ## Defect 1 — independent simplification breaks shared edges
 
@@ -53,10 +81,12 @@ reaches zero, at a real cost:
 | 0.0001 | 11 | 201 | 1372 kB | 18 | 0 |
 | 0.00005 | 6 | 268 | 1824 kB | 14 | 0 |
 
-So the options are: **upgrade the PostGIS image to one built against GEOS ≥ 3.12** and use
-`ST_CoverageSimplify` (which edits the shared edge once, for both neighbours — this is what the
-function exists for), or accept sub-60 m seams between adjacent districts. There is no tolerance
-that fixes it.
+So the options are: **upgrade the dev/CI PostGIS image** and use `ST_CoverageSimplify` — which
+edits the shared edge once, for both neighbours, and is what the function exists for — or accept
+sub-60 m seams between adjacent districts. There is no tolerance that fixes it.
+
+The image change is the only blocker, and it is a dev-environment change rather than a capability
+gap: RDS already has the GEOS the function needs.
 
 Tighter tolerance is *not* recommended on its own: 2.4× the payload for 18 remaining gaps.
 
