@@ -1447,8 +1447,8 @@ export type InteractionMapType = {
 export type InteractionPointType = {
   __typename: 'InteractionPointType';
   interactedAt: Scalars['DateTime']['output'];
-  latitude: Scalars['Float']['output'];
-  longitude: Scalars['Float']['output'];
+  latitude: Scalars['LatitudeScalar']['output'];
+  longitude: Scalars['LongitudeScalar']['output'];
 };
 
 export enum LanguageEnum {
@@ -2592,7 +2592,6 @@ export type Query = {
   referral: ReferralType;
   referrals: ReferralTypeOffsetPaginated;
   regionDimensions: Array<RegionDimension>;
-  regions: Array<RegionType>;
   reportSummary: ReportSummaryType;
   reservation: ReservationType;
   reservations: ReservationTypeOffsetPaginated;
@@ -2802,12 +2801,6 @@ export type QueryReferralsArgs = {
 };
 
 
-export type QueryRegionsArgs = {
-  codes?: InputMaybe<Array<Scalars['String']['input']>>;
-  dimension: RegionDimension;
-};
-
-
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
   organizationId: Scalars['ID']['input'];
@@ -3004,14 +2997,6 @@ export enum RegionDimension {
   SupervisorialDistrict = 'SUPERVISORIAL_DISTRICT',
   Zip = 'ZIP'
 }
-
-export type RegionType = {
-  __typename: 'RegionType';
-  code: Scalars['String']['output'];
-  geometry: Scalars['String']['output'];
-  kind: RegionDimension;
-  name: Scalars['String']['output'];
-};
 
 export enum RelationshipTypeEnum {
   Aunt = 'AUNT',
