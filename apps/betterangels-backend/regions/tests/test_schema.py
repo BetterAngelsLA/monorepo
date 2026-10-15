@@ -21,7 +21,8 @@ from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.models import Location
-from common.tests.utils import GraphQLBaseTestCase
+from common.tests.utils import GraphQLBaseTestCase, make_legacy_only_holder
+from notes.groups import CASEWORKER
 from notes.models import Note
 from regions.models import Region, RegionKind
 
@@ -202,69 +203,111 @@ INTERACTION_MAP_QUERY = """
 """
 
 
-class InteractionMapPermissionTestCase(GraphQLBaseTestCase):
-    """Pins carry the note read scope, not the report scope.
+class InteractionMapBaseTestCase(GraphQLBaseTestCase):
+    """One located note in ``org_1``, one in ``org_2``, and the roles that may see them.
 
-    ``ORG_ADMIN`` holds ``reports.view_reports`` and no ``notes.view_note``
-    (``accounts/groups.py``), so it must not see coordinates.
+    The map's authority is two gates that are easy to conflate:
 
-    Geometry is irrelevant here: the assertions are all or nothing.
+    * ``reports.view_reports`` at the org — a **grant**, role-backed since the reports
+      cutover, so ``ORG_ADMIN``/``ORG_SUPERUSER`` satisfy it;
+    * the note read scope — a **legacy** ``PermissionGroup`` permission, because notes
+      are gated on RFC 0003 and **no ``Role`` carries ``notes.view_note``**
+      (``CASEWORKER_ROLE`` carries only ``Team.perms.VIEW``).
+
+    So a caller must satisfy both, and the roles that do are caseworkers, not
+    ``ORG_ADMIN``. Before this suite existed the resolver gated on
+    ``require_can(..., NotePermissions.VIEW)`` — a grant predicate on a permission no
+    ``Role`` holds — which denied *every* non-superuser and made the map return nothing
+    for every real user. The positive test below is what pins that shut.
     """
 
     def setUp(self) -> None:
         super().setUp()
         sync_roles()
-        self.reader = baker.make(User)
-        self.org_1.add_user(self.reader)
-        OrgRoleManager(self.org_1).add_roles(self.reader, ORG_ADMIN)
 
         Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_A))
-        baker.make(
-            Note,
-            organization=self.org_1,
-            interacted_at=datetime(2026, 1, 15, tzinfo=UTC),
-            location=baker.make(Location, point=Point(-118.24, 34.05, srid=4326)),
-        )
+
+        when = datetime(2026, 1, 15, tzinfo=UTC)
+        # One shared location, used by both orgs' notes. Deliberate: it makes the org
+        # predicate the *only* thing that can separate the two rows in the confinement
+        # tests below, so a missing org filter cannot hide behind distinct geometry.
+        shared_location = baker.make(Location, point=Point(-118.24, 34.05, srid=4326))
+        self.note_here = baker.make(Note, organization=self.org_1, interacted_at=when, location=shared_location)
+        self.note_there = baker.make(Note, organization=self.org_2, interacted_at=when, location=shared_location)
         assign_locations()
 
-    def _map(self) -> dict[str, Any]:
-        self.graphql_client.force_login(self.reader)
-        response = self.execute_graphql(
-            INTERACTION_MAP_QUERY,
-            {
-                "organizationId": str(self.org_1.pk),
-                "dimension": "COUNCIL_DISTRICT",
-                "startDate": "2026-01-01",
-                "endDate": "2026-01-31",
-            },
-        )
+    def caseworker(self) -> User:
+        """A real caseworker: legacy ``notes.view_note`` AND a grant for the report gate.
+
+        Built in that order deliberately — ``add_legacy_membership`` drops every Grant on
+        the user (it models the pre-cutover state), so the role-backed grant has to be
+        added after it or it is silently revoked.
+        """
+        user = make_legacy_only_holder(user=baker.make(User), organization=self.org_1, template_name=CASEWORKER.name)
+        OrgRoleManager(self.org_1).add_roles(user, ORG_ADMIN)
+        return user
+
+    def _map(self, user: User, *, org_id: object = None, **overrides: Any) -> dict[str, Any]:
+        self.graphql_client.force_login(user)
+        variables: dict[str, Any] = {
+            "organizationId": str(org_id if org_id is not None else self.org_1.pk),
+            "dimension": "COUNCIL_DISTRICT",
+            "startDate": "2026-01-01",
+            "endDate": "2026-01-31",
+        }
+        variables.update(overrides)
+        response = self.execute_graphql(INTERACTION_MAP_QUERY, variables)
         if response.get("errors"):
             return {"errors": response["errors"]}
         return cast(dict[str, Any], response["data"]["interactionMap"])
 
-    def test_org_admin_without_note_permission_sees_no_pins(self) -> None:
-        """The role that can read reports but not notes must not see coordinates.
 
-        It either gets a permission error or an empty map — both are acceptable
-        refusals. Leaking a coordinate is not.
+class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
+    """Who may read pins: the caseworker yes, the report-only role no."""
+
+    def test_a_caseworker_holds_both_gates_and_sees_the_pins(self) -> None:
+        """**The positive case, and the reason this class was rewritten.**
+
+        A caseworker holds ``notes.view_note`` through the legacy ``Caseworker`` group
+        and ``reports.view_reports`` through their ``ORG_ADMIN`` grant, so the map must
+        return the org's interaction. Asserting only the denial below would pass whether
+        or not the map works for anyone — which is exactly how the original
+        unsatisfiable gate shipped green.
         """
-        result = self._map()
-        if "errors" in result:
-            return
+        result = self._map(self.caseworker())
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertEqual(len(result["points"]), 1, "the caseworker's note must be a pin")
+        self.assertAlmostEqual(result["points"][0]["latitude"], 34.05, places=4)
+
+    def test_org_admin_without_note_permission_is_denied(self) -> None:
+        """``ORG_ADMIN`` holds ``reports.view_reports`` and no ``notes.view_note``.
+
+        A different question from the caseworker's, and it must be asserted as a
+        **denial** rather than "an error or an empty map — either is fine". Accepting both
+        outcomes is what let an unsatisfiable gate and a working one look identical.
+        """
+        admin = baker.make(User)
+        self.org_1.add_user(admin)
+        OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
+
+        result = self._map(admin)
         self.assertEqual(
             result["points"],
             [],
-            f"ORG_ADMIN has no notes.view_note but received {len(result['points'])} pin(s): {result['points'][:2]}",
+            f"ORG_ADMIN has no notes.view_note but received {len(result.get('points') or [])} pin(s)",
         )
 
-    def test_the_rollup_still_works_for_that_role(self) -> None:
+    def test_the_rollup_still_works_for_the_report_only_role(self) -> None:
         """Refusing the pins must not disable the aggregate report.
 
-        ``interactionsByRegion`` returns counts, which is what ``view_reports`` is
-        for. If this starts failing, the note check has been applied in the wrong
-        place — which is the mistake this guards.
+        ``interactionsByRegion`` returns counts, which is what ``view_reports`` is for.
+        The note scope belongs on the pins, not on the rollup.
         """
-        self.graphql_client.force_login(self.reader)
+        admin = baker.make(User)
+        self.org_1.add_user(admin)
+        OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
+
+        self.graphql_client.force_login(admin)
         response = self.execute_graphql(
             ROLLUP_QUERY,
             {
@@ -276,3 +319,33 @@ class InteractionMapPermissionTestCase(GraphQLBaseTestCase):
         )
         self.assertIsNone(response.get("errors"), response.get("errors"))
         self.assertTrue(response["data"]["interactionsByRegion"])
+
+
+class InteractionMapOrgConfinementTestCase(InteractionMapBaseTestCase):
+    """Org confinement is the SQL clause, not the permission filter.
+
+    ``filter_for_user`` answers "does this user hold ``notes.view_note`` ⇒ every row",
+    with no org awareness at all: a user holding it model-level (the legacy group is
+    model-level) would otherwise receive every organization's coordinates that fall in
+    the date window. These two tests are the guard on that.
+    """
+
+    def test_only_the_requested_orgs_pins_are_returned(self) -> None:
+        """Both orgs' notes share one location, so only the org predicate can separate them."""
+        user = self.caseworker()
+        self.assertEqual(self.note_there.location_id, self.note_here.location_id)
+
+        result = self._map(user)
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertEqual(len(result["points"]), 1, "the other org's note must not be a pin")
+
+    def test_the_other_org_cannot_be_read(self) -> None:
+        """The report gate is per-org: authority at org_1 is not authority at org_2."""
+        result = self._map(self.caseworker(), org_id=self.org_2.pk)
+        self.assertIn("errors", result, "reading org_2 with authority only at org_1 must be denied")
+
+    def test_an_unknown_org_id_fails_closed(self) -> None:
+        """A bad org id is a permission problem, never a DoesNotExist crash."""
+        result = self._map(self.caseworker(), org_id="99999999")
+        self.assertIn("errors", result)
+        self.assertNotIn("DoesNotExist", str(result["errors"]))

@@ -15,13 +15,11 @@ native geometry type in this schema; polygons are returned as a GeoJSON string
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, time, timedelta
+from datetime import date
 from typing import List, Optional, cast
-from zoneinfo import ZoneInfo
 
 import strawberry
 import strawberry_django
-from django.core.exceptions import PermissionDenied
 from organizations.models import Organization
 from strawberry import ID
 from strawberry.types import Info
@@ -29,15 +27,15 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.utils.query import filter_for_user
 
 from accounts.models import User as AccountUser
+from common.graphql.utils import org_or_deny
 from common.permissions.utils import IsAuthenticated, require_can
-from common.utils import get_or_none
-from notes.models import Note
+from common.utils import aware_range
 from notes.permissions import NotePermissions
 from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import report_default_date_range
 
-from .selectors import POINT_LIMIT, available_kinds, region_features, scope_notes_to_regions
+from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, region_features, scope_notes_to_regions
 from .services import interaction_map_data, region_rollup
 from .types import (
     InteractionMapType,
@@ -55,17 +53,6 @@ def _resolve_dates(org: Organization, start_date: Optional[date], end_date: Opti
         start_date = start_date or default_start
         end_date = end_date or default_end
     return start_date, end_date
-
-
-def _aware_range(start_date: date, end_date: date, tz: ZoneInfo) -> tuple[datetime, datetime]:
-    """Inclusive calendar dates -> half-open instants, matching ``note_list_for_org``.
-
-    Half-open so the range and every bucket under it describe one period; using
-    ``interacted_at__date`` would also wrap the column in a cast and lose the index.
-    """
-    start = datetime.combine(start_date, time.min, tzinfo=tz)
-    end = datetime.combine(end_date + timedelta(days=1), time.min, tzinfo=tz)
-    return start, end
 
 
 @strawberry.type
@@ -92,11 +79,11 @@ class Query:
         differently, so it must not be reachable by a weaker check.
         """
         user = cast(AccountUser, get_current_user(info))
-        org = _org_or_deny(organization_id)
+        org = org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
         start_date, end_date = _resolve_dates(org, start_date, end_date)
-        start, end = _aware_range(start_date, end_date, report_calendar_time_zone(org))
+        start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
 
         return region_rollup(
             # `None` counts every dimension at once, grouping by (kind, code) because a
@@ -121,40 +108,53 @@ class Query:
     ) -> InteractionMapType:
         """Where the interactions happened, as map pins.
 
-        Authority is **the note read scope, not the report scope.** This returns
-        individual coordinates, so it is gated on ``notes.view_note`` and filtered
-        through ``filter_for_user``. Gating on ``reports.view_reports`` alone would
-        widen the scope: ``LocationType.point`` is reached *through* a note, and
-        ``reports.view_reports`` is held by ``ORG_ADMIN``, which has no note
-        permission.
+        **Two gates, and they are not interchangeable.** The coarse gate is
+        ``reports.view_reports`` at the payload org — the same authority as the rollup
+        beside it, because a pin is the same interaction the rollup counts, sliced
+        differently. The fine gate is the note read scope, applied by
+        ``filter_for_user(..., [NotePermissions.VIEW])``.
 
-        ``dimension`` is required: codes are not unique across dimensions, so the
-        dimension is what makes ``regionCodes`` meaningful. ``regionCodes`` then
-        narrows the map to those regions.
+        It is deliberately **not** ``require_can(..., NotePermissions.VIEW)``. Notes are a
+        legacy-only domain: ``LEGACY_INERT_APPS`` (``common/permissions/domain.py``) lists
+        shelters/teams/reports/organizations, not notes, and the scoped ``CASEWORKER_ROLE``
+        carries only ``Team.perms.VIEW`` (RFC 0003 step 1) — **no ``Role`` carries
+        ``notes.view_note``**. A grant predicate on that codename therefore resolves to an
+        empty scope and denies every non-superuser, including the caseworkers the map is
+        for. That is the ADR §5.3 anti-pattern: gating on a permission before its cutover
+        deletes authority rather than moving it. The note scope is enforced below, through
+        the same legacy path the Notes pages use.
+
+        ``filter_for_user`` is a **binary** filter, not row-narrowing: it answers "does
+        this user hold ``notes.view_note`` model-level (or on an object grant) ⇒ every row
+        it is given". It has no organization awareness at all, which is why the queryset
+        is org-confined *before* it is passed in (``org_notes_in_range``) and why
+        ``interaction_points`` also applies its own org predicate.
+
+        ``dimension`` is required when ``regionCodes`` is given: codes are not unique
+        across dimensions, so the dimension is what makes them meaningful.
         """
         user = cast(AccountUser, get_current_user(info))
-        org = _org_or_deny(organization_id)
+        org = org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
-        # Pins are note locations, so the note permission is required too. The org
-        # check above is the coarse gate; `filter_for_user` narrows it to the rows
-        # this user may actually read.
-        require_can(user, NotePermissions.VIEW, org=org)
 
         start_date, end_date = _resolve_dates(org, start_date, end_date)
-        start, end = _aware_range(start_date, end_date, report_calendar_time_zone(org))
+        start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
 
-        scoped_notes = filter_for_user(
-            Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end),
-            user,
-            [NotePermissions.VIEW],
-        )
+        # Org confinement happens here, once, in the selector — not in a later SQL clause
+        # and not in the permission filter. `filter_for_user` is the *note* read scope and
+        # has no org notion: it is a binary "holds `notes.view_note` model-level ⇒ every
+        # row of every org", so it cannot confine anything.
+        scoped_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
+        # The per-row note authority. Notes are a legacy domain (ADR 0001 §4.1: gated on
+        # RFC 0003, `LEGACY_INERT_APPS` excludes them), so this is the legacy arm and
+        # deliberately so — it is the same scope the Notes pages themselves apply.
+        scoped_notes = filter_for_user(scoped_notes, user, [NotePermissions.VIEW])
+
         scoped_codes = list(region_codes or [])
         if scoped_codes:
             if dimension is None:
-                # Refused, not ignored. A code without a dimension cannot be resolved —
-                # "1" is a council district, an SPA and a supervisorial district — so
-                # dropping the filter would return every interaction while looking
-                # filtered, which is worse than an error.
+                # Refused, not ignored. A code cannot be resolved without a dimension:
+                # "1" is a council district, an SPA and a supervisorial district.
                 raise ValueError("regionCodes requires a dimension")
             scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=scoped_codes)
 
@@ -204,14 +204,6 @@ class Query:
             )
             for row in rows
         ]
-
-
-def _org_or_deny(org_id: object) -> Organization:
-    """Resolve an org id from client input, failing closed (mirrors reports.schema)."""
-    org = get_or_none(Organization.objects.all(), org_id)
-    if org is None:
-        raise PermissionDenied("You do not have access to this organization.")
-    return org
 
 
 __all__ = ["Query", "RegionCountType", "RegionDimension", "RegionType", "UnassignedReason"]

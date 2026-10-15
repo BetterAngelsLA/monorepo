@@ -18,6 +18,24 @@ from notes.models import Note
 from .models import LocationRegion, Region, RegionKind
 
 
+def org_notes_in_range(*, organization_id: int, start: datetime, end: datetime) -> QuerySet[Note]:
+    """The organization's notes in a half-open instant range — every read's starting point.
+
+    Deliberately one function so the org predicate has exactly one home. Both
+    client-data-bearing reads in this app start from this queryset. A caller that builds
+    its own ``Note.objects.filter(...)`` reproduces the hole this closes:
+    ``interactionMap`` once queried notes across **every** organization in the date window
+    and relied on a later SQL clause (``interaction_points``'s ``organization_id``) to
+    confine the result — which meant the note queryset handed to the permission filter was
+    cross-org, and the map materialised every organization's note ids per request.
+    """
+    return Note.objects.filter(
+        organization_id=organization_id,
+        interacted_at__gte=start,
+        interacted_at__lt=end,
+    )
+
+
 def region_counts(
     *,
     kind: str | None,
@@ -43,15 +61,16 @@ def region_counts(
     ``codes is not None`` throughout: an explicitly empty list means "no codes" and
     matches nothing, where a truthiness check treats it as absent, drops the
     predicate, and returns the whole dimension.
+
+    **Pure read.** This used to call ``ensure_location_regions`` to fill gaps for
+    locations created since the last import. A selector that opens transactions and
+    INSERTs violates ``docs/styleguides/python.md`` ("read-only queries"), and the write
+    was global — every location in the database, every org, triggered by any report load.
+    Unresolved locations are now the importer's job (and ``manage.py
+    backfill_location_regions``); a location with no assignment is simply absent from
+    these buckets, which ``region_totals_without_boundaries`` and the locationless bucket
+    in ``region_rollup`` are there to reconcile.
     """
-
-    # Fill unresolved locations first. The read joins ``LocationRegion``, so a
-    # location created since the last import would be absent from every bucket,
-    # including unassigned, and the report would under-count with no error.
-    # Incremental, so a NULL assignment (resolved, in no region) is not retried.
-    from .services import ensure_location_regions
-
-    ensure_location_regions(kind=kind)
 
     notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end)
     if organization_id is not None:
@@ -142,6 +161,14 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
     Serves ``geom_display`` (see ``Region.geom_display``), falling back to ``geom``
     where the importer has not set it, so a region is never invisible on the map.
 
+    **``codes`` of ``None`` or ``[]`` both mean "no restriction" — every region of
+    ``kinds``.** This is one of the app's two empty-list readings and it is the intended
+    one: the frontend sends ``undefined`` when nothing is selected (``useRegionMap``
+    normalises ``[]`` to ``undefined`` before it hits the wire), so an empty list cannot
+    reach here from the UI, and "show me this dimension" is the useful reading for a
+    direct API caller. It is stated explicitly because ``parse_region_code_filter`` reads
+    an empty list the other way for the rollup; see ``services.parse_region_code_filter``.
+
     6 decimal places is ~10 cm — finer than the simplification tolerance, so nothing
     is lost in serialisation.
     """
@@ -153,10 +180,11 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
             WHERE kind = ANY(%(kinds)s)
               AND (%(codes)s IS NULL OR code = ANY(%(codes)s))
             """,
-            # `is not None`, not `or None`: an explicit empty list means "no codes"
-            # and must match nothing, where collapsing to NULL drops the predicate and
-            # returns the whole dimension.
-            {"kinds": list(kinds), "codes": list(codes) if codes is not None else None},
+            # An empty list collapses to NULL deliberately: with no codes asked for, the
+            # whole dimension is the answer (see the docstring). If this ever needs to
+            # mean "match nothing" instead, it is `list(codes) if codes else None` that
+            # has to change *and* `useRegionMap`'s normalisation, together.
+            {"kinds": list(kinds), "codes": list(codes) if codes else None},
         )
         rows = cursor.fetchall()
 
@@ -174,7 +202,7 @@ def interaction_points(
     *,
     start: datetime,
     end: datetime,
-    organization_id: int | None = None,
+    organization_id: int,
     limit: int = POINT_LIMIT,
     notes: "QuerySet[Note] | None" = None,
 ) -> tuple[list[dict[str, Any]], bool]:
@@ -185,22 +213,29 @@ def interaction_points(
     without answering "who". `LocationType.point` is already readable wherever a
     location is, so this is not a new class of disclosure, but it stays minimal.
 
+    ``organization_id`` is **required**, not defaulted to ``None``. It used to default to
+    "no org filter", which meant org confinement was a property of the one call site that
+    remembered to pass it rather than of this function — the fail-open shape. Every caller
+    wants the same confinement, so asking for it is the defect.
+
+    ``notes`` is permission-filtered by the caller (the resolver's legacy note scope) and
+    narrows the result further. It is *not* the org confinement: Django's
+    ``filter_for_user`` has no org notion at all — it is a binary "holds the model
+    permission ⇒ every row", so a cross-org queryset passed in here would stay cross-org
+    without the clause below.
+
     Returns ``(rows, truncated)``. Asking for one row past the cap is what detects
     truncation, so the caller can say the map is a subset rather than let it read as
     complete.
     """
     limit = max(1, min(limit, POINT_LIMIT_MAX))
-    params: dict[str, Any] = {"start": start, "end": end, "limit": limit + 1}
-    # `notes` is already permission-filtered by the caller, which is how the map
-    # inherits the note read scope rather than inventing its own.
+    params: dict[str, Any] = {"start": start, "end": end, "limit": limit + 1, "org_id": organization_id}
+    # `notes` carries the note read scope. `organization_id` above carries the org scope.
+    # Two independent controls, both applied, neither trusted to imply the other.
     notes_clause = ""
     if notes is not None:
         notes_clause = "AND n.id = ANY(%(note_ids)s)"
         params["note_ids"] = list(notes.values_list("id", flat=True))
-    org_clause = ""
-    if organization_id is not None:
-        org_clause = "AND n.organization_id = %(org_id)s"
-        params["org_id"] = organization_id
 
     sql = f"""
         SELECT ST_Y(l.point::geometry) AS latitude,
@@ -211,7 +246,7 @@ def interaction_points(
         WHERE n.interacted_at >= %(start)s
           AND n.interacted_at < %(end)s
           AND n.location_id IS NOT NULL
-          {org_clause}
+          AND n.organization_id = %(org_id)s
           {notes_clause}
         ORDER BY n.interacted_at DESC
         LIMIT %(limit)s

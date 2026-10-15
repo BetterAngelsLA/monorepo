@@ -165,6 +165,12 @@ def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> 
                     SELECT 1 FROM regions_locationregion lr
                     WHERE lr.location_id = l.id AND lr.kind = %(kind)s
                 )
+                -- Belt and braces with the NOT EXISTS above: `unique_location_kind_assignment`
+                -- is the real guarantee, and this makes a concurrent or repeated fill a
+                -- no-op instead of an IntegrityError. This function is reachable from a
+                -- management command and from the importer, both of which can overlap with
+                -- each other or with a re-run.
+                ON CONFLICT ON CONSTRAINT unique_location_kind_assignment DO NOTHING
                 """,
                 {"kind": scope},
             )
@@ -294,10 +300,15 @@ def interaction_map_data(
 ) -> InteractionMapType:
     """The interaction points for the given scope, as map pins.
 
-    ``notes`` arrives already permission-filtered **and already region-scoped** — the
-    resolver applies the drill-down before calling this, because the same scoped queryset
-    also feeds the shell queries beside it. Re-applying it here would be a second copy of
-    the rule that could drift from the first.
+    ``notes`` arrives already org-confined **and** already permission-filtered **and**
+    already region-scoped — the resolver applies all three before calling this, because
+    each is a rule about *what the caller may see* rather than about what to count, and
+    re-applying any of them here would be a second copy that could drift from the first.
+
+    ``organization_id`` is passed through to ``interaction_points`` as well, which applies
+    it as its own predicate. That is deliberate duplication, not an oversight: the note
+    permission filter has no org awareness, so the SQL clause is what actually confines
+    the result, and it should not depend on the caller's queryset being correct.
     """
     points, truncated = interaction_points(
         start=start, end=end, organization_id=organization_id, limit=limit, notes=notes

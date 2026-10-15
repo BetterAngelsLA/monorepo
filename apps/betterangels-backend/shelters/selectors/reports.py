@@ -12,6 +12,7 @@ from django.db.models.functions import Cast
 from django.utils import timezone as django_timezone
 from strawberry import ID
 
+from common.utils import aware_range, day_end
 from shelters.enums import BedStatusChoices, ReservationStatusChoices
 
 if TYPE_CHECKING:
@@ -107,7 +108,7 @@ def _day_end(day: datetime.date, tz: datetime.tzinfo) -> datetime.datetime:
 
     This is the exclusive upper bound for events that fall on *day*.
     """
-    return datetime.datetime.combine(day + datetime.timedelta(days=1), datetime.time.min, tzinfo=tz)
+    return day_end(day, tz)
 
 
 # ── Shared data reconstruction ────────────────────────────────────────────────
@@ -683,8 +684,7 @@ def shelter_metrics_window(
     end_date = end_date or django_timezone.now().astimezone(tz).date()
     start_date = start_date or (end_date - datetime.timedelta(days=29))
 
-    start = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=tz)
-    end = datetime.datetime.combine(end_date, datetime.time.min, tzinfo=tz) + datetime.timedelta(days=1)
+    start, end = aware_range(start_date, end_date, tz)
 
     return start, end
 

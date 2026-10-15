@@ -41,7 +41,25 @@ def get_registered_permission_enums() -> list[type[TextChoices]]:
 # permissions. Seed/dev-fixture-only models are not product surfaces: their
 # permissions would otherwise appear in the role/admin permission pickers, in
 # ``currentUser.permissions`` and in the generated frontend catalog.
-PERMISSION_EXCLUDED_MODELS: frozenset[str] = frozenset({"referrals.ReferralTestShelter"})
+#
+# ``regions.*`` is the second case, and a different one: the three region models are
+# *reference data with no write surface in the product*. Boundaries arrive through
+# ``manage.py import_regions``; ``RegionAdmin`` is read-only but for Django's own
+# ``change``/``delete``, which check ``user.has_perm`` (the legacy path) and which no
+# ``RoleDef`` carries — so a grant on them would authorize nothing. Shipping them to the
+# catalog would put four unassignable checkboxes per model in the role picker: twelve
+# permissions that cannot grant the thing they name. Declaring the data surface is what
+# the exclusion list is for. Server-side reads of region data are gated by
+# ``IsAuthenticated`` / ``reports.view_reports`` (see ``regions.schema``), never by a
+# ``regions.*`` permission.
+PERMISSION_EXCLUDED_MODELS: frozenset[str] = frozenset(
+    {
+        "referrals.ReferralTestShelter",
+        "regions.Region",
+        "regions.RegionPiece",
+        "regions.LocationRegion",
+    }
+)
 
 
 def register_model_permissions() -> None:

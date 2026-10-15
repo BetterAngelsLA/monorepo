@@ -7,7 +7,7 @@ They should not contain write logic — that belongs in services.
 Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 """
 
-from datetime import date, datetime, time, timedelta
+from datetime import date, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -16,6 +16,7 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 from organizations.models import Organization
 
+from common.utils import aware_range
 from notes.models import Note
 
 from .calendar import report_calendar_time_zone
@@ -43,11 +44,9 @@ def note_list_for_org(*, org: Organization, start_date: date, end_date: date, ti
     *time_zone* is the calendar the dates are read on — one decision per report,
     made by the caller, so the range and the buckets below it cannot disagree.
     """
-    org_time_zone = time_zone
-    # Half-open on instants rather than ``interacted_at__date``, which would wrap
-    # the column in a cast and lose the index.
-    start = timezone.make_aware(datetime.combine(start_date, time.min), timezone=org_time_zone)
-    end = timezone.make_aware(datetime.combine(end_date + timedelta(days=1), time.min), timezone=org_time_zone)
+    # Half-open on instants rather than ``interacted_at__date``; see ``common.utils.aware_range``
+    # for why, and for why the calendar is passed in rather than read from the active zone.
+    start, end = aware_range(start_date, end_date, time_zone)
 
     return Note.objects.filter(
         interacted_at__gte=start,

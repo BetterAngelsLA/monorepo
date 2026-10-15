@@ -15,15 +15,17 @@ from model_bakery import baker
 from accounts.tests.baker_recipes import organization_recipe
 from common.models import Location
 from notes.models import Note
-from regions.models import Region, RegionKind
+from regions.models import LocationRegion, Region, RegionKind
 from regions.selectors import (
     available_kinds,
     interaction_points,
+    org_notes_in_range,
     region_counts,
     region_features,
     region_totals_without_boundaries,
     scope_notes_to_regions,
 )
+from regions.services import ensure_location_regions
 
 from .helpers import assign_locations
 
@@ -255,10 +257,16 @@ class InteractionMapTestCase(TestCase):
         )
 
     def _notes(self, *, org: Any = None) -> Any:
-        """The notes in range, the way the resolver hands them to the selectors."""
-        return Note.objects.filter(
-            organization=org or self.org, interacted_at__gte=self.start, interacted_at__lt=self.end
-        )
+        """The notes in range, through the **same helper the resolver uses**.
+
+        Calls ``org_notes_in_range`` rather than repeating its filter. The previous
+        version hand-wrote ``Note.objects.filter(organization=..., interacted_at...``
+        while claiming to be "the way the resolver hands them to the selectors" — the
+        resolver did *not* filter by org at all, so the org confinement this helper
+        appeared to exercise was never the resolver's. Sharing the call keeps the test
+        and the resolver from drifting apart again.
+        """
+        return org_notes_in_range(organization_id=(org or self.org).id, start=self.start, end=self.end)
 
     def _points(self, **kwargs: Any) -> tuple[list[dict[str, Any]], bool]:
         return interaction_points(
@@ -357,13 +365,17 @@ class InteractionMapTestCase(TestCase):
 
 
 class StaleAssignmentTestCase(TestCase):
-    """A location created since the last import must still be counted.
+    """A location created since the last import must still be counted — once filled.
 
-    The rollup joins the stored assignment, so without a fill it would omit such a
-    location from every bucket — silently, with the total quietly no longer
-    reconciling against the KPI row. ``_note_at_resolved_by_no_one`` creates that
-    state: a real ``Location`` with no assignment, which the normal helper would have
-    resolved.
+    The rollup joins the stored assignment, so a location with no assignment is absent
+    from every bucket. ``_note_at_resolved_by_no_one`` creates that state: a real
+    ``Location`` with no assignment.
+
+    **The fill is explicit.** It used to happen inside ``region_counts``, which made a
+    read open transactions and INSERT for every location in the database — a selector
+    doing a global write (``docs/styleguides/python.md``). The fill now belongs to
+    ``manage.py backfill_location_regions`` (same ``ensure_location_regions`` service, and
+    ``import_regions``), and ``test_a_read_writes_nothing`` below is what keeps it out.
     """
 
     def setUp(self) -> None:
@@ -390,9 +402,30 @@ class StaleAssignmentTestCase(TestCase):
             interacted_at=datetime(2026, 1, 15, tzinfo=UTC),
         )
 
-    def test_the_rollup_resolves_a_location_it_has_never_seen(self) -> None:
+    def test_a_read_writes_nothing(self) -> None:
+        """The regression guard for the write-on-read bug.
+
+        A location with no assignment must stay unassigned after a read. If
+        ``region_counts`` ever calls ``ensure_location_regions`` again, this fails — and
+        it fails on the *mechanism* rather than on the count, so it cannot be satisfied
+        by a coincidentally-correct bucket.
+        """
+        note = self._note_at_resolved_by_no_one(-118.24, 34.05)
+        location_id = note.location_id
+        assert location_id is not None  # the helper always sets one
+
+        self._counts()
+
+        self.assertFalse(
+            LocationRegion.objects.filter(location_id=location_id).exists(),
+            "region_counts wrote an assignment; the fill belongs to the backfill command",
+        )
+
+    def test_the_fill_resolves_a_location_it_has_never_seen(self) -> None:
+        """The command's service does what the selector used to do on the side."""
         self._note_at_resolved_by_no_one(-118.24, 34.05)  # inside BOX_A
 
+        ensure_location_regions(kind=RegionKind.COUNCIL_DISTRICT)
         counts = self._counts()
         self.assertEqual(counts.get("1"), 1, "a fresh location must land in its region")
         self.assertNotIn(None, counts, "it resolved, so it is not unassigned")
@@ -401,19 +434,33 @@ class StaleAssignmentTestCase(TestCase):
         self._note_at_resolved_by_no_one(-118.24, 34.05)  # BOX_A
         self._note_at_resolved_by_no_one(*OUTSIDE)  # no region
 
+        ensure_location_regions(kind=RegionKind.COUNCIL_DISTRICT)
         counts = self._counts()
         self.assertEqual(counts.get("1"), 1)
         self.assertEqual(counts.get(None), 1, "the outside note is reported, not dropped")
         self.assertEqual(sum(counts.values()), 2, "buckets must reconcile to the total")
 
-    def test_repeated_reads_do_not_double_count(self) -> None:
-        """Resolving on read must be idempotent, or every report inflates."""
+    def test_an_unfilled_location_is_not_double_counted(self) -> None:
+        """Absent from the buckets is the honest answer; inflating them is not.
+
+        Pins the trade the fix makes: an unfilled location is missing from the rollup
+        until the backfill runs, rather than being counted by a read that also wrote.
+        """
         self._note_at_resolved_by_no_one(-118.24, 34.05)
 
+        self.assertEqual(self._counts(), {}, "an unassigned location is in no bucket")
+
+    def test_repeated_fills_do_not_double_count(self) -> None:
+        """Filling must be idempotent, or every import inflates the report."""
+        self._note_at_resolved_by_no_one(-118.24, 34.05)
+
+        ensure_location_regions(kind=RegionKind.COUNCIL_DISTRICT)
         first = self._counts()
+        ensure_location_regions(kind=RegionKind.COUNCIL_DISTRICT)
         second = self._counts()
-        self.assertEqual(first, second, "a repeated read must not resolve again")
+        self.assertEqual(first, second, "a repeated fill must not write a second assignment")
         self.assertEqual(second.get("1"), 1)
+        self.assertEqual(LocationRegion.objects.filter(kind=RegionKind.COUNCIL_DISTRICT).count(), 1)
 
 
 class RegionCodeCollisionTestCase(TestCase):
