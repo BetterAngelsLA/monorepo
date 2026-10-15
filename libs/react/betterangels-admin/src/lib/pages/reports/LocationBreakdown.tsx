@@ -551,7 +551,6 @@ export function LocationBreakdown({
         <div className="mb-5">
           <RegionMap
             dimension={dimension}
-            rows={shown}
             points={points}
             truncated={truncated}
             hasMapsKey={hasMapsKey}

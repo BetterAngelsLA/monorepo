@@ -11,9 +11,8 @@ import type { RegionDimension } from '@monorepo/ba-platform/types';
 
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
-import type { InteractionPointType, RegionCountType } from './hooks';
+import type { InteractionPointType } from './hooks';
 /** Stable identity, so the ungrouped map does not rebuild its layers on every render. */
-const EMPTY_COUNTS = new Map<string, number>();
 /** Same reason as `EMPTY_COUNTS`: a stable identity for the ungrouped case. */
 const EMPTY_FOCUS: string[] = [];
 
@@ -135,14 +134,12 @@ function useMapColors() {
  */
 function RegionOverlay({
   dimension,
-  rows,
   focusCodes,
   overlay,
   points,
   view,
 }: {
   dimension: RegionDimension;
-  rows: RegionCountType[];
   focusCodes: string[];
   overlay: {
     emptyFill: string;
@@ -153,34 +150,13 @@ function RegionOverlay({
   points: HeatPoint[];
   view: MapView;
 }) {
-  const counts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const row of rows) {
-      if (!row.isUnassigned) {
-        map.set(row.code, row.count);
-      }
-    }
-    return map;
-  }, [rows]);
-
-  const maxCount = useMemo(
-    () =>
-      rows.reduce(
-        (max, row) => (row.isUnassigned ? max : Math.max(max, row.count)),
-        0,
-      ),
-    [rows],
-  );
-
   return (
     <>
       <DeckMapLayers
         points={points}
         view={view}
         regionKind={dimension}
-        counts={counts}
         focusCodes={focusCodes}
-        maxCount={maxCount}
         overlay={overlay}
       />
     </>
@@ -193,7 +169,6 @@ export type MapView = 'heatmap' | 'clusters';
 type RegionMapProps = {
   /** Absent when the report is not grouped by geography; then no polygons are drawn. */
   dimension?: RegionDimension;
-  rows: RegionCountType[];
   /** Individual interaction locations, from `interactionMap`. */
   points?: InteractionPointType[];
   /** True when the point cap was reached and the clusters are a subset. */
@@ -229,7 +204,6 @@ type RegionMapProps = {
  */
 export function RegionMap({
   dimension,
-  rows,
   points = [],
   truncated = false,
   filteredTo,
@@ -312,8 +286,7 @@ export function RegionMap({
           {dimension !== undefined && (
             <RegionOverlay
               dimension={dimension}
-              rows={rows}
-              focusCodes={focusCodes}
+                      focusCodes={focusCodes}
               overlay={mapColors}
               points={points}
               view={view}
@@ -326,9 +299,7 @@ export function RegionMap({
               points={points}
               view={view}
               regionKind={null}
-              counts={EMPTY_COUNTS}
               focusCodes={EMPTY_FOCUS}
-              maxCount={0}
               overlay={mapColors}
             />
           )}

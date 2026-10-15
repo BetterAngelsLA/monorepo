@@ -61,12 +61,8 @@ export type DeckMapLayersProps = {
   view: 'heatmap' | 'clusters';
   /** Dimension whose boundaries to draw, or `null` when nothing is grouped. */
   regionKind: string | null;
-  /** Region counts by code, joined from the rollup. Drives the choropleth fill. */
-  counts: Map<string, number>;
   /** Regions the reader has drilled into. Empty means every region is in scope. */
   focusCodes: string[];
-  /** Highest count across the rows, for the choropleth ramp. */
-  maxCount: number;
   /** Design-system colours, resolved from antd tokens by the caller. */
   overlay: {
     emptyFill: string;
@@ -80,10 +76,8 @@ type BuildLayersArgs = {
   points: HeatPoint[];
   view: 'heatmap' | 'clusters';
   regionKind: string | null;
-  counts: Map<string, number>;
   focusCodes: string[];
   tileUrl: string | null;
-  maxCount: number;
   /** Binned once per (points, zoom) by the caller; see `useClusters` below. */
   clusters: Cluster[];
   overlay: {
@@ -102,10 +96,8 @@ function buildLayers({
   points,
   view,
   regionKind,
-  counts,
   focusCodes,
   tileUrl,
-  maxCount,
   overlay,
   clusters,
 }: BuildLayersArgs): Layer[] {
@@ -115,54 +107,36 @@ function buildLayers({
     layers.push(
       new MVTLayer({
         id: `region-boundaries-${regionKind}`,
-        // `{z}/{x}/{y}` are substituted per tile. deck.gl fetches only the tiles in view, so
-        // the client no longer receives a whole dimension: measured, `coc` is 1281 B for a
-        // DTLA tile against 769 kB for the entire layer.
         data: tileUrl,
-        // The tile endpoint is on the API's origin, not the app's, and it needs the session.
-        // deck.gl's own fetch does not send cookies cross-origin, so every tile came back
-        // 403 {"detail":"Authentication credentials were not provided."} and the boundary
-        // layer drew nothing at all. Apollo's credentials interceptor does not reach here.
         loadOptions: { fetch: { credentials: 'include' } },
         minZoom: 0,
         maxZoom: 16,
-        filled: true,
+        // **Stroke only.** The fill used to encode each region's interaction count as a colour
+        // and an alpha, which is the same quantity the heatmap already encodes as a colour —
+        // two encodings of "where are the interactions", competing for the same pixels. The
+        // reader saw grey districts and no density. Boundaries are the frame, not a second
+        // reading of the data; the table beside the map carries the per-region counts.
+        filled: false,
         stroked: true,
-        // Every boundary is drawn even when the reader has drilled into one district: tiles
-        // cannot be filtered by a code list — a tile URL is a template and `codes` is not part
-        // of it — and a single district with nothing around it loses the geography that makes
-        // it locatable. Focus is shown by emphasis instead of omission.
-        getFillColor: (feature) => {
-          const code = String(
-            (feature.properties as { code?: string })?.code ?? '',
-          );
-          const count = counts.get(code) ?? 0;
-          const t = maxCount > 0 ? Math.sqrt(Math.max(0, count) / maxCount) : 0;
-          const alpha = count > 0 ? 0.18 * t + 0.06 : 0.06;
-          const faded = focusCodes.length > 0 && !focusCodes.includes(code);
-          return hexToRgba(overlay.fullFill, faded ? alpha * 0.35 : alpha);
-        },
         getLineColor: (feature) => {
           const code = String(
             (feature.properties as { code?: string })?.code ?? '',
           );
+          // Everything stays drawn when a region is selected, with the chosen ones emphasised.
+          // A single district floating with nothing around it loses the geography that makes it
+          // locatable.
           const faded = focusCodes.length > 0 && !focusCodes.includes(code);
-          return hexToRgba(overlay.stroke, faded ? 0.3 : 0.85);
+          return hexToRgba(overlay.stroke, faded ? 0.25 : 0.9);
         },
-        // The focused districts get a heavier outline, which is what carries the drill-down now
-        // that the layer is not narrowed to them.
         getLineWidth: (feature) => {
           const code = String(
             (feature.properties as { code?: string })?.code ?? '',
           );
-          return focusCodes.includes(code) ? 2.4 : 1.4;
+          return focusCodes.includes(code) ? 2.4 : 1.2;
         },
         lineWidthUnits: 'pixels',
         pickable: false,
-        // Tiles arrive after the rollup does, so the fill has to be recomputed when the counts
-        // land — otherwise every tile is drawn at the empty shade and never repainted.
         updateTriggers: {
-          getFillColor: [maxCount, overlay.fullFill, counts, focusCodes],
           getLineColor: [overlay.stroke, focusCodes],
           getLineWidth: [focusCodes],
         },
@@ -231,9 +205,7 @@ export function DeckMapLayers({
   points,
   view,
   regionKind,
-  counts,
   focusCodes,
-  maxCount,
   overlay,
 }: DeckMapLayersProps) {
   const map = useMap();
@@ -267,10 +239,8 @@ export function DeckMapLayers({
         points,
         view,
         regionKind,
-        counts,
         focusCodes,
         tileUrl,
-        maxCount,
         overlay,
         clusters,
       }),
@@ -278,10 +248,8 @@ export function DeckMapLayers({
       points,
       view,
       regionKind,
-      counts,
       focusCodes,
       tileUrl,
-      maxCount,
       overlay,
       clusters,
     ],
