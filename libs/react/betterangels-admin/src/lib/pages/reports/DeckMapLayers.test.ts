@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { GeoJsonLayer } from '@deck.gl/layers';
-import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 
 // `DeckMapLayers` is imported for its module side effects (deck.gl must be constructible in
 // this environment); the layer stack itself is exercised by constructing the same layers
 // `buildLayers` does and asserting on the props that carry behaviour.
 import { DeckMapLayers } from './DeckMapLayers';
-import { HEATMAP_RADIUS_PX, HEATMAP_RAMP_CSS, RAMP } from './heatmapMath';
-
-const POINTS = [
-  { latitude: 34.05, longitude: -118.25 },
-  { latitude: 34.06, longitude: -118.24 },
-];
+import {
+  DENSITY_COLOR_MAX,
+  densityColor,
+  HEATMAP_RAMP_CSS,
+  RAMP,
+  rampAt,
+} from './heatmapMath';
 
 describe('the colour ramp', () => {
   it('is ordered, and spans the whole range', () => {
@@ -31,43 +31,43 @@ describe('the colour ramp', () => {
       expect(HEATMAP_RAMP_CSS).toContain(`${(stop * 100).toFixed(0)}%`);
     }
   });
+
+  it('interpolates between the stops rather than snapping to them', () => {
+    // A mid-stop intensity must not equal either neighbour, or the field would band into five
+    // colours instead of reading as a gradient.
+    const between = rampAt(0.4);
+    expect(between).not.toEqual(RAMP[1].color);
+    expect(between).not.toEqual(RAMP[2].color);
+  });
 });
 
-describe('the layer stack deck.gl is given', () => {
-  it('leaves the heatmap domain to deck.gl', () => {
-    // Not a style preference. A hand-computed domain sat on a different kernel and radius
-    // from the aggregation it was applied to, which flattened the whole field to the cold
-    // end of the ramp whenever it was set. deck derives it from the dataset, and that is
-    // stable across pans — measured, panning the dense area away drops the warm share rather
-    // than promoting whatever is left to red.
-    const layer = new HeatmapLayer({
-      id: 'interaction-heatmap',
-      data: POINTS,
-      getPosition: (p: { longitude: number; latitude: number }) => [
-        p.longitude,
-        p.latitude,
-      ],
-      colorRange: RAMP.map((stop) => stop.color),
-      radiusPixels: HEATMAP_RADIUS_PX,
-    });
-    // deck's own default is `null`, which means "derive it from the data" — so this asserts
-    // that nothing overrode it, not merely that the prop is absent.
-    expect(layer.props.colorDomain).toBeNull();
-    expect(layer.props.radiusPixels).toBe(HEATMAP_RADIUS_PX);
+describe('the density colour scale', () => {
+  it('puts the cold end on zero and red on the reference count', () => {
+    expect(densityColor(0).slice(0, 3)).toEqual(RAMP[0].color);
+    expect(densityColor(DENSITY_COLOR_MAX).slice(0, 3)).toEqual([
+      ...RAMP[RAMP.length - 1].color,
+    ]);
   });
 
-  it('maps a region count through the choropleth ramp', () => {
-    const maxCount = 100;
-    const alphaFor = (count: number) => {
-      const t = maxCount > 0 ? Math.sqrt(Math.max(0, count) / maxCount) : 0;
-      return count > 0 ? 0.18 * t + 0.06 : 0.06;
-    };
-    // The three behaviours worth pinning: zero is the flat empty tint, the max is the most
-    // saturated, and the mid-point is monotonic between them.
-    expect(alphaFor(0)).toBeCloseTo(0.06, 6);
-    expect(alphaFor(100)).toBeCloseTo(0.24, 6);
-    expect(alphaFor(25)).toBeGreaterThan(alphaFor(0));
-    expect(alphaFor(25)).toBeLessThan(alphaFor(100));
+  it('is the ramp read at a square root of the count', () => {
+    // The scale is not a free choice — it is the legend's "25+" and the layer's colour
+    // agreeing — so this pins the mapping for counts across the range, including one past
+    // the reference, which must clamp rather than run off the ramp.
+    for (const count of [0, 1, 6, 12, 25, 100]) {
+      expect(densityColor(count)).toEqual([
+        ...rampAt(Math.sqrt(count / DENSITY_COLOR_MAX)),
+        216,
+      ]);
+    }
+  });
+
+  it('fails to the cold end when the count is unreadable', () => {
+    // `count` arrives as `Number(feature.properties.count)`. A missing or malformed property
+    // is `NaN`, which compares false against every stop and would fall *through* the ramp to
+    // the hottest colour — an unreadable cell must read as empty, not as the peak.
+    expect(densityColor(Number.NaN)).toEqual(densityColor(0));
+    expect(densityColor(-5)).toEqual(densityColor(0));
+    expect(Number.isFinite(densityColor(0)[0])).toBe(true);
   });
 
   it('constructs without a WebGL context, so the module is import-safe', () => {

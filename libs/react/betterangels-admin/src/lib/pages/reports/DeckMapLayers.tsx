@@ -4,13 +4,12 @@ import { ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 // layer is used. It is a resolution requirement, not a runtime one; tree-shaking keeps it
 // out of the build.
 import { MVTLayer } from '@deck.gl/geo-layers';
-import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { GoogleMapsOverlay } from '@deck.gl/google-maps';
 import type { Layer } from '@deck.gl/core';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useApiConfig } from '@monorepo/ba-platform';
-import { HEATMAP_RADIUS_PX, RAMP, type HeatPoint } from './heatmapMath';
+import { densityColor, type HeatPoint } from './heatmapMath';
 import {
   buildClusterIndex,
   clusterRadius,
@@ -21,13 +20,12 @@ import { clustersToBinary } from './deckData';
 import { parseColor } from './mapColors';
 
 /**
- * Both map layers, drawn by deck.gl.
+ * The map's layers, drawn by deck.gl.
  *
- * This replaces three hand-rolled renderers: a canvas heatmap, a canvas cluster layer, and the
- * choropleth drawn on Google's `map.data`. deck.gl was chosen because Google's own deprecation
- * notice for `google.maps.visualization.HeatmapLayer` names it as the replacement, it is
- * maintained by the vis.gl organisation (the same org as `@vis.gl/react-google-maps`, which
- * this app already uses), and it removes several hundred lines of untested drawing code.
+ * Density and boundaries are both `MVTLayer`s over endpoints on the API, and clustering is a
+ * client-side binning of the point list. Density used to be a `HeatmapLayer` fed every
+ * individual interaction — 10,000 points, about 1 MB — which is why it is now a tile: the
+ * server aggregates the points into a grid and the client fetches only the cells in view.
  *
  * ## Why `GoogleMapsOverlay` rather than `<DeckGL>` wrapping `<Map>`
  *
@@ -46,16 +44,26 @@ const NO_CLUSTERS: Cluster[] = [];
 /** deck.gl colours are `[r, g, b]` or `[r, g, b, a]`, all channels 0-255. */
 type RgbaTuple = [number, number, number, number];
 
-/** The ramp as `[r, g, b]` triples; `RAMP` already holds them. */
-const COLOR_RANGE: [number, number, number][] = RAMP.map((stop) => stop.color);
-
 const hexToRgba = (color: string, alpha: number): RgbaTuple => {
   const [r, g, b] = parseColor(color);
   return [r, g, b, Math.round(alpha * 255)];
 };
 
+/**
+ * The density endpoint's tile encoding, recorded here even though none of it is a deck.gl
+ * prop — deck.gl has no tile-buffer option and the extent is the MVT spec's, so there is
+ * nothing on this side to set. It is written down because it is what the server chose and
+ * what the client's rendering depends on:
+ *
+ * * **extent 4096** (`regions.tiles.TILE_EXTENT`), which the MVT loader reads from the layer
+ *   to normalise the geometry.
+ * * **buffer 0** (`regions.tiles.DENSITY_TILE_BUFFER`): cells are clipped exactly to the tile
+ *   so neighbours meet edge to edge. The boundary layer uses 64, for line continuity, which a
+ *   grid must not do — an overlap would draw one cell's count over its neighbour's.
+ */
+
 export type DeckMapLayersProps = {
-  /** Interaction locations. Empty when the reader has not grouped by anything. */
+  /** Interaction locations. Only the clusters view reads them. */
   points: HeatPoint[];
   /** Which of the two point renderings to draw. */
   view: 'heatmap' | 'clusters';
@@ -63,6 +71,18 @@ export type DeckMapLayersProps = {
   regionKind: string | null;
   /** Regions the reader has drilled into. Empty means every region is in scope. */
   focusCodes: string[];
+  /** The org whose interactions the density grid covers. The endpoint requires it. */
+  organizationId: string;
+  /** The report window, as `YYYY-MM-DD`, so the grid matches the table beside it. */
+  startDate: string;
+  endDate: string;
+  /**
+   * The density tiles were **refused**, which is a permission answer rather than a fault —
+   * the note read scope is a different permission from the report scope, so a reader can be
+   * entitled to the breakdown and not to the interactions. Reported up so the panel can say
+   * so; see `RegionMap`.
+   */
+  onDensityRefused?: () => void;
   /** Design-system colours, resolved from antd tokens by the caller. */
   overlay: {
     emptyFill: string;
@@ -77,9 +97,11 @@ type BuildLayersArgs = {
   view: 'heatmap' | 'clusters';
   regionKind: string | null;
   focusCodes: string[];
-  tileUrl: string | null;
+  boundaryUrl: string | null;
+  densityUrl: string | null;
   /** Binned once per (points, zoom) by the caller; see `useClusters` below. */
   clusters: Cluster[];
+  onDensityRefused?: () => void;
   overlay: {
     emptyFill: string;
     fullFill: string;
@@ -90,34 +112,51 @@ type BuildLayersArgs = {
 
 /**
  * One definition of the layer stack.
-
+ *
  */
 function buildLayers({
   points,
   view,
   regionKind,
   focusCodes,
-  tileUrl,
+  boundaryUrl,
+  densityUrl,
+  onDensityRefused,
   overlay,
   clusters,
 }: BuildLayersArgs): Layer[] {
   const layers: Layer[] = [];
 
-  if (points.length > 0 && view === 'heatmap') {
+  // **Density first, so it is underneath.** The boundary strokes are pushed last and belong
+  // over the field they frame; a filled grid drawn after them would hide the geography.
+  if (view === 'heatmap' && densityUrl) {
     layers.push(
-      new HeatmapLayer<HeatPoint>({
-        id: 'interaction-heatmap',
-        data: points,
-        getPosition: (point: HeatPoint) => [point.longitude, point.latitude],
-        // Gaussian KDE on the GPU, replacing the hand-rolled quartic kernel.
-        aggregation: 'SUM',
-        // The zoomed-out end of the radius table: deck.gl scales the kernel with zoom itself,
-        // so this is a reference radius rather than a per-level table.
-        radiusPixels: HEATMAP_RADIUS_PX,
-        colorRange: COLOR_RANGE,
-        // No `colorDomain`: deck derives it from the data, which is stable across pans and
-        // on the same scale as the aggregation it is applied to. See `heatmapMath.ts`.
+      new MVTLayer({
+        id: 'interaction-density',
+        // deck.gl caches tiles by URL, which is what makes the query parameters safe: a new
+        // date range or a new set of region codes is a new URL, and a new URL is a refetch.
+        data: densityUrl,
+        // The session cookie is what the endpoint authorizes on, and the API is on another
+        // origin in development. Without this the tiles arrive as anonymous 403s.
+        loadOptions: { fetch: { credentials: 'include' } },
+        minZoom: 0,
+        maxZoom: 16,
+        filled: true,
+        stroked: false,
+        getFillColor: (feature) =>
+          densityColor(
+            Number((feature.properties as { count?: number })?.count ?? 0),
+          ),
         pickable: false,
+        onTileError: (error: unknown) => {
+          // loaders.gl throws `fetch failed 403 Forbidden` for a refused tile, and the status
+          // is all there is to go on: it does not expose the Response. Only a refusal is
+          // reported — a transient network failure is not a statement about permission, and
+          // telling the reader their role cannot see this would be a lie.
+          if (/\b(?:401|403)\b/.test(String((error as Error)?.message ?? ''))) {
+            onDensityRefused?.();
+          }
+        },
       }),
     );
   }
@@ -159,23 +198,23 @@ function buildLayers({
 
   // Pushed last so the strokes land **over** the density field.
   //
-  // The heatmap is a triangle mesh covering its data's bounding box, and inside that box it
-  // is opaque. Drawn after the boundaries — which is what array order used to do — it painted
-  // straight over the outlines, so the geography the reader needs to place the density was
-  // hidden by the density itself. A frame belongs on top of what it frames.
-  if (regionKind && tileUrl) {
+  // The field is opaque over the area its data bounds. Drawn after the boundaries — which is
+  // what array order used to do — it painted straight over the outlines, so the geography the
+  // reader needs to place the density was hidden by the density itself. A frame belongs on
+  // top of what it frames.
+  if (regionKind && boundaryUrl) {
     layers.push(
       new MVTLayer({
         id: `region-boundaries-${regionKind}`,
-        data: tileUrl,
+        data: boundaryUrl,
         loadOptions: { fetch: { credentials: 'include' } },
         minZoom: 0,
         maxZoom: 16,
         // **Stroke only.** The fill used to encode each region's interaction count as a colour
-        // and an alpha, which is the same quantity the heatmap already encodes as a colour —
-        // two encodings of "where are the interactions", competing for the same pixels. The
-        // reader saw grey districts and no density. Boundaries are the frame, not a second
-        // reading of the data; the table beside the map carries the per-region counts.
+        // and an alpha, which is the same quantity the density grid already encodes as a
+        // colour — two encodings of "where are the interactions", competing for the same
+        // pixels. The reader saw grey districts and no density. Boundaries are the frame, not a
+        // second reading of the data; the table beside the map carries the per-region counts.
         filled: false,
         stroked: true,
         getLineColor: (feature) => {
@@ -212,6 +251,10 @@ export function DeckMapLayers({
   view,
   regionKind,
   focusCodes,
+  organizationId,
+  startDate,
+  endDate,
+  onDensityRefused,
   overlay,
 }: DeckMapLayersProps) {
   const map = useMap();
@@ -222,7 +265,8 @@ export function DeckMapLayers({
   // expensive half. The per-zoom query against it is sub-millisecond.
   const clusterIndex = useMemo(() => buildClusterIndex(points), [points]);
   const clusters = useMemo(
-    // Only queried when the view that draws them is showing: the heatmap has no use for them.
+    // Only queried when the view that draws them is showing: the density grid has no use for
+    // them, and nothing else on the page does either.
     () => (view === 'clusters' ? clustersForZoom(clusterIndex, zoom) : NO_CLUSTERS),
     [clusterIndex, zoom, view],
   );
@@ -235,9 +279,39 @@ export function DeckMapLayers({
   // endpoint matches the wire `kind`, which is lowercase. Sending the enum as-is made every
   // tile 404 — measured, `COUNCIL_DISTRICT/8/43/102` 404 against `council_district/8/43/102`
   // 200 with 4.4 kB of geometry — so the boundary layer drew nothing at all.
-  const tileUrl = regionKind
+  const boundaryUrl = regionKind
     ? `${apiUrl}/regions/tiles/${regionKind.toLowerCase()}/{z}/{x}/{y}.mvt`
     : null;
+
+  // The density grid's own query string. It carries the org, the window and — only when the
+  // reader has drilled into regions — the dimension and the codes, which is exactly the
+  // variable set `interactionMap` is given. A *grouping* with nothing selected deliberately
+  // does not appear: a group-by re-partitions the same interactions rather than selecting
+  // different ones, so it must not move the field, and sending it would change the URL and
+  // refetch identical tiles on every group-by.
+  const densityUrl = useMemo(() => {
+    if (!organizationId || !startDate || !endDate) {
+      return null;
+    }
+    const params = new URLSearchParams({
+      organizationId,
+      start: startDate,
+      end: endDate,
+    });
+    if (regionKind && focusCodes.length > 0) {
+      params.set('dimension', regionKind.toLowerCase());
+      for (const code of focusCodes) {
+        params.append('codes', code);
+      }
+    }
+    return `${apiUrl}/regions/tiles/density/{z}/{x}/{y}.mvt?${params.toString()}`;
+  }, [apiUrl, organizationId, startDate, endDate, regionKind, focusCodes]);
+
+  // Stable, so the layer memo is not invalidated by a new closure on every render.
+  const handleDensityRefused = useCallback(
+    () => onDensityRefused?.(),
+    [onDensityRefused],
+  );
 
   const layers = useMemo(
     () =>
@@ -246,7 +320,9 @@ export function DeckMapLayers({
         view,
         regionKind,
         focusCodes,
-        tileUrl,
+        boundaryUrl,
+        densityUrl,
+        onDensityRefused: handleDensityRefused,
         overlay,
         clusters,
       }),
@@ -255,7 +331,9 @@ export function DeckMapLayers({
       view,
       regionKind,
       focusCodes,
-      tileUrl,
+      boundaryUrl,
+      densityUrl,
+      handleDensityRefused,
       overlay,
       clusters,
     ],
@@ -276,7 +354,7 @@ export function DeckMapLayers({
       listener.remove();
     };
     // `view` is a dependency because the level only matters to the cluster bins: with the
-    // heatmap showing, a zoom would re-render this subtree and rebuild a layer stack that
+    // density grid showing, a zoom would re-render this subtree and rebuild a layer stack that
     // cannot have changed.
   }, [map, view]);
 

@@ -1,12 +1,13 @@
 /// <reference types="google.maps" />
 import { Map as GoogleMap } from '@vis.gl/react-google-maps';
 import {
+  DENSITY_COLOR_MAX,
   HEATMAP_RAMP_CSS,
   type HeatPoint,
 } from './heatmapMath';
 import { DeckMapLayers } from './DeckMapLayers';
 import { Alert, theme } from 'antd';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
@@ -37,9 +38,9 @@ const LA_CENTER: google.maps.LatLngLiteral = {
 /**
  * Strip the basemap back to what the data needs.
  *
- * Under a heatmap every business pin, restaurant label and attraction icon is noise
+ * Under a density field every business pin, restaurant label and attraction icon is noise
  * competing with the field being read, and it is worst exactly where the data is densest —
- * central LA — where the clutter and the heat overlap.
+ * central LA — where the clutter and the data overlap.
  *
  * What stays is what orients the reader: roads, water, city and neighbourhood names, and
  * administrative boundaries. `poi` goes entirely, including `poi.park`, because park
@@ -78,7 +79,7 @@ const DATA_FOCUSED_STYLES: google.maps.MapTypeStyle[] = [
     elementType: 'labels.icon',
     stylers: [{ visibility: 'off' }],
   },
-  // Softened so the basemap sits behind the heatmap instead of beside it.
+  // Softened so the basemap sits behind the density field instead of beside it.
   {
     featureType: 'landscape',
     elementType: 'geometry',
@@ -121,6 +122,13 @@ function useMapColors() {
   );
 }
 
+type OverlayColors = {
+  emptyFill: string;
+  fullFill: string;
+  stroke: string;
+  markFill: string;
+};
+
 /**
  * Resolves the grouping's boundaries and hands everything to deck.gl.
  *
@@ -128,9 +136,8 @@ function useMapColors() {
  * because a code is ambiguous across dimensions — without every call site asserting it. This
  * only mounts when a grouping is chosen, so the requirement is carried by the component tree.
  *
- * The two queries are joined here, on `code`: the rollup says how many interactions each
- * region has, and the geometry says where the regions are. Driving the geometry from the
- * rollup would draw only the regions that happen to have data and silently lose the rest.
+ * The map draws the boundaries from their own tile endpoint rather than from the rollup, so
+ * regions with no interactions are still drawn instead of silently missing.
  */
 function RegionOverlay({
   dimension,
@@ -138,17 +145,20 @@ function RegionOverlay({
   overlay,
   points,
   view,
+  organizationId,
+  startDate,
+  endDate,
+  onDensityRefused,
 }: {
   dimension: RegionDimension;
   focusCodes: string[];
-  overlay: {
-    emptyFill: string;
-    fullFill: string;
-    stroke: string;
-    markFill: string;
-  };
+  overlay: OverlayColors;
   points: HeatPoint[];
   view: MapView;
+  organizationId: string;
+  startDate: string;
+  endDate: string;
+  onDensityRefused: () => void;
 }) {
   return (
     <>
@@ -157,19 +167,28 @@ function RegionOverlay({
         view={view}
         regionKind={dimension}
         focusCodes={focusCodes}
+        organizationId={organizationId}
+        startDate={startDate}
+        endDate={endDate}
+        onDensityRefused={onDensityRefused}
         overlay={overlay}
       />
     </>
   );
 }
 
-/** The map's views. Heatmap is the default; see `RegionMap` below. */
+/** The map's views. Density is the default; see `RegionMap` below. */
 export type MapView = 'heatmap' | 'clusters';
 
 type RegionMapProps = {
   /** Absent when the report is not grouped by geography; then no polygons are drawn. */
   dimension?: RegionDimension;
-  /** Individual interaction locations, from `interactionMap`. */
+  /**
+   * Individual interaction locations, from `interactionMap`.
+   *
+   * Only the clusters view draws them: the density grid is aggregated server-side, so the
+   * point query is not even requested while it is showing — see `LocationBreakdown`.
+   */
   points?: InteractionPointType[];
   /** True when the point cap was reached and the clusters are a subset. */
   truncated?: boolean;
@@ -185,22 +204,22 @@ type RegionMapProps = {
    * see `LocationBreakdown`. The boundaries and the table stay useful without pins.
    */
   failed?: boolean;
-  /**
-   * Which rendering of the same data to draw. Owned by the caller so its toggle can sit in
-   * the card header rather than inside the map, and defaulted so a caller offering no
-   * choice does not have to pass one.
-   */
+  /** Which rendering of the same data to draw. */
   view?: MapView;
+  /** The org whose interactions the density grid covers. */
+  organizationId: string;
+  /** The report window, as `YYYY-MM-DD`, so the grid matches the table beneath it. */
+  startDate: string;
+  endDate: string;
   className?: string;
 };
 
 /**
  * Interactions by region, drawn on a map.
  *
- * Geometry and counts are fetched separately and joined on `code` on the client.
- * `interactionsByRegion` reports only regions that actually have interactions, so
- * driving the geometry request from those codes avoids shipping polygons nobody
- * will look at — a real saving on the 311-region ZIP dimension.
+ * The density grid arrives as vector tiles from the API, so the client holds the counts in
+ * view rather than every interaction. The clusters view still plots individual points, which
+ * is the only thing `interactionMap` is for now.
  */
 export function RegionMap({
   dimension,
@@ -211,36 +230,57 @@ export function RegionMap({
   hasMapsKey = true,
   failed = false,
   view = 'heatmap',
+  organizationId,
+  startDate,
+  endDate,
   className = '',
 }: RegionMapProps) {
-  // Heatmap first: density over an area is the question this page is usually asked, and
-  // the choropleth is the same data once you know where to look.
-  //
   const mapColors = useMapColors();
+
+  /**
+   * A density tile came back refused, which means the note read scope withheld it.
+   *
+   * That is the same answer `interactionMap` gives this role, but the map no longer asks that
+   * query while the grid is showing, so the refusal has to be noticed at the tile. Held here,
+   * and cleared whenever the question changes, because a refusal for the last date range is
+   * not an answer about this one.
+   */
+  const [densityRefused, setDensityRefused] = useState(false);
+  useEffect(() => {
+    setDensityRefused(false);
+    // `focusCodes` is state held by the caller, so its identity is the selection.
+  }, [organizationId, startDate, endDate, dimension, focusCodes]);
 
   const caption = useMemo(() => {
     const scope = filteredTo ? ` within ${filteredTo}` : '';
     if (view === 'clusters') {
       // Not "each dot is one interaction" any more: points in the same screen cell are
-      // merged into one bubble, so a dot stands for one *or more*.
+      // merged into one bubble, so a dot stands for one *or more*. This count is the number
+      // of points the client holds, which is exactly what this view plots.
       return `${points.length.toLocaleString()} interactions${scope}, grouped into clusters. A numbered bubble counts the interactions under it; zoom in to split it.`;
     }
     if (view === 'heatmap') {
-      return `Density of interactions${scope}, as a continuous field. Red is where interactions concentrate, blue where they thin out — relative only, so read the table below for counts.`;
+      // **No total here, deliberately.** The grid is aggregated on the server and the point
+      // list is not fetched, so the client has no count to state — and deriving one from the
+      // rollup would be the cross-dimension sum the table below is careful not to invite.
+      return `Interaction density${scope}, as a grid of counts. Red is where interactions concentrate, blue where they thin out — the legend is an absolute scale, and the table below has the counts per region.`;
     }
     return `Interactions in this range${scope}.`;
   }, [view, points.length, filteredTo]);
-  if (failed) {
+
+  if (failed || (view === 'heatmap' && densityRefused)) {
     // A refusal, not a fault: the note read scope is a different permission from the report
-    // scope, so a reader can be entitled to the breakdown and not to the pins. Said plainly
-    // rather than as "something went wrong", and the table below carries the same data.
+    // scope, so a reader can be entitled to the breakdown and not to the interactions. Said
+    // plainly rather than as "something went wrong", and the table below carries the same
+    // data. Reachable two ways now — `interactionMap` for the clusters, a refused density tile
+    // for the grid — but they are the same refusal.
     return (
       <Alert
         className={mergeCss(className)}
         type="info"
         showIcon
         message="Map unavailable"
-        description="Your role can read the regional breakdown but not individual interactions, so the pins are not shown. The table below has the same figures per region."
+        description="Your role can read the regional breakdown but not individual interactions, so the map is not shown. The table below has the same figures per region."
       />
     );
   }
@@ -273,38 +313,47 @@ export function RegionMap({
           styles={DATA_FOCUSED_STYLES}
           // The map is a fixed analytical view, not a place to explore. Street View and the
           // map/satellite switch offer ways to look at *imagery* rather than at the data, and
-          // the satellite basemap in particular competes with the heatmap and the boundaries
-          // drawn over it. The zoom control stays — it is how you read the clusters.
+          // the satellite basemap in particular competes with the density field and the
+          // boundaries drawn over it. The zoom control stays — it is how you read the clusters.
           streetViewControl={false}
           mapTypeControl={false}
           fullscreenControl={false}
           rotateControl={false}
         >
-          {/* deck.gl draws both the boundaries and the points, in one overlay. The
-              boundaries are the grouping's geography — all of them, including the ones
-              with no interactions — and the points layer draws only for the chosen view. */}
+          {/* deck.gl draws the boundaries and whichever view of the interactions is chosen,
+              in one overlay. The boundaries are the grouping's geography — all of them,
+              including the ones with no interactions. */}
           {dimension !== undefined && (
             <RegionOverlay
               dimension={dimension}
-                      focusCodes={focusCodes}
+              focusCodes={focusCodes}
               overlay={mapColors}
               points={points}
               view={view}
+              organizationId={organizationId}
+              startDate={startDate}
+              endDate={endDate}
+              onDensityRefused={() => setDensityRefused(true)}
             />
           )}
-          {dimension === undefined && points.length > 0 && (
-            // Ungrouped there are no boundaries to draw, but the field still is: the
-            // heatmap answers "where were the interactions" without a grouping.
+          {dimension === undefined && (view === 'heatmap' || points.length > 0) && (
+            // Ungrouped there are no boundaries to draw, but the field still is: the density
+            // grid answers "where were the interactions" without a grouping. The clusters view
+            // still needs the points, so it waits for them.
             <DeckMapLayers
               points={points}
               view={view}
               regionKind={null}
               focusCodes={EMPTY_FOCUS}
+              organizationId={organizationId}
+              startDate={startDate}
+              endDate={endDate}
+              onDensityRefused={() => setDensityRefused(true)}
               overlay={mapColors}
             />
           )}
-          {/* On the map rather than beside it: the ramp is meaningless without knowing it is
-            absolute, and a reader looking at a gradient should not have to hunt for its
+          {/* On the map rather than beside it: the ramp is meaningless without knowing what
+            it measures, and a reader looking at a gradient should not have to hunt for its
             key. Positioned bottom-left, clear of the map's own controls. */}
           {view === 'heatmap' && (
             <div
@@ -320,42 +369,41 @@ export function RegionMap({
                 which measures 10.7:1 — the legend is the only key to the colour scale, so
                 leaving it at the least readable size on the page was backwards. */}
               <div className="mb-1 text-xs font-medium text-neutral-700">
-                Interaction density
+                Interactions per cell
               </div>
               <div
                 className="h-2 w-44 rounded-sm"
                 style={{ background: HEATMAP_RAMP_CSS }}
               />
-              {/* Numbers rather than "fewer"/"more". The ramp is normalised against the
-                busiest area in the whole selection, so the honest reading is a share of
-                that peak — not an absolute count, which the weighted sum is not. */}
+              {/* Numbers, and **absolute** ones. The ramp is normalised by a fixed reference
+                rather than by the peak in view, so the honest reading is a count of
+                interactions in a cell, not a share of that peak. The middle label sits at the
+                ramp's midpoint because the scale is a square root, which puts a quarter of
+                the reference there. */}
               <div className="mt-0.5 flex w-44 justify-between text-xs text-neutral-700">
                 <span>0</span>
-                <span>50</span>
-                <span>100%</span>
+                <span>{Math.round(DENSITY_COLOR_MAX / 4)}</span>
+                <span>{DENSITY_COLOR_MAX}+</span>
               </div>
               <div className="mt-0.5 w-44 text-xs text-neutral-700">
-                100% = the densest area in this selection
+                Each square is one grid cell
               </div>
             </div>
           )}
         </GoogleMap>
       </div>
       <p className="mt-2 text-xs text-neutral-500">{caption}</p>
-      {/* Both views plot the same capped point set, so both have to say when it is a subset.
-          The heatmap is the default view, so gating this on `clusters` meant the warning was
-          hidden in exactly the case most readers saw. */}
-      {truncated && (
+      {/* Only the clusters view can be short of interactions now. The density grid is
+          aggregated server-side over every interaction in range rather than a capped point
+          list, so there is nothing for it to truncate — and `interactionMap`, which reports
+          the flag, is not even requested while it is showing. */}
+      {view === 'clusters' && truncated && (
         <Alert
           className="mt-2"
           type="warning"
           showIcon
           message="Showing the most recent interactions only"
-          description={
-            view === 'clusters'
-              ? 'There are more interactions in this range than the map can plot, so these clusters are a subset — the counts and table below are complete.'
-              : 'There are more interactions in this range than the map can plot, so this field is drawn from a subset — the counts and table below are complete.'
-          }
+          description="There are more interactions in this range than the map can plot, so these clusters are a subset — the counts and table below are complete."
         />
       )}
     </div>

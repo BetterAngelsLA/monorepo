@@ -218,20 +218,24 @@ export function LocationBreakdown({
     organizationId,
     startDate,
     endDate,
-    // The heatmap ignores the *grouping* — a group-by re-partitions the same interactions
-    // rather than selecting different ones, so it must not move the surface. It does
-    // honour the *drill-down*, because narrowing to SPA 4 and still seeing the whole
+    // The density grid ignores the *grouping* — a group-by re-partitions the same
+    // interactions rather than selecting different ones, so it must not move the surface. It
+    // does honour the *drill-down*, because narrowing to SPA 4 and still seeing the whole
     // county is the bug this fixes: no interaction should sit outside the shapes drawn.
     //
     // `dimension` travels with the drill-down only, for the same reason: a code cannot be
     // resolved without one, and the API rejects codes that arrive without it rather than
     // guessing. Sending it when nothing is selected would contradict the paragraph above —
-    // it changes the query's variables without changing its answer, so Apollo re-fetches a
-    // 10,000-point page (1 MB) for a result that is byte-for-byte identical, on every
-    // group-by. Measured against the live backend.
+    // it changes the query's variables without changing its answer.
     dimension: selectedCodes.length > 0 ? dimension : undefined,
     regionCodes: selectedCodes.length > 0 ? selectedCodes : undefined,
-    enabled: mapVisible,
+    // **Not while the density grid is showing.** The grid is aggregated on the server from
+    // the same notes, so the point list is not an input to anything the reader is looking at,
+    // and requesting it spent ~1 MB to derive clusters nobody asked for. The one thing this
+    // query *was* still needed for in the grid's case — noticing that the note read scope
+    // withholds the interactions — the density tile answers itself, and `RegionMap` surfaces
+    // that refusal.
+    enabled: mapVisible && view === 'clusters',
   });
 
   /**
@@ -558,6 +562,9 @@ export function LocationBreakdown({
             filteredTo={filteredToName}
             focusCodes={selectedCodes}
             view={view}
+            organizationId={organizationId}
+            startDate={startDate}
+            endDate={endDate}
           />
         </div>
       )}
