@@ -365,18 +365,10 @@ def interaction_points(
     if notes is not None:
         queryset = queryset.filter(pk__in=notes.values("pk"))
 
-    # Coordinates come out of the geography point via `ST_AsGeoJSON`, then JSON path
-    # extraction — **not** `ST_X`/`ST_Y`, which Django does not wrap: its function set is
-    # Area, AsGeoJSON, Centroid, Distance, Envelope, Length, Transform, Union and so on,
-    # and the only `ST_X`/`ST_Y` in the codebase is Oracle-specific. `AsGeoJSON` is the
-    # supported path, and `__0`/`__1` are the lon/lat of its `coordinates` array.
-    #
-    # `point` is `geography=True` (common/models.py); geography coordinates are lon/lat
-    # degrees, so index 0 is the longitude and 1 the latitude.
-    # `ST_X`/`ST_Y` are called through `Func` because Django ships **no** wrapper for
-    # either — its GeoDjango function set is Area, AsGeoJSON, Centroid, Distance,
-    # Envelope, Length, Transform, Union and similar, and the only `ST_X`/`ST_Y` in the
-    # codebase is Oracle-specific.
+    # `ST_X`/`ST_Y` are called through `Func` because Django ships **no** wrapper for either —
+    # its GeoDjango function set is Area, AsGeoJSON, Centroid, Distance, Envelope, Length,
+    # Transform, Union and similar, and the only `ST_X`/`ST_Y` in the codebase is
+    # Oracle-specific.
     #
     # The `Cast(…, GeometryField())` is **required, not cosmetic**: `point` is
     # `geography=True` (common/models.py) and PostGIS defines `ST_X`/`ST_Y` only for

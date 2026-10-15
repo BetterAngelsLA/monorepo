@@ -5,7 +5,7 @@ Adds the ``RegionDimension`` enum (``models.RegionKind``) and four queries:
 * ``interactionsByRegion`` — interaction counts per region of a dimension.
 * ``interactionMap`` — individual interaction points, for the map.
 * ``regionDimensions`` — which dimensions have boundaries loaded.
-* ``regions`` — the boundary polygons themselves, as GeoJSON.
+* ``regions`` — the boundary polygons themselves, as geometry.
 
 They sit alongside the existing ``reportSummary``.
 
@@ -191,14 +191,14 @@ class Query:
         dimension: RegionKind,
         codes: Optional[List[str]] = None,
     ) -> List[RegionType]:
-        """Boundary polygons as GeoJSON, for the map view.
+        """Boundary polygons for the map view, as ``MultiPolygon`` values.
 
         ``IsAuthenticated`` only, deliberately — unlike ``interactionsByRegion``.
-        These are public reference boundaries, identical for every tenant; the
-        SELECT returns ``kind, code, name, ST_AsGeoJSON(geom, 6)`` and no org- or
-        client-scoped column. Requiring ``reports.view_reports`` here would mean
-        the map could not render for a signed-in user who may see the report's
-        charts but not its boundary layer, with no confidentiality gained.
+        These are public reference boundaries, identical for every tenant; the SELECT
+        returns ``kind, code, name`` and the rounded geometry, and no org- or client-scoped
+        column. Requiring ``reports.view_reports`` here would mean the map could not render
+        for a signed-in user who may see the report's charts but not its boundary layer, with
+        no confidentiality gained.
         """
         rows = region_features(kinds=[dimension.value], codes=codes)
         return [
