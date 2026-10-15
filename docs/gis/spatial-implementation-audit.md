@@ -29,6 +29,21 @@ nothing today; see below. The other is the PostGIS minor, 3.5.2 against 3.5.6, w
 fix would reproduce locally and not in production, which is the confusing direction — but nothing
 here depends on a difference between them.
 
+**Moving a local volume between the two images needs care.** A `pgdata` created under the trixie
+image does work under bullseye — PostGIS loads and answers — but two things are wrong with it, and
+both are reported rather than silent:
+
+- `postgis_full_version()` ends with `(core procs from "3.6.4" need upgrade)`: an older library is
+  serving procedures registered by a newer one. Fine for the functions this app calls, and not a
+  configuration to leave in place.
+- Postgres warns that the database has a **collation version mismatch** — trixie ships glibc 2.41
+  and bullseye 2.31. This one matters for more than the warning: collation-derived indexes were
+  built under the other collation.
+
+Recreate the volume (`docker compose down -v`) before bringing the stack up, or stay on the newer
+image locally. What this repository pins is the image CI and new checkouts get, not what any one
+machine is running.
+
 ## What we do, and why it is the documented approach
 
 | choice | where | why |
