@@ -27,18 +27,12 @@ SUBDIVIDE_MAX_VERTICES = 256
 
 @strawberry.enum(name="RegionDimension")
 class RegionKind(models.TextChoices):
-    """The geographic dimensions we aggregate by — the **one** definition of them.
+    """The geographic dimensions we aggregate by — the one definition of them.
 
-    Values are the wire and DB identifiers, so keep them stable. The GraphQL enum is
-    published as ``RegionDimension`` (the ``name=`` above) rather than ``RegionKind``:
-    that is the name clients already select against, and it keeps the schema stable while
-    the Python-side identity is the model's own.
-
-    There used to be a second, hand-maintained ``enum.Enum`` mirroring these six values in
-    ``types.py``, plus six conversion sites between the two. This is the house pattern for
-    a dimension carried into GraphQL — see ``shelters/enums.py``, where every one is
-    ``@strawberry.enum`` over ``models.TextChoices`` — which also means the ``label`` on
-    each member is the single place the display names live.
+    Values are the wire and DB identifiers, so keep them stable. The GraphQL enum is published
+    as ``RegionDimension`` (the ``name=`` above), the name clients already select against, and
+    ``label`` is the single place the display names live. This is the house pattern for a
+    dimension carried into GraphQL — see ``shelters/enums.py``.
     """
 
     ZIP = "zip", "ZIP Code"

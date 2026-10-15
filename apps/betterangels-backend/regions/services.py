@@ -102,23 +102,19 @@ def build_region_pieces(*, kind: str | None = None) -> int:
 def ensure_location_regions(*, kind: str | None = None, force: bool = False) -> int:
     """Resolve locations to regions and store the answer.
 
-    This is the *write* side of the trade :class:`LocationRegion` describes: the spatial work
-    happens once and is then an ordinary indexed join, rather than a point-in-polygon test per
-    read.
+    The write side of the trade :class:`LocationRegion` describes: spatial work once, then an
+    ordinary indexed join.
 
-    **It is incremental, and that is the point.** Without ``force`` the scan is guarded by
-    ``NOT EXISTS`` per kind, so only locations with no assignment at all are considered —
-    steady-state cost tracks *new* locations, not the size of the table. Measured on 20k notes
-    over 4,000 locations: ~450 ms once, then a no-op. That is why the read path can simply call
-    it and forget about it, with no schedule and no "did the backfill run" question.
+    **Incremental, and that is the point.** Without ``force`` the scan is guarded by
+    ``NOT EXISTS`` per kind, so only locations with no assignment are considered — cost tracks
+    *new* locations, not table size. Measured on 20k notes over 4,000 locations: ~450 ms once,
+    then a no-op. That is why the read path can call it and forget it, with no schedule.
 
-    A location that resolved to nothing is stored as a row with a NULL ``region_id`` precisely
-    so it is not re-resolved forever — the NULL is an answer, not a gap.
+    A location that resolved to nothing is stored with a NULL ``region_id`` so it is not
+    re-resolved forever — the NULL is an answer, not a gap.
 
-    ``force`` clears the stored answers for the scope first, which is what the importer wants
-    after replacing a dimension: the boundaries changed, so every previous answer for that kind
-    may now be wrong, and recomputing the still-correct ones is cheaper than working out which
-    moved.
+    ``force`` clears the scope first, which is what the importer wants after replacing a
+    dimension: the boundaries moved, so every prior answer for that kind may be wrong.
 
     Returns the number of assignments written.
     """
@@ -230,17 +226,16 @@ UNASSIGNED = "__unassigned__"
 class RegionCodeFilter:
     """``regionCodes`` interpreted for one dimension.
 
-    Three shapes, and conflating the first two is the bug this exists to prevent:
+    Three shapes, and conflating the first two is the bug this prevents:
 
-    * ``regionCodes`` absent               -> unfiltered
-    * ``["__unassigned__"]`` alone         -> only rows matching no region
+    * absent                                -> unfiltered
+    * ``["__unassigned__"]`` alone          -> only rows matching no region
     * real codes (with or without sentinel) -> those regions, plus unassigned if asked
 
-    ``query_unassigned`` and ``keep_unassigned`` are deliberately separate.
-    ``region_counts`` only needs the unassigned arm when real codes are *also* being
-    asked for (it is an OR arm); the result filter keeps unassigned rows whenever the
-    rollup is unfiltered or the sentinel was sent. One flag for both silently drops
-    every unassigned bucket from an unfiltered rollup.
+    ``query_unassigned`` and ``keep_unassigned`` are separate on purpose: the query needs the
+    unassigned arm only when real codes are *also* requested, while the result filter keeps
+    unassigned rows whenever the rollup is unfiltered or the sentinel was sent. One flag for
+    both silently drops every unassigned bucket from an unfiltered rollup.
     """
 
     codes: list[str] | None

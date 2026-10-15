@@ -65,17 +65,10 @@ def region_counts(
     matches nothing, where a truthiness check treats it as absent, drops the
     predicate, and returns the whole dimension.
 
-    **This function writes, deliberately, and the write is bounded.** ``LocationRegion`` is a
-    cache over the ``RegionPiece`` index, and ``ensure_location_regions`` is incremental — its
-    ``NOT EXISTS`` guard means it only resolves locations with no assignment at all, so this
-    costs ~450 ms once after new locations appear and is a no-op on every subsequent read. The
-    alternative was a Celery beat job to keep the cache warm, which buys nothing the on-demand
-    fill does not and adds a staleness window plus a thing to monitor.
-
-    It is stated here rather than hidden because ``docs/styleguides/python.md`` calls selectors
-    read-only. They are read-only about *returning* data — this tops up a derived index, it
-    does not mutate anything a caller supplied — and the trade is recorded so the next reader
-    can weigh it rather than rediscover it.
+    **This writes, deliberately.** ``ensure_location_regions`` is incremental, so the fill is
+    ~450 ms once after new locations appear and a no-op afterwards. ``python.md`` calls
+    selectors read-only; this tops up a derived index without mutating anything a caller
+    passed, and the alternative (a beat job) buys nothing but a staleness window.
     """
     from .services import ensure_location_regions
 
@@ -89,14 +82,10 @@ def region_counts(
 
     # **Every predicate on this relation goes into ONE `filter()` call.**
     #
-    # Django builds a *separate join* per `filter()` on a multi-valued relation, so two
-    # chained filters on the same relation multiply rows: this query used to filter
-    # `assignments__isnull=False` and then `assignments__kind=…` separately, which produced
-    # a cross-product of the two joins. With `count(DISTINCT n.id)` that was invisible; the
-    # moment the count is not distinct, a note with a `council_district` row *and* an `spa`
-    # row is counted twice in the `spa` rollup — measured as a bucket reading 2 for a single
-    # interaction. Combining the predicates with `Q` makes one join that cannot do that,
-    # which is what lets the count be a plain `count`.
+    # Django builds a *separate join* per `filter()` on a multi-valued relation, so chaining
+    # two filters on this one multiplies rows: a note with a `council_district` row *and* an
+    # `spa` row is counted twice in the `spa` rollup. Combining with `Q` makes one join, which
+    # is what lets the count below be a plain `count`.
     predicate = Q(**{f"{assignments}__isnull": False})
     if kind is not None:
         predicate &= Q(**{f"{assignments}__kind": kind})
@@ -177,18 +166,12 @@ def region_totals_without_boundaries(*, start: datetime, end: datetime, organiza
 def available_kinds() -> list[str]:
     """Dimensions that actually have boundaries loaded, for the UI's picker.
 
-    A kind the GraphQL enum does not know is filtered out rather than allowed to make
-    ``regionDimensions`` fail wholesale.
+    The ``kind__in`` filter runs in the database, so a kind the GraphQL enum does not know is
+    excluded rather than making ``regionDimensions`` fail wholesale.
 
-    ``.order_by()`` is load-bearing: the model's default ordering is appended to the
-    SELECT, so a bare ``.distinct()`` de-duplicates on ``(kind, code)`` and returns one
-    row per region. See ``services.ensure_location_regions``.
-
-    The enum filter runs **in the database**, not in Python: `kind__in` against the
-    ``TextChoices`` sends the six known values and lets the index do the rest, rather than
-    selecting every distinct kind and discarding the strays here. A kind the enum does not
-    know is therefore filtered out (rather than making ``regionDimensions`` fail wholesale)
-    without being fetched first.
+    ``.order_by()`` is load-bearing: the model's default ordering is appended to the SELECT, so
+    a bare ``.distinct()`` de-duplicates on ``(kind, code)`` and returns one row per region. See
+    ``services.ensure_location_regions``.
     """
     known = list(RegionKind.values)
     kinds = Region.objects.order_by().filter(kind__in=known).values_list("kind", flat=True).distinct()
@@ -198,41 +181,16 @@ def available_kinds() -> list[str]:
 def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None) -> list[dict[str, Any]]:
     """Region polygons as GEOS geometry, for the map view.
 
-    Serves ``geom_display`` (see ``Region.geom_display``), falling back to ``geom``
-    where the importer has not set it, so a region is never invisible on the map.
+    Serves ``geom_display`` (see ``Region.geom_display``), falling back to ``geom`` where the
+    importer has not set it, so a region is never invisible on the map.
 
-    ``geometry`` is a GEOS ``MultiPolygon``, which the schema's ``MultiPolygon`` scalar
-    serialises to the ``coordinates`` of a GeoJSON MultiPolygon (nested ``[lng, lat]`` pairs).
-    No GeoJSON *document* is built anywhere: the Feature wrapper and its ``type`` members are
-    fixed for a column that only ever holds MultiPolygons, so they would be payload the
-    client parses and discards.
+    ``codes`` of ``None`` or ``[]`` both mean "no restriction". ``parse_region_code_filter``
+    reads an empty list the other way for the rollup, so the two are not interchangeable.
 
-    **``codes`` of ``None`` or ``[]`` both mean "no restriction" — every region of
-    ``kinds``.** This is one of the app's two empty-list readings and it is the intended
-    one: the frontend sends ``undefined`` when nothing is selected (``useRegionMap``
-    normalises ``[]`` to ``undefined`` before it hits the wire), so an empty list cannot
-    reach here from the UI, and "show me this dimension" is the useful reading for a
-    direct API caller. It is stated explicitly because ``parse_region_code_filter`` reads
-    an empty list the other way for the rollup; see ``services.parse_region_code_filter``.
+    ``ST_ReducePrecision`` keeps coordinates at 6 dp (~10 cm) **in the database**: GEOS
+    serialises at full IEEE-754 precision, measured at 1.58x the payload.
 
-    Coordinates are reduced to 6 decimal places (~10 cm — finer than the simplification
-    tolerance, so nothing visible is lost) **in the database**, by ``ST_ReducePrecision``.
-    That is load-bearing rather than tidiness: GEOS serialises a coordinate at full
-    IEEE-754 precision, which measured 1.58x the payload of the rounded form (1838 kB
-    against 1163 kB for the LA layers). Rounding in SQL keeps it at parity.
-
-    **``output_field=MultiPolygonField()`` on the annotation is load-bearing**, not
-    decoration. ``RegionType.geometry`` is strawberry-django's built-in ``MultiPolygon``
-    scalar, whose serializer is
-
-        lambda v: v.tuple if isinstance(v, geos.MultiPolygon) else v
-
-    — one level deep, and guarded on the exact GEOS type. PostGIS returns ``POLYGON`` for a
-    single-part result, so without the declared ``output_field`` the ORM would hand back a
-    ``Polygon``, the guard would fail, and ``else v`` would give the JSON encoder a raw GEOS
-    object — surfacing as a WKT string rather than an error. The declaration makes the ORM
-    coerce every row to ``MultiPolygon``, which is verified for all five dimensions in
-    ``test_region_geometry_is_a_multipolygon``.
+    The ``output_field`` below is load-bearing too; see ``RegionType.geometry``.
     """
     # An empty list means "no restriction", so it is normalised away before the filter —
     # see the docstring. If this ever needs to mean "match nothing", this line and
@@ -325,25 +283,17 @@ def interaction_points(
 ) -> tuple[list[dict[str, Any]], bool]:
     """Individual interaction locations, for map pins.
 
-    **Coordinates and a timestamp, and nothing else.** No client name, client id,
-    note id, address, or note content: this answers "where were our interactions"
-    without answering "who". `LocationType.point` is already readable wherever a
-    location is, so this is not a new class of disclosure, but it stays minimal.
+    Coordinates and a timestamp only — no client, note, or address field. This answers "where
+    were our interactions" without answering "who".
 
-    ``organization_id`` is **required**, not defaulted to ``None``. It used to default to
-    "no org filter", which meant org confinement was a property of the one call site that
-    remembered to pass it rather than of this function — the fail-open shape. Every caller
-    wants the same confinement, so asking for it is the defect.
+    ``organization_id`` is required rather than defaulting to ``None``: a default of "no org
+    filter" makes confinement a property of the call site that remembered to pass it.
 
-    ``notes`` is permission-filtered by the caller (the resolver's legacy note scope) and
-    narrows the result further. It is *not* the org confinement: Django's
-    ``filter_for_user`` has no org notion at all — it is a binary "holds the model
-    permission ⇒ every row", so a cross-org queryset passed in here would stay cross-org
-    without the clause below.
+    ``notes`` narrows further and is permission-filtered by the caller. It is **not** the org
+    confinement — ``filter_for_user`` has no org notion, so without the clause below a
+    cross-org queryset would stay cross-org.
 
-    Returns ``(rows, truncated)``. Asking for one row past the cap is what detects
-    truncation, so the caller can say the map is a subset rather than let it read as
-    complete.
+    Returns ``(rows, truncated)``; one row past the cap is what detects truncation.
     """
     limit = max(1, min(limit, POINT_LIMIT_MAX))
 
@@ -401,15 +351,13 @@ def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[
     """Narrow a note queryset to those whose location falls in one of ``codes``.
 
     ``Exists`` rather than a reverse-relation join: a join yields one row per matching
-    assignment and would need ``.distinct()``, which a semi-join cannot need.
+    assignment and would need the ``.distinct()`` a semi-join does not.
 
-    ``kind`` is required because codes are **not** unique across dimensions — in this
-    data ``"1"`` is simultaneously a council district, an SPA and a supervisorial
-    district — so filtering on the code alone returns up to three dimensions' worth of
-    interactions, labelled as the one the caller asked for.
+    ``kind`` is required because codes are not unique across dimensions — ``"1"`` is a council
+    district, an SPA and a supervisorial district here — so a code alone would return up to
+    three dimensions' worth, labelled as the one the caller asked for.
 
-    Tops the cache up first, for the same reason and at the same bounded cost as
-    ``region_counts``.
+    Tops the cache up first; see ``region_counts``.
     """
     from .services import ensure_location_regions
 

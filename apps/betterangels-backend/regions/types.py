@@ -86,21 +86,13 @@ class InteractionMapType:
 class RegionType:
     """A boundary polygon.
 
-    ``geometry`` uses strawberry-django's built-in ``MultiPolygon`` scalar — the same one
-    ``LocationType.point`` uses via ``Point`` — so the schema says what the field is rather
-    than publishing an opaque ``JSON!``. It serialises to the ``coordinates`` of a GeoJSON
-    MultiPolygon as nested ``[lng, lat]`` pairs, which a client reads directly.
-
-    **The scalar's serialiser is one level deep and guarded on the exact GEOS type:**
-
-        lambda v: v.tuple if isinstance(v, geos.MultiPolygon) else v
-
-    so it only produces coordinates when the value really is a ``MultiPolygon``. PostGIS
-    returns ``POLYGON`` for a single-part result, so correctness rests on
-    ``selectors.region_features`` declaring ``output_field=MultiPolygonField()``, which makes
-    the ORM coerce the row to a ``MultiPolygon`` regardless. Drop that and the ``else v``
-    branch hands a raw GEOS object to the JSON encoder. ``test_region_geometry_is_a_multipolygon``
-    pins it, because the failure is a WKT string rather than an error.
+    ``geometry`` is the built-in ``MultiPolygon`` scalar. Its serialiser converts one level and
+    is guarded on the exact GEOS type — ``v.tuple if isinstance(v, MultiPolygon) else v`` — so
+    it only yields coordinates for a real ``MultiPolygon``. PostGIS returns ``POLYGON`` for a
+    single-part result, so this depends on ``selectors.region_features`` declaring
+    ``output_field=MultiPolygonField()``; without it the ``else v`` branch hands the JSON
+    encoder a raw GEOS object and the client gets a WKT string, not an error. Pinned by
+    ``test_region_geometry_is_a_multipolygon``.
     """
 
     kind: RegionKind

@@ -9,14 +9,11 @@ Adds the ``RegionDimension`` enum (``models.RegionKind``) and four queries:
 
 They sit alongside the existing ``reportSummary``.
 
-**Polygons are returned as a GeoJSON string the client parses**, via ``AsGeoJSON``. This is
-a payload decision, not a schema limitation: strawberry-django *does* register geometry
-scalars (``schema.graphql`` already publishes ``scalar Point`` for ``LocationType.point``,
-and ``strawberry_django/fields/types.py`` registers ``MultiPolygon`` alongside it), so a
-scalar was available. It was not used because the native scalar serialises the full vertex
-set — the six-dimension payload is 21 MB unsimplified against 817 kB for the simplified
-``geom_display`` this serves — and because the client needs the geometry as an object, which
-a string hands over after one ``JSON.parse`` rather than after a bespoke scalar's shape.
+Polygons are returned as ``MultiPolygon`` values, using strawberry-django's built-in geometry
+scalar — the same mechanism as ``LocationType.point``. The payload argument that once justified
+sending a GeoJSON string was about simplified versus unsimplified vertices, not scalar versus
+string; the simplification is what bounds it, and ``ST_ReducePrecision`` keeps the rounded form
+at payload parity. See ``RegionType.geometry`` for the one caveat the scalar carries.
 """
 
 from __future__ import annotations
