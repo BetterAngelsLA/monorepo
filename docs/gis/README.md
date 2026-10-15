@@ -75,19 +75,39 @@ python manage.py import_regions --dry-run             # validate, write nothing
 Verified live: **431 regions** — 311 postal ZIP, 88 city, 15 council district, 8 SPA,
 5 supervisorial, 4 CoC.
 
-### Seeing it
+### Running it locally
 
-The importer populates the backend. To look at the data, the admin app renders the region
-boundaries over a heatmap, with a clustered view of the individual interactions, on the
-Reports page:
+```bash
+# 1. Schema. `common/0002` adds `Location.point_geom` as a stored generated column, which
+#    rewrites `common_location` once, under an ACCESS EXCLUSIVE lock.
+python manage.py migrate
 
-1. Start the backend and the admin app, then sign in and open **`/reports`**.
-2. The panel sits under the existing charts and follows their date range.
-3. It needs a Google Maps key (`VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`). Without
-   one the panel explains itself rather than breaking the page.
-4. Browsing `localhost` versus `127.0.0.1` matters in local dev: the session cookie is
-   host-only, so the API host must match the host in your address bar. `config.ts`
-   handles this for you in development.
+# 2. Boundaries. Pulls each dimension from its publisher's live ArcGIS REST endpoint, so this
+#    needs outbound network. Expect 431 regions and 5,685 lookup pieces.
+python manage.py import_regions
+
+# 3. Interactions for the report to place. Skipping this leaves every panel empty: the rollup
+#    has nothing to bucket.
+python manage.py load_report_test_data --notes 100 --with-locations
+```
+
+Then start the backend and the admin app, sign in, and open **`/reports`**. The panel sits under
+the existing charts and follows their date range.
+
+- It needs a Google Maps key (`VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`). Without one the
+  panel explains itself rather than breaking the page.
+- Browsing `localhost` versus `127.0.0.1` matters in local dev: the session cookie is host-only,
+  so the API host must match the host in your address bar. `config.ts` handles this in development.
+
+**What the seeded data should show.** `--with-locations` puts nine notes in ten at one of ten real
+LA landmarks and leaves the rest without a point. Grouping by council district gives several named
+districts and a large unassigned bucket: Long Beach, Santa Monica and Beverly Hills are cities of
+their own, so they have no LA council district. Grouping by city gives Los Angeles, Long Beach,
+Santa Monica and Beverly Hills, with a small unassigned bucket for Florence-Firestone, which is
+unincorporated. A "No location recorded" row holds the tenth of notes left without one.
+
+**No outbound network?** `import_regions --source <file.geojson> --kind <dimension>` loads one
+dimension from a local file instead of fetching. It takes exactly one `--kind` per run.
 
 See `admin-integration.md` for the GraphQL surface, the permission gates, and the
 codegen build-order gotcha.
