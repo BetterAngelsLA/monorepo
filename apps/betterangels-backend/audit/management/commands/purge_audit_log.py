@@ -6,12 +6,13 @@ partitioned-table operation.
 
 Two targets, both batched to avoid long locks:
 
-* ``pghistory`` ``*Event`` tables -- the per-model write event rows.
+* ``pghistory`` ``*Event`` tables -- the per-model write event rows, except the
+  ``RETAINED_LABELS`` the reporting selectors rebuild state from.
 * ``pghistory.Context`` rows older than the cutoff that no surviving event row
   references any more (deleting an event row does not cascade to its context,
   because that FK is ``DO_NOTHING, db_constraint=False``).
 
-Read-event retention is specified in ADR 0005 and is out of scope here.
+Read-event retention is specified in ADR 0004 §22-§29 and is out of scope here.
 """
 
 import datetime
@@ -27,6 +28,22 @@ from pghistory.models import Context
 # date cannot truncate live audit history. The retention window is 1-2 years;
 # this is the floor, not the schedule.
 MIN_RETENTION_DAYS = 730
+
+# Event labels the reporting selectors rebuild state from
+# (``shelters/selectors/reports.py``). These rows are NOT audit-only storage:
+# pruning them silently zeroes the occupancy and bed-count reports, because
+# ``_bed_lifecycles`` and ``_reservation_status_intervals`` reconstruct object
+# existence from ``*.add`` with no lower bound and return empty when it is gone.
+# They are retained indefinitely; see ADR 0004 §31.
+RETAINED_LABELS = frozenset(
+    {
+        "bed.add",
+        "bed.update",
+        "bed.remove",
+        "reservation.add",
+        "reservation.status_change",
+    }
+)
 
 
 class Command(BaseCommand):
@@ -87,7 +104,11 @@ class Command(BaseCommand):
         seen: set[Any] = set()
         while True:
             # Rebuild the queryset each pass so the slice re-queries.
-            batch = model._default_manager.filter(pgh_created_at__lt=before).values_list("pk", flat=True)
+            batch = (
+                model._default_manager.filter(pgh_created_at__lt=before)
+                .exclude(pgh_label__in=RETAINED_LABELS)
+                .values_list("pk", flat=True)
+            )
             if seen:
                 batch = batch.exclude(pk__in=seen)
             ids = list(batch[:batch_size])
