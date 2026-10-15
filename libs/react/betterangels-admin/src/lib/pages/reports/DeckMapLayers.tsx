@@ -181,10 +181,6 @@ function buildLayers({
         // The zoomed-out end of the radius table: deck.gl scales the kernel with zoom itself,
         // so this is a reference radius rather than a per-level table.
         radiusPixels: HEATMAP_RADIUS_PX,
-        // deck defaults this to 2048, which builds a 2048-wide weight texture every aggregation
-        // for a viewport a fraction of that. 1024 is the documented perf knob for a smaller
-        // canvas and the difference is not visible at this kernel radius.
-        weightsTextureSize: 1024,
         colorRange: COLOR_RANGE,
         // No `colorDomain`: deck derives it from the data, which is stable across pans and
         // on the same scale as the aggregation it is applied to. See `heatmapMath.ts`.
