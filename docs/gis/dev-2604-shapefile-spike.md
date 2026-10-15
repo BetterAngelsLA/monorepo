@@ -255,8 +255,8 @@ geography caveat that makes this non-obvious.
 ## 6. Sample code
 
 **`apps/betterangels-backend/regions/management/commands/import_regions.py`** — the shipped
-loader (the spike prototype that follows was `load_region_boundaries`, now deleted) — complete,
-runnable, and used to produce every result in this document. Core loop:
+loader. The listing below is the spike prototype, not the shipped command; it is complete,
+runnable, and produced every result in this document. Core loop:
 
 ```python
 from django.contrib.gis.gdal import DataSource
@@ -360,11 +360,12 @@ dataset compared with census tracts. Simplification is not optional at the next 
 
 ### 7.5 `postgis` extension — RESOLVED: already present, and we must not create it
 
-**RESOLVED: already present, and we must not create it.** That
-premise was wrong: `clients`, `common`, `hmis` and `shelters` each declare geometry fields in
-their `0001_initial` migrations, and those migrations cannot apply without the extension.
+**RESOLVED: already present, and we must not create it.** The spike's premise — that the
+extension had to be created alongside the boundary tables — was wrong: `clients`, `common`,
+`hmis` and `shelters` each declare geometry fields in their `0001_initial` migrations, and
+those migrations cannot apply without the extension.
 
-It was removed, and should not be re-added. PostGIS is **not** a trusted extension, so
+**Do not add a `CreateExtension`.** PostGIS is **not** a trusted extension, so
 `CREATE EXTENSION postgis` needs superuser or `rds_superuser` — which the app's IAM-minted
 role is not — and `CreateExtension`'s *reverse* migration compiles to
 `DROP EXTENSION IF EXISTS postgis`, which would try to drop it out from under four other

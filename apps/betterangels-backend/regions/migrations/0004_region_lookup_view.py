@@ -1,40 +1,25 @@
-"""The point-lookup view, and the removal of the stored crosswalk.
+"""Drop the point→region crosswalk, drop ``RegionPiece.kind``, and add the lookup view.
 
-Three changes, one decision.
+**``LocationRegion`` is dropped.** The rollup computes the point→region join live instead,
+written boundaries-first so it probes the GiST index on ``Location.point_geom``
+(``common/0002``). On the real LA layers, all six dimensions, that join costs 45 ms over
+20,000 interactions and 210 ms over 500,000 — its cost tracks *distinct locations* rather
+than interactions, so a wider report window does not widen it. Nothing is stored, so the
+rollup needs no derived table, no backfill and no write on the read path.
 
-**``LocationRegion`` is deleted.** It stored "which region each location falls in, per
-dimension", resolved once and rebuilt whenever boundaries moved. The rollup now does that
-join live, written boundaries-first, so it probes the GiST index on ``Location.point_geom``
-(added in ``common/0002``). Measured on the real LA layers, all six dimensions:
-
-    interactions      live join     stored crosswalk
-        20,000           45 ms            22 ms
-       500,000          210 ms           211 ms
-
-The live join's cost tracks *distinct locations*, not interactions, so it converges on the
-crosswalk as a report window grows — and at the fixture's 20,000 interactions it is 2x
-rather than the ~4x the mirror query costs. What that buys is the
-removal of a derived table, its service, its management command, its migration backfill and
-its staleness class — and of a write performed from the read path on every report load.
-
-**``RegionPiece.kind`` is deleted.** The rollup joins ``Region`` anyway to read the code, so
-the denormalised copy bought nothing and could disagree with its parent.
+**``RegionPiece.kind`` is dropped.** The rollup joins ``Region`` to read the code anyway, so
+the denormalised copy would add a second source of truth that can disagree with its parent.
 
 **``regions_regionlookup`` is created.** It is the surface the rollup and the map's region
-filter both read: each region's subdivided pieces, plus the parent boundary for a region
-that has no piece. The fallback lives here, once, instead of in every query. The importer
-writes at least one piece per region, so in practice the second arm is empty — the
-anti-join over 431 regions measures 0.27 ms.
+filter both read: each region's subdivided pieces, plus the parent boundary for a region with
+no piece. The fallback lives here, once, instead of in every query. The importer writes at
+least one piece per region, so in practice the second arm is empty — the anti-join over 431
+regions measures 0.27 ms.
 
-Why the read direction matters, since it is what makes this affordable: the lookup polygons
-drive and the points are probed. The mirror query — "for each interaction, find its region"
-— measures 200 ms for the same result, and 4,950 ms with no subdivision at all.
-
-**This view is also what keeps the planner in that direction.** Pointed straight at
-``regions_regionpiece``, the planner flips the join round on a selective window and drives
-from the notes: 100 ms for a 2,041-interaction window against 30 ms through the view. It is
-not only a place to keep the piece-less fallback, it is the relation shape the good plan
-needs.
+**Do not inline the view into its callers.** It is what holds the planner in the good join
+direction: pointed straight at ``regions_regionpiece`` the planner flips round on a selective
+window and drives from the notes — 100 ms for 2,041 interactions against 30 ms through the
+view. The mirror query over the same data costs 200 ms, and 4,950 ms with no subdivision.
 """
 
 from django.db import migrations, models
@@ -72,8 +57,8 @@ class Migration(migrations.Migration):
             name="kind",
         ),
         # `db_index=True` on a CharField also creates a `varchar_pattern_ops` twin for
-        # prefix `LIKE`s, which nothing in this app performs. Dropping the flag and
-        # declaring one index by name is what turns two indexes into one.
+        # prefix `LIKE`s, which nothing in this app performs. One index declared by name
+        # replaces both.
         migrations.AlterField(
             model_name="region",
             name="kind",

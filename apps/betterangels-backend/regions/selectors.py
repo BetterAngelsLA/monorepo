@@ -1,12 +1,10 @@
 """Read-only rollups over the authoritative boundaries (DEV-2570 / DEV-2604).
 
-The rollup is a **live spatial join**, not an indexed join against a precomputed
-crosswalk. Deciding which region covers a point happens on every read, which is
-affordable because the join is written in the one direction PostGIS can index: the
-subdivided boundaries drive, and the GiST index on ``Location.point_geom`` is probed.
+The rollup is a **live spatial join**: deciding which region covers a point happens on every
+read. That is affordable because the join is written in the one direction PostGIS can index —
+the subdivided boundaries drive, and the GiST index on ``Location.point_geom`` is probed.
 
-There is no derived table to keep fresh, so there is no backfill, no staleness window
-and nothing to write from a read path.
+Nothing derived is stored, so a read writes nothing and there is nothing to keep fresh.
 """
 
 from __future__ import annotations
@@ -27,8 +25,7 @@ from notes.models import Note
 from .models import REGION_LOOKUP_VIEW, Region, RegionKind
 
 #: Table names interpolated into the raw SQL below. Taken from the models rather than
-#: written out, so a `db_table` override cannot leave the query pointing at a table that
-#: no longer exists.
+#: written out, so a `db_table` override cannot leave the query pointing somewhere else.
 _NOTE_TABLE = Note._meta.db_table
 _LOCATION_TABLE = Location._meta.db_table
 _REGION_TABLE = Region._meta.db_table
@@ -38,12 +35,9 @@ def org_notes_in_range(*, organization_id: int, start: datetime, end: datetime) 
     """The organization's notes in a half-open instant range — every read's starting point.
 
     Deliberately one function so the org predicate has exactly one home. Both
-    client-data-bearing reads in this app start from this queryset. A caller that builds
-    its own ``Note.objects.filter(...)`` reproduces the hole this closes:
-    ``interactionMap`` once queried notes across **every** organization in the date window
-    and relied on a later SQL clause (``interaction_points``'s ``organization_id``) to
-    confine the result — which meant the note queryset handed to the permission filter was
-    cross-org, and the map materialised every organization's note ids per request.
+    client-data-bearing reads in this app start from this queryset, and it is org-confined
+    *before* the note permission filter sees it: ``filter_for_user`` is the note read scope
+    and has no organization notion, so confinement cannot come from there.
     """
     return Note.objects.filter(
         organization_id=organization_id,
@@ -77,30 +71,22 @@ def _rollup_sql(*, organization_id: int | None) -> str:
 def _assigned_counts(*, start: datetime, end: datetime, organization_id: int | None) -> dict[str, dict[str, int]]:
     """Interactions per ``(kind, code)`` that a boundary actually contains.
 
-    **The boundaries drive and the points are probed.** That is the whole trick and it is
-    worth about 5x. Written the other way round — "for each interaction, find its region",
-    a `LATERAL` over the pieces — the planner puts the points on the inner side and probes
-    them once per interaction. Written this way it scans the lookup polygons and probes the
-    GiST index on `point_geom` for each, which is the direction PostGIS can index: the plan
-    shows `Index Cond: (point_geom @ lu.geom)`.
+    **The boundaries drive and the points are probed.** That is the whole trick: the scan is
+    over the lookup polygons and the GiST index on ``point_geom`` is probed for each, which
+    is the direction PostGIS can index — the plan shows
+    ``Index Cond: (point_geom @ lu.geom)``. Reversing it — a ``LATERAL`` keyed on the
+    interaction, asking "which region is this point in" — puts the points on the inner side
+    and probes them once per interaction instead.
 
     Measured on the real LA layers (431 regions, 5,685 pieces, 4,000 locations), all six
-    dimensions at once:
-
-        window              this direction    per-location LATERAL    no subdivision
-        20,000 interactions      45 ms              200 ms              4,950 ms
-         2,041 interactions      30 ms               82 ms                    —
+    dimensions at once: 45 ms for a 20,000-interaction window and 30 ms for a
+    2,041-interaction one. The spatial cost tracks *distinct locations* rather than
+    interactions, so it amortises as a report window grows.
 
     **The view is what keeps the plan in this direction.** Pointed straight at
-    ``regions_regionpiece`` instead, the planner flips the join round on a selective window
-    and drives from the notes — 100 ms for those same 2,041 interactions, against 30 ms
-    through the view. The view presents one relation to drive from, which is what the
-    planner needs to pick the indexed side.
-
-    At 500,000 interactions it is 210 ms against 211 ms for the precomputed crosswalk this
-    replaced — the spatial cost tracks *distinct locations*, not interactions, so it
-    amortises as a report window grows. It is ~2x slower at the 20,000-interaction fixture,
-    and that is the honest price of not maintaining a derived table.
+    ``regions_regionpiece`` the planner flips the join round on a selective window and drives
+    from the notes instead; the view presents it one relation to drive from, which is what it
+    needs to pick the indexed side.
 
     ``ST_Covers`` alone carries the index condition, so there is no explicit ``&&``. Adding
     one measures *slower* (91 ms against 45 ms): the redundant predicate constrains the
@@ -132,8 +118,7 @@ def _notes_with_a_location(*, start: datetime, end: datetime, organization_id: i
 
     The minuend of the unassigned subtraction. A note's location either falls in exactly
     one region of a dimension or in none, so ``unassigned = this - assigned`` — which is
-    why the unassigned bucket needs no spatial query of its own. Written as a spatial
-    anti-join instead, it measured **3.2 seconds** on 20,000 interactions.
+    why the unassigned bucket needs no spatial query of its own.
     """
     notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end, location__isnull=False)
     if organization_id is not None:
@@ -193,8 +178,8 @@ def region_counts(
                     continue
                 buckets.append({"kind": scope, "code": code, "name": "", "count": count})
 
-    # `codes is None` means "no restriction", which includes the unassigned bucket, exactly
-    # as an absent filter did when the unassigned rows were stored with a NULL region.
+    # `codes is None` means "no restriction", which is the one case that puts the unassigned
+    # bucket in scope without the caller asking for it by name.
     if unassigned_only or include_unassigned or codes is None:
         with_location = _notes_with_a_location(start=start, end=end, organization_id=organization_id)
         for scope in scopes:
@@ -220,8 +205,8 @@ def region_counts(
         for bucket in buckets:
             bucket["name"] = named.get((bucket["kind"], bucket["code"] or ""), "")
 
-    # Deterministic: by dimension, named regions in code order, unassigned last. The
-    # previous implementation returned whatever order the GROUP BY produced.
+    # Sorted so the client gets a stable order: by dimension, named regions in code order,
+    # unassigned last. Without this the order is whatever the GROUP BY happened to produce.
     buckets.sort(key=lambda bucket: (bucket["kind"], bucket["code"] is None, bucket["code"] or ""))
     return buckets
 
@@ -245,9 +230,9 @@ def available_kinds() -> list[str]:
     The ``kind__in`` filter runs in the database, so a kind the GraphQL enum does not know is
     excluded rather than making ``regionDimensions`` fail wholesale.
 
-    ``Region`` carries no ``Meta.ordering``, so this de-duplicates on ``kind`` alone. It used
-    to need an explicit ``.order_by()`` to defeat a model-level ordering that widened the
-    ``DISTINCT`` to ``(kind, code)``; that ordering is gone, so the call is not.
+    ``Region`` carries no ``Meta.ordering``, so this de-duplicates on ``kind`` alone. A
+    model-level ordering would be appended to the SELECT and widen the ``DISTINCT`` to
+    ``(kind, code)``.
     """
     known = list(RegionKind.values)
     kinds = Region.objects.filter(kind__in=known).values_list("kind", flat=True).distinct()
@@ -275,8 +260,8 @@ def region_features(*, kinds: Iterable[str], codes: Iterable[str] | None = None)
     if codes:
         queryset = queryset.filter(code__in=list(codes))
 
-    # `ReducePrecision` rounds in the database rather than in Python. No `Coalesce`: since
-    # `geom_display` became a generated column it cannot be NULL where `geom` is not.
+    # `ReducePrecision` rounds in the database rather than in Python. No `Coalesce`:
+    # `geom_display` is a generated column, so it cannot be NULL where `geom` is not.
     rows = (
         queryset.annotate(geometry=ReducePrecision(F("geom_display"), Value(GEOJSON_PRECISION_GRID)))
         .values("kind", "code", "name", "geometry")
@@ -318,9 +303,9 @@ def _as_multipolygon(geometry: Any) -> Any:
 
 
 # Coordinate grid for region geometry, in degrees. `1e-6` is ~10 cm — finer than the
-# simplification tolerance (`models.DISPLAY_SIMPLIFY_DEGREES`), so nothing visible is lost,
-# and it is what keeps the payload at parity with the old `ST_AsGeoJSON(…, 6)`: GEOS
-# serialises at full double precision otherwise, which measured 1.58x the size.
+# simplification tolerance (`models.DISPLAY_SIMPLIFY_DEGREES`), so nothing visible is lost —
+# and it is what holds the payload to six decimal places. GEOS serialises at full double
+# precision otherwise, which measured 1.58x the size.
 GEOJSON_PRECISION_GRID = 1e-6
 
 
@@ -376,12 +361,10 @@ def interaction_points(
     # Two independent controls, both applied, neither trusted to imply the other:
     # `organization_id` is the org scope, `notes` carries the note read scope.
     #
-    # `notes` is folded in as a **subquery**, not as a materialised list of ids. The
-    # previous version did `list(notes.values_list("id", flat=True))` and shipped the ids
-    # back as a bind parameter — one round trip to read every id in the window, an
-    # unbounded parameter list, and the whole thing thrown away again to answer the same
-    # question the database could have answered inline. `__in=<queryset>` lets Postgres
-    # plan it as a semi-join against the query the caller already built.
+    # `notes` is folded in as a **subquery**, not as a materialised list of ids.
+    # `__in=<queryset>` lets Postgres plan it as a semi-join against the query the caller
+    # already built; reading the ids out first would cost a round trip, ship an unbounded
+    # bind parameter, and answer the same question a second time.
     queryset = Note.objects.filter(
         organization_id=organization_id,
         interacted_at__gte=start,
@@ -396,12 +379,12 @@ def interaction_points(
     # Transform, Union and similar, and the only `ST_X`/`ST_Y` in the codebase is
     # Oracle-specific.
     #
-    # They read the generated `point_geom` rather than `point`, which is what removes the
-    # `Cast(…, GeometryField())` this used to need: `point` is `geography=True`
-    # (common/models.py), PostGIS defines `ST_X`/`ST_Y` only for geometry, and the cast that
-    # resolved that was load-bearing — without it the query fails on the live database with
-    # `function st_x(geography) does not exist`. Now the column is already geometry, so the
-    # cast is the database's problem once per row written instead of ours once per read.
+    # They read the generated `point_geom`, not `point`, and that is load-bearing rather
+    # than tidiness: `point` is `geography=True` (common/models.py) and PostGIS defines
+    # `ST_X`/`ST_Y` only for geometry, so reading it directly fails on the live database
+    # with `function st_x(geography) does not exist` unless every call site remembers to
+    # cast. The generated column is already geometry, so the cast happens once per row
+    # written instead of once per row read.
     rows = (
         queryset.annotate(
             latitude=Func("location__point_geom", function="ST_Y", output_field=FloatField()),

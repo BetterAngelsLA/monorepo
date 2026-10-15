@@ -503,8 +503,7 @@ Coordinate pairs counted from full-precision GeoJSON (`geometryPrecision=6`); "s
 
 > **SUPERSEDED.** The shipped design stores **EPSG:4326** and uses
 > `Region` + `RegionPiece` joined live against the indexed `Location.point_geom`, not
-> EPSG:2229 and a `geography_boundary` table per tier. (An intermediate design also stored
-> a `LocationRegion` crosswalk; it was removed — see `spatial-implementation-audit.md`.)
+> EPSG:2229 and a `geography_boundary` table per tier.
 > The reasons below are kept only for the parts that still hold: simplify before ingest,
 > `ST_Subdivide` the heavy layers, and join on a stable code rather than a display name.
 

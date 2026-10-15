@@ -86,8 +86,8 @@ def build_region_pieces(*, kind: str | None = None) -> int:
     """
     with transaction.atomic(), connection.cursor() as cursor:
         if kind is not None:
-            # Scoped through `region_id`: the piece no longer carries a denormalised kind,
-            # so a rename or a re-import cannot leave pieces behind under a stale one.
+            # Scoped through `region_id`, because the piece carries no kind of its own —
+            # reading it from `Region` is what keeps a rename from orphaning pieces.
             cursor.execute(
                 "DELETE FROM regions_regionpiece WHERE region_id IN "
                 "(SELECT id FROM regions_region WHERE kind = %(kind)s)",
@@ -115,8 +115,8 @@ def build_region_pieces(*, kind: str | None = None) -> int:
 # ---------------------------------------------------------------------------
 
 
-# Sentinel code the client sends to ask for interactions that fall in no region. It is
-# not a real code: a location's `code` is NULL when it resolved to nothing.
+# Sentinel code the client sends to ask for interactions that fall in no region. It is not a
+# real code: a bucket standing for one comes back with a NULL ``code``.
 UNASSIGNED = "__unassigned__"
 
 
@@ -124,7 +124,7 @@ UNASSIGNED = "__unassigned__"
 class RegionCodeFilter:
     """``regionCodes`` interpreted for one dimension.
 
-    Four shapes, and conflating any two of them is the bug this prevents:
+    Four shapes, and conflating any two of them is the failure to avoid:
 
     * absent                                -> unfiltered, including unassigned and
                                                locationless
@@ -132,11 +132,8 @@ class RegionCodeFilter:
     * ``["__unassigned__"]`` alone          -> only rows matching no region, both causes
     * real codes (with or without sentinel) -> those regions, plus unassigned if asked
 
-    There used to be two flags here — ``query_unassigned`` and ``keep_unassigned`` — because
-    the stored crosswalk needed an extra ``OR`` arm in its join to reach unassigned rows, and
-    that arm was only wanted when real codes were *also* requested. The bucket is computed by
-    subtraction now, so there is no arm to gate and the two questions collapsed into one:
-    ``keep_unassigned`` is what ``region_counts`` emits on and what the caller reads back.
+    ``keep_unassigned`` is the single answer to "is the unassigned bucket in scope": it is
+    both what ``region_counts`` emits on and what the caller reads back.
 
     ``include_locationless`` is separate again, because "notes with no location" is a third
     bucket with a third reason to be in or out of scope. It is true for an absent list and

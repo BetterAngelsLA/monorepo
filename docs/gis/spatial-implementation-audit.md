@@ -155,17 +155,15 @@ tile path would absorb it; a CHECK constraint would prevent it.
 
 ## Smaller observations
 
-- `interaction_points` reads coordinates as `Func(Cast('location__point', GeometryField()),
-  function='ST_Y')`. The cast is required — PostGIS has no `ST_Y(geography)` — and the cost is
-  bounded by `POINT_LIMIT`. Not worth changing.
-- **There is no crosswalk, and that is a deliberate reversal.** An earlier revision stored the
-  point→region answer in a `LocationRegion` table, refreshed by `import_regions(force=True)` and
-  topped up incrementally on read. It was removed: the live join costs 45 ms against 22 ms for
-  the stored one at 20,000 interactions, and 210 ms against 211 ms at 500,000 — it tracks
-  distinct locations rather than interactions, so it converges as a window grows. What the
-  crosswalk bought was not worth a derived table, a backfill, a write on the read path and a
-  staleness class. The same reasoning removed the drift check this bullet used to ask for: with
-  nothing derived from boundaries, there is nothing to drift.
+- `interaction_points` reads coordinates as `Func('location__point_geom', function='ST_Y')`.
+  Django ships no `ST_X`/`ST_Y` wrapper, and PostGIS defines neither for `geography`, so the
+  query reads the generated geometry column rather than `point`. The cost is bounded by
+  `POINT_LIMIT`. Not worth changing.
+- **The point→region answer is not stored.** The live join costs 45 ms against 22 ms for a
+  stored crosswalk at 20,000 interactions, and 210 ms against 211 ms at 500,000 — it tracks
+  distinct locations rather than interactions, so it converges as a window grows. That is not
+  worth a derived table, a backfill and a write on the read path, and with nothing derived from
+  the boundaries there is no drift check to run either.
 - The rollup assumes each dimension's boundaries **partition** the plane, which is what lets
   `unassigned = located − assigned` be a subtraction rather than a second spatial query. It
   holds for every layer loaded here (verified: no location matches two pieces of one dimension)

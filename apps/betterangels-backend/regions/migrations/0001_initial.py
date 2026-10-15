@@ -1,10 +1,7 @@
-"""The Region schema: boundaries and the subdivided point-lookup geometry.
+"""The Region schema: boundaries, the subdivided point-lookup geometry, and a crosswalk.
 
-One migration. This app has never been deployed, so there is no schema history to
-preserve — see ``regions/models.py`` for what the two live tables are for. This revision
-also declares ``LocationRegion``, a point→region crosswalk that
-``0004_region_lookup_view`` deletes; the app has never been deployed, so the history is
-kept rather than rewritten.
+``LocationRegion``, the third table here, is dropped by ``0004_region_lookup_view``; see
+``regions/models.py`` for what the surviving two are for.
 
 **No ``CreateExtension("postgis")``.** The extension is already present: ``clients``,
 ``common``, ``hmis`` and ``shelters`` each created geometry columns in their own
@@ -14,9 +11,9 @@ would be a deploy hazard — PostGIS is not a trusted extension, so
 application connects with an IAM-minted token for a non-superuser role. Its reverse
 migration would also ``DROP EXTENSION`` out from under those four apps.
 
-The backfill at the end is for a database that already has boundaries and wants the
-derived tables populated without re-running the importer. On a fresh one it is a
-no-op, because there is nothing to derive from.
+The backfill at the end is for a database that already has boundaries and wants the lookup
+geometry populated without re-running the importer. On a fresh one it is a no-op, because
+there is nothing to derive from.
 """
 
 from django.contrib.gis.db.models import MultiPolygonField
@@ -27,22 +24,17 @@ import django.db.models.deletion
 def backfill(apps, schema_editor):  # type: ignore[no-untyped-def]
     """Populate the lookup geometry and the display geometry from existing boundaries.
 
-    **Self-contained SQL, deliberately — and the reason is a bug this file shipped.** It used
-    to call ``regions.services.build_region_pieces`` and ``ensure_location_regions``, i.e. live
-    module state. A later revision deleted the second of those, which turned this migration
-    into an ``ImportError`` on every *fresh* database while every test run stayed green under
-    ``--reuse-db``, because an already-applied migration is never re-run. A migration is a
-    historical document: it describes the schema as it was, and it must not call code that
-    describes the schema as it is. The subdivision parameters and the tolerance are therefore
-    literals here, frozen at the values ``models`` held at the time.
+    **Self-contained SQL.** A migration describes the schema it produces and must not call
+    service code, whose existence and signature describe the schema as it currently is. The
+    subdivision parameters and the tolerance are therefore literals rather than imports, so
+    changing a model constant cannot alter what this migration writes.
 
-    The order matters only in that both statements read ``regions_region``, which this
-    migration has just created; on a fresh database both are no-ops, because there is nothing
-    to derive from. It exists for a database that already has boundaries and wants the lookup
+    On a fresh database both statements are no-ops, because there is nothing to derive from.
+    The backfill exists for a database that already has boundaries and wants the lookup
     geometry populated without re-running the importer.
 
-    ``kind`` is inserted because the column exists at this point in the history —
-    ``0004_region_lookup_view`` is what drops it.
+    ``kind`` is inserted because the column exists at this point in the schema —
+    ``0004_region_lookup_view`` drops it.
     """
     schema_editor.execute(
         """

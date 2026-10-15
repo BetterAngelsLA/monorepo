@@ -1,9 +1,8 @@
 """Region boundary models (DEV-2570 / DEV-2604).
 
-``MultiPolygonField`` in EPSG:4326, so boundaries join ``Location.point`` with no
-per-query reprojection. Geometry rather than geography on purpose: Django's
-``within`` lookup appends ``::geometry`` to a geography operand, discarding the GiST
-index.
+``MultiPolygonField`` in EPSG:4326, so boundaries join ``Location.point_geom`` with no
+per-query reprojection. Geometry rather than geography on purpose: Django's ``within``
+lookup appends ``::geometry`` to a geography operand, discarding the GiST index.
 """
 
 from __future__ import annotations
@@ -84,13 +83,8 @@ class Region(BaseModel):
     # (it cannot be NULL while `geom` is not). `ST_SimplifyPreserveTopology` is
     # IMMUTABLE, which is what makes this legal.
     #
-    # It was hand-maintained until this, kept in step by `import_regions`, with
-    # `region_features` coalescing back to `geom` for rows a test or script created
-    # without it. Verified byte-identical to what the importer used to write — 0 of 583
-    # rows differed — so the change is invisible to consumers.
-    #
     # Not derived from `RegionPiece`: subdivision clips at subdivision boundaries, so
-    # reuniting a region from its pieces equals the parent for only 334 of 431.
+    # reuniting a region from its pieces does not equal the parent.
     geom_display = models.GeneratedField(
         expression=SimplifyPreserveTopology(models.F("geom"), models.Value(DISPLAY_SIMPLIFY_DEGREES)),
         output_field=MultiPolygonField(srid=4326, null=True),
@@ -110,11 +104,9 @@ class Region(BaseModel):
         # meant. The GiST index on `geom` is `spatial_index=True`, the default.
         indexes = [models.Index(fields=["kind"], name="regions_region_kind_idx")]
         #
-        # **No model-level `ordering`, deliberately.** It is appended to every SELECT, so a
-        # bare `.distinct()` de-duplicates on `(kind, code)` and returns one row per region
-        # instead of one per kind — which silently broke two call sites, each of which now
-        # carries an `order_by()` plus a comment explaining it. Callers that want an order
-        # ask for one.
+        # **No model-level `ordering`, deliberately.** Django appends it to every SELECT, so a
+        # bare `.distinct()` de-duplicates on `(kind, code)` and yields one row per region
+        # instead of one per kind. Callers that want an order ask for one.
 
     def __str__(self) -> str:
         label = self.name or self.code
@@ -154,8 +146,8 @@ class RegionPiece(BaseModel):
     **only** regions above it are subdivided at all. Subdividing everything instead — the same
     256-vertex target, no threshold — is 1,867 ms against 39 ms for the rollup, on 8,156
     pieces against 5,685. A region that is already a handful of vertices is not worth
-    splitting, and the pieces the split produces cost more to search than the single original
-    did. This is why "the boundaries are slow, subdivide more" is the wrong instinct twice
+    splitting, and the pieces the split produces cost more to search than that region's own
+    geometry would. "The boundaries are slow, subdivide more" is the wrong instinct twice
     over.
 
     Read through ``regions_regionlookup`` (see ``0004``), never directly. The view adds the
@@ -170,15 +162,16 @@ class RegionPiece(BaseModel):
 
     class Meta:
         # The FK covers `region`; the GiST index on `geom` is `spatial_index=True`, the
-        # default. There is deliberately **no** denormalised `kind` here: the rollup joins
-        # `Region` anyway to read the code, so a copy bought nothing and could disagree
-        # with its parent.
+        # default. There is deliberately **no** denormalised `kind`: every reader joins
+        # `Region` to read the code anyway, so a copy would add a second source of truth
+        # that can disagree with its parent.
         pass
 
     def __str__(self) -> str:
         return f"piece of {self.region_id}"
 
 
-#: SQL name of the point-lookup view. Defined in migration ``0004``; read with raw SQL
-#: (``selectors._ROLLUP_SQL``), never through the ORM.
+#: SQL name of the point-lookup view, which migration ``0004`` creates. Read with raw SQL
+#: (``selectors``), never through the ORM: the view has no primary key for a model to
+#: declare.
 REGION_LOOKUP_VIEW = "regions_regionlookup"

@@ -123,19 +123,11 @@ class RegionRollupTestCase(TestCase):
         self.assertEqual(rows, [])
 
     def test_a_note_in_two_dimensions_is_counted_once_in_each(self) -> None:
-        """The regression guard for a chained-filter cross-product.
+        """One interaction inside two dimensions' regions counts once in each.
 
-        Django builds a *separate join* per `filter()` on a multi-valued relation, so
-
-            rows.filter(assignments__isnull=False).filter(assignments__kind=kind)
-
-        joins `regions_locationregion` twice and counts the cross-product. A note holding both
-        a `council_district` and an `spa` assignment was therefore counted **twice** in the
-        `spa` rollup — a bucket reading 2 for one interaction.
-
-        `count(DISTINCT n.id)` hid it. The count is a plain `count` now (it is measurably
-        cheaper: 9.7 ms against 23.2 ms on 20k notes), so the predicates have to stay in one
-        `filter()`. If someone splits them again, this fails.
+        The note in BOX_A falls in both a council district and an SPA, so each dimension's
+        bucket reads 1. A bucket reading 2 would mean the interaction is counted per
+        overlapping region rather than per dimension.
         """
         Region.objects.create(kind=RegionKind.SPA, code="4", name="Metro", geom=box(BOX_A))
         self._note_at(*OUTSIDE)  # a note that is in neither region
@@ -265,9 +257,6 @@ class RegionReconciliationTestCase(TestCase):
         # (c) no location at all — the only "unlocatable" shape the schema allows
         baker.make(Note, organization=self.org, interacted_at=when, location=None)
 
-        # The rollup reads the stored assignment, so resolve the two located notes
-        # (the locationless one has nothing to resolve) before asserting anything.
-
     def test_every_note_lands_in_exactly_one_bucket(self) -> None:
         rows = region_counts(
             kind=RegionKind.COUNCIL_DISTRICT, start=self.start, end=self.end, organization_id=self.org.id
@@ -316,12 +305,9 @@ class InteractionMapTestCase(TestCase):
     def _notes(self, *, org: Any = None) -> Any:
         """The notes in range, through the **same helper the resolver uses**.
 
-        Calls ``org_notes_in_range`` rather than repeating its filter. The previous
-        version hand-wrote ``Note.objects.filter(organization=..., interacted_at...``
-        while claiming to be "the way the resolver hands them to the selectors" — the
-        resolver did *not* filter by org at all, so the org confinement this helper
-        appeared to exercise was never the resolver's. Sharing the call keeps the test
-        and the resolver from drifting apart again.
+        Calling ``org_notes_in_range`` rather than repeating its filter is what keeps this
+        fixture and the resolver from drifting apart: a hand-written filter here would
+        exercise a different query from the one that ships.
         """
         return org_notes_in_range(organization_id=(org or self.org).id, start=self.start, end=self.end)
 
@@ -378,11 +364,9 @@ class InteractionMapTestCase(TestCase):
     def test_limit_is_clamped(self) -> None:
         """A client-supplied limit cannot exceed the cap, and truncation says so.
 
-        Asserted against a **patched** cap rather than by asking for a huge one: with fewer
-        notes than the cap, a clamped limit and no clamp return the same rows, so the
-        original version of this test passed whether or not the clamp existed — and the
-        resolver passes the client's ``limit`` straight through, which made the clamp the
-        only thing bounding the payload.
+        The cap is patched rather than exceeded: with fewer notes than the cap, a clamped
+        limit and no clamp return the same rows. The resolver passes the client's ``limit``
+        straight through, so this expression is the only thing bounding the payload.
         """
         for i in range(4):
             self._note_at(-118.24 + i * 0.01, 34.05)
@@ -394,7 +378,7 @@ class InteractionMapTestCase(TestCase):
         self.assertTrue(truncated, "truncation must be reported, not silent")
 
     def test_a_limit_below_one_is_raised_to_one(self) -> None:
-        """The floor of the clamp, which the original test also never reached."""
+        """The floor of the clamp: a limit below one is raised, not honoured."""
         for i in range(3):
             self._note_at(-118.24 + i * 0.01, 34.05)
         rows, truncated = self._points(limit=0)
@@ -410,8 +394,8 @@ class InteractionMapTestCase(TestCase):
     def test_scoping_by_region_narrows_the_points(self) -> None:
         """Filtering by region is the "show me the SPA 4 visits" case.
 
-        Reads the stored assignment, so it is an indexed semi-join — and it must
-        actually narrow, not silently return everything an unwired filter would.
+        The predicate must actually narrow: an unwired filter returns every point and still
+        looks like a working map.
         """
         self._box_region("1", BOX_A)
         self._note_at(-118.24, 34.05)  # in region "1"
@@ -441,12 +425,10 @@ class InteractionMapTestCase(TestCase):
 
 
 class LiveSpatialJoinTestCase(TestCase):
-    """The rollup reads the boundaries live — there is no crosswalk to keep fresh.
+    """The rollup reads the boundaries live, so there is no resolved state to top up.
 
-    This replaces ``StaleAssignmentTestCase``, which pinned the opposite design: a
-    ``LocationRegion`` row per (location, dimension), resolved once and topped up from the
-    read path. Nothing here needs a fill step, and that is the point — a location created
-    between two imports is counted by the very next read, with no write anywhere.
+    A location created between two imports is counted by the very next read, with no write
+    anywhere.
     """
 
     def setUp(self) -> None:
@@ -475,14 +457,14 @@ class LiveSpatialJoinTestCase(TestCase):
         )
 
     def test_a_location_created_after_the_boundaries_is_counted_with_no_fill(self) -> None:
-        """The contract that replaces "the read tops up a derived index"."""
+        """Nothing has to run between a location being written and it appearing in a bucket."""
         note = self._note_at(-118.24, 34.05)
 
         self.assertEqual(self._counts().get("1"), 1)
         self.assertIsNotNone(note.location_id)
 
     def test_a_read_writes_nothing(self) -> None:
-        """The property the stored crosswalk could not have, and why it is gone.
+        """The rollup is a pure read: no INSERT, UPDATE or DELETE against any table.
 
         Asserted on the statements the rollup actually executed rather than on a row count:
         the failure this guards against is a selector that INSERTs, which a row-count
@@ -503,8 +485,8 @@ class LiveSpatialJoinTestCase(TestCase):
     def test_a_region_with_no_pieces_resolves_through_the_lookup_view(self) -> None:
         """The fallback arm of ``regions_regionlookup``: a region with no pieces.
 
-        Every other test in this module creates regions this way, so this is the arm they
-        all exercise. Worth naming, because it is **not** the one production uses.
+        Most fixtures in this module create regions this way, so this is the arm they take —
+        and it is **not** the one production uses.
         """
         self.assertFalse(self.region.pieces.exists(), "precondition: no pieces were built")
 
@@ -515,9 +497,8 @@ class LiveSpatialJoinTestCase(TestCase):
     def test_a_region_with_pieces_resolves_through_them(self) -> None:
         """The production arm, which ``import_regions`` always creates.
 
-        Without this test the piece branch of the lookup is never executed by the suite —
-        only the parent-boundary fallback is — so a defect in the subdivided geometry, the
-        one thing ``RegionPiece`` exists for, would ship green.
+        The piece branch is otherwise unexecuted by the suite, so a defect in the subdivided
+        geometry — the one thing ``RegionPiece`` exists for — would go unnoticed.
         """
         build_pieces(kind=RegionKind.COUNCIL_DISTRICT)
         self.assertTrue(self.region.pieces.exists(), "precondition: pieces were built")

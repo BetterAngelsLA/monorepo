@@ -128,11 +128,10 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
         self.assertEqual(counts[("", "NO_LOCATION")], 1)
 
     def test_empty_code_list_returns_no_named_regions(self) -> None:
-        """`regionCodes: []` must match nothing, not everything.
+        """``regionCodes: []`` must match nothing, not everything.
 
-        `wanted or None` collapsed an explicitly-empty list to SQL NULL, which drops
-        the code predicate altogether. An empty list means "no codes", so it must
-        match nothing — the same class of bug as the unassigned sentinel.
+        An empty list means "no codes". Collapsing it to SQL NULL drops the code predicate
+        and returns the whole dimension — the same trap as the unassigned sentinel.
         """
         buckets = self._query([])
         named = [b for b in buckets if not b["isUnassigned"]]
@@ -141,8 +140,8 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
     def test_empty_code_list_does_not_smuggle_in_unassigned_rows(self) -> None:
         """The empty list asks for no regions, not for the unassigned buckets.
 
-        Asserted separately from the named-region check because the two leak through
-        different branches: the code predicate and `include_locationless`.
+        The code predicate and ``include_locationless`` are separate branches, so a check on
+        one does not cover the other.
         """
         buckets = self._query([])
         reasons = {b["unassignedReason"] for b in buckets if b["isUnassigned"]}
@@ -213,17 +212,16 @@ class InteractionMapBaseTestCase(GraphQLBaseTestCase):
 
     The map's authority is two gates that are easy to conflate:
 
-    * ``reports.view_reports`` at the org — a **grant**, role-backed since the reports
-      cutover, so ``ORG_ADMIN``/``ORG_SUPERUSER`` satisfy it;
+    * ``reports.view_reports`` at the org — a **grant**, role-backed, so
+      ``ORG_ADMIN``/``ORG_SUPERUSER`` satisfy it;
     * the note read scope — a **legacy** ``PermissionGroup`` permission, because notes
       are gated on RFC 0003 and **no ``Role`` carries ``notes.view_note``**
       (``CASEWORKER_ROLE`` carries only ``Team.perms.VIEW``).
 
     So a caller must satisfy both, and the roles that do are caseworkers, not
-    ``ORG_ADMIN``. Before this suite existed the resolver gated on
-    ``require_can(..., NotePermissions.VIEW)`` — a grant predicate on a permission no
-    ``Role`` holds — which denied *every* non-superuser and made the map return nothing
-    for every real user. The positive test below is what pins that shut.
+    ``ORG_ADMIN``. Gating the map on ``require_can(..., NotePermissions.VIEW)`` instead would
+    deny *every* non-superuser and return nothing for every real user, because no ``Role``
+    carries that codename.
     """
 
     def setUp(self) -> None:
@@ -270,25 +268,24 @@ class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
     """Who may read pins: the caseworker yes, the report-only role no."""
 
     def test_a_caseworker_holds_both_gates_and_sees_the_pins(self) -> None:
-        """**The positive case, and the reason this class was rewritten.**
+        """**The positive case.** A caseworker holds ``notes.view_note`` through the legacy
+        ``Caseworker`` group and ``reports.view_reports`` through their ``ORG_ADMIN`` grant,
+        so the map must return the org's interaction.
 
-        A caseworker holds ``notes.view_note`` through the legacy ``Caseworker`` group
-        and ``reports.view_reports`` through their ``ORG_ADMIN`` grant, so the map must
-        return the org's interaction. Asserting only the denial below would pass whether
-        or not the map works for anyone — which is exactly how the original
-        unsatisfiable gate shipped green.
+        The one test that separates a working gate from an unsatisfiable one: both return
+        nothing, so a suite of denials alone cannot tell them apart.
         """
         result = self._map(self.caseworker())
         self.assertNotIn("errors", result, result.get("errors"))
         self.assertEqual(len(result["points"]), 1, "the caseworker's note must be a pin")
         self.assertAlmostEqual(result["points"][0]["latitude"], 34.05, places=4)
 
-    def test_org_admin_without_note_permission_is_denied(self) -> None:
+    def test_org_admin_without_note_permission_sees_no_pins(self) -> None:
         """``ORG_ADMIN`` holds ``reports.view_reports`` and no ``notes.view_note``.
 
-        A different question from the caseworker's, and it must be asserted as a
-        **denial** rather than "an error or an empty map — either is fine". Accepting both
-        outcomes is what let an unsatisfiable gate and a working one look identical.
+        The note scope withholds the pins rather than the report gate, so the request
+        succeeds and returns an empty map. That is a different mechanism from the
+        caseworker's, and the two gates are independent.
         """
         admin = baker.make(User)
         self.org_1.add_user(admin)
@@ -328,10 +325,9 @@ class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
 class InteractionMapOrgConfinementTestCase(InteractionMapBaseTestCase):
     """Org confinement is the SQL clause, not the permission filter.
 
-    ``filter_for_user`` answers "does this user hold ``notes.view_note`` ⇒ every row",
-    with no org awareness at all: a user holding it model-level (the legacy group is
-    model-level) would otherwise receive every organization's coordinates that fall in
-    the date window. These two tests are the guard on that.
+    ``filter_for_user`` answers "does this user hold ``notes.view_note`` ⇒ every row", with
+    no org awareness at all: a user holding it model-level (the legacy group is model-level)
+    would otherwise receive every organization's coordinates that fall in the date window.
     """
 
     def test_only_the_requested_orgs_pins_are_returned(self) -> None:
@@ -385,12 +381,10 @@ REGION_METADATA_QUERY = """
 
 
 class InteractionMapRegionFilterTestCase(InteractionMapBaseTestCase):
-    """``interactionMap(regionCodes: …)`` — the argument the suite never exercised.
+    """``interactionMap(regionCodes: …)``, whose empty-list meaning is easiest to get backwards.
 
-    The map's query carried no ``regionCodes`` at all, so the resolver's whole region
-    branch could be deleted and every test still passed. It is also the argument whose
-    empty-list meaning is easiest to get backwards: read as "absent", the predicate is
-    dropped and a caller who asked for no regions receives every pin in the organization.
+    Read as "absent", the predicate is dropped and a caller who asked for no regions receives
+    every pin in the organization.
     """
 
     def setUp(self) -> None:
@@ -432,7 +426,7 @@ class InteractionMapRegionFilterTestCase(InteractionMapBaseTestCase):
         self.assertEqual(result["points"], [], "an empty code list leaked every pin")
 
     def test_region_codes_without_a_dimension_are_refused(self) -> None:
-        """A code is ambiguous across dimensions, so guessing one is the bug.
+        """A code is ambiguous across dimensions, so a dimension is required rather than guessed.
 
         ``"1"`` is a council district, an SPA and a supervisorial district in this data;
         returning any of them would be an answer the caller did not ask for.
@@ -444,10 +438,9 @@ class InteractionMapRegionFilterTestCase(InteractionMapBaseTestCase):
 class UngroupedRollupTestCase(GraphQLBaseTestCase):
     """``interactionsByRegion`` with no dimension: every dimension in one response.
 
-    Every other rollup test names a dimension, so the ``(kind, code)`` grouping — the reason
-    the ungrouped rollup exists — was never executed. Codes are not unique across
-    dimensions; drop the kind from the grouping and three unrelated regions merge into one
-    bucket with a summed count and one arbitrary name.
+    Codes are not unique across dimensions, so the grouping is on ``(kind, code)``. Drop the
+    kind and three unrelated regions merge into one bucket with a summed count and one
+    arbitrary name.
     """
 
     def setUp(self) -> None:
@@ -503,8 +496,8 @@ class UngroupedRollupTestCase(GraphQLBaseTestCase):
 class RegionMetadataQueryTestCase(GraphQLBaseTestCase):
     """``regionDimensions`` and ``regions`` through the resolvers, not just the selectors.
 
-    Both were untested at the GraphQL layer: a resolver returning ``[]``, dropping ``codes``,
-    or failing to build the enum would have shipped green.
+    ``regionDimensions`` reports only the dimensions that have boundaries loaded, and
+    ``regions`` returns that dimension's boundaries with their codes and names.
     """
 
     def setUp(self) -> None:

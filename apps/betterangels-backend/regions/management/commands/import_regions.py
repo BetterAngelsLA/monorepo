@@ -93,8 +93,8 @@ SOURCES: tuple[RegionSource, ...] = (
             # Both filters are load-bearing. FEAT_TYPE='Land' drops the breakwater,
             # water and pier pieces of the same city. CITY_TYPE='City' drops the 190
             # `Unincorporated` polygons: that is a legal *status* (the absence of a
-            # city), not a city, and loading it put a pseudo-city holding two-thirds
-            # of the county's land into every "top cities" rollup.
+            # city), not a city, and loading it would put a pseudo-city holding
+            # two-thirds of the county's land into every "top cities" rollup.
             #
             # "Not in a city" needs no dimension: a point falling in none of the 88
             # is unincorporated by definition, and deriving it stays correct when the
@@ -373,9 +373,8 @@ class Command(BaseCommand):
                     source_item_id=metadata["item_id"],
                     geom=geometry,
                     # `geom_display` is not set here: it is a generated column
-                    # (`Region.geom_display`), so the database derives it from `geom`.
-                    # Writing it was what made this importer responsible for keeping a
-                    # derived value in step; that responsibility is now Postgres's.
+                    # (`Region.geom_display`), so the database derives it from `geom` and
+                    # there is nothing for this importer to keep in step.
                 )
             )
 
@@ -409,8 +408,7 @@ class Command(BaseCommand):
             pieces = build_region_pieces(kind=source.kind)
 
         # Nothing else to derive. The rollup reads `Region` and `RegionPiece` directly, so
-        # replacing the boundary and its pieces is the whole update — there is no crosswalk
-        # to rebuild and no location-to-region answer left over from the old geometry.
+        # replacing the boundary and its pieces is the whole update.
         self.stdout.write(f"  pieces    : {pieces}")
         return len(regions)
 

@@ -3,8 +3,7 @@
 ``Location.point`` is ``geography``. PostGIS indexes that spherically, and
 ``geography -> geometry`` is an **explicit-only** cast — so a point-in-polygon test against
 a ``geometry`` boundary has to write ``point::geometry``, which discards the GiST index.
-This column is what the region joins probe instead, and it is what makes the rollup a live
-spatial join rather than a lookup against a precomputed crosswalk.
+This column is what the region joins probe.
 
 Two things to know before running this.
 
@@ -21,8 +20,8 @@ column at all — the same property that lets ``Region.geom_display`` use
 ``ST_SimplifyPreserveTopology``.
 
 The expression is written out rather than imported from the model, so that re-typing the
-model field cannot silently change what this historical migration produced. Only the
-*callable* has to match the model for ``makemigrations --check``; the arguments do not.
+model field cannot silently change what this migration writes. Only the *callable* has to
+match the model for ``makemigrations --check``; the arguments do not.
 """
 
 import django.contrib.gis.db.models.fields

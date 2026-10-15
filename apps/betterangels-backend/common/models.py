@@ -232,17 +232,18 @@ class Location(BaseModel):
     point = PointField(geography=True)
     # ``point`` again, as ``geometry``, maintained by the database.
     #
-    # PostGIS indexes a ``geography`` column spheroidally, and ``geography -> geometry`` is an
-    # **explicit-only** cast — so a point-in-polygon test against a ``geometry`` boundary has
-    # to write ``point::geometry``, which discards the geography GiST index. This column is
-    # what the boundary joins index instead. Measured on the real LA layers, casting the
-    # *boundaries* to geography to reuse the existing index instead takes the region rollup
-    # from 42 ms to 3,067 ms.
+    # The boundary joins index this rather than ``point``. PostGIS indexes a ``geography``
+    # column spheroidally, and ``geography -> geometry`` is an **explicit-only** cast, so a
+    # point-in-polygon test against a ``geometry`` boundary has to write ``point::geometry``
+    # — which discards the geography GiST index. Casting the *boundaries* to geography to
+    # reuse that index instead measures 3,067 ms against 45 ms for the rollup this column
+    # serves.
     #
     # A **generated column**, for the same reasons as ``Region.geom_display``: the database
-    # derives it, so there is no backfill to run, nothing to remember on write, and no way for
-    # it to drift from ``point``. ``geography -> geometry`` is IMMUTABLE, which is what makes
-    # that legal. Adding it rewrites ``common_location`` once; see the migration.
+    # derives it, so there is no backfill to run, nothing to remember on write, and no way
+    # for it to drift from ``point``. ``geography -> geometry`` is IMMUTABLE, which is what
+    # makes that legal. Adding it rewrites ``common_location`` once, under an ACCESS
+    # EXCLUSIVE lock — see the migration.
     point_geom = models.GeneratedField(
         expression=Cast("point", GeometryField(srid=4326)),
         output_field=GeometryField(srid=4326),
