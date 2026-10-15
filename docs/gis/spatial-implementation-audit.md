@@ -4,6 +4,28 @@ What the GIS code does, whether it follows documented practice, and the two defe
 measurement found. Written against the implementation in `regions/`, plus the one other spatial
 consumer (`shelters`).
 
+## Version parity: RDS runs ahead of local, not behind
+
+Every version that matters is *newer* on RDS than in the dev/CI image, which is the opposite of
+the usual dev/prod divergence risk.
+
+| | dev / CI (`nickblah/postgis:17.5-bullseye-postgis-3.5`) | Amazon RDS for PostgreSQL 17 |
+|---|---|---|
+| PostGIS | 3.5.2 | up to **3.5.6** |
+| GEOS | **3.9.0** | **3.13.0** (since 17.0) |
+| `ST_CoverageSimplify` | unavailable — needs GEOS 3.12 | **available** |
+| `ST_TileEnvelope`, `ST_AsMVT`, `feature_id_name` | available (PostGIS ≥ 3.0) | available |
+| `ST_ReducePrecision` | available (PostGIS ≥ 3.0) | available |
+
+Nothing this app calls requires a PostGIS newer than RDS offers. Two concrete gaps to close, both
+in the dev environment rather than production:
+
+1. **GEOS** — our image is four minor versions behind, which is why `ST_CoverageSimplify` fails
+   locally and would work on RDS. See below.
+2. **PostGIS minor** — 3.5.2 locally against 3.5.6 on RDS. Nothing here depends on the difference,
+   but a bug fixed upstream between those versions would reproduce locally and not in production,
+   which is the confusing direction.
+
 ## What we do, and why it is the documented approach
 
 | choice | where | why |
