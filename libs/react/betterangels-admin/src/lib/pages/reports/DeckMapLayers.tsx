@@ -103,47 +103,6 @@ function buildLayers({
 }: BuildLayersArgs): Layer[] {
   const layers: Layer[] = [];
 
-  if (regionKind && tileUrl) {
-    layers.push(
-      new MVTLayer({
-        id: `region-boundaries-${regionKind}`,
-        data: tileUrl,
-        loadOptions: { fetch: { credentials: 'include' } },
-        minZoom: 0,
-        maxZoom: 16,
-        // **Stroke only.** The fill used to encode each region's interaction count as a colour
-        // and an alpha, which is the same quantity the heatmap already encodes as a colour —
-        // two encodings of "where are the interactions", competing for the same pixels. The
-        // reader saw grey districts and no density. Boundaries are the frame, not a second
-        // reading of the data; the table beside the map carries the per-region counts.
-        filled: false,
-        stroked: true,
-        getLineColor: (feature) => {
-          const code = String(
-            (feature.properties as { code?: string })?.code ?? '',
-          );
-          // Everything stays drawn when a region is selected, with the chosen ones emphasised.
-          // A single district floating with nothing around it loses the geography that makes it
-          // locatable.
-          const faded = focusCodes.length > 0 && !focusCodes.includes(code);
-          return hexToRgba(overlay.stroke, faded ? 0.25 : 0.9);
-        },
-        getLineWidth: (feature) => {
-          const code = String(
-            (feature.properties as { code?: string })?.code ?? '',
-          );
-          return focusCodes.includes(code) ? 2.4 : 1.2;
-        },
-        lineWidthUnits: 'pixels',
-        pickable: false,
-        updateTriggers: {
-          getLineColor: [overlay.stroke, focusCodes],
-          getLineWidth: [focusCodes],
-        },
-      }),
-    );
-  }
-
   if (points.length > 0 && view === 'heatmap') {
     layers.push(
       new HeatmapLayer<HeatPoint>({
@@ -194,6 +153,53 @@ function buildLayers({
         // font name, and a CSS keyword resolves to nothing — the bubbles drew with no numbers
         // in them at all. deck's default face is the one it has an atlas for.
         pickable: false,
+      }),
+    );
+  }
+
+  // Pushed last so the strokes land **over** the density field.
+  //
+  // The heatmap is a triangle mesh covering its data's bounding box, and inside that box it
+  // is opaque. Drawn after the boundaries — which is what array order used to do — it painted
+  // straight over the outlines, so the geography the reader needs to place the density was
+  // hidden by the density itself. A frame belongs on top of what it frames.
+  if (regionKind && tileUrl) {
+    layers.push(
+      new MVTLayer({
+        id: `region-boundaries-${regionKind}`,
+        data: tileUrl,
+        loadOptions: { fetch: { credentials: 'include' } },
+        minZoom: 0,
+        maxZoom: 16,
+        // **Stroke only.** The fill used to encode each region's interaction count as a colour
+        // and an alpha, which is the same quantity the heatmap already encodes as a colour —
+        // two encodings of "where are the interactions", competing for the same pixels. The
+        // reader saw grey districts and no density. Boundaries are the frame, not a second
+        // reading of the data; the table beside the map carries the per-region counts.
+        filled: false,
+        stroked: true,
+        getLineColor: (feature) => {
+          const code = String(
+            (feature.properties as { code?: string })?.code ?? '',
+          );
+          // Everything stays drawn when a region is selected, with the chosen ones emphasised.
+          // A single district floating with nothing around it loses the geography that makes it
+          // locatable.
+          const faded = focusCodes.length > 0 && !focusCodes.includes(code);
+          return hexToRgba(overlay.stroke, faded ? 0.25 : 0.9);
+        },
+        getLineWidth: (feature) => {
+          const code = String(
+            (feature.properties as { code?: string })?.code ?? '',
+          );
+          return focusCodes.includes(code) ? 2.4 : 1.2;
+        },
+        lineWidthUnits: 'pixels',
+        pickable: false,
+        updateTriggers: {
+          getLineColor: [overlay.stroke, focusCodes],
+          getLineWidth: [focusCodes],
+        },
       }),
     );
   }
