@@ -6,6 +6,7 @@ import { useActiveOrg, useApiConfig } from '@monorepo/ba-platform';
 import { useUser } from '../../../providers/user/UserProvider';
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InfoIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -149,6 +150,7 @@ function ReferralsContent({
   client,
   clientId,
 }: Pick<TProps, 'client'> & { clientId: string }) {
+  const insets = useSafeAreaInsets();
   const store = useReferralDraftStore();
   const apolloClient = useApolloClient();
   const { showSnackbar } = useSnackbar();
@@ -314,7 +316,10 @@ function ReferralsContent({
   };
 
   return (
-    <View style={styles.container} testID="referrals-screen">
+    <View
+      style={[styles.container, { paddingBottom: insets.bottom }]}
+      testID="referrals-screen"
+    >
       <DraftRecoveryNotice />
       {/* Header row */}
       <View style={styles.headerRow}>

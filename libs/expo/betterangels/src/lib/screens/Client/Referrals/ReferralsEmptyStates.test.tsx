@@ -43,6 +43,9 @@ vi.mock('../../../providers/user/UserProvider', () => ({
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
+vi.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 24, left: 0, right: 0 }),
+}));
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('../../../hooks', () => ({
@@ -102,6 +105,21 @@ const client = {
 describe('empty referral history', () => {
   beforeEach(() => {
     draftStore = createStore();
+  });
+
+  it('keeps the list viewport above system navigation', async () => {
+    await render(
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
+        <ReferralsTab client={client} draftStore={draftStore} />
+      </MockedProvider>,
+    );
+    await screen.findByText('No referrals yet');
+    expect(screen.getByTestId('referrals-screen')).toHaveStyle({
+      paddingBottom: 24,
+    });
   });
 
   it('says there are no referrals yet instead of showing a blank screen', async () => {

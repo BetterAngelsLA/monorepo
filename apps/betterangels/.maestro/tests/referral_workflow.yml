@@ -16,11 +16,18 @@ appId: ${MAESTRO_APP_ID}
       - scrollUntilVisible:
           element:
             id: 'edit-referral-.*'
+            childOf:
+              id: 'referral-card-.*'
+              containsDescendants:
+                - text: '${"Notes: " + output.referralMarker}'
           direction: DOWN
           timeout: 30000
       - tapOn:
           id: 'edit-referral-.*'
-          index: 0
+          childOf:
+            id: 'referral-card-.*'
+            containsDescendants:
+              - text: '${"Notes: " + output.referralMarker}'
       - assertVisible: 'Changes apply only to this referral.*'
       # Select a date using the native Android dialog.
       - runFlow:
@@ -52,6 +59,9 @@ appId: ${MAESTRO_APP_ID}
             id: intake-notes-input
           direction: DOWN
           timeout: 30000
+      - assertVisible:
+          id: intake-notes-input
+          text: ${output.referralMarker}
       - tapOn:
           id: intake-notes-input
       - assertVisible:
@@ -63,10 +73,14 @@ appId: ${MAESTRO_APP_ID}
           element:
             id: intake-notes-input
           direction: DOWN
-          centerElement: true
           timeout: 30000
       - longPressOn:
           id: intake-notes-input
+      - runFlow:
+          when:
+            visible: 'Select [Aa]ll'
+          commands:
+            - tapOn: 'Select [Aa]ll'
       - tapOn: 'Cut'
       - inputText: ${output.editedMarker}
       - assertVisible:
@@ -90,11 +104,18 @@ appId: ${MAESTRO_APP_ID}
       - scrollUntilVisible:
           element:
             id: 'share-referral-.*'
+            childOf:
+              id: 'referral-card-.*'
+              containsDescendants:
+                - text: '${"Notes: " + output.editedMarker}'
           direction: DOWN
           timeout: 30000
       - tapOn:
           id: 'share-referral-.*'
-          index: 0
+          childOf:
+            id: 'referral-card-.*'
+            containsDescendants:
+              - text: '${"Notes: " + output.editedMarker}'
       - assertVisible: 'Review referral summary'
       - assertNotVisible: ${'(?s).*' + output.editedMarker + '.*'}
       - tapOn:
@@ -112,11 +133,18 @@ appId: ${MAESTRO_APP_ID}
       - scrollUntilVisible:
           element:
             id: 'reuse-referral-.*'
+            childOf:
+              id: 'referral-card-.*'
+              containsDescendants:
+                - text: '${"Notes: " + output.editedMarker}'
           direction: UP
           timeout: 30000
       - tapOn:
           id: 'reuse-referral-.*'
-          index: 0
+          childOf:
+            id: 'referral-card-.*'
+            containsDescendants:
+              - text: '${"Notes: " + output.editedMarker}'
       - assertVisible:
           id: referral-reuse-review
       - runFlow:
