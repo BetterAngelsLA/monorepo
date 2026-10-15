@@ -1,0 +1,63 @@
+query RegionDimensions {
+  regionDimensions
+}
+
+query InteractionsByRegion(
+  $organizationId: ID!
+  $dimension: RegionDimension
+  $startDate: Date
+  $endDate: Date
+  $regionCodes: [String!]
+) {
+  interactionsByRegion(
+    organizationId: $organizationId
+    dimension: $dimension
+    startDate: $startDate
+    endDate: $endDate
+    regionCodes: $regionCodes
+  ) {
+    # Which dimension this bucket belongs to. A rollup can span every dimension, where the
+    # code alone is ambiguous, so the table has to be able to say which one a row came from.
+    kind
+    code
+    name
+    count
+    isUnassigned
+    unassignedReason
+  }
+}
+
+# `dimension` is non-null because the API refuses a code without one — a code is ambiguous
+# across dimensions. The map simply does not request boundaries when nothing is grouped.
+query RegionsForMap($dimension: RegionDimension!, $codes: [String!]) {
+  regions(dimension: $dimension, codes: $codes) {
+    kind
+    code
+    name
+    geometry
+  }
+}
+
+query InteractionMap(
+  $organizationId: ID!
+  $dimension: RegionDimension
+  $startDate: Date
+  $endDate: Date
+  $limit: Int
+  $regionCodes: [String!]
+) {
+  interactionMap(
+    organizationId: $organizationId
+    startDate: $startDate
+    endDate: $endDate
+    limit: $limit
+    dimension: $dimension
+    regionCodes: $regionCodes
+  ) {
+    points {
+      latitude
+      longitude
+    }
+    truncated
+  }
+}
