@@ -101,17 +101,25 @@ const LA_ZOOM = 9;
  */
 function useMapColors() {
   const { token } = theme.useToken();
-  return {
-    // antd's neutral palette is defined to meet contrast on light and dark backgrounds, so
-    // the overlay stays legible over raster tiles.
-    emptyFill: token.colorFillSecondary,
-    fullFill: token.colorText,
-    stroke: token.colorText,
-    // The cluster marks use the error red: the palette's warm accent, and the one hue that
-    // reads against the basemap's greens and blues.
-    markFill: token.colorError,
-    markStroke: token.colorErrorActive ?? token.colorError,
-  } as const;
+  const { colorFillSecondary, colorText, colorError } = token;
+  // Memoised on the token values, not returned as a fresh literal: the result is in the layer
+  // memo's dependency list, so a new object identity on every render rebuilt the whole deck.gl
+  // layer stack — including re-binning the clusters over every point — for a render that
+  // changed nothing the map can see.
+  return useMemo(
+    () =>
+      ({
+        // antd's neutral palette is defined to meet contrast on light and dark backgrounds, so
+        // the overlay stays legible over raster tiles.
+        emptyFill: colorFillSecondary,
+        fullFill: colorText,
+        stroke: colorText,
+        // The cluster marks use the error red: the palette's warm accent, and the one hue that
+        // reads against the basemap's greens and blues.
+        markFill: colorError,
+      }) as const,
+    [colorFillSecondary, colorText, colorError],
+  );
 }
 
 /**

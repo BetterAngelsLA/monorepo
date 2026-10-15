@@ -34,6 +34,9 @@ import { parseColor } from './mapColors';
  *
  */
 
+/** Shared empty result, so "no clusters" keeps one identity instead of a new array each time. */
+const NO_CLUSTERS: Cluster[] = [];
+
 /** deck.gl colours are `[r, g, b]` or `[r, g, b, a]`, all channels 0-255. */
 type RgbaTuple = [number, number, number, number];
 
@@ -75,8 +78,8 @@ type BuildLayersArgs = {
   focusCodes: string[];
   tileUrl: string | null;
   maxCount: number;
-  /** Current map level. The cluster bins are cut in screen space, so this cuts them. */
-  zoom: number;
+  /** Binned once per (points, zoom) by the caller; see `useClusters` below. */
+  clusters: Cluster[];
   overlay: {
     emptyFill: string;
     fullFill: string;
@@ -87,9 +90,7 @@ type BuildLayersArgs = {
 
 /**
  * One definition of the layer stack.
- *
- * `zoom` is a parameter because the cluster bins are cut in screen space: a bubble splits as
- * the reader zooms in, and that is a property of the level, not of the data.
+
  */
 function buildLayers({
   points,
@@ -100,7 +101,7 @@ function buildLayers({
   tileUrl,
   maxCount,
   overlay,
-  zoom,
+  clusters,
 }: BuildLayersArgs): Layer[] {
   const layers: Layer[] = [];
 
@@ -183,7 +184,6 @@ function buildLayers({
   }
 
   if (points.length > 0 && view === 'clusters') {
-    const clusters = clusterPoints(points, zoom);
     layers.push(
       new ScatterplotLayer<Cluster>({
         id: 'interaction-clusters',
@@ -233,6 +233,14 @@ export function DeckMapLayers({
 }: DeckMapLayersProps) {
   const map = useMap();
   const [zoom, setZoom] = useState<number>(10);
+  // Binning is the expensive part of the cluster view, so it is done once per (points, zoom)
+  // rather than inside every layer rebuild.
+  const clusters = useMemo(
+    // Only binned when the view that draws them is showing. The heatmap does not need them,
+    // and binning ten thousand points for a view nobody is looking at is work for nothing.
+    () => (view === 'clusters' ? clusterPoints(points, zoom) : NO_CLUSTERS),
+    [points, zoom, view],
+  );
   const { apiUrl } = useApiConfig();
   const overlayRef = useRef<GoogleMapsOverlay | null>(null);
 
@@ -257,7 +265,7 @@ export function DeckMapLayers({
         tileUrl,
         maxCount,
         overlay,
-        zoom,
+        clusters,
       }),
     [
       points,
@@ -268,7 +276,7 @@ export function DeckMapLayers({
       tileUrl,
       maxCount,
       overlay,
-      zoom,
+      clusters,
     ],
   );
 
@@ -276,16 +284,20 @@ export function DeckMapLayers({
   // nothing else. This is the listener the domain-driven version needed and no longer does;
   // clustering is the only reason left to track a level at all.
   useEffect(() => {
-    if (!map) {
+    if (!map || view !== 'clusters') {
       return;
     }
+    setZoom(map.getZoom() ?? 10);
     const listener = map.addListener('zoom_changed', () => {
       setZoom(map.getZoom() ?? 10);
     });
     return () => {
       listener.remove();
     };
-  }, [map]);
+    // `view` is a dependency because the level only matters to the cluster bins: with the
+    // heatmap showing, a zoom would re-render this subtree and rebuild a layer stack that
+    // cannot have changed.
+  }, [map, view]);
 
   // One overlay per map, reused across renders. deck.gl diffs the layer array itself, so the
   // overlay is created once and updated with `setProps` — recreating it would throw away the
