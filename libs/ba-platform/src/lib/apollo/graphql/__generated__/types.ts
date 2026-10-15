@@ -1438,6 +1438,19 @@ export type InteractionAuthorTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type InteractionMapType = {
+  __typename: 'InteractionMapType';
+  points: Array<InteractionPointType>;
+  truncated: Scalars['Boolean']['output'];
+};
+
+export type InteractionPointType = {
+  __typename: 'InteractionPointType';
+  interactedAt: Scalars['DateTime']['output'];
+  latitude: Scalars['Float']['output'];
+  longitude: Scalars['Float']['output'];
+};
+
 export enum LanguageEnum {
   Arabic = 'ARABIC',
   Armenian = 'ARMENIAN',
@@ -2568,6 +2581,8 @@ export type Query = {
   hmisProfile: HmisProfileType;
   hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
+  interactionMap: InteractionMapType;
+  interactionsByRegion: Array<RegionCountType>;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
   operatorShelter: OperatorShelterType;
@@ -2576,6 +2591,8 @@ export type Query = {
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
   referral: ReferralType;
   referrals: ReferralTypeOffsetPaginated;
+  regionDimensions: Array<RegionDimension>;
+  regions: Array<RegionType>;
   reportSummary: ReportSummaryType;
   reservation: ReservationType;
   reservations: ReservationTypeOffsetPaginated;
@@ -2714,6 +2731,25 @@ export type QueryInteractionAuthorsArgs = {
 };
 
 
+export type QueryInteractionMapArgs = {
+  dimension?: InputMaybe<RegionDimension>;
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
+export type QueryInteractionsByRegionArgs = {
+  dimension?: InputMaybe<RegionDimension>;
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
 export type QueryNoteArgs = {
   pk: Scalars['ID']['input'];
 };
@@ -2763,6 +2799,12 @@ export type QueryReferralsArgs = {
   filters?: InputMaybe<ReferralFilter>;
   ordering?: Array<ReferralOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryRegionsArgs = {
+  codes?: InputMaybe<Array<Scalars['String']['input']>>;
+  dimension: RegionDimension;
 };
 
 
@@ -2942,6 +2984,33 @@ export type ReferralTypeOffsetPaginated = {
   results: Array<ReferralType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
+};
+
+export type RegionCountType = {
+  __typename: 'RegionCountType';
+  code: Scalars['String']['output'];
+  count: Scalars['Int']['output'];
+  isUnassigned: Scalars['Boolean']['output'];
+  kind: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  unassignedReason?: Maybe<UnassignedReason>;
+};
+
+export enum RegionDimension {
+  City = 'CITY',
+  Coc = 'COC',
+  CouncilDistrict = 'COUNCIL_DISTRICT',
+  Spa = 'SPA',
+  SupervisorialDistrict = 'SUPERVISORIAL_DISTRICT',
+  Zip = 'ZIP'
+}
+
+export type RegionType = {
+  __typename: 'RegionType';
+  code: Scalars['String']['output'];
+  geometry: Scalars['String']['output'];
+  kind: RegionDimension;
+  name: Scalars['String']['output'];
 };
 
 export enum RelationshipTypeEnum {
@@ -3708,6 +3777,11 @@ export type TeamTypeOffsetPaginated = {
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
+
+export enum UnassignedReason {
+  NoLocation = 'NO_LOCATION',
+  OutsideAllRegions = 'OUTSIDE_ALL_REGIONS'
+}
 
 export type UpdateBedInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
