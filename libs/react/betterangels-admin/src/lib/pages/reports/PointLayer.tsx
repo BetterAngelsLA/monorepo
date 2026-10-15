@@ -49,9 +49,8 @@ import { withAlpha } from './mapColors';
  * `getClusters` is sub-millisecond, so it is recomputed per draw without a cache.
  */
 
-/** Zoom bounds. `MAX_ZOOM` is where clustering stops; above it every point draws alone. */
+/** Where clustering stops: above this every interaction draws alone. */
 const MAX_ZOOM = 19;
-const MIN_ZOOM = 6;
 /**
  * Cluster radius in pixels, matching the Expo map's `MapClusterManager` default so the two
  * maps in the product cluster at the same scale.
@@ -64,11 +63,19 @@ const WORLD_BBOX: [number, number, number, number] = [-180, -85, 180, 85];
 
 export type InteractionPoint = { latitude: number; longitude: number };
 
-/** One drawn mark: a cluster of `count` interactions at a point, or a single interaction. */
+/**
+ * One drawn mark: a cluster of `count` interactions at a point, or a single interaction.
+ *
+ * `clusterId` is supercluster's own id, carried through rather than recomputed: it is what
+ * `getClusterExpansionZoom` needs for click-to-zoom, and it stays valid across pan and zoom
+ * (verified — every cluster id visible in a downtown viewport is also present in a
+ * whole-world query at the same zoom).
+ */
 type ClusterOrPoint = {
   latitude: number;
   longitude: number;
   count: number;
+  clusterId?: number;
 };
 
 function toFeature(
@@ -94,7 +101,15 @@ function buildIndex(
   const index = new Supercluster<{ id: number }, { id: number }>({
     radius: CLUSTER_RADIUS,
     maxZoom: MAX_ZOOM,
-    minZoom: MIN_ZOOM,
+    // Left at 0 deliberately. `MIN_ZOOM` was 6, which only suppressed clusters the map is
+    // never drawn without anyway — the component is not rendered below the map's own
+    // minimum, and constraining it bought nothing while diverging from the tested default.
+    // Set explicitly so the intent is reviewable rather than implied by omission.
+    minZoom: 0,
+    // A cluster of two, drawn as a bubble labelled "2", reads as data where it is really
+    // just two interactions that happen to be within the merge radius. Three is the point
+    // at which a bubble says something. supercluster then leaves pairs as separate points.
+    minPoints: 3,
   });
   index.load(points.map(toFeature));
   return index;
@@ -109,12 +124,18 @@ function marksForZoom(
     const [longitude, latitude] = feature.geometry.coordinates;
     const isCluster =
       'cluster' in feature.properties && feature.properties.cluster === true;
+    if (!isCluster) {
+      return { latitude, longitude, count: 1 };
+    }
+    const props = feature.properties as {
+      point_count: number;
+      cluster_id: number;
+    };
     return {
       latitude,
       longitude,
-      count: isCluster
-        ? (feature.properties as { point_count: number }).point_count
-        : 1,
+      count: props.point_count,
+      clusterId: props.cluster_id,
     };
   });
 }
@@ -157,6 +178,10 @@ export function PointLayer({
    * re-running it on every refetch would tear the overlay down and rebuild it.
    */
   const hasPointsRef = useRef(false);
+  /** Last frame's marks and radii, for hit-testing a click. */
+  const drawnRef = useRef<
+    { x: number; y: number; r: number; clusterId?: number }[]
+  >([]);
 
   useEffect(() => {
     indexRef.current = buildIndex(points);
@@ -186,6 +211,10 @@ export function PointLayer({
     };
     overlay.draw = () => drawRef.current?.();
     overlay.setMap(map);
+
+    // What is on screen this frame: position, drawn radius and the library's cluster id.
+    // Shared with the click handler so a hit test never re-derives the projection.
+    const drawn: { x: number; y: number; r: number; clusterId?: number }[] = [];
 
     const draw = () => {
       const projection = overlay.getProjection();
@@ -219,6 +248,10 @@ export function PointLayer({
 
       const margin = 60;
       ctx.lineWidth = 1;
+      // What ended up on screen this frame, with the radius it was drawn at — the only
+      // thing a click handler needs, and the reason it does not recompute the projection.
+      const drawn: { x: number; y: number; r: number; clusterId?: number }[] =
+        [];
       for (const cluster of visible) {
         const pixel = projection.fromLatLngToContainerPixel(
           new google.maps.LatLng(cluster.latitude, cluster.longitude),
@@ -241,6 +274,8 @@ export function PointLayer({
             ? radius
             : Math.min(radius * 3.2, radius + Math.sqrt(cluster.count) * 1.15);
 
+        drawn.push({ x: pixel.x, y: pixel.y, r, clusterId: cluster.clusterId });
+
         ctx.beginPath();
         ctx.arc(pixel.x, pixel.y, r, 0, Math.PI * 2);
         ctx.fillStyle =
@@ -260,11 +295,44 @@ export function PointLayer({
     };
 
     drawRef.current = draw;
+    drawnRef.current = drawn;
     draw();
 
+    // Click-to-zoom, from the library rather than from us: `getClusterExpansionZoom` is
+    // supercluster's own answer to "at what zoom does this cluster break apart", so the
+    // handler is a hit test plus one call. Nothing here decides how clustering works.
+    const onClick = (event: google.maps.MapMouseEvent) => {
+      const domEvent = event.domEvent as MouseEvent | undefined;
+      const index = indexRef.current;
+      if (!domEvent || !index) {
+        return;
+      }
+      const bounds = host.getBoundingClientRect();
+      const x = domEvent.clientX - bounds.left;
+      const y = domEvent.clientY - bounds.top;
+      // Nearest mark within its own radius wins, so a small mark on top of a large one stays
+      // clickable. Scanned in reverse draw order, matching what the reader sees.
+      let hit: { clusterId?: number } | undefined;
+      for (let i = drawn.length - 1; i >= 0; i--) {
+        const mark = drawn[i];
+        if (Math.hypot(mark.x - x, mark.y - y) <= mark.r) {
+          hit = mark;
+          break;
+        }
+      }
+      if (!hit?.clusterId) {
+        return;
+      }
+      map.setZoom(index.getClusterExpansionZoom(hit.clusterId));
+    };
+
+    const clickListener = map.addListener('click', onClick);
+
     return () => {
+      google.maps.event.removeListener(clickListener);
       overlay.setMap(null);
       drawRef.current = null;
+      drawnRef.current = [];
       canvas.remove();
     };
   }, [map, radius, markFill, markStroke]);
