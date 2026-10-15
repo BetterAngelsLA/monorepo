@@ -6,6 +6,7 @@ import { execSync } from 'child_process';
  * - Dev server → "/"
  * - VITE_APP_BASE_PATH env (explicit override) → use as-is (it must start with
  *   `/`; without that, web asset URLs come out relative and the page is blank)
+ * - Local (no CI) → "/" — only deployed builds are branch-scoped
  * - Production configuration → "/"
  * - CI: BRANCH_NAME env → "/branches/{branch}"
  * - Git fallback → "/branches/{branch}"
@@ -13,6 +14,10 @@ import { execSync } from 'child_process';
 export function getBranchBasePath() {
   if (process.env.NODE_ENV === 'development') return '/';
   if (process.env.VITE_APP_BASE_PATH) return process.env.VITE_APP_BASE_PATH;
+  // Deployed previews live at /branches/<branch>/; local builds and the local
+  // preview server serve from the root. `CI` is passed into the container by
+  // docker-compose-ci.yml, so deploys keep their branch scope.
+  if (!process.env.CI) return '/';
   if (process.env.NX_TASK_TARGET_CONFIGURATION === 'production') return '/';
 
   let branch;

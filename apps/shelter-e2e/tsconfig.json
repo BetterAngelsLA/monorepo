@@ -11,10 +11,10 @@
     "**/*.ts",
     "**/*.js",
     "playwright.config.ts",
-    "src/**/*.spec.ts",
-    "src/**/*.spec.js",
-    "src/**/*.test.ts",
-    "src/**/*.test.js",
-    "src/**/*.d.ts"
+    "tests/**/*.spec.ts",
+    "tests/**/*.spec.js",
+    "tests/**/*.test.ts",
+    "tests/**/*.test.js",
+    "tests/**/*.d.ts"
   ]
 }

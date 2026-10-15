@@ -168,8 +168,8 @@ feeds — the scripted suite:
   `BASE_URL` override (deploy preview → tests → PR feedback).
 - `apps/shelter-e2e/` wires the same pattern for `shelter-web`, with a first
   spec covering the sign-in form's client-side behaviour. Run it locally with
-  `yarn nx run shelter-e2e:e2e` (which starts `shelter-web:preview`
-  automatically), or point it at a deployed environment via `BASE_URL`.
+  `yarn nx run shelter-e2e:e2e` (it starts its own `shelter-web` dev server), or
+  point it at a deployed environment via `BASE_URL`.
 - Typical flow: a check that proves valuable as an agent walkthrough gets
   graduated into a spec, which then runs deterministically per PR in CI.
 
