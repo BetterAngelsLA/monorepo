@@ -127,12 +127,11 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       gdal-bin
 
 # Playwright (Chromium) runtime dependencies — lets devs run the Playwright e2e
-# suites and agent browser checks locally.
+# suites locally, and lets CI launch the browser it installs per run.
 # Provenance: snapshot of playwright-core 1.62's `debian13-x64` deps (tools +
 # chromium) — not an executed version pin. Browsers come from yarn.lock via
 # post-create.sh; after a Playwright upgrade, re-sync this list if a launch
-# reports a missing shared library. See docs/agent_browser_testing/ and
-# apps/shelter-e2e/README.md.
+# reports a missing shared library. See apps/shelter-e2e/README.md.
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
