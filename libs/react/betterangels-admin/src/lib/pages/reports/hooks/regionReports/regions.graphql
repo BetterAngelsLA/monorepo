@@ -1,5 +1,9 @@
 query RegionDimensions {
-  regionDimensions
+  regionDimensions {
+    value
+    label
+    plural
+  }
 }
 
 query InteractionsByRegion(
@@ -46,5 +50,6 @@ query InteractionMap(
       longitude
     }
     truncated
+    withheld
   }
 }

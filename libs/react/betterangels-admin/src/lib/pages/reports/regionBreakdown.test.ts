@@ -34,23 +34,30 @@ const unassigned = (
     ...overrides,
   });
 
+// The API publishes the vocabulary; these are the shapes `regionDimensions` returns.
+const VOCABULARY = [
+  { value: 'COUNCIL_DISTRICT', label: 'City Council District', plural: 'City Council Districts' },
+  { value: 'CITY', label: 'City', plural: 'Cities' },
+  { value: 'COC', label: 'Continuum of Care', plural: 'Continuums of Care' },
+];
+
 describe('the dimension vocabulary', () => {
   it('resolves the wire value and the enum spelling', () => {
     // The wire `kind` is lowercase and `RegionDimension` is uppercase; both reach here.
-    expect(kindLabel('council_district')).toBe('City Council District');
-    expect(kindLabel('COUNCIL_DISTRICT')).toBe('City Council District');
-    expect(kindLabel('coc')).toBe('Continuum of Care');
+    expect(kindLabel('council_district', VOCABULARY)).toBe('City Council District');
+    expect(kindLabel('COUNCIL_DISTRICT', VOCABULARY)).toBe('City Council District');
+    expect(kindLabel('coc', VOCABULARY)).toBe('Continuum of Care');
   });
 
-  it('falls back to the raw value for a dimension this build does not know', () => {
-    // A new dimension must render rather than come out blank or throw.
-    expect(kindLabel('health_district')).toBe('health_district');
+  it('falls back to the raw value for a dimension the server did not report', () => {
+    // A bucket the client cannot name must still render rather than come out blank or throw.
+    expect(kindLabel('health_district', VOCABULARY)).toBe('health_district');
   });
 
   it('pluralises for the "All …" control, which is not a suffix in English', () => {
-    expect(kindLabelPlural('city')).toBe('Cities');
-    expect(kindLabelPlural('coc')).toBe('Continuums of Care');
-    expect(kindLabelPlural('unknown_kind')).toBe('unknown_kinds');
+    expect(kindLabelPlural('city', VOCABULARY)).toBe('Cities');
+    expect(kindLabelPlural('coc', VOCABULARY)).toBe('Continuums of Care');
+    expect(kindLabelPlural('unknown_kind', VOCABULARY)).toBe('unknown_kinds');
   });
 });
 
@@ -96,11 +103,11 @@ describe('the unassigned labels', () => {
   it('names the kind only when the rollup spans every dimension', () => {
     const row = unassigned({ kind: 'council_district' });
     // Ungrouped, one label repeats per dimension, so the kind is what tells the rows apart.
-    expect(unassignedRowLabel(row, undefined)).toBe(
+    expect(unassignedRowLabel(row, VOCABULARY, undefined)).toBe(
       'Outside all boundaries (City Council District)',
     );
     // Grouped, every row shares the dimension; naming it again is noise.
-    expect(unassignedRowLabel(row, 'council_district')).toBe(
+    expect(unassignedRowLabel(row, VOCABULARY, 'council_district')).toBe(
       'Outside all boundaries',
     );
   });

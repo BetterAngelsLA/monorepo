@@ -1,6 +1,12 @@
 import { useQuery } from '@apollo/client/react';
-import type { RegionDimension } from '@monorepo/ba-platform/types';
-import { RegionDimensionsDocument } from './__generated__/regions.generated';
+import {
+  RegionDimensionsDocument,
+  type RegionDimensionsQuery,
+} from './__generated__/regions.generated';
+
+/** One dimension as the API publishes it: the value, and the names to render it. */
+export type RegionDimensionInfoType =
+  RegionDimensionsQuery['regionDimensions'][number];
 
 /**
  * One frozen instance for "nothing yet". A literal `[]` fallback is a new array identity on
@@ -8,10 +14,10 @@ import { RegionDimensionsDocument } from './__generated__/regions.generated';
  * is in flight. Frozen so a caller that writes to it fails loudly rather than corrupting the
  * shared instance.
  */
-const EMPTY_DIMENSIONS: RegionDimension[] = [];
+const EMPTY_DIMENSIONS: RegionDimensionInfoType[] = [];
 Object.freeze(EMPTY_DIMENSIONS);
 
-/** The dimensions a program manager can group the breakdown by. */
+/** The dimensions a program manager can group the breakdown by, with their display names. */
 export function useRegionDimensions() {
   const { data, loading, error } = useQuery(RegionDimensionsDocument);
 

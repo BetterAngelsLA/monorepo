@@ -5,6 +5,17 @@ import type { InteractionsByRegionQuery } from './regions.generated';
 import type { InteractionMapQuery } from './regions.generated';
 
 export const regionDimensionsOperationKey: keyof Omit<RegionDimensionsQuery, '__typename'> = 'regionDimensions';
+export const regionDimensionsSuccessTypename: Extract<
+  NonNullable<RegionDimensionsQuery['regionDimensions']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<RegionDimensionsQuery['regionDimensions']>,
+  { __typename: 'RegionDimensionInfo' }
+>['__typename'] = 'RegionDimensionInfo';
+
+export const regionDimensionsMeta = {
+  operationKey: regionDimensionsOperationKey,
+  successTypename: regionDimensionsSuccessTypename,
+} as const;
 
 export const interactionsByRegionOperationKey: keyof Omit<InteractionsByRegionQuery, '__typename'> = 'interactionsByRegion';
 export const interactionsByRegionSuccessTypename: Extract<

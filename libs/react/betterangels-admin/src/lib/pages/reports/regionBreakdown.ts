@@ -12,37 +12,52 @@
 import { UnassignedReason } from '@monorepo/ba-platform/types';
 import type { RegionCountType } from './hooks';
 
-/**
- * Display names for the dimensions, keyed by the **wire** value (`council_district`).
- *
- * One map, not two: the table and the dropdown share it, so a rename cannot make them
- * disagree. `Partial` because a bucket's `kind` arrives off the wire as a plain string and may
- * be a value this build has never heard of — the map is a lookup that can miss, not a record
- * that covers every string.
- */
-const DIMENSION_LABELS: Partial<Record<string, string>> = {
-  zip: 'ZIP Code',
-  city: 'City',
-  council_district: 'City Council District',
-  supervisorial_district: 'Supervisorial District',
-  spa: 'Service Planning Area',
-  coc: 'Continuum of Care',
+/** One dimension's published names, as `regionDimensions` returns them. */
+export type DimensionInfo = {
+  value: string;
+  label: string;
+  plural: string;
 };
 
 /**
- * Plural forms, for "All …" and any other place a count is implied.
+ * The published entry for a dimension, accepting either spelling.
  *
- * Written out rather than derived: `city` + "s" is not a word, and neither is `continuum of
- * care` + "s". Keyed by the wire value for the same reason the labels are.
+ * The wire `kind` is lowercase and `RegionDimension` spells the same dimension uppercase, so
+ * both have to resolve. A kind the server has not reported is simply absent: the vocabulary
+ * belongs to the API, so this is a lookup that can miss rather than a local copy that would
+ * silently fall through.
  */
-const DIMENSION_PLURALS: Partial<Record<string, string>> = {
-  zip: 'ZIP Codes',
-  city: 'Cities',
-  council_district: 'City Council Districts',
-  supervisorial_district: 'Supervisorial Districts',
-  spa: 'Service Planning Areas',
-  coc: 'Continuums of Care',
-};
+function findDimension(
+  kind: string,
+  dimensions: readonly DimensionInfo[],
+): DimensionInfo | undefined {
+  const lower = kind.toLowerCase();
+  return dimensions.find((dimension) => dimension.value.toLowerCase() === lower);
+}
+
+/**
+ * Prose label for a dimension, from the vocabulary the API published.
+ *
+ * Unknown keys fall back to the raw value, so a bucket this build cannot name still renders —
+ * and a dimension added server-side is named by the server rather than by a local copy.
+ */
+export function kindLabel(
+  kind: string,
+  dimensions: readonly DimensionInfo[],
+): string {
+  return findDimension(kind, dimensions)?.label ?? kind;
+}
+
+/** The plural of `kindLabel`, for controls that offer more than one of them. */
+export function kindLabelPlural(
+  kind: string,
+  dimensions: readonly DimensionInfo[],
+): string {
+  const found = findDimension(kind, dimensions);
+  // Not `label + "s"`: "City" + "s" is not a word. The suffix is only reached for a kind the
+  // server never reported, which cannot be selected in the first place.
+  return found?.plural ?? `${found?.label ?? kind}s`;
+}
 
 /**
  * Clients with no address on file, versus clients outside every boundary we load.
@@ -54,26 +69,6 @@ const UNASSIGNED_LABELS: Partial<Record<UnassignedReason, string>> = {
   [UnassignedReason.NoLocation]: 'No location on file',
   [UnassignedReason.OutsideAllRegions]: 'Outside all boundaries',
 };
-
-/**
- * Prose label for a dimension. Accepts either spelling.
- *
- * The wire `kind` is lowercase and `RegionDimension` spells the same dimension uppercase, so
- * both have to resolve. Unknown keys fall back to the raw value, so a dimension this build has
- * never heard of still renders.
- */
-export function kindLabel(kind: string): string {
-  return DIMENSION_LABELS[kind] ?? DIMENSION_LABELS[kind.toLowerCase()] ?? kind;
-}
-
-/** The plural of `kindLabel`, for controls that offer more than one of them. */
-export function kindLabelPlural(kind: string): string {
-  return (
-    DIMENSION_PLURALS[kind] ??
-    DIMENSION_PLURALS[kind.toLowerCase()] ??
-    `${kindLabel(kind)}s`
-  );
-}
 
 /**
  * Case-insensitive substring match on the option's searchable text.
@@ -120,11 +115,12 @@ export function unassignedLabel(row: RegionCountType): string {
  */
 export function unassignedRowLabel(
   row: RegionCountType,
+  dimensions: readonly DimensionInfo[],
   dimension?: string,
 ): string {
   const label = unassignedLabel(row);
   if (dimension === undefined && row.kind) {
-    return `${label} (${kindLabel(row.kind)})`;
+    return `${label} (${kindLabel(row.kind, dimensions)})`;
   }
   return label;
 }

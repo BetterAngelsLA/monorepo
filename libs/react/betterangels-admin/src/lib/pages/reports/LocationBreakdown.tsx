@@ -183,11 +183,11 @@ export function LocationBreakdown({
   // spans every dimension, so there is no single name to interpolate.
   let dimensionName = 'all dimensions';
   if (dimension) {
-    dimensionName = kindLabel(dimension);
+    dimensionName = kindLabel(dimension, dimensions);
   }
   let dimensionNamePlural = 'dimensions';
   if (dimension) {
-    dimensionNamePlural = kindLabelPlural(dimension);
+    dimensionNamePlural = kindLabelPlural(dimension, dimensions);
   }
 
   // Selecting a different dimension invalidates the codes: "4" is an SPA and also a Long
@@ -236,7 +236,7 @@ export function LocationBreakdown({
   // Both option arrays are typed, so `filterOption` reads a declared field rather than casting
   // one at the call site.
   const dimensionOptions: DimensionOption[] = useMemo(
-    () => dimensions.map((value) => ({ value, label: kindLabel(value) })),
+    () => dimensions.map((info) => ({ value: info.value, label: info.label })),
     [dimensions],
   );
   // A code is what a reader usually has to hand ("district 13") and it is not what the label
@@ -508,7 +508,7 @@ export function LocationBreakdown({
                 className="flex items-baseline gap-2"
               >
                 <span className="text-neutral-700">
-                  {unassignedRowLabel(row, dimension)}
+                  {unassignedRowLabel(row, dimensions, dimension)}
                 </span>
                 <Text strong>{row.count.toLocaleString()}</Text>
                 <Text type="secondary">interactions</Text>
