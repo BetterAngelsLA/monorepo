@@ -33,7 +33,7 @@ export default function Task({
 
   const handleClientPress = useCallback(() => {
     // `/client/[id]` resolves to the HMIS client screen for HMIS users; this
-    // row is a BACS client, so only navigate for non-HMIS users.
+    // row is a BA client, so only navigate for non-HMIS users.
     if (!clientProfileId || user?.isHmisUser) return;
 
     router.navigate({
