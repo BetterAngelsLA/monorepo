@@ -146,13 +146,14 @@ class RegionPiece(BaseModel):
     """A sub-polygon of a :class:`Region`, sized for fast point lookup.
 
     ``Region.geom`` is the authoritative boundary: full resolution, used for display,
-    area, and the vector tiles. It is the wrong thing to test a point against. A single
-    city multipolygon can be hundreds of thousands of vertices in one row, so the GiST
-    index hands the planner one enormous bounding box that matches nearly every point in
-    Los Angeles and the real work lands in the vertex recheck — measured at **4,950 ms**
-    for the supervisorial dimension against 20,000 interactions.
+    area, and the vector tiles. It is the wrong thing to test a point against. The
+    largest boundary row — a supervisorial district — holds 77,918 vertices, and the
+    largest city row 32,273, so the GiST index hands the planner a bounding box that
+    matches far more points than the polygon encloses and the real work lands in the
+    vertex recheck: against the whole boundaries the rollup measures **~200 ms** at
+    20,000 interactions.
 
-    Subdivided, the same work is **45 ms**. PostGIS's own guidance is this one: *"when you
+    Subdivided, the same work is **~70 ms**. PostGIS's own guidance is this one: *"when you
     have very large polygons, but are doing queries in small areas, you 'denormalize' your
     geometric data into smaller chunks so that the index can effectively subquery parts of
     the object"* (Data Management §4.3.4.4, which points at ``ST_Subdivide``).
@@ -161,29 +162,30 @@ class RegionPiece(BaseModel):
     on the full rollup, all six dimensions:
 
         max_vertices     pieces     rollup
-        256 (this)        5,685      45 ms
-        128              11,149     210 ms
-        64               22,136     231 ms
-        32               44,719     250 ms
+        256 (this)        5,685      70 ms
+        128              11,149      77 ms
+        64               22,136     102 ms
+        32               44,719     118 ms
 
     Tighter pieces have smaller bounding boxes but there are more of them, and a point
     falls inside more of their boxes; the extra index entries cost more than the thinner
-    recheck saves. **All four produce identical answers** — subdivision is exact, so this
-    is purely a performance dial. Re-measure before changing it.
+    recheck saves. The penalty is real but mild — 1.6× across the whole range — so 256 is
+    the cheap end of a shallow curve rather than a cliff. **All four produce identical
+    answers** — subdivision is exact, so this is purely a performance dial. Re-measure
+    before changing it.
 
     ``SUBDIVIDE_VERTEX_THRESHOLD`` is the other half of the tuning, and the less obvious one:
     **only** regions above it are subdivided at all. Subdividing everything instead — the same
-    256-vertex target, no threshold — is 1,867 ms against 39 ms for the rollup, on 8,156
-    pieces against 5,685. A region that is already a handful of vertices is not worth
-    splitting, and the pieces the split produces cost more to search than that region's own
-    geometry would. "The boundaries are slow, subdivide more" is the wrong instinct twice
-    over.
+    256-vertex target, no threshold — produces 8,156 pieces against 5,685 and measures about
+    the same (73 ms against 71 ms). The threshold therefore buys fewer rows to store, index
+    and rebuild, not a faster query: a region that is already a handful of vertices is not
+    worth splitting, but splitting it costs little.
 
     Read through ``regions_regionlookup`` (see ``0004``), never directly. The view adds the
     parent boundary back for a region that has no piece, so a region created outside
     ``import_regions`` resolves slower rather than disappearing from the rollup — and it is
     also what keeps the planner driving from the boundaries rather than from the notes, which
-    is worth 3x on a selective window.
+    is worth about 5x on a selective window (39 ms against 206 ms for the same result).
     """
 
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="pieces")

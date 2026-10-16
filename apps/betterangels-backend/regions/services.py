@@ -147,12 +147,40 @@ def build_region_pieces(*, kind: str | None = None) -> int:
 UNASSIGNED = "__unassigned__"
 
 
+class RegionScopeErrorCodes:
+    """The ``errorCode`` values for the ``(dimension, codes)`` refusals.
+
+    These are **validation** codes, not protocol ones: the refusal is "argument A was sent
+    without argument B", so it travels in ``extensions.errors[].errorCode`` with ``field`` naming
+    the argument to revisit, the shape ``clients/schema.py`` uses and
+    ``docs/graphql_errors.md`` §2 documents. ``extensions.code`` is the other registry — for
+    cross-cutting conditions such as ``UNAUTHENTICATED`` — and carries no field.
+
+    A client switches on these, never on the message. The frontend mirrors validation codes in
+    ``BE_VALIDATION_ERROR_CODE`` (``libs/ba-platform/src/lib/apollo/graphql/backendApiCodes.ts``)
+    and has no entry for either yet; both values have to be added there for the mirror to hold.
+    """
+
+    #: ``dimension`` was sent with no ``regionCodes`` — the dimension has nothing to narrow.
+    DIMENSION_REQUIRES_REGION_CODES = "DIMENSION_REQUIRES_REGION_CODES"
+    #: A non-empty ``regionCodes`` was sent with no ``dimension`` — a code is ambiguous alone.
+    REGION_CODES_REQUIRE_DIMENSION = "REGION_CODES_REQUIRE_DIMENSION"
+
+
 class RegionScopeError(ValueError):
     """A ``(dimension, codes)`` pair that cannot be interpreted.
 
-    Raised by :func:`resolve_region_scope`. Each surface translates it into its own channel —
-    a GraphQL error, an HTTP 400 — but the *contract* is expressed once, here.
+    Raised by :func:`resolve_region_scope` and translated by each surface into its own channel —
+    a GraphQL error, an HTTP 400 — because those channels need different exception types and a
+    service must not depend on either. The *contract* is expressed once, here: ``code`` is the
+    stable identifier a client branches on, ``field`` is the argument it should revisit, and
+    ``str(error)`` is the message a person reads.
     """
+
+    def __init__(self, message: str, *, code: str, field: str) -> None:
+        super().__init__(message)
+        self.code = code
+        self.field = field
 
 
 def resolve_region_scope(*, dimension: str | None, codes: Sequence[str] | None) -> tuple[str | None, list[str] | None]:
@@ -173,12 +201,20 @@ def resolve_region_scope(*, dimension: str | None, codes: Sequence[str] | None) 
     """
     if codes is None:
         if dimension is not None:
-            raise RegionScopeError("dimension requires regionCodes")
+            raise RegionScopeError(
+                "dimension requires regionCodes",
+                code=RegionScopeErrorCodes.DIMENSION_REQUIRES_REGION_CODES,
+                field="dimension",
+            )
         return None, None
     if not codes:
         return dimension, []
     if dimension is None:
-        raise RegionScopeError("regionCodes requires a dimension")
+        raise RegionScopeError(
+            "regionCodes requires a dimension",
+            code=RegionScopeErrorCodes.REGION_CODES_REQUIRE_DIMENSION,
+            field="regionCodes",
+        )
     return dimension, list(codes)
 
 
@@ -190,7 +226,9 @@ class RegionCodeFilter:
 
     * absent                                -> unfiltered, including unassigned and
                                                locationless
-    * ``[]``                                -> **matches nothing**, including those buckets
+    * ``[]``                                -> no **named** region and no outside-all-regions
+                                               bucket, but the locationless total is still
+                                               reported — see below
     * ``["__unassigned__"]`` alone          -> only rows matching no region, both causes
     * real codes (with or without sentinel) -> those regions, plus unassigned if asked
 
@@ -198,9 +236,12 @@ class RegionCodeFilter:
     both what ``region_counts`` emits on and what the caller reads back.
 
     ``include_locationless`` is separate again, because "notes with no location" is a third
-    bucket with a third reason to be in or out of scope. It is true for an absent list and
-    for the sentinel, and false for everything else — an empty list asks for no regions and
-    must not smuggle in a bucket a real code filter would have excluded.
+    bucket with a third reason to be in or out of scope. It is true for an absent list, for the
+    sentinel, and for an explicitly empty one — a note with no location was never attributable
+    to a region, so a filter asking for no regions still cannot exclude it — and false for a
+    list that names codes. That is the opposite reading from ``keep_unassigned`` above, and it
+    makes ``[]`` differ from ``["does-not-exist"]``: the second matches nothing at all, the
+    first reports the locationless total.
     """
 
     codes: list[str] | None
@@ -302,6 +343,7 @@ def interaction_map_data(
     organization_id: int,
     notes: "QuerySet[Note]",
     limit: int,
+    withheld: bool,
 ) -> InteractionMapType:
     """The interaction points for the given scope, as map pins.
 
@@ -321,4 +363,5 @@ def interaction_map_data(
     return InteractionMapType(
         points=[InteractionPointType(**row) for row in points],
         truncated=truncated,
+        withheld=withheld,
     )

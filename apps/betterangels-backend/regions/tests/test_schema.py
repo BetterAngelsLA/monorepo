@@ -142,6 +142,14 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
         self.assertNotIn(
             "OUTSIDE_ALL_REGIONS", reasons, "an empty code list asked for no regions, but returned outside-all-regions"
         )
+        # The other half of the pair, and the reason this test exists: `include_locationless` is
+        # deliberately the *opposite* reading, because a note with no location was never
+        # attributable to a region and so cannot be excluded by a filter asking for none.
+        self.assertIn(
+            "NO_LOCATION",
+            reasons,
+            "an empty code list dropped the locationless total, which no code filter can exclude",
+        )
 
     def test_code_plus_sentinel_keeps_the_outside_all_regions_bucket(self) -> None:
         counts = self._counts(self._query(["1", "__unassigned__"]))
@@ -196,6 +204,7 @@ INTERACTION_MAP_QUERY = """
         ) {
             points { latitude longitude }
             truncated
+            withheld
         }
     }
 """
@@ -273,6 +282,9 @@ class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
         self.assertNotIn("errors", result, result.get("errors"))
         self.assertEqual(len(result["points"]), 1, "the caseworker's note must be a pin")
         self.assertAlmostEqual(result["points"][0]["latitude"], 34.05, places=4)
+        # The negative control for `withheld`: this role holds the note scope, so a non-empty
+        # payload must not claim one was applied.
+        self.assertFalse(result["withheld"], "a reader who can see notes was told the payload was withheld")
 
     def test_org_admin_without_note_permission_sees_no_pins(self) -> None:
         """``ORG_ADMIN`` holds ``reports.view_reports`` and no ``notes.view_note``.
@@ -290,6 +302,14 @@ class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
             result["points"],
             [],
             f"ORG_ADMIN has no notes.view_note but received {len(result.get('points') or [])} pin(s)",
+        )
+        # An empty list for two different reasons, and this is what tells them apart: the
+        # period holds interactions (the caseworker's own test above proves it) and the note
+        # scope removed all of them. Without the flag a client reports the permission answer
+        # as "0 interactions", which is a claim about the neighbourhood.
+        self.assertTrue(
+            result["withheld"],
+            "an empty payload caused by the note scope must say so, or the client renders it as no interactions",
         )
 
     def test_the_rollup_still_works_for_the_report_only_role(self) -> None:
@@ -428,9 +448,17 @@ class InteractionMapRegionFilterTestCase(InteractionMapBaseTestCase):
 
         ``"1"`` is a council district, an SPA and a supervisorial district in this data;
         returning any of them would be an answer the caller did not ask for.
+
+        The refusal is machine-readable: ``field`` names the argument to revisit and
+        ``errorCode`` is the value a client switches on, asserted literally because it is the
+        wire contract the density view also returns. The English message is not the contract.
         """
         result = self._map(self.caseworker(), dimension=None, regionCodes=["1"])
         self.assertIn("errors", result, "a code without a dimension must be refused, not guessed")
+        self.assertEqual(
+            result["errors"][0]["extensions"]["errors"],
+            [{"field": "regionCodes", "location": None, "errorCode": "REGION_CODES_REQUIRE_DIMENSION"}],
+        )
 
 
 class UngroupedRollupTestCase(GraphQLBaseTestCase):

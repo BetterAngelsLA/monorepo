@@ -215,7 +215,7 @@ def fetch_geojson(source: RegionSource, timeout: int = 120) -> Path:
     return Path(handle.name)
 
 
-def normalise(geometry: Any) -> MultiPolygon:
+def normalise(geometry: Any, *, label: str = "") -> MultiPolygon:
     """Repair and promote one geometry to ``MultiPolygon`` in place.
 
     Shapefile/FeatureServer layers are single-type, so a ``Polygon`` feature and a
@@ -223,22 +223,39 @@ def normalise(geometry: Any) -> MultiPolygon:
     ``make_valid`` first: self-intersections are routine in published boundaries,
     and it can widen the type to a GeometryCollection, so polygonal parts are
     extracted before the cast.
+
+    Refuses anything with no boundary to import: an empty or zero-area geometry, or a
+    geometry with no polygonal part after ``make_valid``. ``ST_IsValid('POLYGON EMPTY')``
+    is true, so the table's ``regions_region_geom_valid`` CHECK does not catch an empty
+    boundary — the row would be written, cover no point and count nothing, and every step
+    would still report success. ``label`` names the source feature in that message.
     """
     if not geometry.valid:
         geometry = geometry.make_valid()
 
+    prefix = f"{label}: " if label else ""
+
     if geometry.geom_type == "GeometryCollection":
         collection: Any = geometry
         parts = [g for g in collection if g.geom_type in ("Polygon", "MultiPolygon")]
-        return MultiPolygon(
+        multipolygon = MultiPolygon(
             [p for poly in parts for p in (poly if poly.geom_type == "MultiPolygon" else [poly])],
             srid=geometry.srid,
         )
-    if geometry.geom_type == "Polygon":
-        return MultiPolygon(geometry, srid=geometry.srid)
-    if geometry.geom_type == "MultiPolygon":
-        return cast(MultiPolygon, geometry)
-    raise CommandError(f"unsupported geometry type {geometry.geom_type!r}")
+    elif geometry.geom_type == "Polygon":
+        multipolygon = MultiPolygon(geometry, srid=geometry.srid)
+    elif geometry.geom_type == "MultiPolygon":
+        multipolygon = cast(MultiPolygon, geometry)
+    else:
+        raise CommandError(f"{prefix}unsupported geometry type {geometry.geom_type!r}")
+
+    if multipolygon.empty or multipolygon.area == 0:
+        raise CommandError(
+            f"{prefix}the boundary normalises to nothing ({geometry.geom_type!r}, "
+            "empty or zero area); it would cover no point and count nothing"
+        )
+
+    return multipolygon
 
 
 class Command(BaseCommand):
@@ -348,7 +365,7 @@ class Command(BaseCommand):
             if geometry is None:
                 continue  # type: ignore[unreachable]
             name = self._read_field(feature, source.name_field) or code
-            multipolygon = normalise(geometry)
+            multipolygon = normalise(geometry, label=f"{source.kind} code {code!r}")
             entry = buckets.setdefault(code, {"name": name, "parts": []})
             entry["parts"].append(multipolygon)
 
@@ -366,7 +383,7 @@ class Command(BaseCommand):
                 # drew as overlapping slivers stay as they were drawn.
                 for part in parts[1:]:
                     geometry = geometry.union(part)
-                geometry = normalise(geometry)
+                geometry = normalise(geometry, label=f"{source.kind} code {code!r}")
             regions.append(
                 Region(
                     kind=source.kind,
@@ -411,6 +428,14 @@ class Command(BaseCommand):
             # publisher's current vintage should not linger as a stale region.
             # Pieces cascade with their region.
             Region.objects.filter(kind=source.kind).delete()
+            # `bulk_create`, so `full_clean()` never runs — a deliberate deviation from the
+            # styleguide's "services call full_clean() before save()", which exists so the
+            # model's rules are reachable from the API. Here they are not the gate: this command
+            # is the only writer, it validates the boundary before it gets this far (an empty or
+            # non-polygonal geometry aborts the run), and row-by-row cleaning over every region
+            # of every dimension would cost more than it catches. The database constraints
+            # remain — the `kind`/`code` uniqueness and the `geom` validity check — so a bad row
+            # still fails loudly rather than landing.
             Region.objects.bulk_create(regions, batch_size=200)
             pieces = build_region_pieces(kind=source.kind)
 

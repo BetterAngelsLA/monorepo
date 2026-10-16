@@ -27,12 +27,27 @@ _NOTE_TABLE = Note._meta.db_table
 _LOCATION_TABLE = Location._meta.db_table
 _REGION_TABLE = Region._meta.db_table
 
-#: The point→region answer, **boundaries-first**: the selected regions' lookup geometry drives
-#: and the GiST index on ``Location.point_geom`` is probed. Returns location ids, one row each.
+#: The spatial predicate itself, with the aliases every raw statement in the app uses: ``lu`` is
+#: the lookup view, ``l`` the location table. Split out from the join below so a statement that
+#: has already joined ``l`` — the density tile joins it to scope the notes — can apply the same
+#: predicate without restating it, which is what keeps the rule in one place.
+REGION_MEMBERSHIP_SQL = "ST_Covers(lu.geom, l.point_geom)"
+
+#: The point→region predicate, **boundaries-first**: the selected regions' lookup geometry
+#: drives and the GiST index on ``Location.point_geom`` is probed.
 #:
 #: ``regions_regionlookup`` carries both arms — a region's subdivided pieces, plus the parent
-#: boundary of a region that has none — so this is the single definition of "this point is in
-#: this region" that the rollup, the map's ``regionCodes`` filter and the density tile read.
+#: boundary of a region that has none — so this fragment is the single definition of "this
+#: point is in this region" that the rollup, the map's ``regionCodes`` filter and the density
+#: tile read. The statements around it differ in what they project and group by; the predicate
+#: they must agree on is here, once.
+REGION_JOIN_SQL = f"""
+    FROM {REGION_LOOKUP_VIEW} lu
+    JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
+    JOIN {_LOCATION_TABLE} l ON {REGION_MEMBERSHIP_SQL}
+"""
+
+#: The location ids a ``(kind, codes)`` selection covers. Returns location ids, one row each.
 #:
 #: ``DISTINCT`` because a location may fall in more than one piece of the same region, which
 #: would otherwise join that note once per piece and double-count it.
@@ -41,31 +56,40 @@ _REGION_TABLE = Region._meta.db_table
 #: predicate sees them, so it narrows a scoped queryset rather than confining one.
 REGION_LOCATIONS_SQL = f"""
     SELECT DISTINCT l.id
-    FROM {REGION_LOOKUP_VIEW} lu
-    JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
-    JOIN {_LOCATION_TABLE} l ON ST_Covers(lu.geom, l.point_geom)
+    {REGION_JOIN_SQL}
     WHERE rr.kind = %s AND rr.code = ANY(%s)
 """
 
 
-def org_notes_in_range(*, organization_id: int, start: datetime, end: datetime) -> QuerySet[Note]:
+def org_notes_in_range(
+    *,
+    organization_id: int | None,
+    start: datetime,
+    end: datetime,
+    has_location: bool | None = None,
+) -> QuerySet[Note]:
     """The organization's notes in a half-open instant range — the note-queryset reads' start.
 
-    One home for the org predicate on the reads that build a **note queryset**:
-    ``interactionMap`` and the density tile both begin here and then apply the note read scope
-    (``filter_for_user``). That order is load-bearing — ``filter_for_user`` is binary and has
-    no organization notion, so confinement cannot come from it and has to be applied before
-    it.
+    One home for the org and window predicate on every read that builds a **note queryset**:
+    ``interactionMap``, the density tile, and the two rollup figures that count located and
+    locationless notes. That order is load-bearing — ``filter_for_user`` is binary and has no
+    organization notion, so confinement cannot come from it and has to be applied before it.
 
-    It is **not** the only org confinement in the app. ``region_counts`` never builds a note
-    queryset; it confines the rollup inside its own raw SQL (``_rollup_sql``), which is why
-    that statement carries the org predicate itself.
+    ``has_location`` narrows to notes with a location (``True``) or without one (``False``);
+    ``None`` leaves the queryset unnarrowed. The rollup subtracts one from the other, so both
+    sides are taken from this one filter rather than two that could drift apart and silently
+    stop reconciling.
+
+    ``organization_id`` is optional because the ungrouped report has no organization scope. The
+    predicate is then omitted rather than spelled as a null check, which would defeat the
+    planner's use of the column.
     """
-    return Note.objects.filter(
-        organization_id=organization_id,
-        interacted_at__gte=start,
-        interacted_at__lt=end,
-    )
+    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end)
+    if organization_id is not None:
+        notes = notes.filter(organization_id=organization_id)
+    if has_location is not None:
+        notes = notes.filter(location__isnull=not has_location)
+    return notes
 
 
 def _rollup_sql(*, organization_id: int | None) -> str:
@@ -85,9 +109,7 @@ def _rollup_sql(*, organization_id: int | None) -> str:
     org = "AND n.organization_id = %(organization_id)s" if organization_id is not None else ""
     return f"""
         SELECT rr.kind AS kind, rr.code AS code, count(DISTINCT n.id) AS count
-        FROM {REGION_LOOKUP_VIEW} lu
-        JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
-        JOIN {_LOCATION_TABLE} l ON ST_Covers(lu.geom, l.point_geom)
+        {REGION_JOIN_SQL}
         JOIN {_NOTE_TABLE} n ON n.location_id = l.id
         WHERE n.interacted_at >= %(start)s
           AND n.interacted_at < %(end)s
@@ -115,27 +137,29 @@ def _assigned_counts(
     **The boundaries drive and the points are probed.** That is the whole trick: the scan is
     over the lookup polygons and the GiST index on ``point_geom`` is probed for each, which
     is the direction PostGIS can index — the plan shows
-    ``Index Cond: (point_geom @ lu.geom)``. Reversing it — a ``LATERAL`` keyed on the
+    ``Index Cond: (point_geom @ r.geom)``. Reversing it — a ``LATERAL`` keyed on the
     interaction, asking "which region is this point in" — puts the points on the inner side
     and probes them once per interaction instead.
 
     Measured on the real LA layers (431 regions, 5,685 pieces, 4,000 locations), all six
-    dimensions at once: 45 ms for a 20,000-interaction window and 30 ms for a
-    2,041-interaction one. The spatial cost tracks *distinct locations* rather than
-    interactions, so it amortises as a report window grows.
+    dimensions at once: **~85 ms** for the 20,000-interaction window and **~48 ms** for a
+    2,461-interaction one. The spatial cost tracks *distinct locations* rather than
+    interactions, so the total grows sublinearly — 1.8× the time for 8× the notes — and the
+    per-interaction cost falls as the window grows.
 
     **The view is what keeps the plan in this direction.** Pointed straight at
     ``regions_regionpiece`` the planner flips the join round on a selective window and drives
-    from the notes instead; the view presents it one relation to drive from, which is what it
-    needs to pick the indexed side.
+    from the notes instead — 206 ms against 39 ms for the same result. The view presents it
+    one relation to drive from, which is what it needs to pick the indexed side.
 
     ``ST_Covers`` alone carries the index condition, so there is no explicit ``&&``. Adding
-    one measures *slower* (91 ms against 45 ms): the redundant predicate constrains the
+    one measures *slower* (342 ms against 70 ms): the redundant predicate constrains the
     join order the planner would otherwise pick for itself.
 
-    No ``kind`` predicate. One pass over every dimension's pieces costs about what one
-    dimension costs (45 ms against 28 ms), so a single-dimension rollup filters the same
-    result in Python instead of paying for a second query shape.
+    No ``kind`` predicate. One pass over every dimension's pieces costs more than one
+    dimension alone (85 ms against 46 ms for ``zip``), which is the price of one query shape
+    serving both the grouped and the ungrouped view; the single-dimension rollup filters the
+    same result in Python rather than paying for a second shape.
 
     Grouped by kind **and** code: without the kind, SPA 1, council district 1 and
     supervisorial district 1 collapse into one bucket.
@@ -171,10 +195,7 @@ def _notes_with_a_location(*, start: datetime, end: datetime, organization_id: i
     falls in two overlapping same-kind regions belongs to both buckets but subtracts once, so
     ``unassigned = this - totals[kind]`` stays coherent and can never go negative.
     """
-    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end, location__isnull=False)
-    if organization_id is not None:
-        notes = notes.filter(organization_id=organization_id)
-    return notes.count()
+    return org_notes_in_range(organization_id=organization_id, start=start, end=end, has_location=True).count()
 
 
 def region_counts(
@@ -221,8 +242,7 @@ def region_counts(
     claim about coverage that has not been loaded.
     """
     loaded = set(Region.objects.values_list("kind", flat=True).distinct())
-    scopes = (sorted(loaded) if kind is None else [kind]) if (kind is None or kind in loaded) else []
-    scopes = [scope for scope in scopes if scope in loaded]
+    scopes = sorted(loaded) if kind is None else ([kind] if kind in loaded else [])
     if not scopes:
         return []
 
@@ -250,9 +270,13 @@ def region_counts(
             # that hides an uncovered neighbourhood.
             unassigned = with_location - totals.get(scope, 0)
             if unassigned < 0:
-                # Unreachable: `totals` is a subset of `with_location` under identical
-                # org/date predicates. Loud rather than dropped, so a future change to either
-                # query surfaces here instead of reporting a nonsensical bucket.
+                # A **server invariant**, not input validation, and deliberately not one of the
+                # coded errors `resolve_region_scope` raises: nothing the caller sent can cause
+                # this, so there is no client action to branch on. It means the two figures
+                # disagree about which notes are located, which is a bug here rather than a bad
+                # request — so it stays loud, and it is unreachable by construction because both
+                # sides now come from `org_notes_in_range` under one predicate. A change that
+                # reintroduces a second copy of that predicate is what this would catch.
                 raise ValueError(
                     f"{scope}: {totals.get(scope, 0)} located notes attributed to a region, "
                     f"but only {with_location} located note(s) in range"
@@ -286,10 +310,7 @@ def region_totals_without_boundaries(*, start: datetime, end: datetime, organiza
     a note with no location would otherwise vanish from every bucket and make the
     report totals disagree with the KPI row.
     """
-    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end, location__isnull=True)
-    if organization_id is not None:
-        notes = notes.filter(organization_id=organization_id)
-    return notes.count()
+    return org_notes_in_range(organization_id=organization_id, start=start, end=end, has_location=False).count()
 
 
 def available_kinds() -> list[str]:
@@ -345,12 +366,7 @@ def interaction_points(
     # `__in=<queryset>` lets Postgres plan it as a semi-join against the query the caller
     # already built; reading the ids out first would cost a round trip, ship an unbounded
     # bind parameter, and answer the same question a second time.
-    queryset = Note.objects.filter(
-        organization_id=organization_id,
-        interacted_at__gte=start,
-        interacted_at__lt=end,
-        location__isnull=False,
-    )
+    queryset = org_notes_in_range(organization_id=organization_id, start=start, end=end, has_location=True)
     if notes is not None:
         queryset = queryset.filter(pk__in=notes.values("pk"))
 

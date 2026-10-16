@@ -90,13 +90,17 @@ class ResolveRegionScopeTestCase(SimpleTestCase):
         self.assertEqual(resolve_region_scope(dimension=None, codes=None), (None, None))
 
     def test_a_dimension_without_codes_is_refused_rather_than_ignored(self) -> None:
-        with self.assertRaises(RegionScopeError):
+        with self.assertRaises(RegionScopeError) as caught:
             resolve_region_scope(dimension=RegionKind.ZIP.value, codes=None)
+        self.assertEqual(caught.exception.code, "DIMENSION_REQUIRES_REGION_CODES")
+        self.assertEqual(caught.exception.field, "dimension")
 
     def test_a_non_empty_code_list_requires_a_dimension(self) -> None:
         with self.assertRaises(RegionScopeError) as caught:
             resolve_region_scope(dimension=None, codes=["90012"])
         self.assertEqual(str(caught.exception), "regionCodes requires a dimension")
+        self.assertEqual(caught.exception.code, "REGION_CODES_REQUIRE_DIMENSION")
+        self.assertEqual(caught.exception.field, "regionCodes")
 
     def test_a_non_empty_code_list_with_a_dimension_is_returned_verbatim(self) -> None:
         self.assertEqual(resolve_region_scope(dimension="zip", codes=["90012"]), ("zip", ["90012"]))

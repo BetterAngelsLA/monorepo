@@ -45,15 +45,17 @@ Tests: `apps/betterangels-backend/regions/tests/`
   bounding box to catch that class of failure.
 - **Every boundary set leaves coverage gaps**, so the API returns an explicit unassigned bucket
   rather than dropping interactions that fall outside every region.
-- **The heavy layers need subdivided lookup geometry.** One city multipolygon has ~310k vertices
-  in one row, so one bounding box matches nearly every point in the city and the real work lands
-  in the vertex recheck: the rollup takes 4,950 ms at 20k interactions against the whole
-  boundaries. `RegionPiece` holds subdivided parts and the rollup joins that — **45 ms**. See
-  `regions/models.py` (`RegionPiece`) and `regions/selectors.py`.
+- **The heavy layers need subdivided lookup geometry.** The largest boundary row — a supervisorial
+  district — holds 77,918 vertices, and the largest city row 32,273, so one bounding box matches
+  far more points than the polygon encloses and the real work lands in the vertex recheck:
+  against the whole boundaries the rollup takes **~200 ms** at 20k interactions. `RegionPiece`
+  holds subdivided parts and the rollup joins those — **~70 ms**. See `regions/models.py`
+  (`RegionPiece`) and `regions/selectors.py`.
 - **The rollup is a live spatial join; nothing is precomputed and nothing is backfilled.** It is
-  written boundaries-first so it probes the GiST index on `Location.point_geom`. Its cost tracks
-  *distinct locations* rather than interactions, so a wider report window does not widen it:
-  **45 ms** at 20,000 interactions and **30 ms** at 2,041.
+  written boundaries-first so it probes the GiST index on `Location.point_geom`. Its cost is
+  driven by *distinct locations* rather than interactions, so it grows **sublinearly** with the
+  report window: **~85 ms** at 20,000 interactions and **~48 ms** at 2,461 — 1.8× the time for
+  8× the notes. Restricting to one dimension is cheaper still, at **~46 ms** for the whole window.
 - **Adding `Location.point_geom` rewrites `common_location` once**, under an `ACCESS EXCLUSIVE`
   lock. Plan a window, or use the expression index instead — see
   `common/migrations/0002_location_point_geom.py`.

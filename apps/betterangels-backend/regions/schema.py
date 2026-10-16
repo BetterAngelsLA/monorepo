@@ -20,6 +20,7 @@ from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
+from graphql import GraphQLError
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -36,7 +37,7 @@ from reports.selectors import resolve_date_range
 
 from .models import RegionKind
 from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, scope_notes_to_regions
-from .services import interaction_map_data, region_rollup, resolve_region_scope
+from .services import RegionScopeError, interaction_map_data, region_rollup, resolve_region_scope
 from .types import (
     InteractionMapType,
     RegionCountType,
@@ -139,22 +140,41 @@ class Query:
         # and not in the permission filter. `filter_for_user` is the *note* read scope and
         # has no org notion: it is a binary "holds `notes.view_note` model-level ⇒ every
         # row of every org", so it cannot confine anything.
-        scoped_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
+        org_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
         # The per-row note authority. Notes are a legacy domain (ADR 0001 §4.1: gated on
         # RFC 0003, `LEGACY_INERT_APPS` excludes them), so this is the legacy arm and
         # deliberately so — it is the same scope the Notes pages themselves apply.
-        scoped_notes = filter_for_user(scoped_notes, user, [NotePermissions.VIEW])
+        scoped_notes = filter_for_user(org_notes, user, [NotePermissions.VIEW])
+
+        # Whether the note scope is what emptied the payload is answerable here and **only**
+        # here: downstream the region filter can empty the same payload for a reason the reader
+        # can act on ("that district had no visits"). Both sides are the *unfiltered* set, so a
+        # region with nothing in it cannot make an empty map read as a permission answer.
+        withheld = not scoped_notes.exists() and org_notes.exists()
 
         # The one reading of `(dimension, regionCodes)`: an empty list matches nothing and
         # needs no dimension, a non-empty list without one is refused, and an absent list is
-        # no restriction. `resolve_region_scope` raises `RegionScopeError` (a `ValueError`,
-        # which surfaces as a GraphQL error) for the ambiguous case. It is consulted only when
-        # `regionCodes` was sent at all: a `dimension` with no codes has nothing to narrow and
-        # is ignored here, as the docstring says.
+        # no restriction. It is consulted only when `regionCodes` was sent at all: a
+        # `dimension` with no codes has nothing to narrow and is ignored here, as the
+        # docstring says.
         if region_codes is not None:
-            kind, scoped_codes = resolve_region_scope(
-                dimension=dimension.value if dimension else None, codes=region_codes
-            )
+            try:
+                kind, scoped_codes = resolve_region_scope(
+                    dimension=dimension.value if dimension else None, codes=region_codes
+                )
+            except RegionScopeError as error:
+                # A top-level error, because `interactionMap` returns a concrete type and so
+                # cannot carry the `OperationInfo` payload the mutation path uses. The
+                # `{field, errorCode}` entry is the branchable part; the message stays the
+                # human-readable one. See `docs/graphql_errors.md` §2.
+                raise GraphQLError(
+                    str(error),
+                    extensions={
+                        "errors": [
+                            {"field": error.field, "location": None, "errorCode": error.code},
+                        ]
+                    },
+                ) from error
             scoped_notes = (
                 scope_notes_to_regions(scoped_notes, kind=cast(str, kind), codes=scoped_codes)
                 if scoped_codes
@@ -169,6 +189,7 @@ class Query:
             # `is not None`, not truthiness: `limit: 0` is a request for one pin, and
             # `limit or POINT_LIMIT` would turn it into the 10,000 cap.
             limit=limit if limit is not None else POINT_LIMIT,
+            withheld=withheld,
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
