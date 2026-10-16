@@ -18,12 +18,12 @@ export const MAP_CANVAS = '.gm-style';
  */
 export const MAP_CAMERA_TESTID = 'map-camera';
 
-export const ZOOM_IN_TESTID = 'map-zoom-in';
-export const ZOOM_OUT_TESTID = 'map-zoom-out';
-export const SHOW_MY_LOCATION_TESTID = 'map-show-my-location';
+export const ZOOM_IN_BTN_TESTID = 'map-zoom-in';
+export const ZOOM_OUT_BTN_TESTID = 'map-zoom-out';
+export const SHOW_MY_LOCATION_BTN_TESTID = 'map-show-my-location';
 
 /** Has visible text, so it is addressed by that instead of a test id. */
-export const SEARCH_THIS_AREA_LABEL = 'Search this area';
+export const SEARCH_THIS_AREA_BTN_LABEL = 'Search this area';
 
 /**
  * Where the map centres when the browser offers no location — the app's own

@@ -2,10 +2,10 @@ import type { Locator, Page } from '@playwright/test';
 import {
   MAP_CAMERA_TESTID,
   MAP_CANVAS,
-  SEARCH_THIS_AREA_LABEL,
-  SHOW_MY_LOCATION_TESTID,
-  ZOOM_IN_TESTID,
-  ZOOM_OUT_TESTID,
+  SEARCH_THIS_AREA_BTN_LABEL,
+  SHOW_MY_LOCATION_BTN_TESTID,
+  ZOOM_IN_BTN_TESTID,
+  ZOOM_OUT_BTN_TESTID,
 } from './constants';
 
 /**
@@ -30,20 +30,20 @@ export function mapCanvas(page: Page): Locator {
 }
 
 export function zoomInButton(page: Page): Locator {
-  return page.getByTestId(ZOOM_IN_TESTID);
+  return page.getByTestId(ZOOM_IN_BTN_TESTID);
 }
 
 export function zoomOutButton(page: Page): Locator {
-  return page.getByTestId(ZOOM_OUT_TESTID);
+  return page.getByTestId(ZOOM_OUT_BTN_TESTID);
 }
 
 /** Only rendered once the browser has granted the geolocation permission. */
 export function showMyLocationButton(page: Page): Locator {
-  return page.getByTestId(SHOW_MY_LOCATION_TESTID);
+  return page.getByTestId(SHOW_MY_LOCATION_BTN_TESTID);
 }
 
 export function searchThisAreaButton(page: Page): Locator {
-  return page.getByRole('button', { name: SEARCH_THIS_AREA_LABEL });
+  return page.getByRole('button', { name: SEARCH_THIS_AREA_BTN_LABEL });
 }
 
 /** The camera the app currently has the map on. */
