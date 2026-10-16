@@ -1,17 +1,24 @@
 """Mapbox Vector Tiles for region boundaries and interaction density.
 
-Boundaries as coordinates are 1.25 MB across the five LA layers — ``coc`` alone is 769 kB for
-43 polygons — and a bounding-box filter prunes nothing, because LA County *is* the extent. Tiles
-invert that: the client asks for what is on screen, and PostGIS generalises to the zoom as it
-encodes.
+Boundaries as coordinates are 27 MB across the six loaded dimensions, 1.0 MB once simplified
+(560 kB of stored geometry), and a bounding-box filter prunes nothing, because LA County *is*
+the extent. Tiles invert that: the client asks for what is on screen, and PostGIS generalises to
+the zoom as it encodes.
 
-Measured on the real layers, DTLA at z10: ``coc`` 1281 B in 1.4 ms, ``city`` 3030 B in 1.9 ms,
-``zip`` (densest) 13091 B in 5.2 ms. Against 769 kB / 292 kB / 291 kB for the whole dimensions.
+**Every figure in this module comes from one measurement**, taken on the dev fixture — 431
+regions, 5,685 pieces, 4,000 locations, 20,000 notes — with the whole-dimension payloads read as
+``sum(length(ST_AsGeoJSON(…)))`` and ``sum(pg_column_size(…))``. It is a point-in-time
+measurement of one fixture, not a spec; re-measure before quoting it as one.
+
+Measured on the loaded layers, DTLA at z10: ``coc`` 1281 B, ``city`` 3030 B, ``zip`` (densest)
+13091 B — against 59 kB / 216 kB / 518 kB of simplified GeoJSON for the whole ``coc`` / ``city``
+/ ``zip`` dimensions (932 kB / 5.4 MB / 12 MB unsimplified).
 
 The **density** tile is the same trick applied to the interaction points, which as a raw point
-list are 1 MB for a single LA County month (see ``interactionMap``). Every non-empty grid cell
-becomes one polygon carrying its ``count``, so the client receives an area rather than a point
-cloud and the payload is bounded by the cells in view instead of by the interactions.
+list are ~1.1 MB for a single LA County month on this fixture (see ``interactionMap``). Every
+non-empty grid cell becomes one polygon carrying its ``count``, so the client receives an area
+rather than a point cloud and the payload is bounded by the cells in view instead of by the
+interactions.
 """
 
 from __future__ import annotations
@@ -24,13 +31,13 @@ from django.db.models import QuerySet
 from common.models import Location
 from notes.models import Note
 
-from .models import REGION_LOOKUP_VIEW, Region
+from .selectors import REGION_LOCATIONS_SQL
+from .services import resolve_region_scope
 
-#: Table names interpolated into the density SQL below, taken from the models rather than
-#: written out, so a ``db_table`` override cannot leave the query pointing somewhere else —
-#: the same rule ``selectors`` follows for its raw SQL.
+#: The location table, taken from the model rather than written out, so a ``db_table``
+#: override cannot leave the density SQL pointing somewhere else — the same rule ``selectors``
+#: follows for its raw SQL.
 _LOCATION_TABLE = Location._meta.db_table
-_REGION_TABLE = Region._meta.db_table
 
 #: Tile coordinate space. 4096 is what deck.gl's MVTLayer and Mapbox's spec both assume.
 TILE_EXTENT = 4096
@@ -58,8 +65,13 @@ prepared AS (
                ST_Transform(r.geom_display, 3857), b.tile, %(extent)s, %(buffer)s, true
            ) AS geom
     FROM regions_region r, bounds b
-    -- `&&` is evaluated in the table's own SRID, which is what keeps the GiST index; it is a
-    -- bounding-box test, so it over-selects slightly and the clip below discards the rest.
+    -- `&&` is evaluated in the table's own SRID, so it can use the GiST index on
+    -- `geom_display` that migration `0005` adds — a `GeneratedField` is never indexed
+    -- automatically. The planner leads with the envelope only when it is selective (deep
+    -- zoom); at coarse zoom a tile holds most of the dimension, so it scans by `kind` and
+    -- filters, which is the correct plan. Either way the index is what keeps the read from
+    -- scaling with the number of regions loaded. It is a bounding-box test, so it
+    -- over-selects slightly and the clip below discards the rest.
     WHERE r.kind = %(kind)s AND r.geom_display && b.fetch
 )
 SELECT ST_AsMVT(p.*, %(layer)s, %(extent)s, 'geom')
@@ -118,7 +130,7 @@ def region_tile(*, kind: str, z: int, x: int, y: int, layer: str = "regions") ->
 # is a multiple of the cell size whenever the cell size is the tile divided by a whole number.
 #
 # Measured on the LA County fixture, a county-scale tile holds ~1,250 non-empty cells and
-# ~30 kB of MVT at z9 (~370 cells, ~9 kB at z8), against 671 kB for the same month's points
+# ~30 kB of MVT at z9 (~370 cells, ~9 kB at z8), against ~1.1 MB for the same month's points
 # through ``interactionMap``.
 #
 # **z9 is not the zoom the admin map asks for.** deck.gl's tiles are 512 px while Google's
@@ -148,22 +160,16 @@ scoped AS (
 #: The region semi-join, present only when the read is scoped to region codes.
 #:
 #: **Boundaries drive and the points are probed**, the direction ``selectors._assigned_counts``
-#: uses and documents. ``selectors.scope_notes_to_regions`` answers the same question, but as a
-#: correlated ``EXISTS`` keyed on the *note*; measured on the live fixture that costs **2,600 ms
-#: a tile**, because ``regions_regionlookup``'s second arm (the parent boundary of a region with
-#: no piece, normally empty) is a sequential scan of every region re-run once per note — 9,465
-#: loops of 431 rows. Written this way the same filter is **2 ms**: one pass over the two
-#: selected regions, probing the GiST index on ``point_geom``. It reads the same view, so the
-#: definition of "this point is in this region" still has one home; only the plan differs.
+#: documents: one pass over the selected regions, probing the GiST index on ``point_geom``.
+#: The statement is ``selectors.REGION_LOCATIONS_SQL``, imported rather than rewritten, so the
+#: density tile, the rollup and ``interactionMap``'s ``regionCodes`` filter share one definition
+#: of "this point is in this region" — `regions_regionlookup`'s two arms included.
 #:
-#: ``DISTINCT`` because a location may fall in more than one piece of the same region.
+#: Its ``DISTINCT`` is load-bearing: a location may fall in more than one piece of the same
+#: region, and without it the note would be counted once per piece.
 _DENSITY_REGION = """
 , region_locations AS (
-    SELECT DISTINCT l2.id
-    FROM {region_table} rr
-    JOIN {region_lookup_view} lu ON lu.region_id = rr.id
-    JOIN {location_table} l2 ON ST_Covers(lu.geom, l2.point_geom)
-    WHERE rr.kind = %s AND rr.code = ANY(%s)
+    {region_locations_sql}
 )"""
 
 #: The seen-from-space part of the statement: the tile's Web Mercator envelope, the grid origin,
@@ -257,11 +263,12 @@ def density_tile(
     parameter is appended in the order its fragment appears in the text.
 
     ``region_kind``/``region_codes`` narrow the cells to interactions whose location falls in
-    one of those regions of that dimension. Both are required together — a code is ambiguous
-    across dimensions — and an empty code list matches **nothing** rather than everything, the
-    same reading ``interactionMap`` gives it; that is short-circuited here because
-    ``= ANY('{}')`` needs an array type Postgres cannot infer from an empty list, and the
-    answer is known without asking. ``None`` codes means no restriction.
+    one of those regions of that dimension. They go through ``services.resolve_region_scope``,
+    the one expression of the contract: both are required together, a non-empty code list
+    without a dimension is ambiguous and refused, and an empty code list matches **nothing**
+    rather than everything — short-circuited here because ``= ANY('{}')`` needs an array type
+    Postgres cannot infer from an empty list, and the answer is known without asking. ``None``
+    codes means no restriction.
 
     Empty is a normal answer and the caller must turn it into a **204**: deck.gl reads an empty
     body with a success status as a malformed tile.
@@ -269,21 +276,21 @@ def density_tile(
     Nothing is cached and nothing is precomputed — this is a live aggregate over the same
     tables the rollup reads, which is why there is no migration behind it.
     """
-    if region_codes is not None and not region_codes:
+    region_kind, region_codes = resolve_region_scope(dimension=region_kind, codes=region_codes)
+    if region_codes == []:
         return b""
-    if (region_kind is None) != (region_codes is None):
-        raise ValueError("region_kind and region_codes must be given together")
 
+    # `sql_with_params` returns SQL containing real `%s` placeholders *and* the parameters that
+    # bind them, so the text goes in verbatim and `scoped_params` heads the positional list. The
+    # templates below use `%s` too, so the fragments compose into one pyformat statement. A
+    # literal `%` cannot appear here from the ORM — a `Value("%")` arrives as a bound parameter —
+    # so the one source would be a caller's `RawSQL`, which has to escape its own text.
     scoped_sql, scoped_params = notes.order_by().values("location_id").query.sql_with_params()
     params: list[Any] = [*scoped_params]
     sql = "WITH " + _DENSITY_SCOPED.format(scoped=scoped_sql)
 
-    if region_kind is not None and region_codes is not None:
-        sql += _DENSITY_REGION.format(
-            region_table=_REGION_TABLE,
-            region_lookup_view=REGION_LOOKUP_VIEW,
-            location_table=_LOCATION_TABLE,
-        )
+    if region_codes is not None:
+        sql += _DENSITY_REGION.format(region_locations_sql=REGION_LOCATIONS_SQL)
         params += [region_kind, list(region_codes)]
 
     sql += _DENSITY_BOUNDS

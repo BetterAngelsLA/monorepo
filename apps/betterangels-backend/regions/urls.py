@@ -7,10 +7,12 @@ from .views import DensityTileView, RegionTileView
 app_name = "regions"
 
 urlpatterns = [
-    # Registered **before** the ``<str:kind>`` route, and deliberately. The two cannot actually
-    # collide — the boundary pattern wants an extra ``<int>`` segment, so ``density/9/87/204``
-    # cannot match it — but "the literal comes first" is the rule that stays true if either
-    # pattern is ever changed, and the order is what an error message points at.
+    # Registered **before** the ``<str:kind>`` route, and the order is load-bearing rather than
+    # conventional. The two templates are the same four segments once ``density`` is read as a
+    # kind, so ``reverse("regions:region_density_tile", …)`` and
+    # ``reverse("regions:region_tile", kwargs={"kind": "density", …})`` build the **same** path
+    # — ``test_density_tiles`` pins that equality. The literal therefore has to match first, and
+    # this ordering is the only thing that decides which view a density tile reaches.
     path(
         "tiles/density/<int:z>/<int:x>/<int:y>.mvt",
         DensityTileView.as_view(),

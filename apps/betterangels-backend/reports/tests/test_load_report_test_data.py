@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from django.contrib.gis.geos import Point
 from django.core.management import call_command
 from django.test import TestCase
 from model_bakery import baker
@@ -76,8 +75,19 @@ class LoadReportTestDataLocationsTestCase(TestCase):
         self.assertTrue(used, "no locations were created")
         self.assertLessEqual(used, reviewed, f"locations outside the reviewed set: {used - reviewed}")
 
-    def test_the_sample_points_are_distinct(self) -> None:
-        """A duplicate would silently reduce the spread the set exists to provide."""
+    def test_the_sample_points_are_distinct_and_in_the_los_angeles_area(self) -> None:
+        """A duplicate would silently reduce the spread the set exists to provide.
+
+        The envelope is the real assertion: the set is ten *LA* landmarks, and the report's
+        buckets are only meaningful if they land there. It is **not** a range check on
+        ``Point`` — GEOS stores planar coordinates without validating them, so
+        ``Point(200, 200, srid=4326)`` constructs happily and a loop that only constructed the
+        points would pass for coordinates in the Gulf of Guinea.
+        """
         self.assertEqual(len(set(SAMPLE_POINTS)), len(SAMPLE_POINTS))
         for lon, lat in SAMPLE_POINTS:
-            Point(lon, lat, srid=4326)  # raises if a coordinate is out of range
+            with self.subTest(point=(lon, lat)):
+                self.assertTrue(
+                    -119.0 <= lon <= -117.0 and 32.5 <= lat <= 35.0,
+                    f"({lon}, {lat}) is outside the Los Angeles area the fixture is meant to cover",
+                )

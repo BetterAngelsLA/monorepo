@@ -13,11 +13,11 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any, Dict, List, cast
 
-from django.contrib.gis.geos import MultiPolygon, Point, Polygon
+from django.contrib.gis.geos import Point
 from model_bakery import baker
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import User
+from accounts.models import OrganizationProfile, OrgTypeChoices, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.models import Location
@@ -26,9 +26,7 @@ from notes.groups import CASEWORKER
 from notes.models import Note
 from regions.models import Region, RegionKind
 
-BOX_A = ((-118.30, 34.02), (-118.18, 34.02), (-118.18, 34.12), (-118.30, 34.12), (-118.30, 34.02))
-BOX_B = ((-118.60, 34.30), (-118.48, 34.30), (-118.48, 34.40), (-118.60, 34.40), (-118.60, 34.30))
-OUTSIDE = (-118.41, 34.07)
+from .helpers import BOX_A, BOX_B, OUTSIDE, box
 
 ROLLUP_QUERY = """
     query InteractionsByRegion(
@@ -53,10 +51,6 @@ ROLLUP_QUERY = """
         }
     }
 """
-
-
-def box(coords: tuple[tuple[float, float], ...]) -> MultiPolygon:
-    return MultiPolygon(Polygon(coords, srid=4326), srid=4326)
 
 
 class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
@@ -319,7 +313,10 @@ class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
             },
         )
         self.assertIsNone(response.get("errors"), response.get("errors"))
-        self.assertTrue(response["data"]["interactionsByRegion"])
+        buckets = response["data"]["interactionsByRegion"]
+        # The count, not truthiness: a non-empty list of zero-count buckets would satisfy
+        # `assertTrue` while meaning the rollup found nothing.
+        self.assertEqual([bucket["count"] for bucket in buckets], [1])
 
 
 class InteractionMapOrgConfinementTestCase(InteractionMapBaseTestCase):
@@ -345,10 +342,16 @@ class InteractionMapOrgConfinementTestCase(InteractionMapBaseTestCase):
         self.assertIn("errors", result, "reading org_2 with authority only at org_1 must be denied")
 
     def test_an_unknown_org_id_fails_closed(self) -> None:
-        """A bad org id is a permission problem, never a DoesNotExist crash."""
+        """A bad org id is a permission problem, never a DoesNotExist crash.
+
+        The *message* is asserted, not the absence of ``"DoesNotExist"``: a Graphene error for
+        ``Organization.DoesNotExist`` renders as "Organization matching query does not exist.",
+        which never contains that token — so an ``assertNotIn("DoesNotExist", …)`` passes
+        whatever the code does and guards nothing.
+        """
         result = self._map(self.caseworker(), org_id="99999999")
         self.assertIn("errors", result)
-        self.assertNotIn("DoesNotExist", str(result["errors"]))
+        self.assertEqual(result["errors"][0]["message"], "You do not have access to this organization.")
 
 
 UNGROUPED_ROLLUP_QUERY = """
@@ -489,7 +492,7 @@ class UngroupedRollupTestCase(GraphQLBaseTestCase):
 
 
 class RegionDimensionsQueryTestCase(GraphQLBaseTestCase):
-    """``regionDimensions`` and ``regions`` through the resolvers, not just the selectors.
+    """``regionDimensions`` through the resolver, not just the selector.
 
     ``regionDimensions`` reports only the dimensions that have boundaries loaded, so the
     report's picker offers a control that returns rows.
@@ -507,3 +510,148 @@ class RegionDimensionsQueryTestCase(GraphQLBaseTestCase):
         response = self.execute_graphql(REGION_DIMENSIONS_QUERY)
         self.assertIsNone(response.get("errors"), response.get("errors"))
         self.assertEqual(response["data"]["regionDimensions"], ["CITY"])
+
+
+class RegionQueryAuthenticationTestCase(GraphQLBaseTestCase):
+    """All three region queries are ``IsAuthenticated``; none may answer an anonymous caller.
+
+    The two tile views assert the same refusal, and they are separate code paths — a permission
+    class on the resolvers is the only thing that protects the GraphQL surface, so it needs its
+    own assertion rather than inheriting confidence from the DRF views.
+    """
+
+    def test_interactions_by_region_requires_a_session(self) -> None:
+        self.graphql_client.logout()
+        response = self.execute_graphql(
+            ROLLUP_QUERY,
+            {
+                "organizationId": str(self.org_1.pk),
+                "dimension": "COUNCIL_DISTRICT",
+                "regionCodes": None,
+                "startDate": "2026-01-01",
+                "endDate": "2026-01-31",
+            },
+        )
+        self.assertGraphQLUnauthenticated(response)
+
+    def test_interaction_map_requires_a_session(self) -> None:
+        self.graphql_client.logout()
+        response = self.execute_graphql(
+            INTERACTION_MAP_QUERY,
+            {
+                "organizationId": str(self.org_1.pk),
+                "dimension": "COUNCIL_DISTRICT",
+                "startDate": "2026-01-01",
+                "endDate": "2026-01-31",
+            },
+        )
+        self.assertGraphQLUnauthenticated(response)
+
+    def test_region_dimensions_requires_a_session(self) -> None:
+        """The query takes no arguments and reads no client data — the gate is still a session."""
+        self.graphql_client.logout()
+        response = self.execute_graphql(REGION_DIMENSIONS_QUERY)
+        self.assertGraphQLUnauthenticated(response)
+
+
+class InteractionMapLimitTestCase(InteractionMapBaseTestCase):
+    """The ``limit`` argument end to end: the cap, the floor, and the ``truncated`` flag.
+
+    Declared on the field and exercised only through the selector before this: a resolver that
+    dropped the argument, or turned ``0`` into the cap, would have kept every test green.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        when = datetime(2026, 1, 15, tzinfo=UTC)
+        # setUp put one note in org_1; add four more so the cap has something to cut.
+        for index in range(1, 5):
+            baker.make(
+                Note,
+                organization=self.org_1,
+                interacted_at=when,
+                location=baker.make(Location, point=Point(-118.24 + index * 0.001, 34.05, srid=4326)),
+            )
+
+    def test_an_omitted_limit_returns_every_pin_untruncated(self) -> None:
+        result = self._map(self.caseworker())
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertEqual(len(result["points"]), 5)
+        self.assertFalse(result["truncated"])
+
+    def test_a_limit_below_the_pin_count_truncates_and_says_so(self) -> None:
+        result = self._map(self.caseworker(), limit=2)
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertEqual(len(result["points"]), 2)
+        self.assertTrue(result["truncated"], "a partial map that looks complete is worse than a slow one")
+
+    def test_limit_zero_returns_one_pin_rather_than_the_cap(self) -> None:
+        """``0`` is the selector's floor, not "absent".
+
+        ``limit or POINT_LIMIT`` turned a client's ``0`` into the 10,000 cap — the opposite of
+        the contract ``interaction_points`` encodes with ``max(1, min(limit, …))``.
+        """
+        result = self._map(self.caseworker(), limit=0)
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertEqual(len(result["points"]), 1, "`limit: 0` must clamp to one, not to the cap")
+        self.assertTrue(result["truncated"])
+
+
+class ReportCalendarTimeZoneTestCase(GraphQLBaseTestCase):
+    """The **organization's** calendar cuts the region range, not the server's.
+
+    ``report_calendar_time_zone(org)`` is applied in every region resolver, but no regions test
+    gave an org a zone, so a resolver that read the active timezone instead would have agreed
+    with every other fixture. Tokyo is UTC+9, so an instant late on 31 January UTC is already
+    1 February there and falls outside a January request.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+        # A caseworker: the map needs the note read scope as well as the report grant, and the
+        # legacy holder is created before the role so `make_legacy_only_holder`'s grant purge
+        # cannot revoke it.
+        self.reader = make_legacy_only_holder(
+            user=baker.make(User), organization=self.org_1, template_name=CASEWORKER.name
+        )
+        OrgRoleManager(self.org_1).add_roles(self.reader, ORG_ADMIN)
+        OrganizationProfile.objects.update_or_create(
+            organization=self.org_1,
+            defaults={"org_types": [OrgTypeChoices.OUTREACH], "time_zone": "Asia/Tokyo"},
+        )
+        Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_A))
+
+        shared = baker.make(Location, point=Point(-118.24, 34.05, srid=4326))
+        baker.make(Note, organization=self.org_1, interacted_at=datetime(2026, 1, 15, tzinfo=UTC), location=shared)
+        # 2026-01-31T16:00Z is inside January in UTC and 2026-02-01 01:00 in Tokyo.
+        baker.make(Note, organization=self.org_1, interacted_at=datetime(2026, 1, 31, 16, tzinfo=UTC), location=shared)
+
+        self.graphql_client.force_login(self.reader)
+
+    def _variables(self) -> dict[str, Any]:
+        return {
+            "organizationId": str(self.org_1.pk),
+            "dimension": "COUNCIL_DISTRICT",
+            "startDate": "2026-01-01",
+            "endDate": "2026-01-31",
+        }
+
+    def test_a_note_past_the_orgs_calendar_day_is_excluded_from_the_rollup(self) -> None:
+        response = self.execute_graphql(ROLLUP_QUERY, {**self._variables(), "regionCodes": None})
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+        counts = {
+            bucket["code"]: bucket["count"]
+            for bucket in response["data"]["interactionsByRegion"]
+            if not bucket["isUnassigned"]
+        }
+        self.assertEqual(counts, {"1": 1}, "the org's calendar was not applied")
+
+    def test_the_map_applies_the_same_calendar(self) -> None:
+        response = self.execute_graphql(INTERACTION_MAP_QUERY, self._variables())
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+        self.assertEqual(
+            len(response["data"]["interactionMap"]["points"]),
+            1,
+            "the map counted a note the org's calendar places outside the month",
+        )

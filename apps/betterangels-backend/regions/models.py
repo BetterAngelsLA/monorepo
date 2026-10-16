@@ -9,13 +9,15 @@ from __future__ import annotations
 
 import strawberry
 from django.contrib.gis.db.models import MultiPolygonField
-from django.contrib.gis.db.models.functions import GeomOutputGeoFunc
+from django.contrib.gis.db.models.functions import GeomOutputGeoFunc, IsValid
+from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 
 from common.models import BaseModel
 
-# ~46 m at Los Angeles: below what the map can draw, and it takes the six-dimension
-# payload from 21 MB to 817 kB.
+# ~46 m at Los Angeles: below what the map can draw. Measured on the dev fixture (431 regions,
+# all six dimensions) this takes the payload from 27 MB of GeoJSON to 1.0 MB — 14 MB of stored
+# geometry to 560 kB (`sum(pg_column_size(…))`).
 DISPLAY_SIMPLIFY_DEGREES = 0.0005
 
 
@@ -23,9 +25,10 @@ class SimplifyPreserveTopology(GeomOutputGeoFunc):
     """``ST_SimplifyPreserveTopology(geometry, tolerance)``.
 
     Declared for the generated column below. A subclass rather than a call with
-    ``function=``: ``GeomOutputGeoFunc`` resolves the SQL name from the class attribute, so
-    passing it as a keyword emits a call to the class's own name — the same trap
-    ``selectors.ReducePrecision`` documents.
+    ``function=``: ``GeoFuncMixin`` resolves the SQL name from the class when ``self.function``
+    is unset, and a ``function=`` keyword lands in ``Func.extra`` rather than on
+    ``self.function`` — so the keyword form emits ``GeomOutputGeoFunc(…)`` instead of
+    ``ST_SimplifyPreserveTopology(…)``. Verified against Django 6.1.
     """
 
     function = "ST_SimplifyPreserveTopology"
@@ -76,7 +79,12 @@ class Region(BaseModel):
     # Item ids are stable; the URLs they came from are not.
     source_item_id = models.CharField(max_length=64, blank=True, default="")
 
-    geom = MultiPolygonField(srid=4326)
+    # **No spatial index on this column.** It is the authoritative full-resolution boundary,
+    # and every read of it is a full scan: the importer reads it to subdivide, and the admin's
+    # detail page reads it by primary key. Every indexed spatial read in the app goes through
+    # `geom_display` (the tiles) or `RegionPiece.geom` (the point lookup), so a GiST index here
+    # would be rebuilt on every import and probed by nothing.
+    geom = MultiPolygonField(srid=4326, spatial_index=False)
 
     # A **generated column**: the database derives and maintains it, so there is no
     # backfill to run, no chance of it drifting from `geom`, and no fallback needed
@@ -96,13 +104,34 @@ class Region(BaseModel):
     class Meta:
         constraints = [
             # Makes the loader idempotent.
-            models.UniqueConstraint(fields=["kind", "code"], name="regions_region_kind_code_uniq"),
+            models.UniqueConstraint(
+                fields=["kind", "code"],
+                name="regions_region_kind_code_uniq",
+                violation_error_message="A region with this kind and code already exists.",
+            ),
+            # The one thing that makes a tile query safe against a bad row. `ST_Covers`
+            # tolerates an invalid geometry, but `ST_AsMVTGeom` and `ST_Intersection` do not —
+            # an invalid boundary fails an `ST_Intersection` outright with
+            # `TopologyException: Nested shells`, which would take down a whole dimension's
+            # tiles. `ST_IsValid` is IMMUTABLE, so it is legal in a CHECK.
+            models.CheckConstraint(
+                condition=models.Q(IsValid("geom")),
+                name="regions_region_geom_valid",
+                violation_error_message="Region geometry must be a valid OGC geometry.",
+            ),
         ]
         # **One** index on `kind`, declared here rather than with `db_index=True`.
         # `db_index=True` on a `CharField` also creates a `varchar_pattern_ops` twin for
         # prefix `LIKE`s, which nothing in this app performs — two indexes where one is
-        # meant. The GiST index on `geom` is `spatial_index=True`, the default.
-        indexes = [models.Index(fields=["kind"], name="regions_region_kind_idx")]
+        # meant. `geom` carries no spatial index (see the field), and `geom_display` needs
+        # one declared by hand because a `GeneratedField` is never indexed automatically:
+        # `PostGISSchemaEditor._field_should_be_indexed` looks for `spatial_index`, which a
+        # generated column does not carry, so the `geom_display && <envelope>` predicate in
+        # the boundary tile would otherwise scan every row of the dimension for every tile.
+        indexes = [
+            models.Index(fields=["kind"], name="regions_region_kind_idx"),
+            GistIndex(fields=["geom_display"], name="regions_region_geom_display_gix"),
+        ]
         #
         # **No model-level `ordering`, deliberately.** Django appends it to every SELECT, so a
         # bare `.distinct()` de-duplicates on `(kind, code)` and yields one row per region

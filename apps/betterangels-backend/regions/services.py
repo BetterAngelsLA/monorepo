@@ -12,6 +12,7 @@ resolvers. Two kinds live here:
 
 from __future__ import annotations
 
+import zlib
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Sequence
@@ -21,6 +22,7 @@ from django.db import connection, transaction
 from .models import (
     SUBDIVIDE_MAX_VERTICES,
     SUBDIVIDE_VERTEX_THRESHOLD,
+    Region,
 )
 from .selectors import (
     interaction_points,
@@ -38,6 +40,18 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet
 
     from notes.models import Note
+
+#: Namespace for the advisory lock that serialises piece rebuilds: the high 32 bits of the lock
+#: key, with a CRC of the dimension in the low 32. Advisory locks are a shared namespace on the
+#: database, so the constant keeps this app's rebuild locks from colliding with any other
+#: feature's — the ASCII "REPS" is only a mnemonic.
+_PIECES_LOCK_NAMESPACE = 0x52455053  # "REPS"
+
+
+def _pieces_lock_key(kind: str) -> int:
+    """The advisory-lock key for one dimension's piece rebuild."""
+    return (_PIECES_LOCK_NAMESPACE << 32) | (zlib.crc32(kind.encode()) & 0xFFFFFFFF)
+
 
 # This is raw SQL because Django cannot express it, for two independent reasons — both
 # verified against Django 6.1, so a future reviewer does not "clean this up":
@@ -83,8 +97,21 @@ def build_region_pieces(*, kind: str | None = None) -> int:
     against the lookup view, so a duplicated piece would join a note twice and double-count
     it. (It also bloats the GiST index.) Rebuilding a dimension is therefore safe to repeat,
     which is what lets the importer replace a dimension and rebuild in one transaction.
+
+    **The rebuild is serialised with a transaction-scoped advisory lock.** The DELETE alone
+    does not make it safe against a *concurrent* rebuild: under READ COMMITTED a second run
+    cannot see the first run's uncommitted INSERTs, so both DELETEs run first and both
+    INSERTs follow, leaving two sets of pieces — the double-count the DELETE exists to
+    prevent. ``pg_advisory_xact_lock`` is held until the enclosing transaction commits or
+    rolls back, and one lock is taken per dimension touched: a rebuild of a single kind
+    conflicts with a rebuild of every kind, and the kinds are locked in sorted order so two
+    "all" runs cannot deadlock each other.
     """
     with transaction.atomic(), connection.cursor() as cursor:
+        lock_kinds = sorted(Region.objects.values_list("kind", flat=True).distinct()) if kind is None else [kind]
+        for lock_kind in lock_kinds:
+            cursor.execute("SELECT pg_advisory_xact_lock(%s)", [_pieces_lock_key(lock_kind)])
+
         if kind is not None:
             # Scoped through `region_id`, because the piece carries no kind of its own —
             # reading it from `Region` is what keeps a rename from orphaning pieces.
@@ -120,6 +147,41 @@ def build_region_pieces(*, kind: str | None = None) -> int:
 UNASSIGNED = "__unassigned__"
 
 
+class RegionScopeError(ValueError):
+    """A ``(dimension, codes)`` pair that cannot be interpreted.
+
+    Raised by :func:`resolve_region_scope`. Each surface translates it into its own channel —
+    a GraphQL error, an HTTP 400 — but the *contract* is expressed once, here.
+    """
+
+
+def resolve_region_scope(*, dimension: str | None, codes: Sequence[str] | None) -> tuple[str | None, list[str] | None]:
+    """The one reading of a ``(dimension, codes)`` pair for a code-scoped read.
+
+    Three shapes, and conflating any two of them is the failure to avoid:
+
+    * ``codes is None`` -> **no restriction**. A ``dimension`` alongside it is refused rather
+      than ignored: a caller who named a dimension meant to narrow by it, and silently
+      returning every region would answer a question they did not ask.
+    * ``[]`` -> **matches nothing**, and it needs no dimension: the answer cannot depend on
+      one, so demanding a dimension for it would turn "show me nothing" into an error.
+    * a non-empty list -> **requires a dimension**, because a code is not unique across them:
+      ``"1"`` is a council district, an SPA and a supervisorial district in this data.
+
+    Returns ``(dimension, codes)`` when a restriction applies — ``codes`` empty means it
+    matches nothing — or ``(None, None)`` when there is no restriction at all.
+    """
+    if codes is None:
+        if dimension is not None:
+            raise RegionScopeError("dimension requires regionCodes")
+        return None, None
+    if not codes:
+        return dimension, []
+    if dimension is None:
+        raise RegionScopeError("regionCodes requires a dimension")
+    return dimension, list(codes)
+
+
 @dataclass(frozen=True)
 class RegionCodeFilter:
     """``regionCodes`` interpreted for one dimension.
@@ -148,6 +210,15 @@ class RegionCodeFilter:
 
 
 def parse_region_code_filter(region_codes: Sequence[str] | None) -> RegionCodeFilter:
+    """The rollup's own reading of ``regionCodes`` — the only caller that has a sentinel.
+
+    ``resolve_region_scope`` is the shared contract for the *code-scoped* surfaces (the pins
+    filter and the density tile): a non-empty list needs a dimension, an empty list matches
+    nothing, an absent list is no restriction. This function is separate because
+    ``interactionsByRegion`` adds ``__unassigned__`` and a "no location recorded" bucket on top,
+    which are bucket-selection decisions rather than code parsing. It keeps the same reading of
+    ``None`` versus ``[]``.
+    """
     requested = list(region_codes or [])
     sentinel_requested = UNASSIGNED in requested
     wanted = [code for code in requested if code != UNASSIGNED]

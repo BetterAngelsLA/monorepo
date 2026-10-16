@@ -162,7 +162,10 @@ class DensityTileBaseTestCase(TestCase):
             },
         )
         resolved = organization_id if organization_id is not None else str((organization or self.org).pk)
-        query: dict[str, Any] = {"organizationId": resolved}
+        # `org_id`, not `organizationId`: this is an HTTP query parameter read by
+        # `reports.permissions.HasReportAccess`, and it is deliberately the same name the CSV
+        # export uses. The GraphQL surfaces take `organizationId` instead.
+        query: dict[str, Any] = {"org_id": resolved}
         if start != "omit":
             query["start"] = self.start.isoformat() if start == "__default__" else start
         if end != "omit":
@@ -260,6 +263,45 @@ class DensityTileContentTestCase(DensityTileBaseTestCase):
         self.assertEqual(MVT_CONTENT_TYPE, "application/vnd.mapbox-vector-tile")
         self.assertIn(b"density", response.content[:64], "the layer name is in the tile header")
 
+    def test_a_cell_is_drawn_where_its_count_was_computed(self) -> None:
+        """The polygon is rebuilt from the same origin and cell size the grouping used.
+
+        Without this the *geometry* half of ``_DENSITY_ENCODE`` is unasserted: a flipped axis,
+        an off-by-one cell, or a wrong origin would keep every count-based test green while
+        moving every square off the ground it describes.
+        """
+        cell = (10, 10)
+        self._note_in_cell(*cell)
+
+        features = mvt.decode(self.client.get(self._url()).content)["density"]
+        self.assertEqual(len(features), 1)
+        rings = features[0][mvt.GEOMETRY]
+        self.assertEqual(len(rings), 1, "a cell is one polygon ring")
+        ring = rings[0]
+        self.assertEqual(len(ring), 5, "a rectangle ring is four corners plus the closing point")
+        self.assertEqual(ring[0], ring[-1], "the ring must be closed")
+
+        # Tile-local units: a cell is the 4096-unit tile divided by the cells per tile, and the
+        # y axis runs **southward** from the tile's top, so cell row `cy` sits at
+        # `4096 - (cy + 1) * size … 4096 - cy * size`.
+        size = 4096 // DENSITY_CELLS_PER_TILE
+        xs = [point[0] for point in ring]
+        ys = [point[1] for point in ring]
+        self.assertEqual((min(xs), max(xs)), (cell[0] * size, (cell[0] + 1) * size))
+        self.assertEqual((min(ys), max(ys)), (4096 - (cell[1] + 1) * size, 4096 - cell[1] * size))
+
+    def test_the_density_tile_is_private_and_short_lived(self) -> None:
+        """The response is per-org and per-permission, so no shared cache may keep it.
+
+        The header is the only thing that says so: the URL carries the org and the range, so a
+        cache keyed on it is exactly the wrong thing, and a longer lifetime than the boundary
+        layer's would outlive the notes it aggregates.
+        """
+        self._note_in_cell(10, 10)
+        response = self.client.get(self._url())
+        self.assertIn("private", response["Cache-Control"])
+        self.assertIn("max-age=60", response["Cache-Control"])
+
     def test_a_tile_outside_the_zooms_grid_is_404(self) -> None:
         # 2**2 == 4, so x=4 is out of range; z17 is past the ceiling.
         self.assertEqual(self.client.get(self._url(z=2, x=4, y=1)).status_code, 404)
@@ -275,8 +317,9 @@ class DensityTileContentTestCase(DensityTileBaseTestCase):
         the only thing that decides, which is why `urls.py` puts the literal first and why this
         reverses both routes to prove the shapes coincide rather than asserting they do.
 
-        The distinguisher is the **400**: a missing ``organizationId`` is a density-view answer,
-        where the boundary view would have said 404 (``density`` is not a ``RegionKind``).
+        The distinguisher is the **403**: a missing ``org_id`` is a density-view answer (the
+        report permission refuses it), where the boundary view has no org parameter and would
+        have said 404 (``density`` is not a ``RegionKind``).
         """
         path = reverse("regions:region_density_tile", kwargs={"z": _ZOOM, "x": self.tile_x, "y": self.tile_y})
         boundary_shaped = reverse(
@@ -285,7 +328,7 @@ class DensityTileContentTestCase(DensityTileBaseTestCase):
         self.assertTrue(path.startswith("/regions/tiles/density/"))
         self.assertEqual(boundary_shaped, path, "the two templates must collide for this test to mean anything")
 
-        self.assertEqual(self.client.get(path).status_code, 400)
+        self.assertEqual(self.client.get(path).status_code, 403)
 
         # And the boundary route is still reached for a real dimension.
         real = reverse(
@@ -428,6 +471,21 @@ class DensityTileRegionScopeTestCase(DensityTileBaseTestCase):
         """``?codes=`` is "no region", not "no filter" — the same reading as ``interactionMap``."""
         response = self.client.get(self._url(dimension="council_district", codes=""))
         self.assertEqual(response.status_code, 204)
+
+    def test_an_empty_code_list_without_a_dimension_is_an_empty_map_not_a_400(self) -> None:
+        """An empty list matches nothing in *any* dimension, so it needs no dimension.
+
+        This is the shape that has to agree with ``interactionMap(regionCodes: [])``, which
+        returns an empty map. Spelling it as "codes without a dimension" and refusing it would
+        make the same request a 400 on one surface and an empty answer on the other.
+        """
+        response = self.client.get(self._url(codes=""))
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.content, b"")
+
+    def test_a_dimension_without_codes_is_refused_rather_than_ignored(self) -> None:
+        """A caller who named a dimension meant to narrow by it, so silence is not an option."""
+        self.assertEqual(self.client.get(self._url(dimension="council_district")).status_code, 400)
 
     def test_codes_without_a_dimension_are_refused(self) -> None:
         """A code cannot be resolved without one: "1" is three dimensions at once."""
