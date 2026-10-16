@@ -341,23 +341,32 @@ export function LocationBreakdown({
               sets `autocomplete="new-password"` on that input unconditionally, with no prop
               that reaches it. So leaving search off here removes the cause rather than patching
               the symptom. The multi-select below still needs search and keeps it. */}
-          <Select<RegionDimension | undefined, DimensionOption>
-            // Clears to "All" — the rollup then spans every dimension.
-            allowClear
-            // Without this the panel's primary control is an empty dropdown with a
-            // placeholder and no busy state while the dimensions are in flight.
-            loading={dimensionsLoading}
-            value={dimension}
-            onChange={(value) => {
-              // The selection is cleared by the effect on `dimension`, which also covers a
-              // change from anywhere else; clearing here as well was a second copy of the
-              // same rule.
-              setDimension(value);
-            }}
-            style={{ minWidth: 220 }}
-            placeholder="All dimensions"
-            options={dimensionOptions}
-          />
+          {/* Loading and "the server reports no loaded boundary sets" both arrive as an empty
+              list, so they are told apart here: without this the panel invites the reader to
+              choose from an empty dropdown and never says why it is empty. */}
+          {!dimensionsLoading && dimensionsError === undefined && dimensions.length === 0 ? (
+            <Text type="secondary">
+              No region boundaries have been loaded for this organisation.
+            </Text>
+          ) : (
+            <Select<RegionDimension | undefined, DimensionOption>
+              // Clears to "All" — the rollup then spans every dimension.
+              allowClear
+              // Without this the panel's primary control is an empty dropdown with a
+              // placeholder and no busy state while the dimensions are in flight.
+              loading={dimensionsLoading}
+              value={dimension}
+              onChange={(value) => {
+                // The selection is cleared by the effect on `dimension`, which also covers a
+                // change from anywhere else; clearing here as well was a second copy of the
+                // same rule.
+                setDimension(value);
+              }}
+              style={{ minWidth: 220 }}
+              placeholder="All dimensions"
+              options={dimensionOptions}
+            />
+          )}
         </div>
 
         {dimension !== undefined && (
