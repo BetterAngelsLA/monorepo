@@ -223,8 +223,7 @@ def region_counts(
     claim about coverage that has not been loaded.
     """
     loaded = set(Region.objects.values_list("kind", flat=True).distinct())
-    scopes = (sorted(loaded) if kind is None else [kind]) if (kind is None or kind in loaded) else []
-    scopes = [scope for scope in scopes if scope in loaded]
+    scopes = sorted(loaded) if kind is None else ([kind] if kind in loaded else [])
     if not scopes:
         return []
 

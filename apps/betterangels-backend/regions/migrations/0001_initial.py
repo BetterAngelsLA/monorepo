@@ -11,59 +11,13 @@ would be a deploy hazard — PostGIS is not a trusted extension, so
 application connects with an IAM-minted token for a non-superuser role. Its reverse
 migration would also ``DROP EXTENSION`` out from under those four apps.
 
-The backfill at the end is for a database that already has boundaries and wants the lookup
-geometry populated without re-running the importer. On a fresh one it is a no-op, because
-there is nothing to derive from.
+The empty tables are the whole of what this migration leaves behind: there is nothing to
+backfill, because the boundaries arrive later through ``import_regions``.
 """
 
 from django.contrib.gis.db.models import MultiPolygonField
 from django.db import migrations, models
 import django.db.models.deletion
-
-
-def backfill(apps, schema_editor):  # type: ignore[no-untyped-def]
-    """Populate the lookup geometry and the display geometry from existing boundaries.
-
-    **Self-contained SQL.** A migration describes the schema it produces and must not call
-    service code, whose existence and signature describe the schema as it currently is. The
-    subdivision parameters and the tolerance are therefore literals rather than imports, so
-    changing a model constant cannot alter what this migration writes.
-
-    On a fresh database both statements are no-ops, because there is nothing to derive from.
-    The backfill exists for a database that already has boundaries and wants the lookup
-    geometry populated without re-running the importer.
-
-    ``kind`` is inserted because the column exists at this point in the schema —
-    ``0004_region_lookup_view`` drops it.
-    """
-    schema_editor.execute(
-        """
-        INSERT INTO regions_regionpiece (region_id, kind, geom, created_at, updated_at)
-        SELECT r.id,
-               r.kind,
-               ST_Multi(COALESCE(CASE WHEN ST_NPoints(r.geom) > 2000 THEN p.geom END, r.geom)),
-               NOW(),
-               NOW()
-        FROM regions_region r
-        LEFT JOIN LATERAL ST_Subdivide(r.geom, 256) AS p(geom)
-               ON ST_NPoints(r.geom) > 2000
-        """
-    )
-    schema_editor.execute(
-        """
-        UPDATE regions_region
-        SET geom_display = ST_Multi(ST_SimplifyPreserveTopology(geom, %s))
-        WHERE geom IS NOT NULL
-        """,
-        [0.0005],
-    )
-
-
-def unbackfill(apps, schema_editor):  # type: ignore[no-untyped-def]
-    """Derived data. Dropping it is safe; the importer rewrites it."""
-    apps.get_model("regions", "RegionPiece").objects.all().delete()
-    apps.get_model("regions", "LocationRegion").objects.all().delete()
-    apps.get_model("regions", "Region").objects.all().update(geom_display=None)
 
 
 class Migration(migrations.Migration):
@@ -189,5 +143,4 @@ class Migration(migrations.Migration):
                 ],
             },
         ),
-        migrations.RunPython(backfill, unbackfill),
     ]
