@@ -42,14 +42,17 @@ const DIMENSION_LABELS: Record<string, string> = {
 };
 
 /**
- * Dimension display order, as a string-keyed lookup.
+ * Dimension display order, taken from the label map above.
  *
- * A `Record<RegionDimension, …>` forces a cast at the call site, because the `kind` on a
- * bucket arrives as a plain string; keying by string keeps the lookup honest and tolerates a
- * value the client does not know.
+ * Keyed by the **wire** value for the same reason the labels are, and that reason is not
+ * cosmetic: `RegionDimension` spells the dimension uppercase (`COUNCIL_DISTRICT`) while a
+ * bucket's `kind` arrives lowercase (`council_district`), so a map built from
+ * `Object.values(RegionDimension)` can never match a row and the lookup silently falls through
+ * to the fallback for every one of them. Deriving the order from the same keys the labels use
+ * makes the two impossible to disagree, and keeps the order a single list to edit.
  */
 const KIND_ORDER = new Map<string, number>(
-  Object.values(RegionDimension).map((dimension, index) => [dimension, index]),
+  Object.keys(DIMENSION_LABELS).map((kind, index) => [kind, index]),
 );
 
 /**

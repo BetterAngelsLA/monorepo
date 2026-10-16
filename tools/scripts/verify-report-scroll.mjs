@@ -5,12 +5,14 @@
  * a single frame in which the panel collapsed: the new grouping is a cache miss, so the rollup
  * came back empty, the page read empty as "no located interactions", and unmounted the map. The
  * document lost a panel's height, the browser clamped the scroll position to fit what was left,
- * and the position did not come back when the content did. Nothing in the existing checks
- * looked at scroll position at all, which is why it shipped.
+ * and the position did not come back when the content did. The date range did the same thing to
+ * the whole page, because the reports query has the same empty-on-refetch behaviour and the
+ * page swapped its content for skeletons. Nothing in the existing checks looked at scroll
+ * position at all, which is why both shipped.
  *
- * So this sweeps every control that re-partitions the panel and asserts, frame by frame, that
- * the position only ever holds or grows. It prints the numbers either way, so a failure says
- * which control moved the page and how far.
+ * So this sweeps every control that re-partitions the page and asserts, frame by frame, that
+ * the position only ever holds and that the map is never unmounted. It prints the numbers
+ * either way, so a failure says which control moved the page and how far.
  *
  * Run: BASE=... SESSION=... CSRF=... node tools/scripts/verify-report-scroll.mjs
  */
@@ -55,20 +57,35 @@ await page.evaluate(() => {
   sample();
 });
 
-/** Park the reader part-way down, where a collapse below will clamp the position. */
-async function park() {
-  await page.evaluate(() => {
+/** Park the reader where a collapse below would clamp the position. */
+async function park(px) {
+  await page.evaluate((target) => {
     const el = window.__scroller;
-    el.scrollTop = Math.round((el.scrollHeight - el.clientHeight) * 0.6);
-  });
+    el.scrollTop =
+      target ?? Math.round((el.scrollHeight - el.clientHeight) * 0.6);
+  }, px);
   await page.waitForTimeout(1200);
 }
 
 const results = [];
 
-/** Runs `act`, then reports whether the position held and how far the height dipped. */
-async function step(label, act) {
-  await park();
+/**
+ * Runs `prepare`, parks, measures `act`, then checks `verify`.
+ *
+ * The split exists for the date picker: its input sits at the top of the page, so clicking it
+ * makes Playwright scroll the input into view — which moves the very position under test. Any
+ * scroll the harness itself causes is finished and discarded before the sampler is reset, so
+ * only the act under test is measured. Without this the check reports its own scroll-into-view
+ * as a product bug, which is how an earlier run of it failed.
+ *
+ * `verify` is required rather than optional: a step whose control never actually changed would
+ * otherwise pass while proving nothing, and one earlier version of this file did exactly that.
+ */
+async function step(label, { act, prepare, verify, parkPx }) {
+  if (prepare) {
+    await prepare();
+  }
+  await park(parkPx);
   const before = await page.evaluate(() => ({
     top: window.__scroller.scrollTop,
     h: window.__scroller.scrollHeight,
@@ -85,65 +102,121 @@ async function step(label, act) {
     h: window.__scroller.scrollHeight,
   }));
   const frames = await page.evaluate(() => window.__frames);
+  const drove = await verify();
 
   const minTop = frames.reduce((m, f) => Math.min(m, f.top), before.top);
   const minH = frames.reduce((m, f) => Math.min(m, f.h), before.h);
   const collapsed = frames.filter((f) => f.map === 0).length;
 
-  results.push({ label, before, after, minTop, minH, collapsedFrames: collapsed });
+  results.push({ label, before, after, minTop, minH, collapsedFrames: collapsed, drove });
   console.log(
     `${label.padEnd(34)} top ${String(before.top).padStart(4)} -> ${String(after.top).padStart(4)}` +
-      `   min top ${String(minTop).padStart(4)}   height ${before.h} -> ${after.h} (min ${minH })` +
-      `   frames without a map: ${collapsed}`,
+      `   min top ${String(minTop).padStart(4)}   height ${before.h} -> ${after.h} (min ${minH})` +
+      `   frames without a map: ${collapsed}   drove: ${drove ? 'yes' : 'NO'}`,
   );
 }
 
 const groupBy = page.locator('.ant-select').first();
-
-await step('group by council district', async () => {
-  await groupBy.click();
-  await page.waitForTimeout(600);
-  await page
-    .locator('.ant-select-item-option', { hasText: 'City Council District' })
-    .first()
-    .click();
-});
-
-await step('switch to another dimension', async () => {
-  await groupBy.click();
-  await page.waitForTimeout(600);
-  await page
-    .locator('.ant-select-item-option', { hasText: 'ZIP Code' })
-    .first()
-    .click();
-});
-
-await step('clear the grouping', async () => {
-  await groupBy.hover();
-  await page.waitForTimeout(300);
-  await page.locator('.ant-select-clear').first().click({ force: true });
-});
-
-// antd's button-style radio hides the input itself, so the label is what takes the click.
+const groupByValue = () => groupBy.innerText();
+const rangeValues = () =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('.ant-picker-input input')].map((i) => i.value),
+  );
 const viewToggle = (name) =>
   page.locator('.ant-radio-button-wrapper', { hasText: name });
 
-await step('switch to the clusters view', async () => {
-  await viewToggle('Clusters').click();
+// The date range re-runs every query on the page, so it is the control most able to move the
+// reader. Opening the panel is the `prepare` half; picking the days is the measurement.
+await step('change the date range', {
+  act: async () => {
+    // The day cells live in a body-level overlay, so clicking them cannot scroll the page's
+    // own scroller.
+    await page
+      .locator('.ant-picker-dropdown .ant-picker-cell[title="2026-09-05"]')
+      .first()
+      .click();
+    await page.waitForTimeout(500);
+    await page
+      .locator('.ant-picker-dropdown .ant-picker-cell[title="2026-09-25"]')
+      .first()
+      .click();
+  },
+  prepare: async () => {
+    await page.locator('.ant-picker-input input').first().click();
+    await page.waitForTimeout(800);
+  },
+  verify: async () => {
+    const values = await rangeValues();
+    return values[0] === '2026-09-05' && values[1] === '2026-09-25';
+  },
+  // Shallower than the other steps: the picker and its calendar live at the top of the page,
+  // and a panel opened there is off screen once the reader is parked low. Still a non-zero
+  // position, so a collapse that would clamp the reader is still detected — and the map and
+  // height assertions, which are the causal ones, do not depend on where the reader sits.
+  parkPx: 60,
 });
 
-await step('switch back to the density view', async () => {
-  await viewToggle('Heatmap').click();
+await step('group by council district', {
+  act: async () => {
+    await groupBy.click();
+    await page.waitForTimeout(600);
+    await page
+      .locator('.ant-select-item-option', { hasText: 'City Council District' })
+      .first()
+      .click();
+  },
+  verify: async () =>
+    (await groupByValue()).includes('City Council District'),
+});
+
+await step('switch to another dimension', {
+  act: async () => {
+    await groupBy.click();
+    await page.waitForTimeout(600);
+    await page.locator('.ant-select-item-option', { hasText: 'ZIP Code' }).first().click();
+  },
+  verify: async () => (await groupByValue()).includes('ZIP Code'),
+});
+
+await step('clear the grouping', {
+  act: async () => {
+    await groupBy.hover();
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-clear').first().click({ force: true });
+  },
+  // Cleared, antd shows the placeholder text, which is the "All dimensions" label.
+  verify: async () => (await groupByValue()).trim() === 'All dimensions',
+});
+
+// The view toggle fires no query of its own, so there is no busy state to look for; what it
+// must do is change which radio is selected.
+await step('switch to the clusters view', {
+  act: async () => {
+    await viewToggle('Clusters').click();
+  },
+  verify: async () =>
+    (await viewToggle('Clusters').locator('input').isChecked()) === true,
+});
+
+await step('switch back to the density view', {
+  act: async () => {
+    await viewToggle('Heatmap').click();
+  },
+  verify: async () =>
+    (await viewToggle('Heatmap').locator('input').isChecked()) === true,
 });
 
 // A shrinking page is not itself a fault — clearing the grouping removes the table, and the
 // view toggle adds and removes a notice. What must never happen is the position moving, and
 // what must never happen *underneath* it is the map being torn down and rebuilt, because that
 // is the collapse that clamps the position in the first place. Checking the map catches the
-// cause on a reader who happens to be at the top, where a clamp is a no-op and a scroll-only
-// assertion would pass while the bug was back.
+// cause even on a reader who happens to be at the top, where a clamp is a no-op and a
+// scroll-only assertion would pass while the bug was back.
 const fails = [];
 for (const r of results) {
+  if (!r.drove) {
+    fails.push(`${r.label}: the control did not change, so the step proved nothing`);
+  }
   if (r.minTop < r.before.top) {
     fails.push(
       `${r.label}: page moved up ${r.before.top - r.minTop}px (${r.before.top} -> ${r.minTop})`,
@@ -162,7 +235,7 @@ if (fails.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    '\nPASS: no control moved the position, and the map stayed mounted throughout.',
+    '\nPASS: every control drove, none moved the position, and the map stayed mounted.',
   );
 }
 

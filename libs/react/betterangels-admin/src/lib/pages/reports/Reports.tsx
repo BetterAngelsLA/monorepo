@@ -8,6 +8,7 @@ import {
   DatePicker,
   Row,
   Skeleton,
+  Spin,
   Statistic,
   theme,
 } from 'antd';
@@ -256,9 +257,13 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
         />
       )}
 
-      {/* Loading. Skeletons rather than a spinner: antd's data-format spec asks for them, and
-          they hold the page's shape so the content does not jump in when it arrives. */}
-      {loading && (
+      {/* Skeletons **only for the first load**, which is the only time there is nothing to
+          show. They are a different height from the real content, so swapping them in on every
+          refetch replaces every card — the map panel included — with placeholder shapes and
+          the page loses enough height for the browser to clamp the reader's scroll position.
+          Once there is a summary, the refetch is shown as a busy overlay over it instead, which
+          keeps the layout and the map exactly where they were. */}
+      {loading && !summary && (
         <div className="flex flex-col gap-4">
           <Row gutter={[16, 16]}>
             {[0, 1, 2, 3].map((i) => (
@@ -288,9 +293,13 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
         </div>
       )}
 
-      {summary && !loading && (
-        <>
-          {/* KPI row */}
+      {summary && (
+        <Spin spinning={loading}>
+          {/* The gap has to be re-declared here: `Spin` inserts its own block wrappers between
+              the page's flex column and these rows, so the parent's `gap-6` no longer reaches
+              them and the cards would otherwise touch. */}
+          <div className="flex flex-col gap-6">
+            {/* KPI row */}
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={6}>
               <Card>
@@ -465,7 +474,8 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
               </p>
             </Card>
           )}
-        </>
+          </div>
+        </Spin>
       )}
     </div>
   );
