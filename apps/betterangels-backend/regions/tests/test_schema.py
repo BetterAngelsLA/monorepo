@@ -142,6 +142,12 @@ class RegionRollupGraphQLTestCase(GraphQLBaseTestCase):
         self.assertNotIn(
             "OUTSIDE_ALL_REGIONS", reasons, "an empty code list asked for no regions, but returned outside-all-regions"
         )
+        # The other half of the pair, and the reason this test exists: `include_locationless` is
+        # deliberately the *opposite* reading, because a note with no location was never
+        # attributable to a region and so cannot be excluded by a filter asking for none.
+        self.assertIn(
+            "NO_LOCATION", reasons, "an empty code list dropped the locationless total, which no code filter can exclude"
+        )
 
     def test_code_plus_sentinel_keeps_the_outside_all_regions_bucket(self) -> None:
         counts = self._counts(self._query(["1", "__unassigned__"]))

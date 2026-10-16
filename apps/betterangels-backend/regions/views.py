@@ -152,13 +152,14 @@ class DensityTileView(APIView):
     defaulting to the organization's current month exactly as ``interactionMap`` does),
     ``dimension`` and ``codes`` (optional; scoping to regions).
 
-    ``codes`` and ``dimension`` are refused without each other, with one deliberate exception
-    that keeps this surface consistent with ``interactionMap``: an **empty** ``codes`` matches
-    nothing in any dimension, so ``?codes=`` is a **204** (an empty map) rather than a 400,
-    while a non-empty ``codes`` without a dimension is a 400 because a code is ambiguous
-    across dimensions. ``dimension`` without ``codes`` is a 400 as well — refused, not
-    silently ignored. Both 400s carry the ``errorCode`` ``interactionMap`` reports for the same
-    refusal, so a client branches on one vocabulary across the two channels.
+    ``codes`` and ``dimension`` are refused without each other, with two deliberate exceptions.
+    An **empty** ``codes`` matches nothing in any dimension, so ``?codes=`` is a **204** (an
+    empty map) rather than a 400. And a lone ``dimension`` is a **400** here — the caller named
+    a dimension, so refusing is the safer reading — where ``interactionMap`` ignores it, having
+    nothing to narrow. The two surfaces therefore agree on the empty case and on a non-empty
+    ``codes`` with no dimension, and part company on that one. Both 400s carry the ``errorCode``
+    ``interactionMap`` reports for the same refusal, so a client branches on one vocabulary
+    across the two channels.
 
     Serves **204** for a tile with no cells — most of the ocean, most of the time. deck.gl reads
     an empty body with a success status as a malformed tile.

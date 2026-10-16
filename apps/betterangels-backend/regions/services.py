@@ -226,7 +226,9 @@ class RegionCodeFilter:
 
     * absent                                -> unfiltered, including unassigned and
                                                locationless
-    * ``[]``                                -> **matches nothing**, including those buckets
+    * ``[]``                                -> no **named** region and no outside-all-regions
+                                               bucket, but the locationless total is still
+                                               reported — see below
     * ``["__unassigned__"]`` alone          -> only rows matching no region, both causes
     * real codes (with or without sentinel) -> those regions, plus unassigned if asked
 
@@ -234,9 +236,12 @@ class RegionCodeFilter:
     both what ``region_counts`` emits on and what the caller reads back.
 
     ``include_locationless`` is separate again, because "notes with no location" is a third
-    bucket with a third reason to be in or out of scope. It is true for an absent list and
-    for the sentinel, and false for everything else — an empty list asks for no regions and
-    must not smuggle in a bucket a real code filter would have excluded.
+    bucket with a third reason to be in or out of scope. It is true for an absent list, for the
+    sentinel, and for an explicitly empty one — a note with no location was never attributable
+    to a region, so a filter asking for no regions still cannot exclude it — and false for a
+    list that names codes. That is the opposite reading from ``keep_unassigned`` above, and it
+    makes ``[]`` differ from ``["does-not-exist"]``: the second matches nothing at all, the
+    first reports the locationless total.
     """
 
     codes: list[str] | None
