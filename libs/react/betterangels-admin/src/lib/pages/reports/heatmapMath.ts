@@ -54,6 +54,11 @@ export const HEATMAP_RAMP_CSS = `linear-gradient(to right, ${RAMP.map(
  * the zoom was rejected because the field would then recolour on every zoom tick — the same
  * swimming the ramp's fixed domain was chosen to avoid — and because deck gives a per-tile
  * accessor no tile index to key on without reimplementing the layer.
+ *
+ * **The counts are per server cell, not per pixel.** `DENSITY_CELLS_PER_TILE` in the backend's
+ * `regions/tiles.py` is what one tile is divided into (64 × 64), so this reference is a count of
+ * interactions within that share of a tile. Changing the server's grid changes what a count
+ * means without changing this number, and the colours would silently rescale with it.
  */
 export const DENSITY_COLOR_MAX = 50;
 

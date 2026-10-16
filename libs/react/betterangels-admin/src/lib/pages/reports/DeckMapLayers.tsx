@@ -149,6 +149,17 @@ export type BuildLayersArgs = {
 };
 
 /**
+ * The deepest zoom the tile endpoints serve.
+ *
+ * Mirrors `MAX_ZOOM` in the backend's `regions/views.py`, which **rejects** a tile past its
+ * ceiling rather than serving a clamped one — so if the server's value dropped while this stayed
+ * put, the map would blank out at depth. `onTileFault` is what makes that a visible fault rather
+ * than an empty field. One constant for both layers because the density grid and the boundaries
+ * are drawn over each other and have to stop at the same depth.
+ */
+const TILE_MAX_ZOOM = 16;
+
+/**
  * The layer stack, in draw order.
  *
  * Exported so its ordering and its accessors can be asserted without a WebGL context: this
@@ -183,7 +194,7 @@ export function buildLayers({
         // origin in development. Without this the tiles arrive as anonymous 403s.
         loadOptions: { fetch: { credentials: 'include' } },
         minZoom: 0,
-        maxZoom: 16,
+        maxZoom: TILE_MAX_ZOOM,
         filled: true,
         stroked: false,
         getFillColor: (feature) =>
@@ -253,7 +264,7 @@ export function buildLayers({
         data: boundaryUrl,
         loadOptions: { fetch: { credentials: 'include' } },
         minZoom: 0,
-        maxZoom: 16,
+        maxZoom: TILE_MAX_ZOOM,
         // Boundaries are public reference data with no note scope to refuse, so an error here
         // is always a fault. Reported for the same reason as the density tile's: boundaries
         // that silently fail to draw leave a map that looks like it has nothing to show.
