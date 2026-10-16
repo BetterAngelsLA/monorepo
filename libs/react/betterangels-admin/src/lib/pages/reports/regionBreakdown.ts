@@ -129,6 +129,18 @@ export function unassignedRowLabel(
   return label;
 }
 
+/**
+ * The region's display label.
+ *
+ * `||` and not `??`: an empty name is not a label, so the code stands in for it. One
+ * implementation because three places need the same rule — the table's name column, the
+ * drill-down option's text, and the "within …" prose — and a region with no name must read as
+ * its code in all three.
+ */
+export function displayName(row: Pick<RegionCountType, 'name' | 'code'>): string {
+  return row.name || row.code;
+}
+
 export type RegionBreakdownView = {
   /** Named regions with interactions — what the table and the drill-down are drawn from. */
   assigned: RegionCountType[];
@@ -182,8 +194,8 @@ export function regionBreakdownView(
   const assigned = shown.filter((row) => !row.isUnassigned && row.count > 0);
   const unassigned = shown.filter((row) => row.isUnassigned);
 
-  // Resolved here rather than inline in the JSX. `||` and not `??`: an empty name is not a
-  // display label, so the code stands in for it.
+  // Resolved here rather than inline in the JSX. A selected code that is not in `assigned` has
+  // no row to name it, so the code itself is all there is to print.
   let filteredToName: string | undefined;
   if (selectedCodes.length > 0) {
     filteredToName = selectedCodes
@@ -192,7 +204,7 @@ export function regionBreakdownView(
         if (match === undefined) {
           return code;
         }
-        return match.name || code;
+        return displayName(match);
       })
       .join(', ');
   }

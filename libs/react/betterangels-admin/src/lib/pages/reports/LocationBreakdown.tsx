@@ -18,6 +18,7 @@ import {
   type RegionCountType,
 } from './hooks';
 import {
+  displayName,
   kindLabel,
   kindLabelPlural,
   matches,
@@ -49,16 +50,6 @@ function renderCode(code: string) {
     return <Text type="secondary">-</Text>;
   }
   return code;
-}
-
-/**
- * The region's display name.
- *
- * `||` and not `??`: an empty name is not a label, so the code stands in for it. Every row here
- * is a named region — the unassigned buckets are listed below the table instead.
- */
-function renderName(name: string, row: RegionCountType) {
-  return name || row.code;
 }
 
 /**
@@ -254,7 +245,7 @@ export function LocationBreakdown({
     () =>
       selectable.map((row) => ({
         value: row.code,
-        label: `${row.name || row.code} (${row.count.toLocaleString()})`,
+        label: `${displayName(row)} (${row.count.toLocaleString()})`,
         searchText: `${row.name} ${row.code}`,
       })),
     [selectable],
@@ -282,7 +273,7 @@ export function LocationBreakdown({
       title: dimensionName,
       dataIndex: 'name',
       key: 'name',
-      render: renderName,
+      render: (_: string, row: RegionCountType) => displayName(row),
     },
     {
       title: 'Code',

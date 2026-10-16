@@ -32,14 +32,12 @@ query InteractionMap(
   $dimension: RegionDimension
   $startDate: Date
   $endDate: Date
-  $limit: Int
   $regionCodes: [String!]
 ) {
   interactionMap(
     organizationId: $organizationId
     startDate: $startDate
     endDate: $endDate
-    limit: $limit
     dimension: $dimension
     regionCodes: $regionCodes
   ) {
