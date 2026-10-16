@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils.dateparse import parse_date
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -157,7 +157,8 @@ class DensityTileView(APIView):
     nothing in any dimension, so ``?codes=`` is a **204** (an empty map) rather than a 400,
     while a non-empty ``codes`` without a dimension is a 400 because a code is ambiguous
     across dimensions. ``dimension`` without ``codes`` is a 400 as well — refused, not
-    silently ignored.
+    silently ignored. Both 400s carry the ``errorCode`` ``interactionMap`` reports for the same
+    refusal, so a client branches on one vocabulary across the two channels.
 
     Serves **204** for a tile with no cells — most of the ocean, most of the time. deck.gl reads
     an empty body with a success status as a malformed tile.
@@ -183,16 +184,17 @@ class DensityTileView(APIView):
 
         dimension = request.query_params.get("dimension")
         codes = _codes_param(request)
-        if codes is None and dimension is not None:
-            # Refused, not ignored: a caller who named a dimension meant to narrow by it, and
-            # returning every region would answer a question they did not ask.
-            return HttpResponse(status=400)
         try:
             region_kind, region_codes = resolve_region_scope(dimension=dimension, codes=codes)
-        except RegionScopeError:
-            # A non-empty `codes` with no `dimension`: "1" is a council district, an SPA and a
-            # supervisorial district, so guessing would be a wrong answer rather than an error.
-            return HttpResponse(status=400)
+        except RegionScopeError as error:
+            # `resolve_region_scope` is the one reading of the pair. A non-empty `codes` with no
+            # `dimension` is refused here for the reason `interactionMap` refuses it: "1" is a
+            # council district, an SPA and a supervisorial district, so guessing would be a
+            # wrong answer. A `dimension` with no `codes` is refused by this endpoint alone —
+            # the resolver ignores a lone dimension because it has nothing to narrow. Either
+            # way, `code` is the branchable part, in the same vocabulary that surface carries in
+            # `extensions.errors[].errorCode`; `message` stays human-readable.
+            return JsonResponse({"code": error.code, "message": str(error)}, status=400)
         if region_kind is not None and region_kind not in RegionKind.values:
             return HttpResponse(status=400)
         if region_codes == []:

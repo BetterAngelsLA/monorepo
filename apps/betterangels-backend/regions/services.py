@@ -147,12 +147,40 @@ def build_region_pieces(*, kind: str | None = None) -> int:
 UNASSIGNED = "__unassigned__"
 
 
+class RegionScopeErrorCodes:
+    """The ``errorCode`` values for the ``(dimension, codes)`` refusals.
+
+    These are **validation** codes, not protocol ones: the refusal is "argument A was sent
+    without argument B", so it travels in ``extensions.errors[].errorCode`` with ``field`` naming
+    the argument to revisit, the shape ``clients/schema.py`` uses and
+    ``docs/graphql_errors.md`` §2 documents. ``extensions.code`` is the other registry — for
+    cross-cutting conditions such as ``UNAUTHENTICATED`` — and carries no field.
+
+    A client switches on these, never on the message. The frontend mirrors validation codes in
+    ``BE_VALIDATION_ERROR_CODE`` (``libs/ba-platform/src/lib/apollo/graphql/backendApiCodes.ts``)
+    and has no entry for either yet; both values have to be added there for the mirror to hold.
+    """
+
+    #: ``dimension`` was sent with no ``regionCodes`` — the dimension has nothing to narrow.
+    DIMENSION_REQUIRES_REGION_CODES = "DIMENSION_REQUIRES_REGION_CODES"
+    #: A non-empty ``regionCodes`` was sent with no ``dimension`` — a code is ambiguous alone.
+    REGION_CODES_REQUIRE_DIMENSION = "REGION_CODES_REQUIRE_DIMENSION"
+
+
 class RegionScopeError(ValueError):
     """A ``(dimension, codes)`` pair that cannot be interpreted.
 
-    Raised by :func:`resolve_region_scope`. Each surface translates it into its own channel —
-    a GraphQL error, an HTTP 400 — but the *contract* is expressed once, here.
+    Raised by :func:`resolve_region_scope` and translated by each surface into its own channel —
+    a GraphQL error, an HTTP 400 — because those channels need different exception types and a
+    service must not depend on either. The *contract* is expressed once, here: ``code`` is the
+    stable identifier a client branches on, ``field`` is the argument it should revisit, and
+    ``str(error)`` is the message a person reads.
     """
+
+    def __init__(self, message: str, *, code: str, field: str) -> None:
+        super().__init__(message)
+        self.code = code
+        self.field = field
 
 
 def resolve_region_scope(*, dimension: str | None, codes: Sequence[str] | None) -> tuple[str | None, list[str] | None]:
@@ -173,12 +201,20 @@ def resolve_region_scope(*, dimension: str | None, codes: Sequence[str] | None) 
     """
     if codes is None:
         if dimension is not None:
-            raise RegionScopeError("dimension requires regionCodes")
+            raise RegionScopeError(
+                "dimension requires regionCodes",
+                code=RegionScopeErrorCodes.DIMENSION_REQUIRES_REGION_CODES,
+                field="dimension",
+            )
         return None, None
     if not codes:
         return dimension, []
     if dimension is None:
-        raise RegionScopeError("regionCodes requires a dimension")
+        raise RegionScopeError(
+            "regionCodes requires a dimension",
+            code=RegionScopeErrorCodes.REGION_CODES_REQUIRE_DIMENSION,
+            field="regionCodes",
+        )
     return dimension, list(codes)
 
 

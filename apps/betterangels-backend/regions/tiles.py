@@ -31,12 +31,13 @@ from django.db.models import QuerySet
 from common.models import Location
 from notes.models import Note
 
-from .selectors import REGION_LOCATIONS_SQL
+from .selectors import _REGION_TABLE, REGION_LOCATIONS_SQL
 from .services import resolve_region_scope
 
 #: The location table, taken from the model rather than written out, so a ``db_table``
 #: override cannot leave the density SQL pointing somewhere else — the same rule ``selectors``
-#: follows for its raw SQL.
+#: follows for its raw SQL. ``_REGION_TABLE`` is imported from there rather than re-derived,
+#: so every raw statement in the app names the region table the same way.
 _LOCATION_TABLE = Location._meta.db_table
 
 #: Tile coordinate space. 4096 is what deck.gl's MVTLayer and Mapbox's spec both assume.
@@ -48,7 +49,7 @@ TILE_BUFFER = 64
 #: The pre-filter's envelope margin, in tile units. See ``region_tile``.
 _MARGIN = TILE_BUFFER / TILE_EXTENT
 
-_TILE_SQL = """
+_TILE_SQL = f"""
 WITH bounds AS (
     -- Two envelopes, deliberately. The margined one decides which rows to *consider*, so a
     -- feature just outside the tile is still fetched and clipped into the buffer; the plain
@@ -64,7 +65,7 @@ prepared AS (
            ST_AsMVTGeom(
                ST_Transform(r.geom_display, 3857), b.tile, %(extent)s, %(buffer)s, true
            ) AS geom
-    FROM regions_region r, bounds b
+    FROM {_REGION_TABLE} r, bounds b
     -- `&&` is evaluated in the table's own SRID, so it can use the GiST index on
     -- `geom_display` that migration `0005` adds — a `GeneratedField` is never indexed
     -- automatically. The planner leads with the envelope only when it is selective (deep

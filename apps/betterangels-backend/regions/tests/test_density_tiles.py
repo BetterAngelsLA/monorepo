@@ -484,12 +484,20 @@ class DensityTileRegionScopeTestCase(DensityTileBaseTestCase):
         self.assertEqual(response.content, b"")
 
     def test_a_dimension_without_codes_is_refused_rather_than_ignored(self) -> None:
-        """A caller who named a dimension meant to narrow by it, so silence is not an option."""
-        self.assertEqual(self.client.get(self._url(dimension="council_district")).status_code, 400)
+        """A caller who named a dimension meant to narrow by it, so silence is not an option.
+
+        ``code`` is the branchable part, in the vocabulary the GraphQL surface reports in
+        ``extensions.errors[].errorCode``.
+        """
+        response = self.client.get(self._url(dimension="council_district"))
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "DIMENSION_REQUIRES_REGION_CODES")
 
     def test_codes_without_a_dimension_are_refused(self) -> None:
         """A code cannot be resolved without one: "1" is three dimensions at once."""
-        self.assertEqual(self.client.get(self._url(codes=["1"])).status_code, 400)
+        response = self.client.get(self._url(codes=["1"]))
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "REGION_CODES_REQUIRE_DIMENSION")
 
     def test_an_unknown_dimension_is_refused(self) -> None:
         self.assertEqual(self.client.get(self._url(dimension="not_a_dimension", codes=["1"])).status_code, 400)

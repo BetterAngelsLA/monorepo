@@ -428,9 +428,17 @@ class InteractionMapRegionFilterTestCase(InteractionMapBaseTestCase):
 
         ``"1"`` is a council district, an SPA and a supervisorial district in this data;
         returning any of them would be an answer the caller did not ask for.
+
+        The refusal is machine-readable: ``field`` names the argument to revisit and
+        ``errorCode`` is the value a client switches on, asserted literally because it is the
+        wire contract the density view also returns. The English message is not the contract.
         """
         result = self._map(self.caseworker(), dimension=None, regionCodes=["1"])
         self.assertIn("errors", result, "a code without a dimension must be refused, not guessed")
+        self.assertEqual(
+            result["errors"][0]["extensions"]["errors"],
+            [{"field": "regionCodes", "location": None, "errorCode": "REGION_CODES_REQUIRE_DIMENSION"}],
+        )
 
 
 class UngroupedRollupTestCase(GraphQLBaseTestCase):

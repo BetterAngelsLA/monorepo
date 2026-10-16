@@ -20,6 +20,7 @@ from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
+from graphql import GraphQLError
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -36,7 +37,7 @@ from reports.selectors import resolve_date_range
 
 from .models import RegionKind
 from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, scope_notes_to_regions
-from .services import interaction_map_data, region_rollup, resolve_region_scope
+from .services import RegionScopeError, interaction_map_data, region_rollup, resolve_region_scope
 from .types import (
     InteractionMapType,
     RegionCountType,
@@ -147,14 +148,27 @@ class Query:
 
         # The one reading of `(dimension, regionCodes)`: an empty list matches nothing and
         # needs no dimension, a non-empty list without one is refused, and an absent list is
-        # no restriction. `resolve_region_scope` raises `RegionScopeError` (a `ValueError`,
-        # which surfaces as a GraphQL error) for the ambiguous case. It is consulted only when
-        # `regionCodes` was sent at all: a `dimension` with no codes has nothing to narrow and
-        # is ignored here, as the docstring says.
+        # no restriction. It is consulted only when `regionCodes` was sent at all: a
+        # `dimension` with no codes has nothing to narrow and is ignored here, as the
+        # docstring says.
         if region_codes is not None:
-            kind, scoped_codes = resolve_region_scope(
-                dimension=dimension.value if dimension else None, codes=region_codes
-            )
+            try:
+                kind, scoped_codes = resolve_region_scope(
+                    dimension=dimension.value if dimension else None, codes=region_codes
+                )
+            except RegionScopeError as error:
+                # A top-level error, because `interactionMap` returns a concrete type and so
+                # cannot carry the `OperationInfo` payload the mutation path uses. The
+                # `{field, errorCode}` entry is the branchable part; the message stays the
+                # human-readable one. See `docs/graphql_errors.md` §2.
+                raise GraphQLError(
+                    str(error),
+                    extensions={
+                        "errors": [
+                            {"field": error.field, "location": None, "errorCode": error.code},
+                        ]
+                    },
+                ) from error
             scoped_notes = (
                 scope_notes_to_regions(scoped_notes, kind=cast(str, kind), codes=scoped_codes)
                 if scoped_codes

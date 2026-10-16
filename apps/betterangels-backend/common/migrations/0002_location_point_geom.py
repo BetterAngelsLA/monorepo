@@ -15,10 +15,10 @@ window; the alternative that avoids the rewrite is an expression index
 (``CREATE INDEX … USING gist ((point::geometry))``) with the cast written into the query
 instead. See ``docs/gis/README.md``.
 
-**The index is deliberately not built here.** ``0003`` adds it with ``AddIndexConcurrently``,
-because a plain ``CREATE INDEX`` is a *second* ``ACCESS EXCLUSIVE`` lock on this table and
-there is no reason to hold the migration's rewrite lock and an index-build lock in one
-statement when Postgres can build the index online. See that module for the detail.
+**The index is deliberately not built here.** ``0003`` adds it concurrently, because a plain
+``CREATE INDEX`` is a *second* ``ACCESS EXCLUSIVE`` lock on this table and there is no reason to
+hold the migration's rewrite lock and an index-build lock in one statement when Postgres can
+build the index online. See that module for the detail.
 
 The expression is written out rather than imported from the model, so that re-typing the
 model field cannot silently change what this migration writes. Only the *callable* has to
