@@ -286,7 +286,13 @@ export function RegionMap({
     // **No total here, deliberately.** The grid is aggregated on the server and the point
     // list is not fetched, so the client has no count to state — and deriving one from the
     // rollup would be the cross-dimension sum the table below is careful not to invite.
-    return `Interaction density${scope}, as a grid of counts. Red is where interactions concentrate, blue where they thin out — the legend is an absolute scale, and the table below has the counts per region.`;
+    //
+    // It does not assert that cells were drawn either. The note read scope can withhold the
+    // whole grid, and a cell-free tile is indistinguishable from a range with nothing in it:
+    // a 204 carries no body, and an MVT has no field to say which it was. The pinned view can
+    // say so — `withheld` arrives in its JSON — but this one cannot, so it describes what the
+    // scale *means* and leaves the figures to the table, which holds either way.
+    return `Interaction density${scope}, as a grid of counts. Where the grid has cells, red is where interactions concentrate and blue where they thin out; the legend is an absolute scale, and the table below has the counts per region.`;
   }, [view, points.length, filteredTo, pointsLoading]);
 
   if (refused || (view === 'heatmap' && densityRefused)) {
