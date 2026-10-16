@@ -343,6 +343,7 @@ def interaction_map_data(
     organization_id: int,
     notes: "QuerySet[Note]",
     limit: int,
+    withheld: bool,
 ) -> InteractionMapType:
     """The interaction points for the given scope, as map pins.
 
@@ -362,4 +363,5 @@ def interaction_map_data(
     return InteractionMapType(
         points=[InteractionPointType(**row) for row in points],
         truncated=truncated,
+        withheld=withheld,
     )

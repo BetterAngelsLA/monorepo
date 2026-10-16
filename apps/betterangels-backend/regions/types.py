@@ -73,7 +73,15 @@ class InteractionMapType:
     ``truncated`` is set when the point cap was reached — the map is then a subset
     of the period's interactions and the UI must say so, because a partial map that
     looks complete is worse than no map.
+
+    ``withheld`` is set when the note read scope removed **every** pin while the
+    period had interactions to show. The payload is then an empty list for a reason
+    that is not "there were none", and a client that cannot tell the two apart
+    reports a permission answer as a fact about the neighbourhood. It is computed by
+    the resolver, the only place that knows what the scope removed; the service
+    assembles what it is given.
     """
 
     points: List[InteractionPointType]
     truncated: bool
+    withheld: bool
