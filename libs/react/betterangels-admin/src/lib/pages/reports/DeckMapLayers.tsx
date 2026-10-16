@@ -306,6 +306,8 @@ export function DeckMapLayers({
   );
   const { apiUrl } = useApiConfig();
   const overlayRef = useRef<GoogleMapsOverlay | null>(null);
+  //: Pending deferred teardown, so a re-mount can cancel it; see the effect below.
+  const teardownRef = useRef<number | null>(null);
 
   // Absolute because deck.gl's TileLayer fetches the template directly; a relative template
   // would resolve against the page origin rather than the API's.
@@ -405,6 +407,11 @@ export function DeckMapLayers({
     if (!map) {
       return;
     }
+    // A re-run cancels a teardown that the *other* effect scheduled; see below.
+    if (teardownRef.current !== null) {
+      window.clearTimeout(teardownRef.current);
+      teardownRef.current = null;
+    }
     if (!overlayRef.current) {
       overlayRef.current = new GoogleMapsOverlay({ layers });
       overlayRef.current.setMap(map);
@@ -413,14 +420,38 @@ export function DeckMapLayers({
     }
   }, [map, layers]);
 
-  useEffect(
-    () => () => {
-      overlayRef.current?.setMap(null);
-      overlayRef.current?.finalize();
-      overlayRef.current = null;
-    },
-    [],
-  );
+  /**
+   * Teardown, **deferred by a tick and cancelled by a re-mount**.
+   *
+   * On a raster map deck.gl sizes and draws its canvas inside Google's `OverlayView.draw()`,
+   * and Google only calls that when the map itself redraws. An overlay attached while the map
+   * is already idle therefore fetches its tiles and paints nothing — measured on the dev
+   * server: the deck canvas stays 1×1, four density tiles arrive with 200s, and nothing
+   * appears until the reader scrolls or moves the map.
+   *
+   * That is the normal case in development, where React's `StrictMode` mounts every effect,
+   * tears it down and mounts it again: an immediate teardown detaches the overlay whose canvas
+   * *was* drawn, and its replacement is attached after the map has gone idle. Deferring the
+   * teardown to the next tick lets the re-mount cancel it, so the overlay that already has a
+   * drawn canvas survives the double-invoke. A real unmount has no re-mount to cancel it and
+   * still releases the WebGL context.
+   *
+   * (`google.maps.event.trigger(map, 'resize')` does not help here: `trigger` only calls the
+   * listeners registered for the event, it does not resize or redraw anything.)
+   */
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+    return () => {
+      teardownRef.current = window.setTimeout(() => {
+        overlayRef.current?.setMap(null);
+        overlayRef.current?.finalize();
+        overlayRef.current = null;
+        teardownRef.current = null;
+      }, 0);
+    };
+  }, [map]);
 
   return null;
 }
