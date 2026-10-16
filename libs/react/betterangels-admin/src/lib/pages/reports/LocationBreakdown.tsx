@@ -108,7 +108,8 @@ export function LocationBreakdown({
    * false when codes are given, so nothing extra is added), so the same rows are already in
    * hand. The picker needs the *unfiltered* set for the opposite reason — a multi-select built
    * from the filtered result collapses to the one region chosen and can never select a second.
-   * One unfiltered rollup satisfies both: `pickable` is it, `shown` is a view of it.
+   * One unfiltered rollup satisfies both: `pickable` is it, and the drill-down's narrowed rows
+   * are derived from it rather than fetched again.
    */
   const {
     rows: availableRegions,
@@ -200,8 +201,11 @@ export function LocationBreakdown({
 
   // Selecting a different dimension invalidates the codes: "4" is an SPA and also a Long
   // Beach council district, so a selection cannot carry across.
+  //
+  // Returning the existing array when it is already empty matters: a fresh `[]` is not
+  // `Object.is`-equal to the old one, so it would schedule a render on mount for no change.
   useEffect(() => {
-    setSelectedCodes([]);
+    setSelectedCodes((codes) => (codes.length === 0 ? codes : []));
   }, [dimension]);
 
   /**
@@ -354,8 +358,10 @@ export function LocationBreakdown({
             loading={dimensionsLoading}
             value={dimension}
             onChange={(value) => {
+              // The selection is cleared by the effect on `dimension`, which also covers a
+              // change from anywhere else; clearing here as well was a second copy of the
+              // same rule.
               setDimension(value);
-              setSelectedCodes([]);
             }}
             style={{ minWidth: 220 }}
             placeholder="All dimensions"

@@ -142,7 +142,7 @@ describe('the reader selection applied to the rollup', () => {
     // part of a drill-down: "outside all boundaries: 291" beside two districts is not an answer.
     const view = regionBreakdownView(rows, ['1']);
 
-    expect(view.shown.map((row) => row.code)).toEqual(['1']);
+    expect(view.assigned.map((row) => row.code)).toEqual(['1']);
     expect(view.unassigned).toEqual([]);
     // The picker still offers the unfiltered set, or a second region could never be chosen.
     expect(view.pickable.map((row) => row.code)).toEqual(['1', '2']);

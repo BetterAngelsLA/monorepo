@@ -130,15 +130,13 @@ export function unassignedRowLabel(
 }
 
 export type RegionBreakdownView = {
-  /** The rollup with the reader's selection applied; the table reads this. */
-  shown: RegionCountType[];
   /** Named regions with interactions — what the table and the drill-down are drawn from. */
   assigned: RegionCountType[];
   /** Every named region with interactions in the dimension, unfiltered: the picker's set. */
   pickable: RegionCountType[];
   /** `pickable`, sorted for reading: numeric codes as numbers, everything else alphabetically. */
   selectable: RegionCountType[];
-  /** The unassigned buckets in `shown`. */
+  /** The unassigned buckets in the selection. */
   unassigned: RegionCountType[];
   hasData: boolean;
   /** Names of the selected regions, for prose. `undefined` when nothing is selected. */
@@ -150,7 +148,7 @@ export type RegionBreakdownView = {
  *
  * The picker still needs the *unfiltered* set — a multi-select built from the filtered result
  * collapses to the one region chosen and can never select a second. So `pickable` is the whole
- * rollup and `shown` is a view of it.
+ * rollup and the narrowed rows are an intermediate here rather than a field the caller reads.
  *
  * **The table's order is the count order**, which the "Interactions" column implements with
  * `defaultSortOrder: 'descend'`. There is deliberately no cross-dimension order to impose: the
@@ -207,7 +205,6 @@ export function regionBreakdownView(
   // Reading `assigned` here called that an empty range — the panel said there were no located
   // interactions when there were, elsewhere — and unmounted `RegionMap` for the duration.
   return {
-    shown,
     assigned,
     pickable,
     selectable,
