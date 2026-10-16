@@ -25,13 +25,20 @@ type UseInteractionMapArgs = {
   enabled?: boolean;
   /** Narrow the map to these regions of `dimension` — "show me the SPA 4 visits". */
   regionCodes?: string[];
+  /**
+   * Cap on the points the server returns. Omitted leaves the endpoint's own default
+   * (`POINT_LIMIT`, 10 000) in force; the server clamps anything above its `POINT_LIMIT_MAX`
+   * (50 000). `truncated` reports whether a cap was hit.
+   */
+  limit?: number;
 };
 
 /**
  * Where the interactions were, as individual points.
  *
  * `truncated` says the point cap was reached, which the UI must surface: a partial map
- * that looks complete is worse than no map.
+ * that looks complete is worse than no map. The cap is the server's default unless `limit` is
+ * passed, and passing `limit` is what the operation's `$limit` variable exists for.
  *
  * Coordinates only. There is deliberately no client or note field on this query,
  * and it is authorized by the note read scope rather than the report scope alone.
@@ -46,6 +53,7 @@ export function useInteractionMap({
   endDate,
   dimension,
   regionCodes,
+  limit,
   enabled = true,
 }: UseInteractionMapArgs) {
   const { data, previousData, loading, error } = useQuery<
@@ -58,6 +66,7 @@ export function useInteractionMap({
       endDate,
       dimension,
       regionCodes,
+      limit,
     },
     skip: !organizationId || !enabled,
   });

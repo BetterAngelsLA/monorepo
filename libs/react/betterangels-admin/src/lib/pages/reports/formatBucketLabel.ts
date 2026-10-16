@@ -10,8 +10,7 @@
  * clock to do it — which makes the output, and any test of it, dependent on where
  * the test runs.  ``new Date(value)`` is worse: it anchors to UTC midnight and
  * renders ``2025-01-31`` as the 30th west of UTC.  Reading the digits keeps the
- * label identical on every machine, so the old implementation fails the test on a
- * UTC CI runner instead of only on a developer's laptop.
+ * label identical on every machine.
  *
  * Anything not shaped like a date is passed through untouched.
  */

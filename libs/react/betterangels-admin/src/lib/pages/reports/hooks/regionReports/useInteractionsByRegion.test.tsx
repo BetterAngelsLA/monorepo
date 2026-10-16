@@ -73,19 +73,21 @@ describe('useInteractionsByRegion', () => {
     let call = 0;
     const link = new ApolloLink(
       () =>
-        new Observable<{ data: { interactionsByRegion: Row[] } }>((observer) => {
-          call += 1;
-          const first = call === 1;
-          const emit = (rows: Row[]) => {
-            observer.next({ data: { interactionsByRegion: rows } });
-            observer.complete();
-          };
-          if (first) {
-            emit(ungrouped);
-          } else {
-            grouped.promise.then(emit);
-          }
-        }),
+        new Observable<{ data: { interactionsByRegion: Row[] } }>(
+          (observer) => {
+            call += 1;
+            const first = call === 1;
+            const emit = (rows: Row[]) => {
+              observer.next({ data: { interactionsByRegion: rows } });
+              observer.complete();
+            };
+            if (first) {
+              emit(ungrouped);
+            } else {
+              grouped.promise.then(emit);
+            }
+          },
+        ),
     );
 
     const client = new ApolloClient({ link, cache: new InMemoryCache() });
@@ -119,5 +121,42 @@ describe('useInteractionsByRegion', () => {
       expect(screen.getByTestId('count').textContent).toBe('1'),
     );
     expect(screen.getByTestId('loading').textContent).toBe('no');
+  });
+
+  it('hands back one frozen empty array while there are no rows', () => {
+    // While the query is in flight `rows` is the fallback. A literal `[]` there is a new
+    // identity on every render, which makes every downstream `useMemo` keyed on `rows`
+    // recompute for the whole round trip.
+    const seen: unknown[] = [];
+
+    function IdentityHarness({ tick }: { tick: number }) {
+      const { rows } = useInteractionsByRegion({
+        organizationId: ORG,
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+      });
+      seen.push(rows);
+      return <span data-testid="tick">{tick}</span>;
+    }
+
+    // A request that never answers, so every render sees the fallback.
+    const link = new ApolloLink(() => new Observable(() => () => undefined));
+    const client = new ApolloClient({ link, cache: new InMemoryCache() });
+    const { rerender } = render(
+      <ApolloProvider client={client}>
+        <IdentityHarness tick={0} />
+      </ApolloProvider>,
+    );
+    rerender(
+      <ApolloProvider client={client}>
+        <IdentityHarness tick={1} />
+      </ApolloProvider>,
+    );
+
+    expect(seen.length).toBeGreaterThanOrEqual(2);
+    expect(seen[0]).toBe(seen[seen.length - 1]);
+    // Frozen, so a consumer that writes to it fails loudly rather than corrupting the shared
+    // instance for every other consumer.
+    expect(Object.isFrozen(seen[0])).toBe(true);
   });
 });

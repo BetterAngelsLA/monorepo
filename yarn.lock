@@ -2331,23 +2331,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@deck.gl/aggregation-layers@npm:9.4.0":
-  version: 9.4.0
-  resolution: "@deck.gl/aggregation-layers@npm:9.4.0"
-  dependencies:
-    "@luma.gl/shadertools": "npm:^9.4.0"
-    "@math.gl/core": "npm:^4.1.0"
-    "@math.gl/web-mercator": "npm:^4.1.0"
-    d3-hexbin: "npm:^0.2.1"
-  peerDependencies:
-    "@deck.gl/core": ~9.4.0
-    "@deck.gl/layers": ~9.4.0
-    "@luma.gl/core": ~9.4.0
-    "@luma.gl/engine": ~9.4.0
-  checksum: 10/031fb210f38df90802bbe6f767a54c9e8414c29cfd68247a3c61b2c2bddcd07296446fa7f1bc4d160ed9364579fc31d44a79e8f256d1637168f419b4c816c0ca
-  languageName: node
-  linkType: hard
-
 "@deck.gl/core@npm:9.4.0":
   version: 9.4.0
   resolution: "@deck.gl/core@npm:9.4.0"
@@ -6043,7 +6026,6 @@ __metadata:
     "@babel/runtime": "npm:^7.25.0"
     "@chromatic-com/storybook": "npm:^4.1.0"
     "@config-plugins/react-native-pdf": "npm:^14.0.0"
-    "@deck.gl/aggregation-layers": "npm:9.4.0"
     "@deck.gl/core": "npm:9.4.0"
     "@deck.gl/extensions": "npm:9.4.0"
     "@deck.gl/geo-layers": "npm:9.4.0"
@@ -15541,13 +15523,6 @@ __metadata:
   dependencies:
     d3-array: "npm:2.5.0 - 3"
   checksum: 10/dc5e980330d891dabf92869b98871b05ca2021c64d7ef253bcfd4f2348839ad33576fba474baecc2def86ebd3d943a11d93c0af26be0a2694f5bd59824838133
-  languageName: node
-  linkType: hard
-
-"d3-hexbin@npm:^0.2.1":
-  version: 0.2.2
-  resolution: "d3-hexbin@npm:0.2.2"
-  checksum: 10/503b3dbb2244751b49c53e45756df2609b89f015848a28b323899e3cfc43aaae0ea65cb69db2148f91d839c320899fed5e7c6bf4cbd333e00013a4b040131581
   languageName: node
   linkType: hard
 

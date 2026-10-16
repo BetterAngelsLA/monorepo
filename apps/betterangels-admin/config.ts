@@ -58,6 +58,6 @@ const apiUrl = resolveApiUrl(configuredApiUrl ?? '');
  * `RegionMap` checks for this and says so.
  */
 const googleMapsApiKey =
-  import.meta.env.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY || '';
+  import.meta.env.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY ?? '';
 
 export { apiUrl, googleMapsApiKey };

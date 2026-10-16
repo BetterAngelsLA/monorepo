@@ -14,6 +14,16 @@ import {
 export type RegionCountType =
   InteractionsByRegionQuery['interactionsByRegion'][number];
 
+/**
+ * One frozen instance for "nothing yet".
+ *
+ * A literal `[]` fallback is a new array identity on every render, so every downstream
+ * `useMemo` keyed on `rows` recomputes for the whole time the query is in flight. Frozen so a
+ * caller that writes to it fails loudly instead of corrupting the shared instance.
+ */
+const EMPTY_ROWS: RegionCountType[] = [];
+Object.freeze(EMPTY_ROWS);
+
 type UseInteractionsByRegionArgs = {
   organizationId: string;
   /** Absent means every dimension at once; buckets then carry their own `kind`. */
@@ -59,7 +69,7 @@ export function useInteractionsByRegion({
   const activeData = data ?? previousData;
 
   return {
-    rows: activeData?.interactionsByRegion ?? [],
+    rows: activeData?.interactionsByRegion ?? EMPTY_ROWS,
     loading,
     error,
   };

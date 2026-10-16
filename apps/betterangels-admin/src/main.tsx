@@ -15,13 +15,11 @@ import App from './app/app';
 /**
  * The API URL is asserted here rather than in `config.ts`.
  *
- * It used to `throw` at the top of that module, which is where a missing environment
- * variable is most obviously caught. That had to move: a top-level `throw` in a module that
- * also contains a function reading `import.meta.env` is mis-compiled by the current
- * toolchain — the module's exports become invisible to importers ("apiUrl is not exported by
- * config.ts") and `vite build` fails outright. Confirmed as a minimal repro on Vite 8.1.5.
- *
- * Same failure, same point in startup, one module over.
+ * A top-level `throw` in a module that also contains a function reading `import.meta.env` is
+ * mis-compiled by the current toolchain — the module's exports become invisible to importers
+ * ("apiUrl is not exported by config.ts") and `vite build` fails outright. Confirmed as a
+ * minimal repro on Vite 8.1.5. Asserting here runs at the same point in startup, one module
+ * later.
  */
 if (!apiUrl) {
   throw new Error(
@@ -29,7 +27,11 @@ if (!apiUrl) {
   );
 }
 
-const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
+// `VITE_APP_BASE_PATH` is not read from the environment: `vite.config.mts` defines it as the
+// output of `tools/shared/get-base-path.mjs`, which never returns `''` (it answers `/` or
+// `/branches/<branch>`). The `??` fallback is therefore unreachable belt-and-braces, and `??`
+// rather than `||` means a deliberately empty base path could never be silently rewritten.
+const basename = import.meta.env.VITE_APP_BASE_PATH ?? '/';
 // createWebFetchClient() is URL-agnostic — CSRF cookies are origin-scoped
 // and the token lives on the same domain as the API.  The buildFetch factory
 // signature exists for the Expo env-switching case; web ignores the apiUrl

@@ -4,18 +4,20 @@
  * deck.gl takes layer data either as an array of objects with accessor functions, or as
  * **binary attributes** — typed arrays plus a length. The array form runs the accessor once per
  * object per update, and every accessor here returns a fresh `[longitude, latitude]` tuple, so
- * ten thousand points meant ten thousand array allocations each time the layer was updated.
- * The binary form allocates two typed arrays once and hands deck the buffer.
+ * the accessor form would allocate one tuple per point on every layer update. The binary form
+ * allocates two typed arrays once and hands deck the buffer.
  *
  * See deck.gl's "Performance Optimization" / binary data section: the accessor form is for
  * convenience, and the binary form is what the layer actually consumes.
  *
  * **Positions become `float32`.** A `Float32Array` cannot hold 34.05 exactly — it stores
  * 34.04999923706055 — so binary attributes trade precision for the buffer. At Los Angeles
- * latitudes the resolution is roughly 2e-6 degrees, a little under 0.2 m, which is well below
- * anything this map draws: the heatmap's kernel is tens of pixels wide, and the cluster bins
- * are 64. It would not be acceptable for the stored point, which is why the backend's
- * `point_geom` keeps full precision and this is only how it reaches the GPU.
+ * latitudes the resolution is roughly 2e-6 degrees, a little under 0.2 m, which is below
+ * anything this map resolves: the density layer paints server-rendered MVT cells, whose
+ * resolution is set by the tile rather than by this buffer, and the cluster view merges points
+ * within `CLUSTER_RADIUS_PX` (50 px), a distance far larger than 0.2 m at any zoom it draws. It
+ * would not be acceptable for the stored point, which is why the backend's `point_geom` keeps
+ * full precision and this is only how it reaches the GPU.
  */
 
 /** The shape deck.gl expects for binary `data`. */

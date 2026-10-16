@@ -41,13 +41,12 @@ export const HEATMAP_RAMP_CSS = `linear-gradient(to right, ${RAMP.map(
  * **Measured at the zoom the map opens at**, which is not the zoom a naive reading of the
  * tile URL suggests: deck.gl's tiles are 512 px and Google's zoom levels are 256 px, so a map
  * at Google zoom 9 asks the endpoint for **z8** tiles. Decoded from what the browser actually
- * loaded (LA County, 30-day window): 368 non-empty cells, counts 1 to 52, median 30 quarter
- * 20, ninetieth percentile 40.
+ * loaded (LA County, 30-day window): 368 non-empty cells, counts 1 to 52, median 30,
+ * ninetieth percentile 40.
  *
- * Measured *before* the tile zoom was understood, a reference of 25 put three quarters of the
- * cells at the top of the ramp and the map read as one flat red mass with no gradient in it —
- * the whole point of a ramp is that most of it is visible. At 50 the peak is red, the median
- * is yellow-orange and the sparse edges are blue.
+ * 50 is chosen so the ramp's range covers that distribution: the peak is red, the median is
+ * yellow-orange and the sparse edges are blue, so most of the ramp is visible rather than the
+ * field flattening into one red mass.
  *
  * The trade this number makes is deliberate and worth stating: the scale is **fixed**, so it
  * does not follow the zoom. A cell covers four times the ground at each zoom step out, so

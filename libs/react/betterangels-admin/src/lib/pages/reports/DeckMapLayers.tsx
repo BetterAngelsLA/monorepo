@@ -14,7 +14,9 @@ import {
   buildClusterIndex,
   clusterRadius,
   clustersForZoom,
+  type BBox,
   type Cluster,
+  type ClusterIndex,
 } from './clusterPoints';
 import { clustersToBinary } from './deckData';
 import { parseColor } from './mapColors';
@@ -23,9 +25,8 @@ import { parseColor } from './mapColors';
  * The map's layers, drawn by deck.gl.
  *
  * Density and boundaries are both `MVTLayer`s over endpoints on the API, and clustering is a
- * client-side binning of the point list. Density used to be a `HeatmapLayer` fed every
- * individual interaction — 10,000 points, about 1 MB — which is why it is now a tile: the
- * server aggregates the points into a grid and the client fetches only the cells in view.
+ * client-side binning of the point list. The density grid is aggregated by the server, so the
+ * client holds one colour per cell it is showing rather than every interaction in the range.
  *
  * ## Why `GoogleMapsOverlay` rather than `<DeckGL>` wrapping `<Map>`
  *
@@ -35,7 +36,6 @@ import { parseColor } from './mapColors';
  * `GoogleMapsOverlay` has no React integration of its own — it is imperative — so it is
  * constructed in an effect against the map from `useMap()`, which is the wrapper pattern
  * vis.gl documents.
- *
  */
 
 /** Shared empty result, so "no clusters" keeps one identity instead of a new array each time. */
@@ -50,17 +50,23 @@ const hexToRgba = (color: string, alpha: number): RgbaTuple => {
 };
 
 /**
- * The density endpoint's tile encoding, recorded here even though none of it is a deck.gl
- * prop — deck.gl has no tile-buffer option and the extent is the MVT spec's, so there is
- * nothing on this side to set. It is written down because it is what the server chose and
- * what the client's rendering depends on:
- *
- * * **extent 4096** (`regions.tiles.TILE_EXTENT`), which the MVT loader reads from the layer
- *   to normalise the geometry.
- * * **buffer 0** (`regions.tiles.DENSITY_TILE_BUFFER`): cells are clipped exactly to the tile
- *   so neighbours meet edge to edge. The boundary layer uses 64, for line continuity, which a
- *   grid must not do — an overlap would draw one cell's count over its neighbour's.
+ * The density grid is clipped exactly to its tile (buffer 0) so neighbouring cells meet edge to
+ * edge; the boundary layer keeps a buffer so its lines stay continuous across tile seams. Both
+ * are the server's choices (`regions.tiles`), and the client sets neither — it depends on them.
  */
+
+/**
+ * Design-system colours the layers paint with, resolved from antd tokens by the caller.
+ *
+ * One shape shared by `DeckMapLayers` and `RegionMap` rather than a structural copy in each:
+ * the object is in the layer memo's dependency list, so the two must agree on every field.
+ */
+export type OverlayColors = {
+  /** Region outlines, and the outline of a cluster bubble. */
+  stroke: string;
+  /** Cluster bubbles' fill. */
+  markFill: string;
+};
 
 export type DeckMapLayersProps = {
   /** Interaction locations. Only the clusters view reads them. */
@@ -77,8 +83,8 @@ export type DeckMapLayersProps = {
   startDate: string;
   endDate: string;
   /**
-   * The density tiles were **refused**, which is a permission answer rather than a fault —
-   * the note read scope is a different permission from the report scope, so a reader can be
+   * The density tiles were **refused**, which is a permission answer rather than a fault: the
+   * note read scope is a different permission from the report scope, so a reader can be
    * entitled to the breakdown and not to the interactions. Reported up so the panel can say
    * so; see `RegionMap`.
    */
@@ -92,12 +98,7 @@ export type DeckMapLayersProps = {
    */
   onDensityLoaded?: () => void;
   /** Design-system colours, resolved from antd tokens by the caller. */
-  overlay: {
-    emptyFill: string;
-    fullFill: string;
-    stroke: string;
-    markFill: string;
-  };
+  overlay: OverlayColors;
 };
 
 /**
@@ -122,30 +123,28 @@ export function isRefusedTileError(error: unknown): boolean {
   return code === 401 || code === 403;
 }
 
-type BuildLayersArgs = {
+export type BuildLayersArgs = {
   points: HeatPoint[];
   view: 'heatmap' | 'clusters';
   regionKind: string | null;
   focusCodes: string[];
   boundaryUrl: string | null;
   densityUrl: string | null;
-  /** Binned once per (points, zoom) by the caller; see `useClusters` below. */
+  /** Binned once per (points, zoom) by the caller; see `DeckMapLayers` below. */
   clusters: Cluster[];
   onDensityRefused?: () => void;
   onDensityLoaded?: () => void;
-  overlay: {
-    emptyFill: string;
-    fullFill: string;
-    stroke: string;
-    markFill: string;
-  };
+  overlay: OverlayColors;
 };
 
 /**
- * One definition of the layer stack.
+ * The layer stack, in draw order.
  *
+ * Exported so its ordering and its accessors can be asserted without a WebGL context: this
+ * environment has none, and both the layer order and the focus styling are behaviour that a
+ * render would not catch.
  */
-function buildLayers({
+export function buildLayers({
   points,
   view,
   regionKind,
@@ -200,7 +199,7 @@ function buildLayers({
         id: 'interaction-clusters',
         // Position and radius baked into buffers. Radius comes from the count, so it is a
         // cheap function of data already in hand — no reason to run an accessor per cluster.
-        data: clustersToBinary(clusters, clusterRadius) as never,
+        data: clustersToBinary(clusters, clusterRadius),
         positionFormat: 'XY',
         radiusUnits: 'pixels',
         filled: true,
@@ -229,12 +228,10 @@ function buildLayers({
     );
   }
 
-  // Pushed last so the strokes land **over** the density field.
-  //
-  // The field is opaque over the area its data bounds. Drawn after the boundaries — which is
-  // what array order used to do — it painted straight over the outlines, so the geography the
-  // reader needs to place the density was hidden by the density itself. A frame belongs on
-  // top of what it frames.
+  // Pushed last so the strokes land **over** the density field. The field is opaque over the
+  // area its data bounds, so boundaries drawn under it are painted over and the geography the
+  // reader needs in order to place the density disappears. A frame belongs on top of what it
+  // frames.
   if (regionKind && boundaryUrl) {
     layers.push(
       new MVTLayer({
@@ -243,11 +240,10 @@ function buildLayers({
         loadOptions: { fetch: { credentials: 'include' } },
         minZoom: 0,
         maxZoom: 16,
-        // **Stroke only.** The fill used to encode each region's interaction count as a colour
-        // and an alpha, which is the same quantity the density grid already encodes as a
-        // colour — two encodings of "where are the interactions", competing for the same
-        // pixels. The reader saw grey districts and no density. Boundaries are the frame, not a
-        // second reading of the data; the table beside the map carries the per-region counts.
+        // **Stroke only.** Filling each region with its interaction count would be a second
+        // encoding of the quantity the density grid already encodes as a colour, competing for
+        // the same pixels. Boundaries are the frame, not a second reading of the data; the
+        // table beside the map carries the per-region counts.
         filled: false,
         stroked: true,
         getLineColor: (feature) => {
@@ -279,6 +275,44 @@ function buildLayers({
   return layers;
 }
 
+/** The map's viewport, in the shape the cluster query takes. */
+type Viewport = {
+  zoom: number;
+  /** `[west, south, east, north]`, or `null` before the map reports bounds. */
+  bounds: BBox | null;
+};
+
+/** `supercluster` wants `[west, south, east, north]`; `LatLngBounds` gives corners. */
+function readViewport(map: google.maps.Map): Viewport {
+  const bounds = map.getBounds();
+  if (!bounds) {
+    return { zoom: map.getZoom() ?? 0, bounds: null };
+  }
+  const southWest = bounds.getSouthWest();
+  const northEast = bounds.getNorthEast();
+  return {
+    zoom: map.getZoom() ?? 0,
+    bounds: [
+      southWest.lng(),
+      southWest.lat(),
+      northEast.lng(),
+      northEast.lat(),
+    ],
+  };
+}
+
+function sameBounds(a: BBox | null, b: BBox | null): boolean {
+  if (a === null || b === null) {
+    return a === b;
+  }
+  return a.every((value, index) => value === b[index]);
+}
+
+/** Equality, so a settled map does not hand the layer memo a new viewport object. */
+function sameViewport(a: Viewport, b: Viewport): boolean {
+  return a.zoom === b.zoom && sameBounds(a.bounds, b.bounds);
+}
+
 export function DeckMapLayers({
   points,
   view,
@@ -292,21 +326,36 @@ export function DeckMapLayers({
   overlay,
 }: DeckMapLayersProps) {
   const map = useMap();
-  const [zoom, setZoom] = useState<number>(10);
-  // Binning is the expensive part of the cluster view, so it is done once per (points, zoom)
-  // rather than inside every layer rebuild.
-  // The tree is built once per dataset — it is a property of the data, and building it is the
-  // expensive half. The per-zoom query against it is sub-millisecond.
-  const clusterIndex = useMemo(() => buildClusterIndex(points), [points]);
-  const clusters = useMemo(
-    // Only queried when the view that draws them is showing: the density grid has no use for
-    // them, and nothing else on the page does either.
-    () => (view === 'clusters' ? clustersForZoom(clusterIndex, zoom) : NO_CLUSTERS),
-    [clusterIndex, zoom, view],
-  );
+
+  /**
+   * The clustering tree for `points`, built in an effect rather than during render.
+   *
+   * `buildClusterIndex` runs `index.load()` over every point synchronously — measured at
+   * ~25 ms for 5,000 — and the points that need it arrive in the same render that first draws
+   * the clusters view, so building during render spends that frame's paint budget on it. As
+   * state it costs one frame with no bubbles instead. The points it was built from travel with
+   * it, so a tree is never drawn against a different point list while the next one is building.
+   */
+  const [clusterIndex, setClusterIndex] = useState<{
+    points: HeatPoint[];
+    index: ClusterIndex;
+  } | null>(null);
+
+  useEffect(() => {
+    if (view !== 'clusters') {
+      return;
+    }
+    // Deferred a tick so the map paints first, and so StrictMode's double-invoke cancels the
+    // first build rather than paying for the synchronous load twice.
+    const handle = window.setTimeout(() => {
+      setClusterIndex({ points, index: buildClusterIndex(points) });
+    }, 0);
+    return () => window.clearTimeout(handle);
+  }, [points, view]);
+
   const { apiUrl } = useApiConfig();
   const overlayRef = useRef<GoogleMapsOverlay | null>(null);
-  //: Pending deferred teardown, so a re-mount can cancel it; see the effect below.
+  /** Pending deferred teardown, so a re-mount can cancel it; see the effect below. */
   const teardownRef = useRef<number | null>(null);
 
   // Absolute because deck.gl's TileLayer fetches the template directly; a relative template
@@ -315,9 +364,10 @@ export function DeckMapLayers({
   // endpoint matches the wire `kind`, which is lowercase. Sending the enum as-is made every
   // tile 404 — measured, `COUNCIL_DISTRICT/8/43/102` 404 against `council_district/8/43/102`
   // 200 with 4.4 kB of geometry — so the boundary layer drew nothing at all.
-  const boundaryUrl = regionKind
-    ? `${apiUrl}/regions/tiles/${regionKind.toLowerCase()}/{z}/{x}/{y}.mvt`
-    : null;
+  let boundaryUrl: string | null = null;
+  if (regionKind) {
+    boundaryUrl = `${apiUrl}/regions/tiles/${regionKind.toLowerCase()}/{z}/{x}/{y}.mvt`;
+  }
 
   // The density grid's own query string. It carries the org, the window and — only when the
   // reader has drilled into regions — the dimension and the codes, which is exactly the
@@ -330,18 +380,70 @@ export function DeckMapLayers({
       return null;
     }
     const params = new URLSearchParams({
-      organizationId,
+      org_id: organizationId,
       start: startDate,
       end: endDate,
     });
     if (regionKind && focusCodes.length > 0) {
       params.set('dimension', regionKind.toLowerCase());
-      for (const code of focusCodes) {
+      // Sorted, because deck.gl caches tiles by URL: the same set of codes picked in a
+      // different order must not be a second URL and a refetch of identical tiles.
+      for (const code of [...focusCodes].sort()) {
         params.append('codes', code);
       }
     }
     return `${apiUrl}/regions/tiles/density/{z}/{x}/{y}.mvt?${params.toString()}`;
   }, [apiUrl, organizationId, startDate, endDate, regionKind, focusCodes]);
+
+  /**
+   * The viewport the cluster bins are cut against, in state so the layer memo sees it.
+   *
+   * `supercluster`'s tree decides membership and counts; the viewport only narrows what is
+   * returned, which is what keeps a high zoom from handing the layers one entry per point.
+   * Seeded from the map rather than from a constant, so the first bin is cut at the level the
+   * map actually opens at.
+   */
+  const [viewport, setViewport] = useState<Viewport | null>(null);
+
+  useEffect(() => {
+    if (!map || view !== 'clusters') {
+      return;
+    }
+    const sync = () => {
+      const next = readViewport(map);
+      setViewport((previous) =>
+        previous && sameViewport(previous, next) ? previous : next,
+      );
+    };
+    sync();
+    // `zoomend`, not `zoom_changed`: the latter fires on every step of a zoom animation, and
+    // each tick would re-bin and rebuild the layer stack. `idle` covers the pan, which matters
+    // because a viewport-narrowed query has to be asked again once the box moves.
+    const listeners = [
+      map.addListener('zoomend', sync),
+      map.addListener('idle', sync),
+    ];
+    return () => {
+      for (const listener of listeners) {
+        listener.remove();
+      }
+    };
+    // `view` is a dependency because the viewport only matters to the cluster bins: with the
+    // density grid showing, a zoom would re-render this subtree and rebuild a layer stack that
+    // cannot have changed.
+  }, [map, view]);
+
+  const clusters = useMemo(() => {
+    if (view !== 'clusters' || viewport === null) {
+      return NO_CLUSTERS;
+    }
+    // Only the tree for the points in hand; until the effect above has built it, the view
+    // draws no bubbles rather than the previous dataset's.
+    if (clusterIndex === null || clusterIndex.points !== points) {
+      return NO_CLUSTERS;
+    }
+    return clustersForZoom(clusterIndex.index, viewport.zoom, viewport.bounds);
+  }, [clusterIndex, points, viewport, view]);
 
   // Stable, so the layer memo is not invalidated by a new closure on every render.
   const handleDensityRefused = useCallback(
@@ -381,25 +483,6 @@ export function DeckMapLayers({
     ],
   );
 
-  // The cluster bins are cut in screen space, so they are a function of the zoom level and
-  // nothing else. This is the listener the domain-driven version needed and no longer does;
-  // clustering is the only reason left to track a level at all.
-  useEffect(() => {
-    if (!map || view !== 'clusters') {
-      return;
-    }
-    setZoom(map.getZoom() ?? 10);
-    const listener = map.addListener('zoom_changed', () => {
-      setZoom(map.getZoom() ?? 10);
-    });
-    return () => {
-      listener.remove();
-    };
-    // `view` is a dependency because the level only matters to the cluster bins: with the
-    // density grid showing, a zoom would re-render this subtree and rebuild a layer stack that
-    // cannot have changed.
-  }, [map, view]);
-
   // One overlay per map, reused across renders. deck.gl diffs the layer array itself, so the
   // overlay is created once and updated with `setProps` — recreating it would throw away the
   // WebGL context on every render.
@@ -423,21 +506,12 @@ export function DeckMapLayers({
   /**
    * Teardown, **deferred by a tick and cancelled by a re-mount**.
    *
-   * On a raster map deck.gl sizes and draws its canvas inside Google's `OverlayView.draw()`,
-   * and Google only calls that when the map itself redraws. An overlay attached while the map
-   * is already idle therefore fetches its tiles and paints nothing — measured on the dev
-   * server: the deck canvas stays 1×1, four density tiles arrive with 200s, and nothing
-   * appears until the reader scrolls or moves the map.
-   *
-   * That is the normal case in development, where React's `StrictMode` mounts every effect,
-   * tears it down and mounts it again: an immediate teardown detaches the overlay whose canvas
-   * *was* drawn, and its replacement is attached after the map has gone idle. Deferring the
-   * teardown to the next tick lets the re-mount cancel it, so the overlay that already has a
-   * drawn canvas survives the double-invoke. A real unmount has no re-mount to cancel it and
-   * still releases the WebGL context.
-   *
-   * (`google.maps.event.trigger(map, 'resize')` does not help here: `trigger` only calls the
-   * listeners registered for the event, it does not resize or redraw anything.)
+   * The constraint is not optional: deck.gl sizes and draws its canvas inside Google's
+   * `OverlayView.draw()`, which the map only calls when it redraws itself, so an overlay that
+   * is detached and then re-attached while the map is already idle can be left with a canvas
+   * nothing ever draws. Deferring the teardown to the next tick lets the re-mount that follows
+   * it in the same tick cancel the timer, so the overlay that already has a drawn canvas
+   * survives; a real unmount has no re-mount to cancel it and still releases the WebGL context.
    */
   useEffect(() => {
     if (!map) {

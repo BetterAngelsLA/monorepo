@@ -1,16 +1,13 @@
 /**
- * Colour maths shared by the two canvas layers.
+ * Colour maths for the map's deck.gl layers.
  *
- * `RegionMap` and `PointLayer` both read their colours from antd design tokens, which arrive
- * as either `#rrggbb` or `rgb(r, g, b)` depending on the token — and the canvas 2D context
- * needs components to interpolate between them (the choropleth ramp) or to apply an alpha to
- * (the cluster marks).
- *
- * These lived as identical private copies in both files. Two copies of a parser is two places
- * for the same edge case to be fixed once and not the other, so they live here instead.
+ * `DeckMapLayers` reads its colours from antd design tokens, which arrive as either `#rrggbb`
+ * or `rgb(r, g, b)` depending on the token, and the density ramp interpolates between stops.
+ * deck.gl is WebGL, so both need `[r, g, b]` component arrays rather than CSS strings —
+ * `parseColor` produces one from a token, `lerpRgb` blends two.
  */
 
-/** An 8-bit RGB triple, as canvas and the ramp tables both want it. */
+/** An 8-bit RGB triple, as the layer colours and the ramp tables both want it. */
 export type Rgb = [number, number, number];
 
 /** Parse `#rrggbb` or `rgb(r,g,b)` into components; antd tokens come as either. */
@@ -29,13 +26,7 @@ export function parseColor(color: string): Rgb {
   return [128, 128, 128];
 }
 
-/** A token with an alpha applied, whether it arrives as hex or as `rgb()`. */
-export function withAlpha(color: string, alpha: number): string {
-  const [r, g, b] = parseColor(color);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-/** Linear blend between two colour components. The one line both layers were repeating. */
+/** Linear blend between two colour components. */
 function lerpChannel(from: number, to: number, t: number): number {
   return Math.round(from + (to - from) * t);
 }
@@ -47,10 +38,4 @@ export function lerpRgb(from: Rgb, to: Rgb, t: number): Rgb {
     lerpChannel(from[1], to[1], t),
     lerpChannel(from[2], to[2], t),
   ];
-}
-
-/** A colour interpolated by `t` between two tokens, as a CSS `rgb()`. */
-export function mixRgb(a: string, b: string, t: number): string {
-  const [r, g, b2] = lerpRgb(parseColor(a), parseColor(b), t);
-  return `rgb(${r},${g},${b2})`;
 }

@@ -21,8 +21,9 @@ import { mergeCss } from '@monorepo/react/shared';
 import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
 import { formatBucketLabel } from './formatBucketLabel';
-import { useReportSummary } from './hooks';
+import { useReportSummary, type ReportSummaryType } from './hooks';
 import { LocationBreakdown } from './LocationBreakdown';
+import { GENERIC_ERROR_MESSAGE } from './reportErrors';
 
 const { RangePicker } = DatePicker;
 
@@ -30,8 +31,6 @@ type IProps = {
   className?: string;
   hasMapsKey?: boolean;
 };
-
-const GENERIC_ERROR_MESSAGE = 'Sorry, something went wrong. Please try again.';
 
 function getDefaultRange(): [Dayjs, Dayjs] {
   const now = dayjs();
@@ -72,6 +71,49 @@ function Metric({
   return <Statistic title={title} value={value} />;
 }
 
+/**
+ * The purposes chart, in one of two shapes.
+ *
+ * A donut of one category is a ring that says only "100%", and the legend, the outside label
+ * and the ring all repeat the same word. A single line states it once. Split into its own
+ * component rather than a ternary in the JSX: both branches are whole elements, which is past
+ * the point the styleguide asks for a guard.
+ */
+function PurposeChart({
+  purposes,
+}: {
+  purposes: ReportSummaryType['notesByPurpose'];
+}) {
+  if (purposes.length === 1) {
+    const only = purposes[0];
+    return (
+      <div className="flex h-[300px] flex-col items-center justify-center gap-1">
+        <span className="text-2xl font-semibold text-neutral-800">
+          {only.count.toLocaleString()}
+        </span>
+        <span className="text-sm text-neutral-500">
+          interactions, all with purpose{' '}
+          <span className="font-medium text-neutral-700">{only.name}</span>
+        </span>
+      </div>
+    );
+  }
+  return (
+    <Pie
+      data={purposes}
+      angleField="count"
+      colorField="name"
+      // Multi-series: the categorical palette is the right answer here, and
+      // `style.fill` would flatten every slice to one colour.
+      height={300}
+      radius={0.8}
+      innerRadius={0.5}
+      label={{ text: 'name', position: 'outside' }}
+      legend={{ position: 'bottom' }}
+    />
+  );
+}
+
 function DownloadIcon({ isDownloading }: { isDownloading: boolean }) {
   if (isDownloading) {
     return <LoadingOutlined />;
@@ -84,15 +126,10 @@ function DownloadIcon({ isDownloading }: { isDownloading: boolean }) {
  *
  * NOTE the prop: `@ant-design/charts` v2 colours marks through `style.fill`. A `color` prop is
  * silently ignored — verified by setting it to magenta and watching the chart render its
- * default blue regardless. Every chart on this page passed `color` and had therefore been
- * using G2's default palette all along.
+ * default blue regardless — so the fill has to be passed where the mark reads it.
  *
- * These were Material palette values floating in a Tailwind + antd app — `#1B3A5C` is a 2018
- * Material navy, `#2E7D32` is Material green 800. antd's colour spec is explicit that the
- * product palette is *derived from* the system palette, so a re-theme would have moved every
- * component except these four charts.
- *
- * Read through `useToken` rather than importing hexes, so a theme change flows through.
+ * Read through `useToken` rather than importing hexes, so a theme change flows through, and the
+ * palette stays the product's rather than a set of values chosen once against an older theme.
  */
 function useChartColors() {
   const { token } = theme.useToken();
@@ -118,14 +155,11 @@ function useChartColors() {
 /**
  * Axis config, hoisted so a re-render does not hand the chart a new object and re-init it.
  *
- * **`axis={{ x, y }}`, not `xAxis`/`yAxis`.** The v1 props are dead in `@ant-design/charts` v2
- * exactly as `color` is: `@antv/g2`'s mark spec has no `xAxis`/`yAxis` member (only `axis`), and
- * `@ant-design/plots`' option map — the same table that turns `colorField` into `encode.color` —
- * has no mapping for either name. Confirmed by grep: neither string occurs anywhere in
- * `@ant-design/plots/es` or `@antv/g2/lib`. So the previous `xAxis={...}`/`yAxis={...}` silently
- * did nothing, and every axis title, the auto-rotated labels and `formatBucketLabel` never
- * reached the chart — the formatter had a unit test that only ever tested the function.
- * The house wrapper shows the working form: `BarChart.tsx` passes `axis: { x, y }`.
+ * **`axis={{ x, y }}`, not `xAxis`/`yAxis`.** `@antv/g2`'s mark spec has no `xAxis`/`yAxis`
+ * member (only `axis`), and `@ant-design/plots`' option map — the same table that turns
+ * `colorField` into `encode.color` — has no mapping for either name. Confirmed by grep: neither
+ * string occurs anywhere in `@ant-design/plots/es` or `@antv/g2/lib`, so the v1 names are dead
+ * and an axis passed that way never reaches the chart.
  *
  * `axis.x` / `axis.y` are positional channels, so they stay correct when the chart's
  * orientation changes; the `countAxis` helper builds the shared "title only" number axis.
@@ -171,8 +205,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
   const [startDate, endDate] = dateRange;
   // `YYYY-MM-DD` is the `Date` scalar's wire format. Named for what it produces rather than
   // recycling the shared `formatScalarDate`, which takes a *scalar string* and returns a
-  // *display* string — the opposite direction, and it was shadowed by a local of that name
-  // here, so the two were easy to confuse.
+  // *display* string — the opposite direction.
   const startStr = toDateString(startDate.toDate());
   const endStr = toDateString(endDate.toDate());
 
@@ -205,8 +238,13 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
 
   const handleDownload = () => download(startStr, endStr, activeOrg?.id);
 
-  const totalServices =
-    summary?.topProvidedServices?.reduce((s, x) => s + (x.count ?? 0), 0) ?? 0;
+  // `topProvidedServices` is capped at 15 by the backend (`reports.selectors.note_top_services`),
+  // so this sum is the interactions attributed to the 15 most provided services — not a total
+  // over every service, which the summary does not carry. The label states the cap rather than
+  // claiming a total the number cannot support.
+  const topProvidedServicesTotal =
+    summary?.topProvidedServices?.reduce((sum, row) => sum + (row.count ?? 0), 0) ??
+    0;
 
   return (
     <div className={mergeCss(['flex flex-col gap-6', className])}>
@@ -333,7 +371,10 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
             </Col>
             <Col xs={24} sm={6}>
               <Card>
-                <Statistic title="Services Provided" value={totalServices} />
+                <Statistic
+                  title="Top 15 Provided Services"
+                  value={topProvidedServicesTotal}
+                />
               </Card>
             </Col>
           </Row>
@@ -388,35 +429,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
             {(summary.notesByPurpose?.length ?? 0) > 0 && (
               <Col xs={24} lg={12}>
                 <ChartCard title="Top Purposes">
-                  {/* A donut of one category is a ring that says only "100%", and the
-                      legend, the outside label and the ring all repeat the same word. A
-                      single line states it once. */}
-                  {summary.notesByPurpose.length === 1 ? (
-                    <div className="flex h-[300px] flex-col items-center justify-center gap-1">
-                      <span className="text-2xl font-semibold text-neutral-800">
-                        {summary.notesByPurpose[0].count.toLocaleString()}
-                      </span>
-                      <span className="text-sm text-neutral-500">
-                        interactions, all with purpose{' '}
-                        <span className="font-medium text-neutral-700">
-                          {summary.notesByPurpose[0].name}
-                        </span>
-                      </span>
-                    </div>
-                  ) : (
-                    <Pie
-                      data={summary.notesByPurpose}
-                      angleField="count"
-                      colorField="name"
-                      // Multi-series: the categorical palette is the right answer here, and
-                      // `style.fill` would flatten every slice to one colour.
-                      height={300}
-                      radius={0.8}
-                      innerRadius={0.5}
-                      label={{ text: 'name', position: 'outside' }}
-                      legend={{ position: 'bottom' }}
-                    />
-                  )}
+                  <PurposeChart purposes={summary.notesByPurpose} />
                 </ChartCard>
               </Col>
             )}
