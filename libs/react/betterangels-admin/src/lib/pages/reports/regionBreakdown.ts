@@ -200,13 +200,19 @@ export function regionBreakdownView(
   }
 
   // Deliberately ignores loading: a refetch must not unmount the map.
+  //
+  // And deliberately the **unfiltered** rollup, not `assigned`. A drill-down outlives the data
+  // it was chosen from: change the date range with a region selected and the rollup refetches
+  // unfiltered, so a region with interactions in the old window can have none in the new one.
+  // Reading `assigned` here called that an empty range — the panel said there were no located
+  // interactions when there were, elsewhere — and unmounted `RegionMap` for the duration.
   return {
     shown,
     assigned,
     pickable,
     selectable,
     unassigned,
-    hasData: assigned.length > 0,
+    hasData: pickable.length > 0,
     filteredToName,
   };
 }

@@ -457,22 +457,31 @@ export function LocationBreakdown({
       )}
 
       {hasData && dimension !== undefined && (
-        <Table<RegionCountType>
-          className="mt-4"
-          size="small"
-          // The named regions of this dimension; a code is unique within one. `kind` is in the
-          // key so it stays unique if the rollup ever spans dimensions, though this table only
-          // renders with one selected.
-          rowKey={(row) => `${row.kind}-${row.code}`}
-          columns={columns}
-          dataSource={assigned}
-          // The table owns its own loading state rather than the page swapping in a
-          // spinner: replacing the content unmounts `RegionMap`, which tears down and
-          // rebuilds the Google map and collapses the page height, so the reader's scroll
-          // position jumps. `rowsLoading` also drives the inline indicator above.
-          loading={rowsLoading}
-          pagination={{ pageSize: 10, hideOnSinglePage: true }}
-        />
+        <>
+          {/* The drill-down is empty while the range is not: distinct from "no located
+              interactions for this range" above, which is about the range itself. */}
+          {!rowsLoading && selectedCodes.length > 0 && assigned.length === 0 && (
+            <p className="mt-4 text-center text-sm text-neutral-500">
+              No interactions in the selected regions for this range.
+            </p>
+          )}
+          <Table<RegionCountType>
+            className="mt-4"
+            size="small"
+            // The named regions of this dimension; a code is unique within one. `kind` is in the
+            // key so it stays unique if the rollup ever spans dimensions, though this table only
+            // renders with one selected.
+            rowKey={(row) => `${row.kind}-${row.code}`}
+            columns={columns}
+            dataSource={assigned}
+            // The table owns its own loading state rather than the page swapping in a
+            // spinner: replacing the content unmounts `RegionMap`, which tears down and
+            // rebuilds the Google map and collapses the page height, so the reader's scroll
+            // position jumps. `rowsLoading` also drives the inline indicator above.
+            loading={rowsLoading}
+            pagination={{ pageSize: 10, hideOnSinglePage: true }}
+          />
+        </>
       )}
 
       {/* Reachable in both views: an ungrouped reader — the default view — must still see that

@@ -158,4 +158,14 @@ describe('the reader selection applied to the rollup', () => {
       false,
     );
   });
+
+  it('does not call a stale drill-down an empty range', () => {
+    // The rollup is refetched unfiltered when the date range changes, so a region selected out
+    // of the old window can be absent from the new one. The range still has located
+    // interactions; reporting none unmounted `RegionMap` and collapsed the panel.
+    const view = regionBreakdownView([region({ code: '2' })], ['1']);
+
+    expect(view.assigned).toEqual([]);
+    expect(view.hasData).toBe(true);
+  });
 });
