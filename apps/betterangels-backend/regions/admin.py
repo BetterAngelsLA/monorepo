@@ -55,6 +55,3 @@ class RegionAdmin(GISModelAdmin):
         # until the next import. Replacing a dimension is the importer's job, which does it
         # in one transaction and rebuilds the pieces with it.
         return False
-
-    def get_readonly_fields(self, request: object, obj: object = None) -> tuple[str, ...]:
-        return READONLY_FIELDS

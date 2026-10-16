@@ -428,6 +428,14 @@ class Command(BaseCommand):
             # publisher's current vintage should not linger as a stale region.
             # Pieces cascade with their region.
             Region.objects.filter(kind=source.kind).delete()
+            # `bulk_create`, so `full_clean()` never runs — a deliberate deviation from the
+            # styleguide's "services call full_clean() before save()", which exists so the
+            # model's rules are reachable from the API. Here they are not the gate: this command
+            # is the only writer, it validates the boundary before it gets this far (an empty or
+            # non-polygonal geometry aborts the run), and row-by-row cleaning over every region
+            # of every dimension would cost more than it catches. The database constraints
+            # remain — the `kind`/`code` uniqueness and the `geom` validity check — so a bad row
+            # still fails loudly rather than landing.
             Region.objects.bulk_create(regions, batch_size=200)
             pieces = build_region_pieces(kind=source.kind)
 

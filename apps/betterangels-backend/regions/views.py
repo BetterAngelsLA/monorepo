@@ -29,7 +29,7 @@ from reports.selectors import resolve_date_range
 from .models import RegionKind
 from .selectors import org_notes_in_range
 from .services import RegionScopeError, resolve_region_scope
-from .tiles import DENSITY_LAYER, MVT_CONTENT_TYPE, density_tile, region_tile
+from .tiles import MVT_CONTENT_TYPE, density_tile, region_tile
 
 #: Slippy-map limits. z0 is the whole world; z16 is past the detail these boundaries carry, and
 #: without a ceiling a client can ask for a zoom that makes PostGIS encode thousands of
@@ -214,12 +214,11 @@ class DensityTileView(APIView):
             x=x,
             y=y,
             # The region scope is applied inside the tile statement rather than by narrowing
-            # the note queryset here: it is a boundaries-first semi-join, and `density_tile`
-            # and `interactionMap` share `selectors.REGION_LOCATIONS_SQL`, so they cannot
-            # disagree about what "inside the region" means.
+            # the note queryset here: it is a boundaries-first test, and `density_tile` and
+            # `interactionMap` share `selectors.REGION_MEMBERSHIP_SQL`, so they cannot disagree
+            # about what "inside the region" means.
             region_kind=region_kind,
             region_codes=region_codes,
-            layer=DENSITY_LAYER,
         )
         if not tile:
             return HttpResponse(status=204)

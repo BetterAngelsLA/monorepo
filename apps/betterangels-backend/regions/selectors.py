@@ -270,9 +270,13 @@ def region_counts(
             # that hides an uncovered neighbourhood.
             unassigned = with_location - totals.get(scope, 0)
             if unassigned < 0:
-                # Unreachable: `totals` is a subset of `with_location` under identical
-                # org/date predicates. Loud rather than dropped, so a future change to either
-                # query surfaces here instead of reporting a nonsensical bucket.
+                # A **server invariant**, not input validation, and deliberately not one of the
+                # coded errors `resolve_region_scope` raises: nothing the caller sent can cause
+                # this, so there is no client action to branch on. It means the two figures
+                # disagree about which notes are located, which is a bug here rather than a bad
+                # request — so it stays loud, and it is unreachable by construction because both
+                # sides now come from `org_notes_in_range` under one predicate. A change that
+                # reintroduces a second copy of that predicate is what this would catch.
                 raise ValueError(
                     f"{scope}: {totals.get(scope, 0)} located notes attributed to a region, "
                     f"but only {with_location} located note(s) in range"
