@@ -185,10 +185,14 @@ type RegionMapProps = {
   /** The app owns the key; the lib only needs to know whether one exists. */
   hasMapsKey?: boolean;
   /**
-   * The point query was **refused** — the reader's role cannot see individual interactions.
-   * Rendered as the permission notice, in place, rather than thrown: the rollup beside it is a
-   * separate query that succeeded, so the panel must not be replaced. See `LocationBreakdown`
-   * and `isRefusalError`.
+   * The reader's role **withheld** the interactions — either the point query was refused
+   * outright, or the API answered with an empty pinned set and `withheld` set, which is the
+   * note read scope removing every pin. Both mean the same thing to the reader, so both get the
+   * permission notice, in place, rather than thrown: the rollup beside it is a separate query
+   * that succeeded, so the panel must not be replaced.
+   *
+   * Without the second case an empty payload reads as "0 interactions" — a claim about the
+   * neighbourhood that the client is in no position to make. See `LocationBreakdown`.
    */
   refused?: boolean;
   /**

@@ -71,6 +71,9 @@ export function useInteractionMap({
     [activeData],
   );
   const truncated = activeData?.interactionMap?.truncated ?? false;
+  // The note scope removed every pin while the period had some. Held across a variables change
+  // like the points are, so a refetch cannot flash "no interactions" over a permission answer.
+  const withheld = activeData?.interactionMap?.withheld ?? false;
 
-  return { points, truncated, loading, error };
+  return { points, truncated, withheld, loading, error };
 }

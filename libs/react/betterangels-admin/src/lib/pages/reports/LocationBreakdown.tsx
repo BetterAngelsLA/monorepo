@@ -141,6 +141,7 @@ export function LocationBreakdown({
   const {
     points,
     truncated,
+    withheld: pointsWithheld,
     loading: pointsLoading,
     error: mapError,
   } = useInteractionMap({
@@ -424,7 +425,7 @@ export function LocationBreakdown({
               pointsLoading={pointsLoading}
               truncated={truncated}
               hasMapsKey={hasMapsKey}
-              refused={mapRefused}
+              refused={mapRefused || pointsWithheld}
               failed={mapFailed}
               filteredTo={breakdown.filteredToName}
               focusCodes={selectedCodes}
