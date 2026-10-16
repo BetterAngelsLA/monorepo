@@ -393,7 +393,11 @@ UNGROUPED_ROLLUP_QUERY = """
 
 REGION_DIMENSIONS_QUERY = """
     query RegionDimensions {
-        regionDimensions
+        regionDimensions {
+            value
+            label
+            plural
+        }
     }
 """
 
@@ -537,7 +541,12 @@ class RegionDimensionsQueryTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.reader)
         response = self.execute_graphql(REGION_DIMENSIONS_QUERY)
         self.assertIsNone(response.get("errors"), response.get("errors"))
-        self.assertEqual(response["data"]["regionDimensions"], ["CITY"])
+        # The names travel with the value, so a client renders the vocabulary instead of keeping
+        # its own copy of it — and the plural is the part that cannot be derived from the label.
+        self.assertEqual(
+            response["data"]["regionDimensions"],
+            [{"value": "CITY", "label": "City", "plural": "Cities"}],
+        )
 
 
 class RegionQueryAuthenticationTestCase(GraphQLBaseTestCase):

@@ -49,8 +49,10 @@ class RegionKind(models.TextChoices):
 
     Values are the wire and DB identifiers, so keep them stable. The GraphQL enum is published
     as ``RegionDimension`` (the ``name=`` above), the name clients already select against, and
-    ``label`` is the single place the display names live. This is the house pattern for a
-    dimension carried into GraphQL — see ``shelters/enums.py``.
+    ``label`` is the display name. Both are published to clients through
+    ``RegionDimensionInfo``, so a client renders them rather than keeping a second copy that a
+    seventh dimension would silently fall through. This is the house pattern for a dimension
+    carried into GraphQL — see ``shelters/enums.py``.
     """
 
     ZIP = "zip", "ZIP Code"
@@ -59,6 +61,19 @@ class RegionKind(models.TextChoices):
     SUPERVISORIAL_DISTRICT = "supervisorial_district", "Supervisorial District"
     SPA = "spa", "Service Planning Area"
     COC = "coc", "Continuum of Care"
+
+
+#: Plural display names, for the picker's "All …" control. Written out rather than derived from
+#: ``RegionKind.label``: "City" + "s" is not a word, and neither is "Continuum of Care" + "s".
+#: Published alongside the labels so the client does not keep its own copy of either.
+REGION_KIND_PLURALS: dict[str, str] = {
+    RegionKind.ZIP: "ZIP Codes",
+    RegionKind.CITY: "Cities",
+    RegionKind.COUNCIL_DISTRICT: "City Council Districts",
+    RegionKind.SUPERVISORIAL_DISTRICT: "Supervisorial Districts",
+    RegionKind.SPA: "Service Planning Areas",
+    RegionKind.COC: "Continuums of Care",
+}
 
 
 class Region(BaseModel):

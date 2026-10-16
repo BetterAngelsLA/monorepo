@@ -13,6 +13,7 @@ from typing import List, Optional
 import strawberry
 
 from common.graphql.types import LatitudeScalar, LongitudeScalar
+from regions.models import RegionKind
 
 
 @strawberry.enum
@@ -64,6 +65,20 @@ class InteractionPointType:
     latitude: LatitudeScalar
     longitude: LongitudeScalar
     interacted_at: datetime
+
+
+@strawberry.type
+class RegionDimensionInfo:
+    """One dimension the report can group by, with the names to render it.
+
+    ``label`` and ``plural`` travel with the value rather than being left to each client: a
+    client that spells them out holds a second copy of the vocabulary, and a dimension added
+    later falls through its lookup instead of appearing.
+    """
+
+    value: RegionKind
+    label: str
+    plural: str
 
 
 @strawberry.type

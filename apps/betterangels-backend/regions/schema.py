@@ -35,12 +35,13 @@ from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import resolve_date_range
 
-from .models import RegionKind
+from .models import REGION_KIND_PLURALS, RegionKind
 from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, scope_notes_to_regions
 from .services import RegionScopeError, interaction_map_data, region_rollup, resolve_region_scope
 from .types import (
     InteractionMapType,
     RegionCountType,
+    RegionDimensionInfo,
     UnassignedReason,
 )
 
@@ -193,16 +194,27 @@ class Query:
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def region_dimensions(self, info: Info) -> List[RegionKind]:
-        """Dimensions that actually have boundaries loaded.
+    def region_dimensions(self, info: Info) -> List[RegionDimensionInfo]:
+        """Dimensions that actually have boundaries loaded, with their display names.
 
         Lets the report offer only groupable dimensions instead of presenting a
         control that returns nothing because ``import_regions`` has not run for it.
 
+        The labels travel with the value so a client renders the vocabulary rather than
+        keeping its own copy of it; a dimension added later would otherwise fall through
+        that copy's lookup and render as a bare code.
+
         ``IsAuthenticated`` only, deliberately: this exposes which boundary sets exist,
         not any client data. It reads no organization and takes no organization argument.
         """
-        return [RegionKind(kind) for kind in available_kinds()]
+        return [
+            RegionDimensionInfo(
+                value=kind,
+                label=kind.label,
+                plural=REGION_KIND_PLURALS[kind.value],
+            )
+            for kind in (RegionKind(loaded) for loaded in available_kinds())
+        ]
 
 
 __all__ = ["Query", "RegionCountType", "RegionKind", "UnassignedReason"]
