@@ -127,11 +127,12 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       gdal-bin
 
 # Playwright (Chromium) runtime dependencies — lets devs run the Playwright e2e
-# suites locally, and lets CI launch the browser it installs per run.
+# suites locally, and lets CI launch the browser baked into the image by the
+# `playwright` stage below.
 # Provenance: snapshot of playwright-core 1.62's `debian13-x64` deps (tools +
-# chromium) — not an executed version pin. Browsers come from yarn.lock via
-# post-create.sh; after a Playwright upgrade, re-sync this list if a launch
-# reports a missing shared library. See apps/shelter-e2e/README.md.
+# chromium) — not an executed version pin. After a Playwright upgrade, re-sync
+# this list if a launch reports a missing shared library. See
+# apps/shelter-e2e/README.md.
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
@@ -169,6 +170,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       libxfixes3 \
       libxkbcommon0 \
       libxrandr2
+
 ENV PATH=/workspace/.venv/bin:$PATH:/home/betterangels/.local/bin
 RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betterangels \
     && chown -R betterangels:betterangels /workspace /home/betterangels
@@ -213,8 +215,22 @@ COPY --chown=betterangels --parents \
 RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
     yarn install
 
+# Playwright's browser binaries, installed once at image build instead of on
+# every CI run. `FROM yarn` deliberately: the revision then comes from the same
+# `yarn install` as node_modules, so it cannot drift from yarn.lock the way the
+# hand-written system-library list above can.
+# They land in Playwright's cache directory under $HOME, outside /workspace —
+# which is why `production` has to copy them over below.
+FROM yarn AS playwright
+RUN yarn playwright install chromium
+
 # Production Build
 FROM base AS production
 COPY --from=uv-stage --link /workspace /workspace
 COPY --from=yarn --link /workspace /workspace
+# Playwright's cache directory, not /workspace — the node_modules copy above
+# brings none of it along. A literal path on purpose: if Playwright's default
+# ever moves, this COPY fails loudly rather than shipping an image with no
+# browser in it.
+COPY --from=playwright /home/betterangels/.cache/ms-playwright /home/betterangels/.cache/ms-playwright
 COPY --chown=betterangels . /workspace

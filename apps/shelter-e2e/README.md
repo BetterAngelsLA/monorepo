@@ -8,8 +8,10 @@ or any deployed environment (branch preview, DEV).
 **Prerequisites** (dev container):
 
 - The container image ships Chromium's system libraries (see the Playwright block
-  in the root `Dockerfile`).
-- Browser binaries are downloaded automatically at container creation
+  in the root `Dockerfile`). CI runs in the image's `production` stage, which
+  additionally bakes the browser binaries themselves (the `playwright` stage).
+- The dev container's `development` stage does not include those binaries, so
+  locally they are downloaded at container creation
   (`tools/scripts/post-create.sh`). On an older container, rebuild it — or just run
   `yarn playwright install chromium` once.
 - Running the suite from a **host** checkout instead of the container works the
@@ -105,8 +107,8 @@ Anonymous, client-side flows so far:
     one is marked `test.fail` — see the file). The map's own behaviour belongs
     with the component in the lib.
   - `pages/home/shelter-search.spec.ts`: the search entry (which opens
-    `/search`), plus the results count/source line and the deployed-only empty
-    state.
+    `/search`), the results count/source line, and the deployed-only base-path
+    check.
   - `pages/sign-in/form.spec.ts`: sign-in form enable/disable logic.
 - `lib/` is imported through `lib/index.ts` (e.g.
   `import { VIEWPORTS, assertInlineNav } from '../../../lib'`):
@@ -123,9 +125,14 @@ Environment notes for the home specs:
   `VITE_SHELTER_API_URL` (see `apps/shelter-web/.env.local`). With the local
   backend not running the panel stays in its pre-search state — the specs
   tolerate both states.
-- The exact empty-results copy ("0 of 0 locations" / "No results" / "Try
-  searching for something else.") depends on the environment's data, so it is
-  only asserted against deployed environments (`BASE_URL`, e.g. a PR preview).
+- The results line depends on the environment's data — `0 locations` +
+  `(based on search area)` before a search resolves, `N of M locations` +
+  `(based on map area)` after — so the specs assert tolerant patterns rather
+  than exact strings.
+- Exact empty-state copy is not asserted anywhere. Whether a searched area holds
+  public shelters is data, not code, and asserting it made the suite depend on
+  what a given environment happens to contain; that belongs to a component test
+  with a mocked response.
 
 ## Troubleshooting
 
@@ -138,12 +145,38 @@ Environment notes for the home specs:
 | `Timed out waiting 60000ms from config.webServer`                             | The dev server didn't come up. Run `yarn shelter` on its own to see its error — usually a port clash or a missing `apps/shelter-web/.env.local`.                         |
 | Page shows "The server is configured with a public base URL of /branches/..." | A deployed `BASE_URL` missed the branch-scoped base path — include the full `/branches/<branch>/` segment.                                                               |
 
-## CI (future)
+## CI
 
-Same specs are designed to run per-PR against the branch preview, GitHub-hosted:
+Runs in the `🧪 E2E shelter-web (preview)` step of
+[`.github/workflows/default.yml`](../../.github/workflows/default.yml), inside
+the same monorepo container every other CI step uses — not a host runner with
+`setup-node`, so nothing is installed at test time:
 
-1. checkout + `setup-node` (22.21.1, yarn cache) + `yarn install`
-2. `yarn playwright install --with-deps chromium` (runners have sudo; this also
-   installs the system libraries there)
-3. run `shelter-e2e:e2e` with `BASE_URL` pointed at the preview deploy
-4. post results as a PR comment
+- **Browsers** come from the image (`playwright` stage in the `Dockerfile`,
+  built from the same `yarn.lock` as `node_modules`). The step's
+  `yarn playwright install chromium` is therefore a no-op, kept as a check that
+  the revision the checkout expects is the one the image carries.
+- **`BASE_URL`** points at the branch preview and is passed with
+  `docker compose run -e`: `docker-compose-ci.yml` enumerates what reaches the
+  container, so exporting it here would leave the suite starting its own dev
+  server and testing a local build instead — which looks like a pass. The skip
+  count distinguishes the two: one skipped test means it reached the preview,
+  two means it did not.
+- **Order** is after `deploy`, which returns only once the edge serves the
+  revision just built, so the run describes this commit rather than whatever was
+  deployed before it.
+- **Gated on `nx affected`**: `shelter-web` affected means this commit was built
+  and deployed; `shelter-e2e` affected means the specs changed and are worth
+  checking against what is deployed. Neither means the deploy step deployed
+  nothing, so the run would report on another commit's revision.
+- **`--skip-nx-cache`** on the run: replaying a cached result would report a
+  local run as if it had tested the deployed site.
+
+`nx affected -t e2e` is deliberately not used: `BASE_URL` is one value for the
+whole container, so a second suite in the same invocation would be handed the
+wrong origin.
+
+The `list,json` reporters write a JSON report to `PLAYWRIGHT_JSON_OUTPUT_NAME`,
+which the step points inside the artifact path; the
+`shelter-e2e-report-<branch>` artifact carries that plus the HTML report and
+traces. Posting the results as a PR comment is not wired up yet.

@@ -295,8 +295,9 @@ jobs:
 
           echo "▶ BASE_URL=$BASE_URL"
 
-          # The image carries Chromium's system libraries; post-create installs
-          # the browser itself, and post-create never runs in CI.
+          # The browser is baked into the image (the `playwright` stage in the
+          # Dockerfile), so this is a no-op — kept as a cheap check that the
+          # revision this checkout expects is the one the image carries.
           yarn playwright install chromium
 
           # `--skip-nx-cache`: replaying a cached result would report a local run
