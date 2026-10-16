@@ -115,27 +115,29 @@ def _assigned_counts(
     **The boundaries drive and the points are probed.** That is the whole trick: the scan is
     over the lookup polygons and the GiST index on ``point_geom`` is probed for each, which
     is the direction PostGIS can index — the plan shows
-    ``Index Cond: (point_geom @ lu.geom)``. Reversing it — a ``LATERAL`` keyed on the
+    ``Index Cond: (point_geom @ r.geom)``. Reversing it — a ``LATERAL`` keyed on the
     interaction, asking "which region is this point in" — puts the points on the inner side
     and probes them once per interaction instead.
 
     Measured on the real LA layers (431 regions, 5,685 pieces, 4,000 locations), all six
-    dimensions at once: 45 ms for a 20,000-interaction window and 30 ms for a
-    2,041-interaction one. The spatial cost tracks *distinct locations* rather than
-    interactions, so it amortises as a report window grows.
+    dimensions at once: **~85 ms** for the 20,000-interaction window and **~48 ms** for a
+    2,461-interaction one. The spatial cost tracks *distinct locations* rather than
+    interactions, so the total grows sublinearly — 1.8× the time for 8× the notes — and the
+    per-interaction cost falls as the window grows.
 
     **The view is what keeps the plan in this direction.** Pointed straight at
     ``regions_regionpiece`` the planner flips the join round on a selective window and drives
-    from the notes instead; the view presents it one relation to drive from, which is what it
-    needs to pick the indexed side.
+    from the notes instead — 206 ms against 39 ms for the same result. The view presents it
+    one relation to drive from, which is what it needs to pick the indexed side.
 
     ``ST_Covers`` alone carries the index condition, so there is no explicit ``&&``. Adding
-    one measures *slower* (91 ms against 45 ms): the redundant predicate constrains the
+    one measures *slower* (342 ms against 70 ms): the redundant predicate constrains the
     join order the planner would otherwise pick for itself.
 
-    No ``kind`` predicate. One pass over every dimension's pieces costs about what one
-    dimension costs (45 ms against 28 ms), so a single-dimension rollup filters the same
-    result in Python instead of paying for a second query shape.
+    No ``kind`` predicate. One pass over every dimension's pieces costs more than one
+    dimension alone (85 ms against 46 ms for ``zip``), which is the price of one query shape
+    serving both the grouped and the ungrouped view; the single-dimension rollup filters the
+    same result in Python rather than paying for a second shape.
 
     Grouped by kind **and** code: without the kind, SPA 1, council district 1 and
     supervisorial district 1 collapse into one bucket.
