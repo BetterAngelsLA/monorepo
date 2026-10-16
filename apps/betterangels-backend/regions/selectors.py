@@ -27,6 +27,12 @@ _NOTE_TABLE = Note._meta.db_table
 _LOCATION_TABLE = Location._meta.db_table
 _REGION_TABLE = Region._meta.db_table
 
+#: The spatial predicate itself, with the aliases every raw statement in the app uses: ``lu`` is
+#: the lookup view, ``l`` the location table. Split out from the join below so a statement that
+#: has already joined ``l`` — the density tile joins it to scope the notes — can apply the same
+#: predicate without restating it, which is what keeps the rule in one place.
+REGION_MEMBERSHIP_SQL = "ST_Covers(lu.geom, l.point_geom)"
+
 #: The point→region predicate, **boundaries-first**: the selected regions' lookup geometry
 #: drives and the GiST index on ``Location.point_geom`` is probed.
 #:
@@ -38,7 +44,7 @@ _REGION_TABLE = Region._meta.db_table
 REGION_JOIN_SQL = f"""
     FROM {REGION_LOOKUP_VIEW} lu
     JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
-    JOIN {_LOCATION_TABLE} l ON ST_Covers(lu.geom, l.point_geom)
+    JOIN {_LOCATION_TABLE} l ON {REGION_MEMBERSHIP_SQL}
 """
 
 #: The location ids a ``(kind, codes)`` selection covers. Returns location ids, one row each.

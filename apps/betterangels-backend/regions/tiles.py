@@ -31,7 +31,8 @@ from django.db.models import QuerySet
 from common.models import Location
 from notes.models import Note
 
-from .selectors import _REGION_TABLE, REGION_LOCATIONS_SQL
+from .models import REGION_LOOKUP_VIEW
+from .selectors import _REGION_TABLE, REGION_MEMBERSHIP_SQL
 from .services import resolve_region_scope
 
 #: The location table, taken from the model rather than written out, so a ``db_table``
@@ -158,21 +159,6 @@ scoped AS (
     {scoped}
 )"""
 
-#: The region semi-join, present only when the read is scoped to region codes.
-#:
-#: **Boundaries drive and the points are probed**, the direction ``selectors._assigned_counts``
-#: documents: one pass over the selected regions, probing the GiST index on ``point_geom``.
-#: The statement is ``selectors.REGION_LOCATIONS_SQL``, imported rather than rewritten, so the
-#: density tile, the rollup and ``interactionMap``'s ``regionCodes`` filter share one definition
-#: of "this point is in this region" — `regions_regionlookup`'s two arms included.
-#:
-#: Its ``DISTINCT`` is load-bearing: a location may fall in more than one piece of the same
-#: region, and without it the note would be counted once per piece.
-_DENSITY_REGION = """
-, region_locations AS (
-    {region_locations_sql}
-)"""
-
 #: The seen-from-space part of the statement: the tile's Web Mercator envelope, the grid origin,
 #: and the cell size derived from it. ``ST_TileEnvelope`` is the origin as well as the clip, so
 #: no floating-point drift accumulates across the tile.
@@ -237,9 +223,31 @@ FROM prepared p
 WHERE geom IS NOT NULL
 """
 
-#: The membership test the region CTE's ids are joined through.
-_DENSITY_REGION_FILTER = """
-      AND l.id IN (SELECT id FROM region_locations)"""
+#: The region membership test, as an ``EXISTS`` rather than a join.
+#:
+#: A join *can* return a note once per selected region whose boundary contains its location, and
+#: same-kind boundaries overlap — 27 ZIP and 91 city pairs on the LA fixture. ``EXISTS`` cannot:
+#: one output row per note, which is what the per-cell count means. The CTE of ids this replaced
+#: got the same guarantee from its ``DISTINCT``, so ``EXISTS`` preserves it by construction
+#: rather than by relying on the sample. No location in the fixture falls inside two ZIPs, so a
+#: join would in fact agree here — that is a property of the sample, not of the boundaries.
+#:
+#: Still tile-bounded, unlike the CTE: a CTE listing every location in the selected regions is
+#: bounded by the *region*, so a z14 tile holding 11 locations paid for all 3,999 of Los
+#: Angeles'. This test is correlated on the location, so it is evaluated only for rows that
+#: already survived the tile's ``&&`` above.
+#:
+#: The predicate text is ``selectors.REGION_MEMBERSHIP_SQL``, imported rather than rewritten,
+#: so the rollup, ``interactionMap``'s filter and this tile cannot disagree about what "inside
+#: the region" means.
+_DENSITY_REGION_FILTER = f"""
+      AND EXISTS (
+          SELECT 1
+          FROM {REGION_LOOKUP_VIEW} lu
+          JOIN {_REGION_TABLE} rr
+            ON rr.id = lu.region_id AND rr.kind = %s AND rr.code = ANY(%s)
+          WHERE {REGION_MEMBERSHIP_SQL}
+      )"""
 
 
 def density_tile(
@@ -290,17 +298,19 @@ def density_tile(
     params: list[Any] = [*scoped_params]
     sql = "WITH " + _DENSITY_SCOPED.format(scoped=scoped_sql)
 
-    if region_codes is not None:
-        sql += _DENSITY_REGION.format(region_locations_sql=REGION_LOCATIONS_SQL)
-        params += [region_kind, list(region_codes)]
-
     sql += _DENSITY_BOUNDS
     params += [z, x, y, DENSITY_CELLS_PER_TILE]
 
+    # The region parameters follow the tile's rather than preceding them: the join they bind
+    # sits inside `cells`, which the bounds CTE precedes in the statement. A `%s` must be bound
+    # in the order it appears, and nothing type-checks that beyond these two lines.
     sql += _DENSITY_CELLS.format(
         location_table=_LOCATION_TABLE,
         region_filter=_DENSITY_REGION_FILTER if region_codes is not None else "",
     )
+    if region_codes is not None:
+        params += [region_kind, list(region_codes)]
+
     sql += _DENSITY_ENCODE
     params += [TILE_EXTENT, DENSITY_TILE_BUFFER, layer, TILE_EXTENT]
 
