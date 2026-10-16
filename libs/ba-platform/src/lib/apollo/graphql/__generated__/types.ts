@@ -1442,6 +1442,7 @@ export type InteractionMapType = {
   __typename: 'InteractionMapType';
   points: Array<InteractionPointType>;
   truncated: Scalars['Boolean']['output'];
+  withheld: Scalars['Boolean']['output'];
 };
 
 export type InteractionPointType = {
@@ -2591,7 +2592,7 @@ export type Query = {
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
   referral: ReferralType;
   referrals: ReferralTypeOffsetPaginated;
-  regionDimensions: Array<RegionDimension>;
+  regionDimensions: Array<RegionDimensionInfo>;
   reportSummary: ReportSummaryType;
   reservation: ReservationType;
   reservations: ReservationTypeOffsetPaginated;
@@ -2997,6 +2998,13 @@ export enum RegionDimension {
   SupervisorialDistrict = 'SUPERVISORIAL_DISTRICT',
   Zip = 'ZIP'
 }
+
+export type RegionDimensionInfo = {
+  __typename: 'RegionDimensionInfo';
+  label: Scalars['String']['output'];
+  plural: Scalars['String']['output'];
+  value: RegionDimension;
+};
 
 export enum RelationshipTypeEnum {
   Aunt = 'AUNT',
