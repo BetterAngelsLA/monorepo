@@ -23,8 +23,8 @@
  */
 
 import Supercluster from 'supercluster';
+import type { HeatPoint } from './heatmapMath';
 
-export type ClusterPoint = { latitude: number; longitude: number };
 export type Cluster = { latitude: number; longitude: number; count: number };
 
 /** Where clustering stops: above this every interaction draws alone. */
@@ -58,7 +58,7 @@ export type ClusterIndex = Supercluster<PointProps, ClusterProps>;
  * Build the clustering tree. The property of the **data**, so it belongs in a memo keyed on the
  * points — never in the per-zoom path.
  */
-export function buildClusterIndex(points: ClusterPoint[]): ClusterIndex {
+export function buildClusterIndex(points: HeatPoint[]): ClusterIndex {
   const index = new Supercluster<PointProps, ClusterProps>({
     radius: CLUSTER_RADIUS_PX,
     maxZoom: MAX_CLUSTER_ZOOM,

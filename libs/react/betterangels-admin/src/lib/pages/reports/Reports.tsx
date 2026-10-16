@@ -62,9 +62,12 @@ function Metric({
       <Statistic
         title={title}
         value="—"
-        className="text-neutral-400"
-        // The dash is only meaningful with the reason attached.
-        suffix={<span className="text-xs font-normal">{emptyHint}</span>}
+        // The dash is only meaningful with the reason attached, and both read as secondary.
+        // The colour has to sit on these nodes rather than on the root: `Statistic` sets `color`
+        // on its own title and content elements, and a colour inherited from the root loses to
+        // a declaration on the element itself.
+        valueRender={(node) => <span className="text-neutral-400">{node}</span>}
+        suffix={<span className="text-xs font-normal text-neutral-400">{emptyHint}</span>}
       />
     );
   }
