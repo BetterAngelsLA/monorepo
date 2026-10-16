@@ -1,8 +1,8 @@
 /**
  * The shared Playwright bootstrap for the Reports-page verification scripts.
  *
- * All three scripts need the same thing before they can assert anything: Chrome, a context, the
- * session cookies, the Reports page, and a collector for page errors.
+ * All the Reports-page verification runs need the same thing before they can assert anything:
+ * Chrome, a context, the session cookies, the Reports page, and a collector for page errors.
  *
  * The cookie injection is the part worth having exactly one copy of. The API sets
  * `Set-Cookie: sessionid=…` with **no `Domain` attribute**, so the cookie is host-only: a page
@@ -19,7 +19,7 @@ import { chromium } from 'playwright';
 export const DEFAULT_BASE =
   'http://localhost:8090/branches/gis-regions-frontend';
 
-/** `BASE` override, or the branch preview. One default for all three scripts. */
+/** `BASE` override, or the branch preview. One default for every verification run. */
 export function reportBaseUrl() {
   return process.env.BASE ?? DEFAULT_BASE;
 }

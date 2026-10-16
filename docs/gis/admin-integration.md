@@ -59,7 +59,9 @@ KPIs above. It provides:
 - a **drill-down selector** listing the regions that have interactions, with counts, so
   the map can answer "show me the SPA 4 visits" rather than only "every visit, coloured
   by SPA";
-- a **region table** with the unassigned buckets labelled by cause;
+- a **region table** of the named regions, with the unassigned buckets labelled by cause in a
+  separate panel beneath the map — printing them in both places showed the reader the same
+  number twice;
 - `RegionMap`, which draws region boundaries from the tile endpoint when a grouping is chosen,
   with a **Heatmap** / **Clusters** toggle in its card header and a `filteredTo` caption when
   the map is narrowed.

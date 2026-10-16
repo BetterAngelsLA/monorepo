@@ -20,6 +20,7 @@ import {
 } from './clusterPoints';
 import { clustersToBinary } from './deckData';
 import { parseColor } from './mapColors';
+import { isRefusalStatus } from './reportErrors';
 
 /**
  * The map's layers, drawn by deck.gl.
@@ -120,7 +121,7 @@ export function isRefusedTileError(error: unknown): boolean {
   const message = String((error as Error)?.message ?? '');
   const status = /fetch failed (\d{3})|Failed to fetch resource[^(]*\((\d{3})\)/.exec(message);
   const code = Number(status?.[1] ?? status?.[2]);
-  return code === 401 || code === 403;
+  return isRefusalStatus(code);
 }
 
 export type BuildLayersArgs = {

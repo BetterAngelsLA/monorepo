@@ -42,6 +42,17 @@ function httpStatusOf(extensions: Readonly<Record<string, unknown>> | undefined)
 }
 
 /**
+ * Whether an HTTP status is a refusal rather than a fault.
+ *
+ * Exported because the density tiles reach this decision from a different shape — a loaders.gl
+ * message string rather than an Apollo error — and the policy is the half that must not
+ * diverge. A caller that has a status should ask this rather than restate the set.
+ */
+export function isRefusalStatus(status: number): boolean {
+  return REFUSAL_STATUSES.has(status);
+}
+
+/**
  * Whether an Apollo error is a refusal rather than a fault.
  *
  * `ServerError`/`ServerParseError` carry the HTTP status; a GraphQL error over a 200 carries a
@@ -50,7 +61,7 @@ function httpStatusOf(extensions: Readonly<Record<string, unknown>> | undefined)
  */
 export function isRefusalError(error: unknown): boolean {
   if (ServerError.is(error) || ServerParseError.is(error)) {
-    return REFUSAL_STATUSES.has(error.statusCode);
+    return isRefusalStatus(error.statusCode);
   }
   if (CombinedGraphQLErrors.is(error)) {
     return error.errors.some((graphQLError) => {
@@ -58,7 +69,7 @@ export function isRefusalError(error: unknown): boolean {
       if (REFUSAL_CODES.has(String(extensions?.['code'] ?? ''))) {
         return true;
       }
-      return REFUSAL_STATUSES.has(httpStatusOf(extensions) ?? 0);
+      return isRefusalStatus(httpStatusOf(extensions) ?? 0);
     });
   }
   return false;
