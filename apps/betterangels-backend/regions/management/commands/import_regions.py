@@ -2,8 +2,9 @@
 """Import official LA region boundary layers into the ``Region`` table.
 
 Pulls each dimension from its publisher's ArcGIS REST endpoint as GeoJSON, honours the
-declared CRS, normalises to ``MultiPolygon / EPSG:4326``, and upserts on ``(kind,
-code)`` so re-running is idempotent.
+declared CRS, normalises to ``MultiPolygon / EPSG:4326``, and replaces the dimension
+wholesale — the existing rows are deleted and the new ones bulk-created, so a code that
+vanished from the publisher's current vintage cannot linger.
 
     python manage.py import_regions                        # everything
     python manage.py import_regions --kind council_district --kind spa
@@ -302,21 +303,27 @@ class Command(BaseCommand):
                 raise CommandError(f"no such file: {path}")
         else:
             path = fetch_geojson(source)
-            # A ~22 MB temp file per fetch, so it is always removed — including on
-            # the failure paths below, which is exactly when it would leak.
+            # The fetched payload is a temp file per fetch, so it is always removed —
+            # including on the failure paths below, which is exactly when it would leak.
             downloaded = path
         try:
-            return self._ingest(source, path=path, dry_run=dry_run)
+            # `downloaded is not None` is the one place the local/remote distinction is known,
+            # so it is carried through rather than re-derived from the file name in `_ingest`.
+            return self._ingest(source, path=path, dry_run=dry_run, fetched=downloaded is not None)
         finally:
             if downloaded is not None:
                 downloaded.unlink(missing_ok=True)
 
-    def _ingest(self, source: RegionSource, *, path: Path, dry_run: bool) -> int:
+    def _ingest(self, source: RegionSource, *, path: Path, dry_run: bool, fetched: bool) -> int:
         self.stdout.write(f"  source file: {path}")
 
+        # Provenance is the *publisher's* claim, read from the ArcGIS service metadata. A local
+        # `--source` file was not fetched from that service, so probing its endpoint for
+        # provenance would both misattribute the file and stall an offline import for the
+        # request timeout — the whole point of `--source`.
         metadata = (
             fetch_service_metadata(source)
-            if not path.name.startswith("tmpshape")
+            if fetched
             else {
                 "attribution": "",
                 "item_id": "",

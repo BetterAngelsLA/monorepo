@@ -9,21 +9,19 @@ from __future__ import annotations
 
 import math
 
-from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.test import SimpleTestCase, TestCase
 
 from regions.models import Region, RegionKind, RegionPiece
 from regions.services import (
     UNASSIGNED,
     RegionCodeFilter,
+    RegionScopeError,
     build_region_pieces,
     parse_region_code_filter,
+    resolve_region_scope,
 )
 
-
-def box(coords: tuple[tuple[float, float], ...]) -> MultiPolygon:
-    return MultiPolygon(Polygon(coords, srid=4326), srid=4326)
-
+from .helpers import box
 
 # A ring with more vertices than SUBDIVIDE_VERTEX_THRESHOLD, so the subdivision branch is
 # genuinely exercised. A small ring is stored whole, so a fixture built from one asserts
@@ -85,6 +83,30 @@ class ParseRegionCodeFilterTestCase(SimpleTestCase):
         self.assertTrue(parsed.keep_unassigned)
 
 
+class ResolveRegionScopeTestCase(SimpleTestCase):
+    """The one reading of ``(dimension, codes)`` that every code-scoped surface shares."""
+
+    def test_absent_codes_are_no_restriction_and_need_no_dimension(self) -> None:
+        self.assertEqual(resolve_region_scope(dimension=None, codes=None), (None, None))
+
+    def test_a_dimension_without_codes_is_refused_rather_than_ignored(self) -> None:
+        with self.assertRaises(RegionScopeError):
+            resolve_region_scope(dimension=RegionKind.ZIP.value, codes=None)
+
+    def test_a_non_empty_code_list_requires_a_dimension(self) -> None:
+        with self.assertRaises(RegionScopeError) as caught:
+            resolve_region_scope(dimension=None, codes=["90012"])
+        self.assertEqual(str(caught.exception), "regionCodes requires a dimension")
+
+    def test_a_non_empty_code_list_with_a_dimension_is_returned_verbatim(self) -> None:
+        self.assertEqual(resolve_region_scope(dimension="zip", codes=["90012"]), ("zip", ["90012"]))
+
+    def test_an_empty_code_list_matches_nothing_and_needs_no_dimension(self) -> None:
+        """The `?codes=` shape: unambiguous, so it is not an error and does not demand a kind."""
+        self.assertEqual(resolve_region_scope(dimension=None, codes=[]), (None, []))
+        self.assertEqual(resolve_region_scope(dimension="zip", codes=[]), ("zip", []))
+
+
 class BuildRegionPiecesTestCase(TestCase):
     """`build_region_pieces` writes with raw SQL, which bypasses the model layer.
 
@@ -125,3 +147,34 @@ class BuildRegionPiecesTestCase(TestCase):
         first = RegionPiece.objects.count()
         build_region_pieces(kind=RegionKind.SPA.value)
         self.assertEqual(RegionPiece.objects.count(), first, "re-running duplicated pieces")
+
+    def test_the_rebuild_holds_an_advisory_lock_for_the_dimension(self) -> None:
+        """A concurrent rebuild must not interleave with this one.
+
+        DELETE-then-INSERT alone does not serialise: under READ COMMITTED the second run cannot
+        see the first run's uncommitted INSERTs, so both DELETEs run and both INSERTs follow,
+        leaving two sets of pieces. Asserted on ``pg_locks`` from inside the *same* outer
+        transaction, because an advisory **xact** lock is held until that transaction ends —
+        which is exactly the property being relied on. A plain row-count assertion cannot see
+        this, since a single-threaded test never has a second run to interleave.
+        """
+        from django.db import connection, transaction
+
+        from regions.services import _PIECES_LOCK_NAMESPACE, _pieces_lock_key
+
+        Region.objects.create(kind=RegionKind.SPA, code="1", name="SPA 1", geom=box(SIMPLE))
+
+        with transaction.atomic():
+            build_region_pieces(kind=RegionKind.SPA.value)
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT count(*) FROM pg_locks "
+                    "WHERE locktype = 'advisory' AND pid = pg_backend_pid() AND classid = %s",
+                    [_PIECES_LOCK_NAMESPACE],
+                )
+                held = cursor.fetchone()[0]
+
+        self.assertGreaterEqual(held, 1, "the rebuild took no advisory lock, so a concurrent run could interleave")
+
+        # And the key is the dimension's, not a constant shared with every other kind.
+        self.assertNotEqual(_pieces_lock_key(RegionKind.SPA.value), _pieces_lock_key(RegionKind.ZIP.value))

@@ -8,9 +8,9 @@ supervisorial district, …).
 
 | Document | What it is |
 |---|---|
-| [dev-2604-shapefile-spike.md](dev-2604-shapefile-spike.md) | **The spike deliverable.** Picks one region, names the official source, and shows the verified load + query process end to end. Read this first. |
-| [spatial-implementation-audit.md](spatial-implementation-audit.md) | **What the GIS code does and where it falls short** — the documented-practice choices, plus two measured defects (broken shared edges between adjacent regions, and nothing enforcing geometry validity). Read before changing anything spatial. |
-| [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) | **The source inventory** — 283 services probed live, 266 real feature counts, 228 verified URLs, plus 33 supersessions and 19 dead/empty sources. Read this before importing anything. |
+| [dev-2604-shapefile-spike.md](dev-2604-shapefile-spike.md) | **The spike record**, not the shipped design: it picks one region, names the official source, and shows the verified spike-time load + query process. Its prototype command and `poc_*` tables are gone — read §8 and this README for what ships. |
+| [spatial-implementation-audit.md](spatial-implementation-audit.md) | **What the GIS code does and where it falls short** — the documented-practice choices, the measured defect (broken shared edges between adjacent regions), and how geometry validity is constrained. Read before changing anything spatial. |
+| [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) | **The source inventory.** Its own counts (services probed, real feature counts, verified URLs, supersessions, dead sources) are a point-in-time probe recorded in that document; treat it, not a restatement elsewhere, as the catalog's source of truth. Read this before importing anything. |
 
 ## The code
 
@@ -46,19 +46,20 @@ Tests: `apps/betterangels-backend/regions/tests/`
 - **Every boundary set leaves coverage gaps**, so the API returns an explicit unassigned bucket
   rather than dropping interactions that fall outside every region.
 - **The heavy layers need subdivided lookup geometry.** One city multipolygon has ~310k vertices
-  in one row, so the GiST index prunes nothing: the rollup takes 4,950 ms at 20k interactions
-  against the whole boundaries. `RegionPiece` holds subdivided parts and the rollup joins that —
-  **45 ms**. See `dev-2604-shapefile-spike.md` §7a.
+  in one row, so one bounding box matches nearly every point in the city and the real work lands
+  in the vertex recheck: the rollup takes 4,950 ms at 20k interactions against the whole
+  boundaries. `RegionPiece` holds subdivided parts and the rollup joins that — **45 ms**. See
+  `regions/models.py` (`RegionPiece`) and `regions/selectors.py`.
 - **The rollup is a live spatial join; nothing is precomputed and nothing is backfilled.** It is
   written boundaries-first so it probes the GiST index on `Location.point_geom`. Its cost tracks
   *distinct locations* rather than interactions, so a wider report window does not widen it:
-  **45 ms** at 20k interactions and **210 ms** at 500k.
+  **45 ms** at 20,000 interactions and **30 ms** at 2,041.
 - **Adding `Location.point_geom` rewrites `common_location` once**, under an `ACCESS EXCLUSIVE`
   lock. Plan a window, or use the expression index instead — see
   `common/migrations/0002_location_point_geom.py`.
 
-`spatial-implementation-audit.md` carries the measurements behind each of these, and the two
-known defects.
+`spatial-implementation-audit.md` carries the measurements behind each of these, and the one
+known defect.
 
 ## Region grouping (backend, shipped)
 
@@ -107,7 +108,27 @@ Santa Monica and Beverly Hills, with a small unassigned bucket for Florence-Fire
 unincorporated. A "No location recorded" row holds the tenth of notes left without one.
 
 **No outbound network?** `import_regions --source <file.geojson> --kind <dimension>` loads one
-dimension from a local file instead of fetching. It takes exactly one `--kind` per run.
+dimension from a local file instead of fetching. It takes exactly one `--kind` per run, and it
+does **not** probe the publisher's endpoint for provenance — a local file was not fetched from
+the service, so the import is fully offline.
+
+### Running the tests from a worktree
+
+`pytest` builds and drops a test database named from `POSTGRES_TEST_NAME`. Several worktrees
+sharing one `monorepo-db-1` container will otherwise collide on the default name, so give each
+session its own:
+
+```bash
+docker exec -e POSTGRES_TEST_NAME=test_regions_fix \
+  -w /workspace/.worktrees/<worktree>/apps/betterangels-backend \
+  monorepo-better-angels-1 python -m pytest regions -q --create-db
+# then, because --create-db leaves nothing behind on a failure:
+docker exec monorepo-db-1 psql -U postgres -c "DROP DATABASE IF EXISTS test_regions_fix;"
+```
+
+Pass it on the command that needs it rather than writing it into `.env`: the shared database is
+the default on purpose, and a checkout permanently pointed elsewhere hides that and leaves stale
+databases behind. `docs/styleguides/python.md` has the mechanics.
 
 See `admin-integration.md` for the GraphQL surface, the permission gates, and the
 codegen build-order gotcha.
@@ -147,18 +168,19 @@ GraphQL: `interactionsByRegion(organizationId, dimension, startDate, endDate, re
 `regionDimensions` (which dimensions have boundaries loaded).
 
 Boundaries are **not** served over GraphQL: the map draws them as vector tiles from
-`/regions/tiles/<kind>/<z>/<x>/<y>.mvt`. A dimension's polygons are 1.25 MB across the five LA
-layers and a tile in view is a few kB, so the tiles are the whole reason the map does not pull
-a whole layer to draw a corner of it.
+`/regions/tiles/<kind>/<z>/<x>/<y>.mvt`. Measured on the 431-region dev fixture, the six loaded
+dimensions are 27 MB of GeoJSON against 1.0 MB for the simplified display geometry, while a DTLA
+tile at z10 is 1.3–13 kB depending on the dimension (the per-tile bytes are in `regions/tiles.py`).
+That gap is the whole reason the map does not pull a whole layer to draw a corner of it.
 
 Interactions are served the same way, as a **density grid**:
-`/regions/tiles/density/<z>/<x>/<y>.mvt`, with `organizationId` required and
+`/regions/tiles/density/<z>/<x>/<y>.mvt`, with `org_id` required and
 `start`/`end`/`dimension`/`codes` optional. Each non-empty cell of a fixed grid over the tile
 is one polygon carrying its `count`, so the map draws an area rather than a point cloud. The
 cell is a fraction of the tile — 64 across, so 8 px at deck.gl's 512 px tile size at every
 zoom — which keeps the grid aligned with tile edges and makes one cell the same number of
 screen pixels however far in the reader is. On the LA County fixture an 8 px cell at z9 gives
-~1,250 non-empty cells and **30 kB** for a county-scale tile, against **1 MB** for the same
+~1,250 non-empty cells and **30 kB** for a county-scale tile, against **~1.1 MB** for the same
 month's points through `interactionMap`. It is computed on the fly from `Note` and `Location`;
 nothing is stored, so there is no migration and nothing to keep fresh. A tile with no cells is
 a **204**, because deck.gl reads an empty body with a success status as a malformed tile.
@@ -175,12 +197,15 @@ it. `regionDimensions` requires only an authenticated session, and so does the b
 endpoint: both serve public reference boundaries, identical for every tenant, and neither
 selects an org- or client-scoped column.
 
-`codes` scopes the grid to regions of `dimension`, and is refused without one — a code is
-ambiguous across dimensions. Region membership is answered against the same
-`regions_regionlookup` view the rollup reads, but with the **boundaries driving** and the
-points probed: the correlated `EXISTS` in `selectors.scope_notes_to_regions` is the same
-question asked note-by-note, and on the live fixture it costs 2,600 ms a tile against 2 ms
-written this way.
+`codes` scopes the grid to regions of `dimension`. A **non-empty** `codes` without a `dimension`
+is refused, because a code is ambiguous across dimensions; an **empty** `codes` (`?codes=`,
+`?codes=,,`) matches nothing in any dimension, so it is a 204 rather than a 400 — the same
+reading `interactionMap(regionCodes: [])` gives it. A `dimension` without `codes` is refused too,
+rather than ignored. Region membership is answered against the same `regions_regionlookup` view
+the rollup reads, read **boundaries-first** so the GiST index on `Location.point_geom` is probed:
+`selectors.REGION_LOCATIONS_SQL` is the single definition, spliced into the tile statement and
+used directly by `scope_notes_to_regions`, so `interactionMap`'s region filter cannot disagree
+with the rollup about what "inside the region" means.
 
 ### Sources that look right but are not
 

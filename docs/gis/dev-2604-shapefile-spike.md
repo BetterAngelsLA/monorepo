@@ -4,8 +4,9 @@
 Ticket: <https://betterangels.atlassian.net/browse/DEV-2604>
 
 **Status of this document:** every command, query, and output shown below was **executed and
-verified** against the PostGIS 17.5 / PostGIS 3.5 + GeoDjango dev environment on 2026-10-13.
-Nothing here is speculative.
+verified** against the PostGIS 17.5 / PostGIS 3.5 + GeoDjango dev environment on 2026-10-13,
+except where a section is marked *not applicable* (the prototype it described has since been
+deleted). The measurements are a point-in-time record of that environment, not a spec.
 
 > **Read this as the spike record, not as the shipped design.** The prototype it describes
 > used a scratch command (`load_region_boundaries`) writing to a table named
@@ -20,7 +21,7 @@ Nothing here is speculative.
 |---|---|
 | Identify a single region, official source | [§1](#1-the-region-and-the-official-source) — LA City Council Districts, City of LA GeoHub |
 | Make a process to download + load into the db | [§4](#4-the-load-process) — working command; shipped as `import_regions`, the spike-time `load_region_boundaries` is deleted |
-| Writeup of the landscape | [§2](#2-landscape-what-types-of-data-exist-and-where) — 143 verified endpoints in [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) |
+| Writeup of the landscape | [§2](#2-landscape-what-types-of-data-exist-and-where), with the counts and the probe date recorded in [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) |
 | What types of data exist | [§2](#2-landscape-what-types-of-data-exist-and-where) |
 | Where does it exist | [§2](#2-landscape-what-types-of-data-exist-and-where) + [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) |
 | How to load it | [§4](#4-the-load-process) |
@@ -61,9 +62,10 @@ The download was performed and verified — 368,885 bytes, 15 features, 33,027 v
 
 ## 2. Landscape: what types of data exist, and where
 
-The full catalog is [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) — 228 verified URLs
-individually HTTP-probed**, with CRS, geometry type, and `maxRecordCount` read from live
-`?f=pjson` responses. Coverage:
+The full catalog is [la-geodata-sources-expanded.md](la-geodata-sources-expanded.md): every
+entry there was HTTP-probed, with CRS, geometry type and `maxRecordCount` read from live
+`?f=pjson` responses. That document records its own counts and the date it was probed, and it is
+the catalog's source of truth rather than any restatement here. Coverage:
 
 1. **Administrative boundaries** — council districts, supervisorial districts, city/county
    boundaries, census tracts/block groups/blocks, ZCTA, LA Times neighborhoods, community plan areas.
@@ -80,7 +82,7 @@ Highest-value endpoints for this epic, all verified:
 | LA City Council Districts | `maps.lacity.org/lahub/rest/services/Boundaries/MapServer/13` | 3857 |
 | LA County Supervisorial | `public.gis.lacounty.gov/.../Political_Boundaries/FeatureServer/27` | 2229 |
 | Service Planning Areas (2022) | `services.arcgis.com/RmCCgQtiZLDCtblq/.../Service_Planning_Areas_2022_view/FeatureServer/4` | 2229 |
-| HUD CoC grantee areas | `services1.arcgis.com/4yjifSiIG17X0gW4/.../Continuum_of_Care_Grantee_Areas_from_HUD/FeatureServer/0` | 3857 |
+| HUD CoC grantee areas | `services.arcgis.com/VTyQ9soqVukalItT/.../Continuum_of_Care_Grantee_Areas/FeatureServer/0` | 3857 |
 | Census tracts (2020) | TIGERweb `.../tigerWMS_Census2020/MapServer/6` | 4269 |
 | Shelters (from 211 LA) | `public.gis.lacounty.gov/.../LMS_Data_Public/MapServer/158` | 2229 |
 
@@ -89,8 +91,11 @@ Highest-value endpoints for this epic, all verified:
 fallback** — it cannot store null geometry (silently drops records), truncates field names to
 10 chars, and depends on a `.cpg` to avoid mojibake on LA place names like *Cañada*.
 
-**Two gaps that need a decision:** LAHSA publishes **no geometry at all**, and LACDMH service
-area polygons are **not public**. Both are noted in the catalog.
+**Two sources are not loaded as dimensions here:** LAHSA publishes its own SPA geometry (the
+shipped `spa` dimension is LA County DPH's), and LACDMH service-area polygons have no canonical
+public layer. Both are catalog questions rather than statements about this spike —
+[la-geodata-sources-expanded.md](la-geodata-sources-expanded.md) records the current source status
+of each, which is the inventory's to state, not this document's.
 
 ---
 
@@ -105,7 +110,7 @@ This matters because it makes the job much smaller than it looks.
 | GDAL | `gdal-bin` **already in the production image** (`Dockerfile:127`) |
 | Geometry today | Exactly **four point fields**, all `PointField(srid=4326, geography=True)` (`Shelter.geolocation`, `ClientProfile.residence_geolocation`, HMIS, `common.Location.point`). **No polygon field anywhere.** |
 | The data we want to aggregate | `Note.location` → `common.Location.point` (`notes/models.py:153`). Every interaction already has a point. |
-| Reusable precedent | `shelters/types/filters.py:196` already does `Polygon.from_bbox` + `geolocation__within` |
+| Reusable precedent | `shelters/types/filters.py:208-210` already does `Polygon.from_bbox` + `geolocation__within` |
 | Hand-keyed today | `Shelter.city_council_district` / `supervisorial_district` are hand-entered integers that polygons would let us **derive** |
 
 **So the shape is: interactions already have points → load region polygons → spatial-join the
@@ -114,6 +119,9 @@ two.** No new geometry needs to be captured from users.
 ---
 
 ## 4. The load process
+
+> **Not applicable to the shipped code — do not run this.** The prototype command and its
+> `poc_*` tables no longer exist.
 
 The command reproduced below is the spike prototype, `load_region_boundaries`. The shipped
 command is `regions/management/commands/import_regions.py` (§6), which writes the `regions`
@@ -254,9 +262,11 @@ geography caveat that makes this non-obvious.
 
 ## 6. Sample code
 
+> **Not applicable to the shipped code — the listings below are the deleted prototype.**
+
 **`apps/betterangels-backend/regions/management/commands/import_regions.py`** — the shipped
-loader. The listing below is the spike prototype, not the shipped command; it is complete,
-runnable, and produced every result in this document. Core loop:
+loader. The listing below is the spike prototype, not the shipped command; it produced every
+result in this document. Core loop:
 
 ```python
 from django.contrib.gis.gdal import DataSource
@@ -380,7 +390,9 @@ mostly *safety* properties rather than the happy path, because that is where a l
 does damage: a point inside a region is counted in it; a point in no region comes back
 as an unassigned bucket rather than being dropped; a note with no location still
 reports, so the regional total reconciles against the KPI row; filtering by code
-narrows the rollup; boundaries are served as GeoJSON with the right SRID.
+narrows the rollup. Boundaries are **not** served as GeoJSON — they are vector tiles
+(`regions/urls.py`), encoded to Web Mercator by `ST_AsMVTGeom`; `regions/schema.py` says the
+same thing from the GraphQL side.
 
 The CRS traps in §7.1–§7.4 are guarded at import time rather than by fixtures: the
 importer refuses geometry with no SRID, rejects a bbox that contradicts the declared
@@ -416,11 +428,12 @@ it and [admin-integration.md](admin-integration.md) for the UI.
 5. **The report.** Shipped: `interactionsByRegion`, `interactionMap` and `regionDimensions`,
    with boundaries drawn from the vector-tile endpoint, rendered by `LocationBreakdown` on the
    admin Reports page.
-6. **Map view.** Built on `@vis.gl/react-google-maps` and the `google.maps.Data` layer,
-   not teovilla — for the reason §8 gives: it drops `holes` on web, so enclaves would
-   render filled. `ST_SimplifyPreserveTopology` is used for display geometry;
-   `ST_CoverageSimplify` would preserve *shared* boundaries better and is worth
-   revisiting if adjacent-region slivers ever show at a higher zoom.
+6. **Map view.** The Google map is mounted with `@vis.gl/react-google-maps`, and the region
+   boundaries and the interaction density are drawn by **deck.gl** (`@deck.gl/geo-layers`
+   `MVTLayer`s, mounted through `GoogleMapsOverlay`) from the two vector-tile endpoints.
+   `ST_SimplifyPreserveTopology` is used for display geometry; `ST_CoverageSimplify` would
+   preserve *shared* boundaries better and is worth revisiting if adjacent-region slivers ever
+   show at a higher zoom.
 7. **Deriving shelter city district / supervisorial district** from the boundaries is
    still open.
 

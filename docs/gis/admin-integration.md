@@ -5,7 +5,7 @@ afternoon to.
 
 ## What ships
 
-**Backend — three queries and a tile endpoint:**
+**Backend — three queries and two tile endpoints:**
 
 ```graphql
 interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes): [RegionCountType!]!
@@ -14,7 +14,8 @@ regionDimensions: [RegionDimension!]!
 ```
 
 ```http
-GET /regions/tiles/<kind>/<z>/<x>/<y>.mvt
+GET /regions/tiles/<kind>/<z>/<x>/<y>.mvt          # public boundaries, authenticated session
+GET /regions/tiles/density/<z>/<x>/<y>.mvt?org_id= # interaction density, reports.view_reports
 ```
 
 `RegionCountType` carries `kind`, `code`, `name`, `count`, `isUnassigned`, and
@@ -23,7 +24,10 @@ rollup can span every dimension at once, where a code alone is ambiguous — `"1
 simultaneously a council district, an SPA and a supervisorial district. `RegionDimension` is
 `ZIP | CITY | COUNCIL_DISTRICT | SUPERVISORIAL_DISTRICT | SPA | COC`.
 
-`interactionMap` returns points and a truncation flag.
+`interactionMap` returns points and a truncation flag. The **density tile** aggregates the same
+pins into a grid of vector-tile cells; it takes `org_id` (not `organizationId`) because it is an
+HTTP query parameter read by the same `HasReportAccess` permission the CSV export uses, plus
+optional `start`/`end`/`dimension`/`codes`.
 
 **Authorization differs by query, deliberately.**
 
@@ -31,7 +35,7 @@ simultaneously a council district, an SPA and a supervisorial district. `RegionD
 payload org, **and** the note read scope, applied as
 `filter_for_user(..., [NotePermissions.VIEW])`. The second is not redundant — a pin is a
 note's location, so it inherits the note scope, and `ORG_ADMIN` holds `reports.view_reports`
-with no note permission at all. `test_org_admin_without_note_permission_is_denied` pins that
+with no note permission at all. `test_org_admin_without_note_permission_sees_no_pins` pins that
 it receives no pins.
 
 It is deliberately **not** `require_can(..., NotePermissions.VIEW)`: notes are a legacy
@@ -41,14 +45,17 @@ the same legacy path the Notes pages use.
 
 `interactionsByRegion` returns counts rather than coordinates, so it carries
 `reports.view_reports` alone — the same authority as `reportSummary`, which it sits beside.
-`regionDimensions` and the tile endpoint serve public reference boundaries and need only an
-authenticated user.
+`regionDimensions` requires only an authenticated session: it exposes which boundary sets are
+loaded, not any client data. So does the **boundary** tile endpoint — public reference polygons,
+identical for every tenant. The **density** tile carries the same two gates as `interactionMap`,
+because a filled cell is still a note's location.
 
 **Frontend.** `LocationBreakdown` renders on the Reports page beneath the existing charts
 and inherits their `dateRange` and `activeOrg`, so the geographic figures always match the
 KPIs above. It provides:
 
-- a **dimension selector** over all six, from `regionDimensions`;
+- a **dimension selector** over the dimensions `regionDimensions` reports as loaded — not a fixed
+  list of six, so a boundary set the importer has not loaded cannot be selected;
 - a **drill-down selector** listing the regions that have interactions, with counts, so
   the map can answer "show me the SPA 4 visits" rather than only "every visit, coloured
   by SPA";
@@ -102,9 +109,11 @@ either schema produces the same output once the types are present. Run it from
 **Geometry editing.** Boundaries are imported, not edited. There is no UI to adjust a
 region or draw a new one, and the importer replaces a whole dimension at a time.
 
-**A third-party heatmap library.** Google removed `visualization.HeatmapLayer` in Maps JS
-API 3.65. The gradient is drawn on a canvas instead, which needs no dependency; deck.gl remains
-the alternative if a standard implementation is wanted later.
+**Google's `visualization.HeatmapLayer`.** It was removed in Maps JS API 3.65, so the heatmap is
+not that layer. Both the boundaries and the density grid are **deck.gl** `MVTLayer`s
+(`@deck.gl/geo-layers`, mounted through `@deck.gl/google-maps`' `GoogleMapsOverlay`) over the two
+tile endpoints; no separate heatmap dependency is involved, and nothing is drawn per point on the
+client.
 
 **The unincorporated-communities dimension.** Documented in
 `unincorporated-communities.md`, not implemented.

@@ -1,6 +1,6 @@
 """GraphQL surface for region grouping (DEV-2570 / DEV-2604).
 
-Adds the ``RegionDimension`` enum (``models.RegionKind``) and four queries:
+Adds the ``RegionDimension`` enum (``models.RegionKind``) and three queries:
 
 * ``interactionsByRegion`` — interaction counts per region of a dimension.
 * ``interactionMap`` — individual interaction points, for the map.
@@ -10,7 +10,7 @@ They sit alongside the existing ``reportSummary``.
 
 **Boundaries are not served here.** The map draws them as vector tiles from
 ``regions/views.py``, which is what keeps a dimension's polygons off the GraphQL payload —
-measured at 1.25 MB across the five LA layers, against a few kB for the tiles in view.
+see ``regions/tiles.py`` for the measured payload and tile sizes.
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
-from organizations.models import Organization
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -33,25 +32,16 @@ from common.utils import aware_range
 from notes.permissions import NotePermissions
 from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
-from reports.selectors import report_default_date_range
+from reports.selectors import resolve_date_range
 
 from .models import RegionKind
 from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, scope_notes_to_regions
-from .services import interaction_map_data, region_rollup
+from .services import interaction_map_data, region_rollup, resolve_region_scope
 from .types import (
     InteractionMapType,
     RegionCountType,
     UnassignedReason,
 )
-
-
-def _resolve_dates(org: Organization, start_date: Optional[date], end_date: Optional[date]) -> tuple[date, date]:
-    """Fill in whichever end of the range the caller omitted, from the org's default."""
-    if start_date is None or end_date is None:
-        default_start, default_end = report_default_date_range(org=org)
-        start_date = start_date or default_start
-        end_date = end_date or default_end
-    return start_date, end_date
 
 
 @strawberry.type
@@ -81,7 +71,7 @@ class Query:
         org = org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
-        start_date, end_date = _resolve_dates(org, start_date, end_date)
+        start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
         start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
 
         return region_rollup(
@@ -129,14 +119,20 @@ class Query:
         is org-confined *before* it is passed in (``org_notes_in_range``) and why
         ``interaction_points`` also applies its own org predicate.
 
-        ``dimension`` is required when ``regionCodes`` is given: codes are not unique
-        across dimensions, so the dimension is what makes them meaningful.
+        ``dimension`` is required when a non-empty ``regionCodes`` is given: codes are not
+        unique across dimensions, so the dimension is what makes them meaningful. An empty
+        list needs no dimension — it matches nothing either way — and a ``dimension`` sent
+        without ``regionCodes`` is ignored, because this resolver has nothing to narrow.
+
+        ``limit`` caps the pins. An omitted limit is ``POINT_LIMIT``; ``limit: 0`` is a
+        request for one pin, not for the cap, which is the same floor the selector applies
+        (``max(1, min(limit, POINT_LIMIT_MAX))``).
         """
         user = cast(AccountUser, get_current_user(info))
         org = org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
-        start_date, end_date = _resolve_dates(org, start_date, end_date)
+        start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
         start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
 
         # Org confinement happens here, once, in the selector — not in a later SQL clause
@@ -149,23 +145,30 @@ class Query:
         # deliberately so — it is the same scope the Notes pages themselves apply.
         scoped_notes = filter_for_user(scoped_notes, user, [NotePermissions.VIEW])
 
-        # `is not None`, not truthiness: `regionCodes: []` asks for no codes and must match
-        # nothing, exactly as it does in `interactionsByRegion`. Read as "absent", the
-        # predicate is dropped and the caller receives every pin in the organization while
-        # believing it filtered. An *absent* list is what means "no restriction".
+        # The one reading of `(dimension, regionCodes)`: an empty list matches nothing and
+        # needs no dimension, a non-empty list without one is refused, and an absent list is
+        # no restriction. `resolve_region_scope` raises `RegionScopeError` (a `ValueError`,
+        # which surfaces as a GraphQL error) for the ambiguous case. It is consulted only when
+        # `regionCodes` was sent at all: a `dimension` with no codes has nothing to narrow and
+        # is ignored here, as the docstring says.
         if region_codes is not None:
-            if dimension is None:
-                # Refused, not ignored. A code cannot be resolved without a dimension:
-                # "1" is a council district, an SPA and a supervisorial district.
-                raise ValueError("regionCodes requires a dimension")
-            scoped_notes = scope_notes_to_regions(scoped_notes, kind=dimension.value, codes=region_codes)
+            kind, scoped_codes = resolve_region_scope(
+                dimension=dimension.value if dimension else None, codes=region_codes
+            )
+            scoped_notes = (
+                scope_notes_to_regions(scoped_notes, kind=cast(str, kind), codes=scoped_codes)
+                if scoped_codes
+                else scoped_notes.none()
+            )
 
         return interaction_map_data(
             start=start,
             end=end,
             organization_id=org.id,
             notes=scoped_notes,
-            limit=limit or POINT_LIMIT,
+            # `is not None`, not truthiness: `limit: 0` is a request for one pin, and
+            # `limit or POINT_LIMIT` would turn it into the 10,000 cap.
+            limit=limit if limit is not None else POINT_LIMIT,
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
@@ -175,8 +178,8 @@ class Query:
         Lets the report offer only groupable dimensions instead of presenting a
         control that returns nothing because ``import_regions`` has not run for it.
 
-        ``IsAuthenticated`` only, like ``regions`` and for the same reason: this
-        exposes which boundary sets exist, not any client data.
+        ``IsAuthenticated`` only, deliberately: this exposes which boundary sets exist,
+        not any client data. It reads no organization and takes no organization argument.
         """
         return [RegionKind(kind) for kind in available_kinds()]
 

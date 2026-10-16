@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any, Sequence
 
 from django.db import connection
-from django.db.models import BooleanField, FloatField, Func, QuerySet
+from django.db.models import FloatField, Func, QuerySet
 from django.db.models.expressions import RawSQL
 
 from common.models import Location
@@ -27,14 +27,39 @@ _NOTE_TABLE = Note._meta.db_table
 _LOCATION_TABLE = Location._meta.db_table
 _REGION_TABLE = Region._meta.db_table
 
+#: The point→region answer, **boundaries-first**: the selected regions' lookup geometry drives
+#: and the GiST index on ``Location.point_geom`` is probed. Returns location ids, one row each.
+#:
+#: ``regions_regionlookup`` carries both arms — a region's subdivided pieces, plus the parent
+#: boundary of a region that has none — so this is the single definition of "this point is in
+#: this region" that the rollup, the map's ``regionCodes`` filter and the density tile read.
+#:
+#: ``DISTINCT`` because a location may fall in more than one piece of the same region, which
+#: would otherwise join that note once per piece and double-count it.
+#:
+#: The caller binds ``(kind, codes)`` positionally. Requests are org-confined before this
+#: predicate sees them, so it narrows a scoped queryset rather than confining one.
+REGION_LOCATIONS_SQL = f"""
+    SELECT DISTINCT l.id
+    FROM {REGION_LOOKUP_VIEW} lu
+    JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
+    JOIN {_LOCATION_TABLE} l ON ST_Covers(lu.geom, l.point_geom)
+    WHERE rr.kind = %s AND rr.code = ANY(%s)
+"""
+
 
 def org_notes_in_range(*, organization_id: int, start: datetime, end: datetime) -> QuerySet[Note]:
-    """The organization's notes in a half-open instant range — every read's starting point.
+    """The organization's notes in a half-open instant range — the note-queryset reads' start.
 
-    Deliberately one function so the org predicate has exactly one home. Both
-    client-data-bearing reads in this app start from this queryset, and it is org-confined
-    *before* the note permission filter sees it: ``filter_for_user`` is the note read scope
-    and has no organization notion, so confinement cannot come from there.
+    One home for the org predicate on the reads that build a **note queryset**:
+    ``interactionMap`` and the density tile both begin here and then apply the note read scope
+    (``filter_for_user``). That order is load-bearing — ``filter_for_user`` is binary and has
+    no organization notion, so confinement cannot come from it and has to be applied before
+    it.
+
+    It is **not** the only org confinement in the app. ``region_counts`` never builds a note
+    queryset; it confines the rollup inside its own raw SQL (``_rollup_sql``), which is why
+    that statement carries the org predicate itself.
     """
     return Note.objects.filter(
         organization_id=organization_id,
@@ -50,10 +75,16 @@ def _rollup_sql(*, organization_id: int | None) -> str:
     spelled as a `%(organization_id)s IS NULL OR …` — that defeats the planner's ability
     to use the column, and it puts the confinement decision inside a SQL expression
     rather than at the call site.
+
+    ``GROUPING SETS`` returns the per-``(kind, code)`` rows **and** a per-``kind`` row (with
+    ``code`` NULL), in one pass. The per-kind row is the count of *distinct* located notes
+    covered by at least one region of that dimension, which is what makes the unassigned
+    subtraction coherent when same-kind boundaries overlap: the per-bucket counts may sum to
+    more than that figure, but it can never exceed the number of located notes.
     """
     org = "AND n.organization_id = %(organization_id)s" if organization_id is not None else ""
     return f"""
-        SELECT rr.kind AS kind, rr.code AS code, count(n.id) AS count
+        SELECT rr.kind AS kind, rr.code AS code, count(DISTINCT n.id) AS count
         FROM {REGION_LOOKUP_VIEW} lu
         JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
         JOIN {_LOCATION_TABLE} l ON ST_Covers(lu.geom, l.point_geom)
@@ -61,12 +92,25 @@ def _rollup_sql(*, organization_id: int | None) -> str:
         WHERE n.interacted_at >= %(start)s
           AND n.interacted_at < %(end)s
           {org}
-        GROUP BY rr.kind, rr.code
+        GROUP BY GROUPING SETS ((rr.kind, rr.code), (rr.kind))
     """
 
 
-def _assigned_counts(*, start: datetime, end: datetime, organization_id: int | None) -> dict[str, dict[str, int]]:
-    """Interactions per ``(kind, code)`` that a boundary actually contains.
+def _assigned_counts(
+    *, start: datetime, end: datetime, organization_id: int | None
+) -> tuple[dict[str, dict[str, int]], dict[str, int]]:
+    """Interactions per ``(kind, code)`` that a boundary actually contains, plus per-kind totals.
+
+    Returns ``(counts, totals)``: ``counts[kind][code]`` is the number of distinct notes whose
+    point is covered by that region, and ``totals[kind]`` is the number of distinct notes
+    covered by **any** region of that dimension.
+
+    ``count(DISTINCT n.id)`` throughout. A note's location can fall in more than one piece of
+    the same region — and, on the shipped layers, in two *overlapping regions of the same
+    kind* — so a plain ``count(n.id)`` would report one interaction as several. The per-bucket
+    counts can still exceed ``totals`` when regions overlap, because the same note genuinely
+    belongs to both polygons; that is why the unassigned figure is derived from ``totals`` and
+    not from the sum of the buckets.
 
     **The boundaries drive and the points are probed.** That is the whole trick: the scan is
     over the lookup polygons and the GiST index on ``point_geom`` is probed for each, which
@@ -95,6 +139,9 @@ def _assigned_counts(*, start: datetime, end: datetime, organization_id: int | N
 
     Grouped by kind **and** code: without the kind, SPA 1, council district 1 and
     supervisorial district 1 collapse into one bucket.
+
+    ``start``/``end``/``organization_id`` are bound into the statement as parameters; they are
+    not applied in Python. They stay in the signature because the statement needs them.
     """
     params: dict[str, Any] = {"start": start, "end": end}
     if organization_id is not None:
@@ -105,17 +152,24 @@ def _assigned_counts(*, start: datetime, end: datetime, organization_id: int | N
         rows = cursor.fetchall()
 
     counts: dict[str, dict[str, int]] = {}
+    totals: dict[str, int] = {}
     for kind, code, count in rows:
-        counts.setdefault(kind, {})[code] = count
-    return counts
+        # `GROUPING SETS` marks the per-kind row with a NULL code; `Region.code` is NOT NULL,
+        # so no per-region row can be mistaken for one.
+        if code is None:
+            totals[kind] = count
+        else:
+            counts.setdefault(kind, {})[code] = count
+    return counts, totals
 
 
 def _notes_with_a_location(*, start: datetime, end: datetime, organization_id: int | None) -> int:
     """Interactions in range that carry a point, whether or not a boundary contains it.
 
-    The minuend of the unassigned subtraction. A note's location either falls in exactly
-    one region of a dimension or in none, so ``unassigned = this - assigned`` — which is
-    why the unassigned bucket needs no spatial query of its own.
+    The minuend of the unassigned subtraction. It is paired with ``_assigned_counts``'
+    per-kind *distinct* total, not with the sum of the per-region buckets: a note whose point
+    falls in two overlapping same-kind regions belongs to both buckets but subtracts once, so
+    ``unassigned = this - totals[kind]`` stays coherent and can never go negative.
     """
     notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end, location__isnull=False)
     if organization_id is not None:
@@ -146,6 +200,14 @@ def region_counts(
     Beverly Hills address in a city-council report. That bucket is *computed*, not stored:
     see ``_notes_with_a_location``.
 
+    **The invariant the counts hold.** Every count is of *distinct notes*. A note is counted
+    in a named bucket when its point is covered by that region, so when two regions of the
+    same kind overlap the same note is counted in both — it really is inside both — and the
+    named buckets can sum to more than the located total. What never exceeds the located total
+    is ``totals``: the unassigned bucket is ``located − (distinct notes covered by any region
+    of this kind)``, which is well defined and non-negative regardless of overlap. To put it
+    another way, the layer is assumed to *cover* points, not to partition them.
+
     ``codes is not None`` throughout: an explicitly empty list means "no codes" and
     matches nothing, where a truthiness check treats it as absent, drops the predicate,
     and returns the whole dimension.
@@ -164,7 +226,7 @@ def region_counts(
     if not scopes:
         return []
 
-    assigned = _assigned_counts(start=start, end=end, organization_id=organization_id)
+    assigned, totals = _assigned_counts(start=start, end=end, organization_id=organization_id)
     codes_set = None if codes is None else set(codes)
 
     buckets: list[dict[str, Any]] = []
@@ -180,12 +242,21 @@ def region_counts(
     if unassigned_only or include_unassigned or codes is None:
         with_location = _notes_with_a_location(start=start, end=end, organization_id=organization_id)
         for scope in scopes:
-            # Every point resolves to at most one region per dimension, which is what makes
-            # this a subtraction rather than a spatial query. Guarded with `> 0` rather than
-            # emitted unconditionally: if a dimension's boundaries were ever to overlap
-            # rather than partition, the total would exceed the number of points and a
-            # negative "unassigned" bucket is not the way to say so.
-            unassigned = with_location - sum(assigned.get(scope, {}).values())
+            # `totals` is the count of **distinct** located notes covered by at least one
+            # region of this dimension, so this subtraction is coherent even when same-kind
+            # boundaries overlap: a note counted in two buckets still subtracts once, and the
+            # result cannot go negative. Deriving it from the sum of the buckets instead would
+            # let an overlap swallow the whole unassigned count, which is the shape of bug
+            # that hides an uncovered neighbourhood.
+            unassigned = with_location - totals.get(scope, 0)
+            if unassigned < 0:
+                # Unreachable: `totals` is a subset of `with_location` under identical
+                # org/date predicates. Loud rather than dropped, so a future change to either
+                # query surfaces here instead of reporting a nonsensical bucket.
+                raise ValueError(
+                    f"{scope}: {totals.get(scope, 0)} located notes attributed to a region, "
+                    f"but only {with_location} located note(s) in range"
+                )
             if unassigned > 0:
                 buckets.append({"kind": scope, "code": None, "name": "", "count": unassigned})
 
@@ -317,27 +388,16 @@ def interaction_points(
 def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[str]) -> QuerySet[Note]:
     """Narrow a note queryset to those whose location falls in one of ``codes``.
 
-    An ``EXISTS`` rather than a reverse-relation join: a join yields one row per matching
-    assignment and would need the ``.distinct()`` a semi-join does not.
+    **A boundaries-first semi-join, not a correlated ``EXISTS``.** ``REGION_LOCATIONS_SQL``
+    drives from the selected regions and probes the GiST index on ``Location.point_geom``,
+    which is the one direction PostGIS can index for this join, and the note is filtered with
+    ``location_id IN (<that subquery>)``. A correlated ``EXISTS`` keyed on the note asks the
+    same question once per note, which re-runs the ``regions_regionlookup`` arm — the parent
+    boundary of a region with no piece — per note. The semi-join evaluates the region set
+    once. The two answer identically; only the plan differs.
 
-    **Raw SQL, and not because the ORM cannot express it.** It can — this is equivalent and
-    builds the right statement::
-
-        Exists(RegionPiece.objects.filter(
-            region__kind=kind, region__code__in=codes,
-            geom__covers=OuterRef("location__point_geom")))
-
-    It is not used because it queries ``RegionPiece`` **directly**, and so answers a
-    slightly different question from ``_assigned_counts``: it would miss a region that has
-    no piece, which ``regions_regionlookup`` exists to cover. Matching the view in the ORM
-    means a second ``Exists`` over ``Region`` with ``pieces__isnull=True`` — two arms, in a
-    second place, that have to be kept in step with the view by hand. The rollup and the map
-    must agree on which regions contain a point, so the definition belongs in one place, and
-    that place is the view.
-
-    Correlated on the **note**, with the location reached through the note's own
-    ``location_id`` rather than by naming whatever alias Django happened to give a join.
-    That keeps the fragment independent of the queryset it is attached to.
+    Reads the same SQL the density tile splices in (``tiles._DENSITY_REGION``), so the
+    rollup, the map and the tile cannot disagree about what "inside the region" means.
 
     ``kind`` is required because codes are not unique across dimensions — ``"1"`` is a council
     district, an SPA and a supervisorial district here — so a code alone would return up to
@@ -350,17 +410,4 @@ def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[
     if not codes:
         return notes.none()
 
-    sql = f"""
-        EXISTS (
-            SELECT 1
-            FROM {REGION_LOOKUP_VIEW} lu
-            JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
-            JOIN {_LOCATION_TABLE} l ON l.id = {_NOTE_TABLE}.location_id
-            WHERE rr.kind = %s
-              AND rr.code = ANY(%s)
-              AND ST_Covers(lu.geom, l.point_geom)
-        )
-    """
-    return notes.annotate(_in_region=RawSQL(sql, (kind, list(codes)), output_field=BooleanField())).filter(
-        _in_region=True
-    )
+    return notes.filter(location_id__in=RawSQL(REGION_LOCATIONS_SQL, (kind, list(codes))))

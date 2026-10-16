@@ -68,7 +68,7 @@ class InteractionPointType:
 
 @strawberry.type
 class InteractionMapType:
-    """Both views of the same interactions, so the client can toggle without refetching.
+    """The map payload: the pins for one period, and whether they are all of them.
 
     ``truncated`` is set when the point cap was reached — the map is then a subset
     of the period's interactions and the UI must say so, because a partial map that

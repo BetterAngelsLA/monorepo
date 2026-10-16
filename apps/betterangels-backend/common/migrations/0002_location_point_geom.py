@@ -5,19 +5,20 @@
 a ``geometry`` boundary has to write ``point::geometry``, which discards the GiST index.
 This column is what the region joins probe.
 
-Two things to know before running this.
+``geography -> geometry`` is IMMUTABLE, which is what makes this legal as a generated column
+at all — the same property that lets ``Region.geom_display`` use ``ST_SimplifyPreserveTopology``.
 
-**It rewrites ``common_location``.** Postgres computes a STORED generated column for every
-existing row as the column is added, so there is no way to avoid the rewrite, and it holds
-an ``ACCESS EXCLUSIVE`` lock for the duration. The index build that follows is separate and
-is the ordinary cost of an index. On a large table this wants a maintenance window; the
-alternative that avoids the rewrite is an expression index
+**This migration rewrites ``common_location``.** Postgres computes a STORED generated column
+for every existing row as the column is added, so there is no way to avoid the rewrite, and it
+holds an ``ACCESS EXCLUSIVE`` lock for the duration. On a large table this wants a maintenance
+window; the alternative that avoids the rewrite is an expression index
 (``CREATE INDEX … USING gist ((point::geometry))``) with the cast written into the query
 instead. See ``docs/gis/README.md``.
 
-**``geography -> geometry`` is IMMUTABLE**, which is what makes this legal as a generated
-column at all — the same property that lets ``Region.geom_display`` use
-``ST_SimplifyPreserveTopology``.
+**The index is deliberately not built here.** ``0003`` adds it with ``AddIndexConcurrently``,
+because a plain ``CREATE INDEX`` is a *second* ``ACCESS EXCLUSIVE`` lock on this table and
+there is no reason to hold the migration's rewrite lock and an index-build lock in one
+statement when Postgres can build the index online. See that module for the detail.
 
 The expression is written out rather than imported from the model, so that re-typing the
 model field cannot silently change what this migration writes. Only the *callable* has to
@@ -25,7 +26,6 @@ match the model for ``makemigrations --check``; the arguments do not.
 """
 
 import django.contrib.gis.db.models.fields
-import django.contrib.postgres.indexes
 import django.db.models.functions.comparison
 from django.db import migrations, models
 
@@ -45,15 +45,6 @@ class Migration(migrations.Migration):
                     "point", django.contrib.gis.db.models.fields.GeometryField(srid=4326)
                 ),
                 output_field=django.contrib.gis.db.models.fields.GeometryField(srid=4326),
-            ),
-        ),
-        # `GistIndex`, not a plain `Index`: PostGIS indexes geometry with GiST, and the
-        # rollup's `ST_Covers` carries an index condition of the form
-        # `point_geom @ lu.geom` that only a GiST index can answer.
-        migrations.AddIndex(
-            model_name="location",
-            index=django.contrib.postgres.indexes.GistIndex(
-                fields=["point_geom"], name="common_location_point_geom_gix"
             ),
         ),
     ]

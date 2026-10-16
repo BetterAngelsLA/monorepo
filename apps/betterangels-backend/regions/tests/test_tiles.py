@@ -7,6 +7,8 @@ from model_bakery import baker
 from regions.models import Region, RegionKind
 from regions.tiles import MVT_CONTENT_TYPE
 
+from . import mvt
+
 # A polygon covering the DTLA tile at z10/175/408.
 RING = [(-118.5, 34.0), (-118.2, 34.0), (-118.2, 34.2), (-118.5, 34.2), (-118.5, 34.0)]
 
@@ -40,6 +42,35 @@ class RegionTileViewTestCase(TestCase):
         self.assertEqual(MVT_CONTENT_TYPE, "application/vnd.mapbox-vector-tile")
         self.assertGreater(len(response.content), 0)
         self.assertIn(b"regions", response.content[:64], "the layer name is in the tile header")
+
+    def test_the_tile_carries_the_regions_code_and_name_with_geometry(self) -> None:
+        """The tile's payload contract is its *properties* plus a geometry, not just bytes.
+
+        ``SELECT r.code, r.name`` is what the client labels a feature with; asserting only that
+        the response is non-empty would let the property list be deleted with every test green,
+        and asserting only the layer name would let the geometry be dropped.
+        """
+        features = mvt.decode(self.client.get(self._url()).content)["regions"]
+        self.assertEqual(len(features), 1)
+
+        feature = features[0]
+        self.assertEqual(feature["code"], "1")
+        self.assertEqual(feature["name"], "District 1")
+        rings = feature[mvt.GEOMETRY]
+        self.assertTrue(rings, "the feature carries no geometry")
+        self.assertGreaterEqual(len(rings[0]), 4, "a clipped polygon ring is at least a triangle plus closure")
+        self.assertEqual(rings[0][0], rings[0][-1], "the ring must be closed")
+
+    def test_the_boundary_tile_is_marked_private(self) -> None:
+        """`private` is the conservative choice for a response fetched with a session cookie.
+
+        The bytes are identical for every reader, so `public` would not leak anything — but the
+        endpoint sits behind an authenticated session, and this keeps an intermediary from
+        storing a session-bearing response. Asserted so the header is not quietly dropped.
+        """
+        response = self.client.get(self._url())
+        self.assertIn("private", response["Cache-Control"])
+        self.assertIn("max-age=3600", response["Cache-Control"])
 
     def test_an_empty_tile_is_204_not_an_empty_200(self) -> None:
         """deck.gl reads an empty body with a success status as a malformed tile."""

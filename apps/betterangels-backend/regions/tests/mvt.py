@@ -2,14 +2,13 @@
 
 There is no MVT codec in the project's dependencies — ``mapbox_vector_tile``, ``shapely`` and
 ``protobuf`` are all absent — and pulling a dependency in to read a tile in a test is not the
-trade this wants. So the protobuf this needs lives here: about sixty lines that walk the
-length-delimited messages the MVT spec defines and yield each feature's *properties*.
+trade this wants. So the protobuf this needs lives here: a hundred lines that walk the
+length-delimited messages the MVT spec defines and yield each feature's properties and geometry.
 
-Geometry is deliberately not decoded. `ST_AsMVTGeom`'s output is a packed command stream
-(``MoveTo``/``LineTo``/``ClosePath``), and every assertion these tests make is about the
-``count`` a cell carries and how many cells there are, not about where their vertices landed.
-Decoding half of it and implying the other half was checked would be worse than not decoding
-it at all.
+Geometry is decoded as the tile-local integer coordinates ``ST_AsMVTGeom`` wrote, in the tile's
+4096-unit extent. Each ring is closed (the closing point is appended when the stream emits
+``ClosePath``, which is how MVT encodes it), so a caller can assert a cell polygon's vertex
+count, closure, and position without a protobuf dependency.
 """
 
 from __future__ import annotations
@@ -33,10 +32,24 @@ _LAYER_FEATURE = 2
 _LAYER_KEY = 3
 _LAYER_VALUE = 4
 _FEATURE_TAGS = 2
+_FEATURE_GEOMETRY = 4
+
+#: MVT geometry command ids (the low three bits of a command integer). ``ClosePath`` is **7**,
+#: not 3, and carries no parameters.
+_MOVE_TO = 1
+_LINE_TO = 2
+_CLOSE_PATH = 7
+
+#: The key each feature's decoded geometry is filed under, alongside its properties.
+GEOMETRY = "geometry"
 
 
 def decode(data: bytes) -> dict[str, list[dict[str, Any]]]:
-    """``{layer name: [feature properties, …]}`` for one encoded tile."""
+    """``{layer name: [feature, …]}`` for one encoded tile.
+
+    Each feature is a plain dict of its properties plus a ``"geometry"`` key: a list of rings,
+    each a list of ``(x, y)`` integer pairs in the tile's coordinate space (4096 across).
+    """
     layers: dict[str, list[dict[str, Any]]] = {}
     for field, wire, value in _walk(data):
         if field == _TILE_LAYER and wire == _LENGTH_DELIMITED:
@@ -66,19 +79,57 @@ def _decode_layer(data: bytes) -> tuple[str, list[dict[str, Any]]]:
     features: list[dict[str, Any]] = []
     for raw in raw_features:
         tags: list[int] = []
+        geometry_commands: list[int] = []
         for field, wire, value in _walk(raw):
-            if field != _FEATURE_TAGS:
-                continue
-            if wire == _LENGTH_DELIMITED:
+            if wire == _LENGTH_DELIMITED and field in (_FEATURE_TAGS, _FEATURE_GEOMETRY):
                 position = 0
+                packed: list[int] = []
                 while position < len(value):
-                    tag, position = _varint(value, position)
-                    tags.append(tag)
-            else:
-                tags.append(int(value))
+                    number, position = _varint(value, position)
+                    packed.append(number)
+                if field == _FEATURE_TAGS:
+                    tags = packed
+                else:
+                    geometry_commands = packed
         # Tags alternate key index, value index; the pair count is always even.
-        features.append({keys[tags[i]]: values[tags[i + 1]] for i in range(0, len(tags) - 1, 2)})
+        feature: dict[str, Any] = {keys[tags[i]]: values[tags[i + 1]] for i in range(0, len(tags) - 1, 2)}
+        feature[GEOMETRY] = decode_geometry(geometry_commands)
+        features.append(feature)
     return name, features
+
+
+def decode_geometry(commands: list[int]) -> list[list[tuple[int, int]]]:
+    """The packed command stream as a list of rings, each closed.
+
+    Commands are ``(id | count << 3)``; a ``MoveTo`` starts a ring, a ``LineTo`` extends it,
+    and ``ClosePath`` closes it by repeating the first point. Coordinates are zigzag deltas
+    from the previous point, starting at the origin.
+    """
+    rings: list[list[tuple[int, int]]] = []
+    x = y = 0
+    position = 0
+    while position < len(commands):
+        command = commands[position]
+        position += 1
+        command_id, count = command & 0x07, command >> 3
+        if command_id == _CLOSE_PATH:
+            if rings and rings[-1] and rings[-1][0] != rings[-1][-1]:
+                rings[-1].append(rings[-1][0])
+            continue
+        for _ in range(count):
+            x += _zigzag(commands[position])
+            y += _zigzag(commands[position + 1])
+            position += 2
+            if command_id == _MOVE_TO:
+                rings.append([(x, y)])
+            else:
+                rings[-1].append((x, y))
+    return rings
+
+
+def _zigzag(value: int) -> int:
+    """The parameter encoding: unsigned integer to signed delta."""
+    return (value >> 1) ^ -(value & 1)
 
 
 def _decode_value(data: bytes) -> Any:
@@ -90,10 +141,13 @@ def _decode_value(data: bytes) -> Any:
             return struct.unpack("<f", value)[0]
         if field == 3:
             return struct.unpack("<d", value)[0]
+        # The Value message is string/float/double/int/uint/sint/bool at 1..7. `int` and `uint`
+        # are both plain varints; only `sint` is zigzag. Reading `uint` as `sint` turns a cell's
+        # count of 1 into -1, which is how this was caught.
         if field in (4, 5):
             return int(value)
         if field == 6:
-            return (int(value) >> 1) ^ -(int(value) & 1)
+            return _zigzag(int(value))
         if field == 7:
             return bool(value)
     return None

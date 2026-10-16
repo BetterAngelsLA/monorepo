@@ -424,7 +424,6 @@ All counts are live `returnCountOnly=true` results; CRS is `latestWkid` from liv
 | `https://gispublic.waterboards.ca.gov/portalserver/.../Regional_Board_Boundary_Features` | **HTTP 499 Token Required** | requires auth → use [non-portal mirror](https://gispublic.waterboards.ca.gov/arcgis/rest/services/Administrative/Regional_Board_Boundaries/MapServer) |
 | LA City `maps.lacity.org/lahub` Assembly/Congressional/State Senate layers | live, but **2011 vintage** | **Live content is wrong.** Wrong by two redistricting cycles. |
 | Third-party mirrors (Metro-mirrored council districts, SACOG, NDCuser1, Nimi_Canvassing, individual academic accounts, GregnCA's school/legislative services) | live | **Not authoritative publishers.** Use the government source named in §2. (`GregnCA`'s CA layers are useful cross-checks, not primary sources.) |
-| **LAHSA published geometry** | — | **CLARIFICATION / CORRECTION:** LAHSA **does** publish geometry. [Service_Planning_Areas/FeatureServer/0](https://services2.arcgis.com/LMBdfutQCnDGYUyc/arcgis/rest/services/Service_Planning_Areas/FeatureServer/0) — 8 SPAs, EPSG:2229, edited 2026-09-25. Their AGOL org (`gis@lahsa`) holds **735 items** incl. SPA, SPA Outreach Zones 2026, Metro count polygons, rapid-bus lines. The earlier claim "LAHSA publishes no geometry" is **incorrect**; only their *data portal* is table/PDF-only. |
 
 ---
 

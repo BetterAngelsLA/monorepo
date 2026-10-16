@@ -1,8 +1,8 @@
 # Spatial implementation audit
 
-What the GIS code does, whether it follows documented practice, and the two defects that
-measurement found. Written against the implementation in `regions/`, plus the one other spatial
-consumer (`shelters`).
+What the GIS code does, whether it follows documented practice, and where the defect that
+measurement found now stands. Written against the implementation in `regions/`, plus the one other
+spatial consumer (`shelters`).
 
 ## Version parity
 
@@ -32,7 +32,7 @@ change that adopts it.
 | `ST_Covers`, not `ST_Contains` | `selectors._assigned_counts` | PostGIS docs: *"Generally this function should be used instead of `ST_Contains`, since it has a simpler definition"*. It also carries the index condition on its own (`point_geom @ lu.geom`), so no explicit `&&` is needed |
 | **the boundaries drive, the points are probed** | `selectors._assigned_counts` | the one direction PostGIS can index for this join. The mirror query — "for each interaction, find its region" — measures **200 ms against 45 ms** for the same result. The `regions_regionlookup` view is what holds the plan there: pointed at `RegionPiece` directly the planner flips round on a small window (100 ms against 30 ms). This is what makes the live join affordable |
 | generated `Location.point_geom` | `common/migrations/0002` | the point as `geometry`, so the join has an indexable column: `geography → geometry` is an explicit-only cast, so testing `point` directly discards the geography GiST index. Casting the *boundaries* to geography instead measures **3,067 ms against 45 ms** |
-| GiST via `spatial_index=True` (the default) | the `Region`, `RegionPiece` and `Location.point_geom` geometry columns | verified present on all three. `Region.kind` carries one named index rather than `db_index=True`, which would add a `varchar_pattern_ops` twin nothing uses |
+| GiST on the columns the queries probe | `Location.point_geom` (`common/0003`), `RegionPiece.geom` and `Region.geom_display` (`regions/0005`) | verified present on those three. `Region.geom` carries **no** spatial index: no read puts a spatial predicate on the full-resolution column, so one there would only be rebuilt on every import. `geom_display` needs one declared by hand because a `GeneratedField` is never auto-indexed, and the planner uses it at deep zoom (a z14 ZIP tile intersects ~18 of 311 regions) while correctly preferring a `kind` scan at coarse zoom. `Region.kind` carries one named index rather than `db_index=True`, which would add a `varchar_pattern_ops` twin nothing uses |
 | `make_valid` on import | `import_regions.normalise` | self-intersections are routine in published boundaries; one ZIP source emits a ring self-intersection that is repaired on every load |
 | `&&` in the table's SRID, before any transform | `regions/tiles.py` | keeps the GiST index usable; transforming first would discard it |
 | two envelopes for tiles | `regions/tiles.py` | a margined envelope decides which rows to *consider* (so buffered features are fetched) and the plain one is what `ST_AsMVTGeom` clips against — PostGIS documents that a margin must not be passed there |
@@ -52,7 +52,7 @@ Measured across the 431 loaded regions:
 | adjacent pairs in the raw geometry | 1090 |
 | pairs that **no longer touch** after simplification | **36** |
 | widest gap | 0.000531° — **59 m** |
-| pairs that **newly overlap** (slivers) | 1 — Industry/Walnut, **37,915 m²** |
+| pairs that **newly overlap** (slivers) | 1 — Industry/Walnut, **32,396 m²** |
 
 Worst in `zip` (90034/90230 at 59 m), which is expected: that layer is parcel-based and much of
 it shares edges.
@@ -60,12 +60,17 @@ it shares edges.
 **This is inherent, not a tuning problem.** Tightening the tolerance reduces the count but never
 reaches zero, at a real cost:
 
-| tolerance | ~m | avg vertices | payload | gaps | slivers |
+| tolerance | ~m | avg vertices | payload¹ | gaps | slivers |
 |---|---|---|---|---|---|
 | 0.0005 (current) | 56 | 80 | 560 kB | 36 | 1 |
 | 0.0002 | 22 | 142 | 979 kB | 25 | 1 |
 | 0.0001 | 11 | 201 | 1372 kB | 18 | 0 |
 | 0.00005 | 6 | 268 | 1824 kB | 14 | 0 |
+
+¹ A vertex-cost estimate (vertices × 16 B), **not** a GeoJSON byte count. For scale, the same
+`Region.geom_display` as GeoJSON across the 431 regions is about 1.0 MB at 0.0005, and the
+full-resolution `Region.geom` for all six dimensions is about 27 MB — different measures of the
+same data, not competing figures for one quantity.
 
 So the options are: simplify the shared edge **once, for both neighbours** — which is what
 `ST_CoverageSimplify` does, and why it exists — or accept sub-60 m seams between adjacent
@@ -75,16 +80,19 @@ That fix needs GEOS 3.12. Dev/CI has 3.9.0 and RDS has 3.13.0, so it is availabl
 and not locally; adopting it means bumping the dev image in the same change. Tighter tolerance is
 *not* a substitute: 2.4× the payload for 18 remaining gaps.
 
-## Defect 2 — nothing enforces geometry validity
+## Geometry validity is constrained
 
-`import_regions` calls `make_valid`, and importer-written data measured clean (0 of 15 regions
-invalid, 0 of 246 pieces). But there is no CHECK constraint, so a region written by a test, the
-admin, or a script can be invalid and nothing notices.
+`import_regions` calls `make_valid`, and importer-written data measured clean (0 of 431 regions
+invalid, 0 of 5,685 pieces). A test, the admin or a script can still write a row outside the
+importer, and one invalid boundary is enough to take out a whole dimension's tiles: `ST_Covers`
+tolerates invalid geometry, but `ST_AsMVTGeom` and `ST_Intersection` do not, and an
+`ST_Intersection` against the loaded layers fails outright with `TopologyException: Nested
+shells`.
 
-`ST_Covers` tolerates invalid geometry, which is why this has not surfaced. `ST_AsMVTGeom` and
-`ST_Intersection` are **not** tolerant — an `ST_Intersection` against the loaded layers fails
-outright with `TopologyException: Nested shells`. Server-side `ST_MakeValid` on the tile path
-would absorb it; a CHECK constraint would prevent it.
+`regions/0006` therefore adds `CHECK (ST_IsValid(geom))` to `regions_region`
+(`regions_region_geom_valid`). `ST_IsValid` is IMMUTABLE, so it is legal in a CHECK. The
+constraint validates existing rows when it is applied, so an already-invalid row fails the
+migration rather than reaching the tile path.
 
 ## Smaller observations
 
@@ -93,12 +101,16 @@ would absorb it; a CHECK constraint would prevent it.
   query reads the generated geometry column rather than `point`. The cost is bounded by
   `POINT_LIMIT`. Not worth changing.
 - **The point→region answer is not stored.** The rollup's cost tracks *distinct locations*
-  rather than interactions, so a wider report window does not widen it: 45 ms at 20,000
-  interactions and 210 ms at 500,000. Nothing derived from the boundaries means nothing to
-  backfill, nothing to keep fresh, and no write on the read path.
-- The rollup assumes each dimension's boundaries **partition** the plane, which is what lets
-  `unassigned = located − assigned` be a subtraction rather than a second spatial query. It
-  holds for every layer loaded here (verified: no location matches two pieces of one dimension)
-  and for any single publisher's boundary set; a dimension built by overlaying two publishers
-  would break it and report no unassigned bucket rather than a wrong one.
+  rather than interactions, so a wider report window does not widen it: measured on the
+  431-region fixture, 45 ms at 20,000 interactions and 30 ms at 2,041. Nothing derived from the
+  boundaries means nothing to backfill, nothing to keep fresh, and no write on the read path.
+- **The rollup does not assume each dimension's boundaries partition the plane.** Every count is
+  of *distinct* notes, and the unassigned bucket is ``located − (distinct notes covered by any
+  region of that kind)``, which stays well defined and non-negative when same-kind regions
+  overlap. That matters, because the shipped layers **do** overlap: measured on the 431-region
+  fixture, same-kind regions overlap with positive area in 27 ZIP pairs, **91 city pairs** and 4
+  supervisorial pairs. Named buckets may therefore sum to more than the located total — a note
+  inside two overlapping regions genuinely belongs to both — but the distinct-covered figure the
+  unassigned bucket subtracts never exceeds it. **This is a property of the code, not a
+  measurement of the layers' behaviour on the 4,000 sampled locations.**
 - Shelters' `geolocation__within` filter is index-backed (`shelters_shelter_geolocation_gist`).

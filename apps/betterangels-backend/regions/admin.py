@@ -7,10 +7,11 @@ from .models import Region
 #: ``manage.py import_regions`` and replaced wholesale per dimension, so **every** field is
 #: read-only here rather than hand-editable. Listed exhaustively (including the
 #: ``BaseModel`` timestamps) instead of naming the interesting ones, because the failure
-#: mode of an omission is silent: an editable ``source_attribution`` or ``geom_display``
-#: lets someone change what the map draws, or the provenance the importer recorded, with
-#: no import and no audit trail — and ``geom_display`` is exactly what the Reports map
-#: renders.
+#: mode of an omission is silent: an editable ``geom`` lets someone redraw a boundary — and
+#: ``geom_display``, the column the boundary tiles actually read, is derived from it — while
+#: an editable ``source_attribution`` rewrites the provenance the importer recorded. Either
+#: would take effect with no import and no audit trail. ``geom_display`` is generated and so
+#: not writable through the ORM at all; it is listed to make the tile path explicit.
 READONLY_FIELDS: tuple[str, ...] = (
     "kind",
     "code",

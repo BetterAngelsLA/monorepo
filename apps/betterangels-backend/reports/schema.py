@@ -12,7 +12,7 @@ from common.graphql.utils import org_or_deny
 from common.permissions.utils import IsAuthenticated, require_can
 
 from .permissions import ReportPermissions
-from .selectors import report_default_date_range, report_summary
+from .selectors import report_summary, resolve_date_range
 
 
 @strawberry.type
@@ -63,10 +63,7 @@ class Query:
         org = org_or_deny(organization_id)
         require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
-        if start_date is None or end_date is None:
-            default_start, default_end = report_default_date_range(org=org)
-            start_date = start_date or default_start
-            end_date = end_date or default_end
+        start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
 
         summary = report_summary(org=org, start_date=start_date, end_date=end_date)
 

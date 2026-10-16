@@ -38,6 +38,21 @@ def report_default_date_range(*, org: Organization) -> tuple[date, date]:
     return report_month_range(year=today.year, month=today.month)
 
 
+def resolve_date_range(*, org: Organization, start_date: date | None, end_date: date | None) -> tuple[date, date]:
+    """Fill in whichever end of the range the caller omitted, from the org's default.
+
+    The one place the fallback lives: ``reportSummary``, ``interactionsByRegion``,
+    ``interactionMap`` and the density tile all read it, so an omitted ``start``/``end``
+    means the same window on every surface. Each end falls back independently — passing
+    only ``start`` keeps it and defaults ``end``.
+    """
+    if start_date is None or end_date is None:
+        default_start, default_end = report_default_date_range(org=org)
+        start_date = start_date or default_start
+        end_date = end_date or default_end
+    return start_date, end_date
+
+
 def note_list_for_org(*, org: Organization, start_date: date, end_date: date, time_zone: ZoneInfo) -> QuerySet[Note]:
     """Return Notes for an organization between two inclusive calendar dates.
 
