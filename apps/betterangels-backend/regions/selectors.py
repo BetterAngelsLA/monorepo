@@ -55,24 +55,35 @@ REGION_LOCATIONS_SQL = f"""
 """
 
 
-def org_notes_in_range(*, organization_id: int, start: datetime, end: datetime) -> QuerySet[Note]:
+def org_notes_in_range(
+    *,
+    organization_id: int | None,
+    start: datetime,
+    end: datetime,
+    has_location: bool | None = None,
+) -> QuerySet[Note]:
     """The organization's notes in a half-open instant range — the note-queryset reads' start.
 
-    One home for the org predicate on the reads that build a **note queryset**:
-    ``interactionMap`` and the density tile both begin here and then apply the note read scope
-    (``filter_for_user``). That order is load-bearing — ``filter_for_user`` is binary and has
-    no organization notion, so confinement cannot come from it and has to be applied before
-    it.
+    One home for the org and window predicate on every read that builds a **note queryset**:
+    ``interactionMap``, the density tile, and the two rollup figures that count located and
+    locationless notes. That order is load-bearing — ``filter_for_user`` is binary and has no
+    organization notion, so confinement cannot come from it and has to be applied before it.
 
-    It is **not** the only org confinement in the app. ``region_counts`` never builds a note
-    queryset; it confines the rollup inside its own raw SQL (``_rollup_sql``), which is why
-    that statement carries the org predicate itself.
+    ``has_location`` narrows to notes with a location (``True``) or without one (``False``);
+    ``None`` leaves the queryset unnarrowed. The rollup subtracts one from the other, so both
+    sides are taken from this one filter rather than two that could drift apart and silently
+    stop reconciling.
+
+    ``organization_id`` is optional because the ungrouped report has no organization scope. The
+    predicate is then omitted rather than spelled as a null check, which would defeat the
+    planner's use of the column.
     """
-    return Note.objects.filter(
-        organization_id=organization_id,
-        interacted_at__gte=start,
-        interacted_at__lt=end,
-    )
+    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end)
+    if organization_id is not None:
+        notes = notes.filter(organization_id=organization_id)
+    if has_location is not None:
+        notes = notes.filter(location__isnull=not has_location)
+    return notes
 
 
 def _rollup_sql(*, organization_id: int | None) -> str:
@@ -178,10 +189,7 @@ def _notes_with_a_location(*, start: datetime, end: datetime, organization_id: i
     falls in two overlapping same-kind regions belongs to both buckets but subtracts once, so
     ``unassigned = this - totals[kind]`` stays coherent and can never go negative.
     """
-    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end, location__isnull=False)
-    if organization_id is not None:
-        notes = notes.filter(organization_id=organization_id)
-    return notes.count()
+    return org_notes_in_range(organization_id=organization_id, start=start, end=end, has_location=True).count()
 
 
 def region_counts(
@@ -292,10 +300,7 @@ def region_totals_without_boundaries(*, start: datetime, end: datetime, organiza
     a note with no location would otherwise vanish from every bucket and make the
     report totals disagree with the KPI row.
     """
-    notes = Note.objects.filter(interacted_at__gte=start, interacted_at__lt=end, location__isnull=True)
-    if organization_id is not None:
-        notes = notes.filter(organization_id=organization_id)
-    return notes.count()
+    return org_notes_in_range(organization_id=organization_id, start=start, end=end, has_location=False).count()
 
 
 def available_kinds() -> list[str]:
@@ -351,12 +356,7 @@ def interaction_points(
     # `__in=<queryset>` lets Postgres plan it as a semi-join against the query the caller
     # already built; reading the ids out first would cost a round trip, ship an unbounded
     # bind parameter, and answer the same question a second time.
-    queryset = Note.objects.filter(
-        organization_id=organization_id,
-        interacted_at__gte=start,
-        interacted_at__lt=end,
-        location__isnull=False,
-    )
+    queryset = org_notes_in_range(organization_id=organization_id, start=start, end=end, has_location=True)
     if notes is not None:
         queryset = queryset.filter(pk__in=notes.values("pk"))
 
