@@ -83,6 +83,14 @@ export type DeckMapLayersProps = {
    * so; see `RegionMap`.
    */
   onDensityRefused?: () => void;
+  /**
+   * A density tile loaded, so whatever the last refusal was about does not apply any more.
+   *
+   * The pair is what keeps a single transient tile failure from replacing the map with a
+   * permission notice for the rest of the session: a refusal is only *shown* while tiles are
+   * actually being refused.
+   */
+  onDensityLoaded?: () => void;
   /** Design-system colours, resolved from antd tokens by the caller. */
   overlay: {
     emptyFill: string;
@@ -91,6 +99,28 @@ export type DeckMapLayersProps = {
     markFill: string;
   };
 };
+
+/**
+ * Whether a tile error is a **refusal** rather than a fault.
+ *
+ * The status is read out of the two shapes loaders.gl puts it in — `fetch failed 403 Forbidden`
+ * (`check-errors`) and `Failed to fetch resource (403) Forbidden: <url>`
+ * (`fetch-error-message`) — rather than by looking for the digits anywhere in the string. The
+ * second is the one this endpoint actually produces, **captured from the browser** rather than
+ * assumed: the status sits immediately after "resource", and the URL comes *after* it, so a
+ * pattern expecting the URL before the status silently matches nothing.
+ *
+ * The distinction is the whole point of the function: the error carries the tile URL, and a
+ * tile at `…/density/8/403/101.mvt` that failed for an unrelated reason — a dropped
+ * connection, an aborted body — must not be reported as "your role cannot see this" and blank
+ * the map. A named function so that mistake is a failing test rather than a comment.
+ */
+export function isRefusedTileError(error: unknown): boolean {
+  const message = String((error as Error)?.message ?? '');
+  const status = /fetch failed (\d{3})|Failed to fetch resource[^(]*\((\d{3})\)/.exec(message);
+  const code = Number(status?.[1] ?? status?.[2]);
+  return code === 401 || code === 403;
+}
 
 type BuildLayersArgs = {
   points: HeatPoint[];
@@ -102,6 +132,7 @@ type BuildLayersArgs = {
   /** Binned once per (points, zoom) by the caller; see `useClusters` below. */
   clusters: Cluster[];
   onDensityRefused?: () => void;
+  onDensityLoaded?: () => void;
   overlay: {
     emptyFill: string;
     fullFill: string;
@@ -122,6 +153,7 @@ function buildLayers({
   boundaryUrl,
   densityUrl,
   onDensityRefused,
+  onDensityLoaded,
   overlay,
   clusters,
 }: BuildLayersArgs): Layer[] {
@@ -148,15 +180,16 @@ function buildLayers({
             Number((feature.properties as { count?: number })?.count ?? 0),
           ),
         pickable: false,
+        // The one thing the grid cannot answer for itself: whether the note read scope
+        // withheld it. `isRefusedTileError` separates a refusal from a fault, and a tile that
+        // does load clears the notice again — so a single dropped connection cannot leave the
+        // map replaced by a permission message for the rest of the session.
         onTileError: (error: unknown) => {
-          // loaders.gl throws `fetch failed 403 Forbidden` for a refused tile, and the status
-          // is all there is to go on: it does not expose the Response. Only a refusal is
-          // reported — a transient network failure is not a statement about permission, and
-          // telling the reader their role cannot see this would be a lie.
-          if (/\b(?:401|403)\b/.test(String((error as Error)?.message ?? ''))) {
+          if (isRefusedTileError(error)) {
             onDensityRefused?.();
           }
         },
+        onTileLoad: () => onDensityLoaded?.(),
       }),
     );
   }
@@ -255,6 +288,7 @@ export function DeckMapLayers({
   startDate,
   endDate,
   onDensityRefused,
+  onDensityLoaded,
   overlay,
 }: DeckMapLayersProps) {
   const map = useMap();
@@ -312,6 +346,10 @@ export function DeckMapLayers({
     () => onDensityRefused?.(),
     [onDensityRefused],
   );
+  const handleDensityLoaded = useCallback(
+    () => onDensityLoaded?.(),
+    [onDensityLoaded],
+  );
 
   const layers = useMemo(
     () =>
@@ -323,6 +361,7 @@ export function DeckMapLayers({
         boundaryUrl,
         densityUrl,
         onDensityRefused: handleDensityRefused,
+        onDensityLoaded: handleDensityLoaded,
         overlay,
         clusters,
       }),
@@ -334,6 +373,7 @@ export function DeckMapLayers({
       boundaryUrl,
       densityUrl,
       handleDensityRefused,
+      handleDensityLoaded,
       overlay,
       clusters,
     ],

@@ -7,7 +7,7 @@ import {
 } from './heatmapMath';
 import { DeckMapLayers } from './DeckMapLayers';
 import { Alert, theme } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
@@ -149,6 +149,7 @@ function RegionOverlay({
   startDate,
   endDate,
   onDensityRefused,
+  onDensityLoaded,
 }: {
   dimension: RegionDimension;
   focusCodes: string[];
@@ -159,6 +160,7 @@ function RegionOverlay({
   startDate: string;
   endDate: string;
   onDensityRefused: () => void;
+  onDensityLoaded: () => void;
 }) {
   return (
     <>
@@ -171,6 +173,7 @@ function RegionOverlay({
         startDate={startDate}
         endDate={endDate}
         onDensityRefused={onDensityRefused}
+        onDensityLoaded={onDensityLoaded}
         overlay={overlay}
       />
     </>
@@ -250,6 +253,11 @@ export function RegionMap({
     setDensityRefused(false);
     // `focusCodes` is state held by the caller, so its identity is the selection.
   }, [organizationId, startDate, endDate, dimension, focusCodes]);
+
+  // Stable identities: these are in the layer memo's dependency list, and a new closure per
+  // render would rebuild the whole deck.gl stack — and refetch the tiles — on every render.
+  const markDensityRefused = useCallback(() => setDensityRefused(true), []);
+  const clearDensityRefused = useCallback(() => setDensityRefused(false), []);
 
   const caption = useMemo(() => {
     const scope = filteredTo ? ` within ${filteredTo}` : '';
@@ -333,7 +341,8 @@ export function RegionMap({
               organizationId={organizationId}
               startDate={startDate}
               endDate={endDate}
-              onDensityRefused={() => setDensityRefused(true)}
+              onDensityRefused={markDensityRefused}
+              onDensityLoaded={clearDensityRefused}
             />
           )}
           {dimension === undefined && (view === 'heatmap' || points.length > 0) && (
@@ -348,7 +357,8 @@ export function RegionMap({
               organizationId={organizationId}
               startDate={startDate}
               endDate={endDate}
-              onDensityRefused={() => setDensityRefused(true)}
+              onDensityRefused={markDensityRefused}
+              onDensityLoaded={clearDensityRefused}
               overlay={mapColors}
             />
           )}

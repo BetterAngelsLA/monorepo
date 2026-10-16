@@ -4,7 +4,7 @@ import { GeoJsonLayer } from '@deck.gl/layers';
 // `DeckMapLayers` is imported for its module side effects (deck.gl must be constructible in
 // this environment); the layer stack itself is exercised by constructing the same layers
 // `buildLayers` does and asserting on the props that carry behaviour.
-import { DeckMapLayers } from './DeckMapLayers';
+import { DeckMapLayers, isRefusedTileError } from './DeckMapLayers';
 import {
   DENSITY_COLOR_MAX,
   densityColor,
@@ -68,6 +68,49 @@ describe('the density colour scale', () => {
     expect(densityColor(Number.NaN)).toEqual(densityColor(0));
     expect(densityColor(-5)).toEqual(densityColor(0));
     expect(Number.isFinite(densityColor(0)[0])).toBe(true);
+  });
+
+  it('tells a refusal apart from a fault', () => {
+    // loaders.gl's message for a non-2xx response; the endpoint answers 403 when the note
+    // read scope withholds the grid.
+    // Both message shapes loaders.gl puts a status in, because which one fires depends on
+    // the path the tile takes through `load()`.
+    expect(isRefusedTileError(new Error('fetch failed 403 Forbidden'))).toBe(true);
+    expect(isRefusedTileError(new Error('fetch failed 401 Unauthorized'))).toBe(true);
+    // **The shape this endpoint actually produces**, captured from the browser's console
+    // while every density tile was being refused.
+    expect(
+      isRefusedTileError(
+        new Error(
+          'Failed to fetch resource (403) Forbidden: http://localhost:8000/regions/tiles/density/8/43/102.mvt?organizationId=2',
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      isRefusedTileError(
+        new Error(
+          'Failed to fetch resource http://localhost:8000/regions/tiles/density/8/43/102.mvt (403): Forbidden',
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      isRefusedTileError(
+        new Error('Failed to fetch resource http://localhost:8000/regions/tiles/density/8/401/102.mvt (401): Unauthorized'),
+      ),
+    ).toBe(true);
+    // A fault must not be reported to the reader as a permission answer.
+    expect(isRefusedTileError(new Error('fetch failed 500 Internal Server Error'))).toBe(false);
+    expect(isRefusedTileError(new Error('fetch failed 204 No Content'))).toBe(false);
+    // **The false positive this guard was written for.** The error carries the tile URL, so a
+    // tile at x=403 that failed for an unrelated reason must not read as a 403 refusal —
+    // matching a bare `403` anywhere did exactly that, and replaced the whole map with
+    // "your role cannot see this".
+    expect(
+      isRefusedTileError(
+        new Error('Failed to load /regions/tiles/density/8/403/101.mvt?organizationId=2'),
+      ),
+    ).toBe(false);
+    expect(isRefusedTileError(undefined)).toBe(false);
   });
 
   it('constructs without a WebGL context, so the module is import-safe', () => {
