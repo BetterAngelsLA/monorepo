@@ -27,12 +27,21 @@ _NOTE_TABLE = Note._meta.db_table
 _LOCATION_TABLE = Location._meta.db_table
 _REGION_TABLE = Region._meta.db_table
 
-#: The point→region answer, **boundaries-first**: the selected regions' lookup geometry drives
-#: and the GiST index on ``Location.point_geom`` is probed. Returns location ids, one row each.
+#: The point→region predicate, **boundaries-first**: the selected regions' lookup geometry
+#: drives and the GiST index on ``Location.point_geom`` is probed.
 #:
 #: ``regions_regionlookup`` carries both arms — a region's subdivided pieces, plus the parent
-#: boundary of a region that has none — so this is the single definition of "this point is in
-#: this region" that the rollup, the map's ``regionCodes`` filter and the density tile read.
+#: boundary of a region that has none — so this fragment is the single definition of "this
+#: point is in this region" that the rollup, the map's ``regionCodes`` filter and the density
+#: tile read. The statements around it differ in what they project and group by; the predicate
+#: they must agree on is here, once.
+REGION_JOIN_SQL = f"""
+    FROM {REGION_LOOKUP_VIEW} lu
+    JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
+    JOIN {_LOCATION_TABLE} l ON ST_Covers(lu.geom, l.point_geom)
+"""
+
+#: The location ids a ``(kind, codes)`` selection covers. Returns location ids, one row each.
 #:
 #: ``DISTINCT`` because a location may fall in more than one piece of the same region, which
 #: would otherwise join that note once per piece and double-count it.
@@ -41,9 +50,7 @@ _REGION_TABLE = Region._meta.db_table
 #: predicate sees them, so it narrows a scoped queryset rather than confining one.
 REGION_LOCATIONS_SQL = f"""
     SELECT DISTINCT l.id
-    FROM {REGION_LOOKUP_VIEW} lu
-    JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
-    JOIN {_LOCATION_TABLE} l ON ST_Covers(lu.geom, l.point_geom)
+    {REGION_JOIN_SQL}
     WHERE rr.kind = %s AND rr.code = ANY(%s)
 """
 
@@ -85,9 +92,7 @@ def _rollup_sql(*, organization_id: int | None) -> str:
     org = "AND n.organization_id = %(organization_id)s" if organization_id is not None else ""
     return f"""
         SELECT rr.kind AS kind, rr.code AS code, count(DISTINCT n.id) AS count
-        FROM {REGION_LOOKUP_VIEW} lu
-        JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
-        JOIN {_LOCATION_TABLE} l ON ST_Covers(lu.geom, l.point_geom)
+        {REGION_JOIN_SQL}
         JOIN {_NOTE_TABLE} n ON n.location_id = l.id
         WHERE n.interacted_at >= %(start)s
           AND n.interacted_at < %(end)s
