@@ -1,6 +1,6 @@
 /// <reference types="google.maps" />
 import { Alert, theme } from 'antd';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { Map as GoogleMap } from '@vis.gl/react-google-maps';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
@@ -241,6 +241,9 @@ export function RegionMap({
    */
   const [densityRefused, setDensityRefused] = useState(false);
   const [tileFaulted, setTileFaulted] = useState(false);
+  // The caption below the map is its accessible description; `role="img"` gives what it draws a
+  // name, and this points at the sentence that says what the picture means.
+  const captionId = useId();
   useEffect(() => {
     setDensityRefused(false);
     // `focusCodes` is state held by the caller, so its identity is the selection.
@@ -271,8 +274,10 @@ export function RegionMap({
       }
       // A dot stands for one *or more* interactions: points in the same screen cell are merged
       // into one bubble. This count is the number of points the client holds, which is exactly
-      // what this view plots.
-      return `${points.length.toLocaleString()} interactions${scope}, grouped into clusters. A numbered bubble counts the interactions under it; zoom in to split it.`;
+      // what this view plots. Stated rather than instructed: the caption is the map's accessible
+      // description, and `role="img"` makes its controls unreachable to assistive tech — telling
+      // that reader to "zoom in" would name an action they cannot take.
+      return `${points.length.toLocaleString()} interactions${scope}, grouped into clusters. A numbered bubble counts the interactions under it, and zooming in splits them further.`;
     }
     // **No total here, deliberately.** The grid is aggregated on the server and the point
     // list is not fetched, so the client has no count to state — and deriving one from the
@@ -338,10 +343,20 @@ export function RegionMap({
             whose Google-generated controls are announced one by one. `aria-hidden` cannot be
             used here — Google's map DOM contains real buttons and links, which is the
             `aria-hidden-focus` violation — and `inert` would make the map unusable, taking the
-            zoom control the clusters view tells the reader to use. `GoogleMap` takes map options
-            and a few container props (`id`, `className`, `style`) and forwards no ARIA
-            attributes, so the role has to sit on a wrapper. */}
-        <div role="img" aria-label="Map of interaction locations">
+            zoom control a sighted reader uses. `GoogleMap` takes map options and a few container
+            props (`id`, `className`, `style`) and forwards no ARIA attributes, so the role has
+            to sit on a wrapper.
+
+            `role="img"` is children-presentational, so the zoom control is out of the
+            accessibility tree while staying in the tab order — which is why the caption
+            describes the view rather than instructing the reader to zoom, and why
+            `aria-describedby` carries it: the picture's meaning is the caption and the table,
+            not the controls. */}
+        <div
+          role="img"
+          aria-label="Map of interaction locations"
+          aria-describedby={captionId}
+        >
           <GoogleMap
             id="admin-region-map"
             style={{ width: '100%', height: 560, borderRadius: 6 }}
@@ -392,7 +407,9 @@ export function RegionMap({
         </div>
         {view === 'heatmap' && <DensityLegend />}
       </div>
-      <p className="mt-2 text-xs text-neutral-500">{caption}</p>
+      <p id={captionId} className="mt-2 text-xs text-neutral-500">
+        {caption}
+      </p>
       {/* Only the clusters view can be short of interactions now. The density grid is
           aggregated server-side over every interaction in range rather than a capped point
           list, so there is nothing for it to truncate — and `interactionMap`, which reports
