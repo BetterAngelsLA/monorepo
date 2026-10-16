@@ -251,6 +251,71 @@ jobs:
           # ships without it.
           EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
 
+      - name: 🧪 E2E shelter-web (preview)
+        # Runs after deploy, because the suite drives the deployed preview: the
+        # deploy step only returns once the edge serves the revision just built,
+        # so these tests describe this commit rather than whatever was there.
+        #
+        # Gated on `affected` for the same reason: the preview is only rebuilt and
+        # redeployed for affected projects, so an untouched shelter-web means the
+        # deployed site is unchanged and a run would report on someone else's
+        # revision.
+        #
+        # One step per web property, because each has its own origin. That origin
+        # already has a home — `SITE_URL` in the app's `.env.deploy.<config>`,
+        # which the deploy step's revision check reads too — and an e2e project
+        # already names its app with `implicitDependencies`. A second suite would
+        # resolve the pair from those rather than repeat a host here. (Which is
+        # also why this can't be `nx affected -t e2e`: `BASE_URL` is one value for
+        # the whole container, so a second suite in the same step would be handed
+        # the wrong origin.)
+        #
+        # `BASE_URL` is passed with `-e`: docker-compose-ci.yml enumerates what
+        # reaches the container, so exporting it here would leave the suite
+        # starting its own dev server and testing a local build instead — which
+        # looks like a pass. One skipped test means it reached the preview; two
+        # means it did not (`shows the empty results state` skips without it).
+        if: matrix.environment == 'preview'
+        run: |
+          docker compose run --rm \
+            -e BASE_URL="https://shelter.dev.betterangels.la/branches/$BRANCH_NAME/" \
+            -e PLAYWRIGHT_JSON_OUTPUT_NAME=/workspace/dist/.playwright/e2e-report.json \
+            better-angels bash <<'EOF'
+          set -e
+
+          # shelter-web affected → this commit was built and deployed.
+          # shelter-e2e affected → the specs changed, so check them against what
+          # is deployed. Neither means "yarn nx affected -t deploy" deployed
+          # nothing, and there is nothing here to test.
+          affected=$(yarn nx show projects --affected)
+          if ! echo "$affected" | grep -qx -e shelter-web -e shelter-e2e; then
+            echo "⏭️  Neither shelter-web nor shelter-e2e is affected — the preview is unchanged, skipping e2e."
+            exit 0
+          fi
+
+          echo "▶ BASE_URL=$BASE_URL"
+
+          # The browser is baked into the image (the `playwright` stage in the
+          # Dockerfile), so this is a no-op — kept as a cheap check that the
+          # revision this checkout expects is the one the image carries.
+          yarn playwright install chromium
+
+          # `--skip-nx-cache`: replaying a cached result would report a local run
+          # as if it had tested the deployed site.
+          yarn nx run shelter-e2e:e2e --skip-nx-cache -- --reporter=list,json
+          EOF
+
+      - name: 📎 Upload shelter-e2e report
+        if: always() && matrix.environment == 'preview'
+        uses: actions/upload-artifact@v4
+        with:
+          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
+          path: |
+            dist/.playwright/apps/shelter-e2e
+            dist/.playwright/e2e-report.json
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: ⏹️ Spin down monorepo environment
         if: always()
         run: |

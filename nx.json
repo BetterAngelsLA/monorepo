@@ -65,7 +65,8 @@
       "{workspaceRoot}/mypy.ini",
       "{workspaceRoot}/uv.*",
       "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/docker-pyproject.toml"
+      "{workspaceRoot}/docker-pyproject.toml",
+      "{workspaceRoot}/tools/shared/**/*"
     ]
   },
   "plugins": [

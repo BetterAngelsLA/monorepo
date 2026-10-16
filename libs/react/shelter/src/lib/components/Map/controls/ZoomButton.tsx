@@ -54,8 +54,15 @@ export function ZoomButton(props: TProps) {
     return null;
   }
 
+  const zoomIn = zoomBy > 0;
+
   return (
-    <button onClick={onZoom} className={mergeCss(parentCss)}>
+    <button
+      onClick={onZoom}
+      aria-label={zoomIn ? 'Zoom in' : 'Zoom out'}
+      data-testid={zoomIn ? 'map-zoom-in' : 'map-zoom-out'}
+      className={mergeCss(parentCss)}
+    >
       {zoomIcon}
     </button>
   );

@@ -13,6 +13,10 @@ interface ICurrentLocation extends PropsWithChildren {
   onError?: (error: TLocationError) => void;
   className?: string;
   timeout?: number;
+  /** Accessible name for the control — it renders an icon only. */
+  label?: string;
+  /** Stable hook for tests; the label above is what users hear. */
+  testId?: string;
 }
 
 export function CurrentLocation(props: ICurrentLocation) {
@@ -22,6 +26,8 @@ export function CurrentLocation(props: ICurrentLocation) {
     timeout = POSITION_TIMEOUT_MS,
     className,
     children,
+    label,
+    testId,
   } = props;
 
   if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -62,7 +68,12 @@ export function CurrentLocation(props: ICurrentLocation) {
   const btnCss = ['w-full', 'h-full', className];
 
   return (
-    <button className={mergeCss(btnCss)} onClick={getLocation}>
+    <button
+      aria-label={label}
+      data-testid={testId}
+      className={mergeCss(btnCss)}
+      onClick={getLocation}
+    >
       {children}
     </button>
   );

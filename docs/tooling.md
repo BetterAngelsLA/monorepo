@@ -25,4 +25,14 @@ yarn nx start betterangels-admin
 
 # Shelter Web
 yarn nx test shelter-web
+
+# Shelter E2E (Playwright) — see apps/shelter-e2e/README.md
+yarn nx run shelter-e2e:e2e
 ```
+
+### Test file naming
+
+Repo convention (the runners accept both patterns — this is about consistency):
+
+- Unit tests: `*.test.ts` / `*.test.tsx`
+- E2E specs: `*.spec.ts` (see [`apps/shelter-e2e/README.md`](../apps/shelter-e2e/README.md))
