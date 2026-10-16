@@ -35,6 +35,10 @@ type UseInteractionMapArgs = {
  *
  * Coordinates only. There is deliberately no client or note field on this query,
  * and it is authorized by the note read scope rather than the report scope alone.
+ *
+ * The previous points are held across a variables change for the same reason the rollup holds
+ * its rows: narrowing the map to another region is a cache miss, so without this the layer
+ * empties and the map flashes blank between two answers that are both about the same data.
  */
 export function useInteractionMap({
   organizationId,
@@ -44,7 +48,7 @@ export function useInteractionMap({
   regionCodes,
   enabled = true,
 }: UseInteractionMapArgs) {
-  const { data, loading, error } = useQuery<
+  const { data, previousData, loading, error } = useQuery<
     InteractionMapQuery,
     InteractionMapQueryVariables
   >(InteractionMapDocument, {
@@ -58,8 +62,13 @@ export function useInteractionMap({
     skip: !organizationId || !enabled,
   });
 
-  const points = useMemo(() => data?.interactionMap?.points ?? [], [data]);
-  const truncated = data?.interactionMap?.truncated ?? false;
+  const activeData = data ?? previousData;
+
+  const points = useMemo(
+    () => activeData?.interactionMap?.points ?? [],
+    [activeData],
+  );
+  const truncated = activeData?.interactionMap?.truncated ?? false;
 
   return { points, truncated, loading, error };
 }
