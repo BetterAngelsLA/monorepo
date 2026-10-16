@@ -12,12 +12,17 @@ from django.db.models.functions import Cast
 from django.utils import timezone as django_timezone
 from strawberry import ID
 
-from common.utils import aware_range, day_end
+from common.utils import aware_range
+from common.utils import day_end as end_of_day
 from shelters.enums import BedStatusChoices, ReservationStatusChoices
 
 if TYPE_CHECKING:
     from shelters.models import Shelter
     from shelters.types.reporting import DailyOccupancyMetricsType, ReservationMetricsType, ShelterOccupancyMetricsType
+
+
+# `day_end` is imported as `end_of_day` because the per-day loops below bind a local `day_end`
+# for readability. `common.utils.day_end` carries the exclusive-upper-bound reasoning.
 
 
 # ── Private helpers ───────────────────────────────────────────────────────────
@@ -101,14 +106,6 @@ class OccupancyInterval:
 def _occupancy_pct(occupied: int, total: int) -> float:
     """Occupancy percentage rounded to two places, or ``0.0`` when no beds exist."""
     return round(occupied / total * 100, 2) if total else 0.0
-
-
-def _day_end(day: datetime.date, tz: datetime.tzinfo) -> datetime.datetime:
-    """Midnight at the start of the day after *day* in *tz* as a tz-aware datetime.
-
-    This is the exclusive upper bound for events that fall on *day*.
-    """
-    return day_end(day, tz)
 
 
 # ── Shared data reconstruction ────────────────────────────────────────────────
@@ -358,7 +355,7 @@ def report_bed_status_counts(
 
     results: list[DailyBedCounts] = []
     for day in days:
-        day_end = _day_end(day, tz)
+        day_end = end_of_day(day, tz)
 
         counts: Counter[str] = Counter()
 
@@ -556,7 +553,7 @@ def daily_occupancy(
 
     results: list[DailyOccupancyMetricsType] = []
     for day in days:
-        day_end = _day_end(day, tz)
+        day_end = end_of_day(day, tz)
 
         # Beds that exist on this day: added before day_end, not yet removed.
         # ``lifecycles`` are sorted by added_at, so we can break early.
