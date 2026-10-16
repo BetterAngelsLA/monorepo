@@ -1,139 +1,433 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, within } from '@testing-library/react';
 import { createRef } from 'react';
+import type { ExportMetric } from '../../components/reports/useShelterMetricsExport';
+import type { ReservationMetrics } from '../../hooks/useShelterOccupancyMetrics';
 import { ShelterReportPrint } from './ShelterReportPrint';
-import type { ShelterReportData } from './types';
 
-function makeReport(
-  overrides: Partial<ShelterReportData> = {},
-): ShelterReportData {
+// @ant-design/plots needs real layout/canvas APIs jsdom doesn't reliably
+// provide; this file is about section inclusion and pagination, not chart
+// internals, so the chart components are stubbed to a recognizable marker.
+vi.mock('../../components/reports/ReportCharts', () => ({
+  BedStatusChart: () => <div data-testid="bed-status-chart" />,
+  DailyOccupancyChart: () => <div data-testid="daily-occupancy-chart" />,
+}));
+
+const RANGE = { from: new Date(2026, 6, 1), to: new Date(2026, 6, 7) };
+const GENERATED_AT = new Date(2026, 6, 8, 9, 30);
+
+const METRICS: ReservationMetrics = {
+  __typename: 'ReservationMetricsType',
+  checkedIn: 8,
+  checkInOverdueToCheckedIn: 1,
+  cancelled: 7,
+  checkInOverdue: 12,
+};
+
+const COUNTS = {
+  total: 100,
+  available: 20,
+  occupied: 60,
+  reserved: 5,
+  inTurnaround: 10,
+  outOfService: 5,
+};
+
+const ALL_METRICS: ExportMetric[] = [
+  'avg_days_to_occupancy',
+  'reservation_metrics',
+  'daily_bed_status_metrics',
+  'daily_occupancy_metrics',
+];
+
+// Realistic rendered heights (chart card ~610px, stat tray ~110px, counts card
+// ~230px). jsdom has no layout, so without this every unit would measure 0 and
+// the packing logic would never be exercised.
+const UNIT_HEIGHTS_BY_KEY: Record<string, number> = {
+  'bed-status': 610,
+  'daily-occupancy': 610,
+  'bed-counts': 230,
+  'room-counts': 230,
+  stats: 110,
+};
+
+function stubUnitHeights() {
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+    function (this: HTMLElement) {
+      const height =
+        UNIT_HEIGHTS_BY_KEY[this.getAttribute('data-report-unit') ?? ''] ?? 0;
+      return {
+        height,
+        width: 720,
+        top: 0,
+        left: 0,
+        right: 720,
+        bottom: height,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      } as DOMRect;
+    },
+  );
+}
+
+/** Only the real pages — the off-canvas measurement pass is not one. */
+function reportPages(): HTMLElement[] {
+  return Array.from(document.querySelectorAll('[data-report-page="true"]'));
+}
+
+function baseProps(includedMetrics: ExportMetric[]) {
   return {
-    id: '1',
-    name: 'Downtown Emergency Shelter',
-    organization: { id: '1', name: 'Test Organization' },
-    location: { place: '1234 S Main St, Los Angeles, CA 90015' },
-    bedCounts: {
-      total: 185,
-      available: 42,
-      occupied: 118,
-      reserved: 13,
-      inTurnaround: 7,
-      outOfService: 5,
-    },
-    roomCounts: {
-      total: 47,
-      available: 9,
-      occupied: 31,
-      reserved: 4,
-      inTurnaround: 2,
-      outOfService: 1,
-    },
-    ...overrides,
-  } as ShelterReportData;
+    shelterName: 'Downtown Emergency Shelter',
+    shelterAddress: '1234 S Main St, Los Angeles, CA 90015',
+    range: RANGE,
+    generatedAt: GENERATED_AT,
+    includedMetrics,
+    metrics: METRICS,
+    avgDaysToOccupancy: 10,
+    dailyBedStatus: [],
+    dailyOccupancy: [],
+  };
 }
 
-/** Reads a section's label/value pairs in render order. */
-function rowsOf(title: string): Array<[string, string]> {
-  const heading = screen.getByRole('heading', { name: title });
-  const section = heading.closest('section');
-  if (!section) throw new Error(`no section for "${title}"`);
-
-  return [...section.querySelectorAll('div.justify-between')].map((row) => {
-    const [label, value] = [...row.querySelectorAll('span')];
-    return [label.textContent ?? '', value.textContent ?? ''];
-  });
+function footers(): string[] {
+  return reportPages().map(
+    (page) =>
+      within(page)
+        .getAllByText(/\d+ of \d+/)
+        .map((el) => el.textContent ?? '')[0] ?? '',
+  );
 }
+
+/** True when any real page contains the given text. */
+function pageHasText(text: string): boolean {
+  return reportPages().some(
+    (page) => within(page).queryAllByText(text).length > 0,
+  );
+}
+
+function pagesWithTestId(testId: string): number {
+  return reportPages().filter((page) => within(page).queryByTestId(testId))
+    .length;
+}
+
+beforeEach(() => {
+  stubUnitHeights();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('ShelterReportPrint', () => {
-  it('titles the report with the shelter name', () => {
-    render(<ShelterReportPrint data={makeReport()} />);
+  it('renders a single page with the Operational Summary header and stats when only stats are included', () => {
+    render(
+      <ShelterReportPrint
+        {...baseProps(['avg_days_to_occupancy', 'reservation_metrics'])}
+      />,
+    );
 
+    expect(reportPages()).toHaveLength(1);
+    expect(pageHasText('Operational Summary')).toBe(true);
     expect(
-      within(screen.getByRole('banner')).getByText(
-        'Downtown Emergency Shelter',
+      pageHasText(
+        'Downtown Emergency Shelter [1234 S Main St, Los Angeles, CA 90015]',
       ),
-    ).toBeTruthy();
+    ).toBe(true);
+    expect(pageHasText('Newly Checked In')).toBe(true);
+    expect(pageHasText('Avg. days to occupancy')).toBe(true);
+    expect(pagesWithTestId('bed-status-chart')).toBe(0);
+    expect(pagesWithTestId('daily-occupancy-chart')).toBe(0);
+    expect(footers()).toEqual(['1 of 1']);
   });
 
-  it('renders the shelter summary', () => {
-    render(<ShelterReportPrint data={makeReport()} />);
+  it('gives each chart its own page rather than letting one overflow the page box', () => {
+    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
 
-    expect(rowsOf('Shelter Summary')).toEqual([
-      ['Name', 'Downtown Emergency Shelter'],
-      ['Organization', 'Test Organization'],
-      ['Address', '1234 S Main St, Los Angeles, CA 90015'],
-    ]);
+    // Two 610px chart cards cannot share an 864px content box.
+    expect(reportPages().length).toBeGreaterThanOrEqual(2);
+    expect(pagesWithTestId('bed-status-chart')).toBe(1);
+    expect(pagesWithTestId('daily-occupancy-chart')).toBe(1);
   });
 
-  it('renders bed counts in a fixed order', () => {
-    render(<ShelterReportPrint data={makeReport()} />);
+  it('never puts more content on a page than the page box can hold', () => {
+    render(
+      <ShelterReportPrint
+        {...baseProps(ALL_METRICS)}
+        bedCounts={COUNTS}
+        roomCounts={COUNTS}
+      />,
+    );
 
-    expect(rowsOf('Bed Summary')).toEqual([
-      ['Total', '185'],
-      ['Available', '42'],
-      ['Occupied', '118'],
-      ['Reserved', '13'],
-      ['In Turnaround', '7'],
-      ['Out of Service', '5'],
-    ]);
+    // Every unit that was built must land inside exactly one page: nothing is
+    // dropped by an overflowing box.
+    const placed = reportPages().flatMap((page) =>
+      Array.from(page.querySelectorAll('[data-report-unit-in-page]')),
+    );
+    const keys = placed.map((el) =>
+      el.getAttribute('data-report-unit-in-page'),
+    );
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(keys).toEqual(
+      expect.arrayContaining(['stats', 'bed-status', 'daily-occupancy']),
+    );
   });
 
-  it('renders room counts from the room totals, not the bed totals', () => {
-    render(<ShelterReportPrint data={makeReport()} />);
+  it('does not keep the off-canvas measurement pass mounted once measurements land', () => {
+    const { container } = render(
+      <ShelterReportPrint {...baseProps(ALL_METRICS)} />,
+    );
 
-    expect(rowsOf('Room Summary')).toEqual([
-      ['Total', '47'],
-      ['Available', '9'],
-      ['Occupied', '31'],
-      ['Reserved', '4'],
-      ['In Turnaround', '2'],
-      ['Out of Service', '1'],
-    ]);
+    // Each chart would otherwise mount twice (once to measure, once on its
+    // page) and render a second canvas chart for the life of the report.
+    expect(container.querySelectorAll('[data-report-unit]')).toHaveLength(0);
+    expect(
+      container.querySelectorAll('[data-testid="bed-status-chart"]'),
+    ).toHaveLength(1);
+    expect(
+      container.querySelectorAll('[data-testid="daily-occupancy-chart"]'),
+    ).toHaveLength(1);
   });
 
-  it('renders zero counts rather than blanks', () => {
-    const zeroed = makeReport({
-      bedCounts: {
-        total: 0,
-        available: 0,
-        occupied: 0,
-        reserved: 0,
-        inTurnaround: 0,
-        outOfService: 0,
-      } as ShelterReportData['bedCounts'],
-    });
+  it('uses a compact header (no "Operational Summary" title) on later pages', () => {
+    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} />);
 
-    render(<ShelterReportPrint data={zeroed} />);
-
-    expect(rowsOf('Bed Summary').map(([, value]) => value)).toEqual([
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-      '0',
-    ]);
+    const pagesWithTitle = reportPages().filter(
+      (page) => within(page).queryAllByText('Operational Summary').length > 0,
+    );
+    expect(pagesWithTitle).toHaveLength(1);
+    expect(pageHasText('Reporting Period')).toBe(true);
   });
 
-  // organization and location are both nullable on the query.
-  it('falls back to an em dash when the organization is missing', () => {
-    render(<ShelterReportPrint data={makeReport({ organization: null })} />);
+  it('collapses to a single page when only Bed Status is included', () => {
+    render(<ShelterReportPrint {...baseProps(['daily_bed_status_metrics'])} />);
 
-    expect(rowsOf('Shelter Summary')).toContainEqual(['Organization', '—']);
+    expect(reportPages()).toHaveLength(1);
+    expect(pagesWithTestId('bed-status-chart')).toBe(1);
+    expect(pagesWithTestId('daily-occupancy-chart')).toBe(0);
+    expect(footers()).toEqual(['1 of 1']);
   });
 
-  it('falls back to an em dash when the location is missing', () => {
-    render(<ShelterReportPrint data={makeReport({ location: null })} />);
+  it('moves Daily Occupancy up to page 1 when Bed Status is not included', () => {
+    render(
+      <ShelterReportPrint
+        {...baseProps(['reservation_metrics', 'daily_occupancy_metrics'])}
+      />,
+    );
 
-    expect(rowsOf('Shelter Summary')).toContainEqual(['Address', '—']);
+    expect(pagesWithTestId('bed-status-chart')).toBe(0);
+    expect(pagesWithTestId('daily-occupancy-chart')).toBe(1);
+    expect(footers()).toEqual(['1 of 1']);
   });
 
-  // useExportPdf captures whatever this ref points at, so the wiring matters.
+  it('renders nothing when no metrics are included', () => {
+    render(<ShelterReportPrint {...baseProps([])} />);
+
+    expect(reportPages()).toHaveLength(0);
+  });
+
+  it('shows the "Previously Overdue" pill when reservation_metrics is included', () => {
+    render(<ShelterReportPrint {...baseProps(['reservation_metrics'])} />);
+
+    expect(pageHasText('Previously Overdue')).toBe(true);
+    expect(pageHasText('1 / 8')).toBe(true);
+  });
+
+  it('shows a dash instead of a 0/0 ratio when nobody has checked in', () => {
+    render(
+      <ShelterReportPrint
+        {...baseProps(['reservation_metrics'])}
+        metrics={{ ...METRICS, checkedIn: 0, checkInOverdueToCheckedIn: 0 }}
+      />,
+    );
+
+    expect(pageHasText('Previously Overdue')).toBe(true);
+    expect(pageHasText('0 / 0')).toBe(false);
+    expect(pageHasText('—')).toBe(true);
+  });
+
   it('forwards its ref to the printable root', () => {
     const ref = createRef<HTMLDivElement>();
 
-    render(<ShelterReportPrint data={makeReport()} ref={ref} />);
+    render(<ShelterReportPrint {...baseProps(ALL_METRICS)} ref={ref} />);
 
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
-    expect(ref.current?.classList.contains('shelter-report-print')).toBe(true);
+    expect(
+      ref.current?.querySelectorAll('[data-report-page="true"]').length,
+    ).toBe(2);
+  });
+
+  describe('bed and room counts', () => {
+    it('prints Bed Summary and Room Summary when counts are provided', () => {
+      render(
+        <ShelterReportPrint
+          {...baseProps(['reservation_metrics'])}
+          bedCounts={COUNTS}
+          roomCounts={COUNTS}
+          organizationName="Better Angels"
+        />,
+      );
+
+      expect(pageHasText('Bed Summary')).toBe(true);
+      expect(pageHasText('Room Summary')).toBe(true);
+      expect(pageHasText('Total')).toBe(true);
+      expect(pageHasText('Organization: Better Angels')).toBe(true);
+    });
+
+    it('omits the counts sections when no counts are provided', () => {
+      render(<ShelterReportPrint {...baseProps(['reservation_metrics'])} />);
+
+      expect(pageHasText('Bed Summary')).toBe(false);
+      expect(pageHasText('Room Summary')).toBe(false);
+    });
+
+    it('starts the counts sections at heading level 2 for a valid heading order', () => {
+      render(
+        <ShelterReportPrint
+          {...baseProps(['reservation_metrics'])}
+          bedCounts={COUNTS}
+        />,
+      );
+
+      const heading = reportPages()
+        .flatMap((page) => Array.from(page.querySelectorAll('h2')))
+        .find((el) => el.textContent === 'Bed Summary');
+      expect(heading).toBeTruthy();
+    });
+  });
+
+  describe('repagination when the metric selection changes', () => {
+    it('re-measures a section that shifts position instead of reusing its neighbour’s height', () => {
+      // Heights are keyed by section rather than by index, so deselecting the
+      // counts card cannot hand its much smaller height to the chart that
+      // shifts up into its place.
+      const { rerender } = render(
+        <ShelterReportPrint
+          {...baseProps(['reservation_metrics', 'daily_bed_status_metrics'])}
+          bedCounts={COUNTS}
+        />,
+      );
+
+      expect(pageHasText('Bed Summary')).toBe(true);
+
+      rerender(
+        <ShelterReportPrint
+          {...baseProps(['reservation_metrics', 'daily_bed_status_metrics'])}
+        />,
+      );
+
+      expect(pageHasText('Bed Summary')).toBe(false);
+      // The chart keeps the full page its own 610px height requires.
+      expect(pagesWithTestId('bed-status-chart')).toBe(1);
+      expect(reportPages()).toHaveLength(1);
+      expect(footers()).toEqual(['1 of 1']);
+    });
+
+    it('keeps every section on a page after the selection shrinks and grows again', () => {
+      const { rerender } = render(
+        <ShelterReportPrint
+          {...baseProps(ALL_METRICS)}
+          bedCounts={COUNTS}
+          roomCounts={COUNTS}
+        />,
+      );
+      const widePageCount = reportPages().length;
+
+      rerender(<ShelterReportPrint {...baseProps(['reservation_metrics'])} />);
+      expect(reportPages()).toHaveLength(1);
+
+      rerender(
+        <ShelterReportPrint
+          {...baseProps(ALL_METRICS)}
+          bedCounts={COUNTS}
+          roomCounts={COUNTS}
+        />,
+      );
+
+      // Back to the same layout, and no unit was dropped along the way.
+      expect(reportPages()).toHaveLength(widePageCount);
+      const placed = reportPages().flatMap((page) =>
+        Array.from(page.querySelectorAll('[data-report-unit-in-page]')),
+      );
+      const keys = placed.map((el) =>
+        el.getAttribute('data-report-unit-in-page'),
+      );
+      expect(new Set(keys).size).toBe(keys.length);
+      expect(keys).toEqual(
+        expect.arrayContaining([
+          'bed-counts',
+          'room-counts',
+          'stats',
+          'bed-status',
+          'daily-occupancy',
+        ]),
+      );
+    });
+  });
+
+  describe('overflow handling', () => {
+    it('treats a zero-height measurement as unmeasured instead of collapsing the report', () => {
+      // No layout available (detached/hidden container): every section
+      // measures 0. Accepting 0 would pack the whole report onto one page and
+      // silently drop everything past the page box, so it must be ignored.
+      vi.spyOn(
+        HTMLElement.prototype,
+        'getBoundingClientRect',
+      ).mockImplementation(function (this: HTMLElement) {
+        return {
+          height: 0,
+          width: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        } as DOMRect;
+      });
+
+      render(
+        <ShelterReportPrint
+          {...baseProps(ALL_METRICS)}
+          bedCounts={COUNTS}
+          roomCounts={COUNTS}
+        />,
+      );
+
+      // Unmeasured sections over-paginate rather than under-paginate, so the
+      // charts still get their own pages instead of sharing one.
+      expect(pagesWithTestId('bed-status-chart')).toBe(1);
+      expect(pagesWithTestId('daily-occupancy-chart')).toBe(1);
+      expect(reportPages().length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('adds pages instead of clipping when the content is taller than one page', () => {
+      render(
+        <ShelterReportPrint
+          {...baseProps(ALL_METRICS)}
+          bedCounts={COUNTS}
+          roomCounts={COUNTS}
+        />,
+      );
+
+      // counts(230) + stats(110) + 2 charts(610 each) over an 864px box.
+      expect(reportPages().length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('keeps the page count announced in the footer in step with the pages rendered', () => {
+      render(
+        <ShelterReportPrint
+          {...baseProps(ALL_METRICS)}
+          bedCounts={COUNTS}
+          roomCounts={COUNTS}
+        />,
+      );
+
+      const pages = reportPages().length;
+      const announced = footers();
+      expect(announced).toHaveLength(pages);
+      expect(announced[0]).toBe(`1 of ${pages}`);
+      expect(announced[pages - 1]).toBe(`${pages} of ${pages}`);
+    });
   });
 });

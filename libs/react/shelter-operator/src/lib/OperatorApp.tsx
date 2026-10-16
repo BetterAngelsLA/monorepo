@@ -7,7 +7,7 @@ import {
   type PermissionEnum,
 } from '@monorepo/ba-platform/permissions';
 import { operatorPath, useUser } from '@monorepo/react/shelter';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import {
   BaPrivateGate,
@@ -31,7 +31,6 @@ import {
 } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
-import { ShelterReportPage } from './pages/report/ShelterReportPage';
 import {
   BaPrivatePage,
   ShelterBasicInfoPage,
@@ -49,7 +48,23 @@ import {
   paths,
   profileRouteConfig,
   routePath,
+  shelterMgmtResourceRoute,
 } from './routing';
+
+/**
+ * The standalone printable-report page is gone (PDF now exports from the
+ * Reports tab), but its URL was shareable, so send old links to the reports
+ * page rather than rendering nothing.
+ */
+function LegacyReportRedirect() {
+  const { shelterId } = useParams<{ shelterId: string }>();
+
+  if (!shelterId) return <Navigate to={routePath(paths.users)} replace />;
+
+  return (
+    <Navigate to={shelterMgmtResourceRoute(shelterId, 'report')} replace />
+  );
+}
 
 export function OperatorApp() {
   const { user } = useUser();
@@ -127,10 +142,6 @@ export function OperatorApp() {
                 }
               />
             </Route>
-            <Route
-              path={routePath(paths.shelterReport)}
-              element={<ShelterReportPage />}
-            />
             <Route path={routePath(mgmtRouteConfig.root)}>
               <Route
                 index
@@ -225,6 +236,11 @@ export function OperatorApp() {
                 element={<ReportsPage />}
               />
             </Route>
+            {/* Kept last so it only catches the retired report URL. */}
+            <Route
+              path={routePath(paths.shelterReportLegacy)}
+              element={<LegacyReportRedirect />}
+            />
           </Route>
         </Routes>
       </OperatorAuthProvider>
