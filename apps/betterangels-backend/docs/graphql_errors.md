@@ -282,11 +282,7 @@ raise GraphQLError("Validation Errors", extensions={"errors": errors})
 ```python
 raise GraphQLError(
     "regionCodes requires a dimension",
-    extensions={
-        "errors": [
-            {"field": "regionCodes", "location": None, "errorCode": "REGION_CODES_REQUIRE_DIMENSION"}
-        ]
-    },
+    extensions={"errors": [{"field": "regionCodes", "location": None, "errorCode": "REGION_CODES_REQUIRE_DIMENSION"}]},
 )
 ```
 
