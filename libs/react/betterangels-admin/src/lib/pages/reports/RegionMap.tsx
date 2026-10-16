@@ -240,6 +240,7 @@ export function RegionMap({
    * question changes, because a refusal for the last date range is not an answer about this one.
    */
   const [densityRefused, setDensityRefused] = useState(false);
+  const [tileFaulted, setTileFaulted] = useState(false);
   useEffect(() => {
     setDensityRefused(false);
     // `focusCodes` is state held by the caller, so its identity is the selection.
@@ -248,7 +249,13 @@ export function RegionMap({
   // Stable identities: these are in the layer memo's dependency list, and a new closure per
   // render would rebuild the whole deck.gl stack — and refetch the tiles — on every render.
   const markDensityRefused = useCallback(() => setDensityRefused(true), []);
-  const clearDensityRefused = useCallback(() => setDensityRefused(false), []);
+  // A tile that loads clears both notices: it is the same evidence the refusal's clear uses,
+  // and one transient failure must not replace the map for the rest of the session.
+  const handleTilesLoaded = useCallback(() => {
+    setDensityRefused(false);
+    setTileFaulted(false);
+  }, []);
+  const markTileFault = useCallback(() => setTileFaulted(true), []);
 
   const caption = useMemo(() => {
     let scope = '';
@@ -290,16 +297,20 @@ export function RegionMap({
     );
   }
 
-  if (failed) {
+  if (failed || tileFaulted) {
     // A fault, and it says so. Everything the map would have drawn from the rollup — the
     // boundaries, the table — is still below and unaffected.
+    //
+    // `failed` is the point query; `tileFaulted` is a tile that failed for a reason that is not
+    // a refusal. Both leave the map undrawable, and neither may pass silently: an empty field
+    // under a legend that promises a density reading is read as "no interactions here".
     return (
       <Alert
         className={mergeCss(className)}
         type="error"
         showIcon
         message="Map unavailable"
-        description={`${GENERIC_ERROR_MESSAGE} We could not load the interaction locations. The table below has the figures per region.`}
+        description={`${GENERIC_ERROR_MESSAGE} We could not load the map. The table below has the figures per region.`}
       />
     );
   }
@@ -372,7 +383,8 @@ export function RegionMap({
                 startDate={startDate}
                 endDate={endDate}
                 onDensityRefused={markDensityRefused}
-                onDensityLoaded={clearDensityRefused}
+                onDensityLoaded={handleTilesLoaded}
+                onTileFault={markTileFault}
                 overlay={mapColors}
               />
             )}

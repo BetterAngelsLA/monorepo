@@ -98,6 +98,15 @@ export type DeckMapLayersProps = {
    * actually being refused.
    */
   onDensityLoaded?: () => void;
+  /**
+   * A tile failed for a reason that is **not** a refusal — a 500, a dropped connection, a tile
+   * outside the server's zoom ceiling.
+   *
+   * Without this the map draws nothing and says nothing: an empty field under a legend that
+   * promises a density reading looks like "no interactions here", which is the one thing a
+   * failed tile must not be mistaken for.
+   */
+  onTileFault?: () => void;
   /** Design-system colours, resolved from antd tokens by the caller. */
   overlay: OverlayColors;
 };
@@ -135,6 +144,7 @@ export type BuildLayersArgs = {
   clusters: Cluster[];
   onDensityRefused?: () => void;
   onDensityLoaded?: () => void;
+  onTileFault?: () => void;
   overlay: OverlayColors;
 };
 
@@ -154,6 +164,7 @@ export function buildLayers({
   densityUrl,
   onDensityRefused,
   onDensityLoaded,
+  onTileFault,
   overlay,
   clusters,
 }: BuildLayersArgs): Layer[] {
@@ -187,7 +198,9 @@ export function buildLayers({
         onTileError: (error: unknown) => {
           if (isRefusedTileError(error)) {
             onDensityRefused?.();
+            return;
           }
+          onTileFault?.();
         },
         onTileLoad: () => onDensityLoaded?.(),
       }),
@@ -241,6 +254,10 @@ export function buildLayers({
         loadOptions: { fetch: { credentials: 'include' } },
         minZoom: 0,
         maxZoom: 16,
+        // Boundaries are public reference data with no note scope to refuse, so an error here
+        // is always a fault. Reported for the same reason as the density tile's: boundaries
+        // that silently fail to draw leave a map that looks like it has nothing to show.
+        onTileError: () => onTileFault?.(),
         // **Stroke only.** Filling each region with its interaction count would be a second
         // encoding of the quantity the density grid already encodes as a colour, competing for
         // the same pixels. Boundaries are the frame, not a second reading of the data; the
@@ -324,6 +341,7 @@ export function DeckMapLayers({
   endDate,
   onDensityRefused,
   onDensityLoaded,
+  onTileFault,
   overlay,
 }: DeckMapLayersProps) {
   const map = useMap();
@@ -455,6 +473,7 @@ export function DeckMapLayers({
     () => onDensityLoaded?.(),
     [onDensityLoaded],
   );
+  const handleTileFault = useCallback(() => onTileFault?.(), [onTileFault]);
 
   const layers = useMemo(
     () =>
@@ -467,6 +486,7 @@ export function DeckMapLayers({
         densityUrl,
         onDensityRefused: handleDensityRefused,
         onDensityLoaded: handleDensityLoaded,
+        onTileFault: handleTileFault,
         overlay,
         clusters,
       }),
@@ -479,6 +499,7 @@ export function DeckMapLayers({
       densityUrl,
       handleDensityRefused,
       handleDensityLoaded,
+      handleTileFault,
       overlay,
       clusters,
     ],

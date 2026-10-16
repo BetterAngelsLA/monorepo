@@ -387,4 +387,45 @@ describe('the tile-error classifier', () => {
     ).toBe(false);
     expect(isRefusedTileError(undefined)).toBe(false);
   });
+
+  // The classifier decides; the layer has to act on the decision. Both halves of that are
+  // asserted here, because a non-refusal error that reaches neither callback draws nothing and
+  // says nothing — an empty field under a legend promising a density reading.
+  const densityErrorCallbacks = () => {
+    const calls = { fault: 0, refused: 0 };
+    const layers = layersFor({
+      densityUrl: 'https://example.test/density/{z}/{x}/{y}.mvt',
+      onTileFault: () => {
+        calls.fault += 1;
+      },
+      onDensityRefused: () => {
+        calls.refused += 1;
+      },
+    });
+    return { calls, density: findLayer(layers, 'interaction-density', isMvt) };
+  };
+
+  it('reports a non-refusal tile error as a fault', () => {
+    const { calls, density } = densityErrorCallbacks();
+
+    density.props.onTileError?.(
+      new Error('fetch failed 500 Internal Server Error'),
+    );
+
+    expect(calls.fault).toBe(1);
+    expect(calls.refused).toBe(0);
+  });
+
+  it('reports a refused tile as a refusal, not as a fault', () => {
+    const { calls, density } = densityErrorCallbacks();
+
+    density.props.onTileError?.(
+      new Error(
+        'Failed to fetch resource (403) Forbidden: https://example.test/density/8/43/102.mvt',
+      ),
+    );
+
+    expect(calls.refused).toBe(1);
+    expect(calls.fault).toBe(0);
+  });
 });
