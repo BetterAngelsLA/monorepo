@@ -463,8 +463,10 @@ curl -sL "https://geohub.lacity.org/api/download/v1/items/76104f230e384f38871eb3
 # 2. inspect before writing code (reveals CRS + real field names)
 ogrinfo -so -al council_districts.zip
 
-# 3. load
-python manage.py import_regions --kind council_district
+# 3. load the file just inspected. Without `--source` the command fetches the layer from the
+#    publisher's live endpoint instead and ignores the download, which would make steps 1-2
+#    pointless in a run meant to reproduce this one.
+python manage.py import_regions --kind council_district --source council_districts.zip
 
 # 4. verify the CRS actually landed
 psql -c "select count(*), ST_SRID(geom), GeometryType(geom)
