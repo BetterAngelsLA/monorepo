@@ -6,11 +6,7 @@ import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { DeckMapLayers, type OverlayColors } from './DeckMapLayers';
-import {
-  DENSITY_COLOR_MAX,
-  HEATMAP_RAMP_CSS,
-  type HeatPoint,
-} from './heatmapMath';
+import { DENSITY_COLOR_MAX, HEATMAP_RAMP_CSS } from './heatmapMath';
 import type { InteractionPointType } from './hooks';
 import { GENERIC_ERROR_MESSAGE } from './reportErrors';
 
@@ -121,55 +117,6 @@ function useMapColors(): OverlayColors {
 }
 
 /**
- * Resolves the grouping's boundaries and hands everything to deck.gl.
- *
- * Split out so the query can require a dimension — the API refuses a code without one,
- * because a code is ambiguous across dimensions — without every call site asserting it. This
- * only mounts when a grouping is chosen, so the requirement is carried by the component tree.
- *
- * The map draws the boundaries from their own tile endpoint rather than from the rollup, so
- * regions with no interactions are still drawn instead of silently missing.
- */
-function RegionOverlay({
-  dimension,
-  focusCodes,
-  overlay,
-  points,
-  view,
-  organizationId,
-  startDate,
-  endDate,
-  onDensityRefused,
-  onDensityLoaded,
-}: {
-  dimension: RegionDimension;
-  focusCodes: string[];
-  overlay: OverlayColors;
-  points: HeatPoint[];
-  view: MapView;
-  organizationId: string;
-  startDate: string;
-  endDate: string;
-  onDensityRefused: () => void;
-  onDensityLoaded: () => void;
-}) {
-  return (
-    <DeckMapLayers
-      points={points}
-      view={view}
-      regionKind={dimension}
-      focusCodes={focusCodes}
-      organizationId={organizationId}
-      startDate={startDate}
-      endDate={endDate}
-      onDensityRefused={onDensityRefused}
-      onDensityLoaded={onDensityLoaded}
-      overlay={overlay}
-    />
-  );
-}
-
-/**
  * The density grid's colour key.
  *
  * A sibling of the map rather than one of its children: the map wrapper is presentational to
@@ -273,7 +220,7 @@ export function RegionMap({
   pointsLoading = false,
   truncated = false,
   filteredTo,
-  focusCodes = [],
+  focusCodes = EMPTY_FOCUS,
   hasMapsKey = true,
   refused = false,
   failed = false,
@@ -402,30 +349,25 @@ export function RegionMap({
           >
             {/* deck.gl draws the boundaries and whichever view of the interactions is chosen,
                 in one overlay. The boundaries are the grouping's geography — all of them,
-                including the ones with no interactions. */}
-            {dimension !== undefined && (
-              <RegionOverlay
-                dimension={dimension}
-                focusCodes={focusCodes}
-                overlay={mapColors}
-                points={points}
-                view={view}
-                organizationId={organizationId}
-                startDate={startDate}
-                endDate={endDate}
-                onDensityRefused={markDensityRefused}
-                onDensityLoaded={clearDensityRefused}
-              />
-            )}
-            {dimension === undefined && (view === 'heatmap' || points.length > 0) && (
-              // Ungrouped there are no boundaries to draw, but the field still is: the density
-              // grid answers "where were the interactions" without a grouping. The clusters view
-              // still needs the points, so it waits for them.
+                including the ones with no interactions.
+
+                Ungrouped there are no boundaries to draw, but the field still is: the density
+                grid answers "where were the interactions" without a grouping. The clusters view
+                still needs the points, so it waits for them — hence the condition rather than a
+                bare mount.
+
+                One element serves both cases, deliberately. Two elements, one per branch, would
+                occupy different child slots, so React would unmount the first and mount the
+                second on every pick and clear of the grouping; a new deck.gl overlay is a new
+                `MVTLayer` with an empty tile cache, so it refetches the density and boundary
+                tiles for a grouping-independent URL. `setProps` on one instance is the whole
+                point of the deferred teardown in `DeckMapLayers`. */}
+            {(dimension !== undefined || view === 'heatmap' || points.length > 0) && (
               <DeckMapLayers
                 points={points}
                 view={view}
-                regionKind={null}
-                focusCodes={EMPTY_FOCUS}
+                regionKind={dimension ?? null}
+                focusCodes={dimension !== undefined ? focusCodes : EMPTY_FOCUS}
                 organizationId={organizationId}
                 startDate={startDate}
                 endDate={endDate}
