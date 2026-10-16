@@ -140,11 +140,17 @@ class Query:
         # and not in the permission filter. `filter_for_user` is the *note* read scope and
         # has no org notion: it is a binary "holds `notes.view_note` model-level ⇒ every
         # row of every org", so it cannot confine anything.
-        scoped_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
+        org_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
         # The per-row note authority. Notes are a legacy domain (ADR 0001 §4.1: gated on
         # RFC 0003, `LEGACY_INERT_APPS` excludes them), so this is the legacy arm and
         # deliberately so — it is the same scope the Notes pages themselves apply.
-        scoped_notes = filter_for_user(scoped_notes, user, [NotePermissions.VIEW])
+        scoped_notes = filter_for_user(org_notes, user, [NotePermissions.VIEW])
+
+        # Whether the note scope is what emptied the payload is answerable here and **only**
+        # here: downstream the region filter can empty the same payload for a reason the reader
+        # can act on ("that district had no visits"). Both sides are the *unfiltered* set, so a
+        # region with nothing in it cannot make an empty map read as a permission answer.
+        withheld = not scoped_notes.exists() and org_notes.exists()
 
         # The one reading of `(dimension, regionCodes)`: an empty list matches nothing and
         # needs no dimension, a non-empty list without one is refused, and an absent list is
@@ -183,6 +189,7 @@ class Query:
             # `is not None`, not truthiness: `limit: 0` is a request for one pin, and
             # `limit or POINT_LIMIT` would turn it into the 10,000 cap.
             limit=limit if limit is not None else POINT_LIMIT,
+            withheld=withheld,
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])

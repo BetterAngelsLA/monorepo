@@ -204,6 +204,7 @@ INTERACTION_MAP_QUERY = """
         ) {
             points { latitude longitude }
             truncated
+            withheld
         }
     }
 """
@@ -281,6 +282,9 @@ class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
         self.assertNotIn("errors", result, result.get("errors"))
         self.assertEqual(len(result["points"]), 1, "the caseworker's note must be a pin")
         self.assertAlmostEqual(result["points"][0]["latitude"], 34.05, places=4)
+        # The negative control for `withheld`: this role holds the note scope, so a non-empty
+        # payload must not claim one was applied.
+        self.assertFalse(result["withheld"], "a reader who can see notes was told the payload was withheld")
 
     def test_org_admin_without_note_permission_sees_no_pins(self) -> None:
         """``ORG_ADMIN`` holds ``reports.view_reports`` and no ``notes.view_note``.
@@ -298,6 +302,14 @@ class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
             result["points"],
             [],
             f"ORG_ADMIN has no notes.view_note but received {len(result.get('points') or [])} pin(s)",
+        )
+        # An empty list for two different reasons, and this is what tells them apart: the
+        # period holds interactions (the caseworker's own test above proves it) and the note
+        # scope removed all of them. Without the flag a client reports the permission answer
+        # as "0 interactions", which is a claim about the neighbourhood.
+        self.assertTrue(
+            result["withheld"],
+            "an empty payload caused by the note scope must say so, or the client renders it as no interactions",
         )
 
     def test_the_rollup_still_works_for_the_report_only_role(self) -> None:
