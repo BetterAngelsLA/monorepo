@@ -9,7 +9,7 @@ import strawberry_django
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import CharField, Exists, F, Func, Max, OuterRef, Q, QuerySet, Value
 from django.utils import timezone
-from strawberry import ID, Info, auto
+from strawberry import ID, Info, Maybe, auto
 
 from clients.enums import (
     AdaAccommodationEnum,
@@ -408,11 +408,11 @@ class CreateClientProfileInput(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
-    contacts: Optional[List[ClientContactInput]]
-    hmis_profiles: Optional[List[HmisProfileInput]]
-    household_members: Optional[List[ClientHouseholdMemberInput]]
-    phone_numbers: Optional[List[PhoneNumberInput]]
-    social_media_profiles: Optional[List[SocialMediaProfileInput]]
+    contacts: Maybe[List[ClientContactInput] | None]
+    hmis_profiles: Maybe[List[HmisProfileInput] | None]
+    household_members: Maybe[List[ClientHouseholdMemberInput] | None]
+    phone_numbers: Maybe[List[PhoneNumberInput] | None]
+    social_media_profiles: Maybe[List[SocialMediaProfileInput] | None]
 
 
 # Data Import
