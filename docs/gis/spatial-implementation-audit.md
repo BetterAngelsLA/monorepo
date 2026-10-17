@@ -49,7 +49,9 @@ polygon's own topology, not its relationship to its neighbours, so adjacent boun
 apart. PostGIS's `ST_Simplify` documentation says so directly: *"This function does not preserve
 boundaries shared between polygons."*
 
-Measured across the 431 loaded regions:
+Measured once, in a probe whose queries were not kept — so these are a record rather than
+something you can re-run from the repository. (`regions/models.py` carries the figures that are
+re-measured and kept current.)
 
 | | |
 |---|---|
