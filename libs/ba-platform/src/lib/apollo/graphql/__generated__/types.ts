@@ -1452,6 +1452,11 @@ export type InteractionPointType = {
   longitude: Scalars['LongitudeScalar']['output'];
 };
 
+export type InteractionScopeType = {
+  __typename: 'InteractionScopeType';
+  withheld: Scalars['Boolean']['output'];
+};
+
 export enum LanguageEnum {
   Arabic = 'ARABIC',
   Armenian = 'ARMENIAN',
@@ -2583,6 +2588,7 @@ export type Query = {
   hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   interactionMap: InteractionMapType;
+  interactionScope: InteractionScopeType;
   interactionsByRegion: Array<RegionCountType>;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
@@ -2737,6 +2743,13 @@ export type QueryInteractionMapArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   organizationId: Scalars['ID']['input'];
   regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
+export type QueryInteractionScopeArgs = {
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId: Scalars['ID']['input'];
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
