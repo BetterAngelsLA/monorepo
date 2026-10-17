@@ -14,7 +14,8 @@ from __future__ import annotations
 from typing import Any
 
 from django.core.management import call_command
-from django.test import TestCase
+from django.core.management.base import CommandError
+from django.test import TestCase, override_settings
 from model_bakery import baker
 from organizations.models import Organization
 
@@ -91,3 +92,17 @@ class LoadReportTestDataLocationsTestCase(TestCase):
                     -119.0 <= lon <= -117.0 and 32.5 <= lat <= 35.0,
                     f"({lon}, {lat}) is outside the Los Angeles area the fixture is meant to cover",
                 )
+
+
+class LoadReportTestDataGuardTestCase(TestCase):
+    """It refuses outside local dev.
+
+    The command writes notes and, with ``--clear``, deletes every note belonging to
+    ``test_org``. That org not existing in production is a property of the production data
+    rather than a guard, so the environment is checked explicitly.
+    """
+
+    @override_settings(IS_LOCAL_DEV=False)
+    def test_it_refuses_when_not_local_dev(self) -> None:
+        with self.assertRaises(CommandError):
+            call_command("load_report_test_data", verbosity=0)

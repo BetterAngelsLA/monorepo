@@ -3,6 +3,17 @@
 What it takes to run, read and change the geographic grouping behind the Reports page: one
 `regions` app, one importer, two tile endpoints and three GraphQL queries.
 
+**At a glance**
+
+- Ships: boundary polygons for six LA dimensions, a live point→region rollup, two MVT tile
+  endpoints, and a Reports-page panel.
+- Run it: `migrate` → `import_regions` → `load_report_test_data --with-locations` → open
+  `/reports`.
+- Needs: a Google Maps key for the panel (`VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`) and
+  outbound network to import boundaries.
+- Known defect: simplified boundaries do not meet at their shared edges (sub-60 m seams).
+  Inherent to per-polygon simplification; the fix needs a newer GEOS than dev pins.
+
 The "why" for each implementation choice lives in the code — `regions/models.py` (generated
 columns, subdivision tuning), `regions/selectors.py` (the join direction, the measurements),
 `regions/tiles.py` (tile geometry, the density grid), `regions/schema.py` and `regions/views.py`
@@ -60,6 +71,11 @@ Tests: `apps/betterangels-backend/regions/tests/`
 - **Adding `Location.point_geom` rewrites `common_location` once**, under an `ACCESS EXCLUSIVE`
   lock. Plan a window, or use the expression index instead — see
   `common/migrations/0002_location_point_geom.py`.
+
+The figures above are re-measured from the dev fixture. The tables behind them — the
+`ST_Subdivide` tuning sweep and the join-direction comparison — live next to the constants they
+justify, in `regions/models.py` and `regions/selectors.py`; start a measurement change there,
+not here.
 
 ## Region grouping (shipped)
 
@@ -194,21 +210,14 @@ is simultaneously a council district, an SPA and a supervisorial district. `Regi
 `ZIP | CITY | COUNCIL_DISTRICT | SUPERVISORIAL_DISTRICT | SPA | COC`, and `regionDimensions`
 returns the display names with it so a client does not keep a second copy of the vocabulary.
 
-**Authorization differs by query, deliberately.**
+**Authorization differs by query, deliberately.** `interactionMap` returns coordinates and so
+carries two gates — `reports.view_reports` at the payload org, **and** the note read scope — while
+`interactionsByRegion` returns counts and carries only the first. The boundary tile and
+`regionDimensions` need nothing beyond a session. `interactionScope` carries the same gates as
+`interactionMap`, because it answers the same question about the same notes.
 
-`interactionMap` returns coordinates, so it carries two gates: `reports.view_reports` at the
-payload org, **and** the note read scope via `filter_for_user(..., [NotePermissions.VIEW])`. The
-second is not redundant — a pin is a note's location, so it inherits the note scope, and
-`ORG_ADMIN` holds `reports.view_reports` with no note permission. It is deliberately **not**
-`require_can(..., NotePermissions.VIEW)`: notes are a legacy domain, no `Role` carries
-`notes.view_note`, and a grant predicate on that codename denies every non-superuser.
-
-`interactionsByRegion` returns counts rather than coordinates, so it carries `reports.view_reports`
-alone — the same authority as `reportSummary`, which it sits beside. `regionDimensions` requires
-only an authenticated session: it exposes which boundary sets are loaded, not client data. So does
-the **boundary** tile endpoint — public reference polygons, identical for every tenant. The
-**density** tile carries the same two gates as `interactionMap`, because a filled cell is still a
-note's location.
+Why the second gate is a filter rather than a grant predicate, and why the two must not be
+confused, is stated once, in `regions/schema.py` (`interaction_map`).
 
 An empty `regionCodes` matches **nothing** and needs no `dimension`; a non-empty list requires one.
 `interactionMap` ignores a lone `dimension` (nothing to narrow) where the density tile refuses it.
