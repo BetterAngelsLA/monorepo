@@ -14,8 +14,9 @@ import random
 from datetime import timedelta
 from typing import Any
 
+from django.conf import settings
 from django.contrib.gis.geos import Point
-from django.core.management.base import BaseCommand, CommandParser
+from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.utils import timezone
 from organizations.models import Organization
 
@@ -216,6 +217,15 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
+        # Refuse outside local dev, explicitly. The command seeds Notes and, with `--clear`,
+        # deletes every note belonging to `test_org`; relying on that organization not existing
+        # is not a safety property, it is a coincidence of the production data.
+        if not settings.IS_LOCAL_DEV:
+            raise CommandError(
+                "load_report_test_data writes test notes and deletes them with --clear; "
+                "it runs only when IS_LOCAL_DEV is True."
+            )
+
         # Find test_org
         try:
             org = Organization.objects.get(name="test_org")
