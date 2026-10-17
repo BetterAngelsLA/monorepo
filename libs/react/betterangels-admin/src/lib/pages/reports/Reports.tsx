@@ -67,7 +67,11 @@ function Metric({
         // on its own title and content elements, and a colour inherited from the root loses to
         // a declaration on the element itself.
         valueRender={(node) => <span className="text-neutral-400">{node}</span>}
-        suffix={<span className="text-xs font-normal text-neutral-400">{emptyHint}</span>}
+        suffix={
+          <span className="text-xs font-normal text-neutral-400">
+            {emptyHint}
+          </span>
+        }
       />
     );
   }
@@ -246,8 +250,10 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
   // over every service, which the summary does not carry. The label states the cap rather than
   // claiming a total the number cannot support.
   const topProvidedServicesTotal =
-    summary?.topProvidedServices?.reduce((sum, row) => sum + (row.count ?? 0), 0) ??
-    0;
+    summary?.topProvidedServices?.reduce(
+      (sum, row) => sum + (row.count ?? 0),
+      0,
+    ) ?? 0;
 
   return (
     <div className={mergeCss(['flex flex-col gap-6', className])}>
@@ -341,155 +347,155 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
               them and the cards would otherwise touch. */}
           <div className="flex flex-col gap-6">
             {/* KPI row */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={6}>
-              <Card>
-                <Statistic
-                  title="Total Interactions"
-                  value={summary.totalNotes}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Card>
-                <Metric
-                  title="Unique Clients"
-                  value={summary.uniqueClients}
-                  // Zero here while interactions exist reads as "you served nobody". It is
-                  // the same zero as "nothing is recorded", and those are different claims.
-                  emptyHint="No clients recorded on these interactions"
-                  hasData={summary.totalNotes > 0}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Card>
-                <Metric
-                  title="Active Teams"
-                  value={summary.notesByTeam?.length ?? 0}
-                  emptyHint="No team recorded on these interactions"
-                  hasData={summary.totalNotes > 0}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Card>
-                <Statistic
-                  title="Top 15 Provided Services"
-                  value={topProvidedServicesTotal}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Charts */}
-          <Row gutter={[16, 16]}>
-            {(summary.notesByDate?.length ?? 0) > 0 && (
-              <Col xs={24} lg={12}>
-                <ChartCard title="Interactions Over Time">
-                  <Column
-                    data={summary.notesByDate}
-                    xField="date"
-                    yField="count"
-                    height={300}
-                    axis={AXIS_DATES_INTERACTIONS}
-                    style={CHART_STYLE.primary}
-                  />
-                </ChartCard>
-              </Col>
-            )}
-
-            {(summary.uniqueClientsByDate?.length ?? 0) > 0 && (
-              <Col xs={24} lg={12}>
-                <ChartCard title="Unique Clients Over Time">
-                  <Column
-                    data={summary.uniqueClientsByDate}
-                    xField="date"
-                    yField="count"
-                    height={300}
-                    axis={AXIS_DATES_CLIENTS}
-                    style={CHART_STYLE.purple}
-                  />
-                </ChartCard>
-              </Col>
-            )}
-
-            {(summary.notesByTeam?.length ?? 0) > 0 && (
-              <Col xs={24} lg={12}>
-                <ChartCard title="Interactions by Team">
-                  <Column
-                    data={summary.notesByTeam}
-                    xField="name"
-                    yField="count"
-                    height={300}
-                    axis={AXIS_NAMES_COUNT}
-                    style={CHART_STYLE.primary}
-                  />
-                </ChartCard>
-              </Col>
-            )}
-
-            {(summary.notesByPurpose?.length ?? 0) > 0 && (
-              <Col xs={24} lg={12}>
-                <ChartCard title="Top Purposes">
-                  <PurposeChart purposes={summary.notesByPurpose} />
-                </ChartCard>
-              </Col>
-            )}
-
-            {(summary.topProvidedServices?.length ?? 0) > 0 && (
-              <Col xs={24} lg={12}>
-                <ChartCard title="Top Provided Services">
-                  <Column
-                    data={summary.topProvidedServices}
-                    xField="name"
-                    yField="count"
-                    height={300}
-                    axis={AXIS_NAMES_COUNT}
-                    style={CHART_STYLE.success}
-                  />
-                </ChartCard>
-              </Col>
-            )}
-
-            {(summary.topRequestedServices?.length ?? 0) > 0 && (
-              <Col xs={24} lg={12}>
-                <ChartCard title="Top Requested Services">
-                  <Column
-                    data={summary.topRequestedServices}
-                    xField="name"
-                    yField="count"
-                    height={300}
-                    axis={AXIS_NAMES_COUNT}
-                    style={CHART_STYLE.warning}
-                  />
-                </ChartCard>
-              </Col>
-            )}
-          </Row>
-
-          {/* Geographic breakdown. Reuses the page's own date range and org so the
-              region figures always match the KPIs above them. */}
-          {activeOrg && (
             <Row gutter={[16, 16]}>
-              <Col xs={24}>
-                <LocationBreakdown
-                  organizationId={activeOrg.id}
-                  startDate={startStr}
-                  endDate={endStr}
-                  hasMapsKey={hasMapsKey}
-                />
+              <Col xs={24} sm={6}>
+                <Card>
+                  <Statistic
+                    title="Total Interactions"
+                    value={summary.totalNotes}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={6}>
+                <Card>
+                  <Metric
+                    title="Unique Clients"
+                    value={summary.uniqueClients}
+                    // Zero here while interactions exist reads as "you served nobody". It is
+                    // the same zero as "nothing is recorded", and those are different claims.
+                    emptyHint="No clients recorded on these interactions"
+                    hasData={summary.totalNotes > 0}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={6}>
+                <Card>
+                  <Metric
+                    title="Active Teams"
+                    value={summary.notesByTeam?.length ?? 0}
+                    emptyHint="No team recorded on these interactions"
+                    hasData={summary.totalNotes > 0}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={6}>
+                <Card>
+                  <Statistic
+                    title="Top 15 Provided Services"
+                    value={topProvidedServicesTotal}
+                  />
+                </Card>
               </Col>
             </Row>
-          )}
 
-          {summary.totalNotes === 0 && (
-            <Card>
-              <p className="text-center text-neutral-500">
-                No interaction data found for the selected date range.
-              </p>
-            </Card>
-          )}
+            {/* Charts */}
+            <Row gutter={[16, 16]}>
+              {(summary.notesByDate?.length ?? 0) > 0 && (
+                <Col xs={24} lg={12}>
+                  <ChartCard title="Interactions Over Time">
+                    <Column
+                      data={summary.notesByDate}
+                      xField="date"
+                      yField="count"
+                      height={300}
+                      axis={AXIS_DATES_INTERACTIONS}
+                      style={CHART_STYLE.primary}
+                    />
+                  </ChartCard>
+                </Col>
+              )}
+
+              {(summary.uniqueClientsByDate?.length ?? 0) > 0 && (
+                <Col xs={24} lg={12}>
+                  <ChartCard title="Unique Clients Over Time">
+                    <Column
+                      data={summary.uniqueClientsByDate}
+                      xField="date"
+                      yField="count"
+                      height={300}
+                      axis={AXIS_DATES_CLIENTS}
+                      style={CHART_STYLE.purple}
+                    />
+                  </ChartCard>
+                </Col>
+              )}
+
+              {(summary.notesByTeam?.length ?? 0) > 0 && (
+                <Col xs={24} lg={12}>
+                  <ChartCard title="Interactions by Team">
+                    <Column
+                      data={summary.notesByTeam}
+                      xField="name"
+                      yField="count"
+                      height={300}
+                      axis={AXIS_NAMES_COUNT}
+                      style={CHART_STYLE.primary}
+                    />
+                  </ChartCard>
+                </Col>
+              )}
+
+              {(summary.notesByPurpose?.length ?? 0) > 0 && (
+                <Col xs={24} lg={12}>
+                  <ChartCard title="Top Purposes">
+                    <PurposeChart purposes={summary.notesByPurpose} />
+                  </ChartCard>
+                </Col>
+              )}
+
+              {(summary.topProvidedServices?.length ?? 0) > 0 && (
+                <Col xs={24} lg={12}>
+                  <ChartCard title="Top Provided Services">
+                    <Column
+                      data={summary.topProvidedServices}
+                      xField="name"
+                      yField="count"
+                      height={300}
+                      axis={AXIS_NAMES_COUNT}
+                      style={CHART_STYLE.success}
+                    />
+                  </ChartCard>
+                </Col>
+              )}
+
+              {(summary.topRequestedServices?.length ?? 0) > 0 && (
+                <Col xs={24} lg={12}>
+                  <ChartCard title="Top Requested Services">
+                    <Column
+                      data={summary.topRequestedServices}
+                      xField="name"
+                      yField="count"
+                      height={300}
+                      axis={AXIS_NAMES_COUNT}
+                      style={CHART_STYLE.warning}
+                    />
+                  </ChartCard>
+                </Col>
+              )}
+            </Row>
+
+            {/* Geographic breakdown. Reuses the page's own date range and org so the
+              region figures always match the KPIs above them. */}
+            {activeOrg && (
+              <Row gutter={[16, 16]}>
+                <Col xs={24}>
+                  <LocationBreakdown
+                    organizationId={activeOrg.id}
+                    startDate={startStr}
+                    endDate={endStr}
+                    hasMapsKey={hasMapsKey}
+                  />
+                </Col>
+              </Row>
+            )}
+
+            {summary.totalNotes === 0 && (
+              <Card>
+                <p className="text-center text-neutral-500">
+                  No interaction data found for the selected date range.
+                </p>
+              </Card>
+            )}
           </div>
         </Spin>
       )}

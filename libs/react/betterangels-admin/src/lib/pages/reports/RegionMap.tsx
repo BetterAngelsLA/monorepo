@@ -8,6 +8,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { DeckMapLayers, type OverlayColors } from './DeckMapLayers';
 import { DENSITY_COLOR_MAX, HEATMAP_RAMP_CSS } from './heatmapMath';
 import type { InteractionPointType } from './hooks';
+import { mapNotice } from './mapNotice';
 import { GENERIC_ERROR_MESSAGE } from './reportErrors';
 
 /** Stable identity for the ungrouped map, so its layers are not rebuilt on every render. */
@@ -167,9 +168,9 @@ type RegionMapProps = {
   /**
    * Individual interaction locations, from `interactionMap`.
    *
-   * Only the clusters view draws them. The density view still asks the query, but for one row:
-   * `withheld` is the only report of a note scope that removed every cell, and the tile
-   * endpoint answers 204 for "nothing here" and "withheld" alike. See `LocationBreakdown`.
+   * Only the clusters view draws them. The density view asks `interactionScope` instead,
+   * because it needs the one flag those points would carry and draws none of them: the tile
+   * endpoint answers 204 for "nothing here" and for "withheld" alike.
    */
   points?: InteractionPointType[];
   /** The point query is in flight and has not answered yet. */
@@ -300,14 +301,21 @@ export function RegionMap({
     //
     // It does not assert that cells were drawn either. A cell-free tile is indistinguishable
     // from a range with nothing in it: a 204 carries no body, and an MVT has no field to say
-    // which it was. Whether the note scope *withheld* the grid is reported by
-    // `interactionMap`'s `withheld` (the one-row probe requested in this view), so it reaches
-    // the reader as the refusal notice above rather than as a legend on an empty field. The
-    // caption describes what the scale *means* and leaves the figures below.
+    // which it was. Whether the note scope *withheld* the grid is answered by
+    // `interactionScope`, so it reaches the reader as the refusal notice above rather than as
+    // a legend on an empty field. The caption describes what the scale *means* and leaves the
+    // figures below.
     return `Interaction density${scope}, as a grid of counts. Where the grid has cells, red is where interactions concentrate and blue where they thin out; the legend is an absolute scale, and the figures below cover the same interactions.`;
   }, [view, points.length, filteredTo, pointsLoading, truncated]);
 
-  if (refused || (view === 'heatmap' && densityRefused)) {
+  const notice = mapNotice({
+    hasMapsKey,
+    refused: refused || (view === 'heatmap' && densityRefused),
+    failed,
+    tileFaulted,
+  });
+
+  if (notice === 'refused') {
     // A refusal, not a fault. The note read scope is a different permission from the report
     // scope, so a reader can be entitled to the breakdown and not to the interactions.
     // `withheld` on the one-row probe reports exactly that in both views; a 403 from the tile
@@ -325,7 +333,7 @@ export function RegionMap({
     );
   }
 
-  if (failed) {
+  if (notice === 'failed') {
     // A fault, and it says so. Everything the map would have drawn from the rollup — the
     // boundaries, the table — is still below and unaffected.
     return (
@@ -339,7 +347,7 @@ export function RegionMap({
     );
   }
 
-  if (!hasMapsKey) {
+  if (notice === 'no-key') {
     return (
       <Alert
         className={mergeCss(className)}
@@ -411,7 +419,9 @@ export function RegionMap({
                 `MVTLayer` with an empty tile cache, so it refetches the density and boundary
                 tiles for a grouping-independent URL. `setProps` on one instance is the whole
                 point of the deferred teardown in `DeckMapLayers`. */}
-            {(dimension !== undefined || view === 'heatmap' || points.length > 0) && (
+            {(dimension !== undefined ||
+              view === 'heatmap' ||
+              points.length > 0) && (
               <DeckMapLayers
                 points={points}
                 view={view}
@@ -437,7 +447,7 @@ export function RegionMap({
           it. Replacing the map would unmount the layers, and then no tile could ever load to
           clear the notice — the fault would outlive the network condition that caused it. Kept
           mounted, the next successful tile clears it (see `handleTilesLoaded`). */}
-      {tileFaulted && (
+      {notice === 'tile-fault' && (
         <Alert
           className="mt-2"
           type="warning"

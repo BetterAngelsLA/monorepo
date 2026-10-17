@@ -36,7 +36,9 @@ function findDimension(
   dimensions: readonly DimensionInfo[],
 ): DimensionInfo | undefined {
   const lower = kind.toLowerCase();
-  return dimensions.find((dimension) => dimension.value.toLowerCase() === lower);
+  return dimensions.find(
+    (dimension) => dimension.value.toLowerCase() === lower,
+  );
 }
 
 /**
@@ -137,7 +139,9 @@ export function unassignedRowLabel(
  * drill-down option's text, and the "within …" prose — and a region with no name must read as
  * its code in all three.
  */
-export function displayName(row: Pick<RegionCountType, 'name' | 'code'>): string {
+export function displayName(
+  row: Pick<RegionCountType, 'name' | 'code'>,
+): string {
   return row.name || row.code;
 }
 

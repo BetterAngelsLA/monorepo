@@ -13,6 +13,7 @@ import { useVisibilityObserver } from '@monorepo/react/shared';
 import { ChartCard } from '../../components';
 import {
   useInteractionMap,
+  useInteractionScope,
   useInteractionsByRegion,
   useRegionDimensions,
   type RegionCountType,
@@ -159,14 +160,24 @@ export function LocationBreakdown({
     // it changes the query's variables without changing its answer.
     dimension: selectedCodes.length > 0 ? dimension : undefined,
     regionCodes: selectedCodes.length > 0 ? selectedCodes : undefined,
-    // **Both views ask, for different reasons.** Clusters draws the points. The density grid
-    // draws nothing from them — they are aggregated on the server — but `withheld` is the only
-    // surface that can report a note scope which removed *every* cell: the tile endpoint
-    // answers 204 for "nothing here" and for "withheld" alike, and an MVT has no field to tell
-    // them apart. One row is enough to know which, so the grid asks for `limit: 1` rather than
-    // a megabyte of points nobody plots.
-    enabled: hasMapsKey && mapVisible,
-    limit: mapView === 'clusters' ? undefined : 1,
+    // Only the clusters view draws points. The density grid draws none of them — it is
+    // aggregated on the server — so it asks `useInteractionScope` for the one flag it needs
+    // instead of fetching a payload it would ignore.
+    enabled: hasMapsKey && mapVisible && mapView === 'clusters',
+  });
+
+  /**
+   * Whether the note scope withheld the interactions, for the view that cannot tell.
+   *
+   * A cell-free tile is a 204 whether the range was quiet or the scope removed every pin, so
+   * the grid needs this answer from outside the tiles. Clusters takes it from `interactionMap`,
+   * which it already holds.
+   */
+  const { withheld: scopeWithheld } = useInteractionScope({
+    organizationId,
+    startDate,
+    endDate,
+    enabled: hasMapsKey && mapVisible && mapView === 'heatmap',
   });
 
   /**
@@ -341,7 +352,9 @@ export function LocationBreakdown({
           {/* Loading and "the server reports no loaded boundary sets" both arrive as an empty
               list, so they are told apart here: without this the panel invites the reader to
               choose from an empty dropdown and never says why it is empty. */}
-          {!dimensionsLoading && dimensionsError === undefined && dimensions.length === 0 ? (
+          {!dimensionsLoading &&
+          dimensionsError === undefined &&
+          dimensions.length === 0 ? (
             <Text type="secondary">
               No region boundaries have been loaded for this organisation.
             </Text>
@@ -431,7 +444,10 @@ export function LocationBreakdown({
               pointsLoading={pointsLoading}
               truncated={truncated}
               hasMapsKey={hasMapsKey}
-              refused={mapRefused || pointsWithheld}
+              refused={
+                mapRefused ||
+                (mapView === 'clusters' ? pointsWithheld : scopeWithheld)
+              }
               failed={mapFailed}
               filteredTo={breakdown.filteredToName}
               focusCodes={selectedCodes}
@@ -473,11 +489,13 @@ export function LocationBreakdown({
         <>
           {/* The drill-down is empty while the range is not: distinct from "no located
               interactions for this range" above, which is about the range itself. */}
-          {!rowsLoading && selectedCodes.length > 0 && assigned.length === 0 && (
-            <p className="mt-4 text-center text-sm text-neutral-500">
-              No interactions in the selected regions for this range.
-            </p>
-          )}
+          {!rowsLoading &&
+            selectedCodes.length > 0 &&
+            assigned.length === 0 && (
+              <p className="mt-4 text-center text-sm text-neutral-500">
+                No interactions in the selected regions for this range.
+              </p>
+            )}
           <Table<RegionCountType>
             className="mt-4"
             size="small"

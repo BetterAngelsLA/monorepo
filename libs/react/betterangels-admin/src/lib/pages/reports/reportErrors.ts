@@ -33,7 +33,9 @@ const REFUSAL_CODES = new Set([
 ]);
 
 /** `extensions.http.status`, when the server reports the status it would have used. */
-function httpStatusOf(extensions: Readonly<Record<string, unknown>> | undefined) {
+function httpStatusOf(
+  extensions: Readonly<Record<string, unknown>> | undefined,
+) {
   const http = extensions?.['http'];
   if (typeof http !== 'object' || http === null || !('status' in http)) {
     return undefined;

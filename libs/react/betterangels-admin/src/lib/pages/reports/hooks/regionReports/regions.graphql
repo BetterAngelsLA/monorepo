@@ -35,8 +35,6 @@ query InteractionMap(
   $startDate: Date
   $endDate: Date
   $regionCodes: [String!]
-  # Only the density view asks for one: it needs `withheld`, not the pins.
-  $limit: Int
 ) {
   interactionMap(
     organizationId: $organizationId
@@ -44,13 +42,24 @@ query InteractionMap(
     endDate: $endDate
     dimension: $dimension
     regionCodes: $regionCodes
-    limit: $limit
   ) {
     points {
       latitude
       longitude
     }
     truncated
+    withheld
+  }
+}
+
+# The density view draws no points, so it asks the one question it cannot answer from a tile:
+# a cell-free response is a 204 either way, and an MVT has no field to say which it was.
+query InteractionScope($organizationId: ID!, $startDate: Date, $endDate: Date) {
+  interactionScope(
+    organizationId: $organizationId
+    startDate: $startDate
+    endDate: $endDate
+  ) {
     withheld
   }
 }

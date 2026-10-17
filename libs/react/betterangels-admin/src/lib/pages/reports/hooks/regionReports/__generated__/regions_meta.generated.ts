@@ -3,6 +3,7 @@
 import type { RegionDimensionsQuery } from './regions.generated';
 import type { InteractionsByRegionQuery } from './regions.generated';
 import type { InteractionMapQuery } from './regions.generated';
+import type { InteractionScopeQuery } from './regions.generated';
 
 export const regionDimensionsOperationKey: keyof Omit<RegionDimensionsQuery, '__typename'> = 'regionDimensions';
 export const regionDimensionsSuccessTypename: Extract<
@@ -41,4 +42,17 @@ export const interactionMapSuccessTypename: Extract<
 export const interactionMapMeta = {
   operationKey: interactionMapOperationKey,
   successTypename: interactionMapSuccessTypename,
+} as const;
+
+export const interactionScopeOperationKey: keyof Omit<InteractionScopeQuery, '__typename'> = 'interactionScope';
+export const interactionScopeSuccessTypename: Extract<
+  NonNullable<InteractionScopeQuery['interactionScope']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<InteractionScopeQuery['interactionScope']>,
+  { __typename: 'InteractionScopeType' }
+>['__typename'] = 'InteractionScopeType';
+
+export const interactionScopeMeta = {
+  operationKey: interactionScopeOperationKey,
+  successTypename: interactionScopeSuccessTypename,
 } as const;

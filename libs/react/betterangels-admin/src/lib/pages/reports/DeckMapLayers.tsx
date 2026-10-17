@@ -129,7 +129,10 @@ export type DeckMapLayersProps = {
  */
 export function isRefusedTileError(error: unknown): boolean {
   const message = String((error as Error)?.message ?? '');
-  const status = /fetch failed (\d{3})|Failed to fetch resource[^(]*\((\d{3})\)/.exec(message);
+  const status =
+    /fetch failed (\d{3})|Failed to fetch resource[^(]*\((\d{3})\)/.exec(
+      message,
+    );
   const code = Number(status?.[1] ?? status?.[2]);
   return isRefusalStatus(code);
 }
@@ -237,7 +240,10 @@ export function buildLayers({
       new TextLayer<Cluster>({
         id: 'interaction-cluster-counts',
         data: clusters.filter((cluster: Cluster) => cluster.count > 1),
-        getPosition: (cluster: Cluster) => [cluster.longitude, cluster.latitude],
+        getPosition: (cluster: Cluster) => [
+          cluster.longitude,
+          cluster.latitude,
+        ],
         getText: (cluster: Cluster) => String(cluster.count),
         // The count is the whole point of a bubble; a bin of one is just a dot and would be
         // shouting "1" over the whole map.
@@ -486,10 +492,7 @@ export function DeckMapLayers({
     () => onDensityRefused?.(),
     [onDensityRefused],
   );
-  const handleTilesLoaded = useCallback(
-    () => onTileLoaded?.(),
-    [onTileLoaded],
-  );
+  const handleTilesLoaded = useCallback(() => onTileLoaded?.(), [onTileLoaded]);
   const handleTileFault = useCallback(() => onTileFault?.(), [onTileFault]);
 
   const layers = useMemo(

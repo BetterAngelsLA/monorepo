@@ -22,11 +22,17 @@ describe('isRefusalError', () => {
 
   it('treats the auth-shaped GraphQL codes as a refusal', () => {
     // A permission failure over HTTP 200 arrives as `errors[]`, not as a status.
-    expect(isRefusalError(graphQLError({ code: 'UNAUTHENTICATED' }))).toBe(true);
-    expect(isRefusalError(graphQLError({ code: 'PERMISSION_DENIED' }))).toBe(true);
+    expect(isRefusalError(graphQLError({ code: 'UNAUTHENTICATED' }))).toBe(
+      true,
+    );
+    expect(isRefusalError(graphQLError({ code: 'PERMISSION_DENIED' }))).toBe(
+      true,
+    );
     // The backend's own unauthenticated error carries both, and either alone is enough.
     expect(
-      isRefusalError(graphQLError({ code: 'UNAUTHENTICATED', http: { status: 401 } })),
+      isRefusalError(
+        graphQLError({ code: 'UNAUTHENTICATED', http: { status: 401 } }),
+      ),
     ).toBe(true);
     expect(isRefusalError(graphQLError({ http: { status: 403 } }))).toBe(true);
   });
@@ -36,7 +42,9 @@ describe('isRefusalError', () => {
     expect(isRefusalError(new Error('fetch failed 500'))).toBe(false);
     // A 200 GraphQL error with no auth code is a resolver fault or a validation error.
     expect(isRefusalError(graphQLError())).toBe(false);
-    expect(isRefusalError(graphQLError({ code: 'VALIDATION_ERROR' }))).toBe(false);
+    expect(isRefusalError(graphQLError({ code: 'VALIDATION_ERROR' }))).toBe(
+      false,
+    );
     // An offline browser surfaces as a link error, not an Apollo response.
     expect(isRefusalError(new TypeError('Failed to fetch'))).toBe(false);
     expect(isRefusalError(undefined)).toBe(false);

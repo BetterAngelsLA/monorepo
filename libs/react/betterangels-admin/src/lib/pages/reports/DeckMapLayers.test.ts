@@ -315,7 +315,11 @@ describe('the cluster layers', () => {
     });
 
     const bubbles = findLayer(layers, 'interaction-clusters', isScatterplot);
-    const counts = findLayer(layers, 'interaction-cluster-counts', isClusterText);
+    const counts = findLayer(
+      layers,
+      'interaction-cluster-counts',
+      isClusterText,
+    );
 
     // Every cluster is a bubble, and the positions and radii reached deck.gl as buffers.
     const binary = bubbles.props.data;
@@ -342,7 +346,9 @@ describe('the tile-error classifier', () => {
     // read scope withholds the grid.
     // Both message shapes loaders.gl puts a status in, because which one fires depends on
     // the path the tile takes through `load()`.
-    expect(isRefusedTileError(new Error('fetch failed 403 Forbidden'))).toBe(true);
+    expect(isRefusedTileError(new Error('fetch failed 403 Forbidden'))).toBe(
+      true,
+    );
     expect(isRefusedTileError(new Error('fetch failed 401 Unauthorized'))).toBe(
       true,
     );
@@ -382,7 +388,9 @@ describe('the tile-error classifier', () => {
     // "your role cannot see this".
     expect(
       isRefusedTileError(
-        new Error('Failed to load /regions/tiles/density/8/403/101.mvt?org_id=2'),
+        new Error(
+          'Failed to load /regions/tiles/density/8/403/101.mvt?org_id=2',
+        ),
       ),
     ).toBe(false);
     expect(isRefusedTileError(undefined)).toBe(false);

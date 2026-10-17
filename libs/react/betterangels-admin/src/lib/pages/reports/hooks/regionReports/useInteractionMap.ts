@@ -25,19 +25,14 @@ type UseInteractionMapArgs = {
   enabled?: boolean;
   /** Narrow the map to these regions of `dimension` — "show me the SPA 4 visits". */
   regionCodes?: string[];
-  /**
-   * Cap the points returned, overriding the server's own. Only the density view passes it: one
-   * row is enough to read `withheld`, and the grid plots none of them.
-   */
-  limit?: number;
 };
 
 /**
  * Where the interactions were, as individual points.
  *
  * `truncated` says the point cap was reached, which the UI must surface: a partial map
- * that looks complete is worse than no map. `limit` overrides the cap; left `undefined`, the
- * server's default (`POINT_LIMIT`, 10 000) applies and the answer is the endpoint's standard
+ * that looks complete is worse than no map. The cap is the server's own (`POINT_LIMIT`,
+ * 10 000); the client does not ask for another, so the answer is the endpoint's standard
  * read.
  *
  * Coordinates only. There is deliberately no client or note field on this query,
@@ -53,7 +48,6 @@ export function useInteractionMap({
   endDate,
   dimension,
   regionCodes,
-  limit,
   enabled = true,
 }: UseInteractionMapArgs) {
   const { data, previousData, loading, error } = useQuery<
@@ -66,7 +60,6 @@ export function useInteractionMap({
       endDate,
       dimension,
       regionCodes,
-      limit,
     },
     skip: !organizationId || !enabled,
   });

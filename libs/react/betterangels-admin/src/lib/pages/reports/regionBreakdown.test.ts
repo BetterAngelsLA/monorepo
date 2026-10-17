@@ -36,7 +36,11 @@ const unassigned = (
 
 // The API publishes the vocabulary; these are the shapes `regionDimensions` returns.
 const VOCABULARY = [
-  { value: 'COUNCIL_DISTRICT', label: 'City Council District', plural: 'City Council Districts' },
+  {
+    value: 'COUNCIL_DISTRICT',
+    label: 'City Council District',
+    plural: 'City Council Districts',
+  },
   { value: 'CITY', label: 'City', plural: 'Cities' },
   { value: 'COC', label: 'Continuum of Care', plural: 'Continuums of Care' },
 ];
@@ -44,8 +48,12 @@ const VOCABULARY = [
 describe('the dimension vocabulary', () => {
   it('resolves the wire value and the enum spelling', () => {
     // The wire `kind` is lowercase and `RegionDimension` is uppercase; both reach here.
-    expect(kindLabel('council_district', VOCABULARY)).toBe('City Council District');
-    expect(kindLabel('COUNCIL_DISTRICT', VOCABULARY)).toBe('City Council District');
+    expect(kindLabel('council_district', VOCABULARY)).toBe(
+      'City Council District',
+    );
+    expect(kindLabel('COUNCIL_DISTRICT', VOCABULARY)).toBe(
+      'City Council District',
+    );
     expect(kindLabel('coc', VOCABULARY)).toBe('Continuum of Care');
   });
 
