@@ -12,7 +12,7 @@ from unittest import mock
 
 from django.contrib.gis.geos import Point
 from django.db import connection
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
 
@@ -818,3 +818,22 @@ class SubdividedPieceBoundaryTestCase(TestCase):
         rows = region_counts(kind=RegionKind.SPA, start=start, end=end, organization_id=org.id)
         counts = {row["code"]: row["count"] for row in rows}
         self.assertEqual(counts.get("1"), 1, "a point on a shared piece edge was counted once per piece")
+
+
+class RollupStatementShapeTestCase(SimpleTestCase):
+    """The rollup's predicates are conditional, and that is a performance decision.
+
+    A `%(… )s IS NULL OR …` spelling would defeat the planner; a dimension predicate is worth
+    a second statement shape — measured at 40 ms for `zip` and 30 ms for `city` against 87–95 ms
+    over every dimension — so it is asserted rather than left to a comment.
+    """
+
+    def test_a_scoped_rollup_filters_by_kind(self) -> None:
+        self.assertIn("rr.kind = %(kind)s", selectors._rollup_sql(organization_id=None, kind=RegionKind.ZIP))
+
+    def test_an_unscoped_rollup_does_not(self) -> None:
+        self.assertNotIn("rr.kind = %(kind)s", selectors._rollup_sql(organization_id=None, kind=None))
+
+    def test_the_org_predicate_is_also_conditional(self) -> None:
+        self.assertIn("organization_id", selectors._rollup_sql(organization_id=1, kind=None))
+        self.assertNotIn("organization_id", selectors._rollup_sql(organization_id=None, kind=None))

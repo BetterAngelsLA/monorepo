@@ -253,10 +253,14 @@ class InteractionMapBaseTestCase(GraphQLBaseTestCase):
         return user
 
     def _map(self, user: User, *, org_id: object = None, **overrides: Any) -> dict[str, Any]:
+        """The map query, with no region filter unless the caller adds one.
+
+        A dimension means nothing here on its own — pins are not grouped — so the helper omits
+        it and each filtered test passes the pair, the same way the resolver now reads it.
+        """
         self.graphql_client.force_login(user)
         variables: dict[str, Any] = {
             "organizationId": str(org_id if org_id is not None else self.org_1.pk),
-            "dimension": "COUNCIL_DISTRICT",
             "startDate": "2026-01-01",
             "endDate": "2026-01-31",
         }
@@ -265,6 +269,74 @@ class InteractionMapBaseTestCase(GraphQLBaseTestCase):
         if response.get("errors"):
             return {"errors": response["errors"]}
         return cast(dict[str, Any], response["data"]["interactionMap"])
+
+
+INTERACTION_SCOPE_QUERY = """
+    query InteractionScope($organizationId: ID!, $startDate: Date, $endDate: Date) {
+        interactionScope(
+            organizationId: $organizationId
+            startDate: $startDate
+            endDate: $endDate
+        ) {
+            withheld
+        }
+    }
+"""
+
+
+class InteractionScopeQueryTestCase(InteractionMapBaseTestCase):
+    """``interactionScope``: the one question the density view cannot get from a tile.
+
+    A cell-free tile is a 204, and an MVT has no field to say whether it was empty or
+    withheld, so the grid asks this instead. It carries the same gates as ``interactionMap``
+    — that is the whole point — so the cases worth pinning are the ones where the flag and the
+    pins could disagree.
+    """
+
+    def _scope(self, user: User, **overrides: Any) -> dict[str, Any]:
+        self.graphql_client.force_login(user)
+        variables: dict[str, Any] = {
+            "organizationId": str(self.org_1.pk),
+            "startDate": "2026-01-01",
+            "endDate": "2026-01-31",
+        }
+        variables.update(overrides)
+        response = self.execute_graphql(INTERACTION_SCOPE_QUERY, variables)
+        if response.get("errors"):
+            return {"errors": response["errors"]}
+        return cast(dict[str, Any], response["data"]["interactionScope"])
+
+    def test_a_caseworker_is_not_withheld(self) -> None:
+        result = self._scope(self.caseworker())
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertFalse(result["withheld"])
+
+    def test_a_report_only_role_is_withheld(self) -> None:
+        admin = baker.make(User)
+        self.org_1.add_user(admin)
+        OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
+
+        result = self._scope(admin)
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertTrue(result["withheld"], "the note scope removed every pin, so the grid is withheld")
+
+    def test_an_empty_window_is_not_withheld(self) -> None:
+        """The flag is about the note scope, not about a quiet period.
+
+        A window with no interactions at all is empty for a reason the reader can act on, and
+        calling that withheld would be the same false diagnosis in the other direction.
+        """
+        result = self._scope(self.caseworker(), startDate="2025-01-01", endDate="2025-01-31")
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertFalse(result["withheld"])
+
+    def test_it_requires_a_session(self) -> None:
+        self.graphql_client.logout()
+        response = self.execute_graphql(
+            INTERACTION_SCOPE_QUERY,
+            {"organizationId": str(self.org_1.pk), "startDate": "2026-01-01", "endDate": "2026-01-31"},
+        )
+        self.assertGraphQLUnauthenticated(response)
 
 
 class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
@@ -427,13 +499,13 @@ class InteractionMapRegionFilterTestCase(InteractionMapBaseTestCase):
         self.assertNotIn("errors", unfiltered, unfiltered.get("errors"))
         self.assertEqual(len(unfiltered["points"]), 2, "precondition: both notes are pins")
 
-        filtered = self._map(user, regionCodes=["1"])
+        filtered = self._map(user, dimension="COUNCIL_DISTRICT", regionCodes=["1"])
         self.assertNotIn("errors", filtered, filtered.get("errors"))
         self.assertEqual(len(filtered["points"]), 1, "only the note inside BOX_A may remain")
         self.assertAlmostEqual(filtered["points"][0]["latitude"], 34.05, places=4)
 
     def test_a_code_with_no_region_returns_no_pins(self) -> None:
-        result = self._map(self.caseworker(), regionCodes=["does-not-exist"])
+        result = self._map(self.caseworker(), dimension="COUNCIL_DISTRICT", regionCodes=["does-not-exist"])
         self.assertNotIn("errors", result, result.get("errors"))
         self.assertEqual(result["points"], [])
 
@@ -443,9 +515,24 @@ class InteractionMapRegionFilterTestCase(InteractionMapBaseTestCase):
         Truthiness here means "absent": the filter is skipped and the caller gets the whole
         organization while believing it asked for nothing.
         """
-        result = self._map(self.caseworker(), regionCodes=[])
+        result = self._map(self.caseworker(), dimension="COUNCIL_DISTRICT", regionCodes=[])
         self.assertNotIn("errors", result, result.get("errors"))
         self.assertEqual(result["points"], [], "an empty code list leaked every pin")
+
+    def test_a_dimension_without_region_codes_is_refused(self) -> None:
+        """The mirror of the case below, and the rule the density tile already applied.
+
+        A pins query is not grouped, so a dimension on its own narrows nothing; silently
+        ignoring it answered "where were the interactions in this dimension" with every
+        interaction. Refusing is the same reading `resolve_region_scope` gives the pair on
+        every surface, and it is what makes the code below reachable from both.
+        """
+        result = self._map(self.caseworker(), dimension="COUNCIL_DISTRICT")
+        self.assertIn("errors", result, "a dimension without codes must be refused, not ignored")
+        self.assertEqual(
+            result["errors"][0]["extensions"]["errors"],
+            [{"field": "dimension", "location": None, "errorCode": "DIMENSION_REQUIRES_REGION_CODES"}],
+        )
 
     def test_region_codes_without_a_dimension_are_refused(self) -> None:
         """A code is ambiguous across dimensions, so a dimension is required rather than guessed.
@@ -685,7 +772,7 @@ class ReportCalendarTimeZoneTestCase(GraphQLBaseTestCase):
         self.assertEqual(counts, {"1": 1}, "the org's calendar was not applied")
 
     def test_the_map_applies_the_same_calendar(self) -> None:
-        response = self.execute_graphql(INTERACTION_MAP_QUERY, self._variables())
+        response = self.execute_graphql(INTERACTION_MAP_QUERY, {**self._variables(), "dimension": None})
         self.assertIsNone(response.get("errors"), response.get("errors"))
         self.assertEqual(
             len(response["data"]["interactionMap"]["points"]),

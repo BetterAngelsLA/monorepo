@@ -34,6 +34,12 @@ from .tiles import MVT_CONTENT_TYPE, density_tile, region_tile
 #: Slippy-map limits. z0 is the whole world; z16 is past the detail these boundaries carry, and
 #: without a ceiling a client can ask for a zoom that makes PostGIS encode thousands of
 #: sub-millimetre tiles for nothing.
+#:
+#: ``MAX_ZOOM`` is mirrored by the admin's ``TILE_MAX_ZOOM``
+#: (``libs/react/betterangels-admin/src/lib/pages/reports/DeckMapLayers.tsx``), which is the
+#: zoom at which deck.gl stops asking. Raising one without the other means the client requests
+#: tiles this view answers 404 for, so ``test_the_zoom_ceiling_is_the_one_the_client_assumes``
+#: pins the value rather than letting it drift quietly.
 MIN_ZOOM = 0
 MAX_ZOOM = 16
 
@@ -153,12 +159,11 @@ class DensityTileView(APIView):
     defaulting to the organization's current month exactly as ``interactionMap`` does),
     ``dimension`` and ``codes`` (optional; scoping to regions).
 
-    ``codes`` and ``dimension`` are refused without each other, with two deliberate exceptions.
-    An **empty** ``codes`` matches nothing in any dimension, so ``?codes=`` is a **204** (an
-    empty map) rather than a 400. And a lone ``dimension`` is a **400** here — the caller named
-    a dimension, so refusing is the safer reading — where ``interactionMap`` ignores it, having
-    nothing to narrow. The two surfaces therefore agree on the empty case and on a non-empty
-    ``codes`` with no dimension, and part company on that one. Both 400s carry the ``errorCode``
+    ``codes`` and ``dimension`` are read together, and **the same way `interactionMap` reads
+    them**: the two surfaces must not disagree about the same pair. An **empty** ``codes``
+    matches nothing in any dimension, so ``?codes=`` is a **204** (an empty map) rather than a
+    400; a lone ``dimension`` is a **400**, because the caller named one and returning every one
+    would answer a question they did not ask. Both 400s carry the ``errorCode``
     ``interactionMap`` reports for the same refusal, so a client branches on one vocabulary
     across the two channels.
 

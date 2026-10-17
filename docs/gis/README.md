@@ -177,6 +177,7 @@ served side by side.
 ```graphql
 interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes): [RegionCountType!]!
 interactionMap(organizationId, startDate, endDate, limit, dimension, regionCodes): InteractionMapType!
+interactionScope(organizationId, startDate, endDate): InteractionScopeType!
 regionDimensions: [RegionDimensionInfo!]!
 ```
 

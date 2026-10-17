@@ -106,3 +106,16 @@ class InteractionMapType:
     points: List[InteractionPointType]
     truncated: bool
     withheld: bool
+
+
+@strawberry.type
+class InteractionScopeType:
+    """Whether the caller may see individual interactions for a window.
+
+    One boolean, because it is the one thing a client cannot work out for itself: the density
+    tile answers 204 for "nothing here" and for "withheld" alike, and an MVT has no field to
+    say which. Kept separate from ``InteractionMapType`` so a view that draws no points can
+    ask the question without asking for a payload.
+    """
+
+    withheld: bool

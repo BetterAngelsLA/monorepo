@@ -16,7 +16,7 @@ see ``regions/tiles.py`` for the measured payload and tile sizes.
 from __future__ import annotations
 
 from datetime import date
-from typing import List, Optional, cast
+from typing import TYPE_CHECKING, List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -40,10 +40,34 @@ from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, scope_n
 from .services import RegionScopeError, interaction_map_data, region_rollup, resolve_region_scope
 from .types import (
     InteractionMapType,
+    InteractionScopeType,
     RegionCountType,
     RegionDimensionInfo,
-    UnassignedReason,
 )
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+
+    from notes.models import Note
+
+
+def _note_scoped_notes(org_notes: "QuerySet[Note]", user: AccountUser) -> "QuerySet[Note]":
+    """The per-row note authority: the same legacy scope the Notes pages apply.
+
+    A filter rather than a grant predicate, and deliberately so — `interaction_map` carries
+    the reasoning. Shared with `interaction_scope` so the two cannot answer differently.
+    """
+    # `filter_for_user` is untyped upstream, so the shape is asserted rather than inferred.
+    return cast("QuerySet[Note]", filter_for_user(org_notes, user, [NotePermissions.VIEW]))
+
+
+def _is_withheld(*, org_notes: "QuerySet[Note]", scoped_notes: "QuerySet[Note]") -> bool:
+    """Whether the note scope removed **every** pin from a set that is not itself empty.
+
+    Both sides are the set *before* any region filter: otherwise a district with no visits
+    would read as a permission answer, which is the false diagnosis this flag exists to stop.
+    """
+    return not scoped_notes.exists() and org_notes.exists()
 
 
 @strawberry.type
@@ -126,10 +150,11 @@ class Query:
         ``withheld`` is a boolean and therefore reports only the all-or-nothing case: a
         partially scoped map still reads as complete.
 
-        ``dimension`` is required when a non-empty ``regionCodes`` is given: codes are not
-        unique across dimensions, so the dimension is what makes them meaningful. An empty
-        list needs no dimension — it matches nothing either way — and a ``dimension`` sent
-        without ``regionCodes`` is ignored, because this resolver has nothing to narrow.
+        ``dimension`` and ``regionCodes`` are read together, the same way the density tile
+        reads them: a non-empty ``regionCodes`` needs a dimension (a code is not unique across
+        them), an empty list needs none (it matches nothing either way), and a ``dimension``
+        sent without ``regionCodes`` is refused — the caller named a dimension, so returning
+        every one would answer a question they did not ask.
 
         ``limit`` caps the pins. An omitted limit is ``POINT_LIMIT``; ``limit: 0`` is a
         request for one pin, not for the cap, which is the same floor the selector applies
@@ -150,38 +175,32 @@ class Query:
         # The per-row note authority. Notes are a legacy domain (ADR 0001 §4.1: gated on
         # RFC 0003, `LEGACY_INERT_APPS` excludes them), so this is the legacy arm and
         # deliberately so — it is the same scope the Notes pages themselves apply.
-        scoped_notes = filter_for_user(org_notes, user, [NotePermissions.VIEW])
+        scoped_notes = _note_scoped_notes(org_notes, user)
+        withheld = _is_withheld(org_notes=org_notes, scoped_notes=scoped_notes)
 
-        # Whether the note scope is what emptied the payload is answerable here and **only**
-        # here: downstream the region filter can empty the same payload for a reason the reader
-        # can act on ("that district had no visits"). Both sides are the set *before* the region
-        # filter is applied, so a region with nothing in it cannot make an empty map read as a
-        # permission answer.
-        withheld = not scoped_notes.exists() and org_notes.exists()
+        # One reading of `(dimension, regionCodes)`, consulted on every call so this surface
+        # and the density tile cannot answer the same pair differently: an empty list matches
+        # nothing and needs no dimension, a non-empty list without one is refused, a dimension
+        # without codes is refused, and an absent list is no restriction.
+        try:
+            kind, scoped_codes = resolve_region_scope(
+                dimension=dimension.value if dimension else None, codes=region_codes
+            )
+        except RegionScopeError as error:
+            # A top-level error, because `interactionMap` returns a concrete type and so
+            # cannot carry the `OperationInfo` payload the mutation path uses. The
+            # `{field, errorCode}` entry is the branchable part; the message stays the
+            # human-readable one. See `docs/graphql_errors.md` §2.
+            raise GraphQLError(
+                str(error),
+                extensions={
+                    "errors": [
+                        {"field": error.field, "location": None, "errorCode": error.code},
+                    ]
+                },
+            ) from error
 
-        # The one reading of `(dimension, regionCodes)`: an empty list matches nothing and
-        # needs no dimension, a non-empty list without one is refused, and an absent list is
-        # no restriction. It is consulted only when `regionCodes` was sent at all: a
-        # `dimension` with no codes has nothing to narrow and is ignored here, as the
-        # docstring says.
-        if region_codes is not None:
-            try:
-                kind, scoped_codes = resolve_region_scope(
-                    dimension=dimension.value if dimension else None, codes=region_codes
-                )
-            except RegionScopeError as error:
-                # A top-level error, because `interactionMap` returns a concrete type and so
-                # cannot carry the `OperationInfo` payload the mutation path uses. The
-                # `{field, errorCode}` entry is the branchable part; the message stays the
-                # human-readable one. See `docs/graphql_errors.md` §2.
-                raise GraphQLError(
-                    str(error),
-                    extensions={
-                        "errors": [
-                            {"field": error.field, "location": None, "errorCode": error.code},
-                        ]
-                    },
-                ) from error
+        if scoped_codes is not None:
             scoped_notes = (
                 scope_notes_to_regions(scoped_notes, kind=cast(str, kind), codes=scoped_codes)
                 if scoped_codes
@@ -197,6 +216,40 @@ class Query:
             # `limit or POINT_LIMIT` would turn it into the 10,000 cap.
             limit=limit if limit is not None else POINT_LIMIT,
             withheld=withheld,
+        )
+
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    def interaction_scope(
+        self,
+        info: Info,
+        organization_id: ID,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> InteractionScopeType:
+        """Whether ``interactionMap`` would be withheld for this window.
+
+        Takes only the organization and the window, because that is all the answer depends on:
+        ``withheld`` is computed *before* the region filter — otherwise a district with no
+        visits would read as a permission answer — so accepting ``dimension``/``regionCodes``
+        here would be accepting arguments it silently ignores.
+
+        Same gates and same date resolution as ``interactionMap``, without assembling a
+        payload. It exists because the density view needs the answer and draws none of the
+        points: a cell-free tile is a **204**, and an MVT has no field to say whether it was
+        empty or withheld, so the one surface that can answer has to be asked separately.
+
+        ``withheld`` reports the all-or-nothing case only; see ``interaction_map``.
+        """
+        user = cast(AccountUser, get_current_user(info))
+        org = org_or_deny(organization_id)
+        require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
+
+        start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
+        start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
+
+        org_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
+        return InteractionScopeType(
+            withheld=_is_withheld(org_notes=org_notes, scoped_notes=_note_scoped_notes(org_notes, user))
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
@@ -221,6 +274,3 @@ class Query:
             )
             for kind in (RegionKind(loaded) for loaded in available_kinds())
         ]
-
-
-__all__ = ["Query", "RegionCountType", "RegionKind", "UnassignedReason"]
