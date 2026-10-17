@@ -1,19 +1,24 @@
 # SPDX-License-Identifier: MIT
 """Import official LA region boundary layers into the ``Region`` table.
 
-Pulls each dimension from its publisher's ArcGIS REST endpoint as GeoJSON, honours the
-declared CRS, normalises to ``MultiPolygon / EPSG:4326``, and replaces the dimension
-wholesale — the existing rows are deleted and the new ones bulk-created, so a code that
-vanished from the publisher's current vintage cannot linger.
+Pulls each dimension from its publisher's ArcGIS REST endpoint as GeoJSON and replaces the
+dimension wholesale — the existing rows are deleted and the new ones bulk-created, so a code
+that vanished from the publisher's current vintage cannot linger.
 
     python manage.py import_regions                        # everything
     python manage.py import_regions --kind council_district --kind spa
     python manage.py import_regions --kind zip --dry-run   # verify, write nothing
 
-Live REST rather than vendored shapefiles because the services declare their CRS in
-``?f=pjson`` — LA's own GeoJSON sometimes does not, declaring WGS84 while emitting
-State Plane feet. ``--source`` takes a local shapefile or GeoPackage for anything
-with no service.
+Live REST rather than vendored shapefiles because ``outSR=4326`` puts the reprojection on the
+publisher's side. LA's own GeoJSON sometimes declares WGS84 while emitting State Plane feet,
+and a vendored copy of that defect imports as garbage.
+
+**A ``--source`` file is not reprojected.** The remote path asks the service for 4326; the
+local path hands the file to GDAL and stores what comes back. Nothing here calls
+``transform()``, so a local file that *declares* a non-4326 CRS fails on insert with PostGIS's
+``Geometry SRID (…) does not match column SRID (4326)``, and one that declares no CRS at all
+is taken at face value as 4326 — which is what the LA bbox assertion below is for. Export a
+local source in 4326. Adding per-file reprojection would mean guessing a CRS for the caller.
 
 Runs against the DB directly. Do not call it from a request: ``gunicorn[gevent]``
 patches the event loop and a CPU-bound OGR parse would starve it.
@@ -355,16 +360,20 @@ class Command(BaseCommand):
         layer = datasource[0]
         self.stdout.write(f"  features  : {len(layer)}")
 
+        # One case-folded field map for the whole layer: `feature.fields` is the layer's own
+        # field list, so rebuilding it per feature (and per field) was pure repetition.
+        field_names = {str(f).lower(): f for f in layer.fields}
+
         # Group by code so a layer published in parts (cities) becomes one region.
         buckets: dict[str, dict[str, Any]] = {}
         for feature in layer:
-            code = self._read_field(feature, source.code_field)
+            code = self._read_field(feature, field_names, source.code_field)
             if code is None:
                 continue
             geometry = feature.geom.geos
             if geometry is None:
                 continue  # type: ignore[unreachable]
-            name = self._read_field(feature, source.name_field) or code
+            name = self._read_field(feature, field_names, source.name_field) or code
             multipolygon = normalise(geometry, label=f"{source.kind} code {code!r}")
             entry = buckets.setdefault(code, {"name": name, "parts": []})
             entry["parts"].append(multipolygon)
@@ -439,18 +448,17 @@ class Command(BaseCommand):
             Region.objects.bulk_create(regions, batch_size=200)
             pieces = build_region_pieces(kind=source.kind)
 
-        # Nothing else to derive. The rollup reads `Region` and `RegionPiece` directly, so
-        # replacing the boundary and its pieces is the whole update.
+        # Nothing else to derive. The rollup reads `regions_regionlookup`, which is exactly
+        # these two tables, so replacing the boundary and its pieces is the whole update.
         self.stdout.write(f"  pieces    : {pieces}")
         return len(regions)
 
     @staticmethod
-    def _read_field(feature: Any, field_name: str) -> str | None:
+    def _read_field(feature: Any, field_names: dict[str, str], field_name: str) -> str | None:
         """Read an attribute, tolerating case differences (DBF is case-insensitive)."""
         if not field_name:
             return None
-        lookup = {str(f).lower(): f for f in feature.fields}
-        actual = lookup.get(field_name.lower())
+        actual = field_names.get(field_name.lower())
         if actual is None:
             return None
         value = feature.get(actual)

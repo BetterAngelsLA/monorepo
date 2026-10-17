@@ -15,20 +15,23 @@ from django.db import models
 
 from common.models import BaseModel
 
-# ~46 m at Los Angeles: below what the map can draw. Measured on the dev fixture (431 regions,
-# all six dimensions) this takes the payload from 27 MB of GeoJSON to 1.0 MB — 14 MB of stored
-# geometry to 560 kB (`sum(pg_column_size(…))`).
+# ~46 m east–west at 34°N (~56 m north–south): below what the map can draw. Measured on the
+# dev fixture (431 regions, all six dimensions) this takes the payload from 27.8 MB of GeoJSON
+# to 1.04 MB — 15.0 MB of stored geometry to 573 kB (`pg_column_size`).
 DISPLAY_SIMPLIFY_DEGREES = 0.0005
 
 
 class SimplifyPreserveTopology(GeomOutputGeoFunc):
     """``ST_SimplifyPreserveTopology(geometry, tolerance)``.
 
-    Declared for the generated column below. A subclass rather than a call with
-    ``function=``: ``GeoFuncMixin`` resolves the SQL name from the class when ``self.function``
-    is unset, and a ``function=`` keyword lands in ``Func.extra`` rather than on
-    ``self.function`` — so the keyword form emits ``GeomOutputGeoFunc(…)`` instead of
-    ``ST_SimplifyPreserveTopology(…)``. Verified against Django 6.1.
+    Declared as a named subclass because Django compares field expressions **by class**
+    (``BaseExpression.__eq__``), so an inline copy in a migration is a different class and
+    ``makemigrations --check`` would report a pending change forever. ``0002`` imports this
+    helper for that reason rather than redefining it.
+
+    A ``function=`` keyword would emit the same SQL — ``Func.as_sql`` seeds its template data
+    from ``self.extra`` before falling back to the class attribute — so the subclass is about
+    expression identity, not about how the function name reaches the statement.
     """
 
     function = "ST_SimplifyPreserveTopology"
@@ -95,10 +98,10 @@ class Region(BaseModel):
     source_item_id = models.CharField(max_length=64, blank=True, default="")
 
     # **No spatial index on this column.** It is the authoritative full-resolution boundary,
-    # and every read of it is a full scan: the importer reads it to subdivide, and the admin's
-    # detail page reads it by primary key. Every indexed spatial read in the app goes through
-    # `geom_display` (the tiles) or `RegionPiece.geom` (the point lookup), so a GiST index here
-    # would be rebuilt on every import and probed by nothing.
+    # and no read puts a spatial predicate on it: the importer reads it to subdivide (a full
+    # scan) and the admin's detail page reads it by primary key. Every indexed spatial read in
+    # the app goes through `geom_display` (the tiles) or `RegionPiece.geom` (the point lookup),
+    # so a GiST index here would be rebuilt on every import and probed by nothing.
     geom = MultiPolygonField(srid=4326, spatial_index=False)
 
     # A **generated column**: the database derives and maintains it, so there is no
@@ -160,27 +163,28 @@ class Region(BaseModel):
 class RegionPiece(BaseModel):
     """A sub-polygon of a :class:`Region`, sized for fast point lookup.
 
-    ``Region.geom`` is the authoritative boundary: full resolution, used for display,
-    area, and the vector tiles. It is the wrong thing to test a point against. The
+    ``Region.geom`` is the authoritative boundary: full resolution, the source for
+    ``geom_display`` (which is what the tiles read), for area, and for the admin's detail
+    page. It is the wrong thing to test a point against. The
     largest boundary row — a supervisorial district — holds 77,918 vertices, and the
     largest city row 32,273, so the GiST index hands the planner a bounding box that
     matches far more points than the polygon encloses and the real work lands in the
-    vertex recheck: against the whole boundaries the rollup measures **~200 ms** at
+    vertex recheck: against the whole boundaries the rollup measures **~127 ms** at
     20,000 interactions.
 
-    Subdivided, the same work is **~70 ms**. PostGIS's own guidance is this one: *"when you
+    Subdivided, the same work is **~85 ms**. PostGIS's own guidance is this one: *"when you
     have very large polygons, but are doing queries in small areas, you 'denormalize' your
     geometric data into smaller chunks so that the index can effectively subquery parts of
     the object"* (Data Management §4.3.4.4, which points at ``ST_Subdivide``).
 
     ``SUBDIVIDE_MAX_VERTICES`` is a tuned target, not a "smaller is better" knob. Measured
-    on the full rollup, all six dimensions:
+    on the full rollup, all six dimensions, over the 20,000-interaction window:
 
         max_vertices     pieces     rollup
-        256 (this)        5,685      70 ms
-        128              11,149      77 ms
-        64               22,136     102 ms
-        32               44,719     118 ms
+        256 (this)        5,685      85 ms
+        128              11,149      91 ms
+        64               22,136     113 ms
+        32               44,719     140 ms
 
     Tighter pieces have smaller bounding boxes but there are more of them, and a point
     falls inside more of their boxes; the extra index entries cost more than the thinner
@@ -191,27 +195,28 @@ class RegionPiece(BaseModel):
 
     ``SUBDIVIDE_VERTEX_THRESHOLD`` is the other half of the tuning, and the less obvious one:
     **only** regions above it are subdivided at all. Subdividing everything instead — the same
-    256-vertex target, no threshold — produces 8,156 pieces against 5,685 and measures about
-    the same (73 ms against 71 ms). The threshold therefore buys fewer rows to store, index
-    and rebuild, not a faster query: a region that is already a handful of vertices is not
-    worth splitting, but splitting it costs little.
+    256-vertex target, no threshold — produces 8,156 pieces against 5,685 and measures the
+    same (85 ms either way). The threshold therefore buys fewer rows to store, index and
+    rebuild, not a faster query: a region that is already a handful of vertices is not worth
+    splitting, but splitting it costs little.
 
     Read through ``regions_regionlookup`` (see ``0004``), never directly. The view adds the
     parent boundary back for a region that has no piece, so a region created outside
-    ``import_regions`` resolves slower rather than disappearing from the rollup — and it is
-    also what keeps the planner driving from the boundaries rather than from the notes, which
-    is worth about 5x on a selective window (39 ms against 206 ms for the same result).
+    ``import_regions`` still resolves instead of disappearing from the rollup. **That
+    fallback, not the plan shape, is why the view is kept.** Pointing the rollup straight at
+    this table lets the planner drive from the notes on a small window, and re-measured that
+    is not uniformly worse: at ~660 notes it costs 42 ms against 29 ms through the view, but
+    at ~100 it costs 8 ms against 28 ms, and at 10 notes 1.5 ms against 7.7 ms. At 20,000 the
+    two agree (82 ms against 85 ms), so neither shape is a blanket win.
+
+    The FK covers ``region``; the GiST index on ``geom`` is the ``spatial_index=True`` default.
+    There is deliberately **no** denormalised ``kind``: every reader joins ``Region`` to read
+    the code anyway, so a copy would be a second source of truth that can disagree with its
+    parent.
     """
 
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="pieces")
     geom = MultiPolygonField(srid=4326)
-
-    class Meta:
-        # The FK covers `region`; the GiST index on `geom` is `spatial_index=True`, the
-        # default. There is deliberately **no** denormalised `kind`: every reader joins
-        # `Region` to read the code anyway, so a copy would add a second source of truth
-        # that can disagree with its parent.
-        pass
 
     def __str__(self) -> str:
         return f"piece of {self.region_id}"

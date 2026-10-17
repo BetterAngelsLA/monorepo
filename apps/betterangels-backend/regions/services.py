@@ -158,7 +158,7 @@ class RegionScopeErrorCodes:
 
     A client switches on these, never on the message. The frontend mirrors validation codes in
     ``BE_VALIDATION_ERROR_CODE`` (``libs/ba-platform/src/lib/apollo/graphql/backendApiCodes.ts``)
-    and has no entry for either yet; both values have to be added there for the mirror to hold.
+    and carries both, so the mirror holds.
     """
 
     #: ``dimension`` was sent with no ``regionCodes`` — the dimension has nothing to narrow.
@@ -269,13 +269,13 @@ def parse_region_code_filter(region_codes: Sequence[str] | None) -> RegionCodeFi
         codes=wanted if region_codes is not None else None,
         unassigned_only=sentinel_requested and not wanted,
         keep_unassigned=region_codes is None or sentinel_requested,
-        # True for an absent list **and** for an explicitly empty one, deliberately, and the
+        # True for an absent list, for the sentinel, and for an explicitly empty one — the
         # opposite reading from `keep_unassigned` directly above: a note with no location was
         # never attributable to a region, so a filter asking for no regions still cannot
         # exclude it. `test_an_empty_list_matches_nothing_rather_than_everything` pins the
         # pair. It does make `[]` and `["does-not-exist"]` differ — the second matches nothing
         # at all, this one reports the locationless total — so change it only with that test.
-        include_locationless=(region_codes is None or sentinel_requested) or (not sentinel_requested and not wanted),
+        include_locationless=region_codes is None or sentinel_requested or not wanted,
     )
 
 

@@ -26,7 +26,11 @@ python manage.py import_regions --kind city \
 
 It pulls each dimension from its publisher's live ArcGIS REST endpoint as GeoJSON,
 normalises to `MultiPolygon/EPSG:4326`, and replaces the dimension wholesale so a code
-that vanished from the publisher's current vintage cannot linger. It uses the GeoDjango
+that vanished from the publisher's current vintage cannot linger. **The reprojection is the
+service's**: the fetch asks for `outSR=4326`. A `--source` file is *not* reprojected — a file
+declaring a non-4326 CRS fails on insert with PostGIS's SRID mismatch, and one declaring no
+CRS is taken at face value as 4326, which is what the LA bounding-box assertion is for. Export
+a local source in 4326. It uses the GeoDjango
 OGR bindings that already ship with Django, so it needs no extra packages and no
 `ogr2ogr` subprocess. It also refuses a truncated ArcGIS response rather than importing a
 partial layer.
@@ -48,14 +52,16 @@ Tests: `apps/betterangels-backend/regions/tests/`
 - **The heavy layers need subdivided lookup geometry.** The largest boundary row — a supervisorial
   district — holds 77,918 vertices, and the largest city row 32,273, so one bounding box matches
   far more points than the polygon encloses and the real work lands in the vertex recheck:
-  against the whole boundaries the rollup takes **~200 ms** at 20k interactions. `RegionPiece`
-  holds subdivided parts and the rollup joins those — **~70 ms**. See `regions/models.py`
+  against the whole boundaries the rollup takes **~127 ms** at 20k interactions. `RegionPiece`
+  holds subdivided parts and the rollup joins those — **~85 ms**. See `regions/models.py`
   (`RegionPiece`) and `regions/selectors.py`.
 - **The rollup is a live spatial join; nothing is precomputed and nothing is backfilled.** It is
   written boundaries-first so it probes the GiST index on `Location.point_geom`. Its cost is
   driven by *distinct locations* rather than interactions, so it grows **sublinearly** with the
-  report window: **~85 ms** at 20,000 interactions and **~48 ms** at 2,461 — 1.8× the time for
-  8× the notes. Restricting to one dimension is cheaper still, at **~46 ms** for the whole window.
+  report window: **~85 ms** at 20,000 interactions and **~35 ms** at 2,460 — 2.4× the time for
+  8× the notes. Restricting to one dimension does **not** make it cheaper: the statement is
+  dimension-agnostic and the code list is applied in Python, so `zip` alone measures the same
+  ~85 ms (78 ms against 80 ms through the service).
 - **Adding `Location.point_geom` rewrites `common_location` once**, under an `ACCESS EXCLUSIVE`
   lock. Plan a window, or use the expression index instead — see
   `common/migrations/0002_location_point_geom.py`.
@@ -152,6 +158,12 @@ Every layer records the publisher's own attribution (`copyrightText`) at import,
 Two layers expose no ownership text, which is recorded as an empty attribution
 rather than glossed over: for those, the service itself does not evidence authority.
 
+**One caveat on reading that column.** A `--source` import writes an empty attribution too,
+because a local file was not fetched from the service and probing its endpoint would
+misattribute it (the command says so on stdout). So an empty `source_attribution` means
+"loaded locally, or the publisher publishes none" — the two are distinguishable by
+`source_item_id`, which is only set on a fetched import.
+
 Two deliberate source choices worth knowing:
 
 - **ZIP is postal ZIP, not Census ZCTA.** ZCTA is a statistical approximation built
@@ -205,8 +217,9 @@ is refused, because a code is ambiguous across dimensions; an **empty** `codes` 
 reading `interactionMap(regionCodes: [])` gives it. A `dimension` without `codes` is refused too,
 rather than ignored. Region membership is answered against the same `regions_regionlookup` view
 the rollup reads, read **boundaries-first** so the GiST index on `Location.point_geom` is probed:
-`selectors.REGION_LOCATIONS_SQL` is the single definition, spliced into the tile statement and
-used directly by `scope_notes_to_regions`, so `interactionMap`'s region filter cannot disagree
+`selectors.REGION_MEMBERSHIP_SQL` is the single predicate — the tile splices it in through
+`tiles._DENSITY_REGION_FILTER`, and `scope_notes_to_regions` applies it through
+`REGION_LOCATIONS_SQL` — so `interactionMap`'s region filter cannot disagree
 with the rollup about what "inside the region" means.
 
 ### Sources that look right but are not
