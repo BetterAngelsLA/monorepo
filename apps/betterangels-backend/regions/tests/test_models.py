@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from django.db import connection, transaction
 from django.db.utils import IntegrityError
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
-from regions.models import Region, RegionKind
+from regions.models import REGION_KIND_PLURALS, Region, RegionKind
 
 from .helpers import BOX_A, BOX_B, box
 
@@ -82,3 +82,21 @@ class RegionIndexTestCase(TestCase):
             any("(geom)" in definition for definition in definitions),
             f"regions_region.geom is not queried spatially but carries an index: {definitions}",
         )
+
+
+class RegionKindVocabularyTestCase(SimpleTestCase):
+    """Every dimension the enum declares has the display names the API publishes.
+
+    ``regionDimensions`` indexes ``REGION_KIND_PLURALS`` by value, so a seventh dimension added
+    without a plural is not a missing label — it is a ``KeyError`` that fails the whole query
+    and takes the report's picker with it. No fixture can reach that state before the enum
+    does, so the assertion belongs against the enum rather than against a query.
+    """
+
+    def test_every_kind_has_a_plural(self) -> None:
+        missing = sorted(set(RegionKind.values) - set(REGION_KIND_PLURALS))
+        self.assertEqual(missing, [], f"region dimensions with no plural: {missing}")
+
+    def test_the_plural_map_names_only_real_dimensions(self) -> None:
+        orphans = sorted(set(REGION_KIND_PLURALS) - set(RegionKind.values))
+        self.assertEqual(orphans, [], f"plurals for dimensions that no longer exist: {orphans}")
