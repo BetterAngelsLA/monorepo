@@ -15,6 +15,7 @@ from notes.schema import Mutation as NotesMutation
 from notes.schema import Query as NotesQuery
 from referrals.schema import Mutation as ReferralsMutation
 from referrals.schema import Query as ReferralsQuery
+from regions.schema import Query as RegionsQuery
 from reports.schema import Query as ReportsQuery
 from shelters.schema import Mutation as SheltersMutation
 from shelters.schema import Query as SheltersQuery
@@ -31,6 +32,7 @@ queries = (
     CommonQuery,
     HmisQuery,
     NotesQuery,
+    RegionsQuery,
     ReportsQuery,
     TasksQuery,
     TeamsQuery,
