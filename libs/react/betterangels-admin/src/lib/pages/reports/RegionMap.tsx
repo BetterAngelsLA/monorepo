@@ -130,10 +130,7 @@ function useMapColors(): OverlayColors {
  */
 function DensityLegend() {
   return (
-    <div
-      className="pointer-events-none absolute bottom-9 left-3 rounded bg-white/90 px-2 py-1 shadow"
-      style={{ position: 'absolute', zIndex: 5 }}
-    >
+    <div className="pointer-events-none absolute bottom-9 left-3 z-[5] rounded bg-white/90 px-2 py-1 shadow">
       {/* 12px is the floor for legible secondary text, and #8c8c8c on white is only 3.36:1
           against a 4.5:1 requirement. These use the 12px/`neutral-700` pairing, which measures
           10.7:1 — the legend is the only key to the colour scale, so leaving it at the least
@@ -170,8 +167,9 @@ type RegionMapProps = {
   /**
    * Individual interaction locations, from `interactionMap`.
    *
-   * Only the clusters view draws them: the density grid is aggregated server-side, so the
-   * point query is not even requested while it is showing — see `LocationBreakdown`.
+   * Only the clusters view draws them. The density view still asks the query, but for one row:
+   * `withheld` is the only report of a note scope that removed every cell, and the tile
+   * endpoint answers 204 for "nothing here" and "withheld" alike. See `LocationBreakdown`.
    */
   points?: InteractionPointType[];
   /** The point query is in flight and has not answered yet. */
@@ -237,11 +235,13 @@ export function RegionMap({
   const mapColors = useMapColors();
 
   /**
-   * A density tile came back refused, which means the note read scope withheld it.
+   * A density tile came back **refused** — a 403 from the tile endpoint rather than a failed
+   * one. That is an authority or session problem, not the note read scope: the note scope is a
+   * filter, so a reader it excludes gets a 204 with no cells, and `interactionMap` is what
+   * reports that as `withheld` (in both views; see `LocationBreakdown`).
    *
-   * While the grid is showing, the point query that would report the same refusal is not even
-   * requested, so the refusal has to be noticed at the tile. Held here, and cleared whenever the
-   * question changes, because a refusal for the last date range is not an answer about this one.
+   * Cleared whenever the question changes, because a refusal for the last date range is not an
+   * answer about this one.
    */
   const [densityRefused, setDensityRefused] = useState(false);
   const [tileFaulted, setTileFaulted] = useState(false);
@@ -250,14 +250,20 @@ export function RegionMap({
   const captionId = useId();
   useEffect(() => {
     setDensityRefused(false);
+    // A tile fault is about the tiles of *that* question too: a new range or grouping is a new
+    // URL and a new fetch, so it starts with no fault held against it.
+    setTileFaulted(false);
     // `focusCodes` is state held by the caller, so its identity is the selection.
-  }, [organizationId, startDate, endDate, dimension, focusCodes]);
+  }, [organizationId, startDate, endDate, dimension, focusCodes, view]);
 
   // Stable identities: these are in the layer memo's dependency list, and a new closure per
   // render would rebuild the whole deck.gl stack — and refetch the tiles — on every render.
   const markDensityRefused = useCallback(() => setDensityRefused(true), []);
-  // A tile that loads clears both notices: it is the same evidence the refusal's clear uses,
-  // and one transient failure must not replace the map for the rest of the session.
+  // Any tile that loads clears both notices: it is the same evidence the refusal's clear uses,
+  // and one transient failure must not outlive the next successful fetch. Both layers report
+  // this, so a boundary tile recovering is enough — the alternative is a fault that only a
+  // density tile could clear, which is unreachable in the clusters view, where no density layer
+  // is built at all.
   const handleTilesLoaded = useCallback(() => {
     setDensityRefused(false);
     setTileFaulted(false);
@@ -281,51 +287,54 @@ export function RegionMap({
       // what this view plots. Stated rather than instructed: the caption is the map's accessible
       // description, and `role="img"` makes its controls unreachable to assistive tech — telling
       // that reader to "zoom in" would name an action they cannot take.
-      return `${points.length.toLocaleString()} interactions${scope}, grouped into clusters. A numbered bubble counts the interactions under it, and zooming in splits them further.`;
+      //
+      // "Up to" when the cap was reached: the count is then the cap, not the range's total, and
+      // the alert below says so too.
+      const count = `${truncated ? 'Up to ' : ''}${points.length.toLocaleString()} interactions`;
+      return `${count}${scope}, grouped into clusters. A numbered bubble counts the interactions under it, and zooming in splits them further.`;
     }
     // **No total here, deliberately.** The grid is aggregated on the server and the point
-    // list is not fetched, so the client has no count to state — and deriving one from the
-    // rollup would be the cross-dimension sum the table below is careful not to invite.
+    // list holds at most one probe row, so the client has no count to state — and deriving one
+    // from the rollup would be the cross-dimension sum the table below is careful not to
+    // invite.
     //
-    // It does not assert that cells were drawn either. The note read scope can withhold the
-    // whole grid, and a cell-free tile is indistinguishable from a range with nothing in it:
-    // a 204 carries no body, and an MVT has no field to say which it was. The pinned view can
-    // say so — `withheld` arrives in its JSON — but this one cannot, so it describes what the
-    // scale *means* and leaves the figures to the table, which holds either way.
-    return `Interaction density${scope}, as a grid of counts. Where the grid has cells, red is where interactions concentrate and blue where they thin out; the legend is an absolute scale, and the table below has the counts per region.`;
-  }, [view, points.length, filteredTo, pointsLoading]);
+    // It does not assert that cells were drawn either. A cell-free tile is indistinguishable
+    // from a range with nothing in it: a 204 carries no body, and an MVT has no field to say
+    // which it was. Whether the note scope *withheld* the grid is reported by
+    // `interactionMap`'s `withheld` (the one-row probe requested in this view), so it reaches
+    // the reader as the refusal notice above rather than as a legend on an empty field. The
+    // caption describes what the scale *means* and leaves the figures below.
+    return `Interaction density${scope}, as a grid of counts. Where the grid has cells, red is where interactions concentrate and blue where they thin out; the legend is an absolute scale, and the figures below cover the same interactions.`;
+  }, [view, points.length, filteredTo, pointsLoading, truncated]);
 
   if (refused || (view === 'heatmap' && densityRefused)) {
-    // A refusal, not a fault: the note read scope is a different permission from the report
-    // scope, so a reader can be entitled to the breakdown and not to the interactions. Said
-    // plainly rather than as "something went wrong", and the table below carries the same
-    // data. Reachable two ways — `interactionMap` for the clusters, a refused density tile
-    // for the grid — but they are the same refusal.
+    // A refusal, not a fault. The note read scope is a different permission from the report
+    // scope, so a reader can be entitled to the breakdown and not to the interactions.
+    // `withheld` on the one-row probe reports exactly that in both views; a 403 from the tile
+    // endpoint lands here too, and means the request itself was refused.
+    // Said plainly rather than as "something went wrong", and the figures below carry the same
+    // data.
     return (
       <Alert
         className={mergeCss(className)}
         type="info"
         showIcon
         message="Map unavailable"
-        description="Your role can read the regional breakdown but not individual interactions, so the map is not shown. The table below has the same figures per region."
+        description="Your role can read the regional breakdown but not individual interactions, so the map is not shown. The figures below cover the same interactions."
       />
     );
   }
 
-  if (failed || tileFaulted) {
+  if (failed) {
     // A fault, and it says so. Everything the map would have drawn from the rollup — the
     // boundaries, the table — is still below and unaffected.
-    //
-    // `failed` is the point query; `tileFaulted` is a tile that failed for a reason that is not
-    // a refusal. Both leave the map undrawable, and neither may pass silently: an empty field
-    // under a legend that promises a density reading is read as "no interactions here".
     return (
       <Alert
         className={mergeCss(className)}
         type="error"
         showIcon
         message="Map unavailable"
-        description={`${GENERIC_ERROR_MESSAGE} We could not load the map. The table below has the figures per region.`}
+        description={`${GENERIC_ERROR_MESSAGE} We could not load the map. The figures below are unaffected.`}
       />
     );
   }
@@ -343,7 +352,7 @@ export function RegionMap({
   }
 
   return (
-    <div className={mergeCss(['relative', className])}>
+    <div className={mergeCss([className])}>
       {/* The map's own positioning context. The legend is a sibling of the map — it has to stay
           in the accessibility tree — so its `bottom-*` has to measure the map, not the caption
           below it. */}
@@ -364,7 +373,11 @@ export function RegionMap({
             not the controls. */}
         <div
           role="img"
-          aria-label="Map of interaction locations"
+          aria-label={
+            view === 'heatmap'
+              ? 'Map of interaction density'
+              : 'Map of interaction locations'
+          }
           aria-describedby={captionId}
         >
           <GoogleMap
@@ -408,7 +421,7 @@ export function RegionMap({
                 startDate={startDate}
                 endDate={endDate}
                 onDensityRefused={markDensityRefused}
-                onDensityLoaded={handleTilesLoaded}
+                onTileLoaded={handleTilesLoaded}
                 onTileFault={markTileFault}
                 overlay={mapColors}
               />
@@ -420,6 +433,19 @@ export function RegionMap({
       <p id={captionId} className="mt-2 text-xs text-neutral-500">
         {caption}
       </p>
+      {/* A tile that could not be fetched is reported **beside** the map rather than instead of
+          it. Replacing the map would unmount the layers, and then no tile could ever load to
+          clear the notice — the fault would outlive the network condition that caused it. Kept
+          mounted, the next successful tile clears it (see `handleTilesLoaded`). */}
+      {tileFaulted && (
+        <Alert
+          className="mt-2"
+          type="warning"
+          showIcon
+          message="Some map tiles did not load"
+          description="The map may be missing areas. It clears itself as soon as a tile loads again; changing the range or grouping also retries."
+        />
+      )}
       {/* Only the clusters view can be short of interactions now. The density grid is
           aggregated server-side over every interaction in range rather than a capped point
           list, so there is nothing for it to truncate — and `interactionMap`, which reports

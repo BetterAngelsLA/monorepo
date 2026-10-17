@@ -11,14 +11,12 @@ query InteractionsByRegion(
   $dimension: RegionDimension
   $startDate: Date
   $endDate: Date
-  $regionCodes: [String!]
 ) {
   interactionsByRegion(
     organizationId: $organizationId
     dimension: $dimension
     startDate: $startDate
     endDate: $endDate
-    regionCodes: $regionCodes
   ) {
     # Which dimension this bucket belongs to. A rollup can span every dimension, where the
     # code alone is ambiguous, so the table has to be able to say which one a row came from.
@@ -37,6 +35,8 @@ query InteractionMap(
   $startDate: Date
   $endDate: Date
   $regionCodes: [String!]
+  # Only the density view asks for one: it needs `withheld`, not the pins.
+  $limit: Int
 ) {
   interactionMap(
     organizationId: $organizationId
@@ -44,6 +44,7 @@ query InteractionMap(
     endDate: $endDate
     dimension: $dimension
     regionCodes: $regionCodes
+    limit: $limit
   ) {
     points {
       latitude

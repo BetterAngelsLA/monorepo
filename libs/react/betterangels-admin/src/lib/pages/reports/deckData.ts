@@ -21,7 +21,7 @@
  */
 
 /** The shape deck.gl expects for binary `data`. */
-export type BinaryData = {
+type BinaryData = {
   length: number;
   attributes: Record<string, { value: Float32Array; size: number }>;
 };

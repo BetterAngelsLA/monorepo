@@ -30,8 +30,6 @@ type UseInteractionsByRegionArgs = {
   dimension?: RegionDimension;
   startDate: string;
   endDate: string;
-  /** Narrow the rollup to these regions, matching the map's drill-down. */
-  regionCodes?: string[];
 };
 
 /**
@@ -56,13 +54,12 @@ export function useInteractionsByRegion({
   dimension,
   startDate,
   endDate,
-  regionCodes,
 }: UseInteractionsByRegionArgs) {
   const { data, previousData, loading, error } = useQuery<
     InteractionsByRegionQuery,
     InteractionsByRegionQueryVariables
   >(InteractionsByRegionDocument, {
-    variables: { organizationId, dimension, startDate, endDate, regionCodes },
+    variables: { organizationId, dimension, startDate, endDate },
     skip: !organizationId,
   });
 

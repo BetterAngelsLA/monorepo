@@ -159,12 +159,14 @@ export function LocationBreakdown({
     // it changes the query's variables without changing its answer.
     dimension: selectedCodes.length > 0 ? dimension : undefined,
     regionCodes: selectedCodes.length > 0 ? selectedCodes : undefined,
-    // **Not while the density grid is showing.** The grid is aggregated on the server from
-    // the same notes, so the point list is not an input to anything the reader is looking at,
-    // and requesting it spends ~1 MB to derive clusters nobody asked for. Whether the reader
-    // may see the interactions at all is answered by the density tile, and `RegionMap` surfaces
-    // that refusal in place.
-    enabled: mapVisible && mapView === 'clusters',
+    // **Both views ask, for different reasons.** Clusters draws the points. The density grid
+    // draws nothing from them — they are aggregated on the server — but `withheld` is the only
+    // surface that can report a note scope which removed *every* cell: the tile endpoint
+    // answers 204 for "nothing here" and for "withheld" alike, and an MVT has no field to tell
+    // them apart. One row is enough to know which, so the grid asks for `limit: 1` rather than
+    // a megabyte of points nobody plots.
+    enabled: hasMapsKey && mapVisible,
+    limit: mapView === 'clusters' ? undefined : 1,
   });
 
   /**
@@ -178,7 +180,8 @@ export function LocationBreakdown({
     () => regionBreakdownView(availableRegions, selectedCodes),
     [availableRegions, selectedCodes],
   );
-  const { assigned, pickable, selectable, unassigned, hasData } = breakdown;
+  const { assigned, selectable, unassigned, hasData, hasLocatedRows } =
+    breakdown;
 
   // Used for prose only ("Loading city council district data"). Absent means the rollup
   // spans every dimension, so there is no single name to interpolate.
@@ -190,15 +193,6 @@ export function LocationBreakdown({
   if (dimension) {
     dimensionNamePlural = kindLabelPlural(dimension, dimensions);
   }
-
-  // Selecting a different dimension invalidates the codes: "4" is an SPA and also a Long
-  // Beach council district, so a selection cannot carry across.
-  //
-  // Returning the existing array when it is already empty matters: a fresh `[]` is not
-  // `Object.is`-equal to the old one, so it would schedule a render on mount for no change.
-  useEffect(() => {
-    setSelectedCodes((codes) => (codes.length === 0 ? codes : []));
-  }, [dimension]);
 
   /**
    * **Two error states, not one.** The rollup and the map are separate queries with separate
@@ -256,7 +250,9 @@ export function LocationBreakdown({
   if (selectedCodes.length === 0) {
     selectionHint = `No selection means every ${dimensionName.toLowerCase()} in range.`;
   } else {
-    selectionHint = `${selectedCodes.length} of ${pickable.length} selected — clear the control to show all.`;
+    // No denominator: `pickable` is the *current* range's regions, so a selection made in an
+    // earlier range can exceed it and read "3 of 1 selected".
+    selectionHint = `${selectedCodes.length} selected — clear the control to show all.`;
   }
 
   let loadingLabel = 'Loading data...';
@@ -351,6 +347,9 @@ export function LocationBreakdown({
             </Text>
           ) : (
             <Select<RegionDimension | undefined, DimensionOption>
+              // The caption above is a `<Text>`, not a `<label>`, so the combobox needs its
+              // name here; rc-select forwards `aria-*` to the input.
+              aria-label="Group by"
               // Clears to "All" — the rollup then spans every dimension.
               allowClear
               // Without this the panel's primary control is an empty dropdown with a
@@ -358,10 +357,16 @@ export function LocationBreakdown({
               loading={dimensionsLoading}
               value={dimension}
               onChange={(value) => {
-                // The selection is cleared by the effect on `dimension`, which also covers a
-                // change from anywhere else; clearing here as well was a second copy of the
-                // same rule.
+                // The codes are cleared **here**, in the same batch as the dimension, because
+                // they are only meaningful within it ("4" is an SPA and also a Long Beach
+                // council district). An effect on `dimension` would run after commit, leaving
+                // one frame where the new dimension is paired with the old dimension's codes —
+                // and that frame is enough to start a density-tile fetch and a point query for
+                // a region the reader never picked.
                 setDimension(value);
+                // Returning the existing array when it is already empty keeps the identity, so
+                // this does not schedule a render for a change that is not one.
+                setSelectedCodes((codes) => (codes.length === 0 ? codes : []));
               }}
               style={{ minWidth: 220 }}
               placeholder="All dimensions"
@@ -377,6 +382,7 @@ export function LocationBreakdown({
               The dropdown closes on select in multiple mode, which is why the pills — not the
               open list — are what tells the reader what is selected. */}
             <Select<string[], RegionOption>
+              aria-label="Show regions"
               mode="multiple"
               showSearch
               allowClear
@@ -410,14 +416,14 @@ export function LocationBreakdown({
         </div>
       )}
 
-      {!rowsLoading && !hasData && (
+      {!rowsLoading && !hasLocatedRows && (
         <p className="text-center text-neutral-500">
           No located interactions for this range.
         </p>
       )}
 
       <div ref={triggerRef}>
-        {hasData && (
+        {hasLocatedRows && (
           <div className="mb-5">
             <RegionMap
               dimension={dimension}
@@ -438,7 +444,7 @@ export function LocationBreakdown({
         )}
       </div>
 
-      {hasData && dimension === undefined && (
+      {hasLocatedRows && dimension === undefined && (
         /*
          * One item, because a *table* of every dimension cannot be read as a total.
          *

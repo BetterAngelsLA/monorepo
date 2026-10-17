@@ -84,20 +84,21 @@ export type DeckMapLayersProps = {
   startDate: string;
   endDate: string;
   /**
-   * The density tiles were **refused**, which is a permission answer rather than a fault: the
-   * note read scope is a different permission from the report scope, so a reader can be
-   * entitled to the breakdown and not to the interactions. Reported up so the panel can say
-   * so; see `RegionMap`.
+   * The density tiles were **refused** — a 403 from the endpoint, which is an authority or
+   * session answer rather than a fault. Reported up so the panel can say so; see `RegionMap`.
+   *
+   * This is not how a withheld *note scope* reaches the reader: that scope is a filter, so it
+   * produces a 204 with no cells, and `interactionMap.withheld` is what reports it.
    */
   onDensityRefused?: () => void;
   /**
-   * A density tile loaded, so whatever the last refusal was about does not apply any more.
+   * **Any** tile loaded, so whatever the last refusal or fault was about does not apply any
+   * more.
    *
-   * The pair is what keeps a single transient tile failure from replacing the map with a
-   * permission notice for the rest of the session: a refusal is only *shown* while tiles are
-   * actually being refused.
+   * Both layers call it, and that is the point: a notice only a density tile could clear would
+   * persist forever in the clusters view, where no density layer is built.
    */
-  onDensityLoaded?: () => void;
+  onTileLoaded?: () => void;
   /**
    * A tile failed for a reason that is **not** a refusal — a 500, a dropped connection, a tile
    * outside the server's zoom ceiling.
@@ -143,7 +144,7 @@ export type BuildLayersArgs = {
   /** Binned once per (points, zoom) by the caller; see `DeckMapLayers` below. */
   clusters: Cluster[];
   onDensityRefused?: () => void;
-  onDensityLoaded?: () => void;
+  onTileLoaded?: () => void;
   onTileFault?: () => void;
   overlay: OverlayColors;
 };
@@ -174,7 +175,7 @@ export function buildLayers({
   boundaryUrl,
   densityUrl,
   onDensityRefused,
-  onDensityLoaded,
+  onTileLoaded,
   onTileFault,
   overlay,
   clusters,
@@ -213,7 +214,7 @@ export function buildLayers({
           }
           onTileFault?.();
         },
-        onTileLoad: () => onDensityLoaded?.(),
+        onTileLoad: () => onTileLoaded?.(),
       }),
     );
   }
@@ -265,10 +266,13 @@ export function buildLayers({
         loadOptions: { fetch: { credentials: 'include' } },
         minZoom: 0,
         maxZoom: TILE_MAX_ZOOM,
-        // Boundaries are public reference data with no note scope to refuse, so an error here
-        // is always a fault. Reported for the same reason as the density tile's: boundaries
-        // that silently fail to draw leave a map that looks like it has nothing to show.
+        // Boundaries are public reference data with no note scope to refuse, so an error here is
+        // a session or transport problem like any other. Both outcomes are reported the same
+        // way, and `onTileLoad` on this same layer is what clears them — without it a boundary
+        // tile that failed once would leave the notice up for the rest of the session, because
+        // in the clusters view there is no density layer to report a successful load.
         onTileError: () => onTileFault?.(),
+        onTileLoad: () => onTileLoaded?.(),
         // **Stroke only.** Filling each region with its interaction count would be a second
         // encoding of the quantity the density grid already encodes as a colour, competing for
         // the same pixels. Boundaries are the frame, not a second reading of the data; the
@@ -351,7 +355,7 @@ export function DeckMapLayers({
   startDate,
   endDate,
   onDensityRefused,
-  onDensityLoaded,
+  onTileLoaded,
   onTileFault,
   overlay,
 }: DeckMapLayersProps) {
@@ -385,6 +389,8 @@ export function DeckMapLayers({
 
   const { apiUrl } = useApiConfig();
   const overlayRef = useRef<GoogleMapsOverlay | null>(null);
+  /** The map instance the overlay is currently attached to, so a layers change does not re-attach. */
+  const attachedMapRef = useRef<google.maps.Map | null>(null);
   /** Pending deferred teardown, so a re-mount can cancel it; see the effect below. */
   const teardownRef = useRef<number | null>(null);
 
@@ -480,9 +486,9 @@ export function DeckMapLayers({
     () => onDensityRefused?.(),
     [onDensityRefused],
   );
-  const handleDensityLoaded = useCallback(
-    () => onDensityLoaded?.(),
-    [onDensityLoaded],
+  const handleTilesLoaded = useCallback(
+    () => onTileLoaded?.(),
+    [onTileLoaded],
   );
   const handleTileFault = useCallback(() => onTileFault?.(), [onTileFault]);
 
@@ -496,7 +502,7 @@ export function DeckMapLayers({
         boundaryUrl,
         densityUrl,
         onDensityRefused: handleDensityRefused,
-        onDensityLoaded: handleDensityLoaded,
+        onTileLoaded: handleTilesLoaded,
         onTileFault: handleTileFault,
         overlay,
         clusters,
@@ -509,7 +515,7 @@ export function DeckMapLayers({
       boundaryUrl,
       densityUrl,
       handleDensityRefused,
-      handleDensityLoaded,
+      handleTilesLoaded,
       handleTileFault,
       overlay,
       clusters,
@@ -530,9 +536,16 @@ export function DeckMapLayers({
     }
     if (!overlayRef.current) {
       overlayRef.current = new GoogleMapsOverlay({ layers });
-      overlayRef.current.setMap(map);
     } else {
       overlayRef.current.setProps({ layers });
+    }
+    // Re-attach only when the map itself is a different instance. The teardown effect is keyed
+    // on `map` precisely because a replacement is possible, and an overlay left on the old one
+    // draws nothing — the `else` branch above alone would leave it there. Guarded by a ref so a
+    // layers change does not re-register the overlay's map listeners on every render.
+    if (attachedMapRef.current !== map) {
+      overlayRef.current.setMap(map);
+      attachedMapRef.current = map;
     }
   }, [map, layers]);
 
@@ -555,6 +568,7 @@ export function DeckMapLayers({
         overlayRef.current?.setMap(null);
         overlayRef.current?.finalize();
         overlayRef.current = null;
+        attachedMapRef.current = null;
         teardownRef.current = null;
       }, 0);
     };

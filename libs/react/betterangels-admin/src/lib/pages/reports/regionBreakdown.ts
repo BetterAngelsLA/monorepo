@@ -10,13 +10,17 @@
  */
 
 import { UnassignedReason } from '@monorepo/ba-platform/types';
-import type { RegionCountType } from './hooks';
+import type { RegionCountType, RegionDimensionInfoType } from './hooks';
 
-/** One dimension's published names, as `regionDimensions` returns them. */
-export type DimensionInfo = {
+/**
+ * One dimension's published names, as `regionDimensions` returns them.
+ *
+ * The generated type with `value` widened to `string`: the wire `kind` is lowercase
+ * (`council_district`) and the enum is uppercase (`COUNCIL_DISTRICT`), and both spellings are
+ * looked up here. Widening is the whole difference, so this is derived rather than restated.
+ */
+export type DimensionInfo = Omit<RegionDimensionInfoType, 'value'> & {
   value: string;
-  label: string;
-  plural: string;
 };
 
 /**
@@ -56,7 +60,7 @@ export function kindLabelPlural(
   const found = findDimension(kind, dimensions);
   // Not `label + "s"`: "City" + "s" is not a word. The suffix is only reached for a kind the
   // server never reported, which cannot be selected in the first place.
-  return found?.plural ?? `${found?.label ?? kind}s`;
+  return found?.plural ?? `${kind}s`;
 }
 
 /**
@@ -146,7 +150,17 @@ export type RegionBreakdownView = {
   selectable: RegionCountType[];
   /** The unassigned buckets in the selection. */
   unassigned: RegionCountType[];
+  /** At least one named region has interactions — what the table and the prompt need. */
   hasData: boolean;
+  /**
+   * At least one row has a point, named or not.
+   *
+   * Deliberately not `hasData`: an interaction outside every loaded boundary is *located* —
+   * the density grid draws it and the map still has something to show — so an all-unassigned
+   * range must not read as "no located interactions" or lose the map. `hasData` is about
+   * *named* regions, which is what the table lists.
+   */
+  hasLocatedRows: boolean;
   /** Names of the selected regions, for prose. `undefined` when nothing is selected. */
   filteredToName?: string;
 };
@@ -212,12 +226,19 @@ export function regionBreakdownView(
   // unfiltered, so a region with interactions in the old window can have none in the new one.
   // Reading `assigned` here called that an empty range — the panel said there were no located
   // interactions when there were, elsewhere — and unmounted `RegionMap` for the duration.
+  // Every row here has a point except the "no location recorded" bucket.
+  const hasLocatedRows = rows.some(
+    (row) =>
+      !row.isUnassigned || row.unassignedReason !== UnassignedReason.NoLocation,
+  );
+
   return {
     assigned,
     pickable,
     selectable,
     unassigned,
     hasData: pickable.length > 0,
+    hasLocatedRows,
     filteredToName,
   };
 }

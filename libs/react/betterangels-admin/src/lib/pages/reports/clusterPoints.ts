@@ -46,20 +46,22 @@ export type BBox = [number, number, number, number]; // west, south, east, north
 const WORLD_BBOX: BBox = [-180, -85, 180, 85];
 
 /**
- * `Supercluster<P, C>`: **P** is a point's properties, **C** a cluster's. Each point carries its
- * index into the original array; `cluster_id`/`point_count` are added by the library.
+ * `Supercluster<P, C>`: **P** is a point's properties, **C** a cluster's.
+ *
+ * Both are empty on purpose. The layer is not pickable and the only value the drawn bubbles
+ * read — `point_count` — is added by the library, so an `{ id }` per point would be one small
+ * object per interaction that nothing ever reads.
  */
-type PointProps = { id: number };
-type ClusterProps = { id: number };
+type NoProps = Record<string, never>;
 
-export type ClusterIndex = Supercluster<PointProps, ClusterProps>;
+export type ClusterIndex = Supercluster<NoProps, NoProps>;
 
 /**
  * Build the clustering tree. The property of the **data**, so it belongs in a memo keyed on the
  * points — never in the per-zoom path.
  */
 export function buildClusterIndex(points: HeatPoint[]): ClusterIndex {
-  const index = new Supercluster<PointProps, ClusterProps>({
+  const index = new Supercluster<NoProps, NoProps>({
     radius: CLUSTER_RADIUS_PX,
     maxZoom: MAX_CLUSTER_ZOOM,
     // Set explicitly rather than left to the default, so the intent is reviewable.
@@ -70,9 +72,9 @@ export function buildClusterIndex(points: HeatPoint[]): ClusterIndex {
     minPoints: 3,
   });
   index.load(
-    points.map((point, id) => ({
+    points.map((point) => ({
       type: 'Feature' as const,
-      properties: { id },
+      properties: {},
       geometry: {
         type: 'Point' as const,
         coordinates: [point.longitude, point.latitude],

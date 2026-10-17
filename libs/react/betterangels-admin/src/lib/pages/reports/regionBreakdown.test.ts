@@ -166,6 +166,29 @@ describe('the reader selection applied to the rollup', () => {
     );
   });
 
+  it('keeps the map for a range whose interactions are all outside every boundary', () => {
+    // "Unassigned" is not "unlocated": an interaction outside every loaded boundary still has a
+    // point, and the density grid draws it without needing a grouping. Reading `hasData` here
+    // said "no located interactions for this range" beside a list of them, and hid the map.
+    const view = regionBreakdownView([unassigned({ count: 291 })], []);
+
+    expect(view.hasData).toBe(false);
+    expect(view.hasLocatedRows).toBe(true);
+  });
+
+  it('hides the map only when no interaction has a location at all', () => {
+    const view = regionBreakdownView(
+      [unassigned({ count: 9, unassignedReason: UnassignedReason.NoLocation })],
+      [],
+    );
+
+    expect(view.hasLocatedRows).toBe(false);
+  });
+
+  it('treats an empty rollup as nothing located', () => {
+    expect(regionBreakdownView([], []).hasLocatedRows).toBe(false);
+  });
+
   it('does not call a stale drill-down an empty range', () => {
     // The rollup is refetched unfiltered when the date range changes, so a region selected out
     // of the old window can be absent from the new one. The range still has located

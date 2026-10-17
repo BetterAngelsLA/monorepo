@@ -21,7 +21,10 @@ const { browser, page, errors } = await openReports({
 });
 
 try {
-  await page.waitForTimeout(9000);
+  // Wait for the map rather than for the clock: it is the last thing to arrive and the thing
+  // every assertion below is about.
+  await page.waitForSelector('.gm-style', { timeout: 60000 });
+  await page.waitForTimeout(1500);
 
   /**
    * Samples the outermost scroller on every frame.
@@ -29,10 +32,15 @@ try {
    * The app scrolls an inner container rather than the document, so `window.scrollY` is always
    * zero here and watching it would never see this.
    */
-  await page.evaluate(() => {
+  const hasScroller = await page.evaluate(() => {
     const scroller = [...document.querySelectorAll('*')]
       .filter((e) => e.scrollHeight > e.clientHeight + 200)
       .sort((a, b) => b.scrollHeight - a.scrollHeight)[0];
+    // Not `?.`: a miss here used to throw a bare TypeError inside `evaluate`, which says
+    // nothing about what actually happened.
+    if (!scroller) {
+      return false;
+    }
     window.__scroller = scroller;
     window.__frames = [];
     const sample = () => {
@@ -45,7 +53,13 @@ try {
       window.__raf = requestAnimationFrame(sample);
     };
     sample();
+    return true;
   });
+  if (!hasScroller) {
+    throw new Error(
+      'no scrollable container found: the Reports page did not render, so there is nothing to measure',
+    );
+  }
 
   /** Park the reader where a collapse below would clamp the position. */
   async function park(px) {
@@ -125,6 +139,22 @@ try {
   const viewToggle = (name) =>
     page.locator('.ant-radio-button-wrapper', { hasText: name });
 
+  /**
+   * The days this run picks, derived from today so the script does not expire.
+   *
+   * The picker opens on the current month and only renders that month's cells, so a literal
+   * date worked for exactly one month and then timed out on both clicks. Both days are in the
+   * past — antd will not accept a range that starts after it ends — and `RANGE_FROM` /
+   * `RANGE_TO` override them for a preview seeded with a fixed window.
+   */
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, '0');
+  const yyyymm = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+  const rangeFrom = process.env.RANGE_FROM ?? `${yyyymm}-01`;
+  const rangeTo =
+    process.env.RANGE_TO ?? `${yyyymm}-${pad(Math.max(1, now.getDate() - 1))}`;
+  console.log(`date range under test: ${rangeFrom} .. ${rangeTo}`);
+
   // The date range re-runs every query on the page, so it is the control most able to move the
   // reader. Opening the panel is the `prepare` half; picking the days is the measurement.
   await step('change the date range', {
@@ -132,12 +162,14 @@ try {
       // The day cells live in a body-level overlay, so clicking them cannot scroll the page's
       // own scroller.
       await page
-        .locator('.ant-picker-dropdown .ant-picker-cell[title="2026-09-05"]')
+        .locator(
+          `.ant-picker-dropdown .ant-picker-cell[title="${rangeFrom}"]`,
+        )
         .first()
         .click();
       await page.waitForTimeout(500);
       await page
-        .locator('.ant-picker-dropdown .ant-picker-cell[title="2026-09-25"]')
+        .locator(`.ant-picker-dropdown .ant-picker-cell[title="${rangeTo}"]`)
         .first()
         .click();
     },
@@ -147,7 +179,7 @@ try {
     },
     verify: async () => {
       const values = await rangeValues();
-      return values[0] === '2026-09-05' && values[1] === '2026-09-25';
+      return values[0] === rangeFrom && values[1] === rangeTo;
     },
     // Shallower than the other steps: the picker and its calendar live at the top of the page,
     // and a panel opened there is off screen once the reader is parked low. Still a non-zero
