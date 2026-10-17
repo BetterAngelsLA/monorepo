@@ -35,6 +35,11 @@ export const SHARED_SCALARS: ScalarsMap = {
 
   // --- Intentionally untyped scalars ---
   JSON: 'any',
+  // Geometry scalars serialise to nested coordinate arrays. Left untyped rather than mapped
+  // to a GeoJSON type because `@types/geojson` declares `MultiPolygon.coordinates` as
+  // `Position[][][]` — three levels — where RFC 7946 requires four, so the library type
+  // would be wrong in exactly the place that matters. Consumers narrow at runtime instead.
+  MultiPolygon: 'any',
   Point: 'any',
   Upload: 'any',
 };
