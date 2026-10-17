@@ -17,8 +17,7 @@
     "pretty": "nx format:check --verbose",
     "pretty:fix": "nx format:write",
     "pretty:all": "nx format:check --all --verbose",
-    "pretty:all:fix": "nx format:write --all",
-    "verify:report-scroll": "node tools/scripts/verify-report-scroll.mjs"
+    "pretty:all:fix": "nx format:write --all"
   },
   "dependencies": {
     "@ant-design/charts": "^2.6.7",
