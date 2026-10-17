@@ -277,7 +277,7 @@ raise GraphQLError("Validation Errors", extensions={"errors": errors})
 
 #### `regions/schema.py` — region scope
 
-`interactionMap(regionCodes:)` needs `dimension` and `regionCodes` together: a code is not unique across dimensions (`"1"` is a council district, an SPA and a supervisorial district), and a `dimension` sent without codes has nothing to narrow. `regions/services.resolve_region_scope` expresses that refusal once and carries a `code` and a `field`; the resolver renders them in the same extension shape:
+`interactionMap(regionCodes:)` refuses a **non-empty** `regionCodes` with no `dimension`: a code is not unique across dimensions (`"1"` is a council district, an SPA and a supervisorial district), so there is no correct dimension to guess. A `dimension` sent *without* `regionCodes` is **ignored** here — it has nothing to narrow — where the density tile refuses it. `regions/services.resolve_region_scope` expresses the pairing once and carries a `code` and a `field`; the resolver renders them in the same extension shape:
 
 ```python
 raise GraphQLError(

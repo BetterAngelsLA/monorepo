@@ -108,7 +108,7 @@ This matters because it makes the job much smaller than it looks.
 | Database | PostGIS already — `ENGINE = common.backends.iam_dbauth.postgis`; image `nickblah/postgis:17.5-bullseye-postgis-3.5` |
 | Django | 6.1, Python 3.14, psycopg 3.3.4. `django.contrib.gis` **already installed** |
 | GDAL | `gdal-bin` **already in the production image** (`Dockerfile:127`) |
-| Geometry today | Exactly **four point fields**, all `PointField(srid=4326, geography=True)` (`Shelter.geolocation`, `ClientProfile.residence_geolocation`, HMIS, `common.Location.point`). **No polygon field anywhere.** |
+| Geometry at spike time | Exactly **four point fields**, all `PointField(srid=4326, geography=True)` (`Shelter.geolocation`, `ClientProfile.residence_geolocation`, HMIS, `common.Location.point`). **No polygon field anywhere.** |
 | The data we want to aggregate | `Note.location` → `common.Location.point` (`notes/models.py:153`). Every interaction already has a point. |
 | Reusable precedent | `shelters/types/filters.py:208-210` already does `Polygon.from_bbox` + `geolocation__within` |
 | Hand-keyed today | `Shelter.city_council_district` / `supervisorial_district` are hand-entered integers that polygons would let us **derive** |
@@ -395,9 +395,10 @@ narrows the rollup. Boundaries are **not** served as GeoJSON — they are vector
 same thing from the GraphQL side.
 
 The CRS traps in §7.1–§7.4 are guarded at import time rather than by fixtures: the
-importer refuses geometry with no SRID, rejects a bbox that contradicts the declared
-CRS (the real `data.lacity.org` defect in §7.3), and treats an unknown field name as a
-hard error rather than filling the table with NULL codes.
+importer rejects a bbox that falls outside LA (the real `data.lacity.org` defect in §7.3),
+which is also what catches a file that declares no CRS and is therefore taken at face value as
+4326, and it fails when the configured code field matches no feature rather than filling the
+table with NULL codes. A `--source` file is not reprojected; export it in 4326.
 
 ```bash
 python -m pytest regions/tests

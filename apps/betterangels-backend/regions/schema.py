@@ -115,11 +115,16 @@ class Query:
         deletes authority rather than moving it. The note scope is enforced below, through
         the same legacy path the Notes pages use.
 
-        ``filter_for_user`` is a **binary** filter, not row-narrowing: it answers "does
-        this user hold ``notes.view_note`` model-level (or on an object grant) ⇒ every row
-        it is given". It has no organization awareness at all, which is why the queryset
-        is org-confined *before* it is passed in (``org_notes_in_range``) and why
+        ``filter_for_user`` has **no organization awareness at all**, which is why the
+        queryset is org-confined *before* it is passed in (``org_notes_in_range``) and why
         ``interaction_points`` also applies its own org predicate.
+
+        For this codename it behaves as all-or-nothing in this deployment — no ``Role``
+        carries ``notes.view_note`` and nothing writes an object grant for a note — but that
+        is a property of the data, not of the helper. It ORs the model-level permission with
+        an object-grant ``pk__in`` subquery, so a per-object grant would narrow the result.
+        ``withheld`` is a boolean and therefore reports only the all-or-nothing case: a
+        partially scoped map still reads as complete.
 
         ``dimension`` is required when a non-empty ``regionCodes`` is given: codes are not
         unique across dimensions, so the dimension is what makes them meaningful. An empty
@@ -149,8 +154,9 @@ class Query:
 
         # Whether the note scope is what emptied the payload is answerable here and **only**
         # here: downstream the region filter can empty the same payload for a reason the reader
-        # can act on ("that district had no visits"). Both sides are the *unfiltered* set, so a
-        # region with nothing in it cannot make an empty map read as a permission answer.
+        # can act on ("that district had no visits"). Both sides are the set *before* the region
+        # filter is applied, so a region with nothing in it cannot make an empty map read as a
+        # permission answer.
         withheld = not scoped_notes.exists() and org_notes.exists()
 
         # The one reading of `(dimension, regionCodes)`: an empty list matches nothing and

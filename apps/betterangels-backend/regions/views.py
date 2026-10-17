@@ -39,10 +39,13 @@ MAX_ZOOM = 16
 
 
 def _zoom_or_none(z: int, x: int, y: int) -> Optional[int]:
-    """The clamped zoom when ``(z, x, y)`` is a real tile index, otherwise ``None``.
+    """The zoom when ``(z, x, y)`` is a real tile index, otherwise ``None``.
 
-    Shared by both tile endpoints so the two cannot drift on what "out of range" means. z is
-    bounded first, so ``2**z`` cannot be enormous.
+    An out-of-range ``z`` is **rejected**, not clamped: a clamped z would serve one tile's
+    bytes under another tile's URL, which the client caches as if it had asked for it. ``z``
+    is bounded before ``2**z`` is computed so the exponent cannot be enormous.
+
+    Shared by both tile endpoints so the two cannot drift on what "out of range" means.
     """
     zoom = min(max(z, MIN_ZOOM), MAX_ZOOM)
     if z != zoom:
@@ -137,15 +140,13 @@ class DensityTileView(APIView):
       the same DRF permission the report export uses, which reads ``org_id``, resolves it
       fail-closed, checks the grant, and stores the row on ``request.permitted_org``;
     * the note read scope, via ``filter_for_user(..., [NotePermissions.VIEW])`` — **not**
-      ``require_can(..., NotePermissions.VIEW)``. ``interaction_map``'s docstring has the
-      reason: notes are a legacy-only domain and no ``Role`` carries ``notes.view_note``, so a
-      grant predicate on that codename denies every non-superuser, including the caseworkers
-      the map is for.
+      ``require_can``. ``interaction_map``'s docstring carries the reasoning; the two
+      surfaces must use the same gate, so it is stated once, there.
 
     The two gates are applied to the *queryset the tile is aggregated from*, not to a count
     computed first and filtered afterwards, so a cell cannot be emitted for an interaction the
-    points query would have denied. ``filter_for_user`` is binary and has no organization
-    notion, which is why the org predicate is applied before it, in ``org_notes_in_range``.
+    points query would have denied. ``filter_for_user`` has no organization notion, which is
+    why the org predicate is applied before it, in ``org_notes_in_range``.
 
     Query parameters: ``org_id`` (required, the organization id — the same name
     ``HasReportAccess`` and the CSV export read), ``start``/``end`` (optional ISO dates,

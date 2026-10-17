@@ -10,7 +10,7 @@ afternoon to.
 ```graphql
 interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes): [RegionCountType!]!
 interactionMap(organizationId, startDate, endDate, limit, dimension, regionCodes): InteractionMapType!
-regionDimensions: [RegionDimension!]!
+regionDimensions: [RegionDimensionInfo!]!
 ```
 
 ```http
@@ -87,17 +87,20 @@ Codegen against a schema that lacks the region types does not fail loudly: it em
 for the new operations, so the hooks simply do not exist and the failure looks like a typo
 in an import.
 
-So when generating on a branch whose `schema.graphql` predates the region types, point
-codegen at the schema that has them for one run:
+So when generating on a branch whose `schema.graphql` predates the region types, borrow the
+schema from the worktree that has them for one run, then put yours back:
 
 ```bash
-# from the worktree that has the region types
-branch_root=$(git rev-parse --show-toplevel)
+# cwd is the worktree you are generating on; OTHER is the one with the region types.
+OTHER=/path/to/the/worktree/with/regions
 cp apps/betterangels-backend/schema.graphql /tmp/schema.backup
-cp "$branch_root/apps/betterangels-backend/schema.graphql" apps/betterangels-backend/schema.graphql
-cd libs/ba-platform && npx graphql-codegen --config codegen.ts
+cp "$OTHER/apps/betterangels-backend/schema.graphql" apps/betterangels-backend/schema.graphql
+(cd libs/ba-platform && npx graphql-codegen --config codegen.ts)
 cp /tmp/schema.backup apps/betterangels-backend/schema.graphql   # restore
 ```
+
+The `cd` runs in a subshell so the restore path still resolves; the backup is taken before the
+overwrite so a failed codegen still leaves the branch recoverable.
 
 The generated types are a pure function of schema plus operations, so generating against
 either schema produces the same output once the types are present. Run it from

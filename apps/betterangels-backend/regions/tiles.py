@@ -32,12 +32,12 @@ from common.models import Location
 from notes.models import Note
 
 from .models import REGION_LOOKUP_VIEW
-from .selectors import _REGION_TABLE, REGION_MEMBERSHIP_SQL
+from .selectors import REGION_MEMBERSHIP_SQL, REGION_TABLE
 from .services import resolve_region_scope
 
 #: The location table, taken from the model rather than written out, so a ``db_table``
 #: override cannot leave the density SQL pointing somewhere else — the same rule ``selectors``
-#: follows for its raw SQL. ``_REGION_TABLE`` is imported from there rather than re-derived,
+#: follows for its raw SQL. ``REGION_TABLE`` is imported from there rather than re-derived,
 #: so every raw statement in the app names the region table the same way.
 _LOCATION_TABLE = Location._meta.db_table
 
@@ -66,7 +66,7 @@ prepared AS (
            ST_AsMVTGeom(
                ST_Transform(r.geom_display, 3857), b.tile, %(extent)s, %(buffer)s, true
            ) AS geom
-    FROM {_REGION_TABLE} r, bounds b
+    FROM {REGION_TABLE} r, bounds b
     -- `&&` is evaluated in the table's own SRID, so it can use the GiST index on
     -- `geom_display` that migration `0005` adds — a `GeneratedField` is never indexed
     -- automatically. The planner leads with the envelope only when it is selective (deep
@@ -244,7 +244,7 @@ _DENSITY_REGION_FILTER = f"""
       AND EXISTS (
           SELECT 1
           FROM {REGION_LOOKUP_VIEW} lu
-          JOIN {_REGION_TABLE} rr
+          JOIN {REGION_TABLE} rr
             ON rr.id = lu.region_id AND rr.kind = %s AND rr.code = ANY(%s)
           WHERE {REGION_MEMBERSHIP_SQL}
       )"""

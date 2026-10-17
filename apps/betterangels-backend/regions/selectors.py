@@ -25,7 +25,7 @@ from .models import REGION_LOOKUP_VIEW, Region, RegionKind
 #: written out, so a `db_table` override cannot leave the query pointing somewhere else.
 _NOTE_TABLE = Note._meta.db_table
 _LOCATION_TABLE = Location._meta.db_table
-_REGION_TABLE = Region._meta.db_table
+REGION_TABLE = Region._meta.db_table
 
 #: The spatial predicate itself, with the aliases every raw statement in the app uses: ``lu`` is
 #: the lookup view, ``l`` the location table. Split out from the join below so a statement that
@@ -43,7 +43,7 @@ REGION_MEMBERSHIP_SQL = "ST_Covers(lu.geom, l.point_geom)"
 #: they must agree on is here, once.
 REGION_JOIN_SQL = f"""
     FROM {REGION_LOOKUP_VIEW} lu
-    JOIN {_REGION_TABLE} rr ON rr.id = lu.region_id
+    JOIN {REGION_TABLE} rr ON rr.id = lu.region_id
     JOIN {_LOCATION_TABLE} l ON {REGION_MEMBERSHIP_SQL}
 """
 
@@ -142,24 +142,27 @@ def _assigned_counts(
     and probes them once per interaction instead.
 
     Measured on the real LA layers (431 regions, 5,685 pieces, 4,000 locations), all six
-    dimensions at once: **~85 ms** for the 20,000-interaction window and **~48 ms** for a
-    2,461-interaction one. The spatial cost tracks *distinct locations* rather than
-    interactions, so the total grows sublinearly — 1.8× the time for 8× the notes — and the
+    dimensions at once: **~85 ms** for the 20,000-interaction window and **~35 ms** for a
+    2,460-interaction one. The spatial cost tracks *distinct locations* rather than
+    interactions, so the total grows sublinearly — 2.4× the time for 8× the notes — and the
     per-interaction cost falls as the window grows.
 
-    **The view is what keeps the plan in this direction.** Pointed straight at
-    ``regions_regionpiece`` the planner flips the join round on a selective window and drives
-    from the notes instead — 206 ms against 39 ms for the same result. The view presents it
-    one relation to drive from, which is what it needs to pick the indexed side.
+    **The view is read for its fallback arm, not for the plan.** It adds back the parent
+    boundary of a region that has no piece, which is what keeps such a region from vanishing
+    out of the rollup. Pointed straight at ``regions_regionpiece`` the planner does drive from
+    the notes on a small window, and re-measuring that is not uniformly slower: at ~660 notes
+    it costs 42 ms against 29 ms through the view, but at ~100 notes 8 ms against 28 ms, and
+    at 10 notes 1.5 ms against 7.7 ms. At 20,000 the two agree (82 ms against 85 ms).
+    ``models.RegionPiece`` carries the numbers.
 
     ``ST_Covers`` alone carries the index condition, so there is no explicit ``&&``. Adding
     one measures *slower* (342 ms against 70 ms): the redundant predicate constrains the
     join order the planner would otherwise pick for itself.
 
-    No ``kind`` predicate. One pass over every dimension's pieces costs more than one
-    dimension alone (85 ms against 46 ms for ``zip``), which is the price of one query shape
-    serving both the grouped and the ungrouped view; the single-dimension rollup filters the
-    same result in Python rather than paying for a second shape.
+    No ``kind`` predicate. The statement is dimension-agnostic, so a single dimension pays
+    the same cost and narrows in Python below rather than paying for a second shape:
+    measured through ``region_counts``, all six dimensions take 80 ms against 78 ms for
+    ``zip`` alone.
 
     Grouped by kind **and** code: without the kind, SPA 1, council district 1 and
     supervisorial district 1 collapse into one bucket.
@@ -258,8 +261,11 @@ def region_counts(
                 buckets.append({"kind": scope, "code": code, "name": "", "count": count})
 
     # `codes is None` means "no restriction", which is the one case that puts the unassigned
-    # bucket in scope without the caller asking for it by name.
-    if unassigned_only or include_unassigned or codes is None:
+    # bucket in scope without the caller asking for it by name — the same reading
+    # `parse_region_code_filter` gives it, so a direct caller of this selector agrees with
+    # `region_rollup`.
+    unassigned_in_scope = include_unassigned or codes is None
+    if unassigned_only or unassigned_in_scope:
         with_location = _notes_with_a_location(start=start, end=end, organization_id=organization_id)
         for scope in scopes:
             # `totals` is the count of **distinct** located notes covered by at least one
@@ -412,8 +418,9 @@ def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[
     boundary of a region with no piece — per note. The semi-join evaluates the region set
     once. The two answer identically; only the plan differs.
 
-    Reads the same SQL the density tile splices in (``tiles._DENSITY_REGION``), so the
-    rollup, the map and the tile cannot disagree about what "inside the region" means.
+    Reads the same membership predicate the density tile splices in
+    (``tiles._DENSITY_REGION_FILTER``), so the rollup, the map and the tile cannot disagree
+    about what "inside the region" means.
 
     ``kind`` is required because codes are not unique across dimensions — ``"1"`` is a council
     district, an SPA and a supervisorial district here — so a code alone would return up to

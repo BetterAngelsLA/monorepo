@@ -33,10 +33,12 @@ class UnassignedReason(enum.Enum):
 class RegionCountType:
     """One bucket of the rollup.
 
-    At most one bucket per ``(kind, code)``, plus at most one of each
-    ``unassigned_reason``. ``code`` is empty for an unassigned bucket; use
-    ``is_unassigned``/``unassigned_reason`` to identify it, never ``code`` alone —
-    there can be two unassigned buckets in a single response.
+    At most one bucket per ``(kind, code)``, plus **one unassigned bucket per dimension** —
+    ``OUTSIDE_ALL_REGIONS`` is computed per dimension, so an ungrouped rollup can return one
+    of those for each loaded dimension, and a grouped one returns at most one. Add at most one
+    ``NO_LOCATION`` bucket, which is not per dimension. ``code`` is empty for an unassigned
+    bucket; use ``is_unassigned``/``unassigned_reason`` to identify it, never ``code`` alone —
+    several unassigned buckets can appear in a single response.
 
     ``kind`` is empty when the rollup covers a single dimension, and names the
     dimension on every bucket when it spans all of them. It is needed there because a
@@ -95,6 +97,10 @@ class InteractionMapType:
     reports a permission answer as a fact about the neighbourhood. It is computed by
     the resolver, the only place that knows what the scope removed; the service
     assembles what it is given.
+
+    It reports the **all-or-nothing** case only. The note scope can in principle narrow
+    rather than exclude (an object grant), and a boolean cannot say "some"; see
+    ``interaction_map``'s docstring.
     """
 
     points: List[InteractionPointType]

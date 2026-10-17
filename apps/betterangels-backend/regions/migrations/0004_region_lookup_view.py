@@ -11,9 +11,12 @@ denormalised copy would add a second source of truth that can disagree with its 
 both read: each region's subdivided pieces, plus the parent boundary for a region with no piece.
 The importer writes at least one piece per region, so in practice the second arm is empty.
 
-**Do not inline the view into its callers.** It is what holds the planner in the good join
-direction: pointed straight at ``regions_regionpiece`` the planner flips round on a selective
-window and drives from the notes — 100 ms against 30 ms through the view.
+**Do not inline the view into its callers.** It adds back the parent boundary of a region that
+has no piece, which is what keeps such a region out of the rollup's blind spot, and it gives
+the rollup and the tile one relation to read. The plan-shape argument that used to be here did
+not survive re-measurement: pointed straight at ``regions_regionpiece`` the planner does drive
+from the notes on a small window, but measures 42 ms against 29 ms through the view at ~660
+notes, and 8 ms against 28 ms at ~100. ``regions/models.py`` carries the current numbers.
 """
 
 from django.db import migrations, models

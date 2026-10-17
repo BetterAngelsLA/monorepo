@@ -236,7 +236,7 @@ class Location(BaseModel):
     # column spheroidally, and ``geography -> geometry`` is an **explicit-only** cast, so a
     # point-in-polygon test against a ``geometry`` boundary has to write ``point::geometry``
     # — which discards the geography GiST index. Casting the *boundaries* to geography to
-    # reuse that index instead measures 3,067 ms against 45 ms for the rollup this column
+    # reuse that index instead measures ~2,200 ms against ~85 ms for the rollup this column
     # serves.
     #
     # A **generated column**, for the same reasons as ``Region.geom_display``: the database
