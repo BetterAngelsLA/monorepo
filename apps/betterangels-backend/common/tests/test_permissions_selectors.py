@@ -1,16 +1,17 @@
 """Tests for the read-side authorization selectors (ADR 0001 §2.4, §2.10)."""
 
-from accounts.models import Role, User
-from accounts.services import grant_create, role_assign, sync_roles
-from accounts.tests.baker_recipes import organization_recipe
-from common.permissions.selectors import ALL, can, can_anywhere, can_obj, scopes, visible
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from model_bakery import baker
+
+from accounts.models import Role, User
+from accounts.services import grant_create, role_assign, sync_roles
+from accounts.tests.baker_recipes import organization_recipe
+from common.permissions.selectors import ALL, can, can_anywhere, can_globally, can_obj, scopes, visible
 from notes.models import Note
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
-from shelters.models import Shelter
+from shelters.models import ContactInfo, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
 
 
@@ -139,6 +140,50 @@ class GrantSelectorsTestCase(TestCase):
         self.assertTrue(can_obj(alice, Shelter.perms.VIEW, self.shelter_a))
         self.assertFalse(can_obj(alice, Shelter.perms.VIEW, self.shelter_b))
 
+    def test_can_obj_shared_tier_is_any_holder_anywhere(self) -> None:
+        """ClientProfile declares WRITE_SHARED (RFC 0002 #1): can_obj == can_anywhere."""
+        from clients.models import ClientProfile
+
+        client = baker.make(ClientProfile)
+        editor = baker.make(User)
+        client_role = Role.objects.create(name="Client Editor", is_global=False)
+        perm = Permission.objects.get(
+            codename=ClientProfile.perms.CHANGE.split(".")[1], content_type__app_label="clients"
+        )
+        client_role.permissions.add(perm)
+        grant_create(user=editor, role=client_role, scope_org=self.org_a)
+        stranger = baker.make(User)
+        admin = baker.make(User, is_superuser=True)
+
+        self.assertTrue(can_obj(editor, ClientProfile.perms.CHANGE, client))
+        self.assertFalse(can_obj(stranger, ClientProfile.perms.CHANGE, client))
+        self.assertTrue(can_obj(admin, ClientProfile.perms.CHANGE, client))
+
+    def test_can_obj_fails_closed_for_undeclared_platform_shared(self) -> None:
+        """A platform-shared OrgScoped model with no write_tier: only the global tier acts.
+
+        RFC 0002 §Precondition — the read rule never feeds an undeclared write
+        (finding C1): a finite org-scoped holder is denied; an anywhere/global
+        holder (scopes is ALL) still acts.
+        """
+        from common.models import OrgScoped
+
+        class UndeclaredShared(OrgScoped):
+            org_via = None
+
+            class Meta:
+                app_label = "common"
+                managed = False
+
+        row = UndeclaredShared()  # no DB access in the fail-closed branch
+        scoped = baker.make(User)
+        grant_create(user=scoped, role=self.shelter_role, scope_org=self.org_a)
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+
+        self.assertFalse(can_obj(scoped, Shelter.perms.VIEW, row))
+        self.assertTrue(can_obj(gso, Shelter.perms.VIEW, row))
+
     def test_can_anywhere_holds_for_platform_shared_creates(self) -> None:
         from clients.models import ClientProfile
 
@@ -148,3 +193,38 @@ class GrantSelectorsTestCase(TestCase):
 
         self.assertTrue(can_anywhere(alice, ClientProfile.perms.VIEW))
         self.assertFalse(can_anywhere(stranger, ClientProfile.perms.VIEW))
+
+
+class CanGloballyTestCase(TestCase):
+    """can_globally is the global arm of scopes — Grant reach never satisfies it."""
+
+    def setUp(self) -> None:
+        sync_roles()
+        self.org = organization_recipe.make(name="Can Globally Org")
+        self.shelter_role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        self.gso_role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
+
+    def test_global_role_holder_can_act_globally(self) -> None:
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+
+        self.assertTrue(can_globally(gso, ContactInfo.perms.CHANGE))
+
+    def test_scoped_grant_holder_cannot_act_globally(self) -> None:
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org)
+
+        # The near-miss pinned: ``can_anywhere`` admits this scoped holder, so
+        # it can never substitute for a global-only gate.
+        self.assertTrue(can_anywhere(alice, Shelter.perms.VIEW))
+        self.assertFalse(can_globally(alice, Shelter.perms.VIEW))
+
+    def test_user_without_authority_cannot_act_globally(self) -> None:
+        stranger = baker.make(User)
+
+        self.assertFalse(can_globally(stranger, ContactInfo.perms.VIEW))
+
+    def test_superuser_can_act_globally(self) -> None:
+        admin = baker.make(User, is_superuser=True)
+
+        self.assertTrue(can_globally(admin, ContactInfo.perms.VIEW))

@@ -13,12 +13,12 @@ export default function NoteTitle({
 
   return (
     <View>
-      {note?.purpose && (
+      {!!note?.purpose && (
         <TextBold selectable size="lg" mb="xs">
           {note?.purpose}
         </TextBold>
       )}
-      {interactedAt && (
+      {!!interactedAt && (
         <TextRegular selectable mb="sm" size="sm">
           {format(interactedAt, 'MM/dd/yyyy')}
           {' @ '}

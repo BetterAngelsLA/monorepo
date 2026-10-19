@@ -6,9 +6,16 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ComponentType, ReactElement, useEffect, useState } from 'react';
+import {
+  Activity,
+  ComponentType,
+  ReactElement,
+  useEffect,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
+import { HeaderSlot } from '../../navigation';
 import { FeatureFlags } from '../../static';
 import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
@@ -115,13 +122,28 @@ export default function Client({
     throw new Error(`Something went wrong. Please try again. ${error}`);
   }
 
-  const showHeader = tab === ClientViewTabEnum.Profile;
-  const screenTitle =
+  // A stale or deep-linked Referrals tab must not render the referral screen
+  // once the flag is off; derive the active tab so no frame shows it.
+  const activeTab =
+    tab === ClientViewTabEnum.Referrals && !referralsEnabled
+      ? ClientViewTabEnum.Profile
+      : tab;
+
+  // Referral work changed the header/navbar layout; keep the pre-referral look
+  // while the flag is off so production users see no change. With the flag, the
+  // header shows on all tabs except Locations (the map keeps full height,
+  // DEV-1737) and the client's name appears exactly once — rich header when
+  // shown, otherwise in the navbar (per wireframe, navbar reads "Client").
+  const showHeader = referralsEnabled
+    ? activeTab !== ClientViewTabEnum.Locations
+    : activeTab === ClientViewTabEnum.Profile;
+  const clientName =
     data?.clientProfile.firstName || data?.clientProfile.lastName
       ? `${data?.clientProfile.firstName ?? ''} ${
           data?.clientProfile.lastName ?? ''
         }`.trim()
       : 'Client';
+  const screenTitle = referralsEnabled && showHeader ? 'Client' : clientName;
 
   return (
     <>
@@ -138,23 +160,27 @@ export default function Client({
             </TextBold>
           ),
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
-              accessibilityHint="goes to previous screen"
-              onPress={() => router.dismissTo(arrivedFrom || '/')}
-              testID="client-screen-back-btn"
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            <HeaderSlot side="left">
+              <Pressable
+                accessibilityRole="button"
+                accessible
+                accessibilityHint="goes to previous screen"
+                onPress={() => router.dismissTo(arrivedFrom || '/')}
+                testID="client-screen-back-btn"
+              >
+                <TextRegular color={Colors.WHITE}>Back</TextRegular>
+              </Pressable>
+            </HeaderSlot>
           ),
           headerRight: () => (
-            <ClientNavMenu
-              clientProfileId={clientProfileId}
-              onDeleted={() => {
-                router.dismissTo(arrivedFrom || '/');
-              }}
-            />
+            <HeaderSlot side="right">
+              <ClientNavMenu
+                clientProfileId={clientProfileId}
+                onDeleted={() => {
+                  router.dismissTo(arrivedFrom || '/');
+                }}
+              />
+            </HeaderSlot>
           ),
         }}
       />
@@ -165,10 +191,14 @@ export default function Client({
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         px={0}
       >
-        {showHeader && <ClientHeader client={data?.clientProfile} />}
+        {/* Hidden rather than unmounted: a fresh image element means the browser
+            lays out and decodes the profile photo again. */}
+        <Activity mode={showHeader ? 'visible' : 'hidden'}>
+          <ClientHeader client={data?.clientProfile} />
+        </Activity>
         <UploadProgressBar />
-        <ClientTabs selectedTab={tab} setTab={setTab} />
-        {getTabComponent(tab, data, openCard)}
+        <ClientTabs selectedTab={activeTab} setTab={setTab} />
+        {getTabComponent(activeTab, data, openCard)}
       </MainContainer>
     </>
   );

@@ -1,5 +1,6 @@
 import {
   ConsentModal,
+  FeatureFlags,
   MainPlusModal,
   useUser,
 } from '@monorepo/expo/betterangels';
@@ -11,6 +12,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Redirect, Tabs, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ColorValue, Pressable, StyleSheet, View } from 'react-native';
@@ -46,10 +48,16 @@ const TabIcon = ({
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [tosModalIsOpen, setTosModalIsOpen] = useState(false);
   const router = useRouter();
   const { user, isLoading } = useUser();
+  // Same gate as `useHmisProdSessionWatch`: the HMIS shell and its screens
+  // only make sense for sessions authenticated via HMIS — the flag alone can
+  // be active for a BA-credential login, which must keep the regular tabs.
+  const hmisProdDemoEnabled =
+    useFeatureFlagActive(FeatureFlags.HMIS_PROD_DEMO) &&
+    user?.isHmisUser === true;
 
   useEffect(() => {
     if (!user) return;
@@ -111,43 +119,16 @@ export default function TabLayout() {
                 color={color}
                 Icon={UsersSolidIcon}
                 InactiveIcon={UsersLineIcon}
-                label="Clients"
+                label={hmisProdDemoEnabled ? 'HMIS Clients' : 'Clients'}
               />
             ),
           }}
         />
 
         <Tabs.Screen
-          name="drawerPlaceholder"
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              setModalVisible(true);
-            },
-          }}
-          options={{
-            title: '',
-            tabBarIcon: () => (
-              <View style={styles.plusButtonWrapper}>
-                <Pressable
-                  testID="main-plus-tab-btn"
-                  accessibilityRole="button"
-                  accessibilityHint="Opening homepage main modal"
-                  onPress={() => setModalVisible(true)}
-                  style={({ pressed }) => [
-                    styles.plusButton,
-                    pressed && styles.plusButtonPressed,
-                  ]}
-                >
-                  <PlusIcon color={Colors.WHITE} />
-                </Pressable>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="interactions"
           options={{
+            href: hmisProdDemoEnabled ? null : undefined,
             title: '',
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
@@ -162,8 +143,42 @@ export default function TabLayout() {
         />
       </Tabs>
 
+      {/*
+        Deliberately not a tab: as a `Tabs.Screen` it depended on cancelling the
+        tab press, which web cannot do — the tab bar wraps every tab in an <a>, so
+        the navigation won and landed on an empty screen. A plain Pressable never
+        participates in navigation on either platform.
+
+        `pointerEvents` is load-bearing: without `box-none` this wrapper swallows
+        every tap in its square, so the ring around the button eats presses meant
+        for the tab bar underneath.
+
+        It has to come from the `StyleSheet.create` entry, not the inline style
+        beside it: react-native-web polyfills `box-none` only in the atomic
+        compiler, while the inline path drops the value and leaves it `auto`.
+      */}
+      {!hmisProdDemoEnabled && (
+        <View
+          style={[styles.plusButtonOverlay, { bottom: insets.bottom + 24 }]}
+        >
+          <Pressable
+            testID="main-plus-tab-btn"
+            accessibilityRole="button"
+            accessibilityLabel="Add"
+            accessibilityHint="Opening homepage main modal"
+            onPress={() => setIsModalVisible(true)}
+            style={({ pressed }) => [
+              styles.plusButton,
+              pressed && styles.plusButtonPressed,
+            ]}
+          >
+            <PlusIcon color={Colors.WHITE} />
+          </Pressable>
+        </View>
+      )}
+
       <MainPlusModal
-        closeModal={() => setModalVisible(false)}
+        closeModal={() => setIsModalVisible(false)}
         isModalVisible={isModalVisible}
       />
       <ConsentModal
@@ -197,15 +212,22 @@ const styles = StyleSheet.create({
   labelText: {
     textAlign: 'center',
   },
-  plusButtonWrapper: {
-    position: 'relative',
-    bottom: 36,
+  /**
+   * The "add" button, floated over the tab bar. Absolute rather than a tab slot,
+   * because it is not a destination — see the comment at its render site.
+   */
+  plusButtonOverlay: {
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -40,
     height: 80,
     width: 80,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.WHITE,
+    // See the note above the element: `box-none` only works from here.
+    pointerEvents: 'box-none',
   },
   plusButton: {
     height: 66,

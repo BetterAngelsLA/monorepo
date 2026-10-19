@@ -2,6 +2,3 @@
 
 DAILY_MINUTES = 24 * 60  # 1440
 WEEK_MINUTES = 7 * DAILY_MINUTES  # 10080
-
-# django-waffle flag gating BA-internal shelter fields.
-BA_ADMIN_ONLY_FIELDS_FLAG = "ffShelterOperatorBaOnlyFields"

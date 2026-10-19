@@ -1,9 +1,4 @@
 """
-Requires the user to have the specified permission(s) in the organization set via X-Organization-ID header.
-"""
-directive @hasOrgPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
-
-"""
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
 
 When the condition fails, the following can be returned (following this priority):
@@ -192,8 +187,7 @@ type BulkDeleteResult {
 }
 
 input ChangeOrganizationMemberRoleInput {
-  userId: ID!
-  organizationId: ID!
+  membershipId: ID!
   permissionTemplate: PermissionTemplateEnum!
 }
 
@@ -397,11 +391,6 @@ input ClientProfileOrder {
   id: Ordering
 }
 
-input ClientProfilePhotoInput {
-  clientProfile: ID!
-  photo: Upload
-}
-
 type ClientProfileType {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
@@ -427,7 +416,6 @@ type ClientProfileType {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: DjangoImageType
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -437,6 +425,7 @@ type ClientProfileType {
   unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
+  profilePhoto: DjangoImageType
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
@@ -534,7 +523,6 @@ input CreateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -585,7 +573,6 @@ input CreateHmisClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   residenceAddress: String
@@ -1116,7 +1103,6 @@ type HmisClientProfileType {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: DjangoImageType
   pronouns: PronounEnum
   pronounsOther: String
   residenceAddress: String
@@ -1124,6 +1110,7 @@ type HmisClientProfileType {
   spokenLanguages: [LanguageEnum!]
   unhousedStartDate: Date
   id: ID!
+  profilePhoto: DjangoImageType
   hmisId: String
   personalId: String
   uniqueIdentifier: String
@@ -1526,10 +1513,10 @@ type Mutation {
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   updateUserProfile(data: UpdateUserProfileInput!): UpdateUserProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
-  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
-  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
+  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload!
+  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload!
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
-  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "change_org_member_role"}], any: true)
+  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload!
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1547,7 +1534,6 @@ type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
-  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true) @deprecated(reason: "Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.")
   deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
@@ -1931,6 +1917,7 @@ type OrganizationMemberType {
   memberRole: OrgRoleEnum!
   isOrgOwner: Boolean!
   permissionTemplates: [PermissionTemplateEnum!]!
+  membershipId: ID
 }
 
 type OrganizationMemberTypeOffsetPaginated {
@@ -2107,8 +2094,8 @@ input PublicShelterFilter {
 
 type Query {
   currentUser: CurrentUserType!
-  organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
+  organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
+  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -2134,7 +2121,7 @@ type Query {
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
-  reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPerm(permissions: [{app: "reports", permission: "view_reports"}], any: true)
+  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
@@ -2250,8 +2237,7 @@ input RemoveHmisNoteServiceRequestInput {
 union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
 
 input RemoveOrganizationMemberInput {
-  id: ID!
-  organizationId: ID!
+  membershipId: ID!
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
@@ -3017,7 +3003,6 @@ input UpdateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -3035,8 +3020,6 @@ input UpdateClientProfileInput {
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
-
-union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union UpdateCurrentUserPayload = UserType | CurrentUserType | OperationInfo
 
@@ -3073,7 +3056,6 @@ input UpdateHmisClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   residenceAddress: String
@@ -3178,6 +3160,7 @@ input UpdateShelterInput {
   description: String
   email: String
   website: String
+  instagram: String
   isPrivate: Boolean
   heroImageId: ID
   cityId: ID
@@ -3266,9 +3249,6 @@ input UpdateUserProfileInput {
 }
 
 union UpdateUserProfilePayload = CurrentUserType | OperationInfo
-
-"""Represents a file upload."""
-scalar Upload
 
 type UserType {
   firstName: NonBlankString

@@ -1,13 +1,13 @@
 from typing import Any
 
-from accounts.models import User
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase
-from waffle.testutils import override_flag
 
-from shelters.constants import BA_ADMIN_ONLY_FIELDS_FLAG
-from shelters.models import SPA, City, Service, ServiceCategory, Shelter
+from accounts.models import Role, User
+from accounts.services import role_assign
+from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
+from shelters.models import SPA, City, ContactInfo, Service, ServiceCategory, Shelter
 from shelters.tests.utils import ShelterTestCase
 
 
@@ -70,6 +70,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                         email
                         phone
                         website
+                        instagram
                         totalBeds
                         maxStay
                         onSiteSecurity
@@ -88,6 +89,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                 "email": "info@shelter.org",
                 "phone": "+13105551234",
                 "website": "https://www.shelter.org",
+                "instagram": "@helloInstaHandle",
                 "totalBeds": 50,
                 "maxStay": 90,
                 "onSiteSecurity": True,
@@ -106,6 +108,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         # FIX: Check for either format (with or without +1)
         self.assertIn(shelter["phone"], ["+13105551234", "3105551234"])  # ← Changed this line
         self.assertEqual(shelter["website"], "https://www.shelter.org")
+        self.assertEqual(shelter["instagram"], "@helloInstaHandle")
         self.assertEqual(shelter["totalBeds"], 50)
         self.assertEqual(shelter["maxStay"], 90)
         self.assertTrue(shelter["onSiteSecurity"])
@@ -525,6 +528,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                         email
                         phone
                         website
+                        instagram
                         isPrivate
                     }
                 }
@@ -539,6 +543,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                 "email": "contact@shelter.org",
                 "phone": "+13105551234",
                 "website": "https://shelter.org",
+                "instagram": "@helloInstaHandle",
                 "isPrivate": True,
             }
         }
@@ -553,6 +558,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(result["email"], "contact@shelter.org")
         self.assertIn(result["phone"], ["+13105551234", "3105551234"])
         self.assertEqual(result["website"], "https://shelter.org")
+        self.assertEqual(result["instagram"], "@helloInstaHandle")
         self.assertTrue(result["isPrivate"])
 
     def test_update_shelter_patch_semantics(self) -> None:
@@ -1027,6 +1033,84 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
         self.shelter.refresh_from_db()
         self.assertEqual(self.shelter.name, "Permission Target")
 
+    def test_update_shelter_additional_contacts_allowed_for_global_shelter_operator(self) -> None:
+        """The BA-only contacts field is a global-tier gate: the GSO may submit it."""
+        role_assign(
+            user=self.operator,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "additionalContacts": [{"contactName": "Ada", "contactNumber": "2125550100"}],
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(self.shelter.additional_contacts.count(), 1)
+        self.assertEqual(self.shelter.additional_contacts.get().contact_name, "Ada")
+
+    def test_update_shelter_additional_contacts_denied_for_scoped_operator(self) -> None:
+        """A scoped operator (no global ContactInfo perms) may not submit the field."""
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "additionalContacts": [{"contactName": "Ada", "contactNumber": "2125550100"}],
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(
+            response,
+            "updateShelter",
+            "Editing additional contacts is not allowed with this role.",
+            kind="PERMISSION",
+        )
+        self.assertEqual(self.shelter.additional_contacts.count(), 0)
+
+    def test_update_shelter_additional_contacts_denied_for_granted_scoped_contactinfo_role(self) -> None:
+        """A scoped role carrying the ContactInfo perms plus a Grant still fails.
+
+        Adversarial on purpose: ``can_anywhere`` would admit this user, so only
+        a global-tier check keeps the gate closed (SDB-277).
+        """
+        self._grant_permission(
+            self.operator,
+            ContactInfo.perms.CHANGE,
+            self.org,
+            role_name="Scoped Contact Editor",
+        )
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "additionalContacts": [{"contactName": "Ada", "contactNumber": "2125550100"}],
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(
+            response,
+            "updateShelter",
+            "Editing additional contacts is not allowed with this role.",
+            kind="PERMISSION",
+        )
+        self.assertEqual(self.shelter.additional_contacts.count(), 0)
+
     # ── deleteShelter ────────────────────────────────────────────────────────
 
     def test_delete_shelter_succeeds_for_user_with_delete_permission(self) -> None:
@@ -1075,10 +1159,15 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
 
     def setUp(self) -> None:
         super().setUp()
+        # The contacts field is a global-tier gate — log in as a GSO holder so
+        # these cases exercise the per-contact validation shape, not the gate.
+        role_assign(
+            user=self.operator,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
         self.graphql_client.force_login(self.operator)
         self.shelter = Shelter.objects.create(name="Contacts Error Shelter", organization=self.org)
 
-    @override_flag(BA_ADMIN_ONLY_FIELDS_FLAG, active=True)
     def test_two_new_contacts_each_with_error(self) -> None:
         response = self.execute_graphql(
             self.MUTATION,

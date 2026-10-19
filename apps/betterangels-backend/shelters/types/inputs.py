@@ -5,9 +5,9 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from common.graphql.types import NonBlankString, NonEmptyString, PhoneNumberScalar
 from strawberry import ID, UNSET, Maybe, auto
 
+from common.graphql.types import NonBlankString, NonEmptyString, PhoneNumberScalar
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -159,6 +159,7 @@ class UpdateShelterInput:
     description: Maybe[str] = UNSET
     email: Maybe[Optional[str]] = UNSET
     website: Maybe[Optional[str]] = UNSET
+    instagram: Maybe[Optional[str]] = UNSET
     is_private: Maybe[bool] = UNSET
     hero_image_id: Maybe[ID | None] = UNSET
     city_id: Maybe[ID | None] = UNSET

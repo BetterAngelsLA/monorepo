@@ -4,11 +4,11 @@ from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
 
-from accounts.models import User
 from django.test import RequestFactory, TestCase
 from model_bakery import baker
 from waffle import get_waffle_flag_model
 
+from accounts.models import User
 from common.services.feature_flags import flag_is_active
 
 

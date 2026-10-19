@@ -75,7 +75,7 @@ export function Alert(props: IAlertProps) {
       <TextRegular color={VARIANTS[variant].color} style={{ flex: 1 }} ml="sm">
         {text}
       </TextRegular>
-      {actionText && (
+      {!!actionText && (
         <TextRegular
           ml="sm"
           color={VARIANTS[variant].color}

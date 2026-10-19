@@ -27,3 +27,25 @@ export const Dropdown: Story = {
     return <StoryComponent {...baseArgs} />;
   },
 };
+
+export const WithHeaderAndFooter: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'h-[400px] bg-gray-100',
+    },
+  },
+  render: () => (
+    <StoryComponent
+      {...defaultArgs}
+      header={
+        <div className="flex flex-col gap-0.5">
+          <p className="text-sm font-medium text-primary-20">Jane Doe</p>
+          <p className="text-xs text-neutral-55">jane@example.com</p>
+        </div>
+      }
+      footer={
+        <p className="text-xs text-neutral-55">Organization: Better Angels</p>
+      }
+    />
+  ),
+};

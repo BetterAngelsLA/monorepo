@@ -1,9 +1,10 @@
-from accounts.models import User
-from accounts.role_manager import OrgRoleManager
 from django.test import TestCase
 from model_bakery import baker
-from notes.groups import CASEWORKER
 from organizations.models import Organization, OrganizationUser
+
+from accounts.models import User
+from accounts.role_manager import OrgRoleManager
+from notes.groups import CASEWORKER
 
 from .baker_recipes import organization_recipe
 

@@ -1,9 +1,10 @@
 from typing import Any
 
+from unittest_parametrize import parametrize
+
 from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import StatusChoices
 from shelters.tests.baker_recipes import shelter_recipe
-from unittest_parametrize import parametrize
 
 
 class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
@@ -67,9 +68,10 @@ class ShelterPrivacyPermissionTestCase(GraphQLBaseTestCase):
 
     def _grant_view_private_shelter(self, user: Any) -> None:
         """Grant view_private_shelter permission to a user via their PermissionGroup."""
-        from accounts.models import PermissionGroup
         from django.contrib.auth.models import Permission
         from django.contrib.contenttypes.models import ContentType
+
+        from accounts.models import PermissionGroup
         from shelters.models import Shelter
 
         ct = ContentType.objects.get_for_model(Shelter)

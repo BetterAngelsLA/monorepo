@@ -3,6 +3,20 @@ import uuid
 from typing import Any, List, Optional, cast
 
 import pghistory
+from dateutil.relativedelta import relativedelta
+from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.gis.db.models import PointField
+from django.contrib.postgres.fields import ArrayField
+from django.core.validators import RegexValidator
+from django.db import models
+from django.db.models import Model, QuerySet
+from django.db.models.functions import Lower
+from django.utils import timezone
+from django.utils.encoding import force_str
+from django_choices_field import TextChoicesField
+from phonenumber_field.modelfields import PhoneNumberField
+from strawberry_django.descriptors import model_property
+
 from betterangels_backend import settings
 from clients.enums import (
     AdaAccommodationEnum,
@@ -22,21 +36,8 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
-from common.models import Attachment, BaseModel, OrgScoped, PhoneNumber
+from common.models import WRITE_SHARED, Attachment, BaseModel, OrgScoped, PhoneNumber
 from common.permissions.utils import PermissionSet
-from dateutil.relativedelta import relativedelta
-from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.gis.db.models import PointField
-from django.contrib.postgres.fields import ArrayField
-from django.core.validators import RegexValidator
-from django.db import models
-from django.db.models import Model, QuerySet
-from django.db.models.functions import Lower
-from django.utils import timezone
-from django.utils.encoding import force_str
-from django_choices_field import TextChoicesField
-from phonenumber_field.modelfields import PhoneNumberField
-from strawberry_django.descriptors import model_property
 
 DOC_READY_NAMESPACES = [
     ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
@@ -168,6 +169,11 @@ class ClientProfileManager(models.Manager.from_queryset(ClientProfileQuerySet)["
 )
 class ClientProfile(OrgScoped, AbstractClientProfile):
     org_via = None  # platform-shared by product decision (ADR 0001 §2.3)
+    # SHARED write tier (RFC 0002 decision #1): client CHANGE/DELETE today come
+    # from model-level perms on the CASEWORKER group (global-tier behavior in
+    # disguise), so the cutover preserves that as "holds the permission
+    # anywhere" — can_obj(user, clients.change_clientprofile, row) == can_anywhere.
+    write_tier = WRITE_SHARED
 
     objects = ClientProfileManager()  # hides merged profiles by default
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)

@@ -1,0 +1,39 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Opens the first client in the list and selects their Referrals tab.
+#
+# Precondition:
+#   - the clients list is visible (`clients-screen`)
+#   - at least one client exists
+#   - `ffReferrals` is ENABLED in the target environment — the tab is hidden
+#     otherwise, and an unknown/absent waffle flag resolves to false. See
+#     README.md → "Feature Flags (ffReferrals)".
+# Input env vars: none.
+# Output vars: none.
+# Side effects: navigates from the clients list into the first client's
+# Referrals tab.
+#
+# Deliberately data-agnostic: taps the first client rather than a named one, so
+# the flow does not depend on a particular seed.
+
+- assertVisible:
+    id: clients-screen
+
+- tapOn:
+    # ids are built by toTestId(['client-card', firstName]), so match the
+    # prefix rather than a specific seeded client.
+    id: 'client-card-.*'
+    index: 0
+
+# the tab strip scrolls horizontally; Referrals sits after Docs
+- scrollUntilVisible:
+    element:
+      id: client-tab-referrals
+    direction: RIGHT
+    timeout: 10000
+
+- tapOn:
+    id: client-tab-referrals
+
+- assertVisible:
+    id: referrals-screen

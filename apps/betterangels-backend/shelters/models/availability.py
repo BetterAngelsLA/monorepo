@@ -1,9 +1,11 @@
 """ShelterAvailability model — tracks bed availability for shelters."""
 
 import pghistory
-from common.models import BaseModel, OrgScoped
+import pgtrigger
 from django.core.validators import MinValueValidator
 from django.db import models
+
+from common.models import BaseModel, OrgScoped
 
 from .shelter import Shelter
 
@@ -12,6 +14,10 @@ from .shelter import Shelter
     pghistory.InsertEvent("shelter.availability.add"),
     pghistory.UpdateEvent("shelter.availability.update"),
     pghistory.DeleteEvent("shelter.availability.remove"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelteravail_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class ShelterAvailability(OrgScoped, BaseModel):
     org_via = ("shelter",)

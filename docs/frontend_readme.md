@@ -102,7 +102,7 @@ Run the following on the host machine—**not in the container**:
 1. Optional: add a `.env.local` file:
    - See `.env.local.sample` file for refernce
    - .env.local file should override the .env values on your local machine
-     - usage example: seting `EXPO_PUBLIC_API_URL`` and `EXPO_PUBLIC_DEMO_API_URL` to same domain to avoid CORS issues
+     - usage example: set `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_DEMO_API_URL` to the API hosts you want; a web dev build reaches them through the dev server's same-origin `/__api/<environment>` proxy, so no CORS setup is needed there
    - NX docs on [Environment Variables](https://nx.dev/recipes/tips-n-tricks/define-environment-variables)
 
 ### Running the Frontend: Nx Workspace with Expo Application
@@ -184,7 +184,7 @@ netsh interface portproxy delete v4tov4 listenport=8083 listenaddress=0.0.0.0
    ```
 
    - `tcp:8000` — Django backend API
-   - `tcp:9000` — MinIO S3 API (local file storage)
+   - `tcp:9000` — Local S3 API / SeaweedFS (file storage)
    - `tcp:8080` — imgproxy (image processing)
 
    Note: This might require you to install adb (Android Debug Bridge) [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)

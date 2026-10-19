@@ -1,9 +1,7 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
-import {
-  InfiniteList,
-  TRenderListResultsHeader,
-} from '@monorepo/expo/shared/ui-components';
+import { TRenderListResultsHeader } from '@monorepo/expo/shared/ui-components';
+import { FocusedInfiniteList } from '../InfiniteList/FocusedInfiniteList';
 import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
@@ -41,19 +39,28 @@ export function ListClientsHmis(props: TProps) {
     renderItem,
     style,
   } = props;
-  const { items, total, loading, reloading, hasMore, loadMore, reload, error } =
-    useInfiniteScrollQuery<
-      TClientProfileResultHmis,
-      ClientProfilesHmisQuery,
-      ClientProfilesHmisQueryVariables
-    >({
-      document: ClientProfilesHmisDocument,
-      queryFieldName: 'hmisClientProfiles',
-      pageSize: paginationLimit,
-      variables: { filters },
-      fetchPolicy: 'cache-and-network',
-      nextFetchPolicy: 'cache-first',
-    });
+  const {
+    items,
+    total,
+    loading,
+    reloading,
+    hasMore,
+    loadMore,
+    reload,
+    error,
+    queryKey,
+  } = useInfiniteScrollQuery<
+    TClientProfileResultHmis,
+    ClientProfilesHmisQuery,
+    ClientProfilesHmisQueryVariables
+  >({
+    document: ClientProfilesHmisDocument,
+    queryFieldName: 'hmisClientProfiles',
+    pageSize: paginationLimit,
+    variables: { filters },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
+  });
 
   if (error) {
     console.error(error);
@@ -72,8 +79,9 @@ export function ListClientsHmis(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<HmisClientProfileType>
+      <FocusedInfiniteList<HmisClientProfileType>
         modelName="client"
+        scrollResetKey={queryKey}
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}

@@ -12,14 +12,15 @@ The contract the frontend gates on:
   legacy groups) plus the global tier folded in where the backend enforces it.
 """
 
+from django.contrib.auth.models import Permission
+from model_bakery import baker
+
 from accounts.groups import ORG_ADMIN
 from accounts.models import Role, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import grant_create, grant_delegate, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
-from model_bakery import baker
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 from shelters.models import Shelter
 from teams.models import Team
@@ -205,9 +206,10 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         # Grant-only global perms are enforceable at any org via can().
         self.assertIn("shelters.view_shelter", orgs["Super Member Org"])
         self.assertIn("shelters.change_shelter", orgs["Super Member Org"])
+        # Grant-only reports perms fold too (can() honors the global tier).
+        self.assertIn("reports.view_reports", orgs["Super Member Org"])
         # Legacy-only-domain perms stay group-gated even for a superuser.
         self.assertNotIn("accounts.view_user", orgs["Super Member Org"])
-        self.assertNotIn("reports.view_reports", orgs["Super Member Org"])
         self.assertNotIn("Unowned Super Org", orgs)
 
     def test_consultant_grant_without_membership_does_not_inherit_delegations(self) -> None:
@@ -306,8 +308,9 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
     def test_reported_shelter_perms_are_enforceable(self) -> None:
         """Property (domain-aware): the report never claims a grant-only perm
         (``LEGACY_INERT_APPS``) that ``can()`` would deny at that org."""
-        from common.permissions.selectors import can
         from organizations.models import Organization
+
+        from common.permissions.selectors import can
 
         b = organization_recipe.make(name="Prop B")
         c = organization_recipe.make(name="Prop C")
@@ -355,8 +358,9 @@ class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
 
     def _assert_report_matches_can(self, user: User) -> None:
         """For every switchable org and every shelter perm: entry ≡ can()."""
-        from common.permissions.selectors import can
         from organizations.models import Organization
+
+        from common.permissions.selectors import can
 
         response = self.execute_graphql(
             """
@@ -455,47 +459,40 @@ class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
         self._assert_report_matches_can(user)
 
 
-class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
-    """The per-org report's legacy arm equals legacy (``PermissionGroup``) enforcement.
+class CurrentUserMemberManagementCanEquivalenceTestCase(GraphQLBaseTestCase):
+    """Member management (org-root ``organizations.*``) is grant-only — entry ≡ ``can()``.
 
-    Member management and reports are still enforced through ``HasOrgPerm`` —
-    gated per org by the legacy ``PermissionGroup`` predicate
-    (``permissioned_queryset``), not by grants (``can()``).  The report must
-    agree with that predicate so the admin UI neither hides an action the
-    backend allows nor shows one it refuses.
+    Member management is the last org-admin domain cut over to grants (ADR 0001
+    §5.3): the ``organizations.*`` codenames bind to the org-root ``Organization``
+    model, the ORG_ADMIN/ORG_SUPERUSER Role bundles carry them, and every member
+    read/mutation authorizes with ``require_can(...)`` at the payload org.
+    ``"organizations"`` is in ``LEGACY_INERT_APPS``.
 
-    Teams cut over to grant-only (mutations read ``can()``; ``teams`` is in
-    ``LEGACY_INERT_APPS``), so its per-org presence comes from the grant arm
-    (ORG_ADMIN/ORG_SUPERUSER roles, backfilled) and the global tier folds —
-    like shelters.  The ORG_ADMIN template bundle is still the fixture of
-    record: an ORG_ADMIN member's org entry carries the full bundle through
-    grant (teams, reports) + legacy (member management) arms combined.
+    The FE's ``hasPermission(P)`` at org O is a membership test on O's effective
+    entry (the global tier is folded in server-side), so ``P ∈ entry[O]`` must
+    equal ``can(user, P, org=O)`` over the ORG_ADMIN bundle — otherwise the
+    admin UI hides/shows member actions the backend allows/refuses.  The
+    ORG_ADMIN role is the fixture of record: it bundles the member-management
+    perms with the (already cut-over) teams and reports perms, so this class is
+    the tripwire for the whole org-admin cutover.
 
-    Cutover contract: this class encodes the CURRENT state.  When the
-    remaining legacy-only domains flip (reports, member management) the
-    report's arms and this test must flip in lockstep — the equivalence
-    predicate becomes ``can()`` and the domain's app_label moves into
-    ``LEGACY_INERT_APPS``.  These tests are the tripwire: they fail the
-    moment the report and the enforcement predicate disagree.
-
-    The global-tier × legacy-only cross product is pinned here too: a superuser
-    or ``user_permission`` holder carries these permissions in
-    ``currentUser.permissions`` (acts-anywhere for ``scopes()``), but the legacy
-    predicate never consults the global tier — so the effective per-org fold
-    must NOT advertise them at an org the user has no group in (finding H2).
+    The global-tier cross product is pinned here too: a superuser or
+    ``user_permission`` holder carries these perms in ``currentUser.permissions``
+    (acts-anywhere for ``scopes()``), and ``can()`` honors the global tier at any
+    org — so the per-org fold must advertise them at every member org.
     """
 
-    # The ORG_ADMIN template is the canonical role for member management /
-    # reports / teams (accounts/groups.py) — the full reported bundle.
-    LEGACY_PERMS = tuple(str(p) for p in ORG_ADMIN.permissions)
+    # The ORG_ADMIN role is the canonical bundle for member management /
+    # reports / teams (accounts/groups.py).
+    BUNDLE_PERMS = tuple(str(p) for p in ORG_ADMIN.permissions)
 
     def setUp(self) -> None:
         super().setUp()
         # Provision the Role rows so ORG_ADMIN memberships mirror Grants at the
-        # m2m edge (the grant arm the report reads teams from).
+        # m2m edge (the grant arm the report reads teams/reports/member
+        # management from).
         sync_roles()
-        # Presets create the ORG_ADMIN PermissionGroup on the org.
-        self.org = organization_recipe.make(name="Legacy Admin Org")
+        self.org = organization_recipe.make(name="Admin Equiv Org")
 
     def _report(self) -> tuple[set[str], dict[str, set[str]]]:
         response = self.execute_graphql(
@@ -516,22 +513,25 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
         orgs = {o["name"]: set(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
         return global_perms, orgs
 
-    def _legacy_holds(self, user: User, perm: str) -> bool:
-        """The exact predicate ``HasOrgPerm`` enforces for the active org."""
-        from common.permissions.utils import permissioned_queryset
+    def _assert_matches_can(self, user: User) -> None:
+        """Every member-org entry must carry exactly the perms ``can()`` grants there."""
         from organizations.models import Organization
 
-        return permissioned_queryset(
-            Organization.objects.all(),
-            user=user,
-            organization_id=str(self.org.pk),
-            perms=[perm],
-            any_perm=True,
-            organization_field="pk",
-        ).exists()
+        from common.permissions.selectors import can
 
-    def test_org_admin_member_report_matches_legacy_enforcement(self) -> None:
-        """An ORG_ADMIN member: the report carries exactly the enforceable perms."""
+        global_perms, orgs = self._report()
+        for org_name, org_perms in orgs.items():
+            org = Organization.objects.get(name=org_name)
+            for perm in self.BUNDLE_PERMS:
+                reported = perm in org_perms or perm in global_perms
+                self.assertEqual(
+                    reported,
+                    can(user, perm, org=org),
+                    f"{perm} at {org_name}: entry says {reported}, can() says otherwise",
+                )
+
+    def test_org_admin_member_bundle_matches_can(self) -> None:
+        """An ORG_ADMIN member: the entry carries exactly the enforceable bundle."""
         user = baker.make(User)
         self.org.add_user(user)
         OrgRoleManager(self.org).add_roles(user, ORG_ADMIN)
@@ -544,29 +544,12 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
         self.assertIn("organizations.add_org_member", org_perms)
         self.assertIn("reports.view_reports", org_perms)
         self.assertIn("teams.add_team", org_perms)
-        # …and nothing more than the group + role grants (no amplification).
-        self.assertEqual(org_perms, set(self.LEGACY_PERMS))
+        # …and nothing more than the role's perms (no amplification).
+        self.assertEqual(org_perms, set(self.BUNDLE_PERMS))
 
-        # Every reported perm is enforceable by the predicate that enforces it:
-        # teams.* is grant-only (``can()``), member management / reports are
-        # legacy (``permissioned_queryset``).  Asserting the legacy predicate
-        # for teams would pass vacuously while the ORG_ADMIN member still holds
-        # the (now inert) legacy group, letting report-vs-enforcement drift
-        # through unnoticed.
-        from common.permissions.selectors import can
+        self._assert_matches_can(user)
 
-        for perm in self.LEGACY_PERMS:
-            reported = perm in org_perms or perm in global_perms
-            self.assertTrue(reported, f"{perm} not reported for an ORG_ADMIN member")
-            if perm.startswith("teams."):
-                self.assertTrue(
-                    can(user, perm, org=self.org),
-                    f"{perm} reported but grant enforcement denies",
-                )
-            else:
-                self.assertTrue(self._legacy_holds(user, perm), f"{perm} reported but legacy enforcement denies")
-
-    def test_plain_member_report_matches_legacy_enforcement(self) -> None:
+    def test_plain_member_reports_nothing_and_can_is_false(self) -> None:
         """A member with no role: nothing reported, nothing enforceable."""
         user = baker.make(User)
         self.org.add_user(user)
@@ -577,20 +560,16 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(org_perms, set())
         self.assertEqual(global_perms, set())
-        for perm in self.LEGACY_PERMS:
-            self.assertFalse(self._legacy_holds(user, perm), f"{perm} held without any PermissionGroup")
+        self._assert_matches_can(user)
 
-    def test_superuser_org_entry_is_group_scoped_for_legacy_only_domains(self) -> None:
-        """A superuser's per-org entry folds grant-only global perms, not legacy-only ones.
+    def test_superuser_member_org_entry_folds_the_whole_bundle(self) -> None:
+        """A superuser's member-org entry folds every grant-only bundle perm.
 
-        ``currentUser.permissions`` (the global list) carries every permission —
-        including member management / reports / teams.  The grant-only domains
-        (shelters, teams) enforce the global tier at any org via ``can()``, so
-        their perms fold into the entry.  Member management and reports are
-        still ``HasOrgPerm`` → org ``PermissionGroup`` rows, which never consult
-        the global tier (no superuser bypass) — advertising them at an org
-        where the superuser has no group would show controls the backend
-        refuses.
+        ``can()`` honors the global tier at any org for every ``LEGACY_INERT_APPS``
+        domain — now including member management — so the entry advertises the
+        full bundle (member management + teams + reports) even with no
+        group/grant.  This is the flip from the old ``HasOrgPerm`` behavior,
+        which never consulted the global tier.
         """
         user = baker.make(User, is_superuser=True)
         self.org.add_user(user)
@@ -603,65 +582,44 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
         self.assertIn("reports.view_reports", global_perms)
         self.assertIn("shelters.view_shelter", global_perms)
 
-        # …but the org entry only claims what is enforceable at the org.
-        self.assertIn("shelters.view_shelter", org_perms)  # grant-only: folds
-        self.assertIn("shelters.change_shelter", org_perms)  # grant-only: folds
+        # …and the org entry claims everything ``can()`` enforces at the org.
+        self.assertIn("organizations.add_org_member", org_perms)  # grant-only (cutover): folds
+        self.assertIn("reports.view_reports", org_perms)  # grant-only (cutover): folds
         self.assertIn("teams.add_team", org_perms)  # grant-only (cutover): folds
-        self.assertIn("teams.change_team", org_perms)  # grant-only (cutover): folds
-        self.assertNotIn("reports.view_reports", org_perms)  # legacy-only: group-gated
-        self.assertNotIn("organizations.add_org_member", org_perms)  # legacy-only
-        for perm in ("reports.view_reports", "organizations.add_org_member"):
-            self.assertFalse(self._legacy_holds(user, perm), f"{perm} enforceable for a groupless superuser")
+        self.assertIn("shelters.view_shelter", org_perms)  # grant-only: folds
+        self._assert_matches_can(user)
 
-    def test_superuser_org_entry_folds_legacy_perms_once_in_the_group(self) -> None:
-        """…and adding the superuser to the org's group surfaces the legacy perms.
+    def test_user_permission_holder_member_folds_the_org_admin_bundle(self) -> None:
+        """A ``user_permission`` on the org-admin bundle is org-enforceable.
 
-        The scoped (legacy) arm runs even for a superuser — the old
-        "global subsumes everything" short-circuit would have hidden these.
-        """
-        user = baker.make(User, is_superuser=True)
-        self.org.add_user(user)
-        OrgRoleManager(self.org).add_roles(user, ORG_ADMIN)
-        self.graphql_client.force_login(user)
-
-        _, orgs = self._report()
-        org_perms = orgs[self.org.name]
-        self.assertIn("organizations.add_org_member", org_perms)
-        self.assertIn("reports.view_reports", org_perms)
-        self.assertIn("teams.add_team", org_perms)
-        for perm in ("organizations.add_org_member", "reports.view_reports"):
-            self.assertTrue(self._legacy_holds(user, perm), f"{perm} not enforceable for a grouped superuser")
-
-    def test_user_permission_on_legacy_only_domain_is_not_org_enforceable(self) -> None:
-        """A ``user_permission`` on a legacy-only perm is global-tier but NOT org-enforceable.
-
-        ``scopes()``/``global_permissions`` treat a ``user_permission`` as
-        acts-anywhere (``can()`` would even say yes at the org), but the legacy
-        domain's per-org gate reads org groups only — so it must not surface in
-        the org entry (the FE must not gate that org's legacy-domain UI on the
-        global list).  A grant-only ``user_permission`` (shelters, teams) DOES
-        fold, because ``can()`` honors the global tier there.
+        ``scopes()`` treats a ``user_permission`` as acts-anywhere, so ``can()``
+        applies it at any member org and the entry must fold it — for the
+        member-management perms just like the already-cut-over teams/reports and
+        shelters ones.
         """
         user = baker.make(User)
         self.org.add_user(user)
         member_perm = Permission.objects.get(codename="add_org_member", content_type__app_label="organizations")
         teams_perm = Permission.objects.get(codename="add_team", content_type__app_label="teams")
         shelters_perm = Permission.objects.get(codename="view_shelter", content_type__app_label="shelters")
-        user.user_permissions.add(member_perm, teams_perm, shelters_perm)
+        reports_perm = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
+        user.user_permissions.add(member_perm, teams_perm, shelters_perm, reports_perm)
         self.graphql_client.force_login(user)
 
         global_perms, orgs = self._report()
         org_perms = orgs[self.org.name]
 
-        # All three are global-tier…
+        # All four are global-tier…
         self.assertIn("organizations.add_org_member", global_perms)
         self.assertIn("teams.add_team", global_perms)
         self.assertIn("shelters.view_shelter", global_perms)
-        # …but only the grant-only ones are enforceable at the org.
-        self.assertNotIn("organizations.add_org_member", org_perms)
+        self.assertIn("reports.view_reports", global_perms)
+        # …and every one of them is enforceable at the org, so all fold.
+        self.assertIn("organizations.add_org_member", org_perms)
         self.assertIn("teams.add_team", org_perms)
         self.assertIn("shelters.view_shelter", org_perms)
-        self.assertFalse(self._legacy_holds(user, "organizations.add_org_member"))
+        self.assertIn("reports.view_reports", org_perms)
+        self._assert_matches_can(user)
 
 
 class CurrentUserTeamsReportCanEquivalenceTestCase(GraphQLBaseTestCase):
@@ -683,8 +641,9 @@ class CurrentUserTeamsReportCanEquivalenceTestCase(GraphQLBaseTestCase):
         self.org = organization_recipe.make(name="Teams Equiv Org")
 
     def _assert_report_matches_can(self, user: User) -> None:
-        from common.permissions.selectors import can
         from organizations.models import Organization
+
+        from common.permissions.selectors import can
 
         response = self.execute_graphql(
             """

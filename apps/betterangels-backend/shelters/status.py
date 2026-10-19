@@ -6,6 +6,7 @@ import datetime
 from typing import Set, TypeVar
 
 from django.db.models import QuerySet
+
 from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices
 
 _StatusChoice = TypeVar("_StatusChoice", BedStatusChoices, RoomStatusChoices)

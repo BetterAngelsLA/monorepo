@@ -2,6 +2,12 @@ import datetime
 from unittest import skip
 from unittest.mock import ANY, patch
 
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
+from django.test import TestCase, override_settings
+from model_bakery import baker
+
 from clients.enums import (
     AdaAccommodationEnum,
     EyeColorEnum,
@@ -14,10 +20,6 @@ from clients.enums import (
 )
 from common.models import Location, PhoneNumber
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.gis.geos import Point
-from django.test import TestCase, override_settings
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -29,7 +31,6 @@ from hmis.enums import (
 )
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
-from model_bakery import baker
 from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 

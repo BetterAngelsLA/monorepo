@@ -202,11 +202,28 @@ GLOBAL_SHELTER_OPERATOR = RoleDef(
 )
 ```
 
-A `sync_roles` command `get_or_create`s the `Role` rows and sets their permissions from
+A `sync_roles` command provisions the `Role` rows and sets their permissions from
 the `RoleDef`s (replacing `sync_group_permissions` for role-backed domains; legacy
 templates keep their own sync during transition). `is_global` is **code-owned** — the
 admin may not flip it (see E002). Invite/welcome email metadata lives on the `RoleDef`,
 not on a per-org row.
+
+**A role name is an `auth.Group` name, and that namespace is shared.** `Role` and
+`PermissionGroup` are MTI subclasses of `auth.Group`, so all three draw from the same
+unique `auth_group.name`. A plain `get_or_create` therefore inserts the parent row
+first, and a *bare* `Group` carrying a RoleDef's name (no `Role`/`PermissionGroup`
+child — a pre-cutover leftover) aborts the whole provisioning transaction on
+`auth_group_name_key`, rolling back every Role, every grant backfill and the phantom
+retire for that deploy (2026-09-11 incident: a bare `Caseworker` group cost one
+deploy's entire conversion). Provisioning resolves the name-holder deterministically:
+an existing `Role` is reused; a **memberless** bare `Group` is adopted as the Role's
+group row (the `accounts_role` child is written with the same pk, keeping the row's
+identity); a bare `Group` **with members** is renamed to `"<name> (legacy group <pk>)"`
+and a fresh `Role` created — a scoped `Role` must never sit in `user.groups` (E001), so
+those memberships stay on the renamed group; a `PermissionGroup` is never adopted or
+renamed — an exact match there is a hand-made row and fails with an actionable error.
+Idempotent: once the name is held by the `Role`, later runs take the reuse branch and
+touch nothing.
 
 **Global roles compose and may be narrower than full CRUD.** Authority at the global
 tier is the per-permission union of every global `Role` a user holds in `user.groups`
@@ -392,6 +409,15 @@ subquery, not a re-derivation.
   a stated convention for every child-create service, not per-site.
 - The arm is `OBJECT_ARM_ENABLED = False` until the clients cutover ships (finding F9);
   it is turned on with its first consumer, not before.
+- **Write tiers are in (RFC 0002 §Precondition, 2026-09-09).** `OrgScoped.write_tier`
+  lets a model declare its write scope independently of `org_via` (its read scope):
+  `can_obj` uses the ORG filter for org-anchored models (derived default), a declared
+  SHARED tier for platform-shared models whose writes are shared-by-role-anywhere
+  (`ClientProfile` today — matches `main`), and fails closed for an undeclared
+  platform-shared model (finding C1 default — only the global tier acts until the model
+  declares a tier or an object grant covers the row). `permissions.E007` guards the
+  declarations; the OBJECT tier and the object-grant predicate stay off until the
+  clients cutover turns the arm on with its first consumer.
 - **Object grants are user-principal only (decision).** Sharing is person-granular:
   `Grant(principal_user, role, scope_object)` — authority attaches to a person you can
   audit and revoke. Org-principal object grants (`principal_org` + `scope_object`) are
@@ -717,7 +743,7 @@ authorization, which is the service→selector pattern the guide prescribes.
 | Phase | Ships |
 |---|---|
 | **0** | This ADR; §7 decision log (items resolved; §7.2 open) |
-| **1** | `Role` + `Grant` models, constraints, checks, provisioning + backfill. **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** Provisioning (`sync_roles`) and backfill (`backfill_shelter_grants` / `backfill_global_role_members`) are idempotent `post_migrate` syncs + a `manage.py sync_roles` command, per the repo's "replaces RunPython data migrations" convention — not RunPython migrations. **Transition caveat: the phase-1 backfill is add-only and runs only at `migrate`** — a membership removed after the last backfill leaves a stale `Grant`, and a brand-new org gets none until the next migrate. Phase 2's dual-write must therefore treat backfilled rows as a bootstrapping snapshot: write `Grant`s synchronously on membership change (assign/invite/remove, org creation) and make the `reconcile` command *revoke* stale rows, not just backfill. |
+| **1** | `Role` + `Grant` models, constraints, checks, provisioning + backfill. **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** Provisioning (`sync_roles`) and backfill (`backfill_shelter_grants` / `backfill_global_role_members`) are idempotent `post_migrate` syncs + a `manage.py sync_roles` command, per the repo's "replaces RunPython data migrations" convention — not RunPython migrations. (`sync_roles` is one transaction: any failure inside it — e.g. an `auth_group.name` collision — skips the whole conversion chain that follows; name-holders are resolved per §2.2, so leftover `Group` rows cannot abort it.) **Transition caveat: the phase-1 backfill is add-only and runs only at `migrate`** — a membership removed after the last backfill leaves a stale `Grant`, and a brand-new org gets none until the next migrate. Phase 2's dual-write must therefore treat backfilled rows as a bootstrapping snapshot: write `Grant`s synchronously on membership change (assign/invite/remove, org creation) and make the `reconcile` command *revoke* stale rows, not just backfill. |
 | **2** | `scopes()`/`visible()`/`can()` wired to **shelter** selectors/mutations (global + user + delegation arms); mutation-surface convention; org→org delegation admin inline; assign/invite service dual-writes `Grant` (authoritative for shelters) + legacy `PermissionGroup` (authoritative for everything else) with a `reconcile` command + test. **Covers org creation and owner-role seeding** (finding F22) — new orgs born during transition get `Grant`s for shelter roles, not legacy groups. |
 | **3** | Frontend (both apps): grants-based FINITE org list (never every org — no "All" mode), header optional, effective per-org permission entries, `currentUser.permissions` global list as the shared contract (finding F24). |
 | **4** | Clients/notes cutover: wire the object arm + whitelist + cleanup signals; client-sharing data edge; **notes/guardian migration per §5 / clients per §5.1**; guardian teardown per domain. |
@@ -734,7 +760,7 @@ still needs at its cutover:
 | **Tasks** | `Task.organization` | `()` | legacy template + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
 | **Referrals** | `Referral.organization` (+ shelter) | `()` — but "own org **or** via shelter" is inexpressible today (§4.1 note) | legacy + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
 | **Teams** | `Team.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — no scoped `Role` row yet | **Cut over (§5.3)** — no guardian rows; org reads/writes via `can()`/`can_obj` on the role-backed admin roles | None (after §5.3) |
-| **Reports** | report row `.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — no scoped `Role` row yet | **Cut over (§5.3)** — DRF + GraphQL reads authorize through the grant predicate | None (after §5.3) |
+| **Reports** | report row `.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — role-backed as of §5.3 | **Cut over (§5.3)** — DRF + GraphQL reads authorize through the grant predicate | None (after §5.3) |
 | **Notes** | `Note.organization` | `()` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
 | **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy model-level perms on CASEWORKER (no per-record rows) | parity-first: SHARED write via `can_anywhere` (RFC 0002); owner-tier (`created_by_org`) parked | §5.1 / RFC 0002 |
 | **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
@@ -990,11 +1016,11 @@ regenerated at each step.
 
 **Status on main — teams landed first, on the grant-only model (2026-09-09).**
 Main's machinery evolved past the stack this section sketched: the seam is the
-per-domain `can()`/`require_can` (shelters cut over that way in §4.1/#2412), and
-two of the four org-admin consumers cannot ride a scoped `Role` today — the
-`organizations.*` member-management codenames and `reports.view_reports` resolve
-to no concrete model, so `sync_roles` refuses them on a RoleDef (phantom
-ContentType). The teams cutover therefore landed *teams alone*:
+per-domain `can()`/`require_can` (shelters cut over that way in §4.1/#2412).  At
+the teams landing, the `organizations.*` member-management codenames and
+`reports.view_reports` could not ride a scoped `Role` — they resolved to no
+concrete model, so `sync_roles` refused them on a RoleDef (phantom
+ContentType).  The teams cutover therefore landed *teams alone*:
 
 - `ORG_ADMIN`/`ORG_SUPERUSER` are role-backed with a scoped `Role` carrying
   **`teams.*` only**; `backfill_org_admin_grants()` converts every existing
@@ -1042,6 +1068,116 @@ ContentType). The teams cutover therefore landed *teams alone*:
   (``get_or_none``'s pk guard) instead of reaching the DB as an unhandled
   ``ValueError``, and answer missing-vs-forbidden rows with one refusal, so
   neither is a crash nor an existence oracle.
+
+**Status on main — reports joined (2026-09-09).** ``_resolve_permissions`` now
+binds a RoleDef permission to the model that *declares* it in
+``Meta.permissions`` (resolved from the app registry), so a custom codename
+whose last token is not its model — ``reports.view_reports`` on
+``ScheduledReport`` — rides a scoped Role instead of tripping the
+phantom-ContentType guard.  The reports slice then mirrors teams:
+
+- ``ORG_ADMIN``/``ORG_SUPERUSER`` Roles add ``reports.view_reports``; the
+  existing backfilled org-admin Grants inherit it from the Role row on the next
+  ``sync_roles`` (no re-backfill).
+- ``reportSummary`` (GraphQL) and the DRF interaction-data export authorize via
+  ``require_can``/``can`` at the target org — membership no longer consulted, a
+  legacy-only holder fails closed.  ``reports`` joins ``LEGACY_INERT_APPS``;
+  ``ScheduledReport`` declares ``OrgScoped`` (permissions.E005).
+- **Header-free.** Reports is a web feature (the admin portal), so it cut over
+  in one step instead of keeping the ``X-Organization-ID`` header as a
+  deprecated fallback: ``reportSummary`` now carries the org in the payload
+  (a required ``organizationId`` argument) and the DRF export already took the
+  ``org_id`` query param.  No reports surface reads the header.
+- Phantom Permission/ContentType rows synthesized by the old last-token
+  resolution and superseded by real-model binding are retired idempotently at
+  ``post_migrate`` (``retire_superseded_phantom_permissions``).
+**Status on main — member management joined (2026-09-09).** The last
+legacy-only org-admin domain flips grant-only.  The org-root bind from the
+seed migration gives the ``organizations.*`` portal codenames a real model —
+the org-root ``Organization`` ContentType — so they can ride scoped Roles:
+
+- ``ORG_ADMIN``/``ORG_SUPERUSER`` Roles bundle the member-management codenames
+  (``organizations.access_org_portal``, ``add_org_member``,
+  ``remove_org_member``, ``view_org_member``, and — superuser only —
+  ``change_org_member_role``); backfilled org-admin Grants inherit them from the
+  Role row on the next ``sync_roles`` (no re-backfill).
+- ``seed_org_portal_permissions`` binds the five codenames to the real org-root
+  ``Organization`` model at ``post_migrate`` (after ``sync_roles``), replacing
+  the phantom rows the old last-token resolution synthesized; superseded phantom
+  rows are retired idempotently (references re-pointed first) by
+  ``retire_superseded_phantom_permissions``.
+- The org-root permissions guard is identity-scoped (permissions.E005): a
+  permission registered on ``Organization`` itself is a capability on the org,
+  not an org-wide capability-gate — the org's own rows never trip the
+  cross-object guard.
+- ``organizationMember``/``organizationMembers`` and the add mutation authorize
+  via ``require_can`` at the org in the payload;
+  ``removeOrganizationMember``/``changeOrganizationMemberRole`` are keyed on the
+  ``OrganizationUser`` membership row and authorize at the row's org (mirroring
+  teams' row-keyed update/delete); ``organizations`` joins ``LEGACY_INERT_APPS``.
+- **Header-free.** Member management is a web feature (the admin portal), so it
+  cut over in one step instead of keeping the ``X-Organization-ID`` header as a
+  deprecated fallback: add/read carry ``organizationId`` in the payload, and
+  remove/change-role carry the membership row id (``membershipId``).  No
+  member-management surface reads the header.
+- Every ORG_ADMIN/ORG_SUPERUSER template permission is now grant-backed.  The
+  org-admin legacy ``PermissionGroup`` rows are fully inert (redundant with the
+  backfilled Grants) — retained only as an inert remainder until the post-cutover
+  teardown (see §5.3).
+
+**Cutover audit — hand-defined roles.** The backfills and the membership mirror
+only convert code-owned templates whose name maps to a scoped `Role`
+(`ORG_ADMIN`/`ORG_SUPERUSER` here); a `PermissionGroupTemplate` created in the
+admin that carries a cut-over permission (e.g. `reports.view_reports`) gets no
+scoped `Role` and therefore no `Grant` — its members lose that domain's
+authority when the surface flips to grant-only (the same exposure every domain
+cutover carries).  Audit before deploying a cutover and re-grant via a
+role-backed template if the query below returns holders; otherwise the
+revocation is accepted:
+
+```python
+PermissionGroupTemplate.objects.filter(
+    permissions__content_type__app_label="reports", permissions__codename="view_reports"
+).exclude(name__in=list(REGISTRY.template_names()))
+# template-less groups: PermissionGroup.objects.filter(
+#     permissions__content_type__app_label="reports", permissions__codename="view_reports",
+#     template__isnull=True,
+# )
+```
+
+**Status on main — org-admin teardown (2026-09-09).** The inert org-admin rows
+are gone; the org-admin legacy *machinery* is removed:
+
+- ``TemplateConfig.legacy_inert`` marks a template whose ``PermissionGroup`` rows
+  are grant-only — set on ORG_ADMIN/ORG_SUPERUSER (every app their permissions
+  span is in ``LEGACY_INERT_APPS``).
+- ``OrgRoleManager`` mirrors only the scoped ``Role`` ``Grant`` for a
+  ``legacy_inert`` template — no org ``PermissionGroup`` membership is created or
+  removed (``clear_roles`` still drops every grant at the org).
+- ``reconcile_org_groups`` excludes ``legacy_inert`` templates from the expected
+  set and retires any leftover row unconditionally (``_retire_legacy_inert_rows``)
+  — orgs migrated from before the cutover lose their inert org-admin rows on the
+  next reconcile, cascading their ``auth.Group`` and memberships away.
+- Member-role reporting reads the grant arm: ``annotate_member_role``
+  (``memberRole`` on the admin member page) derives SUPERUSER/ADMIN from the
+  scoped ORG_ADMIN/ORG_SUPERUSER ``Grant`` rows, and the Django-admin role labels
+  (``member_role_names`` / ``role_names_by_organization`` / the role form's
+  ``locked_role_names``) merge the grant arm with the surviving dual-write rows.
+  A stale legacy-only holder (no Grant) reports MEMBER — matching enforcement.
+- Dead machinery removed: the ``HasOrgPerm`` strawberry extension,
+  ``get_user_permitted_org``, ``active_org``, and the ``permissioned_queryset`` /
+  ``perm_filter`` legacy predicates had no consumers once member management cut
+  over.  The ``X-Organization-ID`` header read is **kept only as the teams
+  list-read fallback**: mobile's ``useOrgTeams`` callers still send just
+  ``{ isActive }``, so the filter-first read retains the deprecated header
+  fallback (blank/malformed ids deny, never fall back) until mobile passes
+  ``organizationId`` — DEV-2566.  ``OrganizationMiddleware`` /
+  ``get_current_organization`` stay only with it; the teams mutations and every
+  other cut-over surface take their org from the payload/row.
+- Kept (not grant-only): CASEWORKER, SHELTER_OPERATOR and every member-level /
+  unscoped template still dual-write their ``PermissionGroup`` rows until the
+  notes/clients (and shelter-operator) domains cut over.  ``PermissionGroup``
+  rows with no template and hand-managed rows are untouched.
 
 ## 6. References
 

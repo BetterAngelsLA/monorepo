@@ -1,6 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { FlashList } from '@shopify/flash-list';
-import { useCallback, useMemo } from 'react';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyListView } from './EmptyListView';
 import { ErrorListView } from './ErrorListView';
@@ -9,6 +9,24 @@ import { LoadingListView } from './LoadingListView';
 import { ResultsHeader } from './ResultsHeader';
 import type { TInfiniteListProps } from './types';
 
+/**
+ * Paging is gated on the `isFocused` prop, which defaults to `true` so a caller
+ * with no focus signal to give keeps plain paging behaviour.
+ *
+ * `isFocused` is a prop rather than something this module reads for itself: the only
+ * focus signal available is the router's, and `useIsFocused` reaches `useNavigation`,
+ * which throws "Couldn't find a navigation object. Is your component inside
+ * NavigationContainer?" with no container above it. Reading it here would make a
+ * navigation container a requirement of this component for every consumer. The app
+ * supplies the prop from `FocusedInfiniteList` (`libs/expo/betterangels`); anything
+ * rendering this list directly states its own focus, or takes the default.
+ *
+ * This module itself imports no router. The library is not router-free overall —
+ * `Camera` and `MediaPicker` reach `expo-router` through `@monorepo/expo/shared/
+ * clients` → its apollo error link → `createRedirectHandler`, which predates this
+ * change — but that edge is a module-scope import of the `router` singleton, not a
+ * navigation hook, so it does not require a container above the component tree.
+ */
 export function InfiniteList<T>(props: TInfiniteListProps<T>) {
   const {
     style,
@@ -38,10 +56,22 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     ItemSeparatorComponent,
     ErrorViewComponent,
     onRefresh,
+    scrollResetKey,
+    isFocused = true,
     ...rest
   } = props;
 
   const isAnyLoading = loading || loadingMore || refreshing;
+
+  const listRef = useRef<FlashListRef<T> | null>(null);
+
+  // Reset to the top so a shorter result set never leaves the viewport past
+  // its content (BACS-123).
+  useEffect(() => {
+    if (scrollResetKey === undefined) return;
+
+    listRef.current?.scrollToTop({ animated: false });
+  }, [scrollResetKey]);
 
   const renderItemStable = useCallback(
     ({ item }: { item: T }) => renderItem(item),
@@ -107,6 +137,13 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     [data.length, itemGap, extraData],
   );
 
+  // A list kept mounted but not on screen reads as "at the end" on every commit and
+  // would page in its whole dataset — the clients list reached "456 of 456" behind a
+  // pushed route with nothing scrolled. Withhold the handler rather than guard the
+  // callback: FlashList spends its one-shot end latch before calling it, so guarding
+  // would spend the latch on a list nobody is looking at.
+  const endReachedHandler = isFocused ? onEndReached : undefined;
+
   return (
     <View style={[styles.container, style]}>
       {!error && (
@@ -120,10 +157,18 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
         />
       )}
 
+      {/*
+        `{...rest}` goes first so the props below cannot be clobbered at runtime.
+        `onEndReached` is excluded from the pass-through type, but a type is not a
+        runtime guarantee: spread first, and an `onEndReached` arriving from a JS
+        caller cannot bypass the loading/hasMore guard or the focus gate.
+      */}
       <FlashList<T>
+        {...rest}
+        ref={listRef}
         data={data}
         renderItem={renderItemStable}
-        onEndReached={onEndReached}
+        onEndReached={endReachedHandler}
         onEndReachedThreshold={onEndReachedThreshold}
         ItemSeparatorComponent={ItemSeparator}
         extraData={stableExtraData}
@@ -133,7 +178,6 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
         showsVerticalScrollIndicator={showScrollIndicator}
         onRefresh={onRefresh}
         refreshing={refreshing}
-        {...rest}
       />
     </View>
   );

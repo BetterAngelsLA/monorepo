@@ -32,7 +32,7 @@ export type TQuestion = {
   title: string;
   body?: string;
   subtitle?: string;
-  note?: React.ReactNode;
+  note?: ReactNode;
   options: TOption[];
   rules?: TQuestionValidate;
   renderAfter?: ReactNode;
@@ -50,9 +50,9 @@ export type TOption = {
   tags?: string[];
 };
 
-export type TAnswer = {
+export type TAnswer<T extends TQuestion['type'] = TQuestion['type']> = {
   questionId: string;
-  result: string | string[];
+  result: T extends 'radio' ? string : string[];
 };
 
 export type TSurveyResults = {

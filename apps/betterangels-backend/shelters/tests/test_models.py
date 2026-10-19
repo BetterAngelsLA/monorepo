@@ -1,24 +1,41 @@
 import datetime
 import random
+from typing import Any
 
 from django.db import IntegrityError
 from django.test import TestCase
+from model_bakery import baker
 from pghistory.models import Events
 from places import Places
+
+from clients.models import ClientProfile
 from shelters.enums import (
+    AccessibilityChoices,
     ConditionChoices,
     DayOfWeekChoices,
     DemographicChoices,
+    PetChoices,
+    ReservationStatusChoices,
     ScheduleTypeChoices,
     ShelterChoices,
 )
 from shelters.models import (
+    Accessibility,
+    Bed,
+    City,
     Demographic,
+    MediaLink,
+    Pet,
+    Reservation,
+    ReservationClient,
+    Room,
     Schedule,
     Service,
     ServiceCategory,
     Shelter,
+    ShelterPhoto,
     ShelterType,
+    Video,
 )
 
 
@@ -793,3 +810,121 @@ class CreateSchedulesServiceTestCase(TestCase):
         schedule = self.shelter.schedules.first()
         assert schedule is not None
         self.assertIsNone(schedule.day)
+
+
+class WriteEventCoverageTestCase(TestCase):
+    """Every operator-portal write must leave a pghistory event (ADR 0004 §1)."""
+
+    def setUp(self) -> None:
+        self.shelter = Shelter.objects.create(name="Write Event Shelter")
+
+    @staticmethod
+    def _labels(model: Any, obj_pk: int) -> list[str]:
+        return list(model.pgh_event_model.objects.filter(pgh_obj_id=obj_pk).values_list("pgh_label", flat=True))
+
+    def test_room_lifecycle_events(self) -> None:
+        room = Room.objects.create(shelter=self.shelter, name="Room 1")
+        self.assertEqual(self._labels(Room, room.pk), ["room.add"])
+
+        room.name = "Room 1 (renamed)"
+        room.save()
+        self.assertEqual(self._labels(Room, room.pk).count("room.update"), 1)
+
+        room_pk = room.pk
+        room.delete()
+        self.assertIn("room.remove", self._labels(Room, room_pk))
+
+    def test_reservation_non_status_update_fires_update_event(self) -> None:
+        bed = Bed.objects.create(shelter=self.shelter, name="Bed")
+        reservation = Reservation.objects.create(bed=bed)
+
+        reservation.notes = "Needs a lower bunk"
+        reservation.save()
+
+        labels = self._labels(Reservation, reservation.pk)
+        self.assertEqual(labels.count("reservation.add"), 1)
+        self.assertEqual(labels.count("reservation.update"), 1)
+        self.assertEqual(labels.count("reservation.status_change"), 0)
+
+    def test_reservation_status_change_does_not_fire_the_update_event(self) -> None:
+        # ADR 0004 §2: ``status_change`` fires on a status change and ``update``
+        # excludes ``status``, so the conditions are disjoint — a status change
+        # writes exactly one event, not two.
+        bed = Bed.objects.create(shelter=self.shelter, name="Bed")
+        reservation = Reservation.objects.create(bed=bed)
+
+        reservation.status = ReservationStatusChoices.CHECKED_IN
+        reservation.save()
+
+        labels = self._labels(Reservation, reservation.pk)
+        self.assertEqual(labels.count("reservation.status_change"), 1)
+        self.assertEqual(labels.count("reservation.update"), 0)
+
+    def test_reservation_status_and_notes_update_fires_both_labels(self) -> None:
+        # A save that changes status *and* a non-status field matches both
+        # disjoint conditions, so each label fires once with its own diff.
+        bed = Bed.objects.create(shelter=self.shelter, name="Bed")
+        reservation = Reservation.objects.create(bed=bed)
+
+        reservation.status = ReservationStatusChoices.CHECKED_IN
+        reservation.notes = "Needs a lower bunk"
+        reservation.save()
+
+        labels = self._labels(Reservation, reservation.pk)
+        self.assertEqual(labels.count("reservation.status_change"), 1)
+        self.assertEqual(labels.count("reservation.update"), 1)
+
+    def test_reservation_client_add_and_remove_events(self) -> None:
+        bed = Bed.objects.create(shelter=self.shelter, name="Bed")
+        reservation = Reservation.objects.create(bed=bed)
+        client = baker.make(ClientProfile)
+
+        link = ReservationClient.objects.create(reservation=reservation, client_profile=client)
+        self.assertEqual(self._labels(ReservationClient, link.pk), ["reservation_client.add"])
+
+        link_pk = link.pk
+        link.delete()
+        self.assertIn("reservation_client.remove", self._labels(ReservationClient, link_pk))
+
+    def test_shelter_photo_add_and_remove_events(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter)
+        self.assertIn("shelter_photo.add", self._labels(ShelterPhoto, photo.pk))
+
+        photo_pk = photo.pk
+        photo.delete()
+        self.assertIn("shelter_photo.remove", self._labels(ShelterPhoto, photo_pk))
+
+    def test_media_link_and_video_add_events(self) -> None:
+        link = MediaLink.objects.create(shelter=self.shelter, url="https://example.com/watch")
+        self.assertIn("media_link.add", self._labels(MediaLink, link.pk))
+
+        video = baker.make(Video, shelter=self.shelter)
+        self.assertIn("video.add", self._labels(Video, video.pk))
+
+    def test_lookup_add_and_remove_events(self) -> None:
+        city = City.objects.create(name="Write Event Coverage City")
+        self.assertIn("city.add", self._labels(City, city.pk))
+
+        city_pk = city.pk
+        city.delete()
+        self.assertIn("city.remove", self._labels(City, city_pk))
+
+    def test_bed_many_to_many_set_events(self) -> None:
+        bed = Bed.objects.create(shelter=self.shelter, name="Bed")
+        accessibility = Accessibility.objects.create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
+
+        bed.accessibility.set([accessibility])
+        self.assertEqual(Events.objects.filter(pgh_label="bed.accessibility.add").count(), 1)
+
+        bed.accessibility.clear()
+        self.assertEqual(Events.objects.filter(pgh_label="bed.accessibility.remove").count(), 1)
+
+    def test_room_many_to_many_set_events(self) -> None:
+        room = Room.objects.create(shelter=self.shelter, name="Room")
+        pet = Pet.objects.create(name=PetChoices.CATS)
+
+        room.pets.set([pet])
+        self.assertEqual(Events.objects.filter(pgh_label="room.pet.add").count(), 1)
+
+        room.pets.clear()
+        self.assertEqual(Events.objects.filter(pgh_label="room.pet.remove").count(), 1)

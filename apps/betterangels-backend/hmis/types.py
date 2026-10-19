@@ -5,6 +5,9 @@ from typing import Optional, Union
 
 import strawberry
 import strawberry_django
+from django.db.models import Q, QuerySet
+from strawberry import ID, Info, auto
+
 from accounts.types import CurrentUserType, UserType
 from clients.enums import (
     AdaAccommodationEnum,
@@ -20,7 +23,6 @@ from common.graphql.types import (
     PhoneNumberType,
     make_in_filter,
 )
-from django.db.models import Q, QuerySet
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -34,7 +36,6 @@ from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestTypeEnum
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
-from strawberry import ID, Info, auto
 from tasks.types import TaskType
 
 
@@ -136,7 +137,6 @@ class HmisClientProfileBaseType:
     place_of_birth: auto
     preferred_communication: Optional[list[PreferredCommunicationEnum]]
     preferred_language: auto
-    profile_photo: auto
     pronouns: auto
     pronouns_other: auto
     residence_address: auto
@@ -153,6 +153,7 @@ class HmisClientProfileBaseType:
 )
 class HmisClientProfileType(HmisClientProfileBaseType):
     id: ID
+    profile_photo: auto
     # HMIS Fields
     hmis_id: Optional[str]
     personal_id: Optional[str]

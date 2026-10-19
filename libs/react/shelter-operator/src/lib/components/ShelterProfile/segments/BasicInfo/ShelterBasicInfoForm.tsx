@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { FormattedDate } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { enumStatusChoices } from '@monorepo/react/shelter';
 import { useMemo } from 'react';
@@ -13,12 +14,14 @@ import {
 import { Input } from '../../../base-ui/input';
 import { RichTextEditor } from '../../../base-ui/richTextEditor';
 import { Switch } from '../../../base-ui/switch';
+import { Text } from '../../../base-ui/text/text';
 import { Form } from '../../../form/Form';
 import {
   SEARCHABLE_DROPDOWN_MIN,
   STATUS_COLOR_MAP,
   STATUS_OPTIONS,
 } from '../../constants';
+import { InstagramField } from './components/InstagramField';
 import {
   defaultFormValues,
   formSchema,
@@ -44,6 +47,10 @@ type TProps = {
   /** When provided, renders an Organization dropdown (create form, global
    * operators only). */
   organizationField?: OrganizationField;
+  /** When provided, renders a read-only meta block (gray container) at the
+   * bottom of the form — used for admin info such as the last-updated
+   * timestamp. */
+  updatedAt?: string | null;
 };
 
 export function ShelterBasicInfoForm(props: TProps) {
@@ -56,6 +63,7 @@ export function ShelterBasicInfoForm(props: TProps) {
     disabled = false,
     className,
     organizationField,
+    updatedAt,
   } = props;
 
   const initialValues = useMemo(
@@ -269,6 +277,24 @@ export function ShelterBasicInfoForm(props: TProps) {
               )}
             />
           </Form.Block>
+
+          <Form.Block>
+            <InstagramField
+              control={control}
+              error={errors.instagram?.message}
+              isViewMode={isViewMode}
+              disabled={disabled}
+            />
+          </Form.Block>
+
+          {!!updatedAt && (
+            <Form.Meta>
+              <Text variant="caption" className="text-gray-500">
+                Last updated:{' '}
+                <FormattedDate value={updatedAt} appendRelative={true} />
+              </Text>
+            </Form.Meta>
+          )}
 
           {!isViewMode && (
             <Form.Actions

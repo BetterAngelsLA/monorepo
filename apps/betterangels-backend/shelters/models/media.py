@@ -2,13 +2,16 @@
 
 from typing import Any, Optional
 
+import pghistory
+import pgtrigger
 from admin_async_upload.models import AsyncFileField
-from common.models import BaseModel, OrgScoped
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import RegexValidator
 from django.db import models
 from django_choices_field import TextChoicesField
+
+from common.models import BaseModel, OrgScoped
 from shelters.enums import MediaLinkTypeChoices, ShelterPhotoTypeChoices
 
 from .shelter import Shelter
@@ -30,6 +33,15 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     return default_storage.get_available_name(file_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("shelter_photo.add"),
+    pghistory.UpdateEvent("shelter_photo.update"),
+    pghistory.DeleteEvent("shelter_photo.remove"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelterphoto_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
+)
 class ShelterPhoto(OrgScoped, BaseModel):
     org_via = ("shelter",)
 
@@ -77,6 +89,15 @@ class ExteriorShelterPhoto(ShelterPhoto):
         super().save(*args, **kwargs)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("video.add"),
+    pghistory.UpdateEvent("video.update"),
+    pghistory.DeleteEvent("video.remove"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="video_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
+)
 class Video(OrgScoped, BaseModel):
     org_via = ("shelter",)
 
@@ -94,6 +115,15 @@ MEDIA_TYPE_VALIDATORS: dict[str, RegexValidator] = {
 }
 
 
+@pghistory.track(
+    pghistory.InsertEvent("media_link.add"),
+    pghistory.UpdateEvent("media_link.update"),
+    pghistory.DeleteEvent("media_link.remove"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="medialink_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
+)
 class MediaLink(OrgScoped, BaseModel):
     org_via = ("shelter",)
 

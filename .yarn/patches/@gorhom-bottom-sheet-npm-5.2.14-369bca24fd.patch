@@ -1,0 +1,69 @@
+diff --git a/lib/commonjs/components/bottomSheetModal/BottomSheetModal.js b/lib/commonjs/components/bottomSheetModal/BottomSheetModal.js
+index ee51e76824b2ac36661a1dc2eb41d90726fd22d4..8ed594c8385b21ea75ef5386f926ac3985d548cc 100644
+--- a/lib/commonjs/components/bottomSheetModal/BottomSheetModal.js
++++ b/lib/commonjs/components/bottomSheetModal/BottomSheetModal.js
+@@ -192,10 +192,11 @@ function BottomSheetModalComponent(props, ref) {
+     }
+ 
+     /**
+-     * if the modal position is already in a closed position,
+-     * then we unmount the node and early exit.
++     * if the modal position is already in a closed position, or the modal has
++     * never been presented / is already dismissed, then we unmount the node
++     * and early exit. (INITIAL/DISMISSED guard: gorhom#2669)
+      */
+-    if ([_constants.MODAL_STATUS.CLOSED, _constants.MODAL_STATUS.MINIMIZED].includes(statusRef.current) || statusRef.current === _constants.MODAL_STATUS.DISMISSING && currentIndexRef.current === -1) {
++    if ([_constants.MODAL_STATUS.INITIAL, _constants.MODAL_STATUS.CLOSED, _constants.MODAL_STATUS.MINIMIZED, _constants.MODAL_STATUS.DISMISSED].includes(statusRef.current) || statusRef.current === _constants.MODAL_STATUS.DISMISSING && currentIndexRef.current === -1) {
+       statusRef.current = _constants.MODAL_STATUS.DISMISSED;
+       unmount();
+       return;
+diff --git a/lib/module/components/bottomSheetModal/BottomSheetModal.js b/lib/module/components/bottomSheetModal/BottomSheetModal.js
+index 94fabdb5fd49cbd7deb0e971f9bf6b3ca3639010..b1f6d6564657a662f7e181339846dadbc85c8195 100644
+--- a/lib/module/components/bottomSheetModal/BottomSheetModal.js
++++ b/lib/module/components/bottomSheetModal/BottomSheetModal.js
+@@ -185,10 +185,11 @@ function BottomSheetModalComponent(props, ref) {
+     }
+ 
+     /**
+-     * if the modal position is already in a closed position,
+-     * then we unmount the node and early exit.
++     * if the modal position is already in a closed position, or the modal has
++     * never been presented / is already dismissed, then we unmount the node
++     * and early exit. (INITIAL/DISMISSED guard: gorhom#2669)
+      */
+-    if ([MODAL_STATUS.CLOSED, MODAL_STATUS.MINIMIZED].includes(statusRef.current) || statusRef.current === MODAL_STATUS.DISMISSING && currentIndexRef.current === -1) {
++    if ([MODAL_STATUS.INITIAL, MODAL_STATUS.CLOSED, MODAL_STATUS.MINIMIZED, MODAL_STATUS.DISMISSED].includes(statusRef.current) || statusRef.current === MODAL_STATUS.DISMISSING && currentIndexRef.current === -1) {
+       statusRef.current = MODAL_STATUS.DISMISSED;
+       unmount();
+       return;
+diff --git a/src/components/bottomSheetModal/BottomSheetModal.tsx b/src/components/bottomSheetModal/BottomSheetModal.tsx
+index 2954b3f4282e28c1973ab88f479eb2d7889913c5..7aa1ff5d53f6e9c9d37865291c8f0ca8aa0d44ad 100644
+--- a/src/components/bottomSheetModal/BottomSheetModal.tsx
++++ b/src/components/bottomSheetModal/BottomSheetModal.tsx
+@@ -273,13 +273,21 @@ function BottomSheetModalComponent<T = never>(
+       }
+ 
+       /**
+-       * if the modal position is already in a closed position,
+-       * then we unmount the node and early exit.
++       * if the modal position is already in a closed position, or the modal has
++       * never been presented / is already dismissed, then we unmount the node
++       * and early exit.
++       *
++       * Patched: guard MODAL_STATUS.INITIAL/DISMISSED so dismiss() on a
++       * not-yet-presented modal can't latch the status and block later
++       * present() calls (gorhom/react-native-bottom-sheet#2669).
+        */
+       if (
+-        [MODAL_STATUS.CLOSED, MODAL_STATUS.MINIMIZED].includes(
+-          statusRef.current
+-        ) ||
++        [
++          MODAL_STATUS.INITIAL,
++          MODAL_STATUS.CLOSED,
++          MODAL_STATUS.MINIMIZED,
++          MODAL_STATUS.DISMISSED,
++        ].includes(statusRef.current) ||
+         (statusRef.current === MODAL_STATUS.DISMISSING &&
+           currentIndexRef.current === -1)
+       ) {

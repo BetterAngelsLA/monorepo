@@ -7,7 +7,13 @@ import {
 
 export interface ActiveOrgProviderProps {
   children: ReactNode;
-  organizations: Org[];
+  /**
+   * The user's organizations, or `undefined` while they are not known yet.
+   * Unknown is not the same as empty: with `undefined` the store keeps the
+   * remembered organization in play rather than treating the user as belonging
+   * to nothing.
+   */
+  organizations: Org[] | undefined;
 }
 
 /** Create an ``ActiveOrgProvider`` bound to a specific React context. */

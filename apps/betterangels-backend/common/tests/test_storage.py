@@ -1,7 +1,8 @@
 from unittest.mock import Mock, patch
 
-from common.storage import LocalS3Storage
 from django.test import SimpleTestCase, override_settings
+
+from common.storage import LocalS3Storage
 
 
 @override_settings(LOCAL_S3_PUBLIC_ENDPOINT_URL="http://localhost:9000", AWS_REGION="us-west-2")
@@ -16,12 +17,12 @@ class LocalS3StorageTest(SimpleTestCase):
 
         storage = LocalS3Storage(
             bucket_name="betterangels-local",
-            endpoint_url="http://minio:9000",
+            endpoint_url="http://s3:8333",
             location="media",
             addressing_style="path",
             signature_version="s3v4",
-            access_key="minioadmin",
-            secret_key="minioadmin",
+            access_key="admin",
+            secret_key="password",
         )
 
         url = storage.url("client_profile_photos/test.png")
@@ -51,12 +52,12 @@ class LocalS3StorageTest(SimpleTestCase):
 
         storage = LocalS3Storage(
             bucket_name="betterangels-local",
-            endpoint_url="http://minio:9000",
+            endpoint_url="http://s3:8333",
             location="media",
             addressing_style="path",
             signature_version="s3v4",
-            access_key="minioadmin",
-            secret_key="minioadmin",
+            access_key="admin",
+            secret_key="password",
         )
 
         result = storage.get_external_client()
@@ -73,12 +74,12 @@ class LocalS3StorageFallbackTest(SimpleTestCase):
     def test_url_falls_back_to_base_s3_storage_when_public_endpoint_not_set(self, mock_boto_client: Mock) -> None:
         storage = LocalS3Storage(
             bucket_name="betterangels-local",
-            endpoint_url="http://minio:9000",
+            endpoint_url="http://s3:8333",
             location="media",
             addressing_style="path",
             signature_version="s3v4",
-            access_key="minioadmin",
-            secret_key="minioadmin",
+            access_key="admin",
+            secret_key="password",
         )
 
         url = storage.url("client_profile_photos/test.png")

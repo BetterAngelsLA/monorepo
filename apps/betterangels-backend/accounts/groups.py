@@ -17,6 +17,7 @@ ORG_ADMIN = TemplateConfig(
         Team.perms.VIEW,
     ],
     is_invitable=False,
+    legacy_inert=True,
 )
 
 ORG_SUPERUSER = TemplateConfig(
@@ -26,33 +27,24 @@ ORG_SUPERUSER = TemplateConfig(
         UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE,
     ],
     is_invitable=False,
+    legacy_inert=True,
 )
 
 
 # ── Role definitions (ADR 0001 §2.2 — org-admin cutover) ─────────────────
-# Role-backing ORG_ADMIN / ORG_SUPERUSER lets the team mutations authorize via
-# Grants (``can()``).  The Role carries only ``teams.*``: the member-management
-# codenames (``organizations.*``) and ``reports.view_reports`` resolve to no
-# concrete model, so a RoleDef carrying them fails ``sync_roles``' phantom-
-# ContentType guard; those surfaces stay legacy until their own cutover.
-ORG_ADMIN_ROLE = RoleDef(
-    name=ORG_ADMIN.name,
-    permissions=[
-        Team.perms.ADD,
-        Team.perms.CHANGE,
-        Team.perms.DELETE,
-        Team.perms.VIEW,
-    ],
-    is_invitable=ORG_ADMIN.is_invitable,
-)
-
-ORG_SUPERUSER_ROLE = RoleDef(
-    name=ORG_SUPERUSER.name,
-    # Same bundle as ORG_ADMIN while teams is the only scoped permission either
-    # role can carry (the phantom-ContentType guard keeps the rest legacy).
-    # Derived so the two cannot drift apart until that changes.
-    permissions=list(ORG_ADMIN_ROLE.permissions),
-    is_invitable=ORG_SUPERUSER.is_invitable,
-)
+# Role-backing ORG_ADMIN / ORG_SUPERUSER lets the teams, reports, and
+# member-management surfaces read authority from Grants (``can()``) instead of
+# legacy ``PermissionGroup`` rows.
+#
+# Each RoleDef is built from its TemplateConfig via ``RoleDef.from_template``
+# so the grant-side bundle is the SAME source as the (now inert) legacy
+# template — ORG_SUPERUSER = ORG_ADMIN + ``change_org_member_role`` — and a
+# mirrored Grant can never drift from, or amplify beyond, the legacy bundle.
+# ``RoleDef.from_template`` copies the permission list, so the two cannot
+# diverge by hand.  (This is deliberate for ORG_ADMIN/ORG_SUPERUSER only:
+# ``CASEWORKER_ROLE`` carries a strict subset of its template — RFC 0003 step
+# 1 — and is defined by hand in notes/groups.py.)
+ORG_ADMIN_ROLE = RoleDef.from_template(ORG_ADMIN)
+ORG_SUPERUSER_ROLE = RoleDef.from_template(ORG_SUPERUSER)
 
 ORG_ADMIN_ROLES: tuple[RoleDef, ...] = (ORG_ADMIN_ROLE, ORG_SUPERUSER_ROLE)

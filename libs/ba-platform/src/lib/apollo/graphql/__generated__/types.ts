@@ -31,8 +31,6 @@ export type Scalars = {
   /** Time (isoformat) */
   Time: { input: TimeString; output: TimeString; }
   UUID: { input: UUIDString; output: UUIDString; }
-  /** Represents a file upload. */
-  Upload: { input: any; output: any; }
 };
 
 export enum AccessibilityChoices {
@@ -191,9 +189,8 @@ export type BulkDeleteResult = {
 };
 
 export type ChangeOrganizationMemberRoleInput = {
-  organizationId: Scalars['ID']['input'];
+  membershipId: Scalars['ID']['input'];
   permissionTemplate: PermissionTemplateEnum;
-  userId: Scalars['ID']['input'];
 };
 
 export type ChangeOrganizationMemberRolePayload = OperationInfo | OrganizationMemberType;
@@ -398,11 +395,6 @@ export type ClientProfileOrder = {
   lastName?: InputMaybe<Ordering>;
 };
 
-export type ClientProfilePhotoInput = {
-  clientProfile: Scalars['ID']['input'];
-  photo?: InputMaybe<Scalars['Upload']['input']>;
-};
-
 export type ClientProfileType = {
   __typename: 'ClientProfileType';
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
@@ -539,7 +531,6 @@ export type CreateClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
@@ -580,7 +571,6 @@ export type CreateHmisClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   raceEthnicity?: InputMaybe<Array<HmisRaceEnum>>;
@@ -1606,8 +1596,6 @@ export type Mutation = {
   updateClientDocument: UpdateClientDocumentPayload;
   updateClientHouseholdMember: UpdateClientHouseholdMemberPayload;
   updateClientProfile: UpdateClientProfilePayload;
-  /** @deprecated Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal. */
-  updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
   updateHmisClientProfile: UpdateHmisClientProfilePayload;
   updateHmisNote: UpdateHmisNotePayload;
@@ -1941,11 +1929,6 @@ export type MutationUpdateClientHouseholdMemberArgs = {
 
 export type MutationUpdateClientProfileArgs = {
   data: UpdateClientProfileInput;
-};
-
-
-export type MutationUpdateClientProfilePhotoArgs = {
-  data: ClientProfilePhotoInput;
 };
 
 
@@ -2372,6 +2355,7 @@ export type OrganizationMemberType = {
   lastLogin?: Maybe<Scalars['DateTime']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   memberRole: OrgRoleEnum;
+  membershipId?: Maybe<Scalars['ID']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   permissionTemplates: Array<PermissionTemplateEnum>;
 };
@@ -2784,6 +2768,7 @@ export type QueryReferralsArgs = {
 
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId: Scalars['ID']['input'];
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2985,8 +2970,7 @@ export type RemoveHmisNoteServiceRequestInput = {
 export type RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo;
 
 export type RemoveOrganizationMemberInput = {
-  id: Scalars['ID']['input'];
-  organizationId: Scalars['ID']['input'];
+  membershipId: Scalars['ID']['input'];
 };
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
@@ -3787,7 +3771,6 @@ export type UpdateClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
@@ -3800,8 +3783,6 @@ export type UpdateClientProfileInput = {
 };
 
 export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
-
-export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
 export type UpdateCurrentUserPayload = CurrentUserType | OperationInfo | UserType;
 
@@ -3834,7 +3815,6 @@ export type UpdateHmisClientProfileInput = {
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
-  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   raceEthnicity: Array<HmisRaceEnum>;
@@ -3957,6 +3937,7 @@ export type UpdateShelterInput = {
   fundersOther?: InputMaybe<Scalars['String']['input']>;
   heroImageId?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
+  instagram?: InputMaybe<Scalars['String']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;

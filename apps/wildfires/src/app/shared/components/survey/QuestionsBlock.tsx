@@ -14,19 +14,6 @@ export function QuestionsBlock(props: IProps) {
 
   const parentCss = [className];
 
-  function handleAnswer(answer: TAnswer) {
-    onAnswer(answer);
-  }
-
-  function findQuestionResult(
-    question: TQuestion,
-    answers: TAnswer[],
-  ): string | string[] {
-    const answer = answers.find((a) => a.questionId === question.id);
-
-    return answer?.result || '';
-  }
-
   return (
     <div className={mergeCss(parentCss)}>
       {questions.map((question) => {
@@ -35,8 +22,11 @@ export function QuestionsBlock(props: IProps) {
             className="mb-[90px] md:mb-[120px] last:mb-0"
             key={question.id}
             question={question}
-            answer={findQuestionResult(question, answers)}
-            onAnswer={handleAnswer}
+            answer={
+              answers.find((answer) => answer.questionId === question.id)
+                ?.result
+            }
+            onAnswer={onAnswer}
           />
         );
       })}

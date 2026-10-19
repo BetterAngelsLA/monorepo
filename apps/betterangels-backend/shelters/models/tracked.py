@@ -2,7 +2,7 @@
 
 import pghistory
 
-from .shelter import Shelter
+from .shelter import Bed, Room, Shelter
 
 
 @pghistory.track(
@@ -141,5 +141,134 @@ class TrackedShelterProgram(Shelter.shelter_programs.through):  # type: ignore[n
     obj_field=None,
 )
 class TrackedFunder(Shelter.funders.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+# ── Remaining Shelter M2M joins ─────────────────────────────────────────────
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter.exit_policy.add"),
+    pghistory.DeleteEvent("shelter.exit_policy.remove"),
+    obj_field=None,
+)
+class TrackedExitPolicy(Shelter.exit_policy.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter.referral_requirement.add"),
+    pghistory.DeleteEvent("shelter.referral_requirement.remove"),
+    obj_field=None,
+)
+class TrackedReferralRequirement(Shelter.referral_requirement.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter.service.add"),
+    pghistory.DeleteEvent("shelter.service.remove"),
+    obj_field=None,
+)
+class TrackedService(Shelter.services.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+# ── Bed M2M joins (parent-prefixed to avoid colliding with Shelter proxies) ──
+
+
+@pghistory.track(
+    pghistory.InsertEvent("bed.accessibility.add"),
+    pghistory.DeleteEvent("bed.accessibility.remove"),
+    obj_field=None,
+)
+class TrackedBedAccessibility(Bed.accessibility.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("bed.demographic.add"),
+    pghistory.DeleteEvent("bed.demographic.remove"),
+    obj_field=None,
+)
+class TrackedBedDemographic(Bed.demographics.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("bed.funder.add"),
+    pghistory.DeleteEvent("bed.funder.remove"),
+    obj_field=None,
+)
+class TrackedBedFunder(Bed.funders.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("bed.medical_need.add"),
+    pghistory.DeleteEvent("bed.medical_need.remove"),
+    obj_field=None,
+)
+class TrackedBedMedicalNeed(Bed.medical_needs.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("bed.pet.add"),
+    pghistory.DeleteEvent("bed.pet.remove"),
+    obj_field=None,
+)
+class TrackedBedPet(Bed.pets.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+# ── Room M2M joins (parent-prefixed to avoid colliding with Shelter proxies) ─
+
+
+@pghistory.track(
+    pghistory.InsertEvent("room.accessibility.add"),
+    pghistory.DeleteEvent("room.accessibility.remove"),
+    obj_field=None,
+)
+class TrackedRoomAccessibility(Room.accessibility.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("room.demographic.add"),
+    pghistory.DeleteEvent("room.demographic.remove"),
+    obj_field=None,
+)
+class TrackedRoomDemographic(Room.demographics.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("room.funder.add"),
+    pghistory.DeleteEvent("room.funder.remove"),
+    obj_field=None,
+)
+class TrackedRoomFunder(Room.funders.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("room.pet.add"),
+    pghistory.DeleteEvent("room.pet.remove"),
+    obj_field=None,
+)
+class TrackedRoomPet(Room.pets.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True

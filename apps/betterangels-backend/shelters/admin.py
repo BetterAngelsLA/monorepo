@@ -4,12 +4,10 @@ from collections.abc import Iterator
 from typing import Any, Optional, Tuple, Type, TypeVar, Union, cast
 from urllib.parse import quote
 
+import pghistory
 import places
 import requests
 from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
-from betterangels_backend import settings
-from common.images import build_img_url
-from common.models import Location
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -35,6 +33,9 @@ from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
 
+from betterangels_backend import settings
+from common.images import build_img_url
+from common.models import Location
 from shelters.managers import BedQuerySet, RoomQuerySet
 
 from .enums import (
@@ -1402,6 +1403,17 @@ class ShelterAdmin(ImportExportModelAdmin):
             if isinstance(field, models.ManyToManyField):
                 getattr(copy, field.name).set(getattr(original, field.name).all())
 
+    def process_dataset(self, dataset: Any, form: Any, request: HttpRequest, **kwargs: Any) -> Any:
+        """Tag CSV-import writes with a reason label (ADR 0004 §7b.4).
+
+        The override wraps the single method that performs the DB writes; the
+        broader ``process_import`` view also renders the confirm/dry-run form,
+        which writes nothing. Import events are kept and rendered as
+        "system (import)"; they are not excluded from the audit log.
+        """
+        with pghistory.context(label="import"):
+            return super().process_dataset(dataset, form, request, **kwargs)
+
     def clone_view(self, request: HttpRequest, object_id: str) -> HttpResponseRedirect:
         """Clone a shelter instance with all related objects."""
         shelter = self.get_object(request, object_id)
@@ -1421,7 +1433,11 @@ class ShelterAdmin(ImportExportModelAdmin):
             self.message_user(request, msg, messages.WARNING)
             return HttpResponseRedirect(reverse("admin:index", current_app=self.admin_site.name))
 
-        with transaction.atomic():
+        # Tag the cloned rows as operator-initiated so they are kept and
+        # attributed as "system (clone)" rather than mistaken for direct edits
+        # (ADR 0004 §7b.3). The surrounding admin request already supplies the
+        # acting user via HistoryMiddleware.
+        with pghistory.context(label="clone"), transaction.atomic():
             # Create a copy of the shelter
             shelter_copy = Shelter.objects.get(pk=shelter.pk)
             shelter_copy.pk = None

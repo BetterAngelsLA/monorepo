@@ -3,8 +3,9 @@ from uuid import UUID
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from notes.models import Note
 from pghistory.models import Context, Events
+
+from notes.models import Note
 
 
 class NoteReverter:

@@ -1,12 +1,13 @@
 """Schedule model — per-day, per-type operating hours for shelters."""
 
 import pghistory
-from common.models import BaseModel, OrgScoped
+import pgtrigger
 from django.db import models
 from django.db.models import Case, ExpressionWrapper, F, Q, UniqueConstraint, Value, When
 from django.db.models.functions import Cast, Coalesce, Extract, Mod, NullIf
 from django_choices_field import TextChoicesField
 
+from common.models import BaseModel, OrgScoped
 from shelters.constants import DAILY_MINUTES
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 
@@ -100,6 +101,10 @@ def _duration_minutes_expression() -> Case:
     pghistory.InsertEvent("shelter.schedule.add"),
     pghistory.UpdateEvent("shelter.schedule.update"),
     pghistory.DeleteEvent("shelter.schedule.remove"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="schedule_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Schedule(OrgScoped, BaseModel):
     org_via = ("shelter",)

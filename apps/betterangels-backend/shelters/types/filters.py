@@ -4,10 +4,17 @@ import datetime
 from functools import reduce
 from operator import and_, or_
 from typing import List, Optional, Tuple
-from zoneinfo import ZoneInfo
 
 import strawberry
 import strawberry_django
+from django.contrib.gis.db.models.functions import Distance
+from django.contrib.gis.geos import Point, Polygon
+from django.contrib.gis.measure import D
+from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Q, QuerySet, Value, When
+from django.db.models.functions import Coalesce
+from django.utils import timezone as django_timezone
+from strawberry import ID, Info, asdict, auto
+
 from common.graphql.types import (
     LatitudeScalar,
     LongitudeScalar,
@@ -15,13 +22,6 @@ from common.graphql.types import (
     make_in_filter,
     make_m2m_in_filter,
 )
-from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.geos import Point, Polygon
-from django.contrib.gis.measure import D
-from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Q, QuerySet, Value, When
-from django.db.models.functions import Coalesce
-from strawberry import ID, Info, asdict, auto
-
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -48,11 +48,14 @@ from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.open_at import shelters_open_at
 from shelters.selectors.computed_status import shelter_count_subquery
 
-SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
-
 
 def get_current_shelter_schedule_datetime() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).astimezone(SHELTER_SCHEDULE_TIME_ZONE)
+    """Now, on the calendar the shelters' posted hours are written in.
+
+    Deliberately the site's zone rather than the viewer's: a shelter is open on
+    its own clock whoever is looking it up.
+    """
+    return django_timezone.localtime(timezone=django_timezone.get_default_timezone())
 
 
 @strawberry.input

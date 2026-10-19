@@ -5,6 +5,15 @@
   "projectType": "library",
   "tags": ["type:util", "scope:shared"],
   "targets": {
+    "test": {
+      "options": {},
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "coverage": true
+        }
+      }
+    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

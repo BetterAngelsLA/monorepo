@@ -5,8 +5,8 @@ describe('Select Component', () => {
   const mockData = ['Option 1', 'Option 2', 'Option 3'];
   const mockSetExternalValue = vi.fn();
 
-  it('renders correctly with placeholder', () => {
-    const { getByText } = render(
+  it('renders correctly with placeholder', async () => {
+    const { getByText } = await render(
       <Select
         items={mockData.map((item) => ({ title: item }))}
         onValueChange={mockSetExternalValue}
@@ -16,8 +16,8 @@ describe('Select Component', () => {
     expect(getByText('Select an option')).toBeTruthy();
   });
 
-  it('renders correctly with a label', () => {
-    const { getByText } = render(
+  it('renders correctly with a label', async () => {
+    const { getByText } = await render(
       <Select
         items={mockData.map((item) => ({ displayValue: item }))}
         onValueChange={mockSetExternalValue}

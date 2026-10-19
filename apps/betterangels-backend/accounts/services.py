@@ -10,12 +10,14 @@ import logging
 import uuid
 from typing import TYPE_CHECKING, Any
 
-from common.org_types import REGISTRY
-from common.permissions.config import RoleDef, TemplateConfig
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
+
+from common.org_types import REGISTRY
+from common.permissions.config import RoleDef, TemplateConfig
 
 from .emails import base_url_for
 from .groups import ORG_ADMIN
@@ -305,8 +307,15 @@ def reconcile_org_groups(org: Organization) -> None:
     without this a newly created group would grant nothing until the next
     ``migrate``.
 
+    ``legacy_inert`` templates (ORG_ADMIN/ORG_SUPERUSER — grant-only, ADR 0001
+    teardown) never get a row here: they are excluded from the expected set and
+    any leftover row is retired unconditionally, so orgs migrated from before
+    the cutover lose their inert org-admin rows on the next reconcile.
+
     Safe to call repeatedly — all operations are idempotent.
     """
+    _retire_legacy_inert_rows(org)
+
     org_types = OrganizationProfile.objects.values_list("org_types", flat=True).filter(organization=org).first()
 
     if org_types is not None:
@@ -316,6 +325,8 @@ def reconcile_org_groups(org: Organization) -> None:
             if org_config is None:
                 continue
             for template_config in org_config.templates:
+                if template_config.legacy_inert:
+                    continue
                 expected.add(template_config.name)
 
         for template_name in expected:
@@ -337,6 +348,25 @@ def reconcile_org_groups(org: Organization) -> None:
 
     _refresh_group_names(org)
     sync_group_permissions(organization=org)
+
+
+def _retire_legacy_inert_rows(org: Organization) -> None:
+    """Delete every ``PermissionGroup`` row of *org* for a ``legacy_inert`` template.
+
+    The org-admin org-portal roles are grant-only (ADR 0001 teardown): their
+    legacy rows are inert and redundant with the mirrored ``Grant`` rows, so
+    they are retired idempotently wherever reconcile runs.  Deleting the row
+    tears down its ``auth.Group`` (``delete_orphaned_group``) and drops the
+    group memberships — authority and member-role reporting now read the grant
+    arm only.
+    """
+    grant_only_names = {
+        name
+        for name in REGISTRY.template_names()
+        if (template := REGISTRY.template(name)) is not None and template.legacy_inert
+    }
+    if grant_only_names:
+        PermissionGroup.objects.filter(organization=org, template__name__in=grant_only_names).delete()
 
 
 def _refresh_group_names(org: Organization) -> None:
@@ -526,14 +556,16 @@ def create_organization_service(
 def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[int]) -> None:
     """Fail loudly when a RoleDef permission binds to a phantom ContentType.
 
-    :func:`accounts.seed._resolve_permissions` derives each permission's
-    ContentType model from the codename's last ``_`` token, so a custom codename
-    whose final token is not the model it belongs to (e.g.
-    ``change_shelter_is_reviewed`` → ``"reviewed"``) binds to a ContentType with
-    no model class.  ``permissions.E005`` silently skips those (``model_class()``
-    → ``None``) and no runtime path can exercise them, so provisioning must
-    refuse to create them.  Runs inside :func:`sync_roles`' transaction, so the
-    phantom rows are rolled back with the error.
+    :func:`accounts.seed._resolve_permissions` binds a RoleDef permission to a
+    real model when one declares it (e.g. ``reports.view_reports`` on
+    ``ScheduledReport``) and only falls back to synthesizing a ContentType from
+    the codename's last ``_`` token for portal codenames no model declares (e.g.
+    ``organizations.add_org_member``).  A codename that ends up on a ContentType
+    with no model class (``change_shelter_is_reviewed`` → ``"reviewed"``) is a
+    typo'd custom codename: ``permissions.E005`` silently skips those
+    (``model_class()`` → ``None``) and no runtime path can exercise them, so
+    provisioning must refuse to create them.  Runs inside :func:`sync_roles`'
+    transaction, so the phantom rows are rolled back with the error.
     """
     from django.contrib.auth.models import Permission
 
@@ -545,8 +577,9 @@ def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[in
     if phantoms:
         raise RuntimeError(
             f"RoleDef {role_def.name!r} permissions {', '.join(phantoms)} resolve to a "
-            "ContentType with no model class.  Custom permission codenames must end in the "
-            "model name they belong to (e.g. 'view_private_shelter')."
+            "ContentType with no model class.  Custom permission codenames must be "
+            "declared in the owning model's Meta.permissions (e.g. 'view_reports' on "
+            "ScheduledReport) — a codename no model declares is a typo."
         )
 
 
@@ -558,24 +591,124 @@ def _all_role_defs() -> tuple[RoleDef, ...]:
     domain-specific on purpose — each converts its own template slice at its
     own cutover.
     """
-    from shelters.groups import ROLES
-
     from accounts.groups import ORG_ADMIN_ROLES
     from notes.groups import CASEWORKER_ROLE
+    from shelters.groups import ROLES
 
     return (*ROLES, *ORG_ADMIN_ROLES, CASEWORKER_ROLE)
+
+
+def _rename_legacy_group(group: Group) -> str:
+    """Rename a staffed legacy ``auth.Group`` out of a ``RoleDef``'s name.
+
+    ``auth.Group.name`` is unique and at most 150 characters, so the candidate
+    is ``"<name> (legacy group <pk>)"`` — pk-suffixed, hence stable across
+    runs — with a ``-<n>`` counter for the pathological case in which even that
+    candidate is taken.  The renamed row keeps its pk, members and permissions;
+    only the name moves.  Returns the new name.
+    """
+    max_length: int = Group._meta.get_field("name").max_length or 150
+    suffix = f" (legacy group {group.pk})"
+    candidate = f"{group.name[: max(max_length - len(suffix), 0)]}{suffix}"
+    n = 1
+    while Group.objects.filter(name=candidate).exclude(pk=group.pk).exists():
+        marker = f"-{n}"
+        candidate = f"{group.name[: max(max_length - len(suffix) - len(marker), 0)]}{suffix}{marker}"
+        n += 1
+    group.name = candidate
+    group.save(update_fields=["name"])
+    return candidate
+
+
+def _adopt_bare_group_as_role(group: Group, role_def: RoleDef) -> Role:
+    """Write the MTI ``accounts_role`` child row for an existing bare ``Group``.
+
+    ``Role(group_ptr=group, ...)`` keeps the group's primary key: the pk is set,
+    so Django updates the existing ``auth_group`` row (the name is written
+    unchanged) and inserts only the child — the group *becomes* the role,
+    keeping its pk, name and any references (admin log rows, guardian object
+    permissions) instead of being orphaned or duplicated.  ``name`` is passed
+    explicitly: it is a concrete ``Group`` field, and the parent update would
+    otherwise blank it.
+    """
+    role = Role(group_ptr=group, name=group.name, is_global=role_def.is_global)
+    role.save()
+    return role
+
+
+def _provision_role(role_def: RoleDef) -> tuple[Role, bool]:
+    """Return ``(role, created)`` for *role_def*, resolving name collisions.
+
+    ``Role`` and ``PermissionGroup`` are MTI subclasses of ``auth.Group``, so
+    all three share the ``auth_group`` name namespace.  A plain
+    ``get_or_create`` inserts the parent row first, which means a legacy *bare*
+    ``Group`` holding a ``RoleDef``'s name — no ``Role``/``PermissionGroup``
+    child, so it grants no org-scoped authority — aborts the whole
+    ``sync_roles`` transaction on ``auth_group_name_key`` (2026-09-11 incident:
+    a bare ``Caseworker`` group rolled back Role provisioning, every grant
+    backfill and the phantom retire, denying reports/teams to legacy holders).
+
+    The row actually holding the name decides the policy:
+
+    * an existing ``Role`` is returned as-is (no behavior change);
+    * a **memberless** bare ``Group`` is adopted — see
+      :func:`_adopt_bare_group_as_role`;
+    * a bare ``Group`` **with members** cannot be adopted: a scoped ``Role`` in
+      ``user.groups`` is a ``permissions.E001`` error, so it is renamed (see
+      :func:`_rename_legacy_group`) and a fresh ``Role`` created.  The members
+      stay on the renamed group, untouched;
+    * a ``PermissionGroup`` is never touched — its names are generated
+      (``"<organization> [<pk>] · <template>"``), so an exact match is a
+      hand-made row a human must resolve; the error names it.
+
+    Idempotent: after the first run the name is held by a ``Role``, so later
+    runs take the first branch and touch nothing.
+    """
+    role = Role.objects.filter(name=role_def.name).first()
+    if role is not None:
+        return role, False
+
+    group = Group.objects.filter(name=role_def.name).first()
+    if group is None:
+        return Role.objects.create(name=role_def.name), True
+
+    if PermissionGroup.objects.filter(pk=group.pk).exists():
+        raise RuntimeError(
+            f"auth.Group name {role_def.name!r} is held by a PermissionGroup.  Roles are "
+            "code-owned and never adopt or rename one; PermissionGroup names are generated "
+            '("<organization> [<pk>] · <template>"), so this is a hand-made row — rename it '
+            "before roles can be provisioned."
+        )
+
+    if group.user_set.exists():
+        renamed = _rename_legacy_group(group)
+        logger.warning(
+            "Renamed legacy group %r to %r before provisioning Role %r (a group with "
+            "members cannot be adopted as a scoped Role — permissions.E001)",
+            role_def.name,
+            renamed,
+            role_def.name,
+        )
+        return Role.objects.create(name=role_def.name), True
+
+    adopted = _adopt_bare_group_as_role(group, role_def)
+    logger.info("Adopted legacy group %r as Role %s", role_def.name, role_def.name)
+    return adopted, True
 
 
 def sync_roles() -> None:
     """Create or refresh the code-owned ``Role`` rows (ADR 0001 §2.2).
 
     One row per :class:`~common.permissions.config.RoleDef` — global roles are
-    provisioned once, never per organization.  Idempotent: get_or_create each
-    ``Role``, then reconcile ``permissions`` and ``is_global`` from the RoleDef.
+    provisioned once, never per organization.  Idempotent: provision each
+    ``Role`` (a pre-existing ``auth.Group`` holding the name is resolved by
+    :func:`_provision_role` — ``Role`` is an MTI subclass of ``Group``, so the
+    unique name is shared with every ``auth.Group`` row), then reconcile
+    ``permissions`` and ``is_global`` from the RoleDef.
     """
     with transaction.atomic():
         for role_def in _all_role_defs():
-            role, created = Role.objects.get_or_create(name=role_def.name)
+            role, created = _provision_role(role_def)
             wanted = set(_resolve_permissions(role_def.permissions))
             _raise_on_phantom_role_permissions(role_def, wanted)
             perms_changed = {p.pk for p in role.permissions.all()} != wanted
@@ -643,9 +776,8 @@ def backfill_global_role_members() -> None:
     belong on the global Role's group, which is the global tier (ADR 0001 §2.1).
     Idempotent (``user.groups.add``).
     """
-    from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-
     from accounts.models import PermissionGroup, Role
+    from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 
     role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
     groups = PermissionGroup.objects.filter(template__name=GLOBAL_SHELTER_OPERATOR_ROLE.name)

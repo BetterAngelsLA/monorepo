@@ -45,7 +45,7 @@ export function ShelterContactForm(props: TProps) {
         )}
       </div>
 
-      <Form.Block columns={2}>
+      <Form.Block columns={3}>
         <Input
           label="Name"
           dataType="string"
@@ -88,9 +88,7 @@ export function ShelterContactForm(props: TProps) {
           isViewMode={isViewMode}
           error={errors?.contactTitle?.message}
         />
-      </Form.Block>
 
-      <div className="mt-8">
         <Switch
           label="Claimant"
           value={entry.isClaimant}
@@ -99,7 +97,7 @@ export function ShelterContactForm(props: TProps) {
           trueLabel="Yes"
           falseLabel="No"
         />
-      </div>
+      </Form.Block>
     </div>
   );
 }

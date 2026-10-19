@@ -5,8 +5,7 @@ from functools import cache
 from typing import Any
 
 import pghistory
-from common.models import BaseModel, OrgScoped
-from common.permissions.utils import PermissionSet, perm
+import pgtrigger
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
@@ -19,6 +18,8 @@ from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
 from places.fields import PlacesField
 
+from common.models import BaseModel, OrgScoped
+from common.permissions.utils import PermissionSet, perm
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
@@ -66,6 +67,10 @@ ACTIVE_RESERVATION_STATUSES = (
     pghistory.InsertEvent("shelter.add"),
     pghistory.UpdateEvent("shelter.update"),
     pghistory.DeleteEvent("shelter.remove"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelter_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Shelter(OrgScoped, BaseModel):
     class perms(PermissionSet):
@@ -82,7 +87,7 @@ class Shelter(OrgScoped, BaseModel):
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-    instagram = models.URLField(blank=True, null=True)
+    instagram = models.CharField(max_length=255, blank=True, null=True)
 
     # Hero Image (explicit pick from this shelter's gallery photos)
     hero_image = models.ForeignKey(
@@ -222,6 +227,10 @@ class Shelter(OrgScoped, BaseModel):
     pghistory.InsertEvent("bed.add"),
     pghistory.DeleteEvent("bed.remove"),
     pghistory.UpdateEvent("bed.update"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="bed_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Bed(CloneMixin, OrgScoped, BaseModel):
     org_via = ("shelter",)
@@ -299,6 +308,15 @@ class Bed(CloneMixin, OrgScoped, BaseModel):
         )
 
 
+@pghistory.track(
+    pghistory.InsertEvent("room.add"),
+    pghistory.UpdateEvent("room.update"),
+    pghistory.DeleteEvent("room.remove"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="room_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
+)
 class Room(CloneMixin, OrgScoped, BaseModel):
     org_via = ("shelter",)
 
@@ -370,6 +388,10 @@ class Room(CloneMixin, OrgScoped, BaseModel):
     pghistory.InsertEvent("shelter.contact_info.add"),
     pghistory.UpdateEvent("shelter.contact_info.update"),
     pghistory.DeleteEvent("shelter.contact_info.remove"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="contactinfo_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class ContactInfo(OrgScoped):
     org_via = ("shelter",)
