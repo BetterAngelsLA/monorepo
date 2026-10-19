@@ -19,12 +19,15 @@ class AuditEventKind(enum.Enum):
 
 @strawberry.enum
 class AuditTargetType(enum.Enum):
-    """The object kind an ``objectAuditLog`` query is anchored on (§18)."""
+    """The object kind an ``objectAuditLog`` query is anchored on (§18, §32).
+
+    ``RESERVATION`` is deliberately absent: reservation history is still tracked
+    (reports depend on it) but has no public log surface yet.
+    """
 
     SHELTER = "SHELTER"
     ROOM = "ROOM"
     BED = "BED"
-    RESERVATION = "RESERVATION"
 
 
 @strawberry.type
@@ -39,6 +42,9 @@ class AuditEventType:
     target_id: strawberry.ID
     field_changes: JSON
     snapshot: Optional[JSON] = None
+    # One-line acknowledgment for summarized events (§32); the UI shows this
+    # instead of ``field_changes`` when present.
+    summary: Optional[str] = None
 
 
 @strawberry.type
@@ -62,6 +68,7 @@ def to_event_type(event: Any) -> AuditEventType:
         target_id=strawberry.ID(event.target_id),
         field_changes=event.field_changes,
         snapshot=event.snapshot,
+        summary=event.summary,
     )
 
 

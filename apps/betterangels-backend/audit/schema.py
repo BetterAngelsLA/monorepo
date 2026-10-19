@@ -28,6 +28,8 @@ def _resolve_target(user: AccountUser, target_type: AuditTargetType, object_id: 
         return room_get(user=user, room_id=object_id, permission=Room.perms.VIEW)
     if target_type is AuditTargetType.BED:
         return bed_get(user=user, bed_id=object_id, permission=Bed.perms.VIEW)
+    # Unreachable from GraphQL while ``AuditTargetType`` omits RESERVATION
+    # (§32); the reservation selector path is retained for the future surface.
     return reservation_get(user=user, reservation_id=object_id, permission=Reservation.perms.VIEW)
 
 

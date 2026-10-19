@@ -111,13 +111,13 @@ type AuditEventType {
   targetId: ID!
   fieldChanges: JSON!
   snapshot: JSON
+  summary: String
 }
 
 enum AuditTargetType {
   SHELTER
   ROOM
   BED
-  RESERVATION
 }
 
 type AuthResponse {

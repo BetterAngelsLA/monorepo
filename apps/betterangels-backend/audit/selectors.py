@@ -43,18 +43,26 @@ MAX_LIMIT = 200
 # (default-inclusive) rather than a hand-maintained allowlist.
 _EXCLUDED_EVENT_MODELS = ("referrals.ReferralEvent",)
 
-# Additional, target-scoped exclusions. A Room/Bed log is about that object's
-# own configuration and occupancy, not every reservation that ever referenced
-# it (``references()`` includes ``ReservationEvent`` via its ``room_id``/
-# ``bed_id``, which is the main volume driver for a busy room/bed). Reservation
-# history is still available via ``objectAuditLog(RESERVATION)``.
+# Additional, target-scoped exclusions (§32). Each log owns its model: a
+# reservation's detail is tracked but has no public surface yet, and a Room is
+# configuration-only here because its beds have their own log.
 _SCOPED_EXCLUSIONS: dict[str, tuple[str, ...]] = {
-    "ROOM": ("shelters.ReservationEvent",),
+    # Reservation/ReservationClient rows are still tracked (for reporting and a
+    # future surface) but must not render anywhere in the operator UI.
+    "SHELTER": ("shelters.ReservationEvent", "shelters.ReservationClientEvent"),
+    # A room log is the room's own configuration; beds are summarized on the
+    # shelter log and detailed on their own.
+    "ROOM": ("shelters.ReservationEvent", "shelters.BedEvent"),
     "BED": ("shelters.ReservationEvent",),
 }
 
 # Labels that are recorded but rendered as a reason rather than an actor (§11).
 _SYSTEM_REASON_LABELS = frozenset({"import", "clone"})
+
+# Objects the Shelter log only acknowledges (§32). Their own log carries the
+# detail, so a shelter-level action renders one line per object: name and id.
+_SUMMARY_ONLY_MODELS = frozenset({"shelters.Bed", "shelters.Room"})
+_SUMMARY_VERBS = {"INSERT": "Created", "UPDATE": "Updated", "DELETE": "Deleted"}
 
 
 # Through-table rendering metadata (§19). Derived at runtime from pghistory's
@@ -144,6 +152,10 @@ class AuditEventData:
     # Full object state as of the event (§13), rendered from ``pgh_data``. Only
     # populated when the caller opts in; ``None`` for M2M rows.
     snapshot: dict[str, Any] | None = None
+    # One-line description for events that are acknowledged rather than detailed
+    # (§32, e.g. "Created Bed A (7)"). When set, the UI shows this and no field
+    # changes; ``field_changes`` is empty.
+    summary: str | None = None
 
 
 @dataclass
@@ -368,6 +380,19 @@ def _kind(label: str) -> str:
     if label.endswith(".remove"):
         return "DELETE"
     return "UPDATE"
+
+
+def _summary_line(row: Any, kind: str) -> str:
+    """One-line acknowledgment for a summarized object (§32).
+
+    ``pgh_data`` carries the row's state for INSERT/DELETE and the new state for
+    UPDATE, so it is the source for the name in every case. ``Bed.name`` is
+    nullable, so fall back to a model-and-id label instead of rendering "None".
+    """
+    name = (row.pgh_data or {}).get("name")
+    if not name:
+        name = f"{_model_verbose_name(row.pgh_obj_model)} #{row.pgh_obj_id}"
+    return f"{_SUMMARY_VERBS[kind]} {name} ({row.pgh_obj_id})"
 
 
 def _actor(row: Any) -> str:
@@ -626,8 +651,34 @@ def _build_action(
     scalar_changes: dict[tuple[str, Any, str], list[Any]] = {}
     m2m_changes: dict[tuple[str, Any, str], dict[str, list[_Ref]]] = defaultdict(lambda: {"removed": [], "added": []})
     events: list[AuditEventData] = []
+    summarized: set[tuple[str, Any, str]] = set()
 
     for row in rows:
+        # Bed/Room writes are acknowledged, not detailed (§32): the shelter log
+        # renders one line per object, and the object's own log carries the rest.
+        # The anchored object is never summarized -- a Bed log must detail the
+        # bed's own fields. One action must not print the same object twice for
+        # the same kind, so repeated saves of one bed collapse into one line.
+        if row.pgh_obj_model in _SUMMARY_ONLY_MODELS and row.pgh_obj_model != target_model_label:
+            kind = _kind(row.pgh_label)
+            summary_key = (row.pgh_obj_model, row.pgh_obj_id, kind)
+            if summary_key in summarized:
+                continue
+            summarized.add(summary_key)
+            events.append(
+                AuditEventData(
+                    timestamp=row.pgh_created_at,
+                    actor=_actor(row),
+                    kind=kind,
+                    action=row.pgh_label,
+                    target_type=target_type,
+                    target_id=target_id,
+                    field_changes={},
+                    summary=_summary_line(row, kind),
+                )
+            )
+            continue
+
         meta = _m2m_meta(row.pgh_model)
         if meta is not None:
             parent_pk = (row.pgh_data or {}).get(meta.parent_col)
