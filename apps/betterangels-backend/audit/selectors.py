@@ -688,11 +688,19 @@ def _build_action(
         if removed or added:
             action_changes[_action_change_key(owner, obj_id, field_name, target_model_label)] = [removed, added]
 
+    kinds = {event.kind for event in events}
+    if kinds == {"INSERT"}:
+        verb = "created"
+    elif kinds == {"DELETE"}:
+        verb = "deleted"
+    else:
+        verb = "modified"
+
     timestamp = rows[-1].pgh_created_at if rows else timezone.now()
     return AuditActionData(
         timestamp=timestamp,
         actor=actor,
-        summary=f"{actor} modified {target_type.lower()} {target_id}",
+        summary=f"{actor} {verb} {target_type.lower()} {target_id}",
         events=events,
         field_changes=action_changes,
         order=_action_order(rows),

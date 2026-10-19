@@ -10,7 +10,7 @@ from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import DemographicChoices, ReservationStatusChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-from shelters.models import Bed, Demographic, Reservation, ReservationClient, Shelter
+from shelters.models import Bed, Demographic, Reservation, ReservationClient, Room, Shelter
 
 OBJECT_AUDIT_LOG_QUERY = """
     query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $offset: Int, $includeSnapshot: Boolean) {
@@ -42,12 +42,15 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self.org_1_case_manager_1.save()
         self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
         self._grant_permission(self.org_1_case_manager_1, Reservation.perms.VIEW, self.org_1)
+        self._grant_permission(self.org_1_case_manager_1, Room.perms.VIEW, self.org_1)
+        self._grant_permission(self.org_1_case_manager_1, Bed.perms.VIEW, self.org_1)
 
         with audit_context(label="seed"):
             self.shelter = Shelter.objects.create(name="Query Shelter", organization=self.org_1)
             self.demographic_all = Demographic.objects.create(name=DemographicChoices.ALL)
             self.demographic_couples = Demographic.objects.create(name=DemographicChoices.COUPLES)
             self.shelter.demographics.set([self.demographic_all])
+            self.room = Room.objects.create(shelter=self.shelter, name="Room A")
             self.bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
             self.reservation = Reservation.objects.create(bed=self.bed, status=ReservationStatusChoices.CONFIRMED)
 
@@ -130,6 +133,36 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_2_case_manager_1)
 
         response = self._query("SHELTER", self.shelter.id)
+
+        self.assertGraphQLError(response, "could not be found")
+
+    def test_room_without_view_permission_fails_closed(self) -> None:
+        self.graphql_client.force_login(self.non_case_manager_user)
+
+        response = self._query("ROOM", self.room.id)
+
+        self.assertGraphQLError(response, "could not be found")
+
+    def test_room_cross_org_fails_closed(self) -> None:
+        self._grant_permission(self.org_2_case_manager_1, Room.perms.VIEW, self.org_2)
+        self.graphql_client.force_login(self.org_2_case_manager_1)
+
+        response = self._query("ROOM", self.room.id)
+
+        self.assertGraphQLError(response, "could not be found")
+
+    def test_bed_without_view_permission_fails_closed(self) -> None:
+        self.graphql_client.force_login(self.non_case_manager_user)
+
+        response = self._query("BED", self.bed.id)
+
+        self.assertGraphQLError(response, "could not be found")
+
+    def test_bed_cross_org_fails_closed(self) -> None:
+        self._grant_permission(self.org_2_case_manager_1, Bed.perms.VIEW, self.org_2)
+        self.graphql_client.force_login(self.org_2_case_manager_1)
+
+        response = self._query("BED", self.bed.id)
 
         self.assertGraphQLError(response, "could not be found")
 
