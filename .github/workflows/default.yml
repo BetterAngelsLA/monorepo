@@ -208,6 +208,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
+          VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
