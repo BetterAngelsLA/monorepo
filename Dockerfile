@@ -232,5 +232,10 @@ COPY --from=yarn --link /workspace /workspace
 # brings none of it along. A literal path on purpose: if Playwright's default
 # ever moves, this COPY fails loudly rather than shipping an image with no
 # browser in it.
-COPY --from=playwright /home/betterangels/.cache/ms-playwright /home/betterangels/.cache/ms-playwright
+# `--chown` is load-bearing: `.cache` does not exist in `base`, so this COPY
+# creates it, and without the chown it lands root-owned. uv then can't create
+# `.cache/uv` at runtime and every `uv` command fails with EPERM.
+COPY --chown=betterangels:betterangels --from=playwright \
+  /home/betterangels/.cache/ms-playwright \
+  /home/betterangels/.cache/ms-playwright/
 COPY --chown=betterangels . /workspace
