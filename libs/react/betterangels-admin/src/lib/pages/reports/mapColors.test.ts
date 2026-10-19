@@ -8,6 +8,12 @@ describe('parseColor', () => {
     expect(parseColor('#000000')).toEqual([0, 0, 0]);
   });
 
+  it('parses #rgb shorthand', () => {
+    expect(parseColor('#fff')).toEqual([255, 255, 255]);
+    expect(parseColor('#0f0')).toEqual([0, 255, 0]);
+    expect(parseColor('#1A2')).toEqual([17, 170, 34]);
+  });
+
   it('parses rgb()', () => {
     expect(parseColor('rgb(26, 43, 60)')).toEqual([26, 43, 60]);
     expect(parseColor('rgb(0,0,0)')).toEqual([0, 0, 0]);

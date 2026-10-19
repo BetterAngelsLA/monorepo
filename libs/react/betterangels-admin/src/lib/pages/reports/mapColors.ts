@@ -1,7 +1,7 @@
 /**
  * Colour maths for the map's deck.gl layers.
  *
- * `DeckMapLayers` reads its colours from antd design tokens, which arrive as either `#rrggbb`
+ * `DeckMapLayers` reads its colours from antd design tokens, which arrive as `#rgb`, `#rrggbb`
  * or `rgb(r, g, b)` depending on the token, and the density ramp interpolates between stops.
  * deck.gl is WebGL, so both need `[r, g, b]` component arrays rather than CSS strings —
  * `parseColor` produces one from a token, `lerpRgb` blends two.
@@ -10,11 +10,20 @@
 /** An 8-bit RGB triple, as the layer colours and the ramp tables both want it. */
 export type Rgb = [number, number, number];
 
-/** Parse `#rrggbb` or `rgb(r,g,b)` into components; antd tokens come as either. */
+/** Parse `#rgb`, `#rrggbb`, `rgb()` or `rgba()` into components; antd tokens come as these. */
 export function parseColor(color: string): Rgb {
-  const hex = color.trim().match(/^#([0-9a-f]{6})$/i);
+  const hex = color.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
   if (hex) {
-    const n = parseInt(hex[1], 16);
+    // `#fff` is a valid token — antd's own `colorBgBase` is `#fff` — so expand the
+    // shorthand instead of letting it fall through to the grey fallback.
+    const digits =
+      hex[1].length === 3
+        ? hex[1]
+            .split('')
+            .map((c) => c + c)
+            .join('')
+        : hex[1];
+    const n = parseInt(digits, 16);
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
   const rgb = color.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
