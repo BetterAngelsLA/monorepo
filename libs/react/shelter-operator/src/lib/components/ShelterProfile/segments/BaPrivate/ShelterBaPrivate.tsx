@@ -6,8 +6,8 @@ import {
   BA_PRIVATE_TABS,
   BaPrivateTab,
 } from './constants';
-import { ShelterContactsTab } from './Contacts/ShelterContactsTab';
-import { ShelterReviewTab } from './Review/ShelterReviewTab';
+import { ShelterContacts } from './Contacts/ShelterContacts';
+import { ShelterReview } from './Review/ShelterReview';
 
 type TProps = {
   shelterId: string;
@@ -29,11 +29,9 @@ export function ShelterBaPrivate(props: TProps) {
         getLabel={(tab) => BA_PRIVATE_TAB_LABELS[tab]}
       />
 
-      {currentTab === 'contacts' && (
-        <ShelterContactsTab shelterId={shelterId} />
-      )}
+      {currentTab === 'contacts' && <ShelterContacts shelterId={shelterId} />}
 
-      {currentTab === 'review' && <ShelterReviewTab />}
+      {currentTab === 'review' && <ShelterReview />}
     </div>
   );
 }

@@ -1,100 +1,178 @@
-import { mergeCss } from '@monorepo/react/shared';
-import { Plus } from 'lucide-react';
-import type { Control, FieldArrayWithId } from 'react-hook-form';
-import { Controller, useFormState } from 'react-hook-form';
-import { Button } from '../../../../base-ui/buttons';
-import { Text } from '../../../../base-ui/text/text';
-import type { AdditionalContactsFormData } from '../formSchema';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors } from '@monorepo/react/shared';
+import { useEffect, useState } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import {
-  ShelterContactForm,
-  type ContactFormErrors,
-} from './ShelterContactForm';
+  updateShelterProfileMeta,
+  useBaPrivatePermissions,
+  useShelterOperatorProfile,
+  useShelterPermissions,
+  useUpdateShelterProfile,
+  UseUpdateShelterProfileInput,
+} from '../../../../../hooks';
+import { useToast } from '../../../../base-ui/toast';
+import { Form } from '../../../../form/Form';
+import {
+  defaultFormValues,
+  formFieldNames,
+  formSchema,
+  toFormData,
+  type AdditionalContactsFormData,
+} from '../formSchema';
+import { defaultContactValues } from './formSchema';
+import { ShelterContactsForm } from './ShelterContactsForm';
+
+function toUpdateInput(
+  shelterId: string,
+  data: AdditionalContactsFormData,
+): UseUpdateShelterProfileInput {
+  return {
+    id: shelterId,
+    additionalContacts: data.additionalContacts.map((contact) => ({
+      id: contact.id,
+      contactName: contact.contactName,
+      contactNumber: contact.contactNumber,
+      contactEmail: contact.contactEmail || null,
+      contactTitle: contact.contactTitle || null,
+      isClaimant: contact.isClaimant,
+    })),
+  };
+}
 
 type TProps = {
-  fields: FieldArrayWithId<
-    AdditionalContactsFormData,
-    'additionalContacts',
-    '_rhfId'
-  >[];
-  control: Control<AdditionalContactsFormData>;
-  onAdd: () => void;
-  onRemove: (index: number) => void;
-  isViewMode?: boolean;
-  disabled?: boolean;
-  className?: string;
-  contactFormClassName?: string;
+  shelterId: string;
 };
 
 export function ShelterContacts(props: TProps) {
+  const { shelterId } = props;
+
+  const [isEditMode, setEditMode] = useState<boolean>(false);
+  const [disabled, setDisabled] = useState<boolean>(false);
+
+  const { shelter } = useShelterOperatorProfile(shelterId);
+  const { canEditShelter } = useShelterPermissions();
+  const { additionalContactsPermissions } = useBaPrivatePermissions();
+  const { updateShelter } = useUpdateShelterProfile();
+  const { showToast } = useToast();
+
+  const { control, handleSubmit, setError, reset } =
+    useForm<AdditionalContactsFormData>({
+      resolver: zodResolver(formSchema),
+      defaultValues: defaultFormValues,
+      mode: 'onBlur',
+    });
+
   const {
     fields,
+    append: appendContact,
+    remove: removeContact,
+  } = useFieldArray({
     control,
-    onAdd,
-    onRemove,
-    isViewMode,
-    disabled,
-    className,
-    contactFormClassName,
-  } = props;
+    name: 'additionalContacts',
+    keyName: '_rhfId',
+  });
 
-  // Errors for a contact live at nested paths like
-  // `additionalContacts.0.contactEmail`, not on the object path
-  // (`additionalContacts.0`) this list is registered under. Read the whole
-  // `additionalContacts` error subtree so each contact row receives its child
-  // field messages instead of a bare object-level error.
-  const { errors } = useFormState({ control, name: 'additionalContacts' });
+  useEffect(() => {
+    if (shelter) {
+      reset(toFormData(shelter));
+    }
+  }, [shelter, reset]);
+
+  async function onSubmit(
+    data: AdditionalContactsFormData,
+    setError: UseFormSetError<AdditionalContactsFormData>,
+  ) {
+    try {
+      setDisabled(true);
+
+      const response = await updateShelter({
+        variables: { data: toUpdateInput(shelterId, data) },
+      });
+
+      const fieldErrors = getFieldErrorsOrThrow({
+        response,
+        ...updateShelterProfileMeta,
+        fields: formFieldNames,
+      });
+
+      if (fieldErrors.length) {
+        applyFieldErrors(fieldErrors, setError);
+
+        throw new BaError('Please see validation messages.');
+      }
+
+      setEditMode(false);
+
+      showToast({
+        status: 'success',
+        title: 'Shelter updated.',
+      });
+    } catch (e) {
+      let userMessage = 'An unexpected error occurred.';
+
+      if (e instanceof BaError) {
+        userMessage = e.message;
+      }
+
+      console.error(`[updateShelter error]: ${e}.`);
+
+      showToast({
+        status: 'error',
+        title: 'Update failed',
+        description: userMessage,
+      });
+    } finally {
+      setDisabled(false);
+    }
+  }
+
+  function onCancel() {
+    if (shelter) {
+      reset(toFormData(shelter));
+    }
+    setEditMode(false);
+  }
+
+  if (!shelter) {
+    return null;
+  }
+
+  // Editing contacts also needs the global ContactInfo `change` permission —
+  // the backend refuses `additionalContacts` writes without it.
+  const showEditBtn =
+    !isEditMode && canEditShelter && additionalContactsPermissions.canEdit;
 
   return (
-    <div className={mergeCss(['flex flex-col gap-8', className])}>
-      {/* <Text variant="subheading" className="pl-5">
-        Additional Contacts
-      </Text> */}
+    <Form className="flex-1 gap-4">
+      <Form.Header
+        title="Additional Contacts"
+        onEditClick={showEditBtn ? () => setEditMode(true) : undefined}
+        className="pl-5 my-6"
+        size="sm"
+      />
 
-      {fields.length === 0 && (
-        <Text variant="body-light" className="pl-5">
-          No additional contacts.
-        </Text>
-      )}
-
-      <div className="flex flex-col gap-4">
-        {fields.map((field, index) => {
-          const contactErrors = (errors.additionalContacts?.[index] ??
-            undefined) as ContactFormErrors | undefined;
-
-          return (
-            <Controller
-              key={field._rhfId}
-              name={`additionalContacts.${index}`}
-              control={control}
-              render={({ field: { value, onChange, onBlur } }) => (
-                <ShelterContactForm
-                  entry={value}
-                  onChange={(patch) => onChange({ ...value, ...patch })}
-                  onBlur={onBlur}
-                  onRemove={() => onRemove(index)}
-                  errors={contactErrors}
-                  isViewMode={isViewMode}
-                  className={contactFormClassName}
-                />
-              )}
-            />
-          );
-        })}
-      </div>
-
-      {!isViewMode && (
-        <Button
+      <Form.Content>
+        <ShelterContactsForm
           disabled={disabled}
-          variant="primary-sm"
-          color="blue"
-          className="disabled:bg-[#D3D9E3] disabled:border-[#D3D9E3]"
-          onClick={onAdd}
-          leftIcon={<Plus size={15} />}
-          aria-label="Open form to add a new contact"
-        >
-          Add contact
-        </Button>
-      )}
-    </div>
+          fields={fields}
+          control={control}
+          onAdd={() => appendContact({ ...defaultContactValues })}
+          onRemove={removeContact}
+          isViewMode={!isEditMode}
+        />
+
+        {isEditMode && (
+          <Form.Actions
+            primaryDisabled={disabled}
+            secondaryDisabled={disabled}
+            onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
+            onSecondaryClick={onCancel}
+            className="z-99"
+          />
+        )}
+      </Form.Content>
+    </Form>
   );
 }

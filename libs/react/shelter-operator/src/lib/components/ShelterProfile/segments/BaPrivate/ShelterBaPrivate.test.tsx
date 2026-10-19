@@ -29,8 +29,8 @@ vi.mock('@monorepo/ba-platform', () => ({
 
 // The contacts list is the section body; these cases are about the header's
 // edit affordance, so only the prop that reflects view/edit mode is surfaced.
-vi.mock('./Contacts/ShelterContacts', () => ({
-  ShelterContacts: ({ isViewMode }: { isViewMode: boolean }) => (
+vi.mock('./Contacts/ShelterContactsForm', () => ({
+  ShelterContactsForm: ({ isViewMode }: { isViewMode: boolean }) => (
     <div data-testid="contacts" data-view-mode={String(isViewMode)} />
   ),
 }));
