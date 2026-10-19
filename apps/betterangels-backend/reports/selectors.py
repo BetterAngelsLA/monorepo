@@ -7,7 +7,7 @@ They should not contain write logic — that belongs in services.
 Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 """
 
-from datetime import date, datetime, time, timedelta
+from datetime import date, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -16,6 +16,7 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 from organizations.models import Organization
 
+from common.utils import aware_range
 from notes.models import Note
 
 from .calendar import report_calendar_time_zone
@@ -37,17 +38,30 @@ def report_default_date_range(*, org: Organization) -> tuple[date, date]:
     return report_month_range(year=today.year, month=today.month)
 
 
+def resolve_date_range(*, org: Organization, start_date: date | None, end_date: date | None) -> tuple[date, date]:
+    """Fill in whichever end of the range the caller omitted, from the org's default.
+
+    The one place the fallback lives: ``reportSummary``, ``interactionsByRegion``,
+    ``interactionMap`` and the density tile all read it, so an omitted ``start``/``end``
+    means the same window on every surface. Each end falls back independently — passing
+    only ``start`` keeps it and defaults ``end``.
+    """
+    if start_date is None or end_date is None:
+        default_start, default_end = report_default_date_range(org=org)
+        start_date = start_date or default_start
+        end_date = end_date or default_end
+    return start_date, end_date
+
+
 def note_list_for_org(*, org: Organization, start_date: date, end_date: date, time_zone: ZoneInfo) -> QuerySet[Note]:
     """Return Notes for an organization between two inclusive calendar dates.
 
     *time_zone* is the calendar the dates are read on — one decision per report,
     made by the caller, so the range and the buckets below it cannot disagree.
     """
-    org_time_zone = time_zone
-    # Half-open on instants rather than ``interacted_at__date``, which would wrap
-    # the column in a cast and lose the index.
-    start = timezone.make_aware(datetime.combine(start_date, time.min), timezone=org_time_zone)
-    end = timezone.make_aware(datetime.combine(end_date + timedelta(days=1), time.min), timezone=org_time_zone)
+    # Half-open on instants rather than ``interacted_at__date``; see ``common.utils.aware_range``
+    # for why, and for why the calendar is passed in rather than read from the active zone.
+    start, end = aware_range(start_date, end_date, time_zone)
 
     return Note.objects.filter(
         interacted_at__gte=start,

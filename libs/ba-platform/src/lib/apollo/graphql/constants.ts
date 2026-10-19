@@ -28,4 +28,8 @@ export const DEFAULT_API_ERROR_MESSAGE: Record<BaApiErrorCode, string> = {
     'Filling out one of the fields is required',
   [BE_VALIDATION_ERROR_CODE.PHONE_NUMBER_INVALID]:
     'Please enter a valid 10-digit phone number',
+  [BE_VALIDATION_ERROR_CODE.DIMENSION_REQUIRES_REGION_CODES]:
+    'Choose at least one region for the selected grouping',
+  [BE_VALIDATION_ERROR_CODE.REGION_CODES_REQUIRE_DIMENSION]:
+    'Choose a grouping for the selected regions',
 };

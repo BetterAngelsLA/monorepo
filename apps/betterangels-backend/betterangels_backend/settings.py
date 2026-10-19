@@ -169,6 +169,7 @@ INSTALLED_APPS = [
     "legal",
     "notes",
     "proxy",
+    "regions",
     "reports",
     "shelters",
     "referrals",

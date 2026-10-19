@@ -13,13 +13,13 @@ from strawberry_django.pagination import OffsetPaginated
 
 from accounts.models import User as AccountUser
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.utils import org_or_deny
 from common.permissions.utils import (
     PERMISSION_DENIED_MESSAGE,
     IsAuthenticated,
     get_current_organization,
     require_can,
 )
-from common.utils import get_or_none
 
 from .models import Team
 from .selectors import team_get, team_list
@@ -47,22 +47,6 @@ class Query:
         return team_list(organization=org)
 
 
-def _org_or_deny(org_id: object) -> Organization:
-    """Resolve an org id, failing closed on a missing/unknown/malformed one.
-
-    *org_id* is client input (payload field, filter, or header), so it is
-    validated the way selectors validate pks: an id the column cannot hold
-    (``""``, a UUID string) denies like an unknown one instead of reaching the
-    DB as an unhandled ``ValueError``.  ``get_or_none`` is the house guard
-    (``common.utils``) for exactly that.  Module-level because strawberry-django
-    mutation resolvers are invoked unbound.
-    """
-    org = get_or_none(Organization.objects.all(), org_id)
-    if org is None:
-        raise PermissionDenied("You do not have access to this organization.")
-    return org
-
-
 def _resolve_read_org(info: Info, filters: Optional[TeamFilter]) -> Organization:
     """The org whose teams are listed: the ``organizationId`` filter when the
     client sends one, otherwise the deprecated ``X-Organization-ID`` header
@@ -76,8 +60,8 @@ def _resolve_read_org(info: Info, filters: Optional[TeamFilter]) -> Organization
     """
     filter_org_id = getattr(filters, "organization_id", None) if filters else None
     if filter_org_id in (None, strawberry.UNSET):
-        return _org_or_deny(get_current_organization(info))
-    return _org_or_deny(filter_org_id)
+        return org_or_deny(get_current_organization(info))
+    return org_or_deny(filter_org_id)
 
 
 @strawberry.type
@@ -93,7 +77,7 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
-        org = _org_or_deny(data.organization_id)
+        org = org_or_deny(data.organization_id)
         require_can(get_current_user(info), Team.perms.ADD, org=org)
         return cast(TeamType, team_create(name=data.name, organization=org))
 
