@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 from io import StringIO
+from typing import Any
 
 from django.contrib.auth.models import Permission
 from django.core.management import call_command
@@ -185,7 +186,7 @@ class ExplainPermissionTestCase(TestCase):
         holder = baker.make(User)
         self.org_a.add_user(holder)
         add_legacy_membership(holder, group=group)
-        note = baker.make("notes.Note", organization=self.org_a)
+        note: Any = baker.make("notes.Note", organization=self.org_a)
 
         result = explain(holder, "notes.view_note", obj=note)
 

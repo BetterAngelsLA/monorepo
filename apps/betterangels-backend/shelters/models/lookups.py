@@ -4,6 +4,7 @@ Small single-field models used as targets for Shelter's ManyToManyFields.
 Each wraps a TextChoicesField / IntegerChoicesField with ``unique=True``.
 """
 
+import pghistory
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower
@@ -31,7 +32,11 @@ from shelters.enums import (
 )
 
 
-# Summary Info
+@pghistory.track(
+    pghistory.InsertEvent("demographic.add"),
+    pghistory.UpdateEvent("demographic.update"),
+    pghistory.DeleteEvent("demographic.remove"),
+)
 class Demographic(models.Model):
     class perms(PermissionSet):
         pass
@@ -42,6 +47,11 @@ class Demographic(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("special_situation_restriction.add"),
+    pghistory.UpdateEvent("special_situation_restriction.update"),
+    pghistory.DeleteEvent("special_situation_restriction.remove"),
+)
 class SpecialSituationRestriction(models.Model):
     class perms(PermissionSet):
         pass
@@ -52,6 +62,11 @@ class SpecialSituationRestriction(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("shelter_type.add"),
+    pghistory.UpdateEvent("shelter_type.update"),
+    pghistory.DeleteEvent("shelter_type.remove"),
+)
 class ShelterType(models.Model):
     class perms(PermissionSet):
         pass
@@ -63,6 +78,11 @@ class ShelterType(models.Model):
 
 
 # Sleeping Details
+@pghistory.track(
+    pghistory.InsertEvent("room_style.add"),
+    pghistory.UpdateEvent("room_style.update"),
+    pghistory.DeleteEvent("room_style.remove"),
+)
 class RoomStyle(models.Model):
     class perms(PermissionSet):
         pass
@@ -74,6 +94,11 @@ class RoomStyle(models.Model):
 
 
 # Shelter Details
+@pghistory.track(
+    pghistory.InsertEvent("accessibility.add"),
+    pghistory.UpdateEvent("accessibility.update"),
+    pghistory.DeleteEvent("accessibility.remove"),
+)
 class Accessibility(models.Model):
     class perms(PermissionSet):
         pass
@@ -84,6 +109,11 @@ class Accessibility(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("storage.add"),
+    pghistory.UpdateEvent("storage.update"),
+    pghistory.DeleteEvent("storage.remove"),
+)
 class Storage(models.Model):
     class perms(PermissionSet):
         pass
@@ -94,6 +124,11 @@ class Storage(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("pet.add"),
+    pghistory.UpdateEvent("pet.update"),
+    pghistory.DeleteEvent("pet.remove"),
+)
 class Pet(models.Model):
     class perms(PermissionSet):
         pass
@@ -104,6 +139,11 @@ class Pet(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("parking.add"),
+    pghistory.UpdateEvent("parking.update"),
+    pghistory.DeleteEvent("parking.remove"),
+)
 class Parking(models.Model):
     class perms(PermissionSet):
         pass
@@ -115,6 +155,11 @@ class Parking(models.Model):
 
 
 # Entry Requirements
+@pghistory.track(
+    pghistory.InsertEvent("entry_requirement.add"),
+    pghistory.UpdateEvent("entry_requirement.update"),
+    pghistory.DeleteEvent("entry_requirement.remove"),
+)
 class EntryRequirement(models.Model):
     class perms(PermissionSet):
         pass
@@ -125,6 +170,11 @@ class EntryRequirement(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("vaccination_requirement.add"),
+    pghistory.UpdateEvent("vaccination_requirement.update"),
+    pghistory.DeleteEvent("vaccination_requirement.remove"),
+)
 class VaccinationRequirement(models.Model):
     class perms(PermissionSet):
         pass
@@ -136,6 +186,11 @@ class VaccinationRequirement(models.Model):
 
 
 # Ecosystem Information
+@pghistory.track(
+    pghistory.InsertEvent("city.add"),
+    pghistory.UpdateEvent("city.update"),
+    pghistory.DeleteEvent("city.remove"),
+)
 class City(BaseModel):
     """Cities that shelters serve. Users can add new cities directly."""
 
@@ -155,6 +210,11 @@ class City(BaseModel):
         return self.name
 
 
+@pghistory.track(
+    pghistory.InsertEvent("spa.add"),
+    pghistory.UpdateEvent("spa.update"),
+    pghistory.DeleteEvent("spa.remove"),
+)
 class SPA(BaseModel):
     name = IntegerChoicesField(choices_enum=SPAChoices, unique=True, blank=True, null=True)
     short_name = models.CharField(max_length=10, unique=True, db_index=True)
@@ -167,6 +227,11 @@ class SPA(BaseModel):
         return self.long_name
 
 
+@pghistory.track(
+    pghistory.InsertEvent("shelter_program.add"),
+    pghistory.UpdateEvent("shelter_program.update"),
+    pghistory.DeleteEvent("shelter_program.remove"),
+)
 class ShelterProgram(models.Model):
     class perms(PermissionSet):
         pass
@@ -177,6 +242,11 @@ class ShelterProgram(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("funder.add"),
+    pghistory.UpdateEvent("funder.update"),
+    pghistory.DeleteEvent("funder.remove"),
+)
 class Funder(models.Model):
     class perms(PermissionSet):
         pass
@@ -187,6 +257,11 @@ class Funder(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("exit_policy.add"),
+    pghistory.UpdateEvent("exit_policy.update"),
+    pghistory.DeleteEvent("exit_policy.remove"),
+)
 class ExitPolicy(models.Model):
     class perms(PermissionSet):
         pass
@@ -197,6 +272,11 @@ class ExitPolicy(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("referral_requirement.add"),
+    pghistory.UpdateEvent("referral_requirement.update"),
+    pghistory.DeleteEvent("referral_requirement.remove"),
+)
 class ReferralRequirement(models.Model):
     class perms(PermissionSet):
         pass
@@ -207,6 +287,11 @@ class ReferralRequirement(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("medical_need.add"),
+    pghistory.UpdateEvent("medical_need.update"),
+    pghistory.DeleteEvent("medical_need.remove"),
+)
 class MedicalNeed(models.Model):
     class perms(PermissionSet):
         pass

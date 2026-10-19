@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pghistory
+import pgtrigger
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
@@ -20,7 +21,18 @@ if TYPE_CHECKING:
 @pghistory.track(
     pghistory.InsertEvent("reservation.add"),
     pghistory.DeleteEvent("reservation.remove"),
+    # These two update triggers are mutually exclusive: ``status_change`` fires
+    # only when ``status`` changes, and ``update`` excludes ``status``, so a
+    # status change writes exactly one row (with its own diff) rather than two.
+    # ``updated_at`` is excluded alongside ``status`` because it is ``auto_now``
+    # and would otherwise make every save (including a bare status change) match
+    # ``update`` — the pair is only disjoint once the mechanical column is out.
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
+    pghistory.UpdateEvent("reservation.update", condition=pghistory.AnyChange(exclude=["status", "updated_at"])),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="reservation_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Reservation(OrgScoped, BaseModel):
     org_via = ("bed", "room")
@@ -92,6 +104,15 @@ class Reservation(OrgScoped, BaseModel):
         return f"Reservation #{self.pk} at {shelter} ({self.status})"
 
 
+@pghistory.track(
+    pghistory.InsertEvent("reservation_client.add"),
+    pghistory.UpdateEvent("reservation_client.update"),
+    pghistory.DeleteEvent("reservation_client.remove"),
+    meta={
+        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="resclient_evt_obj_idx")],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
+)
 class ReservationClient(BaseModel):
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="reservation_clients")
     client_profile = models.ForeignKey(
