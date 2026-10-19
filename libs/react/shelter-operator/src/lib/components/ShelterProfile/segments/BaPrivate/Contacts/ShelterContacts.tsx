@@ -46,9 +46,9 @@ export function ShelterContacts(props: TProps) {
 
   return (
     <div className={mergeCss(['flex flex-col gap-8', className])}>
-      <Text variant="subheading" className="pl-5">
+      {/* <Text variant="subheading" className="pl-5">
         Additional Contacts
-      </Text>
+      </Text> */}
 
       {fields.length === 0 && (
         <Text variant="body-light" className="pl-5">
