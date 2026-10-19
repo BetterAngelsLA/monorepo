@@ -860,9 +860,12 @@ class WriteEventCoverageTestCase(TestCase):
         self.assertEqual(labels.count("reservation.status_change"), 1)
         self.assertEqual(labels.count("reservation.update"), 0)
 
-    def test_reservation_status_and_notes_update_fires_both_labels(self) -> None:
-        # A save that changes status *and* a non-status field matches both
-        # disjoint conditions, so each label fires once with its own diff.
+    def test_reservation_status_and_notes_update_fires_one_label_with_full_diff(self) -> None:
+        # A save that changes status *and* a non-status field must still emit
+        # exactly one row (ADR 0004 §2): ``update`` is gated on status being
+        # unchanged, so ``status_change`` carries the whole write's diff. Without
+        # the gate, both triggers fire on the same snapshot and the second row
+        # carries an empty ``pgh_diff``.
         bed = Bed.objects.create(shelter=self.shelter, name="Bed")
         reservation = Reservation.objects.create(bed=bed)
 
@@ -872,7 +875,15 @@ class WriteEventCoverageTestCase(TestCase):
 
         labels = self._labels(Reservation, reservation.pk)
         self.assertEqual(labels.count("reservation.status_change"), 1)
-        self.assertEqual(labels.count("reservation.update"), 1)
+        self.assertEqual(labels.count("reservation.update"), 0)
+
+        event = Events.objects.get(
+            pgh_obj_model="shelters.Reservation",
+            pgh_obj_id=str(reservation.pk),
+            pgh_label="reservation.status_change",
+        )
+        self.assertEqual(event.pgh_diff["status"], ["confirmed", "checked_in"])
+        self.assertIn("notes", event.pgh_diff)
 
     def test_reservation_client_add_and_remove_events(self) -> None:
         bed = Bed.objects.create(shelter=self.shelter, name="Bed")

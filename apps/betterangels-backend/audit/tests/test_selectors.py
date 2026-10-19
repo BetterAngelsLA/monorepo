@@ -211,6 +211,23 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(changes["status"], ["Confirmed", "Checked In"])
         self.assertEqual(changes["notes"], [None, "Bed bugs reported"])
 
+    def test_single_save_changing_status_and_notes_renders_one_event(self) -> None:
+        # §2: ``reservation.update`` is gated on status being unchanged, so a
+        # single save that touches both emits one ``status_change`` event with
+        # the whole diff -- not a second event with empty ``field_changes``.
+        with audit_context(user=self.user):
+            self.reservation.status = ReservationStatusChoices.CHECKED_IN
+            self.reservation.notes = "Checked in with a note"
+            self.reservation.save()
+
+        actions = object_audit_log(obj=self.reservation, target_type="RESERVATION")
+
+        self.assertEqual(len(actions), 1)
+        events = actions[0].events
+        self.assertEqual([event.action for event in events], ["reservation.status_change"])
+        self.assertEqual(events[0].field_changes["status"], ["Confirmed", "Checked In"])
+        self.assertEqual(events[0].field_changes["notes"], [None, "Checked in with a note"])
+
     # ── §13/§14 INSERT and FK labels ─────────────────────────────────────────
 
     def test_insert_renders_non_null_fields_and_resolves_fk_labels(self) -> None:

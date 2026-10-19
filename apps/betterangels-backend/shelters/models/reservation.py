@@ -18,17 +18,34 @@ if TYPE_CHECKING:
     from .shelter import Shelter
 
 
+class _NonStatusChange(pghistory.AnyChange):
+    """Any tracked field changed, and ``status`` did not.
+
+    Makes the two ``Reservation`` update events genuinely disjoint, so a write
+    produces exactly one event row. ``AnyChange(exclude=["status"])`` is not
+    enough on its own: one ``save()`` that changes ``status`` *and* another field
+    (the check-in path sets ``checked_in_at``) matches both triggers and writes
+    two rows with identical snapshots. The aggregate diffs a row against the
+    previous event of the *object* (any label), so the second row carries an
+    empty ``pgh_diff`` and the audit log renders a phantom event.
+    """
+
+    def resolve(self, model: type[models.Model]) -> str:
+        status = model._meta.get_field("status").column
+        return f'(({super().resolve(model)}) AND OLD."{status}" IS NOT DISTINCT FROM (NEW."{status}"))'
+
+
 @pghistory.track(
     pghistory.InsertEvent("reservation.add"),
     pghistory.DeleteEvent("reservation.remove"),
-    # These two update triggers are mutually exclusive: ``status_change`` fires
-    # only when ``status`` changes, and ``update`` excludes ``status``, so a
-    # status change writes exactly one row (with its own diff) rather than two.
-    # ``updated_at`` is excluded alongside ``status`` because it is ``auto_now``
-    # and would otherwise make every save (including a bare status change) match
-    # ``update`` — the pair is only disjoint once the mechanical column is out.
+    # These two update triggers are mutually exclusive, so every write emits
+    # exactly one row: ``status_change`` when ``status`` changed (carrying the
+    # whole write's diff, including ``checked_in_at``/``notes`` set in the same
+    # save), and ``update`` only when ``status`` is untouched. ``updated_at`` is
+    # excluded alongside ``status`` because it is ``auto_now`` and would
+    # otherwise make every save match ``update``.
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
-    pghistory.UpdateEvent("reservation.update", condition=pghistory.AnyChange(exclude=["status", "updated_at"])),
+    pghistory.UpdateEvent("reservation.update", condition=_NonStatusChange(exclude=["status", "updated_at"])),
     meta={
         "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="reservation_evt_obj_idx")],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
