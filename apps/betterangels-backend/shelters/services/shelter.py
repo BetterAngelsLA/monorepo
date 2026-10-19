@@ -12,6 +12,14 @@ from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
 from shelters.services.utils import _SHELTER_M2M_FIELDS, _create_schedules, _prepare_shelter_data, _set_m2m_from_enums
 
+_BA_REVIEW_FIELDS = ("overall_rating", "subjective_review", "declined_ba_visit")
+
+
+def _require_permission_on_ba_review_change(user: "User", data: Dict[str, Any]) -> None:
+    if any(field in data for field in _BA_REVIEW_FIELDS) and not can_globally(user, Shelter.perms.CHANGE_BA_REVIEW):
+        raise PermissionDenied("Editing BA review fields is not allowed with this role.")
+
+
 if TYPE_CHECKING:
     from accounts.models import User
 
@@ -241,6 +249,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
         shelters in the target organization.
     """
     data = dict(data)
+    _require_permission_on_ba_review_change(user, data)
     organization_id = data.get("organization_id")
     if not organization_id:
         raise ValidationError({"organization_id": "An organization is required to create a shelter."})
@@ -287,6 +296,7 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = {k: v for k, v in data.items() if v is not UNSET}
+    _require_permission_on_ba_review_change(user, data)
     data.pop("organization", None)  # organization cannot be changed after creation
     shelter_id = data.pop("id")
 

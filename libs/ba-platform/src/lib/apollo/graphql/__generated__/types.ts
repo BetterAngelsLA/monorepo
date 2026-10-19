@@ -2240,6 +2240,7 @@ export type OperatorShelterType = {
   city?: Maybe<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
+  declinedBaVisit?: Maybe<Scalars['Boolean']['output']>;
   demographics: Array<DemographicType>;
   demographicsOther?: Maybe<Scalars['String']['output']>;
   description: Scalars['String']['output'];
@@ -3567,7 +3568,6 @@ export type ShelterType = {
   organization?: Maybe<OrganizationType>;
   otherRules?: Maybe<Scalars['String']['output']>;
   otherServices?: Maybe<Scalars['String']['output']>;
-  overallRating?: Maybe<Scalars['Int']['output']>;
   parking: Array<ParkingType>;
   pets: Array<PetType>;
   phone?: Maybe<Scalars['PhoneNumber']['output']>;
@@ -3588,7 +3588,6 @@ export type ShelterType = {
   specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
   status: StatusChoices;
   storage: Array<StorageType>;
-  subjectiveReview?: Maybe<Scalars['String']['output']>;
   supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -4004,6 +4003,7 @@ export type UpdateShelterInput = {
   citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   cityId?: InputMaybe<Scalars['ID']['input']>;
+  declinedBaVisit?: InputMaybe<Scalars['Boolean']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   demographicsOther?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
@@ -4025,6 +4025,7 @@ export type UpdateShelterInput = {
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
+  overallRating?: InputMaybe<Scalars['Int']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
   phone?: InputMaybe<Scalars['PhoneNumber']['input']>;

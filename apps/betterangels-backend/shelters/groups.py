@@ -94,6 +94,9 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
         # ── Custom perms ──
         Shelter.perms.VIEW_PRIVATE,
         ClientProfile.perms.VIEW,
+        # Internal-Review fields (overall_rating / subjective_review / declined_ba_visit)
+        Shelter.perms.VIEW_BA_REVIEW,
+        Shelter.perms.CHANGE_BA_REVIEW,
         # ── common ──
         Address.perms.ADD,
         Address.perms.CHANGE,
