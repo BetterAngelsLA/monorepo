@@ -17,6 +17,7 @@ import { updateRoomMeta } from '../../../../hooks/useUpdateRoom/__generated__/us
 import {
   shelterCreateResourceRoute,
   shelterEditResourceRoute,
+  shelterResourceActivityRoute,
 } from '../../../../routing';
 import { Button } from '../../../base-ui/buttons';
 import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
@@ -85,6 +86,13 @@ export function Rooms({ shelterId }: { shelterId: string }) {
   const handleEdit = useCallback(
     (roomId: string) => {
       navigate(shelterEditResourceRoute(shelterId, 'room', roomId));
+    },
+    [navigate, shelterId],
+  );
+
+  const handleActivity = useCallback(
+    (roomId: string) => {
+      navigate(shelterResourceActivityRoute(shelterId, 'room', roomId));
     },
     [navigate, shelterId],
   );
@@ -178,6 +186,7 @@ export function Rooms({ shelterId }: { shelterId: string }) {
         <RoomTable
           rooms={rooms}
           onEdit={handleEdit}
+          onActivity={handleActivity}
           onClone={handleClone}
           onDeleteRooms={(roomIds, roomName) =>
             handleDeleteRequest(roomIds, roomName)

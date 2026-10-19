@@ -1,5 +1,5 @@
 import { BedStatusChoices } from '@monorepo/ba-platform/types';
-import { BookCheck, CopyPlus } from 'lucide-react';
+import { BookCheck, CopyPlus, History } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useShelterPermissions } from '../../../../hooks';
@@ -28,6 +28,7 @@ type BedTableProps = {
   onDeleteBeds: (bedIds: string[]) => void;
   onMarkReady: (bedId: string) => void;
   onReserve: (bed: Bed) => void;
+  onActivity?: (bedId: string) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -76,6 +77,7 @@ export function BedTable({
   onDeleteBeds,
   onMarkReady,
   onReserve,
+  onActivity,
   loading,
   loadingState,
   emptyState = tableEmptyState('No beds yet.'),
@@ -173,6 +175,15 @@ export function BedTable({
               variant="edit"
               aria-label="Edit bed"
               onClick={() => onEdit(bed.id)}
+            />
+          )}
+          {onActivity && (
+            <Button
+              type="button"
+              variant="edit"
+              aria-label="View bed activity"
+              leftIcon={<History size={22} stroke="black" />}
+              onClick={() => onActivity(bed.id)}
             />
           )}
           {canDeleteBed && (

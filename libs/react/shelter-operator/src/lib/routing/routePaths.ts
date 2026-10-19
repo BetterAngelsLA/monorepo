@@ -83,6 +83,7 @@ export const mgmtRouteConfig = {
   actions: {
     create: 'create',
     edit: ':id/edit',
+    activity: ':id/activity',
   },
 } as const satisfies CrudRouteConfig;
 
@@ -125,6 +126,18 @@ export function shelterEditResourceRoute(
 ): string {
   return generatePath(
     `${shelterMgmtResourceRoute(shelterId, resource)}/${mgmtRouteConfig.actions.edit}`,
+    { id: resourceId },
+  );
+}
+
+/** /operator/shelter/5/manage/beds/12/activity */
+export function shelterResourceActivityRoute(
+  shelterId: string,
+  resource: TMgmtResource,
+  resourceId: string,
+): string {
+  return generatePath(
+    `${shelterMgmtResourceRoute(shelterId, resource)}/${mgmtRouteConfig.actions.activity}`,
     { id: resourceId },
   );
 }

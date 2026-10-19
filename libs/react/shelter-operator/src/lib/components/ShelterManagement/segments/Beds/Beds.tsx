@@ -16,6 +16,7 @@ import { updateBedMeta } from '../../../../hooks/useUpdateBed/__generated__/useU
 import {
   shelterCreateResourceRoute,
   shelterEditResourceRoute,
+  shelterResourceActivityRoute,
 } from '../../../../routing';
 import { Button } from '../../../base-ui/buttons';
 import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
@@ -91,6 +92,13 @@ export function Beds({ shelterId }: { shelterId: string }) {
   const handleEdit = useCallback(
     (bedId: string) => {
       navigate(shelterEditResourceRoute(shelterId, 'bed', bedId));
+    },
+    [navigate, shelterId],
+  );
+
+  const handleActivity = useCallback(
+    (bedId: string) => {
+      navigate(shelterResourceActivityRoute(shelterId, 'bed', bedId));
     },
     [navigate, shelterId],
   );
@@ -184,6 +192,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
           beds={beds}
           loading={loading}
           onEdit={handleEdit}
+          onActivity={handleActivity}
           onClone={handleClone}
           onDeleteBeds={handleDeleteRequest}
           onMarkReady={handleMarkReadyRequest}

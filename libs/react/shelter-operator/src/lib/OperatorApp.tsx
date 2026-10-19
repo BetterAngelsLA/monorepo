@@ -14,6 +14,7 @@ import {
 } from './components/guards/PermissionGate';
 import { OperatorLayout } from './components/layout/OperatorLayout';
 import {
+  BedActivityPage,
   BedsPage,
   CreateBedPage,
   CreateReservationPage,
@@ -24,6 +25,7 @@ import {
   OccupantsPage,
   ReportsPage,
   ReservationsPage,
+  RoomActivityPage,
   RoomsPage,
   UsersPage,
 } from './pages';
@@ -164,6 +166,10 @@ export function OperatorApp() {
               }
             />
             <Route
+              path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.activity}`}
+              element={<BedActivityPage />}
+            />
+            <Route
               path={mgmtRouteConfig.children.rooms}
               element={<RoomsPage />}
             />
@@ -188,6 +194,10 @@ export function OperatorApp() {
                   <EditRoomPage />
                 </MgmtActionGate>
               }
+            />
+            <Route
+              path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.activity}`}
+              element={<RoomActivityPage />}
             />
             <Route
               path={mgmtRouteConfig.children.reservations}

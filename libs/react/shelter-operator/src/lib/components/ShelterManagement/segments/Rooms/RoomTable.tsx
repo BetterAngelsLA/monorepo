@@ -1,4 +1,4 @@
-import { BookCheck, CopyPlus } from 'lucide-react';
+import { BookCheck, CopyPlus, History } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useShelterPermissions } from '../../../../hooks';
@@ -27,6 +27,7 @@ type RoomTableProps = {
   onDeleteRooms: (roomIds: string[], roomName?: string) => void;
   onMarkReady: (roomId: string) => void;
   onReserve: (roomId: string) => void;
+  onActivity?: (roomId: string) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -69,6 +70,7 @@ export function RoomTable({
   onDeleteRooms,
   onMarkReady,
   onReserve,
+  onActivity,
   loading,
   loadingState,
   emptyState = tableEmptyState('No rooms yet.'),
@@ -156,6 +158,16 @@ export function RoomTable({
               className="text-[#747A82]"
               aria-label="Edit room"
               onClick={() => onEdit(room.id)}
+            />
+          )}
+          {onActivity && (
+            <Button
+              type="button"
+              variant="edit"
+              className="text-[#747A82]"
+              aria-label="View room activity"
+              leftIcon={<History size={22} stroke="black" />}
+              onClick={() => onActivity(room.id)}
             />
           )}
           {canDeleteRoom && (
