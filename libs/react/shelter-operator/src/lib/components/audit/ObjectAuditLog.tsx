@@ -14,7 +14,8 @@ type ObjectAuditLogProps = {
 
 /**
  * Generic, read-only audit log for a single object, keyed by target type so it
- * can be mounted for shelters (and later rooms, beds, reservations).
+ * can be mounted for shelters, beds, and rooms. Bed/Room writes appear on the
+ * shelter log as one-line summaries; their own logs carry the detail.
  */
 export function ObjectAuditLog({ targetType, objectId }: ObjectAuditLogProps) {
   const [filters, setFilters] = useState<ObjectAuditLogFilters>({});

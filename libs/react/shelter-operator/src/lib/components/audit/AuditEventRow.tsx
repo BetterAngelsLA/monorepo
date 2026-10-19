@@ -45,7 +45,7 @@ export function AuditEventRow({ event }: { event: AuditEvent }) {
         </span>
 
         <Text variant="body-bold" textColor="text-neutral-20">
-          {humanizeAction(event.action)}
+          {event.summary ?? humanizeAction(event.action)}
         </Text>
 
         <Text
@@ -57,7 +57,9 @@ export function AuditEventRow({ event }: { event: AuditEvent }) {
         </Text>
       </div>
 
-      <AuditChangesView value={event.fieldChanges} action={event.action} />
+      {!event.summary && (
+        <AuditChangesView value={event.fieldChanges} action={event.action} />
+      )}
     </div>
   );
 }

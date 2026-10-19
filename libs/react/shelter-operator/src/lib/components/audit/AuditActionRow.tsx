@@ -18,8 +18,14 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
   // The merged action-level changes belong to one subject; use its action so
   // schedule actions get day/type pinned and no-op fields dropped.
   const subjectAction = action.events.find((event) =>
-    event.action.startsWith('shelter.schedule')
+    event.action.startsWith('shelter.schedule'),
   )?.action;
+
+  // Summarized events (§32) are one-liners, not field changes: a shelter action
+  // that only touches a bed would otherwise render an empty card body.
+  const summaries = action.events
+    .map((event) => event.summary)
+    .filter((summary): summary is string => Boolean(summary));
 
   return (
     <div className="rounded-2xl border border-neutral-90 bg-white p-4">
@@ -52,6 +58,20 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
           </button>
         )}
       </div>
+
+      {summaries.length > 0 && (
+        <div className="mt-3 flex flex-col gap-1">
+          {summaries.map((summary, index) => (
+            <Text
+              key={`${summary}-${index}`}
+              variant="body"
+              textColor="text-neutral-20"
+            >
+              {summary}
+            </Text>
+          ))}
+        </div>
+      )}
 
       <AuditChangesView
         value={action.fieldChanges}
