@@ -1,4 +1,5 @@
 import os
+from datetime import date, datetime, time, timedelta, tzinfo
 from typing import Any, Iterable, Set, TypeVar
 
 import requests
@@ -73,3 +74,39 @@ def dict_keys_to_camel(d: dict[str, Any]) -> dict[str, Any]:
 def dict_keys_to_snake(d: dict[str, Any]) -> dict[str, Any]:
     """Return a new dict with snake_case keys."""
     return {to_snake_case(k): v for k, v in d.items()}
+
+
+# ── Calendar ranges ───────────────────────────────────────────────────────────
+
+
+def day_end(day: date, tz: tzinfo) -> datetime:
+    """Midnight at the start of the day *after* ``day``, in ``tz``.
+
+    The exclusive upper bound for events that fall on ``day``. See
+    :func:`aware_range` for why the bound is exclusive.
+    """
+    return datetime.combine(day + timedelta(days=1), time.min, tzinfo=tz)
+
+
+def aware_range(start_date: date, end_date: date, tz: tzinfo) -> tuple[datetime, datetime]:
+    """Two **inclusive** calendar dates → a half-open ``[start, end)`` pair of instants.
+
+    The one form of this conversion for every report that needs it — ``reports``,
+    ``regions`` and ``shelters``. Centralised because getting it subtly wrong is
+    invisible: an off-by-one-day bound still returns rows, just the wrong ones, and the
+    report's totals stop reconciling against its buckets.
+
+    Three decisions worth keeping in one place:
+
+    * **Half-open on instants**, not ``field__date``. A ``__date`` lookup wraps the column
+      in a cast and loses its index; ``gte``/``lt`` does not.
+    * **``tzinfo=tz`` at construction**, not a separate ``make_aware``. For a ``ZoneInfo``
+      the two are identical (``make_aware`` is ``value.replace(tzinfo=…)``), so this is the
+      shorter spelling of the same instant — but it is *one* call, so there is no window in
+      which a naive datetime exists.
+    * **The calendar is the caller's**, passed in rather than read from the active
+      timezone. The range and every bucket computed beneath it must agree on which day a
+      row falls in, and ``TruncDate`` consults the activated zone by default — so the
+      caller decides once and passes the same ``tz`` to both.
+    """
+    return datetime.combine(start_date, time.min, tzinfo=tz), day_end(end_date, tz)

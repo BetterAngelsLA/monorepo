@@ -168,6 +168,7 @@ INSTALLED_APPS = [
     "legal",
     "notes",
     "proxy",
+    "regions",
     "reports",
     "shelters",
     "referrals",
@@ -189,7 +190,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
-    "pghistory.middleware.HistoryMiddleware",
+    "common.middleware.HistoryMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
     "common.middleware.organization.OrganizationMiddleware",
