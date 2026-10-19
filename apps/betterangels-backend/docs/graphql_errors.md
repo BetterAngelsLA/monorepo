@@ -275,6 +275,25 @@ When the upstream HMIS API returns a 422, the proxy maps their `messages` dict i
 raise GraphQLError("Validation Errors", extensions={"errors": errors})
 ```
 
+#### `regions/schema.py` — region scope
+
+`interactionMap(regionCodes:)` refuses a **non-empty** `regionCodes` with no `dimension`: a code is not unique across dimensions (`"1"` is a council district, an SPA and a supervisorial district), so there is no correct dimension to guess. A `dimension` sent *without* `regionCodes` is **ignored** here — it has nothing to narrow — where the density tile refuses it. `regions/services.resolve_region_scope` expresses the pairing once and carries a `code` and a `field`; the resolver renders them in the same extension shape:
+
+```python
+raise GraphQLError(
+    "regionCodes requires a dimension",
+    extensions={"errors": [{"field": "regionCodes", "location": None, "errorCode": "REGION_CODES_REQUIRE_DIMENSION"}]},
+)
+```
+
+The values live in `regions/services.RegionScopeErrorCodes` — `DIMENSION_REQUIRES_REGION_CODES` and `REGION_CODES_REQUIRE_DIMENSION`. An empty `regionCodes` needs no dimension (it matches nothing either way) and is **not** an error.
+
+The density tile (`regions/views.py`) refuses the same two conditions with the same codes in a JSON body, since a DRF endpoint has no `errors[]` envelope to put them in:
+
+```json
+{ "code": "REGION_CODES_REQUIRE_DIMENSION", "message": "regionCodes requires a dimension" }
+```
+
 ### 2.4 The `ErrorCodeEnum`
 
 Custom validation errors use `ErrorCodeEnum` (defined in `clients/enums.py`) to provide **machine-readable error codes** that the frontend can switch on:
@@ -316,7 +335,7 @@ Every exception type used in the BetterAngels backend, the error path each takes
 | `ObjectDoesNotExist`      | `django.core.exceptions`                    | `get_by_pk_or_not_found()`, `.get()` on scoped querysets                                                        | ✅ Yes (→ `OperationInfo`, `kind: ERROR`)      | Contains `OperationInfo`                        | —                                                                       |
 | `PermissionDenied`        | `django.core.exceptions`                    | `accounts/schema.py`, `referrals/schema.py`, `tasks/schema.py`, `hmis/api_bridge.py`, `common/graphql/utils.py` | ✅ Yes (→ `OperationInfo`, `kind: PERMISSION`) | Contains `OperationInfo`                        | —                                                                       |
 | `DjangoNoPermission`      | `strawberry_django.permissions`             | Permission extensions (`HasPerm`, `HasRetvalPerm`, `IsAuthenticated`)                                          | ❌ No — caught by `handle_no_permission()`     | Contains `OperationInfo` (if union supports it) | —                                                                       |
-| `GraphQLError`            | `graphql-core`                              | `clients/schema.py`, `hmis/api_bridge.py`                                                                       | ❌ No                                          | `null`                                          | `{message, extensions: {errors: [...]}}`                                |
+| `GraphQLError`            | `graphql-core`                              | `clients/schema.py`, `hmis/api_bridge.py`, `regions/schema.py`                                                   | ❌ No                                          | `null`                                          | `{message, extensions: {errors: [...]}}`                                |
 | `UnauthenticatedGQLError` | `common/errors.py` (extends `GraphQLError`) | `common/permissions/utils.py` (`IsAuthenticated`), `hmis/api_bridge.py` (401)                                   | ❌ No                                          | `null`                                          | `{message, extensions: {code: "UNAUTHENTICATED", http: {status: 401}}}` |
 | `NotFoundGQLError`        | `common/errors.py` (extends `GraphQLError`) | `hmis/api_bridge.py` only (404)                                                                                 | ❌ No                                          | `null`                                          | `{message, extensions: {code: "NOT_FOUND", http: {status: 404}}}`       |
 | `PermissionError`         | Python `builtins` (OS-level)                | `accounts/schema.py`, `accounts/selectors.py`, `clients/schema.py`, `hmis/schema.py`                            | ❌ No                                          | `null`                                          | `{message: "..."}` (plain, no extensions)                               |

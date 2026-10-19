@@ -1410,6 +1410,22 @@ type InteractionAuthorTypeOffsetPaginated {
   results: [InteractionAuthorType!]!
 }
 
+type InteractionMapType {
+  points: [InteractionPointType!]!
+  truncated: Boolean!
+  withheld: Boolean!
+}
+
+type InteractionPointType {
+  latitude: LatitudeScalar!
+  longitude: LongitudeScalar!
+  interactedAt: DateTime!
+}
+
+type InteractionScopeType {
+  withheld: Boolean!
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
@@ -2121,6 +2137,10 @@ type Query {
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
+  interactionsByRegion(organizationId: ID!, dimension: RegionDimension = null, startDate: Date = null, endDate: Date = null, regionCodes: [String!] = null): [RegionCountType!]!
+  interactionMap(organizationId: ID!, startDate: Date = null, endDate: Date = null, limit: Int = null, dimension: RegionDimension = null, regionCodes: [String!] = null): InteractionMapType!
+  interactionScope(organizationId: ID!, startDate: Date = null, endDate: Date = null): InteractionScopeType!
+  regionDimensions: [RegionDimensionInfo!]!
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
@@ -2209,6 +2229,30 @@ type ReferralTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ReferralType!]!
+}
+
+type RegionCountType {
+  kind: String!
+  code: String!
+  name: String!
+  count: Int!
+  isUnassigned: Boolean!
+  unassignedReason: UnassignedReason
+}
+
+enum RegionDimension {
+  ZIP
+  CITY
+  COUNCIL_DISTRICT
+  SUPERVISORIAL_DISTRICT
+  SPA
+  COC
+}
+
+type RegionDimensionInfo {
+  value: RegionDimension!
+  label: String!
+  plural: String!
 }
 
 enum RelationshipTypeEnum {
@@ -2945,6 +2989,11 @@ type TeamTypeOffsetPaginated {
 scalar Time
 
 scalar UUID
+
+enum UnassignedReason {
+  OUTSIDE_ALL_REGIONS
+  NO_LOCATION
+}
 
 input UpdateBedInput {
   id: ID!
