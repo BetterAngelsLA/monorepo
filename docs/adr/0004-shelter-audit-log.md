@@ -120,9 +120,10 @@ Most reporting consumers are unaffected: the selectors that filter on a single
 ignore the new labels. `_reservation_status_intervals` (used by
 `report_bed_status_counts` and `daily_occupancy`) walks status transitions and
 scopes `reservation.update` out. Because §2 makes the two update conditions
-**disjoint**, that scope no longer guards against a replayed status change — it is
-retained defensively, because it also keeps a non-status bed reparent out of the
-walk. §2 documents the reasoning and adds the regression test.
+**disjoint** (for a single save as well as across saves), that scope no longer
+guards against a replayed status change — it is retained defensively, because it
+also keeps a non-status bed reparent out of the walk. §2 documents the reasoning
+and adds the regression test.
 
 ## Deliverables (phased)
 
@@ -179,20 +180,30 @@ class Room(CloneMixin, OrgScoped, BaseModel):
 
 ## 2. Track all `Reservation` updates (currently status-only)
 
-In [shelters/models/reservation.py](apps/betterangels-backend/shelters/models/reservation.py), add a second update event whose condition is **disjoint** from the existing `status_change`, so a status change writes exactly one row:
+In [shelters/models/reservation.py](apps/betterangels-backend/shelters/models/reservation.py), add a second update event whose condition is **disjoint** from the existing `status_change`, so every write emits exactly one row:
 
 ```python
+class _NonStatusChange(pghistory.AnyChange):
+    """Any tracked field changed, and ``status`` did not."""
+
+    def resolve(self, model: type[models.Model]) -> str:
+        status = model._meta.get_field("status").column
+        return f'(({super().resolve(model)}) AND OLD."{status}" IS NOT DISTINCT FROM (NEW."{status}"))'
+
+
 @pghistory.track(
     pghistory.InsertEvent("reservation.add"),
     pghistory.DeleteEvent("reservation.remove"),
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
-    pghistory.UpdateEvent("reservation.update", condition=pghistory.AnyChange(exclude=["status", "updated_at"])),
+    pghistory.UpdateEvent("reservation.update", condition=_NonStatusChange(exclude=["status", "updated_at"])),
 )
 ```
 
-`reservation.status_change` exists to feed the reporting selectors; `reservation.update` covers every other change. Because the conditions are mutually exclusive, a status change emits **one** event, not two, and each label carries its own diff.
+`reservation.status_change` exists to feed the reporting selectors; `reservation.update` covers every other change. Because the conditions are mutually exclusive, every write emits **one** event: `status_change` when `status` changed — carrying the whole write's diff, including `checked_in_at`/`notes` set in the same save — and `update` otherwise.
 
-> **Why `updated_at` is excluded, not just `status`.** `AnyChange(exclude=["status"])` is _not_ disjoint on its own: `BaseModel.updated_at` is `auto_now`, so it changes on every `save()`, and the generated condition `... OR OLD."updated_at" IS DISTINCT FROM NEW."updated_at"` matches every status change too. Excluding the mechanical column is what actually makes the pair mutually exclusive. (Only `updated_at` churns — `created_at` is `auto_now_add` and never changes on update.)
+> **Why `updated_at` is excluded.** `BaseModel.updated_at` is `auto_now`, so it changes on every `save()`. Leaving it in makes `reservation.update` match every write, including a bare status change. (Only `updated_at` churns — `created_at` is `auto_now_add` and never changes on update.)
+
+> **Why `update` also requires `status` to be unchanged.** `AnyChange(exclude=["status", "updated_at"])` is not disjoint on its own — it only excludes `status` from the *change test*, so a single save that changes `status` and another field matches both triggers. The check-in/check-out path does exactly that: `reservation_update` sets `status` and `checked_in_at`/`checked_out_at` together ([shelters/services/reservation.py](apps/betterangels-backend/shelters/services/reservation.py)). Both triggers then insert the same `NEW` snapshot; the aggregate diffs a row against the previous event of the *object* (any label, so `_prev_data` is not per-label), leaving the second row with `pgh_diff = NULL` and a phantom audit event. Gating `update` on `OLD.status IS NOT DISTINCT FROM NEW.status` is what makes the pair genuinely disjoint, and it removes any dependence on trigger firing order. Asserted by `test_reservation_status_and_notes_update_fires_one_label_with_full_diff` and `test_check_in_writes_exactly_one_event`.
 
 **Reporting:** `_reservation_status_intervals`
 ([shelters/selectors/reports.py](apps/betterangels-backend/shelters/selectors/reports.py))
@@ -1185,17 +1196,19 @@ within that action, so a key's shape does not depend on what else the request
 touched.
 
 **`reservation` update labels:** the two update triggers have disjoint
-conditions (§2), so each label carries its own diff — `reservation.status_change`
-fires only for a status change (carrying the `status` `old → new` diff) and
-`reservation.update` fires for every other change (carrying that diff). When a
-single request performs both (a status change _and_ a non-status edit — one save
-that sets both, or two `.save()` calls), both labels fire, each with its own
-diff, and the action-level diff is simply their union. Because the conditions are
-mutually exclusive there is no identical-snapshot pair and no empty-`pgh_diff`
-row to reconcile, and nothing depends on trigger firing order. Computing the
-action-level diff from the object's before/after state across the grouped action's
-events remains the preferred approach — it is naturally robust to one request
-performing several changes — and should be tested (§20).
+conditions (§2), so each write emits exactly one row. `reservation.status_change`
+fires only when `status` changed and carries the write's whole diff;
+`reservation.update` fires only when `status` is untouched and carries that
+diff. `pgh_diff` compares a row against the previous event **of the object, any
+label** (the aggregate's `_prev_data` is not per-label), which is why the
+conditions must exclude one another rather than merely filter fields: a single
+save that changed `status` *and* another field previously matched both triggers,
+and the second row's diff was `NULL` (rendered as an empty event). Two separate
+saves in one request still produce two events, one per label, and the action-level
+diff is their union. Computing the action-level diff from the object's
+before/after state across the grouped action's events remains the preferred
+approach — it is naturally robust to one request performing several changes — and
+is tested (§20).
 
 **Display rendering (decided) — choices and verbose names.** Stored values are
 raw column values; the log is operator-facing, so rendering translates them
@@ -1275,10 +1288,11 @@ field) for the parent, plus the multi-word cases (`medical_needs`, `exit_policy`
 ## 16. `reservation.status_change` in the audit log
 
 With the disjoint update conditions (§2), a status change produces exactly one
-event — `reservation.status_change` — carrying the `status` `old → new` diff,
-and `reservation.update` covers every other change. The audit log **includes**
-`reservation.status_change`: it _is_ the status-change event. There is no second
-row to drop and no diff to lift from a sibling label.
+event — `reservation.status_change` — carrying the `status` `old → new` diff
+(other fields changed in the same save ride along in that diff), and
+`reservation.update` covers every write that leaves `status` untouched. The audit
+log **includes** `reservation.status_change`: it _is_ the status-change event.
+There is no second row to drop and no diff to lift from a sibling label.
 
 An earlier revision of this ADR excluded `reservation.status_change` and kept
 `reservation.update`, which required reading the diff from the grouped
@@ -1416,11 +1430,11 @@ derivation regression, so it is the stronger guard.
 - **NULL-context + seed filter:** a NULL-context event **survives** the seed `.exclude(pgh_context__label="seed")` (i.e. the `label` proxy field is nullable, §11), so out-of-band system writes are never silently dropped.
 - **M2M field_changes:** a Bed `.set()` on `medical_needs` renders the exact `medical_needs` field change as a single multi-value entry `{medical_needs: [[removed], [added]]}` via the through-table path (§13, §15) — asserting **one entry per related field**, not one per through row — with the multi-word M2Ms asserting the correct related FK column — `medical_needs`→`medicalneed` (Bed), `exit_policy`→`exitpolicy` and `referral_requirement`→`referralrequirement` (both Shelter) — so the FK-field naming (§19) can't silently regress.
 - **Through-metadata coverage + pin:** for each target in `{Shelter, Bed, Room}`, derive the through models from `event_models(references_model=<target>)` (keep only models lacking `pgh_obj`, i.e. `hasattr(model, "pgh_obj_id")` is `False`) and assert the **union** across targets equals the derived map's keys, so a new M2M field cannot fall out of the M2M rendering path (§19). Because the map is _derived_, its `(parent_col, related_fk_field)` pairs are additionally pinned in a hand-written literal (`_EXPECTED_THROUGH_EVENT_META`) so a derivation regression is caught, not followed.
-- **`reservation` status change:** a status change renders as a single `reservation.status_change` action whose `field_changes` include the `status` old→new diff — the disjoint conditions (§2) mean no paired `reservation.update` row exists to reconcile.
+- **`reservation` status change:** a status change renders as a single `reservation.status_change` action whose `field_changes` include the `status` old→new diff — the disjoint conditions (§2) mean no paired `reservation.update` row exists to reconcile. A **single save** that changes `status` and another field (the check-in path sets `checked_in_at`) still emits one event carrying both changes; the trigger-level tests assert one row and a non-null diff, and the service-level test covers the real `reservation_update` check-in call.
 - **`references()` attribution:** a reservation's `objectAuditLog` includes `ReservationClient` add/remove (client assignments) attributed through `references()` — the most sensitive part of a reservation's history; a shelter's log includes `ShelterPhoto`/`MediaLink`/`Video`/`Schedule`/`ContactInfo`/`ShelterAvailability` changes.
 - **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted against a **hand-written literal** per target (`_EXPECTED_SHELTER_REFERENCES` and the Bed/Room equivalents), so any change to what `references()` reaches — a newly tracked model, a dropped branch — fails loudly. The literal, not a set derived from `event_models()` at assert time, is the stronger pin: a derived set would silently track a `references()` regression instead of catching it. Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
 - **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` but **not** in `objectAuditLog(ROOM)`/`(BED)` (the target-scoped blocklist, §10); a room/bed configuration change still appears.
-- **Multi-write action-level diff:** a status change + a separate notes update in one request renders both the `status` and `notes` field changes (before/after diff), not just one winner row.
+- **Multi-write action-level diff:** a status change + a separate notes update in one request (two saves, so two events) renders both the `status` and `notes` field changes (before/after diff), not just one winner row. A single save doing both is the one-row case above, and renders both changes from one event.
 - **Cross-model action-level diff:** one action writing two different tracked models (e.g. a Shelter and a Bed) keeps them as separate before→after pairs — the anchored Shelter's change stays bare (`name`) and the related Bed's is qualified (`Bed 7 name`) — rather than merging into one false pair.
 - **Same-model multi-row action:** one action touching two rows of the _same_ model (two beds renamed in one context, standing in for a bulk `label="import"` write) keeps a separate before→after per row, keyed by row id — not one collapsed pair (§13).
 - **Duplicate `verbose_name`:** a model with two fields sharing a `verbose_name` (the three `Shelter` "Additional Notes" fields) renders each edit under its own (raw) key in both `field_changes` and `snapshot`, so neither is silently dropped (§13).
