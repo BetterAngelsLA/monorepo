@@ -1,19 +1,14 @@
 import { isPermission } from '@monorepo/ba-platform/permissions';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
-import {
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useSyncExternalStore,
-} from 'react';
+import { useCallback, useLayoutEffect, useMemo } from 'react';
 
 import {
   pushActiveOrgSource,
-  getActiveOrgId,
   setActiveOrgId as commitActiveOrgId,
-  subscribeActiveOrgId,
 } from '../../../activeOrg';
+
+import { useActiveOrgId } from './useActiveOrgId';
 
 /**
  * Minimal org shape accepted by the active-org state.
@@ -118,12 +113,8 @@ export function useActiveOrgState(
 
   // No reconciliation: the store derives the id from the same two inputs this
   // hook renders from, so a stale remembered id reads as the first organization
-  // here and in the request header alike. Choosing one is `setActiveOrgId`.
-  const activeOrgId = useSyncExternalStore(
-    subscribeActiveOrgId,
-    getActiveOrgId,
-    getActiveOrgId,
-  );
+  // here and in the query payload alike. Choosing one is `setActiveOrgId`.
+  const activeOrgId = useActiveOrgId();
 
   const activeOrg = useMemo(
     () => cleanOrgs.find((o) => o.id === activeOrgId),

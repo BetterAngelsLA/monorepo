@@ -7,6 +7,7 @@ const ActiveOrgProvider = createActiveOrgProvider(ActiveOrgContext);
 
 export { createActiveOrgContext, createUseActiveOrg } from './createActiveOrg';
 export { createActiveOrgProvider } from './createActiveOrgProvider';
+export { useActiveOrgId } from './useActiveOrgId';
 export { useActiveOrgState } from './useActiveOrgState';
 export type { ActiveOrgState, Org } from './useActiveOrgState';
 export { ActiveOrgContext, ActiveOrgProvider, useActiveOrg };
