@@ -280,6 +280,12 @@ describe('useOrgTeams', () => {
       setActiveOrgId('org-2');
     });
 
+    // The delayed link may not have answered yet, so assert only that the old
+    // rows are gone; org-2's teams arriving is the separate check below.
+    expect(result.current.teams.map((team) => team.id)).not.toContain(
+      'team-org-1',
+    );
+
     await waitFor(() =>
       expect(result.current.teams.map((team) => team.id)).toEqual([
         'team-org-2',
