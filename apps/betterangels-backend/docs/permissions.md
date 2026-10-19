@@ -15,7 +15,7 @@ Both layers sit on Django's permission primitives, but they ask different questi
 
 ### Where the org comes from
 
-Prefer the **payload**: query filters and mutation inputs carry the organization (`TeamFilter.organizationId`, `CreateTeamInput.organizationId`), and row-scoped mutations derive it from the row they name.  The `X-Organization-ID` header (set by `OrganizationMiddleware` in `common/middleware/organization.py`) survives in exactly one place — the *teams list read* keeps it as a deprecated fallback so mobile's `useOrgTeams` callers (still sending only `{ isActive }`) keep working until they pass `organizationId` (DEV-2566).  Every other cut-over surface is header-free.
+The org always travels in the **payload**: query filters and mutation inputs carry the organization (`TeamFilter.organizationId`, `CreateTeamInput.organizationId`), and row-scoped mutations derive it from the row they name.  The `X-Organization-ID` header and its `OrganizationMiddleware` were removed with the mobile cutover (DEV-2566) — no backend surface reads a request header.
 
 ### Grants — the authority
 
@@ -40,6 +40,15 @@ Prefer the **payload**: query filters and mutation inputs carry the organization
 - `IsAuthenticated` — the custom strawberry permission class (raises `UnauthenticatedGQLError`).
 
 The old `HasOrgPerm` extension and the `permissioned_queryset()` / `perm_filter()` / `_perm_q()` helpers are **deleted** — org-scoped surfaces authorize through the selectors above.
+
+### Debugging authority
+
+`manage.py explain_permission` answers "why can/can't this user do P at org O / on object R?".  It re-asks the canonical predicate (`can` / `can_obj` / `can_anywhere`) so it can never disagree with enforcement, then lists the arms behind the answer: global tier, direct grant, delegated grant, object grant (not wired yet), and the legacy `PermissionGroup` rows with the domain's live/inert posture.  Exits 0 on ALLOWED and 1 on DENIED — script-friendly.
+
+```shell
+python manage.py explain_permission --user jane@example.org --perm shelters.change_shelter --org 7
+python manage.py explain_permission --user 42 --perm shelters.view_shelter --object shelters.shelter:12
+```
 
 ## Overview
 
@@ -128,11 +137,12 @@ Each `groups.py` imports `TemplateConfig` and defines one or more template confi
 | `common/permissions/utils.py`       | `require_can()`, `IsAuthenticated`, `register_permission()`, `PERMISSION_DENIED_MESSAGE`              |
 | `common/permissions/config.py`      | `TemplateConfig`, `RoleDef` (incl. `from_template()`)                                                 |
 | `common/permissions/domain.py`      | `LEGACY_INERT_APPS` / `GLOBAL_TIER_ORG_APPS` — which domains are grant-only                           |
+| `common/permissions/explain.py`     | `explain()` — arm-by-arm explanation of a verdict; backs `explain_permission`                          |
+| `common/management/commands/explain_permission.py` | `manage.py explain_permission` — the authority debugger                              |
 | `accounts/groups.py`                | `ORG_ADMIN` / `ORG_SUPERUSER` templates + role definitions                                            |
 | `accounts/role_manager.py`          | `OrgRoleManager` — add/remove/clear/replace org roles; grant-only mirroring for `legacy_inert` roles  |
 | `accounts/signals.py`               | `User.groups` m2m edge — mirrors dual-write memberships to `Grant` rows                               |
 | `accounts/permissions.py`           | `UserOrganizationPermissions` enum + Django-admin-only `OrganizationAdminPermissions`                 |
-| `common/middleware/organization.py` | `OrganizationMiddleware` — kept only for the teams-read fallback (strip = DEV-2566)                   |
 | `shelters/selectors/operator.py`    | `shelter_queryset`, `room_queryset`, `bed_queryset` wrappers; `_get` selectors                        |
 | `shelters/selectors/reports.py`     | Report aggregation functions                                                                          |
 | `shelters/selectors/__init__.py`    | Re-exports from operator.py and reports.py                                                            |
@@ -145,7 +155,7 @@ Each `groups.py` imports `TemplateConfig` and defines one or more template confi
 
 Grant authority is pinned per domain in `tests/test_grant_authorization.py` (teams, reports, member management, clients): scoped Grant holders pass, stale legacy-only holders are denied, cross-org grants are denied, and the global tier applies only where `GLOBAL_TIER_ORG_APPS` says so.  The org-admin backfill conversions are covered in `accounts/tests/test_roles.py`.
 
-`GraphQLBaseTestCase` (`common/tests/utils.py`) provides `execute_graphql()` plus `_set_active_org()` — the latter feeds the deprecated `X-Organization-ID` fallback that the teams-read tests still pin until DEV-2566.
+`GraphQLBaseTestCase` (`common/tests/utils.py`) provides `execute_graphql()`; org-scoped calls carry the org in their own variables/filters.
 
 ## Adding templates or permissions
 
