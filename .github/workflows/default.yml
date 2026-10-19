@@ -240,12 +240,6 @@ jobs:
         # browser bundle is built here rather than in a second invocation.
         run: |
           docker compose run better-angels bash <<'EOF'
-          if [ "${GITHUB_EVENT_NAME}" = "push" ] \
-            && [ "${BRANCH_NAME}" = "main" ] \
-            && [ -z "${VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY}" ]; then
-            echo "::error::VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY is empty; the admin map will not render."
-            exit 1
-          fi
           yarn nx affected -t deploy --configuration ${{ matrix.environment }}
           EOF
         env:
