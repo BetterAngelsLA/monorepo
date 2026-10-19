@@ -85,7 +85,12 @@ def get_client_profile_photo_file_path(instance: Model, filename: str) -> str:
     pghistory.UpdateEvent("hmis_profile.update"),
     pghistory.DeleteEvent("hmis_profile.remove"),
 )
-class HmisProfile(BaseModel):
+class HmisProfile(OrgScoped, BaseModel):
+    # The client family rides ClientProfile's tier (RFC 0002): platform-shared
+    # for reads, SHARED for writes — any holder of the permission may act.
+    org_via = None
+    write_tier = WRITE_SHARED
+
     client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profiles")
     hmis_id = models.CharField(max_length=50)
     agency = TextChoicesField(choices_enum=HmisAgencyEnum)
@@ -274,7 +279,11 @@ class ClientDocument(Attachment):
     pghistory.UpdateEvent("social_media_profile.update"),
     pghistory.DeleteEvent("social_media_profile.remove"),
 )
-class SocialMediaProfile(BaseModel):
+class SocialMediaProfile(OrgScoped, BaseModel):
+    # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
+    org_via = None
+    write_tier = WRITE_SHARED
+
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="social_media_profiles")
     platform = TextChoicesField(choices_enum=SocialMediaEnum)
     platform_user_id = models.CharField(max_length=100)
@@ -285,7 +294,11 @@ class SocialMediaProfile(BaseModel):
     pghistory.UpdateEvent("client_contact.update"),
     pghistory.DeleteEvent("client_contact.remove"),
 )
-class ClientContact(BaseModel):
+class ClientContact(OrgScoped, BaseModel):
+    # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
+    org_via = None
+    write_tier = WRITE_SHARED
+
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
     name = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
@@ -300,7 +313,11 @@ class ClientContact(BaseModel):
     pghistory.UpdateEvent("client_household_member.update"),
     pghistory.DeleteEvent("client_household_member.remove"),
 )
-class ClientHouseholdMember(BaseModel):
+class ClientHouseholdMember(OrgScoped, BaseModel):
+    # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
+    org_via = None
+    write_tier = WRITE_SHARED
+
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="household_members")
     name = models.CharField(max_length=100, null=True, blank=True)
     date_of_birth = models.DateField(blank=True, null=True)

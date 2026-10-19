@@ -90,10 +90,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertEqual(len(response["errors"]), 1)
                 self.assertIn(
                     response["errors"][0]["message"],
-                    {
-                        "You do not have permission to modify this client.",
-                        "Cannot filter against a non-conditional expression.",
-                    },
+                    {"You don't have permission to access this app."},
                 )
 
     @parametrize(
@@ -697,7 +694,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
                 response["data"]["updateClientContact"]["messages"][0],
                 {
                     "kind": "PERMISSION",
-                    "field": None,
+                    "field": "updateClientContact",
                     "message": "You don't have permission to access this app.",
                 },
             )
@@ -728,7 +725,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
                 response["data"]["deleteClientContact"]["messages"][0],
                 {
                     "kind": "PERMISSION",
-                    "field": None,
+                    "field": "deleteClientContact",
                     "message": "You don't have permission to access this app.",
                 },
             )
@@ -865,7 +862,7 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
                 response["data"]["updateClientHouseholdMember"]["messages"][0],
                 {
                     "kind": "PERMISSION",
-                    "field": None,
+                    "field": "updateClientHouseholdMember",
                     "message": "You don't have permission to access this app.",
                 },
             )
@@ -896,7 +893,7 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
                 response["data"]["deleteClientHouseholdMember"]["messages"][0],
                 {
                     "kind": "PERMISSION",
-                    "field": None,
+                    "field": "deleteClientHouseholdMember",
                     "message": "You don't have permission to access this app.",
                 },
             )
@@ -1033,7 +1030,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
                 response["data"]["updateHmisProfile"]["messages"][0],
                 {
                     "kind": "PERMISSION",
-                    "field": None,
+                    "field": "updateHmisProfile",
                     "message": "You don't have permission to access this app.",
                 },
             )
@@ -1064,7 +1061,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
                 response["data"]["deleteHmisProfile"]["messages"][0],
                 {
                     "kind": "PERMISSION",
-                    "field": None,
+                    "field": "deleteHmisProfile",
                     "message": "You don't have permission to access this app.",
                 },
             )
