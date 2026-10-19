@@ -25,14 +25,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useOrgTeams } from './useOrgTeams';
 
 /**
- * Asserts the org each request names in ``filters.organizationId`` and what the
- * active-org store held when it went out — counted at the link, rather than
- * inferred from loading flags, which cannot distinguish a request that never
- * went out from one still in flight.
+ * Asserts which org each request names and what the active-org store held when
+ * it went out. Counted at the link: a request that never went out is otherwise
+ * indistinguishable from one still in flight.
  *
- * ``useOrgTeams`` stands in for any org-scoped query: these are the
- * cross-project tests that exercise the store, the provider and the query
- * variables together.
+ * ``useOrgTeams`` stands in for any org-scoped query.
  */
 
 type TestOrg = {
