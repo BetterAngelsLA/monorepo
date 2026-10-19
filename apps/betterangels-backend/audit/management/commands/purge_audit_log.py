@@ -78,6 +78,8 @@ class Command(BaseCommand):
     def handle(self, *args: Any, **options: Any) -> None:
         before = self._parse_before(options["before"])
         batch_size = options["batch_size"]
+        if batch_size < 1:
+            raise CommandError("--batch-size must be at least 1.")
         dry_run = options["dry_run"]
 
         earliest_allowed = timezone.now() - datetime.timedelta(days=MIN_RETENTION_DAYS)
@@ -101,7 +103,10 @@ class Command(BaseCommand):
 
     @staticmethod
     def _parse_before(raw: str) -> datetime.datetime:
-        parsed = datetime.datetime.strptime(raw, "%Y-%m-%d").date()
+        try:
+            parsed = datetime.datetime.strptime(raw, "%Y-%m-%d").date()
+        except ValueError as err:
+            raise CommandError(f"Invalid --before date '{raw}'; expected YYYY-MM-DD.") from err
         # Midnight UTC on the cutoff, so a row created later the same day survives.
         return datetime.datetime.combine(parsed, datetime.time.min, tzinfo=datetime.timezone.utc)
 

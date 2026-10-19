@@ -173,6 +173,16 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(removed, ["all"])
         self.assertEqual(added, ["couples"])
 
+    def test_m2m_add_and_remove_cancelling_out_omits_empty_action_change(self) -> None:
+        with audit_context(user=self.user):
+            self.shelter.demographics.add(self.demographic_couples)
+            self.shelter.demographics.remove(self.demographic_couples)
+
+        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertNotIn("demographics", actions[0].field_changes)
+
     # ── §16 reservation status_change ────────────────────────────────────────
 
     def test_status_change_renders_as_a_single_event(self) -> None:

@@ -92,6 +92,20 @@ class PurgeAuditLogTestCase(TestCase):
         # Should not raise; nothing is old enough to delete.
         call_command("purge_audit_log", before=recent, force=True)
 
+    def test_rejects_malformed_before_date(self) -> None:
+        with self.assertRaises(CommandError) as ctx:
+            call_command("purge_audit_log", before="not-a-date")
+
+        self.assertIn("YYYY-MM-DD", str(ctx.exception))
+
+    def test_rejects_non_positive_batch_size(self) -> None:
+        for batch_size in (0, -1):
+            with self.subTest(batch_size=batch_size):
+                with self.assertRaises(CommandError) as ctx:
+                    call_command("purge_audit_log", before=_CUTOFF, batch_size=batch_size)
+
+                self.assertIn("--batch-size", str(ctx.exception))
+
     # ── deletion scope ───────────────────────────────────────────────────────
 
     def test_deletes_event_rows_older_than_the_cutoff(self) -> None:

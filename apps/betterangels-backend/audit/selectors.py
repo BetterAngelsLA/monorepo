@@ -685,7 +685,8 @@ def _build_action(
         both = added_keys & removed_keys
         added = [r for r in bucket["added"] if r not in both]
         removed = [r for r in bucket["removed"] if r not in both]
-        action_changes[_action_change_key(owner, obj_id, field_name, target_model_label)] = [removed, added]
+        if removed or added:
+            action_changes[_action_change_key(owner, obj_id, field_name, target_model_label)] = [removed, added]
 
     timestamp = rows[-1].pgh_created_at if rows else timezone.now()
     return AuditActionData(
