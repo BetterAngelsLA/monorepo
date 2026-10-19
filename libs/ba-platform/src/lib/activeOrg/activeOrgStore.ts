@@ -32,10 +32,10 @@ export interface ActiveOrgPersistence {
  * Where the store finds the signed-in user's organizations, or ``null`` while
  * that is still unknown.
  *
- * A function rather than a published value: it is read when the header is needed
- * (at request time) and in ``getSnapshot``, so it cannot lag a render. A published
- * list would have to be in place before the first render that mounts a component
- * which queries, which no render-order-independent point in React offers.
+ * A function rather than a published value: it is read when a request needs the
+ * org and in ``getSnapshot``, so it cannot lag a render. A published list would
+ * have to be in place before the first render that mounts a component which
+ * queries, which no render-order-independent point in React offers.
  */
 export interface ActiveOrgSource {
   (): readonly { id: string }[] | null;
@@ -66,8 +66,8 @@ const readOrganizations = (): readonly { id: string }[] | null => {
 /**
  * Install an organization reader, returning the function that removes it again.
  *
- * Reads nothing: the reader is consulted lazily, when the header is needed or the
- * snapshot is taken. Callers dispose it from an effect cleanup, so a provider
+ * Reads nothing: the reader is consulted lazily, when a request needs the org or
+ * the snapshot is taken. Callers dispose it from an effect cleanup, so a provider
  * that unmounts (or whose list changes) restores whatever was installed beneath
  * it. Notifies only when the change moves the *derived* id, so a caller that
  * installs a fresh closure on every render cannot make subscribers loop.
@@ -83,7 +83,7 @@ export const pushActiveOrgSource = (next: ActiveOrgSource): (() => void) => {
     // Always, not only when the derived id moved: tracking "the last value we
     // announced" in one place and mutating the stack in several is how a removal
     // that restores an older value ends up notifying nobody, which leaves
-    // subscribers rendering one organization while the header sends another.
+    // subscribers rendering one organization while a request carries another.
     notify();
   };
 };
@@ -211,21 +211,21 @@ export const setActiveOrgId = (id: string | null): void => {
  * Forget the active organization.
  *
  * Call on logout and when switching API environments: an id from one user or
- * environment means nothing in another, and leaving it set sends a stale header
- * until a new organization list reconciles it.
+ * environment means nothing in another, and leaving it set lets a stale org reach
+ * a request until a new organization list reconciles it.
  */
 export const clearActiveOrgId = (): void => {
   // Forget the readers along with the choice. The organizations belong to the
   // session being torn down (logout, an environment switch), and a derivation
-  // that kept reading them would put an organization straight back into the
-  // header. Providers still mounted re-install theirs on their next render.
+  // that kept reading them would put an organization straight back into a
+  // request. Providers still mounted re-install theirs on their next render.
   organizationSources.length = 0;
 
   // `write` then `notify`, not `setActiveOrgId`: dropping the sources changes the
   // *derived* id on its own, and `setActiveOrgId` broadcasts only when the
   // *selected* id moves. With the selected id already null it stays silent, leaving
-  // every subscriber on the organization just discarded — the header then keeps an
-  // id belonging to the session that was torn down.
+  // every subscriber on the organization just discarded — the next request then
+  // carries an id belonging to the session that was torn down.
   write(null);
   notify();
 };
