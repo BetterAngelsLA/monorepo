@@ -28,6 +28,7 @@ function resolveApiUrl(configured: string): string {
     const api = new URL(configured);
     const isLocalApi =
       api.hostname === 'localhost' || api.hostname === '127.0.0.1';
+
     if (!isLocalApi) {
       return configured;
     }
