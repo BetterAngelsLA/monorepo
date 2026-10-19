@@ -203,7 +203,7 @@ class _NonStatusChange(pghistory.AnyChange):
 
 > **Why `updated_at` is excluded.** `BaseModel.updated_at` is `auto_now`, so it changes on every `save()`. Leaving it in makes `reservation.update` match every write, including a bare status change. (Only `updated_at` churns — `created_at` is `auto_now_add` and never changes on update.)
 
-> **Why `update` also requires `status` to be unchanged.** `AnyChange(exclude=["status", "updated_at"])` is not disjoint on its own — it only excludes `status` from the *change test*, so a single save that changes `status` and another field matches both triggers. The check-in/check-out path does exactly that: `reservation_update` sets `status` and `checked_in_at`/`checked_out_at` together ([shelters/services/reservation.py](apps/betterangels-backend/shelters/services/reservation.py)). Both triggers then insert the same `NEW` snapshot; the aggregate diffs a row against the previous event of the *object* (any label, so `_prev_data` is not per-label), leaving the second row with `pgh_diff = NULL` and a phantom audit event. Gating `update` on `OLD.status IS NOT DISTINCT FROM NEW.status` is what makes the pair genuinely disjoint, and it removes any dependence on trigger firing order. Asserted by `test_reservation_status_and_notes_update_fires_one_label_with_full_diff` and `test_check_in_writes_exactly_one_event`.
+> **Why `update` also requires `status` to be unchanged.** `AnyChange(exclude=["status", "updated_at"])` is not disjoint on its own — it only excludes `status` from the _change test_, so a single save that changes `status` and another field matches both triggers. The check-in/check-out path does exactly that: `reservation_update` sets `status` and `checked_in_at`/`checked_out_at` together ([shelters/services/reservation.py](apps/betterangels-backend/shelters/services/reservation.py)). Both triggers then insert the same `NEW` snapshot; the aggregate diffs a row against the previous event of the _object_ (any label, so `_prev_data` is not per-label), leaving the second row with `pgh_diff = NULL` and a phantom audit event. Gating `update` on `OLD.status IS NOT DISTINCT FROM NEW.status` is what makes the pair genuinely disjoint, and it removes any dependence on trigger firing order. Asserted by `test_reservation_status_and_notes_update_fires_one_label_with_full_diff` and `test_check_in_writes_exactly_one_event`.
 
 **Reporting:** `_reservation_status_intervals`
 ([shelters/selectors/reports.py](apps/betterangels-backend/shelters/selectors/reports.py))
@@ -1211,7 +1211,7 @@ fires only when `status` changed and carries the write's whole diff;
 diff. `pgh_diff` compares a row against the previous event **of the object, any
 label** (the aggregate's `_prev_data` is not per-label), which is why the
 conditions must exclude one another rather than merely filter fields: a single
-save that changed `status` *and* another field previously matched both triggers,
+save that changed `status` _and_ another field previously matched both triggers,
 and the second row's diff was `NULL` (rendered as an empty event). Two separate
 saves in one request still produce two events, one per label, and the action-level
 diff is their union. Computing the action-level diff from the object's
@@ -1350,7 +1350,7 @@ pghistory, not from the `AuditReadEvent` table.
 ## 18. Authorization (org scoping)
 
 - `objectAuditLog` resolves the object through the existing `*_get` helpers (`shelter_get`, `room_get`, `bed_get`) with the matching `VIEW` permission, so a cross-org object id fails closed (ADR 0001 §2.6). Because those helpers already honor the global tier (via `scopes`/`visible`), a **Global Shelter Operator** can view any object's audit log, while a scoped operator is limited to their own org's objects. This is the primary (and sufficient) audit surface for the global tier.
-- **Reservation target (unreachable, §32):** `_resolve_target` keeps its `reservation_get` fallback for when the enum member returns, but `AuditTargetType` no longer exposes `RESERVATION`, so GraphQL cannot reach it. `to_event_type` therefore only ever sees `SHELTER`/`ROOM`/`BED`.
+- **Reservation target (not exposed, §32):** `AuditTargetType` omits `RESERVATION`, so GraphQL cannot reach it, and `_resolve_target` ends in `assert_never` rather than a dead `reservation_get` branch. Re-adding the enum member fails that check at type-check time, which is the signal to restore the branch; the selector's reservation path is already retained. `to_event_type` therefore only ever sees `SHELTER`/`ROOM`/`BED`.
 - **Reservation re-org edge case:** scoping uses the object's _current_ org. A reservation can be reparented across orgs (`reservation_update` in [shelters/services/reservation.py](apps/betterangels-backend/shelters/services/reservation.py)), but this is highly unlikely and accepted; no org-at-event-time reconstruction is built.
 - **Deleted-object limitation (deferred):** `objectAuditLog` authorizes by resolving the live object via `*_get`, so an object that has been deleted (e.g. `deleteShelter`) fails closed even for the global tier — "who deleted shelter 7?" is not answerable today. This is deferred to Future considerations; no soft-delete / recycle-bin process is introduced in this ADR (it would fan out across models, services, selectors, and the audit grouping logic).
 - **Decision:** reading an object's history reuses the object's `VIEW` permission — the `*_get` helpers above. No dedicated `view_audit_log` permission is introduced.
@@ -1853,8 +1853,9 @@ their own log (`_SCOPED_EXCLUSIONS`, §10).
 **Reservations — tracked, not exposed.** `Reservation` and `ReservationClient`
 history keeps accruing for reporting and a future surface, but no operator UI
 shows it: the Shelter log drops both event models and `AuditTargetType` no longer
-publishes `RESERVATION`. The selector's `reservation` path stays so returning the
-enum member is a one-line change.
+publishes `RESERVATION`. The selector's `reservation` path stays; restoring the
+enum member also requires restoring the `reservation_get` branch in
+`_resolve_target`, which `assert_never` currently rejects at type-check time.
 
 **Tests** (§20): summary text and empty detail, no snapshot leak, collapse of
 repeat saves, delete/nameless fallbacks, shelter omission of reservation rows,

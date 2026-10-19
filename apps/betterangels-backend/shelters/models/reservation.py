@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pghistory
 import pgtrigger
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
-from django.db.models import UniqueConstraint
+from django.db.models import Field, UniqueConstraint
 from django_choices_field import TextChoicesField
 
 from common.models import BaseModel, OrgScoped
@@ -31,7 +31,7 @@ class _NonStatusChange(pghistory.AnyChange):
     """
 
     def resolve(self, model: type[models.Model]) -> str:
-        status = model._meta.get_field("status").column
+        status = cast(Field[Any, Any], model._meta.get_field("status")).column
         return f'(({super().resolve(model)}) AND OLD."{status}" IS NOT DISTINCT FROM (NEW."{status}"))'
 
 

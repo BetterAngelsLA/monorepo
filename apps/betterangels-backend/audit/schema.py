@@ -1,6 +1,6 @@
 """GraphQL surface for the object audit log (ADR 0004 §18)."""
 
-from typing import List, cast
+from typing import List, assert_never, cast
 
 import strawberry
 from graphql import GraphQLError
@@ -9,8 +9,8 @@ from strawberry_django.auth.utils import get_current_user
 
 from accounts.models import User as AccountUser
 from common.permissions.utils import IsAuthenticated
-from shelters.models import Bed, Reservation, Room, Shelter
-from shelters.selectors.operator import bed_get, reservation_get, room_get, shelter_get
+from shelters.models import Bed, Room, Shelter
+from shelters.selectors.operator import bed_get, room_get, shelter_get
 
 from .selectors import object_audit_log
 from .types import AuditActionType, AuditTargetType, to_action_type
@@ -28,9 +28,10 @@ def _resolve_target(user: AccountUser, target_type: AuditTargetType, object_id: 
         return room_get(user=user, room_id=object_id, permission=Room.perms.VIEW)
     if target_type is AuditTargetType.BED:
         return bed_get(user=user, bed_id=object_id, permission=Bed.perms.VIEW)
-    # Unreachable from GraphQL while ``AuditTargetType`` omits RESERVATION
-    # (§32); the reservation selector path is retained for the future surface.
-    return reservation_get(user=user, reservation_id=object_id, permission=Reservation.perms.VIEW)
+    # No RESERVATION branch while ``AuditTargetType`` omits it (§32). Adding the
+    # enum member fails this check at type-check time, which is the reminder to
+    # restore ``reservation_get`` (the selector path is already retained).
+    assert_never(target_type)
 
 
 @strawberry.type

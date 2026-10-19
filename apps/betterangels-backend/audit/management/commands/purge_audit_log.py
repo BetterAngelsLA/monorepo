@@ -16,7 +16,7 @@ Read-event retention is specified in ADR 0004 §22-§29 and is out of scope here
 """
 
 import datetime
-from typing import Any
+from typing import Any, cast
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
@@ -119,7 +119,7 @@ class Command(BaseCommand):
             # most ``batch_size`` rows no matter how much is older than the cutoff,
             # and this total is the only pre-flight signal before an irreversible
             # delete.
-            return rows.count()
+            return cast(int, rows.count())
 
         deleted_total = 0
         while True:
@@ -133,7 +133,7 @@ class Command(BaseCommand):
 
             with transaction.atomic():
                 deleted, _ = model._default_manager.filter(pk__in=ids).delete()
-            deleted_total += deleted
+            deleted_total += cast(int, deleted)
             if deleted == 0:
                 # Nothing removed this pass; stop rather than spin.
                 return deleted_total
