@@ -73,6 +73,22 @@ def _annotated_count(root: models.Shelter, name: str) -> int:
     return 0 if value is None else value
 
 
+def _can_view_ba_review(info: Info) -> bool:
+    """BA review fields are a global-tier domain, like additional contacts (ADR 0001 §2.4).
+
+    ``change`` implies ``view``: a role trusted to edit the review must also be
+    able to read it, otherwise it would write blind.
+    """
+    user = get_current_user(info)
+    if user is None or not user.is_authenticated:
+        return False
+
+    reviewer = cast(User, user)
+    return can_globally(reviewer, models.Shelter.perms.VIEW_BA_REVIEW) or can_globally(
+        reviewer, models.Shelter.perms.CHANGE_BA_REVIEW
+    )
+
+
 @strawberry.type
 class ShelterLocationType:
     place: str
@@ -166,7 +182,6 @@ class ShelterTypeMixin:
     organization: Optional[OrganizationType]
     other_rules: Optional[str]
     other_services: Optional[str]
-    overall_rating: auto
     parking: List[ParkingType]
     pets: List[PetType]
     phone: Optional[PhoneNumberScalar]  # type: ignore
@@ -187,7 +202,6 @@ class ShelterTypeMixin:
     is_private: auto
     status: auto
     storage: List[StorageType]
-    subjective_review: Optional[str]
     supervisorial_district: auto
     total_beds: auto
     updated_at: auto
@@ -282,6 +296,21 @@ class ShelterType(ShelterTypeMixin):
 # Operator list reads: the ``*_queryset`` wrappers below are the reach-scoped,
 # fail-closed gate; the query's own ``filters`` variable only narrows the view.
 class OperatorShelterType(ShelterTypeMixin):
+    @strawberry_django.field
+    def overall_rating(self, root: models.Shelter, info: Info) -> Optional[int]:
+        """BA-only review field — global-tier gate (ADR 0001 §2.4)."""
+        return root.overall_rating if _can_view_ba_review(info) else None
+
+    @strawberry_django.field
+    def subjective_review(self, root: models.Shelter, info: Info) -> Optional[str]:
+        """BA-only review field — global-tier gate (ADR 0001 §2.4)."""
+        return root.subjective_review if _can_view_ba_review(info) else None
+
+    @strawberry_django.field
+    def declined_ba_visit(self, root: models.Shelter, info: Info) -> Optional[bool]:
+        """BA-only review field — global-tier gate (ADR 0001 §2.4)."""
+        return root.declined_ba_visit if _can_view_ba_review(info) else None
+
     @strawberry_django.field(prefetch_related=["additional_contacts"])
     def additional_contacts(self, root: models.Shelter, info: Info) -> List[ShelterContactInfoType]:
         """BA-only contacts — global-tier gate (``can_globally``), never a scoped Grant (ADR 0001 §2.4)."""

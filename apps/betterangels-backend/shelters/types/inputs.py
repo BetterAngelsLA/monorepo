@@ -178,6 +178,8 @@ class UpdateShelterInput:
     other_services: Maybe[Optional[str]] = UNSET
     entry_info: Maybe[Optional[str]] = UNSET
     subjective_review: Maybe[Optional[str]] = UNSET
+    overall_rating: Maybe[Optional[int]] = UNSET
+    declined_ba_visit: Maybe[Optional[bool]] = UNSET
     demographics_other: Maybe[Optional[str]] = UNSET
     shelter_types_other: Maybe[Optional[str]] = UNSET
     city_council_district: Maybe[Optional[int]] = UNSET
