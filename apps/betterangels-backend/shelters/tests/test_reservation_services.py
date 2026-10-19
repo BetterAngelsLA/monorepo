@@ -271,6 +271,26 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
         self.assertEqual(event.status, ReservationStatusChoices.CHECKED_IN)
         self.assertIsNotNone(event.checked_in_at)
 
+    def test_timestamp_only_update_fires_one_update_event(self) -> None:
+        # ``checked_in_at``/``checked_out_at`` are editable independently of
+        # ``status`` (the admin's Check-in / Check-out fieldset, and
+        # ``UpdateReservationInput``). Because ``reservation.update`` is gated on
+        # status being *unchanged* rather than excluding those columns from the
+        # change test, a timestamp-only edit is still audited. Excluding them
+        # would match neither trigger and record nothing at all (ADR 0004 §2).
+        checkout = datetime.datetime(2026, 1, 15, 12, 0, tzinfo=datetime.timezone.utc)
+
+        reservation_update(
+            user=self.user,
+            data={"id": self.reservation.pk, "checked_out_at": checkout},
+        )
+
+        events = Reservation.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+            pgh_obj_id=self.reservation.pk, pgh_label__startswith="reservation."
+        ).exclude(pgh_label="reservation.add")
+        self.assertEqual(list(events.values_list("pgh_label", flat=True)), ["reservation.update"])
+        self.assertEqual(events.get().checked_out_at, checkout)
+
     def test_none_scalar_values_skipped(self) -> None:
         reservation_update(
             user=self.user,
