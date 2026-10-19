@@ -14,9 +14,9 @@ BetterAngels has four frontend apps sharing one backend:
 | `shelter-operator`   | Web (Vite)    | React + Apollo        |
 | `betterangels`       | Mobile (Expo) | React Native + Apollo |
 
-Each app needs the same backend-specific behavior — sending the
-`X-Organization-ID` header, managing the active organization, CSRF
-protection, and so on. This code doesn't belong in the generic shared
+Each app needs the same backend-specific behavior — managing the active
+organization, carrying it in the operation's variables, CSRF protection,
+and so on. This code doesn't belong in the generic shared
 libraries (`libs/react/shared`, `libs/apollo`) because those are designed
 to be backend-agnostic (`scope:shared`). `ba-platform` is the dedicated
 home for that glue.
@@ -138,7 +138,7 @@ code.
 
 | ✅ Belongs here                                                                                     | ❌ Does NOT belong here                                                   |
 | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Code that depends on BA backend conventions (`X-Organization-ID`, `HasOrgPerm`, org-scoped queries) | Generic React hooks or utilities → `libs/react/shared`                    |
+| Code that depends on BA backend conventions (`HasOrgPerm`, org-scoped queries, the active-org store) | Generic React hooks or utilities → `libs/react/shared`                    |
 | Code shared by **two or more** BA frontend apps                                                     | App-specific pages or components → the app's own lib                      |
 | BA-specific integration for any layer (React, Apollo, pure TS)                                      | Generic Apollo or storage utilities → `libs/apollo`, `libs/react/shared`  |
 | GQL operations + generated types for the BA schema                                                  | Code with no BA dependency at all                                         |

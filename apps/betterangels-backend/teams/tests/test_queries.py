@@ -173,3 +173,28 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         """An explicit null names no org — it denies like a missing one."""
         response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": None}})
         self._assert_denied(response, "You do not have access to this organization.")
+
+    def test_a_stale_header_does_not_change_the_result(self) -> None:
+        """``X-Organization-ID`` is retired: a header naming another org is inert.
+
+        Pins the retirement against a reintroduced fallback — an old client that
+        still sends the header keeps working through the filter, and gains nothing.
+        """
+        self.org_2.add_user(self.org_1_admin)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_admin, ORG_ADMIN)
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_1.pk)
+
+        results = self._list(self.org_2)["data"]["teams"]["results"]
+
+        returned_ids = {int(row["id"]) for row in results}
+        org_2_ids = set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
+        self.assertEqual(returned_ids, org_2_ids)
+
+    def test_a_header_alone_names_no_org(self) -> None:
+        """The header is not a fallback: without the filter the read is denied."""
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_1.pk)
+
+        self._assert_denied(
+            self.execute_graphql(self.get_teams_query()),
+            "You do not have access to this organization.",
+        )
