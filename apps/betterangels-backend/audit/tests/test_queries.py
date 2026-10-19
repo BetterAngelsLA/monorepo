@@ -6,11 +6,10 @@ from accounts.models import Role, User
 from accounts.services import role_assign, sync_roles
 from audit.selectors import MAX_LIMIT
 from audit.tests.utils import audit_context
-from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import DemographicChoices, ReservationStatusChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-from shelters.models import Bed, Demographic, Reservation, ReservationClient, Room, Shelter
+from shelters.models import Bed, Demographic, Reservation, Room, Shelter
 
 OBJECT_AUDIT_LOG_QUERY = """
     query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $offset: Int, $includeSnapshot: Boolean) {
@@ -25,6 +24,7 @@ OBJECT_AUDIT_LOG_QUERY = """
                 targetType
                 targetId
                 actor
+                summary
                 fieldChanges
                 snapshot
             }
@@ -94,23 +94,33 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(removed, [])
         self.assertEqual(added, ["couples"])
 
-    def test_reservation_client_write_is_attributed_to_the_reservation(self) -> None:
+    def test_reservation_target_is_not_exposed(self) -> None:
+        """``AuditTargetType`` no longer publishes ``RESERVATION`` (§32).
+
+        Reservation history keeps accruing server-side; only the public query
+        surface is withdrawn, so schema validation rejects the target.
+        """
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        client_profile = baker.make(ClientProfile, first_name="Grace", last_name="Hopper")
-        with audit_context(user=self.org_1_case_manager_1):
-            reservation_client = ReservationClient.objects.create(
-                reservation=self.reservation, client_profile=client_profile, is_primary=True
-            )
 
         response = self._query("RESERVATION", self.reservation.id)
-        actions = response["data"]["objectAuditLog"]
 
-        self.assertEqual(len(actions), 1)
-        self.assertEqual(actions[0]["events"][0]["action"], "reservation_client.add")
-        # The reservation is the anchor; the client row is a related model, so its
-        # action-level key is qualified with the model and row id (§13).
-        key = f"Reservation client {reservation_client.pk} client profile"
-        self.assertEqual(actions[0]["fieldChanges"][key], [None, "Grace Hopper"])
+        errors = response.get("errors", [])
+        self.assertEqual(len(errors), 1)
+        self.assertIn("RESERVATION", errors[0]["message"])
+        self.assertIn("AuditTargetType", errors[0]["message"])
+        self.assertNotIn("objectAuditLog", response.get("data") or {})
+
+    def test_summary_is_exposed_on_events(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        with audit_context(user=self.org_1_case_manager_1):
+            self.bed.name = "Summarized Bed"
+            self.bed.save()
+
+        response = self._query("SHELTER", self.shelter.id)
+        events = response["data"]["objectAuditLog"][0]["events"]
+
+        self.assertEqual(events[0]["summary"], f"Updated Summarized Bed ({self.bed.id})")
+        self.assertEqual(events[0]["fieldChanges"], {})
 
     # ── authorization (§18) ──────────────────────────────────────────────────
 

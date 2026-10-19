@@ -861,9 +861,11 @@ room/bed. So `audit/selectors.py` applies a small per-target blocklist
 excluded = (*_EXCLUDED_EVENT_MODELS, *_SCOPED_EXCLUSIONS.get(target_type, ()))
 ```
 
-Reservation history remains available via `objectAuditLog(RESERVATION)`.
-`BedEvent.room_id` rows **stay** in a Room's log (the room's beds are its
-configuration). The per-target match set from `references()` is still pinned by a
+Per target (§32): **Shelter** drops `ReservationEvent` and
+`ReservationClientEvent`; **Room** drops `ReservationEvent` and `BedEvent`;
+**Bed** drops `ReservationEvent`. A Room's log is the room's own configuration,
+and its beds have their own log. Reservation history keeps accruing but has no
+public surface. The per-target match set from `references()` is still pinned by a
 test; the log filters on top of it.
 
 **Excluding `ReferralEvent` (blocklist, not allowlist).** **Decision:**
@@ -1160,6 +1162,13 @@ excluded from both `pgh_data` and `pgh_diff` by the aggregate CTE
 (`WHERE key NOT LIKE 'pgh_%'`, pghistory `models.py`), so no extra filtering is
 needed for them.
 
+**Summary-only events (§32).** `AuditEventData` carries an optional
+`summary: str | None`. It is populated only by the summarized-object path —
+related `Room`/`Bed` writes in a Shelter log — which renders one line
+(`"Created Bed A (7)"`) and an empty `field_changes`. Such events never carry a
+snapshot, even when `include_snapshot=True`, because the object's own log is the
+detail surface.
+
 **Exclude the primary key:** the pk is present in `pgh_data` for INSERT/REMOVE
 but can never change (the UPDATE branch renders `pgh_diff`, which never contains
 it), so it is dropped from those two branches rather than rendered as
@@ -1310,6 +1319,7 @@ unrelated to reservations — the §7b context-`label` seed exclusion and the Ph
 
 - Add `AuditActionType` (an action grouped by `pgh_context_id`, exposing `timestamp`, `actor`, `summary`, and a nested `events: [AuditEventType!]!` list), `AuditEventType`, `AuditEventKind` enum (`INSERT`/`UPDATE`/`DELETE`; `READ` is added in §28), and `AuditTargetType` enum in the `audit` app's types (e.g. `audit/types.py`).
 - `AuditEventType` gains an optional `snapshot: JSON` field (opt-in, §13) rendered from the event's `pgh_data`.
+- `AuditEventType` gains an optional `summary: String` (§32) for events that are acknowledged with one line instead of field detail; it is `null` for every detailed event.
 - Add one query to a new `Query` class in `audit/schema.py`, `permission_classes=[IsAuthenticated]`. It returns a **plain list** of `AuditActionType`, not an `OffsetPaginated` wrapper — the selector produces grouped Python actions (not a queryset), so `strawberry_django.offset_paginated` cannot wrap it. Pagination is applied in SQL by the selector (§10), not as an in-memory slice of a fully-grouped list: the resolver forwards the explicit `limit`/`offset` args.
 
 ```graphql
@@ -1325,7 +1335,7 @@ objectAuditLog(
 - Wire it into the top-level schema: import `AuditQuery` and add it to the `queries` tuple in [betterangels_backend/schema.py](apps/betterangels-backend/betterangels_backend/schema.py), next to `ReportsQuery`.
 - **Regenerate `schema.graphql`.** The repo enforces the checked-in SDL — the `validate-graphql-schema` nx target diffs `manage.py export_schema betterangels_backend.schema` against [schema.graphql](apps/betterangels-backend/schema.graphql). Adding `objectAuditLog` therefore requires running `nx run betterangels-backend:generate-graphql-schema` (or `uv run python manage.py export_schema betterangels_backend.schema > schema.graphql`) in the same change, or CI fails.
 
-`AuditTargetType` covers the primary operator objects (`SHELTER`, `ROOM`, `BED`, `RESERVATION`), each mapped to its model + content type + pghistory event model. `RESERVATION`'s write half is driven by `references()` (its `ReservationClient`, etc.), not by the derived through-table metadata — `Reservation` has no M2M through tables (§19).
+`AuditTargetType` covers the primary operator objects (`SHELTER`, `ROOM`, `BED`), each mapped to its model + content type + pghistory event model. `RESERVATION` is deliberately absent (§32): its history is still tracked server-side, but there is no public log surface for it yet. `RESERVATION`'s selector path is retained internally; if the target returns, its write half is driven by `references()` (its `ReservationClient`, etc.), not by the derived through-table metadata — `Reservation` has no M2M through tables (§19).
 
 **Naming note (decided).** The GraphQL `AuditEventType` is the _unified_
 write+read shape, backed by two Django models with distinct names:
@@ -1339,7 +1349,8 @@ pghistory, not from the `AuditReadEvent` table.
 
 ## 18. Authorization (org scoping)
 
-- `objectAuditLog` resolves the object through the existing `*_get` helpers (`shelter_get`, `room_get`, `bed_get`, `reservation_get`) with the matching `VIEW` permission, so a cross-org object id fails closed (ADR 0001 §2.6). Because those helpers already honor the global tier (via `scopes`/`visible`), a **Global Shelter Operator** can view any object's audit log, while a scoped operator is limited to their own org's objects. This is the primary (and sufficient) audit surface for the global tier.
+- `objectAuditLog` resolves the object through the existing `*_get` helpers (`shelter_get`, `room_get`, `bed_get`) with the matching `VIEW` permission, so a cross-org object id fails closed (ADR 0001 §2.6). Because those helpers already honor the global tier (via `scopes`/`visible`), a **Global Shelter Operator** can view any object's audit log, while a scoped operator is limited to their own org's objects. This is the primary (and sufficient) audit surface for the global tier.
+- **Reservation target (unreachable, §32):** `_resolve_target` keeps its `reservation_get` fallback for when the enum member returns, but `AuditTargetType` no longer exposes `RESERVATION`, so GraphQL cannot reach it. `to_event_type` therefore only ever sees `SHELTER`/`ROOM`/`BED`.
 - **Reservation re-org edge case:** scoping uses the object's _current_ org. A reservation can be reparented across orgs (`reservation_update` in [shelters/services/reservation.py](apps/betterangels-backend/shelters/services/reservation.py)), but this is highly unlikely and accepted; no org-at-event-time reconstruction is built.
 - **Deleted-object limitation (deferred):** `objectAuditLog` authorizes by resolving the live object via `*_get`, so an object that has been deleted (e.g. `deleteShelter`) fails closed even for the global tier — "who deleted shelter 7?" is not answerable today. This is deferred to Future considerations; no soft-delete / recycle-bin process is introduced in this ADR (it would fan out across models, services, selectors, and the audit grouping logic).
 - **Decision:** reading an object's history reuses the object's `VIEW` permission — the `*_get` helpers above. No dedicated `view_audit_log` permission is introduced.
@@ -1433,10 +1444,11 @@ derivation regression, so it is the stronger guard.
 - **`reservation` status change:** a status change renders as a single `reservation.status_change` action whose `field_changes` include the `status` old→new diff — the disjoint conditions (§2) mean no paired `reservation.update` row exists to reconcile. A **single save** that changes `status` and another field (the check-in path sets `checked_in_at`) still emits one event carrying both changes; the trigger-level tests assert one row and a non-null diff, and the service-level test covers the real `reservation_update` check-in call.
 - **`references()` attribution:** a reservation's `objectAuditLog` includes `ReservationClient` add/remove (client assignments) attributed through `references()` — the most sensitive part of a reservation's history; a shelter's log includes `ShelterPhoto`/`MediaLink`/`Video`/`Schedule`/`ContactInfo`/`ShelterAvailability` changes.
 - **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted against a **hand-written literal** per target (`_EXPECTED_SHELTER_REFERENCES` and the Bed/Room equivalents), so any change to what `references()` reaches — a newly tracked model, a dropped branch — fails loudly. The literal, not a set derived from `event_models()` at assert time, is the stronger pin: a derived set would silently track a `references()` regression instead of catching it. Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
-- **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` but **not** in `objectAuditLog(ROOM)`/`(BED)` (the target-scoped blocklist, §10); a room/bed configuration change still appears.
+- **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` (internal path) but **not** in `objectAuditLog(ROOM)`/`(BED)` or `(SHELTER)` (the target-scoped blocklist, §10); a room/bed configuration change still appears. A room log contains no `BedEvent` rows, and a bed log keeps the bed's full field detail.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request (two saves, so two events) renders both the `status` and `notes` field changes (before/after diff), not just one winner row. A single save doing both is the one-row case above, and renders both changes from one event.
-- **Cross-model action-level diff:** one action writing two different tracked models (e.g. a Shelter and a Bed) keeps them as separate before→after pairs — the anchored Shelter's change stays bare (`name`) and the related Bed's is qualified (`Bed 7 name`) — rather than merging into one false pair.
-- **Same-model multi-row action:** one action touching two rows of the _same_ model (two beds renamed in one context, standing in for a bulk `label="import"` write) keeps a separate before→after per row, keyed by row id — not one collapsed pair (§13).
+- **Cross-model action:** one action writing a Shelter and a Bed renders the shelter's own before→after pair and a **summary** line for the bed (`Updated <name> (<id>)`) — no `Bed <id> name` pair, no shared-field collision (§13, §32).
+- **Same-model multi-row action:** one action touching two rows of the _same_ model (two beds renamed in one context, standing in for a bulk `label="import"` write) renders two distinct summary lines, one per bed — not one collapsed line (§13, §32).
+- **Display scopes (§32):** a shelter action that creates a bed and renames a room renders `Created <name> (<id>)` / `Updated <name> (<id>)` with empty `field_changes` and no snapshot even under `include_snapshot=True`; repeated saves of one bed collapse to one line; a deleted bed keeps its last name; a nameless bed falls back to `Bed #<id>`; the shelter log omits `ReservationEvent`/`ReservationClientEvent`; and `targetType: RESERVATION` fails schema validation (the enum no longer publishes it, while the internal selector path still renders reservation-client writes).
 - **Duplicate `verbose_name`:** a model with two fields sharing a `verbose_name` (the three `Shelter` "Additional Notes" fields) renders each edit under its own (raw) key in both `field_changes` and `snapshot`, so neither is silently dropped (§13).
 - **Cross-table context-less writes:** two context-less writes in different event tables render as two distinct singleton actions, with the `pgh_id` collision pinned explicitly so the test does not rely on sequence coincidence (§12).
 - **INSERT/REMOVE pk exclusion:** the model pk (`id`) is absent from an `.add` event's `field_changes` — it is in `pgh_data` but can never change — and (unit-tested) from the `.remove` branch too (§13).
@@ -1802,6 +1814,52 @@ test deriving the labels `reports.py` reads and asserting `RETAINED_LABELS` cove
 them (so a new report label cannot be added without being retained).
 No Celery-beat schedule is wired by default — enabling one remains a deliberate ops
 choice.
+
+---
+
+## 32. Display scopes (decided)
+
+Each audit surface owns a different amount of detail. The split exists because a
+single "everything referencing this shelter" feed is both noisy and slow once a
+shelter has many beds, rooms, and stays, while the detail is still valuable at
+the object level.
+
+```mermaid
+graph LR
+  ShelterLog["Shelter activity"] -->|"one line per write"| BedRoomSummary["Created/Updated/Deleted Bed A (7)"]
+  ShelterLog -->|"full detail"| ShelterFields["Shelter fields, contacts, media, schedules, M2Ms"]
+  BedLog["Bed activity"] -->|"full detail"| BedFields["Bed fields + Bed M2Ms"]
+  RoomLog["Room activity"] -->|"full detail"| RoomFields["Room fields + Room M2Ms"]
+  Reservation["Reservation events"] -.->|"tracked, never displayed"| Nowhere["no public surface"]
+```
+
+**Shelter log — summaries for related Bed/Room.** Related `Bed` and `Room`
+writes appear as one line per object per kind: `Created <name> (<id>)`,
+`Updated <name> (<id>)`, `Deleted <name> (<id>)` (§13 `summary`). They carry an
+empty `field_changes` and never a snapshot, even when `include_snapshot=True`.
+Repeated saves of the same object under one context collapse to one line, keyed
+by `(model, obj id, kind)`. `Bed.name` is nullable, so a nameless bed falls back
+to `Bed #<id>`. The shelter's **own** fields and its contacts, media, schedules,
+availability, and M2M rows keep full detail. `_SUMMARY_ONLY_MODELS` and
+`_SUMMARY_VERBS` in `audit/selectors.py` hold the list and the wording.
+
+**Bed and Room logs — full detail.** A Bed log carries the bed's own fields and
+M2M changes; a Room log carries the room's own fields and M2M changes. Reachable
+from the operator management tables' row history action
+(`/manage/beds/:id/activity`, `/manage/rooms/:id/activity`). Neither log includes
+reservation rows, and the Room log also excludes `BedEvent` because beds have
+their own log (`_SCOPED_EXCLUSIONS`, §10).
+
+**Reservations — tracked, not exposed.** `Reservation` and `ReservationClient`
+history keeps accruing for reporting and a future surface, but no operator UI
+shows it: the Shelter log drops both event models and `AuditTargetType` no longer
+publishes `RESERVATION`. The selector's `reservation` path stays so returning the
+enum member is a one-line change.
+
+**Tests** (§20): summary text and empty detail, no snapshot leak, collapse of
+repeat saves, delete/nameless fallbacks, shelter omission of reservation rows,
+room exclusion of bed rows, bed detail retained, and schema rejection of
+`targetType: RESERVATION`.
 
 ---
 

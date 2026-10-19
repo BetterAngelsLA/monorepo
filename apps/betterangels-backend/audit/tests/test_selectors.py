@@ -24,6 +24,7 @@ from audit.selectors import (
     object_audit_log,
 )
 from audit.tests.utils import audit_context, clear_history_context
+from clients.models import ClientProfile
 from shelters.enums import (
     DemographicChoices,
     ExitPolicyChoices,
@@ -38,6 +39,7 @@ from shelters.models import (
     MedicalNeed,
     ReferralRequirement,
     Reservation,
+    ReservationClient,
     Room,
     Shelter,
 )
@@ -57,6 +59,19 @@ def _action_with(actions: list[Any], value: Any) -> Any | None:
             new = pair[1]
             if new == value or (isinstance(new, list) and value in new):
                 return action
+    return None
+
+
+def _summaries(action: Any) -> list[str]:
+    """The summarized one-liners in an action, in event order (§32)."""
+    return [event.summary for event in action.events if event.summary]
+
+
+def _action_with_summary(actions: list[Any], text: str) -> Any | None:
+    """The first action containing a summary line that mentions *text*."""
+    for action in actions:
+        if any(text in summary for summary in _summaries(action)):
+            return action
     return None
 
 
@@ -104,11 +119,12 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(renames[0].field_changes["name"], ["Audit Shelter", "Second Rename"])
 
     def test_one_action_writing_two_models_does_not_conflate_shared_field_names(self) -> None:
-        """Two tracked models rendering the same display name keep separate pairs (§13).
+        """A related bed is summarized, never merged into the shelter's fields (§13, §32).
 
         ``references()`` spans the target plus its related rows, so one action can
-        write a Shelter and a Bed. Both render ``"name"``; merging them by display
-        name alone would produce a false ``Audit Shelter -> Renamed Bed`` pair.
+        write a Shelter and a Bed. Both have a ``name``; the shelter keeps its own
+        before/after and the bed is acknowledged with one line, so no
+        ``Bed <id> name`` pair can appear or collide.
         """
         with audit_context(user=self.user):
             self.shelter.name = "Renamed Shelter"
@@ -120,17 +136,16 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
         self.assertEqual(len(actions), 1)
         changes = actions[0].field_changes
-        # The anchored shelter's own change stays bare; the related bed is
-        # qualified with its model and id, so the two never merge.
         self.assertEqual(changes["name"], ["Audit Shelter", "Renamed Shelter"])
-        self.assertEqual(changes[f"Bed {self.bed.pk} name"], ["Bed A", "Renamed Bed"])
+        self.assertNotIn(f"Bed {self.bed.pk} name", changes)
+        self.assertEqual(_summaries(actions[0]), [f"Updated Renamed Bed ({self.bed.pk})"])
 
     def test_one_action_touching_two_rows_of_a_model_keeps_them_separate(self) -> None:
-        """Two rows of the *same* model must not merge into one pair (§13).
+        """Two rows of the *same* model render as two summary lines (§13, §32).
 
         A bulk write (e.g. the ``label="import"`` CSV import) saves many rows under
-        one context. Keying the action rollup by field name alone would render a
-        50-object import as a single ``name: [None, "<last>"]`` create.
+        one context. Keying the acknowledgment by field name alone would collapse
+        them into one line naming only the last object.
         """
         with audit_context(label="seed"):
             other_bed = Bed.objects.create(shelter=self.shelter, name="Bed B")
@@ -144,10 +159,12 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
 
         self.assertEqual(len(actions), 1)
-        changes = actions[0].field_changes
-        # Each bed keeps its own before/after, keyed by row id.
-        self.assertEqual(changes[f"Bed {self.bed.pk} name"], ["Bed A", "Renamed Bed A"])
-        self.assertEqual(changes[f"Bed {other_bed.pk} name"], ["Bed B", "Renamed Bed B"])
+        self.assertEqual(
+            _summaries(actions[0]),
+            [f"Updated Renamed Bed A ({self.bed.pk})", f"Updated Renamed Bed B ({other_bed.pk})"],
+        )
+        # Neither bed's fields reach the shelter-level rollup.
+        self.assertEqual(actions[0].field_changes, {})
 
     def test_m2m_set_is_one_action_with_one_multi_value_entry(self) -> None:
         with audit_context(user=self.user):
@@ -284,16 +301,19 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertNotIn("id", changes)
 
     def test_fk_update_resolves_to_related_display_label(self) -> None:
+        """FK ids render the related object's label, anchored on the bed itself (§14).
+
+        The bed's own log is the one that details its fields; the shelter log only
+        summarizes the bed (§32).
+        """
         with audit_context(user=self.user):
             self.bed.room = self.room
             self.bed.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
-        bed_key = f"Bed {self.bed.pk} room"
-        bed_actions = [a for a in actions if a.field_changes.get(bed_key)]
+        actions = object_audit_log(obj=self.bed, target_type="BED")
 
-        self.assertEqual(len(bed_actions), 1)
-        self.assertEqual(bed_actions[0].field_changes[bed_key], [None, "Room A"])
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["room"], [None, "Room A"])
 
     # ── §11 seed / import / clone attribution ────────────────────────────────
 
@@ -368,7 +388,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         # Both writes are in the shelter's log (references() spans its beds) but
         # they are two separate actions, not one merged "system" action.
         shelter_action = _action_with(actions, "Shelter No Context")
-        bed_action = _action_with(actions, "Bed No Context")
+        bed_action = _action_with_summary(actions, "Bed No Context")
         self.assertIsNotNone(shelter_action)
         self.assertIsNotNone(bed_action)
         self.assertNotEqual(shelter_action, bed_action)
@@ -636,10 +656,11 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         # A bed reaches the reservations on it and its own TrackedBed* proxies.
         self.assertIn("shelters.ReservationEvent", labels)
 
-    def test_room_and_bed_logs_exclude_reservations_but_keep_config_changes(self) -> None:
+    def test_room_and_bed_logs_exclude_reservations_but_keep_own_config_changes(self) -> None:
         # ``references()`` matches ``ReservationEvent`` via ``room_id``/``bed_id``,
         # but the *log* filters it out: a room/bed log is its own configuration,
-        # not every stay that referenced it (§10).
+        # not every stay that referenced it (§10). The room log also drops
+        # ``BedEvent``, because beds have their own log (§32).
         with audit_context(user=self.user):
             Reservation.objects.create(bed=self.bed, room=self.room, status=ReservationStatusChoices.CANCELLED)
         with audit_context(user=self.user):
@@ -649,15 +670,34 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         room_actions = object_audit_log(obj=self.room, target_type="ROOM")
         self.assertEqual(len(room_actions), 1)
         self.assertEqual(room_actions[0].field_changes.get("name"), ["Room A", "Renamed Room"])
+        self.assertEqual(_summaries(room_actions[0]), [])
 
         self.assertEqual(object_audit_log(obj=self.bed, target_type="BED"), [])
+
+    def test_room_log_contains_no_bed_events(self) -> None:
+        with audit_context(user=self.user):
+            self.bed.name = "Bed Renamed Under Room"
+            self.bed.save()
+
+        self.assertEqual(object_audit_log(obj=self.room, target_type="ROOM"), [])
+
+    def test_bed_log_keeps_full_field_changes(self) -> None:
+        with audit_context(user=self.user):
+            self.bed.name = "Detailed Bed"
+            self.bed.save()
+
+        actions = object_audit_log(obj=self.bed, target_type="BED")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes, {"name": ["Bed A", "Detailed Bed"]})
+        self.assertEqual(_summaries(actions[0]), [])
 
     def test_references_boundary_for_room(self) -> None:
         labels = {event_model._meta.label for event_model in event_models(references_model=Room)}
 
         self.assertEqual(labels, _EXPECTED_ROOM_REFERENCES)
-        # ``references()`` matches these, but the Room *log* drops ReservationEvent
-        # (see the exclusion test above); BedEvent stays (beds in the room).
+        # ``references()`` matches these, but the Room *log* drops both
+        # ReservationEvent and BedEvent (see the exclusion test above).
         self.assertIn("shelters.BedEvent", labels)
         self.assertIn("shelters.ReservationEvent", labels)
 
@@ -727,6 +767,124 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             size = max((len(query["sql"]) for query in captured.captured_queries), default=0)
 
             self.assertLessEqual(size, self._STATEMENT_CEILINGS[target_type], f"{target_type} statement grew to {size}")
+
+
+class AuditDisplayScopeTestCase(TestCase):
+    """Display scopes: summarized Bed/Room writes and hidden reservations (§32)."""
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Scope Shelter")
+            self.room = Room.objects.create(shelter=self.shelter, name="Room A")
+
+    def _log(self, **kwargs: Any) -> list[Any]:
+        return object_audit_log(obj=self.shelter, target_type="SHELTER", **kwargs)
+
+    def test_shelter_log_summarizes_bed_and_room_writes(self) -> None:
+        with audit_context(user=self.user):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+            self.room.name = "Room B"
+            self.room.save()
+
+        actions = self._log()
+
+        self.assertEqual(len(actions), 1)
+        self.assertCountEqual(
+            _summaries(actions[0]),
+            [f"Created Bed A ({bed.pk})", f"Updated Room B ({self.room.pk})"],
+        )
+        # Nothing else about either object reaches the shelter-level rollup.
+        self.assertEqual(actions[0].field_changes, {})
+        self.assertEqual([event.field_changes for event in actions[0].events], [{}, {}])
+
+    def test_shelter_summary_does_not_leak_bed_detail_or_snapshot(self) -> None:
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        with audit_context(user=self.user):
+            bed.name = "Bed B"
+            bed.room = self.room
+            bed.save()
+
+        actions = self._log(include_snapshot=True)
+        action = _action_with_summary(actions, "Bed B")
+
+        self.assertIsNotNone(action)
+        assert action is not None
+        self.assertEqual(_summaries(action), [f"Updated Bed B ({bed.pk})"])
+        self.assertEqual(action.field_changes, {})
+        self.assertEqual(action.events[0].field_changes, {})
+        self.assertIsNone(action.events[0].snapshot)
+
+    def test_repeated_bed_saves_collapse_to_one_summary_line(self) -> None:
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        with audit_context(user=self.user):
+            bed.name = "Bed B"
+            bed.save()
+            bed.status_notes = "Second write"
+            bed.save()
+
+        actions = self._log()
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(_summaries(actions[0]), [f"Updated Bed B ({bed.pk})"])
+
+    def test_deleted_bed_is_summarized_with_its_last_name(self) -> None:
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+            bed_id = bed.pk
+
+        with audit_context(user=self.user):
+            bed.delete()
+
+        actions = self._log()
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(_summaries(actions[0]), [f"Deleted Bed A ({bed_id})"])
+
+    def test_summary_falls_back_when_a_bed_has_no_name(self) -> None:
+        # ``Bed.name`` is nullable, so the line must not render "None".
+        with audit_context(user=self.user):
+            bed = Bed.objects.create(shelter=self.shelter)
+
+        actions = self._log()
+
+        self.assertEqual(_summaries(actions[0]), [f"Created Bed #{bed.pk} ({bed.pk})"])
+
+    def test_shelter_log_omits_reservation_and_reservation_client_rows(self) -> None:
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+            reservation = Reservation.objects.create(bed=bed, status=ReservationStatusChoices.CONFIRMED)
+            profile = baker.make(ClientProfile, first_name="Grace", last_name="Hopper")
+
+        with audit_context(user=self.user):
+            reservation.notes = "Hidden detail"
+            reservation.save()
+            ReservationClient.objects.create(reservation=reservation, client_profile=profile)
+
+        self.assertEqual(object_audit_log(obj=self.shelter, target_type="SHELTER"), [])
+
+    def test_internal_reservation_path_still_renders_its_own_log(self) -> None:
+        """Tracking is unchanged; only the public surface is withdrawn (§32)."""
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+            reservation = Reservation.objects.create(bed=bed, status=ReservationStatusChoices.CONFIRMED)
+            profile = baker.make(ClientProfile, first_name="Grace", last_name="Hopper")
+
+        with audit_context(user=self.user):
+            reservation_client = ReservationClient.objects.create(
+                reservation=reservation, client_profile=profile, is_primary=True
+            )
+
+        actions = object_audit_log(obj=reservation, target_type="RESERVATION")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].events[0].action, "reservation_client.add")
+        key = f"Reservation client {reservation_client.pk} client profile"
+        self.assertEqual(actions[0].field_changes[key], [None, "Grace Hopper"])
 
 
 # §19 through-table rendering metadata, pinned literally. The map is *derived*
