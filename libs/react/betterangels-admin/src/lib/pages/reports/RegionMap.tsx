@@ -1,12 +1,20 @@
 /// <reference types="google.maps" />
 import { Alert, theme } from 'antd';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { Map as GoogleMap } from '@vis.gl/react-google-maps';
+import {
+  Map as GoogleMap,
+  type MapCameraChangedEvent,
+} from '@vis.gl/react-google-maps';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { DeckMapLayers, type OverlayColors } from './DeckMapLayers';
-import { DENSITY_COLOR_MAX, HEATMAP_RAMP_CSS } from './heatmapMath';
+import {
+  DENSITY_PER_KM2_MAX,
+  HEATMAP_RAMP_CSS,
+  densityCellAreaKm2,
+  densityCellSideMeters,
+} from './heatmapMath';
 import type { InteractionPointType } from './hooks';
 import { mapNotice } from './mapNotice';
 import { GENERIC_ERROR_MESSAGE } from './reportErrors';
@@ -91,6 +99,15 @@ const DATA_FOCUSED_STYLES: google.maps.MapTypeStyle[] = [
 const LA_ZOOM = 9;
 
 /**
+ * The density tile zoom at the home view.
+ *
+ * deck.gl tiles are 512px and Google's are 256px, so map zoom 9 fetches **z8** tiles (the same
+ * relationship the tile URL comments record). The cell area in the legend starts here and
+ * follows the map's camera.
+ */
+const INITIAL_TILE_ZOOM = Math.max(0, Math.floor(LA_ZOOM) - 1);
+
+/**
  * Overlay colours from the design system.
  *
  * Read through `useToken` rather than importing hexes, so a theme change flows through. The
@@ -129,7 +146,12 @@ function useMapColors(): OverlayColors {
  * of Google's own attribution, which owns that corner and must stay readable — it is a licence
  * term, not decoration.
  */
-function DensityLegend() {
+function DensityLegend({ cellSideM }: { cellSideM: number }) {
+  const cellLabel =
+    cellSideM >= 1000
+      ? `${(cellSideM / 1000).toFixed(1)} km`
+      : `${Math.round(cellSideM)} m`;
+
   return (
     <div className="pointer-events-none absolute bottom-9 left-3 z-[5] rounded bg-white/90 px-2 py-1 shadow">
       {/* 12px is the floor for legible secondary text, and #8c8c8c on white is only 3.36:1
@@ -137,23 +159,22 @@ function DensityLegend() {
           10.7:1 — the legend is the only key to the colour scale, so leaving it at the least
           readable size on the page was backwards. */}
       <div className="mb-1 text-xs font-medium text-neutral-700">
-        Interactions per cell
+        Interactions per km²
       </div>
       <div
         className="h-2 w-44 rounded-sm"
         style={{ background: HEATMAP_RAMP_CSS }}
       />
-      {/* Numbers, and **absolute** ones. The ramp is normalised by a fixed reference rather
-          than by the peak in view, so the honest reading is a count of interactions in a cell,
-          not a share of that peak. The middle label sits at the ramp's midpoint because the
-          scale is a square root, which puts a quarter of the reference there. */}
+      {/* The scale is per area, so these numbers hold as the reader zooms; only the cell size
+          in the last line changes. The middle label is the ramp's midpoint, which a square-root
+          scale puts at a quarter of the reference. */}
       <div className="mt-0.5 flex w-44 justify-between text-xs text-neutral-700">
         <span>0</span>
-        <span>{Math.round(DENSITY_COLOR_MAX / 4)}</span>
-        <span>{DENSITY_COLOR_MAX}+</span>
+        <span>{Math.round(DENSITY_PER_KM2_MAX / 4)}</span>
+        <span>{DENSITY_PER_KM2_MAX}+</span>
       </div>
       <div className="mt-0.5 w-44 text-xs text-neutral-700">
-        Each square is one grid cell
+        Each square ≈ {cellLabel} across
       </div>
     </div>
   );
@@ -249,6 +270,9 @@ export function RegionMap({
    */
   const [densityRefused, setDensityRefused] = useState(false);
   const [tileFaulted, setTileFaulted] = useState(false);
+  // The density tiles the camera is asking for; the cell area follows it so the legend and the
+  // colour scale describe the cells actually on screen.
+  const [tileZoom, setTileZoom] = useState(INITIAL_TILE_ZOOM);
   // The caption below the map is its accessible description; `role="img"` gives what it draws a
   // name, and this points at the sentence that says what the picture means.
   const captionId = useId();
@@ -273,6 +297,16 @@ export function RegionMap({
     setTileFaulted(false);
   }, []);
   const markTileFault = useCallback(() => setTileFaulted(true), []);
+
+  // Only an integer tile-zoom change matters: panning inside a zoom keeps the same cell area,
+  // so the colours do not move. The state update is skipped when the tile zoom is unchanged.
+  const handleCameraChanged = useCallback((event: MapCameraChangedEvent) => {
+    const next = Math.max(0, Math.floor(event.detail.zoom) - 1);
+    setTileZoom((previous) => (previous === next ? previous : next));
+  }, []);
+
+  const cellSideM = densityCellSideMeters(tileZoom, LA_CENTER.lat);
+  const cellAreaKm2 = densityCellAreaKm2(tileZoom, LA_CENTER.lat);
 
   const caption = useMemo(() => {
     let scope = '';
@@ -308,7 +342,7 @@ export function RegionMap({
     // `interactionScope`, so it reaches the reader as the refusal notice above rather than as
     // a legend on an empty field. The caption describes what the scale *means* and leaves the
     // figures below.
-    return `Interaction density${scope}, as a grid of counts. Where the grid has cells, red is where interactions concentrate and blue where they thin out; the legend is an absolute scale, and the figures below cover the same interactions.`;
+    return `Interaction density${scope}, in interactions per km². Red is where interactions concentrate and blue where they thin out; the scale is per area so it holds as you zoom, while each square covers more ground at lower zoom.`;
   }, [view, points.length, filteredTo, pointsLoading, truncated]);
 
   const notice = mapNotice({
@@ -396,6 +430,7 @@ export function RegionMap({
             style={{ width: '100%', height, borderRadius: 6 }}
             defaultCenter={LA_CENTER}
             defaultZoom={LA_ZOOM}
+            onCameraChanged={handleCameraChanged}
             gestureHandling="cooperative"
             styles={DATA_FOCUSED_STYLES}
             // The map is a fixed analytical view, not a place to explore. Street View and the
@@ -437,11 +472,12 @@ export function RegionMap({
                 onTileLoaded={handleTilesLoaded}
                 onTileFault={markTileFault}
                 overlay={mapColors}
+                cellAreaKm2={cellAreaKm2}
               />
             )}
           </GoogleMap>
         </div>
-        {view === 'heatmap' && <DensityLegend />}
+        {view === 'heatmap' && <DensityLegend cellSideM={cellSideM} />}
       </div>
       <p id={captionId} className="mt-2 text-xs text-neutral-500">
         {caption}

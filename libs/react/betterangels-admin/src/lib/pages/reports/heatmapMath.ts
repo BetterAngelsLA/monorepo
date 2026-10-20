@@ -6,14 +6,11 @@
  * maintained separately is a second source of truth, and a key describing colours the map no
  * longer produces is worse than no key at all.
  *
- * The *scale* is here too, and it is deliberately **fixed** rather than derived from the
- * data. The layer paints server-aggregated grid cells, one tile at a time, so the client never
- * holds the whole selection's counts and a per-tile maximum would recolour the field at every
- * tile boundary. A fixed reference — `DENSITY_COLOR_MAX` interactions in one cell — is the
- * same wherever the reader looks and whatever they pan to. The trade is that the scale does
- * not follow the zoom: cells get smaller as the reader zooms in, so the same physical density
- * reads cooler. The legend states the absolute numbers, so that is readable rather than
- * hidden.
+ * **The scale is density, not a raw cell count.** One server cell covers four times the ground
+ * for each zoom step out, so a count per cell is not comparable across zooms: the same
+ * neighbourhood reads four times hotter one step out and saturates at the county view. Dividing
+ * the count by the cell's area makes the colour mean *interactions per km²* at every zoom. The
+ * cell size still changes — the legend states it — but the colour no longer does.
  */
 
 import { lerpRgb, type Rgb } from './mapColors';
@@ -36,31 +33,44 @@ export const HEATMAP_RAMP_CSS = `linear-gradient(to right, ${RAMP.map(
 ).join(', ')})`;
 
 /**
- * Interactions in one cell at which the ramp reaches red.
+ * Interactions per km² at which the ramp reaches red.
  *
- * **Measured at the zoom the map opens at**, which is not the zoom a naive reading of the
- * tile URL suggests: deck.gl's tiles are 512 px and Google's zoom levels are 256 px, so a map
- * at Google zoom 9 asks the endpoint for **z8** tiles. Decoded from what the browser actually
- * loaded (LA County, 30-day window): 368 non-empty cells, counts 1 to 52, median 30,
- * ninetieth percentile 40.
- *
- * 50 is chosen so the ramp's range covers that distribution: the peak is red, the median is
- * yellow-orange and the sparse edges are blue, so most of the ramp is visible rather than the
- * field flattening into one red mass.
- *
- * The trade this number makes is deliberate and worth stating: the scale is **fixed**, so it
- * does not follow the zoom. A cell covers four times the ground at each zoom step out, so
- * zooming out past the opening view saturates and zooming in cools. Adapting the reference to
- * the zoom was rejected because the field would then recolour on every zoom tick — the same
- * swimming the ramp's fixed domain was chosen to avoid — and because deck gives a per-tile
- * accessor no tile index to key on without reimplementing the layer.
- *
- * **The counts are per server cell, not per pixel.** `DENSITY_CELLS_PER_TILE` in the backend's
- * `regions/tiles.py` is what one tile is divided into (64 × 64), so this reference is a count of
- * interactions within that share of a tile. Changing the server's grid changes what a count
- * means without changing this number, and the colours would silently rescale with it.
+ * Measured at the zoom the map opens at: the peak cell held 50 interactions in a cell about
+ * 2.0 km square (~4.1 km²), i.e. ~12 per km². Because the colour is now density, this one
+ * number works at every zoom; the legend's cell-size line explains how big the squares are.
  */
-export const DENSITY_COLOR_MAX = 50;
+export const DENSITY_PER_KM2_MAX = 12;
+
+/**
+ * Grid cells per tile, mirroring `DENSITY_CELLS_PER_TILE` in the backend's `tiles.py`.
+ *
+ * The client needs it to turn a tile zoom into a cell area. Changing the server's grid changes
+ * what a cell means; update this with it or the legend and colours silently disagree.
+ */
+export const DENSITY_CELLS_PER_TILE = 64;
+
+const EARTH_CIRCUMFERENCE_M = 40_075_016.686;
+
+/** A tile's ground width in metres, for a Web Mercator tile at *zoom* and *latitude*. */
+function tileWidthMeters(tileZoom: number, latitude: number): number {
+  return (
+    (EARTH_CIRCUMFERENCE_M * Math.cos((latitude * Math.PI) / 180)) /
+    2 ** tileZoom
+  );
+}
+
+/** One cell's ground width in metres. */
+export function densityCellSideMeters(
+  tileZoom: number,
+  latitude: number,
+): number {
+  return tileWidthMeters(tileZoom, latitude) / DENSITY_CELLS_PER_TILE;
+}
+
+/** One cell's ground area in km²; the divisor that makes the colour a density. */
+export function densityCellAreaKm2(tileZoom: number, latitude: number): number {
+  return densityCellSideMeters(tileZoom, latitude) ** 2 / 1_000_000;
+}
 
 /** One interaction location, as the layers hand it around. */
 export type HeatPoint = { latitude: number; longitude: number };
@@ -83,20 +93,24 @@ export function rampAt(intensity: number): Rgb {
 /**
  * A cell's fill, as deck.gl wants it: `[r, g, b, a]`, each channel 0-255.
  *
- * The square root is what makes the low end readable. Cell counts are heavy-tailed — most
- * cells hold a handful of interactions and a few hold the peak — so a linear map puts almost
- * every cell in the cold third of the ramp and the map reads as blank. `sqrt` spreads the
- * common values across the middle without changing which cells are hottest.
+ * The square root is what makes the low end readable. Densities are heavy-tailed — most cells
+ * hold a modest density and a few hold the peak — so a linear map puts almost every cell in the
+ * cold third of the ramp and the map reads as blank. `sqrt` spreads the common values across
+ * the middle without changing which cells are hottest.
  *
  * The alpha is constant: cells tile the plane without overlapping, so there is nothing for a
- * variable alpha to say, and a constant one keeps the colour a function of `count` alone.
+ * variable alpha to say, and a constant one keeps the colour a function of density alone.
  */
-export function densityColor(count: number): [number, number, number, number] {
+export function densityColor(
+  count: number,
+  cellAreaKm2: number,
+): [number, number, number, number] {
   // A missing or malformed `count` property reaches here as `NaN`, and `NaN` compares false
   // against every stop — which would fall through the loop to the *hottest* colour. Fail to
   // the cold end instead: an unreadable cell should read as empty, not as the peak.
-  const safe = Number.isFinite(count) ? Math.max(0, count) : 0;
-  const intensity = Math.sqrt(safe / DENSITY_COLOR_MAX);
+  const safeCount = Number.isFinite(count) ? Math.max(0, count) : 0;
+  const area = Number.isFinite(cellAreaKm2) ? Math.max(cellAreaKm2, 1e-6) : 1;
+  const intensity = Math.sqrt(safeCount / area / DENSITY_PER_KM2_MAX);
   const [r, g, b] = rampAt(intensity);
   return [r, g, b, 216];
 }

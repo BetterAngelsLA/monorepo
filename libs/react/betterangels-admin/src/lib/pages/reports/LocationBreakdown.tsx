@@ -313,24 +313,7 @@ export function LocationBreakdown({
         </div>
 
         {dimension === undefined ? (
-          <div className="flex flex-col gap-4">
-            {hasLocatedRows && (
-              /*
-               * One item, because a *table* of every dimension cannot be read as a total. The six
-               * dimensions are six views of the same interactions, so summing their rows gave
-               * 6,588 against a true total of 1,098. Choosing one also scopes the charts above.
-               */
-              <div className="rounded border border-neutral-200 bg-white p-4">
-                <Text strong>Choose a grouping for the regional breakdown</Text>
-                <p className="mt-1 mb-0 text-sm text-neutral-600">
-                  Each dimension covers the same interactions a different way,
-                  so their rows can not be added together. Pick one to see its
-                  regions and to scope the KPIs and charts above.
-                </p>
-              </div>
-            )}
-            {unassignedPanel}
-          </div>
+          <div className="flex flex-col gap-4">{unassignedPanel}</div>
         ) : (
           <div className="flex min-w-0 flex-col gap-4">
             {hasData && (

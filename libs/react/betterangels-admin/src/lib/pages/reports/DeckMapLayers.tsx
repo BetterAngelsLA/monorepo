@@ -84,6 +84,8 @@ export type DeckMapLayersProps = {
   /** The report window, as `YYYY-MM-DD`, so the grid matches the table beside it. */
   startDate: string;
   endDate: string;
+  /** One grid cell's ground area at the current zoom; turns a count into a density. */
+  cellAreaKm2: number;
   /**
    * The density tiles were **refused** — a 403 from the endpoint, which is an authority or
    * session answer rather than a fault. Reported up so the panel can say so; see `RegionMap`.
@@ -145,6 +147,8 @@ export type BuildLayersArgs = {
   focusCodes: string[];
   boundaryUrl: string | null;
   densityUrl: string | null;
+  /** One grid cell's ground area at the current zoom; turns a count into a density. */
+  cellAreaKm2: number;
   /** Binned once per (points, zoom) by the caller; see `DeckMapLayers` below. */
   clusters: Cluster[];
   onDensityRefused?: () => void;
@@ -178,6 +182,7 @@ export function buildLayers({
   focusCodes,
   boundaryUrl,
   densityUrl,
+  cellAreaKm2,
   onDensityRefused,
   onTileLoaded,
   onTileFault,
@@ -205,6 +210,7 @@ export function buildLayers({
         getFillColor: (feature) =>
           densityColor(
             Number((feature.properties as { count?: number })?.count ?? 0),
+            cellAreaKm2,
           ),
         pickable: false,
         // The one thing the grid cannot answer for itself: whether the note read scope
@@ -361,6 +367,7 @@ export function DeckMapLayers({
   organizationId,
   startDate,
   endDate,
+  cellAreaKm2,
   onDensityRefused,
   onTileLoaded,
   onTileFault,
@@ -490,6 +497,7 @@ export function DeckMapLayers({
         focusCodes,
         boundaryUrl,
         densityUrl,
+        cellAreaKm2,
         onDensityRefused: handleDensityRefused,
         onTileLoaded: handleTilesLoaded,
         onTileFault: handleTileFault,
@@ -503,6 +511,7 @@ export function DeckMapLayers({
       focusCodes,
       boundaryUrl,
       densityUrl,
+      cellAreaKm2,
       handleDensityRefused,
       handleTilesLoaded,
       handleTileFault,

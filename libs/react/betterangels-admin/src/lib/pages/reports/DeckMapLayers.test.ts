@@ -64,6 +64,7 @@ function layersFor(overrides: Partial<Parameters<typeof buildLayers>[0]>) {
     focusCodes: [],
     boundaryUrl: null,
     densityUrl: null,
+    cellAreaKm2: 4,
     clusters: [],
     overlay: OVERLAY,
     ...overrides,
