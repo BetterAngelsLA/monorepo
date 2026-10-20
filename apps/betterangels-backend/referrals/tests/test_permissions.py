@@ -62,9 +62,7 @@ class ReferralPermissionSyncTests(TestCase):
         sync_group_permissions(organization=org)
 
         codenames = set(
-            group.permissions.filter(content_type__app_label="referrals").values_list(
-                "codename", flat=True
-            )
+            group.permissions.filter(content_type__app_label="referrals").values_list("codename", flat=True)
         )
         self.assertEqual(codenames, {"add_referral", "change_referral", "view_referral"})
 
