@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 import {
   formatScalarDate,
   parseDateString,
@@ -23,10 +22,10 @@ function dateOf(value?: string | number): Date | null {
 export function formatReferralDate(value?: string | number): string {
   if (typeof value === 'number') {
     const date = dateOf(value);
-    return date ? format(date, 'MM/dd/yyyy') : '';
+    // Normalize to the same Date scalar the string path uses, so both paths
+    // share one parser/formatter and one invalid-value behavior.
+    return date ? formatScalarDate(toDateString(date), 'MM/dd/yyyy') : '';
   }
-  // The shared scalar formatter parses ISO dates and rejects partial ones, so
-  // invalid values cannot reach `format`.
   return formatScalarDate(value as DateTimeString | undefined, 'MM/dd/yyyy');
 }
 
