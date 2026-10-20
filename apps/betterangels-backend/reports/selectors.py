@@ -175,8 +175,9 @@ def scope_notes_to_group(
         # make a group filter disappear.
         if region_codes:
             raise ValueError("region_codes requires a region_kind")
-        if region_codes == []:
-            # No dimension and no named region: an empty selection is an answer of zero.
+        if region_codes is not None:
+            # No dimension and no named region: an empty selection is an answer of zero. This
+            # covers any empty sequence, not just the list the GraphQL layer sends.
             return notes.none()
         return notes
     if region_codes is None:
@@ -199,7 +200,9 @@ def report_summary(
     chosen geography. The pair is interpreted by ``resolve_group_scope``; the filter is applied
     once, before the aggregates.
     """
-    if region_codes is not None and region_kind is None:
+    # An empty list is a valid "no regions" answer even without a dimension; only non-empty
+    # codes require one. The selector handles the empty case as `notes.none()`.
+    if region_codes and region_kind is None:
         raise ValueError("region_codes requires a region_kind")
 
     # One calendar for the whole summary: the range, the buckets and the labels all

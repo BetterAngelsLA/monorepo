@@ -284,6 +284,32 @@ INTERACTION_SCOPE_QUERY = """
 """
 
 
+DENSITY_SCALE_QUERY = """
+    query DensityScale(
+        $organizationId: ID!
+        $zoom: Int!
+        $dimension: RegionDimension
+        $startDate: Date
+        $endDate: Date
+        $regionCodes: [String!]
+    ) {
+        densityScale(
+            organizationId: $organizationId
+            zoom: $zoom
+            dimension: $dimension
+            startDate: $startDate
+            endDate: $endDate
+            regionCodes: $regionCodes
+        ) {
+            p50
+            p90
+            p95
+            max
+        }
+    }
+"""
+
+
 class InteractionScopeQueryTestCase(InteractionMapBaseTestCase):
     """``interactionScope``: the one question the density view cannot get from a tile.
 
@@ -337,6 +363,52 @@ class InteractionScopeQueryTestCase(InteractionMapBaseTestCase):
             {"organizationId": str(self.org_1.pk), "startDate": "2026-01-01", "endDate": "2026-01-31"},
         )
         self.assertGraphQLUnauthenticated(response)
+
+
+class DensityScaleQueryTestCase(InteractionMapBaseTestCase):
+    """The colour domain carries the same note and region scope as the tiles it colours."""
+
+    def _scale(self, user: User, **overrides: Any) -> dict[str, Any]:
+        self.graphql_client.force_login(user)
+        variables: dict[str, Any] = {
+            "organizationId": str(self.org_1.pk),
+            "zoom": 12,
+            "startDate": "2026-01-01",
+            "endDate": "2026-01-31",
+        }
+        variables.update(overrides)
+        response = self.execute_graphql(DENSITY_SCALE_QUERY, variables)
+        if response.get("errors"):
+            return {"errors": response["errors"]}
+        return cast(dict[str, Any], response["data"]["densityScale"])
+
+    def test_caseworker_sees_the_same_cells_as_the_map(self) -> None:
+        result = self._scale(self.caseworker())
+
+        self.assertNotIn("errors", result, result.get("errors"))
+        self.assertEqual(result["p50"], 1.0)
+        self.assertEqual(result["p90"], 1.0)
+        self.assertEqual(result["p95"], 1.0)
+        self.assertEqual(result["max"], 1)
+
+    def test_a_report_only_role_has_no_scale(self) -> None:
+        admin = baker.make(User)
+        self.org_1.add_user(admin)
+        OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
+
+        self.assertIsNone(self._scale(admin))
+
+    def test_empty_codes_match_nothing(self) -> None:
+        self.assertIsNone(self._scale(self.caseworker(), regionCodes=[]))
+
+    def test_codes_without_a_dimension_are_refused(self) -> None:
+        result = self._scale(self.caseworker(), regionCodes=["1"])
+
+        self.assertIn("errors", result)
+        self.assertEqual(
+            result["errors"][0]["extensions"]["errors"][0]["errorCode"],
+            "REGION_CODES_REQUIRE_DIMENSION",
+        )
 
 
 class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):

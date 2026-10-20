@@ -804,6 +804,15 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertEqual(data["notesByDate"], [])
         self.assertEqual(data["notesByTeam"], [])
 
+    def test_summary_empty_codes_without_a_dimension_match_nothing(self) -> None:
+        """The empty-selection rule is the same with or without a dimension."""
+        org, user = self._setup_org_user_with_access()
+        self._note_at(org, point=Point(-118.24, 34.05, srid=4326))
+
+        data = self._summary(org, user, regionCodes=[])
+
+        self.assertEqual(data["totalNotes"], 0)
+
     def test_summary_region_codes_without_a_dimension_are_refused(self) -> None:
         """A code is ambiguous across dimensions, so the pair is refused like the map does."""
         org, user = self._setup_org_user_with_access()

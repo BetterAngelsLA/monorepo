@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Sequence
 
+from django.core.exceptions import EmptyResultSet
 from django.db import connection
 from django.db.models import FloatField, Func, QuerySet
 from django.db.models.expressions import RawSQL
@@ -470,7 +471,12 @@ def density_scale(*, notes: QuerySet[Note], zoom: int) -> dict[str, float | int]
     floor over a note queryset, which the ORM cannot express without a manager of raw
     expressions. The queryset is already org-, permission- and region-scoped by the caller.
     """
-    scoped_sql, scoped_params = notes.order_by().values("location_id").query.sql_with_params()
+    try:
+        scoped_sql, scoped_params = notes.order_by().values("location_id").query.sql_with_params()
+    except EmptyResultSet:
+        # `notes.none()` compiles to an `EmptyResultSet`, not a `WHERE false` fragment. An
+        # empty region selection is a valid request whose answer is "no cells", not a 500.
+        return None
     cell_size = density_cell_size_mercator(zoom)
     sql = f"""
     WITH scoped AS ({scoped_sql}),
