@@ -117,6 +117,45 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
       </>
     );
   },
+  DiscardModal: ({
+    button,
+    onDiscard,
+  }: {
+    button?: ReactElement<{ onPress?: () => void }>;
+    onDiscard?: () => void;
+  }) => {
+    const [visible, setVisible] = useState(false);
+
+    return (
+      <>
+        {button
+          ? // eslint-disable-next-line @eslint-react/no-clone-element
+            cloneElement(button, { onPress: () => setVisible(true) })
+          : null}
+        {visible ? (
+          <>
+            <Pressable
+              testID="discard-modal-confirm"
+              accessibilityRole="button"
+              onPress={() => {
+                onDiscard?.();
+                setVisible(false);
+              }}
+            >
+              <Text>Discard</Text>
+            </Pressable>
+            <Pressable
+              testID="discard-modal-cancel"
+              accessibilityRole="button"
+              onPress={() => setVisible(false)}
+            >
+              <Text>Keep Editing</Text>
+            </Pressable>
+          </>
+        ) : null}
+      </>
+    );
+  },
   TextBold: ({ children }: { children?: ReactNode }) => <Text>{children}</Text>,
   TextButton: ({ title }: { title?: string }) => <Text>{title}</Text>,
   TextMedium: ({ children }: { children?: ReactNode }) => (
