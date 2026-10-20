@@ -28,6 +28,9 @@ function optionsFrom<TValue extends string>(
 // Only destinations supported by the current notes adapter are expressible.
 // A new API destination needs an adapter implementation as well as codegen.
 type NotesField = Extract<keyof CreateReferralInput, 'notes'>;
+// `unmapped` is deliberately kept: it is the shape a future field takes when
+// the backend has nowhere to store it yet, and the encoder/UI already handle
+// it. No catalog field uses it today.
 export type IntakeBackendMapping =
   | { readonly mode: 'unmapped' }
   | { readonly mode: 'direct'; readonly field: NotesField }
@@ -49,7 +52,9 @@ type FieldMetadata = {
   readonly sensitive: boolean;
   readonly reuse: 'prefill' | 'review' | 'reset';
   readonly persistence: { readonly localDraft: boolean };
-  // Pending means requiredness is under review; answering is currently optional.
+  // Pending means requiredness is under review; answering is currently
+  // optional. `required` is scaffolding: no field uses it yet, so the submit
+  // guard and its dialog stay unreachable until one does.
   readonly requirement: 'optional' | 'pending' | 'required';
   readonly help?: string;
 };
