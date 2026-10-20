@@ -4,7 +4,7 @@ from django_choices_field import IntegerChoicesField
 from organizations.models import Organization
 
 from accounts.models import User
-from common.models import BaseModel
+from common.models import BaseModel, OrgScoped
 
 
 class ReferralTestShelter(BaseModel):
@@ -23,7 +23,17 @@ class ReferralTestShelter(BaseModel):
     pghistory.UpdateEvent("referral.update"),
     pghistory.DeleteEvent("referral.remove"),
 )
-class Referral(BaseModel):
+class Referral(OrgScoped, BaseModel):
+    """Referral, scoped to its own ``organization``.
+
+    ``OrgScoped`` is metadata only (no fields, no migration): it declares that
+    the row belongs to one organization through the ``organization`` FK below,
+    which is the same relation every referral query already filters on.
+    ``permissions.E005`` requires the declaration because the role templates
+    grant referral permissions to org-scoped roles (caseworker, org admin,
+    shelter operator).  ``organization`` stays nullable for legacy rows.
+    """
+
     class Status(models.IntegerChoices):
         PENDING = 0, "Pending"
         ACCEPTED = 1, "Accepted"
