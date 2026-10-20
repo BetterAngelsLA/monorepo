@@ -28,7 +28,7 @@ const scopedStorage = () =>
   createPersistentSynchronousStorage({ scopeId: 'referral-drafts-v2' });
 
 /** Remove the pre-v2 record, which carries no account or environment owner. */
-export function clearLegacyReferralDraft(): void {
+function clearLegacyReferralDraft(): void {
   try {
     legacyStorage().remove('draft');
   } catch (error) {
@@ -43,7 +43,7 @@ export function clearLegacyReferralDraft(): void {
  * Revoke in-memory callbacks and forms. Account-scoped disk records are
  * deliberately retained for the same authenticated account.
  */
-export function releaseReferralDraftSessions(): void {
+function releaseReferralDraftSessions(): void {
   for (const [key, store] of stores) {
     stores.delete(key);
     store.release();
