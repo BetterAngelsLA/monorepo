@@ -15,7 +15,6 @@ import {
 import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ReferralsTab } from './ReferralsTab';
-import { REFERRALS_PAGE_SIZE } from './constants';
 import { ClientReferralsDocument } from './__generated__/Referrals.generated';
 import { createReferralDraftStore } from './referralDraft';
 import { randomUUID } from 'node:crypto';
@@ -62,7 +61,7 @@ const emptyReferrals = [
       query: ClientReferralsDocument,
       variables: {
         filters: { clientProfile: CLIENT_ID },
-        pagination: { offset: 0, limit: REFERRALS_PAGE_SIZE },
+        pagination: { offset: 0, limit: 25 },
       },
     },
     result: {
