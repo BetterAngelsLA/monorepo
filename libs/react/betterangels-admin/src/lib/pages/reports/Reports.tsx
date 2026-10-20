@@ -11,10 +11,11 @@ import {
   Spin,
   Statistic,
   theme,
+  Typography,
 } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useActiveOrg } from '@monorepo/ba-platform';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { toDateString } from '@monorepo/shared/scalars';
@@ -34,6 +35,7 @@ import { kindLabelPlural, regionBreakdownView } from './regionBreakdown';
 import { ReportGroupControls } from './ReportGroupControls';
 
 const { RangePicker } = DatePicker;
+const { Text } = Typography;
 
 type IProps = {
   className?: string;
@@ -48,42 +50,43 @@ function getDefaultRange(): [Dayjs, Dayjs] {
 }
 
 /**
- * A headline number that distinguishes "measured zero" from "nothing to measure".
+ * One headline number with a single-line caption, so the four cards share a height.
  *
- * A bare `0` beside "1,098 interactions" reads as a contradiction, or worse as "you served
- * nobody". When the count is zero *and* there is other data, that is a gap in the record
- * rather than a finding, so it says so.
+ * A zero that means "measured zero" is shown as a dash only when the rest of the page has
+ * data; the caption carries the reason in one truncated line rather than wrapping the card.
  */
-function Metric({
+function Kpi({
   title,
   value,
-  hasData,
-  emptyHint,
+  caption,
+  empty = false,
 }: {
   title: string;
   value: number;
-  hasData: boolean;
-  emptyHint: string;
+  caption: string;
+  empty?: boolean;
 }) {
-  if (value === 0 && hasData) {
-    return (
-      <Statistic
-        title={title}
-        value="—"
-        // The dash is only meaningful with the reason attached, and both read as secondary.
-        // The colour has to sit on these nodes rather than on the root: `Statistic` sets `color`
-        // on its own title and content elements, and a colour inherited from the root loses to
-        // a declaration on the element itself.
-        valueRender={(node) => <span className="text-neutral-400">{node}</span>}
-        suffix={
-          <span className="text-xs font-normal text-neutral-400">
-            {emptyHint}
-          </span>
-        }
-      />
-    );
-  }
-  return <Statistic title={title} value={value} />;
+  return (
+    <div className="flex min-h-[92px] flex-col justify-between">
+      {empty ? (
+        <Statistic
+          title={title}
+          value="—"
+          valueRender={(node) => (
+            <span className="text-neutral-400">{node}</span>
+          )}
+        />
+      ) : (
+        <Statistic title={title} value={value} />
+      )}
+      <span
+        className="mt-2 block truncate text-xs text-neutral-500"
+        title={caption}
+      >
+        {caption}
+      </span>
+    </div>
+  );
 }
 
 /**
@@ -305,6 +308,12 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
     clearError();
   };
 
+  const handleResetGroup = () => {
+    setDimension(undefined);
+    setSelectedCodes([]);
+    clearError();
+  };
+
   const handleRangeChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
     if (dates?.[0] && dates?.[1]) {
       setDateRange([dates[0], dates[1]]);
@@ -328,65 +337,162 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
       0,
     ) ?? 0;
 
+  // Only the charts with data; the grid reflows around whatever is left, so a quiet group does
+  // not leave an empty half-row.
+  const charts: { key: string; title: string; body: ReactNode }[] = [];
+  if (summary) {
+    if ((summary.notesByDate?.length ?? 0) > 0) {
+      charts.push({
+        key: 'date',
+        title: 'Interactions Over Time',
+        body: (
+          <Column
+            data={summary.notesByDate}
+            xField="date"
+            yField="count"
+            height={300}
+            axis={AXIS_DATES_INTERACTIONS}
+            style={CHART_STYLE.primary}
+          />
+        ),
+      });
+    }
+    if ((summary.uniqueClientsByDate?.length ?? 0) > 0) {
+      charts.push({
+        key: 'clients-date',
+        title: 'Unique Clients Over Time',
+        body: (
+          <Column
+            data={summary.uniqueClientsByDate}
+            xField="date"
+            yField="count"
+            height={300}
+            axis={AXIS_DATES_CLIENTS}
+            style={CHART_STYLE.purple}
+          />
+        ),
+      });
+    }
+    if ((summary.notesByTeam?.length ?? 0) > 0) {
+      charts.push({
+        key: 'team',
+        title: 'Interactions by Team',
+        body: (
+          <Column
+            data={summary.notesByTeam}
+            xField="name"
+            yField="count"
+            height={300}
+            axis={AXIS_NAMES_COUNT}
+            style={CHART_STYLE.primary}
+          />
+        ),
+      });
+    }
+    if ((summary.notesByPurpose?.length ?? 0) > 0) {
+      charts.push({
+        key: 'purpose',
+        title: 'Top Purposes',
+        body: <PurposeChart purposes={summary.notesByPurpose} />,
+      });
+    }
+    if ((summary.topProvidedServices?.length ?? 0) > 0) {
+      charts.push({
+        key: 'provided',
+        title: 'Top Provided Services',
+        body: (
+          <Column
+            data={summary.topProvidedServices}
+            xField="name"
+            yField="count"
+            height={300}
+            axis={AXIS_NAMES_COUNT}
+            style={CHART_STYLE.success}
+          />
+        ),
+      });
+    }
+    if ((summary.topRequestedServices?.length ?? 0) > 0) {
+      charts.push({
+        key: 'requested',
+        title: 'Top Requested Services',
+        body: (
+          <Column
+            data={summary.topRequestedServices}
+            xField="name"
+            yField="count"
+            height={300}
+            axis={AXIS_NAMES_COUNT}
+            style={CHART_STYLE.warning}
+          />
+        ),
+      });
+    }
+  }
+
   return (
     <div className={mergeCss(['flex flex-col gap-6', className])}>
-      <div>
-        <h1 className="text-2xl font-semibold text-neutral-900">Reports</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Interaction data for {orgName}
-          {groupLabel ? ` · ${groupLabel}` : ''}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-neutral-900">Reports</h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            Interaction data for {orgName}
+            {groupLabel ? ` · ${groupLabel}` : ''}
+          </p>
+        </div>
+        <Button
+          type="primary"
+          icon={<DownloadIcon isDownloading={isDownloading} />}
+          loading={isDownloading}
+          onClick={handleDownload}
+        >
+          Download CSV
+        </Button>
       </div>
 
-      {/* The group comes first: it scopes every KPI and chart below. */}
-      <Card size="small">
-        <div className="flex flex-col gap-3">
-          <ReportGroupControls
-            dimensions={dimensions}
-            dimensionsLoading={dimensionsLoading}
-            dimensionsError={dimensionsError}
-            dimension={dimension}
-            selectedCodes={selectedCodes}
-            rows={availableRegions}
-            rowsLoading={rowsLoading}
-            onDimensionChange={handleDimensionChange}
-            onSelectedCodesChange={handleCodesChange}
+      {/* One compact toolbar: the group scopes everything below, the date range is the window,
+          and Reset clears the group. No card, no helper copy. */}
+      <div className="flex flex-wrap items-end gap-3 border-b border-neutral-200 pb-4">
+        <ReportGroupControls
+          dimensions={dimensions}
+          dimensionsLoading={dimensionsLoading}
+          dimensionsError={dimensionsError}
+          dimension={dimension}
+          selectedCodes={selectedCodes}
+          rows={availableRegions}
+          rowsLoading={rowsLoading}
+          onDimensionChange={handleDimensionChange}
+          onSelectedCodesChange={handleCodesChange}
+        />
+
+        <div className="flex flex-col gap-1">
+          <Text type="secondary">Date range</Text>
+          <RangePicker
+            value={dateRange}
+            onChange={handleRangeChange}
+            format="YYYY-MM-DD"
+            allowClear={false}
           />
-
-          <p className="mb-0 text-xs text-neutral-500">
-            {dimension === undefined
-              ? 'Choose a grouping to scope every KPI and chart below.'
-              : 'Every KPI and chart below is calculated for this group.'}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4 border-t border-neutral-200 pt-3">
-            <RangePicker
-              value={dateRange}
-              onChange={handleRangeChange}
-              format="YYYY-MM-DD"
-              allowClear={false}
-            />
-            <Button
-              type="primary"
-              icon={<DownloadIcon isDownloading={isDownloading} />}
-              loading={isDownloading}
-              onClick={handleDownload}
-            >
-              Download CSV
-            </Button>
-          </div>
         </div>
-        {downloadError && (
-          <Alert
-            className="mt-4"
-            type="error"
-            showIcon
-            message={GENERIC_ERROR_MESSAGE}
-            closable
-            onClose={clearError}
-          />
-        )}
-      </Card>
+
+        <Button
+          type="text"
+          disabled={dimension === undefined && selectedCodes.length === 0}
+          onClick={handleResetGroup}
+        >
+          Reset
+        </Button>
+      </div>
+
+      {downloadError && (
+        <Alert
+          type="error"
+          showIcon
+          message={GENERIC_ERROR_MESSAGE}
+          closable
+          onClose={clearError}
+        />
+      )}
 
       {/* Error */}
       {error && (
@@ -442,136 +548,90 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
           <div className="flex flex-col gap-6">
             {/* KPI row */}
             <Row gutter={[16, 16]}>
-              <Col xs={24} sm={6}>
+              <Col xs={24} sm={12} xl={6}>
                 <Card>
-                  <Statistic
-                    // "Total" would overclaim on a grouped page.
+                  <Kpi
                     title={
                       dimension === undefined
                         ? 'Total Interactions'
                         : 'Interactions in Group'
                     }
                     value={summary.totalNotes}
+                    caption={
+                      dimension === undefined
+                        ? 'In the selected date range'
+                        : 'Inside the selected group'
+                    }
                   />
                 </Card>
               </Col>
-              <Col xs={24} sm={6}>
+              <Col xs={24} sm={12} xl={6}>
                 <Card>
-                  <Metric
+                  <Kpi
                     title="Unique Clients"
                     value={summary.uniqueClients}
-                    // Zero here while interactions exist reads as "you served nobody". It is
-                    // the same zero as "nothing is recorded", and those are different claims.
-                    emptyHint="No clients recorded on these interactions"
-                    hasData={summary.totalNotes > 0}
+                    empty={
+                      summary.uniqueClients === 0 && summary.totalNotes > 0
+                    }
+                    caption={
+                      summary.totalNotes === 0
+                        ? 'No interactions in range'
+                        : summary.uniqueClients === 0
+                          ? 'No clients recorded'
+                          : 'Distinct clients in range'
+                    }
                   />
                 </Card>
               </Col>
-              <Col xs={24} sm={6}>
+              <Col xs={24} sm={12} xl={6}>
                 <Card>
-                  <Metric
+                  <Kpi
                     title="Active Teams"
                     value={summary.notesByTeam?.length ?? 0}
-                    emptyHint="No team recorded on these interactions"
-                    hasData={summary.totalNotes > 0}
+                    empty={
+                      (summary.notesByTeam?.length ?? 0) === 0 &&
+                      summary.totalNotes > 0
+                    }
+                    caption={
+                      summary.totalNotes === 0
+                        ? 'No interactions in range'
+                        : (summary.notesByTeam?.length ?? 0) === 0
+                          ? 'No team recorded'
+                          : 'Teams with interactions'
+                    }
                   />
                 </Card>
               </Col>
-              <Col xs={24} sm={6}>
+              <Col xs={24} sm={12} xl={6}>
                 <Card>
-                  <Statistic
+                  <Kpi
                     title="Top 15 Provided Services"
                     value={topProvidedServicesTotal}
+                    caption={
+                      topProvidedServicesTotal === 0
+                        ? 'No services recorded'
+                        : 'Across the top 15 services'
+                    }
                   />
                 </Card>
               </Col>
             </Row>
 
-            {/* Charts */}
-            <Row gutter={[16, 16]}>
-              {(summary.notesByDate?.length ?? 0) > 0 && (
-                <Col xs={24} lg={12}>
-                  <ChartCard title="Interactions Over Time">
-                    <Column
-                      data={summary.notesByDate}
-                      xField="date"
-                      yField="count"
-                      height={300}
-                      axis={AXIS_DATES_INTERACTIONS}
-                      style={CHART_STYLE.primary}
-                    />
+            {/* Charts. Auto-fit: one chart fills the row, two or more tile without a hole. */}
+            {charts.length > 0 && (
+              <div
+                className="grid gap-4"
+                style={{
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
+                }}
+              >
+                {charts.map(({ key, title, body }) => (
+                  <ChartCard key={key} title={title}>
+                    {body}
                   </ChartCard>
-                </Col>
-              )}
-
-              {(summary.uniqueClientsByDate?.length ?? 0) > 0 && (
-                <Col xs={24} lg={12}>
-                  <ChartCard title="Unique Clients Over Time">
-                    <Column
-                      data={summary.uniqueClientsByDate}
-                      xField="date"
-                      yField="count"
-                      height={300}
-                      axis={AXIS_DATES_CLIENTS}
-                      style={CHART_STYLE.purple}
-                    />
-                  </ChartCard>
-                </Col>
-              )}
-
-              {(summary.notesByTeam?.length ?? 0) > 0 && (
-                <Col xs={24} lg={12}>
-                  <ChartCard title="Interactions by Team">
-                    <Column
-                      data={summary.notesByTeam}
-                      xField="name"
-                      yField="count"
-                      height={300}
-                      axis={AXIS_NAMES_COUNT}
-                      style={CHART_STYLE.primary}
-                    />
-                  </ChartCard>
-                </Col>
-              )}
-
-              {(summary.notesByPurpose?.length ?? 0) > 0 && (
-                <Col xs={24} lg={12}>
-                  <ChartCard title="Top Purposes">
-                    <PurposeChart purposes={summary.notesByPurpose} />
-                  </ChartCard>
-                </Col>
-              )}
-
-              {(summary.topProvidedServices?.length ?? 0) > 0 && (
-                <Col xs={24} lg={12}>
-                  <ChartCard title="Top Provided Services">
-                    <Column
-                      data={summary.topProvidedServices}
-                      xField="name"
-                      yField="count"
-                      height={300}
-                      axis={AXIS_NAMES_COUNT}
-                      style={CHART_STYLE.success}
-                    />
-                  </ChartCard>
-                </Col>
-              )}
-
-              {(summary.topRequestedServices?.length ?? 0) > 0 && (
-                <Col xs={24} lg={12}>
-                  <ChartCard title="Top Requested Services">
-                    <Column
-                      data={summary.topRequestedServices}
-                      xField="name"
-                      yField="count"
-                      height={300}
-                      axis={AXIS_NAMES_COUNT}
-                      style={CHART_STYLE.warning}
-                    />
-                  </ChartCard>
-                </Col>
-              )}
-            </Row>
+                ))}
+              </div>
+            )}
 
             {/* Reuses the page's date range, org and group. */}
             {activeOrg && (

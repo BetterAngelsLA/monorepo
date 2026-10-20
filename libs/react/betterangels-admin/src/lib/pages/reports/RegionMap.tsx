@@ -207,6 +207,8 @@ type RegionMapProps = {
   /** The report window, as `YYYY-MM-DD`, so the grid matches the table beneath it. */
   startDate: string;
   endDate: string;
+  /** Map height in pixels; the split layout gives it less than the full-width one. */
+  height?: number;
   className?: string;
 };
 
@@ -231,6 +233,7 @@ export function RegionMap({
   organizationId,
   startDate,
   endDate,
+  height = 560,
   className = '',
 }: RegionMapProps) {
   const mapColors = useMapColors();
@@ -390,7 +393,7 @@ export function RegionMap({
         >
           <GoogleMap
             id="admin-region-map"
-            style={{ width: '100%', height: 560, borderRadius: 6 }}
+            style={{ width: '100%', height, borderRadius: 6 }}
             defaultCenter={LA_CENTER}
             defaultZoom={LA_ZOOM}
             gestureHandling="cooperative"

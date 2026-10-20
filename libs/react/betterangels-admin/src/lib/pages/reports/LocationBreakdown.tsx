@@ -46,14 +46,6 @@ type LocationBreakdownProps = {
   className?: string;
 };
 
-/** antd's data-format spec: show `-` when there is no value. */
-function renderCode(code: string) {
-  if (!code) {
-    return <Text type="secondary">-</Text>;
-  }
-  return code;
-}
-
 /**
  * Interactions grouped by geography.
  *
@@ -202,13 +194,9 @@ export function LocationBreakdown({
       title: dimensionName,
       dataIndex: 'name',
       key: 'name',
+      // The name already contains the code for every dimension ("90012", "2 - Adrin
+      // Nazarian"), so a separate Code column only repeated it.
       render: (_: string, row: RegionCountType) => displayName(row),
-    },
-    {
-      title: 'Code',
-      dataIndex: 'code',
-      key: 'code',
-      render: renderCode,
     },
     {
       title: 'Interactions',
@@ -222,6 +210,27 @@ export function LocationBreakdown({
       defaultSortOrder: 'descend',
     },
   ];
+
+  const unassignedPanel =
+    !rowsLoading && unassigned.length > 0 ? (
+      <div className="rounded border border-neutral-200 bg-white p-3">
+        <Text strong>{unassignedTitle}</Text>
+        <ul className="mt-2 mb-0 list-none space-y-1 p-0 text-sm">
+          {unassigned.map((row) => (
+            <li
+              key={`${row.kind}-${row.unassignedReason ?? ''}-${row.code}`}
+              className="flex items-baseline gap-2"
+            >
+              <span className="text-neutral-700">
+                {unassignedRowLabel(row, dimensions, dimension)}
+              </span>
+              <Text strong>{row.count.toLocaleString()}</Text>
+              <Text type="secondary">interactions</Text>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
 
   if (panelError) {
     return (
@@ -256,9 +265,9 @@ export function LocationBreakdown({
         />
       }
     >
-      {/* The grouping and region controls sit at the top of the page, because they now scope
-          every chart as well as this card. Keeping a second copy here would give the reader two
-          places to change one setting, and the one above the charts is the one that matters. */}
+      {/* One card, two views of the same data. Wide screens put the table beside the map so
+          overview and detail are visible together; below xl they stack. The grouping controls
+          live at the top of the page, because they scope every chart too. */}
 
       {rowsLoading && (
         <div className="flex items-center gap-2 text-sm text-neutral-500">
@@ -272,9 +281,15 @@ export function LocationBreakdown({
         </p>
       )}
 
-      <div ref={triggerRef}>
-        {hasLocatedRows && (
-          <div className="mb-5">
+      <div
+        className={
+          dimension === undefined
+            ? 'flex flex-col gap-4'
+            : 'grid gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'
+        }
+      >
+        <div ref={triggerRef}>
+          {hasLocatedRows && (
             <RegionMap
               dimension={dimension}
               points={points}
@@ -292,93 +307,65 @@ export function LocationBreakdown({
               organizationId={organizationId}
               startDate={startDate}
               endDate={endDate}
+              height={dimension === undefined ? 500 : 420}
             />
+          )}
+        </div>
+
+        {dimension === undefined ? (
+          <div className="flex flex-col gap-4">
+            {hasLocatedRows && (
+              /*
+               * One item, because a *table* of every dimension cannot be read as a total. The six
+               * dimensions are six views of the same interactions, so summing their rows gave
+               * 6,588 against a true total of 1,098. Choosing one also scopes the charts above.
+               */
+              <div className="rounded border border-neutral-200 bg-white p-4">
+                <Text strong>Choose a grouping for the regional breakdown</Text>
+                <p className="mt-1 mb-0 text-sm text-neutral-600">
+                  Each dimension covers the same interactions a different way,
+                  so their rows can not be added together. Pick one to see its
+                  regions and to scope the KPIs and charts above.
+                </p>
+              </div>
+            )}
+            {unassignedPanel}
+          </div>
+        ) : (
+          <div className="flex min-w-0 flex-col gap-4">
+            {hasData && (
+              <>
+                {/* The drill-down is empty while the range is not: distinct from "no located
+                    interactions for this range" above, which is about the range itself. */}
+                {!rowsLoading &&
+                  selectedCodes.length > 0 &&
+                  assigned.length === 0 && (
+                    <p className="text-center text-sm text-neutral-500">
+                      No interactions in the selected regions for this range.
+                    </p>
+                  )}
+                <Table<RegionCountType>
+                  size="small"
+                  // The named regions of this dimension; a code is unique within one. `kind` is
+                  // in the key so it stays unique if the rollup ever spans dimensions, though
+                  // this table only renders with one selected.
+                  rowKey={(row) => `${row.kind}-${row.code}`}
+                  columns={columns}
+                  dataSource={assigned}
+                  // The table owns its own loading state rather than the page swapping in a
+                  // spinner: replacing the content unmounts `RegionMap` and rebuilds the map.
+                  loading={rowsLoading}
+                  pagination={{ pageSize: 8, hideOnSinglePage: true }}
+                />
+              </>
+            )}
+
+            {/* Reachable in both views: an ungrouped reader must still see that some
+                interactions could not be attributed to anything. */}
+            {unassignedPanel}
           </div>
         )}
       </div>
-
-      {hasLocatedRows && dimension === undefined && (
-        /*
-         * One item, because a *table* of every dimension cannot be read as a total.
-         *
-         * The six dimensions partition the same interactions, so their rows are six views of
-         * one population rather than six groups of it. Summing them gave 6,588 against a true
-         * total of 1,098 — six times over — and listing 133 rows invited exactly that
-         * addition. The count of unassigned interactions is the same trap: 318 is six partial
-         * counts (council district 291, city 23, and 1 each for the other four), not one
-         * bucket.
-         *
-         * So this asks the reader to choose a dimension rather than showing them a number
-         * that cannot be added up. Choosing one also scopes the KPIs and charts above, which is
-         * why the group control is at the top of the page rather than in this card.
-         */
-        <div className="mt-4 rounded border border-neutral-200 bg-white p-4">
-          <Text strong>Choose a grouping for the regional breakdown</Text>
-          <p className="mt-1 mb-0 text-sm text-neutral-600">
-            Each dimension covers the same interactions a different way, so
-            their rows can not be added together. Pick one to see its regions
-            and to scope the KPIs and charts above to that geography.
-          </p>
-        </div>
-      )}
-
-      {hasData && dimension !== undefined && (
-        <>
-          {/* The drill-down is empty while the range is not: distinct from "no located
-              interactions for this range" above, which is about the range itself. */}
-          {!rowsLoading &&
-            selectedCodes.length > 0 &&
-            assigned.length === 0 && (
-              <p className="mt-4 text-center text-sm text-neutral-500">
-                No interactions in the selected regions for this range.
-              </p>
-            )}
-          <Table<RegionCountType>
-            className="mt-4"
-            size="small"
-            // The named regions of this dimension; a code is unique within one. `kind` is in the
-            // key so it stays unique if the rollup ever spans dimensions, though this table only
-            // renders with one selected.
-            rowKey={(row) => `${row.kind}-${row.code}`}
-            columns={columns}
-            dataSource={assigned}
-            // The table owns its own loading state rather than the page swapping in a
-            // spinner: replacing the content unmounts `RegionMap`, which tears down and
-            // rebuilds the Google map and collapses the page height, so the reader's scroll
-            // position jumps. `rowsLoading` also drives the inline indicator above.
-            loading={rowsLoading}
-            pagination={{ pageSize: 10, hideOnSinglePage: true }}
-          />
-        </>
-      )}
-
-      {/* Reachable in both views: an ungrouped reader — the default view — must still see that
-          some interactions could not be attributed to anything. It is one figure per bucket and
-          it does not invite the cross-dimension sum the grouped view exists to avoid. */}
-      {!rowsLoading && unassigned.length > 0 && (
-        // Readable rather than grey-on-grey, which read as disabled. The dimension is named
-        // when there is one, because without it every row says the same thing: one unassigned
-        // row per dimension, all labelled "Outside all boundaries", so 23 and 291 looked like
-        // duplicates of each other instead of two different groupings. Ungrouped, each row
-        // names its own dimension instead (see `unassignedRowLabel`).
-        <div className="mt-4 rounded border border-neutral-200 bg-white p-3">
-          <Text strong>{unassignedTitle}</Text>
-          <ul className="mt-2 mb-0 list-none space-y-1 p-0 text-sm">
-            {unassigned.map((row) => (
-              <li
-                key={`${row.kind}-${row.unassignedReason ?? ''}-${row.code}`}
-                className="flex items-baseline gap-2"
-              >
-                <span className="text-neutral-700">
-                  {unassignedRowLabel(row, dimensions, dimension)}
-                </span>
-                <Text strong>{row.count.toLocaleString()}</Text>
-                <Text type="secondary">interactions</Text>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </ChartCard>
   );
 }
