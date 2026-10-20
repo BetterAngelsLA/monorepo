@@ -25,7 +25,8 @@ export function downloadBlobInBrowser(
   try {
     return downloadInBrowser(url, filename);
   } finally {
-    // Let the browser start the download before the object URL is revoked.
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    // Safari/Android WebView can still be reading the blob right after the
+    // click; revoking at 0 ms intermittently cancels the download.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 }

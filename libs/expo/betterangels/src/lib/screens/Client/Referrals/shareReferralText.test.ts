@@ -306,3 +306,15 @@ it('reports a clear failure when the browser can neither share nor download', as
     /unavailable in this browser/,
   );
 });
+
+it('does not download when the user dismisses the browser share sheet', async () => {
+  setPlatform('web');
+  const cancel = Object.assign(new Error('Share canceled'), {
+    name: 'AbortError',
+  });
+  vi.spyOn(Share, 'share').mockRejectedValueOnce(cancel);
+
+  await shareReferralText(copy);
+
+  expect(browser.download).not.toHaveBeenCalled();
+});

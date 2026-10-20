@@ -73,12 +73,18 @@ describe('downloadBlobInBrowser', () => {
     expect(blobArgs?.type).toBe('image/png');
   });
 
-  it('revokes the object URL after the click', () => {
+  it('revokes the object URL only after the browser has had time to read it', () => {
     vi.useFakeTimers();
     try {
       downloadBlobInBrowser('hello', 'note.txt', 'text/plain');
       expect(revoked).toEqual([]);
-      vi.runAllTimers();
+
+      // Safari/WebViews can still be reading the blob immediately after the
+      // click, so a 0 ms revoke intermittently cancels the download.
+      vi.advanceTimersByTime(999);
+      expect(revoked).toEqual([]);
+
+      vi.advanceTimersByTime(1);
       expect(revoked).toEqual(created);
     } finally {
       vi.useRealTimers();

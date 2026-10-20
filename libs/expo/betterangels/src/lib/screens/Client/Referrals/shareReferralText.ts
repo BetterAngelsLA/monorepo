@@ -30,7 +30,10 @@ export async function shareReferralText(copy: ReferralTextCopy) {
         { subject: copy.title, dialogTitle: 'Share referral text' },
       );
       return;
-    } catch {
+    } catch (error) {
+      // Dismissing the browser share sheet is a user decision, not a failure:
+      // do not turn a cancel into a surprise download.
+      if ((error as { name?: string } | null)?.name === 'AbortError') return;
       // No Web Share API (most desktop browsers): hand over a text download
       // rather than leaving the button dead.
       if (
@@ -41,7 +44,11 @@ export async function shareReferralText(copy: ReferralTextCopy) {
         )
       )
         return;
-      throw new Error('Sharing is unavailable in this browser');
+      // `new Error(msg, { cause })` needs lib ES2022; the app targets ES2020.
+      throw Object.assign(
+        new Error('Sharing is unavailable in this browser'),
+        { cause: error },
+      );
     }
   }
 
