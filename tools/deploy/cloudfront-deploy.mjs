@@ -67,21 +67,16 @@ console.log('✅ S3 sync complete.');
  * invalidating them cannot change what is served — the enumeration was an
  * optimization nobody measured, and one path is the cheapest thing CloudFront
  * processes.
+ *
+ * Nothing waits for the invalidation to complete. Confirming it needs
+ * `cloudfront:GetInvalidation`, which the deploy role does not carry (it only
+ * has `cloudfront:CreateInvalidation`), so the check cannot run from here. What
+ * follows — the e2e step, which installs the browser before it starts — is the
+ * gap the edge gets in practice. If the role ever gains that permission,
+ * `aws cloudfront wait invalidation-completed --id <id>` belongs here.
  */
 const invalidationId = execSync(
   `aws cloudfront create-invalidation --distribution-id "${CF_DISTRIBUTION_ID}" --paths "${cfPath}/*" --query 'Invalidation.Id' --output text --no-cli-pager`,
   { encoding: 'utf8' },
 ).trim();
 console.log(`✅ CloudFront invalidation sent: ${invalidationId}`);
-
-/*
- * Wait for the edge rather than polling the deployed HTML ourselves: a deploy
- * that reports success while the previous revision is still being served would
- * make the e2e run describe someone else's code. AWS already knows when the
- * invalidation completes, and its waiter gives up on its own.
- */
-execSync(
-  `timeout 300 aws cloudfront wait invalidation-completed --distribution-id "${CF_DISTRIBUTION_ID}" --id "${invalidationId}" --no-cli-pager`,
-  { stdio: 'inherit' },
-);
-console.log('✅ Edge is serving the new revision.');
