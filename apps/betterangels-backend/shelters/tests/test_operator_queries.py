@@ -1,6 +1,7 @@
 import datetime
 from typing import Any, Optional, cast
 
+from django.contrib.auth.models import Permission
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -893,3 +894,94 @@ class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
         self.assertEqual(contacts[0]["contactEmail"], "ada@example.org")
         self.assertEqual(contacts[0]["contactTitle"], "Director")
         self.assertTrue(contacts[0]["isClaimant"])
+
+
+class OperatorShelterBAReviewTestCase(GraphQLBaseTestCase):
+    """The BA review fields are a global-tier (GSO-only) domain (ADR 0001 §2.4).
+
+    A scoped shelter operator — even one holding the BA review perms through a
+    Grant — reads ``null``, while a global Role (the Global Shelter Operator, or
+    any global Role carrying the perms) sees the values.
+    """
+
+    BA_REVIEW_QUERY = """
+        query OperatorShelter($pk: ID!) {
+            operatorShelter(pk: $pk) {
+                id
+                overallRating
+                subjectiveReview
+                declinedBaVisit
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.shelter = shelter_recipe.make(
+            organization=self.org_1,
+            overall_rating=4,
+            subjective_review="Clean and well run",
+            declined_ba_visit=True,
+        )
+
+    def _assign_global_role(self, *perms: str) -> None:
+        role, _ = Role.objects.get_or_create(name="Global BA Review Editor", defaults={"is_global": True})
+        for perm in perms:
+            app_label, codename = perm.split(".")
+            role.permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        self.org_1_case_manager_1.groups.add(role)
+
+    def _review(self) -> dict:
+        response = self.execute_graphql(self.BA_REVIEW_QUERY, {"pk": str(self.shelter.pk)})
+        self.assertIsNone(response.get("errors"))
+        return cast(dict, response["data"]["operatorShelter"])
+
+    def test_ba_review_hidden_for_scoped_operator(self) -> None:
+        review = self._review()
+
+        self.assertIsNone(review["overallRating"])
+        self.assertIsNone(review["subjectiveReview"])
+        self.assertIsNone(review["declinedBaVisit"])
+
+    def test_ba_review_hidden_for_granted_scoped_ba_review_role(self) -> None:
+        """A scoped role carrying the BA review perms plus a Grant still fails.
+
+        Adversarial on purpose: ``can_anywhere`` would admit this user, so only
+        a global-tier check keeps the gate closed (SDB-277).
+        """
+        self._grant_permission(
+            self.org_1_case_manager_1,
+            Shelter.perms.VIEW_BA_REVIEW,
+            self.org_1,
+            role_name="Scoped BA Reviewer",
+        )
+
+        review = self._review()
+
+        self.assertIsNone(review["overallRating"])
+        self.assertIsNone(review["subjectiveReview"])
+        self.assertIsNone(review["declinedBaVisit"])
+
+    def test_ba_review_visible_for_global_shelter_operator(self) -> None:
+        role_assign(
+            user=self.org_1_case_manager_1,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
+
+        review = self._review()
+
+        self.assertEqual(review["overallRating"], 4)
+        self.assertEqual(review["subjectiveReview"], "Clean and well run")
+        self.assertTrue(review["declinedBaVisit"])
+
+    def test_ba_review_visible_for_global_role_with_change_only(self) -> None:
+        """``change`` implies ``view``: an editor must be able to read what it edits."""
+        self._assign_global_role(Shelter.perms.CHANGE_BA_REVIEW)
+
+        review = self._review()
+
+        self.assertEqual(review["overallRating"], 4)
+        self.assertEqual(review["subjectiveReview"], "Clean and well run")
+        self.assertTrue(review["declinedBaVisit"])

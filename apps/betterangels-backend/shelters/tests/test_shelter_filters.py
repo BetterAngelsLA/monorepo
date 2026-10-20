@@ -7,6 +7,8 @@ from django.test.utils import CaptureQueriesContext
 from places import Places
 from unittest_parametrize import parametrize
 
+from accounts.models import Role
+from accounts.services import role_assign
 from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import (
     AccessibilityChoices,
@@ -19,6 +21,7 @@ from shelters.enums import (
     StatusChoices,
     StorageChoices,
 )
+from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 from shelters.models import (
     SPA,
     Accessibility,
@@ -1597,7 +1600,17 @@ class OperatorShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(self._result_ids({"supervisorialDistrict": [2]}), {str(match.id)})
 
     def test_overall_rating_filter(self) -> None:
+        role_assign(
+            user=self.org_1_case_manager_1,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
         match = shelter_recipe.make(organization=self.org_1, overall_rating=5)
         shelter_recipe.make(organization=self.org_1, overall_rating=2)
 
         self.assertEqual(self._result_ids({"overallRating": [5]}), {str(match.id)})
+
+    def test_overall_rating_filter_returns_nothing_for_scoped_operator(self) -> None:
+        """The filter is a global-tier read: a scoped operator cannot infer ratings."""
+        shelter_recipe.make(organization=self.org_1, overall_rating=5)
+
+        self.assertEqual(self._result_ids({"overallRating": [5]}), set())

@@ -248,8 +248,11 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
         ``django.core.exceptions.PermissionDenied`` when the user may not add
         shelters in the target organization.
     """
-    data = dict(data)
+    # Callers say "not supplied" with None; downstream reads a key as "supplied".
+    data = {k: v for k, v in data.items() if v is not None}
+
     _require_permission_on_ba_review_change(user, data)
+
     organization_id = data.get("organization_id")
     if not organization_id:
         raise ValidationError({"organization_id": "An organization is required to create a shelter."})
