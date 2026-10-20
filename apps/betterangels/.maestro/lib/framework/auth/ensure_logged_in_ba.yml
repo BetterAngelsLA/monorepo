@@ -12,5 +12,12 @@ appId: ${MAESTRO_APP_ID}
         id: unauthorized-root
     file: login_ba.yml
 
-- assertVisible:
-    id: authorized-root
+# Wait, rather than assert: the dev client shows its native
+# "Loading from Metro…" splash until the JS bundle is fetched, and none of the
+# app's testIDs exist until then. A bare assert fails on that splash, and the
+# `authorized-pending` wait above passes vacuously because the element is
+# absent rather than settled. This also covers slow cold starts on CI.
+- extendedWaitUntil:
+    visible:
+      id: authorized-root
+    timeout: 60000
