@@ -280,17 +280,17 @@ class ShelterType(ShelterTypeMixin):
 # Operator list reads: the ``*_queryset`` wrappers below are the reach-scoped,
 # fail-closed gate; the query's own ``filters`` variable only narrows the view.
 class OperatorShelterType(ShelterTypeMixin):
-    @strawberry_django.field
+    @strawberry_django.field(only=["overall_rating"])
     def overall_rating(self, root: models.Shelter, info: Info) -> Optional[int]:
         """BA-only review field — global-tier gate (ADR 0001 §2.4)."""
         return root.overall_rating if can_view_ba_review(info) else None
 
-    @strawberry_django.field
+    @strawberry_django.field(only=["subjective_review"])
     def subjective_review(self, root: models.Shelter, info: Info) -> Optional[str]:
         """BA-only review field — global-tier gate (ADR 0001 §2.4)."""
         return root.subjective_review if can_view_ba_review(info) else None
 
-    @strawberry_django.field
+    @strawberry_django.field(only=["declined_ba_visit"])
     def declined_ba_visit(self, root: models.Shelter, info: Info) -> Optional[bool]:
         """BA-only review field — global-tier gate (ADR 0001 §2.4)."""
         return root.declined_ba_visit if can_view_ba_review(info) else None

@@ -896,7 +896,7 @@ class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
         self.assertTrue(contacts[0]["isClaimant"])
 
 
-class OperatorShelterBAReviewTestCase(GraphQLBaseTestCase):
+class OperatorShelterBAReviewTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     """The BA review fields are a global-tier (GSO-only) domain (ADR 0001 §2.4).
 
     A scoped shelter operator — even one holding the BA review perms through a
@@ -985,3 +985,49 @@ class OperatorShelterBAReviewTestCase(GraphQLBaseTestCase):
         self.assertEqual(review["overallRating"], 4)
         self.assertEqual(review["subjectiveReview"], "Clean and well run")
         self.assertTrue(review["declinedBaVisit"])
+
+    OPERATOR_SHELTERS_BA_REVIEW_QUERY = """
+        query OperatorSheltersReviewFields {
+            operatorShelters {
+                results {
+                    id
+                    overallRating
+                    subjectiveReview
+                    declinedBaVisit
+                }
+            }
+        }
+    """
+
+    def _make_shelters(self, count: int) -> None:
+        for _ in range(count):
+            shelter_recipe.make(organization=self.org_1)
+
+    @parametrize(
+        "viewer, expected_query_count",
+        [
+            ("global", 4),
+            ("grant", 9),
+        ],
+    )
+    def test_operator_shelters_review_fields_query_count(self, viewer: str, expected_query_count: int) -> None:
+        """The review columns ride the parent SELECT instead of one query per row.
+
+        The model hints for a custom resolver come only from its own ``only=``,
+        so a list read that omits them defers each column and pays one extra
+        ``SELECT`` per row per field. A granted (scoped) viewer pays nothing
+        extra either way: the gate returns ``None`` without touching the column.
+        """
+        if viewer == "global":
+            role_assign(
+                user=self.org_1_case_manager_1,
+                role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+            )
+        self._make_shelters(4)
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.OPERATOR_SHELTERS_BA_REVIEW_QUERY)
+
+        self.assertIsNone(response.get("errors"))
+        results = response["data"]["operatorShelters"]["results"]
+        self.assertEqual(len(results), 5)
