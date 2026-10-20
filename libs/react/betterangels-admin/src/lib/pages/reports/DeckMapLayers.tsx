@@ -401,19 +401,14 @@ export function DeckMapLayers({
   /** Pending deferred teardown, so a re-mount can cancel it; see the effect below. */
   const teardownRef = useRef<number | null>(null);
 
-  // The endpoint spellings and query strings live in `api/reports`; this component only decides
-  // which of them to draw. The boundary template is absolute because deck.gl fetches it
-  // directly, and `regionTileUrl` lowercases the dimension to the wire `kind`.
+  // Endpoint spellings live in `api/reports`; the template is absolute for deck.gl.
   let boundaryUrl: string | null = null;
   if (regionKind) {
     boundaryUrl = regionTileUrl(apiUrl, regionKind);
   }
 
-  // The density grid's own query string: the org and the window, plus the region pair only
-  // when the reader has drilled into regions. A *grouping* with nothing selected deliberately
-  // does not appear — a group-by re-partitions the same interactions rather than selecting
-  // different ones, so sending it would change the URL and refetch identical tiles on every
-  // group-by. `densityTileUrl` sorts the codes for the same caching reason.
+  // Only a region drill-down travels: a bare grouping must not change the URL, or every
+  // group-by refetches identical tiles. `densityTileUrl` sorts the codes for the same cache.
   const densityUrl = useMemo(() => {
     if (!organizationId || !startDate || !endDate) {
       return null;

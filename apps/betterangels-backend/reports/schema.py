@@ -64,17 +64,9 @@ class Query:
         global tier.  Membership is not consulted; a legacy-only holder fails
         closed; an unknown org id fails closed.
 
-        ``dimension``/``regionCodes`` scope the whole summary — the KPIs and every chart — to
-        interactions inside a geographic group. They are the same pair the location breakdown
-        and the map read, and they follow ``resolve_group_scope``: naming a dimension alone
-        means every region of that dimension, adding codes narrows to those regions, and codes
-        without a dimension are refused because a code is ambiguous across dimensions. The
-        filter is applied to the note queryset before aggregation, so no chart can be left
-        unscoped while its neighbours are narrowed.
-
-        A group is a *scope*, not a display choice: choosing City excludes interactions whose
-        address falls in no city, which is why the summary can legitimately be smaller than an
-        ungrouped one. The breakdown's "not attributed to a city" figure names that remainder.
+        ``dimension``/``regionCodes`` scope every KPI and chart; see ``resolve_group_scope``.
+        A group is a scope, not a display choice: choosing City excludes interactions in no
+        city, which is why the total can be smaller than the ungrouped one.
         """
         user = cast(AccountUser, get_current_user(info))
         org = org_or_deny(organization_id)
@@ -87,9 +79,7 @@ class Query:
                 dimension=dimension.value if dimension else None, codes=region_codes
             )
         except RegionScopeError as error:
-            # Same channel and same branchable `errorCode` as `interactionMap` and the density
-            # tile: one refusal vocabulary across the report's surfaces. See
-            # `docs/graphql_errors.md` §2.
+            # Same channel and error codes as `interactionMap`; see docs/graphql_errors.md §2.
             raise GraphQLError(
                 str(error),
                 extensions={

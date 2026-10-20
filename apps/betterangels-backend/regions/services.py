@@ -219,24 +219,12 @@ def resolve_region_scope(*, dimension: str | None, codes: Sequence[str] | None) 
 
 
 def resolve_group_scope(*, dimension: str | None, codes: Sequence[str] | None) -> tuple[str | None, list[str] | None]:
-    """The ``(dimension, codes)`` reading for a **group filter** — the report summary's scope.
+    """The report summary's reading of ``(dimension, codes)``.
 
-    A group is a dimension first — "show me cities" — and a set of its regions second — "show
-    me Beverly Hills and Culver City". So this agrees with :func:`resolve_region_scope` on the
-    ambiguous cases and differs on exactly one: a ``dimension`` with no codes means **every
-    region of that dimension**, where the map's resolver refuses it.
-
-    The refusal would be wrong here. The map only draws pins, so a bare dimension has nothing
-    to narrow and the caller is asking it a question it cannot answer; the summary, by contrast,
-    can answer "all cities" — it is the population the breakdown below it already groups into
-    rows. Refusing it would leave the reader who chose a grouping looking at an unfiltered page.
-
-    The other two shapes match ``resolve_region_scope``: ``codes is None`` is no restriction,
-    and ``[]`` names no region so it matches nothing. A non-empty code list still requires a
-    dimension, for the same reason codes are not unique across dimensions.
-
-    Returns ``(dimension, codes)``; ``codes is None`` means every region of ``dimension``, and
-    ``(None, None)`` is the unfiltered report.
+    Differs from :func:`resolve_region_scope` in one way: a dimension with no codes means every
+    region of it ("all cities"), not an error. That is a meaningful population for the summary,
+    though not for the map. ``[]`` still matches nothing, and non-empty codes still require a
+    dimension.
     """
     if dimension is None:
         if codes:
@@ -246,8 +234,7 @@ def resolve_group_scope(*, dimension: str | None, codes: Sequence[str] | None) -
                 field="regionCodes",
             )
         if codes is not None:
-            # An explicitly empty list names no region, and with no dimension it cannot be
-            # resolved into one either: it matches nothing.
+            # No dimension and no named region: an empty selection is an answer of zero.
             return None, []
         return None, None
     return dimension, None if codes is None else list(codes)

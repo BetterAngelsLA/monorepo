@@ -32,12 +32,8 @@ type UseReportSummaryArgs = {
  *
  * `loading` still reports the truth, so the page can show that it is working.
  *
- * **The group travels in the same request as the range.** Scoping the charts is a filter on the
- * same note population, not a second dataset, so sending them together is what makes the KPIs
- * and all six charts agree with the location breakdown below them. `dimension` alone is the
- * "every region of this grouping" scope the backend resolves; `regionCodes` is only sent when
- * the reader narrowed to specific regions, so an empty selection is not mistaken for a request
- * for nothing.
+ * The group travels with the range: `dimension` alone means every region of it, and
+ * `regionCodes` is sent only when some are selected.
  */
 export function useReportSummary({
   organizationId,
@@ -55,8 +51,8 @@ export function useReportSummary({
       startDate,
       endDate,
       dimension,
-      // An empty list is a real (empty) selection; an absent list means every region of the
-      // grouping. Only send codes when there are some.
+      // An empty list is a selection of nothing; omit it so the backend scopes to the
+      // dimension.
       regionCodes: regionCodes?.length ? regionCodes : undefined,
     },
     skip: !organizationId,

@@ -35,17 +35,9 @@ type ReportGroupControlsProps = {
 };
 
 /**
- * The page's geographic group: an optional dimension, and optionally some of its regions.
- *
- * Sits at the top of the Reports page because it is a **scope**, not a display option: every
- * KPI and every chart below it is calculated over the same group, and so are the map and the
- * table at the bottom. It used to live inside the location card, where changing it visibly
- * re-partitioned the table while leaving the charts above untouched — the numbers disagreed
- * with the page they were on.
- *
- * The state belongs to the page rather than this component: the summary query, the rollup and
- * the map all have to read the same selection, and a control that owned it would be the only
- * thing that knew what the charts were showing.
+ * The page's geographic group: optional dimension, optional regions. This is a scope — the
+ * KPIs, charts, map and table all read it — so it sits at the top of the page, and the page owns
+ * the state.
  */
 export function ReportGroupControls({
   dimensions,
@@ -63,14 +55,8 @@ export function ReportGroupControls({
     [dimensions],
   );
 
-  // The picker's set is the *unfiltered* rollup, for the same reason the multi-select could
-  // never work from a filtered one: choosing one region would remove the others from the list
-  // and the reader could never select a second.
-  //
-  // Filtered to the current dimension by `kind`, because the rollup keeps the previous rows
-  // while a new dimension loads — one dimension's codes are not another's, and offering a
-  // council district while the reader is looking at cities would let them pick a region the
-  // page is not asking about.
+  // Options come from the unfiltered rollup so selecting one region does not remove the
+  // others; filtered by `kind` because the previous dimension's rows linger while it loads.
   const selectable = useMemo(() => {
     const rowsForDimension = regionBreakdownView(rows, []).selectable;
     if (dimension === undefined) {
@@ -130,22 +116,16 @@ export function ReportGroupControls({
             aria-label="Group by"
             // Clears to "All dimensions" — the summary then spans the whole organisation.
             allowClear
-            // Without this the page's primary control is an empty dropdown with a placeholder
-            // and no busy state while the dimensions are in flight.
+            // Busy state while the dimensions are in flight.
             loading={dimensionsLoading}
             value={dimension}
-            // The codes are cleared by the page **in the same batch** as the dimension,
-            // because they are only meaningful within it ("4" is an SPA and also a Long Beach
-            // council district). A stale pair would fetch a region the reader never picked.
+            // The page clears the codes in the same batch; they are dimension-specific.
             onChange={onDimensionChange}
             style={{ minWidth: 220 }}
             placeholder="All dimensions"
             options={dimensionOptions}
-            // **Not searchable, deliberately.** Six fixed options do not need a search box,
-            // and `showSearch` is the only thing that makes antd's Select input editable:
-            // without it rc-select renders it `readOnly`, and an editable field is what makes
-            // a password manager offer to fill or save it. The multi-select below still needs
-            // search and keeps it.
+            // Not searchable: `showSearch` makes the input editable for password managers, and
+            // six fixed options do not need it.
           />
         )}
       </div>
@@ -153,26 +133,18 @@ export function ReportGroupControls({
       {dimension !== undefined && (
         <div className="flex min-w-0 flex-1 flex-col gap-1 lg:max-w-xl">
           <Text type="secondary">Show</Text>
-          {/* A searchable multi-select with the selection kept visible as removable pills.
-              The dropdown closes on select in multiple mode, which is why the pills — not the
-              open list — are what tells the reader what is selected. */}
+          {/* Searchable multi-select; the pills are what show the selection after it closes. */}
           <Select<string[], RegionOption>
             aria-label="Show regions"
             mode="multiple"
             showSearch
             allowClear
-            // The rollup keeps the previous rows while a dimension change loads, so the list
-            // is briefly stale; the busy state says so rather than making the reader think the
-            // new dimension has no regions.
+            // Rows can be stale while a dimension change loads.
             loading={rowsLoading}
             options={regionOptions}
             value={selectedCodes}
             onChange={onSelectedCodesChange}
-            // Keeps the pills from growing without bound; the overflow is the "+N" chip.
-            // A fixed cap rather than `responsive`: antd's responsive mode renders the
-            // overflow chip even when nothing is hidden, so three selected regions showed a
-            // stray "+ 0 ..." beside them. Capping at two is also more honest — a "+N" that
-            // always means N things you cannot see.
+            // Cap the pills; antd's `responsive` mode renders a stray "+0" chip.
             maxTagCount={2}
             placeholder={`All ${dimensionPlural}`}
             style={{ width: '100%' }}

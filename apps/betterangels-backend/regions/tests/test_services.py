@@ -119,11 +119,9 @@ class ResolveGroupScopeTestCase(SimpleTestCase):
         self.assertEqual(resolve_group_scope(dimension=None, codes=None), (None, None))
 
     def test_a_dimension_without_codes_means_every_region_of_it(self) -> None:
-        """The difference from `resolve_region_scope`: "all cities" is a complete answer.
+        """The difference from `resolve_region_scope`: a lone dimension is a complete group.
 
-        The map refuses this shape because pins have nothing to narrow; the summary's
-        dimension-only view is a real population (the one the city table groups into rows),
-        so refusing it would leave the reader looking at an unfiltered page.
+        The map refuses it; a summary can answer "all cities".
         """
         self.assertEqual(resolve_group_scope(dimension="city", codes=None), ("city", None))
 

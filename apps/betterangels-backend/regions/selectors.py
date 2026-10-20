@@ -47,32 +47,18 @@ REGION_JOIN_SQL = f"""
     JOIN {_LOCATION_TABLE} l ON {REGION_MEMBERSHIP_SQL}
 """
 
-#: The location ids covered by one dimension, optionally narrowed to a set of its codes.
-#:
-#: ``DISTINCT`` because a location may fall in more than one piece of the same region, which
-#: would otherwise join that note once per piece and double-count it.
-#:
-#: The caller binds ``kind`` positionally. Requests are org-confined before this predicate sees
-#: them, so it narrows a scoped queryset rather than confining one. The code arm is appended
-#: below rather than written twice, so the dimension predicate and the membership join cannot
-#: drift between "any region of this dimension" and "these regions of it".
+#: Location ids covered by one dimension, optionally narrowed to codes. ``DISTINCT`` because a
+#: location can fall in more than one piece of the same region. Callers bind positionally.
 _REGION_LOCATIONS_SQL = f"""
     SELECT DISTINCT l.id
     {REGION_JOIN_SQL}
     WHERE rr.kind = %s
 """
 
-#: The location ids a ``(kind, codes)`` selection covers. Returns location ids, one row each.
-#:
-#: The caller binds ``(kind, codes)`` positionally.
+#: The code arm is appended rather than written twice, so the two arms cannot drift.
 REGION_LOCATIONS_SQL = f"{_REGION_LOCATIONS_SQL}      AND rr.code = ANY(%s)\n"
 
-#: The location ids covered by **any** region of one dimension. Returns location ids, one row
-#: each.
-#:
-#: The group filter's dimension-only arm: "show me the cities" without naming a city. A note
-#: whose point falls in no city is excluded, which is the same population the city rollup can
-#: attribute to a bucket. The caller binds ``kind`` positionally.
+#: Any region of one dimension — the group filter's "all cities" arm.
 REGION_KIND_LOCATIONS_SQL = _REGION_LOCATIONS_SQL
 
 
@@ -463,26 +449,8 @@ def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[
 
 
 def scope_notes_to_region_kind(notes: QuerySet[Note], *, kind: str) -> QuerySet[Note]:
-    """Narrow a note queryset to those whose location falls in **any** region of ``kind``.
+    """Notes whose location falls in any region of ``kind`` — the dimension-only group scope.
 
-    The dimension-only arm of the group filter: a reader who chooses "City" without naming a
-    city is asking for every interaction a city boundary contains — not for an error and not
-    for the whole county. It is also what makes the report's charts reconcile with the city
-    table: the rows below the map plus the "not attributed to a city" figure are exactly this
-    population.
-
-    Uses the same boundaries-first semi-join as :func:`scope_notes_to_regions` — the dimension
-    drives, and the GiST index on ``Location.point_geom`` is probed — so the two arms differ
-    only in whether the code predicate is appended.
-
-    **Do not replace this with an ORM ``Exists`` for tidiness.** Measured on the dev fixture
-    (431 regions, 5,685 pieces, 20,000 notes), the summary's count query takes **~41 ms** with
-    this semi-join and **~1.2 s** with the equivalent correlated ``Exists`` over
-    ``RegionPiece``: the ORM shape asks the spatial question once per note instead of once per
-    boundary. ``REGION_KIND_LOCATIONS_SQL`` exists for that reason, not because the ORM could
-    not express the predicate.
-
-    ``kind`` is still required, though no code is: the join has to be told which dimension's
-    boundaries to read, and a note can fall in a city and a council district at once.
+    Kept raw: the ORM ``Exists`` equivalent measured ~1.2 s against ~41 ms.
     """
     return notes.filter(location_id__in=RawSQL(REGION_KIND_LOCATIONS_SQL, (kind,)))

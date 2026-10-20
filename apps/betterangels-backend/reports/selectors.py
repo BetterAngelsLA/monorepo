@@ -165,14 +165,9 @@ def scope_notes_to_group(
     region_kind: str | None,
     region_codes: Sequence[str] | None,
 ) -> QuerySet[Note]:
-    """Narrow *notes* to a resolved group scope — the summary's and the export's filter.
+    """Apply a resolved group to *notes*; shared by the summary and the CSV export.
 
-    The three arms are the ones ``regions.services.resolve_group_scope`` names, kept in one
-    place because both the on-screen figures and the CSV must describe the same population:
-    a dimension alone is every region of it, codes narrow to those regions, and an explicitly
-    empty code list matches nothing rather than everything.
-
-    *notes* arrives already org- and window-scoped; this only narrows it.
+    ``region_codes=None`` means every region of ``region_kind``; ``[]`` matches nothing.
     """
     if region_kind is not None:
         if region_codes is None:
@@ -195,23 +190,9 @@ def report_summary(
     """
     Build the full report summary for an organization and inclusive date range.
 
-    ``region_kind``/``region_codes`` scope **every figure in the summary** to interactions whose
-    location falls in the chosen geography — the same filter the location breakdown below the
-    charts applies, so the KPIs and the table describe one population:
-
-    * ``region_kind is None`` -> the whole organization, unfiltered;
-    * ``region_kind`` with ``region_codes is None`` -> every region of that dimension;
-    * ``region_kind`` with codes -> those regions, and an explicitly empty list matches nothing.
-
-    The scoping is a note-queryset filter, applied once before the aggregates, rather than a
-    predicate restated in each chart query: the six charts and the KPIs read different
-    aggregations of one queryset, so a filter they each applied separately could drift.
-
-    ``region_codes`` without a ``region_kind`` is a programming error rather than a user input
-    shape — the GraphQL resolver normalizes the pair through ``resolve_group_scope`` first —
-    and is refused loudly instead of silently returning the unfiltered organisation.
-
-    Returns a dict ready to be serialized by the GraphQL layer or a DRF view.
+    ``region_kind``/``region_codes`` scope every figure — the KPIs and all six charts — to the
+    chosen geography. The pair is interpreted by ``resolve_group_scope``; the filter is applied
+    once, before the aggregates.
     """
     if region_codes is not None and region_kind is None:
         raise ValueError("region_codes requires a region_kind")

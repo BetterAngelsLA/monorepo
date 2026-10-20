@@ -2,13 +2,7 @@ import { useCallback, useState } from 'react';
 import { interactionExportUrl, type ReportGroup } from '../api/reports';
 import { useApiConfig } from '../providers';
 
-/**
- * Download the Reports CSV for a window and an optional geographic group.
- *
- * The endpoint, its parameters and their spellings live in `api/reports`; this hook owns the
- * browser mechanics (blob, object URL, filename) and the busy/error state. The page passes the
- * same group it shows in the charts, so the file covers the same population.
- */
+/** Download the Reports CSV; the endpoint and params live in `api/reports`. */
 export default function useCSVDownload() {
   const { fetch } = useApiConfig();
   const [isDownloading, setIsDownloading] = useState(false);

@@ -31,21 +31,13 @@ type LocationBreakdownProps = {
   organizationId: string;
   startDate: string;
   endDate: string;
-  /**
-   * The geographic group the page is scoped to. Owned by the page rather than this card:
-   * the same selection filters every chart above, so the control lives at the top of the
-   * screen and this card reads the result. The map and table share it.
-   */
+  /** The page's group; the map and table share it. */
   dimension?: RegionDimension;
   /** Specific regions within `dimension`; empty means every region of it. */
   selectedCodes: string[];
   /** The published dimension vocabulary, for the table's column name and prose. */
   dimensions: DimensionInfo[];
-  /**
-   * The page's **unfiltered** rollup for `dimension`. The drill-down is derived from it
-   * locally; a second, filtered fetch would collapse the reader's selection to the rows it
-   * returned.
-   */
+  /** The page's unfiltered rollup for `dimension`; the drill-down is derived from it. */
   rows: RegionCountType[];
   rowsLoading: boolean;
   /** The dimensions list or the rollup failed, so the card cannot be assembled. */
@@ -88,16 +80,9 @@ export function LocationBreakdown({
   // page, because they also scope every chart above this card.
   const [mapView, setMapView] = useState<MapView>('heatmap');
 
-  // The heatmap is deliberately **not** scoped by the grouping. The grouping scopes the
-  // report's figures (the charts above), where "every city" is a meaningful population; the
-  // density surface stays county-wide so the reader can see a grouping in the context of the
-  // whole service area. Scoping it too would narrow 431 regions to a dozen and throw away the
-  // picture the heatmap exists to show.
-  //
-  // The grouping drives the boundaries drawn *over* the surface instead, which is the usual
-  // separation: the gradient encodes a continuous quantity, the boundaries encode a
-  // categorical one. An explicit region selection is different — it is the reader saying
-  // "only these places", so it scopes every surface including this one.
+  // The heatmap stays county-wide: the grouping scopes the charts above, while the map is the
+  // service-area context its boundaries are drawn over. A specific region selection does scope
+  // it, because that is the reader saying "only these places".
 
   // The map panel is below the fold and its point payload is the largest thing this page
   // fetches, so the request waits until the reader is near it.

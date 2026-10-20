@@ -210,10 +210,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
   );
   const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
-  // The geographic group the whole page is scoped to. `undefined` is "All dimensions", and it
-  // is the default: the page opens on the whole picture rather than on one arbitrary partition.
-  // The codes are only meaningful within a dimension, so the page clears them whenever the
-  // dimension changes (see `handleDimensionChange`).
+  // The page's group. Codes are cleared with the dimension (see `handleDimensionChange`).
   const [dimension, setDimension] = useState<RegionDimension | undefined>(
     undefined,
   );
@@ -234,10 +231,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
 
   const organizationId = activeOrg?.id ?? '';
 
-  // The group's two inputs live on the page because three surfaces read them: the summary
-  // query below (every KPI and chart), the rollup that feeds the picker and the table, and the
-  // map. Fetching them here rather than inside the location card is also what keeps those
-  // surfaces from drifting — there is one selection, not one per component.
+  // One selection for the summary, the picker/table rollup and the map.
   const {
     dimensions,
     loading: dimensionsLoading,
@@ -281,8 +275,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
 
   const orgName = activeOrg?.name ?? 'Your Organization';
 
-  // The rollup's drill-down is derived locally, exactly as the location card does it, so the
-  // subtitle can name the selected regions rather than printing bare codes.
+  // The rollup's drill-down, derived locally so the subtitle can name the selection.
   const breakdown = useMemo(
     () => regionBreakdownView(availableRegions, selectedCodes),
     [availableRegions, selectedCodes],
@@ -291,9 +284,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
   let groupLabel: string | undefined;
   if (dimension !== undefined) {
     const plural = kindLabelPlural(dimension, dimensions);
-    // Names come from the rollup; until it answers (or if a selected region has no row) the
-    // codes are all there is to print, and printing "All cities" beside a selection would be
-    // wrong.
+    // Fall back to codes until the rollup can name the selection.
     groupLabel =
       selectedCodes.length > 0
         ? `${plural}: ${breakdown.filteredToName ?? selectedCodes.join(', ')}`
@@ -304,10 +295,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
 
   const handleDimensionChange = (next?: RegionDimension) => {
     setDimension(next);
-    // Cleared **here**, in the same batch as the dimension, because a code is only meaningful
-    // within its dimension ("4" is an SPA and also a Long Beach council district). An effect on
-    // `dimension` would run after commit and leave one frame pairing the new dimension with
-    // the old dimension's codes — enough to fetch a region the reader never picked.
+    // Codes are dimension-specific; clear them in the same batch.
     setSelectedCodes((codes) => (codes.length === 0 ? codes : []));
     clearError();
   };
@@ -350,9 +338,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
         </p>
       </div>
 
-      {/* Controls. The group comes first because it is the page's scope: every KPI and every
-          chart below is calculated over it, so putting the date range above it implied the
-          opposite order of importance. */}
+      {/* The group comes first: it scopes every KPI and chart below. */}
       <Card size="small">
         <div className="flex flex-col gap-3">
           <ReportGroupControls
@@ -459,8 +445,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
               <Col xs={24} sm={6}>
                 <Card>
                   <Statistic
-                    // "Total" is a claim about the whole organisation, which a grouped page is
-                    // not making. The label follows the scope so the number cannot be misread.
+                    // "Total" would overclaim on a grouped page.
                     title={
                       dimension === undefined
                         ? 'Total Interactions'
@@ -588,8 +573,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
               )}
             </Row>
 
-            {/* Geographic breakdown. Reuses the page's own date range, org and group so the
-              region figures always match the KPIs above them. */}
+            {/* Reuses the page's date range, org and group. */}
             {activeOrg && (
               <Row gutter={[16, 16]}>
                 <Col xs={24}>

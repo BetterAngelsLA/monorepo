@@ -708,12 +708,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         return response["data"]["reportSummary"]  # type: ignore[no-any-return]
 
     def test_summary_scopes_every_chart_to_the_chosen_dimension(self) -> None:
-        """A dimension alone narrows the KPIs and all six charts, not just the table.
-
-        The city boundary covers BOX_A and the council district covers BOX_B. The
-        council-district note is inside *a* region but outside the city grouping, so a
-        dimension-agnostic "has a location in any region" filter would wrongly count it.
-        """
+        """A dimension alone narrows every chart; the district note is not in the city group."""
         org, user = self._setup_org_user_with_access()
         Region.objects.create(kind=RegionKind.CITY, code="beverly-hills", name="Beverly Hills", geom=box(BOX_A))
         Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_B))
