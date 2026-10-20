@@ -14,6 +14,7 @@ import { CancelReferralButton } from './CancelReferralButton';
 import { FocusedInfiniteList } from '../../../ui-components/InfiniteList/FocusedInfiniteList';
 import { rankShelters, type TCoords } from './shelterAttributes';
 import { useReferralShelters } from './useReferralShelters';
+import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 
 type TOriginMode = 'none' | 'device';
 
@@ -145,22 +146,23 @@ export function ReferralForm({
       style={[styles.container, { paddingBottom: insets.bottom }]}
       testID="shelter-picker-screen"
     >
-      {/* Header — Back / Pause / Save. The intake step keeps Cancel; here the
-          left slot returns to that step instead, since discard is available on
-          the draft card. */}
+      {/* Back uses the app's existing chevron. Save remains an explicit action. */}
       <View style={styles.header}>
         <Pressable
           testID="picker-back-btn"
-          style={[styles.headerBtn, styles.headerBtnFlex]}
+          style={[styles.headerBtn, styles.headerIconBtn]}
           onPress={onBack}
           disabled={submitting}
           accessibilityRole="button"
           accessibilityLabel="back to referral information"
           accessibilityHint="returns to the intake form to change answers"
         >
-          <TextRegular size="sm" color={Colors.PRIMARY}>
-            Back
-          </TextRegular>
+          <View
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+          >
+            <ChevronLeftIcon size="sm" color={Colors.PRIMARY} />
+          </View>
         </Pressable>
         <CancelReferralButton
           testID="picker-cancel-btn"
@@ -177,7 +179,7 @@ export function ReferralForm({
             accessibilityLabel="pause referral"
             accessibilityHint="saves a draft you can resume later"
           >
-            <TextRegular size="sm" color={Colors.PRIMARY}>
+            <TextRegular size="sm" color={Colors.PRIMARY} numberOfLines={1}>
               Pause
             </TextRegular>
           </Pressable>
@@ -197,7 +199,7 @@ export function ReferralForm({
           accessibilityLabel="save referral"
           accessibilityHint="saves a referral record for the selected shelter"
         >
-          <TextBold size="sm" color={Colors.PRIMARY}>
+          <TextBold size="sm" color={Colors.PRIMARY} numberOfLines={1}>
             {submitting ? 'Saving…' : 'Save'}
           </TextBold>
         </Pressable>
@@ -404,6 +406,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: Spacings.xs,
     backgroundColor: Colors.WHITE,
@@ -416,11 +419,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.PRIMARY,
     borderRadius: 8,
-    paddingHorizontal: Spacings.sm,
+    paddingHorizontal: Spacings.xs,
     paddingVertical: Spacings.xxs,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   headerBtnFlex: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
+    alignItems: 'center',
+  },
+  headerIconBtn: {
+    width: 48,
     alignItems: 'center',
   },
   headerBtnDisabled: {

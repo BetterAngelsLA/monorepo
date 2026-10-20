@@ -13,6 +13,7 @@ import { decodeReferralNotes, summarizeIntake } from './referralIntakeSidecar';
 import { shelterAttributeLabels } from './shelterAttributes';
 import { formatReferralDate } from './referralPresentation';
 import type { ProfileCardData } from './referralProfile';
+import { RequestedArrivalDate } from './RequestedArrivalDate';
 
 // A card reads the intake answers stored on the referral (in the shelter's own
 // vocabulary — see clientNeeds.ts), so it reflects the needs as they were
@@ -50,19 +51,22 @@ export function ReferralCard({
 
   // TEMPORARY: split the human notes from the intake sidecar for display.
   const { humanNotes, intake } = decodeReferralNotes(referral.notes);
-  const intakeSummary = summarizeIntake(intake); // PII masked
+  const { requestedArrivalDate, ...otherIntake } = intake;
+  const intakeSummary = summarizeIntake(otherIntake); // PII masked
 
   return (
     <View style={styles.card} testID={`referral-card-${referral.id}`}>
       {/* date + status tags */}
       <View style={styles.cardTopRow}>
         <TextRegular size="sm" color={Colors.NEUTRAL}>
-          {dateStr}
+          Referred: {dateStr || 'Not recorded'}
         </TextRegular>
         <TagRow
           tags={[{ label: referral.status ?? 'PENDING', color: statusColor }]}
         />
       </View>
+
+      <RequestedArrivalDate value={requestedArrivalDate} />
 
       {/* shelter block, shared with the picker */}
       {referral.shelter ? (

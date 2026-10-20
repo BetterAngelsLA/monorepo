@@ -4,6 +4,7 @@ import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { INTAKE_FIELDS } from './intakeFields';
+import { Colors } from '@monorepo/expo/shared/static';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,
@@ -58,6 +59,78 @@ async function setup() {
 
 const consent = () =>
   screen.getByRole('checkbox', { name: /Client gave consent/ });
+
+it('uses the edit-specific confirmation and discards only the local unsaved changes', async () => {
+  const savedNotes = 'Previously saved notes';
+  const store = createReferralDraftStore(
+    { load: () => null, save: vi.fn(), remove: vi.fn() },
+    randomUUID,
+  );
+  store.startNew('client-1', {
+    source: { kind: 'edit', referralId: 'saved-r1', originalNotes: savedNotes },
+    values: { notes: savedNotes },
+    selectedShelterId: 's1',
+  });
+  store.setField('notes', 'Unsaved edits');
+  const draftId = store.getSnapshot()?.id;
+  if (!draftId) throw new Error('Expected an edit draft');
+  const onCancel = vi.fn(() => store.clear(draftId));
+  const onContinue = vi.fn();
+  await render(
+    <ReferralDraftProvider store={store}>
+      <ReferralIntakeForm
+        editing
+        onCancel={onCancel}
+        onPause={vi.fn()}
+        onContinue={onContinue}
+      />
+    </ReferralDraftProvider>,
+  );
+  await fireEvent.press(screen.getByTestId('intake-cancel-btn'));
+  expect(screen.getByText('Discard unsaved changes?')).toBeOnTheScreen();
+  expect(
+    screen.getByText('The saved referral will remain unchanged.'),
+  ).toBeOnTheScreen();
+  expect(store.getField('notes')).toBe('Unsaved edits');
+  expect(store.getSnapshot()?.source).toEqual({
+    kind: 'edit',
+    referralId: 'saved-r1',
+    originalNotes: savedNotes,
+  });
+  expect(onCancel).not.toHaveBeenCalled();
+  await fireEvent.press(screen.getByTestId('discard-modal-confirm'));
+  expect(onCancel).toHaveBeenCalledOnce();
+  expect(store.getSnapshot()).toBeNull();
+  expect(onContinue).not.toHaveBeenCalled();
+});
+
+it('uses an accessible next chevron and warns about past arrival without blocking continuation', async () => {
+  const { store } = await setup();
+  const onContinue = vi.fn();
+  // Setup mounted an empty form; mount the same store with the callback separately.
+  await screen.unmount();
+  await mountForm(store, onContinue);
+  expect(
+    screen.getByRole('button', { name: 'continue to shelter picker' }),
+  ).toHaveStyle({ width: 48, minHeight: 48 });
+  expect(screen.queryByText('Next')).toBeNull();
+  await fireEvent.changeText(
+    screen.getByLabelText('Requested arrival date'),
+    '2000-01-01',
+  );
+  expect(
+    screen.getByTestId('requested-arrival-past-warning'),
+  ).toHaveTextContent('Past date. Saving is still allowed.');
+  expect(screen.getByTestId('requested-arrival-past-warning').props.color).toBe(
+    Colors.ERROR,
+  );
+  await fireEvent.press(screen.getByTestId('intake-next-btn'));
+  expect(onContinue).toHaveBeenCalledOnce();
+  await fireEvent.press(
+    screen.getByRole('button', { name: 'Clear Requested arrival date' }),
+  );
+  expect(screen.queryByTestId('requested-arrival-past-warning')).toBeNull();
+});
 
 it('labels current intake fields as optional and permits continuing with them unanswered', async () => {
   const store = createReferralDraftStore(

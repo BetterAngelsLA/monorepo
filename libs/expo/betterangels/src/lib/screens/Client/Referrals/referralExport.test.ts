@@ -5,7 +5,11 @@ import {
 } from '../../../apollo';
 import type { ProfileCardData } from './ProfileCard';
 import { INTAKE_FIELDS } from './intakeFields';
-import { buildReferralTextCopy, type ExportReferral } from './referralExport';
+import {
+  buildReferralTextCopy,
+  buildReferralDocumentCopy,
+  type ExportReferral,
+} from './referralExport';
 import { encodeReferralNotes } from './referralIntakeSidecar';
 
 const referral: ExportReferral = {
@@ -196,7 +200,7 @@ it('builds a readable Unicode copy from saved answers with separate creation, ar
   expect(text).toContain('Fictional Shelter');
   expect(text).toContain('123 Test St');
   expect(text).toContain('Referrer: A Volunteer');
-  expect(text).toMatch(/Created: Sep 1, 2026, 12:00 PM UTC/);
+  expect(text).toMatch(/Referred: Sep 1, 2026, 12:00 PM UTC/);
   expect(text).toContain('Requested arrival date: 2026-09-10');
   expect(text).toMatch(/Copy generated: Sep 8, 2026, 12:30 PM UTC/);
   expect(text).toContain('Animals with the client: Cats');
@@ -204,6 +208,41 @@ it('builds a readable Unicode copy from saved answers with separate creation, ar
   expect(text).toContain('DHS data-sharing consent: Yes');
   expect(text).not.toContain('referral-intake');
   expect(text).not.toContain('selfcare:');
+});
+
+it('puts the arrival near the top, keeps all timestamps separate, and marks only earlier dates', () => {
+  for (const [day, past] of [
+    ['2026-09-07', true],
+    ['2026-09-08', false],
+    ['2026-09-09', false],
+  ] as const) {
+    const copy = buildReferralDocumentCopy({
+      ...source,
+      generatedAt: new Date(2026, 8, 8, 12).toISOString(),
+      referral: {
+        ...referral,
+        notes: encodeReferralNotes('Unchanged', { requestedArrivalDate: day }),
+      },
+    });
+    const row = copy.blocks.find(
+      (block) =>
+        block.kind === 'field' && block.label === 'Requested arrival date',
+    );
+    expect(row).toEqual({
+      kind: 'field',
+      label: 'Requested arrival date',
+      value: day + (past ? ' (Past)' : ''),
+      ...(past ? { tone: 'warning' } : {}),
+    });
+    expect(copy.text.match(/Requested arrival date:/g)).toHaveLength(1);
+    expect(copy.text.indexOf('Requested arrival date:')).toBeLessThan(
+      copy.text.indexOf('Referred:'),
+    );
+    expect(copy.text.indexOf('Requested arrival date:')).toBeLessThan(
+      copy.text.indexOf('Saved referral intake'),
+    );
+    expect(copy.text).toContain('Copy generated:');
+  }
 });
 
 it('excludes private values by default and includes them only when requested, preserving saved data', () => {

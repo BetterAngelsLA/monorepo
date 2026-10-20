@@ -120,6 +120,28 @@ beforeEach(() => {
 });
 
 describe('ReferralForm shelter selection', () => {
+  it('keeps four header actions compact, named, and independently usable without wrapping their labels', async () => {
+    const onBack = vi.fn();
+    const onPause = vi.fn();
+    await renderPicker({ onBack, onPause });
+    await screen.findByText('Alpha House');
+    const back = screen.getByRole('button', {
+      name: 'back to referral information',
+    });
+    expect(back).toHaveStyle({ width: 48, minHeight: 48 });
+    expect(screen.queryByText('Back')).toBeNull();
+    expect(screen.getByText('Cancel').props.numberOfLines).toBe(1);
+    expect(screen.getByText('Save').props.numberOfLines).toBe(1);
+    expect(screen.getByTestId('picker-cancel-btn')).toHaveStyle({
+      flexGrow: 1,
+      flexShrink: 0,
+      minHeight: 48,
+    });
+    await fireEvent.press(back);
+    await fireEvent.press(screen.getByTestId('picker-pause-btn'));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(onPause).toHaveBeenCalledOnce();
+  });
   it('exposes distinct radios and directory links without grouping away the child controls', async () => {
     await renderPicker();
     await screen.findByText('Alpha House');

@@ -29,6 +29,22 @@ it('forwards its public testId to the actual input and opens the calendar on foc
   expect(getByTestId('native-calendar')).toBeTruthy();
 });
 
+it('forwards optional date-value styling without making a warning a validation error', async () => {
+  const { getByTestId } = await render(
+    <WheelDatePicker
+      mode="date"
+      format="MM/dd/yyyy"
+      testId="arrival-warning"
+      inputStyle={{ color: '#CB0808' }}
+      onChange={vi.fn()}
+    />,
+  );
+  expect(getByTestId('arrival-warning').props.inputStyle).toEqual({
+    color: '#CB0808',
+  });
+  expect(getByTestId('arrival-warning').props.error).toBe(false);
+});
+
 it('passes a selected calendar date through and leaves the answer unchanged on cancellation', async () => {
   const onChange = vi.fn();
   const { getByTestId, queryByTestId } = await render(

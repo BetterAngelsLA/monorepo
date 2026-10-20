@@ -7,6 +7,7 @@ import {
 import { Alert, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CancelReferralButton } from './CancelReferralButton';
+import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { DeferredFieldsCard } from './DeferredFieldsCard';
 import { Field } from './IntakeField';
 import { MemoryIcon, PiiTag } from './IntakeFieldMarkers';
@@ -23,7 +24,11 @@ import {
 
 const NEEDS_FIELDS = INTAKE_FIELDS.filter((field) => field.section === 'needs');
 const ADDITIONAL_FIELDS = INTAKE_FIELDS.filter(
-  (field) => field.section === 'additional',
+  (field) =>
+    field.section === 'additional' && field.key !== 'requestedArrivalDate',
+);
+const ARRIVAL_FIELDS = INTAKE_FIELDS.filter(
+  (field) => field.key === 'requestedArrivalDate',
 );
 
 type TProps = {
@@ -68,6 +73,7 @@ export function ReferralIntakeForm({
           testID="intake-cancel-btn"
           style={[styles.headerBtn, styles.headerBtnFlex]}
           onCancel={onCancel}
+          editing={editing}
           disabled={draft?.submission.status === 'pending'}
         />
         <Pressable
@@ -78,17 +84,24 @@ export function ReferralIntakeForm({
           accessibilityLabel="pause referral"
           accessibilityHint="saves a draft you can resume later"
         >
-          <TextRegular size="sm" color={Colors.PRIMARY}>
+          <TextRegular size="sm" color={Colors.PRIMARY} numberOfLines={1}>
             Pause
           </TextRegular>
         </Pressable>
         <Pressable
           testID="intake-next-btn"
-          style={[styles.headerBtn, styles.headerBtnFlex]}
+          style={[
+            styles.headerBtn,
+            editing ? styles.headerBtnFlex : styles.headerIconBtn,
+          ]}
           onPress={continueToShelters}
           accessibilityRole="button"
           accessibilityLabel={
-            editing ? 'save referral changes' : 'continue to shelter picker'
+            editing
+              ? 'save referral changes'
+              : draft?.source?.kind === 'reuse'
+                ? 'confirm review and continue to shelter picker'
+                : 'continue to shelter picker'
           }
           accessibilityHint={
             editing
@@ -96,13 +109,22 @@ export function ReferralIntakeForm({
               : 'proceeds to select a shelter'
           }
         >
-          <TextBold size="sm" color={Colors.PRIMARY}>
-            {editing
-              ? 'Save changes'
-              : draft?.source?.kind === 'reuse'
-                ? 'Reviewed — Next'
-                : 'Next'}
-          </TextBold>
+          {editing ? (
+            <TextBold size="sm" color={Colors.PRIMARY} numberOfLines={1}>
+              Save changes
+            </TextBold>
+          ) : (
+            <View
+              accessible={false}
+              importantForAccessibility="no-hide-descendants"
+            >
+              <ChevronLeftIcon
+                size="sm"
+                color={Colors.PRIMARY}
+                rotate="180deg"
+              />
+            </View>
+          )}
         </Pressable>
       </View>
 
@@ -191,7 +213,7 @@ export function ReferralIntakeForm({
             ? 'Complete fields marked Required. All other intake fields are optional.'
             : 'All referral intake fields are currently optional.'}
         </TextRegular>
-        {NEEDS_FIELDS.map((f) => (
+        {[...ARRIVAL_FIELDS, ...NEEDS_FIELDS].map((f) => (
           <Field
             key={f.key}
             f={f}

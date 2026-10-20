@@ -1,3 +1,5 @@
+import { parseDateString, toDateString } from '@monorepo/shared/scalars';
+
 /** Fixed English collation keeps labels stable across device locale settings. */
 export function compareReferralLabels(a: string, b: string): number {
   const order = a.localeCompare(b, 'en-US');
@@ -30,9 +32,30 @@ export function formatReferralEdited(
   if (!date) return '';
   const today = date.toDateString() === new Date(now).toDateString();
   if (today) {
-    return ` · ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   }
-  return ` · ${formatReferralDate(updatedAt)}`;
+  return formatReferralDate(updatedAt);
+}
+
+/** Compare calendar dates, never UTC-midnight instants. Today is not past. */
+export function localReferralDay(now = Date.now()): string {
+  const date = dateOf(now);
+  return date ? toDateString(date) : '';
+}
+
+export function referralArrival(value: unknown, today = localReferralDay()) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value))
+    return null;
+  const date = parseDateString(value);
+  if (!date || toDateString(date) !== value) return null;
+  return {
+    value,
+    label: formatReferralDate(date.getTime()),
+    isPast: !!today && value < today,
+  };
 }
 
 /** Exported instants include UTC explicitly; arrival dates stay date-only. */

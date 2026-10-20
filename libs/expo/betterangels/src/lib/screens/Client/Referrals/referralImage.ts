@@ -1,4 +1,5 @@
 import type { ReferralDocumentCopy } from './referralExport';
+import { Colors } from '@monorepo/expo/shared/static';
 
 export type ReferralImageLine = {
   text: string;
@@ -7,6 +8,7 @@ export type ReferralImageLine = {
   fontSize: number;
   fontWeight: '400' | '700';
   fontStyle: 'normal' | 'italic';
+  color?: string;
 };
 export type ReferralImageLayout = {
   lines: readonly ReferralImageLine[];
@@ -116,6 +118,7 @@ export function layoutReferralImage(
         lines.push({
           text,
           x: MARGIN + 324,
+          ...(block.tone === 'warning' ? { color: Colors.ERROR } : {}),
           y: top + (index + 1) * 26,
           fontSize: 18,
           fontWeight: '400',

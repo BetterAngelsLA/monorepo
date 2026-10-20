@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   buildReferralDocumentCopy,
+  referralDocumentBlockText,
   type ExportReferral,
   type ReferralDocumentCopy,
 } from './referralExport';
@@ -206,7 +207,18 @@ export function ReferralShare({
                 selectable
                 color={Colors.PRIMARY_EXTRA_DARK}
               >
-                {copy?.text}
+                {copy?.blocks.map((block, index) => {
+                  const text =
+                    referralDocumentBlockText(block) +
+                    (index < copy.blocks.length - 1 ? '\n' : '');
+                  return block.kind === 'field' && block.tone === 'warning' ? (
+                    <TextRegular key={index} color={Colors.ERROR}>
+                      {text}
+                    </TextRegular>
+                  ) : (
+                    text
+                  );
+                })}
               </TextRegular>
             )}
           </ScrollView>

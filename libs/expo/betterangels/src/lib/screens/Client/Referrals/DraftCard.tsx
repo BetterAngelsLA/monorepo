@@ -7,16 +7,19 @@ import {
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { ReferralSubmission } from './referralDraft';
 import { formatReferralEdited } from './referralPresentation';
+import { RequestedArrivalDate } from './RequestedArrivalDate';
 
 // The in-progress local draft, made visible in the list (tap to resume). Styled
 // unmistakably as a not-yet-submitted, on-device draft — dashed edge + badge.
 export function DraftCard({
   updatedAt,
+  requestedArrivalDate,
   onResume,
   onDiscard,
   status = 'idle',
 }: {
   updatedAt?: number;
+  requestedArrivalDate?: unknown;
   onResume: () => void;
   onDiscard: () => void;
   status?: ReferralSubmission['status'];
@@ -60,21 +63,20 @@ export function DraftCard({
         </Pressable>
       </View>
 
+      <RequestedArrivalDate value={requestedArrivalDate} />
+
       {/* Row 2: provenance + discard */}
       <View style={styles.draftRow}>
-        <TextRegular
-          size="xs"
-          color={Colors.NEUTRAL}
-          numberOfLines={1}
-          style={styles.draftGrow}
-        >
+        <TextRegular size="xs" color={Colors.NEUTRAL} style={styles.draftGrow}>
+          Last edited: {formatReferralEdited(updatedAt) || 'Not recorded'}
+          {'\n'}
           {status === 'pending'
             ? 'Saving. You can pause and return.'
             : status === 'uncertain'
               ? 'Save outcome unknown. Check the referral list.'
               : status === 'saved'
                 ? 'Saved. Local draft cleanup needed.'
-                : `On this device · not submitted${formatReferralEdited(updatedAt)}`}
+                : 'On this device · not submitted'}
         </TextRegular>
         <DiscardModal
           title="Discard draft?"

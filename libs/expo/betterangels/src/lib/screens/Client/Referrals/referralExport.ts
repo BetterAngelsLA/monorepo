@@ -1,6 +1,10 @@
 import type { ClientReferralsQuery } from './__generated__/Referrals.generated';
 import { INTAKE_FIELDS, isIntakeControlValue } from './intakeFields';
-import { formatReferralTimestamp } from './referralPresentation';
+import {
+  formatReferralTimestamp,
+  localReferralDay,
+  referralArrival,
+} from './referralPresentation';
 import { referralProfileRows, type ProfileCardData } from './referralProfile';
 import {
   canEditReferralNotes,
@@ -12,7 +16,7 @@ export type ExportReferral =
 export type ReferralTextCopy = { title: string; text: string };
 export type ReferralDocumentBlock =
   | { kind: 'title' | 'heading' | 'note'; text: string }
-  | { kind: 'field'; label: string; value: string }
+  | { kind: 'field'; label: string; value: string; tone?: 'warning' }
   | { kind: 'space' };
 export type ReferralDocumentCopy = ReferralTextCopy & {
   blocks: readonly ReferralDocumentBlock[];
@@ -33,6 +37,13 @@ function note(text: string): ReferralDocumentBlock {
   return { kind: 'note', text };
 }
 
+export function referralDocumentBlockText(
+  block: ReferralDocumentBlock,
+): string {
+  if (block.kind === 'space') return '';
+  return block.kind === 'field' ? `${block.label}: ${block.value}` : block.text;
+}
+
 /** A readable copy of this saved referral, never the client's active draft. */
 export function buildReferralDocumentCopy({
   referral,
@@ -47,6 +58,15 @@ export function buildReferralDocumentCopy({
     );
   }
   const { humanNotes, intake } = decodeReferralNotes(referral.notes);
+  const arrival = referralArrival(
+    intake.requestedArrivalDate,
+    localReferralDay(new Date(generatedAt).getTime()),
+  );
+  const arrivalValue = arrival
+    ? `${arrival.value}${arrival.isPast ? ' (Past)' : ''}`
+    : intake.requestedArrivalDate != null && intake.requestedArrivalDate !== ''
+      ? 'Unrecognized saved answer; review the original referral'
+      : 'Not recorded';
   const profileRows = referralProfileRows(profile, clientName);
   const referrer =
     [referral.createdBy?.firstName, referral.createdBy?.lastName]
@@ -73,7 +93,13 @@ export function buildReferralDocumentCopy({
       'Shelter address',
       referral.shelter?.location?.place || 'Not recorded',
     ),
-    documentField('Created', formatReferralTimestamp(referral.createdAt)),
+    {
+      kind: 'field',
+      label: 'Requested arrival date',
+      value: arrivalValue,
+      ...(arrival?.isPast ? { tone: 'warning' as const } : {}),
+    },
+    documentField('Referred', formatReferralTimestamp(referral.createdAt)),
     documentField('Referrer', referrer),
     documentField('Recorded outcome', status),
     documentField('Copy generated', formatReferralTimestamp(generatedAt)),
@@ -116,6 +142,8 @@ export function buildReferralDocumentCopy({
   );
   let omitted = false;
   for (const field of INTAKE_FIELDS) {
+    // Arrival is prominent above, rather than duplicated in the intake tail.
+    if (field.key === 'requestedArrivalDate') continue;
     // Staff notes may contain private details even though their form metadata
     // describes a direct text mapping rather than a sensitive sidecar bucket.
     const sensitive = field.sensitive || field.backend.mode === 'direct';
@@ -186,13 +214,7 @@ export function buildReferralDocumentCopy({
         'Some saved answers use older or unrecognized fields/values and are omitted. Review the original referral; this is not a complete archival copy.',
       ),
     );
-  const text = blocks
-    .map((block) => {
-      if (block.kind === 'space') return '';
-      if (block.kind === 'field') return `${block.label}: ${block.value}`;
-      return block.text;
-    })
-    .join('\n');
+  const text = blocks.map(referralDocumentBlockText).join('\n');
   return { title: 'Better Angels referral summary', text, blocks };
 }
 

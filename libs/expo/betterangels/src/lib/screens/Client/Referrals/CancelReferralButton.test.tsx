@@ -20,26 +20,58 @@ it('asks for confirmation instead of discarding on the first tap', async () => {
   expect(onCancel).not.toHaveBeenCalled();
 });
 
-it('discards only after the confirmation', async () => {
+it('explains that discarding edit changes leaves the saved referral unchanged', async () => {
   const onCancel = vi.fn();
   await render(
-    <CancelReferralButton testID="cancel-btn" onCancel={onCancel} />,
+    <CancelReferralButton testID="cancel-btn" onCancel={onCancel} editing />,
   );
-
-  await fireEvent.press(screen.getByTestId('cancel-btn'));
-  await fireEvent.press(screen.getByTestId('discard-modal-confirm'));
-
-  expect(onCancel).toHaveBeenCalledTimes(1);
-});
-
-it('keeps the draft when the confirmation is dismissed', async () => {
-  const onCancel = vi.fn();
-  await render(
-    <CancelReferralButton testID="cancel-btn" onCancel={onCancel} />,
-  );
-
-  await fireEvent.press(screen.getByTestId('cancel-btn'));
-  await fireEvent.press(screen.getByTestId('discard-modal-cancel'));
-
+  const cancel = screen.getByRole('button', {
+    name: 'cancel referral changes',
+  });
+  expect(cancel.props.accessibilityHint).toContain('without deleting');
+  await fireEvent.press(cancel);
+  expect(screen.getByText('Discard unsaved changes?')).toBeOnTheScreen();
+  expect(
+    screen.getByText('The saved referral will remain unchanged.'),
+  ).toBeOnTheScreen();
+  expect(screen.queryByText('Discard referral?')).toBeNull();
   expect(onCancel).not.toHaveBeenCalled();
 });
+
+it.each([false, true])(
+  'discards only after confirmation, editing=%s',
+  async (editing) => {
+    const onCancel = vi.fn();
+    await render(
+      <CancelReferralButton
+        testID="cancel-btn"
+        onCancel={onCancel}
+        editing={editing}
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('cancel-btn'));
+    await fireEvent.press(screen.getByTestId('discard-modal-confirm'));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  },
+);
+
+it.each([false, true])(
+  'keeps the draft when confirmation is dismissed, editing=%s',
+  async (editing) => {
+    const onCancel = vi.fn();
+    await render(
+      <CancelReferralButton
+        testID="cancel-btn"
+        onCancel={onCancel}
+        editing={editing}
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('cancel-btn'));
+    await fireEvent.press(screen.getByTestId('discard-modal-cancel'));
+
+    expect(onCancel).not.toHaveBeenCalled();
+  },
+);

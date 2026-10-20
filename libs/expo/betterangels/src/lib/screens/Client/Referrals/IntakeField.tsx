@@ -8,6 +8,8 @@ import {
 import { Pressable, TextInput, View } from 'react-native';
 import { MemoryIcon } from './IntakeFieldMarkers';
 import { GREEN, RED, styles } from './intakeFormStyles';
+import { referralArrival } from './referralPresentation';
+import { useReferralDay } from './useReferralDay';
 import {
   intakeRequirementLabel,
   isRequiredIntakeField,
@@ -73,36 +75,59 @@ export function Control({
   onChange: (v: IntakeControlValue) => void;
 }) {
   if (f.control === 'date') {
-    return (
-      <View>
-        <DatePicker
-          type="wheel"
-          mode="date"
-          format="MM/dd/yyyy"
-          placeholder={f.label}
-          testId={`${f.key}-input`}
-          value={
-            typeof value === 'string' && value
-              ? parseDateString(value)
-              : undefined
-          }
-          onChange={(date) => onChange(date ? toDateString(date) : '')}
-        />
-        {!!value && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Clear ${f.label}`}
-            accessibilityHint="removes the requested date"
-            onPress={() => onChange('')}
-          >
-            <TextRegular size="sm" color={Colors.PRIMARY}>
-              Clear date
-            </TextRegular>
-          </Pressable>
-        )}
-      </View>
-    );
+    return <ArrivalDateControl f={f} value={value} onChange={onChange} />;
   }
+  return <NonDateControl f={f} value={value} onChange={onChange} />;
+}
+
+function ArrivalDateControl({
+  f,
+  value,
+  onChange,
+}: Parameters<typeof Control>[0]) {
+  const arrival = referralArrival(value, useReferralDay());
+  return (
+    <View>
+      <DatePicker
+        type="wheel"
+        mode="date"
+        format="MM/dd/yyyy"
+        placeholder={f.label}
+        testId={`${f.key}-input`}
+        inputStyle={arrival?.isPast ? { color: Colors.ERROR } : undefined}
+        value={
+          typeof value === 'string' && value
+            ? parseDateString(value)
+            : undefined
+        }
+        onChange={(date) => onChange(date ? toDateString(date) : '')}
+      />
+      {arrival?.isPast && (
+        <TextRegular
+          testID="requested-arrival-past-warning"
+          color={Colors.ERROR}
+          accessibilityLiveRegion="polite"
+        >
+          Past date. Saving is still allowed.
+        </TextRegular>
+      )}
+      {!!value && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Clear ${f.label}`}
+          accessibilityHint="removes the requested date"
+          onPress={() => onChange('')}
+        >
+          <TextRegular size="sm" color={Colors.PRIMARY}>
+            Clear date
+          </TextRegular>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+function NonDateControl({ f, value, onChange }: Parameters<typeof Control>[0]) {
   if (f.control === 'yesno') {
     return (
       <View style={styles.chips}>

@@ -45,7 +45,7 @@ export function ReferralImagePreview({
             fontSize={line.fontSize}
             fontWeight={line.fontWeight}
             fontStyle={line.fontStyle}
-            fill="#172b40"
+            fill={line.color ?? '#172b40'}
           >
             {line.text}
           </SvgText>

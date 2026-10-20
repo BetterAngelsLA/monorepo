@@ -61,8 +61,12 @@ it('renders every layout line with its formatting, white background, and full-do
   });
   const lines = screen.getAllByTestId('svg-line');
   expect(lines).toHaveLength(layout.lines.length);
-  for (const [index, { text, ...format }] of layout.lines.entries()) {
-    expect(lines[index].props).toMatchObject({ ...format, children: text });
+  for (const [index, { text, color, ...format }] of layout.lines.entries()) {
+    expect(lines[index].props).toMatchObject({
+      ...format,
+      fill: color ?? '#172b40',
+      children: text,
+    });
   }
   expect(lines.some((line) => line.props.fontWeight === '700')).toBe(true);
   expect(lines.some((line) => line.props.fontStyle === 'italic')).toBe(true);

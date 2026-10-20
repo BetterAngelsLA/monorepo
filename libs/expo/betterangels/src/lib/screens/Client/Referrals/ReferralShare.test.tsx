@@ -6,6 +6,8 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import { Alert, View } from 'react-native';
+import { isValidElement, type ReactNode } from 'react';
+import { Colors } from '@monorepo/expo/shared/static';
 import { AdaAccommodationEnum } from '../../../apollo';
 import { uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ReferralShare } from './ReferralShare';
@@ -57,10 +59,47 @@ const referral: ExportReferral = {
 };
 const open = async () =>
   await fireEvent.press(screen.getByTestId('share-referral-r1'));
+// Read all visible text, including nested colored spans, for byte-for-byte
+// comparison with the native sharing payload.
+function renderedText(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(renderedText).join('');
+  if (isValidElement<{ children?: ReactNode }>(node))
+    return renderedText(node.props.children);
+  return '';
+}
+const previewText = () =>
+  renderedText(screen.getByTestId('referral-share-preview').props.children);
 beforeEach(() => {
   vi.mocked(shareReferralText).mockReset().mockResolvedValue(undefined);
   vi.mocked(shareReferralTextFile).mockReset().mockResolvedValue(undefined);
   vi.mocked(shareReferralPng).mockReset().mockResolvedValue(undefined);
+});
+
+it('shows a past arrival in red near the top without changing the reviewed text payload', async () => {
+  await render(
+    <ReferralShare
+      referral={{
+        ...referral,
+        notes: encodeReferralNotes('', { requestedArrivalDate: '2000-01-01' }),
+      }}
+      clientName="Fictional client"
+    />,
+  );
+  await open();
+  const warning = screen.getByText(
+    /Requested arrival date: 2000-01-01 \(Past\)/,
+  );
+  expect(warning.props.color).toBe(Colors.ERROR);
+  const text = previewText();
+  expect(text.indexOf('Requested arrival date:')).toBeLessThan(
+    text.indexOf('Referred:'),
+  );
+  await fireEvent.press(screen.getByRole('button', { name: 'Share text' }));
+  expect(shareReferralText).toHaveBeenCalledExactlyOnceWith({
+    title: 'Better Angels referral summary',
+    text,
+  });
 });
 
 it('includes profile accommodations in the reviewed copy and file only while the sensitive option is checked', async () => {
@@ -81,7 +120,7 @@ it('includes profile accommodations in the reviewed copy and file only while the
   for (const [index, included] of [false, true, false].entries()) {
     if (index > 0) await fireEvent.press(toggle);
     expect(toggle.props.accessibilityState.checked).toBe(included);
-    const text = screen.getByTestId('referral-share-preview').props.children;
+    const text = previewText();
     expect(text).toContain('Age: 0');
     expect(text).toContain('Gender: Woman');
     if (included) {
@@ -184,9 +223,7 @@ it('offers the complete text copy instead of truncating a summary too large for 
   );
   expect(screen.getByTestId('referral-share-png')).toBeDisabled();
   await fireEvent.press(screen.getByTestId('referral-image-mode'));
-  expect(screen.getByTestId('referral-share-preview').props.children).toContain(
-    'W'.repeat(20001),
-  );
+  expect(previewText()).toContain('W'.repeat(20001));
 });
 
 it('locks duplicate PNG taps and privacy changes, recovers from a capture failure, and permits a fresh retry and text fallback', async () => {
@@ -294,7 +331,7 @@ it('previews before sharing, uses exactly the reviewed text, and resets private 
   expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
     /Sensitive answer/,
   );
-  const text = screen.getByTestId('referral-share-preview').props.children;
+  const text = previewText();
   await fireEvent.press(screen.getByRole('button', { name: 'Share text' }));
   await waitFor(() =>
     expect(shareReferralText).toHaveBeenCalledExactlyOnceWith({

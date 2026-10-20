@@ -11,6 +11,27 @@ import {
 import { encodeReferralNotes } from './referralIntakeSidecar';
 import { AdaAccommodationEnum } from '../../../apollo';
 import { INTAKE_FIELDS } from './intakeFields';
+import { Colors } from '@monorepo/expo/shared/static';
+
+it('preserves the past-date label and red arrival value in PNG without recoloring other fields', () => {
+  const copy = buildReferralDocumentCopy({
+    referral: {
+      __typename: 'ReferralType',
+      id: 'past',
+      createdAt: '2026-10-14T12:00:00Z',
+      shelter: null,
+      notes: encodeReferralNotes('', { requestedArrivalDate: '2026-10-14' }),
+    },
+    clientName: 'Fictional client',
+    generatedAt: new Date(2026, 9, 19, 12).toISOString(),
+  });
+  const lines = layoutReferralImage(copy).lines;
+  const red = lines.filter((line) => line.color === Colors.ERROR);
+  expect(red.map((line) => line.text).join('')).toBe('2026-10-14 (Past)');
+  expect(
+    lines.find((line) => line.text === 'Referred:')?.color,
+  ).toBeUndefined();
+});
 
 const privateFields = INTAKE_FIELDS.filter(
   (field) => field.sensitive || field.backend.mode === 'direct',

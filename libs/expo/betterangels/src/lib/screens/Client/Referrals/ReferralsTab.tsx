@@ -493,6 +493,7 @@ function DraftListHeader({
   return (
     <DraftCard
       updatedAt={draft.updatedAt}
+      requestedArrivalDate={draft.answers.requestedArrivalDate}
       status={draft.submission.status}
       onResume={onResume}
       onDiscard={onDiscard}
