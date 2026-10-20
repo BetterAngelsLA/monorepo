@@ -3,4 +3,6 @@ export interface PersistentSynchronousStorageApi {
   set<T>(key: string, value: T): void;
   remove(key: string): void;
   clearAll(): void;
+  /** Every key in this scope, for account-wide deletion. */
+  keys(): string[];
 }

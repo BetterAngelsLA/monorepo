@@ -1,6 +1,6 @@
 import {
   AuthContainer,
-  clearPersistedReferralDraft,
+  endReferralDraftSession,
   useClearLocalSession,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -32,7 +32,7 @@ export default function Auth() {
     // Expired/401 sessions bypass useSignOut. Wipe the unowned legacy draft and
     // revoke loaded scoped draft callbacks before async cleanup. Scoped disk
     // records can only be reopened by their authenticated account/environment.
-    clearPersistedReferralDraft();
+    endReferralDraftSession();
     void clearLocalSession();
   }, [clearLocalSession]);
 

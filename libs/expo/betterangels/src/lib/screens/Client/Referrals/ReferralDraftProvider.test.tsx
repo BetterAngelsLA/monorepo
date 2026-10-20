@@ -9,7 +9,7 @@ import {
   ReferralDraftProvider,
   useReferralDraft,
 } from './ReferralDraftProvider';
-import { createReferralDraftStore } from './referralDraft';
+import { createReferralDraftStore } from '../../../draft/referralDraft';
 import { SheltersDocument } from './__generated__/Shelters.generated';
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());

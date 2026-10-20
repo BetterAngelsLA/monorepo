@@ -5,7 +5,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
-import type { ReferralSubmission } from './referralDraft';
+import type { ReferralSubmission } from '../../../draft/referralDraft';
 import { formatReferralEdited } from './referralPresentation';
 import { RequestedArrivalDate } from './RequestedArrivalDate';
 

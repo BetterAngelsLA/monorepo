@@ -4,7 +4,7 @@ import {
   VeteranStatusEnum,
 } from '../../../apollo';
 import type { ProfileCardData } from './ProfileCard';
-import { INTAKE_FIELDS } from './intakeFields';
+import { INTAKE_FIELDS } from '../../../draft/intakeFields';
 import {
   buildReferralTextCopy,
   buildReferralDocumentCopy,

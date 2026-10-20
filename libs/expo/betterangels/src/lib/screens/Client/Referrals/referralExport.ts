@@ -1,5 +1,5 @@
 import type { ClientReferralsQuery } from './__generated__/Referrals.generated';
-import { INTAKE_FIELDS, isIntakeControlValue } from './intakeFields';
+import { INTAKE_FIELDS, isIntakeControlValue } from '../../../draft/intakeFields';
 import {
   formatReferralTimestamp,
   localReferralDay,

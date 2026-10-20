@@ -9,7 +9,7 @@ import {
   missingRequiredIntakeFields,
   type IntakeFieldDefinition,
   type IntakeValues,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 import {
   buildReferralNotes,
   decodeReferralNotes,

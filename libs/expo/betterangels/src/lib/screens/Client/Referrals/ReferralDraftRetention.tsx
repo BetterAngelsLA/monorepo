@@ -5,7 +5,7 @@ import { Alert, Pressable, View } from 'react-native';
 import {
   discardAccountReferralDrafts,
   type ReferralDraftAccount,
-} from './referralDraftStorage';
+} from '../../../draft/referralDraftStorage';
 
 export function ReferralDraftRetention({
   account,
