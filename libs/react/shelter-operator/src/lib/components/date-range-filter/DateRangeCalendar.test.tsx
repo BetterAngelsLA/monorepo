@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DateRangeCalendar } from './DateRangeCalendar';
 
@@ -227,5 +227,111 @@ describe('DateRangeCalendar', () => {
       from: new Date(2025, 11, 10),
       to: new Date(2026, 0, 6),
     });
+  });
+
+  it('moves focus into the popover when opened from the toggle', () => {
+    const { toggle } = renderCalendar();
+
+    fireEvent.click(toggle);
+
+    expect(document.activeElement).toBe(dialog());
+  });
+
+  it('leaves focus in the date field when the field opens the popover', () => {
+    renderCalendar();
+
+    const start = input('Start date');
+    act(() => start.focus());
+
+    expect(document.activeElement).toBe(start);
+  });
+
+  it('returns focus to the toggle after Save and Cancel', () => {
+    const { toggle } = renderCalendar();
+
+    fireEvent.click(toggle);
+    fireEvent.change(input('Start date'), { target: { value: '06/01/2026' } });
+    fireEvent.change(input('End date'), { target: { value: '06/30/2026' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(document.activeElement).toBe(toggle);
+
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(document.activeElement).toBe(toggle);
+  });
+
+  it('commits the typed range on Save without waiting for a blur', () => {
+    const onCommit = vi.fn();
+    render(
+      <DateRangeCalendar
+        value={{ from: new Date(2026, 0, 1), to: new Date(2026, 0, 31) }}
+        onCommit={onCommit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
+    fireEvent.change(input('Start date'), { target: { value: '06/01/2026' } });
+    fireEvent.change(input('End date'), { target: { value: '06/30/2026' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onCommit).toHaveBeenCalledWith({
+      from: new Date(2026, 5, 1),
+      to: new Date(2026, 5, 30),
+    });
+  });
+
+  it('does not commit an invalid typed date on Save', () => {
+    const onCommit = vi.fn();
+    render(
+      <DateRangeCalendar
+        value={{ from: new Date(2026, 0, 1), to: new Date(2026, 0, 31) }}
+        onCommit={onCommit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
+    const start = input('Start date');
+    fireEvent.change(start, { target: { value: '05/1' } });
+    fireEvent.blur(start);
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(dialog()).not.toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Enter valid start and end dates.',
+    );
+  });
+
+  it('does not commit a half-open range on Save', () => {
+    const onCommit = vi.fn();
+    render(
+      <DateRangeCalendar
+        value={{ from: new Date(2026, 0, 1), to: new Date(2026, 0, 31) }}
+        onCommit={onCommit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
+    fireEvent.change(input('End date'), { target: { value: '' } });
+    fireEvent.blur(input('End date'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(dialog()).not.toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Select both a start and end date.',
+    );
+  });
+
+  it('keeps the right pane ahead of a typed start date', () => {
+    renderCalendar();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
+    const start = input('Start date');
+    fireEvent.change(start, { target: { value: '12/01/2030' } });
+    fireEvent.blur(start);
+
+    expect(screen.getByText('December 2030')).toBeTruthy();
+    expect(screen.getByText('January 2031')).toBeTruthy();
   });
 });

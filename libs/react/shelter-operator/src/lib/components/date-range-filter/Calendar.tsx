@@ -17,7 +17,10 @@ import {
   TEXT_PRIMARY,
   TEXT_SECONDARY,
 } from './colors';
-import { resolveRangeSelection, type RangeEndpoint } from './dateRangeCalendarUtils';
+import {
+  resolveRangeSelection,
+  type RangeEndpoint,
+} from './dateRangeCalendarUtils';
 
 export type { RdpDateRange };
 

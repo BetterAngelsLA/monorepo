@@ -69,7 +69,7 @@ describe('Calendar endpoint routing', () => {
         onSelect={onSelect}
         month={JUNE_2026}
         endpoint={endpoint}
-      />
+      />,
     );
     return onSelect;
   };
