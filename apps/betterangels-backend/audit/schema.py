@@ -1,6 +1,6 @@
 """GraphQL surface for the object audit log (ADR 0004 §18)."""
 
-from typing import List, assert_never, cast
+from typing import Optional, assert_never, cast
 
 import strawberry
 from graphql import GraphQLError
@@ -13,7 +13,7 @@ from shelters.models import Bed, Room, Shelter
 from shelters.selectors.operator import bed_get, room_get, shelter_get
 
 from .selectors import object_audit_log
-from .types import AuditActionType, AuditTargetType, to_action_type
+from .types import AuditActionPage, AuditTargetType, to_action_page
 
 
 def _resolve_target(user: AccountUser, target_type: AuditTargetType, object_id: ID) -> object:
@@ -42,27 +42,30 @@ class Query:
         info: Info,
         target_type: AuditTargetType,
         object_id: ID,
+        after: Optional[str] = None,
         limit: int = 50,
-        offset: int = 0,
         include_snapshot: bool = False,
-    ) -> List[AuditActionType]:
+    ) -> AuditActionPage:
         """The write audit log for one object, newest action first.
 
-        ``includeSnapshot`` opts each event into a full-object-state snapshot
-        rendered from the event's ``pgh_data`` (ADR 0004 §13).
+        ``after`` is the opaque ``endCursor`` from a previous page. The cursor
+        sits on a total order, so an event inserted between requests cannot
+        repeat or skip an action the way ``offset`` can. ``includeSnapshot``
+        opts each event into a full-object-state snapshot rendered from the
+        event's ``pgh_data`` (ADR 0004 §13).
         """
         user = cast(AccountUser, get_current_user(info))
         obj = _resolve_target(user, target_type, object_id)
         try:
-            actions = object_audit_log(
+            page = object_audit_log(
                 obj=obj,
                 target_type=target_type.value,
+                after=after,
                 limit=limit,
-                offset=offset,
                 include_snapshot=include_snapshot,
             )
         except ValueError as error:
-            # A bad ``limit``/``offset`` is caller input, not a server fault;
+            # A bad ``limit``/cursor is caller input, not a server fault;
             # surface it as a GraphQL error rather than a 500 (§10 cap).
             raise GraphQLError(str(error)) from error
-        return [to_action_type(action) for action in actions]
+        return to_action_page(page)

@@ -1,14 +1,15 @@
-"""Regression tests for the audit-log findings.
+"""Regression tests for the audit-log review findings.
 
-These are deterministic behavior checks for the four blockers discussed on the PR.
-They fail on the current head by design; once a fix lands they should pass (and then
-stay in the suite as regressions). The performance/EXPLAIN probes are deliberately
-not included because plan choice and timings vary with statistics and data volume.
+Each test pins a behavior that the review flagged as broken: ``ContactInfo``
+leaking through the log, retention corrupting a surviving diff, retention
+deleting other apps' history, and ``OFFSET`` pagination repeating an action when
+a write lands between pages. They failed on the reviewed head and now stay in
+the suite as regressions. The index/``EXPLAIN`` probes live in
+``test_audit_indexes.py``.
 
-Run with an isolated test database:
+Run with the shared test database:
 
-    POSTGRES_TEST_NAME=test_audit_regressions python -m pytest \
-        audit/tests/test_audit_regressions.py -q
+    python -m pytest audit/tests/test_audit_regressions.py -q --reuse-db
 """
 
 import datetime
@@ -18,12 +19,15 @@ from django.core.management import call_command
 from django.test import TestCase
 from model_bakery import baker
 
+from accounts.models import Role, User
+from accounts.services import role_assign, sync_roles
 from audit.selectors import object_audit_log
 from audit.tests.utils import audit_context
 from clients.admin import ClientProfileResource
 from clients.enums import LivingSituationEnum
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
+from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 from shelters.models import ContactInfo, Shelter
 from test_utils.pghistory import backdate_event_rows
 
@@ -32,18 +36,25 @@ _OLD = datetime.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
 AUDIT_QUERY = """
     query($targetType: AuditTargetType!, $objectId: ID!) {
         objectAuditLog(targetType: $targetType, objectId: $objectId, includeSnapshot: true) {
-            fieldChanges
-            events {
+            results {
                 fieldChanges
-                snapshot
+                events {
+                    fieldChanges
+                    snapshot
+                }
             }
         }
     }
 """
 
 
-class ContactInfoAuthorizationRegression(GraphQLBaseTestCase):
-    """A scoped Shelter.VIEW holder must not read BA-only ContactInfo rows."""
+class ContactInfoExclusionRegression(GraphQLBaseTestCase):
+    """ContactInfo is internal BA data: no caller may read it through the log.
+
+    The rows are still written (tracking is unchanged); the selector excludes the
+    event model for every target and every caller, so contact names, emails, and
+    phone numbers cannot surface even with ``includeSnapshot``.
+    """
 
     def setUp(self) -> None:
         super().setUp()
@@ -51,25 +62,54 @@ class ContactInfoAuthorizationRegression(GraphQLBaseTestCase):
         with audit_context(label="seed"):
             self.shelter = Shelter.objects.create(name="Repro Shelter", organization=self.org_1)
         with audit_context(user=self.org_1_case_manager_2):
-            ContactInfo.objects.create(
+            self.contact = ContactInfo.objects.create(
                 shelter=self.shelter,
                 contact_name="BA Secret",
                 contact_number="+15551234567",
                 contact_email="secret@example.com",
                 is_claimant=True,
             )
+        # A non-contact action so the log cannot be empty for the wrong reason.
+        with audit_context(user=self.org_1_case_manager_2):
+            self.shelter.name = "Repro Shelter Renamed"
+            self.shelter.save()
 
-    def test_scoped_operator_cannot_read_contact_info(self) -> None:
+    def _assert_no_contact_data(self, payload: dict) -> None:
+        dumped = json.dumps(payload)
+        self.assertNotIn("Contact info", dumped)
+        self.assertNotIn("BA Secret", dumped)
+        self.assertNotIn("secret@example.com", dumped)
+        self.assertNotIn("+15551234567", dumped)
+        # The unrelated shelter action still renders, so the exclusion is
+        # specific rather than a silently empty log.
+        self.assertIn("Repro Shelter Renamed", dumped)
+
+    def test_contact_rows_exist_but_are_never_rendered_for_a_scoped_operator(self) -> None:
+        ContactInfoEvent = ContactInfo.pgh_event_model  # type: ignore[attr-defined]
+        self.assertTrue(ContactInfoEvent.objects.filter(pgh_obj_id=self.contact.pk).exists())
+
         self.graphql_client.force_login(self.org_1_case_manager_1)
         response = self.execute_graphql(
             AUDIT_QUERY,
             variables={"targetType": "SHELTER", "objectId": str(self.shelter.id)},
         )
-        payload = json.dumps(response)
 
-        # Current head: both assertions fail because returns Contact info rows.
-        self.assertNotIn("Contact info", payload)
-        self.assertNotIn("secret@example.com", payload)
+        self.assertIsNone(response.get("errors"))
+        self._assert_no_contact_data(response)
+
+    def test_contact_rows_are_hidden_from_the_global_operator_too(self) -> None:
+        sync_roles()
+        global_operator = baker.make(User)
+        role_assign(user=global_operator, role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name))
+
+        self.graphql_client.force_login(global_operator)
+        response = self.execute_graphql(
+            AUDIT_QUERY,
+            variables={"targetType": "SHELTER", "objectId": str(self.shelter.id)},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self._assert_no_contact_data(response)
 
 
 class PurgeDiffRegression(TestCase):
@@ -97,10 +137,8 @@ class PurgeDiffRegression(TestCase):
 
         call_command("purge_audit_log", before="2021-01-01")
 
-        actions = object_audit_log(obj=shelter, target_type="SHELTER")
+        actions = object_audit_log(obj=shelter, target_type="SHELTER").results
 
-        # Current head: {} because the previous row was deleted and pgh_diff is
-        # computed at read time from the surviving previous event.
         self.assertEqual(actions[0].field_changes.get("name"), ["Intermediate", "Final"])
 
 
@@ -125,10 +163,10 @@ class PurgeClientExportRegression(TestCase):
         self.assertEqual(resource.dehydrate_living_situation_initial(profile), "Tent")
 
 
-class OffsetPaginationRegression(TestCase):
-    """Offset pagination must not repeat an action when a new event arrives."""
+class CursorPaginationRegression(TestCase):
+    """A cursor page must not repeat an action when a new event arrives."""
 
-    def test_offset_pagination_does_not_duplicate_across_pages(self) -> None:
+    def test_cursor_pagination_does_not_duplicate_across_pages(self) -> None:
         with audit_context(label="seed"):
             shelter = Shelter.objects.create(name="Page Shelter")
         for name in ("A", "B", "C", "D"):
@@ -136,17 +174,19 @@ class OffsetPaginationRegression(TestCase):
                 shelter.name = name
                 shelter.save()
 
-        page1 = object_audit_log(obj=shelter, target_type="SHELTER", limit=2, offset=0)
+        page1 = object_audit_log(obj=shelter, target_type="SHELTER", limit=2)
 
-        # A new action arrives between page requests.
+        # A new action arrives between page requests. Offset pagination would
+        # shift the window and repeat ``C``; the cursor is anchored to the last
+        # action of page 1, so it continues strictly after it.
         with audit_context():
             shelter.name = "E"
             shelter.save()
 
-        page2 = object_audit_log(obj=shelter, target_type="SHELTER", limit=2, offset=2)
-        names1 = {action.field_changes["name"][1] for action in page1}
-        names2 = {action.field_changes["name"][1] for action in page2}
+        page2 = object_audit_log(obj=shelter, target_type="SHELTER", limit=2, after=page1.end_cursor)
+        names1 = {action.field_changes["name"][1] for action in page1.results}
+        names2 = {action.field_changes["name"][1] for action in page2.results}
 
-        # Current head: page 1 (before the insert) is [D, C]; page 2 (after the
-        # insert, offset 2) is [C, B], so C repeats.
         self.assertFalse(names1 & names2, f"duplicate across pages: {names1 & names2}")
+        # Page 2 continues from where page 1 stopped (B, A), not from the top.
+        self.assertEqual(names2, {"A", "B"})

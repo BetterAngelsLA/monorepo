@@ -102,7 +102,11 @@ def _duration_minutes_expression() -> Case:
     pghistory.UpdateEvent("shelter.schedule.update"),
     pghistory.DeleteEvent("shelter.schedule.remove"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="schedule_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="schedule_evt_obj_idx"),
+            models.Index(fields=["shelter", "pgh_id"], name="schedule_evt_shelter_idx"),
+            models.Index(fields=["pgh_created_at"], name="schedule_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )

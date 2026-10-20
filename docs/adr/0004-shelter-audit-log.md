@@ -30,10 +30,10 @@ todos:
     content: 'Phase 1: Add write-event coverage tests and run pytest --reuse-db'
     status: pending
   - id: audit-selector
-    content: 'Phase 2: Add audit selector for writes (MiddlewareEvents.references)'
+    content: 'Phase 2: Add audit selector for writes (AuditWriteEvent.objects.references)'
     status: pending
   - id: audit-selector-pagination
-    content: 'Phase 2: Refactor selector to SQL-level action pagination (group action keys in SQL with LIMIT/OFFSET before Python grouping)'
+    content: 'Phase 2: Paginate actions in SQL with a cursor (grouped action keys, endCursor/hasNextPage) before Python grouping'
     status: pending
   - id: audit-rename-models
     content: 'Phase 2: Rename write aggregate AuditEvent -> AuditWriteEvent (regenerate the unmerged initial migration) and update importers'
@@ -96,7 +96,11 @@ isProject: false
 
 ## Status
 
-Accepted (planning). Implementation phased as described below.
+Accepted. Phase 1 (write tracking) and Phase 2 (the write audit log) are
+implemented, including the review follow-ups: cursor pagination with a
+total-order cursor, `across()` branch pruning and indexable page predicates,
+retention scoped to `--apps` with per-object boundary rows, and the complete
+`ContactInfo` read exclusion.
 
 ## Context
 
@@ -472,19 +476,28 @@ These writes run under the `HistoryMiddleware` context (so they already carry
 These produce attributed events with no `label`; the selector's actor/label
 precedence must not render them "system" when a `user` is present.
 
-### 7b.6 Sensitive fields retained by design (`ContactInfo`)
+### 7b.6 Sensitive fields retained on the table, excluded from the log (`ContactInfo`)
 
 `ContactInfoEvent` snapshots `contact_name`, `contact_number`, and
 `contact_email` ([shelters/models/shelter.py](apps/betterangels-backend/shelters/models/shelter.py))
-on every write, into an append-only-by-convention event table. This is retained
-deliberately: `ContactInfo` is shelter **staff** contact information (additional
-shelter contacts), not sensitive client PII, so there is no data-subject deletion
-obligation that would require excluding it. Keeping the fields on the event also
-preserves `Event.can_revert()` for `ContactInfo`, which requires every
-tracked-model field to be present on the event model
+on every write, into an append-only-by-convention event table. The rows are
+retained deliberately: keeping every tracked-model field on the event preserves
+`Event.can_revert()` for `ContactInfo`, which requires the full snapshot
 (`pghistory/models.py`). `contact_title`/`is_claimant` are non-sensitive and
-retained for the same reason. (If client PII is ever tracked into an event table,
-this decision does **not** extend to it — see the retention/open-items notes.)
+retained for the same reason.
+
+The **read path excludes the model entirely.** `ContactInfo` is internal Better
+Angels data with no end-user surface, and `objectAuditLog` is an operator-facing
+surface whose history spans every event model referencing a shelter. Rendering
+those snapshots would expose staff names, emails, and phone numbers to every
+holder of `Shelter.VIEW` — including a caller who cannot open the contact record
+itself. Rather than gate the rows behind a per-caller permission check (which
+still leaves them one permission-grant away from exposure), the model is in
+`_EXCLUDED_EVENT_MODELS` for *all* callers and *all* targets, and `across()`
+drops its UNION branch so the table is not even read (§10). This is a
+read-side exclusion only: writes are still tracked, so lookups and `can_revert`
+work as before. (If client PII is ever tracked into an event table, this
+decision does **not** extend to it — see the retention/open-items notes.)
 
 ### Test coverage
 
@@ -752,7 +765,7 @@ attribution. Reads are not yet part of the stream (§28 adds them):
 
 ```mermaid
 flowchart LR
-  write["Write (mutation / admin / script)"] --> pg["MiddlewareEvents.references() (pghistory + actor)"]
+  write["Write (mutation / admin / script)"] --> pg["AuditWriteEvent.references() (pghistory + actor)"]
   pg --> selector["audit selector (unify + group + org-scope + sort)"]
   selector --> q1["objectAuditLog(targetType, objectId) — writes only"]
 ```
@@ -804,10 +817,11 @@ timestamp desc. It imports shelter models, `*_get` helpers, and event models
 (the `audit` → `shelters` edge).
 
 **One source, not three.** The write half is a single
-`MiddlewareEvents.objects.references(...)` query:
+`AuditWriteEvent.objects.references(...)` query (a proxy of pghistory's
+aggregate `Events` model, §11):
 
 ```python
-# writes (all): MiddlewareEvents.objects.references(Shelter.objects.filter(pk=...))
+# writes (all): AuditWriteEvent.objects.references(Shelter.objects.filter(pk=...))
 ```
 
 `references()` matches _every_ field on any event model whose FK points at the
@@ -861,23 +875,36 @@ room/bed. So `audit/selectors.py` applies a small per-target blocklist
 excluded = (*_EXCLUDED_EVENT_MODELS, *_SCOPED_EXCLUSIONS.get(target_type, ()))
 ```
 
-Per target (§32): **Shelter** drops `ReservationEvent` and
-`ReservationClientEvent`; **Room** drops `ReservationEvent` and `BedEvent`;
-**Bed** drops `ReservationEvent`. A Room's log is the room's own configuration,
-and its beds have their own log. Reservation history keeps accruing but has no
-public surface. The per-target match set from `references()` is still pinned by a
-test; the log filters on top of it.
+Per target (§32): **Shelter** reaches neither `ReservationEvent` nor
+`ReservationClientEvent` at all (`Reservation` has no `shelter` FK — it reaches a
+shelter only through `bed`/`room`), so it needs no blocklist entry; **Room** drops
+`ReservationEvent` and `BedEvent`; **Bed** drops `ReservationEvent`. A Room's log
+is the room's own configuration, and its beds have their own log. Reservation
+history keeps accruing but has no public surface. The per-target match set from
+`references()` is still pinned by a test; the log filters on top of it.
 
-**Excluding `ReferralEvent` (blocklist, not allowlist).** **Decision:**
-`ReferralEvent.shelter_id` is excluded from a Shelter's log (referrals are a
-separate concern). `references(*objs)` exposes no allowlist knob — it unions
-every event model with an FK to the target — so the exclusion is a
-**single-entry blocklist** applied to the aggregate queryset:
+**Excluding `ReferralEvent` and `ContactInfoEvent` (blocklist, not allowlist).**
+**Decision:** `ReferralEvent.shelter_id` is excluded from a Shelter's log
+(referrals are a separate concern) and `ContactInfoEvent` is excluded from every
+log (§7b.6). `references(*objs)` exposes no allowlist knob — it unions every
+event model with an FK to the target — so the exclusions are a blocklist applied
+at the compiled-union level:
 
 ```python
-# verified to compile on the aggregate Events CTE:
-MiddlewareEvents.objects.references(...).exclude(pgh_model="referrals.ReferralEvent")
+_EXCLUDED_EVENT_MODELS = ("referrals.ReferralEvent", "shelters.ContactInfoEvent")
+
+allowed = [
+    model
+    for model in event_models(references_model=obj._meta.concrete_model)
+    if model._meta.label not in _EXCLUDED_EVENT_MODELS
+]
+AuditWriteEvent.objects.across(*allowed).references([obj]).exclude(label="seed")
 ```
+
+`across()` is the load-bearing part: an `.exclude(pgh_model__in=...)` still
+compiles the branch, so the excluded table is scanned and thrown away. Pruning
+removes it from the SQL entirely (pinned by a test asserting the excluded table
+names never appear in the captured statement, §20).
 
 Use the blocklist (default-inclusive), **not** a hand-maintained allowlist: an
 allowlist must enumerate ~19 referencing models plus every §6 `Tracked*Event`
@@ -907,14 +934,53 @@ than with the page. Instead, paginate actions in SQL with **two queries**:
 
 1. **Action-key query** — select the page's action keys in SQL by grouping the
    aggregate queryset on the composite action key (§12) and ordering by
-   `max(pgh_created_at) DESC`, applying `LIMIT`/`OFFSET` here. This is the only
-   place `limit`/`offset` bind; it returns at most one page of keys. If the
-   aggregate CTE cannot express the group-by directly, select the keys via a
-   minimal-column projection of the same CTE (no per-row diff rendering), which
-   achieves the same bounded work.
+   `max(pgh_created_at) DESC, max(pgh_id) DESC, action_key DESC`, applying the
+   **cursor predicate** and `LIMIT limit + 1` here. This is the only place the
+   page bound binds; it returns at most one page of keys. The extra key is what
+   makes `hasNextPage` free (no `COUNT`). If the aggregate CTE cannot express
+   the group-by directly, select the keys via a minimal-column projection of the
+   same CTE (no per-row diff rendering), which achieves the same bounded work.
 2. **Row fetch** — fetch the event rows for just those keys (a filtered
    `references()` query), then build the actions and render `field_changes`/
    labels in Python as today.
+
+**Cursor, not `OFFSET`.** The page is anchored to the last action of the
+previous page via an opaque `after` cursor carrying `(pgh_created_at, pgh_id,
+action_key)` — the same total order the key query sorts on. `OFFSET` re-counts
+from the top on every request, so an event written between two page requests
+shifts the window and repeats an action (pinned by a regression test, §20). The
+cursor predicate is the lexicographic "strictly older than" expansion of that
+tuple:
+
+```sql
+(last_event, last_id, action_key) < (cursor.event, cursor.id, cursor.key)
+```
+
+`endCursor` is the `after` input for the next page; it is `null` for an empty
+page. Both the cursor and `limit` are caller input, so a malformed cursor or an
+out-of-range limit raises `ValueError` and surfaces as a `GraphQLError` (not a
+500).
+
+**Filtering the page's rows must stay indexable.** `action_key` is
+`COALESCE(CAST(pgh_context_id AS text), pgh_slug)`, which no index can serve, so
+the row fetch does not filter on it. The page keys are split back into UUIDs
+(context-backed actions) and slugs (context-less singletons) and the row fetch
+predicates on the raw columns instead:
+
+```sql
+pgh_context_id IN (...) OR pgh_slug IN (...)
+```
+
+Both arms are plain column comparisons served by the existing indexes.
+
+**Drop excluded models from the SQL, not just from the rows.** A row-level
+`.exclude(pgh_model__in=...)` still compiles the UNION branch for every excluded
+event table, so Postgres scans it and the result is discarded. The selector
+passes the surviving event models to `EventsQuerySet.across(...)`, which prunes
+the unused branches at compile time — the statement and the scan both shrink
+with each exclusion. The list is derived from
+`pghistory.event_models(references_model=...)`, so a newly tracked model is
+included automatically.
 
 SQL-level predicates stay on the aggregate CTE's **outer SELECT**: the §7b
 `seed` `label` exclusion and the Phase 3 `dateFrom`/`dateTo`/`actorId` filters
@@ -982,6 +1048,25 @@ aggregates those rows under the parent `Reservation`, so `_prev_data` never runs
 against `pgh_obj_id` on this table. It is declared for completeness per the list
 above — write cost with no reader today — noted so it is not mistaken for
 evidence that the query shape exists.
+
+**Branch and retention indexes (decided).** The composite above serves the
+`pgh_obj` seek; the aggregate's branches need their own access path. Each
+`UNION ALL` branch filters on the event table's FK to the target
+(`bed_id`/`room_id`/`shelter_id`/`reservation_id`) and then pages on `pgh_id`,
+so every such column gets a composite `(fk, pgh_id)` index. The through-table
+proxies declare theirs through the `_event_meta()` helper in
+[tracked.py](apps/betterangels-backend/shelters/models/tracked.py) (Django caps
+index names at 30 characters, so long model names are hashed into the name
+rather than colliding after truncation). Every reachable event table also gets
+a `pgh_created_at` index, because retention filters on it.
+
+`pghistory.Context` has no index on `created_at`, so the orphan-context sweep
+(§31) scans every context ever written. The model belongs to `pghistory`, so
+this is a raw `CREATE INDEX` operation on the audit app's initial migration
+([audit/migrations/0001_initial.py](apps/betterangels-backend/audit/migrations/0001_initial.py))
+rather than a `Meta.indexes` change. §20 pins all of these structurally (the
+index definition must exist) and functionally (`EXPLAIN` with `enable_seqscan
+off` must choose the branch index).
 
 ### RDS Proxy interaction (connection pinning)
 
@@ -1107,8 +1192,10 @@ render as one action. `pgh_slug` is pghistory's own `'<event_model>:<pgh_id>'`
 primary key on the aggregate `Events` model — unique across all event tables.
 
 This composite key is also the SQL pagination key (§10): the action-key query
-groups on it and orders by `max(pgh_created_at)`, then the row fetch selects the
-keys on the current page.
+groups on it and orders by `(max(pgh_created_at), max(pgh_id), action_key)`
+descending, then the row fetch selects the page's keys through the raw
+`pgh_context_id` / `pgh_slug` columns (never through the computed key, which no
+index can serve).
 
 **Tie-break (§10):** action timestamps tie whenever the events are written in one
 transaction (`NOW()` is constant), so pagination orders by
@@ -1133,9 +1220,9 @@ empty_ on DELETE (the DELETE snapshots the OLD row, which normally equals the
 state from the last prior event). Derive `field_changes` from event _kind_, not
 from an assumption about `pgh_diff`:
 
-- **INSERT** — only the **non-null (or non-default)** snapshot fields in `pgh_data`, rendered as `{field: [null, value]}` (all "added"). `pgh_data` is the full row JSON, so an unset field is `null` and would otherwise render as a no-op `{field: [null, null]}`; omit null-valued fields to avoid dozens of noise rows per action on a wide model (e.g. a ~45-column `Shelter` insert where most columns are null).
+- **INSERT** — only the **non-null** snapshot fields in `pgh_data`, rendered as `{field: [null, value]}` (all "added"). `pgh_data` is the full row JSON, so an unset field is `null` and would otherwise render as a no-op `{field: [null, null]}`; omit null-valued fields to avoid dozens of noise rows per action on a wide model (e.g. a ~45-column `Shelter` insert where most columns are null). Defaults are **not** special-cased: a field the insert explicitly set to its default value is still a real value and is rendered.
 - **UPDATE** — the action-level `old → new` diff (see the `reservation` update-labels note below), rendered as `{field: [old, new]}`.
-- **DELETE** — only the **non-null (or non-default)** snapshot fields in `pgh_data`, rendered as `{field: [value, null]}` (all "removed"); same null-omission as INSERT.
+- **DELETE** — only the **non-null** snapshot fields in `pgh_data`, rendered as `{field: [value, null]}` (all "removed"); same null-omission as INSERT.
 
 **Multi-value fields (M2M and list-valued scalars):** the `[old, new]` pair above
 holds scalars for single-value columns, but a multi-value change (e.g. one action
@@ -1245,6 +1332,16 @@ is exactly the event's `pgh_data`. Make it opt-in per query/field (a
 snapshot is complete, this also unblocks the deferred Revert capability
 (`Event.can_revert`/`revert()`, a Future consideration).
 
+**Per-action event cap (decided).** `pgh_context_id` is per-request (§12), so
+one action can wrap an unbounded write — the CSV import (§7b.4) opens one
+context around the whole dataset. The action's `events` list is therefore capped
+at `MAX_EVENTS_PER_ACTION` (500) and `AuditActionType.truncated` reports that
+rows were omitted. The cap is applied to the rendered events only: the
+action-level `field_changes` still merges every row and the action verb is
+derived from every row's label, so the action's before/after pair stays correct
+when the per-event list is cut. `limit` bounds actions, not events, so without
+this cap a one-action response would still be unbounded.
+
 ## 14. Resolve FK ids to labels
 
 `pgh_data`/`pgh_diff` store FK fields as ids (`shelter_id`, `demographic_id`,
@@ -1320,17 +1417,28 @@ unrelated to reservations — the §7b context-`label` seed exclusion and the Ph
 - Add `AuditActionType` (an action grouped by `pgh_context_id`, exposing `timestamp`, `actor`, `summary`, and a nested `events: [AuditEventType!]!` list), `AuditEventType`, `AuditEventKind` enum (`INSERT`/`UPDATE`/`DELETE`; `READ` is added in §28), and `AuditTargetType` enum in the `audit` app's types (e.g. `audit/types.py`).
 - `AuditEventType` gains an optional `snapshot: JSON` field (opt-in, §13) rendered from the event's `pgh_data`.
 - `AuditEventType` gains an optional `summary: String` (§32) for events that are acknowledged with one line instead of field detail; it is `null` for every detailed event.
-- Add one query to a new `Query` class in `audit/schema.py`, `permission_classes=[IsAuthenticated]`. It returns a **plain list** of `AuditActionType`, not an `OffsetPaginated` wrapper — the selector produces grouped Python actions (not a queryset), so `strawberry_django.offset_paginated` cannot wrap it. Pagination is applied in SQL by the selector (§10), not as an in-memory slice of a fully-grouped list: the resolver forwards the explicit `limit`/`offset` args.
+- `AuditActionType` gains `truncated: Boolean!` (§13) — the action carried more events than the server renders.
+- Add one query to a new `Query` class in `audit/schema.py`, `permission_classes=[IsAuthenticated]`. It returns an `AuditActionPage`, not a plain list and not an `OffsetPaginated` wrapper — the selector produces grouped Python actions (not a queryset), so `strawberry_django.offset_paginated` cannot wrap it. Pagination is applied in SQL by the selector (§10), not as an in-memory slice of a fully-grouped list: the resolver forwards the opaque `after` cursor and `limit`.
 
 ```graphql
+type AuditActionPage {
+  results: [AuditActionType!]!
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
 objectAuditLog(
   targetType: AuditTargetType!,
   objectId: ID!,
+  after: String = null,
   limit: Int = 50,
-  offset: Int = 0,
   includeSnapshot: Boolean = false
-): [AuditActionType!]!
+): AuditActionPage!
 ```
+
+A `ValueError` from the selector (bad `limit`, malformed cursor) is translated
+to a `GraphQLError` at the resolver boundary, so caller input cannot produce a
+500 (§10).
 
 - Wire it into the top-level schema: import `AuditQuery` and add it to the `queries` tuple in [betterangels_backend/schema.py](apps/betterangels-backend/betterangels_backend/schema.py), next to `ReportsQuery`.
 - **Regenerate `schema.graphql`.** The repo enforces the checked-in SDL — the `validate-graphql-schema` nx target diffs `manage.py export_schema betterangels_backend.schema` against [schema.graphql](apps/betterangels-backend/schema.graphql). Adding `objectAuditLog` therefore requires running `nx run betterangels-backend:generate-graphql-schema` (or `uv run python manage.py export_schema betterangels_backend.schema > schema.graphql`) in the same change, or CI fails.
@@ -1354,6 +1462,7 @@ pghistory, not from the `AuditReadEvent` table.
 - **Reservation re-org edge case:** scoping uses the object's _current_ org. A reservation can be reparented across orgs (`reservation_update` in [shelters/services/reservation.py](apps/betterangels-backend/shelters/services/reservation.py)), but this is highly unlikely and accepted; no org-at-event-time reconstruction is built.
 - **Deleted-object limitation (deferred):** `objectAuditLog` authorizes by resolving the live object via `*_get`, so an object that has been deleted (e.g. `deleteShelter`) fails closed even for the global tier — "who deleted shelter 7?" is not answerable today. This is deferred to Future considerations; no soft-delete / recycle-bin process is introduced in this ADR (it would fan out across models, services, selectors, and the audit grouping logic).
 - **Decision:** reading an object's history reuses the object's `VIEW` permission — the `*_get` helpers above. No dedicated `view_audit_log` permission is introduced.
+- **`ContactInfo` is not authorized, it is absent.** The model is excluded from the log for every caller and target (§7b.6), so a `Shelter.VIEW` holder never receives staff contact names, emails, or phone numbers even though the rows are tracked in the database.
 
 ## 19. Through-table (M2M) attribution — rendering metadata
 
@@ -1442,19 +1551,26 @@ derivation regression, so it is the stronger guard.
 - **M2M field_changes:** a Bed `.set()` on `medical_needs` renders the exact `medical_needs` field change as a single multi-value entry `{medical_needs: [[removed], [added]]}` via the through-table path (§13, §15) — asserting **one entry per related field**, not one per through row — with the multi-word M2Ms asserting the correct related FK column — `medical_needs`→`medicalneed` (Bed), `exit_policy`→`exitpolicy` and `referral_requirement`→`referralrequirement` (both Shelter) — so the FK-field naming (§19) can't silently regress.
 - **Through-metadata coverage + pin:** for each target in `{Shelter, Bed, Room}`, derive the through models from `event_models(references_model=<target>)` (keep only models lacking `pgh_obj`, i.e. `hasattr(model, "pgh_obj_id")` is `False`) and assert the **union** across targets equals the derived map's keys, so a new M2M field cannot fall out of the M2M rendering path (§19). Because the map is _derived_, its `(parent_col, related_fk_field)` pairs are additionally pinned in a hand-written literal (`_EXPECTED_THROUGH_EVENT_META`) so a derivation regression is caught, not followed.
 - **`reservation` status change:** a status change renders as a single `reservation.status_change` action whose `field_changes` include the `status` old→new diff — the disjoint conditions (§2) mean no paired `reservation.update` row exists to reconcile. A **single save** that changes `status` and another field (the check-in path sets `checked_in_at`) still emits one event carrying both changes; the trigger-level tests assert one row and a non-null diff, and the service-level test covers the real `reservation_update` check-in call.
-- **`references()` attribution:** a reservation's `objectAuditLog` includes `ReservationClient` add/remove (client assignments) attributed through `references()` — the most sensitive part of a reservation's history; a shelter's log includes `ShelterPhoto`/`MediaLink`/`Video`/`Schedule`/`ContactInfo`/`ShelterAvailability` changes.
+- **`references()` attribution:** a reservation's `objectAuditLog` includes `ReservationClient` add/remove (client assignments) attributed through `references()` — the most sensitive part of a reservation's history; a shelter's log includes `ShelterPhoto`/`MediaLink`/`Video`/`Schedule`/`ShelterAvailability` changes.
+- **`ContactInfo` is never rendered:** after a `ContactInfo` write, the row exists in `ContactInfoEvent` (positive control) but no caller — scoped operator or Global Shelter Operator — sees its name/email/phone in `objectAuditLog`, including under `includeSnapshot: true`. A non-contact shelter action in the same log still renders, so the exclusion is specific rather than an empty log (§7b.6).
+- **Excluded branches are pruned, not filtered:** the captured SQL for a shelter log contains neither `referrals_referralevent` nor `shelters_contactinfoevent`, so `across()` is doing the exclusion and the excluded tables are never scanned (§10).
 - **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted against a **hand-written literal** per target (`_EXPECTED_SHELTER_REFERENCES` and the Bed/Room equivalents), so any change to what `references()` reaches — a newly tracked model, a dropped branch — fails loudly. The literal, not a set derived from `event_models()` at assert time, is the stronger pin: a derived set would silently track a `references()` regression instead of catching it. Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
 - **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` (internal path) but **not** in `objectAuditLog(ROOM)`/`(BED)` or `(SHELTER)` (the target-scoped blocklist, §10); a room/bed configuration change still appears. A room log contains no `BedEvent` rows, and a bed log keeps the bed's full field detail.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request (two saves, so two events) renders both the `status` and `notes` field changes (before/after diff), not just one winner row. A single save doing both is the one-row case above, and renders both changes from one event.
 - **Cross-model action:** one action writing a Shelter and a Bed renders the shelter's own before→after pair and a **summary** line for the bed (`Updated <name> (<id>)`) — no `Bed <id> name` pair, no shared-field collision (§13, §32).
 - **Same-model multi-row action:** one action touching two rows of the _same_ model (two beds renamed in one context, standing in for a bulk `label="import"` write) renders two distinct summary lines, one per bed — not one collapsed line (§13, §32).
-- **Display scopes (§32):** a shelter action that creates a bed and renames a room renders `Created <name> (<id>)` / `Updated <name> (<id>)` with empty `field_changes` and no snapshot even under `include_snapshot=True`; repeated saves of one bed collapse to one line; a deleted bed keeps its last name; a nameless bed falls back to `Bed #<id>`; the shelter log omits `ReservationEvent`/`ReservationClientEvent`; and `targetType: RESERVATION` fails schema validation (the enum no longer publishes it, while the internal selector path still renders reservation-client writes).
+- **Display scopes (§32):** a shelter action that creates a bed and renames a room renders `Created <name> (<id>)` / `Updated <name> (<id>)` with empty `field_changes` and no snapshot even under `include_snapshot=True`; repeated saves of one bed collapse to one line; a deleted bed keeps its last name; a nameless bed falls back to `Bed #<id>`; a Shelter log cannot reach `ReservationEvent`/`ReservationClientEvent` (`Reservation` has no shelter FK), while Room/Bed logs drop them via `_SCOPED_EXCLUSIONS`; and `targetType: RESERVATION` fails schema validation (the enum no longer publishes it, while the internal selector path still renders reservation-client writes).
 - **Duplicate `verbose_name`:** a model with two fields sharing a `verbose_name` (the three `Shelter` "Additional Notes" fields) renders each edit under its own (raw) key in both `field_changes` and `snapshot`, so neither is silently dropped (§13).
 - **Cross-table context-less writes:** two context-less writes in different event tables render as two distinct singleton actions, with the `pgh_id` collision pinned explicitly so the test does not rely on sequence coincidence (§12).
 - **INSERT/REMOVE pk exclusion:** the model pk (`id`) is absent from an `.add` event's `field_changes` — it is in `pgh_data` but can never change — and (unit-tested) from the `.remove` branch too (§13).
-- **Total-order pagination:** with tied timestamps (one transaction — `NOW()` is constant), paging one action at a time returns each action exactly once, newest-first, so the tie-break is total _and_ chronological (§10).
+- **Total-order cursor pagination:** with tied timestamps (one transaction — `NOW()` is constant), paging one action at a time via `endCursor`/`after` returns each action exactly once, newest-first, so the tie-break is total _and_ chronological (§10).
+- **No duplicate across pages:** an action inserted between two page requests does not repeat on the second page (the regression `OFFSET` exhibits), and continuing past the last action returns an empty page with `hasNextPage: false` (§10).
+- **Indexable page predicates:** the page-row query filters on `pgh_context_id`/`pgh_slug`, never on the computed `COALESCE(CAST(...))` action key (§10).
+- **Branch and retention indexes:** every event table reachable from `references()` has `(parent_fk, pgh_id)` and `pgh_created_at` indexes, `pgh_obj` tables have `(pgh_obj, pgh_id)`, `pghistory_context` has a `created_at` index, and `EXPLAIN` with `enable_seqscan = off` chooses the branch index (§10).
+- **Per-action event cap:** an action carrying more events than `MAX_EVENTS_PER_ACTION` renders the cap and sets `truncated: true`, while its `field_changes` still reflects every row (§13).
+- **Cursor/limit validation:** a malformed `after` and an out-of-range `limit` both surface as GraphQL errors, not 500s (§10, §17).
 - **`RETAINED_LABELS` covers the reports (§31):** the labels `shelters/selectors/reports.py` reads are derived from its source and asserted to be a subset of `RETAINED_LABELS`, so a new report label cannot be added without also being retained (the other retention tests import the same constant the command uses, which cannot catch that).
-- **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that label/date/actor filters are pushed to SQL (§10 performance note), not applied in Python after fetching.
+- **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that the `label` predicate is pushed to SQL (§10 performance note), not applied in Python after fetching. Date/actor filters are Phase 3 (§21) and are not part of this query.
 - **No server-side cursor:** `objectAuditLog` must not emit a `DECLARE` (Django's `.iterator()`), which RDS Proxy pins. Assert the captured queries contain no `DECLARE` (§10 RDS Proxy note).
 - **Connection-pinning guards:** (a) the write path's injected SQL uses the transaction-local `set_config(..., true)` form and never a session-scoped `set_config(..., false)`; (b) the statement the selector **actually issues** (the max over its grouped key query and page query, measured as interpolated SQL) stays within the documented per-target ceilings, recording the >16 KB reality from §10 rather than asserting a bound the design cannot meet.
 
@@ -1474,9 +1590,9 @@ objectAuditLog(
   dateFrom: DateTime,
   dateTo: DateTime,
   actorId: ID,
-  limit: Int = 50,
-  offset: Int = 0
-): [AuditActionType!]!
+  after: String = null,
+  limit: Int = 50
+): AuditActionPage!
 ```
 
 - `dateFrom`/`dateTo` — timestamp window.
@@ -1664,7 +1780,7 @@ union `AuditReadEvent` rows and render them in the same unified stream:
 
 ```mermaid
 flowchart LR
-  write["Write (mutation / admin / script)"] --> pg["MiddlewareEvents.references()"]
+  write["Write (mutation / admin / script)"] --> pg["AuditWriteEvent.references()"]
   read["Read (GraphQL query)"] --> ae["AuditReadEvent.actor"]
   pg --> selector["audit selector (unify + group + org-scope + sort)"]
   ae --> selector
@@ -1713,9 +1829,9 @@ objectAuditLog(
   dateTo: DateTime,
   actorId: ID,
   kinds: [AuditEventKind!],
-  limit: Int = 50,
-  offset: Int = 0
-): [AuditActionType!]!
+  after: String = null,
+  limit: Int = 50
+): AuditActionPage!
 ```
 
 - `kinds` — `[INSERT, UPDATE, DELETE, READ]`; defaults to all.
@@ -1739,10 +1855,36 @@ A Celery-beat schedule can make retention automatic.
 
 Targets (batched to avoid long locks):
 
-- pghistory `*Event` tables (the per-model write event rows), **except the
-  report-critical labels in `RETAINED_LABELS`** (below).
+- pghistory `*Event` tables in the requested apps (`--apps`, default `shelters`),
+  **except the report-critical labels in `RETAINED_LABELS`** (below).
 - `pghistory.Context` rows with no remaining referencing events.
 - `AuditReadEvent` (Phase 4) once it exists.
+
+**Scope: `--apps` (default `shelters`).** A command named `purge_audit_log` must
+not silently delete history owned by other features. The event tables outside
+`shelters` are read by their own features — `ClientProfileEvent` by the client
+export ([clients/admin.py](apps/betterangels-backend/clients/admin.py)), `NoteEvent`
+by `NoteReverter` — so a date cutoff applied platform-wide would rewrite their
+outputs as a side effect of audit retention. `--apps` takes one or more app
+labels and defaults to `("shelters",)`; other apps are only purged when named
+explicitly (`--apps shelters clients`), and an unknown label is a `CommandError`
+listing the known labels. The orphan-context sweep still runs across *all* event
+tables, so it only removes a context no surviving row in any app references.
+
+**Boundary row per object (diff correctness).** `pgh_diff` is computed at read
+time (§13): the aggregate's `_prev_data` is the row with the greatest `pgh_id`
+strictly below the current row, **regardless of label or cutoff**. Deleting a
+whole old prefix would therefore make the first surviving event diff against
+nothing, and its `field_changes` would render as `{}` — an edit silently
+disappearing from the log. For each event model and each `pgh_obj_id`, the
+command therefore retains the newest *deletable* row when that object still has
+a newer row that survives. This keeps the first surviving diff exact and costs at
+most one row per object. A fully aged object (no newer rows) has no boundary and
+is deleted completely. Through-table event models have no `pgh_obj` and no
+`_prev_data` (their diff is forced to `NULL::JSONB`, §15), so they need no
+boundary. The retained row also keeps its `Context` referenced, so
+`_purge_orphan_contexts` leaves that context alone even when its timestamp is
+older than the cutoff.
 
 **Retained labels (report-critical rows are not audit-only storage).** The
 reporting selectors in [shelters/selectors/reports.py](apps/betterangels-backend/shelters/selectors/reports.py)
@@ -1790,6 +1932,8 @@ partition drop, no exempt role. Implemented in
 [audit/management/commands/purge_audit_log.py](apps/betterangels-backend/audit/management/commands/purge_audit_log.py):
 
 - `--before <YYYY-MM-DD>` — upper bound on `pgh_created_at`; rows strictly older are removed.
+- `--apps <label> [...]` — event-model apps to purge; defaults to `shelters`. Unknown
+  labels raise `CommandError`.
 - `MIN_RETENTION_DAYS = 730` — refuses a cutoff inside the last two years unless
   `--force`, so a mistyped date cannot wipe recent history.
 - `--batch-size` (default 5000) — loops until drained, so no single statement takes a
@@ -1807,11 +1951,15 @@ partition drop, no exempt role. Implemented in
   the purged events.
 
 Tests: [audit/tests/test_purge_audit_log.py](apps/betterangels-backend/audit/tests/test_purge_audit_log.py)
-— deletion/retention scope, multi-batch draining, dry-run accuracy (events and
-contexts), orphan-context cleanup, a regression test asserting
-`report_bed_status_counts` / `daily_occupancy` are unchanged across a purge, and a
-test deriving the labels `reports.py` reads and asserting `RETAINED_LABELS` covers
-them (so a new report label cannot be added without being retained).
+— deletion/retention scope, boundary-row retention (a surviving event keeps its
+exact diff; a fully aged object deletes cleanly; the boundary row is not counted
+by `--dry-run`), `--apps` default isolation and explicit opt-in (a client event
+survives the default run and is deleted with `--apps clients`), unknown-label
+rejection, multi-batch draining, dry-run accuracy (events and contexts),
+orphan-context cleanup, a regression test asserting `report_bed_status_counts` /
+`daily_occupancy` are unchanged across a purge, and a test deriving the labels
+`reports.py` reads and asserting `RETAINED_LABELS` covers them (so a new report
+label cannot be added without being retained).
 No Celery-beat schedule is wired by default — enabling one remains a deliberate ops
 choice.
 
@@ -1827,7 +1975,7 @@ the object level.
 ```mermaid
 graph LR
   ShelterLog["Shelter activity"] -->|"one line per write"| BedRoomSummary["Created/Updated/Deleted Bed A (7)"]
-  ShelterLog -->|"full detail"| ShelterFields["Shelter fields, contacts, media, schedules, M2Ms"]
+  ShelterLog -->|"full detail"| ShelterFields["Shelter fields, media, schedules, M2Ms"]
   BedLog["Bed activity"] -->|"full detail"| BedFields["Bed fields + Bed M2Ms"]
   RoomLog["Room activity"] -->|"full detail"| RoomFields["Room fields + Room M2Ms"]
   Reservation["Reservation events"] -.->|"tracked, never displayed"| Nowhere["no public surface"]
@@ -1852,15 +2000,18 @@ their own log (`_SCOPED_EXCLUSIONS`, §10).
 
 **Reservations — tracked, not exposed.** `Reservation` and `ReservationClient`
 history keeps accruing for reporting and a future surface, but no operator UI
-shows it: the Shelter log drops both event models and `AuditTargetType` no longer
-publishes `RESERVATION`. The selector's `reservation` path stays; restoring the
-enum member also requires restoring the `reservation_get` branch in
-`_resolve_target`, which `assert_never` currently rejects at type-check time.
+shows it: the Room/Bed logs drop both event models via `_SCOPED_EXCLUSIONS`, and
+a Shelter log cannot reach them at all because `Reservation` has no `shelter`
+FK (only `bed`/`room`), so `references(Shelter)` never matches them.
+`AuditTargetType` no longer publishes `RESERVATION`. The selector's
+`reservation` path stays; restoring the enum member also requires restoring the
+`reservation_get` branch in `_resolve_target`, which `assert_never` currently
+rejects at type-check time.
 
 **Tests** (§20): summary text and empty detail, no snapshot leak, collapse of
-repeat saves, delete/nameless fallbacks, shelter omission of reservation rows,
-room exclusion of bed rows, bed detail retained, and schema rejection of
-`targetType: RESERVATION`.
+repeat saves, delete/nameless fallbacks, Shelter non-reachability of reservation
+rows, room exclusion of reservation and bed rows, bed detail retained, and
+schema rejection of `targetType: RESERVATION`.
 
 ---
 
@@ -1874,11 +2025,11 @@ rendering §13/§14, full-state snapshot §13, retention command §31). These we
 **considered and rejected**, recorded here so they are not re-litigated:
 
 - **Field masking** — the tracked models are shelter-operational data with no
-  sensitive fields to redact today. The personal-data candidates
-  (`ReservationClient` → `ClientProfile.full_name`; `ContactInfo.contact_name`/
-  `contact_email`/`phone`) are either the point of the log (who a client is
-  assigned to) or already operator-visible. Revisit only if a concrete redaction
-  requirement appears.
+  fields that need in-place redaction: `ContactInfo` (staff contacts) is excluded
+  from the log entirely (§7b.6), and the remaining personal-data candidate,
+  `ReservationClient` → `ClientProfile.full_name`, is the point of the log (who a
+  client is assigned to). Revisit only if a concrete redaction requirement
+  appears.
 - **Correlation-id exposure** — grouping already uses `pgh_context_id`
   internally (§12); exposing it in the API fixes no operator-facing problem.
   Keep it internal.

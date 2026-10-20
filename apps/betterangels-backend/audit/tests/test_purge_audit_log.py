@@ -15,6 +15,7 @@ from pghistory.core import event_models
 from pghistory.models import Context
 
 from audit.management.commands.purge_audit_log import RETAINED_LABELS
+from clients.models import ClientProfile
 from shelters.models import Bed, Shelter
 from shelters.selectors import reports as reports_selector
 from shelters.selectors.reports import daily_occupancy, report_bed_status_counts
@@ -108,6 +109,45 @@ class PurgeAuditLogTestCase(TestCase):
 
     # ── deletion scope ───────────────────────────────────────────────────────
 
+    def test_default_scope_leaves_other_apps_alone(self) -> None:
+        """``purge_audit_log`` is the audit feature's tool, not a platform-wide purge.
+
+        Client/note/task/referral/account history belongs to those features
+        (the client export and ``NoteReverter`` read the same rows), so it is
+        only touched when its app is named explicitly.
+        """
+        profile = baker.make(ClientProfile, first_name="Scope", last_name="Client")
+        ClientProfileEvent = ClientProfile.pgh_event_model  # type: ignore[attr-defined]
+        client_ids = list(ClientProfileEvent.objects.filter(pgh_obj_id=profile.pk).values_list("pk", flat=True))
+        self.assertTrue(client_ids)
+        # Only shelter event tables carry the update guard; client rows are
+        # aged with a plain UPDATE.
+        ClientProfileEvent.objects.filter(pk__in=client_ids).update(pgh_created_at=_OLD)
+
+        call_command("purge_audit_log", before=_CUTOFF)
+
+        self.assertEqual(
+            set(ClientProfileEvent.objects.filter(pgh_obj_id=profile.pk).values_list("pk", flat=True)),
+            set(client_ids),
+        )
+
+    def test_apps_flag_opts_another_app_in(self) -> None:
+        profile = baker.make(ClientProfile, first_name="Scoped", last_name="Client")
+        ClientProfileEvent = ClientProfile.pgh_event_model  # type: ignore[attr-defined]
+        client_ids = list(ClientProfileEvent.objects.filter(pgh_obj_id=profile.pk).values_list("pk", flat=True))
+        self.assertTrue(client_ids)
+        ClientProfileEvent.objects.filter(pk__in=client_ids).update(pgh_created_at=_OLD)
+
+        call_command("purge_audit_log", before=_CUTOFF, apps=["clients"])
+
+        self.assertFalse(ClientProfileEvent.objects.filter(pk__in=client_ids).exists())
+
+    def test_rejects_an_unknown_app_label(self) -> None:
+        with self.assertRaises(CommandError) as ctx:
+            call_command("purge_audit_log", before=_CUTOFF, apps=["not-an-app"])
+
+        self.assertIn("Unknown --apps label", str(ctx.exception))
+
     def test_deletes_event_rows_older_than_the_cutoff(self) -> None:
         # Uses shelter.* (not bed.*): the bed labels are report-critical and so
         # are deliberately retained (see the retained-label tests below).
@@ -116,17 +156,64 @@ class PurgeAuditLogTestCase(TestCase):
         shelter.save()
 
         events = ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).order_by("pk")
-        old_event = events.first()
-        self.assertIsNotNone(old_event)
-        backdate_event_rows(ShelterEvent.objects.filter(pk=old_event.pk), pgh_created_at=_OLD)
-        surviving = set(events.values_list("pk", flat=True)) - {old_event.pk}
+        ids = list(events.values_list("pk", flat=True))
+        self.assertEqual(len(ids), 2)
+        # Age both rows: with no surviving event the object needs no boundary row.
+        backdate_event_rows(ShelterEvent.objects.filter(pk__in=ids), pgh_created_at=_OLD)
 
         call_command("purge_audit_log", before=_CUTOFF)
 
-        self.assertFalse(ShelterEvent.objects.filter(pk=old_event.pk).exists())
-        self.assertEqual(
-            set(ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).values_list("pk", flat=True)), surviving
-        )
+        self.assertFalse(ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).exists())
+
+    def test_retains_the_boundary_row_when_a_newer_event_survives(self) -> None:
+        """The newest pre-cutoff row per object is kept: it is the next row's diff base."""
+        shelter = Shelter.objects.create(name="Boundary Shelter")
+        for name in ("Second Shelter", "Final Shelter"):
+            shelter.name = name
+            shelter.save()
+
+        events = list(ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).order_by("pk"))
+        self.assertEqual(len(events), 3)
+        backdate_event_rows(ShelterEvent.objects.filter(pk__in=[events[0].pk, events[1].pk]), pgh_created_at=_OLD)
+
+        call_command("purge_audit_log", before=_CUTOFF)
+
+        # The INSERT goes; the pre-cutoff update stays as the boundary row, so
+        # the surviving update still diffs against it.
+        self.assertFalse(ShelterEvent.objects.filter(pk=events[0].pk).exists())
+        self.assertTrue(ShelterEvent.objects.filter(pk=events[1].pk).exists())
+        self.assertTrue(ShelterEvent.objects.filter(pk=events[2].pk).exists())
+
+    def test_boundary_row_is_not_retained_without_a_newer_event(self) -> None:
+        """A fully-aged object deletes cleanly; the boundary rule adds no row."""
+        shelter = Shelter.objects.create(name="Fully Aged")
+        shelter.name = "Fully Aged Renamed"
+        shelter.save()
+        ids = list(ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).values_list("pk", flat=True))
+        backdate_event_rows(ShelterEvent.objects.filter(pk__in=ids), pgh_created_at=_OLD)
+
+        out = StringIO()
+        call_command("purge_audit_log", before=_CUTOFF, dry_run=True, stdout=out)
+
+        # Both rows are counted for deletion (no boundary row is withheld).
+        self.assertIn("would delete 2 event rows", out.getvalue())
+        call_command("purge_audit_log", before=_CUTOFF)
+        self.assertFalse(ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).exists())
+
+    def test_dry_run_does_not_count_the_boundary_row(self) -> None:
+        """The boundary row is deliberately retained, so a dry run must not report it."""
+        shelter = Shelter.objects.create(name="Boundary Dry Run")
+        shelter.name = "Boundary Dry Run Renamed"
+        shelter.save()
+        first = ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).order_by("pk").first()
+        assert first is not None
+        backdate_event_rows(ShelterEvent.objects.filter(pk=first.pk), pgh_created_at=_OLD)
+
+        out = StringIO()
+        call_command("purge_audit_log", before=_CUTOFF, dry_run=True, stdout=out)
+
+        self.assertIn("would delete 0 event rows", out.getvalue())
+        self.assertTrue(ShelterEvent.objects.filter(pk=first.pk).exists())
 
     def test_retains_report_critical_labels_and_deletes_the_rest(self) -> None:
         """The blast radius is pinned: report-critical labels survive, the rest go."""
@@ -188,9 +275,8 @@ class PurgeAuditLogTestCase(TestCase):
         shelter = Shelter.objects.create(name="Dry Run Shelter")
         shelter.name = "Renamed Dry Run Shelter"
         shelter.save()
-        old_event = ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).order_by("pk").first()
-        self.assertIsNotNone(old_event)
-        backdate_event_rows(ShelterEvent.objects.filter(pk=old_event.pk), pgh_created_at=_OLD)
+        ids = list(ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).values_list("pk", flat=True))
+        backdate_event_rows(ShelterEvent.objects.filter(pk__in=ids), pgh_created_at=_OLD)
 
         before_count = ShelterEvent.objects.count()
         out = StringIO()
@@ -198,8 +284,8 @@ class PurgeAuditLogTestCase(TestCase):
         call_command("purge_audit_log", before=_CUTOFF, dry_run=True, stdout=out)
 
         self.assertEqual(ShelterEvent.objects.count(), before_count)
-        self.assertTrue(ShelterEvent.objects.filter(pk=old_event.pk).exists())
-        self.assertIn("would delete 1 event rows", out.getvalue())
+        self.assertTrue(ShelterEvent.objects.filter(pgh_obj_id=shelter.pk).exists())
+        self.assertIn("would delete 2 event rows", out.getvalue())
 
     def test_dry_run_total_is_not_truncated_at_one_batch(self) -> None:
         """A dry run must count the whole set, not just the first batch."""

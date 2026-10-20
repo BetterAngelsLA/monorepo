@@ -85,6 +85,13 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
+export type AuditActionPage = {
+  __typename: 'AuditActionPage';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+  results: Array<AuditActionType>;
+};
+
 export type AuditActionType = {
   __typename: 'AuditActionType';
   actor: Scalars['String']['output'];
@@ -92,6 +99,7 @@ export type AuditActionType = {
   fieldChanges: Scalars['JSON']['output'];
   summary: Scalars['String']['output'];
   timestamp: Scalars['DateTime']['output'];
+  truncated: Scalars['Boolean']['output'];
 };
 
 export enum AuditEventKind {
@@ -2626,7 +2634,7 @@ export type Query = {
   interactionsByRegion: Array<RegionCountType>;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
-  objectAuditLog: Array<AuditActionType>;
+  objectAuditLog: AuditActionPage;
   operatorShelter: OperatorShelterType;
   operatorShelters: OperatorShelterTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
@@ -2811,10 +2819,10 @@ export type QueryNotesArgs = {
 
 
 export type QueryObjectAuditLogArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
   includeSnapshot?: Scalars['Boolean']['input'];
   limit?: Scalars['Int']['input'];
   objectId: Scalars['ID']['input'];
-  offset?: Scalars['Int']['input'];
   targetType: AuditTargetType;
 };
 

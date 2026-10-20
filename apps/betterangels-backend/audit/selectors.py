@@ -10,19 +10,25 @@ event model with an FK to the object — including the §6 through-table proxies
 introspection) only, never a second query source.
 
 Pagination is applied in SQL (§10): the page's action keys are selected with a
-grouped ``LIMIT``/``OFFSET`` query, then only those keys' rows are fetched, so
-page size does not scale the work with the object's total history.
+grouped ``LIMIT`` over a cursor on the total order, then only those keys' rows
+are fetched, so page size does not scale the work with the object's total
+history. Excluded event models are dropped from the compiled union with
+``across()`` rather than filtered row-by-row, so their tables are never read.
 """
 
 from __future__ import annotations
 
+import base64
+import json
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from functools import lru_cache
-from typing import Any
+from typing import Any, Sequence
+from uuid import UUID
 
 from django.apps import apps
-from django.db.models import Max, Model, TextField
+from django.db.models import Max, Model, Q, TextField
 from django.db.models.functions import Cast, Coalesce
 from django.utils import timezone
 from pghistory.core import event_models
@@ -38,18 +44,30 @@ _MECHANICAL_FIELDS = frozenset({"created_at", "updated_at"})
 # an uncapped ``limit`` is an easy way to request an unbounded response (§10).
 MAX_LIMIT = 200
 
-# The single deliberate exclusion from a Shelter's log (§10). ``references()``
-# unions every event model with an FK to the target, so this is a blocklist
-# (default-inclusive) rather than a hand-maintained allowlist.
-_EXCLUDED_EVENT_MODELS = ("referrals.ReferralEvent",)
+# Upper bound on the events rendered for a single action. One ``pghistory``
+# context can wrap an arbitrarily large write (a CSV import wraps its whole
+# dataset), so an action's event list is capped independently of the cursor
+# limit; ``AuditActionData.truncated`` reports that rows were omitted.
+MAX_EVENTS_PER_ACTION = 500
+
+# Excluded from every target's log (blocklist, default-inclusive; §10).
+# ``referrals.ReferralEvent`` is a separate concern from a shelter log.
+# ``ContactInfoEvent`` is internal Better Angels data with no end-user surface:
+# contact names, emails, and phone numbers must never reach the operator log,
+# regardless of the caller's permissions. The rows are still written, so this is
+# a read-side exclusion only (ADR 0004 §7b.6).
+_EXCLUDED_EVENT_MODELS = ("referrals.ReferralEvent", "shelters.ContactInfoEvent")
 
 # Additional, target-scoped exclusions (§32). Each log owns its model: a
 # reservation's detail is tracked but has no public surface yet, and a Room is
 # configuration-only here because its beds have their own log.
+#
+# There is deliberately no ``SHELTER`` entry. ``Reservation`` reaches a shelter
+# only through its ``bed``/``room``, so ``references(Shelter)`` never matches
+# ``ReservationEvent`` or ``ReservationClientEvent`` -- a Shelter log omits
+# reservation rows structurally, not by filtering. Only the Room/Bed logs, which
+# *do* reach reservations through their own FKs, need a scoped exclusion.
 _SCOPED_EXCLUSIONS: dict[str, tuple[str, ...]] = {
-    # Reservation/ReservationClient rows are still tracked (for reporting and a
-    # future surface) but must not render anywhere in the operator UI.
-    "SHELTER": ("shelters.ReservationEvent", "shelters.ReservationClientEvent"),
     # A room log is the room's own configuration; beds are summarized on the
     # shelter log and detailed on their own.
     "ROOM": ("shelters.ReservationEvent", "shelters.BedEvent"),
@@ -142,7 +160,7 @@ def _label_field(model: type[Model]) -> str | None:
 
 @dataclass
 class AuditEventData:
-    timestamp: Any
+    timestamp: datetime
     actor: str
     kind: str
     action: str
@@ -160,7 +178,7 @@ class AuditEventData:
 
 @dataclass
 class AuditActionData:
-    timestamp: Any
+    timestamp: datetime
     actor: str
     summary: str
     events: list[AuditEventData] = field(default_factory=list)
@@ -169,6 +187,64 @@ class AuditActionData:
     # (``pgh_id`` then the action key; see ``_action_order``). It is a string so
     # both sorts share one comparison.
     order: str = ""
+    # The two aggregate values the cursor is built from; mirrors the SQL
+    # ``Max("pgh_created_at")`` / ``Max("pgh_id")`` above, which need not come
+    # from the same row when a transaction ties timestamps.
+    last_id: int = 0
+    order_key: str = ""
+    # True when the action carried more events than ``MAX_EVENTS_PER_ACTION``
+    # and the remaining rows were omitted from ``events`` (the action-level
+    # ``field_changes`` still reflects every row).
+    truncated: bool = False
+
+
+@dataclass
+class AuditActionPageData:
+    """One cursor page of actions plus the cursor to continue from (§10)."""
+
+    results: list[AuditActionData] = field(default_factory=list)
+    end_cursor: str | None = None
+    has_next_page: bool = False
+
+
+@dataclass(frozen=True)
+class _Cursor:
+    event: datetime
+    event_id: int
+    action_key: str
+
+
+_CURSOR_VERSION = 1
+
+
+def _encode_cursor(action: AuditActionData) -> str:
+    payload = {
+        "v": _CURSOR_VERSION,
+        "t": action.timestamp.isoformat(),
+        "i": action.last_id,
+        "k": action.order_key,
+    }
+    raw = json.dumps(payload, separators=(",", ":"))
+    return base64.urlsafe_b64encode(raw.encode()).decode()
+
+
+def _decode_cursor(raw: str) -> _Cursor:
+    """Parse an opaque ``after`` cursor, raising ``ValueError`` when malformed.
+
+    The cursor is caller input, so a bad value must surface as a GraphQL error
+    (via the schema's ``ValueError`` handling) rather than a 500.
+    """
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(raw.encode()).decode())
+        if payload.get("v") != _CURSOR_VERSION:
+            raise ValueError(payload.get("v"))
+        return _Cursor(
+            event=datetime.fromisoformat(payload["t"]),
+            event_id=int(payload["i"]),
+            action_key=str(payload["k"]),
+        )
+    except (ValueError, TypeError, KeyError) as err:
+        raise ValueError("Invalid cursor.") from err
 
 
 @dataclass(frozen=True)
@@ -535,46 +611,96 @@ def _action_key_expr() -> Any:
     )
 
 
-def _action_order(rows: list[Any]) -> str:
-    """The action's total-order key, shared by the SQL page query and the Python
-    re-sort (§10).
+def _action_order(rows: list[Any]) -> tuple[int, str]:
+    """The action's total-order key pieces, shared by the SQL page query and the
+    Python re-sort (§10).
 
     ``pgh_id`` is a per-table ``AutoField``, so it is only chronological *within*
     an event table; two actions in different tables can tie on it, and they always
     tie on ``pgh_created_at`` when they are written in one transaction (``NOW()``
     is constant). Appending the (unique) action key makes the order total, so no
-    action can be skipped or duplicated across pages. Fixed-width zero padding
-    keeps its lexicographic order equal to numeric order.
+    action can be skipped or duplicated across pages.
+
+    Returns ``(last_id, action_key)``; ``last_id`` is zero-padded into ``order``
+    so the lexicographic comparison matches the numeric one.
     """
     last_id = max((row.pgh_id for row in rows), default=0)
-    return f"{last_id:012d}:{rows[0].action_key}"
+    return last_id, rows[0].action_key
+
+
+def _allowed_event_models(obj: Model, excluded: Sequence[str]) -> list[type[Model]]:
+    """The event models ``references()`` would union for *obj*, minus exclusions.
+
+    Passed to ``across()`` so an excluded model's table is not read at all: a
+    row-level ``.exclude(pgh_model__in=...)`` still compiles its UNION branch,
+    paying the scan and the statement-size cost for rows that are then thrown
+    away. The list is derived from pghistory, so a newly tracked model is
+    included automatically (no hand-maintained allowlist).
+    """
+    labels = set(excluded)
+    return [
+        model for model in event_models(references_model=obj._meta.concrete_model) if model._meta.label not in labels
+    ]
+
+
+def _page_filter(page_keys: Sequence[str]) -> Q:
+    """A SQL predicate selecting the page's rows by the indexed raw columns.
+
+    ``action_key`` is ``COALESCE(CAST(pgh_context_id AS text), pgh_slug)``, so
+    filtering on it cannot use the ``pgh_context_id`` index. Splitting the keys
+    back into UUIDs (context-backed actions) and slugs (context-less singletons)
+    keeps both arms indexable.
+    """
+    context_ids: list[UUID] = []
+    slugs: list[str] = []
+    for key in page_keys:
+        try:
+            context_ids.append(UUID(key))
+        except ValueError:
+            slugs.append(key)
+
+    filters: list[Q] = []
+    if context_ids:
+        filters.append(Q(pgh_context_id__in=context_ids))
+    if slugs:
+        filters.append(Q(pgh_slug__in=slugs))
+    if not filters:
+        return Q(pk__in=[])
+    page_filter = filters[0]
+    for extra in filters[1:]:
+        page_filter |= extra
+    return page_filter
 
 
 def object_audit_log(
     *,
     obj: Any,
     target_type: str,
+    after: str | None = None,
     limit: int = 50,
-    offset: int = 0,
     include_snapshot: bool = False,
-) -> list[AuditActionData]:
-    """Return the write audit log for *obj*, newest action first.
+) -> AuditActionPageData:
+    """Return one cursor page of *obj*'s write audit log, newest action first.
 
     *target_type* is the ``AuditTargetType`` value (``SHELTER``/``ROOM``/``BED``/
-    ``RESERVATION``) echoed onto each event. Pagination is done in SQL (§10):
-    only the requested page's action keys are fetched from the aggregate CTE.
+    ``RESERVATION``) echoed onto each event. *after* is the opaque ``end_cursor``
+    from a previous page; the cursor sits on the same ``(pgh_created_at,
+    pgh_id, action_key)`` total order the SQL page query uses, so an event
+    inserted between requests cannot shift a later page (offset pagination can
+    repeat an action).
 
-    Raises ``ValueError`` for a non-positive/oversized ``limit`` or a negative
-    ``offset`` (§10 cap): callers surface this as a GraphQL error.
+    Pagination is done in SQL (§10): only the page's action keys are fetched
+    from the aggregate CTE. Raises ``ValueError`` for a non-positive/oversized
+    ``limit`` or a malformed cursor (§10 cap): callers surface this as a
+    GraphQL error.
     """
     if limit < 1 or limit > MAX_LIMIT:
         raise ValueError(f"limit must be between 1 and {MAX_LIMIT}.")
-    if offset < 0:
-        raise ValueError("offset must be non-negative.")
+    cursor = _decode_cursor(after) if after is not None else None
 
     target_id = str(obj.pk)
     excluded = (*_EXCLUDED_EVENT_MODELS, *_SCOPED_EXCLUSIONS.get(target_type, ()))
-    base = AuditWriteEvent.objects.references([obj]).exclude(pgh_model__in=excluded).exclude(label="seed")
+    base = AuditWriteEvent.objects.across(*_allowed_event_models(obj, excluded)).references([obj]).exclude(label="seed")
     key_expr = _action_key_expr()
 
     # 1) Action keys for the requested page, grouped and limited in SQL.
@@ -585,21 +711,32 @@ def object_audit_log(
     #    transaction (``NOW()`` is constant). Without the final key an action could
     #    be skipped or repeated across pages; the Python re-sort uses the same
     #    tuple (see ``_action_order``).
-    key_rows = (
+    key_query = (
         base.annotate(action_key=key_expr)
         .values("action_key")
         .annotate(last_event=Max("pgh_created_at"), last_id=Max("pgh_id"))
-        .order_by("-last_event", "-last_id", "-action_key")[offset : offset + limit]
+        .order_by("-last_event", "-last_id", "-action_key")
     )
+    if cursor is not None:
+        key_query = key_query.filter(
+            Q(last_event__lt=cursor.event)
+            | Q(last_event=cursor.event, last_id__lt=cursor.event_id)
+            | Q(last_event=cursor.event, last_id=cursor.event_id, action_key__lt=cursor.action_key)
+        )
+
+    # Fetch one extra key so ``has_next_page`` is known without a count query.
+    key_rows = list(key_query[: limit + 1])
+    has_next_page = len(key_rows) > limit
+    key_rows = key_rows[:limit]
     page_keys = [row["action_key"] for row in key_rows]
     if not page_keys:
-        return []
+        return AuditActionPageData(results=[], end_cursor=None, has_next_page=False)
 
     # 2) Fetch only the page's rows and build actions. This is a plain iteration,
     # not ``.iterator()``: Django's server-side cursor issues ``DECLARE``, which
     # RDS Proxy pins (ADR 0004 §10). The row set is already bounded by
     # ``page_keys``, so a server-side cursor buys nothing here.
-    rows = base.annotate(action_key=key_expr).filter(action_key__in=page_keys).order_by("pgh_created_at", "pgh_id")
+    rows = base.annotate(action_key=key_expr).filter(_page_filter(page_keys)).order_by("pgh_created_at", "pgh_id")
 
     grouped: dict[str, list[Any]] = defaultdict(list)
     for row in rows:
@@ -628,7 +765,11 @@ def object_audit_log(
                 event.snapshot = _finalize(event.snapshot, resolver)
 
     actions.sort(key=lambda a: (a.timestamp, a.order), reverse=True)
-    return actions
+    return AuditActionPageData(
+        results=actions,
+        end_cursor=_encode_cursor(actions[-1]) if actions else None,
+        has_next_page=has_next_page,
+    )
 
 
 def _build_action(
@@ -652,6 +793,14 @@ def _build_action(
     m2m_changes: dict[tuple[str, Any, str], dict[str, list[_Ref]]] = defaultdict(lambda: {"removed": [], "added": []})
     events: list[AuditEventData] = []
     summarized: set[tuple[str, Any, str]] = set()
+    truncated = False
+
+    def add_event(event: AuditEventData) -> None:
+        nonlocal truncated
+        if len(events) >= MAX_EVENTS_PER_ACTION:
+            truncated = True
+            return
+        events.append(event)
 
     for row in rows:
         # Bed/Room writes are acknowledged, not detailed (§32): the shelter log
@@ -665,7 +814,7 @@ def _build_action(
             if summary_key in summarized:
                 continue
             summarized.add(summary_key)
-            events.append(
+            add_event(
                 AuditEventData(
                     timestamp=row.pgh_created_at,
                     actor=_actor(row),
@@ -691,7 +840,7 @@ def _build_action(
                 bucket["added"].append(ref)
 
             single = [[ref], []] if row.pgh_label.endswith(".remove") else [[], [ref]]
-            events.append(
+            add_event(
                 AuditEventData(
                     timestamp=row.pgh_created_at,
                     actor=_actor(row),
@@ -711,7 +860,7 @@ def _build_action(
         changes = _render_keys(_scalar_changes(row, resolver), owner)
         _merge_scalar(scalar_changes, owner, row.pgh_obj_id, changes)
 
-        events.append(
+        add_event(
             AuditEventData(
                 timestamp=row.pgh_created_at,
                 actor=_actor(row),
@@ -739,7 +888,8 @@ def _build_action(
         if removed or added:
             action_changes[_action_change_key(owner, obj_id, field_name, target_model_label)] = [removed, added]
 
-    kinds = {event.kind for event in events}
+    # Derive the verb from every row, not the (possibly capped) rendered events.
+    kinds = {_kind(row.pgh_label) for row in rows}
     if kinds == {"INSERT"}:
         verb = "created"
     elif kinds == {"DELETE"}:
@@ -747,6 +897,7 @@ def _build_action(
     else:
         verb = "modified"
 
+    last_id, order_key = _action_order(rows)
     timestamp = rows[-1].pgh_created_at if rows else timezone.now()
     return AuditActionData(
         timestamp=timestamp,
@@ -754,5 +905,8 @@ def _build_action(
         summary=f"{actor} {verb} {target_type.lower()} {target_id}",
         events=events,
         field_changes=action_changes,
-        order=_action_order(rows),
+        order=f"{last_id:012d}:{order_key}",
+        last_id=last_id,
+        order_key=order_key,
+        truncated=truncated,
     )

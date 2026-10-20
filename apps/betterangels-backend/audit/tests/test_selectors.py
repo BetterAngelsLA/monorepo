@@ -3,6 +3,7 @@
 import re
 from types import SimpleNamespace
 from typing import Any
+from unittest import mock
 
 from django.apps import apps
 from django.db import connection
@@ -22,8 +23,8 @@ from audit.selectors import (
     _scalar_changes,
     _through_event_meta,
     object_audit_log,
-)
-from audit.tests.utils import audit_context, clear_history_context
+)  # noqa: F401 -- the cursor-aware API is exercised directly by the pagination tests
+from audit.tests.utils import audit_context, audit_log, clear_history_context
 from clients.models import ClientProfile
 from shelters.enums import (
     DemographicChoices,
@@ -97,7 +98,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.name = "Renamed Shelter"
             self.shelter.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
 
         self.assertEqual(len(actions), 1)
         self.assertEqual([event.action for event in actions[0].events], ["shelter.update"])
@@ -111,7 +112,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.name = "Second Rename"
             self.shelter.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
         renames = [a for a in actions if "name" in a.field_changes]
 
         self.assertEqual(len(renames), 1)
@@ -132,7 +133,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.bed.name = "Renamed Bed"
             self.bed.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
 
         self.assertEqual(len(actions), 1)
         changes = actions[0].field_changes
@@ -156,7 +157,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             other_bed.name = "Renamed Bed B"
             other_bed.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(
@@ -170,7 +171,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         with audit_context(user=self.user):
             self.shelter.demographics.set([self.demographic_couples, self.demographic_families])
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
         m2m_actions = [a for a in actions if "demographics" in a.field_changes]
 
         self.assertEqual(len(m2m_actions), 1)
@@ -182,7 +183,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         with audit_context(user=self.user):
             self.shelter.demographics.set([self.demographic_couples])
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
         m2m_actions = [a for a in actions if "demographics" in a.field_changes]
 
         self.assertEqual(len(m2m_actions), 1)
@@ -195,7 +196,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.demographics.add(self.demographic_couples)
             self.shelter.demographics.remove(self.demographic_couples)
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
 
         self.assertEqual(len(actions), 1)
         self.assertNotIn("demographics", actions[0].field_changes)
@@ -210,7 +211,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.reservation.status = ReservationStatusChoices.CHECKED_IN
             self.reservation.save()
 
-        actions = object_audit_log(obj=self.reservation, target_type="RESERVATION")
+        actions = audit_log(obj=self.reservation, target_type="RESERVATION")
 
         self.assertEqual(len(actions), 1)
         action = actions[0]
@@ -228,7 +229,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.reservation.notes = "Bed bugs reported"
             self.reservation.save()
 
-        actions = object_audit_log(obj=self.reservation, target_type="RESERVATION")
+        actions = audit_log(obj=self.reservation, target_type="RESERVATION")
 
         self.assertEqual(len(actions), 1)
         labels = [event.action for event in actions[0].events]
@@ -247,7 +248,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.reservation.notes = "Checked in with a note"
             self.reservation.save()
 
-        actions = object_audit_log(obj=self.reservation, target_type="RESERVATION")
+        actions = audit_log(obj=self.reservation, target_type="RESERVATION")
 
         self.assertEqual(len(actions), 1)
         events = actions[0].events
@@ -261,7 +262,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         with audit_context(user=self.user):
             reservation = Reservation.objects.create(bed=self.bed, status=ReservationStatusChoices.CANCELLED)
 
-        actions = object_audit_log(obj=reservation, target_type="RESERVATION")
+        actions = audit_log(obj=reservation, target_type="RESERVATION")
         add_action = _action_with(actions, "Cancelled")
 
         self.assertIsNotNone(add_action)
@@ -281,7 +282,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         with audit_context(user=self.user):
             reservation = Reservation.objects.create(bed=self.bed, status=ReservationStatusChoices.CANCELLED)
 
-        add_action = _action_with(object_audit_log(obj=reservation, target_type="RESERVATION"), "Cancelled")
+        add_action = _action_with(audit_log(obj=reservation, target_type="RESERVATION"), "Cancelled")
         self.assertIsNotNone(add_action)
         assert add_action is not None
         self.assertNotIn("id", add_action.field_changes)
@@ -310,7 +311,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.bed.room = self.room
             self.bed.save()
 
-        actions = object_audit_log(obj=self.bed, target_type="BED")
+        actions = audit_log(obj=self.bed, target_type="BED")
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].field_changes["room"], [None, "Room A"])
@@ -322,7 +323,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.name = "Seeded Name"
             self.shelter.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
 
         self.assertIsNone(_action_with(actions, "Seeded Name"))
 
@@ -331,7 +332,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.name = "Cloned Name"
             self.shelter.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
         action = _action_with(actions, "Cloned Name")
 
         self.assertIsNotNone(action)
@@ -345,7 +346,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.shelter.name = "No Context B"
         self.shelter.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
 
         first = _action_with(actions, "No Context A")
         second = _action_with(actions, "No Context B")
@@ -383,7 +384,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             row = model._default_manager.filter(pgh_obj_id=obj_pk, pgh_label=label).latest("pgh_id")
             backdate_event_rows(model._default_manager.filter(pk=row.pk), pgh_id=shared_pgh_id)
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
 
         # Both writes are in the shelter's log (references() spans its beds) but
         # they are two separate actions, not one merged "system" action.
@@ -398,7 +399,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.name = "Named Actor"
             self.shelter.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
         action = _action_with(actions, "Named Actor")
 
         assert action is not None
@@ -411,10 +412,10 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.name = "Snapshot Shelter"
             self.shelter.save()
 
-        without = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        without = audit_log(obj=self.shelter, target_type="SHELTER")
         self.assertIsNone(without[0].events[0].snapshot)
 
-        with_snapshot = object_audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        with_snapshot = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
         snapshot = with_snapshot[0].events[0].snapshot
         self.assertIsNotNone(snapshot)
         assert snapshot is not None
@@ -436,7 +437,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.add_notes_shelter_details = "Shelter detail"
             self.shelter.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
 
         self.assertEqual(len(actions), 1)
         changes = actions[0].field_changes
@@ -453,37 +454,55 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertIn("add_notes_shelter_details", snapshot)
         self.assertIn("other_services", snapshot)
 
-    def test_offset_beyond_range_returns_no_actions(self) -> None:
+    def test_cursor_past_the_oldest_action_returns_no_actions(self) -> None:
         with audit_context(user=self.user):
             self.shelter.name = "Only Rename"
             self.shelter.save()
 
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=10, offset=100)
+        first = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=10)
+        self.assertEqual(len(first.results), 1)
+        self.assertFalse(first.has_next_page)
+        self.assertIsNotNone(first.end_cursor)
 
-        self.assertEqual(actions, [])
+        # Continuing after the last action is a legitimate, empty page.
+        rest = object_audit_log(obj=self.shelter, target_type="SHELTER", after=first.end_cursor)
+        self.assertEqual(rest.results, [])
+        self.assertFalse(rest.has_next_page)
 
-    def test_limit_and_offset_are_validated(self) -> None:
-        # An oversized/non-positive limit or a negative offset is caller input
+    def test_limit_and_cursor_are_validated(self) -> None:
+        # An oversized/non-positive limit or a malformed cursor is caller input
         # and must raise rather than slicing unboundedly (§10 cap).
-        for limit, offset in ((0, 0), (MAX_LIMIT + 1, 0), (50, -1)):
-            with self.subTest(limit=limit, offset=offset):
+        for limit in (0, MAX_LIMIT + 1):
+            with self.subTest(limit=limit):
                 with self.assertRaises(ValueError):
-                    object_audit_log(obj=self.shelter, target_type="SHELTER", limit=limit, offset=offset)
+                    object_audit_log(obj=self.shelter, target_type="SHELTER", limit=limit)
+
+        for cursor in ("not-a-cursor", "", "eyJ2IjogOTk5fQ=="):
+            with self.subTest(cursor=cursor):
+                with self.assertRaises(ValueError):
+                    object_audit_log(obj=self.shelter, target_type="SHELTER", after=cursor)
 
     def test_max_limit_is_the_inclusive_upper_bound(self) -> None:
-        actions = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=MAX_LIMIT)
-        self.assertIsInstance(actions, list)
+        page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=MAX_LIMIT)
+        self.assertIsInstance(page.results, list)
 
-    def test_sql_pagination_returns_the_requested_page(self) -> None:
+    def test_cursor_pagination_returns_the_requested_page(self) -> None:
         for name in ("Page One", "Page Two", "Page Three"):
             with audit_context(user=self.user):
                 self.shelter.name = name
                 self.shelter.save()
 
-        page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, offset=1)
+        first = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1)
+        self.assertEqual([a.field_changes["name"] for a in first.results], [["Page Two", "Page Three"]])
+        self.assertTrue(first.has_next_page)
 
-        self.assertEqual(len(page), 1)
-        self.assertEqual(page[0].field_changes["name"], ["Page One", "Page Two"])
+        second = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, after=first.end_cursor)
+        self.assertEqual([a.field_changes["name"] for a in second.results], [["Page One", "Page Two"]])
+        self.assertTrue(second.has_next_page)
+
+        third = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, after=second.end_cursor)
+        self.assertEqual([a.field_changes["name"] for a in third.results], [["Audit Shelter", "Page One"]])
+        self.assertFalse(third.has_next_page)
 
     def test_pagination_is_deterministic_and_newest_first_when_timestamps_tie(self) -> None:
         """Paging must not skip or repeat an action, even with tied timestamps (§10).
@@ -500,8 +519,13 @@ class ObjectAuditLogSelectorTestCase(TestCase):
                 self.shelter.save()
 
         seen: list[Any] = []
-        for offset in range(3):
-            seen.extend(object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, offset=offset))
+        cursor: str | None = None
+        while True:
+            page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, after=cursor)
+            seen.extend(page.results)
+            cursor = page.end_cursor
+            if not page.has_next_page:
+                break
 
         # Exactly one action per page, none repeated, none missing...
         self.assertEqual(len(seen), 3)
@@ -516,13 +540,59 @@ class ObjectAuditLogSelectorTestCase(TestCase):
                 self.shelter.save()
 
         with CaptureQueriesContext(connection) as ctx:
-            object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, offset=0)
+            object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1)
 
         sql = " ".join(query["sql"] for query in ctx.captured_queries).upper()
         # The action keys are grouped and sliced in SQL, not by fetching the
-        # object's whole history into Python first (§10).
+        # object's whole history into Python first (§10). One extra key is read so
+        # ``hasNextPage`` needs no count query.
         self.assertIn("GROUP BY", sql)
-        self.assertIn("LIMIT 1", sql)
+        self.assertIn("LIMIT 2", sql)
+
+    def test_events_per_action_are_capped(self) -> None:
+        """One context can wrap an unbounded write; the event list is capped.
+
+        The action-level ``field_changes`` still merges every row, so the
+        before/after pair stays correct even when the per-event list is cut.
+        """
+        with audit_context(user=self.user):
+            for name in ("Cap One", "Cap Two", "Cap Three", "Cap Four"):
+                self.shelter.name = name
+                self.shelter.save()
+
+        with mock.patch("audit.selectors.MAX_EVENTS_PER_ACTION", 2):
+            page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1)
+
+        action = page.results[0]
+        self.assertEqual(len(action.events), 2)
+        self.assertTrue(action.truncated)
+        self.assertEqual(action.field_changes["name"], ["Audit Shelter", "Cap Four"])
+
+    def test_page_rows_filter_on_the_indexable_columns(self) -> None:
+        """The page fetch must not filter on the computed ``action_key``.
+
+        ``action_key`` is ``COALESCE(CAST(pgh_context_id AS text), pgh_slug)``,
+        which no index can serve. The page's rows are selected by
+        ``pgh_context_id IN (...)`` / ``pgh_slug IN (...)`` instead.
+        """
+        for name in ("Raw One", "Raw Two"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+
+        # A context-less write groups by ``pgh_slug`` (its singleton action key).
+        clear_history_context()
+        self.shelter.name = "Context Less"
+        self.shelter.save()
+
+        with CaptureQueriesContext(connection) as ctx:
+            page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=50)
+
+        self.assertTrue(page.results)
+        page_sql = [query["sql"] for query in ctx.captured_queries if "GROUP BY" not in query["sql"].upper()]
+        self.assertTrue(page_sql)
+        self.assertTrue(any("pgh_context_id" in sql for sql in page_sql))
+        self.assertFalse(any("COALESCE(CAST(" in sql for sql in page_sql))
 
     def test_busy_object_query_count_is_bounded_and_page_size_independent(self) -> None:
         # The aggregate CTE spans every event model referencing the target (§10).
@@ -541,9 +611,9 @@ class ObjectAuditLogSelectorTestCase(TestCase):
                 self.shelter.demographics.set([target])
 
         with CaptureQueriesContext(connection) as one:
-            object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1)
+            audit_log(obj=self.shelter, target_type="SHELTER", limit=1)
         with CaptureQueriesContext(connection) as many:
-            object_audit_log(obj=self.shelter, target_type="SHELTER", limit=50)
+            audit_log(obj=self.shelter, target_type="SHELTER", limit=50)
 
         self.assertEqual(len(one), len(many))
         self.assertLessEqual(len(many), 4)
@@ -568,7 +638,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.exit_policy.set([exit_policy])
             self.shelter.referral_requirement.set([referral_requirement])
 
-        bed_actions = object_audit_log(obj=self.bed, target_type="BED")
+        bed_actions = audit_log(obj=self.bed, target_type="BED")
         self.assertEqual(len(bed_actions), 1)
         # Rendering the correct through FK column proves it was attributed
         # rather than dropped to the non-M2M path (§19).
@@ -576,7 +646,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(removed, [])
         self.assertEqual(added, ["erc"])
 
-        shelter_actions = object_audit_log(obj=self.shelter, target_type="SHELTER")
+        shelter_actions = audit_log(obj=self.shelter, target_type="SHELTER")
         self.assertEqual(len(shelter_actions), 1)
         changes = shelter_actions[0].field_changes
         self.assertEqual(changes["exit policy"], [[], ["mia"]])
@@ -645,9 +715,30 @@ class ObjectAuditLogSelectorTestCase(TestCase):
     def test_references_boundary_for_shelter_minus_the_blocklist(self) -> None:
         labels = {event_model._meta.label for event_model in event_models(references_model=Shelter)}
 
+        # The *match* set is unchanged: ContactInfo still references a Shelter
+        # (and its rows are still written); the log excludes it below.
         self.assertEqual(labels, _EXPECTED_SHELTER_REFERENCES)
         self.assertIn("referrals.ReferralEvent", labels)
-        self.assertEqual(_EXCLUDED_EVENT_MODELS, ("referrals.ReferralEvent",))
+        self.assertIn("shelters.ContactInfoEvent", labels)
+        self.assertEqual(_EXCLUDED_EVENT_MODELS, ("referrals.ReferralEvent", "shelters.ContactInfoEvent"))
+
+    def test_excluded_branches_are_dropped_from_the_compiled_union(self) -> None:
+        """``across()`` removes an excluded table from the SQL, not just its rows.
+
+        A row-level ``.exclude(pgh_model__in=...)`` still compiles every UNION
+        branch, so the excluded table is scanned and its rows thrown away. The
+        compiled statement must not mention them at all.
+        """
+        with audit_context(user=self.user):
+            self.shelter.name = "Branch Pruning"
+            self.shelter.save()
+
+        with CaptureQueriesContext(connection) as captured:
+            audit_log(obj=self.shelter, target_type="SHELTER", limit=50)
+
+        sql = " ".join(query["sql"] for query in captured.captured_queries).lower()
+        self.assertNotIn("referrals_referralevent", sql)
+        self.assertNotIn("shelters_contactinfoevent", sql)
 
     def test_references_boundary_for_bed(self) -> None:
         labels = {event_model._meta.label for event_model in event_models(references_model=Bed)}
@@ -667,26 +758,26 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.room.name = "Renamed Room"
             self.room.save()
 
-        room_actions = object_audit_log(obj=self.room, target_type="ROOM")
+        room_actions = audit_log(obj=self.room, target_type="ROOM")
         self.assertEqual(len(room_actions), 1)
         self.assertEqual(room_actions[0].field_changes.get("name"), ["Room A", "Renamed Room"])
         self.assertEqual(_summaries(room_actions[0]), [])
 
-        self.assertEqual(object_audit_log(obj=self.bed, target_type="BED"), [])
+        self.assertEqual(audit_log(obj=self.bed, target_type="BED"), [])
 
     def test_room_log_contains_no_bed_events(self) -> None:
         with audit_context(user=self.user):
             self.bed.name = "Bed Renamed Under Room"
             self.bed.save()
 
-        self.assertEqual(object_audit_log(obj=self.room, target_type="ROOM"), [])
+        self.assertEqual(audit_log(obj=self.room, target_type="ROOM"), [])
 
     def test_bed_log_keeps_full_field_changes(self) -> None:
         with audit_context(user=self.user):
             self.bed.name = "Detailed Bed"
             self.bed.save()
 
-        actions = object_audit_log(obj=self.bed, target_type="BED")
+        actions = audit_log(obj=self.bed, target_type="BED")
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].field_changes, {"name": ["Bed A", "Detailed Bed"]})
@@ -723,7 +814,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             self.shelter.save()
 
         with CaptureQueriesContext(connection) as captured:
-            object_audit_log(obj=self.shelter, target_type="SHELTER")
+            audit_log(obj=self.shelter, target_type="SHELTER")
 
         sql = "\n".join(query["sql"] for query in captured.captured_queries)
 
@@ -762,7 +853,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             ("RESERVATION", self.reservation),
         ):
             with CaptureQueriesContext(connection) as captured:
-                object_audit_log(obj=obj, target_type=target_type, limit=1, offset=0)
+                audit_log(obj=obj, target_type=target_type, limit=1)
 
             size = max((len(query["sql"]) for query in captured.captured_queries), default=0)
 
@@ -779,7 +870,7 @@ class AuditDisplayScopeTestCase(TestCase):
             self.room = Room.objects.create(shelter=self.shelter, name="Room A")
 
     def _log(self, **kwargs: Any) -> list[Any]:
-        return object_audit_log(obj=self.shelter, target_type="SHELTER", **kwargs)
+        return audit_log(obj=self.shelter, target_type="SHELTER", **kwargs)
 
     def test_shelter_log_summarizes_bed_and_room_writes(self) -> None:
         with audit_context(user=self.user):
@@ -854,7 +945,16 @@ class AuditDisplayScopeTestCase(TestCase):
 
         self.assertEqual(_summaries(actions[0]), [f"Created Bed #{bed.pk} ({bed.pk})"])
 
-    def test_shelter_log_omits_reservation_and_reservation_client_rows(self) -> None:
+    def test_shelter_log_cannot_reach_reservation_rows(self) -> None:
+        """A Shelter log omits reservations structurally, not by an exclusion.
+
+        ``Reservation`` reaches a shelter only through ``bed``/``room``, so
+        ``references(Shelter)`` never matches these event models and
+        ``_SCOPED_EXCLUSIONS`` needs no ``SHELTER`` entry. This asserts the
+        *reach*, which is what actually keeps them out -- the older version of
+        this test asserted a bare empty log, which passes even if an exclusion
+        is doing nothing.
+        """
         with audit_context(label="seed"):
             bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
             reservation = Reservation.objects.create(bed=bed, status=ReservationStatusChoices.CONFIRMED)
@@ -863,9 +963,26 @@ class AuditDisplayScopeTestCase(TestCase):
         with audit_context(user=self.user):
             reservation.notes = "Hidden detail"
             reservation.save()
-            ReservationClient.objects.create(reservation=reservation, client_profile=profile)
+            reservation_client = ReservationClient.objects.create(reservation=reservation, client_profile=profile)
 
-        self.assertEqual(object_audit_log(obj=self.shelter, target_type="SHELTER"), [])
+        # Positive control: both rows exist, so the empty log below is not a
+        # write that never happened.
+        self.assertTrue(
+            Reservation.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+                pgh_obj_id=reservation.pk
+            ).exists()
+        )
+        self.assertTrue(
+            ReservationClient.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+                pgh_obj_id=reservation_client.pk
+            ).exists()
+        )
+
+        shelter_references = {model._meta.label for model in event_models(references_model=Shelter)}
+        self.assertNotIn("shelters.ReservationEvent", shelter_references)
+        self.assertNotIn("shelters.ReservationClientEvent", shelter_references)
+
+        self.assertEqual(audit_log(obj=self.shelter, target_type="SHELTER"), [])
 
     def test_internal_reservation_path_still_renders_its_own_log(self) -> None:
         """Tracking is unchanged; only the public surface is withdrawn (§32)."""
@@ -879,7 +996,7 @@ class AuditDisplayScopeTestCase(TestCase):
                 reservation=reservation, client_profile=profile, is_primary=True
             )
 
-        actions = object_audit_log(obj=reservation, target_type="RESERVATION")
+        actions = audit_log(obj=reservation, target_type="RESERVATION")
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].events[0].action, "reservation_client.add")

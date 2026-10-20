@@ -7,6 +7,7 @@ import pghistory
 from django.db import connection
 
 from accounts.models import User
+from audit.selectors import AuditActionData, object_audit_log
 
 
 @contextmanager
@@ -20,6 +21,15 @@ def audit_context(user: User | None = None, label: str | None = None, **extra: A
     metadata.update(extra)
     with pghistory.context(**metadata):
         yield
+
+
+def audit_log(**kwargs: Any) -> list[AuditActionData]:
+    """``object_audit_log`` unwrapped to its actions, for tests that ignore paging.
+
+    The selector returns a cursor page (so ``end_cursor``/``has_next_page`` are
+    available to the schema); most tests only care about the action list.
+    """
+    return object_audit_log(**kwargs).results
 
 
 def clear_history_context() -> None:

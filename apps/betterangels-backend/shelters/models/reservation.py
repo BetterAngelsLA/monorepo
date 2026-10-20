@@ -47,7 +47,13 @@ class _NonStatusChange(pghistory.AnyChange):
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
     pghistory.UpdateEvent("reservation.update", condition=_NonStatusChange(exclude=["status", "updated_at"])),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="reservation_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="reservation_evt_obj_idx"),
+            # Reached through the room/bed (``references(room)`` / ``(bed)``).
+            models.Index(fields=["room", "pgh_id"], name="reservation_evt_room_idx"),
+            models.Index(fields=["bed", "pgh_id"], name="reservation_evt_bed_idx"),
+            models.Index(fields=["pgh_created_at"], name="reservation_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )
@@ -126,7 +132,11 @@ class Reservation(OrgScoped, BaseModel):
     pghistory.UpdateEvent("reservation_client.update"),
     pghistory.DeleteEvent("reservation_client.remove"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="resclient_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="resclient_evt_obj_idx"),
+            models.Index(fields=["reservation", "pgh_id"], name="resclient_evt_res_idx"),
+            models.Index(fields=["pgh_created_at"], name="resclient_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )

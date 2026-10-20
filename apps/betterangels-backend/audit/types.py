@@ -56,6 +56,24 @@ class AuditActionType:
     summary: str
     events: List[AuditEventType]
     field_changes: JSON
+    # True when the action carried more events than the server renders in one
+    # response. ``field_changes`` still reflects every row, so the action's
+    # before/after stays correct; only the per-event list is shortened.
+    truncated: bool = False
+
+
+@strawberry.type
+class AuditActionPage:
+    """One cursor page of audit actions (§10).
+
+    ``end_cursor`` is opaque and is passed back as ``after`` to continue; it is
+    null when the page is empty. ``has_next_page`` is known without a count
+    query because the selector fetches one extra action key.
+    """
+
+    results: List[AuditActionType]
+    end_cursor: Optional[str] = None
+    has_next_page: bool = False
 
 
 def to_event_type(event: Any) -> AuditEventType:
@@ -79,4 +97,13 @@ def to_action_type(action: Any) -> AuditActionType:
         summary=action.summary,
         events=[to_event_type(event) for event in action.events],
         field_changes=action.field_changes,
+        truncated=action.truncated,
+    )
+
+
+def to_action_page(page: Any) -> AuditActionPage:
+    return AuditActionPage(
+        results=[to_action_type(action) for action in page.results],
+        end_cursor=page.end_cursor,
+        has_next_page=page.has_next_page,
     )

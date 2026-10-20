@@ -12,21 +12,26 @@ from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 from shelters.models import Bed, Demographic, Reservation, Room, Shelter
 
 OBJECT_AUDIT_LOG_QUERY = """
-    query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $offset: Int, $includeSnapshot: Boolean) {
-        objectAuditLog(targetType: $targetType, objectId: $objectId, limit: $limit, offset: $offset, includeSnapshot: $includeSnapshot) {
-            timestamp
-            actor
-            summary
-            fieldChanges
-            events {
-                kind
-                action
-                targetType
-                targetId
+    query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $after: String, $includeSnapshot: Boolean) {
+        objectAuditLog(targetType: $targetType, objectId: $objectId, limit: $limit, after: $after, includeSnapshot: $includeSnapshot) {
+            endCursor
+            hasNextPage
+            results {
+                timestamp
                 actor
                 summary
                 fieldChanges
-                snapshot
+                truncated
+                events {
+                    kind
+                    action
+                    targetType
+                    targetId
+                    actor
+                    summary
+                    fieldChanges
+                    snapshot
+                }
             }
         }
     }
@@ -72,7 +77,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
             self.shelter.save()
 
         response = self._query("SHELTER", self.shelter.id)
-        actions = response["data"]["objectAuditLog"]
+        actions = response["data"]["objectAuditLog"]["results"]
 
         self.assertEqual(len(actions), 2)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["First", "Second"])
@@ -87,7 +92,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
             self.shelter.demographics.set([self.demographic_all, self.demographic_couples])
 
         response = self._query("SHELTER", self.shelter.id)
-        actions = response["data"]["objectAuditLog"]
+        actions = response["data"]["objectAuditLog"]["results"]
 
         self.assertEqual(len(actions), 1)
         removed, added = actions[0]["fieldChanges"]["demographics"]
@@ -117,7 +122,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
             self.bed.save()
 
         response = self._query("SHELTER", self.shelter.id)
-        events = response["data"]["objectAuditLog"][0]["events"]
+        events = response["data"]["objectAuditLog"]["results"][0]["events"]
 
         self.assertEqual(events[0]["summary"], f"Updated Summarized Bed ({self.bed.id})")
         self.assertEqual(events[0]["fieldChanges"], {})
@@ -193,7 +198,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         # global holder), yet the org_2 object resolves.
         self.graphql_client.force_login(gso)
         response = self._query("SHELTER", cross_org_shelter.id)
-        actions = response["data"]["objectAuditLog"]
+        actions = response["data"]["objectAuditLog"]["results"]
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["Org 2 Shelter", "Org 2 Renamed"])
@@ -205,21 +210,28 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
                 self.shelter.name = name
                 self.shelter.save()
 
-        response = self._query("SHELTER", self.shelter.id, limit=1, offset=1)
-        actions = response["data"]["objectAuditLog"]
+        first = self._query("SHELTER", self.shelter.id, limit=1)
+        page = first["data"]["objectAuditLog"]
+        self.assertTrue(page["hasNextPage"])
+
+        response = self._query("SHELTER", self.shelter.id, limit=1, after=page["endCursor"])
+        actions = response["data"]["objectAuditLog"]["results"]
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["First", "Second"])
 
-    def test_offset_beyond_range_returns_no_actions(self) -> None:
+    def test_cursor_past_the_oldest_action_returns_no_actions(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
         with audit_context(user=self.org_1_case_manager_1):
             self.shelter.name = "Only"
             self.shelter.save()
 
-        response = self._query("SHELTER", self.shelter.id, limit=5, offset=50)
+        first = self._query("SHELTER", self.shelter.id, limit=5)
+        page = first["data"]["objectAuditLog"]
+        response = self._query("SHELTER", self.shelter.id, limit=5, after=page["endCursor"])
 
-        self.assertEqual(response["data"]["objectAuditLog"], [])
+        self.assertEqual(response["data"]["objectAuditLog"]["results"], [])
+        self.assertFalse(response["data"]["objectAuditLog"]["hasNextPage"])
 
     def test_limit_over_the_cap_is_a_graphql_error_not_a_crash(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -228,12 +240,12 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
         self.assertGraphQLError(response, f"limit must be between 1 and {MAX_LIMIT}")
 
-    def test_negative_offset_is_a_graphql_error(self) -> None:
+    def test_malformed_cursor_is_a_graphql_error(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        response = self._query("SHELTER", self.shelter.id, offset=-1)
+        response = self._query("SHELTER", self.shelter.id, after="not-a-cursor")
 
-        self.assertGraphQLError(response, "offset must be non-negative")
+        self.assertGraphQLError(response, "Invalid cursor")
 
     def test_include_snapshot_returns_full_object_state(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -242,7 +254,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
             self.shelter.save()
 
         response = self._query("SHELTER", self.shelter.id, includeSnapshot=True)
-        event = response["data"]["objectAuditLog"][0]["events"][0]
+        event = response["data"]["objectAuditLog"]["results"][0]["events"][0]
 
         self.assertEqual(event["snapshot"]["name"], "Snapshot Query")
         self.assertNotIn("updated_at", event["snapshot"])
