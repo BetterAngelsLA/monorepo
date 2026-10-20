@@ -225,8 +225,7 @@ export const INTAKE_FIELDS = [
     reuse: 'reset',
     label: 'DHS data-sharing consent',
     section: 'additional',
-    control: 'checkbox',
-    checkboxLabel: 'Client gave consent',
+    control: 'yesno',
     sensitive: false,
     requirement: 'optional',
     help: 'Records that the client consented to DHS data sharing (a plain yes/no — not PII). Consent content, signer, and delivery are unresolved — see GAP-21.',
@@ -288,6 +287,20 @@ export function getIntakeField(
   return definitions.find((field) => field.key === key);
 }
 
+/**
+ * Coerce answers written by older versions into the current control
+ * vocabulary. Older referrals stored yes/no controls as booleans; the current
+ * controls use the chip labels. Unknown fields and values pass through.
+ */
+export function normalizeIntakeValue(
+  field: IntakeFieldDefinition | undefined,
+  value: unknown,
+): unknown {
+  if (field?.control === 'yesno' && typeof value === 'boolean')
+    return value ? 'Yes' : 'No';
+  return value;
+}
+
 export function isIntakeControlValue(
   field: IntakeFieldDefinition,
   value: unknown,
@@ -331,7 +344,7 @@ export function readIntakeAnswers(
   const answers: IntakeValues = {};
   const readField = <K extends IntakeFieldKey>(key: K) => {
     const field = getIntakeField(key);
-    let value = values[key];
+    let value = normalizeIntakeValue(field, values[key]);
     // Keep valid selections visible when an older draft also has retired ones.
     if (field?.control === 'multiselect' && Array.isArray(value)) {
       value = value.filter((item) =>

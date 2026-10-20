@@ -195,7 +195,9 @@ function NonDateControl({ f, value, onChange }: Parameters<typeof Control>[0]) {
   }
 
   if (f.control === 'checkbox') {
-    const checked = value === true;
+    // The catalog has no checkbox control today; keep the capability typed and
+    // readable for the next one without narrowing `value` to a boolean.
+    const checked = typeof value === 'boolean' && value;
     return (
       <Pressable
         style={styles.checkboxRow}
