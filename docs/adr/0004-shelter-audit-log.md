@@ -98,9 +98,10 @@ isProject: false
 
 Accepted. Phase 1 (write tracking) and Phase 2 (the write audit log) are
 implemented, including the review follow-ups: cursor pagination with a
-total-order cursor, `across()` branch pruning and indexable page predicates,
-retention scoped to `--apps` with per-object boundary rows, and the complete
-`ContactInfo` read exclusion.
+total-order cursor, `across()` branch pruning, raw-column page predicates (only
+the context arm is indexable), a per-page event budget, retention scoped to
+`--apps` with per-object boundary rows, and the complete `ContactInfo` read
+exclusion.
 
 ## Context
 
@@ -918,7 +919,12 @@ so it cannot go stale.
 
 Unified fields: `timestamp`, `actor`, `kind`, `action` (pghistory label),
 `target_type`, `target_id`, and `field_changes` (rendered per the `field_changes`
-contract below, not naively from `pgh_diff`). `kind` is the write _operation_
+contract below, not naively from `pgh_diff`). `field_changes` on an **event** is
+nullable: `null` means the event has no diff base (its predecessor row was
+removed, so the read-time `pgh_diff` is NULL), while `{}` means the write changed
+nothing renderable (e.g. a summarized bed/room acknowledgment). The action-level
+`field_changes` stays non-null but covers only the rows actually rendered, which
+is what `truncated` reports. `kind` is the write _operation_
 derived from the event label suffix — `.add` → `INSERT`, `.remove` → `DELETE`,
 anything else → `UPDATE` — so it is always one of `INSERT`/`UPDATE`/`DELETE` on
 the write side. §28 adds a `READ` value (a read/write axis) alongside these three
@@ -971,7 +977,14 @@ predicates on the raw columns instead:
 pgh_context_id IN (...) OR pgh_slug IN (...)
 ```
 
-Both arms are plain column comparisons served by the existing indexes.
+Only the `pgh_context_id` arm is indexable. `pgh_slug` is not a stored column
+either — pghistory synthesizes it in the CTE as
+`CONCAT('<event model label>', ':', pgh_id)` — so that arm remains an expression
+filter over the CTE output and scans the page's branches. It is kept because
+context-less actions (writes outside the request middleware) must still be
+pageable; decomposing the slug back into `(pgh_model, pgh_id)` pairs is possible
+but `pgh_model` is also synthesized, so it needs an `EXPLAIN` first. Context-less
+writes are rare enough that this is not scheduled.
 
 **Drop excluded models from the SQL, not just from the rows.** A row-level
 `.exclude(pgh_model__in=...)` still compiles the UNION branch for every excluded
@@ -1336,11 +1349,26 @@ snapshot is complete, this also unblocks the deferred Revert capability
 one action can wrap an unbounded write — the CSV import (§7b.4) opens one
 context around the whole dataset. The action's `events` list is therefore capped
 at `MAX_EVENTS_PER_ACTION` (500) and `AuditActionType.truncated` reports that
-rows were omitted. The cap is applied to the rendered events only: the
-action-level `field_changes` still merges every row and the action verb is
-derived from every row's label, so the action's before/after pair stays correct
-when the per-event list is cut. `limit` bounds actions, not events, so without
-this cap a one-action response would still be unbounded.
+rendering stopped early. Rendering breaks out of the row loop at the cap, so the
+action-level `field_changes` covers the same rendered rows and a bulk action's
+before/after pair can stop mid-sequence; `truncated` is the only signal. The
+action verb is still derived from every row's label (it reads the full row list,
+not the accumulated events). `limit` bounds actions, not events, so on its own it
+would leave a one-action response unbounded — and even with this cap a
+`limit=200` page could render 100k events.
+
+**Page event budget (decided).** `MAX_EVENTS_PER_PAGE` (2000) bounds the events
+rendered across one page. Actions are started in page order and the budget is
+checked *before* starting the next one, so an action is never cut in half by this
+budget: `truncated` keeps its single per-action meaning, no event is lost at a
+page boundary, and deferred actions are served by the next request from
+`endCursor`. The response is therefore bounded by
+`MAX_EVENTS_PER_PAGE + MAX_EVENTS_PER_ACTION - 1` (the last action may begin on a
+budget of one). When the budget runs out with actions still pending,
+`hasNextPage` is set by the gate itself rather than by the `limit + 1` probe.
+Load is bounded, not fetched: the page query still reads every row of the
+selected actions, so a pathological bulk action is bounded in rendering and in
+`field_changes` but not in rows fetched.
 
 ## 14. Resolve FK ids to labels
 
@@ -1565,10 +1593,12 @@ derivation regression, so it is the stronger guard.
 - **INSERT/REMOVE pk exclusion:** the model pk (`id`) is absent from an `.add` event's `field_changes` — it is in `pgh_data` but can never change — and (unit-tested) from the `.remove` branch too (§13).
 - **Total-order cursor pagination:** with tied timestamps (one transaction — `NOW()` is constant), paging one action at a time via `endCursor`/`after` returns each action exactly once, newest-first, so the tie-break is total _and_ chronological (§10).
 - **No duplicate across pages:** an action inserted between two page requests does not repeat on the second page (the regression `OFFSET` exhibits), and continuing past the last action returns an empty page with `hasNextPage: false` (§10).
-- **Indexable page predicates:** the page-row query filters on `pgh_context_id`/`pgh_slug`, never on the computed `COALESCE(CAST(...))` action key (§10).
+- **Indexable page predicates:** the page-row query filters on `pgh_context_id`/`pgh_slug` raw columns, never on the computed `COALESCE(CAST(...))` action key. Only the `pgh_context_id` arm seeks an index; the `pgh_slug` arm is an expression over the CTE and is documented as such rather than claimed indexable (§10).
 - **Branch and retention indexes:** every event table reachable from `references()` has `(parent_fk, pgh_id)` and `pgh_created_at` indexes, `pgh_obj` tables have `(pgh_obj, pgh_id)`, `pghistory_context` has a `created_at` index, and `EXPLAIN` with `enable_seqscan = off` chooses the branch index (§10).
-- **Per-action event cap:** an action carrying more events than `MAX_EVENTS_PER_ACTION` renders the cap and sets `truncated: true`, while its `field_changes` still reflects every row (§13).
-- **Cursor/limit validation:** a malformed `after` and an out-of-range `limit` both surface as GraphQL errors, not 500s (§10, §17).
+- **Per-action event cap:** an action carrying more rows than `MAX_EVENTS_PER_ACTION` renders the cap, sets `truncated: true`, and its action-level `field_changes` covers only the rendered rows — a bulk action's before/after can stop mid-sequence, and `truncated` is the only signal (§13).
+- **Page event budget:** a page renders at most `MAX_EVENTS_PER_PAGE` events' worth of actions, never cutting an action in half; actions that do not fit are served by the next request via `endCursor`, so nothing is skipped or duplicated (§10).
+- **No diff base:** an UPDATE whose predecessor row was purged renders `fieldChanges: null`, not `{}` — distinguishable from a write that changed nothing renderable (§13, §31).
+- **Cursor/limit validation:** a malformed `after`, an `after` with a naive (offset-less) timestamp, and an out-of-range `limit` all surface as GraphQL errors, not 500s (§10, §17).
 - **`RETAINED_LABELS` covers the reports (§31):** the labels `shelters/selectors/reports.py` reads are derived from its source and asserted to be a subset of `RETAINED_LABELS`, so a new report label cannot be added without also being retained (the other retention tests import the same constant the command uses, which cannot catch that).
 - **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that the `label` predicate is pushed to SQL (§10 performance note), not applied in Python after fetching. Date/actor filters are Phase 3 (§21) and are not part of this query.
 - **No server-side cursor:** `objectAuditLog` must not emit a `DECLARE` (Django's `.iterator()`), which RDS Proxy pins. Assert the captured queries contain no `DECLARE` (§10 RDS Proxy note).
@@ -1875,12 +1905,25 @@ tables, so it only removes a context no surviving row in any app references.
 time (§13): the aggregate's `_prev_data` is the row with the greatest `pgh_id`
 strictly below the current row, **regardless of label or cutoff**. Deleting a
 whole old prefix would therefore make the first surviving event diff against
-nothing, and its `field_changes` would render as `{}` — an edit silently
-disappearing from the log. For each event model and each `pgh_obj_id`, the
-command therefore retains the newest *deletable* row when that object still has
-a newer row that survives. This keeps the first surviving diff exact and costs at
-most one row per object. A fully aged object (no newer rows) has no boundary and
-is deleted completely. Through-table event models have no `pgh_obj` and no
+nothing, and its `field_changes` would render as `null` (no diff base) — an edit
+silently disappearing from the log. For each event model and each `pgh_obj_id`, a
+row is withheld when it is both the newest *deletable* row of its object and
+outlived by a surviving row; that withheld row is the boundary. This keeps the
+first surviving diff exact and costs at most one row per object. A fully aged
+object (no newer rows) has no boundary and is deleted completely.
+
+The rule is expressed as two correlated `EXISTS` predicates in the delete
+queryset — "a newer deletable row exists" (not the boundary) OR "no newer row
+exists at all" (nothing to protect) — rather than as a Python list of retained
+ids. A list would put one bind parameter per object in the statement and pin the
+RDS Proxy connection, which is the cost the batched delete loop is designed to
+avoid. Because rows below the boundary always satisfy the first predicate, they
+are deleted first and the boundary never moves between batch passes. Note that a
+boundary row that *is* retained still has no diff base of its own when all of its
+predecessors are gone, so it renders `field_changes: null`; the contract
+distinguishes that from `{}`.
+
+Through-table event models have no `pgh_obj` and no
 `_prev_data` (their diff is forced to `NULL::JSONB`, §15), so they need no
 boundary. The retained row also keeps its `Context` referenced, so
 `_purge_orphan_contexts` leaves that context alone even when its timestamp is
@@ -1952,7 +1995,9 @@ partition drop, no exempt role. Implemented in
 
 Tests: [audit/tests/test_purge_audit_log.py](apps/betterangels-backend/audit/tests/test_purge_audit_log.py)
 — deletion/retention scope, boundary-row retention (a surviving event keeps its
-exact diff; a fully aged object deletes cleanly; the boundary row is not counted
+exact diff, including the `ReservationEvent` case where a retained `reservation.add`
+has a lower `pgh_id` than the boundary; a fully aged object deletes cleanly; the
+boundary row is not counted
 by `--dry-run`), `--apps` default isolation and explicit opt-in (a client event
 survives the default run and is deleted with `--apps clients`), unknown-label
 rejection, multi-batch draining, dry-run accuracy (events and contexts),

@@ -15,8 +15,12 @@ from pghistory.core import event_models
 from pghistory.models import Context
 
 from audit.management.commands.purge_audit_log import RETAINED_LABELS
+from audit.selectors import object_audit_log
+from audit.tests.utils import audit_context
+from clients.admin import ClientProfileResource
+from clients.enums import LivingSituationEnum
 from clients.models import ClientProfile
-from shelters.models import Bed, Shelter
+from shelters.models import Bed, Reservation, Shelter
 from shelters.selectors import reports as reports_selector
 from shelters.selectors.reports import daily_occupancy, report_bed_status_counts
 from test_utils.pghistory import UPDATE_GUARD, backdate_event_rows
@@ -184,6 +188,60 @@ class PurgeAuditLogTestCase(TestCase):
         self.assertTrue(ShelterEvent.objects.filter(pk=events[1].pk).exists())
         self.assertTrue(ShelterEvent.objects.filter(pk=events[2].pk).exists())
 
+        # ...and the survivor's diff is intact end to end, not rebased.
+        actions = object_audit_log(obj=shelter, target_type="SHELTER").results
+        self.assertEqual(actions[0].field_changes["name"], ["Second Shelter", "Final Shelter"])
+
+    def test_retains_the_boundary_row_behind_a_retained_row_with_a_lower_pgh_id(self) -> None:
+        """A retained row below the boundary must not invalidate it.
+
+        ``reservation.add`` is in ``RETAINED_LABELS``, so it survives with the
+        *lowest* ``pgh_id`` of the object. A boundary test that looked at the
+        lowest surviving row would see the insert and conclude the boundary was
+        unnecessary, deleting it and silently rebasing the next update. Both
+        update rows here change ``notes`` only: ``reservation.status_change`` is
+        also retained, so touching ``status`` would leave nothing deletable and
+        make the test vacuous.
+        """
+        shelter = baker.make(Shelter, name="Boundary Shelter")
+        bed = Bed.objects.create(shelter=shelter, name="Boundary Bed")
+        with audit_context():
+            reservation = Reservation.objects.create(bed=bed, notes="A")
+        with audit_context():
+            reservation.notes = "B"
+            reservation.save()
+        with audit_context():
+            reservation.notes = "C"
+            reservation.save()
+
+        ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
+        rows = list(ReservationEvent.objects.filter(pgh_obj_id=reservation.pk).order_by("pgh_id"))
+        self.assertEqual(
+            [row.pgh_label for row in rows], ["reservation.add", "reservation.update", "reservation.update"]
+        )
+        add_row, boundary_row, survivor_row = rows
+        backdate_event_rows(ReservationEvent.objects.filter(pk=add_row.pk), pgh_created_at=_OLD)
+        backdate_event_rows(ReservationEvent.objects.filter(pk=boundary_row.pk), pgh_created_at=_OLD)
+
+        call_command("purge_audit_log", before=_CUTOFF)
+
+        survivors = ReservationEvent.objects.filter(pgh_obj_id=reservation.pk)
+        # Exactly the boundary row and the post-cutoff survivor remain among the
+        # deletable-labelled rows. Under the old "lowest surviving row" test the
+        # retained add would have made the boundary look unnecessary and it would
+        # be deleted, so this set would be missing ``boundary_row``.
+        self.assertEqual(
+            set(survivors.exclude(pgh_label__in=RETAINED_LABELS).values_list("pk", flat=True)),
+            {boundary_row.pk, survivor_row.pk},
+        )
+        self.assertTrue(survivors.filter(pgh_label__in=RETAINED_LABELS, pk=add_row.pk).exists())
+
+        # Both diffs are intact end to end: the surviving insert is the boundary
+        # row's base, so its own diff is ["A", "B"], not null.
+        actions = object_audit_log(obj=reservation, target_type="RESERVATION").results
+        self.assertEqual(actions[0].field_changes["notes"], ["B", "C"])
+        self.assertEqual(actions[1].field_changes["notes"], ["A", "B"])
+
     def test_boundary_row_is_not_retained_without_a_newer_event(self) -> None:
         """A fully-aged object deletes cleanly; the boundary rule adds no row."""
         shelter = Shelter.objects.create(name="Fully Aged")
@@ -348,7 +406,7 @@ class PurgeAuditLogTestCase(TestCase):
         call_command("purge_audit_log", before=_CUTOFF)
         self.assertFalse(Context.objects.filter(pk=context.pk).exists())
 
-    # ── interaction with the reporting selectors ─────────────────────────────
+    # ── interaction with downstream readers (reports, export) ───────────────
 
     def test_purge_leaves_report_output_unchanged(self) -> None:
         """The retained labels are the reports' source of truth; the purge is safe.
@@ -378,3 +436,25 @@ class PurgeAuditLogTestCase(TestCase):
         self.assertEqual(daily_occupancy(shelter=shelter, start=start, end=end), occupancy_before)
         # ``bed.add`` is the reports' source of truth, so it must survive the purge.
         self.assertTrue(BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.add").exists())
+
+    def test_purge_leaves_the_client_export_unchanged(self) -> None:
+        """Client history belongs to the client feature, so the default purge spares it.
+
+        The export derives "initial living situation" from the oldest
+        ``ClientProfileEvent`` row, so deleting the history would silently
+        report the current value as the initial one.
+        """
+        profile = baker.make(ClientProfile, living_situation=LivingSituationEnum.TENT)
+        profile.living_situation = LivingSituationEnum.HOUSING
+        profile.save()
+
+        resource = ClientProfileResource()
+        self.assertEqual(resource.dehydrate_living_situation_initial(profile), "Tent")
+
+        ClientProfileEvent = ClientProfile.pgh_event_model  # type: ignore[attr-defined]
+        ClientProfileEvent.objects.filter(pgh_obj_id=profile.pk).update(pgh_created_at=_OLD)
+
+        call_command("purge_audit_log", before=_CUTOFF)
+
+        self.assertTrue(ClientProfileEvent.objects.filter(pgh_obj_id=profile.pk).exists())
+        self.assertEqual(resource.dehydrate_living_situation_initial(profile), "Tent")

@@ -50,6 +50,16 @@ MAX_LIMIT = 200
 # limit; ``AuditActionData.truncated`` reports that rows were omitted.
 MAX_EVENTS_PER_ACTION = 500
 
+# Upper bound on the events rendered across one page. ``MAX_LIMIT`` bounds the
+# number of *actions*, but each may carry up to ``MAX_EVENTS_PER_ACTION`` events,
+# so without this a ``limit=200`` request could render 100k events -- each with a
+# full ``snapshot`` under ``include_snapshot=True``. Actions are started in
+# order until the budget runs out; an action is never cut in half by this
+# budget, so the response is bounded by
+# ``MAX_EVENTS_PER_PAGE + MAX_EVENTS_PER_ACTION - 1`` and ``truncated`` keeps its
+# single per-action meaning.
+MAX_EVENTS_PER_PAGE = 2000
+
 # Excluded from every target's log (blocklist, default-inclusive; §10).
 # ``referrals.ReferralEvent`` is a separate concern from a shelter log.
 # ``ContactInfoEvent`` is internal Better Angels data with no end-user surface:
@@ -166,7 +176,10 @@ class AuditEventData:
     action: str
     target_type: str
     target_id: str
-    field_changes: dict[str, Any]
+    # ``None`` when the event has no diff base -- its predecessor row was purged,
+    # so pghistory's read-time ``pgh_diff`` is NULL. ``{}`` still means "the write
+    # changed nothing renderable" (e.g. a summarized bed/room acknowledgment).
+    field_changes: dict[str, Any] | None
     # Full object state as of the event (§13), rendered from ``pgh_data``. Only
     # populated when the caller opts in; ``None`` for M2M rows.
     snapshot: dict[str, Any] | None = None
@@ -192,9 +205,10 @@ class AuditActionData:
     # from the same row when a transaction ties timestamps.
     last_id: int = 0
     order_key: str = ""
-    # True when the action carried more events than ``MAX_EVENTS_PER_ACTION``
-    # and the remaining rows were omitted from ``events`` (the action-level
-    # ``field_changes`` still reflects every row).
+    # True when the action carried more rows than ``MAX_EVENTS_PER_ACTION``.
+    # Rendering stops at the cap, so ``events`` **and** the action-level
+    # ``field_changes`` both cover only the rendered rows: a bulk action's
+    # before/after can stop mid-sequence, and this flag is the only signal.
     truncated: bool = False
 
 
@@ -238,8 +252,14 @@ def _decode_cursor(raw: str) -> _Cursor:
         payload = json.loads(base64.urlsafe_b64decode(raw.encode()).decode())
         if payload.get("v") != _CURSOR_VERSION:
             raise ValueError(payload.get("v"))
+        event = datetime.fromisoformat(payload["t"])
+        if event.tzinfo is None:
+            # Cursors we mint always carry an offset. A naive value would be
+            # coerced with the server's active timezone, making the page boundary
+            # depend on process configuration.
+            raise ValueError(payload["t"])
         return _Cursor(
-            event=datetime.fromisoformat(payload["t"]),
+            event=event,
             event_id=int(payload["i"]),
             action_key=str(payload["k"]),
         )
@@ -644,12 +664,19 @@ def _allowed_event_models(obj: Model, excluded: Sequence[str]) -> list[type[Mode
 
 
 def _page_filter(page_keys: Sequence[str]) -> Q:
-    """A SQL predicate selecting the page's rows by the indexed raw columns.
+    """A SQL predicate selecting the page's rows by the raw columns, not the key.
 
-    ``action_key`` is ``COALESCE(CAST(pgh_context_id AS text), pgh_slug)``, so
-    filtering on it cannot use the ``pgh_context_id`` index. Splitting the keys
-    back into UUIDs (context-backed actions) and slugs (context-less singletons)
-    keeps both arms indexable.
+    ``action_key`` is ``COALESCE(CAST(pgh_context_id AS text), pgh_slug)``, an
+    expression no index can serve, so filtering on it would defeat the page
+    query's indexes.
+
+    Only the ``pgh_context_id`` arm is indexable. ``pgh_slug`` is not a stored
+    column either -- pghistory synthesizes it in the CTE as
+    ``CONCAT('<event model label>', ':', pgh_id)`` -- so that arm is still an
+    expression filter over the CTE output. It is kept because context-less
+    actions (writes outside the request middleware) must still be pageable, and
+    they are rare enough that the arm is not worth decomposing into
+    ``(pgh_model, pgh_id)`` pairs.
     """
     context_ids: list[UUID] = []
     slugs: list[str] = []
@@ -744,8 +771,22 @@ def object_audit_log(
 
     resolver = _LabelResolver()
     target_model_label = obj._meta.label
-    actions = [
-        _build_action(
+
+    # Iterate in SQL page order (newest first) rather than ``grouped`` insertion
+    # order, and gate *starting* an action on the remaining page budget. An action
+    # is never cut in half here, so ``truncated`` keeps its single per-action
+    # meaning and no event is dropped at a page boundary; whatever does not fit is
+    # served from the cursor by the next request.
+    remaining = MAX_EVENTS_PER_PAGE
+    actions: list[AuditActionData] = []
+    for key in page_keys:
+        action_rows = grouped.get(key)
+        if not action_rows:
+            continue
+        if remaining <= 0:
+            has_next_page = True
+            break
+        action = _build_action(
             action_rows,
             target_type=target_type,
             target_id=target_id,
@@ -753,8 +794,8 @@ def object_audit_log(
             target_model_label=target_model_label,
             include_snapshot=include_snapshot,
         )
-        for action_rows in grouped.values()
-    ]
+        actions.append(action)
+        remaining -= len(action.events)
 
     resolver.fetch()
     for action in actions:
@@ -795,14 +836,13 @@ def _build_action(
     summarized: set[tuple[str, Any, str]] = set()
     truncated = False
 
-    def add_event(event: AuditEventData) -> None:
-        nonlocal truncated
+    for row in rows:
+        # Stop before doing any per-row work (including the action-level rollup)
+        # once the cap is reached, so ``field_changes`` is bounded by the same
+        # counter as ``events``.
         if len(events) >= MAX_EVENTS_PER_ACTION:
             truncated = True
-            return
-        events.append(event)
-
-    for row in rows:
+            break
         # Bed/Room writes are acknowledged, not detailed (§32): the shelter log
         # renders one line per object, and the object's own log carries the rest.
         # The anchored object is never summarized -- a Bed log must detail the
@@ -814,7 +854,7 @@ def _build_action(
             if summary_key in summarized:
                 continue
             summarized.add(summary_key)
-            add_event(
+            events.append(
                 AuditEventData(
                     timestamp=row.pgh_created_at,
                     actor=_actor(row),
@@ -840,7 +880,7 @@ def _build_action(
                 bucket["added"].append(ref)
 
             single = [[ref], []] if row.pgh_label.endswith(".remove") else [[], [ref]]
-            add_event(
+            events.append(
                 AuditEventData(
                     timestamp=row.pgh_created_at,
                     actor=_actor(row),
@@ -860,7 +900,13 @@ def _build_action(
         changes = _render_keys(_scalar_changes(row, resolver), owner)
         _merge_scalar(scalar_changes, owner, row.pgh_obj_id, changes)
 
-        add_event(
+        # An UPDATE whose predecessor row was purged has no diff base:
+        # pghistory's read-time ``pgh_diff`` is NULL, which is not the same as
+        # "the write changed nothing" (``{}``). Only UPDATE is affected --
+        # INSERT/DELETE render from ``pgh_data`` and the through-table path has
+        # no ``pgh_obj`` to diff against at all.
+        no_base = _kind(row.pgh_label) == "UPDATE" and row.pgh_diff is None
+        events.append(
             AuditEventData(
                 timestamp=row.pgh_created_at,
                 actor=_actor(row),
@@ -868,7 +914,7 @@ def _build_action(
                 action=row.pgh_label,
                 target_type=target_type,
                 target_id=target_id,
-                field_changes={f: list(pair) for f, pair in changes.items()},
+                field_changes=None if no_base else {f: list(pair) for f, pair in changes.items()},
                 snapshot=_snapshot(row, resolver) if include_snapshot else None,
             )
         )

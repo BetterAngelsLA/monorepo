@@ -1,5 +1,7 @@
 """GraphQL tests for ``objectAuditLog`` (ADR 0004 §20)."""
 
+import json
+
 from model_bakery import baker
 
 from accounts.models import Role, User
@@ -9,7 +11,7 @@ from audit.tests.utils import audit_context
 from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import DemographicChoices, ReservationStatusChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-from shelters.models import Bed, Demographic, Reservation, Room, Shelter
+from shelters.models import Bed, ContactInfo, Demographic, Reservation, Room, Shelter
 
 OBJECT_AUDIT_LOG_QUERY = """
     query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $after: String, $includeSnapshot: Boolean) {
@@ -202,6 +204,63 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["Org 2 Shelter", "Org 2 Renamed"])
+
+    # ── excluded internal models (§7b.6) ─────────────────────────────────────
+
+    def _seed_contact_info(self) -> ContactInfo:
+        """Create an internal contact row, plus a shelter action as a positive control."""
+        with audit_context(user=self.org_1_case_manager_2):
+            contact = ContactInfo.objects.create(
+                shelter=self.shelter,
+                contact_name="BA Secret",
+                contact_number="+15551234567",
+                contact_email="secret@example.com",
+                is_claimant=True,
+            )
+        # A non-contact action so the log cannot be empty for the wrong reason.
+        with audit_context(user=self.org_1_case_manager_2):
+            self.shelter.name = "Query Shelter Renamed"
+            self.shelter.save()
+        return contact
+
+    def _assert_no_contact_data(self, response: dict) -> None:
+        dumped = json.dumps(response)
+        self.assertNotIn("Contact info", dumped)
+        self.assertNotIn("BA Secret", dumped)
+        self.assertNotIn("secret@example.com", dumped)
+        self.assertNotIn("+15551234567", dumped)
+        # The unrelated shelter action still renders, so the exclusion is
+        # specific rather than a silently empty log.
+        self.assertIn("Query Shelter Renamed", dumped)
+
+    def test_contact_rows_are_written_but_never_rendered(self) -> None:
+        """ContactInfo is internal BA data: no caller may read it through the log.
+
+        The rows are still written (tracking is unchanged); the selector excludes
+        the event model for every target and every caller, so contact names,
+        emails, and phone numbers cannot surface even with ``includeSnapshot``.
+        """
+        contact = self._seed_contact_info()
+        ContactInfoEvent = ContactInfo.pgh_event_model  # type: ignore[attr-defined]
+        self.assertTrue(ContactInfoEvent.objects.filter(pgh_obj_id=contact.pk).exists())
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        response = self._query("SHELTER", self.shelter.id, includeSnapshot=True)
+
+        self.assertIsNone(response.get("errors"))
+        self._assert_no_contact_data(response)
+
+    def test_contact_rows_are_hidden_from_the_global_operator(self) -> None:
+        self._seed_contact_info()
+        sync_roles()
+        global_operator = baker.make(User)
+        role_assign(user=global_operator, role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name))
+
+        self.graphql_client.force_login(global_operator)
+        response = self._query("SHELTER", self.shelter.id, includeSnapshot=True)
+
+        self.assertIsNone(response.get("errors"))
+        self._assert_no_contact_data(response)
 
     def test_pagination_slices_actions(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)

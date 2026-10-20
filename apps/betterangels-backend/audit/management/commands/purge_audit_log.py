@@ -19,7 +19,9 @@ Targets, both batched to avoid long locks:
 Within an event table, the newest deletable row per object is retained when the
 object still has newer rows. pghistory computes ``pgh_diff`` at read time from
 ``_prev_data`` (the row with the greatest ``pgh_id`` below the current row), so
-deleting that row silently rewrites the first surviving event's diff to ``{}``.
+deleting that row silently rewrites the first surviving event's diff to NULL.
+The rule is a correlated ``EXISTS`` pair in the delete predicate, so it needs no
+list of retained ids.
 
 Read-event retention is specified in ADR 0004 §22-§29 and is out of scope here.
 """
@@ -29,7 +31,7 @@ from typing import Any, cast
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
-from django.db.models import Max, Min
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 from pghistory.core import event_models
 from pghistory.models import Context
@@ -151,45 +153,45 @@ class Command(BaseCommand):
         return datetime.datetime.combine(parsed, datetime.time.min, tzinfo=datetime.timezone.utc)
 
     @staticmethod
-    def _boundary_ids(model: Any, deletable: Any) -> list[Any]:
-        """Pks of boundary rows that must survive so surviving diffs stay intact.
+    def _deletable_rows(model: Any, before: datetime.datetime) -> Any:
+        """The rows this run may delete, with the per-object boundary already excluded.
 
         pghistory's aggregate computes ``pgh_diff`` at read time from
         ``_prev_data``: the row with the greatest ``pgh_id`` below the current
         row, regardless of label or cutoff. Deleting that row makes the first
-        surviving event diff against nothing, so its ``pgh_diff`` becomes ``{}``
+        surviving event diff against nothing, so its ``pgh_diff`` becomes NULL
         and an edit silently disappears from the audit log.
 
-        The boundary is the newest *deletable* row per object, kept only when the
-        object still has a newer row that survives. Through event models have no
-        ``pgh_obj`` (and no ``_prev_data``), so they need no boundary.
+        The boundary is the newest *deletable* row of an object, kept only when
+        the object still has a newer surviving row. Both halves of that test are
+        correlated ``EXISTS`` on ``(pgh_obj, pgh_id)``, so the rule folds into the
+        delete predicate and no id list is ever materialized: a Python list would
+        put one parameter per object in the statement and pin the RDS Proxy
+        connection, which is exactly what the batched loop below avoids.
+
+        A row is deletable when it has a newer deletable row (it is not the
+        boundary), or when it has no newer row at all (nothing to preserve a base
+        for). Only a row that is both object-newest *among deletable rows* and
+        outlived by a surviving row is withheld -- and that row is the boundary.
+        Through event models have no ``pgh_obj`` (and no ``_prev_data``), so they
+        need no boundary.
         """
+        deletable = model._default_manager.filter(pgh_created_at__lt=before).exclude(pgh_label__in=RETAINED_LABELS)
         if not hasattr(model, "pgh_obj_id"):
-            return []
+            return deletable
 
-        last_deletable = dict(
-            deletable.filter(pgh_obj_id__isnull=False)
-            .values("pgh_obj_id")
-            .annotate(last_id=Max("pgh_id"))
-            .values_list("pgh_obj_id", "last_id")
+        # A NULL ``pgh_obj_id`` compares unknown in both predicates, so it falls
+        # through to "no newer row" and is deleted -- correct, since a row with no
+        # object has no successor whose base it could provide.
+        newer_deletable = Exists(deletable.filter(pgh_obj_id=OuterRef("pgh_obj_id"), pgh_id__gt=OuterRef("pgh_id")))
+        newer_any = Exists(
+            model._default_manager.filter(pgh_obj_id=OuterRef("pgh_obj_id"), pgh_id__gt=OuterRef("pgh_id"))
         )
-        if not last_deletable:
-            return []
-
-        first_survivor = dict(
-            model._default_manager.filter(pgh_obj_id__in=list(last_deletable))
-            .exclude(pk__in=deletable.values("pk"))
-            .values("pgh_obj_id")
-            .annotate(first_id=Min("pgh_id"))
-            .values_list("pgh_obj_id", "first_id")
-        )
-        return [last_id for obj_id, last_id in last_deletable.items() if first_survivor.get(obj_id, 0) > last_id]
+        return deletable.filter(newer_deletable | ~newer_any)
 
     @classmethod
     def _purge_event_model(cls, model: Any, before: datetime.datetime, batch_size: int, dry_run: bool) -> int:
-        deletable = model._default_manager.filter(pgh_created_at__lt=before).exclude(pgh_label__in=RETAINED_LABELS)
-        boundary = cls._boundary_ids(model, deletable)
-        rows = deletable.exclude(pk__in=boundary) if boundary else deletable
+        rows = cls._deletable_rows(model, before)
 
         if dry_run:
             # Count the whole set. Returning after the first batch would report at

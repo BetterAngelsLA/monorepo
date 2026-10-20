@@ -1,5 +1,7 @@
 """Tests for the object audit-log selector (ADR 0004 §20)."""
 
+import base64
+import json
 import re
 from types import SimpleNamespace
 from typing import Any
@@ -504,6 +506,30 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual([a.field_changes["name"] for a in third.results], [["Audit Shelter", "Page One"]])
         self.assertFalse(third.has_next_page)
 
+    def test_cursor_pagination_does_not_duplicate_when_a_write_lands_between_pages(self) -> None:
+        """A cursor page must not repeat an action when a new event arrives."""
+        for name in ("A", "B", "C", "D"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+
+        page1 = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=2)
+
+        # A new action arrives between page requests. Offset pagination would
+        # shift the window and repeat ``C``; the cursor is anchored to the last
+        # action of page 1, so it continues strictly after it.
+        with audit_context(user=self.user):
+            self.shelter.name = "E"
+            self.shelter.save()
+
+        page2 = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=2, after=page1.end_cursor)
+        names1 = {action.field_changes["name"][1] for action in page1.results}
+        names2 = {action.field_changes["name"][1] for action in page2.results}
+
+        self.assertFalse(names1 & names2, f"duplicate across pages: {names1 & names2}")
+        # Page 2 continues from where page 1 stopped (B, A), not from the top.
+        self.assertEqual(names2, {"A", "B"})
+
     def test_pagination_is_deterministic_and_newest_first_when_timestamps_tie(self) -> None:
         """Paging must not skip or repeat an action, even with tied timestamps (§10).
 
@@ -554,10 +580,12 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertIn("LIMIT 2", sql)
 
     def test_events_per_action_are_capped(self) -> None:
-        """One context can wrap an unbounded write; the event list is capped.
+        """One context can wrap an unbounded write; rendering stops at the cap.
 
-        The action-level ``field_changes`` still merges every row, so the
-        before/after pair stays correct even when the per-event list is cut.
+        ``truncated`` means the action's detail is incomplete: the rendered
+        events *and* the action-level ``field_changes`` both stop at the cap, so
+        the before/after pair can stop mid-sequence. That is the contract; it is
+        not a per-event list that was shortened while the rollup stayed complete.
         """
         with audit_context(user=self.user):
             for name in ("Cap One", "Cap Two", "Cap Three", "Cap Four"):
@@ -570,14 +598,16 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         action = page.results[0]
         self.assertEqual(len(action.events), 2)
         self.assertTrue(action.truncated)
-        self.assertEqual(action.field_changes["name"], ["Audit Shelter", "Cap Four"])
+        self.assertEqual(action.field_changes["name"], ["Audit Shelter", "Cap Two"])
 
-    def test_page_rows_filter_on_the_indexable_columns(self) -> None:
+    def test_page_rows_filter_on_the_raw_columns(self) -> None:
         """The page fetch must not filter on the computed ``action_key``.
 
         ``action_key`` is ``COALESCE(CAST(pgh_context_id AS text), pgh_slug)``,
         which no index can serve. The page's rows are selected by
-        ``pgh_context_id IN (...)`` / ``pgh_slug IN (...)`` instead.
+        ``pgh_context_id IN (...)`` / ``pgh_slug IN (...)`` instead. Only the
+        ``pgh_context_id`` arm is indexable -- ``pgh_slug`` is synthesized in the
+        CTE -- so this asserts the shape of the predicate, not index usage.
         """
         for name in ("Raw One", "Raw Two"):
             with audit_context(user=self.user):
@@ -637,6 +667,104 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         # Filtering (the seed exclusion) is pushed into SQL, not applied in Python.
         self.assertIn("seed", sql)
         self.assertIn("group by", sql)
+
+    def test_page_event_budget_defers_actions_instead_of_cutting_them(self) -> None:
+        """A page renders complete actions until the event budget is spent.
+
+        With two-event actions and a budget of two, the first action consumes it
+        entirely, so the page holds exactly one action. The remaining actions are
+        deferred to the next request rather than being truncated or dropped, and
+        ``truncated`` stays false because no action was cut by the page budget.
+        """
+        for name in ("Page One", "Page Two", "Page Three"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+                self.shelter.website = f"https://{name.replace(' ', '').lower()}.org"
+                self.shelter.save()
+
+        with mock.patch("audit.selectors.MAX_EVENTS_PER_PAGE", 2):
+            page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=50)
+
+        self.assertEqual(len(page.results), 1)
+        self.assertEqual(len(page.results[0].events), 2)
+        self.assertTrue(page.has_next_page)
+        self.assertFalse(page.results[0].truncated)
+
+        # Walking the cursor must return every action exactly once.
+        seen: list[str] = [event.action for action in page.results for event in action.events]
+        cursor = page.end_cursor
+        pages = 1
+        while cursor is not None:
+            with mock.patch("audit.selectors.MAX_EVENTS_PER_PAGE", 2):
+                nxt = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=50, after=cursor)
+            pages += 1
+            self.assertLessEqual(len(nxt.results), 1, "page budget not applied")
+            for action in nxt.results:
+                seen.extend(event.action for event in action.events)
+                self.assertFalse(action.truncated)
+            self.assertLess(pages, 10, "cursor did not advance")
+            cursor = nxt.end_cursor
+
+        # Two writes per action, three actions, each event served exactly once.
+        self.assertEqual(len(seen), 6)
+        self.assertFalse(nxt.has_next_page)
+
+    def test_page_budget_sets_has_next_page_when_actions_remain(self) -> None:
+        """The budget gate, not the ``limit + 1`` probe, can set ``hasNextPage``.
+
+        The newest action is a single-event write, so it fills a budget of one
+        exactly; the two-event action before it is deferred and ``hasNextPage``
+        must still be true even though the SQL probe found nothing beyond
+        ``limit``.
+        """
+        with audit_context(user=self.user):
+            self.shelter.name = "Budget Solo"
+            self.shelter.save()
+            self.shelter.website = "https://first.example.org"
+            self.shelter.save()
+        with audit_context(user=self.user):
+            self.shelter.phone = "555-0100"
+            self.shelter.save()
+
+        with mock.patch("audit.selectors.MAX_EVENTS_PER_PAGE", 1):
+            page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=50)
+
+        self.assertEqual(len(page.results), 1)
+        self.assertEqual(len(page.results[0].events), 1)
+        self.assertTrue(page.has_next_page)
+        self.assertIsNotNone(page.end_cursor)
+
+    def test_event_without_a_diff_base_renders_null_not_empty(self) -> None:
+        """A purged predecessor renders ``None``; a no-op write renders ``{}``.
+
+        ``None`` and ``{}`` are different facts: "the base is gone" versus "nothing
+        renderable changed". Collapsing them makes a purged event look like a
+        write that touched nothing.
+        """
+        with audit_context(user=self.user):
+            self.shelter.name = "Base One"
+            self.shelter.save()
+
+        ShelterEvent = Shelter.pgh_event_model  # type: ignore[attr-defined]
+        first = ShelterEvent.objects.filter(pgh_obj_id=self.shelter.pk).order_by("pgh_id").first()
+        assert first is not None
+        # Delete the base row directly: events allow DELETE (ADR 0004 §9b).
+        first.delete()
+
+        page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=10)
+        self.assertTrue(page.results)
+        event = page.results[0].events[0]
+        self.assertEqual(event.kind, "UPDATE")
+        self.assertIsNone(event.field_changes)
+
+    def test_rejects_a_naive_timestamp_cursor(self) -> None:
+        """A cursor without an offset would be coerced with the server timezone."""
+        payload = json.dumps({"v": 1, "t": "2026-01-01T00:00:00", "i": 1, "k": "00000000-0000-0000-0000-000000000000"})
+        cursor = base64.urlsafe_b64encode(payload.encode()).decode()
+
+        with self.assertRaises(ValueError):
+            object_audit_log(obj=self.shelter, target_type="SHELTER", after=cursor)
 
     # ── §19 multi-word M2M columns (the regression-prone names) ──────────────
 

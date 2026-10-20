@@ -40,7 +40,10 @@ class AuditEventType:
     action: str
     target_type: AuditTargetType
     target_id: strawberry.ID
-    field_changes: JSON
+    # ``null`` when the event has no diff base: its predecessor row was purged, so
+    # pghistory's read-time ``pgh_diff`` is NULL. ``{}`` still means the write
+    # changed nothing renderable (e.g. a summarized bed/room acknowledgment).
+    field_changes: Optional[JSON]
     snapshot: Optional[JSON] = None
     # One-line acknowledgment for summarized events (§32); the UI shows this
     # instead of ``field_changes`` when present.
@@ -56,9 +59,10 @@ class AuditActionType:
     summary: str
     events: List[AuditEventType]
     field_changes: JSON
-    # True when the action carried more events than the server renders in one
-    # response. ``field_changes`` still reflects every row, so the action's
-    # before/after stays correct; only the per-event list is shortened.
+    # True when the action carried more rows than ``MAX_EVENTS_PER_ACTION``.
+    # Rendering stops at the cap, so ``events`` and this action-level
+    # ``field_changes`` both cover only the rendered rows: a bulk action's
+    # before/after can stop mid-sequence, and this flag is the only signal.
     truncated: bool = False
 
 

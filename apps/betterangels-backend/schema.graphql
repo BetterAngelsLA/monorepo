@@ -116,7 +116,7 @@ type AuditEventType {
   action: String!
   targetType: AuditTargetType!
   targetId: ID!
-  fieldChanges: JSON!
+  fieldChanges: JSON
   snapshot: JSON
   summary: String
 }
