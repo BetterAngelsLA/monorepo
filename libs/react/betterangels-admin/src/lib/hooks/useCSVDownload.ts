@@ -1,21 +1,14 @@
 import { useCallback, useState } from 'react';
-import type { RegionDimension } from '@monorepo/ba-platform/types';
+import { interactionExportUrl, type ReportGroup } from '../api/reports';
 import { useApiConfig } from '../providers';
 
 /**
- * The geographic group a download should cover.
+ * Download the Reports CSV for a window and an optional geographic group.
  *
- * `dimension` is sent in the endpoint's wire spelling — the lowercase `kind` the tile endpoint
- * also reads (`RegionDimension.CITY` -> `city`) — and only when the page is grouped, so an
- * ungrouped download stays the organisation-wide export it always was. `codes` is omitted
- * rather than sent empty when no region is chosen: an absent list means "every region of the
- * dimension", while an explicit empty list means "no region" and would download an empty file.
+ * The endpoint, its parameters and their spellings live in `api/reports`; this hook owns the
+ * browser mechanics (blob, object URL, filename) and the busy/error state. The page passes the
+ * same group it shows in the charts, so the file covers the same population.
  */
-type DownloadGroup = {
-  dimension?: RegionDimension;
-  codes?: string[];
-};
-
 export default function useCSVDownload() {
   const { fetch } = useApiConfig();
   const [isDownloading, setIsDownloading] = useState(false);
@@ -26,27 +19,19 @@ export default function useCSVDownload() {
       startDate: string,
       endDate: string,
       orgId?: string,
-      group?: DownloadGroup,
+      group?: ReportGroup,
     ) => {
       setIsDownloading(true);
       setError(null);
       try {
-        const params = new URLSearchParams({
-          start_date: startDate,
-          end_date: endDate,
-        });
-        if (orgId) {
-          params.set('org_id', orgId);
-        }
-        if (group?.dimension) {
-          params.set('dimension', group.dimension.toLowerCase());
-        }
-        // Repeated parameters, which is what the endpoint reads; the page's selection is a
-        // list and a comma-joined string would be a second dialect to keep in step.
-        for (const code of group?.codes ?? []) {
-          params.append('codes', code);
-        }
-        const response = await fetch(`/reports/export/?${params.toString()}`);
+        const response = await fetch(
+          interactionExportUrl({
+            startDate,
+            endDate,
+            organizationId: orgId,
+            group,
+          }),
+        );
         if (!response.ok) {
           const body = await response.json().catch(() => null);
           throw new Error(body?.error ?? `Export failed (${response.status})`);

@@ -9,6 +9,7 @@ import type { Layer } from '@deck.gl/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useApiConfig } from '@monorepo/ba-platform';
+import { densityTileUrl, regionTileUrl } from '../../api/reports';
 import { densityColor, type HeatPoint } from './heatmapMath';
 import {
   buildClusterIndex,
@@ -400,41 +401,31 @@ export function DeckMapLayers({
   /** Pending deferred teardown, so a re-mount can cancel it; see the effect below. */
   const teardownRef = useRef<number | null>(null);
 
-  // Absolute because deck.gl's TileLayer fetches the template directly; a relative template
-  // would resolve against the page origin rather than the API's.
-  // Lowercased: `RegionDimension` spells the dimension uppercase (`COUNCIL_DISTRICT`) and the
-  // endpoint matches the wire `kind`, which is lowercase. Sending the enum as-is made every
-  // tile 404 — measured, `COUNCIL_DISTRICT/8/43/102` 404 against `council_district/8/43/102`
-  // 200 with 4.4 kB of geometry — so the boundary layer drew nothing at all.
+  // The endpoint spellings and query strings live in `api/reports`; this component only decides
+  // which of them to draw. The boundary template is absolute because deck.gl fetches it
+  // directly, and `regionTileUrl` lowercases the dimension to the wire `kind`.
   let boundaryUrl: string | null = null;
   if (regionKind) {
-    boundaryUrl = `${apiUrl}/regions/tiles/${regionKind.toLowerCase()}/{z}/{x}/{y}.mvt`;
+    boundaryUrl = regionTileUrl(apiUrl, regionKind);
   }
 
-  // The density grid's own query string. It carries the org, the window and — only when the
-  // reader has drilled into regions — the dimension and the codes, which is exactly the
-  // variable set `interactionMap` is given. A *grouping* with nothing selected deliberately
-  // does not appear: a group-by re-partitions the same interactions rather than selecting
-  // different ones, so it must not move the field, and sending it would change the URL and
-  // refetch identical tiles on every group-by.
+  // The density grid's own query string: the org and the window, plus the region pair only
+  // when the reader has drilled into regions. A *grouping* with nothing selected deliberately
+  // does not appear — a group-by re-partitions the same interactions rather than selecting
+  // different ones, so sending it would change the URL and refetch identical tiles on every
+  // group-by. `densityTileUrl` sorts the codes for the same caching reason.
   const densityUrl = useMemo(() => {
     if (!organizationId || !startDate || !endDate) {
       return null;
     }
-    const params = new URLSearchParams({
-      org_id: organizationId,
-      start: startDate,
-      end: endDate,
+    return densityTileUrl({
+      apiUrl,
+      organizationId,
+      startDate,
+      endDate,
+      dimension: regionKind ?? undefined,
+      codes: focusCodes,
     });
-    if (regionKind && focusCodes.length > 0) {
-      params.set('dimension', regionKind.toLowerCase());
-      // Sorted, because deck.gl caches tiles by URL: the same set of codes picked in a
-      // different order must not be a second URL and a refetch of identical tiles.
-      for (const code of [...focusCodes].sort()) {
-        params.append('codes', code);
-      }
-    }
-    return `${apiUrl}/regions/tiles/density/{z}/{x}/{y}.mvt?${params.toString()}`;
   }, [apiUrl, organizationId, startDate, endDate, regionKind, focusCodes]);
 
   /**
