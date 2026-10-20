@@ -169,14 +169,19 @@ def scope_notes_to_group(
 
     ``region_codes=None`` means every region of ``region_kind``; ``[]`` matches nothing.
     """
-    if region_kind is not None:
-        if region_codes is None:
-            return scope_notes_to_region_kind(notes, kind=region_kind)
-        return scope_notes_to_regions(notes, kind=region_kind, codes=region_codes)
-    if region_codes == []:
-        # No dimension and no named region: an empty selection is an answer of zero.
-        return notes.none()
-    return notes
+    if region_kind is None:
+        # Refuse rather than silently returning the unfiltered queryset: a caller that has
+        # codes but no dimension has not resolved the scope, and guessing "all notes" would
+        # make a group filter disappear.
+        if region_codes:
+            raise ValueError("region_codes requires a region_kind")
+        if region_codes == []:
+            # No dimension and no named region: an empty selection is an answer of zero.
+            return notes.none()
+        return notes
+    if region_codes is None:
+        return scope_notes_to_region_kind(notes, kind=region_kind)
+    return scope_notes_to_regions(notes, kind=region_kind, codes=region_codes)
 
 
 def report_summary(

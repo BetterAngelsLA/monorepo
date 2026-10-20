@@ -7,10 +7,10 @@
  * longer produces is worse than no key at all.
  *
  * **The scale is density, not a raw cell count.** One server cell covers four times the ground
- * for each zoom step out, so a count per cell is not comparable across zooms: the same
- * neighbourhood reads four times hotter one step out and saturates at the county view. Dividing
- * the count by the cell's area makes the colour mean *interactions per km²* at every zoom. The
- * cell size still changes — the legend states it — but the colour no longer does.
+ * for each zoom step out, so a count per cell is not comparable across zooms. Dividing the count
+ * by the cell's area makes the colour mean *interactions per km²*; the live domain is then the
+ * p95 of those densities at the current zoom, so the ramp is full at every zoom but the colours
+ * are relative to it, not comparable across zooms. The legend states both.
  */
 
 import { lerpRgb, type Rgb } from './mapColors';
@@ -55,9 +55,9 @@ export const DENSITY_PER_KM2_MAX = 18;
  * the same area the server counted over. The reference latitude is LA's, so the two agree
  * exactly across the county (the true ground size varies by ~1.5%).
  */
-export const DENSITY_TARGET_CELL_M = 500;
-export const DENSITY_MAX_CELLS_PER_TILE = 64;
-export const DENSITY_REFERENCE_LATITUDE = 34.05;
+const DENSITY_TARGET_CELL_M = 500;
+const DENSITY_MAX_CELLS_PER_TILE = 64;
+const DENSITY_REFERENCE_LATITUDE = 34.05;
 
 const EARTH_CIRCUMFERENCE_M = 40_075_016.686;
 

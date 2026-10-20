@@ -149,9 +149,11 @@ function useMapColors(): OverlayColors {
 function DensityLegend({
   cellSideM,
   densityMax,
+  relative,
 }: {
   cellSideM: number;
   densityMax: number;
+  relative: boolean;
 }) {
   const cellLabel =
     cellSideM >= 1000
@@ -171,7 +173,7 @@ function DensityLegend({
         Interactions per km²
       </div>
       <div className="mb-1 text-xs leading-tight text-neutral-600">
-        Relative to this zoom
+        {relative ? 'Relative to this zoom' : 'Fixed scale'}
       </div>
       <div
         className="h-2 w-44 rounded-sm"
@@ -241,6 +243,11 @@ type RegionMapProps = {
   endDate: string;
   /** Map height in pixels; the split layout gives it less than the full-width one. */
   height?: number;
+  /**
+   * The map is near the viewport. The density scale query is a full-window aggregate, so it
+   * waits like the point query does rather than running for a panel below the fold.
+   */
+  visible?: boolean;
   className?: string;
 };
 
@@ -266,6 +273,7 @@ export function RegionMap({
   startDate,
   endDate,
   height = 560,
+  visible = true,
   className = '',
 }: RegionMapProps) {
   const mapColors = useMapColors();
@@ -321,15 +329,18 @@ export function RegionMap({
 
   // The scale is computed over the same population as the heatmap: a dimension alone leaves
   // the map county-wide, so only specific region codes narrow it.
-  const { scale: densityScale } = useDensityScale({
+  const { scale: densityScale, loading: scaleLoading } = useDensityScale({
     organizationId,
     startDate,
     endDate,
     zoom: tileZoom,
     dimension: focusCodes.length > 0 ? dimension : undefined,
     regionCodes: focusCodes.length > 0 ? focusCodes : undefined,
-    enabled: view === 'heatmap',
+    // The map is replaced by a notice without a key or when the scope refused the data; the
+    // domain would colour nothing.
+    enabled: view === 'heatmap' && hasMapsKey && !refused && visible,
   });
+  const hasDensityScale = densityScale !== null;
   const densityMax =
     densityScale && Number.isFinite(densityScale.p95) && densityScale.p95 > 0
       ? densityScale.p95 / cellAreaKm2
@@ -369,8 +380,21 @@ export function RegionMap({
     // `interactionScope`, so it reaches the reader as the refusal notice above rather than as
     // a legend on an empty field. The caption describes what the scale *means* and leaves the
     // figures below.
-    return `Interaction density${scope}, in interactions per km². The scale is relative to this zoom: the legend's top value is the 95th percentile of non-empty cells, so the full ramp is in use and the densest 5% clamp to red.`;
-  }, [view, points.length, filteredTo, pointsLoading, truncated]);
+    const scaleNote = hasDensityScale
+      ? `The scale is relative to this zoom: the legend's top value is the 95th percentile of non-empty cells, so the full ramp is in use and the densest 5% clamp to red.`
+      : scaleLoading
+        ? `The per-zoom scale is loading; the colour uses a fixed reference until it arrives.`
+        : `The per-zoom scale is unavailable, so the colour uses a fixed reference.`;
+    return `Interaction density${scope}, in interactions per km². ${scaleNote}`;
+  }, [
+    view,
+    points.length,
+    filteredTo,
+    pointsLoading,
+    truncated,
+    hasDensityScale,
+    scaleLoading,
+  ]);
 
   const notice = mapNotice({
     hasMapsKey,
@@ -506,7 +530,11 @@ export function RegionMap({
           </GoogleMap>
         </div>
         {view === 'heatmap' && (
-          <DensityLegend cellSideM={cellSideM} densityMax={densityMax} />
+          <DensityLegend
+            cellSideM={cellSideM}
+            densityMax={densityMax}
+            relative={hasDensityScale}
+          />
         )}
       </div>
       <p id={captionId} className="mt-2 text-xs text-neutral-500">

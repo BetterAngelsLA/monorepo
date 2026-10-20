@@ -308,6 +308,7 @@ export function LocationBreakdown({
               startDate={startDate}
               endDate={endDate}
               height={dimension === undefined ? 500 : 420}
+              visible={mapVisible}
             />
           )}
         </div>

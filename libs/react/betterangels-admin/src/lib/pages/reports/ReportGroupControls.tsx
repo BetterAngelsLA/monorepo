@@ -131,11 +131,13 @@ export function ReportGroupControls({
           mode="multiple"
           showSearch
           allowClear
-          // Rows can be stale while a dimension change loads.
+          // Rows can be stale while a dimension change loads, and selecting from the previous
+          // dimension's options would send a code the new dimension cannot resolve. Keep the
+          // control disabled until its own options have settled.
           loading={rowsLoading}
           // Disabled rather than hidden: the dependent control keeps its place, so choosing a
           // grouping does not reflow the toolbar.
-          disabled={dimension === undefined}
+          disabled={dimension === undefined || rowsLoading}
           options={regionOptions}
           value={selectedCodes}
           onChange={onSelectedCodesChange}

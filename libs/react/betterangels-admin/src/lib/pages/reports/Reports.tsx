@@ -622,7 +622,8 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
               <div
                 className="grid gap-4"
                 style={{
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
+                  gridTemplateColumns:
+                    'repeat(auto-fit, minmax(min(100%, 380px), 1fr))',
                 }}
               >
                 {charts.map(({ key, title, body }) => (
