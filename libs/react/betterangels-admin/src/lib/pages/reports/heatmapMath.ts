@@ -35,19 +35,28 @@ export const HEATMAP_RAMP_CSS = `linear-gradient(to right, ${RAMP.map(
 /**
  * Interactions per km² at which the ramp reaches red.
  *
- * Measured at the zoom the map opens at: the peak cell held 50 interactions in a cell about
- * 2.0 km square (~4.1 km²), i.e. ~12 per km². Because the colour is now density, this one
- * number works at every zoom; the legend's cell-size line explains how big the squares are.
+ * The opening view's peak is ~12/km², but once the grid holds ~500 m cells the local peaks
+ * are higher; a 12 reference put most occupied 500 m cells at red. 24 keeps the ramp useful at
+ * both scales: the county core reads yellow/orange, the densest local cells red.
  */
-export const DENSITY_PER_KM2_MAX = 12;
+export const DENSITY_PER_KM2_MAX = 18;
 
 /**
- * Grid cells per tile, mirroring `DENSITY_CELLS_PER_TILE` in the backend's `tiles.py`.
+ * Grid cells per tile, as a target ground size rather than a fixed count.
  *
- * The client needs it to turn a tile zoom into a cell area. Changing the server's grid changes
- * what a cell means; update this with it or the legend and colours silently disagree.
+ * A fixed 64×64 grid makes a cell four times smaller with every zoom step in; below a few
+ * hundred metres a single interaction is a large density and every occupied cell goes red.
+ * Instead the tile uses as many cells as it takes to keep a cell near `DENSITY_TARGET_CELL_M`,
+ * capped so a county tile does not explode into a huge payload. Above tile zoom 10 that is a
+ * constant ~500 m cell; below it the cap makes cells 1–4 km.
+ *
+ * This must match `density_cells_per_tile` in the backend's `tiles.py`; the colour divides by
+ * the same area the server counted over. The reference latitude is LA's, so the two agree
+ * exactly across the county (the true ground size varies by ~1.5%).
  */
-export const DENSITY_CELLS_PER_TILE = 64;
+export const DENSITY_TARGET_CELL_M = 500;
+export const DENSITY_MAX_CELLS_PER_TILE = 64;
+export const DENSITY_REFERENCE_LATITUDE = 34.05;
 
 const EARTH_CIRCUMFERENCE_M = 40_075_016.686;
 
@@ -59,12 +68,23 @@ function tileWidthMeters(tileZoom: number, latitude: number): number {
   );
 }
 
+/** Cells across one tile at *tileZoom*; see `DENSITY_TARGET_CELL_M`. */
+export function densityCellsPerTile(tileZoom: number): number {
+  const cells =
+    tileWidthMeters(tileZoom, DENSITY_REFERENCE_LATITUDE) /
+    DENSITY_TARGET_CELL_M;
+  return Math.max(
+    1,
+    Math.min(DENSITY_MAX_CELLS_PER_TILE, Math.floor(cells + 0.5)),
+  );
+}
+
 /** One cell's ground width in metres. */
 export function densityCellSideMeters(
   tileZoom: number,
   latitude: number,
 ): number {
-  return tileWidthMeters(tileZoom, latitude) / DENSITY_CELLS_PER_TILE;
+  return tileWidthMeters(tileZoom, latitude) / densityCellsPerTile(tileZoom);
 }
 
 /** One cell's ground area in km²; the divisor that makes the colour a density. */

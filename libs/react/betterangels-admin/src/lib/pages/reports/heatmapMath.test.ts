@@ -3,6 +3,7 @@ import {
   DENSITY_PER_KM2_MAX,
   densityCellAreaKm2,
   densityCellSideMeters,
+  densityCellsPerTile,
   densityColor,
   rampAt,
 } from './heatmapMath';
@@ -77,6 +78,16 @@ describe('cell geometry', () => {
     expect(z8).toBeCloseTo(4.11, 1);
     expect(z7).toBeCloseTo(z8 * 4, 5);
     expect(z9).toBeCloseTo(z8 / 4, 5);
+  });
+
+  it('holds a ~500 m cell once the fixed fraction would be too small', () => {
+    // The client and server must agree on this list; the backend test asserts the same one.
+    expect([8, 9, 10, 11, 12, 13, 14, 15, 16].map(densityCellsPerTile)).toEqual(
+      [64, 64, 64, 32, 16, 8, 4, 2, 1],
+    );
+    for (const zoom of [10, 11, 12, 13, 14, 15, 16]) {
+      expect(densityCellSideMeters(zoom, 34.05)).toBeCloseTo(507, 0);
+    }
   });
 });
 

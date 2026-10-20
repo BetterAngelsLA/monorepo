@@ -23,7 +23,7 @@ from typing import Any, Optional
 from urllib.parse import urlencode
 
 from django.contrib.gis.geos import MultiPolygon, Point, Polygon
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from model_bakery import baker
@@ -38,15 +38,15 @@ from common.tests.utils import make_legacy_only_holder
 from notes.groups import CASEWORKER
 from notes.models import Note
 from regions.models import Region, RegionKind
-from regions.tiles import DENSITY_CELLS_PER_TILE, MVT_CONTENT_TYPE
+from regions.tiles import MVT_CONTENT_TYPE, density_cells_per_tile
 
 from . import mvt
 
 #: Web Mercator's half-width in metres, and the only constant the tile maths below needs.
 _HALF_WORLD = 20037508.342789244
 
-#: A tile with a cell size of ~153 m at z12, so points a few hundred metres apart land in
-#: different cells. DTLA.
+#: A tile with a cell size of ~507 m at z12, so points a cell apart land in different
+#: cells. DTLA.
 _LON, _LAT = -118.24, 34.05
 _ZOOM = 12
 
@@ -69,7 +69,7 @@ def lonlat_for_cell(cell_x: int, cell_y: int, *, zoom: int, tile_x: int, tile_y:
     """
     world = 2 * _HALF_WORLD
     tile = world / 2**zoom
-    size = tile / DENSITY_CELLS_PER_TILE
+    size = tile / density_cells_per_tile(zoom)
     x0 = -_HALF_WORLD + tile_x * tile
     # Tile y counts **southward** from the top of the world while Mercator y counts northward,
     # so a tile's southern edge is `half - (y + 1) * tile`, not `-half + y * tile`.
@@ -79,6 +79,17 @@ def lonlat_for_cell(cell_x: int, cell_y: int, *, zoom: int, tile_x: int, tile_y:
     lon = mercator_x / world * 360.0
     lat = math.degrees(2 * math.atan(math.exp(mercator_y / (world / (2 * math.pi)))) - math.pi / 2)
     return lon, lat
+
+
+class DensityCellsPerTileTestCase(SimpleTestCase):
+    """The grid holds a ground size rather than a fixed fraction of the tile.
+
+    The client's `densityCellsPerTile` mirrors this list; a change here without the client
+    (or the reverse) would make the legend and the colours disagree.
+    """
+
+    def test_cells_hold_the_target_and_cap_at_the_county(self) -> None:
+        self.assertEqual([density_cells_per_tile(z) for z in range(8, 17)], [64, 64, 64, 32, 16, 8, 4, 2, 1])
 
 
 class DensityTileBaseTestCase(TestCase):
@@ -194,7 +205,7 @@ class DensityTileContentTestCase(DensityTileBaseTestCase):
         self._note_in_cell(10, 10)
         self._note_in_cell(10, 10)
         self._note_in_cell(12, 12)
-        self._note_in_cell(30, 20)
+        self._note_in_cell(5, 4)
 
         counts = self._counts(self.client.get(self._url()))
 
@@ -284,7 +295,7 @@ class DensityTileContentTestCase(DensityTileBaseTestCase):
         # Tile-local units: a cell is the 4096-unit tile divided by the cells per tile, and the
         # y axis runs **southward** from the tile's top, so cell row `cy` sits at
         # `4096 - (cy + 1) * size … 4096 - cy * size`.
-        size = 4096 // DENSITY_CELLS_PER_TILE
+        size = 4096 // density_cells_per_tile(_ZOOM)
         xs = [point[0] for point in ring]
         ys = [point[1] for point in ring]
         self.assertEqual((min(xs), max(xs)), (cell[0] * size, (cell[0] + 1) * size))
@@ -358,7 +369,7 @@ class DensityTileDateRangeTestCase(DensityTileBaseTestCase):
         The January and March fixtures are outside the current month, so this asserts the
         default is applied — and would fail if an omitted range silently meant no filter.
         """
-        self._note_in_cell(20, 20, when=timezone.now())
+        self._note_in_cell(14, 14, when=timezone.now())
         response = self.client.get(self._url(start="omit", end="omit"))
         self.assertEqual(sum(self._counts(response)), 1)
 
@@ -426,8 +437,8 @@ class DensityTileRegionScopeTestCase(DensityTileBaseTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # One region around the (10, 10) cell and one around (30, 20), well apart.
-        self.near_cell, self.far_cell = (10, 10), (30, 20)
+        # One region around the (10, 10) cell and one around (5, 4), well apart.
+        self.near_cell, self.far_cell = (10, 10), (5, 4)
         self.near = self._region_around(self.near_cell, kind=RegionKind.COUNCIL_DISTRICT, code="1")
         self.far = self._region_around(self.far_cell, kind=RegionKind.COUNCIL_DISTRICT, code="2")
         # The same code in a different dimension: a filter that keyed on the code alone would
@@ -439,8 +450,8 @@ class DensityTileRegionScopeTestCase(DensityTileBaseTestCase):
 
     def _region_around(self, cell: tuple[int, int], *, kind: str, code: str) -> Region:
         lon, lat = lonlat_for_cell(cell[0], cell[1], zoom=_ZOOM, tile_x=self.tile_x, tile_y=self.tile_y)
-        # ~220 m either way: comfortably larger than a 153 m cell, comfortably smaller than
-        # the distance between the two fixtures.
+        # ~220 m either way around the point; the cell is ~507 m, but only the point has to
+        # fall inside the region for the filter to match.
         ring = [
             (lon - 0.002, lat - 0.002),
             (lon + 0.002, lat - 0.002),
