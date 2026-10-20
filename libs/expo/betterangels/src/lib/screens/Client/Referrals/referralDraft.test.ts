@@ -49,7 +49,7 @@ function harness(initial: unknown = null) {
 describe('validated draft access', () => {
   it('does not create a draft from a stray field write', () => {
     const { store, persistence } = harness();
-    expect(store.setField('consent', true)).toBe(false);
+    expect(store.setField('consent', 'Yes')).toBe(false);
     expect(store.getSnapshot()).toBeNull();
     expect(persistence.save).not.toHaveBeenCalled();
   });
@@ -86,8 +86,8 @@ describe('validated draft access', () => {
     const before = store.getSnapshot();
     // @ts-expect-error Unknown field keys must not become draft fields.
     expect(store.setField('petz', [])).toBe(false);
-    // @ts-expect-error A checkbox does not accept text.
-    expect(store.setField('consent', 'Yes')).toBe(false);
+    // @ts-expect-error A yes/no control does not accept arbitrary text.
+    expect(store.setField('consent', 'MAYBE')).toBe(false);
     // @ts-expect-error Multiselect answers cannot be scalar strings.
     expect(store.setField('pets', 'CATS')).toBe(false);
     // @ts-expect-error Arbitrary strings are not generated enum values.
@@ -130,12 +130,12 @@ describe('validated draft access', () => {
     store.setField('pets', [PetChoices.Cats]);
     store.setField('pets', []);
     store.setField('notes', '');
-    store.setField('consent', false);
+    store.setField('consent', 'No');
     store.setField('selfcare', 'No');
     expect(store.getSnapshot()?.answers).toEqual({
       pets: [],
       notes: '',
-      consent: false,
+      consent: 'No',
       selfcare: 'No',
     });
   });
@@ -248,7 +248,7 @@ describe('snapshot ownership and subscriptions', () => {
     store.startNew(CLIENT);
     const first = store.getSnapshot();
     expect(store.getSnapshot()).toBe(first);
-    store.setField('consent', true);
+    store.setField('consent', 'Yes');
     expect(store.getSnapshot()).not.toBe(first);
     expect(first?.answers.consent).toBeUndefined();
     expect(listener).toHaveBeenCalledTimes(2);
@@ -288,7 +288,7 @@ describe('snapshot ownership and subscriptions', () => {
     vi.mocked(persistence.save).mockImplementation(() => {
       throw new Error('Storage unavailable');
     });
-    expect(() => store.setField('consent', true)).toThrow(
+    expect(() => store.setField('consent', 'Yes')).toThrow(
       'Storage unavailable',
     );
     expect(store.getSnapshot()).toBe(before);

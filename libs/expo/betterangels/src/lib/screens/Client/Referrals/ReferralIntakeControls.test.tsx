@@ -57,8 +57,8 @@ async function setup() {
   };
 }
 
-const consent = () =>
-  screen.getByRole('checkbox', { name: /Client gave consent/ });
+const consentYes = () => screen.getByTestId('consent-yes-btn');
+const consentNo = () => screen.getByTestId('consent-no-btn');
 
 it('uses the edit-specific confirmation and discards only the local unsaved changes', async () => {
   const savedNotes = 'Previously saved notes';
@@ -205,18 +205,21 @@ it('starts self-care unanswered, switches between Yes and No, and restores No as
   expect(yes().props.accessibilityState.selected).toBe(false);
 });
 
-it('records consent as a boolean and keeps an unchecked answer unchecked after restart', async () => {
+it('records consent as a yes/no answer and restores a refusal after restart', async () => {
   const { store, restart } = await setup();
-  expect(consent()).not.toBeChecked();
-  await fireEvent.press(consent());
-  expect(consent()).toBeChecked();
-  expect(store.getField('consent')).toBe(true);
-  await fireEvent.press(consent());
-  expect(consent()).not.toBeChecked();
-  expect(store.getField('consent')).toBe(false);
+  expect(consentYes().props.accessibilityState.selected).toBe(false);
+  expect(consentNo().props.accessibilityState.selected).toBe(false);
+  expect(screen.getByLabelText('DHS data-sharing consent: Yes')).toBe(
+    consentYes(),
+  );
+  await fireEvent.press(consentYes());
+  expect(store.getField('consent')).toBe('Yes');
+  await fireEvent.press(consentNo());
+  expect(store.getField('consent')).toBe('No');
+  expect(consentNo().props.accessibilityState.selected).toBe(true);
   const reloaded = await restart();
-  expect(consent()).not.toBeChecked();
-  expect(reloaded.getField('consent')).toBe(false);
+  expect(consentNo().props.accessibilityState.selected).toBe(true);
+  expect(reloaded.getField('consent')).toBe('No');
 });
 
 it('restores text, multiline notes, consent, and choices together from a new store instance', async () => {
@@ -229,7 +232,7 @@ it('restores text, multiline notes, consent, and choices together from a new sto
     screen.getByLabelText('Staff Observations / Notes'),
     'First line\nSecond line',
   );
-  await fireEvent.press(consent());
+  await fireEvent.press(consentYes());
   await fireEvent.press(screen.getByTestId('selfcare-yes-btn'));
   await fireEvent.press(screen.getByTestId('pets-CATS-btn'));
   expect(store.getSnapshot()?.pii).toEqual({
@@ -242,7 +245,7 @@ it('restores text, multiline notes, consent, and choices together from a new sto
   expect(
     screen.getByLabelText('Staff Observations / Notes'),
   ).toHaveDisplayValue('First line\nSecond line');
-  expect(consent()).toBeChecked();
+  expect(consentYes().props.accessibilityState.selected).toBe(true);
   expect(
     screen.getByTestId('selfcare-yes-btn').props.accessibilityState.selected,
   ).toBe(true);
@@ -250,7 +253,7 @@ it('restores text, multiline notes, consent, and choices together from a new sto
   expect(reloaded.getSnapshot()?.answers).toEqual({
     substances: 'Fictional sensitive answer',
     notes: 'First line\nSecond line',
-    consent: true,
+    consent: 'Yes',
     selfcare: 'Yes',
     pets: ['CATS'],
   });

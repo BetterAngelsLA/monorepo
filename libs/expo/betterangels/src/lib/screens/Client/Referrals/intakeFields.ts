@@ -68,7 +68,6 @@ export type IntakeFieldDefinition = FieldMetadata &
       } & (
         | { readonly control: 'date' }
         | { readonly control: 'yesno' }
-        | { readonly control: 'checkbox'; readonly checkboxLabel: string }
         | {
             readonly control: 'multiselect';
             readonly options: readonly IntakeOption[];
@@ -225,8 +224,7 @@ export const INTAKE_FIELDS = [
     reuse: 'reset',
     label: 'DHS data-sharing consent',
     section: 'additional',
-    control: 'checkbox',
-    checkboxLabel: 'Client gave consent',
+    control: 'yesno',
     sensitive: false,
     requirement: 'optional',
     help: 'Records that the client consented to DHS data sharing (a plain yes/no — not PII). Consent content, signer, and delivery are unresolved — see GAP-21.',
@@ -254,11 +252,9 @@ type ValueFor<TField> = TField extends {
   options: readonly IntakeOption<infer TValue>[];
 }
   ? TValue[]
-  : TField extends { control: 'checkbox' }
-    ? boolean
-    : TField extends { control: 'yesno' }
-      ? 'Yes' | 'No'
-      : string;
+  : TField extends { control: 'yesno' }
+    ? 'Yes' | 'No'
+    : string;
 
 export type IntakeValues = {
   [TField in DefinedField as TField['key']]?: ValueFor<TField>;
@@ -279,13 +275,27 @@ export type IntakeFieldWrite = {
 // Stored records also contain older formats and fields absent from this version.
 // Keep them intact at the persistence boundary; only narrow values for controls.
 export type StoredIntake = Record<string, unknown>;
-export type IntakeControlValue = string | string[] | boolean;
+export type IntakeControlValue = string | string[];
 
 export function getIntakeField(
   key: string,
   definitions: readonly IntakeFieldDefinition[] = INTAKE_FIELDS,
 ): IntakeFieldDefinition | undefined {
   return definitions.find((field) => field.key === key);
+}
+
+/**
+ * Coerce answers written by older versions into the current control
+ * vocabulary. Older referrals stored yes/no controls as booleans; the current
+ * controls use the chip labels. Unknown fields and values pass through.
+ */
+export function normalizeIntakeValue(
+  field: IntakeFieldDefinition | undefined,
+  value: unknown,
+): unknown {
+  if (field?.control === 'yesno' && typeof value === 'boolean')
+    return value ? 'Yes' : 'No';
+  return value;
 }
 
 export function isIntakeControlValue(
@@ -300,8 +310,6 @@ export function isIntakeControlValue(
       const date = parseDateString(value);
       return !!date && toDateString(date) === value;
     }
-    case 'checkbox':
-      return typeof value === 'boolean';
     case 'yesno':
       return value === 'Yes' || value === 'No';
     case 'multiselect':
@@ -331,7 +339,7 @@ export function readIntakeAnswers(
   const answers: IntakeValues = {};
   const readField = <K extends IntakeFieldKey>(key: K) => {
     const field = getIntakeField(key);
-    let value = values[key];
+    let value = normalizeIntakeValue(field, values[key]);
     // Keep valid selections visible when an older draft also has retired ones.
     if (field?.control === 'multiselect' && Array.isArray(value)) {
       value = value.filter((item) =>
