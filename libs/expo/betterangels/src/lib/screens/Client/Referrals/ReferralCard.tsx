@@ -1,4 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { memo, useMemo } from 'react';
 import {
   Avatar,
   TextBold,
@@ -20,15 +21,17 @@ import { useReferralPermissions } from './ReferralPermissions';
 // vocabulary — see clientNeeds.ts), so it reflects the needs as they were
 // recorded at the time rather than whatever is on screen now.
 
+type Referral = ClientReferralsQuery['referrals']['results'][number];
+
 export type ReferralCardProps = {
-  referral: ClientReferralsQuery['referrals']['results'][number];
+  referral: Referral;
   clientName: string;
   profile?: ProfileCardData | null;
-  onEdit: () => void;
-  onReferAgain: () => void;
+  onEdit: (referral: Referral) => void;
+  onReferAgain: (referral: Referral) => void;
 };
 
-export function ReferralCard({
+export const ReferralCard = memo(function ReferralCard({
   referral,
   clientName,
   profile,
@@ -52,9 +55,26 @@ export function ReferralCard({
         : Colors.WARNING;
 
   // TEMPORARY: split the human notes from the intake sidecar for display.
-  const { humanNotes, intake } = decodeReferralNotes(referral.notes);
-  const { requestedArrivalDate, ...otherIntake } = intake;
-  const intakeSummary = summarizeIntake(otherIntake); // PII masked
+  // Decoding parses JSON, so keep it tied to the saved notes rather than to
+  // every render (the list re-renders on refresh and modal changes).
+  const decoded = useMemo(
+    () => decodeReferralNotes(referral.notes),
+    [referral.notes],
+  );
+  const { humanNotes } = decoded;
+  const requestedArrivalDate = decoded.intake.requestedArrivalDate;
+  const intakeSummary = useMemo(() => {
+    const { requestedArrivalDate: _arrival, ...otherIntake } = decoded.intake;
+    return summarizeIntake(otherIntake); // PII masked
+  }, [decoded]);
+  const attributes = useMemo(
+    () => (referral.shelter ? shelterAttributeLabels(referral.shelter) : []),
+    [referral.shelter],
+  );
+  const desiredAttributes = useMemo(
+    () => needLabelsFromIntake(decoded.intake),
+    [decoded],
+  );
 
   return (
     <View style={styles.card} testID={`referral-card-${referral.id}`}>
@@ -76,8 +96,8 @@ export function ReferralCard({
           id={referral.shelter.id}
           name={referral.shelter.name}
           place={referral.shelter.location?.place}
-          attributes={shelterAttributeLabels(referral.shelter)}
-          desiredAttributes={needLabelsFromIntake(intake)}
+          attributes={attributes}
+          desiredAttributes={desiredAttributes}
         />
       ) : (
         <TextBold size="sm">Unknown Shelter</TextBold>
@@ -110,7 +130,7 @@ export function ReferralCard({
             <Pressable
               testID={`edit-referral-${referral.id}`}
               accessibilityRole="button"
-              onPress={onEdit}
+              onPress={() => onEdit(referral)}
             >
               <TextBold color={Colors.PRIMARY}>Edit referral</TextBold>
             </Pressable>
@@ -119,7 +139,7 @@ export function ReferralCard({
             <Pressable
               testID={`reuse-referral-${referral.id}`}
               accessibilityRole="button"
-              onPress={onReferAgain}
+              onPress={() => onReferAgain(referral)}
             >
               <TextBold color={Colors.PRIMARY}>
                 Refer to another shelter
@@ -140,7 +160,7 @@ export function ReferralCard({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

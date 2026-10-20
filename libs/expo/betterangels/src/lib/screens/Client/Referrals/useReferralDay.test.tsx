@@ -31,3 +31,23 @@ it('refreshes at local midnight and on foreground, and cleans up the timer/liste
     vi.useRealTimers();
   }
 });
+
+it('shares one timer and one foreground listener across subscribers', async () => {
+  const remove = vi.fn();
+  const listen = vi
+    .spyOn(AppState, 'addEventListener')
+    .mockReturnValue({ remove });
+  try {
+    const first = await renderHook(useReferralDay);
+    const second = await renderHook(useReferralDay);
+    expect(listen).toHaveBeenCalledOnce();
+
+    await first.unmount();
+    expect(remove).not.toHaveBeenCalled();
+
+    await second.unmount();
+    expect(remove).toHaveBeenCalledOnce();
+  } finally {
+    listen.mockRestore();
+  }
+});

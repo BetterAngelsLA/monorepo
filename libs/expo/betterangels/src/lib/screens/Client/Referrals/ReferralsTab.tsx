@@ -15,6 +15,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useReducer,
@@ -214,12 +215,13 @@ function ReferralsContent({
     variables: { filters: { clientProfile: clientId } },
     pageSize: 25,
   });
-  const submit = useReferralSubmission(store, () => {
+  const handleSaved = useCallback(() => {
     apolloClient.cache.evict({ fieldName: 'referrals' });
     apolloClient.cache.gc();
     reload();
-  });
-  const openReferralForm = () => {
+  }, [apolloClient, reload]);
+  const submit = useReferralSubmission(store, handleSaved);
+  const openReferralForm = useCallback(() => {
     const draftId = store.getSnapshot()?.id;
     if (!draftId) return;
     const session = Symbol();
@@ -275,16 +277,26 @@ function ReferralsContent({
           ? 'Edit Referral'
           : 'Refer to Shelter',
     });
-  };
+  }, [
+    client,
+    clientId,
+    reload,
+    router,
+    runDraftAction,
+    showModalScreen,
+    store,
+    submit,
+  ]);
 
   const startNewReferral = () => {
     if (runDraftAction(() => store.startNew(clientId))) openReferralForm();
   };
 
-  const startFromReferral = (
-    referral: ReferralCardProps['referral'],
-    mode: 'edit' | 'reuse',
-  ) => {
+  const startFromReferral = useCallback(
+    (
+      referral: ReferralCardProps['referral'],
+      mode: 'edit' | 'reuse',
+    ) => {
     if (store.getRecoveryState()) {
       showSnackbar({
         message: 'Resolve the unreadable local draft before starting another.',
@@ -335,7 +347,20 @@ function ReferralsContent({
         },
       ],
     );
-  };
+  },
+    [clientId, openReferralForm, runDraftAction, showSnackbar, store],
+  );
+
+  const handleEdit = useCallback(
+    (referral: ReferralCardProps['referral']) =>
+      startFromReferral(referral, 'edit'),
+    [startFromReferral],
+  );
+  const handleReuse = useCallback(
+    (referral: ReferralCardProps['referral']) =>
+      startFromReferral(referral, 'reuse'),
+    [startFromReferral],
+  );
 
   const confirmDiscardDraft = () => {
     const current = store.getSnapshot();
@@ -413,8 +438,8 @@ function ReferralsContent({
               ]
                 .filter(Boolean)
                 .join(' ')}
-              onEdit={() => startFromReferral(referral, 'edit')}
-              onReferAgain={() => startFromReferral(referral, 'reuse')}
+              onEdit={handleEdit}
+              onReferAgain={handleReuse}
             />
           )}
           totalItems={totalCount}
