@@ -44,6 +44,10 @@ import {
   useReferralDraft,
   useReferralDraftStore,
 } from './ReferralDraftProvider';
+import {
+  ReferralPermissionsProvider,
+  useReferralPermissions,
+} from './ReferralPermissions';
 import { ReferralsHelp } from './ReferralsHelp';
 import type { ReferralDraftStore } from './referralDraft';
 import {
@@ -107,6 +111,7 @@ function PersistentReferralsTab({ client }: Pick<TProps, 'client'>) {
   const store = getPersistentReferralDraft(scope);
   return (
     <ReferralDraftProvider key={JSON.stringify(scope)} store={store}>
+      <ReferralPermissionsProvider>
       {!store.getSnapshot() &&
         !store.getRecoveryState() &&
         hasLegacyReferralDraft(clientId) && (
@@ -142,6 +147,7 @@ function PersistentReferralsTab({ client }: Pick<TProps, 'client'>) {
           </Pressable>
         )}
       <ReferralsContent client={client} clientId={clientId} />
+      </ReferralPermissionsProvider>
     </ReferralDraftProvider>
   );
 }
@@ -448,6 +454,7 @@ function DraftHeaderActions({
   onCreate: () => void;
 }) {
   const { draft, recovery } = useReferralDraft();
+  const { canCreate } = useReferralPermissions();
   if (draft?.clientId === clientId) {
     return (
       <Pressable
@@ -464,7 +471,7 @@ function DraftHeaderActions({
       </Pressable>
     );
   }
-  if (recovery) return null;
+  if (recovery || !canCreate) return null;
   return (
     <IconButton
       testID="create-referral-btn"

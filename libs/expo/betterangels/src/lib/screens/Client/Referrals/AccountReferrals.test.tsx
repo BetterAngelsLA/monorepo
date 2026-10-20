@@ -7,6 +7,7 @@ import {
   configureActiveOrgStorage,
   useActiveOrg,
 } from '@monorepo/ba-platform';
+import { ReferralPermissions } from '@monorepo/ba-platform/permissions';
 import { ReferralStatusEnum } from '@monorepo/ba-platform/types';
 import {
   act,
@@ -138,7 +139,11 @@ const user = {
     __typename: 'OrganizationType' as const,
     id,
     name: id,
-    permissions: [],
+    permissions: [
+      ReferralPermissions.View,
+      ReferralPermissions.Add,
+      ReferralPermissions.Change,
+    ],
   })),
   isOutreachAuthorized: true,
   hasAcceptedTos: true,

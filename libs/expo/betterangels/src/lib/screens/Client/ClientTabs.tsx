@@ -1,6 +1,8 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { toTestId } from '@monorepo/expo/shared/utils';
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { ReferralPermissions } from '@monorepo/ba-platform/permissions';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import {
@@ -37,13 +39,17 @@ interface IClientTabsProps {
 
 export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
   const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
+  const { hasPermission } = useActiveOrg();
+  const canViewReferrals = hasPermission(ReferralPermissions.View);
 
   const visibleTabs = useMemo(
     () =>
       orderedTabs.filter(
-        (t) => t !== ClientViewTabEnum.Referrals || referralsEnabled,
+        (t) =>
+          t !== ClientViewTabEnum.Referrals ||
+          (referralsEnabled && canViewReferrals),
       ),
-    [referralsEnabled],
+    [canViewReferrals, referralsEnabled],
   );
 
   return (
