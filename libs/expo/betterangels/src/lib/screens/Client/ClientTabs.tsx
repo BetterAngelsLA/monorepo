@@ -56,6 +56,7 @@ export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        testID="client-tabs-strip"
       >
         {visibleTabs.map((t) => (
           <TabItem

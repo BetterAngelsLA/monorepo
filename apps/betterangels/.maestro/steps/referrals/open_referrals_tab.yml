@@ -34,6 +34,11 @@ appId: ${MAESTRO_APP_ID}
 
 # The tab strip is a horizontal ScrollView and `scrollUntilVisible` does not
 # reliably drag it, so swipe the tab row left to bring Referrals into view.
+# The row's Y depends on the client header (and the device aspect ratio), so
+# try a few offsets and fall back when the Referrals screen is not reached.
+- assertVisible:
+    id: client-tabs-strip
+
 - swipe:
     start: '90%, 30%'
     end: '10%, 30%'
@@ -43,6 +48,49 @@ appId: ${MAESTRO_APP_ID}
 
 - tapOn:
     id: client-tab-referrals
+    optional: true
+
+- runFlow:
+    when:
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          start: '90%, 31%'
+          end: '10%, 31%'
+          duration: 400
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          start: '90%, 32%'
+          end: '10%, 32%'
+          duration: 400
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          start: '90%, 33%'
+          end: '10%, 33%'
+          duration: 400
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
 
 - assertVisible:
     id: referrals-screen
