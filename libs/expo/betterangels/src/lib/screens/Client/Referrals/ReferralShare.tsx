@@ -17,7 +17,7 @@ import {
 import type { ProfileCardData } from './referralProfile';
 import { ReferralImagePreview } from './ReferralImagePreview';
 import { layoutReferralImage } from './referralImage';
-import { useSnackbar } from '../../../hooks';
+import useSnackbar from '../../../hooks/snackbar/useSnackbar';
 
 export function ReferralShare({
   referral,

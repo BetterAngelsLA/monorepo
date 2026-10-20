@@ -30,8 +30,10 @@ const ActionModalStub = ({
   body,
   primaryButtonTitle,
   secondaryButtonTitle,
+  tertiaryButtonTitle,
   onPrimaryPress,
   onSecondaryPress,
+  onTertiaryPress,
 }: {
   visible?: boolean;
   setVisible?: (visible: boolean) => void;
@@ -39,8 +41,10 @@ const ActionModalStub = ({
   body?: ReactNode;
   primaryButtonTitle?: string;
   secondaryButtonTitle?: string;
+  tertiaryButtonTitle?: string;
   onPrimaryPress?: () => void;
   onSecondaryPress?: () => void;
+  onTertiaryPress?: () => void;
 }) => {
   if (!visible) return null;
   return (
@@ -50,10 +54,7 @@ const ActionModalStub = ({
       <Pressable
         testID="action-modal-primary"
         accessibilityRole="button"
-        onPress={() => {
-          onPrimaryPress?.();
-          setVisible?.(false);
-        }}
+        onPress={() => onPrimaryPress?.()}
       >
         <Text>{primaryButtonTitle}</Text>
       </Pressable>
@@ -61,12 +62,18 @@ const ActionModalStub = ({
         <Pressable
           testID="action-modal-secondary"
           accessibilityRole="button"
-          onPress={() => {
-            onSecondaryPress?.();
-            setVisible?.(false);
-          }}
+          onPress={() => onSecondaryPress?.()}
         >
           <Text>{secondaryButtonTitle}</Text>
+        </Pressable>
+      )}
+      {!!tertiaryButtonTitle && (
+        <Pressable
+          testID="action-modal-tertiary"
+          accessibilityRole="button"
+          onPress={() => onTertiaryPress?.()}
+        >
+          <Text>{tertiaryButtonTitle}</Text>
         </Pressable>
       )}
       <Pressable

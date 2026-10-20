@@ -23,8 +23,8 @@ import type { ReferralImageLayout } from './referralImage';
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
 const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
 
-vi.mock('../../../hooks', () => ({
-  useSnackbar: () => ({ showSnackbar }),
+vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
+  default: () => ({ showSnackbar }),
 }));
 
 vi.mock('./shareReferralText', () => ({

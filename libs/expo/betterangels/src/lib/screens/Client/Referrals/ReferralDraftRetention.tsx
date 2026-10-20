@@ -23,7 +23,7 @@ export function ReferralDraftRetention({
   const lifetime = useRef<object | null>(null);
   const [result, setResult] = useState<{ identity: string; message: string }>();
   useLayoutEffect(() => {
-    // An old native alert must not survive an account/environment switch,
+    // An open confirmation must not survive an account/environment switch;
     // including switching away and back to the same identity.
     const token = {};
     lifetime.current = token;

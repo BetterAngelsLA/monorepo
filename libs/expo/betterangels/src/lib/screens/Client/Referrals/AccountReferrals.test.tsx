@@ -106,6 +106,11 @@ vi.mock(
   '../../../providers',
   async () => import('../../../providers/modalScreen/useModalScreen'),
 );
+vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
+  default: () => ({ showSnackbar }),
+}));
+// Other referral components still use the hooks barrel; keep it stubbed
+// so expo-updates is not loaded in this native test.
 vi.mock('../../../hooks', () => ({ useSnackbar: () => ({ showSnackbar }) }));
 vi.mock('@monorepo/expo/shared/clients', () => ({
   API_ERROR_CODES: { UNAUTHENTICATED: 'UNAUTHENTICATED' },
@@ -306,11 +311,13 @@ async function modalButton(text: string) {
   const testIds: Record<string, string> = {
     Cancel: screen.queryByTestId('discard-modal-cancel')
       ? 'discard-modal-cancel'
-      : 'action-modal-close',
+      : screen.queryByTestId('action-modal-secondary')
+        ? 'action-modal-secondary'
+        : 'action-modal-close',
     Discard: 'discard-modal-confirm',
     Recover: 'action-modal-primary',
     'Resume draft': 'action-modal-primary',
-    'Discard and start': 'action-modal-secondary',
+    'Discard and start': 'action-modal-tertiary',
   };
   const testId = testIds[text];
   if (!testId) throw new Error(`Unknown modal action: ${text}`);

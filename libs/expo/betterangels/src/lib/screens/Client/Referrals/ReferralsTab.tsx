@@ -408,12 +408,14 @@ function ReferralsContent({
         title="A draft already exists for this client"
         body="Resume it, or discard it to start from the selected referral."
         primaryButtonTitle="Resume draft"
-        secondaryButtonTitle="Discard and start"
+        secondaryButtonTitle="Cancel"
+        tertiaryButtonTitle="Discard and start"
         onPrimaryPress={() => {
           setPendingStart(null);
           openReferralForm();
         }}
-        onSecondaryPress={() => {
+        onSecondaryPress={() => setPendingStart(null)}
+        onTertiaryPress={() => {
           const pending = pendingStart;
           setPendingStart(null);
           if (!pending) return;
