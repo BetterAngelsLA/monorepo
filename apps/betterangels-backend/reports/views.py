@@ -18,10 +18,12 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from notes.admin import NoteResource
+from regions.models import RegionKind
+from regions.services import RegionScopeError, resolve_group_scope
 
 from .calendar import report_calendar_time_zone
 from .permissions import HasReportAccess
-from .selectors import note_list_for_org, report_month_range
+from .selectors import note_list_for_org, report_month_range, scope_notes_to_group
 
 
 def _resolve_range(data: dict[str, Any], *, org: Organization) -> tuple[date, date]:
@@ -58,6 +60,16 @@ class ExportInteractionDataApi(APIView):
         # Legacy single-month params
         month = serializers.IntegerField(required=False, min_value=1, max_value=12)
         year = serializers.IntegerField(required=False, min_value=2000, max_value=2100)
+        # The same geographic group the Reports page is scoped to. Accepts either spelling of
+        # the dimension (`city` or `CITY`) and normalizes to the wire `kind`, which is what
+        # `resolve_group_scope` and the tile endpoint use.
+        dimension = serializers.CharField(required=False)
+
+        def validate_dimension(self, value: str) -> str:
+            normalized = value.lower()
+            if normalized not in RegionKind.values:
+                raise serializers.ValidationError("must be a known region dimension.")
+            return normalized
 
         def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:  # type: ignore[override]
             start = attrs.get("start_date")
@@ -75,10 +87,31 @@ class ExportInteractionDataApi(APIView):
         org = request.permitted_org  # type: ignore[attr-defined]  # set by HasReportAccess
         start_date, end_date = _resolve_range(serializer.validated_data, org=org)
 
+        # `codes` is read from the query rather than through the serializer: DRF's ListField
+        # cannot see a repeated QueryDict parameter, and `?codes=` (present but empty) has to
+        # stay distinct from an absent parameter. Both spellings, repeated and comma-separated,
+        # work, as they do on the density tile.
+        codes: list[str] | None = None
+        if "codes" in request.query_params:
+            codes = [code for raw in request.query_params.getlist("codes") for code in raw.split(",") if code]
+
+        # The same reading of `(dimension, codes)` as `reportSummary`: a dimension alone is
+        # every region of it, codes narrow to those regions, and codes without a dimension are
+        # refused because a code is ambiguous across dimensions.
+        try:
+            region_kind, region_codes = resolve_group_scope(
+                dimension=serializer.validated_data.get("dimension"), codes=codes
+            )
+        except RegionScopeError as error:
+            raise serializers.ValidationError({error.field: str(error)}) from error
+
         org_time_zone = report_calendar_time_zone(org)
         notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date, time_zone=org_time_zone).order_by(
             "interacted_at"
         )
+        # The download has to cover the same population as the charts it sits under; an export
+        # that silently widened back to the whole organisation would be a different report.
+        notes = scope_notes_to_group(notes, region_kind=region_kind, region_codes=region_codes)
 
         # Same calendar the range was cut on, so the file's dates and its row set
         # describe one period.  See ``note_list_for_org``.

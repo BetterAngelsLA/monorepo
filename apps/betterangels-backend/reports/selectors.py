@@ -8,7 +8,7 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 """
 
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, Sequence
 from zoneinfo import ZoneInfo
 
 from django.db.models import Count, F, QuerySet
@@ -18,6 +18,7 @@ from organizations.models import Organization
 
 from common.utils import aware_range
 from notes.models import Note
+from regions.selectors import scope_notes_to_region_kind, scope_notes_to_regions
 
 from .calendar import report_calendar_time_zone
 
@@ -158,16 +159,68 @@ def _dates_to_iso(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
-def report_summary(*, org: Organization, start_date: date, end_date: date) -> dict[str, Any]:
+def scope_notes_to_group(
+    notes: QuerySet[Note],
+    *,
+    region_kind: str | None,
+    region_codes: Sequence[str] | None,
+) -> QuerySet[Note]:
+    """Narrow *notes* to a resolved group scope — the summary's and the export's filter.
+
+    The three arms are the ones ``regions.services.resolve_group_scope`` names, kept in one
+    place because both the on-screen figures and the CSV must describe the same population:
+    a dimension alone is every region of it, codes narrow to those regions, and an explicitly
+    empty code list matches nothing rather than everything.
+
+    *notes* arrives already org- and window-scoped; this only narrows it.
+    """
+    if region_kind is not None:
+        if region_codes is None:
+            return scope_notes_to_region_kind(notes, kind=region_kind)
+        return scope_notes_to_regions(notes, kind=region_kind, codes=region_codes)
+    if region_codes == []:
+        # No dimension and no named region: an empty selection is an answer of zero.
+        return notes.none()
+    return notes
+
+
+def report_summary(
+    *,
+    org: Organization,
+    start_date: date,
+    end_date: date,
+    region_kind: str | None = None,
+    region_codes: Sequence[str] | None = None,
+) -> dict[str, Any]:
     """
     Build the full report summary for an organization and inclusive date range.
 
+    ``region_kind``/``region_codes`` scope **every figure in the summary** to interactions whose
+    location falls in the chosen geography — the same filter the location breakdown below the
+    charts applies, so the KPIs and the table describe one population:
+
+    * ``region_kind is None`` -> the whole organization, unfiltered;
+    * ``region_kind`` with ``region_codes is None`` -> every region of that dimension;
+    * ``region_kind`` with codes -> those regions, and an explicitly empty list matches nothing.
+
+    The scoping is a note-queryset filter, applied once before the aggregates, rather than a
+    predicate restated in each chart query: the six charts and the KPIs read different
+    aggregations of one queryset, so a filter they each applied separately could drift.
+
+    ``region_codes`` without a ``region_kind`` is a programming error rather than a user input
+    shape — the GraphQL resolver normalizes the pair through ``resolve_group_scope`` first —
+    and is refused loudly instead of silently returning the unfiltered organisation.
+
     Returns a dict ready to be serialized by the GraphQL layer or a DRF view.
     """
+    if region_codes is not None and region_kind is None:
+        raise ValueError("region_codes requires a region_kind")
+
     # One calendar for the whole summary: the range, the buckets and the labels all
     # have to describe the same one.
     org_time_zone = report_calendar_time_zone(org)
     notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date, time_zone=org_time_zone)
+    notes = scope_notes_to_group(notes, region_kind=region_kind, region_codes=region_codes)
 
     return {
         "total_notes": notes.count(),
