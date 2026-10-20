@@ -1,14 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   buildReferralDocumentCopy,
@@ -24,6 +17,7 @@ import {
 import type { ProfileCardData } from './referralProfile';
 import { ReferralImagePreview } from './ReferralImagePreview';
 import { layoutReferralImage } from './referralImage';
+import useSnackbar from '../../../hooks/snackbar/useSnackbar';
 
 export function ReferralShare({
   referral,
@@ -35,6 +29,7 @@ export function ReferralShare({
   profile?: ProfileCardData | null;
 }) {
   const insets = useSafeAreaInsets();
+  const { showSnackbar } = useSnackbar();
   const session = useRef<symbol | null>(null);
   const mounted = useRef(true);
   const sharing = useRef(false);
@@ -81,10 +76,11 @@ export function ReferralShare({
       setImageCapture(null);
       setPreview(copies);
     } catch {
-      Alert.alert(
-        'Cannot prepare referral summary',
-        'This referral uses an unreadable or newer intake format. Its saved data is unchanged.',
-      );
+      showSnackbar({
+        message:
+          'This referral uses an unreadable or newer intake format. Its saved data is unchanged.',
+        type: 'error',
+      });
     }
   };
   const copy = includePrivate ? preview?.full : preview?.standard;
@@ -122,10 +118,11 @@ export function ReferralShare({
           error instanceof Error ? error.message : 'Unknown native error',
         );
       if (isCurrent())
-        Alert.alert(
-          'Could not open sharing',
-          'Try again, or use the other sharing option. The saved referral is unchanged.',
-        );
+        showSnackbar({
+          message:
+            'Could not open sharing. Try again, or use the other sharing option. The saved referral is unchanged.',
+          type: 'error',
+        });
     } finally {
       sharing.current = false;
       if (mounted.current) setBusy(false);

@@ -62,6 +62,9 @@ vi.mock('react-native-safe-area-context', () => ({
 }));
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
+  default: () => ({ showSnackbar: vi.fn() }),
+}));
 vi.mock('../../../hooks', () => ({
   useSnackbar: () => ({ showSnackbar: vi.fn() }),
 }));

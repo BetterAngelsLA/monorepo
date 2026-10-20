@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import { randomUUID } from 'node:crypto';
 import { uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { createReferralDraftStore } from '../../../draft/referralDraft';
@@ -16,7 +15,6 @@ it('requires explicit confirmation before discarding unreadable data and handles
     { load: () => 42, save: vi.fn(), remove },
     randomUUID,
   );
-  const alert = vi.spyOn(Alert, 'alert');
   await render(
     <ReferralDraftProvider store={store}>
       <DraftRecoveryNotice />
@@ -24,16 +22,14 @@ it('requires explicit confirmation before discarding unreadable data and handles
   );
   await fireEvent.press(screen.getByText('Discard unreadable draft'));
   expect(remove).not.toHaveBeenCalled();
-  const confirm = alert.mock.calls[0][2]?.find(
-    (button) => button.text === 'Discard',
-  )?.onPress;
-  await act(() => confirm?.());
+  await fireEvent.press(screen.getByTestId('discard-modal-confirm'));
   expect(
     screen.getByText('The draft could not be removed. Please try again.'),
   ).toBeOnTheScreen();
   expect(store.getRecoveryState()).toBe('unreadable');
   remove.mockImplementation(() => undefined);
-  await act(() => confirm?.());
+  await fireEvent.press(screen.getByText('Discard unreadable draft'));
+  await fireEvent.press(screen.getByTestId('discard-modal-confirm'));
   expect(screen.queryByText('Local draft needs attention')).toBeNull();
   await act(() => expect(store.startNew('client')).toBe(true));
 });

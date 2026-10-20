@@ -69,6 +69,11 @@ vi.mock(
   async () => import('../../../providers/modalScreen/useModalScreen'),
 );
 const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
+vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
+  default: () => ({ showSnackbar }),
+}));
+// Other referral components still use the hooks barrel; keep it stubbed
+// so expo-updates is not loaded in this native test.
 vi.mock('../../../hooks', () => ({ useSnackbar: () => ({ showSnackbar }) }));
 
 const client: ClientProfileQuery = {
