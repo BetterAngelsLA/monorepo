@@ -82,7 +82,7 @@ const answers = {
   notes: 'Unique referral observation',
   substances: 'Fictional sensitive answer',
   selfcare: 'No',
-  consent: true,
+  consent: 'Yes',
 };
 const notes = buildReferralNotes(answers);
 const created: CreateReferralMutation = {
@@ -296,9 +296,7 @@ async function openPicker() {
     answers.substances,
   );
   await fireEvent.press(screen.getByTestId('selfcare-no-btn'));
-  await fireEvent.press(
-    screen.getByRole('checkbox', { name: /Client gave consent/ }),
-  );
+  await fireEvent.press(screen.getByTestId('consent-yes-btn'));
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   await screen.findByText('Alpha House');
   await fireEvent.press(screen.getByRole('radio'));
@@ -332,7 +330,7 @@ it('submits current answers once, consumes the draft only on success, and displa
   });
   expect(decodeReferralNotes(request.variables.data.notes)).toEqual({
     humanNotes: answers.notes,
-    intake: { substances: answers.substances, selfcare: 'No', consent: true },
+    intake: { substances: answers.substances, selfcare: 'No', consent: 'Yes' },
   });
   expect(screen.getByTestId('submit-referral-btn')).toBeDisabled();
   await fireEvent.press(screen.getByTestId('submit-referral-btn'));
@@ -440,7 +438,7 @@ it('keeps the draft after a network error and submits current answers when retri
     const retry = await submit(requests, 2);
     expect(decodeReferralNotes(retry.variables.data.notes)).toEqual({
       humanNotes: 'Updated before retry',
-      intake: { substances: answers.substances, selfcare: 'No', consent: true },
+      intake: { substances: answers.substances, selfcare: 'No', consent: 'Yes' },
     });
     await act(async () => retry.succeed({ data: created }));
     await waitFor(() => expect(store.getSnapshot()).toBeNull());
@@ -609,16 +607,14 @@ it('copies a saved referral into an independent draft, resets consent/notes/shel
     screen.getByLabelText('Requested arrival date'),
     '2026-09-12',
   );
-  await fireEvent.press(
-    screen.getByRole('checkbox', { name: /Client gave consent/ }),
-  );
+  await fireEvent.press(screen.getByTestId('consent-yes-btn'));
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   await fireEvent.press((await screen.findAllByRole('radio'))[0]);
   const request = await submit(requests);
   expect(request.operationName).toBe('CreateReferral');
   expect(decodeReferralNotes(request.variables.data.notes)).toMatchObject({
     humanNotes: '',
-    intake: { requestedArrivalDate: '2026-09-12', consent: true },
+    intake: { requestedArrivalDate: '2026-09-12', consent: 'Yes' },
   });
   expect(decodeReferralNotes(original.notes)).toMatchObject({
     humanNotes: answers.notes,

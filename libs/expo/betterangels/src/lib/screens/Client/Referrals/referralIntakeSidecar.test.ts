@@ -26,15 +26,21 @@ describe('encodeReferralNotes', () => {
   });
 
   it('drops empty values rather than storing them', () => {
-    // '' / null / false / [] are "unanswered", not answers.
+    // '' / null / [] are "unanswered", not answers. A false answer to a yes/no
+    // control is an answer and is covered separately below.
     const encoded = encodeReferralNotes(HUMAN, {
       storage: '',
       pets: null,
-      consent: false,
       tags: [],
     });
 
     expect(encoded).toBe(HUMAN);
+  });
+
+  it('stores a refused yes/no answer instead of treating it as unanswered', () => {
+    const encoded = encodeReferralNotes(HUMAN, { consent: false });
+
+    expect(encoded).toContain('"consent":"No"');
   });
 
   it('appends a fenced JSON sidecar after the human notes', () => {
@@ -187,14 +193,18 @@ describe('summarizeIntake', () => {
   });
 
   it('does NOT mask consent — a yes/no acknowledgement is not identifying', () => {
-    // A yes/no acknowledgment is not identifying; verify the actual output.
+    // A yes/no acknowledgment is not identifying; verify both answers, including
+    // the legacy boolean form.
     expect(summarizeIntake({ consent: true })).toBe(
       'DHS data-sharing consent: Yes',
+    );
+    expect(summarizeIntake({ consent: false })).toBe(
+      'DHS data-sharing consent: No',
     );
   });
 
   it('omits empty values from the summary', () => {
-    expect(summarizeIntake({ storage: 'Yes', pets: '', consent: false })).toBe(
+    expect(summarizeIntake({ storage: 'Yes', pets: '' })).toBe(
       'Storage needed: Yes',
     );
   });

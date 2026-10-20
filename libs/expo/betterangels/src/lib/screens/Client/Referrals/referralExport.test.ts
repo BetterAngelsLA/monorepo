@@ -121,9 +121,6 @@ it('includes every collected answer for a fully populated fictional form', () =>
       case 'yesno':
         answers[field.key] = 'No';
         break;
-      case 'checkbox':
-        answers[field.key] = true;
-        break;
       default:
         answers[field.key] = 'Fictional saved answer';
     }
@@ -147,7 +144,7 @@ it('includes every collected answer for a fully populated fictional form', () =>
       expect(text).toContain(`${label}: ${field.options[0].label}`);
     }
   }
-  expect(text).toContain('DHS data-sharing consent: Yes');
+  expect(text).toContain('DHS data-sharing consent: No');
   expect(text).toContain('Able to practice self-care: No');
   expect(text).toContain('Requested arrival date: 2026-10-20');
   expect(text).toContain(

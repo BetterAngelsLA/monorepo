@@ -156,26 +156,6 @@ export const styles = StyleSheet.create({
     minHeight: 72,
     textAlignVertical: 'top',
   },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacings.xs,
-    marginTop: Spacings.xs,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.NEUTRAL_LIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.WHITE,
-  },
-  checkboxOn: {
-    backgroundColor: Colors.PRIMARY,
-    borderColor: Colors.PRIMARY,
-  },
   divider: {
     height: 1,
     backgroundColor: Colors.NEUTRAL_LIGHT,
