@@ -80,7 +80,7 @@ export function useReferralSubmission(
         | UpdateReferralMutation['updateReferral']
         | CreateReferralMutation['createReferral']
         | undefined;
-      let successTypename: 'ReferralType';
+      let successTypename: typeof createReferralMeta.successTypename;
       if (source?.kind === 'edit') {
         const result = await updateReferral({
           variables: {
