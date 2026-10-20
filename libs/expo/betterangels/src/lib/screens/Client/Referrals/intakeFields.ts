@@ -68,7 +68,6 @@ export type IntakeFieldDefinition = FieldMetadata &
       } & (
         | { readonly control: 'date' }
         | { readonly control: 'yesno' }
-        | { readonly control: 'checkbox'; readonly checkboxLabel: string }
         | {
             readonly control: 'multiselect';
             readonly options: readonly IntakeOption[];
@@ -253,11 +252,9 @@ type ValueFor<TField> = TField extends {
   options: readonly IntakeOption<infer TValue>[];
 }
   ? TValue[]
-  : TField extends { control: 'checkbox' }
-    ? boolean
-    : TField extends { control: 'yesno' }
-      ? 'Yes' | 'No'
-      : string;
+  : TField extends { control: 'yesno' }
+    ? 'Yes' | 'No'
+    : string;
 
 export type IntakeValues = {
   [TField in DefinedField as TField['key']]?: ValueFor<TField>;
@@ -278,7 +275,7 @@ export type IntakeFieldWrite = {
 // Stored records also contain older formats and fields absent from this version.
 // Keep them intact at the persistence boundary; only narrow values for controls.
 export type StoredIntake = Record<string, unknown>;
-export type IntakeControlValue = string | string[] | boolean;
+export type IntakeControlValue = string | string[];
 
 export function getIntakeField(
   key: string,
@@ -313,8 +310,6 @@ export function isIntakeControlValue(
       const date = parseDateString(value);
       return !!date && toDateString(date) === value;
     }
-    case 'checkbox':
-      return typeof value === 'boolean';
     case 'yesno':
       return value === 'Yes' || value === 'No';
     case 'multiselect':

@@ -209,6 +209,9 @@ it('records consent as a yes/no answer and restores a refusal after restart', as
   const { store, restart } = await setup();
   expect(consentYes().props.accessibilityState.selected).toBe(false);
   expect(consentNo().props.accessibilityState.selected).toBe(false);
+  expect(screen.getByLabelText('DHS data-sharing consent: Yes')).toBe(
+    consentYes(),
+  );
   await fireEvent.press(consentYes());
   expect(store.getField('consent')).toBe('Yes');
   await fireEvent.press(consentNo());

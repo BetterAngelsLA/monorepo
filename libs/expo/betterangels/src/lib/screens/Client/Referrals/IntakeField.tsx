@@ -141,6 +141,8 @@ function NonDateControl({ f, value, onChange }: Parameters<typeof Control>[0]) {
               style={[styles.chip, on && styles.chipOn]}
               accessibilityRole="radio"
               accessibilityState={{ selected: on }}
+              accessibilityLabel={`${f.label}: ${opt}`}
+              accessibilityHint={`selects ${opt} for ${f.label}`}
             >
               <TextRegular
                 size="xs"
@@ -191,31 +193,6 @@ function NonDateControl({ f, value, onChange }: Parameters<typeof Control>[0]) {
           );
         })}
       </View>
-    );
-  }
-
-  if (f.control === 'checkbox') {
-    // The catalog has no checkbox control today; keep the capability typed and
-    // readable for the next one without narrowing `value` to a boolean.
-    const checked = typeof value === 'boolean' && value;
-    return (
-      <Pressable
-        style={styles.checkboxRow}
-        onPress={() => onChange(!checked)}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked }}
-      >
-        <View style={[styles.checkbox, checked && styles.checkboxOn]}>
-          {checked && (
-            <TextRegular size="xs" color={Colors.WHITE}>
-              ✓
-            </TextRegular>
-          )}
-        </View>
-        <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-          {f.checkboxLabel}
-        </TextRegular>
-      </Pressable>
     );
   }
 
