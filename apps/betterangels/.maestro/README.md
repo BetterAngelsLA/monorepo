@@ -275,9 +275,9 @@ export MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=http://
 ### A flow fails during "Loading from Metro…"
 
 The dev client shows a native splash until the JS bundle is fetched; no app
-`testID` exists until then. `ensure_logged_in_ba.yml` waits up to 60s for
-`authorized-root` before giving up, so this failure means the bundle never
-loaded — check the deep link host/port as above rather than the auth flow.
+`testID` exists until then. `ensure_logged_in_ba.yml` waits up to 120s for
+`app-root` before giving up, so this failure means the bundle never loaded —
+check the deep link host/port as above rather than the auth flow.
 
 ### `MAESTRO_DEEPLINK` is empty when running `maestro` directly
 

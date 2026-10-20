@@ -1,5 +1,14 @@
 appId: ${MAESTRO_APP_ID}
 ---
+# Wait for the bundle to render before inspecting auth state. The dev client
+# shows its native "Loading from Metro…" splash until the JS bundle is fetched,
+# and no app testID exists until then — a plain notVisible check below would
+# pass vacuously and the flow would then skip login on a cold, logged-out app.
+- extendedWaitUntil:
+    visible:
+      id: app-root
+    timeout: 120000
+
 # Wait for auth check to settle (authorized-pending indicates auth transition state)
 - extendedWaitUntil:
     notVisible:
@@ -12,12 +21,7 @@ appId: ${MAESTRO_APP_ID}
         id: unauthorized-root
     file: login_ba.yml
 
-# Wait, rather than assert: the dev client shows its native
-# "Loading from Metro…" splash until the JS bundle is fetched, and none of the
-# app's testIDs exist until then. A bare assert fails on that splash, and the
-# `authorized-pending` wait above passes vacuously because the element is
-# absent rather than settled. This also covers slow cold starts on CI.
 - extendedWaitUntil:
     visible:
       id: authorized-root
-    timeout: 60000
+    timeout: 30000

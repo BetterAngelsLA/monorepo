@@ -112,17 +112,22 @@ function ExpoShell({ children }: ExpoShellProps) {
   }, [appBecameActive, refetchUser]);
 
   return (
-    <View
-      testID={
-        !settled
-          ? 'authorized-pending'
-          : user
-            ? 'authorized-root'
-            : 'unauthorized-root'
-      }
-      style={{ flex: 1 }}
-    >
-      {children}
+    // `app-root` is mounted as soon as the bundle has rendered, before the
+    // auth query settles. E2E flows wait for it so they never inspect auth
+    // state while the dev client is still on its native splash.
+    <View testID="app-root" style={{ flex: 1 }}>
+      <View
+        testID={
+          !settled
+            ? 'authorized-pending'
+            : user
+              ? 'authorized-root'
+              : 'unauthorized-root'
+        }
+        style={{ flex: 1 }}
+      >
+        {children}
+      </View>
     </View>
   );
 }
