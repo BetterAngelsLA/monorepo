@@ -1,5 +1,5 @@
 /**
- * Print the deploy base path for the current context, for `experiments.baseUrl`:
+ * Print the build base path for the current context, for `experiments.baseUrl`:
  *   EXPO_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) expo export ...
  * No trailing newline, so it interpolates directly.
  *
@@ -7,6 +7,6 @@
  * `baseUrl` wants `''` for root and raw-joins what it is given into asset URLs, so
  * the consumer normalizes it — see `apps/betterangels/app.config.js`.
  */
-import { getBranchBasePath } from './get-base-path.mjs';
+import { getBuildBasePath } from './get-base-path.mjs';
 
-process.stdout.write(getBranchBasePath());
+process.stdout.write(getBuildBasePath());

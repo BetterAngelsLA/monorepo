@@ -127,8 +127,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       gdal-bin
 
 # Playwright (Chromium) runtime dependencies — lets devs run the Playwright e2e
-# suites locally, and lets CI launch the browser baked into the image by the
-# `playwright` stage below.
+# suites locally against the browser the `playwright`/`development` stages carry,
+# and lets CI launch the Chromium it downloads in the e2e step.
 # Provenance: snapshot of playwright-core 1.62's `debian13-x64` deps (tools +
 # chromium) — not an executed version pin. After a Playwright upgrade, re-sync
 # this list if a launch reports a missing shared library. See
@@ -177,25 +177,6 @@ RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betteran
 WORKDIR /workspace
 USER betterangels
 
-# Development Build
-# Add session manager to allow Fargate sshing
-FROM base AS development
-USER root
-RUN if [ "$(uname -m)" = "x86_64" ]; then \
-      curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
-    elif [ "$(uname -m)" = "aarch64" ]; then \
-      curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_arm64/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
-    else \
-      echo "Unsupported architecture"; \
-      exit 1; \
-    fi \
-    && dpkg -i session-manager-plugin.deb \
-    && rm session-manager-plugin.deb \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-USER betterangels
-RUN git config --global --add safe.directory "*"
-
 FROM base AS uv-stage
 COPY --chown=betterangels --parents \
   pyproject.toml \
@@ -215,27 +196,43 @@ COPY --chown=betterangels --parents \
 RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
     yarn install
 
-# Playwright's browser binaries, installed once at image build instead of on
-# every CI run. `FROM yarn` deliberately: the revision then comes from the same
-# `yarn install` as node_modules, so it cannot drift from yarn.lock the way the
-# hand-written system-library list above can.
+# Playwright's browser binaries for the dev image — installed once at build
+# instead of inside every container. `FROM yarn` deliberately: the revision then
+# comes from the same `yarn install` as node_modules, so it cannot drift from
+# yarn.lock the way the hand-written system-library list above can.
 # They land in Playwright's cache directory under $HOME, outside /workspace —
-# which is why `production` has to copy them over below.
+# which is why `development` inherits this stage rather than copying from it.
 FROM yarn AS playwright
 RUN yarn playwright install chromium
+
+# Development Build
+# Add session manager to allow Fargate sshing.
+#
+# `FROM playwright` on purpose: the browser is a developer tool, so the image
+# that runs the e2e suites owns it, together with the node_modules it needs; the
+# Python venv comes from `uv-stage`. The last stage — the one ECS and CI build
+# by default — is `production`, which stops at `yarn`: the backend task never
+# launches a browser, and CI installs Chromium in the e2e step instead.
+FROM playwright AS development
+COPY --from=uv-stage --link /workspace /workspace
+USER root
+RUN if [ "$(uname -m)" = "x86_64" ]; then \
+      curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
+    elif [ "$(uname -m)" = "aarch64" ]; then \
+      curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_arm64/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
+    else \
+      echo "Unsupported architecture"; \
+      exit 1; \
+    fi \
+    && dpkg -i session-manager-plugin.deb \
+    && rm session-manager-plugin.deb \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+USER betterangels
+RUN git config --global --add safe.directory "*"
 
 # Production Build
 FROM base AS production
 COPY --from=uv-stage --link /workspace /workspace
 COPY --from=yarn --link /workspace /workspace
-# Playwright's cache directory, not /workspace — the node_modules copy above
-# brings none of it along. A literal path on purpose: if Playwright's default
-# ever moves, this COPY fails loudly rather than shipping an image with no
-# browser in it.
-# `--chown` is load-bearing: `.cache` does not exist in `base`, so this COPY
-# creates it, and without the chown it lands root-owned. uv then can't create
-# `.cache/uv` at runtime and every `uv` command fails with EPERM.
-COPY --chown=betterangels:betterangels --from=playwright \
-  /home/betterangels/.cache/ms-playwright \
-  /home/betterangels/.cache/ms-playwright/
 COPY --chown=betterangels . /workspace

@@ -1,4 +1,5 @@
-import { joinPathFragments, workspaceRoot } from '@nx/devkit';
+import { resolve } from 'path';
+
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { defineConfig, devices } from '@playwright/test';
 
@@ -36,30 +37,53 @@ const baseURL = rawBaseURL.endsWith('/') ? rawBaseURL : `${rawBaseURL}/`;
  * server — so `localhost` is correct either way. An instance that is already
  * listening is reused.
  *
- * The command must NOT be an `nx run <project>:<target>` invocation. The
- * @nx/playwright plugin rewrites one into a serve dependency plus a
- * `<target>--wait-for-webserver` gate, and the server that dependency starts
- * under Nx exits immediately (Vite's CLI shuts down on stdin EOF/SIGTERM), so
- * the gate waits out its whole timeout against a dead port. A plain `vite`
- * command leaves the plugin nothing to infer, and Playwright owns the process.
+ * `nx run <project>:<target>` is the form @nx/playwright recognises: it runs
+ * the target as a dependency and infers the `dev--wait-for-webserver` gate, so
+ * Playwright waits on the port Nx's own `vite` process is serving. The target
+ * supplies the port (`apps/shelter-web/vite.config.mts`), so no arguments are
+ * passed.
  *
- * The binary is invoked by absolute path because `node_modules/.bin` is not on
- * PATH for a process Playwright spawns, and `yarn vite` cannot be used from the
- * project subdirectory (this repo is not a yarn workspace). `--strictPort`
- * makes a taken port fail loudly instead of Vite silently moving to the next
- * one while the tests keep polling 8083.
+ * `reuseExistingServer` is unconditional because Nx already starts the server
+ * as a task dependency — and in CI `BASE_URL` makes this block undefined.
  */
 const webServer = process.env['BASE_URL']
   ? undefined
   : {
-      command: `${joinPathFragments(workspaceRoot, 'node_modules/.bin/vite')} --strictPort`,
-      cwd: joinPathFragments(workspaceRoot, 'apps/shelter-web'),
+      command: 'npx nx run shelter-web:dev',
       url: LOCAL_DEV_SERVER_URL,
-      reuseExistingServer: !process.env['CI'],
+      reuseExistingServer: true,
     };
 
+/**
+ * The preset owns the output paths and the `html` reporter. Both options are
+ * stated rather than inherited: opening the report on failure only helps on a
+ * developer's machine, and blob reports exist to be merged across atomized
+ * tasks, which this project never does.
+ */
+const preset = nxE2EPreset(__filename, {
+  testDir: './tests',
+  openHtmlReport: process.env['CI'] ? 'never' : 'on-failure',
+  generateBlobReports: false,
+});
+
 export default defineConfig({
-  ...nxE2EPreset(__filename, { testDir: './tests' }),
+  ...preset,
+  /*
+   * Every reporter is declared here, never on the command line: Playwright's
+   * `--reporter` flag **replaces** this list instead of adding to it, so a CLI
+   * reporter would silently suppress the preset's `html` one. Declaring them
+   * in the config also keeps the JSON file inside the outputs @nx/playwright
+   * infers for this target (it reads them off `reporter`), so the CI artifact
+   * and a cached run both include it.
+   */
+  reporter: [
+    ['list'],
+    ...preset.reporter,
+    [
+      'json',
+      { outputFile: resolve(__dirname, preset.outputDir, 'e2e-report.json') },
+    ],
+  ],
   /*
    * Only `*.spec.ts` inside `tests/` runs. Playwright's default also collects
    * `*.test.ts` and the compiled-suffix variants (`.spec.js`, `.spec.mts`, …),

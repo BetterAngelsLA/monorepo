@@ -34,5 +34,8 @@ yarn nx run shelter-e2e:e2e
 
 Repo convention (the runners accept both patterns — this is about consistency):
 
-- Unit tests: `*.test.ts` / `*.test.tsx`
-- E2E specs: `*.spec.ts` (see [`apps/shelter-e2e/README.md`](../apps/shelter-e2e/README.md))
+- E2E specs: `*.spec.ts` — what `shelter-e2e` collects (see
+  [`apps/shelter-e2e/README.md`](../apps/shelter-e2e/README.md)).
+- Unit tests: prefer `*.test.ts` / `*.test.tsx`. The runners collect both
+  patterns and the codebase already has more `*.spec.tsx` files than
+  `*.test.tsx`, so this is a preference for new files, not a renaming backlog.

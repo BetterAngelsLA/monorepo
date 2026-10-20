@@ -7,13 +7,13 @@ or any deployed environment (branch preview, DEV).
 
 **Prerequisites** (dev container):
 
-- The container image ships Chromium's system libraries (see the Playwright block
-  in the root `Dockerfile`). CI runs in the image's `production` stage, which
-  additionally bakes the browser binaries themselves (the `playwright` stage).
-- The dev container's `development` stage does not include those binaries, so
-  locally they are downloaded at container creation
-  (`tools/scripts/post-create.sh`). On an older container, rebuild it — or just run
-  `yarn playwright install chromium` once.
+- The image ships Chromium's system libraries (see the Playwright block in the
+  root `Dockerfile`), so no `--with-deps` install is needed.
+- The dev container builds the `development` stage, which also carries the
+  browser binaries — it inherits the `playwright` stage, which installs from the
+  same `yarn.lock` as `node_modules`. `tools/scripts/post-create.sh` still runs
+  `yarn playwright install chromium`, which covers an older image and the
+  `dev_home` volume that shadows the baked cache.
 - Running the suite from a **host** checkout instead of the container works the
   same way, but needs its own install there: `yarn install` and
   `yarn playwright install chromium`.
@@ -53,19 +53,18 @@ Notes:
   `server.port` in `apps/shelter-web/vite.config.mts`, and the dev server serves
   from the root locally (`tools/shared/get-base-path.mjs` branch-scopes only
   deployed builds, at `/branches/<branch>/`). The run starts that server itself
-  (`vite` in `apps/shelter-web`) and tears it down at the end, reusing one that
-  is already listening. Specs therefore run against a dev build, not a
+  (`nx run shelter-web:dev`) and lets Nx tear it down at the end, reusing one
+  that is already listening. Specs therefore run against a dev build, not a
   production bundle — good enough for these smoke checks and no rebuild per run.
 - Because the server is started in the environment the tests run in, the suite
   works from the dev container or from a host checkout: `localhost:8083` is
   correct in both. A container run gets a container server, a host run gets a
   host server.
-- That server command must stay a plain `vite` invocation. Handing over an
-  `nx run shelter-web:serve` string makes the `@nx/playwright` plugin turn it
-  into a serve dependency plus a `--wait-for-webserver` gate, and the server that
-  dependency starts under Nx exits immediately — the gate then polls a dead port
-  until it times out. Plain `vite` gives the plugin nothing to infer, so
-  Playwright owns the process.
+- The server command is `npx nx run shelter-web:dev`, which is the form
+  `@nx/playwright` recognises: Nx runs that target as a dependency and infers
+  the `dev--wait-for-webserver` gate, so Playwright waits on the port Nx's own
+  `vite` process serves. The target carries the port, so no arguments are passed
+  and there is no separate `vite` binary path to keep in sync.
 - Setting `BASE_URL` targets a deployed environment. It is used verbatim apart
   from the trailing slash, so provide the full URL including any
   `/branches/<branch>/` segment (e.g. the preview link from the PR comment). CI
@@ -102,13 +101,11 @@ Anonymous, client-side flows so far:
     running once) and `pages/sign-in/nav.spec.ts` (composition only). A page
     whose header differs overrides the rule there rather than forking the
     helper.
-  - `pages/home/map.spec.ts`: the map as mounted on home — that it renders, and
-    that "Search this area" is revealed only after the map is moved (that last
-    one is marked `test.fail` — see the file). The map's own behaviour belongs
-    with the component in the lib.
+  - `pages/home/map.spec.ts`: the map as mounted on home — that it renders and
+    that its controls drive it. The map's own behaviour belongs with the
+    component in the lib.
   - `pages/home/shelter-search.spec.ts`: the search entry (which opens
-    `/search`), the results count/source line, and the deployed-only base-path
-    check.
+    `/search`) and the results count/source line.
   - `pages/sign-in/form.spec.ts`: sign-in form enable/disable logic.
 - `lib/` is imported through `lib/index.ts` (e.g.
   `import { VIEWPORTS, assertInlineNav } from '../../../lib'`):
@@ -152,31 +149,37 @@ Runs in the `🧪 E2E shelter-web (preview)` step of
 the same monorepo container every other CI step uses — not a host runner with
 `setup-node`, so nothing is installed at test time:
 
-- **Browsers** come from the image (`playwright` stage in the `Dockerfile`,
-  built from the same `yarn.lock` as `node_modules`). The step's
-  `yarn playwright install chromium` is therefore a no-op, kept as a check that
-  the revision the checkout expects is the one the image carries.
-- **`BASE_URL`** points at the branch preview and is passed with
-  `docker compose run -e`: `docker-compose-ci.yml` enumerates what reaches the
-  container, so exporting it here would leave the suite starting its own dev
-  server and testing a local build instead — which looks like a pass. The skip
-  count distinguishes the two: one skipped test means it reached the preview,
-  two means it did not.
+- **Browsers** are installed by the run itself
+  (`yarn playwright install chromium` in `tools/scripts/e2e-shelter.sh`). CI
+  builds the `production` stage, which carries the system libraries but not the
+  binaries: that image is also the ECS task image, and the backend task never
+  launches a browser. The install uses the same `yarn.lock` as `node_modules`,
+  so the browser cannot drift from the installed Playwright.
+- **The target is chosen by
+  [`tools/scripts/e2e-shelter.sh`](../../tools/scripts/e2e-shelter.sh)**, the
+  same script you can run locally: `shelter-web` affected means this branch's
+  preview, a `shelter-e2e`-only change means that preview if it exists and a
+  skip otherwise. It probes the served `<base href>` before running — a missing
+  branch path returns 403, and the page has no `<base>` at all. The script
+  exports `BASE_URL`, which is also what stops the suite starting its own dev
+  server and testing a local build instead — which looks like a pass.
 - **Order** is after `deploy`, which returns only once the edge serves the
   revision just built, so the run describes this commit rather than whatever was
   deployed before it.
-- **Gated on `nx affected`**: `shelter-web` affected means this commit was built
-  and deployed; `shelter-e2e` affected means the specs changed and are worth
-  checking against what is deployed. Neither means the deploy step deployed
-  nothing, so the run would report on another commit's revision.
-- **`--skip-nx-cache`** on the run: replaying a cached result would report a
-  local run as if it had tested the deployed site.
+- **Run through Playwright, not Nx**: the script calls
+  `yarn playwright test -c apps/shelter-e2e`, so there is no Nx cache that could
+  replay a run from before the deploy.
 
 `nx affected -t e2e` is deliberately not used: `BASE_URL` is one value for the
 whole container, so a second suite in the same invocation would be handed the
 wrong origin.
 
-The `list,json` reporters write a JSON report to `PLAYWRIGHT_JSON_OUTPUT_NAME`,
-which the step points inside the artifact path; the
-`shelter-e2e-report-<branch>` artifact carries that plus the HTML report and
-traces. Posting the results as a PR comment is not wired up yet.
+The reporters are declared in `playwright.config.ts` — `list`, the preset's
+`html`, and a `json` report written to `test-output/e2e-report.json` — because
+Playwright's `--reporter` flag replaces the configured list rather than adding
+to it. Declaring them in the config also keeps those paths inside the
+`outputs` @nx/playwright infers for the target. The
+`shelter-e2e-report-<branch>` artifact is the whole
+`dist/.playwright/apps/shelter-e2e` directory, so it carries the HTML report,
+the JSON report and traces. Posting the results as a PR comment is not wired
+up yet.

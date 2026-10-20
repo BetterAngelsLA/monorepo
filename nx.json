@@ -6,7 +6,11 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/tools/shared/**/*"
+      ],
       "cache": true
     },
     "test": {
@@ -65,8 +69,7 @@
       "{workspaceRoot}/mypy.ini",
       "{workspaceRoot}/uv.*",
       "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/docker-pyproject.toml",
-      "{workspaceRoot}/tools/shared/**/*"
+      "{workspaceRoot}/docker-pyproject.toml"
     ]
   },
   "plugins": [
@@ -111,6 +114,7 @@
       "include": [
         "apps/betterangels/**/*",
         "apps/betterangels-admin/**/*",
+        "apps/shelter-e2e/**/*",
         "apps/shelter-web/**/*",
         "apps/wildfires/**/*",
         "libs/apollo/**/*",

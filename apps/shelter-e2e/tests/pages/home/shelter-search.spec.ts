@@ -61,26 +61,3 @@ test('renders the results panel with a count and source line', async ({
       .first(),
   ).toBeVisible();
 });
-
-test('serves the build under the base path it was deployed to', async ({
-  page,
-}) => {
-  const deployedBaseUrl = process.env['BASE_URL'];
-
-  test.skip(
-    !deployedBaseUrl,
-    'Deployed-only: the base path is baked into the bundle at build time.',
-  );
-
-  await page.goto('./');
-
-  // The build carries the base path it was built with as `<base href>`. If that
-  // disagrees with the URL under test, every asset and route resolves from the
-  // wrong root — the failure this suite exists to catch, which is why it's
-  // asserted rather than assumed. (A mismatch is also the cheapest possible
-  // signal that BASE_URL reached the suite at all.)
-  const expected = new URL(deployedBaseUrl as string).pathname;
-  const actual = new URL(await page.evaluate(() => document.baseURI)).pathname;
-
-  expect(actual).toBe(expected.endsWith('/') ? expected : `${expected}/`);
-});

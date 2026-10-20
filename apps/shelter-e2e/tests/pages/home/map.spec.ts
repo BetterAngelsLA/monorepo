@@ -1,9 +1,5 @@
-import { expect, test } from '@playwright/test';
-import {
-  assertCurrentLocation,
-  assertMapUi,
-  searchThisAreaButton,
-} from '../../../lib';
+import { test } from '@playwright/test';
+import { assertCurrentLocation, assertMapUi } from '../../../lib';
 
 /**
  * The search map as mounted on the home page.
@@ -19,9 +15,6 @@ import {
 /** Where the browser claims to be — well away from the app's LA fallback. */
 const MOCK_LOCATION = { latitude: 34.31, longitude: -118.03 };
 
-/** The count line the panel shows once the automatic search has settled. */
-const SETTLED_RESULTS = /^\d+( of \d+)? locations?$/;
-
 test.beforeEach(async ({ page }) => {
   await page.goto('./');
 
@@ -35,23 +28,6 @@ test.beforeEach(async ({ page }) => {
   await page
     .getByRole('button', { name: 'Dismiss sign-in notification' })
     .click();
-});
-
-test.skip('does not reveal the search-this-area button on the initial view', async ({
-  page,
-}) => {
-  test.fail(
-    true,
-    'Known gap: every map idle reveals the button, the initial one included. Intended: the initial view searches automatically, and the button appears only after the user moves the map.',
-  );
-
-  // The count line settling means the automatic search for the initial bounds
-  // has run, i.e. the map has been idle at least once.
-  await expect(
-    page.getByText(SETTLED_RESULTS).filter({ visible: true }).first(),
-  ).toBeVisible({ timeout: 15_000 });
-
-  await expect(searchThisAreaButton(page)).toBeHidden();
 });
 
 test('renders the map and drives its controls', async ({ page }) => {

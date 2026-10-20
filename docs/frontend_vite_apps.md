@@ -46,8 +46,8 @@ E2E tests:
 
     yarn nx my-app-e2e:e2e
 
-The Playwright runner generates `apps/my-app-e2e/src/`; our suites are laid out
-as `tests/` (what the runner executes) plus `lib/` (shared helpers it never
+The Playwright runner generates `apps/my-app-e2e/src/`. `shelter-e2e` is laid
+out as `tests/` (what the runner executes) plus `lib/` (shared helpers it never
 collects), with `testDir: './tests'` and `testMatch: '**/*.spec.ts'` — the
 directory decides what runs, not the file name. For the reasoning and the
 conventions that go with it, see

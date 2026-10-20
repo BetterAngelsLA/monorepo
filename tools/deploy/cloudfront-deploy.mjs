@@ -1,12 +1,7 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
-import { readFileSync, readdirSync, statSync } from 'fs';
-import { join, relative, sep } from 'path';
-import { getBranchBasePath } from '../shared/get-base-path.mjs';
 
-/** How long to give the edge before declaring the deploy not-live. */
-const REVISION_TIMEOUT_MS = 5 * 60 * 1000;
-const REVISION_POLL_MS = 5 * 1000;
+import { getBranchBasePath } from '../shared/get-base-path.mjs';
 
 // --- Validate env ---
 const required = [
@@ -58,11 +53,7 @@ const { root } = JSON.parse(
 );
 const distPath = `dist/${root}`;
 
-const invalidated = invalidationPaths();
-
-console.log(
-  `📦 ${NX_TASK_TARGET_PROJECT} → ${s3Dest} | 🚀 ${invalidated.length} paths`,
-);
+console.log(`📦 ${NX_TASK_TARGET_PROJECT} → ${s3Dest}`);
 
 // --- Deploy ---
 execSync(`aws s3 sync "${distPath}" "${s3Dest}" --delete --no-cli-pager`, {
@@ -70,106 +61,27 @@ execSync(`aws s3 sync "${distPath}" "${s3Dest}" --delete --no-cli-pager`, {
 });
 console.log('✅ S3 sync complete.');
 
+/*
+ * One path (the deploy prefix) rather than a walk of the files just written:
+ * content-hashed assets arrive under a new name when they change, so
+ * invalidating them cannot change what is served — the enumeration was an
+ * optimization nobody measured, and one path is the cheapest thing CloudFront
+ * processes.
+ */
+const invalidationId = execSync(
+  `aws cloudfront create-invalidation --distribution-id "${CF_DISTRIBUTION_ID}" --paths "${cfPath}/*" --query 'Invalidation.Id' --output text --no-cli-pager`,
+  { encoding: 'utf8' },
+).trim();
+console.log(`✅ CloudFront invalidation sent: ${invalidationId}`);
+
+/*
+ * Wait for the edge rather than polling the deployed HTML ourselves: a deploy
+ * that reports success while the previous revision is still being served would
+ * make the e2e run describe someone else's code. AWS already knows when the
+ * invalidation completes, and its waiter gives up on its own.
+ */
 execSync(
-  `aws cloudfront create-invalidation --distribution-id "${CF_DISTRIBUTION_ID}" --paths ${invalidated
-    .map((path) => `"${path}"`)
-    .join(' ')} --no-cli-pager`,
+  `timeout 300 aws cloudfront wait invalidation-completed --distribution-id "${CF_DISTRIBUTION_ID}" --id "${invalidationId}" --no-cli-pager`,
   { stdio: 'inherit' },
 );
-console.log('✅ CloudFront invalidation sent.');
-
-await confirmServedRevision();
-
-/**
- * The paths that need refreshing at the edge: the build minus `assets/`.
- *
- * Vite writes content-hashed filenames into `assets/`, so a changed file
- * arrives under a new name and an unchanged one is byte-identical —
- * invalidating those cannot change what is served, it only makes the
- * invalidation slow. Everything else (`index.html`, the icons,
- * `site.webmanifest`, …) keeps its name, so those are the mutable ones. The
- * directory entry itself covers requests that resolve to the default root
- * object.
- */
-function invalidationPaths() {
-  const hashedDir = 'assets/';
-  const paths = [`${cfPath}/`];
-
-  const walk = (dir) => {
-    for (const entry of readdirSync(dir)) {
-      const full = join(dir, entry);
-
-      if (statSync(full).isDirectory()) {
-        walk(full);
-        continue;
-      }
-
-      const rel = relative(distPath, full).split(sep).join('/');
-
-      if (!rel.startsWith(hashedDir)) {
-        paths.push(`${cfPath}/${rel}`);
-      }
-    }
-  };
-
-  walk(distPath);
-
-  return paths;
-}
-
-/**
- * The content-hashed asset URLs an HTML document references — the identity of a
- * build, since Vite renames an asset whenever its contents change.
- */
-function assetRefs(html) {
-  return [...new Set(html.match(/\/assets\/[\w.-]+/g) ?? [])].sort();
-}
-
-/**
- * Fail unless the edge is serving the build just uploaded.
- *
- * A deploy can report success and still leave the previous revision at the edge
- * for a while, and anything that then tests the site — the e2e suite in
- * particular — would pass or fail describing someone else's code. Sending an
- * invalidation does not wait for it to complete, so this polls the deployed HTML
- * for the asset names we built. `SITE_URL` is per site (`.env.deploy.<config>`);
- * sites without one skip the check.
- */
-async function confirmServedRevision() {
-  const { SITE_URL } = process.env;
-
-  if (!SITE_URL) {
-    console.log('⏭️  SITE_URL not set — skipping the deployed-revision check.');
-    return;
-  }
-
-  const expected = assetRefs(
-    readFileSync(join(distPath, 'index.html'), 'utf8'),
-  );
-  const url = `${SITE_URL.replace(/\/$/, '')}${cfPath}/index.html`;
-  const deadline = Date.now() + REVISION_TIMEOUT_MS;
-
-  let served;
-
-  while (Date.now() < deadline) {
-    try {
-      served = assetRefs(await fetch(url).then((res) => res.text()));
-
-      if (served.join() === expected.join()) {
-        console.log(`✅ Serving this revision: ${expected.join(', ')}`);
-        return;
-      }
-    } catch (err) {
-      served = [`(${err.message})`];
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, REVISION_POLL_MS));
-  }
-
-  console.error(
-    `❌ ${url} is still not serving this revision after ${REVISION_TIMEOUT_MS / 1000}s.`,
-  );
-  console.error(`   expected: ${expected.join(', ') || '(none)'}`);
-  console.error(`   served:   ${served?.join(', ') || '(no assets found)'}`);
-  process.exit(1);
-}
+console.log('✅ Edge is serving the new revision.');
