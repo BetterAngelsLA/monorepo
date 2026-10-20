@@ -55,17 +55,13 @@ export function ReportGroupControls({
     [dimensions],
   );
 
-  // Options come from the unfiltered rollup so selecting one region does not remove the
-  // others; filtered by `kind` because the previous dimension's rows linger while it loads.
-  const selectable = useMemo(() => {
-    const rowsForDimension = regionBreakdownView(rows, []).selectable;
-    if (dimension === undefined) {
-      return rowsForDimension;
-    }
-    return rowsForDimension.filter(
-      (row) => row.kind.toLowerCase() === dimension.toLowerCase(),
-    );
-  }, [rows, dimension]);
+  // Options come from the unfiltered rollup: one region must not remove the others from the
+  // list. The rows are already scoped to the requested dimension (the API leaves `kind` empty
+  // in that case), so filtering by kind here would drop every option.
+  const selectable = useMemo(
+    () => regionBreakdownView(rows, []).selectable,
+    [rows],
+  );
 
   // A code is what a reader usually has to hand ("district 13") and it is not what the label
   // starts with, so the option carries the searchable text explicitly.
@@ -84,7 +80,7 @@ export function ReportGroupControls({
     dimensionPlural = kindLabelPlural(dimension, dimensions);
   }
 
-  let selectionHint = `No selection means every ${dimensionPlural.toLowerCase()} in range.`;
+  let selectionHint = `No selection means all ${dimensionPlural.toLowerCase()} in range.`;
   if (selectedCodes.length > 0) {
     // No denominator: the options are the *current* range's regions, so a selection made in
     // an earlier range can exceed it and read "3 of 1 selected".
