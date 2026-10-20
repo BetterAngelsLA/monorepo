@@ -23,6 +23,7 @@ from typing import Any, Optional
 from urllib.parse import urlencode
 
 from django.contrib.gis.geos import MultiPolygon, Point, Polygon
+from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -98,6 +99,9 @@ class DensityTileBaseTestCase(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        # The scale is cached by org/user/window/zoom; clear it so one test's domain cannot
+        # answer another's.
+        cache.clear()
         sync_roles()
         self.org = organization_recipe.make()
         self.other_org = organization_recipe.make()
@@ -544,10 +548,10 @@ class DensityScaleTestCase(DensityTileBaseTestCase):
         scale = density_scale(notes=Note.objects.filter(organization=self.org), zoom=_ZOOM)
 
         assert scale is not None
-        self.assertEqual(scale["max"], 10)
-        self.assertAlmostEqual(scale["p50"], 5.5)
-        self.assertAlmostEqual(scale["p90"], 9.1)
-        self.assertAlmostEqual(scale["p95"], 9.55)
+        self.assertEqual(scale.max, 10)
+        self.assertAlmostEqual(scale.p50, 5.5)
+        self.assertAlmostEqual(scale.p90, 9.1)
+        self.assertAlmostEqual(scale.p95, 9.55)
 
     def test_no_locations_has_no_scale(self) -> None:
         self._note_in_cell(1, 1, located=False)

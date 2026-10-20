@@ -39,7 +39,7 @@ export function useDensityScale({
   regionCodes,
   enabled = true,
 }: UseDensityScaleArgs) {
-  const { data, loading, error } = useQuery<
+  const { data, loading } = useQuery<
     DensityScaleQuery,
     DensityScaleQueryVariables
   >(DensityScaleDocument, {
@@ -59,5 +59,5 @@ export function useDensityScale({
   // tick rather than colouring the new grid with the old one.
   const scale = !loading ? (data?.densityScale ?? null) : null;
 
-  return { scale, loading, error };
+  return { scale, loading };
 }

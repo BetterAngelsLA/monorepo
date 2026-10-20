@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from typing import Any, Dict, List, cast
 
 from django.contrib.gis.geos import Point
+from django.core.cache import cache
 from model_bakery import baker
 
 from accounts.groups import ORG_ADMIN
@@ -367,6 +368,10 @@ class InteractionScopeQueryTestCase(InteractionMapBaseTestCase):
 
 class DensityScaleQueryTestCase(InteractionMapBaseTestCase):
     """The colour domain carries the same note and region scope as the tiles it colours."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        cache.clear()
 
     def _scale(self, user: User, **overrides: Any) -> dict[str, Any]:
         self.graphql_client.force_login(user)

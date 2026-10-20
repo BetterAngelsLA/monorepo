@@ -70,10 +70,7 @@ query DensityScale(
     regionCodes: $regionCodes
     zoom: $zoom
   ) {
-    p50
-    p90
     p95
-    max
   }
 }
 

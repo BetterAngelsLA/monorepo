@@ -381,7 +381,7 @@ export function RegionMap({
     // a legend on an empty field. The caption describes what the scale *means* and leaves the
     // figures below.
     const scaleNote = hasDensityScale
-      ? `The scale is relative to this zoom: the legend's top value is the 95th percentile of non-empty cells, so the full ramp is in use and the densest 5% clamp to red.`
+      ? `The scale is relative to this zoom and covers the whole filtered area: the legend's top value is the 95th percentile of non-empty cells, so the full ramp is in use and the densest 5% clamp to red.`
       : scaleLoading
         ? `The per-zoom scale is loading; the colour uses a fixed reference until it arrives.`
         : `The per-zoom scale is unavailable, so the colour uses a fixed reference.`;

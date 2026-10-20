@@ -314,7 +314,15 @@ export function LocationBreakdown({
         </div>
 
         {dimension === undefined ? (
-          <div className="flex flex-col gap-4">{unassignedPanel}</div>
+          <div className="flex flex-col gap-4">
+            {unassignedPanel}
+            {!rowsLoading && unassigned.length > 0 && (
+              <p className="text-xs text-neutral-500">
+                Each figure is per dimension; the unassigned counts are not
+                additive.
+              </p>
+            )}
+          </div>
         ) : (
           <div className="flex min-w-0 flex-col gap-4">
             {hasData && (

@@ -10,7 +10,7 @@ Nothing derived is stored, so a read writes nothing and there is nothing to keep
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, NamedTuple, Sequence
 
 from django.core.exceptions import EmptyResultSet
 from django.db import connection
@@ -20,7 +20,7 @@ from django.db.models.expressions import RawSQL
 from common.models import Location
 from notes.models import Note
 
-from .grid import MERCATOR_HALF_WORLD, density_cell_size_mercator
+from .grid import MERCATOR_HALF_WORLD, density_cell_size_mercator, density_cell_xy_sql
 from .models import REGION_LOOKUP_VIEW, Region, RegionKind
 
 #: Table names interpolated into the raw SQL below. Taken from the models rather than
@@ -458,7 +458,16 @@ def scope_notes_to_region_kind(notes: QuerySet[Note], *, kind: str) -> QuerySet[
     return notes.filter(location_id__in=RawSQL(REGION_KIND_LOCATIONS_SQL, (kind,)))
 
 
-def density_scale(*, notes: QuerySet[Note], zoom: int) -> dict[str, float | int] | None:
+class DensityScale(NamedTuple):
+    """The non-empty cell distribution used as the map's per-zoom colour domain."""
+
+    p50: float
+    p90: float
+    p95: float
+    max: int
+
+
+def density_scale(*, notes: QuerySet[Note], zoom: int) -> DensityScale | None:
     """Quantiles of the density grid at *zoom*, over the non-empty cells *notes* covers.
 
     The grid is the one ``tiles.density_tile`` paints — same cell size, same global Mercator
@@ -478,11 +487,11 @@ def density_scale(*, notes: QuerySet[Note], zoom: int) -> dict[str, float | int]
         # empty region selection is a valid request whose answer is "no cells", not a 500.
         return None
     cell_size = density_cell_size_mercator(zoom)
+    cell_xy = density_cell_xy_sql(origin_x=str(-MERCATOR_HALF_WORLD), origin_y=str(-MERCATOR_HALF_WORLD), size="%s")
     sql = f"""
     WITH scoped AS ({scoped_sql}),
     cells AS (
-        SELECT floor((ST_X(ST_Transform(l.point_geom, 3857)) + %s) / %s) AS cx,
-               floor((ST_Y(ST_Transform(l.point_geom, 3857)) + %s) / %s) AS cy,
+        SELECT {cell_xy},
                count(*) AS count
         FROM scoped s
         JOIN {_LOCATION_TABLE} l ON l.id = s.location_id
@@ -494,16 +503,13 @@ def density_scale(*, notes: QuerySet[Note], zoom: int) -> dict[str, float | int]
            max(count)
     FROM cells
     """
-    params = [
-        *scoped_params,
-        MERCATOR_HALF_WORLD,
-        cell_size,
-        MERCATOR_HALF_WORLD,
-        cell_size,
-    ]
+    # The origin is the global Mercator corner; the helper turns it into the same
+    # `floor((x - origin) / size)` membership test the tile uses. The size placeholder appears
+    # twice (x and y), so it is bound twice.
+    params = [*scoped_params, cell_size, cell_size]
     with connection.cursor() as cursor:
         cursor.execute(sql, params)
         p50, p90, p95, maximum = cursor.fetchone()
     if maximum is None:
         return None
-    return {"p50": float(p50), "p90": float(p90), "p95": float(p95), "max": int(maximum)}
+    return DensityScale(p50=float(p50), p90=float(p90), p95=float(p95), max=int(maximum))

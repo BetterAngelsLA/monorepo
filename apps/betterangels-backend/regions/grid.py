@@ -24,6 +24,8 @@ DENSITY_REFERENCE_LATITUDE = 34.05
 EARTH_CIRCUMFERENCE_M = 40_075_016.686
 #: Web Mercator's half-width, the origin of the global grid.
 MERCATOR_HALF_WORLD = 20_037_508.342789244
+#: The deepest tile zoom the density endpoint serves; the scale refuses beyond it.
+DENSITY_MAX_ZOOM = 16
 
 
 def density_cells_per_tile(z: int) -> int:
@@ -36,3 +38,17 @@ def density_cells_per_tile(z: int) -> int:
 def density_cell_size_mercator(z: int) -> float:
     """One cell's width in Web Mercator units; the global grid's cell size at z."""
     return float((2 * MERCATOR_HALF_WORLD) / 2**z / density_cells_per_tile(z))
+
+
+def density_cell_xy_sql(*, origin_x: str, origin_y: str, size: str) -> str:
+    """The two cell-index expressions, shared by the tile and the scale query.
+
+    ``origin_x``/``origin_y``/``size`` are SQL expressions, not values: the tile uses its
+    per-tile origin and cell size, while the scale query uses the global Mercator origin and
+    the same cell size. Keeping the projection and floor here means the cells the scale
+    summarises are the cells the tile paints rather than a second implementation.
+    """
+    return (
+        f"floor((ST_X(ST_Transform(l.point_geom, 3857)) - ({origin_x})) / ({size}))::int AS cx,\n"
+        f"           floor((ST_Y(ST_Transform(l.point_geom, 3857)) - ({origin_y})) / ({size}))::int AS cy"
+    )

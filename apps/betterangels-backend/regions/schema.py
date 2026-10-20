@@ -15,11 +15,14 @@ see ``regions/tiles.py`` for the measured payload and tile sizes.
 
 from __future__ import annotations
 
-from datetime import date
+import hashlib
+from dataclasses import dataclass
+from datetime import date, datetime
 from typing import TYPE_CHECKING, List, Optional, cast
 
 import strawberry
 import strawberry_django
+from django.core.cache import cache
 from graphql import GraphQLError
 from strawberry import ID
 from strawberry.types import Info
@@ -35,9 +38,11 @@ from reports.calendar import report_calendar_time_zone
 from reports.permissions import ReportPermissions
 from reports.selectors import resolve_date_range
 
+from .grid import DENSITY_MAX_ZOOM
 from .models import REGION_KIND_PLURALS, RegionKind
 from .selectors import (
     POINT_LIMIT,
+    DensityScale,
     available_kinds,
     org_notes_in_range,
     scope_notes_to_regions,
@@ -77,6 +82,90 @@ def _is_withheld(*, org_notes: "QuerySet[Note]", scoped_notes: "QuerySet[Note]")
     would read as a permission answer, which is the false diagnosis this flag exists to stop.
     """
     return not scoped_notes.exists() and org_notes.exists()
+
+
+_CACHE_MISS = object()
+#: Long enough to absorb a zoom gesture's repeated scale reads, short enough that a note write
+#: is reflected without a manual refresh. The key carries the user id because the note read
+#: scope is per-user; a role change can take up to this long to show a different domain.
+_DENSITY_SCALE_CACHE_SECONDS = 60
+
+
+@dataclass(frozen=True)
+class _MapScope:
+    """The scoped notes and window every map surface shares."""
+
+    org_id: int
+    user_id: int
+    start: datetime
+    end: datetime
+    notes: "QuerySet[Note]"
+    withheld: bool
+
+
+def _map_scope(
+    *,
+    user: AccountUser,
+    organization_id: ID,
+    start_date: Optional[date],
+    end_date: Optional[date],
+    dimension: Optional[RegionKind],
+    region_codes: Optional[List[str]],
+) -> _MapScope:
+    """Apply the map's two gates and its region scope once.
+
+    ``interactionMap``, ``interactionScope`` and ``densityScale`` all read the same scoped
+    note set; keeping the composition here stops the scale from describing a different
+    population than the tiles it colours. ``withheld`` is computed before the region filter,
+    as the map's permission answer must not turn a quiet district into a refusal.
+    """
+    org = org_or_deny(organization_id)
+    require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
+
+    start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
+    start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
+
+    # Org confinement happens here, once, in the selector — not in a later SQL clause
+    # and not in the permission filter. `filter_for_user` is the *note* read scope and
+    # has no org notion: it is a binary "holds `notes.view_note` model-level ⇒ every
+    # row of every org", so it cannot confine anything.
+    org_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
+    scoped_notes = _note_scoped_notes(org_notes, user)
+    withheld = _is_withheld(org_notes=org_notes, scoped_notes=scoped_notes)
+
+    # One reading of `(dimension, regionCodes)`, consulted on every call so these surfaces
+    # and the density tile cannot answer the same pair differently.
+    try:
+        kind, scoped_codes = resolve_region_scope(dimension=dimension.value if dimension else None, codes=region_codes)
+    except RegionScopeError as error:
+        # A top-level error, because these queries return concrete types and so cannot carry
+        # the `OperationInfo` payload the mutation path uses. The `{field, errorCode}` entry is
+        # the branchable part; the message stays the human-readable one. See
+        # `docs/graphql_errors.md` §2.
+        raise GraphQLError(
+            str(error),
+            extensions={
+                "errors": [
+                    {"field": error.field, "location": None, "errorCode": error.code},
+                ]
+            },
+        ) from error
+
+    if scoped_codes is not None:
+        scoped_notes = (
+            scope_notes_to_regions(scoped_notes, kind=cast(str, kind), codes=scoped_codes)
+            if scoped_codes
+            else scoped_notes.none()
+        )
+
+    return _MapScope(
+        org_id=org.id,
+        user_id=user.pk,
+        start=start,
+        end=end,
+        notes=scoped_notes,
+        withheld=withheld,
+    )
 
 
 @strawberry.type
@@ -169,62 +258,24 @@ class Query:
         request for one pin, not for the cap, which is the same floor the selector applies
         (``max(1, min(limit, POINT_LIMIT_MAX))``).
         """
-        user = cast(AccountUser, get_current_user(info))
-        org = org_or_deny(organization_id)
-        require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
-
-        start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
-        start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
-
-        # Org confinement happens here, once, in the selector — not in a later SQL clause
-        # and not in the permission filter. `filter_for_user` is the *note* read scope and
-        # has no org notion: it is a binary "holds `notes.view_note` model-level ⇒ every
-        # row of every org", so it cannot confine anything.
-        org_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
-        # The per-row note authority. Notes are a legacy domain (ADR 0001 §4.1: gated on
-        # RFC 0003, `LEGACY_INERT_APPS` excludes them), so this is the legacy arm and
-        # deliberately so — it is the same scope the Notes pages themselves apply.
-        scoped_notes = _note_scoped_notes(org_notes, user)
-        withheld = _is_withheld(org_notes=org_notes, scoped_notes=scoped_notes)
-
-        # One reading of `(dimension, regionCodes)`, consulted on every call so this surface
-        # and the density tile cannot answer the same pair differently: an empty list matches
-        # nothing and needs no dimension, a non-empty list without one is refused, a dimension
-        # without codes is refused, and an absent list is no restriction.
-        try:
-            kind, scoped_codes = resolve_region_scope(
-                dimension=dimension.value if dimension else None, codes=region_codes
-            )
-        except RegionScopeError as error:
-            # A top-level error, because `interactionMap` returns a concrete type and so
-            # cannot carry the `OperationInfo` payload the mutation path uses. The
-            # `{field, errorCode}` entry is the branchable part; the message stays the
-            # human-readable one. See `docs/graphql_errors.md` §2.
-            raise GraphQLError(
-                str(error),
-                extensions={
-                    "errors": [
-                        {"field": error.field, "location": None, "errorCode": error.code},
-                    ]
-                },
-            ) from error
-
-        if scoped_codes is not None:
-            scoped_notes = (
-                scope_notes_to_regions(scoped_notes, kind=cast(str, kind), codes=scoped_codes)
-                if scoped_codes
-                else scoped_notes.none()
-            )
+        scope = _map_scope(
+            user=cast(AccountUser, get_current_user(info)),
+            organization_id=organization_id,
+            start_date=start_date,
+            end_date=end_date,
+            dimension=dimension,
+            region_codes=region_codes,
+        )
 
         return interaction_map_data(
-            start=start,
-            end=end,
-            organization_id=org.id,
-            notes=scoped_notes,
+            start=scope.start,
+            end=scope.end,
+            organization_id=scope.org_id,
+            notes=scope.notes,
             # `is not None`, not truthiness: `limit: 0` is a request for one pin, and
             # `limit or POINT_LIMIT` would turn it into the 10,000 cap.
             limit=limit if limit is not None else POINT_LIMIT,
-            withheld=withheld,
+            withheld=scope.withheld,
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
@@ -249,17 +300,15 @@ class Query:
 
         ``withheld`` reports the all-or-nothing case only; see ``interaction_map``.
         """
-        user = cast(AccountUser, get_current_user(info))
-        org = org_or_deny(organization_id)
-        require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
-
-        start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
-        start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
-
-        org_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
-        return InteractionScopeType(
-            withheld=_is_withheld(org_notes=org_notes, scoped_notes=_note_scoped_notes(org_notes, user))
+        scope = _map_scope(
+            user=cast(AccountUser, get_current_user(info)),
+            organization_id=organization_id,
+            start_date=start_date,
+            end_date=end_date,
+            dimension=None,
+            region_codes=None,
         )
+        return InteractionScopeType(withheld=scope.withheld)
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def density_scale(
@@ -287,48 +336,48 @@ class Query:
         for a different grid than the tiles would silently colour the map with the wrong
         domain.
         """
-        if not 0 <= zoom <= 16:
+        if not 0 <= zoom <= DENSITY_MAX_ZOOM:
             raise GraphQLError("zoom out of range")
 
-        user = cast(AccountUser, get_current_user(info))
-        org = org_or_deny(organization_id)
-        require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
+        scope = _map_scope(
+            user=cast(AccountUser, get_current_user(info)),
+            organization_id=organization_id,
+            start_date=start_date,
+            end_date=end_date,
+            dimension=dimension,
+            region_codes=region_codes,
+        )
 
-        start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
-        start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
+        # A withheld note scope is an authority answer, not a cacheable domain: do not let a
+        # cached scale outlive the permission that produced it, even for the short TTL.
+        if scope.withheld:
+            return None
 
-        scoped_notes = _note_scoped_notes(org_notes_in_range(organization_id=org.id, start=start, end=end), user)
+        # The key carries the user id because the note read scope is per-user. The code list
+        # is hashed so a long selection cannot exceed a cache backend's key length.
+        if region_codes is None:
+            codes_key = "all"
+        elif not region_codes:
+            codes_key = "none"
+        else:
+            codes_key = "codes:" + ",".join(sorted(region_codes))
+        scope_digest = hashlib.sha256(f"{dimension.value if dimension else '-'}:{codes_key}".encode()).hexdigest()[:16]
+        cache_key = (
+            f"density-scale:{scope.org_id}:{scope.user_id}:"
+            f"{scope.start.date().isoformat()}:{scope.end.date().isoformat()}:"
+            f"{scope_digest}:{zoom}"
+        )
 
-        try:
-            kind, scoped_codes = resolve_region_scope(
-                dimension=dimension.value if dimension else None, codes=region_codes
-            )
-        except RegionScopeError as error:
-            raise GraphQLError(
-                str(error),
-                extensions={
-                    "errors": [
-                        {"field": error.field, "location": None, "errorCode": error.code},
-                    ]
-                },
-            ) from error
+        cached = cache.get(cache_key, _CACHE_MISS)
+        if cached is _CACHE_MISS:
+            scale = density_scale_for(notes=scope.notes, zoom=zoom)
+            cache.set(cache_key, scale, _DENSITY_SCALE_CACHE_SECONDS)
+        else:
+            scale = cast(Optional[DensityScale], cached)
 
-        if scoped_codes is not None:
-            scoped_notes = (
-                scope_notes_to_regions(scoped_notes, kind=cast(str, kind), codes=scoped_codes)
-                if scoped_codes
-                else scoped_notes.none()
-            )
-
-        scale = density_scale_for(notes=scoped_notes, zoom=zoom)
         if scale is None:
             return None
-        return DensityScaleType(
-            p50=cast(float, scale["p50"]),
-            p90=cast(float, scale["p90"]),
-            p95=cast(float, scale["p95"]),
-            max=cast(int, scale["max"]),
-        )
+        return DensityScaleType(p50=scale.p50, p90=scale.p90, p95=scale.p95, max=scale.max)
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def region_dimensions(self, info: Info) -> List[RegionDimensionInfo]:

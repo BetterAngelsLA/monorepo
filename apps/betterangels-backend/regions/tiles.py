@@ -31,7 +31,7 @@ from django.db.models import QuerySet
 from common.models import Location
 from notes.models import Note
 
-from .grid import density_cells_per_tile
+from .grid import density_cell_xy_sql, density_cells_per_tile
 from .models import REGION_LOOKUP_VIEW
 from .selectors import REGION_MEMBERSHIP_SQL, REGION_TABLE
 from .services import resolve_region_scope
@@ -185,8 +185,7 @@ _DENSITY_BOUNDS = """
 #: over-selects and the exact grouping discards the rest.
 _DENSITY_CELLS = """
 , cells AS (
-    SELECT floor((ST_X(ST_Transform(l.point_geom, 3857)) - o.x0) / o.size)::int AS cx,
-           floor((ST_Y(ST_Transform(l.point_geom, 3857)) - o.y0) / o.size)::int AS cy,
+    SELECT {cell_xy},
            count(*) AS count
     FROM scoped s
     JOIN {location_table} l ON l.id = s.location_id
@@ -302,6 +301,7 @@ def density_tile(
     # sits inside `cells`, which the bounds CTE precedes in the statement. A `%s` must be bound
     # in the order it appears, and nothing type-checks that beyond these two lines.
     sql += _DENSITY_CELLS.format(
+        cell_xy=density_cell_xy_sql(origin_x="o.x0", origin_y="o.y0", size="o.size"),
         location_table=_LOCATION_TABLE,
         region_filter=_DENSITY_REGION_FILTER if region_codes is not None else "",
     )
