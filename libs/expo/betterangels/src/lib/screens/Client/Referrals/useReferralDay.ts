@@ -49,7 +49,10 @@ function subscribe(listener: () => void) {
     });
     // The module may have been loaded on a different day than the one this
     // first subscriber is rendering with; let React re-read the snapshot.
-    if (changed) queueMicrotask(listener);
+    if (changed)
+      queueMicrotask(() => {
+        if (listeners.has(listener)) listener();
+      });
   }
 
   return () => {

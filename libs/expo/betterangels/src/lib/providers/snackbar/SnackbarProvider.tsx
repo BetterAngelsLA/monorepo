@@ -2,7 +2,7 @@ import {
   Snackbar,
   type TSnackbarType,
 } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, ReactNode, useState } from 'react';
+import { ReactElement, ReactNode, useCallback, useMemo, useState } from 'react';
 import { SnackbarContext } from './SnackbarContext';
 
 type TShowSnackbarBase = {
@@ -40,7 +40,7 @@ export default function SnackbarProvider(
     undefined,
   );
 
-  const showSnackbar = (props: TShowSnackbar) => {
+  const showSnackbar = useCallback((props: TShowSnackbar) => {
     const { message, type } = props;
 
     const visibleDuration =
@@ -50,14 +50,18 @@ export default function SnackbarProvider(
     setMessage(message);
     setDuration(visibleDuration);
     setSnackbarType(type);
-  };
+  }, []);
+
+  // A new value object re-renders every consumer and changes the identity of
+  // callbacks that depend on showSnackbar; keep both stable.
+  const contextValue = useMemo(() => ({ showSnackbar }), [showSnackbar]);
 
   const dismissSnackbar = () => {
     setVisible(false);
   };
 
   return (
-    <SnackbarContext.Provider value={{ showSnackbar }}>
+    <SnackbarContext.Provider value={contextValue}>
       {children}
 
       <Snackbar

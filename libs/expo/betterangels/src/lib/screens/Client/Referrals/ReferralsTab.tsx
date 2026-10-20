@@ -297,56 +297,56 @@ function ReferralsContent({
       referral: ReferralCardProps['referral'],
       mode: 'edit' | 'reuse',
     ) => {
-    if (store.getRecoveryState()) {
-      showSnackbar({
-        message: 'Resolve the unreadable local draft before starting another.',
-        type: 'error',
-      });
-      return;
-    }
-    const seed = referralDraftSeed(referral, mode);
-    if (!seed) {
-      showSnackbar({
-        message:
-          'This referral contains information this app version cannot read. Its saved information has been left intact.',
-        type: 'error',
-      });
-      return;
-    }
-    const begin = () => {
-      if (runDraftAction(() => store.startNew(clientId, seed)))
+      if (store.getRecoveryState()) {
+        showSnackbar({
+          message: 'Resolve the unreadable local draft before starting another.',
+          type: 'error',
+        });
+        return;
+      }
+      const seed = referralDraftSeed(referral, mode);
+      if (!seed) {
+        showSnackbar({
+          message:
+            'This referral contains information this app version cannot read. Its saved information has been left intact.',
+          type: 'error',
+        });
+        return;
+      }
+      const begin = () => {
+        if (runDraftAction(() => store.startNew(clientId, seed)))
+          openReferralForm();
+      };
+      const existing = store.getSnapshot();
+      if (!existing) {
+        begin();
+        return;
+      }
+      if (existing.submission.status !== 'idle') {
         openReferralForm();
-    };
-    const existing = store.getSnapshot();
-    if (!existing) {
-      begin();
-      return;
-    }
-    if (existing.submission.status !== 'idle') {
-      openReferralForm();
-      return;
-    }
-    Alert.alert(
-      'A draft already exists for this client',
-      'Resume it, or discard it to start from the selected referral.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Resume draft', onPress: openReferralForm },
-        {
-          text: 'Discard and start',
-          style: 'destructive',
-          onPress: () => {
-            // Replace in one persisted write: failure must retain the old draft.
-            const current = store.getSnapshot();
-            if (
-              current?.id === existing.id &&
-              current.submission.status === 'idle'
-            )
-              begin();
+        return;
+      }
+      Alert.alert(
+        'A draft already exists for this client',
+        'Resume it, or discard it to start from the selected referral.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Resume draft', onPress: openReferralForm },
+          {
+            text: 'Discard and start',
+            style: 'destructive',
+            onPress: () => {
+              // Replace in one persisted write: failure must retain the old draft.
+              const current = store.getSnapshot();
+              if (
+                current?.id === existing.id &&
+                current.submission.status === 'idle'
+              )
+                begin();
+            },
           },
-        },
-      ],
-    );
+        ],
+      );
   },
     [clientId, openReferralForm, runDraftAction, showSnackbar, store],
   );
