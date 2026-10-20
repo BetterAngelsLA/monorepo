@@ -1,9 +1,10 @@
 """Density grid geometry shared by the tile SQL and the per-zoom colour scale.
 
-The grid is sized to a **ground distance**, not a fixed fraction of a tile: a fixed 64×64
-grid shrinks a cell to ~127 m by z12, where a single interaction reads as a huge density and
-every occupied cell turns red. The tile uses as many cells as it takes to keep a cell near
-``DENSITY_TARGET_CELL_M``, capped for the county view.
+The grid is sized to a **ground distance**, not a fixed fraction of a tile. That floor is the
+density estimate's resolution, not only a rendering choice: on the county fixture the median
+non-empty 500 m cell holds ~3 interactions, while a 127 m cell holds ~1. Shrinking further
+turns the heatmap into a binary occupied/not map and makes the per-zoom percentile describe
+sampling noise. The 64-cells-per-tile cap is the separate county-view payload cap.
 
 Both the tile endpoint and the scale query use this module, so the cells whose counts the
 scale summarises are exactly the cells the map paints.
@@ -13,7 +14,7 @@ from __future__ import annotations
 
 import math
 
-#: Target ground width of one density cell, in metres.
+#: Target ground width of one density cell: the estimate's resolution floor, in metres.
 DENSITY_TARGET_CELL_M = 500
 #: Cap for the county view; a z8 tile would otherwise ask for 260 cells across.
 DENSITY_MAX_CELLS_PER_TILE = 64

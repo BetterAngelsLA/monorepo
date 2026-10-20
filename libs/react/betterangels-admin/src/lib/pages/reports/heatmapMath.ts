@@ -45,13 +45,13 @@ export const DENSITY_PER_KM2_MAX = 18;
 /**
  * Grid cells per tile, as a target ground size rather than a fixed count.
  *
- * A fixed 64×64 grid makes a cell four times smaller with every zoom step in; below a few
- * hundred metres a single interaction is a large density and every occupied cell goes red.
- * Instead the tile uses as many cells as it takes to keep a cell near `DENSITY_TARGET_CELL_M`,
- * capped so a county tile does not explode into a huge payload. Above tile zoom 10 that is a
- * constant ~500 m cell; below it the cap makes cells 1–4 km.
+ * The ~500 m cell is the density estimate's resolution floor: at this volume a 500 m cell
+ * holds ~3 interactions typically, while a 127 m cell holds ~1, so shrinking further turns the
+ * heatmap into a binary occupied/not map and makes the percentile domain describe noise.
+ * The 64-cell cap is the separate county-view payload cap; above tile zoom 10 the floor holds
+ * a constant ~500 m cell, below it the cap makes cells 1–4 km.
  *
- * This must match `density_cells_per_tile` in the backend's `tiles.py`; the colour divides by
+ * This must match `density_cells_per_tile` in the backend's `grid.py`; the colour divides by
  * the same area the server counted over. The reference latitude is LA's, so the two agree
  * exactly across the county (the true ground size varies by ~1.5%).
  */

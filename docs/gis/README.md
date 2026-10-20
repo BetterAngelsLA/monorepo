@@ -256,6 +256,11 @@ red. It is computed over the whole filtered window, not the viewport, so panning
 change the colours; the cell size changes with zoom, so the domain does. The legend labels it
 "relative to this zoom" — the colours are comparable within a zoom, not across zooms.
 
+The **~500 m minimum cell** is also the density estimate's resolution, not just a colour
+convenience: a smaller cell would hold 0–1 interactions and the map would become a binary
+point field. Use the **Clusters** view for individual interactions; do not shrink the grid
+below the scale at which counts are meaningful.
+
 
 `LocationBreakdown` renders beneath the charts and inherits the page's `dateRange`, `activeOrg`
 and group. It provides:
