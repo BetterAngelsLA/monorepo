@@ -1,11 +1,50 @@
-import { Share } from 'react-native';
+import { downloadBlobInBrowser } from '@monorepo/expo/shared/utils';
+import { Share, Platform } from 'react-native';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { randomUUID } from 'expo-crypto';
 import type { ReferralTextCopy } from './referralExport';
 
+function referralFileName(extension: 'txt' | 'png') {
+  return `referral-${randomUUID()}.${extension}`;
+}
+
+/** Decode the base64 the SVG renderer returns into bytes for a web Blob. */
+function pngBytes(base64: string): Uint8Array<ArrayBuffer> {
+  if (typeof atob !== 'function')
+    throw new Error('This browser cannot decode the referral image');
+  const binary = atob(base64);
+  const bytes = new Uint8Array(new ArrayBuffer(binary.length));
+  for (let index = 0; index < binary.length; index += 1)
+    bytes[index] = binary.charCodeAt(index);
+  return bytes;
+}
+
 /** Native share results are not evidence that a recipient received anything. */
 export async function shareReferralText(copy: ReferralTextCopy) {
+  if (Platform.OS === 'web') {
+    try {
+      // React Native Web forwards this to navigator.share.
+      await Share.share(
+        { title: copy.title, message: copy.text },
+        { subject: copy.title, dialogTitle: 'Share referral text' },
+      );
+      return;
+    } catch {
+      // No Web Share API (most desktop browsers): hand over a text download
+      // rather than leaving the button dead.
+      if (
+        downloadBlobInBrowser(
+          copy.text,
+          referralFileName('txt'),
+          'text/plain',
+        )
+      )
+        return;
+      throw new Error('Sharing is unavailable in this browser');
+    }
+  }
+
   await Share.share(
     { title: copy.title, message: copy.text },
     { subject: copy.title, dialogTitle: 'Share referral text' },
@@ -52,6 +91,18 @@ async function shareReferralFile(
   // Static imports match the app's existing document sharing. Metro's lazy
   // native-module chunks do not resolve reliably from this monorepo app root.
   if (!isCurrent()) return;
+  if (Platform.OS === 'web') {
+    const data = await content();
+    if (!isCurrent()) return;
+    const filename = referralFileName(format);
+    const downloaded =
+      format === 'png'
+        ? downloadBlobInBrowser(pngBytes(data), filename, 'image/png')
+        : downloadBlobInBrowser(data, filename, 'text/plain');
+    if (!downloaded)
+      throw new Error('Downloading is unavailable in this browser');
+    return;
+  }
   if (!(await Sharing.isAvailableAsync()))
     throw new Error('File sharing is unavailable');
   if (!isCurrent()) return;
