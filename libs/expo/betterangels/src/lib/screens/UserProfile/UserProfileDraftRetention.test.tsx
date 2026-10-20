@@ -5,8 +5,8 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
-import { uiComponents } from '../../../../__mocks__/sharedBarrels';
-import UserProfile from '../../UserProfile';
+import { uiComponents } from '../../../__mocks__/sharedBarrels';
+import UserProfile from './index';
 const { removeUser, discard, signOut, showSnackbar, navigate, setOptions } =
   vi.hoisted(() => ({
     removeUser: vi.fn(),
@@ -20,12 +20,12 @@ vi.mock('@apollo/client/react', () => ({ useMutation: () => [removeUser] }));
 vi.mock('@monorepo/ba-platform', () => ({
   useApiConfig: () => ({ apiUrl: 'https://test-api' }),
 }));
-vi.mock('../../../apollo', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../apollo')>()),
+vi.mock('../../apollo', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../apollo')>()),
   extractOperationInfoMessage: () => undefined,
 }));
 vi.mock('@monorepo/react/shared', () => ({ useFeatureFlagActive: () => true }));
-vi.mock('../../../hooks', () => ({
+vi.mock('../../hooks', () => ({
   useUser: () => ({
     user: { id: 'user-1', email: 'fictional@example.com', organizations: [] },
   }),
@@ -36,7 +36,7 @@ vi.mock('expo-router', () => ({
   useNavigation: () => ({ setOptions }),
   useRouter: () => ({ navigate }),
 }));
-vi.mock('./referralDraftStorage', () => ({
+vi.mock('../Client/Referrals/referralDraftStorage', () => ({
   discardAccountReferralDrafts: discard,
 }));
 vi.mock('@monorepo/expo/shared/ui-components', () => ({

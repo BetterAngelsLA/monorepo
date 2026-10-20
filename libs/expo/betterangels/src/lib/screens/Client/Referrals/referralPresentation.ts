@@ -1,4 +1,10 @@
-import { parseDateString, toDateString } from '@monorepo/shared/scalars';
+import { format } from 'date-fns';
+import {
+  formatScalarDate,
+  parseDateString,
+  toDateString,
+  type DateTimeString,
+} from '@monorepo/shared/scalars';
 
 /** Fixed English collation keeps labels stable across device locale settings. */
 export function compareReferralLabels(a: string, b: string): number {
@@ -15,13 +21,13 @@ function dateOf(value?: string | number): Date | null {
 
 /** Screen dates use the device's local day, consistently in MM/DD/YYYY form. */
 export function formatReferralDate(value?: string | number): string {
-  return (
-    dateOf(value)?.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric',
-    }) ?? ''
-  );
+  if (typeof value === 'number') {
+    const date = dateOf(value);
+    return date ? format(date, 'MM/dd/yyyy') : '';
+  }
+  // The shared scalar formatter parses ISO dates and rejects partial ones, so
+  // invalid values cannot reach `format`.
+  return formatScalarDate(value as DateTimeString | undefined, 'MM/dd/yyyy');
 }
 
 export function formatReferralEdited(
@@ -53,7 +59,7 @@ export function referralArrival(value: unknown, today = localReferralDay()) {
   if (!date || toDateString(date) !== value) return null;
   return {
     value,
-    label: formatReferralDate(date.getTime()),
+    label: formatReferralDate(toDateString(date)),
     isPast: !!today && value < today,
   };
 }

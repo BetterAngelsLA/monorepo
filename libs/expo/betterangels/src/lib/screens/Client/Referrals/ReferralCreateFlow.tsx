@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import type { ComponentProps } from 'react';
@@ -25,6 +26,12 @@ export function ReferralCreateFlow({
 }) {
   const { draft, store } = useReferralDraft();
   const runDraftAction = useLocalDraftAction();
+  // Stable while the saved answers are unchanged, so the picker's ranking memo
+  // is not invalidated by every parent render.
+  const desiredAttributes = useMemo(
+    () => needLabelsFromIntake(draft?.storedValues),
+    [draft?.storedValues],
+  );
   if (!draft || draft.clientId !== clientId) return null;
 
   if (draft.submission.status === 'saved') {
@@ -98,7 +105,7 @@ export function ReferralCreateFlow({
       selectedShelterId={draft.selectedShelterId}
       onSelectShelter={(id) => runDraftAction(() => store.setShelter(id))}
       onSubmit={onSubmit}
-      desiredAttributes={needLabelsFromIntake(draft.storedValues)}
+      desiredAttributes={desiredAttributes}
     />
   );
 }
