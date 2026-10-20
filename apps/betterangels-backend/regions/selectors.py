@@ -476,10 +476,11 @@ def scope_notes_to_region_kind(notes: QuerySet[Note], *, kind: str) -> QuerySet[
     only in whether the code predicate is appended.
 
     **Do not replace this with an ORM ``Exists`` for tidiness.** Measured on the dev fixture
-    (431 regions, 5,685 pieces, 20,000 notes), the summary takes **~42 ms** with this semi-join
-    and **~1.2 s** with the equivalent correlated ``Exists`` over ``RegionPiece``: the ORM shape
-    asks the spatial question once per note instead of once per boundary. ``REGION_KIND_LOCATIONS_SQL``
-    exists for that reason, not because the ORM could not express the predicate.
+    (431 regions, 5,685 pieces, 20,000 notes), the summary's count query takes **~41 ms** with
+    this semi-join and **~1.2 s** with the equivalent correlated ``Exists`` over
+    ``RegionPiece``: the ORM shape asks the spatial question once per note instead of once per
+    boundary. ``REGION_KIND_LOCATIONS_SQL`` exists for that reason, not because the ORM could
+    not express the predicate.
 
     ``kind`` is still required, though no code is: the join has to be told which dimension's
     boundaries to read, and a note can fall in a city and a council district at once.
