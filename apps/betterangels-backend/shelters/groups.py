@@ -3,6 +3,7 @@ from accounts.permissions import OrganizationAdminPermissions
 from clients.models import ClientProfile
 from common.models import Address
 from common.permissions.config import RoleDef, TemplateConfig
+from referrals.permissions import REFERRAL_SHELTER_OPERATOR_PERMISSIONS
 from shelters.models.availability import ShelterAvailability
 from shelters.models.lookups import (
     SPA,
@@ -53,6 +54,8 @@ SHELTER_OPERATOR = TemplateConfig(
         # sees their org's private shelters through the org-scoped visible()
         # path instead (ADR 0001 §2.4).
         ClientProfile.perms.VIEW,
+        # Referral: VIEW only (shelter-side visibility into referrals)
+        *REFERRAL_SHELTER_OPERATOR_PERMISSIONS,
         # ContactInfo deliberately NOT on the scoped role as it is
         # currently used for internal BA users only.
     ],
@@ -94,6 +97,8 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
         # ── Custom perms ──
         Shelter.perms.VIEW_PRIVATE,
         ClientProfile.perms.VIEW,
+        # Referral: VIEW only (shelter-side visibility into referrals)
+        *REFERRAL_SHELTER_OPERATOR_PERMISSIONS,
         # ── common ──
         Address.perms.ADD,
         Address.perms.CHANGE,

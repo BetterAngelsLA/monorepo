@@ -1,5 +1,6 @@
 from accounts.permissions import UserOrganizationPermissions
 from common.permissions.config import RoleDef, TemplateConfig
+from referrals.permissions import REFERRAL_ORG_ADMIN_PERMISSIONS
 from reports.permissions import ReportPermissions
 from teams.models import Team
 
@@ -15,6 +16,8 @@ ORG_ADMIN = TemplateConfig(
         Team.perms.CHANGE,
         Team.perms.DELETE,
         Team.perms.VIEW,
+        # Referral: full CRUD (org admins own the referral pipeline)
+        *REFERRAL_ORG_ADMIN_PERMISSIONS,
     ],
     is_invitable=False,
     legacy_inert=True,
