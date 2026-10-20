@@ -3,7 +3,7 @@
 import datetime
 from functools import reduce
 from operator import and_, or_
-from typing import TYPE_CHECKING, List, Optional, Tuple, cast
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
@@ -14,7 +14,6 @@ from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Q, 
 from django.db.models.functions import Coalesce
 from django.utils import timezone as django_timezone
 from strawberry import ID, Info, asdict, auto
-from strawberry_django.auth.utils import get_current_user
 
 from common.graphql.types import (
     LatitudeScalar,
@@ -23,7 +22,6 @@ from common.graphql.types import (
     make_in_filter,
     make_m2m_in_filter,
 )
-from common.permissions.selectors import can_globally
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -48,10 +46,8 @@ from shelters.enums import (
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.open_at import shelters_open_at
+from shelters.permissions import can_view_ba_review
 from shelters.selectors.computed_status import shelter_count_subquery
-
-if TYPE_CHECKING:
-    from accounts.models import User
 
 
 def get_current_shelter_schedule_datetime() -> datetime.datetime:
@@ -344,10 +340,10 @@ class OperatorShelterFilter(PublicShelterFilter):
         if not value:
             return Q()
 
-        # BA-only review field — global-tier gate (ADR 0001 §2.4), so a scoped
-        # operator cannot infer ratings by filtering on them.
-        user = cast("User", get_current_user(info))
-        if user is None or not user.is_authenticated or not can_globally(user, models.Shelter.perms.VIEW_BA_REVIEW):
+        # BA-only review field — the same global-tier read gate as the output
+        # fields (ADR 0001 §2.4), so a scoped operator cannot infer ratings by
+        # filtering on them.
+        if not can_view_ba_review(info):
             return Q(pk__in=[])
 
         return Q(**{f"{prefix}overall_rating__in": value})

@@ -2,6 +2,7 @@ import datetime
 from typing import Any
 from unittest.mock import patch
 
+from django.contrib.auth.models import Permission
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from places import Places
@@ -1614,3 +1615,14 @@ class OperatorShelterFilterQueryTestCase(GraphQLBaseTestCase):
         shelter_recipe.make(organization=self.org_1, overall_rating=5)
 
         self.assertEqual(self._result_ids({"overallRating": [5]}), set())
+
+    def test_overall_rating_filter_allows_global_change_only(self) -> None:
+        """``change`` implies ``view``: an editor can filter what it can read."""
+        role, _ = Role.objects.get_or_create(name="Global BA Review Editor", defaults={"is_global": True})
+        app_label, codename = Shelter.perms.CHANGE_BA_REVIEW.split(".")
+        role.permissions.add(Permission.objects.get(content_type__app_label=app_label, codename=codename))
+        self.org_1_case_manager_1.groups.add(role)
+        match = shelter_recipe.make(organization=self.org_1, overall_rating=5)
+        shelter_recipe.make(organization=self.org_1, overall_rating=2)
+
+        self.assertEqual(self._result_ids({"overallRating": [5]}), {str(match.id)})
