@@ -145,7 +145,8 @@ export function ReferralShare({
       >
         <TextBold color={Colors.PRIMARY}>Share summary</TextBold>
       </Pressable>
-      <Modal visible={!!preview} animationType="slide" onRequestClose={close}>
+      {preview ? (
+      <Modal visible animationType="slide" onRequestClose={close}>
         <View
           style={[
             styles.container,
@@ -289,6 +290,7 @@ export function ReferralShare({
           )}
         </View>
       </Modal>
+      ) : null}
     </>
   );
 }
