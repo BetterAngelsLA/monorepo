@@ -3,7 +3,7 @@ import {
   INTAKE_FIELDS,
   type IntakeFieldDefinition,
   type StoredIntake,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 
 /** Only explicitly matched fields contribute needs; unknown legacy values do not. */
 export function needLabelsFromIntake(

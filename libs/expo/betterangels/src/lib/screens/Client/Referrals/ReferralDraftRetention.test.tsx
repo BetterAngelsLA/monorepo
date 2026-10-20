@@ -4,7 +4,7 @@ import { uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ReferralDraftRetention } from './ReferralDraftRetention';
 const { discard } = vi.hoisted(() => ({ discard: vi.fn() }));
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
-vi.mock('./referralDraftStorage', () => ({
+vi.mock('../../../draft/referralDraftStorage', () => ({
   discardAccountReferralDrafts: discard,
 }));
 afterEach(() => {

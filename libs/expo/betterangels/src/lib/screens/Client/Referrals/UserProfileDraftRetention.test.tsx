@@ -36,7 +36,7 @@ vi.mock('expo-router', () => ({
   useNavigation: () => ({ setOptions }),
   useRouter: () => ({ navigate }),
 }));
-vi.mock('./referralDraftStorage', () => ({
+vi.mock('../../../draft/referralDraftStorage', () => ({
   discardAccountReferralDrafts: discard,
 }));
 vi.mock('@monorepo/expo/shared/ui-components', () => ({

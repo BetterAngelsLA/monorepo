@@ -16,7 +16,7 @@ import {
   StorageChoices,
 } from '../../../apollo';
 import { needLabelsFromIntake } from './clientNeeds';
-import { INTAKE_FIELDS } from './intakeFields';
+import { INTAKE_FIELDS } from '../../../draft/intakeFields';
 import { matchTags } from './shelterAttributes';
 
 describe('needLabelsFromIntake', () => {

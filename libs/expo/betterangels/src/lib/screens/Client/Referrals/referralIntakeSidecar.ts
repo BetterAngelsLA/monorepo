@@ -3,7 +3,7 @@ import {
   getIntakeField,
   type IntakeFieldDefinition,
   type StoredIntake,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 
 /**
  * Compatibility adapter for intake stored in Referral.notes. Preserve the v1

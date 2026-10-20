@@ -1,12 +1,5 @@
 import { parseDateString, toDateString } from '@monorepo/shared/scalars';
 
-/** Fixed English collation keeps labels stable across device locale settings. */
-export function compareReferralLabels(a: string, b: string): number {
-  const order = a.localeCompare(b, 'en-US');
-  if (order || a === b) return order;
-  return a < b ? -1 : 1;
-}
-
 function dateOf(value?: string | number): Date | null {
   if (value === undefined || value === '') return null;
   const date = new Date(value);

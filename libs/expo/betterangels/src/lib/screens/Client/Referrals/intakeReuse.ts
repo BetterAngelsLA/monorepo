@@ -4,7 +4,7 @@ import {
   isIntakeControlValue,
   type IntakeFieldDefinition,
   type StoredIntake,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 
 export type IntakeReuse = {
   values: StoredIntake;

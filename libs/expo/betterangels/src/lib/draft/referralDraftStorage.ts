@@ -1,6 +1,5 @@
 import { createPersistentSynchronousStorage } from '@monorepo/expo/shared/utils';
 import { randomUUID } from 'expo-crypto';
-import { createMMKV } from 'react-native-mmkv';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,
@@ -23,13 +22,13 @@ export type ReferralDraftAccount = Pick<
 const stores = new Map<string, ReferralDraftStore>();
 const legacyStorage = () =>
   createPersistentSynchronousStorage({ scopeId: 'referral-draft' });
+// The same shared adapter as every other synchronous store; `keys()` is what
+// account-wide deletion needs.
+const scopedStorage = () =>
+  createPersistentSynchronousStorage({ scopeId: 'referral-drafts-v2' });
 
-/**
- * Session teardown always wipes the unowned legacy record before async cleanup
- * and revokes every loaded draft's callbacks. Scoped disk records are retained
- * for the same authenticated account; account-local removal is explicit.
- */
-export function clearPersistedReferralDraft(): void {
+/** Remove the pre-v2 record, which carries no account or environment owner. */
+export function clearLegacyReferralDraft(): void {
   try {
     legacyStorage().remove('draft');
   } catch (error) {
@@ -38,26 +37,28 @@ export function clearPersistedReferralDraft(): void {
       error,
     );
   }
+}
+
+/**
+ * Revoke in-memory callbacks and forms. Account-scoped disk records are
+ * deliberately retained for the same authenticated account.
+ */
+export function releaseReferralDraftSessions(): void {
   for (const [key, store] of stores) {
     stores.delete(key);
     store.release();
   }
 }
-function storage() {
-  const backing = createMMKV({ id: 'referral-drafts-v2' });
-  return {
-    get(key: string): unknown {
-      const raw = backing.getString(key);
-      if (raw === undefined) return null;
-      const value: unknown = JSON.parse(raw);
-      if (value === null) throw new SyntaxError('Stored draft is null');
-      return value;
-    },
-    set: (key: string, value: unknown) =>
-      backing.set(key, JSON.stringify(value)),
-    remove: (key: string) => backing.remove(key),
-    keys: () => backing.getAllKeys(),
-  };
+
+/**
+ * Session teardown: wipe the unowned legacy record and revoke every loaded
+ * draft's callbacks. Account-scoped records can only be reopened by their
+ * authenticated account/environment and are removed through the explicit
+ * retention controls.
+ */
+export function endReferralDraftSession(): void {
+  clearLegacyReferralDraft();
+  releaseReferralDraftSessions();
 }
 function scopeKey(scope: ReferralDraftScope) {
   const parts = [
@@ -79,12 +80,15 @@ export function getPersistentReferralDraft(
   if (existing) return existing;
   // Opening native storage can fail too; keep it inside the recoverable load /
   // write boundary, and retry initialization after a transient failure.
-  let backing: ReturnType<typeof storage> | undefined;
-  const getBacking = () => (backing ??= storage());
+  let backing: ReturnType<typeof scopedStorage> | undefined;
+  const getBacking = () => (backing ??= scopedStorage());
   const store = createReferralDraftStore(
     {
       load: () => {
-        const value = getBacking().get(key);
+        const value = getBacking().get<unknown>(key);
+        // JSON `null` is present-but-unreadable, not "no draft".
+        if (value === null && getBacking().keys().includes(key))
+          throw new SyntaxError('Stored draft is null');
         if (
           value &&
           typeof value === 'object' &&
@@ -131,7 +135,7 @@ export function recoverLegacyReferralDraft(scope: ReferralDraftScope): boolean {
   const draft = readLegacyDraft(scope.clientId);
   if (!draft) return false;
   const { storedValues: _values, answers: _answers, ...persisted } = draft;
-  storage().set(key, persisted);
+  scopedStorage().set(key, persisted);
   // Publish the scoped copy even if removing the older copy fails. Otherwise a
   // cached empty store could overwrite the successfully recovered answers.
   stores.delete(key);
@@ -172,7 +176,7 @@ export function releaseReferralDraftSession(session: ReferralDraftSession) {
 export function discardAccountReferralDrafts(account: ReferralDraftAccount) {
   if (!account.apiUrl.trim() || !account.userId.trim())
     throw new Error('Incomplete draft account');
-  const backing = storage();
+  const backing = scopedStorage();
   for (const key of backing.keys()) {
     if (!belongsTo(key, account)) continue;
     backing.remove(key);

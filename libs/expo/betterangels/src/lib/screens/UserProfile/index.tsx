@@ -14,7 +14,7 @@ import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { FeatureFlags } from '../../static';
 import { ReferralDraftRetention } from '../Client/Referrals/ReferralDraftRetention';
-import { discardAccountReferralDrafts } from '../Client/Referrals/referralDraftStorage';
+import { discardAccountReferralDrafts } from '../../draft/referralDraftStorage';
 import {
   DeleteCurrentUserDocument,
   extractOperationInfoMessage,

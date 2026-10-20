@@ -21,7 +21,7 @@ import { PetChoices } from '@monorepo/ba-platform/types';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,
-} from './referralDraft';
+} from '../../../draft/referralDraft';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
 
 // See sharedBarrels.tsx: the shared barrels pull in native-backed components
