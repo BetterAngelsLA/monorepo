@@ -365,11 +365,14 @@ it('submits current answers once, consumes the draft only on success, and displa
   });
 });
 
+const GENERIC_SAVE_ERROR =
+  'The referral was not saved. Check your information and permissions, then try again.';
+
 it.each([
-  OperationMessageKind.Permission,
-  OperationMessageKind.Validation,
-  OperationMessageKind.Error,
-])('preserves the draft and allows retry after a %s response', async (kind) => {
+  [OperationMessageKind.Permission, 'Unable to submit this referral.'],
+  [OperationMessageKind.Validation, 'Unable to submit this referral.'],
+  [OperationMessageKind.Error, GENERIC_SAVE_ERROR],
+])('preserves the draft and allows retry after a %s response', async (kind, expectedMessage) => {
   const { store, requests, refreshed, close } = await setup();
   await openPicker();
   const before = store.getSnapshot();
@@ -393,8 +396,9 @@ it.each([
     }),
   );
   expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-    message:
-      'The referral was not saved. Check your information and permissions, then try again.',
+    // Permission and validation messages are actionable; the `Error` kind can
+    // carry raw exception text, so it must stay generic.
+    message: expectedMessage,
     type: 'error',
   });
   expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
@@ -463,8 +467,7 @@ it('shows a fallback error for an OperationInfo response without messages', asyn
     }),
   );
   expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-    message:
-      'The referral was not saved. Check your information and permissions, then try again.',
+    message: GENERIC_SAVE_ERROR,
     type: 'error',
   });
   expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);

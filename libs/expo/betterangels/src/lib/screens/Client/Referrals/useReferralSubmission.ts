@@ -1,9 +1,19 @@
 import { useMutation } from '@apollo/client/react';
+import {
+  OperationMessageKind,
+  extractOperationInfoMessages,
+} from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import {
   CreateReferralDocument,
   UpdateReferralDocument,
+  type CreateReferralMutation,
+  type UpdateReferralMutation,
 } from './__generated__/Referrals.generated';
+import {
+  createReferralMeta,
+  updateReferralMeta,
+} from './__generated__/Referrals_meta.generated';
 import type {
   ReferralDraftStore,
   ReferralSubmissionAttempt,
@@ -13,6 +23,25 @@ import {
   buildReferralNotes,
   updateReferralNotes,
 } from './referralIntakeSidecar';
+
+/**
+ * Only validation and permission messages are user-facing. `Error` is the
+ * catch-all kind and can carry raw exception text, so it falls back to the
+ * generic wording (matching the rest of the app; see
+ * apps/betterangels-backend/docs/graphql_errors.md).
+ */
+function userFacingMessage(
+  result: Parameters<typeof extractOperationInfoMessages>[0],
+  operationKey: string,
+): string | undefined {
+  const messages = extractOperationInfoMessages(result, operationKey, [
+    OperationMessageKind.Validation,
+    OperationMessageKind.Permission,
+  ]);
+  return messages?.length
+    ? messages.map((message) => message.message).join(', ')
+    : undefined;
+}
 
 /** The store owns the operation, so pausing/unmounting a form cannot unlock it. */
 export function useReferralSubmission(
@@ -43,36 +72,51 @@ export function useReferralSubmission(
     }
     if (!attempt) return false;
     let outcome: 'success' | 'rejected' | 'uncertain' = 'uncertain';
+    let rejectionMessage: string | undefined;
     try {
       const submitted = attempt.draft;
       const source = submitted.source;
-      const referral =
-        source?.kind === 'edit'
-          ? (
-              await updateReferral({
-                variables: {
-                  data: {
-                    id: source.referralId,
-                    notes: updateReferralNotes(
-                      source.originalNotes,
-                      submitted.storedValues,
-                    ),
-                  },
-                },
-              })
-            ).data?.updateReferral
-          : (
-              await createReferral({
-                variables: {
-                  data: {
-                    clientProfile: submitted.clientId,
-                    shelter: submitted.selectedShelterId ?? '',
-                    notes: buildReferralNotes(submitted.storedValues),
-                  },
-                },
-              })
-            ).data?.createReferral;
-      if (referral?.__typename === 'ReferralType' && referral.id)
+      let referral:
+        | UpdateReferralMutation['updateReferral']
+        | CreateReferralMutation['createReferral']
+        | undefined;
+      let successTypename: 'ReferralType';
+      if (source?.kind === 'edit') {
+        const result = await updateReferral({
+          variables: {
+            data: {
+              id: source.referralId,
+              notes: updateReferralNotes(
+                source.originalNotes,
+                submitted.storedValues,
+              ),
+            },
+          },
+        });
+        referral = result.data?.updateReferral;
+        successTypename = updateReferralMeta.successTypename;
+        rejectionMessage = userFacingMessage(
+          result,
+          updateReferralMeta.operationKey,
+        );
+      } else {
+        const result = await createReferral({
+          variables: {
+            data: {
+              clientProfile: submitted.clientId,
+              shelter: submitted.selectedShelterId ?? '',
+              notes: buildReferralNotes(submitted.storedValues),
+            },
+          },
+        });
+        referral = result.data?.createReferral;
+        successTypename = createReferralMeta.successTypename;
+        rejectionMessage = userFacingMessage(
+          result,
+          createReferralMeta.operationKey,
+        );
+      }
+      if (referral?.__typename === successTypename && referral.id)
         outcome = 'success';
       else if (referral?.__typename === 'OperationInfo') outcome = 'rejected';
     } catch {
@@ -99,7 +143,8 @@ export function useReferralSubmission(
             ? 'Referral updated successfully!'
             : 'Referral saved. Share it separately to provide a copy.'
           : outcome === 'rejected'
-            ? 'The referral was not saved. Check your information and permissions, then try again.'
+            ? (rejectionMessage ??
+              'The referral was not saved. Check your information and permissions, then try again.')
             : 'Could not confirm whether the referral was saved. Check the referral list before trying again.',
       type: outcome === 'success' ? 'success' : 'error',
     });
