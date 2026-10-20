@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 import { uiComponents } from '../../../__mocks__/sharedBarrels';
-import UserProfile from './index';
+import UserProfile from '.';
 const { removeUser, discard, signOut, showSnackbar, navigate, setOptions } =
   vi.hoisted(() => ({
     removeUser: vi.fn(),

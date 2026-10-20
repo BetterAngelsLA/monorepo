@@ -23,7 +23,7 @@ import { missingRequiredIntakeFields } from '../../../draft/intakeFields';
 import {
   buildReferralNotes,
   updateReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 /**
  * Only validation and permission messages are user-facing. `Error` is the

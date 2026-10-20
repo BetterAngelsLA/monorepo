@@ -30,7 +30,7 @@ import {
   getPersistentReferralDraft,
   releaseReferralDraftSession,
 } from '../../../draft/referralDraftStorage';
-import { buildReferralNotes } from './referralIntakeSidecar';
+import { buildReferralNotes } from './shared/referralIntakeSidecar';
 
 const imageSharing = vi.hoisted(() => ({
   capture: vi.fn(),
@@ -48,7 +48,7 @@ vi.mock('expo-file-system', async (importOriginal) => ({
   Directory: imageSharing.directory,
   File: vi.fn(),
 }));
-vi.mock('./ReferralImagePreview', () => ({
+vi.mock('./share/ReferralImagePreview', () => ({
   ReferralImagePreview: ({
     onReady,
   }: {

@@ -15,7 +15,7 @@ import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { Pressable, Text } from 'react-native';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { uiComponents } from '../../../__mocks__/sharedBarrels';
-import UserProfile from './index';
+import UserProfile from '.';
 
 vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),

@@ -11,7 +11,7 @@ import {
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { ReferralDraftRetention } from '../Client/Referrals/ReferralDraftRetention';
+import { ReferralDraftRetention } from '../Client/Referrals/sessions';
 import { discardAccountReferralDrafts } from '../../draft/referralDraftStorage';
 import {
   DeleteCurrentUserDocument,

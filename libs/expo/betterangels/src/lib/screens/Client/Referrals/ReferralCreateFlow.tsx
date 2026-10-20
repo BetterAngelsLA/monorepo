@@ -2,11 +2,11 @@ import { useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import type { ComponentProps } from 'react';
-import { ReferralForm } from './ReferralForm';
-import { ReferralIntakeForm } from './ReferralIntakeForm';
-import { useReferralDraft } from './ReferralDraftProvider';
-import { needLabelsFromIntake } from './clientNeeds';
-import { useLocalDraftAction } from './useLocalDraftAction';
+import { ReferralForm } from './shelter/ReferralForm';
+import { ReferralIntakeForm } from './intake/ReferralIntakeForm';
+import { useReferralDraft } from './sessions/ReferralDraftProvider';
+import { needLabelsFromIntake } from './shared/clientNeeds';
+import { useLocalDraftAction } from './sessions/useLocalDraftAction';
 
 // Two-step create flow: Required-Info intake (prototype) → shelter picker.
 export function ReferralCreateFlow({

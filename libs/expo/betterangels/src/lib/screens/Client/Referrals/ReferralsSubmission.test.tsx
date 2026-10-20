@@ -28,7 +28,7 @@ import { createReferralDraftStore } from '../../../draft/referralDraft';
 import {
   buildReferralNotes,
   decodeReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 import {
   ClientReferralsDocument,
   type ClientReferralsQuery,

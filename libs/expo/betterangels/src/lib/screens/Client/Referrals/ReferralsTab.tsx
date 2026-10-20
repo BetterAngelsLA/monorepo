@@ -1,7 +1,7 @@
 import { useApolloClient } from '@apollo/client/react';
 import { FocusedInfiniteList } from '../../../ui-components/InfiniteList/FocusedInfiniteList';
-import { DraftCard } from './DraftCard';
-import { ReferralCard, type ReferralCardProps } from './ReferralCard';
+import { DraftCard } from './sessions/DraftCard';
+import { ReferralCard, type ReferralCardProps } from './list/ReferralCard';
 import { useActiveOrg, useApiConfig } from '@monorepo/ba-platform';
 import { useUser } from '../../../providers/user/UserProvider';
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
@@ -35,16 +35,16 @@ import { pagePaddingHorizontal } from '../../../static';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ClientViewTabEnum } from '../ClientTabs';
 import { useSnackbar } from '../../../hooks';
-import { referralDraftSeed } from './referralDraftSeed';
+import { referralDraftSeed } from './intake/referralDraftSeed';
 import { useReferralSubmission } from './useReferralSubmission';
-import { useLocalDraftAction } from './useLocalDraftAction';
+import { useLocalDraftAction } from './sessions/useLocalDraftAction';
 import { ReferralCreateFlow } from './ReferralCreateFlow';
-import { DraftRecoveryNotice } from './DraftRecoveryNotice';
+import { DraftRecoveryNotice } from './sessions/DraftRecoveryNotice';
 import {
   ReferralDraftProvider,
   useReferralDraft,
   useReferralDraftStore,
-} from './ReferralDraftProvider';
+} from './sessions/ReferralDraftProvider';
 import {
   ReferralPermissionsProvider,
   useReferralPermissions,
