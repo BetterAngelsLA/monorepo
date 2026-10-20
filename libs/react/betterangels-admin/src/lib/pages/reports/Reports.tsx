@@ -16,14 +16,22 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useActiveOrg } from '@monorepo/ba-platform';
+import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { toDateString } from '@monorepo/shared/scalars';
 import { mergeCss } from '@monorepo/react/shared';
 import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
 import { formatBucketLabel } from './formatBucketLabel';
-import { useReportSummary, type ReportSummaryType } from './hooks';
+import {
+  useInteractionsByRegion,
+  useRegionDimensions,
+  useReportSummary,
+  type ReportSummaryType,
+} from './hooks';
 import { LocationBreakdown } from './LocationBreakdown';
 import { GENERIC_ERROR_MESSAGE } from './reportErrors';
+import { kindLabelPlural, regionBreakdownView } from './regionBreakdown';
+import { ReportGroupControls } from './ReportGroupControls';
 
 const { RangePicker } = DatePicker;
 
@@ -202,6 +210,14 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
   );
   const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
+  // The geographic group the whole page is scoped to. `undefined` is "All dimensions", and it
+  // is the default: the page opens on the whole picture rather than on one arbitrary partition.
+  // The codes are only meaningful within a dimension, so the page clears them whenever the
+  // dimension changes (see `handleDimensionChange`).
+  const [dimension, setDimension] = useState<RegionDimension | undefined>(
+    undefined,
+  );
+  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const {
     download,
     isDownloading,
@@ -217,10 +233,33 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
   const endStr = toDateString(endDate.toDate());
 
   const organizationId = activeOrg?.id ?? '';
+
+  // The group's two inputs live on the page because three surfaces read them: the summary
+  // query below (every KPI and chart), the rollup that feeds the picker and the table, and the
+  // map. Fetching them here rather than inside the location card is also what keeps those
+  // surfaces from drifting — there is one selection, not one per component.
+  const {
+    dimensions,
+    loading: dimensionsLoading,
+    error: dimensionsError,
+  } = useRegionDimensions();
+  const {
+    rows: availableRegions,
+    loading: rowsLoading,
+    error: rowsError,
+  } = useInteractionsByRegion({
+    organizationId,
+    dimension,
+    startDate: startStr,
+    endDate: endStr,
+  });
+
   const { summary, loading, error } = useReportSummary({
     organizationId,
     startDate: startStr,
     endDate: endStr,
+    dimension,
+    regionCodes: selectedCodes,
   });
 
   // Backend error bodies are not user-facing copy: log the real error and show a
@@ -232,9 +271,51 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
     if (error) {
       console.error(error);
     }
-  }, [downloadError, error]);
+    if (dimensionsError) {
+      console.error(dimensionsError);
+    }
+    if (rowsError) {
+      console.error(rowsError);
+    }
+  }, [downloadError, error, dimensionsError, rowsError]);
 
   const orgName = activeOrg?.name ?? 'Your Organization';
+
+  // The rollup's drill-down is derived locally, exactly as the location card does it, so the
+  // subtitle can name the selected regions rather than printing bare codes.
+  const breakdown = useMemo(
+    () => regionBreakdownView(availableRegions, selectedCodes),
+    [availableRegions, selectedCodes],
+  );
+
+  let groupLabel: string | undefined;
+  if (dimension !== undefined) {
+    const plural = kindLabelPlural(dimension, dimensions);
+    // Names come from the rollup; until it answers (or if a selected region has no row) the
+    // codes are all there is to print, and printing "All cities" beside a selection would be
+    // wrong.
+    groupLabel =
+      selectedCodes.length > 0
+        ? `${plural}: ${breakdown.filteredToName ?? selectedCodes.join(', ')}`
+        : `All ${plural.toLowerCase()}`;
+  }
+
+  const panelError = dimensionsError ?? rowsError;
+
+  const handleDimensionChange = (next?: RegionDimension) => {
+    setDimension(next);
+    // Cleared **here**, in the same batch as the dimension, because a code is only meaningful
+    // within its dimension ("4" is an SPA and also a Long Beach council district). An effect on
+    // `dimension` would run after commit and leave one frame pairing the new dimension with
+    // the old dimension's codes — enough to fetch a region the reader never picked.
+    setSelectedCodes((codes) => (codes.length === 0 ? codes : []));
+    clearError();
+  };
+
+  const handleCodesChange = (codes: string[]) => {
+    setSelectedCodes(codes);
+    clearError();
+  };
 
   const handleRangeChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
     if (dates?.[0] && dates?.[1]) {
@@ -243,7 +324,11 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
     }
   };
 
-  const handleDownload = () => download(startStr, endStr, activeOrg?.id);
+  const handleDownload = () =>
+    download(startStr, endStr, activeOrg?.id, {
+      dimension,
+      codes: selectedCodes,
+    });
 
   // `topProvidedServices` is capped at 15 by the backend (`reports.selectors.note_top_services`),
   // so this sum is the interactions attributed to the 15 most provided services — not a total
@@ -261,26 +346,49 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
         <h1 className="text-2xl font-semibold text-neutral-900">Reports</h1>
         <p className="mt-1 text-sm text-neutral-500">
           Interaction data for {orgName}
+          {groupLabel ? ` · ${groupLabel}` : ''}
         </p>
       </div>
 
-      {/* Controls */}
+      {/* Controls. The group comes first because it is the page's scope: every KPI and every
+          chart below is calculated over it, so putting the date range above it implied the
+          opposite order of importance. */}
       <Card size="small">
-        <div className="flex flex-wrap items-center gap-4">
-          <RangePicker
-            value={dateRange}
-            onChange={handleRangeChange}
-            format="YYYY-MM-DD"
-            allowClear={false}
+        <div className="flex flex-col gap-3">
+          <ReportGroupControls
+            dimensions={dimensions}
+            dimensionsLoading={dimensionsLoading}
+            dimensionsError={dimensionsError}
+            dimension={dimension}
+            selectedCodes={selectedCodes}
+            rows={availableRegions}
+            rowsLoading={rowsLoading}
+            onDimensionChange={handleDimensionChange}
+            onSelectedCodesChange={handleCodesChange}
           />
-          <Button
-            type="primary"
-            icon={<DownloadIcon isDownloading={isDownloading} />}
-            loading={isDownloading}
-            onClick={handleDownload}
-          >
-            Download CSV
-          </Button>
+
+          <p className="mb-0 text-xs text-neutral-500">
+            {dimension === undefined
+              ? 'Choose a grouping to scope every KPI and chart below.'
+              : 'Every KPI and chart below is calculated for this group.'}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-4 border-t border-neutral-200 pt-3">
+            <RangePicker
+              value={dateRange}
+              onChange={handleRangeChange}
+              format="YYYY-MM-DD"
+              allowClear={false}
+            />
+            <Button
+              type="primary"
+              icon={<DownloadIcon isDownloading={isDownloading} />}
+              loading={isDownloading}
+              onClick={handleDownload}
+            >
+              Download CSV
+            </Button>
+          </div>
         </div>
         {downloadError && (
           <Alert
@@ -351,7 +459,13 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
               <Col xs={24} sm={6}>
                 <Card>
                   <Statistic
-                    title="Total Interactions"
+                    // "Total" is a claim about the whole organisation, which a grouped page is
+                    // not making. The label follows the scope so the number cannot be misread.
+                    title={
+                      dimension === undefined
+                        ? 'Total Interactions'
+                        : 'Interactions in Group'
+                    }
                     value={summary.totalNotes}
                   />
                 </Card>
@@ -474,7 +588,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
               )}
             </Row>
 
-            {/* Geographic breakdown. Reuses the page's own date range and org so the
+            {/* Geographic breakdown. Reuses the page's own date range, org and group so the
               region figures always match the KPIs above them. */}
             {activeOrg && (
               <Row gutter={[16, 16]}>
@@ -483,6 +597,12 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
                     organizationId={activeOrg.id}
                     startDate={startStr}
                     endDate={endStr}
+                    dimension={dimension}
+                    selectedCodes={selectedCodes}
+                    dimensions={dimensions}
+                    rows={availableRegions}
+                    rowsLoading={rowsLoading}
+                    panelError={panelError}
                     hasMapsKey={hasMapsKey}
                   />
                 </Col>
@@ -492,7 +612,9 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
             {summary.totalNotes === 0 && (
               <Card>
                 <p className="text-center text-neutral-500">
-                  No interaction data found for the selected date range.
+                  {dimension === undefined
+                    ? 'No interaction data found for the selected date range.'
+                    : 'No interaction data found for the selected date range and group.'}
                 </p>
               </Card>
             )}

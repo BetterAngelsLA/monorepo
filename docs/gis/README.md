@@ -191,6 +191,7 @@ served side by side.
 ## The API surface
 
 ```graphql
+reportSummary(organizationId, startDate, endDate, dimension, regionCodes): ReportSummaryType!
 interactionsByRegion(organizationId, dimension, startDate, endDate, regionCodes): [RegionCountType!]!
 interactionMap(organizationId, startDate, endDate, limit, dimension, regionCodes): InteractionMapType!
 interactionScope(organizationId, startDate, endDate): InteractionScopeType!
@@ -200,7 +201,16 @@ regionDimensions: [RegionDimensionInfo!]!
 ```http
 GET /regions/tiles/<kind>/<z>/<x>/<y>.mvt           # public boundaries, authenticated session
 GET /regions/tiles/density/<z>/<x>/<y>.mvt?org_id=  # interaction density, reports.view_reports
+GET /reports/export/?org_id=&start_date=&end_date=&dimension=&codes=  # the grouped CSV
 ```
+
+`reportSummary` accepts the same `dimension`/`regionCodes` pair as the location rollup, and
+applies it to the **whole summary** — the KPI row and all six charts — not to one of them. A
+dimension alone means every region of it; codes narrow to those regions; an explicit empty code
+list matches nothing. Codes without a dimension are refused, because a code is not unique across
+dimensions. The CSV export reads the same pair (lowercase `dimension`, repeated or comma-separated
+`codes`), so a download covers the page's group rather than silently widening back to the
+organisation.
 
 `RegionCountType` carries `kind`, `code`, `name`, `count`, `isUnassigned` and `unassignedReason`
 (`OUTSIDE_ALL_REGIONS` | `NO_LOCATION`) — one unassigned bucket *per dimension* when the rollup
@@ -220,21 +230,38 @@ Why the second gate is a filter rather than a grant predicate, and why the two m
 confused, is stated once, in `regions/schema.py` (`interaction_map`).
 
 An empty `regionCodes` matches **nothing** and needs no `dimension`; a non-empty list requires one.
-`interactionMap` ignores a lone `dimension` (nothing to narrow) where the density tile refuses it.
+`interactionMap` and the density tile refuse a lone `dimension` (nothing to narrow), while
+`reportSummary` scopes to every region of it.
 
 ## The admin panel
 
-`LocationBreakdown` renders on the Reports page beneath the existing charts and inherits their
-`dateRange` and `activeOrg`, so the geographic figures always match the KPIs above. It provides:
+The Reports page is **scoped by a geographic group**: a dimension chosen at the top of the page,
+optionally narrowed to specific regions. The group control (`ReportGroupControls`) sits above the
+KPI row, and the same selection travels three ways, so no surface can disagree with another:
 
-- a **dimension selector** over the dimensions `regionDimensions` reports as loaded — not a fixed
-  list of six, so a boundary set the importer has not loaded cannot be selected;
-- a **drill-down selector** listing the regions that have interactions, with counts, so the map
-  can answer "show me the SPA 4 visits" rather than only "every visit, coloured by SPA";
+- `reportSummary` reads it, so the KPI row and every chart are calculated over the group;
+- `interactionsByRegion` reads it, so the region table lists that dimension's regions;
+- `interactionMap` and the density tile read it when specific regions are selected, so a
+  drill-down draws only the interactions inside the shapes it frames.
+
+A dimension alone is a **scope**, not just a grouping label: choosing City counts only
+interactions whose location falls inside a city boundary, which is why the total can be smaller
+than the ungrouped one. The breakdown's "not attributed to a city" figure names that remainder.
+The heatmap deliberately stays county-wide — the boundaries over it are the grouping, and the
+surface is the whole service area the group sits in.
+
+`LocationBreakdown` renders beneath the charts and inherits the page's `dateRange`, `activeOrg`
+and group. It provides:
+
 - a **region table** with the unassigned buckets labelled by cause;
 - `RegionMap`, which draws region boundaries from the tile endpoint when a grouping is chosen,
   with a **Heatmap** / **Clusters** toggle in its card header and a `filteredTo` caption when the
   map is narrowed.
+
+The group control's two selects are fed by `regionDimensions` (loaded boundaries only) and the
+unfiltered `interactionsByRegion` rollup, so a reader who picks one region still finds the others
+in the list. An empty selection means "every region of the grouping"; there is no "All" row,
+because an empty selection already is all.
 
 **The Maps key is the admin's own.** `VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`, plumbed
 through `.github/workflows/default.yml` and `docker-compose-ci.yml`. It is deliberately not
