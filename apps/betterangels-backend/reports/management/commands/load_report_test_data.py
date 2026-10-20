@@ -14,12 +14,15 @@ import random
 from datetime import timedelta
 from typing import Any
 
-from django.core.management.base import BaseCommand, CommandParser
+from django.conf import settings
+from django.contrib.gis.geos import Point
+from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.utils import timezone
 from organizations.models import Organization
 
 from accounts.models import User
 from clients.models import ClientProfile
+from common.models import Location
 from notes.enums import ServiceRequestStatusEnum
 from notes.models import (
     Note,
@@ -151,6 +154,29 @@ LAST_NAMES = [
     "Martin",
 ]
 
+#: Where ``--with-locations`` puts the interactions it creates. Real places rather than random
+#: points, so the region report is readable: each row is a landmark a reviewer recognises and can
+#: check against a map. Random coordinates would fill the report with numbers nobody can verify.
+#:
+#: The set is chosen so that every dimension has something in it **and** something outside it.
+#: Long Beach, Santa Monica and Beverly Hills are cities of their own, so they carry no LA city
+#: council district; Florence-Firestone is unincorporated, so it is in no city at all. A set drawn
+#: only from LA proper would never exercise the unassigned buckets, which are a feature of the
+#: report rather than an edge case. Coordinates are checked against the imported layers — a
+#: re-import from a newer vintage can move a district line out from under one of them.
+SAMPLE_POINTS = [
+    (-118.2437, 34.0522),  # Downtown LA
+    (-118.3287, 34.0928),  # Hollywood
+    (-118.1912, 34.1114),  # Highland Park
+    (-118.4517, 34.2011),  # Van Nuys
+    (-118.2431, 33.9425),  # Watts
+    (-118.5412, 34.0483),  # Pacific Palisades
+    (-118.1937, 33.7701),  # Long Beach — its own city, so no LA council district
+    (-118.4965, 34.0195),  # Santa Monica — likewise
+    (-118.4004, 34.0736),  # Beverly Hills — likewise
+    (-118.2467, 33.9750),  # Florence-Firestone — unincorporated: in no city at all
+]
+
 # Seed teams for local dev, created via get_or_create so the command is
 # self-contained and re-runnable.
 SEED_TEAMS = [
@@ -178,8 +204,28 @@ class Command(BaseCommand):
             default=200,
             help="Number of notes to create (default: 200).",
         )
+        parser.add_argument(
+            "--with-locations",
+            action="store_true",
+            help=(
+                "Give nine notes in ten a Location at one of SAMPLE_POINTS, so the region report, "
+                "map and heatmap have interactions to place. Off by default: this command also "
+                "seeds the CSV export and the chart rollups, which do not want points. The "
+                "remaining tenth are left without one, because 'No location recorded' is a bucket "
+                "the region report has to show."
+            ),
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
+        # Refuse outside local dev, explicitly. The command seeds Notes and, with `--clear`,
+        # deletes every note belonging to `test_org`; relying on that organization not existing
+        # is not a safety property, it is a coincidence of the production data.
+        if not settings.IS_LOCAL_DEV:
+            raise CommandError(
+                "load_report_test_data writes test notes and deletes them with --clear; "
+                "it runs only when IS_LOCAL_DEV is True."
+            )
+
         # Find test_org
         try:
             org = Organization.objects.get(name="test_org")
@@ -236,6 +282,14 @@ class Command(BaseCommand):
             team = random.choice(teams)
             purpose = random.choice(PURPOSES)
 
+            # `get_or_create_location`, not `Location.objects.create`: it is the path a real
+            # interaction takes (common/models.py), so the seed data dedupes and rounds exactly
+            # as production rows do. One note in ten keeps `location=None`.
+            location = None
+            if options["with_locations"] and i % 10 != 0:
+                lon, lat = random.choice(SAMPLE_POINTS)
+                location = Location.get_or_create_location({"point": Point(lon, lat, srid=4326)})
+
             note = Note.objects.create(
                 organization=org,
                 created_by=user,
@@ -245,6 +299,7 @@ class Command(BaseCommand):
                 is_submitted=True,
                 public_details=f"Test interaction #{i + 1} - {purpose} by {team.name}",
                 client_profile=random.choice(clients),
+                location=location,
             )
 
             # Add provided services (1-4 random services)
@@ -280,6 +335,13 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(f"\nDone! Created {notes_created} notes for test_org spanning the last 90 days.")
         )
+        if options["with_locations"]:
+            placed = Note.objects.filter(organization=org, location__isnull=False).count()
+            self.stdout.write(
+                f"  With locations: {placed} notes carry a point, so the region report, map and "
+                "heatmap have interactions to place."
+            )
+            self.stdout.write("  The rest are the 'No location recorded' bucket the report must also show.")
         self.stdout.write(f"  Date range: {three_months_ago.date()} to {now.date()}")
         self.stdout.write(f"  Teams used: {len(teams)}")
         self.stdout.write(f"  Purposes used: {len(PURPOSES)}")

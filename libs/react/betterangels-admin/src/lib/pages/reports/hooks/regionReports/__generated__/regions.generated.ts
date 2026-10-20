@@ -1,0 +1,44 @@
+import type * as Types from '@monorepo/ba-platform/types';
+
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+export type RegionDimensionsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type RegionDimensionsQuery = { __typename: 'Query', regionDimensions: Array<{ __typename: 'RegionDimensionInfo', value: Types.RegionDimension, label: string, plural: string }> };
+
+export type InteractionsByRegionQueryVariables = Types.Exact<{
+  organizationId: Types.Scalars['ID']['input'];
+  dimension?: Types.InputMaybe<Types.RegionDimension>;
+  startDate?: Types.InputMaybe<Types.Scalars['Date']['input']>;
+  endDate?: Types.InputMaybe<Types.Scalars['Date']['input']>;
+}>;
+
+
+export type InteractionsByRegionQuery = { __typename: 'Query', interactionsByRegion: Array<{ __typename: 'RegionCountType', kind: string, code: string, name: string, count: number, isUnassigned: boolean, unassignedReason?: Types.UnassignedReason | null }> };
+
+export type InteractionMapQueryVariables = Types.Exact<{
+  organizationId: Types.Scalars['ID']['input'];
+  dimension?: Types.InputMaybe<Types.RegionDimension>;
+  startDate?: Types.InputMaybe<Types.Scalars['Date']['input']>;
+  endDate?: Types.InputMaybe<Types.Scalars['Date']['input']>;
+  regionCodes?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+}>;
+
+
+export type InteractionMapQuery = { __typename: 'Query', interactionMap: { __typename: 'InteractionMapType', truncated: boolean, withheld: boolean, points: Array<{ __typename: 'InteractionPointType', latitude: number, longitude: number }> } };
+
+export type InteractionScopeQueryVariables = Types.Exact<{
+  organizationId: Types.Scalars['ID']['input'];
+  startDate?: Types.InputMaybe<Types.Scalars['Date']['input']>;
+  endDate?: Types.InputMaybe<Types.Scalars['Date']['input']>;
+}>;
+
+
+export type InteractionScopeQuery = { __typename: 'Query', interactionScope: { __typename: 'InteractionScopeType', withheld: boolean } };
+
+
+export const RegionDimensionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"RegionDimensions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"regionDimensions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"plural"}}]}}]}}]} as unknown as DocumentNode<RegionDimensionsQuery, RegionDimensionsQueryVariables>;
+export const InteractionsByRegionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"InteractionsByRegion"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"dimension"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"RegionDimension"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"startDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Date"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"endDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Date"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"interactionsByRegion"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"organizationId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}}},{"kind":"Argument","name":{"kind":"Name","value":"dimension"},"value":{"kind":"Variable","name":{"kind":"Name","value":"dimension"}}},{"kind":"Argument","name":{"kind":"Name","value":"startDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"startDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"endDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"endDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"count"}},{"kind":"Field","name":{"kind":"Name","value":"isUnassigned"}},{"kind":"Field","name":{"kind":"Name","value":"unassignedReason"}}]}}]}}]} as unknown as DocumentNode<InteractionsByRegionQuery, InteractionsByRegionQueryVariables>;
+export const InteractionMapDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"InteractionMap"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"dimension"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"RegionDimension"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"startDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Date"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"endDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Date"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"regionCodes"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"interactionMap"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"organizationId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}}},{"kind":"Argument","name":{"kind":"Name","value":"startDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"startDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"endDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"endDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"dimension"},"value":{"kind":"Variable","name":{"kind":"Name","value":"dimension"}}},{"kind":"Argument","name":{"kind":"Name","value":"regionCodes"},"value":{"kind":"Variable","name":{"kind":"Name","value":"regionCodes"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"points"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"latitude"}},{"kind":"Field","name":{"kind":"Name","value":"longitude"}}]}},{"kind":"Field","name":{"kind":"Name","value":"truncated"}},{"kind":"Field","name":{"kind":"Name","value":"withheld"}}]}}]}}]} as unknown as DocumentNode<InteractionMapQuery, InteractionMapQueryVariables>;
+export const InteractionScopeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"InteractionScope"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"startDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Date"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"endDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Date"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"interactionScope"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"organizationId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"organizationId"}}},{"kind":"Argument","name":{"kind":"Name","value":"startDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"startDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"endDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"endDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"withheld"}}]}}]}}]} as unknown as DocumentNode<InteractionScopeQuery, InteractionScopeQueryVariables>;
