@@ -20,7 +20,7 @@ import {
   getIntakeField,
   isRequiredIntakeField,
   missingRequiredIntakeFields,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 
 const NEEDS_FIELDS = INTAKE_FIELDS.filter((field) => field.section === 'needs');
 const ADDITIONAL_FIELDS = INTAKE_FIELDS.filter(

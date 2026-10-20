@@ -1,4 +1,4 @@
-import { clearPersistedReferralDraft } from './referralDraftStorage';
+import { endReferralDraftSession } from './referralDraftStorage';
 const { stores } = vi.hoisted(() => ({
   stores: new Map<string, Map<string, string>>(),
 }));
@@ -27,18 +27,18 @@ const scope = {
   clientId: 'client-1',
 };
 beforeEach(() => {
-  clearPersistedReferralDraft();
+  endReferralDraftSession();
   stores.clear();
 });
 
 it('clears unowned legacy data and revokes callbacks at sign-out while retaining scoped drafts on disk', async () => {
-  const { getPersistentReferralDraft, clearPersistedReferralDraft } =
+  const { getPersistentReferralDraft, endReferralDraftSession } =
     await import('./referralDraftStorage');
   const draft = getPersistentReferralDraft(scope);
   draft.startNew(scope.clientId);
   draft.setField('notes', 'Fictional retained answer');
   stores.set('referral-draft', new Map([['draft', 'legacy answer']]));
-  clearPersistedReferralDraft();
+  endReferralDraftSession();
   expect(stores.get('referral-draft')?.has('draft')).toBe(false);
   expect(draft.getSnapshot()).toBeNull();
   expect(draft.setField('notes', 'stale callback')).toBe(false);
@@ -75,7 +75,7 @@ it('preserves several client drafts across restarts without mixing accounts, org
       getPersistentReferralDraft({ ...scope, ...change }).getSnapshot(),
     ).toBeNull();
   }
-  clearPersistedReferralDraft();
+  endReferralDraftSession();
   const restored = (await import('./referralDraftStorage'))
     .getPersistentReferralDraft;
   expect(restored(scope).getSnapshot()).toMatchObject({
@@ -188,7 +188,7 @@ it('removes only the selected account and API, including unopened/corrupted draf
     'client-3',
   ]);
   stores.get('referral-drafts-v2')?.set(corruptKey, '{bad');
-  clearPersistedReferralDraft(); // unopened drafts must also be removed
+  endReferralDraftSession(); // unopened drafts must also be removed
   adapter = await import('./referralDraftStorage');
   const old = adapter.getPersistentReferralDraft(scope);
   adapter.discardAccountReferralDrafts(scope);

@@ -30,7 +30,7 @@ import { ClientReferralsDocument } from './__generated__/Referrals.generated';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,
-} from './referralDraft';
+} from '../../../draft/referralDraft';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
 vi.mock('expo-crypto', async () => ({
   randomUUID: (await import('node:crypto')).randomUUID,

@@ -1,4 +1,4 @@
-import type { ReferralDraftSeed } from './referralDraft';
+import type { ReferralDraftSeed } from '../../../draft/referralDraft';
 import { prepareIntakeReuse } from './intakeReuse';
 import {
   canEditReferralNotes,

@@ -24,7 +24,7 @@ import { ModalScreenContext } from '../../../providers/modalScreen/ModalScreenCo
 import type { TShowModalScreenProps } from '../../../providers/modalScreen/types';
 import type { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ReferralsTab } from './ReferralsTab';
-import { createReferralDraftStore } from './referralDraft';
+import { createReferralDraftStore } from '../../../draft/referralDraft';
 import {
   buildReferralNotes,
   decodeReferralNotes,

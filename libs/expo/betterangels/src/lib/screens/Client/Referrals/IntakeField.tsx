@@ -17,7 +17,7 @@ import {
   type IntakeControlValue,
   type IntakeFieldDefinition,
   type IntakeFieldKey,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 type FormField = IntakeFieldDefinition & { key: IntakeFieldKey };
 
 export function Field({

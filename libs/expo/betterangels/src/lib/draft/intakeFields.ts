@@ -1,5 +1,5 @@
 import { parseDateString, toDateString } from '@monorepo/shared/scalars';
-import type { CreateReferralInput } from '../../../apollo';
+import type { CreateReferralInput } from '../apollo';
 import {
   enumDisplayAccessibilityChoices,
   enumDisplayDemographics,
@@ -7,9 +7,8 @@ import {
   enumDisplayPetChoices,
   enumDisplaySpecialSituationRestrictionChoices,
   enumDisplayStorageChoices,
-} from '../../../static';
-import type { SheltersQuery } from './__generated__/Shelters.generated';
-import { compareReferralLabels } from './referralPresentation';
+} from '../static';
+import { compareReferralLabels } from '../util/compareReferralLabels';
 
 export type IntakeOption<TValue extends string = string> = {
   readonly value: TValue;
@@ -38,11 +37,10 @@ export type IntakeBackendMapping =
       readonly payloadKey: string;
     };
 
-type QueriedShelter = SheltersQuery['shelters']['results'][number];
-export type ShelterMatchCategory = Extract<
-  keyof QueriedShelter,
-  'pets' | 'demographics' | 'accessibility'
->;
+// Mirrors the three attribute lists the shelters query returns. Declared here
+// rather than derived from the generated query so the intake contract does not
+// depend on a screen's __generated__ folder.
+export type ShelterMatchCategory = 'pets' | 'demographics' | 'accessibility';
 
 type FieldMetadata = {
   readonly key: string;

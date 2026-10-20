@@ -45,12 +45,12 @@ import {
   useReferralDraftStore,
 } from './ReferralDraftProvider';
 import { ReferralsHelp } from './ReferralsHelp';
-import type { ReferralDraftStore } from './referralDraft';
+import type { ReferralDraftStore } from '../../../draft/referralDraft';
 import {
   getPersistentReferralDraft,
   hasLegacyReferralDraft,
   recoverLegacyReferralDraft,
-} from './referralDraftStorage';
+} from '../../../draft/referralDraftStorage';
 import {
   ClientReferralsDocument,
   ClientReferralsQuery,

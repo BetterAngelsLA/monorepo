@@ -17,7 +17,7 @@ import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ReferralsTab } from './ReferralsTab';
 import { REFERRALS_PAGE_SIZE } from './constants';
 import { ClientReferralsDocument } from './__generated__/Referrals.generated';
-import { createReferralDraftStore } from './referralDraft';
+import { createReferralDraftStore } from '../../../draft/referralDraft';
 import { randomUUID } from 'node:crypto';
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());

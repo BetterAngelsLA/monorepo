@@ -3,7 +3,7 @@ import {
   INTAKE_FIELDS,
   getIntakeField,
   isIntakeFieldValue,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 import { prepareIntakeReuse } from './intakeReuse';
 import {
   buildReferralNotes,

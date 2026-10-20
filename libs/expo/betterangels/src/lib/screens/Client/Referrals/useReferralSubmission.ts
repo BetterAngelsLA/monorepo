@@ -17,8 +17,8 @@ import {
 import type {
   ReferralDraftStore,
   ReferralSubmissionAttempt,
-} from './referralDraft';
-import { missingRequiredIntakeFields } from './intakeFields';
+} from '../../../draft/referralDraft';
+import { missingRequiredIntakeFields } from '../../../draft/intakeFields';
 import {
   buildReferralNotes,
   updateReferralNotes,

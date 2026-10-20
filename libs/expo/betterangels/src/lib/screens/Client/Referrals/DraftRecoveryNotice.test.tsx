@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { randomUUID } from 'node:crypto';
 import { uiComponents } from '../../../../__mocks__/sharedBarrels';
-import { createReferralDraftStore } from './referralDraft';
+import { createReferralDraftStore } from '../../../draft/referralDraft';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
 import { DraftRecoveryNotice } from './DraftRecoveryNotice';
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());

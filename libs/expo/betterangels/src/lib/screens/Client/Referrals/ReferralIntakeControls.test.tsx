@@ -3,12 +3,12 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
-import { INTAKE_FIELDS } from './intakeFields';
+import { INTAKE_FIELDS } from '../../../draft/intakeFields';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,
-} from './referralDraft';
+} from '../../../draft/referralDraft';
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
 vi.mock('@monorepo/expo/shared/icons', () => icons());

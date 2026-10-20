@@ -28,7 +28,7 @@ import { ReferralsTab } from './ReferralsTab';
 import {
   getPersistentReferralDraft,
   releaseReferralDraftSession,
-} from './referralDraftStorage';
+} from '../../../draft/referralDraftStorage';
 import { buildReferralNotes } from './referralIntakeSidecar';
 
 const imageSharing = vi.hoisted(() => ({

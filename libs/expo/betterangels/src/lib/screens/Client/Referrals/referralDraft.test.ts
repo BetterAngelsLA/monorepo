@@ -7,8 +7,8 @@ import {
 import {
   createReferralDraftStore,
   type DraftPersistence,
-} from './referralDraft';
-import type { IntakeFieldKey } from './intakeFields';
+} from '../../../draft/referralDraft';
+import type { IntakeFieldKey } from '../../../draft/intakeFields';
 import {
   buildReferralNotes,
   decodeReferralNotes,

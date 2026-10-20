@@ -8,7 +8,7 @@ import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import useAppState from '../../hooks/appState/useAppState';
-import { useReferralDraftSession } from '../../screens/Client/Referrals/useReferralDraftSession';
+import { useReferralDraftSession } from '../../draft/useReferralDraftSession';
 import {
   CurrentUserDocument,
   CurrentUserQuery,
