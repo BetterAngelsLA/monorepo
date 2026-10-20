@@ -44,6 +44,10 @@ import {
   useReferralDraft,
   useReferralDraftStore,
 } from './ReferralDraftProvider';
+import {
+  ReferralPermissionsProvider,
+  useReferralPermissions,
+} from './ReferralPermissions';
 import { ReferralsHelp } from './ReferralsHelp';
 import type { ReferralDraftStore } from '../../../draft/referralDraft';
 import {
@@ -69,12 +73,36 @@ type TProps = {
 
 export function ReferralsTab({ client, draftStore }: TProps) {
   if (!client) return <ActivityIndicator />;
-  if (!draftStore) return <PersistentReferralsTab client={client} />;
   return (
-    <ReferralDraftProvider store={draftStore}>
-      <ReferralsContent client={client} clientId={client.clientProfile.id} />
-    </ReferralDraftProvider>
+    <ReferralPermissionsProvider>
+      <ReferralGate>
+        {!draftStore ? (
+          <PersistentReferralsTab client={client} />
+        ) : (
+          <ReferralDraftProvider store={draftStore}>
+            <ReferralsContent
+              client={client}
+              clientId={client.clientProfile.id}
+            />
+          </ReferralDraftProvider>
+        )}
+      </ReferralGate>
+    </ReferralPermissionsProvider>
   );
+}
+
+/** The screen-level gate: hiding the tab is not enough for a deep link. */
+function ReferralGate({ children }: { children: ReactNode }) {
+  const { canView } = useReferralPermissions();
+  if (!canView)
+    return (
+      <View style={styles.centered}>
+        <TextRegular color={Colors.ERROR} accessibilityLiveRegion="polite">
+          You do not have permission to view referrals.
+        </TextRegular>
+      </View>
+    );
+  return <>{children}</>;
 }
 
 function PersistentReferralsTab({ client }: Pick<TProps, 'client'>) {
@@ -448,6 +476,7 @@ function DraftHeaderActions({
   onCreate: () => void;
 }) {
   const { draft, recovery } = useReferralDraft();
+  const { canCreate } = useReferralPermissions();
   if (draft?.clientId === clientId) {
     return (
       <Pressable
@@ -464,7 +493,7 @@ function DraftHeaderActions({
       </Pressable>
     );
   }
-  if (recovery) return null;
+  if (recovery || !canCreate) return null;
   return (
     <IconButton
       testID="create-referral-btn"

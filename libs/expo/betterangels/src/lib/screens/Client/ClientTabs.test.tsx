@@ -10,7 +10,13 @@ import { render, screen } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 
-const flags = vi.hoisted(() => ({ referrals: false }));
+const flags = vi.hoisted(() => ({ referrals: false, canView: true }));
+
+vi.mock('@monorepo/ba-platform', () => ({
+  useActiveOrg: () => ({
+    hasPermission: () => flags.canView,
+  }),
+}));
 
 vi.mock('@monorepo/react/shared', () => ({
   useFeatureFlagActive: (name: string) =>
@@ -37,11 +43,23 @@ it('hides the Referrals tab while ffReferrals is off', async () => {
   expect(screen.getByTestId('client-tab-profile')).toBeOnTheScreen();
 });
 
-it('shows the Referrals tab when ffReferrals is on', async () => {
+it('shows the Referrals tab when ffReferrals is on and referrals.view_referral is granted', async () => {
   flags.referrals = true;
+  flags.canView = true;
   await render(
     <ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />,
   );
 
   expect(screen.getByTestId('client-tab-referrals')).toBeOnTheScreen();
+});
+
+it('hides the Referrals tab without referrals.view_referral, even when the flag is on', async () => {
+  flags.referrals = true;
+  flags.canView = false;
+  await render(
+    <ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />,
+  );
+
+  expect(screen.queryByTestId('client-tab-referrals')).toBeNull();
+  expect(screen.getByTestId('client-tab-profile')).toBeOnTheScreen();
 });

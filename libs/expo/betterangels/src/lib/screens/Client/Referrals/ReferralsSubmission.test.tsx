@@ -49,6 +49,17 @@ vi.mock('../../../providers/user/UserProvider', () => ({
 }));
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
+// The screen always supplies ReferralPermissionsProvider; these harnesses stub
+// the active-org hook so the injected-store path has deterministic gates.
+const gates = vi.hoisted(() => ({
+  canView: true,
+  canCreate: true,
+  canChange: true,
+}));
+vi.mock('../../../hooks/referral/useReferralGates', () => ({
+  useActiveReferralGates: () => gates,
+}));
+
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));

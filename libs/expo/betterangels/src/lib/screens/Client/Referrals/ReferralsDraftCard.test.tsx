@@ -21,6 +21,17 @@ import { createReferralDraftStore } from '../../../draft/referralDraft';
 import { randomUUID } from 'node:crypto';
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
+// The screen always supplies ReferralPermissionsProvider; these harnesses stub
+// the active-org hook so the injected-store path has deterministic gates.
+const gates = vi.hoisted(() => ({
+  canView: true,
+  canCreate: true,
+  canChange: true,
+}));
+vi.mock('../../../hooks/referral/useReferralGates', () => ({
+  useActiveReferralGates: () => gates,
+}));
+
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
@@ -66,7 +77,7 @@ const emptyReferrals = [
   },
 ];
 
-const renderTabWithDraft = async () => {
+const renderTab = async (withDraft = true) => {
   const store = createReferralDraftStore(
     {
       load: () => null,
@@ -75,7 +86,7 @@ const renderTabWithDraft = async () => {
     },
     randomUUID,
   );
-  store.startNew(CLIENT_ID);
+  if (withDraft) store.startNew(CLIENT_ID);
   await render(
     <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
       <ReferralsTab client={client} draftStore={store} />
@@ -84,7 +95,10 @@ const renderTabWithDraft = async () => {
   return store;
 };
 
+const renderTabWithDraft = () => renderTab();
+
 beforeEach(() => {
+  Object.assign(gates, { canView: true, canCreate: true, canChange: true });
   showModalScreen.mockClear();
 });
 
@@ -125,5 +139,22 @@ describe('referral draft card', () => {
     expect(showModalScreen).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Refer to Shelter' }),
     );
+  });
+});
+
+describe('referral permission gates', () => {
+  it('replaces the screen with an access message without referrals.view_referral', async () => {
+    gates.canView = false;
+    await renderTab(false);
+
+    expect(screen.getByText(/do not have permission/)).toBeOnTheScreen();
+    expect(screen.queryByTestId('referrals-screen')).toBeNull();
+  });
+
+  it('hides the create affordance without referrals.add_referral', async () => {
+    gates.canCreate = false;
+    await renderTab(false);
+
+    expect(screen.queryByTestId('create-referral-btn')).toBeNull();
   });
 });

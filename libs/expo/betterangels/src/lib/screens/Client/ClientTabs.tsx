@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { FeatureFlags } from '../../static';
+import { useActiveReferralGates } from '../../hooks/referral/useReferralGates';
 
 export enum ClientViewTabEnum {
   Profile = 'Profile',
@@ -37,13 +38,16 @@ interface IClientTabsProps {
 
 export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
   const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
+  const { canView: canViewReferrals } = useActiveReferralGates();
 
   const visibleTabs = useMemo(
     () =>
       orderedTabs.filter(
-        (t) => t !== ClientViewTabEnum.Referrals || referralsEnabled,
+        (t) =>
+          t !== ClientViewTabEnum.Referrals ||
+          (referralsEnabled && canViewReferrals),
       ),
-    [referralsEnabled],
+    [canViewReferrals, referralsEnabled],
   );
 
   return (
