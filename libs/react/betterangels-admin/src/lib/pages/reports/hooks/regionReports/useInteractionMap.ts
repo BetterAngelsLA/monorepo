@@ -7,6 +7,9 @@ import {
   type InteractionMapQueryVariables,
 } from './__generated__/regions.generated';
 
+/** The server's `POINT_LIMIT_MAX` in `regions/selectors.py`; clusters have no tile path. */
+const CLUSTER_POINT_LIMIT = 50_000;
+
 /** One interaction location, as returned by `interactionMap`. */
 export type InteractionPointType =
   InteractionMapQuery['interactionMap']['points'][number];
@@ -31,9 +34,12 @@ type UseInteractionMapArgs = {
  * Where the interactions were, as individual points.
  *
  * `truncated` says the point cap was reached, which the UI must surface: a partial map
- * that looks complete is worse than no map. The cap is the server's own (`POINT_LIMIT`,
- * 10 000); the client does not ask for another, so the answer is the endpoint's standard
- * read.
+ * that looks complete is worse than no map.
+ *
+ * The client asks for the server's maximum (`POINT_LIMIT_MAX`, 50 000) rather than the
+ * server's 10 000 default. The clusters view is point-based and client-clustered, so it is
+ * the one path the density tiles do not cover; 20 000 notes otherwise truncate while the
+ * heatmap and the table are complete. The flag stays for volumes above the maximum.
  *
  * Coordinates only. There is deliberately no client or note field on this query,
  * and it is authorized by the note read scope rather than the report scope alone.
@@ -60,6 +66,7 @@ export function useInteractionMap({
       endDate,
       dimension,
       regionCodes,
+      limit: CLUSTER_POINT_LIMIT,
     },
     skip: !organizationId || !enabled,
   });

@@ -35,6 +35,7 @@ query InteractionMap(
   $startDate: Date
   $endDate: Date
   $regionCodes: [String!]
+  $limit: Int
 ) {
   interactionMap(
     organizationId: $organizationId
@@ -42,6 +43,7 @@ query InteractionMap(
     endDate: $endDate
     dimension: $dimension
     regionCodes: $regionCodes
+    limit: $limit
   ) {
     points {
       latitude
