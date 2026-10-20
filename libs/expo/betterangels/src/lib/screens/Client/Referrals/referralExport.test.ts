@@ -1,5 +1,7 @@
 import {
+  AccessibilityChoices,
   AdaAccommodationEnum,
+  DemographicChoices,
   ReferralStatusEnum,
   VeteranStatusEnum,
 } from '../../../apollo';
@@ -320,4 +322,60 @@ it('identifies unrecognized or invalid saved answers instead of presenting a com
   expect(text).not.toContain('DO NOT LEAK');
   expect(text).not.toContain('OLD_PET');
   expect(text).toContain('Able to practice self-care: No');
+});
+
+it('treats protected-class and disability answers as sensitive by default', () => {
+  const notes = encodeReferralNotes('', {
+    demographics: [DemographicChoices.LgbtqPlus],
+    accessibility: [AccessibilityChoices.WheelchairAccessible],
+  });
+  const standard = buildReferralTextCopy({
+    ...source,
+    referral: { ...referral, notes },
+  }).text;
+  expect(standard).toContain(
+    'Household / demographic fit [Sensitive]: Excluded (sensitive)',
+  );
+  expect(standard).toContain(
+    'Accessibility needs [Sensitive]: Excluded (sensitive)',
+  );
+  expect(standard).not.toContain('LGBTQ+');
+  expect(standard).not.toContain('Wheelchair Accessible');
+
+  const full = buildReferralTextCopy({
+    ...source,
+    referral: { ...referral, notes },
+    includePrivate: true,
+  }).text;
+  expect(full).toContain('Household / demographic fit [Sensitive]: LGBTQ+');
+  expect(full).toContain(
+    'Accessibility needs [Sensitive]: Wheelchair Accessible',
+  );
+});
+
+it('withholds a recorded sensitive answer without claiming it is missing', () => {
+  const standard = buildReferralTextCopy(source).text;
+  expect(standard).toContain('Substances [Sensitive]: Excluded (sensitive)');
+  expect(standard).not.toContain('Sensitive answer');
+});
+
+it('reports an unanswered sensitive field as Not recorded, not as withheld', () => {
+  const { text } = buildReferralTextCopy({
+    ...source,
+    referral: {
+      ...referral,
+      notes: encodeReferralNotes('', { selfcare: 'No' }),
+    },
+    profile: null,
+  });
+  for (const label of [
+    'Substances [Sensitive]',
+    'Special Situations [Sensitive]',
+    'Staff Observations / Notes [Sensitive]',
+    'Accommodations [Sensitive]',
+  ]) {
+    expect(text).toContain(`${label}: Not recorded`);
+    expect(text).not.toContain(`${label}: Excluded`);
+  }
+  expect(text).toContain('Not recorded means unknown, not No');
 });
