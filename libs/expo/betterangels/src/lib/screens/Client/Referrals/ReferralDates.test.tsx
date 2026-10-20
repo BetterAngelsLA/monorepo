@@ -3,8 +3,17 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { DraftCard } from './DraftCard';
 import { ReferralCard } from './ReferralCard';
+import { ReferralPermissionsProvider } from './ReferralPermissions';
 import { RequestedArrivalDate } from './RequestedArrivalDate';
 import { encodeReferralNotes } from './referralIntakeSidecar';
+
+vi.mock('../../../hooks/referral/useReferralGates', () => ({
+  useActiveReferralGates: () => ({
+    canView: true,
+    canCreate: true,
+    canChange: true,
+  }),
+}));
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
 vi.mock('@monorepo/expo/shared/icons', () => icons());
@@ -78,12 +87,14 @@ it('keeps original Referred metadata separate from the prominent saved arrival',
   };
   const before = JSON.stringify(referral);
   await render(
-    <ReferralCard
-      referral={referral}
-      clientName="Fictional client"
-      onEdit={vi.fn()}
-      onReferAgain={vi.fn()}
-    />,
+    <ReferralPermissionsProvider>
+      <ReferralCard
+        referral={referral}
+        clientName="Fictional client"
+        onEdit={vi.fn()}
+        onReferAgain={vi.fn()}
+      />
+    </ReferralPermissionsProvider>,
   );
   const card = within(screen.getByTestId('referral-card-saved'));
   expect(card.getByText('Referred: 10/10/2026')).toBeOnTheScreen();

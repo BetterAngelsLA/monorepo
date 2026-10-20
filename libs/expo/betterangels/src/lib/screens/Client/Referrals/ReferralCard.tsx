@@ -14,6 +14,7 @@ import { shelterAttributeLabels } from './shelterAttributes';
 import { formatReferralDate } from './referralPresentation';
 import type { ProfileCardData } from './referralProfile';
 import { RequestedArrivalDate } from './RequestedArrivalDate';
+import { useReferralPermissions } from './ReferralPermissions';
 
 // A card reads the intake answers stored on the referral (in the shelter's own
 // vocabulary — see clientNeeds.ts), so it reflects the needs as they were
@@ -34,6 +35,7 @@ export function ReferralCard({
   onEdit,
   onReferAgain,
 }: ReferralCardProps) {
+  const { canChange, canCreate } = useReferralPermissions();
   const referrerName = referral.createdBy
     ? `${referral.createdBy.firstName ?? ''} ${
         referral.createdBy.lastName ?? ''
@@ -102,22 +104,30 @@ export function ReferralCard({
           Notes: {humanNotes}
         </TextRegular>
       ) : null}
-      <View style={styles.cardTopRow}>
-        <Pressable
-          testID={`edit-referral-${referral.id}`}
-          accessibilityRole="button"
-          onPress={onEdit}
-        >
-          <TextBold color={Colors.PRIMARY}>Edit referral</TextBold>
-        </Pressable>
-        <Pressable
-          testID={`reuse-referral-${referral.id}`}
-          accessibilityRole="button"
-          onPress={onReferAgain}
-        >
-          <TextBold color={Colors.PRIMARY}>Refer to another shelter</TextBold>
-        </Pressable>
-      </View>
+      {(canChange || canCreate) && (
+        <View style={styles.cardTopRow}>
+          {canChange && (
+            <Pressable
+              testID={`edit-referral-${referral.id}`}
+              accessibilityRole="button"
+              onPress={onEdit}
+            >
+              <TextBold color={Colors.PRIMARY}>Edit referral</TextBold>
+            </Pressable>
+          )}
+          {canCreate && (
+            <Pressable
+              testID={`reuse-referral-${referral.id}`}
+              accessibilityRole="button"
+              onPress={onReferAgain}
+            >
+              <TextBold color={Colors.PRIMARY}>
+                Refer to another shelter
+              </TextBold>
+            </Pressable>
+          )}
+        </View>
+      )}
       {intakeSummary ? (
         <TextRegular size="xs" color={Colors.NEUTRAL}>
           Intake (temporary): {intakeSummary}

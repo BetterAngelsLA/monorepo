@@ -64,6 +64,9 @@ vi.mock('../../hooks', () => ({
 // the modal's own confirm button.
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
   Avatar: () => null,
+  TextRegular: ({ children }: { children?: ReactNode }) => (
+    <Text>{children}</Text>
+  ),
   Button: ({
     title,
     onPress,

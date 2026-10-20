@@ -1,6 +1,5 @@
 import { useMutation } from '@apollo/client/react';
 import { useApiConfig } from '@monorepo/ba-platform';
-import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Avatar,
@@ -12,7 +11,6 @@ import {
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { FeatureFlags } from '../../static';
 import { ReferralDraftRetention } from '../Client/Referrals/ReferralDraftRetention';
 import { discardAccountReferralDrafts } from '../Client/Referrals/referralDraftStorage';
 import {
@@ -26,7 +24,6 @@ import InfoCard from './InfoCard';
 export default function UserProfile() {
   const { user } = useUser();
   const { apiUrl } = useApiConfig();
-  const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
   const { showSnackbar } = useSnackbar();
 
   if (!user) throw new Error('Something went wrong');
@@ -142,9 +139,7 @@ export default function UserProfile() {
           <InfoCard key={index} title={item.title} value={item.value} />
         ))}
 
-        {referralsEnabled && (
-          <ReferralDraftRetention account={{ apiUrl, userId: user.id }} />
-        )}
+        <ReferralDraftRetention account={{ apiUrl, userId: user.id }} />
         <DeleteModal
           body={`All data associated with your account will be deleted. This action cannot be undone.`}
           title={`Permanently delete your account?`}
