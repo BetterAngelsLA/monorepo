@@ -505,7 +505,7 @@ export function RegionMap({
           type="warning"
           showIcon
           message="Showing the most recent interactions only"
-          description="There are more interactions in this range than the map can plot, so these clusters are a subset — the counts and table below are complete."
+          description="There are more interactions in this range than the map can plot, so these clusters are a subset. The table and totals below are complete."
         />
       )}
     </div>
