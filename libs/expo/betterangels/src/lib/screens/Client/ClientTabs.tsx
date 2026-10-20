@@ -1,8 +1,6 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { toTestId } from '@monorepo/expo/shared/utils';
-import { useActiveOrg } from '@monorepo/ba-platform';
-import { ReferralPermissions } from '@monorepo/ba-platform/permissions';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import {
@@ -13,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { FeatureFlags } from '../../static';
+import { useActiveReferralGates } from '../../hooks/referral/useReferralGates';
 
 export enum ClientViewTabEnum {
   Profile = 'Profile',
@@ -39,8 +38,7 @@ interface IClientTabsProps {
 
 export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
   const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
-  const { hasPermission } = useActiveOrg();
-  const canViewReferrals = hasPermission(ReferralPermissions.View);
+  const { canView: canViewReferrals } = useActiveReferralGates();
 
   const visibleTabs = useMemo(
     () =>

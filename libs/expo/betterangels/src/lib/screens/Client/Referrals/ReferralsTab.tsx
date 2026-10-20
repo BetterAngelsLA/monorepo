@@ -73,12 +73,36 @@ type TProps = {
 
 export function ReferralsTab({ client, draftStore }: TProps) {
   if (!client) return <ActivityIndicator />;
-  if (!draftStore) return <PersistentReferralsTab client={client} />;
   return (
-    <ReferralDraftProvider store={draftStore}>
-      <ReferralsContent client={client} clientId={client.clientProfile.id} />
-    </ReferralDraftProvider>
+    <ReferralPermissionsProvider>
+      <ReferralGate>
+        {!draftStore ? (
+          <PersistentReferralsTab client={client} />
+        ) : (
+          <ReferralDraftProvider store={draftStore}>
+            <ReferralsContent
+              client={client}
+              clientId={client.clientProfile.id}
+            />
+          </ReferralDraftProvider>
+        )}
+      </ReferralGate>
+    </ReferralPermissionsProvider>
   );
+}
+
+/** The screen-level gate: hiding the tab is not enough for a deep link. */
+function ReferralGate({ children }: { children: ReactNode }) {
+  const { canView } = useReferralPermissions();
+  if (!canView)
+    return (
+      <View style={styles.centered}>
+        <TextRegular color={Colors.ERROR} accessibilityLiveRegion="polite">
+          You do not have permission to view referrals.
+        </TextRegular>
+      </View>
+    );
+  return <>{children}</>;
 }
 
 function PersistentReferralsTab({ client }: Pick<TProps, 'client'>) {
@@ -111,7 +135,6 @@ function PersistentReferralsTab({ client }: Pick<TProps, 'client'>) {
   const store = getPersistentReferralDraft(scope);
   return (
     <ReferralDraftProvider key={JSON.stringify(scope)} store={store}>
-      <ReferralPermissionsProvider>
       {!store.getSnapshot() &&
         !store.getRecoveryState() &&
         hasLegacyReferralDraft(clientId) && (
@@ -147,7 +170,6 @@ function PersistentReferralsTab({ client }: Pick<TProps, 'client'>) {
           </Pressable>
         )}
       <ReferralsContent client={client} clientId={clientId} />
-      </ReferralPermissionsProvider>
     </ReferralDraftProvider>
   );
 }

@@ -44,6 +44,17 @@ vi.mock('../../../providers/user/UserProvider', () => ({
 // See sharedBarrels.tsx: the shared barrels pull in native-backed components
 // whose native halves don't exist under test. `static` stays real.
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
+// The screen always supplies ReferralPermissionsProvider; these harnesses stub
+// the active-org hook so the injected-store path has deterministic gates.
+const gates = vi.hoisted(() => ({
+  canView: true,
+  canCreate: true,
+  canChange: true,
+}));
+vi.mock('../../../hooks/referral/useReferralGates', () => ({
+  useActiveReferralGates: () => gates,
+}));
+
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
 vi.mock('react-native-safe-area-context', () => ({

@@ -1,17 +1,19 @@
-import { ReferralPermissions } from '@monorepo/ba-platform/permissions';
 import { render, screen } from '@testing-library/react-native';
+import { Component, type ReactNode } from 'react';
 import { Text } from 'react-native';
 import {
   ReferralPermissionsProvider,
   useReferralPermissions,
 } from './ReferralPermissions';
 
-const granted = vi.hoisted(() => new Set<string>());
+const gates = vi.hoisted(() => ({
+  canView: true,
+  canCreate: true,
+  canChange: false,
+}));
 
-vi.mock('@monorepo/ba-platform', () => ({
-  useActiveOrg: () => ({
-    hasPermission: (permission: string) => granted.has(permission),
-  }),
+vi.mock('../../../hooks/referral/useReferralGates', () => ({
+  useActiveReferralGates: () => gates,
 }));
 
 function Probe() {
@@ -21,11 +23,7 @@ function Probe() {
   );
 }
 
-beforeEach(() => granted.clear());
-
-it('maps the active org permissions to the referral gates', async () => {
-  granted.add(ReferralPermissions.View);
-  granted.add(ReferralPermissions.Add);
+it('exposes the active gates through the provider', async () => {
   await render(
     <ReferralPermissionsProvider>
       <Probe />
@@ -34,16 +32,33 @@ it('maps the active org permissions to the referral gates', async () => {
   expect(screen.getByTestId('gates')).toHaveTextContent('true/true/false');
 });
 
-it('denies every gate when the active org grants nothing', async () => {
-  await render(
-    <ReferralPermissionsProvider>
-      <Probe />
-    </ReferralPermissionsProvider>,
-  );
-  expect(screen.getByTestId('gates')).toHaveTextContent('false/false/false');
-});
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { message: string | null }
+> {
+  state: { message: string | null } = { message: null };
 
-it('falls back to the permissive default outside the provider', async () => {
-  await render(<Probe />);
-  expect(screen.getByTestId('gates')).toHaveTextContent('true/true/true');
+  static getDerivedStateFromError(error: Error) {
+    return { message: error.message };
+  }
+
+  render() {
+    return this.state.message ? (
+      <Text testID="gate-error">{this.state.message}</Text>
+    ) : (
+      this.props.children
+    );
+  }
+}
+
+it('fails closed without the provider instead of allowing every action', async () => {
+  // The old permissive default made a missing provider look like full access.
+  await render(
+    <ErrorBoundary>
+      <Probe />
+    </ErrorBoundary>,
+  );
+  expect(screen.getByTestId('gate-error')).toHaveTextContent(
+    /ReferralPermissionsProvider/,
+  );
 });

@@ -1,44 +1,24 @@
-import { useActiveOrg } from '@monorepo/ba-platform';
-import { ReferralPermissions } from '@monorepo/ba-platform/permissions';
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
+import {
+  useActiveReferralGates,
+  type ReferralGates,
+} from '../../../hooks/referral/useReferralGates';
+
+export type { ReferralGates } from '../../../hooks/referral/useReferralGates';
 
 /**
- * The referral actions this session may use. `hasPermission` is the org-scoped
- * gate from the active-organization provider (ADR 0001 §5.2): a permission the
- * active org does not grant is never satisfied by a global one.
+ * Fail-closed by design: there is no default value. A surface that renders
+ * referral actions without the provider throws instead of silently allowing
+ * them, which is what the previous permissive default did.
  */
-export type ReferralGates = Readonly<{
-  canView: boolean;
-  canCreate: boolean;
-  canChange: boolean;
-}>;
-
-/**
- * Permissive default for tests and for surfaces that are reached only after a
- * real gate (the tab itself). The app path always supplies the provider below.
- */
-const ALLOWED: ReferralGates = {
-  canView: true,
-  canCreate: true,
-  canChange: true,
-};
-
-const ReferralGatesContext = createContext<ReferralGates>(ALLOWED);
+const ReferralGatesContext = createContext<ReferralGates | null>(null);
 
 export function ReferralPermissionsProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  const { hasPermission } = useActiveOrg();
-  const gates = useMemo<ReferralGates>(
-    () => ({
-      canView: hasPermission(ReferralPermissions.View),
-      canCreate: hasPermission(ReferralPermissions.Add),
-      canChange: hasPermission(ReferralPermissions.Change),
-    }),
-    [hasPermission],
-  );
+  const gates = useActiveReferralGates();
   return (
     <ReferralGatesContext.Provider value={gates}>
       {children}
@@ -47,5 +27,10 @@ export function ReferralPermissionsProvider({
 }
 
 export function useReferralPermissions(): ReferralGates {
-  return useContext(ReferralGatesContext);
+  const gates = useContext(ReferralGatesContext);
+  if (!gates)
+    throw new Error(
+      'useReferralPermissions must be used within ReferralPermissionsProvider',
+    );
+  return gates;
 }
