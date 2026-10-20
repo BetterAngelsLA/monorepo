@@ -32,7 +32,12 @@ appId: ${MAESTRO_APP_ID}
 
 - assertVisible: 'Referral information'
 
-- assertVisible: '.*Saved to a dedicated field.*'
+# Dev-only legend: ReferralIntakeForm renders it behind `__DEV__`, which is
+# true for local Metro sessions but false for the EAS Update bundles the CI
+# builds load — so assert it when present instead of failing CI on it.
+- assertVisible:
+    text: '.*Saved to a dedicated field.*'
+    optional: true
 
 # ── Answer intake fields ────────────────────────────────────────────────────
 # Storage's requirement is pending; the test supplies it to verify persistence.
