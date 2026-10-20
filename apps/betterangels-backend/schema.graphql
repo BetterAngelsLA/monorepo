@@ -906,6 +906,13 @@ type DemographicType {
   name: DemographicChoices
 }
 
+type DensityScaleType {
+  p50: Float!
+  p90: Float!
+  p95: Float!
+  max: Int!
+}
+
 type DjangoFileType {
   name: String!
   path: String!
@@ -2140,8 +2147,9 @@ type Query {
   interactionsByRegion(organizationId: ID!, dimension: RegionDimension = null, startDate: Date = null, endDate: Date = null, regionCodes: [String!] = null): [RegionCountType!]!
   interactionMap(organizationId: ID!, startDate: Date = null, endDate: Date = null, limit: Int = null, dimension: RegionDimension = null, regionCodes: [String!] = null): InteractionMapType!
   interactionScope(organizationId: ID!, startDate: Date = null, endDate: Date = null): InteractionScopeType!
+  densityScale(organizationId: ID!, zoom: Int!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): DensityScaleType
   regionDimensions: [RegionDimensionInfo!]!
-  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
+  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
