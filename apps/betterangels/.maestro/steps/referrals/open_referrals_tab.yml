@@ -32,32 +32,39 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - tapOn: 'See Details'
 
-# The tab strip is a horizontal ScrollView and `scrollUntilVisible` does not
-# reliably drag it, so swipe the tab row left to bring Referrals into view.
-# The row's Y depends on the client header (and the device aspect ratio), so
-# try a few offsets and fall back when the Referrals screen is not reached.
+# The client tabs live in a horizontal ScrollView, so Referrals can sit
+# off-screen. How to reach it is platform-dependent:
+#   - Android: `scrollUntilVisible` drives the native strip, and the fixed swipe
+#     offsets below do not line up with its shorter header — scroll natively
+#     first.
+#   - iOS: `scrollUntilVisible` does not reliably drag the strip, so swipe it.
+#     The row's Y moves with the client header and the device aspect ratio, so
+#     the fallbacks retry nearby offsets before failing.
 - assertVisible:
     id: client-tabs-strip
 
-- swipe:
-    start: '90%, 30%'
-    end: '10%, 30%'
-    duration: 400
-
-- waitForAnimationToEnd
-
-- tapOn:
-    id: client-tab-referrals
-    optional: true
+- runFlow:
+    when:
+      platform: android
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: client-tab-referrals
+          direction: RIGHT
+          timeout: 10000
+          optional: true
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
 
 - runFlow:
     when:
-      notVisible:
-        id: referrals-screen
+      platform: ios
     commands:
       - swipe:
-          start: '90%, 31%'
-          end: '10%, 31%'
+          start: '90%, 30%'
+          end: '10%, 30%'
           duration: 400
       - waitForAnimationToEnd
       - tapOn:
@@ -70,8 +77,36 @@ appId: ${MAESTRO_APP_ID}
         id: referrals-screen
     commands:
       - swipe:
-          start: '90%, 32%'
-          end: '10%, 32%'
+          start: '90%, 27%'
+          end: '10%, 27%'
+          duration: 400
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          start: '90%, 29%'
+          end: '10%, 29%'
+          duration: 400
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          start: '90%, 31%'
+          end: '10%, 31%'
           duration: 400
       - waitForAnimationToEnd
       - tapOn:
