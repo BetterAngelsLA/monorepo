@@ -1,9 +1,36 @@
-import { Share } from 'react-native';
+import { Platform, Share } from 'react-native';
 import {
   shareReferralPng,
   shareReferralText,
   shareReferralTextFile,
 } from './shareReferralText';
+
+const browser = vi.hoisted(() => ({
+  download: vi.fn(
+    (_contents: unknown, _filename: string, _type: string) => true,
+  ),
+}));
+
+vi.mock('@monorepo/expo/shared/utils', () => ({
+  downloadBlobInBrowser: browser.download,
+}));
+
+const setPlatform = (os: string) =>
+  Object.defineProperty(Platform, 'OS', {
+    configurable: true,
+    value: os,
+  });
+
+beforeEach(() => {
+  setPlatform('ios');
+  browser.download.mockReset();
+  browser.download.mockReturnValue(true);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  setPlatform('ios');
+});
 
 const native = vi.hoisted(() => ({
   files: new Map<string, { text: string; modified: number }>(),
@@ -210,4 +237,84 @@ it('prunes only expired export-cache files, keeping recent handoffs and other ca
   expect(native.files.has('/cache/referral-exports/old.txt')).toBe(false);
   expect(native.files.has('/cache/referral-exports/recent.txt')).toBe(true);
   expect(native.files.has('/cache/other.txt')).toBe(true);
+});
+
+it('downloads a text file on web instead of using the native share sheet', async () => {
+  setPlatform('web');
+
+  await shareReferralTextFile(copy, () => true);
+
+  expect(browser.download).toHaveBeenCalledWith(
+    copy.text,
+    'referral-new-id.txt',
+    'text/plain',
+  );
+  expect(native.available).not.toHaveBeenCalled();
+  expect(native.handoff).not.toHaveBeenCalled();
+  expect(native.files.size).toBe(0);
+});
+
+it('downloads real PNG bytes on web', async () => {
+  setPlatform('web');
+
+  await shareReferralPng(
+    async () => png,
+    () => true,
+  );
+
+  const [bytes, filename, type] = browser.download.mock.calls[0];
+  expect(bytes).toBeInstanceOf(Uint8Array);
+  expect((bytes as Uint8Array).length).toBe(atob(png).length);
+  expect(filename).toBe('referral-new-id.png');
+  expect(type).toBe('image/png');
+  expect(native.handoff).not.toHaveBeenCalled();
+});
+
+it('falls back to a text download when the browser has no Web Share API', async () => {
+  setPlatform('web');
+  vi.spyOn(Share, 'share').mockRejectedValueOnce(
+    new Error('Share is not supported in this browser'),
+  );
+
+  await shareReferralText(copy);
+
+  expect(browser.download).toHaveBeenCalledWith(
+    copy.text,
+    'referral-new-id.txt',
+    'text/plain',
+  );
+});
+
+it('uses the browser share sheet when it exists', async () => {
+  setPlatform('web');
+  const share = vi
+    .spyOn(Share, 'share')
+    .mockResolvedValueOnce(undefined as never);
+
+  await shareReferralText(copy);
+
+  expect(share).toHaveBeenCalledOnce();
+  expect(browser.download).not.toHaveBeenCalled();
+});
+
+it('reports a clear failure when the browser can neither share nor download', async () => {
+  setPlatform('web');
+  vi.spyOn(Share, 'share').mockRejectedValueOnce(new Error('not supported'));
+  browser.download.mockReturnValueOnce(false);
+
+  await expect(shareReferralText(copy)).rejects.toThrow(
+    /unavailable in this browser/,
+  );
+});
+
+it('does not download when the user dismisses the browser share sheet', async () => {
+  setPlatform('web');
+  const cancel = Object.assign(new Error('Share canceled'), {
+    name: 'AbortError',
+  });
+  vi.spyOn(Share, 'share').mockRejectedValueOnce(cancel);
+
+  await shareReferralText(copy);
+
+  expect(browser.download).not.toHaveBeenCalled();
 });
