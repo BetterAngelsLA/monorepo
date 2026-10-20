@@ -5,7 +5,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react-native';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { isValidElement, type ReactNode } from 'react';
 import { Colors } from '@monorepo/expo/shared/static';
 import { AdaAccommodationEnum } from '../../../apollo';
@@ -21,6 +21,12 @@ import {
 import type { ReferralImageLayout } from './referralImage';
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
+const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
+
+vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
+  default: () => ({ showSnackbar }),
+}));
+
 vi.mock('./shareReferralText', () => ({
   shareReferralText: vi.fn(),
   shareReferralTextFile: vi.fn(),
@@ -71,6 +77,7 @@ function renderedText(node: ReactNode): string {
 const previewText = () =>
   renderedText(screen.getByTestId('referral-share-preview').props.children);
 beforeEach(() => {
+  showSnackbar.mockReset();
   vi.mocked(shareReferralText).mockReset().mockResolvedValue(undefined);
   vi.mocked(shareReferralTextFile).mockReset().mockResolvedValue(undefined);
   vi.mocked(shareReferralPng).mockReset().mockResolvedValue(undefined);
@@ -227,7 +234,6 @@ it('offers the complete text copy instead of truncating a summary too large for 
 });
 
 it('locks duplicate PNG taps and privacy changes, recovers from a capture failure, and permits a fresh retry and text fallback', async () => {
-  const alert = vi.spyOn(Alert, 'alert').mockImplementation(vi.fn());
   const warning = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
   try {
     let fail!: (error: Error) => void;
@@ -249,9 +255,11 @@ it('locks duplicate PNG taps and privacy changes, recovers from a capture failur
     expect(screen.getByTestId('referral-image-mode')).toBeDisabled();
     expect(screen.getByTestId('referral-share-include-private')).toBeDisabled();
     await act(async () => fail(new Error('Synthetic capture failure')));
-    expect(alert).toHaveBeenCalledExactlyOnceWith(
-      'Could not open sharing',
-      expect.any(String),
+    expect(showSnackbar).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        message: expect.stringContaining('Could not open sharing'),
+        type: 'error',
+      }),
     );
     expect(screen.getByTestId('referral-share-png')).toBeEnabled();
     await fireEvent.press(screen.getByTestId('referral-share-png'));
@@ -264,7 +272,6 @@ it('locks duplicate PNG taps and privacy changes, recovers from a capture failur
     expect(shareReferralText).toHaveBeenCalledOnce();
     expect(shareReferralTextFile).toHaveBeenCalledOnce();
   } finally {
-    alert.mockRestore();
     warning.mockRestore();
   }
 });
@@ -272,8 +279,7 @@ it('locks duplicate PNG taps and privacy changes, recovers from a capture failur
 it.each(['close', 'unmount'] as const)(
   'revokes an in-flight PNG on %s and suppresses late error UI',
   async (boundary) => {
-    const alert = vi.spyOn(Alert, 'alert').mockImplementation(vi.fn());
-    const warning = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
+      const warning = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
     try {
       let fail!: (error: Error) => void;
       vi.mocked(shareReferralPng).mockReturnValueOnce(
@@ -298,7 +304,9 @@ it.each(['close', 'unmount'] as const)(
       else await view.unmount();
       expect(isCurrent()).toBe(false);
       await act(async () => fail(new Error('Late native failure')));
-      expect(alert).not.toHaveBeenCalled();
+      expect(showSnackbar).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error' }),
+      );
       if (boundary === 'close') {
         await open();
         expect(
@@ -310,8 +318,7 @@ it.each(['close', 'unmount'] as const)(
         expect(isCurrent()).toBe(false);
       }
     } finally {
-      alert.mockRestore();
-      warning.mockRestore();
+        warning.mockRestore();
     }
   },
 );
@@ -347,7 +354,6 @@ it('previews before sharing, uses exactly the reviewed text, and resets private 
 });
 
 it('prevents duplicate handoffs and recovers after a failed share', async () => {
-  const alert = vi.spyOn(Alert, 'alert').mockImplementation(vi.fn());
   let reject!: (error: Error) => void;
   vi.mocked(shareReferralText).mockReturnValueOnce(
     new Promise((_, fail) => {
@@ -364,12 +370,13 @@ it('prevents duplicate handoffs and recovers after a failed share', async () => 
   await act(async () => {
     reject(new Error('Synthetic share failure'));
   });
-  expect(alert).toHaveBeenCalledWith(
-    'Could not open sharing',
-    expect.any(String),
+  expect(showSnackbar).toHaveBeenCalledWith(
+    expect.objectContaining({
+      message: expect.stringContaining('Could not open sharing'),
+      type: 'error',
+    }),
   );
   expect(button).not.toBeDisabled();
-  alert.mockRestore();
 });
 
 it('revokes a delayed file handoff on close or unmount and permits reopening afterward', async () => {
@@ -398,7 +405,6 @@ it('revokes a delayed file handoff on close or unmount and permits reopening aft
 });
 
 it('explains an unsupported saved format without offering a misleading export', async () => {
-  const alert = vi.spyOn(Alert, 'alert').mockImplementation(vi.fn());
   await render(
     <ReferralShare
       referral={{ ...referral, notes: '<<<referral-intake:v9>>>' }}
@@ -406,11 +412,12 @@ it('explains an unsupported saved format without offering a misleading export', 
     />,
   );
   await open();
-  expect(alert).toHaveBeenCalledWith(
-    'Cannot prepare referral summary',
-    expect.any(String),
+  expect(showSnackbar).toHaveBeenCalledWith(
+    expect.objectContaining({
+      message: expect.stringContaining('unreadable or newer intake format'),
+      type: 'error',
+    }),
   );
   expect(screen.queryByTestId('referral-share-preview')).toBeNull();
   expect(shareReferralTextFile).not.toHaveBeenCalled();
-  alert.mockRestore();
 });

@@ -1,7 +1,11 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  DiscardModal,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useReferralDraft } from './ReferralDraftProvider';
 
 export function DraftRecoveryNotice() {
@@ -26,32 +30,25 @@ export function DraftRecoveryNotice() {
       >
         <TextBold color={Colors.PRIMARY}>Retry reading draft</TextBold>
       </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityHint="asks before removing the unreadable local draft"
-        onPress={() =>
-          Alert.alert(
-            'Discard unreadable draft?',
-            'Its local answers cannot be recovered after deletion. Saved referrals are not changed.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Discard',
-                style: 'destructive',
-                onPress: () => {
-                  try {
-                    store.discardUnreadable();
-                  } catch {
-                    setFailed(true);
-                  }
-                },
-              },
-            ],
-          )
+      <DiscardModal
+        title="Discard unreadable draft?"
+        body="Its local answers cannot be recovered after deletion. Saved referrals are not changed."
+        onDiscard={() => {
+          try {
+            store.discardUnreadable();
+          } catch {
+            setFailed(true);
+          }
+        }}
+        button={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint="asks before removing the unreadable local draft"
+          >
+            <TextBold color={Colors.ERROR}>Discard unreadable draft</TextBold>
+          </Pressable>
         }
-      >
-        <TextBold color={Colors.ERROR}>Discard unreadable draft</TextBold>
-      </Pressable>
+      />
       {failed && (
         <TextRegular accessibilityLiveRegion="polite" color={Colors.ERROR}>
           The draft could not be removed. Please try again.

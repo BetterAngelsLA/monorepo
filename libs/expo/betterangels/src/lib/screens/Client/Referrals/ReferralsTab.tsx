@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InfoIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  ActionModal,
   IconButton,
   TextBold,
   TextRegular,
@@ -24,7 +25,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   StyleSheet,
   View,
@@ -83,6 +83,7 @@ function PersistentReferralsTab({ client }: Pick<TProps, 'client'>) {
   const { activeOrg } = useActiveOrg();
   const { apiUrl } = useApiConfig();
   const [, refresh] = useReducer((value: number) => value + 1, 0);
+  const [recoverScope, setRecoverScope] = useState<string | null>(null);
   const clientId = client?.clientProfile.id;
   const currentScope = useRef('');
   const scopeIdentity = JSON.stringify([
@@ -112,35 +113,36 @@ function PersistentReferralsTab({ client }: Pick<TProps, 'client'>) {
         hasLegacyReferralDraft(clientId) && (
           <Pressable
             accessibilityRole="button"
-            onPress={() =>
-              Alert.alert(
-                'Recover an older draft?',
-                'An older app version saved a draft for this client without recording its account or environment. Recover it only if it belongs to your current work.',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Recover',
-                    onPress: () => {
-                      if (currentScope.current !== scopeIdentity) return;
-                      try {
-                        recoverLegacyReferralDraft(scope);
-                      } catch {
-                        showSnackbar({
-                          message:
-                            'Could not finish recovering the older draft. Its saved answers have been kept. Check the draft shown here before trying again.',
-                          type: 'error',
-                        });
-                      }
-                      refresh();
-                    },
-                  },
-                ],
-              )
-            }
+            onPress={() => setRecoverScope(scopeIdentity)}
           >
             <TextRegular>Recover older local draft</TextRegular>
           </Pressable>
         )}
+      <ActionModal
+        key={scopeIdentity}
+        visible={recoverScope === scopeIdentity}
+        setVisible={(visible) => {
+          if (!visible) setRecoverScope(null);
+        }}
+        title="Recover an older draft?"
+        body="An older app version saved a draft for this client without recording its account or environment. Recover it only if it belongs to your current work."
+        primaryButtonTitle="Recover"
+        secondaryButtonTitle="Cancel"
+        onPrimaryPress={() => {
+          setRecoverScope(null);
+          if (currentScope.current !== scopeIdentity) return;
+          try {
+            recoverLegacyReferralDraft(scope);
+          } catch {
+            showSnackbar({
+              message:
+                'Could not finish recovering the older draft. Its saved answers have been kept. Check the draft shown here before trying again.',
+              type: 'error',
+            });
+          }
+          refresh();
+        }}
+      />
       <ReferralsContent client={client} clientId={clientId} />
     </ReferralDraftProvider>
   );
@@ -156,6 +158,10 @@ function ReferralsContent({
   const { showSnackbar } = useSnackbar();
   const runDraftAction = useLocalDraftAction();
   const modalSession = useRef<symbol | null>(null);
+  const [pendingStart, setPendingStart] = useState<{
+    existingId: string;
+    begin: () => void;
+  } | null>(null);
   const { showModalScreen } = useModalScreen();
   const [helpVisible, setHelpVisible] = useState(false);
   const router = useRouter();
@@ -286,27 +292,7 @@ function ReferralsContent({
       openReferralForm();
       return;
     }
-    Alert.alert(
-      'A draft already exists for this client',
-      'Resume it, or discard it to start from the selected referral.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Resume draft', onPress: openReferralForm },
-        {
-          text: 'Discard and start',
-          style: 'destructive',
-          onPress: () => {
-            // Replace in one persisted write: failure must retain the old draft.
-            const current = store.getSnapshot();
-            if (
-              current?.id === existing.id &&
-              current.submission.status === 'idle'
-            )
-              begin();
-          },
-        },
-      ],
-    );
+    setPendingStart({ existingId: existing.id, begin });
   };
 
   const confirmDiscardDraft = () => {
@@ -413,6 +399,34 @@ function ReferralsContent({
       <ReferralsHelp
         visible={helpVisible}
         onClose={() => setHelpVisible(false)}
+      />
+      <ActionModal
+        visible={!!pendingStart}
+        setVisible={(visible) => {
+          if (!visible) setPendingStart(null);
+        }}
+        title="A draft already exists for this client"
+        body="Resume it, or discard it to start from the selected referral."
+        primaryButtonTitle="Resume draft"
+        secondaryButtonTitle="Cancel"
+        tertiaryButtonTitle="Discard and start"
+        onPrimaryPress={() => {
+          setPendingStart(null);
+          openReferralForm();
+        }}
+        onSecondaryPress={() => setPendingStart(null)}
+        onTertiaryPress={() => {
+          const pending = pendingStart;
+          setPendingStart(null);
+          if (!pending) return;
+          // Replace in one persisted write: failure must retain the old draft.
+          const current = store.getSnapshot();
+          if (
+            current?.id === pending.existingId &&
+            current.submission.status === 'idle'
+          )
+            pending.begin();
+        }}
       />
     </View>
   );
