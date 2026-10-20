@@ -920,6 +920,14 @@ export type DemographicType = {
   name?: Maybe<DemographicChoices>;
 };
 
+export type DensityScaleType = {
+  __typename: 'DensityScaleType';
+  max: Scalars['Int']['output'];
+  p50: Scalars['Float']['output'];
+  p90: Scalars['Float']['output'];
+  p95: Scalars['Float']['output'];
+};
+
 export type DjangoFileType = {
   __typename: 'DjangoFileType';
   name: Scalars['String']['output'];
@@ -2579,6 +2587,7 @@ export type Query = {
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
   currentUser: CurrentUserType;
+  densityScale?: Maybe<DensityScaleType>;
   featureControls: FeatureControlData;
   hmisClientProfile: HmisClientProfileType;
   hmisClientProfiles: HmisClientProfileTypeOffsetPaginated;
@@ -2689,6 +2698,16 @@ export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   ordering?: Array<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryDensityScaleArgs = {
+  dimension?: InputMaybe<RegionDimension>;
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+  zoom: Scalars['Int']['input'];
 };
 
 
@@ -2817,8 +2836,10 @@ export type QueryReferralsArgs = {
 
 
 export type QueryReportSummaryArgs = {
+  dimension?: InputMaybe<RegionDimension>;
   endDate?: InputMaybe<Scalars['Date']['input']>;
   organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 

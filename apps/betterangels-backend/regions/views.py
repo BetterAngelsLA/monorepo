@@ -26,6 +26,7 @@ from reports.calendar import report_calendar_time_zone
 from reports.permissions import HasReportAccess
 from reports.selectors import resolve_date_range
 
+from .grid import DENSITY_MAX_ZOOM
 from .models import RegionKind
 from .selectors import org_notes_in_range
 from .services import RegionScopeError, resolve_region_scope
@@ -41,7 +42,7 @@ from .tiles import MVT_CONTENT_TYPE, density_tile, region_tile
 #: tiles this view answers 404 for, so ``test_the_zoom_ceiling_is_the_one_the_client_assumes``
 #: pins the value rather than letting it drift quietly.
 MIN_ZOOM = 0
-MAX_ZOOM = 16
+MAX_ZOOM = DENSITY_MAX_ZOOM
 
 
 def _zoom_or_none(z: int, x: int, y: int) -> Optional[int]:

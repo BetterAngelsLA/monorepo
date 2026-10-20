@@ -1,13 +1,21 @@
 /// <reference types="google.maps" />
 import { Alert, theme } from 'antd';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { Map as GoogleMap } from '@vis.gl/react-google-maps';
+import {
+  Map as GoogleMap,
+  type MapCameraChangedEvent,
+} from '@vis.gl/react-google-maps';
 import type { RegionDimension } from '@monorepo/ba-platform/types';
 import { LA_COUNTY_CENTER } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { DeckMapLayers, type OverlayColors } from './DeckMapLayers';
-import { DENSITY_COLOR_MAX, HEATMAP_RAMP_CSS } from './heatmapMath';
-import type { InteractionPointType } from './hooks';
+import {
+  DENSITY_PER_KM2_MAX,
+  HEATMAP_RAMP_CSS,
+  densityCellAreaKm2,
+  densityCellSideMeters,
+} from './heatmapMath';
+import { useDensityScale, type InteractionPointType } from './hooks';
 import { mapNotice } from './mapNotice';
 import { GENERIC_ERROR_MESSAGE } from './reportErrors';
 
@@ -91,6 +99,15 @@ const DATA_FOCUSED_STYLES: google.maps.MapTypeStyle[] = [
 const LA_ZOOM = 9;
 
 /**
+ * The density tile zoom at the home view.
+ *
+ * deck.gl tiles are 512px and Google's are 256px, so map zoom 9 fetches **z8** tiles (the same
+ * relationship the tile URL comments record). The cell area in the legend starts here and
+ * follows the map's camera.
+ */
+const INITIAL_TILE_ZOOM = Math.max(0, Math.floor(LA_ZOOM) - 1);
+
+/**
  * Overlay colours from the design system.
  *
  * Read through `useToken` rather than importing hexes, so a theme change flows through. The
@@ -129,31 +146,48 @@ function useMapColors(): OverlayColors {
  * of Google's own attribution, which owns that corner and must stay readable — it is a licence
  * term, not decoration.
  */
-function DensityLegend() {
+function DensityLegend({
+  cellSideM,
+  densityMax,
+  relative,
+}: {
+  cellSideM: number;
+  densityMax: number;
+  relative: boolean;
+}) {
+  const cellLabel =
+    cellSideM >= 1000
+      ? `${(cellSideM / 1000).toFixed(1)} km`
+      : `${Math.round(cellSideM)} m`;
+  // The ramp's midpoint is a quarter of its red end on the square-root scale.
+  const middle = Math.max(1, Math.round(densityMax / 4));
+  const high = Math.max(1, Math.round(densityMax));
+
   return (
     <div className="pointer-events-none absolute bottom-9 left-3 z-[5] rounded bg-white/90 px-2 py-1 shadow">
       {/* 12px is the floor for legible secondary text, and #8c8c8c on white is only 3.36:1
           against a 4.5:1 requirement. These use the 12px/`neutral-700` pairing, which measures
           10.7:1 — the legend is the only key to the colour scale, so leaving it at the least
           readable size on the page was backwards. */}
-      <div className="mb-1 text-xs font-medium text-neutral-700">
-        Interactions per cell
+      <div className="mb-0.5 text-xs font-medium text-neutral-700">
+        Interactions per km²
+      </div>
+      <div className="mb-1 text-xs leading-tight text-neutral-600">
+        {relative ? 'Relative to this zoom' : 'Fixed scale'}
       </div>
       <div
         className="h-2 w-44 rounded-sm"
         style={{ background: HEATMAP_RAMP_CSS }}
       />
-      {/* Numbers, and **absolute** ones. The ramp is normalised by a fixed reference rather
-          than by the peak in view, so the honest reading is a count of interactions in a cell,
-          not a share of that peak. The middle label sits at the ramp's midpoint because the
-          scale is a square root, which puts a quarter of the reference there. */}
+      {/* The domain is the p95 of the non-empty cells at this zoom, so the top label moves
+          when the cell size moves; the "relative" line above is what makes that honest. */}
       <div className="mt-0.5 flex w-44 justify-between text-xs text-neutral-700">
         <span>0</span>
-        <span>{Math.round(DENSITY_COLOR_MAX / 4)}</span>
-        <span>{DENSITY_COLOR_MAX}+</span>
+        <span>{middle}</span>
+        <span>{high}+</span>
       </div>
       <div className="mt-0.5 w-44 text-xs text-neutral-700">
-        Each square is one grid cell
+        Each square ≈ {cellLabel} across
       </div>
     </div>
   );
@@ -207,6 +241,13 @@ type RegionMapProps = {
   /** The report window, as `YYYY-MM-DD`, so the grid matches the table beneath it. */
   startDate: string;
   endDate: string;
+  /** Map height in pixels; the split layout gives it less than the full-width one. */
+  height?: number;
+  /**
+   * The map is near the viewport. The density scale query is a full-window aggregate, so it
+   * waits like the point query does rather than running for a panel below the fold.
+   */
+  visible?: boolean;
   className?: string;
 };
 
@@ -231,6 +272,8 @@ export function RegionMap({
   organizationId,
   startDate,
   endDate,
+  height = 560,
+  visible = true,
   className = '',
 }: RegionMapProps) {
   const mapColors = useMapColors();
@@ -246,6 +289,9 @@ export function RegionMap({
    */
   const [densityRefused, setDensityRefused] = useState(false);
   const [tileFaulted, setTileFaulted] = useState(false);
+  // The density tiles the camera is asking for; the cell area follows it so the legend and the
+  // colour scale describe the cells actually on screen.
+  const [tileZoom, setTileZoom] = useState(INITIAL_TILE_ZOOM);
   // The caption below the map is its accessible description; `role="img"` gives what it draws a
   // name, and this points at the sentence that says what the picture means.
   const captionId = useId();
@@ -270,6 +316,35 @@ export function RegionMap({
     setTileFaulted(false);
   }, []);
   const markTileFault = useCallback(() => setTileFaulted(true), []);
+
+  // Only an integer tile-zoom change matters: panning inside a zoom keeps the same cell area,
+  // so the colours do not move. The state update is skipped when the tile zoom is unchanged.
+  const handleCameraChanged = useCallback((event: MapCameraChangedEvent) => {
+    const next = Math.max(0, Math.floor(event.detail.zoom) - 1);
+    setTileZoom((previous) => (previous === next ? previous : next));
+  }, []);
+
+  const cellSideM = densityCellSideMeters(tileZoom, LA_CENTER.lat);
+  const cellAreaKm2 = densityCellAreaKm2(tileZoom, LA_CENTER.lat);
+
+  // The scale is computed over the same population as the heatmap: a dimension alone leaves
+  // the map county-wide, so only specific region codes narrow it.
+  const { scale: densityScale, loading: scaleLoading } = useDensityScale({
+    organizationId,
+    startDate,
+    endDate,
+    zoom: tileZoom,
+    dimension: focusCodes.length > 0 ? dimension : undefined,
+    regionCodes: focusCodes.length > 0 ? focusCodes : undefined,
+    // The map is replaced by a notice without a key or when the scope refused the data; the
+    // domain would colour nothing.
+    enabled: view === 'heatmap' && hasMapsKey && !refused && visible,
+  });
+  const hasDensityScale = densityScale !== null;
+  const densityMax =
+    densityScale && Number.isFinite(densityScale.p95) && densityScale.p95 > 0
+      ? densityScale.p95 / cellAreaKm2
+      : DENSITY_PER_KM2_MAX;
 
   const caption = useMemo(() => {
     let scope = '';
@@ -305,8 +380,21 @@ export function RegionMap({
     // `interactionScope`, so it reaches the reader as the refusal notice above rather than as
     // a legend on an empty field. The caption describes what the scale *means* and leaves the
     // figures below.
-    return `Interaction density${scope}, as a grid of counts. Where the grid has cells, red is where interactions concentrate and blue where they thin out; the legend is an absolute scale, and the figures below cover the same interactions.`;
-  }, [view, points.length, filteredTo, pointsLoading, truncated]);
+    const scaleNote = hasDensityScale
+      ? `The scale is relative to this zoom and covers the whole filtered area: the legend's top value is the 95th percentile of non-empty cells, so the full ramp is in use and the densest 5% clamp to red.`
+      : scaleLoading
+        ? `The per-zoom scale is loading; the colour uses a fixed reference until it arrives.`
+        : `The per-zoom scale is unavailable, so the colour uses a fixed reference.`;
+    return `Interaction density${scope}, in interactions per km². ${scaleNote}`;
+  }, [
+    view,
+    points.length,
+    filteredTo,
+    pointsLoading,
+    truncated,
+    hasDensityScale,
+    scaleLoading,
+  ]);
 
   const notice = mapNotice({
     hasMapsKey,
@@ -390,9 +478,10 @@ export function RegionMap({
         >
           <GoogleMap
             id="admin-region-map"
-            style={{ width: '100%', height: 560, borderRadius: 6 }}
+            style={{ width: '100%', height, borderRadius: 6 }}
             defaultCenter={LA_CENTER}
             defaultZoom={LA_ZOOM}
+            onCameraChanged={handleCameraChanged}
             gestureHandling="cooperative"
             styles={DATA_FOCUSED_STYLES}
             // The map is a fixed analytical view, not a place to explore. Street View and the
@@ -434,11 +523,19 @@ export function RegionMap({
                 onTileLoaded={handleTilesLoaded}
                 onTileFault={markTileFault}
                 overlay={mapColors}
+                cellAreaKm2={cellAreaKm2}
+                densityMax={densityMax}
               />
             )}
           </GoogleMap>
         </div>
-        {view === 'heatmap' && <DensityLegend />}
+        {view === 'heatmap' && (
+          <DensityLegend
+            cellSideM={cellSideM}
+            densityMax={densityMax}
+            relative={hasDensityScale}
+          />
+        )}
       </div>
       <p id={captionId} className="mt-2 text-xs text-neutral-500">
         {caption}
@@ -466,7 +563,7 @@ export function RegionMap({
           type="warning"
           showIcon
           message="Showing the most recent interactions only"
-          description="There are more interactions in this range than the map can plot, so these clusters are a subset — the counts and table below are complete."
+          description="There are more interactions in this range than the map can plot, so these clusters are a subset. The table and totals below are complete."
         />
       )}
     </div>

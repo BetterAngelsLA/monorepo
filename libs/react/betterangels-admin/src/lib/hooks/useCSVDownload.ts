@@ -1,21 +1,31 @@
 import { useCallback, useState } from 'react';
+import { interactionExportUrl, type ReportGroup } from '../api/reports';
 import { useApiConfig } from '../providers';
 
+/** Download the Reports CSV; the endpoint and params live in `api/reports`. */
 export default function useCSVDownload() {
   const { fetch } = useApiConfig();
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const download = useCallback(
-    async (startDate: string, endDate: string, orgId?: string) => {
+    async (
+      startDate: string,
+      endDate: string,
+      orgId?: string,
+      group?: ReportGroup,
+    ) => {
       setIsDownloading(true);
       setError(null);
       try {
-        let path = `/reports/export/?start_date=${startDate}&end_date=${endDate}`;
-        if (orgId) {
-          path += `&org_id=${orgId}`;
-        }
-        const response = await fetch(path);
+        const response = await fetch(
+          interactionExportUrl({
+            startDate,
+            endDate,
+            organizationId: orgId,
+            group,
+          }),
+        );
         if (!response.ok) {
           const body = await response.json().catch(() => null);
           throw new Error(body?.error ?? `Export failed (${response.status})`);
@@ -27,11 +37,16 @@ export default function useCSVDownload() {
             ?.match(/filename="(.+)"/)?.[1] ??
           `interaction_data_${startDate}_${endDate}.csv`;
         const blobUrl = window.URL.createObjectURL(blob);
-        Object.assign(document.createElement('a'), {
+        const anchor = Object.assign(document.createElement('a'), {
           href: blobUrl,
           download: filename,
-        }).click();
-        window.URL.revokeObjectURL(blobUrl);
+        });
+        // Appending is what makes the download work in Safari; revoking on the next tick
+        // gives the click time to start reading the blob.
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+        window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 0);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {

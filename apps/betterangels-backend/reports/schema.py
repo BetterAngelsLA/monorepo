@@ -3,6 +3,7 @@ from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
+from graphql import GraphQLError
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -10,6 +11,8 @@ from strawberry_django.auth.utils import get_current_user
 from accounts.models import User as AccountUser
 from common.graphql.utils import org_or_deny
 from common.permissions.utils import IsAuthenticated, require_can
+from regions.models import RegionKind
+from regions.services import RegionScopeError, resolve_group_scope
 
 from .permissions import ReportPermissions
 from .selectors import report_summary, resolve_date_range
@@ -50,6 +53,8 @@ class Query:
         organization_id: ID,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        dimension: Optional[RegionKind] = None,
+        region_codes: Optional[List[str]] = None,
     ) -> ReportSummaryType:
         """Report summary for an organization — grant-only, header-free (ADR 0001 §5.3).
 
@@ -58,6 +63,10 @@ class Query:
         that org — role-backed ORG_ADMIN/ORG_SUPERUSER backfilled Grants, or the
         global tier.  Membership is not consulted; a legacy-only holder fails
         closed; an unknown org id fails closed.
+
+        ``dimension``/``regionCodes`` scope every KPI and chart; see ``resolve_group_scope``.
+        A group is a scope, not a display choice: choosing City excludes interactions in no
+        city, which is why the total can be smaller than the ungrouped one.
         """
         user = cast(AccountUser, get_current_user(info))
         org = org_or_deny(organization_id)
@@ -65,7 +74,28 @@ class Query:
 
         start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
 
-        summary = report_summary(org=org, start_date=start_date, end_date=end_date)
+        try:
+            region_kind, scoped_codes = resolve_group_scope(
+                dimension=dimension.value if dimension else None, codes=region_codes
+            )
+        except RegionScopeError as error:
+            # Same channel and error codes as `interactionMap`; see docs/graphql_errors.md §2.
+            raise GraphQLError(
+                str(error),
+                extensions={
+                    "errors": [
+                        {"field": error.field, "location": None, "errorCode": error.code},
+                    ]
+                },
+            ) from error
+
+        summary = report_summary(
+            org=org,
+            start_date=start_date,
+            end_date=end_date,
+            region_kind=region_kind,
+            region_codes=scoped_codes,
+        )
 
         return ReportSummaryType(
             total_notes=summary["total_notes"],
