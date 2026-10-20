@@ -18,6 +18,68 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 type Props = Record<string, unknown> & { children?: ReactNode };
 
+/**
+ * Mirrors the real ActionModal's contract: it renders nothing until visible,
+ * exposes the primary/secondary actions with stable testIDs, and closes after
+ * either. Specs drive the same buttons a user would press.
+ */
+const ActionModalStub = ({
+  visible,
+  setVisible,
+  title,
+  body,
+  primaryButtonTitle,
+  secondaryButtonTitle,
+  onPrimaryPress,
+  onSecondaryPress,
+}: {
+  visible?: boolean;
+  setVisible?: (visible: boolean) => void;
+  title?: string;
+  body?: ReactNode;
+  primaryButtonTitle?: string;
+  secondaryButtonTitle?: string;
+  onPrimaryPress?: () => void;
+  onSecondaryPress?: () => void;
+}) => {
+  if (!visible) return null;
+  return (
+    <View>
+      {!!title && <Text>{title}</Text>}
+      {typeof body === 'string' ? <Text>{body}</Text> : body}
+      <Pressable
+        testID="action-modal-primary"
+        accessibilityRole="button"
+        onPress={() => {
+          onPrimaryPress?.();
+          setVisible?.(false);
+        }}
+      >
+        <Text>{primaryButtonTitle}</Text>
+      </Pressable>
+      {!!secondaryButtonTitle && (
+        <Pressable
+          testID="action-modal-secondary"
+          accessibilityRole="button"
+          onPress={() => {
+            onSecondaryPress?.();
+            setVisible?.(false);
+          }}
+        >
+          <Text>{secondaryButtonTitle}</Text>
+        </Pressable>
+      )}
+      <Pressable
+        testID="action-modal-close"
+        accessibilityRole="button"
+        onPress={() => setVisible?.(false)}
+      >
+        <Text>Close</Text>
+      </Pressable>
+    </View>
+  );
+};
+
 const asText = ({ children, ...rest }: Props) => (
   <Text {...rest}>{children}</Text>
 );
@@ -156,6 +218,7 @@ export const uiComponents = () => ({
   Loading: () => <View />,
   InfiniteList: InfiniteListStub,
   DiscardModal: DiscardModalStub,
+  ActionModal: ActionModalStub,
 });
 
 // Renders items synchronously; virtualization itself is FlashList's job and is

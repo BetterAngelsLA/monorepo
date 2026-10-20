@@ -17,7 +17,7 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { Observable } from 'rxjs';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import UserProvider, { useUser } from '../../../providers/user/UserProvider';
@@ -302,21 +302,19 @@ async function setup(
   };
 }
 
-async function alertButton(text: string) {
-  const modalAction =
-    text === 'Cancel'
+async function modalButton(text: string) {
+  const testIds: Record<string, string> = {
+    Cancel: screen.queryByTestId('discard-modal-cancel')
       ? 'discard-modal-cancel'
-      : text === 'Discard'
-        ? 'discard-modal-confirm'
-        : null;
-  if (modalAction && screen.queryByTestId(modalAction)) {
-    await fireEvent.press(screen.getByTestId(modalAction));
-    return;
-  }
-  const buttons = vi.mocked(Alert.alert).mock.lastCall?.[2];
-  const button = buttons?.find((b) => b.text === text);
-  expect(button, `Expected alert button ${text}`).toBeDefined();
-  await act(() => button?.onPress?.());
+      : 'action-modal-close',
+    Discard: 'discard-modal-confirm',
+    Recover: 'action-modal-primary',
+    'Resume draft': 'action-modal-primary',
+    'Discard and start': 'action-modal-secondary',
+  };
+  const testId = testIds[text];
+  if (!testId) throw new Error(`Unknown modal action: ${text}`);
+  await fireEvent.press(screen.getByTestId(testId));
 }
 function expectWriteFailure() {
   expect(showSnackbar).toHaveBeenLastCalledWith(
@@ -354,7 +352,6 @@ beforeEach(() => {
   imageSharing.available.mockReset().mockResolvedValue(true);
   imageSharing.handoff.mockReset().mockResolvedValue(undefined);
   imageSharing.directory.mockReset();
-  vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
 });
 afterEach(async () => {
   await cleanup();
@@ -384,13 +381,13 @@ it('restores the account draft, pauses/resumes, and discards only after confirma
   ).toHaveDisplayValue('Retained local notes');
   await fireEvent.press(screen.getByTestId('intake-pause-btn'));
   await fireEvent.press(screen.getByTestId('draft-discard-btn'));
-  await alertButton('Cancel');
+  await modalButton('Cancel');
   expect(backing.get('referral-drafts-v2')?.has(key)).toBe(true);
   await fireEvent.press(screen.getByTestId('referral-draft-card'));
   expect(screen.getByTestId('referral-intake-screen')).toBeOnTheScreen();
   await fireEvent.press(screen.getByTestId('intake-pause-btn'));
   await fireEvent.press(screen.getByTestId('draft-discard-btn'));
-  await alertButton('Discard');
+  await modalButton('Discard');
   expect(screen.queryByTestId('referral-draft-card')).toBeNull();
   expect(screen.getByTestId('create-referral-btn')).toBeOnTheScreen();
   expect(backing.get('referral-drafts-v2')?.has(key)).toBe(false);
@@ -477,7 +474,11 @@ it.each(['organization', 'account', 'environment', 'logout'] as const)(
     // native handoff may be reached by the old capture's valid result.
     expect(imageSharing.directory).not.toHaveBeenCalled();
     expect(imageSharing.handoff).not.toHaveBeenCalled();
-    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(showSnackbar).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining('Could not open sharing'),
+      }),
+    );
   },
 );
 
@@ -526,17 +527,17 @@ it('protects unreadable data from create/edit/reuse and keeps the warning until 
   await fireEvent.press(await screen.findByTestId('edit-referral-saved-1'));
   expect(screen.queryByTestId('referral-intake-screen')).toBeNull();
   await fireEvent.press(screen.getByText('Discard unreadable draft'));
-  await alertButton('Cancel');
+  await modalButton('Cancel');
   expect(backing.get('referral-drafts-v2')?.get(key)).toBe('{invalid');
   fault.operation = 'remove';
   await fireEvent.press(screen.getByText('Discard unreadable draft'));
-  await alertButton('Discard');
+  await modalButton('Discard');
   expect(
     screen.getByText('The draft could not be removed. Please try again.'),
   ).toBeOnTheScreen();
   fault.operation = '';
   await fireEvent.press(screen.getByText('Discard unreadable draft'));
-  await alertButton('Discard');
+  await modalButton('Discard');
   expect(screen.getByTestId('create-referral-btn')).toBeOnTheScreen();
   expect(screen.getByTestId('referral-card-saved-1')).toBeOnTheScreen();
 });
@@ -549,7 +550,7 @@ it.each(['none', 'write', 'legacy-remove'])(
     backing.set('referral-draft', new Map([['draft', JSON.stringify(value)]]));
     await setup();
     await fireEvent.press(await screen.findByText('Recover older local draft'));
-    await alertButton('Cancel');
+    await modalButton('Cancel');
     expect(backing.get('referral-drafts-v2')?.size).toBe(0);
     if (failure === 'write') fault.operation = 'write';
     if (failure === 'legacy-remove') {
@@ -557,7 +558,7 @@ it.each(['none', 'write', 'legacy-remove'])(
       fault.storage = 'referral-draft';
     }
     await fireEvent.press(screen.getByText('Recover older local draft'));
-    await alertButton('Recover');
+    await modalButton('Recover');
     if (failure !== 'none') {
       expect(showSnackbar).toHaveBeenLastCalledWith(
         expect.objectContaining({ type: 'error' }),
@@ -568,7 +569,7 @@ it.each(['none', 'write', 'legacy-remove'])(
       expect(screen.queryByTestId('resume-referral-btn')).toBeNull();
       fault.operation = '';
       await fireEvent.press(screen.getByText('Recover older local draft'));
-      await alertButton('Recover');
+      await modalButton('Recover');
     }
     expect(screen.queryByText('Recover older local draft')).toBeNull();
     await fireEvent.press(screen.getByTestId('resume-referral-btn'));
@@ -624,7 +625,7 @@ it('keeps the draft available when list discard or in-form cancel cannot delete 
   await screen.findByTestId('resume-referral-btn');
   fault.operation = 'remove';
   await fireEvent.press(screen.getByTestId('draft-discard-btn'));
-  await alertButton('Discard');
+  await modalButton('Discard');
   expectWriteFailure();
   await fireEvent.press(screen.getByTestId('resume-referral-btn'));
   await fireEvent.press(screen.getByTestId('intake-cancel-btn'));
@@ -643,7 +644,7 @@ it('preserves the original draft if replacing it from a saved referral fails', a
   await setup({ history: true });
   await fireEvent.press(await screen.findByTestId('edit-referral-saved-1'));
   fault.operation = 'write';
-  await alertButton('Discard and start');
+  await modalButton('Discard and start');
   expectWriteFailure();
   expect(backing.get('referral-drafts-v2')?.get(key)).toContain(
     'Retained local notes',
@@ -651,7 +652,7 @@ it('preserves the original draft if replacing it from a saved referral fails', a
   expect(screen.queryByTestId('referral-intake-screen')).toBeNull();
   fault.operation = '';
   await fireEvent.press(screen.getByTestId('edit-referral-saved-1'));
-  await alertButton('Discard and start');
+  await modalButton('Discard and start');
   expect(
     screen.getByLabelText('Staff Observations / Notes'),
   ).toHaveDisplayValue('Saved referral notes');
@@ -684,16 +685,16 @@ it('disables discard while pending and requires a check before discarding an unc
   await fireEvent.press(screen.getByTestId('picker-pause-btn'));
   expect(screen.getByTestId('draft-discard-btn')).toBeDisabled();
   await fireEvent.press(screen.getByTestId('draft-discard-btn'));
-  expect(Alert.alert).not.toHaveBeenCalled();
+  expect(screen.queryByTestId('discard-modal-confirm')).toBeNull();
   await act(async () => app.requests[0].fail());
   await fireEvent.press(screen.getByTestId('draft-discard-btn'));
   expect(
     screen.getByText(/A saved referral may already exist/),
   ).toBeOnTheScreen();
-  await alertButton('Cancel');
+  await modalButton('Cancel');
   expect(backing.get('referral-drafts-v2')?.has(key)).toBe(true);
   await fireEvent.press(screen.getByTestId('draft-discard-btn'));
-  await alertButton('Discard');
+  await modalButton('Discard');
   expect(screen.getByTestId('create-referral-btn')).toBeOnTheScreen();
   expect(app.requests).toHaveLength(1);
 });
@@ -754,7 +755,9 @@ it('ignores an older recovery confirmation after the account has changed', async
   const app = await setup();
   await fireEvent.press(await screen.findByText('Recover older local draft'));
   await act(() => app.account().setUser({ ...user, id: 'user-2' }));
-  await alertButton('Recover');
+  // A confirmation opened for one account is closed by the identity change,
+  // so it cannot recover the legacy draft into the new account.
+  expect(screen.queryByTestId('action-modal-primary')).toBeNull();
   expect(backing.get('referral-drafts-v2')?.size).toBe(0);
   expect(backing.get('referral-draft')?.has('draft')).toBe(true);
   expect(screen.queryByTestId('resume-referral-btn')).toBeNull();
