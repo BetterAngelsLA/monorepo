@@ -8,6 +8,7 @@ from clients.models import (
 from common.models import Attachment
 from common.permissions.config import RoleDef, TemplateConfig
 from notes.models import Note, ServiceRequest
+from referrals.models import Referral
 from tasks.models import Task
 from teams.models import Team
 
@@ -40,6 +41,11 @@ CASEWORKER = TemplateConfig(
         SocialMediaProfile.perms.CHANGE,
         SocialMediaProfile.perms.DELETE,
         SocialMediaProfile.perms.VIEW,
+        # Referral: full CRUD (caseworkers triage and manage referrals)
+        Referral.perms.ADD,
+        Referral.perms.CHANGE,
+        Referral.perms.DELETE,
+        Referral.perms.VIEW,
         # Task: ADD + VIEW only
         Task.perms.ADD,
         Task.perms.VIEW,
