@@ -37,11 +37,16 @@ export default function useCSVDownload() {
             ?.match(/filename="(.+)"/)?.[1] ??
           `interaction_data_${startDate}_${endDate}.csv`;
         const blobUrl = window.URL.createObjectURL(blob);
-        Object.assign(document.createElement('a'), {
+        const anchor = Object.assign(document.createElement('a'), {
           href: blobUrl,
           download: filename,
-        }).click();
-        window.URL.revokeObjectURL(blobUrl);
+        });
+        // Appending is what makes the download work in Safari; revoking on the next tick
+        // gives the click time to start reading the blob.
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+        window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 0);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {

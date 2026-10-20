@@ -444,6 +444,7 @@ export function Reports({ className = '', hasMapsKey = true }: IProps) {
           type="primary"
           icon={<DownloadIcon isDownloading={isDownloading} />}
           loading={isDownloading}
+          disabled={!activeOrg}
           onClick={handleDownload}
         >
           Download CSV
