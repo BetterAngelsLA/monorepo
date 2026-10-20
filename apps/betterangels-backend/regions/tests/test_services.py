@@ -18,6 +18,7 @@ from regions.services import (
     RegionScopeError,
     build_region_pieces,
     parse_region_code_filter,
+    resolve_group_scope,
     resolve_region_scope,
 )
 
@@ -109,6 +110,39 @@ class ResolveRegionScopeTestCase(SimpleTestCase):
         """The `?codes=` shape: unambiguous, so it is not an error and does not demand a kind."""
         self.assertEqual(resolve_region_scope(dimension=None, codes=[]), (None, []))
         self.assertEqual(resolve_region_scope(dimension="zip", codes=[]), ("zip", []))
+
+
+class ResolveGroupScopeTestCase(SimpleTestCase):
+    """The report summary's reading of the pair — one shape differs from the map's."""
+
+    def test_absent_pair_is_unfiltered(self) -> None:
+        self.assertEqual(resolve_group_scope(dimension=None, codes=None), (None, None))
+
+    def test_a_dimension_without_codes_means_every_region_of_it(self) -> None:
+        """The difference from `resolve_region_scope`: "all cities" is a complete answer.
+
+        The map refuses this shape because pins have nothing to narrow; the summary's
+        dimension-only view is a real population (the one the city table groups into rows),
+        so refusing it would leave the reader looking at an unfiltered page.
+        """
+        self.assertEqual(resolve_group_scope(dimension="city", codes=None), ("city", None))
+
+    def test_a_non_empty_code_list_requires_a_dimension(self) -> None:
+        with self.assertRaises(RegionScopeError) as caught:
+            resolve_group_scope(dimension=None, codes=["90012"])
+        self.assertEqual(caught.exception.code, "REGION_CODES_REQUIRE_DIMENSION")
+        self.assertEqual(caught.exception.field, "regionCodes")
+
+    def test_a_non_empty_code_list_with_a_dimension_is_returned_verbatim(self) -> None:
+        self.assertEqual(
+            resolve_group_scope(dimension="city", codes=["Beverly Hills", "Culver City"]),
+            ("city", ["Beverly Hills", "Culver City"]),
+        )
+
+    def test_an_empty_code_list_matches_nothing(self) -> None:
+        # With a dimension, it is a selection of no regions; without one, still nothing.
+        self.assertEqual(resolve_group_scope(dimension="city", codes=[]), ("city", []))
+        self.assertEqual(resolve_group_scope(dimension=None, codes=[]), (None, []))
 
 
 class BuildRegionPiecesTestCase(TestCase):
