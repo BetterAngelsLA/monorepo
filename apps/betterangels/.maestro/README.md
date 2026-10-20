@@ -247,6 +247,47 @@ maestro --device <DEVICE_ID> test apps/betterangels/.maestro/tests \
 
 ---
 
+## Troubleshooting
+
+### The app shows "Could not connect to development server" at `127.0.0.1:8081`
+
+Metro is running, but something else owns `127.0.0.1:8081` — commonly a VS Code
+port-forward or another dev server. Expo binds a wildcard address, so a process
+pinned to `127.0.0.1` wins for connections to `localhost`, and the dev client
+(which resolves `localhost` to `127.0.0.1`) fetches the bundle from the wrong
+server.
+
+Confirm who owns the port:
+
+```bash
+lsof -nP -iTCP:8081 -sTCP:LISTEN
+```
+
+Then either stop the other process, or point the deep link at the host's LAN IP
+instead of `localhost`:
+
+```bash
+export MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=http://<LAN-IP>:8081&disableOnboarding=1"
+```
+
+`MAESTRO_EXPO_HOST=<LAN-IP>` has the same effect when using `setup-maestro.sh`.
+
+### A flow fails during "Loading from Metro…"
+
+The dev client shows a native splash until the JS bundle is fetched; no app
+`testID` exists until then. `ensure_logged_in_ba.yml` waits up to 60s for
+`authorized-root` before giving up, so this failure means the bundle never
+loaded — check the deep link host/port as above rather than the auth flow.
+
+### `MAESTRO_DEEPLINK` is empty when running `maestro` directly
+
+Only the nx targets load `apps/betterangels/.env.local`. When invoking the
+Maestro CLI by hand, export `MAESTRO_DEEPLINK`, `MAESTRO_APP_ID`, and the
+`MAESTRO_BA_USER_*` credentials yourself (see
+[Running Maestro Directly](#running-maestro-directly-optional)).
+
+---
+
 ## Directory Structure
 
 ```
@@ -344,6 +385,11 @@ CI tests run via EAS Workflows. See `.eas/workflows/e2e-test.yml` for the pipeli
 
 The suite runs every file under `tests/`, so all of the flows in the table above
 are included automatically when the referral flows are added or removed.
+
+A `/run-e2e` comment dispatches the workflow from the default branch, so the
+run's displayed `headSha` is `main` even though the PR head is what gets checked
+out. The job summary records the ref/SHA actually tested under **Tested
+revision**; use that (not the run header) when tying a result to a commit.
 
 ---
 
