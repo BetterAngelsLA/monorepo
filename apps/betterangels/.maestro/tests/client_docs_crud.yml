@@ -104,10 +104,12 @@ appId: ${MAESTRO_APP_ID}
 
 # This is a soft check, as there could be a pre-existing uploads
 # and we can't easily validate exact filename of latest upload.
+# The upload round-trip (camera capture -> API -> list refetch) occasionally
+# lands just past the old 15s window on CI runners.
 - extendedWaitUntil:
     visible:
       id: 'file-card-.*jpg'
-    timeout: 15000
+    timeout: 30000
 
 # ##########################
 # Delete the `recent` upload
