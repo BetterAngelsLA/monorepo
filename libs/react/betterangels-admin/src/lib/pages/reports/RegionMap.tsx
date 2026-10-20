@@ -15,7 +15,7 @@ import {
   densityCellAreaKm2,
   densityCellSideMeters,
 } from './heatmapMath';
-import type { InteractionPointType } from './hooks';
+import { useDensityScale, type InteractionPointType } from './hooks';
 import { mapNotice } from './mapNotice';
 import { GENERIC_ERROR_MESSAGE } from './reportErrors';
 
@@ -146,11 +146,20 @@ function useMapColors(): OverlayColors {
  * of Google's own attribution, which owns that corner and must stay readable — it is a licence
  * term, not decoration.
  */
-function DensityLegend({ cellSideM }: { cellSideM: number }) {
+function DensityLegend({
+  cellSideM,
+  densityMax,
+}: {
+  cellSideM: number;
+  densityMax: number;
+}) {
   const cellLabel =
     cellSideM >= 1000
       ? `${(cellSideM / 1000).toFixed(1)} km`
       : `${Math.round(cellSideM)} m`;
+  // The ramp's midpoint is a quarter of its red end on the square-root scale.
+  const middle = Math.max(1, Math.round(densityMax / 4));
+  const high = Math.max(1, Math.round(densityMax));
 
   return (
     <div className="pointer-events-none absolute bottom-9 left-3 z-[5] rounded bg-white/90 px-2 py-1 shadow">
@@ -158,20 +167,22 @@ function DensityLegend({ cellSideM }: { cellSideM: number }) {
           against a 4.5:1 requirement. These use the 12px/`neutral-700` pairing, which measures
           10.7:1 — the legend is the only key to the colour scale, so leaving it at the least
           readable size on the page was backwards. */}
-      <div className="mb-1 text-xs font-medium text-neutral-700">
+      <div className="mb-0.5 text-xs font-medium text-neutral-700">
         Interactions per km²
+      </div>
+      <div className="mb-1 text-xs leading-tight text-neutral-600">
+        Relative to this zoom
       </div>
       <div
         className="h-2 w-44 rounded-sm"
         style={{ background: HEATMAP_RAMP_CSS }}
       />
-      {/* The scale is per area, so these numbers hold as the reader zooms; only the cell size
-          in the last line changes. The middle label is the ramp's midpoint, which a square-root
-          scale puts at a quarter of the reference. */}
+      {/* The domain is the p95 of the non-empty cells at this zoom, so the top label moves
+          when the cell size moves; the "relative" line above is what makes that honest. */}
       <div className="mt-0.5 flex w-44 justify-between text-xs text-neutral-700">
         <span>0</span>
-        <span>{Math.round(DENSITY_PER_KM2_MAX / 4)}</span>
-        <span>{DENSITY_PER_KM2_MAX}+</span>
+        <span>{middle}</span>
+        <span>{high}+</span>
       </div>
       <div className="mt-0.5 w-44 text-xs text-neutral-700">
         Each square ≈ {cellLabel} across
@@ -308,6 +319,22 @@ export function RegionMap({
   const cellSideM = densityCellSideMeters(tileZoom, LA_CENTER.lat);
   const cellAreaKm2 = densityCellAreaKm2(tileZoom, LA_CENTER.lat);
 
+  // The scale is computed over the same population as the heatmap: a dimension alone leaves
+  // the map county-wide, so only specific region codes narrow it.
+  const { scale: densityScale } = useDensityScale({
+    organizationId,
+    startDate,
+    endDate,
+    zoom: tileZoom,
+    dimension: focusCodes.length > 0 ? dimension : undefined,
+    regionCodes: focusCodes.length > 0 ? focusCodes : undefined,
+    enabled: view === 'heatmap',
+  });
+  const densityMax =
+    densityScale && Number.isFinite(densityScale.p95) && densityScale.p95 > 0
+      ? densityScale.p95 / cellAreaKm2
+      : DENSITY_PER_KM2_MAX;
+
   const caption = useMemo(() => {
     let scope = '';
     if (filteredTo) {
@@ -342,7 +369,7 @@ export function RegionMap({
     // `interactionScope`, so it reaches the reader as the refusal notice above rather than as
     // a legend on an empty field. The caption describes what the scale *means* and leaves the
     // figures below.
-    return `Interaction density${scope}, in interactions per km². Red is where interactions concentrate and blue where they thin out; the scale is per area so it holds as you zoom, while each square covers more ground at lower zoom.`;
+    return `Interaction density${scope}, in interactions per km². The scale is relative to this zoom: the legend's top value is the 95th percentile of non-empty cells, so the full ramp is in use and the densest 5% clamp to red.`;
   }, [view, points.length, filteredTo, pointsLoading, truncated]);
 
   const notice = mapNotice({
@@ -473,11 +500,14 @@ export function RegionMap({
                 onTileFault={markTileFault}
                 overlay={mapColors}
                 cellAreaKm2={cellAreaKm2}
+                densityMax={densityMax}
               />
             )}
           </GoogleMap>
         </div>
-        {view === 'heatmap' && <DensityLegend cellSideM={cellSideM} />}
+        {view === 'heatmap' && (
+          <DensityLegend cellSideM={cellSideM} densityMax={densityMax} />
+        )}
       </div>
       <p id={captionId} className="mt-2 text-xs text-neutral-500">
         {caption}

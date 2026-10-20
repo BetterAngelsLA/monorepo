@@ -250,6 +250,13 @@ than the ungrouped one. The breakdown's "not attributed to a city" figure names 
 The heatmap deliberately stays county-wide — the boundaries over it are the grouping, and the
 surface is the whole service area the group sits in.
 
+The heatmap's colour domain is the **95th percentile of the non-empty density cells at the
+current tile zoom** (`densityScale`), so 95% of cells span the ramp and the top 5% clamp to
+red. It is computed over the whole filtered window, not the viewport, so panning does not
+change the colours; the cell size changes with zoom, so the domain does. The legend labels it
+"relative to this zoom" — the colours are comparable within a zoom, not across zooms.
+
+
 `LocationBreakdown` renders beneath the charts and inherits the page's `dateRange`, `activeOrg`
 and group. It provides:
 
@@ -262,6 +269,16 @@ The group control's two selects are fed by `regionDimensions` (loaded boundaries
 unfiltered `interactionsByRegion` rollup, so a reader who picks one region still finds the others
 in the list. An empty selection means "every region of the grouping"; there is no "All" row,
 because an empty selection already is all.
+
+**Density tiles are not cluster tiles.** The heatmap's MVT layer aggregates notes into grid
+cells; a cell carries a `count`, not a point or a cluster centre, so it cannot drive the
+clusters view. Clusters are the other path: `interactionMap` ships individual coordinates and
+the browser groups them, which is why that query has a point cap (50,000) and the density tile
+does not. The tile transport is reusable for a cluster endpoint — same auth, org/date/region
+scope, cache headers and MVT encoding — but the aggregation is a different problem. Removing
+the cap means either viewport-bounded `interactionMap` queries (smaller; refetch on pan/zoom)
+or server-side cluster tiles (no cap, but cluster identity across tile seams and zoom levels is
+the hard part).
 
 **The Maps key is the admin's own.** `VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY`, plumbed
 through `.github/workflows/default.yml` and `docker-compose-ci.yml`. It is deliberately not

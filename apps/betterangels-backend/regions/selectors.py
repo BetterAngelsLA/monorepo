@@ -19,6 +19,7 @@ from django.db.models.expressions import RawSQL
 from common.models import Location
 from notes.models import Note
 
+from .grid import MERCATOR_HALF_WORLD, density_cell_size_mercator
 from .models import REGION_LOOKUP_VIEW, Region, RegionKind
 
 #: Table names interpolated into the raw SQL below. Taken from the models rather than
@@ -454,3 +455,49 @@ def scope_notes_to_region_kind(notes: QuerySet[Note], *, kind: str) -> QuerySet[
     Kept raw: the ORM ``Exists`` equivalent measured ~1.2 s against ~41 ms.
     """
     return notes.filter(location_id__in=RawSQL(REGION_KIND_LOCATIONS_SQL, (kind,)))
+
+
+def density_scale(*, notes: QuerySet[Note], zoom: int) -> dict[str, float | int] | None:
+    """Quantiles of the density grid at *zoom*, over the non-empty cells *notes* covers.
+
+    The grid is the one ``tiles.density_tile`` paints — same cell size, same global Mercator
+    origin — so this is the distribution of exactly the cells on screen, not a second
+    approximation. The client uses ``p95`` as the red end of the ramp: 95% of non-empty cells
+    span the ramp and the top 5% clamp to red, which keeps one extreme cell from flattening
+    the rest. The result is therefore **relative to the zoom**, because the cell size changes.
+
+    The SQL is raw for the same reason the tile is: the cell index is a projection-space
+    floor over a note queryset, which the ORM cannot express without a manager of raw
+    expressions. The queryset is already org-, permission- and region-scoped by the caller.
+    """
+    scoped_sql, scoped_params = notes.order_by().values("location_id").query.sql_with_params()
+    cell_size = density_cell_size_mercator(zoom)
+    sql = f"""
+    WITH scoped AS ({scoped_sql}),
+    cells AS (
+        SELECT floor((ST_X(ST_Transform(l.point_geom, 3857)) + %s) / %s) AS cx,
+               floor((ST_Y(ST_Transform(l.point_geom, 3857)) + %s) / %s) AS cy,
+               count(*) AS count
+        FROM scoped s
+        JOIN {_LOCATION_TABLE} l ON l.id = s.location_id
+        GROUP BY 1, 2
+    )
+    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY count),
+           percentile_cont(0.9) WITHIN GROUP (ORDER BY count),
+           percentile_cont(0.95) WITHIN GROUP (ORDER BY count),
+           max(count)
+    FROM cells
+    """
+    params = [
+        *scoped_params,
+        MERCATOR_HALF_WORLD,
+        cell_size,
+        MERCATOR_HALF_WORLD,
+        cell_size,
+    ]
+    with connection.cursor() as cursor:
+        cursor.execute(sql, params)
+        p50, p90, p95, maximum = cursor.fetchone()
+    if maximum is None:
+        return None
+    return {"p50": float(p50), "p90": float(p90), "p95": float(p95), "max": int(maximum)}

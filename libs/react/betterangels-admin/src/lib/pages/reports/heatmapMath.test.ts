@@ -28,6 +28,17 @@ describe('densityColor', () => {
     );
   });
 
+  it('uses the supplied per-zoom domain so p95 reaches red', () => {
+    const p95 = 24;
+    const red = densityColor(p95 * CELL_KM2, CELL_KM2, p95);
+    expect(red).toEqual([220, 30, 20, 216]);
+    // The same count is cooler when the domain is twice as wide — this is what keeps the
+    // ramp full at a zoom whose p95 is lower.
+    expect(
+      densityColor(p95 * CELL_KM2, CELL_KM2, p95 * 2).slice(0, 3),
+    ).not.toEqual(red.slice(0, 3));
+  });
+
   it('gives the same colour to the same density at different cell sizes', () => {
     // The point of the change: 50 interactions in a 4 km² cell and 12.5 in a 1 km² cell are
     // both 12.5/km². Zooming out makes the cell larger, not the place hotter.

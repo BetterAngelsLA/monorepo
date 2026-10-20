@@ -38,6 +38,7 @@ from common.tests.utils import make_legacy_only_holder
 from notes.groups import CASEWORKER
 from notes.models import Note
 from regions.models import Region, RegionKind
+from regions.selectors import density_scale
 from regions.tiles import MVT_CONTENT_TYPE, density_cells_per_tile
 
 from . import mvt
@@ -528,3 +529,26 @@ class DensityTileRegionScopeTestCase(DensityTileBaseTestCase):
         )
         self.assertEqual(self._counts(in_range), [1])
         self.assertEqual(self._counts(out_of_range), [1])
+
+
+class DensityScaleTestCase(DensityTileBaseTestCase):
+    """The colour domain is the p95 of the same cells the tile paints."""
+
+    def test_quantiles_are_over_non_empty_cells(self) -> None:
+        # Cells hold 1..10 interactions; the scale ignores empty cells, so the distribution
+        # is 1..10, not mostly zeros.
+        for count in range(1, 11):
+            for _ in range(count):
+                self._note_in_cell(count, 1)
+
+        scale = density_scale(notes=Note.objects.filter(organization=self.org), zoom=_ZOOM)
+
+        assert scale is not None
+        self.assertEqual(scale["max"], 10)
+        self.assertAlmostEqual(scale["p50"], 5.5)
+        self.assertAlmostEqual(scale["p90"], 9.1)
+        self.assertAlmostEqual(scale["p95"], 9.55)
+
+    def test_no_locations_has_no_scale(self) -> None:
+        self._note_in_cell(1, 1, located=False)
+        self.assertIsNone(density_scale(notes=Note.objects.filter(organization=self.org), zoom=_ZOOM))

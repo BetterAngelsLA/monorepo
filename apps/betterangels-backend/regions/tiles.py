@@ -23,7 +23,6 @@ interactions.
 
 from __future__ import annotations
 
-import math
 from typing import Any, Sequence
 
 from django.db import connection
@@ -32,6 +31,7 @@ from django.db.models import QuerySet
 from common.models import Location
 from notes.models import Note
 
+from .grid import density_cells_per_tile
 from .models import REGION_LOOKUP_VIEW
 from .selectors import REGION_MEMBERSHIP_SQL, REGION_TABLE
 from .services import resolve_region_scope
@@ -138,21 +138,6 @@ def region_tile(*, kind: str, z: int, x: int, y: int, layer: str = "regions") ->
 # Measured on the LA County fixture, a county-scale tile holds ~1,250 non-empty cells and
 # ~30 kB of MVT at z9 (~370 cells, ~9 kB at z8), against ~1.1 MB for the same month's points
 # through ``interactionMap``.
-DENSITY_TARGET_CELL_M = 500
-DENSITY_MAX_CELLS_PER_TILE = 64
-#: LA's latitude. The target is a ground size, so the tile width is scaled by ``cos(lat)``;
-#: the admin report is LA-specific and using one reference keeps the server and client equal.
-DENSITY_REFERENCE_LATITUDE = 34.05
-_EARTH_CIRCUMFERENCE_M = 40_075_016.686
-
-
-def density_cells_per_tile(z: int) -> int:
-    """Cells across a z tile, targeting ``DENSITY_TARGET_CELL_M`` at LA's latitude."""
-    tile_width = _EARTH_CIRCUMFERENCE_M * math.cos(math.radians(DENSITY_REFERENCE_LATITUDE)) / 2**z
-    return max(1, min(DENSITY_MAX_CELLS_PER_TILE, math.floor(tile_width / DENSITY_TARGET_CELL_M + 0.5)))
-
-
-#: The layer name inside the tile, and what the client selects on.
 DENSITY_LAYER = "density"
 
 #: **Zero**, unlike the boundary tiles. Their 64-unit margin exists so a line crossing the

@@ -36,9 +36,18 @@ from reports.permissions import ReportPermissions
 from reports.selectors import resolve_date_range
 
 from .models import REGION_KIND_PLURALS, RegionKind
-from .selectors import POINT_LIMIT, available_kinds, org_notes_in_range, scope_notes_to_regions
+from .selectors import (
+    POINT_LIMIT,
+    available_kinds,
+    org_notes_in_range,
+    scope_notes_to_regions,
+)
+from .selectors import (
+    density_scale as density_scale_for,
+)
 from .services import RegionScopeError, interaction_map_data, region_rollup, resolve_region_scope
 from .types import (
+    DensityScaleType,
     InteractionMapType,
     InteractionScopeType,
     RegionCountType,
@@ -250,6 +259,75 @@ class Query:
         org_notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
         return InteractionScopeType(
             withheld=_is_withheld(org_notes=org_notes, scoped_notes=_note_scoped_notes(org_notes, user))
+        )
+
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    def density_scale(
+        self,
+        info: Info,
+        organization_id: ID,
+        zoom: int,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        dimension: Optional[RegionKind] = None,
+        region_codes: Optional[List[str]] = None,
+    ) -> Optional[DensityScaleType]:
+        """Quantiles of the density cells at *zoom* — the map's per-zoom colour domain.
+
+        The scale is computed over **the same cells the tile paints**: same org, window,
+        note read scope and region scope, and the same global grid size for *zoom*. The
+        client uses ``p95`` as the red end, so 95% of the non-empty cells span the ramp and
+        the top 5% clamp; that is what keeps the full ramp in use at every zoom.
+
+        The scale is relative to the zoom because the cell size changes with it. A client
+        must label it that way, or equal shading reads as equal absolute density.
+
+        ``zoom`` is the tile zoom the client is drawing (0–16). It is refused rather than
+        clamped, for the same reason the tile endpoints refuse an out-of-range z: a scale
+        for a different grid than the tiles would silently colour the map with the wrong
+        domain.
+        """
+        if not 0 <= zoom <= 16:
+            raise GraphQLError("zoom out of range")
+
+        user = cast(AccountUser, get_current_user(info))
+        org = org_or_deny(organization_id)
+        require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
+
+        start_date, end_date = resolve_date_range(org=org, start_date=start_date, end_date=end_date)
+        start, end = aware_range(start_date, end_date, report_calendar_time_zone(org))
+
+        scoped_notes = _note_scoped_notes(org_notes_in_range(organization_id=org.id, start=start, end=end), user)
+
+        try:
+            kind, scoped_codes = resolve_region_scope(
+                dimension=dimension.value if dimension else None, codes=region_codes
+            )
+        except RegionScopeError as error:
+            raise GraphQLError(
+                str(error),
+                extensions={
+                    "errors": [
+                        {"field": error.field, "location": None, "errorCode": error.code},
+                    ]
+                },
+            ) from error
+
+        if scoped_codes is not None:
+            scoped_notes = (
+                scope_notes_to_regions(scoped_notes, kind=cast(str, kind), codes=scoped_codes)
+                if scoped_codes
+                else scoped_notes.none()
+            )
+
+        scale = density_scale_for(notes=scoped_notes, zoom=zoom)
+        if scale is None:
+            return None
+        return DensityScaleType(
+            p50=cast(float, scale["p50"]),
+            p90=cast(float, scale["p90"]),
+            p95=cast(float, scale["p95"]),
+            max=cast(int, scale["max"]),
         )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])

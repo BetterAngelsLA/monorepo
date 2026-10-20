@@ -33,11 +33,12 @@ export const HEATMAP_RAMP_CSS = `linear-gradient(to right, ${RAMP.map(
 ).join(', ')})`;
 
 /**
- * Interactions per km² at which the ramp reaches red.
+ * Fallback interactions per km² at which the ramp reaches red.
  *
- * The opening view's peak is ~12/km², but once the grid holds ~500 m cells the local peaks
- * are higher; a 12 reference put most occupied 500 m cells at red. 24 keeps the ramp useful at
- * both scales: the county core reads yellow/orange, the densest local cells red.
+ * The live domain is the 95th percentile of the non-empty cells at the current zoom, from
+ * `densityScale`. This fixed value only covers the moment before that answer arrives (and a
+ * failed scale request); 18 reflects the county view's upper range and leaves the street grid
+ * a usable spread.
  */
 export const DENSITY_PER_KM2_MAX = 18;
 
@@ -124,13 +125,20 @@ export function rampAt(intensity: number): Rgb {
 export function densityColor(
   count: number,
   cellAreaKm2: number,
+  densityMax: number = DENSITY_PER_KM2_MAX,
 ): [number, number, number, number] {
   // A missing or malformed `count` property reaches here as `NaN`, and `NaN` compares false
   // against every stop — which would fall through the loop to the *hottest* colour. Fail to
   // the cold end instead: an unreadable cell should read as empty, not as the peak.
   const safeCount = Number.isFinite(count) ? Math.max(0, count) : 0;
   const area = Number.isFinite(cellAreaKm2) ? Math.max(cellAreaKm2, 1e-6) : 1;
-  const intensity = Math.sqrt(safeCount / area / DENSITY_PER_KM2_MAX);
+  // The per-zoom p95 from `densityScale`; the fixed constant is only the fallback while that
+  // answer is in flight or absent. A non-positive domain would divide by zero.
+  const max =
+    Number.isFinite(densityMax) && densityMax > 0
+      ? densityMax
+      : DENSITY_PER_KM2_MAX;
+  const intensity = Math.sqrt(safeCount / area / max);
   const [r, g, b] = rampAt(intensity);
   return [r, g, b, 216];
 }
