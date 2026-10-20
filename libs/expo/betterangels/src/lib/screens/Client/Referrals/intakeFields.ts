@@ -119,7 +119,9 @@ export const INTAKE_FIELDS = [
     control: 'multiselect',
     options: optionsFrom(enumDisplayDemographics),
     matching: { shelterAttribute: 'demographics' },
-    sensitive: false,
+    // Protected-class data (LGBTQ+, family status): withheld from the default
+    // share copy like the other health/DV answers.
+    sensitive: true,
     requirement: 'optional',
     help: 'Matched against who each shelter serves',
     persistence: { localDraft: true },
@@ -137,7 +139,9 @@ export const INTAKE_FIELDS = [
     control: 'multiselect',
     options: optionsFrom(enumDisplayAccessibilityChoices),
     matching: { shelterAttribute: 'accessibility' },
-    sensitive: false,
+    // Disability/medical-equipment needs are health data; the equivalent
+    // profile row ("Accommodations") is already sensitive.
+    sensitive: true,
     requirement: 'optional',
     help: 'Matched against what each shelter provides',
     persistence: { localDraft: true },

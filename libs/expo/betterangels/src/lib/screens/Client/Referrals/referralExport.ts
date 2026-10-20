@@ -126,12 +126,19 @@ export function buildReferralDocumentCopy({
     },
   ];
   for (const row of profileRows) {
-    const value =
-      row.sensitive && !includePrivate
-        ? 'Excluded (sensitive)'
-        : (row.value ?? 'Not recorded');
     const label = row.label + (row.sensitive ? ' [Sensitive]' : '');
-    blocks.push(documentField(label, value));
+    // Unanswered is not the same as withheld: only claim exclusion when there
+    // is actually a value to exclude.
+    if (row.value == null || !row.value.trim()) {
+      blocks.push(documentField(label, 'Not recorded'));
+      continue;
+    }
+    blocks.push(
+      documentField(
+        label,
+        row.sensitive && !includePrivate ? 'Excluded (sensitive)' : row.value,
+      ),
+    );
   }
   blocks.push(
     { kind: 'space' },
@@ -148,18 +155,20 @@ export function buildReferralDocumentCopy({
     // describes a direct text mapping rather than a sensitive sidecar bucket.
     const sensitive = field.sensitive || field.backend.mode === 'direct';
     const label = field.label + (sensitive ? ' [Sensitive]' : '');
-    if (sensitive && !includePrivate) {
-      blocks.push(documentField(label, 'Excluded (sensitive)'));
-      continue;
-    }
     const value =
       field.backend.mode === 'direct' ? humanNotes : intake[field.key];
-    if (
-      value == null ||
-      (typeof value === 'string' && !value.trim()) ||
-      (Array.isArray(value) && !value.length)
-    ) {
+    const recorded =
+      value != null &&
+      !(typeof value === 'string' && !value.trim()) &&
+      !(Array.isArray(value) && !value.length);
+    // Unanswered is not the same as withheld: a sensitive field with no answer
+    // must read as unknown, not as something the sharer chose to hide.
+    if (!recorded) {
       blocks.push(documentField(label, 'Not recorded'));
+      continue;
+    }
+    if (sensitive && !includePrivate) {
+      blocks.push(documentField(label, 'Excluded (sensitive)'));
       continue;
     }
     if (!isIntakeControlValue(field, value)) {

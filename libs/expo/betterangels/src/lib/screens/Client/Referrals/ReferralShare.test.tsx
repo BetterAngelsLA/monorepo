@@ -155,12 +155,17 @@ it('makes the privacy mode visible even when a sparse record has no saved privat
     />,
   );
   await open();
-  expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
-    /Substances \[Sensitive\]: Excluded \(sensitive\)/,
+  expect(screen.getByTestId('referral-share-privacy-status')).toHaveTextContent(
+    /Sensitive details excluded/,
   );
-  await fireEvent.press(screen.getByTestId('referral-share-include-private'));
+  // A sparse record must not imply that sensitive answers were withheld: there
+  // is nothing to withhold, so the field reads as unanswered in both modes.
   expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
     /Substances \[Sensitive\]: Not recorded/,
+  );
+  await fireEvent.press(screen.getByTestId('referral-share-include-private'));
+  expect(screen.getByTestId('referral-share-privacy-status')).toHaveTextContent(
+    /Sensitive details included/,
   );
   expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
     /Staff Observations \/ Notes \[Sensitive\]: Not recorded/,
