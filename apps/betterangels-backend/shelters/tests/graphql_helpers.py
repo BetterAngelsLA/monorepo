@@ -26,14 +26,12 @@ SHELTER_FIELDS = """
     onSiteSecurity
     otherRules
     otherServices
-    overallRating
     phone
     programFees
     roomStylesOther
     shelterProgramsOther
     shelterTypesOther
     status
-    subjectiveReview
     supervisorialDistrict
     totalBeds
     visitorsAllowed

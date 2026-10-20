@@ -1826,7 +1826,6 @@ type OperatorShelterType {
   organization: OrganizationType
   otherRules: String
   otherServices: String
-  overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
   phone: PhoneNumber
@@ -1847,7 +1846,6 @@ type OperatorShelterType {
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
-  subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
@@ -1861,6 +1859,9 @@ type OperatorShelterType {
   distanceInMiles: Float
   bedCounts: BedCountType!
   roomCounts: RoomCountType!
+  overallRating: Int
+  subjectiveReview: String
+  declinedBaVisit: Boolean
   additionalContacts: [ShelterContactInfoType!]!
 }
 
@@ -2780,7 +2781,6 @@ type ShelterType {
   organization: OrganizationType
   otherRules: String
   otherServices: String
-  overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
   phone: PhoneNumber
@@ -2801,7 +2801,6 @@ type ShelterType {
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
-  subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
@@ -3236,6 +3235,8 @@ input UpdateShelterInput {
   otherServices: String
   entryInfo: String
   subjectiveReview: String
+  overallRating: Int
+  declinedBaVisit: Boolean
   demographicsOther: String
   shelterTypesOther: String
   cityCouncilDistrict: Int

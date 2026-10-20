@@ -76,6 +76,8 @@ class Shelter(OrgScoped, BaseModel):
     class perms(PermissionSet):
         CHANGE_IS_REVIEWED = perm("change_shelter_is_reviewed", "Can change shelter is reviewed")
         VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
+        VIEW_BA_REVIEW = perm("view_shelter_ba_review", "Can view shelter BA review")
+        CHANGE_BA_REVIEW = perm("change_shelter_ba_review", "Can change shelter BA review")
 
     objects: ShelterManager = ShelterManager()
 
