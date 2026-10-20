@@ -10,8 +10,9 @@ Nothing derived is stored, so a read writes nothing and there is nothing to keep
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, NamedTuple, Sequence
 
+from django.core.exceptions import EmptyResultSet
 from django.db import connection
 from django.db.models import FloatField, Func, QuerySet
 from django.db.models.expressions import RawSQL
@@ -19,6 +20,7 @@ from django.db.models.expressions import RawSQL
 from common.models import Location
 from notes.models import Note
 
+from .grid import MERCATOR_HALF_WORLD, density_cell_size_mercator, density_cell_xy_sql
 from .models import REGION_LOOKUP_VIEW, Region, RegionKind
 
 #: Table names interpolated into the raw SQL below. Taken from the models rather than
@@ -47,18 +49,19 @@ REGION_JOIN_SQL = f"""
     JOIN {_LOCATION_TABLE} l ON {REGION_MEMBERSHIP_SQL}
 """
 
-#: The location ids a ``(kind, codes)`` selection covers. Returns location ids, one row each.
-#:
-#: ``DISTINCT`` because a location may fall in more than one piece of the same region, which
-#: would otherwise join that note once per piece and double-count it.
-#:
-#: The caller binds ``(kind, codes)`` positionally. Requests are org-confined before this
-#: predicate sees them, so it narrows a scoped queryset rather than confining one.
-REGION_LOCATIONS_SQL = f"""
+#: Location ids covered by one dimension, optionally narrowed to codes. ``DISTINCT`` because a
+#: location can fall in more than one piece of the same region. Callers bind positionally.
+_REGION_LOCATIONS_SQL = f"""
     SELECT DISTINCT l.id
     {REGION_JOIN_SQL}
-    WHERE rr.kind = %s AND rr.code = ANY(%s)
+    WHERE rr.kind = %s
 """
+
+#: The code arm is appended rather than written twice, so the two arms cannot drift.
+REGION_LOCATIONS_SQL = f"{_REGION_LOCATIONS_SQL}      AND rr.code = ANY(%s)\n"
+
+#: Any region of one dimension — the group filter's "all cities" arm.
+REGION_KIND_LOCATIONS_SQL = _REGION_LOCATIONS_SQL
 
 
 def org_notes_in_range(
@@ -445,3 +448,68 @@ def scope_notes_to_regions(notes: QuerySet[Note], *, kind: str, codes: Sequence[
         return notes.none()
 
     return notes.filter(location_id__in=RawSQL(REGION_LOCATIONS_SQL, (kind, list(codes))))
+
+
+def scope_notes_to_region_kind(notes: QuerySet[Note], *, kind: str) -> QuerySet[Note]:
+    """Notes whose location falls in any region of ``kind`` — the dimension-only group scope.
+
+    Kept raw: the ORM ``Exists`` equivalent measured ~1.2 s against ~41 ms.
+    """
+    return notes.filter(location_id__in=RawSQL(REGION_KIND_LOCATIONS_SQL, (kind,)))
+
+
+class DensityScale(NamedTuple):
+    """The non-empty cell distribution used as the map's per-zoom colour domain."""
+
+    p50: float
+    p90: float
+    p95: float
+    max: int
+
+
+def density_scale(*, notes: QuerySet[Note], zoom: int) -> DensityScale | None:
+    """Quantiles of the density grid at *zoom*, over the non-empty cells *notes* covers.
+
+    The grid is the one ``tiles.density_tile`` paints — same cell size, same global Mercator
+    origin — so this is the distribution of exactly the cells on screen, not a second
+    approximation. The client uses ``p95`` as the red end of the ramp: 95% of non-empty cells
+    span the ramp and the top 5% clamp to red, which keeps one extreme cell from flattening
+    the rest. The result is therefore **relative to the zoom**, because the cell size changes.
+
+    The SQL is raw for the same reason the tile is: the cell index is a projection-space
+    floor over a note queryset, which the ORM cannot express without a manager of raw
+    expressions. The queryset is already org-, permission- and region-scoped by the caller.
+    """
+    try:
+        scoped_sql, scoped_params = notes.order_by().values("location_id").query.sql_with_params()
+    except EmptyResultSet:
+        # `notes.none()` compiles to an `EmptyResultSet`, not a `WHERE false` fragment. An
+        # empty region selection is a valid request whose answer is "no cells", not a 500.
+        return None
+    cell_size = density_cell_size_mercator(zoom)
+    cell_xy = density_cell_xy_sql(origin_x=str(-MERCATOR_HALF_WORLD), origin_y=str(-MERCATOR_HALF_WORLD), size="%s")
+    sql = f"""
+    WITH scoped AS ({scoped_sql}),
+    cells AS (
+        SELECT {cell_xy},
+               count(*) AS count
+        FROM scoped s
+        JOIN {_LOCATION_TABLE} l ON l.id = s.location_id
+        GROUP BY 1, 2
+    )
+    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY count),
+           percentile_cont(0.9) WITHIN GROUP (ORDER BY count),
+           percentile_cont(0.95) WITHIN GROUP (ORDER BY count),
+           max(count)
+    FROM cells
+    """
+    # The origin is the global Mercator corner; the helper turns it into the same
+    # `floor((x - origin) / size)` membership test the tile uses. The size placeholder appears
+    # twice (x and y), so it is bound twice.
+    params = [*scoped_params, cell_size, cell_size]
+    with connection.cursor() as cursor:
+        cursor.execute(sql, params)
+        p50, p90, p95, maximum = cursor.fetchone()
+    if maximum is None:
+        return None
+    return DensityScale(p50=float(p50), p90=float(p90), p95=float(p95), max=int(maximum))

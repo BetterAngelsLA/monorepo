@@ -13,8 +13,14 @@ from accounts.models import Organization, OrganizationProfile, OrgTypeChoices
 from notes.models import Note
 from reports.calendar import report_calendar_time_zone
 from reports.models import ScheduledReport
-from reports.selectors import report_default_date_range
+from reports.selectors import report_default_date_range, scope_notes_to_group
 from reports.services import generate_report_data, get_previous_month_range
+
+
+def test_scope_notes_to_group_refuses_codes_without_a_kind() -> None:
+    """A caller with codes but no dimension has not resolved the group; do not drop the filter."""
+    with pytest.raises(ValueError, match="requires a region_kind"):
+        scope_notes_to_group(Note.objects.none(), region_kind=None, region_codes=["90012"])
 
 
 @pytest.mark.django_db

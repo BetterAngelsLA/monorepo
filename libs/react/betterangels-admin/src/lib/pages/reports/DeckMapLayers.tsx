@@ -9,6 +9,7 @@ import type { Layer } from '@deck.gl/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useApiConfig } from '@monorepo/ba-platform';
+import { densityTileUrl, regionTileUrl } from '../../api/reports';
 import { densityColor, type HeatPoint } from './heatmapMath';
 import {
   buildClusterIndex,
@@ -83,6 +84,10 @@ export type DeckMapLayersProps = {
   /** The report window, as `YYYY-MM-DD`, so the grid matches the table beside it. */
   startDate: string;
   endDate: string;
+  /** One grid cell's ground area at the current zoom; turns a count into a density. */
+  cellAreaKm2: number;
+  /** The red end of the density ramp, the per-zoom p95 from `densityScale`. */
+  densityMax: number;
   /**
    * The density tiles were **refused** — a 403 from the endpoint, which is an authority or
    * session answer rather than a fault. Reported up so the panel can say so; see `RegionMap`.
@@ -144,6 +149,10 @@ export type BuildLayersArgs = {
   focusCodes: string[];
   boundaryUrl: string | null;
   densityUrl: string | null;
+  /** One grid cell's ground area at the current zoom; turns a count into a density. */
+  cellAreaKm2: number;
+  /** The red end of the density ramp, the per-zoom p95 from `densityScale`. */
+  densityMax: number;
   /** Binned once per (points, zoom) by the caller; see `DeckMapLayers` below. */
   clusters: Cluster[];
   onDensityRefused?: () => void;
@@ -177,6 +186,8 @@ export function buildLayers({
   focusCodes,
   boundaryUrl,
   densityUrl,
+  cellAreaKm2,
+  densityMax,
   onDensityRefused,
   onTileLoaded,
   onTileFault,
@@ -204,6 +215,8 @@ export function buildLayers({
         getFillColor: (feature) =>
           densityColor(
             Number((feature.properties as { count?: number })?.count ?? 0),
+            cellAreaKm2,
+            densityMax,
           ),
         pickable: false,
         // The one thing the grid cannot answer for itself: whether the note read scope
@@ -360,6 +373,8 @@ export function DeckMapLayers({
   organizationId,
   startDate,
   endDate,
+  cellAreaKm2,
+  densityMax,
   onDensityRefused,
   onTileLoaded,
   onTileFault,
@@ -400,41 +415,26 @@ export function DeckMapLayers({
   /** Pending deferred teardown, so a re-mount can cancel it; see the effect below. */
   const teardownRef = useRef<number | null>(null);
 
-  // Absolute because deck.gl's TileLayer fetches the template directly; a relative template
-  // would resolve against the page origin rather than the API's.
-  // Lowercased: `RegionDimension` spells the dimension uppercase (`COUNCIL_DISTRICT`) and the
-  // endpoint matches the wire `kind`, which is lowercase. Sending the enum as-is made every
-  // tile 404 — measured, `COUNCIL_DISTRICT/8/43/102` 404 against `council_district/8/43/102`
-  // 200 with 4.4 kB of geometry — so the boundary layer drew nothing at all.
+  // Endpoint spellings live in `api/reports`; the template is absolute for deck.gl.
   let boundaryUrl: string | null = null;
   if (regionKind) {
-    boundaryUrl = `${apiUrl}/regions/tiles/${regionKind.toLowerCase()}/{z}/{x}/{y}.mvt`;
+    boundaryUrl = regionTileUrl(apiUrl, regionKind);
   }
 
-  // The density grid's own query string. It carries the org, the window and — only when the
-  // reader has drilled into regions — the dimension and the codes, which is exactly the
-  // variable set `interactionMap` is given. A *grouping* with nothing selected deliberately
-  // does not appear: a group-by re-partitions the same interactions rather than selecting
-  // different ones, so it must not move the field, and sending it would change the URL and
-  // refetch identical tiles on every group-by.
+  // Only a region drill-down travels: a bare grouping must not change the URL, or every
+  // group-by refetches identical tiles. `densityTileUrl` sorts the codes for the same cache.
   const densityUrl = useMemo(() => {
     if (!organizationId || !startDate || !endDate) {
       return null;
     }
-    const params = new URLSearchParams({
-      org_id: organizationId,
-      start: startDate,
-      end: endDate,
+    return densityTileUrl({
+      apiUrl,
+      organizationId,
+      startDate,
+      endDate,
+      dimension: regionKind ?? undefined,
+      codes: focusCodes,
     });
-    if (regionKind && focusCodes.length > 0) {
-      params.set('dimension', regionKind.toLowerCase());
-      // Sorted, because deck.gl caches tiles by URL: the same set of codes picked in a
-      // different order must not be a second URL and a refetch of identical tiles.
-      for (const code of [...focusCodes].sort()) {
-        params.append('codes', code);
-      }
-    }
-    return `${apiUrl}/regions/tiles/density/{z}/{x}/{y}.mvt?${params.toString()}`;
   }, [apiUrl, organizationId, startDate, endDate, regionKind, focusCodes]);
 
   /**
@@ -504,6 +504,8 @@ export function DeckMapLayers({
         focusCodes,
         boundaryUrl,
         densityUrl,
+        cellAreaKm2,
+        densityMax,
         onDensityRefused: handleDensityRefused,
         onTileLoaded: handleTilesLoaded,
         onTileFault: handleTileFault,
@@ -517,6 +519,8 @@ export function DeckMapLayers({
       focusCodes,
       boundaryUrl,
       densityUrl,
+      cellAreaKm2,
+      densityMax,
       handleDensityRefused,
       handleTilesLoaded,
       handleTileFault,
