@@ -32,12 +32,14 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - tapOn: 'See Details'
 
-# the tab strip scrolls horizontally; Referrals sits after Docs
-- scrollUntilVisible:
-    element:
-      id: client-tab-referrals
-    direction: RIGHT
-    timeout: 10000
+# The tab strip is a horizontal ScrollView and `scrollUntilVisible` does not
+# reliably drag it, so swipe the tab row left to bring Referrals into view.
+- swipe:
+    start: '90%, 30%'
+    end: '10%, 30%'
+    duration: 400
+
+- waitForAnimationToEnd
 
 - tapOn:
     id: client-tab-referrals
