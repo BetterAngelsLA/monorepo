@@ -520,12 +520,16 @@ class ObjectAuditLogSelectorTestCase(TestCase):
 
         seen: list[Any] = []
         cursor: str | None = None
-        while True:
+        # Bounded on purpose: a cursor that does not advance (e.g. one the
+        # selector ignores) would otherwise loop forever instead of failing.
+        for _ in range(10):
             page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, after=cursor)
             seen.extend(page.results)
             cursor = page.end_cursor
             if not page.has_next_page:
                 break
+        else:
+            self.fail("pagination did not terminate; the cursor is not advancing")
 
         # Exactly one action per page, none repeated, none missing...
         self.assertEqual(len(seen), 3)
@@ -589,10 +593,21 @@ class ObjectAuditLogSelectorTestCase(TestCase):
             page = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=50)
 
         self.assertTrue(page.results)
-        page_sql = [query["sql"] for query in ctx.captured_queries if "GROUP BY" not in query["sql"].upper()]
+        page_sql = [
+            query["sql"]
+            for query in ctx.captured_queries
+            if "GROUP BY" not in query["sql"].upper() and 'FROM "pghistory_events"' in query["sql"]
+        ]
         self.assertTrue(page_sql)
-        self.assertTrue(any("pgh_context_id" in sql for sql in page_sql))
-        self.assertFalse(any("COALESCE(CAST(" in sql for sql in page_sql))
+        # Assert on the page predicate, not the whole statement: the SELECT list
+        # still computes ``action_key``. Django renders the cast as ``::text``
+        # (not ``CAST(... AS text)``), so a whole-statement string check for the
+        # computed key cannot fail; the ``WHERE`` clause is what must be raw.
+        for statement in page_sql:
+            predicate = statement.rsplit("WHERE", 1)[-1]
+            self.assertIn('"pgh_context_id" IN', predicate)
+            self.assertIn('"pgh_slug" IN', predicate)
+            self.assertNotIn("COALESCE", predicate)
 
     def test_busy_object_query_count_is_bounded_and_page_size_independent(self) -> None:
         # The aggregate CTE spans every event model referencing the target (§10).
@@ -766,6 +781,12 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(audit_log(obj=self.bed, target_type="BED"), [])
 
     def test_room_log_contains_no_bed_events(self) -> None:
+        # ``references(Room)`` reaches a bed only through ``Bed.room``, so the
+        # bed must actually belong to the room or this test passes with the
+        # scoped exclusion deleted.
+        with audit_context(label="seed"):
+            self.bed.room = self.room
+            self.bed.save()
         with audit_context(user=self.user):
             self.bed.name = "Bed Renamed Under Room"
             self.bed.save()
