@@ -1,4 +1,5 @@
 import { useMutation } from '@apollo/client/react';
+import { useCallback } from 'react';
 import {
   OperationMessageKind,
   extractOperationInfoMessages,
@@ -51,7 +52,7 @@ export function useReferralSubmission(
   const [createReferral] = useMutation(CreateReferralDocument);
   const [updateReferral] = useMutation(UpdateReferralDocument);
   const { showSnackbar } = useSnackbar();
-  return async (draftId: string): Promise<boolean> => {
+  return useCallback(async (draftId: string): Promise<boolean> => {
     const draft = store.getSnapshot();
     if (
       !draft ||
@@ -150,5 +151,5 @@ export function useReferralSubmission(
     });
     if (outcome === 'success') onSaved();
     return outcome === 'success';
-  };
+  }, [createReferral, onSaved, showSnackbar, store, updateReferral]);
 }
