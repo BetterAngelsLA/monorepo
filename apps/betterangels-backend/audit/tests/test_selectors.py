@@ -255,8 +255,10 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         events = actions[0].events
         self.assertEqual([event.action for event in events], ["reservation.status_change"])
-        self.assertEqual(events[0].field_changes["status"], ["Confirmed", "Checked In"])
-        self.assertEqual(events[0].field_changes["notes"], [None, "Checked in with a note"])
+        changes = events[0].field_changes
+        assert changes is not None
+        self.assertEqual(changes["status"], ["Confirmed", "Checked In"])
+        self.assertEqual(changes["notes"], [None, "Checked in with a note"])
 
     # ── §13/§14 INSERT and FK labels ─────────────────────────────────────────
 
