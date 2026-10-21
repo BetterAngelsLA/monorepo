@@ -51,6 +51,19 @@ appId: ${MAESTRO_APP_ID}
     while:
       true: ${output.counter < 10}
     commands:
+      # Break as soon as the app has mounted. `app-root` is rendered before the
+      # auth query settles, so it covers the landing screen, the authorized
+      # shell and the pending state alike.
+      # Check it FIRST: every `runFlow when` below is a hierarchy query, so a
+      # healthy launch must not pay for the recovery checks on every iteration
+      # (that was ~6 queries per pass, tens of seconds per flow on CI).
+      - runFlow:
+          when:
+            visible:
+              id: app-root
+          commands:
+            - evalScript: ${output.counter = 999}
+
       # Expo dev-client onboarding screen ("Continue" button). Normally
       # suppressed by `disableOnboarding=1` in MAESTRO_DEEPLINK, but appears
       # on first launch after install if the deep link doesn't bypass it
@@ -98,18 +111,6 @@ appId: ${MAESTRO_APP_ID}
             visible: 'Open'
           commands:
             - tapOn: 'Open'
-
-      # Break as soon as the app has mounted. `app-root` is rendered before the
-      # auth query settles, so it covers the landing screen, the authorized
-      # shell and the pending state alike. Checking it — rather than only
-      # `landing-screen` — keeps a signed-in app from spinning the remaining
-      # iterations, each of which costs a fresh hierarchy query.
-      - runFlow:
-          when:
-            visible:
-              id: app-root
-          commands:
-            - evalScript: ${output.counter = 999}
 
       # otherwise increment counter
       - runFlow:

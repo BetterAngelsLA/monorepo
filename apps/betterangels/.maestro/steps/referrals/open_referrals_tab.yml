@@ -5,9 +5,9 @@ appId: ${MAESTRO_APP_ID}
 # Precondition:
 #   - the clients list is visible (`clients-screen`)
 #   - at least one client exists
-#   - `ffReferrals` is ENABLED in the target environment — the tab is hidden
-#     otherwise, and an unknown/absent waffle flag resolves to false. See
-#     README.md → "Feature Flags (ffReferrals)".
+#   - `ffReferrals` is ENABLED for the caller in the target environment — the
+#     tab is hidden otherwise, and an unknown/absent waffle flag resolves to
+#     false. See README.md → "Feature Flags (ffReferrals)".
 # Input env vars: none.
 # Output vars: none.
 # Side effects: navigates from the clients list into the first client's
@@ -39,28 +39,13 @@ appId: ${MAESTRO_APP_ID}
 #
 # The strip's Y depends on the client header and the device, and the two
 # platforms differ enough to need their own offsets:
-#   - iOS: strip sits at ~31% on the 6.3" simulator; nudge by 1% per attempt.
-#   - Android: measured at 45% on the 320x640 CI emulator and 38% on a
-#     1080x2424 phone (53% when the header wraps), so sweep that band.
-# Swipe until the Referrals tab is on screen, then tap it. A horizontal swipe
-# that lands off the strip is a no-op, so the extra attempts are cheap.
+#   - iOS: strip centre at ~31% on the 6.3" simulator.
+#   - Android: 44% on the 320x640 CI emulator; 38% on a 1080x2424 phone.
+# Two attempts per platform: the measured primary, then one fallback. A swipe
+# that misses the strip is a no-op, and a missed tap is optional, so the final
+# assertion is the single failure point.
 - assertVisible:
     id: client-tabs-strip
-
-- runFlow:
-    when:
-      platform: ios
-      notVisible:
-        id: referrals-screen
-    commands:
-      - swipe:
-          start: '90%, 30%'
-          end: '10%, 30%'
-          duration: 400
-      - waitForAnimationToEnd
-      - tapOn:
-          id: client-tab-referrals
-          optional: true
 
 - runFlow:
     when:
@@ -72,7 +57,8 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 31%'
           end: '10%, 31%'
           duration: 400
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 2000
       - tapOn:
           id: client-tab-referrals
           optional: true
@@ -87,37 +73,8 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 32%'
           end: '10%, 32%'
           duration: 400
-      - waitForAnimationToEnd
-      - tapOn:
-          id: client-tab-referrals
-          optional: true
-
-- runFlow:
-    when:
-      platform: ios
-      notVisible:
-        id: referrals-screen
-    commands:
-      - swipe:
-          start: '90%, 33%'
-          end: '10%, 33%'
-          duration: 400
-      - waitForAnimationToEnd
-      - tapOn:
-          id: client-tab-referrals
-          optional: true
-
-- runFlow:
-    when:
-      platform: android
-      notVisible:
-        id: referrals-screen
-    commands:
-      - swipe:
-          start: '90%, 38%'
-          end: '10%, 38%'
-          duration: 400
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 2000
       - tapOn:
           id: client-tab-referrals
           optional: true
@@ -132,7 +89,8 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 44%'
           end: '10%, 44%'
           duration: 400
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 2000
       - tapOn:
           id: client-tab-referrals
           optional: true
@@ -144,25 +102,11 @@ appId: ${MAESTRO_APP_ID}
         id: referrals-screen
     commands:
       - swipe:
-          start: '90%, 50%'
-          end: '10%, 50%'
+          start: '90%, 38%'
+          end: '10%, 38%'
           duration: 400
-      - waitForAnimationToEnd
-      - tapOn:
-          id: client-tab-referrals
-          optional: true
-
-- runFlow:
-    when:
-      platform: android
-      notVisible:
-        id: referrals-screen
-    commands:
-      - swipe:
-          start: '90%, 56%'
-          end: '10%, 56%'
-          duration: 400
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 2000
       - tapOn:
           id: client-tab-referrals
           optional: true

@@ -7,7 +7,7 @@ appId: ${MAESTRO_APP_ID}
 - extendedWaitUntil:
     visible:
       id: app-root
-    timeout: 120000
+    timeout: 90000
 
 # Wait for auth check to settle (authorized-pending indicates auth transition state)
 - extendedWaitUntil:
