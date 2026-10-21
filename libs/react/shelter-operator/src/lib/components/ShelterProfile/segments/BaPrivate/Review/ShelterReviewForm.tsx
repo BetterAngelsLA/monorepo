@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { Dropdown } from '../../../../base-ui/dropdown';
@@ -35,15 +34,12 @@ export function ShelterReviewForm(props: TProps) {
     disabled = false,
   } = props;
 
-  const initialValues = useMemo(
-    () => ({ ...defaultFormValues, ...values }),
-    [values],
-  );
+  const initialValues = { ...defaultFormValues, ...values };
 
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     setError,
     reset,
   } = useForm<ReviewFormData>({
@@ -89,7 +85,7 @@ export function ShelterReviewForm(props: TProps) {
                     field.onChange(null);
                   }
                 }}
-                disabled={disabled}
+                disabled={disabled || isSubmitting}
                 isViewMode={isViewMode}
                 error={errors.overallRating?.message}
               />
@@ -104,7 +100,7 @@ export function ShelterReviewForm(props: TProps) {
                 label="Declined BA Visit"
                 value={field.value}
                 onChange={field.onChange}
-                disabled={disabled}
+                disabled={disabled || isSubmitting}
                 isViewMode={isViewMode}
               />
             )}
@@ -120,7 +116,7 @@ export function ShelterReviewForm(props: TProps) {
               value={field.value}
               onChange={field.onChange}
               onBlur={field.onBlur}
-              disabled={disabled}
+              disabled={disabled || isSubmitting}
               isViewMode={isViewMode}
               error={errors.subjectiveReview?.message}
             />
@@ -131,8 +127,8 @@ export function ShelterReviewForm(props: TProps) {
           <Form.Actions
             onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
             onSecondaryClick={handleCancel}
-            primaryDisabled={disabled}
-            secondaryDisabled={disabled}
+            primaryDisabled={disabled || isSubmitting}
+            secondaryDisabled={disabled || isSubmitting}
           />
         )}
       </Form.Content>

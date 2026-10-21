@@ -34,10 +34,9 @@ export function ShelterReview(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
-  const [formKey, setFormKey] = useState(0);
 
   const { shelter } = useShelterOperatorProfile(shelterId);
-  const { updateShelter } = useUpdateShelterProfile();
+  const { updateShelter, loading } = useUpdateShelterProfile();
   const { showToast } = useToast();
   const { canEditShelter } = useShelterPermissions();
   const { baReviewPermissions } = useBaPrivatePermissions();
@@ -64,7 +63,6 @@ export function ShelterReview(props: TProps) {
       }
 
       setEditMode(false);
-      setFormKey((k) => k + 1);
 
       showToast({
         status: 'success',
@@ -99,12 +97,12 @@ export function ShelterReview(props: TProps) {
 
   return (
     <ShelterReviewForm
-      key={formKey}
       values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}
       onEditClick={canEditReview ? () => setEditMode(true) : undefined}
       onCancel={onCancel}
+      disabled={loading}
     />
   );
 }

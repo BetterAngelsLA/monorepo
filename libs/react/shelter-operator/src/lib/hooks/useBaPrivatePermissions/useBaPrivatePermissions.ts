@@ -30,12 +30,11 @@ type SectionPermissions = {
  * one place that knows how BA-private capabilities are derived.
  *
  * Who reads what:
- * - `BaPrivateGate` and the sidebar link read `canViewAny` only.
- * - A section reads its own entry: `ShelterContacts` uses
- *   `additionalContactsPermissions.canEdit`, and `ShelterReview` gates both its
- *   render and its pencil on `baReviewPermissions`. `additionalContactsPermissions.canView`
- *   has no consumer yet (the contacts list renders an empty state either way).
- *   The area gate admits anyone who can view *any* section, so leaning on it
+ * - Area level: `BaPrivateGate` (route) and the sidebar link read `canViewAny`.
+ * - Section level: `ShelterBaPrivate` lists a section only when that section's
+ *   `canView` is true, and each section gates its edit affordance on its own
+ *   `canEdit`. `canViewAny` is never a substitute for a section's `canView` —
+ *   the area gate admits anyone who can view *any* section, so leaning on it
  *   would render a section whose backend data is withheld.
  *
  * Caller notes:
