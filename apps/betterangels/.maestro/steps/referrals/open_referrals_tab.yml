@@ -74,6 +74,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 24%'
           end: '10%, 24%'
           duration: 400
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 24%'
+          end: '10%, 24%'
+          duration: 400
       - tapOn:
           waitToSettleTimeoutMs: 300
           id: client-tab-referrals
@@ -85,6 +90,11 @@ appId: ${MAESTRO_APP_ID}
       notVisible:
         id: referrals-screen
     commands:
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 25%'
+          end: '10%, 25%'
+          duration: 400
       - swipe:
           waitToSettleTimeoutMs: 300
           start: '90%, 25%'
@@ -106,6 +116,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 26%'
           end: '10%, 26%'
           duration: 400
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 26%'
+          end: '10%, 26%'
+          duration: 400
       - tapOn:
           waitToSettleTimeoutMs: 300
           id: client-tab-referrals
@@ -117,6 +132,11 @@ appId: ${MAESTRO_APP_ID}
       notVisible:
         id: referrals-screen
     commands:
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 31%'
+          end: '10%, 31%'
+          duration: 400
       - swipe:
           waitToSettleTimeoutMs: 300
           start: '90%, 31%'
@@ -138,6 +158,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 32%'
           end: '10%, 32%'
           duration: 400
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 32%'
+          end: '10%, 32%'
+          duration: 400
       - tapOn:
           waitToSettleTimeoutMs: 300
           id: client-tab-referrals
@@ -149,6 +174,11 @@ appId: ${MAESTRO_APP_ID}
       notVisible:
         id: referrals-screen
     commands:
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 33%'
+          end: '10%, 33%'
+          duration: 400
       - swipe:
           waitToSettleTimeoutMs: 300
           start: '90%, 33%'
@@ -170,6 +200,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 36%'
           end: '10%, 36%'
           duration: 400
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 36%'
+          end: '10%, 36%'
+          duration: 400
       - tapOn:
           waitToSettleTimeoutMs: 300
           id: client-tab-referrals
@@ -186,6 +221,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 38%'
           end: '10%, 38%'
           duration: 400
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 38%'
+          end: '10%, 38%'
+          duration: 400
       - tapOn:
           waitToSettleTimeoutMs: 300
           id: client-tab-referrals
@@ -197,6 +237,11 @@ appId: ${MAESTRO_APP_ID}
       notVisible:
         id: referrals-screen
     commands:
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 44%'
+          end: '10%, 44%'
+          duration: 400
       - swipe:
           waitToSettleTimeoutMs: 300
           start: '90%, 44%'
