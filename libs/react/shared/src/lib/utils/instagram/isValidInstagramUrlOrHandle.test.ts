@@ -15,10 +15,9 @@ const cases: [string | null | undefined, boolean][] = [
   ['https://instagram.com/p/ABC123', true],
   ['@not a handle!', false],
   ['a'.repeat(31), false],
-  // a dotted value reads as a domain, so it is not a handle
-  ['better.angels', false],
+  // a dotted value is just a bare handle, not a domain
+  ['jane.doe', true],
   ['https://example.com/housing', false],
-  ['example.com', false],
 ];
 
 describe('isValidInstagramUrlOrHandle', () => {

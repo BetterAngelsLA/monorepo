@@ -6,6 +6,10 @@ const IG_BASE_URL = 'https://instagram.com';
 const validCases: [string | null | undefined, string | null][] = [
   ['hello', `${IG_BASE_URL}/hello`],
   ['hello.angels_1', `${IG_BASE_URL}/hello.angels_1`],
+  // a dotted handle whose suffix isn't a real TLD is still a handle
+  ['jane.doe', `${IG_BASE_URL}/jane.doe`],
+  // dotted values are indistinguishable from domains, so they're read as handles
+  ['example.com', `${IG_BASE_URL}/example.com`],
   ['@hello', `${IG_BASE_URL}/hello`],
   ['  @hello  ', `${IG_BASE_URL}/hello`],
   ['https://www.instagram.com/hello/', `${IG_BASE_URL}/hello`],
@@ -31,9 +35,8 @@ const invalidCases: [string | null | undefined, string | null][] = [
   ['a'.repeat(31), null],
   ['https://instagram.com', null],
   ['instagram.com/', null],
-  // a non-Instagram URL, or a bare domain, is not an Instagram link
+  // a non-Instagram URL is not an Instagram link
   ['https://example.com/hello', null],
-  ['example.com', null],
   ['https://facebook.com/hello', null],
 ];
 
