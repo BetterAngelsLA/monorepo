@@ -3,7 +3,7 @@ import { Download } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Button } from '../base-ui/buttons/buttons';
 import {
-  DateRangeCalendar,
+  DateRangePicker,
   DateRangePresetDropdown,
   dateRangeFilterAtom,
   type DateRange,
@@ -42,7 +42,7 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-3">
-        <DateRangeCalendar
+        <DateRangePicker
           className="w-80"
           value={range}
           open={isCalendarOpen}

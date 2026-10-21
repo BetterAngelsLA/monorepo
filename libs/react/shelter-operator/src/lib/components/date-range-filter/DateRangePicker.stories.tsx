@@ -1,12 +1,12 @@
 import type { Meta } from '@storybook/react';
 import { format } from 'date-fns';
 import { useState } from 'react';
-import { DateRangeCalendar } from './DateRangeCalendar';
+import { DateRangePicker } from './DateRangePicker';
 import type { DateRange } from './types';
 
-const meta: Meta<typeof DateRangeCalendar> = {
-  component: DateRangeCalendar,
-  title: 'Date Range Filter/DateRangeCalendar',
+const meta: Meta<typeof DateRangePicker> = {
+  component: DateRangePicker,
+  title: 'Date Range Filter/DateRangePicker',
 };
 export default meta;
 
@@ -19,7 +19,7 @@ export const Default = () => {
   });
   return (
     <div className="w-[24rem] space-y-3 p-4">
-      <DateRangeCalendar value={range} onCommit={setRange} />
+      <DateRangePicker value={range} onCommit={setRange} />
       <p className="font-sans text-sm text-neutral-50">
         committed: {fmt(range.from)} – {fmt(range.to)}
       </p>
@@ -31,7 +31,7 @@ export const Empty = () => {
   const [range, setRange] = useState<DateRange>({ from: null, to: null });
   return (
     <div className="w-[24rem] space-y-3 p-4">
-      <DateRangeCalendar value={range} onCommit={setRange} />
+      <DateRangePicker value={range} onCommit={setRange} />
       <p className="font-sans text-sm text-neutral-50">
         committed: {fmt(range.from)} – {fmt(range.to)}
       </p>

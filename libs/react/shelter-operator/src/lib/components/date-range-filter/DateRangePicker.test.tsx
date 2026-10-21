@@ -3,7 +3,7 @@
  */
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DateRangeCalendar } from './DateRangeCalendar';
+import { DateRangePicker } from './DateRangePicker';
 
 // The popover positions itself with usePortalPosition, which jsdom has no
 // ResizeObserver for.
@@ -22,7 +22,7 @@ class NoopResizeObserver {
 function renderCalendar() {
   const onCommit = vi.fn();
   render(
-    <DateRangeCalendar value={{ from: null, to: null }} onCommit={onCommit} />,
+    <DateRangePicker value={{ from: null, to: null }} onCommit={onCommit} />,
   );
   return {
     onCommit,
@@ -49,7 +49,7 @@ function clickDay(iso: string) {
   fireEvent.click(cell.querySelector('button') as HTMLButtonElement);
 }
 
-describe('DateRangeCalendar', () => {
+describe('DateRangePicker', () => {
   beforeEach(() => {
     vi.stubGlobal('ResizeObserver', NoopResizeObserver);
   });
@@ -92,7 +92,7 @@ describe('DateRangeCalendar', () => {
       onOpenChange: vi.fn(),
     };
     const { rerender } = render(
-      <DateRangeCalendar
+      <DateRangePicker
         {...props}
         open={false}
         value={{ from: new Date(2026, 0, 10), to: new Date(2026, 0, 20) }}
@@ -101,7 +101,7 @@ describe('DateRangeCalendar', () => {
 
     // The value changes while the popover is closed (e.g. a preset was picked)…
     rerender(
-      <DateRangeCalendar
+      <DateRangePicker
         {...props}
         open={false}
         value={{ from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) }}
@@ -110,7 +110,7 @@ describe('DateRangeCalendar', () => {
     // …then it is opened through the controlled prop, the way the toolbar's
     // preset dropdown opens it when "Custom" is chosen.
     rerender(
-      <DateRangeCalendar
+      <DateRangePicker
         {...props}
         open
         value={{ from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) }}
@@ -161,7 +161,7 @@ describe('DateRangeCalendar', () => {
   it('does not report a dirty edit when the selection is dismissed with Escape', () => {
     const onDirty = vi.fn();
     render(
-      <DateRangeCalendar
+      <DateRangePicker
         value={{ from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) }}
         onCommit={vi.fn()}
         onDirty={onDirty}
@@ -183,7 +183,7 @@ describe('DateRangeCalendar', () => {
     const onCommit = vi.fn();
     // Panes open on December 2025 (from) and January 2026 (to).
     render(
-      <DateRangeCalendar
+      <DateRangePicker
         value={{ from: new Date(2025, 11, 10), to: new Date(2026, 0, 15) }}
         onCommit={onCommit}
       />,
@@ -210,7 +210,7 @@ describe('DateRangeCalendar', () => {
   it('moves the end date for an inside click in the to calendar', () => {
     const onCommit = vi.fn();
     render(
-      <DateRangeCalendar
+      <DateRangePicker
         value={{ from: new Date(2025, 11, 10), to: new Date(2026, 0, 15) }}
         onCommit={onCommit}
       />,
@@ -263,7 +263,7 @@ describe('DateRangeCalendar', () => {
   it('commits the typed range on Save without waiting for a blur', () => {
     const onCommit = vi.fn();
     render(
-      <DateRangeCalendar
+      <DateRangePicker
         value={{ from: new Date(2026, 0, 1), to: new Date(2026, 0, 31) }}
         onCommit={onCommit}
       />,
@@ -283,7 +283,7 @@ describe('DateRangeCalendar', () => {
   it('does not commit an invalid typed date on Save', () => {
     const onCommit = vi.fn();
     render(
-      <DateRangeCalendar
+      <DateRangePicker
         value={{ from: new Date(2026, 0, 1), to: new Date(2026, 0, 31) }}
         onCommit={onCommit}
       />,
@@ -305,7 +305,7 @@ describe('DateRangeCalendar', () => {
   it('does not commit a half-open range on Save', () => {
     const onCommit = vi.fn();
     render(
-      <DateRangeCalendar
+      <DateRangePicker
         value={{ from: new Date(2026, 0, 1), to: new Date(2026, 0, 31) }}
         onCommit={onCommit}
       />,

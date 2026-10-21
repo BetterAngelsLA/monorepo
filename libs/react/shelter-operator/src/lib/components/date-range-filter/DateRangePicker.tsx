@@ -26,7 +26,7 @@ import {
 import type { DateRange } from './types';
 import { YearGrid } from './YearGrid';
 
-export interface DateRangeCalendarProps {
+export interface DateRangePickerProps {
   value?: DateRange;
   onCommit: (range: DateRange) => void;
   onDirty?: () => void;
@@ -77,14 +77,14 @@ function DateField({
   );
 }
 
-export function DateRangeCalendar({
+export function DateRangePicker({
   value,
   onCommit,
   onDirty,
   open: openProp,
   onOpenChange,
   className,
-}: DateRangeCalendarProps) {
+}: DateRangePickerProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = openProp !== undefined;
   const open = isControlled ? openProp : internalOpen;
