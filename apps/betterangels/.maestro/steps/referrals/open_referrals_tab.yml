@@ -56,8 +56,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 30%'
           end: '10%, 30%'
           duration: 400
-      - waitForAnimationToEnd:
-          timeout: 800
+      - extendedWaitUntil:
+          visible:
+            id: client-tab-referrals
+          timeout: 3000
+          optional: true
       - tapOn:
           id: client-tab-referrals
           optional: true
@@ -72,8 +75,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 44%'
           end: '10%, 44%'
           duration: 400
-      - waitForAnimationToEnd:
-          timeout: 800
+      - extendedWaitUntil:
+          visible:
+            id: client-tab-referrals
+          timeout: 3000
+          optional: true
       - tapOn:
           id: client-tab-referrals
           optional: true
@@ -87,8 +93,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 50%'
           end: '10%, 50%'
           duration: 400
-      - waitForAnimationToEnd:
-          timeout: 800
+      - extendedWaitUntil:
+          visible:
+            id: client-tab-referrals
+          timeout: 3000
+          optional: true
       - tapOn:
           id: client-tab-referrals
           optional: true
@@ -103,8 +112,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 38%'
           end: '10%, 38%'
           duration: 400
-      - waitForAnimationToEnd:
-          timeout: 800
+      - extendedWaitUntil:
+          visible:
+            id: client-tab-referrals
+          timeout: 3000
+          optional: true
       - tapOn:
           id: client-tab-referrals
           optional: true
@@ -119,8 +131,11 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 56%'
           end: '10%, 56%'
           duration: 400
-      - waitForAnimationToEnd:
-          timeout: 800
+      - extendedWaitUntil:
+          visible:
+            id: client-tab-referrals
+          timeout: 3000
+          optional: true
       - tapOn:
           id: client-tab-referrals
           optional: true
