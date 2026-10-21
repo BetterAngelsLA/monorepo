@@ -1,9 +1,20 @@
-"""Feature-flag helpers backed by django-waffle."""
-
 from typing import cast
 
+from django.http import HttpRequest
 from strawberry.types import Info
 from waffle import flag_is_active as waffle_flag_is_active
+
+
+def _request_from(info: Info) -> HttpRequest:
+    """The Django request behind a Strawberry ``Info``.
+
+    Production context exposes it as an attribute; the tests that exercise this
+    helper build a minimal ``{"request": ...}`` mapping.
+    """
+    request = getattr(info.context, "request", None)
+    if request is not None:
+        return cast(HttpRequest, request)
+    return cast(HttpRequest, info.context["request"])
 
 
 def flag_is_active(info: Info, name: str) -> bool:
@@ -14,11 +25,11 @@ def flag_is_active(info: Info, name: str) -> bool:
     :func:`waffle.flag_is_active`, which handles waffle's own caching,
     ``WAFFLE_FLAG_DEFAULT`` for missing flags, and per-user/group semantics.
     """
-    request = info.context["request"]
+    request = _request_from(info)
     cache = getattr(request, "_waffle_flags", None)
     if cache is None:
         cache = {}
-        request._waffle_flags = cache
+        request._waffle_flags = cache  # type: ignore[attr-defined]
     if name not in cache:
         cache[name] = bool(waffle_flag_is_active(request, name))
     return cast(bool, cache[name])

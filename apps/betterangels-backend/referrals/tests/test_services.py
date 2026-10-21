@@ -160,7 +160,7 @@ class ReferralListSelectorTests(GraphQLBaseTestCase):
         self.permission_group_1 = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
         self.permission_group_2 = resolve_permission_group(self.org_2_case_manager_1, template=CASEWORKER)
 
-    def test_returns_only_referrals_created_by_user(self) -> None:
+    def test_returns_referrals_in_the_users_organizations(self) -> None:
         referral_create(
             user=self.org_1_case_manager_1,
             permission_group=self.permission_group_1,
@@ -179,7 +179,30 @@ class ReferralListSelectorTests(GraphQLBaseTestCase):
         self.assertEqual(result.count(), 1)
         first = result.first()
         assert first is not None
-        self.assertEqual(first.created_by, self.org_1_case_manager_1)
+        self.assertEqual(first.organization, self.org_1)
+
+    def test_returns_colleague_referrals_within_the_same_org(self) -> None:
+        referral_create(
+            user=self.org_1_case_manager_2,
+            permission_group=self.permission_group_1,
+            client_profile=self.client_profile,
+            shelter=self.shelter,
+        )
+
+        result = referral_list(user=self.org_1_case_manager_1)
+
+        self.assertEqual(result.count(), 1)
+
+    def test_organization_id_narrows_to_the_active_org(self) -> None:
+        referral_create(
+            user=self.org_1_case_manager_1,
+            permission_group=self.permission_group_1,
+            client_profile=self.client_profile,
+            shelter=self.shelter,
+        )
+
+        self.assertEqual(referral_list(user=self.org_1_case_manager_1, organization_id=self.org_2.id).count(), 0)
+        self.assertEqual(referral_list(user=self.org_1_case_manager_1, organization_id=self.org_1.id).count(), 1)
 
     def test_returns_empty_when_user_has_no_referrals(self) -> None:
         result = referral_list(user=self.org_1_case_manager_1)
