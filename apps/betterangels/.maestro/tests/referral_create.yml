@@ -45,24 +45,37 @@ appId: ${MAESTRO_APP_ID}
 # Allow multiple scrolls to settle on a physical device.
 - scrollUntilVisible:
     waitToSettleTimeoutMs: 300
+    centerElement: true
     element:
       id: storage-AMNESTY_LOCKERS-btn
     direction: DOWN
     timeout: 30000
 
 - tapOn:
-    waitToSettleTimeoutMs: 300
+    waitToSettleTimeoutMs: 600
+    retryTapIfNoChange: true
     id: storage-AMNESTY_LOCKERS-btn
+
+# Android exposes the chip's checked state; iOS does not (see referral_draft).
+- runFlow:
+    when:
+      platform: android
+    commands:
+      - assertVisible:
+          id: storage-AMNESTY_LOCKERS-btn
+          checked: true
 
 - scrollUntilVisible:
     waitToSettleTimeoutMs: 300
+    centerElement: true
     element:
       id: transportation-AUTOMOBILE-btn
     direction: DOWN
     timeout: 30000
 
 - tapOn:
-    waitToSettleTimeoutMs: 300
+    waitToSettleTimeoutMs: 600
+    retryTapIfNoChange: true
     id: transportation-AUTOMOBILE-btn
 
 - scrollUntilVisible:
@@ -73,9 +86,11 @@ appId: ${MAESTRO_APP_ID}
     timeout: 30000
 
 - tapOn:
-    waitToSettleTimeoutMs: 300
+    waitToSettleTimeoutMs: 600
+    retryTapIfNoChange: true
     id: intake-notes-input
 - inputText: ${output.referralMarker}
+- assertVisible: ${output.referralMarker}
 - hideKeyboard
 
 # ── Pick a shelter ──────────────────────────────────────────────────────────
