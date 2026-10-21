@@ -25,8 +25,11 @@ function parseUrl(value: string): URL | null {
   }
 }
 
+/** Matches an all-dot value (`.`, `..`, ...), which the URL parser would normalize away. */
+const ALL_DOTS_REGEX = /^\.+$/;
+
 function toProfileUrl(handle: string): string | null {
-  if (!INSTAGRAM_HANDLE_REGEX.test(handle)) {
+  if (!INSTAGRAM_HANDLE_REGEX.test(handle) || ALL_DOTS_REGEX.test(handle)) {
     return null;
   }
 

@@ -32,6 +32,12 @@ const invalidCases: [string | null | undefined, string | null][] = [
   ['   ', null],
   ['@', null],
   ['@not a handle!', null],
+  // all-dot values pass the handle regex but normalize to Instagram's home page
+  ['.', null],
+  ['..', null],
+  ['@.', null],
+  ['instagram.com/.', null],
+  ['https://instagram.com/..', null],
   // 32 char limit
   ['a'.repeat(31), null],
   ['https://instagram.com', null],

@@ -17,6 +17,7 @@ const cases: [string | null | undefined, boolean][] = [
   ['a'.repeat(31), false],
   // a dotted value is just a bare handle, not a domain
   ['jane.doe', true],
+  ['better.angels', true],
   ['https://example.com/housing', false],
 ];
 
