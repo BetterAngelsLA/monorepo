@@ -77,7 +77,7 @@ export function toInstagramUrl(hrefOrHandle?: string | null): string | null {
     return null;
   }
 
-  // Not an Instagram URL. Anything with a scheme or path already failed the
-  // handle pattern above; a bare value — dotted or not — is treated as a handle.
+  // Not an Instagram URL: fall back to the handle path. `toProfileUrl` below
+  // rejects anything containing `/` or `:`, so pasted URLs land here as `null`.
   return toProfileUrl(value);
 }
