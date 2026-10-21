@@ -4,55 +4,55 @@ overview: Make every write on a shelter-operator-portal object produce an audita
 todos:
   - id: freeze-write-actor
     content: 'Phase 1: freeze actor name/email on writes via HistoryMiddleware subclass'
-    status: pending
+    status: done
   - id: track-room
     content: 'Phase 1: Add @pghistory.track to Room model'
-    status: pending
+    status: done
   - id: track-reservation-update
     content: 'Phase 1: Add a non-status reservation.update event, disjoint from status_change'
-    status: pending
+    status: done
   - id: track-reservation-client
     content: 'Phase 1: Add @pghistory.track to ReservationClient model'
-    status: pending
+    status: done
   - id: track-shelter-photo
     content: 'Phase 1: Add @pghistory.track to ShelterPhoto model'
-    status: pending
+    status: done
   - id: track-media-admin
     content: 'Phase 1: Add @pghistory.track to MediaLink, Video, Service, ServiceCategory, and lookup models'
-    status: pending
+    status: done
   - id: track-m2m-proxies
     content: 'Phase 1: Add through-table proxy tracking for Shelter/Bed/Room M2M joins'
-    status: pending
+    status: done
   - id: generate-migration
     content: 'Phase 1: Run makemigrations shelters to emit pgtrigger AddTrigger operations'
-    status: pending
+    status: done
   - id: add-tests
     content: 'Phase 1: Add write-event coverage tests and run pytest --reuse-db'
-    status: pending
+    status: done
   - id: audit-selector
     content: 'Phase 2: Add audit selector for writes (AuditWriteEvent.objects.references)'
-    status: pending
+    status: done
   - id: audit-selector-pagination
     content: 'Phase 2: Paginate actions in SQL with a cursor (grouped action keys, endCursor/hasNextPage) before Python grouping'
-    status: pending
+    status: done
   - id: audit-rename-models
     content: 'Phase 2: Rename write aggregate AuditEvent -> AuditWriteEvent (regenerate the unmerged initial migration) and update importers'
-    status: pending
+    status: done
   - id: audit-choices-labels
     content: 'Phase 2: Render choice/enum fields as display labels and column names as verbose_name/friendly names'
-    status: pending
+    status: done
   - id: audit-snapshot
     content: 'Phase 2: Add opt-in full-state snapshot (rendered from existing pgh_data) to AuditEventType'
-    status: pending
+    status: done
   - id: audit-graphql
     content: 'Phase 2: Add objectAuditLog query (write-only) with org-scoped authorization'
-    status: pending
+    status: done
   - id: audit-schema-graphql
     content: 'Phase 2: Regenerate schema.graphql after adding objectAuditLog (validate-graphql-schema CI)'
-    status: pending
+    status: done
   - id: audit-query-tests
     content: 'Phase 2: Add write-only tests for objectAuditLog (scoping, actors, M2M attribution)'
-    status: pending
+    status: done
   - id: audit-write-filters
     content: 'Phase 3: Add dateFrom/dateTo/actorId filters to objectAuditLog'
     status: pending
@@ -79,16 +79,16 @@ todos:
     status: pending
   - id: rds-proxy-pinning
     content: 'Phase 3: Record the RDS Proxy connection-pinning interaction and drop the selector cursor'
-    status: pending
+    status: done
   - id: update-guard
     content: 'Phase 1: Guard the audit event tables against UPDATE (protect_updates); DELETE stays allowed for retention'
-    status: pending
+    status: done
   - id: retention-command
     content: 'Retention: add purge_audit_log --before management command (event tables, Context, AuditReadEvent)'
-    status: pending
+    status: done
   - id: multi-object-note
     content: 'Future: note the multi-object/get_for_objects extension feeding org-level audit log'
-    status: pending
+    status: done
 isProject: false
 ---
 
@@ -102,6 +102,11 @@ total-order cursor, `across()` branch pruning, raw-column page predicates (only
 the context arm is indexable), a per-page event budget, retention scoped to
 `--apps` with per-object boundary rows, and the complete `ContactInfo` read
 exclusion.
+
+Not in this change: the Phase 3 `dateFrom`/`dateTo`/`actorId` filters (§21), the
+read path (§22-§29), the kind filter (§30), and the operator-portal UI that
+consumes the query (the §32 routes land with the frontend change). The
+frontmatter `todos` mark what is delivered and what is still pending.
 
 ## Context
 
@@ -1174,6 +1179,7 @@ unnoticed, and the 16 KB conflict is an accepted, documented trade-off because
 
 - Write events carry the actor via pghistory's `MiddlewareEvents.user` (populated by `HistoryMiddleware`); this is the same mechanism [shelters/admin.py](apps/betterangels-backend/shelters/admin.py) already uses for its `updated_by` annotation (`MiddlewareEvents.objects.tracks(qs)`). Display names come from the frozen `user_name`/`user_email` (§8), not a live `User` join.
 - `MiddlewareEvents` proxies only `user` and `url` from context (`pghistory/models.py` `MiddlewareEvents`), so the selector's aggregate model must add `ProxyField("pgh_context__user_name", ...)` / `ProxyField("pgh_context__user_email", ...)` (and `ProxyField("pgh_context__label", ...)` for §7b) so these are first-class filterable columns instead of hand-parsed JSON. **Declare the proxied fields `null=True`** (matching `MiddlewareEvents.user`/`url`): events written outside any context have no `pgh_context`, so their `label`/`user_name`/`user_email` are NULL. Verify `pgh_context__label` compiles correctly against the synthetic CTE column before relying on it in a filter.
+- **The aggregate extends `Events`, not `MiddlewareEvents` (decided).** Inheriting would project `url` in every UNION branch (nothing reads it) and would name the actor id `user`, while the audit vocabulary is `actor`. `AuditWriteEvent.actor` is the same `pgh_context__user` accessor under that name; it compiles to `(_pgh_context.metadata->>'user')::bigint`, so it is a frozen id, not a relation — no `User` join, no `select_related` (§8) — and it exists for `actorId` filtering (§21).
 - A null actor is normal (system writes, data migrations, or events from before the middleware was attached) and must be **rendered as "system"** in the UI, not treated as a missing record.
 - **Label-based exclusion vs. attribution are distinct.** Only the non-operator `seed` label is _excluded_ from the log (§7b). The operator labels `import`/`clone` are **kept** and rendered with `label` outranking `user` for display: "system (import)" / "system (clone)" even though an operator triggered them. "system (seed)" never appears because seed rows are filtered out. Unknown/null-actor events render plain "system".
 - **Seed exclusion is applied in SQL** via `.exclude(pgh_context__label="seed")` on the aggregate queryset (not in Python), as a predicate on the aggregate CTE's outer SELECT before grouping (§10 performance note). Because Django only NULL-guards `.exclude()` for nullable fields, this requires the `label` proxy field to be declared `null=True` — otherwise `NOT (label = 'seed')` evaluates NULL for context-less rows and silently drops every NULL-context event, contradicting §12's singleton "system" action requirement.
@@ -1258,9 +1264,10 @@ a `.set()` replacing full membership yields one entry per related field, with
 row.
 
 Rendering create/delete from `pgh_data` (rather than `pgh_diff`) keeps them from
-showing empty or misleading changes; omitting null (or default-valued) fields
-keeps a single INSERT/DELETE from emitting a `field_changes` entry for every
-column the row never sets.
+showing empty or misleading changes; omitting NULL fields keeps a single
+INSERT/DELETE from emitting a `field_changes` entry for every column the row
+never sets. Only `null` is dropped — a field explicitly set to its default value
+is still rendered (see the INSERT bullet above).
 
 **Exclude mechanical columns:** drop `created_at`/`updated_at` from
 `field_changes` rendering so auto-timestamp churn doesn't surface as phantom
@@ -1616,6 +1623,9 @@ derivation regression, so it is the stronger guard.
 # Phase 3 — Filters
 
 ## 21. Date-range and actor filters
+
+**Not implemented in this change.** This is the Phase 3 plan; the Phase 2 query
+(§17) has no `dateFrom`/`dateTo`/`actorId` arguments yet.
 
 Add the timestamp-window and actor filters to the write audit log (before reads
 exist, `kinds` has nothing to filter on):
@@ -2044,11 +2054,12 @@ availability, and M2M rows keep full detail. `_SUMMARY_ONLY_MODELS` and
 `_SUMMARY_VERBS` in `audit/selectors.py` hold the list and the wording.
 
 **Bed and Room logs — full detail.** A Bed log carries the bed's own fields and
-M2M changes; a Room log carries the room's own fields and M2M changes. Reachable
-from the operator management tables' row history action
-(`/manage/beds/:id/activity`, `/manage/rooms/:id/activity`). Neither log includes
-reservation rows, and the Room log also excludes `BedEvent` because beds have
-their own log (`_SCOPED_EXCLUSIONS`, §10).
+M2M changes; a Room log carries the room's own fields and M2M changes. The
+operator portal reaches them from the management tables' row history action
+(`/manage/beds/:id/activity`, `/manage/rooms/:id/activity`); those pages and
+routes are the frontend change, not this backend one — here the surface is the
+query. Neither log includes reservation rows, and the Room log also excludes
+`BedEvent` because beds have their own log (`_SCOPED_EXCLUSIONS`, §10).
 
 **Reservations — tracked, not exposed.** `Reservation` and `ReservationClient`
 history keeps accruing for reporting and a future surface, but no operator UI
