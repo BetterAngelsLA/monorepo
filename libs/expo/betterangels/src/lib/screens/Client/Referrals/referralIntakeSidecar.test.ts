@@ -10,10 +10,8 @@
  * commit-inventory-and-submission-plan.md). RVTM §7 Tier 1.
  */
 import {
-  PII_KEYS,
   decodeReferralNotes,
   encodeReferralNotes,
-  stripSidecar,
   summarizeIntake,
 } from './referralIntakeSidecar';
 
@@ -152,12 +150,11 @@ describe('decodeReferralNotes', () => {
   });
 });
 
-describe('stripSidecar', () => {
+describe('decoded human notes', () => {
   it('returns only the human notes — the sidecar must never leak', () => {
-    // Every human-facing path (display / email / export) relies on this.
     const encoded = encodeReferralNotes(HUMAN, { substances: '30 days' });
 
-    const stripped = stripSidecar(encoded);
+    const stripped = decodeReferralNotes(encoded).humanNotes;
 
     expect(stripped).toBe(HUMAN);
     expect(stripped).not.toContain('referral-intake');
@@ -190,8 +187,7 @@ describe('summarizeIntake', () => {
   });
 
   it('does NOT mask consent — a yes/no acknowledgement is not identifying', () => {
-    // GAP-21: consent was removed from PII_KEYS.
-    expect(PII_KEYS).not.toContain('consent');
+    // A yes/no acknowledgment is not identifying; verify the actual output.
     expect(summarizeIntake({ consent: true })).toBe(
       'DHS data-sharing consent: Yes',
     );

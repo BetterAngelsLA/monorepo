@@ -1,4 +1,6 @@
 import { useMutation } from '@apollo/client/react';
+import { useApiConfig } from '@monorepo/ba-platform';
+import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Avatar,
@@ -9,7 +11,10 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { FeatureFlags } from '../../static';
+import { ReferralDraftRetention } from '../Client/Referrals/ReferralDraftRetention';
+import { discardAccountReferralDrafts } from '../Client/Referrals/referralDraftStorage';
 import {
   DeleteCurrentUserDocument,
   extractOperationInfoMessage,
@@ -20,9 +25,12 @@ import InfoCard from './InfoCard';
 
 export default function UserProfile() {
   const { user } = useUser();
+  const { apiUrl } = useApiConfig();
+  const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
   const { showSnackbar } = useSnackbar();
 
   if (!user) throw new Error('Something went wrong');
+  const userId = user.id;
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -73,13 +81,29 @@ export default function UserProfile() {
         showSnackbar({
           message:
             extractOperationInfoMessage(result, 'deleteCurrentUser') ??
-            'Sorry, there was an error logging you out.',
+            'Your account could not be deleted. Please try again.',
           type: 'error',
         });
 
         return;
       }
 
+      if (result.data?.deleteCurrentUser?.__typename !== 'DeletedObjectType') {
+        showSnackbar({
+          message: 'Your account could not be deleted. Please try again.',
+          type: 'error',
+        });
+        return;
+      }
+      try {
+        discardAccountReferralDrafts({ apiUrl, userId });
+      } catch {
+        showSnackbar({
+          message:
+            'Your account was deleted, but some local referral drafts could not be removed.',
+          type: 'error',
+        });
+      }
       router.navigate('/auth');
       signOut();
     } catch (err) {
@@ -93,7 +117,7 @@ export default function UserProfile() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View
         style={{
           alignItems: 'center',
@@ -118,6 +142,9 @@ export default function UserProfile() {
           <InfoCard key={index} title={item.title} value={item.value} />
         ))}
 
+        {referralsEnabled && (
+          <ReferralDraftRetention account={{ apiUrl, userId: user.id }} />
+        )}
         <DeleteModal
           body={`All data associated with your account will be deleted. This action cannot be undone.`}
           title={`Permanently delete your account?`}
@@ -133,7 +160,7 @@ export default function UserProfile() {
           }
         />
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

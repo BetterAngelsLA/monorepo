@@ -13,7 +13,6 @@
 import {
   buildReferralNotes,
   decodeReferralNotes,
-  stripSidecar,
   summarizeIntake,
 } from './referralIntakeSidecar';
 
@@ -119,8 +118,8 @@ describe('buildReferralNotes', () => {
     }) as string;
 
     // What display / email / export would show
-    expect(stripSidecar(notes)).toBe(STAFF_NOTES);
-    expect(stripSidecar(notes)).not.toContain('30 days');
+    expect(decodeReferralNotes(notes).humanNotes).toBe(STAFF_NOTES);
+    expect(decodeReferralNotes(notes).humanNotes).not.toContain('30 days');
   });
 
   it('keeps sensitive values masked in the summary rendered on the card', () => {

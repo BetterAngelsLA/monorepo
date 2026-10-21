@@ -6,7 +6,15 @@ import { RED, styles } from './intakeFormStyles';
 /** Database marker: dedicated field or temporary storage with referral notes. */
 export function MemoryIcon({ color }: { color: string }) {
   return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+    <Svg
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       <Ellipse
         cx={12}
         cy={6}

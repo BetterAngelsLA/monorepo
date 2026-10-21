@@ -5,10 +5,6 @@ import {
   type StoredIntake,
 } from './intakeFields';
 
-export const MATCHED_INTAKE_KEYS = INTAKE_FIELDS.filter(
-  (field) => 'matching' in field,
-).map((field) => field.key);
-
 /** Only explicitly matched fields contribute needs; unknown legacy values do not. */
 export function needLabelsFromIntake(
   intake: StoredIntake | null | undefined,

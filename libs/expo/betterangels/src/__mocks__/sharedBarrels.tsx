@@ -14,11 +14,13 @@
  * directory from the library build.
  */
 import { cloneElement, ReactNode, ReactElement, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 type Props = Record<string, unknown> & { children?: ReactNode };
 
-const asText = ({ children }: Props) => <Text>{children}</Text>;
+const asText = ({ children, ...rest }: Props) => (
+  <Text {...rest}>{children}</Text>
+);
 
 // Forwards accessibility props so getByLabelText / getByRole still resolve, and
 // stays pressable so fireEvent.press works on it.
@@ -91,7 +93,66 @@ export const uiComponents = () => ({
   TextMedium: asText,
   IconButton: asPressable,
   Button: asPressable,
+  TextButton: ({ title }: { title?: string }) => <Text>{title}</Text>,
+  RNKeyboardAwareScrollView: ({ children, ...rest }: Props) => (
+    <ScrollView {...rest}>{children}</ScrollView>
+  ),
   Avatar: () => <View />,
+  DatePicker: ({
+    label,
+    placeholder,
+    value,
+    onChange,
+    onDelete,
+    testId,
+  }: {
+    label?: string;
+    placeholder?: string;
+    value?: Date;
+    onChange: (date: Date | null) => void;
+    onDelete?: () => void;
+    testId?: string;
+  }) => (
+    <View>
+      <TextInput
+        accessibilityLabel={label ?? placeholder}
+        accessibilityHint="sets the calendar date"
+        testID={testId}
+        value={
+          value
+            ? `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+            : ''
+        }
+        onChangeText={(text) => {
+          if (!text) onDelete ? onDelete() : onChange(null);
+          else onChange(new Date(`${text}T12:00:00`));
+        }}
+      />
+    </View>
+  ),
+  SingleSelect: ({
+    label,
+    items,
+    onChange,
+  }: {
+    label: string;
+    items: { value: string; displayValue: string }[];
+    onChange: (value: string) => void;
+  }) => (
+    <View>
+      <Text>{label}</Text>
+      {items.map((item) => (
+        <Pressable
+          key={item.value}
+          accessibilityRole="button"
+          onPress={() => onChange(item.value)}
+        >
+          <Text>{item.displayValue}</Text>
+        </Pressable>
+      ))}
+    </View>
+  ),
+  getUserLocation: vi.fn(async () => undefined),
   Loading: () => <View />,
   InfiniteList: InfiniteListStub,
   DiscardModal: DiscardModalStub,
@@ -100,23 +161,43 @@ export const uiComponents = () => ({
 // Renders items synchronously; virtualization itself is FlashList's job and is
 // not under test here. Keeps header/empty/footer rendering observable.
 type InfiniteListStubProps = {
+  testID?: string;
+  accessible?: boolean;
+  accessibilityRole?: import('react-native').ViewProps['accessibilityRole'];
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
   data?: readonly unknown[];
   renderItem?: (item: never) => ReactNode;
   keyExtractor?: (item: never) => string;
   ListHeaderComponent?: ReactNode;
   ListEmptyComponent?: ReactNode | (() => ReactNode);
   ListFooterComponent?: ReactNode;
+  hasMore?: boolean;
+  loadMore?: () => void;
 };
 
 const InfiniteListStub = ({
+  testID,
+  accessible,
+  accessibilityRole,
+  accessibilityLabel,
+  accessibilityHint,
   data = [],
   renderItem,
   keyExtractor,
   ListHeaderComponent,
   ListEmptyComponent,
   ListFooterComponent,
+  hasMore,
+  loadMore,
 }: InfiniteListStubProps) => (
-  <View>
+  <View
+    testID={testID}
+    accessible={accessible}
+    accessibilityRole={accessibilityRole}
+    accessibilityLabel={accessibilityLabel}
+    accessibilityHint={accessibilityHint}
+  >
     {ListHeaderComponent}
     {data.length === 0
       ? typeof ListEmptyComponent === 'function'
@@ -128,6 +209,15 @@ const InfiniteListStub = ({
           </View>
         ))}
     {ListFooterComponent}
+    {hasMore && (
+      <Pressable
+        testID="infinite-list-load-more"
+        accessibilityRole="button"
+        onPress={loadMore}
+      >
+        <Text>Load more</Text>
+      </Pressable>
+    )}
   </View>
 );
 

@@ -13,9 +13,6 @@ import {
 const START = '\n\n<<<referral-intake:v1>>>\n';
 const END = '\n<<<end-referral-intake>>>';
 
-export const PII_KEYS = INTAKE_FIELDS.filter((field) => field.sensitive).map(
-  (field) => field.key,
-);
 export type Intake = StoredIntake;
 
 // Preserve the v1 convention: false and empty collections mean unanswered.
@@ -68,7 +65,11 @@ function isRecord(value: unknown): value is StoredIntake {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-type ParsedPayload = { fields: StoredIntake; pii: StoredIntake };
+type ParsedPayload = {
+  fields: StoredIntake;
+  pii: StoredIntake;
+  raw: StoredIntake;
+};
 
 function parsePayload(candidate: string): ParsedPayload | null {
   try {
@@ -77,7 +78,7 @@ function parsePayload(candidate: string): ParsedPayload | null {
     const fields = parsed.fields ?? {};
     const pii = parsed.PII ?? {};
     if (!isRecord(fields) || !isRecord(pii)) return null;
-    return { fields, pii };
+    return { fields, pii, raw: parsed };
   } catch {
     return null;
   }
@@ -155,8 +156,68 @@ export function buildReferralNotes(
   return encodeReferralNotes(pickerNotes ?? '', intakeValues) || undefined;
 }
 
-export function stripSidecar(raw: string | null | undefined): string {
-  return decodeReferralNotes(raw).humanNotes;
+function editableEnvelope(raw: string | null | undefined) {
+  const text = raw ?? '';
+  const start = text.lastIndexOf(START);
+  if (start < 0) {
+    return text.includes('<<<referral-intake:')
+      ? null
+      : { payload: {} as StoredIntake, humanNotes: text.trim() };
+  }
+  const end = text.indexOf(END, start);
+  if (end < 0) {
+    return looksLikePayload(text.slice(start + START.length))
+      ? null
+      : { payload: {} as StoredIntake, humanNotes: text.trim() };
+  }
+  if (text.slice(end + END.length).includes('<<<referral-intake:')) return null;
+  const parsed = parsePayload(text.slice(start + START.length, end));
+  if (!parsed) return null;
+  return {
+    payload: parsed.raw,
+    humanNotes: decodeReferralNotes(text).humanNotes,
+  };
+}
+
+export function canEditReferralNotes(raw: string | null | undefined): boolean {
+  return editableEnvelope(raw) !== null;
+}
+
+/** Patch known fields without losing foreign keys or envelope metadata. */
+export function updateReferralNotes(
+  original: string | null | undefined,
+  values: Intake,
+): string {
+  const envelope = editableEnvelope(original);
+  if (!envelope)
+    throw new Error('This referral uses an unsupported intake format');
+  const fields = isRecord(envelope.payload.fields)
+    ? { ...envelope.payload.fields }
+    : {};
+  const pii = isRecord(envelope.payload.PII) ? { ...envelope.payload.PII } : {};
+  for (const definition of INTAKE_FIELDS) {
+    if (
+      definition.backend.mode !== 'notesSidecar' ||
+      !Object.prototype.hasOwnProperty.call(values, definition.key)
+    )
+      continue;
+    const key = definition.backend.payloadKey;
+    delete fields[key];
+    delete pii[key];
+    const value = values[definition.key];
+    if (!isEmpty(value)) (definition.sensitive ? pii : fields)[key] = value;
+  }
+  const humanNotes =
+    typeof values.notes === 'string'
+      ? values.notes.trim()
+      : envelope.humanNotes;
+  if (
+    !Object.keys(envelope.payload).length &&
+    !Object.keys(fields).length &&
+    !Object.keys(pii).length
+  )
+    return humanNotes;
+  return `${humanNotes}${START}${JSON.stringify({ ...envelope.payload, v: 1, fields, PII: pii })}${END}`;
 }
 
 /** Human label for a stored value; falls back to the wire value. */

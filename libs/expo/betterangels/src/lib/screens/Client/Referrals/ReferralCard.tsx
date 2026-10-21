@@ -4,31 +4,43 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { ReferralShare } from './ReferralShare';
 import { ClientReferralsQuery } from './__generated__/Referrals.generated';
 import { ShelterCard, TagRow } from './ShelterCard';
 import { needLabelsFromIntake } from './clientNeeds';
 import { decodeReferralNotes, summarizeIntake } from './referralIntakeSidecar';
 import { shelterAttributeLabels } from './shelterAttributes';
+import { formatReferralDate } from './referralPresentation';
+import type { ProfileCardData } from './referralProfile';
+import { RequestedArrivalDate } from './RequestedArrivalDate';
 
 // A card reads the intake answers stored on the referral (in the shelter's own
 // vocabulary — see clientNeeds.ts), so it reflects the needs as they were
 // recorded at the time rather than whatever is on screen now.
 
-type ReferralCardProps = {
+export type ReferralCardProps = {
   referral: ClientReferralsQuery['referrals']['results'][number];
+  clientName: string;
+  profile?: ProfileCardData | null;
+  onEdit: () => void;
+  onReferAgain: () => void;
 };
 
-export function ReferralCard({ referral }: ReferralCardProps) {
+export function ReferralCard({
+  referral,
+  clientName,
+  profile,
+  onEdit,
+  onReferAgain,
+}: ReferralCardProps) {
   const referrerName = referral.createdBy
     ? `${referral.createdBy.firstName ?? ''} ${
         referral.createdBy.lastName ?? ''
       }`.trim()
     : 'Unknown';
 
-  const dateStr = referral.createdAt
-    ? new Date(referral.createdAt).toLocaleDateString()
-    : '';
+  const dateStr = formatReferralDate(referral.createdAt);
 
   const statusColor =
     referral.status === 'ACCEPTED'
@@ -39,19 +51,22 @@ export function ReferralCard({ referral }: ReferralCardProps) {
 
   // TEMPORARY: split the human notes from the intake sidecar for display.
   const { humanNotes, intake } = decodeReferralNotes(referral.notes);
-  const intakeSummary = summarizeIntake(intake); // PII masked
+  const { requestedArrivalDate, ...otherIntake } = intake;
+  const intakeSummary = summarizeIntake(otherIntake); // PII masked
 
   return (
     <View style={styles.card} testID={`referral-card-${referral.id}`}>
       {/* date + status tags */}
       <View style={styles.cardTopRow}>
         <TextRegular size="sm" color={Colors.NEUTRAL}>
-          {dateStr}
+          Referred: {dateStr || 'Not recorded'}
         </TextRegular>
         <TagRow
           tags={[{ label: referral.status ?? 'PENDING', color: statusColor }]}
         />
       </View>
+
+      <RequestedArrivalDate value={requestedArrivalDate} />
 
       {/* shelter block, shared with the picker */}
       {referral.shelter ? (
@@ -87,11 +102,32 @@ export function ReferralCard({ referral }: ReferralCardProps) {
           Notes: {humanNotes}
         </TextRegular>
       ) : null}
+      <View style={styles.cardTopRow}>
+        <Pressable
+          testID={`edit-referral-${referral.id}`}
+          accessibilityRole="button"
+          onPress={onEdit}
+        >
+          <TextBold color={Colors.PRIMARY}>Edit referral</TextBold>
+        </Pressable>
+        <Pressable
+          testID={`reuse-referral-${referral.id}`}
+          accessibilityRole="button"
+          onPress={onReferAgain}
+        >
+          <TextBold color={Colors.PRIMARY}>Refer to another shelter</TextBold>
+        </Pressable>
+      </View>
       {intakeSummary ? (
         <TextRegular size="xs" color={Colors.NEUTRAL}>
           Intake (temporary): {intakeSummary}
         </TextRegular>
       ) : null}
+      <ReferralShare
+        referral={referral}
+        clientName={clientName}
+        profile={profile}
+      />
     </View>
   );
 }

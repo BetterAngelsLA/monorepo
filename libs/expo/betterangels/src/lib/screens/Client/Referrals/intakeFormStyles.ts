@@ -12,6 +12,7 @@ export const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: Spacings.xs,
     backgroundColor: Colors.WHITE,
@@ -24,11 +25,18 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.PRIMARY,
     borderRadius: 8,
-    paddingHorizontal: Spacings.sm,
+    paddingHorizontal: Spacings.xs,
     paddingVertical: Spacings.xxs,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   headerBtnFlex: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
+    alignItems: 'center',
+  },
+  headerIconBtn: {
+    width: 48,
     alignItems: 'center',
   },
   body: {

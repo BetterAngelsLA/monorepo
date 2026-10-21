@@ -18,6 +18,7 @@ import { ReferralsTab } from './ReferralsTab';
 import { REFERRALS_PAGE_SIZE } from './constants';
 import { ClientReferralsDocument } from './__generated__/Referrals.generated';
 import { createReferralDraftStore } from './referralDraft';
+import { randomUUID } from 'node:crypto';
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
 vi.mock('@monorepo/expo/shared/icons', () => icons());
@@ -66,11 +67,14 @@ const emptyReferrals = [
 ];
 
 const renderTabWithDraft = async () => {
-  const store = createReferralDraftStore({
-    load: () => null,
-    save: vi.fn(),
-    remove: vi.fn(),
-  });
+  const store = createReferralDraftStore(
+    {
+      load: () => null,
+      save: vi.fn(),
+      remove: vi.fn(),
+    },
+    randomUUID,
+  );
   store.startNew(CLIENT_ID);
   await render(
     <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>

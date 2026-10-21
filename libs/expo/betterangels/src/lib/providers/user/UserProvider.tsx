@@ -1,9 +1,14 @@
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import { createUserProvider } from '@monorepo/ba-platform';
+import {
+  createUserProvider,
+  useActiveOrg,
+  useApiConfig,
+} from '@monorepo/ba-platform';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import useAppState from '../../hooks/appState/useAppState';
+import { useReferralDraftSession } from '../../screens/Client/Referrals/useReferralDraftSession';
 import {
   CurrentUserDocument,
   CurrentUserQuery,
@@ -88,6 +93,13 @@ interface ExpoShellProps {
 
 function ExpoShell({ children }: ExpoShellProps) {
   const { user, isLoading, refetchUser } = useUser();
+  const { apiUrl } = useApiConfig();
+  const { activeOrg } = useActiveOrg();
+  useReferralDraftSession({
+    apiUrl,
+    userId: user?.id,
+    organizationId: activeOrg?.id,
+  });
   const { appBecameActive } = useAppState();
   const [settled, setSettled] = useState(false);
 

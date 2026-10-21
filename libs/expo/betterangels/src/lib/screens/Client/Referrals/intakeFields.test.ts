@@ -5,6 +5,7 @@ import {
   INTAKE_FIELDS,
   getIntakeField,
   isIntakeControlValue,
+  intakeRequirementLabel,
   missingRequiredIntakeFields,
   type IntakeFieldDefinition,
   type IntakeValues,
@@ -28,6 +29,7 @@ const choices = {
     { value: 'd', label: 'Choice D' },
   ],
   sensitive: false,
+  reuse: 'prefill',
   requirement: 'required',
   persistence: { localDraft: true },
   backend: { mode: 'notesSidecar', field: 'notes', payloadKey: 'backend_bar' },
@@ -72,6 +74,23 @@ describe('field value contracts', () => {
     expect(getIntakeField('storage')?.requirement).toBe('pending');
     expect(missingRequiredIntakeFields({})).toEqual([]);
   });
+
+  it.each(['required', 'optional', 'pending'] as const)(
+    'keeps the %s display and validation policy consistent',
+    (requirement) => {
+      const field = { ...choices, requirement };
+      expect(intakeRequirementLabel(field)).toBe(
+        requirement === 'required'
+          ? 'Required'
+          : requirement === 'pending'
+            ? 'Optional · requirement under review'
+            : 'Optional',
+      );
+      expect(missingRequiredIntakeFields({}, [field])).toEqual(
+        requirement === 'required' ? [field] : [],
+      );
+    },
+  );
 
   it('rejects whitespace for required text and distinguishes No from unanswered', () => {
     const text = { ...choices, control: 'text' } as const;
