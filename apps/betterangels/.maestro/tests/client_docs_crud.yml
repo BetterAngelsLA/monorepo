@@ -93,6 +93,18 @@ appId: ${MAESTRO_APP_ID}
 # #####################################
 # Validate upload exists on next screen
 # #####################################
+
+# If the app reports a failed upload, capture its error text before continuing:
+# this is the only place the client-side upload failure surfaces in CI.
+- runFlow:
+    when:
+      visible: 'Upload failed'
+    commands:
+      - tapOn: 'Details'
+      - takeScreenshot: upload-failed-details
+      - tapOn:
+          text: 'Close'
+          optional: true
 - extendedWaitUntil:
     visible:
       id: 'client-docs-accordion-forms'
