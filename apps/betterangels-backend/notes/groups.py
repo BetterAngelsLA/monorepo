@@ -8,6 +8,7 @@ from clients.models import (
 from common.models import Attachment
 from common.permissions.config import RoleDef, TemplateConfig
 from notes.models import Note, ServiceRequest
+from referrals.permissions import REFERRAL_CASEWORKER_PERMISSIONS
 from tasks.models import Task
 from teams.models import Team
 
@@ -40,6 +41,8 @@ CASEWORKER = TemplateConfig(
         SocialMediaProfile.perms.CHANGE,
         SocialMediaProfile.perms.DELETE,
         SocialMediaProfile.perms.VIEW,
+        # Referral: ADD + CHANGE + VIEW (DELETE is per-object at creation)
+        *REFERRAL_CASEWORKER_PERMISSIONS,
         # Task: ADD + VIEW only
         Task.perms.ADD,
         Task.perms.VIEW,
@@ -58,7 +61,10 @@ CASEWORKER = TemplateConfig(
 # RFC 0003 first step: a scoped ``Caseworker`` Role carrying
 # ``teams.view_team`` lets the ``teams`` read authorize via ``can()`` (pure
 # grant) instead of org membership.  Only the teams permission rides the Role
-# today; the rest of the caseworker bundle stays legacy until RFC 0003.
+# today; the rest of the caseworker bundle — including the referral
+# add/change/view permissions — stays legacy until RFC 0003, so keep
+# ``CASEWORKER_ROLE`` a deliberate subset rather than deriving it from the
+# template.
 CASEWORKER_ROLE = RoleDef(
     name=CASEWORKER.name,
     permissions=[Team.perms.VIEW],
