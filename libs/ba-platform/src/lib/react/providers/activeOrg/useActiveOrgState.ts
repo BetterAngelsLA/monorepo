@@ -1,7 +1,7 @@
 import { isPermission } from '@monorepo/ba-platform/permissions';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
-import { useCallback, useLayoutEffect, useMemo } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 
 import {
   pushActiveOrgSource,
@@ -82,13 +82,22 @@ export function useActiveOrgState(
   // shadow an outer provider's list, which is what keeps requests attributed
   // during a refetch. Pinned by the "before the organization list is known",
   // "before the org list loads" and "genuinely org-less user" tests.
+  // Keep the last known list on screen while a refetch is in flight. Without
+  // this, `organizations === undefined` reads as "no permissions", so every
+  // org-scoped control (the Referrals tab, member management, …) blinks out of
+  // existence during a refetch — e.g. right after creating a client, which
+  // invalidates the user query.
+  const lastKnownOrgs = useRef<Org[] | undefined>(undefined);
+  if (organizations !== undefined) lastKnownOrgs.current = organizations;
+  const visibleOrgs = organizations ?? lastKnownOrgs.current;
+
   const cleanOrgs = useMemo(
     () =>
-      (organizations ?? []).map((org) => ({
+      (visibleOrgs ?? []).map((org) => ({
         ...org,
         permissions: (org.permissions ?? []).filter(isPermission),
       })),
-    [organizations],
+    [visibleOrgs],
   );
 
   // This is where the store learns who the user belongs to. `undefined` means

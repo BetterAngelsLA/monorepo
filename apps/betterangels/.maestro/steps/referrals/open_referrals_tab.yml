@@ -40,15 +40,76 @@ appId: ${MAESTRO_APP_ID}
 # swipes the first scrollable view it finds (the vertical client page) and only
 # at the screen centre, so the strip never moves.
 #
-# The strip's Y depends on the client header and the device, and the two
-# platforms differ enough to need their own offsets:
-#   - iOS: strip centre at ~31% on the 6.3" simulator.
-#   - Android: 44% on the 320x640 CI emulator; 38% on a 1080x2424 phone.
-# Two attempts per platform: the measured primary, then one fallback. A swipe
-# that misses the strip is a no-op, and a missed tap is optional, so the final
-# assertion is the single failure point.
+# The strip's Y depends on the client header height:
+#   - a seeded client (language, pronoun, case manager) puts it at ~31% on the
+#     6.3" iOS simulator, 44% on the 320x640 Android emulator and 38% on a
+#     1080x2424 phone;
+#   - a freshly created client has a shorter header, so the strip sits higher
+#     (~25% iOS, ~34% Android).
+# Sweep both bands. A swipe that misses the strip is a no-op and a missed tap is
+# optional, so the final assertion is the single failure point.
 - assertVisible:
     id: client-tabs-strip
+
+# Fast path: on wide screens the tab may already be on screen.
+- runFlow:
+    when:
+      visible:
+        id: client-tab-referrals
+    commands:
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: client-tab-referrals
+      - assertVisible:
+          id: referrals-screen
+
+- runFlow:
+    when:
+      platform: ios
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 24%'
+          end: '10%, 24%'
+          duration: 400
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      platform: ios
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 25%'
+          end: '10%, 25%'
+          duration: 400
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      platform: ios
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 26%'
+          end: '10%, 26%'
+          duration: 400
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: client-tab-referrals
+          optional: true
 
 - runFlow:
     when:
@@ -61,8 +122,6 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 31%'
           end: '10%, 31%'
           duration: 400
-      - waitForAnimationToEnd:
-          timeout: 2000
       - tapOn:
           waitToSettleTimeoutMs: 300
           id: client-tab-referrals
@@ -79,8 +138,6 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 32%'
           end: '10%, 32%'
           duration: 400
-      - waitForAnimationToEnd:
-          timeout: 2000
       - tapOn:
           waitToSettleTimeoutMs: 300
           id: client-tab-referrals
@@ -94,11 +151,25 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - swipe:
           waitToSettleTimeoutMs: 300
-          start: '90%, 44%'
-          end: '10%, 44%'
+          start: '90%, 33%'
+          end: '10%, 33%'
           duration: 400
-      - waitForAnimationToEnd:
-          timeout: 2000
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      platform: android
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 36%'
+          end: '10%, 36%'
+          duration: 400
       - tapOn:
           waitToSettleTimeoutMs: 300
           id: client-tab-referrals
@@ -115,8 +186,22 @@ appId: ${MAESTRO_APP_ID}
           start: '90%, 38%'
           end: '10%, 38%'
           duration: 400
-      - waitForAnimationToEnd:
-          timeout: 2000
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      platform: android
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          waitToSettleTimeoutMs: 300
+          start: '90%, 44%'
+          end: '10%, 44%'
+          duration: 400
       - tapOn:
           waitToSettleTimeoutMs: 300
           id: client-tab-referrals
