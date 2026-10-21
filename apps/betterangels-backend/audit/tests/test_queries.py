@@ -13,6 +13,25 @@ from shelters.enums import DemographicChoices, ReservationStatusChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 from shelters.models import Bed, ContactInfo, Demographic, Reservation, Room, Shelter
 
+BA_REVIEW_QUERY = """
+    query OperatorShelter($pk: ID!) {
+        operatorShelter(pk: $pk) {
+            id
+            overallRating
+            subjectiveReview
+            declinedBaVisit
+        }
+    }
+"""
+
+BEDS_QUERY = """
+    query Beds {
+        beds(pagination: {limit: 10}) {
+            results { id name }
+        }
+    }
+"""
+
 OBJECT_AUDIT_LOG_QUERY = """
     query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $after: String, $includeSnapshot: Boolean) {
         objectAuditLog(targetType: $targetType, objectId: $objectId, limit: $limit, after: $after, includeSnapshot: $includeSnapshot) {
@@ -317,3 +336,87 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(event["snapshot"]["name"], "Snapshot Query")
         self.assertNotIn("updated_at", event["snapshot"])
+
+    # ── regression: authorization of BA-review fields / related summaries ───
+
+    def test_ba_review_fields_are_hidden_from_scoped_operator(self) -> None:
+        """#2559 gates BA review globally; the audit log must not bypass it.
+
+        Fails today: ``operatorShelter`` correctly returns ``None`` for this
+        scoped user, but ``objectAuditLog`` renders the review fields in
+        ``fieldChanges`` and in the opt-in snapshot.
+        """
+        with audit_context(user=self.org_1_case_manager_1):
+            self.shelter.overall_rating = 5
+            self.shelter.subjective_review = "BA-private-review"
+            self.shelter.declined_ba_visit = True
+            self.shelter.save()
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        gate = self.execute_graphql(BA_REVIEW_QUERY, {"pk": str(self.shelter.pk)})
+        self.assertIsNone(gate["data"]["operatorShelter"]["overallRating"])
+        self.assertIsNone(gate["data"]["operatorShelter"]["subjectiveReview"])
+        self.assertIsNone(gate["data"]["operatorShelter"]["declinedBaVisit"])
+
+        response = self._query("SHELTER", self.shelter.id, includeSnapshot=True)
+        self.assertIsNone(response.get("errors"))
+        self.assertTrue(response["data"]["objectAuditLog"]["results"], "audit log is empty")
+
+        dumped = json.dumps(response)
+        self.assertNotIn("BA-private-review", dumped)
+        self.assertNotIn("subjective review", dumped)
+        self.assertNotIn("overall rating", dumped)
+        self.assertNotIn("Declined BA Visit", dumped)
+
+    def test_ba_review_fields_are_rendered_for_global_reviewer(self) -> None:
+        """Positive control: an authorized global reviewer still sees the fields."""
+        sync_roles()
+        reviewer = baker.make(User)
+        role_assign(user=reviewer, role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name))
+
+        with audit_context(user=reviewer):
+            self.shelter.subjective_review = "BA-global-review"
+            self.shelter.save()
+
+        self.graphql_client.force_login(reviewer)
+        response = self._query("SHELTER", self.shelter.id)
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIn("BA-global-review", json.dumps(response))
+
+    def test_bed_and_room_summaries_require_related_view_permission(self) -> None:
+        """A shelter-only role must not learn bed/room names from the shelter log.
+
+        The ``beds`` query is empty for this user, so the summary lines are the
+        only way the name/id is exposed.
+        """
+        # A unique role name matters: ``_grant_permission`` reuses the
+        # class-named role, which setUp already gave Bed/Room/Reservation VIEW.
+        shelter_only = baker.make(User)
+        self._grant_permission(
+            shelter_only,
+            Shelter.perms.VIEW,
+            self.org_1,
+            role_name="Audit Shelter-Only Viewer",
+        )
+
+        with audit_context(user=shelter_only):
+            self.shelter.name = "Visible Shelter Rename"
+            self.shelter.save()
+            Bed.objects.create(shelter=self.shelter, name="Hidden Bed")
+            self.room.name = "Hidden Room"
+            self.room.save()
+
+        self.graphql_client.force_login(shelter_only)
+
+        beds = self.execute_graphql(BEDS_QUERY)
+        self.assertEqual(beds["data"]["beds"]["results"], [])
+
+        response = self._query("SHELTER", self.shelter.id)
+        self.assertIsNone(response.get("errors"))
+        dumped = json.dumps(response)
+        self.assertIn("Visible Shelter Rename", dumped)
+        self.assertNotIn("Hidden Bed", dumped)
+        self.assertNotIn("Hidden Room", dumped)
+

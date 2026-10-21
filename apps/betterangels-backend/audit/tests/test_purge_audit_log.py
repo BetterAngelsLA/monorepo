@@ -20,6 +20,7 @@ from audit.tests.utils import audit_context
 from clients.admin import ClientProfileResource
 from clients.enums import LivingSituationEnum
 from clients.models import ClientProfile
+from shelters.enums import ReservationStatusChoices
 from shelters.models import Bed, Reservation, Shelter
 from shelters.selectors import reports as reports_selector
 from shelters.selectors.reports import daily_occupancy, report_bed_status_counts
@@ -241,6 +242,57 @@ class PurgeAuditLogTestCase(TestCase):
         actions = object_audit_log(obj=reservation, target_type="RESERVATION").results
         self.assertEqual(actions[0].field_changes["notes"], ["B", "C"])
         self.assertEqual(actions[1].field_changes["notes"], ["A", "B"])
+
+    def test_purge_does_not_rebase_a_retained_status_change_diff(self) -> None:
+        """A retained row's diff must not change when its deletable base is purged.
+
+        Fails today: the boundary rule keeps the newest *deletable* row, but a
+        retained row's deletable predecessor can still be deleted. Here
+        ``reservation.update`` (B) is removed, so the retained
+        ``reservation.status_change`` diffs against ``reservation.add`` and
+        falsely claims the notes changed from A to B.
+        """
+        shelter = baker.make(Shelter, name="Retained Diff Shelter")
+        bed = Bed.objects.create(shelter=shelter, name="Retained Diff Bed")
+        with audit_context():
+            reservation = Reservation.objects.create(
+                bed=bed, notes="A", status=ReservationStatusChoices.CONFIRMED
+            )
+        with audit_context():
+            reservation.notes = "B"
+            reservation.save()
+        with audit_context():
+            reservation.status = ReservationStatusChoices.CHECKED_IN
+            reservation.save()
+        with audit_context():
+            reservation.notes = "C"
+            reservation.save()
+        with audit_context():
+            reservation.notes = "D"
+            reservation.save()
+
+        def status_change_diff() -> dict:
+            actions = object_audit_log(obj=reservation, target_type="RESERVATION").results
+            for action in actions:
+                for event in action.events:
+                    if event.action == "reservation.status_change":
+                        self.assertIsNotNone(event.field_changes)
+                        return event.field_changes or {}
+            raise AssertionError("reservation.status_change event missing")
+
+        before = status_change_diff()
+        self.assertEqual(before, {"status": ["Confirmed", "Checked In"]})
+
+        ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
+        rows = list(ReservationEvent.objects.filter(pgh_obj_id=reservation.pk).order_by("pgh_id"))
+        backdate_event_rows(
+            ReservationEvent.objects.filter(pk__in=[row.pk for row in rows[:-1]]),
+            pgh_created_at=_OLD,
+        )
+        call_command("purge_audit_log", before=_CUTOFF)
+
+        after = status_change_diff()
+        self.assertEqual(after, before, "retained status_change diff was rebased by the purge")
 
     def test_boundary_row_is_not_retained_without_a_newer_event(self) -> None:
         """A fully-aged object deletes cleanly; the boundary rule adds no row."""
