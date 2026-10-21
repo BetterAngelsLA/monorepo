@@ -98,9 +98,17 @@ appId: ${MAESTRO_APP_ID}
       id: 'client-docs-accordion-forms'
     timeout: 15000
 
-- tapOn:
-    id: 'client-docs-accordion-forms'
-- waitForAnimationToEnd
+# The upload screen can leave the folder expanded; only toggle it when the
+# cards are actually hidden, otherwise this tap collapses it and the assertion
+# below can never pass.
+- runFlow:
+    when:
+      notVisible:
+        id: 'file-card-.*jpg'
+    commands:
+      - tapOn:
+          id: 'client-docs-accordion-forms'
+      - waitForAnimationToEnd
 
 # This is a soft check, as there could be a pre-existing uploads
 # and we can't easily validate exact filename of latest upload.
