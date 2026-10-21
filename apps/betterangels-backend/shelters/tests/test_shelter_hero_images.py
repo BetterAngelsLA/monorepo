@@ -1,9 +1,7 @@
 from unittest.mock import Mock, patch
 
 from django.test import TestCase, override_settings
-from waffle.testutils import override_switch
 
-from common.imgproxy import IMGPROXY_SWITCH
 from shelters.enums import ShelterPhotoTypeChoices, StatusChoices
 from shelters.models import ShelterPhoto
 from shelters.tests.baker_recipes import shelter_recipe
@@ -12,7 +10,6 @@ from test_utils.mixins import GraphQLTestCaseMixin
 
 
 @override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
-@override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTestCaseMixin, TestCase):
     """Regression tests for the ``heroImage`` GraphQL field.
 

@@ -6,11 +6,9 @@ from urllib.parse import urlsplit
 
 from django.test import TestCase, override_settings
 from unittest_parametrize import ParametrizedTestCase, parametrize
-from waffle.testutils import override_switch
 
 from common.enums import ImagePresetEnum
 from common.imgproxy import (
-    IMGPROXY_SWITCH,
     _build_signed_imgproxy_path,
     _encode_source_url,
     _get_image_source_url,
@@ -29,21 +27,19 @@ TEST_PREFIX = "imgproxy"
 # is_imgproxy_enabled
 # ---------------------------------------------------------------------------
 class IsImgproxyEnabledTest(ParametrizedTestCase, TestCase):
-    """is_imgproxy_enabled only checks IMGPROXY_KEY, IMGPROXY_SALT, and the waffle switch."""
+    """is_imgproxy_enabled only checks that the signing keys are present."""
 
     @parametrize(
-        "key, salt, switch_active, expected",
+        "key, salt, expected",
         [
-            ("", TEST_SALT, True, False),
-            (TEST_KEY, "", True, False),
-            (TEST_KEY, TEST_SALT, False, False),
-            (TEST_KEY, TEST_SALT, True, True),
+            ("", TEST_SALT, False),
+            (TEST_KEY, "", False),
+            (TEST_KEY, TEST_SALT, True),
         ],
     )
-    def test_is_imgproxy_enabled(self, key: str, salt: str, switch_active: bool, expected: bool) -> None:
+    def test_is_imgproxy_enabled(self, key: str, salt: str, expected: bool) -> None:
         with override_settings(IMGPROXY_KEY=key, IMGPROXY_SALT=salt):
-            with override_switch(IMGPROXY_SWITCH, active=switch_active):
-                self.assertEqual(is_imgproxy_enabled(), expected)
+            self.assertEqual(is_imgproxy_enabled(), expected)
 
 
 # ---------------------------------------------------------------------------
@@ -231,7 +227,6 @@ def _make_file(
 
 
 @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
-@override_switch(IMGPROXY_SWITCH, active=True)
 class BuildImgproxyUrlTest(TestCase):
     @override_settings(IS_LOCAL_DEV=True)
     def test_local_dev_returns_local_url(self) -> None:

@@ -3,12 +3,10 @@ from typing import Optional
 from unittest.mock import ANY
 
 import time_machine
-import waffle
 from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from model_bakery import baker
 from unittest_parametrize import parametrize
-from waffle.testutils import override_switch
 
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
@@ -39,7 +37,6 @@ from clients.tests.utils import (
 )
 from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS, MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from common.enums import ImagePresetEnum
-from common.imgproxy import IMGPROXY_SWITCH
 from notes.models import Note
 
 
@@ -159,7 +156,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         IMGPROXY_SALT="68656C6C6F",
         IMGPROXY_LOCAL_URL="http://localhost:8080",
     )
-    @override_switch(IMGPROXY_SWITCH, active=True)
     def test_client_profiles_query_with_processed_photo(self) -> None:
         self._set_client_profile_photo(self.client_profile_2["id"])
 
@@ -182,10 +178,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }}
             }}
         """
-
-        # Keep the switch cached; a lookup inside the count assertion below
-        # would otherwise be an extra query.
-        waffle.switch_is_active(IMGPROXY_SWITCH)
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
