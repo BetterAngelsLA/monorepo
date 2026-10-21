@@ -145,7 +145,7 @@ jobs:
       build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/']
       retries: 1
-      record_screen: true
+      record_screen: false
 
   maestro_ios_test:
     needs: [wait_ios_build]

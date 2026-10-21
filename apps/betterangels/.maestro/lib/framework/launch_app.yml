@@ -119,3 +119,15 @@ appId: ${MAESTRO_APP_ID}
               id: app-root
           commands:
             - evalScript: ${output.counter = output.counter + 1}
+
+# The loop exhausted without `app-root`: on a cold emulator the update download
+# may still be in flight, or the dev client landed back on its home screen.
+# Kill and re-open once before the (longer) auth wait takes over, instead of
+# failing the flow on the first attempt.
+- runFlow:
+    when:
+      notVisible:
+        id: app-root
+    commands:
+      - killApp
+      - openLink: ${MAESTRO_DEEPLINK}
