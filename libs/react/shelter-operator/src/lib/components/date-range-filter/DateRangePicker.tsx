@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom';
 import { Button } from '../base-ui/buttons';
 import { MENU_GAP } from '../base-ui/dropdown/constants';
 import { MenuPanel } from '../base-ui/dropdown/MenuPanel';
-import { usePortalPosition } from '../base-ui/dropdown/usePortalPosition';
+import { useFloatingPanel } from '../base-ui/popover';
 import { Calendar, type RdpDateRange } from './Calendar';
 import {
   computeFieldCommit,
@@ -298,65 +298,15 @@ export function DateRangePicker({
     [changeRightMonth, rightMonth],
   );
 
-  const menuPos = usePortalPosition(anchorRef, open, close, menuRef);
-
   const dialogId = useId();
 
-  // The panel sizes to its content, so clamp it inside the viewport on both
-  // axes: pull it back from the right edge, flip it above the trigger when it
-  // would run off the bottom, and let the content scroll when it is taller than
-  // the window. Re-measure when the content changes (year grid, month rows,
-  // validation message).
-  const [panelPos, setPanelPos] = useState<{
-    left: number;
-    top: number;
-  } | null>(null);
-  useLayoutEffect(() => {
-    if (!open) {
-      setPanelPos(null);
-      return;
-    }
-    const el = menuRef.current;
-    const anchor = anchorRef.current;
-    if (!el) return;
-
-    const measure = () => {
-      const { width, height } = el.getBoundingClientRect();
-      const margin = 8;
-
-      const maxLeft = Math.max(margin, window.innerWidth - width - margin);
-      const left = Math.max(margin, Math.min(menuPos.left, maxLeft));
-
-      let top = menuPos.top;
-      if (anchor) {
-        const rect = anchor.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - rect.bottom - MENU_GAP;
-        const spaceAbove = rect.top - MENU_GAP;
-        if (height > spaceBelow && spaceAbove > spaceBelow) {
-          top = rect.top - height - MENU_GAP;
-        }
-      }
-      top = Math.max(
-        margin,
-        Math.min(top, window.innerHeight - height - margin),
-      );
-
-      setPanelPos((prev) =>
-        prev?.left === left && prev?.top === top ? prev : { left, top },
-      );
-    };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [open, menuPos.left, menuPos.top]);
-
-  const positioned = {
-    ...menuPos,
-    left: panelPos?.left ?? menuPos.left,
-    top: panelPos?.top ?? menuPos.top,
-  };
+  // Fit the panel inside the viewport and flip it above the trigger when there
+  // is more room there; the hook also dismisses it on an external scroll or a
+  // window resize.
+  const panelPos = useFloatingPanel(anchorRef, menuRef, open, {
+    gap: MENU_GAP,
+    onClose: close,
+  }) ?? { top: 0, left: 0 };
 
   const hasError = fromError || toError;
 
@@ -446,7 +396,7 @@ export function DateRangePicker({
         createPortal(
           <MenuPanel
             menuRef={menuRef}
-            menuPos={positioned}
+            menuPos={panelPos}
             onClose={() => close()}
             align="left-auto"
             hideBackdrop
