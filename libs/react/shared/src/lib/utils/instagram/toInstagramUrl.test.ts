@@ -6,10 +6,11 @@ const IG_BASE_URL = 'https://instagram.com';
 const validCases: [string | null | undefined, string | null][] = [
   ['hello', `${IG_BASE_URL}/hello`],
   ['hello.angels_1', `${IG_BASE_URL}/hello.angels_1`],
-  // a dotted handle whose suffix isn't a real TLD is still a handle
-  ['jane.doe', `${IG_BASE_URL}/jane.doe`],
+  // DEV-2633: the reported case — a dotted handle that is also a valid FQDN
+  ['better.angels', `${IG_BASE_URL}/better.angels`],
   // dotted values are indistinguishable from domains, so they're read as handles
   ['example.com', `${IG_BASE_URL}/example.com`],
+  ['www.google.com', `${IG_BASE_URL}/www.google.com`], // accepted trade-off
   ['@hello', `${IG_BASE_URL}/hello`],
   ['  @hello  ', `${IG_BASE_URL}/hello`],
   ['https://www.instagram.com/hello/', `${IG_BASE_URL}/hello`],
