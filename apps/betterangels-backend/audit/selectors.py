@@ -822,7 +822,11 @@ def _build_action(
     target_model_label: str | None = None,
     include_snapshot: bool = False,
 ) -> AuditActionData:
-    rows.sort(key=lambda r: (r.pgh_created_at, r.pgh_id))
+    # A copy: ``rows`` is the list stored in the caller's ``grouped`` dict, so
+    # sorting in place would mutate it as a hidden side effect. The ascending
+    # order is load-bearing below -- ``rows[0]`` picks the actor and ``rows[-1]``
+    # the action timestamp.
+    rows = sorted(rows, key=lambda r: (r.pgh_created_at, r.pgh_id))
 
     actor = _actor(rows[0])
     # Action-level changes are keyed by ``(owner model, row id, display name)``:

@@ -214,19 +214,29 @@ class Command(BaseCommand):
                 deleted, _ = model._default_manager.filter(pk__in=ids).delete()
             deleted_total += cast(int, deleted)
             if deleted == 0:
-                # Nothing removed this pass; stop rather than spin.
+                # Deliberately conservative: a pass that removes nothing (a
+                # concurrent purge took these ids between the SELECT and the
+                # DELETE) ends this model instead of re-querying. Any aged rows
+                # left behind wait for the next run. Re-checking the queryset
+                # and continuing would spin forever against a DELETE that is a
+                # silent no-op (a rule or row-level policy).
                 return deleted_total
             if len(ids) < batch_size:
                 return deleted_total
 
     @staticmethod
     def _purge_orphan_contexts(before: datetime.datetime, batch_size: int, dry_run: bool) -> int:
+        # Resolved once: the predicate depends only on the event-model registry,
+        # which cannot change while the command runs.
+        where = Command._orphan_context_where()
+        if where is None:
+            return 0
         if dry_run:
-            return Command._count_orphan_contexts(before)
+            return Command._count_orphan_contexts(before, where)
 
         deleted_total = 0
         while True:
-            ids = Command._orphan_context_ids(before, batch_size)
+            ids = Command._orphan_context_ids(before, batch_size, where)
             if not ids:
                 return deleted_total
             with transaction.atomic():
@@ -250,20 +260,14 @@ class Command(BaseCommand):
         return " AND ".join(f'NOT EXISTS (SELECT 1 FROM "{table}" e WHERE e.pgh_context_id = c.id)' for table in tables)
 
     @staticmethod
-    def _orphan_context_ids(before: datetime.datetime, limit: int) -> list[Any]:
-        where = Command._orphan_context_where()
-        if where is None:
-            return []
+    def _orphan_context_ids(before: datetime.datetime, limit: int, where: str) -> list[Any]:
         sql = f'SELECT c.id FROM "{Context._meta.db_table}" c WHERE c.created_at < %s AND {where} LIMIT %s'
         with connection.cursor() as cursor:
             cursor.execute(sql, [before, limit])
             return [row[0] for row in cursor.fetchall()]
 
     @staticmethod
-    def _count_orphan_contexts(before: datetime.datetime) -> int:
-        where = Command._orphan_context_where()
-        if where is None:
-            return 0
+    def _count_orphan_contexts(before: datetime.datetime, where: str) -> int:
         sql = f'SELECT COUNT(*) FROM "{Context._meta.db_table}" c WHERE c.created_at < %s AND {where}'
         with connection.cursor() as cursor:
             cursor.execute(sql, [before])

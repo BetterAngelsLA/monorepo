@@ -284,7 +284,10 @@ class PurgeAuditLogTestCase(TestCase):
         retained_before = _event_rows_for_context(context, retained=True)
         deleted_before = _event_rows_for_context(context, retained=False)
         # Guard against a vacuous pass: the fixture must produce both kinds.
-        self.assertEqual(retained_before, {("shelters.BedEvent", BedEvent.objects.get(pgh_label="bed.add").pk)})
+        # Scoped to this context: a bare label lookup raises
+        # ``MultipleObjectsReturned`` as soon as the class grows a second bed.
+        bed_add_pk = BedEvent.objects.get(pgh_context_id=context.pk, pgh_label="bed.add").pk
+        self.assertEqual(retained_before, {("shelters.BedEvent", bed_add_pk)})
         self.assertTrue(deleted_before)
 
         call_command("purge_audit_log", before=_CUTOFF)
