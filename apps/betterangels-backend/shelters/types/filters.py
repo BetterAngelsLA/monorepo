@@ -46,6 +46,7 @@ from shelters.enums import (
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.open_at import shelters_open_at
+from shelters.permissions import can_view_ba_review
 from shelters.selectors.computed_status import shelter_count_subquery
 
 
@@ -338,6 +339,13 @@ class OperatorShelterFilter(PublicShelterFilter):
     def overall_rating(self, info: Info, value: Optional[List[int]], prefix: str) -> Q:
         if not value:
             return Q()
+
+        # BA-only review field — the same global-tier read gate as the output
+        # fields (ADR 0001 §2.4), so a scoped operator cannot infer ratings by
+        # filtering on them.
+        if not can_view_ba_review(info):
+            return Q(pk__in=[])
+
         return Q(**{f"{prefix}overall_rating__in": value})
 
 
