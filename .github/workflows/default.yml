@@ -253,6 +253,37 @@ jobs:
           # ships without it.
           EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
 
+      - name: 🧪 E2E shelter-web (preview)
+        # Runs after deploy, because the suite drives the deployed preview: the
+        # deploy step only returns once the edge serves the revision just built,
+        # so these tests describe this commit rather than whatever was there.
+        #
+        # Choosing the target — this branch's preview when `shelter-web` was
+        # deployed, the existing preview or a skip when only the specs changed —
+        # lives in tools/scripts/e2e-shelter.sh, which is runnable locally too.
+        # The preview is only rebuilt and redeployed for affected projects, so an
+        # untouched shelter-web means the deployed site is unchanged and a run
+        # would report on someone else's revision.
+        #
+        # One step per web property, because each has its own origin. That origin
+        # already has a home — `SITE_URL` in the app's `.env.deploy.<config>` —
+        # and the script takes it from there. An e2e project already names its
+        # app with `implicitDependencies`. (Which is also why this can't be
+        # `nx affected -t e2e`: `BASE_URL` is one value for the whole container,
+        # so a second suite in the same step would be handed the wrong origin.)
+        if: matrix.environment == 'preview'
+        run: |
+          docker compose run --rm better-angels bash tools/scripts/e2e-shelter.sh
+
+      - name: 📎 Upload shelter-e2e report
+        if: always() && matrix.environment == 'preview'
+        uses: actions/upload-artifact@v4
+        with:
+          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
+          path: dist/.playwright/apps/shelter-e2e
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: ⏹️ Spin down monorepo environment
         if: always()
         run: |
