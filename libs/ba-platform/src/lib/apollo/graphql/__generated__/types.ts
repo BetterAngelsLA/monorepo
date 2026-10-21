@@ -920,6 +920,14 @@ export type DemographicType = {
   name?: Maybe<DemographicChoices>;
 };
 
+export type DensityScaleType = {
+  __typename: 'DensityScaleType';
+  max: Scalars['Int']['output'];
+  p50: Scalars['Float']['output'];
+  p90: Scalars['Float']['output'];
+  p95: Scalars['Float']['output'];
+};
+
 export type DjangoFileType = {
   __typename: 'DjangoFileType';
   name: Scalars['String']['output'];
@@ -2240,6 +2248,7 @@ export type OperatorShelterType = {
   city?: Maybe<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
+  declinedBaVisit?: Maybe<Scalars['Boolean']['output']>;
   demographics: Array<DemographicType>;
   demographicsOther?: Maybe<Scalars['String']['output']>;
   description: Scalars['String']['output'];
@@ -2578,6 +2587,7 @@ export type Query = {
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
   currentUser: CurrentUserType;
+  densityScale?: Maybe<DensityScaleType>;
   featureControls: FeatureControlData;
   hmisClientProfile: HmisClientProfileType;
   hmisClientProfiles: HmisClientProfileTypeOffsetPaginated;
@@ -2688,6 +2698,16 @@ export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   ordering?: Array<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryDensityScaleArgs = {
+  dimension?: InputMaybe<RegionDimension>;
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+  zoom: Scalars['Int']['input'];
 };
 
 
@@ -2816,8 +2836,10 @@ export type QueryReferralsArgs = {
 
 
 export type QueryReportSummaryArgs = {
+  dimension?: InputMaybe<RegionDimension>;
   endDate?: InputMaybe<Scalars['Date']['input']>;
   organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -3567,7 +3589,6 @@ export type ShelterType = {
   organization?: Maybe<OrganizationType>;
   otherRules?: Maybe<Scalars['String']['output']>;
   otherServices?: Maybe<Scalars['String']['output']>;
-  overallRating?: Maybe<Scalars['Int']['output']>;
   parking: Array<ParkingType>;
   pets: Array<PetType>;
   phone?: Maybe<Scalars['PhoneNumber']['output']>;
@@ -3588,7 +3609,6 @@ export type ShelterType = {
   specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
   status: StatusChoices;
   storage: Array<StorageType>;
-  subjectiveReview?: Maybe<Scalars['String']['output']>;
   supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -4004,6 +4024,7 @@ export type UpdateShelterInput = {
   citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   cityId?: InputMaybe<Scalars['ID']['input']>;
+  declinedBaVisit?: InputMaybe<Scalars['Boolean']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   demographicsOther?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
@@ -4025,6 +4046,7 @@ export type UpdateShelterInput = {
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
+  overallRating?: InputMaybe<Scalars['Int']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
   phone?: InputMaybe<Scalars['PhoneNumber']['input']>;

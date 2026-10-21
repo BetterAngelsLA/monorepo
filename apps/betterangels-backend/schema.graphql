@@ -906,6 +906,13 @@ type DemographicType {
   name: DemographicChoices
 }
 
+type DensityScaleType {
+  p50: Float!
+  p90: Float!
+  p95: Float!
+  max: Int!
+}
+
 type DjangoFileType {
   name: String!
   path: String!
@@ -1819,7 +1826,6 @@ type OperatorShelterType {
   organization: OrganizationType
   otherRules: String
   otherServices: String
-  overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
   phone: PhoneNumber
@@ -1840,7 +1846,6 @@ type OperatorShelterType {
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
-  subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
@@ -1854,6 +1859,9 @@ type OperatorShelterType {
   distanceInMiles: Float
   bedCounts: BedCountType!
   roomCounts: RoomCountType!
+  overallRating: Int
+  subjectiveReview: String
+  declinedBaVisit: Boolean
   additionalContacts: [ShelterContactInfoType!]!
 }
 
@@ -2140,8 +2148,9 @@ type Query {
   interactionsByRegion(organizationId: ID!, dimension: RegionDimension = null, startDate: Date = null, endDate: Date = null, regionCodes: [String!] = null): [RegionCountType!]!
   interactionMap(organizationId: ID!, startDate: Date = null, endDate: Date = null, limit: Int = null, dimension: RegionDimension = null, regionCodes: [String!] = null): InteractionMapType!
   interactionScope(organizationId: ID!, startDate: Date = null, endDate: Date = null): InteractionScopeType!
+  densityScale(organizationId: ID!, zoom: Int!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): DensityScaleType
   regionDimensions: [RegionDimensionInfo!]!
-  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
+  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
@@ -2772,7 +2781,6 @@ type ShelterType {
   organization: OrganizationType
   otherRules: String
   otherServices: String
-  overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
   phone: PhoneNumber
@@ -2793,7 +2801,6 @@ type ShelterType {
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
-  subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
@@ -3228,6 +3235,8 @@ input UpdateShelterInput {
   otherServices: String
   entryInfo: String
   subjectiveReview: String
+  overallRating: Int
+  declinedBaVisit: Boolean
   demographicsOther: String
   shelterTypesOther: String
   cityCouncilDistrict: Int
