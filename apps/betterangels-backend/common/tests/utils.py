@@ -4,7 +4,6 @@ import json
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple, Union
 
-import waffle
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.contrib.sites.models import Site
@@ -144,21 +143,6 @@ class _MaxNumQueriesContext:
 
 
 class NumQueriesWithoutCacheMixin:
-    @staticmethod
-    def _warm_waffle_switches() -> None:
-        """Warm every waffle switch before capturing queries.
-
-        Waffle caches each switch; a cold entry adds one query to the next
-        lookup.  Any test can invalidate the cache with
-        ``waffle.testutils.override_switch``, so which switches are warm
-        depends on test order and xdist scheduling.  Warming all existing
-        switches makes exact counts deterministic instead of special-casing
-        the one switch that happened to flake (imgproxy).
-        """
-        switch_model = waffle.get_waffle_switch_model()
-        for name in switch_model.objects.values_list("name", flat=True):
-            waffle.switch_is_active(name)
-
     def assertNumQueriesWithoutCache(self: Any, query_count: int) -> Any:
         """
         Resets all caches that may prevent query execution.
@@ -169,7 +153,6 @@ class NumQueriesWithoutCacheMixin:
         """
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
-        self._warm_waffle_switches()
         return self.assertNumQueries(query_count)
 
     def assertMaxNumQueriesWithoutCache(self: Any, max_query_count: int) -> _MaxNumQueriesContext:
@@ -179,7 +162,6 @@ class NumQueriesWithoutCacheMixin:
         """
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
-        self._warm_waffle_switches()
         return _MaxNumQueriesContext(self, max_query_count)
 
 

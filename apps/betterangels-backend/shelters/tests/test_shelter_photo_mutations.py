@@ -1,9 +1,11 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import pytest
 import waffle
 from django.test import TestCase
 from model_bakery import baker
+from waffle.testutils import override_switch
 
 from accounts.models import User
 from common.imgproxy import IMGPROXY_SWITCH
@@ -14,6 +16,13 @@ from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.utils import ShelterTestCase
 
 
+@pytest.fixture(autouse=True)
+def _warm_imgproxy_switch() -> None:
+    """Keep the switch cached; a lookup inside a count assertion adds a query."""
+    waffle.switch_is_active(IMGPROXY_SWITCH)
+
+
+@override_switch(IMGPROXY_SWITCH, active=True)
 class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
     MUTATION = """
         mutation GenerateShelterPhotoUploads($data: GenerateShelterPhotoUploadsInput!) {
@@ -177,6 +186,7 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         )
 
 
+@override_switch(IMGPROXY_SWITCH, active=True)
 class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
     MUTATION = """
         mutation ResolveShelterPhotoUploads($data: ResolveShelterPhotoUploadsInput!) {
@@ -254,9 +264,6 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
             MagicMock(file_path="shelters/b.jpg"),
         ]
         initial_count = ShelterPhoto.objects.count()
-
-        # Warm waffle cache so is_imgproxy_enabled() doesn't add a flaky extra query
-        waffle.switch_is_active(IMGPROXY_SWITCH)
 
         expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -438,6 +445,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.assertEqual(ShelterPhoto.objects.count(), 0)
 
 
+@override_switch(IMGPROXY_SWITCH, active=True)
 class DeleteShelterPhotosMutationTest(ShelterTestCase, TestCase):
     MUTATION = """
         mutation DeleteShelterPhotos($data: BulkDeleteInput!) {
@@ -528,6 +536,7 @@ class DeleteShelterPhotosMutationTest(ShelterTestCase, TestCase):
         self.assertTrue(ShelterPhoto.objects.filter(pk=photo.pk).exists())
 
 
+@override_switch(IMGPROXY_SWITCH, active=True)
 class UpdateShelterPhotoMutationTest(ShelterTestCase, TestCase):
     MUTATION = """
         mutation UpdateShelterPhoto($data: UpdateShelterPhotoInput!) {
@@ -597,6 +606,7 @@ class UpdateShelterPhotoMutationTest(ShelterTestCase, TestCase):
         self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)
 
 
+@override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterPhotoMutationPermissionTestCase(ShelterTestCase, TestCase):
     """Shelter photo mutations are gated on Shelter.perms.CHANGE.
 

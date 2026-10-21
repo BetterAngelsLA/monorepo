@@ -134,8 +134,6 @@ The built-in runner does not accept Django's `--parallel`; use pytest's `-n`.
   which against Redis is `FLUSHDB` and logs out every other parallel worker.
   The cache session backend's TTL follows `time_machine`, so
   `SESSION_COOKIE_AGE` is extended for the run (no test asserts expiry),
-- publishes Celery tasks to an in-memory broker (`memory://`) in `conftest.py`;
-  no worker runs in tests, so pytest does not need Redis,
 - uses `MD5PasswordHasher` (password strength is not under test).
 
 This is selected by `[tool.pytest.ini_options] DJANGO_SETTINGS_MODULE` in both

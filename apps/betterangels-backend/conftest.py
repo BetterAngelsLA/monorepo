@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -24,23 +23,6 @@ def _no_rate_limits(settings: SettingsWrapper) -> None:
     ``False`` is required -- an empty dict is merged into the defaults.
     """
     settings.ACCOUNT_RATE_LIMITS = False
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _memory_celery_broker() -> None:
-    """Keep Celery task publishing off Redis.
-
-    No worker runs in tests, so the broker only has to accept the publish.
-    Celery builds its config from the base settings before ``settings_test`` is
-    applied, so both the app and the current-app proxy are updated after setup.
-    """
-    from celery import current_app
-
-    from betterangels_backend.celery import app
-
-    os.environ["CELERY_BROKER_URL"] = "memory://"
-    app.conf.update(broker_url="memory://")
-    current_app.conf.update(broker_url="memory://")
 
 
 @pytest.fixture(autouse=True)
