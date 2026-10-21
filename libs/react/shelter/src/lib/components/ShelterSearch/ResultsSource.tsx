@@ -65,7 +65,7 @@ export function ResultsSource(props: TProps) {
 
   return (
     <div className={className}>
-      <span className="text-sm text-neutral">(based on {resultSource})</span>
+      <span className="text-sm text-neutral">(basedX on {resultSource})</span>
     </div>
   );
 }
