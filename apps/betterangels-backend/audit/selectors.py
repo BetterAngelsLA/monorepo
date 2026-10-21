@@ -531,8 +531,14 @@ def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
     hidden = _MECHANICAL_FIELDS | ({pk_attname} if pk_attname else set())
 
     if label.endswith(".add"):
+        # Only non-null new values: a field that is NULL after creation [None, None]
+        # is not a meaningful change. The full post-create state is available via
+        # ``include_snapshot=True``.
         return {f: [None, render(f, v)] for f, v in data.items() if v is not None and f not in hidden}
     if label.endswith(".remove"):
+        # Only non-null old values: a field that was NULL at deletion [None, None]
+        # is not a meaningful change. The full pre-delete state is available via
+        # ``include_snapshot=True``.
         return {f: [render(f, v), None] for f, v in data.items() if v is not None and f not in hidden}
 
     diff = row.pgh_diff or {}
