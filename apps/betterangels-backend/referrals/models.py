@@ -28,11 +28,11 @@ class Referral(OrgScoped, BaseModel):
 
     ``OrgScoped`` is metadata only (no fields, no migration): it declares that
     the row belongs to one organization through the ``organization`` FK below,
-    which is the same relation every referral query already filters on.
-    Declaring it also keeps ``permissions.E005`` satisfied if a scoped Role is
-    ever granted a referral permission (the check reads Role rows from the
-    database, so a stale row is enough to trip it).  ``organization`` stays
-    nullable for legacy rows.
+    which is the relation the grant predicate filters on (``visible()``).
+    The declaration also keeps ``permissions.E005`` satisfied: the scoped
+    ``Caseworker`` Role carries the referral permissions, and E005 reads Role
+    rows from the database.  ``organization`` stays nullable for legacy rows
+    (those are unreachable through grants, which is the correct direction).
     """
 
     class Status(models.IntegerChoices):

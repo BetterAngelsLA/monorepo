@@ -27,8 +27,12 @@ def referral_list(*, user: User, organization_id: int | None = None) -> QuerySet
     )
 
 
-def referral_get(*, user: User, pk: str | int, organization_id: int | None = None) -> Referral | None:
+def referral_get(*, user: User, pk: str | int) -> Referral | None:
     """A single referral the *user* may see, or ``None`` outside their scope.
+
+    Authority-only, no header: ADR 0001 §2.6 says load-by-id is
+    ``visible(qs, perm).get(pk=…)`` — the header only confines a list view.  A
+    stale ``X-Organization-ID`` must not hide a row the caller may read.
 
     ``get_or_none`` (not ``filter(pk=…).first()``) so a non-numeric id is a
     miss, not a ``ValueError`` escaping the resolver.  ``select_related`` keeps
@@ -36,7 +40,7 @@ def referral_get(*, user: User, pk: str | int, organization_id: int | None = Non
     the fields ``ReferralType`` exposes.
     """
     return get_or_none(
-        referral_list(user=user, organization_id=organization_id).select_related(
+        visible(Referral.objects.all(), user, Referral.perms.VIEW).select_related(
             "client_profile",
             "shelter",
             "created_by",
