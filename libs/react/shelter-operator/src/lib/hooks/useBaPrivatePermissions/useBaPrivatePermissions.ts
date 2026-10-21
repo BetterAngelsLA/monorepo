@@ -1,4 +1,7 @@
-import { ContactInfoPermissions } from '@monorepo/ba-platform/permissions';
+import {
+  ContactInfoPermissions,
+  ShelterPermissions,
+} from '@monorepo/ba-platform/permissions';
 import { useUser } from '@monorepo/react/shelter';
 
 /** The capability pair every BA-private section exposes. */
@@ -12,11 +15,12 @@ type SectionPermissions = {
  *
  * One entry per BA-private section, each tier-honest, plus an area-level
  * `canViewAny` that drives the route gate and the sidebar link. The sections
- * so far: the additional-contacts list, a GLOBAL-tier domain (ADR 0001 §2.4)
- * — the backend gates reads on `can_globally(ContactInfo.VIEW)` and writes on
- * `can_globally(ContactInfo.CHANGE)`. `can_anywhere` would admit a scoped
- * Grant, so only a global Role carrying the ContactInfo perms (the Global
- * Shelter Operator) passes.
+ * so far: the additional-contacts list (a GLOBAL-tier domain, gated by
+ * `can_globally(ContactInfo.VIEW/CHANGE)`) and the shelter review fields
+ * (`overall_rating` / `subjective_review` / `declined_ba_visit`, gated by
+ * `can_globally(Shelter.VIEW_BA_REVIEW/CHANGE_BA_REVIEW)`). Both are global-tier
+ * domains (ADR 0001 §2.4). `can_anywhere` would admit a scoped Grant, so only a
+ * global Role carrying those perms (the Global Shelter Operator) passes.
  *
  * The FE mirrors that gate on the user's GLOBAL permission list
  * (`currentUser.permissions` via `hasGlobalPermission`) — never on the active
@@ -27,12 +31,12 @@ type SectionPermissions = {
  *
  * Who reads what:
  * - `BaPrivateGate` and the sidebar link read `canViewAny` only.
- * - A section reads its own entry. `additionalContactsPermissions.canView` has
- *   no consumer yet — with a single section `canViewAny` *is* that read gate,
- *   and `ShelterBaPrivate` uses only `canEdit`. Once a second section lands,
- *   each section must consume its own `canView`: the area gate admits anyone
- *   who can view *any* section, so leaning on it would render a section whose
- *   backend data is withheld (`additional_contacts` resolves to `[]`).
+ * - A section reads its own entry: `ShelterContacts` uses
+ *   `additionalContactsPermissions.canEdit`, and `ShelterReview` gates both its
+ *   render and its pencil on `baReviewPermissions`. `additionalContactsPermissions.canView`
+ *   has no consumer yet (the contacts list renders an empty state either way).
+ *   The area gate admits anyone who can view *any* section, so leaning on it
+ *   would render a section whose backend data is withheld.
  *
  * Caller notes:
  * - The result is a new object on every render; do not use it (or a section
@@ -52,6 +56,13 @@ export function useBaPrivatePermissions() {
     additionalContactsPermissions: {
       canView: hasGlobalPermission(ContactInfoPermissions.View),
       canEdit: hasGlobalPermission(ContactInfoPermissions.Change),
+    },
+    baReviewPermissions: {
+      // `change` implies `view`: whoever may edit the review must be able to read it.
+      canView:
+        hasGlobalPermission(ShelterPermissions.ViewBaReview) ||
+        hasGlobalPermission(ShelterPermissions.ChangeBaReview),
+      canEdit: hasGlobalPermission(ShelterPermissions.ChangeBaReview),
     },
   } satisfies Record<string, SectionPermissions>;
 
