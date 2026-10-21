@@ -111,22 +111,25 @@ the cap matters — keep it at or below 8. CI uses
 `PYTEST_ADDOPTS="-n logical --maxprocesses 4"` (see the Test step in
 `.github/workflows/default.yml`).
 
-`manage.py test` is unsupported and its old `PytestTestRunner` has been
-removed; use `uv run pytest` (or the Nx target) for everything.
+`manage.py test` is unsupported; it now fails with a pointer to pytest
+(`common/management/commands/test.py`) instead of running the unittest subset
+without `conftest.py`. Use `uv run pytest` (or the Nx target) for everything.
 
 #### Test settings
 
 `betterangels_backend/settings_test.py` inherits the normal settings and then:
 
-- sets `DEBUG = False` (otherwise Django logs every query for the whole run),
-- namespaces the shared Redis cache per process, so parallel workers cannot
-  invalidate each other's waffle/session entries (a local-memory cache is not
-  an option: tests use `time_machine`, which would expire its TTLs),
+- sets `DEBUG = False` (otherwise Django keeps every query for the whole run),
+- uses a process-local `LocMemCache`: the region tests call `cache.clear()`,
+  which against Redis is `FLUSHDB` and logs out every other parallel worker.
+  The cache session backend's TTL follows `time_machine`, so
+  `SESSION_COOKIE_AGE` is extended for the run (no test asserts expiry),
 - uses `MD5PasswordHasher` (password strength is not under test).
 
 This is selected by `[tool.pytest.ini_options] DJANGO_SETTINGS_MODULE` in both
-`pyproject.toml` files. Do not point tests back at `betterangels_backend.settings`;
-several query-count assertions depend on the deterministic cache behaviour above.
+`pyproject.toml` files. Keep tests on it: `cache.clear()` in the region tests
+would flush the shared cache under the normal settings and make parallel runs
+flaky.
 
 #### Working in more than one checkout
 
