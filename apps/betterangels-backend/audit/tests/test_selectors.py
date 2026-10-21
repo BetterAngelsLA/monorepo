@@ -407,6 +407,24 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         assert action is not None
         self.assertEqual(action.actor, "Ada Lovelace")
 
+    def test_frozen_email_is_attributed_without_the_actor_id(self) -> None:
+        """A frozen email is enough to attribute an event.
+
+        ``user`` and ``user_email`` land in the same metadata snapshot, but the
+        display must not depend on the id key being present: a producer that
+        records only the email still knows who acted, and rendering "system"
+        there would lose real attribution.
+        """
+        with audit_context(user_email="lone@example.com"):
+            self.shelter.name = "Email Only"
+            self.shelter.save()
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+        action = _action_with(actions, "Email Only")
+
+        assert action is not None
+        self.assertEqual(action.actor, "lone@example.com")
+
     # ── §13 full-state snapshot (opt-in) / §10 SQL pagination ────────────────
 
     def test_snapshot_is_opt_in_and_renders_full_state(self) -> None:

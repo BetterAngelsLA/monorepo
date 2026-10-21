@@ -497,7 +497,10 @@ def _actor(row: Any) -> str:
         return f"system ({label})"
     if row.actor_name:
         return str(row.actor_name)
-    if row.actor_id and row.actor_email:
+    # The frozen email stands alone: ``user`` and ``user_email`` are written into
+    # the same metadata snapshot, so requiring the id would only drop attributed
+    # events that carry the email without the id key.
+    if row.actor_email:
         return str(row.actor_email)
     return "system"
 

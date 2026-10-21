@@ -512,10 +512,14 @@ visible and attributed.
 
 ## 8. Freeze actor identity on writes
 
-`actor` is a live FK (`SET_NULL`) and pghistory's write-event actor is a join to
-the _current_ `User` row, so renaming or deleting a user would silently rewrite
-or null-out history. Identity is therefore **frozen at event time** on the write
-path by snapshotting the acting user's name/email into the context metadata.
+Attribution is easy to get wrong: resolving the event's user id against the
+_current_ `User` row — or rendering `user.get_full_name()` — lets a rename
+silently rewrite history and a delete null it out. pghistory does not perform
+that join itself: the aggregate projects the id straight out of the context
+metadata (`(_pgh_context.metadata->>'user')::bigint`), so the id is already
+frozen at write time. Identity is nevertheless frozen **more completely** on the
+write path by snapshotting the acting user's name/email into the same metadata,
+so display never depends on resolving the id at read time.
 
 Subclass `pghistory.middleware.HistoryMiddleware`, point `MIDDLEWARE` at it, and
 override `get_context` to add the acting user's frozen name/email to the context
@@ -542,9 +546,12 @@ until Phase 2, so the middleware cannot live there.
 
 The write selector reads the frozen `user_name`/`user_email` from the context
 metadata rather than resolving a live `User` join (§11). The read-side
-`AuditReadEvent` model snapshots the same identity on its own columns (§22). The
-`actor`/`user` FK remains for relational lookup and org scoping; display names
-come from the frozen snapshots.
+`AuditReadEvent` model snapshots the same identity on its own columns (§22).
+`AuditWriteEvent.actor` is that same metadata accessor under the audit
+vocabulary — not a relation, so it cannot serve `select_related` or org scoping
+(org scoping needs the org denormalized into the context metadata). It exists for
+`actorId` filtering (§21) and as the id side of attribution; display names come
+from the frozen snapshots.
 
 ## 9. Tests (Phase 1)
 
