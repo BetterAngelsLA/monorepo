@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from urllib.parse import urlsplit
 
 from django.test import TestCase, override_settings
-from unittest_parametrize import ParametrizedTestCase, parametrize
+from unittest_parametrize import ParametrizedTestCase
 
 from common.enums import ImagePresetEnum
 from common.imgproxy import (
@@ -15,31 +15,11 @@ from common.imgproxy import (
     _get_imgproxy_signature,
     _resolve_imgproxy_ops,
     build_imgproxy_url,
-    is_imgproxy_enabled,
 )
 
 TEST_KEY = "736563726574"
 TEST_SALT = "68656C6C6F"
 TEST_PREFIX = "imgproxy"
-
-
-# ---------------------------------------------------------------------------
-# is_imgproxy_enabled
-# ---------------------------------------------------------------------------
-class IsImgproxyEnabledTest(ParametrizedTestCase, TestCase):
-    """is_imgproxy_enabled only checks that the signing keys are present."""
-
-    @parametrize(
-        "key, salt, expected",
-        [
-            ("", TEST_SALT, False),
-            (TEST_KEY, "", False),
-            (TEST_KEY, TEST_SALT, True),
-        ],
-    )
-    def test_is_imgproxy_enabled(self, key: str, salt: str, expected: bool) -> None:
-        with override_settings(IMGPROXY_KEY=key, IMGPROXY_SALT=salt):
-            self.assertEqual(is_imgproxy_enabled(), expected)
 
 
 # ---------------------------------------------------------------------------
@@ -228,6 +208,10 @@ def _make_file(
 
 @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
 class BuildImgproxyUrlTest(TestCase):
+    @override_settings(IMGPROXY_KEY="", IMGPROXY_SALT="")
+    def test_returns_none_without_signing_keys(self) -> None:
+        self.assertIsNone(build_imgproxy_url(_make_file(), ImagePresetEnum.SM, None))
+
     @override_settings(IS_LOCAL_DEV=True)
     def test_local_dev_returns_local_url(self) -> None:
         file = _make_file()

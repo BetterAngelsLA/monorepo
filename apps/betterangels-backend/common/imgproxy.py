@@ -121,7 +121,7 @@ def build_imgproxy_url(
     Returns:
         The complete imgproxy URL, or None if the URL cannot be built.
     """
-    if not is_imgproxy_enabled():
+    if not (settings.IMGPROXY_KEY and settings.IMGPROXY_SALT):
         return None
 
     source_url = _get_image_source_url(file)
@@ -154,8 +154,3 @@ def build_imgproxy_url(
     expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
 
     return cast(str, storage.cloudfront_signer.generate_presigned_url(url, date_less_than=expiration))
-
-
-def is_imgproxy_enabled() -> bool:
-    """Image URLs are proxied whenever the signing keys are configured."""
-    return bool(settings.IMGPROXY_KEY and settings.IMGPROXY_SALT)
