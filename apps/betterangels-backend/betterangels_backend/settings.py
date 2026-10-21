@@ -529,6 +529,9 @@ CKEDITOR_5_CONFIGS = {
     },
 }
 
+# Test Runner
+TEST_RUNNER = "betterangels_backend.runner.PytestTestRunner"
+
 SITE_ID = 1
 
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = env("ACCOUNT_DEFAULT_HTTP_PROTOCOL")

@@ -83,8 +83,11 @@ Once started, you can access the Django development server at
 
 #### Running Tests
 
-The backend suite runs under **pytest** (not `manage.py test`). Test runs use
+The backend suite runs under **pytest**. Test runs use
 `betterangels_backend.settings_test` automatically; see [Test settings](#test-settings).
+`manage.py test` delegates to pytest through `PytestTestRunner`, so it keeps
+`conftest.py`, fixtures and xdist; prefer `uv run pytest` (or the Nx target) for
+day-to-day work.
 
 To run the full test suite:
 
@@ -111,9 +114,8 @@ the cap matters — keep it at or below 8. CI uses
 `PYTEST_ADDOPTS="-n logical --maxprocesses 4 --durations=25"` (see the Test step
 in `.github/workflows/default.yml`).
 
-`manage.py test` is unsupported; it now fails with a pointer to pytest
-(`common/management/commands/test.py`) instead of running the unittest subset
-without `conftest.py`. Use `uv run pytest` (or the Nx target) for everything.
+`manage.py test` accepts `--keepdb`, `--parallel N|auto`, `--failfast` and `-k`
+and forwards them to pytest (`--parallel auto` means logical CPUs).
 
 #### Test settings
 
@@ -124,6 +126,8 @@ without `conftest.py`. Use `uv run pytest` (or the Nx target) for everything.
   which against Redis is `FLUSHDB` and logs out every other parallel worker.
   The cache session backend's TTL follows `time_machine`, so
   `SESSION_COOKIE_AGE` is extended for the run (no test asserts expiry),
+- publishes Celery tasks to an in-memory broker (`memory://`) in `conftest.py`;
+  no worker runs in tests, so pytest does not need Redis,
 - uses `MD5PasswordHasher` (password strength is not under test).
 
 This is selected by `[tool.pytest.ini_options] DJANGO_SETTINGS_MODULE` in both
