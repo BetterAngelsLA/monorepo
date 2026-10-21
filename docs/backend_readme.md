@@ -85,9 +85,9 @@ Once started, you can access the Django development server at
 
 The backend suite runs under **pytest**. Test runs use
 `betterangels_backend.settings_test` automatically; see [Test settings](#test-settings).
-`manage.py test` delegates to pytest through `PytestTestRunner`, so it keeps
-`conftest.py`, fixtures and xdist; prefer `uv run pytest` (or the Nx target) for
-day-to-day work.
+`manage.py test` delegates to pytest through pytest-django's built-in runner
+(`pytest_django.runner.TestRunner`), so it keeps `conftest.py`, fixtures and
+xdist; prefer `uv run pytest` (or the Nx target) for day-to-day work.
 
 To run the full test suite:
 
@@ -114,8 +114,16 @@ time; add `--maxprocesses N` if the machine is DB- or memory-constrained. CI
 scales the same way and adds `--durations=25` through
 `PYTEST_ADDOPTS` (see the Test step in `.github/workflows/default.yml`).
 
-`manage.py test` accepts `--keepdb`, `--parallel N|auto`, `--failfast` and `-k`
-and forwards them to pytest (`--parallel auto` means logical CPUs).
+`manage.py test` uses pytest-django's built-in runner. Django options go before
+`--` and pytest options after it:
+
+```bash
+uv run python manage.py test --keepdb -- -n logical
+uv run python manage.py test --keepdb -- -k test_create
+uv run python manage.py test --keepdb -- --pyargs accounts.tests.test_user_manager
+```
+
+The built-in runner does not accept Django's `--parallel`; use pytest's `-n`.
 
 #### Test settings
 

@@ -63,7 +63,7 @@ django-admin-async-upload = { git = "https://github.com/BetterAngelsLA/django-ad
 [dependency-groups]
 dev = [
     "pytest>=9,<10",
-    "pytest-django>=4,<5",
+    "pytest-django>=4.12,<5",
     "pytest-xdist>=3.8,<4",
 ]
 

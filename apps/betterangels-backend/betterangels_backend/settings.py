@@ -530,7 +530,7 @@ CKEDITOR_5_CONFIGS = {
 }
 
 # Test Runner
-TEST_RUNNER = "betterangels_backend.runner.PytestTestRunner"
+TEST_RUNNER = "pytest_django.runner.TestRunner"
 
 SITE_ID = 1
 

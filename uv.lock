@@ -137,7 +137,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "pytest", specifier = ">=9,<10" },
-    { name = "pytest-django", specifier = ">=4,<5" },
+    { name = "pytest-django", specifier = ">=4.12,<5" },
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
 ]
 
@@ -1415,7 +1415,7 @@ dev = [
     { name = "ipython", specifier = ">=9.9.0,<10" },
     { name = "model-bakery", specifier = ">=1.24.1,<2" },
     { name = "pre-commit", specifier = ">=4.6.2,<5" },
-    { name = "pytest-django", specifier = ">=4.11.1,<5" },
+    { name = "pytest-django", specifier = ">=4.12,<5" },
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "ruff", specifier = ">=0.16.5,<1.0.0" },
     { name = "time-machine", specifier = ">=3.5.0,<4" },
