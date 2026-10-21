@@ -673,6 +673,7 @@ export type CreateProfileDataImportInput = {
 export type CreateReferralInput = {
   clientProfile: Scalars['ID']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
+  organizationId: Scalars['ID']['input'];
   shelter: Scalars['ID']['input'];
 };
 

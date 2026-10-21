@@ -3,10 +3,10 @@ from typing import Any, Dict, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from organizations.models import Organization
 
-from accounts.models import PermissionGroup, User
+from accounts.models import User
 from clients.models import ClientProfile
-from common.permissions.utils import assign_object_permissions
 from referrals.models import Referral
 from shelters.models import Shelter
 
@@ -18,16 +18,23 @@ REFERRAL_UPDATE_FIELDS = ("status", "notes")
 def referral_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    organization: Organization,
     client_profile: ClientProfile,
     shelter: Shelter,
     notes: Optional[str] = None,
 ) -> Referral:
+    """Create a referral in *organization*.
+
+    Authority is the caller's scoped ``Caseworker`` Grant at *organization*,
+    checked by the resolver with ``require_can`` (no row exists yet, so there is
+    nothing to scope).  No guardian rows are written: ADR 0001 §2.1 rule 4 —
+    authority comes from the Grant, not a per-record copy at creation.
+    """
     referral = Referral(
         client_profile=client_profile,
         shelter=shelter,
         created_by=user,
-        organization=permission_group.organization,
+        organization=organization,
         status=Referral.Status.PENDING,
         notes=notes,
     )
@@ -45,11 +52,6 @@ def referral_create(
         )
         raise ValidationError("Unable to create this referral. Please check the details and try again.") from e
 
-    assign_object_permissions(
-        permission_group,
-        referral,
-        [Referral.perms.VIEW, Referral.perms.CHANGE, Referral.perms.DELETE],
-    )
     return referral
 
 

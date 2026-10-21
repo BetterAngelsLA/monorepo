@@ -40,6 +40,7 @@ class ReferralType:
 
 @strawberry_django.input(models.Referral)
 class CreateReferralInput:
+    organization_id: ID
     client_profile: ID
     shelter: ID
     notes: Optional[str]
