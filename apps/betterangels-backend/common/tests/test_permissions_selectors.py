@@ -6,9 +6,18 @@ from django.test import TestCase
 from model_bakery import baker
 
 from accounts.models import Role, User
-from accounts.services import grant_create, role_assign, sync_roles
+from accounts.services import grant_create, role_assign, role_remove, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
-from common.permissions.selectors import ALL, can, can_anywhere, can_globally, can_obj, scopes, visible
+from common.permissions.selectors import (
+    ALL,
+    can,
+    can_anywhere,
+    can_globally,
+    can_obj,
+    invalidate_scope_cache,
+    scopes,
+    visible,
+)
 from notes.models import Note
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 from shelters.models import ContactInfo, Shelter
@@ -122,6 +131,44 @@ class GrantSelectorsTestCase(TestCase):
         self.assertIsNot(s, ALL)
         self.assertIn("_scope_cache", alice.__dict__)
         self.assertIs(scopes(alice, Shelter.perms.VIEW), s)
+
+    def test_global_tier_check_is_memoized_per_request(self) -> None:
+        """The global-tier EXISTS checks are paid once per (user, perm), not per row."""
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+
+        self.assertTrue(can_globally(gso, Shelter.perms.VIEW))
+        with self.assertNumQueries(0):
+            self.assertTrue(can_globally(gso, Shelter.perms.VIEW))
+
+    def test_role_assign_invalidates_the_memoized_global_tier(self) -> None:
+        """A memoized ``False`` must not outlive the role grant that changes it."""
+        user = baker.make(User)
+        self.assertFalse(can_globally(user, Shelter.perms.VIEW))
+
+        role_assign(user=user, role=self.gso_role)
+
+        self.assertTrue(can_globally(user, Shelter.perms.VIEW))
+
+    def test_role_remove_invalidates_the_memoized_global_tier(self) -> None:
+        """A memoized ``True`` must not outlive the revocation."""
+        user = baker.make(User)
+        role_assign(user=user, role=self.gso_role)
+        self.assertTrue(can_globally(user, Shelter.perms.VIEW))
+
+        role_remove(user=user, role=self.gso_role)
+
+        self.assertFalse(can_globally(user, Shelter.perms.VIEW))
+
+    def test_invalidate_drops_the_global_tier_memo(self) -> None:
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+        can_globally(gso, Shelter.perms.VIEW)
+        self.assertIn("_global_tier_cache", gso.__dict__)
+
+        invalidate_scope_cache(gso)
+
+        self.assertNotIn("_global_tier_cache", gso.__dict__)
 
     def test_can_checks_authority_in_an_org(self) -> None:
         alice = baker.make(User)
