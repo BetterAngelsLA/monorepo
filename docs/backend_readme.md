@@ -108,8 +108,8 @@ uv run pytest -n logical --maxprocesses 8
 physical cores and under-provisions SMT machines). Each worker creates its own
 test database (`test_postgres_gw0`, …) and runs migrations the first time, so
 the cap matters — keep it at or below 8. CI uses
-`PYTEST_ADDOPTS="-n logical --maxprocesses 4"` (see the Test step in
-`.github/workflows/default.yml`).
+`PYTEST_ADDOPTS="-n logical --maxprocesses 4 --durations=25"` (see the Test step
+in `.github/workflows/default.yml`).
 
 `manage.py test` is unsupported; it now fails with a pointer to pytest
 (`common/management/commands/test.py`) instead of running the unittest subset
