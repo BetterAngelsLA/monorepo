@@ -35,54 +35,37 @@ appId: ${MAESTRO_APP_ID}
           text: 'See Details'
           waitToSettleTimeoutMs: 300
 
-# The client tabs are a horizontal ScrollView, so Referrals starts off-screen on
-# everything narrower than the strip. Anchor the swipe to the strip element
-# rather than a screen percentage: the strip's Y moves with the client header
-# (language/pronoun/case-manager/address lines), so a fixed Y misses it entirely
-# on clients with a taller header — which is why nothing appeared to scroll.
+# The client tabs are a horizontal ScrollView, so Referrals is off-screen (or
+# only clipped at the edge) on everything narrower than the strip. Anchor the
+# swipe to the strip element rather than a screen percentage: the strip's Y moves
+# with the client header, so a fixed Y misses it on taller headers.
+#
+# Do NOT take a "if the tab is visible, just tap it" shortcut: Maestro counts a
+# partially clipped tab as visible, and its centre can sit outside the viewport,
+# so the tap lands nowhere and the strip never scrolls. Always scroll the strip
+# to its end first; both swipes are no-ops on screens wide enough to fit the tabs.
 - assertVisible:
     id: client-tabs-strip
 
-# Fast path: on wide screens the tab may already be on screen.
-- runFlow:
-    when:
-      visible:
-        id: client-tab-referrals
-    commands:
-      - tapOn:
-          waitToSettleTimeoutMs: 300
-          id: client-tab-referrals
-      - assertVisible:
-          id: referrals-screen
+- swipe:
+    waitToSettleTimeoutMs: 300
+    from:
+      id: client-tabs-strip
+    direction: LEFT
 
-- runFlow:
-    when:
-      notVisible:
-        id: client-tab-referrals
-    commands:
-      - swipe:
-          waitToSettleTimeoutMs: 300
-          from:
-            id: client-tabs-strip
-          direction: LEFT
-      - waitForAnimationToEnd:
-          timeout: 800
+- swipe:
+    waitToSettleTimeoutMs: 300
+    from:
+      id: client-tabs-strip
+    direction: LEFT
 
-- runFlow:
-    when:
-      notVisible:
-        id: client-tab-referrals
-    commands:
-      - swipe:
-          waitToSettleTimeoutMs: 300
-          from:
-            id: client-tabs-strip
-          direction: LEFT
-      - waitForAnimationToEnd:
-          timeout: 800
+- waitForAnimationToEnd:
+    timeout: 2000
 
+# `retryTapIfNoChange` covers a tap swallowed by the strip's scroll momentum.
 - tapOn:
     waitToSettleTimeoutMs: 300
+    retryTapIfNoChange: true
     id: client-tab-referrals
 
 - assertVisible:
