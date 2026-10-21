@@ -1,3 +1,5 @@
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { ReferralPermissions } from '@monorepo/ba-platform/permissions';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { toTestId } from '@monorepo/expo/shared/utils';
@@ -36,14 +38,22 @@ interface IClientTabsProps {
 }
 
 export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
+  // Two gates: the flag decides whether the pilot is on for this account, the
+  // active org's grant-backed `view_referral` decides who may use it. Without
+  // the second, a flagged user with no Caseworker grant sees the tab and gets
+  // an empty list / a refusal from the API.
   const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
+  const { hasPermission } = useActiveOrg();
+  const canViewReferrals = hasPermission(ReferralPermissions.View);
 
   const visibleTabs = useMemo(
     () =>
       orderedTabs.filter(
-        (t) => t !== ClientViewTabEnum.Referrals || referralsEnabled,
+        (t) =>
+          t !== ClientViewTabEnum.Referrals ||
+          (referralsEnabled && canViewReferrals),
       ),
-    [referralsEnabled],
+    [referralsEnabled, canViewReferrals],
   );
 
   return (
