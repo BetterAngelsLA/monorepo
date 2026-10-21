@@ -961,14 +961,14 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertIn("shelters.BedEvent", labels)
         self.assertIn("shelters.ReservationEvent", labels)
 
-    # ── RDS Proxy pinning guards (ADR 0004 §10) ──────────────────────────────
+    # ── statement-shape and cursor guards (ADR 0004 §10) ─────────────────────
 
     # The aggregate statement's size tracks the number of event models
     # ``references()`` matches, so these ceilings catch a newly tracked model
-    # (each branch adds a few KB). SHELTER/BED/ROOM exceed RDS Proxy's 16 KB
-    # pinning threshold by construction — a documented, accepted trade-off — so
-    # this asserts the recorded ceiling rather than a bound the design cannot
-    # meet. The target-scoped exclusions filter rows, not UNION branches, so
+    # (each branch adds a few KB). They are a growth guard over the measured SQL,
+    # not a hard bound the design must meet: pagination bounds rows fetched, not
+    # the statement text, because the aggregate CTE still names every matched
+    # table. The target-scoped exclusions filter rows, not UNION branches, so
     # they barely change the statement size.
     #
     # Recorded from the interpolated SQL the selector actually issues (the max
@@ -977,7 +977,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
     _STATEMENT_CEILINGS = {"SHELTER": 76_500, "BED": 20_600, "ROOM": 20_800, "RESERVATION": 7_150}
 
     def test_selector_issues_no_server_side_cursor(self) -> None:
-        """``.iterator()`` would emit ``DECLARE``, which RDS Proxy pins (§10)."""
+        """``.iterator()`` would add a ``DECLARE``/``FETCH`` round trip (§10)."""
         with audit_context(user=self.user):
             self.shelter.name = "Renamed Shelter"
             self.shelter.save()

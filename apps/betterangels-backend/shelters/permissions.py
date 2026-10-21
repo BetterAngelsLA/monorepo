@@ -16,6 +16,11 @@ from shelters.models import ContactInfo, Shelter
 if TYPE_CHECKING:
     from accounts.models import User
 
+# The singular source for the BA-review fields: the write gate, the read gate,
+# and the audit log's redaction all use this list so a new field cannot be gated
+# in one place and omitted in another (ADR 0001 §2.4, ADR 0004 §18).
+BA_REVIEW_FIELDS = ("overall_rating", "subjective_review", "declined_ba_visit")
+
 
 def can_view_ba_review(info: Info) -> bool:
     """Whether the request user may read the BA-review fields.

@@ -11,9 +11,11 @@ introspection) only, never a second query source.
 
 Pagination is applied in SQL (§10): the page's action keys are selected with a
 grouped ``LIMIT`` over a cursor on the total order, then only those keys' rows
-are fetched, so page size does not scale the work with the object's total
-history. Excluded event models are dropped from the compiled union with
-``across()`` rather than filtered row-by-row, so their tables are never read.
+are fetched, so the page *query* is bounded by the page rather than the object's
+total history. The grouped key query that chooses the keys still aggregates the
+object's full history; a denormalized feed would be needed to change that.
+Excluded event models are dropped from the compiled union with ``across()``
+rather than filtered row-by-row, so their tables are never read.
 """
 
 from __future__ import annotations
@@ -24,7 +26,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import lru_cache
-from typing import Any, Sequence
+from typing import Any, Collection, Mapping, Sequence
 from uuid import UUID
 
 from django.apps import apps
@@ -510,13 +512,22 @@ def _m2m_meta(pgh_model: str) -> _ThroughMeta | None:
     return _through_event_meta().get(pgh_model)
 
 
-def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
+def _scalar_changes(
+    row: Any,
+    resolver: _LabelResolver,
+    hidden_fields: Collection[str] = (),
+) -> dict[str, list[Any]]:
     """Render a non-M2M row's own changes, keyed by **raw column name** (§13).
 
     Raw (attname) keys keep the dict lossless: two fields that share a
     ``verbose_name`` are distinct here even though they render to the same label.
     ``_display_keys`` maps them to display names at the edges (per-event
     ``field_changes``, the action rollup, the snapshot).
+
+    *hidden_fields* are raw attnames withheld for this row's model -- always the
+    case for BA-review fields when the caller lacks the global grant (§18). They
+    are dropped before rendering, so neither the display key nor its value can
+    reach any output shape.
     """
     label = row.pgh_label
     data = row.pgh_data or {}
@@ -531,7 +542,7 @@ def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
     # (the UPDATE branch renders ``pgh_diff``, which never contains it), so it is
     # not a "change". Drop it so a create does not render ``ID: [None, 7]``.
     pk_attname = _pk_attname(obj_model)
-    hidden = _MECHANICAL_FIELDS | ({pk_attname} if pk_attname else set())
+    hidden = _MECHANICAL_FIELDS | set(hidden_fields) | ({pk_attname} if pk_attname else set())
 
     if label.endswith(".add"):
         # Only non-null new values: a field that is NULL after creation [None, None]
@@ -545,7 +556,7 @@ def _scalar_changes(row: Any, resolver: _LabelResolver) -> dict[str, list[Any]]:
         return {f: [render(f, v), None] for f, v in data.items() if v is not None and f not in hidden}
 
     diff = row.pgh_diff or {}
-    return {f: [render(f, old), render(f, new)] for f, (old, new) in diff.items() if f not in _MECHANICAL_FIELDS}
+    return {f: [render(f, old), render(f, new)] for f, (old, new) in diff.items() if f not in hidden}
 
 
 def _render_keys(changes: dict[str, Any], model_label: str) -> dict[str, Any]:
@@ -554,22 +565,25 @@ def _render_keys(changes: dict[str, Any], model_label: str) -> dict[str, Any]:
     return {keys.get(f, f): value for f, value in changes.items()}
 
 
-def _snapshot(row: Any, resolver: _LabelResolver) -> dict[str, Any]:
+def _snapshot(row: Any, resolver: _LabelResolver, hidden_fields: Collection[str] = ()) -> dict[str, Any]:
     """Render the full object state carried by ``pgh_data`` (§13).
 
     Exposes the snapshot pghistory already stores per event (one column per
     tracked field) — no extra storage. FK ids are resolved and choices rendered
-    like any other change; mechanical/``pgh_*`` columns are dropped.
+    like any other change; mechanical/``pgh_*`` columns are dropped. *hidden_fields*
+    are omitted for the same reason as in ``_scalar_changes``: a withheld field
+    must not reappear through the snapshot.
     """
     data = row.pgh_data or {}
     obj_model = row.pgh_obj_model
     fk_fields = _fk_fields(obj_model)
     fields = _field_meta(obj_model)
     keys = _display_keys(obj_model)
+    hidden = set(hidden_fields)
 
     snapshot: dict[str, Any] = {}
     for field_name, value in data.items():
-        if field_name in _MECHANICAL_FIELDS or field_name.startswith("pgh_"):
+        if field_name in _MECHANICAL_FIELDS or field_name.startswith("pgh_") or field_name in hidden:
             continue
         snapshot[keys.get(field_name, field_name)] = _render_value(field_name, value, fk_fields, fields, resolver)
     return snapshot
@@ -715,6 +729,8 @@ def object_audit_log(
     after: str | None = None,
     limit: int = 50,
     include_snapshot: bool = False,
+    hidden_fields: Mapping[str, Collection[str]] | None = None,
+    hidden_summary_models: Collection[str] = (),
 ) -> AuditActionPageData:
     """Return one cursor page of *obj*'s write audit log, newest action first.
 
@@ -724,6 +740,13 @@ def object_audit_log(
     pgh_id, action_key)`` total order the SQL page query uses, so an event
     inserted between requests cannot shift a later page (offset pagination can
     repeat an action).
+
+    *hidden_fields* maps a model label to the raw attnames that must not be
+    rendered for that model, and *hidden_summary_models* lists models whose
+    one-line summaries must be omitted. Both are authorization decisions made by
+    the caller (``audit/schema.py``), because this layer has no request context;
+    they are applied before rendering so a withheld value cannot leak through
+    either ``field_changes`` or ``snapshot``.
 
     Pagination is done in SQL (§10): only the page's action keys are fetched
     from the aggregate CTE. Raises ``ValueError`` for a non-positive/oversized
@@ -769,9 +792,8 @@ def object_audit_log(
         return AuditActionPageData(results=[], end_cursor=None, has_next_page=False)
 
     # 2) Fetch only the page's rows and build actions. This is a plain iteration,
-    # not ``.iterator()``: Django's server-side cursor issues ``DECLARE``, which
-    # RDS Proxy pins (ADR 0004 §10). The row set is already bounded by
-    # ``page_keys``, so a server-side cursor buys nothing here.
+    # not ``.iterator()``: the row set is already bounded by ``page_keys``, so a
+    # server-side cursor buys nothing and adds a ``DECLARE``/``FETCH`` round trip.
     rows = base.annotate(action_key=key_expr).filter(_page_filter(page_keys)).order_by("pgh_created_at", "pgh_id")
 
     grouped: dict[str, list[Any]] = defaultdict(list)
@@ -802,6 +824,8 @@ def object_audit_log(
             resolver=resolver,
             target_model_label=target_model_label,
             include_snapshot=include_snapshot,
+            hidden_fields=hidden_fields,
+            hidden_summary_models=hidden_summary_models,
         )
         actions.append(action)
         remaining -= len(action.events)
@@ -830,12 +854,15 @@ def _build_action(
     resolver: _LabelResolver,
     target_model_label: str | None = None,
     include_snapshot: bool = False,
+    hidden_fields: Mapping[str, Collection[str]] | None = None,
+    hidden_summary_models: Collection[str] = (),
 ) -> AuditActionData:
     # A copy: ``rows`` is the list stored in the caller's ``grouped`` dict, so
     # sorting in place would mutate it as a hidden side effect. The ascending
     # order is load-bearing below -- ``rows[0]`` picks the actor and ``rows[-1]``
     # the action timestamp.
     rows = sorted(rows, key=lambda r: (r.pgh_created_at, r.pgh_id))
+    hidden_by_model = hidden_fields or {}
 
     actor = _actor(rows[0])
     # Action-level changes are keyed by ``(owner model, row id, display name)``:
@@ -862,6 +889,10 @@ def _build_action(
         # bed's own fields. One action must not print the same object twice for
         # the same kind, so repeated saves of one bed collapse into one line.
         if row.pgh_obj_model in _SUMMARY_ONLY_MODELS and row.pgh_obj_model != target_model_label:
+            # A caller without the related model's VIEW permission must not learn
+            # its name or id from the shelter's summary line (§18, §32).
+            if row.pgh_obj_model in hidden_summary_models:
+                continue
             kind = _kind(row.pgh_label)
             summary_key = (row.pgh_obj_model, row.pgh_obj_id, kind)
             if summary_key in summarized:
@@ -910,7 +941,8 @@ def _build_action(
         # Render the raw attname keys to display names here. Two fields sharing a
         # ``verbose_name`` stay distinct because ``_display_keys`` falls back to
         # the raw field name for them (§13).
-        changes = _render_keys(_scalar_changes(row, resolver), owner)
+        hidden = hidden_by_model.get(owner, ())
+        changes = _render_keys(_scalar_changes(row, resolver, hidden), owner)
         _merge_scalar(scalar_changes, owner, row.pgh_obj_id, changes)
 
         # An UPDATE whose predecessor row was purged has no diff base:
@@ -928,7 +960,7 @@ def _build_action(
                 target_type=target_type,
                 target_id=target_id,
                 field_changes=None if no_base else {f: list(pair) for f, pair in changes.items()},
-                snapshot=_snapshot(row, resolver) if include_snapshot else None,
+                snapshot=_snapshot(row, resolver, hidden) if include_snapshot else None,
             )
         )
 

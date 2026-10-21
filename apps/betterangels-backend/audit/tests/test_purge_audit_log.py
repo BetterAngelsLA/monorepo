@@ -246,18 +246,17 @@ class PurgeAuditLogTestCase(TestCase):
     def test_purge_does_not_rebase_a_retained_status_change_diff(self) -> None:
         """A retained row's diff must not change when its deletable base is purged.
 
-        Fails today: the boundary rule keeps the newest *deletable* row, but a
-        retained row's deletable predecessor can still be deleted. Here
-        ``reservation.update`` (B) is removed, so the retained
-        ``reservation.status_change`` diffs against ``reservation.add`` and
-        falsely claims the notes changed from A to B.
+        The single-boundary rule kept the newest *deletable* row, but a retained
+        row's deletable predecessor could still be deleted. Here
+        ``reservation.update`` (B) is removed, so a rebased
+        ``reservation.status_change`` would diff against ``reservation.add`` and
+        falsely claim the notes changed from A to B. The retention interval keeps
+        B, so the retained diff is byte-identical before and after the purge.
         """
         shelter = baker.make(Shelter, name="Retained Diff Shelter")
         bed = Bed.objects.create(shelter=shelter, name="Retained Diff Bed")
         with audit_context():
-            reservation = Reservation.objects.create(
-                bed=bed, notes="A", status=ReservationStatusChoices.CONFIRMED
-            )
+            reservation = Reservation.objects.create(bed=bed, notes="A", status=ReservationStatusChoices.CONFIRMED)
         with audit_context():
             reservation.notes = "B"
             reservation.save()

@@ -16,12 +16,15 @@ Targets, both batched to avoid long locks:
   references any more (deleting an event row does not cascade to its context,
   because that FK is ``DO_NOTHING, db_constraint=False``).
 
-Within an event table, the newest deletable row per object is retained when the
-object still has newer rows. pghistory computes ``pgh_diff`` at read time from
-``_prev_data`` (the row with the greatest ``pgh_id`` below the current row), so
-deleting that row silently rewrites the first surviving event's diff to NULL.
-The rule is a correlated ``EXISTS`` pair in the delete predicate, so it needs no
-list of retained ids.
+Within an event table, retention keeps a contiguous interval per object: from
+the predecessor of the oldest surviving row through the newest surviving row
+(where "surviving" means a retained label or a row at/after the cutoff).
+pghistory computes ``pgh_diff`` at read time from ``_prev_data`` (the row with
+the greatest ``pgh_id`` below the current row), so deleting an interior row would
+silently rebase its successor's diff onto an older row; keeping the interval
+means every surviving row keeps its immediate predecessor. The interval comes
+from correlated subqueries in the delete predicate, so it needs no list of
+retained ids.
 
 Read-event retention is specified in ADR 0004 §22-§29 and is out of scope here.
 """
@@ -31,7 +34,8 @@ from typing import Any, cast
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import F, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from pghistory.core import event_models
 from pghistory.models import Context
@@ -154,40 +158,61 @@ class Command(BaseCommand):
 
     @staticmethod
     def _deletable_rows(model: Any, before: datetime.datetime) -> Any:
-        """The rows this run may delete, with the per-object boundary already excluded.
+        """The rows this run may delete, preserving every surviving diff base.
 
         pghistory's aggregate computes ``pgh_diff`` at read time from
         ``_prev_data``: the row with the greatest ``pgh_id`` below the current
-        row, regardless of label or cutoff. Deleting that row makes the first
-        surviving event diff against nothing, so its ``pgh_diff`` becomes NULL
-        and an edit silently disappears from the audit log.
+        row, regardless of label or cutoff. Deleting an interior row silently
+        rebases its successor's diff onto an older row -- a false change, not a
+        missing one. Deleting a whole older prefix is safe: the oldest surviving
+        row simply has no base (``field_changes: null``).
 
-        The boundary is the newest *deletable* row of an object, kept only when
-        the object still has a newer surviving row. Both halves of that test are
-        correlated ``EXISTS`` on ``(pgh_obj, pgh_id)``, so the rule folds into the
-        delete predicate and no id list is ever materialized: a Python list would
-        put one parameter per object in the statement and pin the RDS Proxy
-        connection, which is exactly what the batched loop below avoids.
+        The surviving set is report-critical labels (``RETAINED_LABELS``) plus
+        rows at or after the cutoff. For each object, everything outside the
+        closed interval from the *predecessor of the oldest survivor* through the
+        newest survivor is deletable. Keeping that whole interval is what prevents
+        a rebase: every surviving row in it keeps its immediate predecessor, and
+        the row at the interval's floor is either an ordinary base row whose own
+        predecessor is also inside the interval, or the oldest survivor, whose
+        diff is allowed to be NULL. An object with no survivors has no interval
+        and is deleted completely.
 
-        A row is deletable when it has a newer deletable row (it is not the
-        boundary), or when it has no newer row at all (nothing to preserve a base
-        for). Only a row that is both object-newest *among deletable rows* and
-        outlived by a surviving row is withheld -- and that row is the boundary.
+        The interval is two correlated subqueries on ``(pgh_obj, pgh_id)`` rather
+        than a Python id list: per-object parameters would bloat the statement
+        with the number of objects, which is what the batched loop below avoids.
         Through event models have no ``pgh_obj`` (and no ``_prev_data``), so they
-        need no boundary.
+        need no interval.
         """
         deletable = model._default_manager.filter(pgh_created_at__lt=before).exclude(pgh_label__in=RETAINED_LABELS)
         if not hasattr(model, "pgh_obj_id"):
             return deletable
 
-        # A NULL ``pgh_obj_id`` compares unknown in both predicates, so it falls
-        # through to "no newer row" and is deleted -- correct, since a row with no
-        # object has no successor whose base it could provide.
-        newer_deletable = Exists(deletable.filter(pgh_obj_id=OuterRef("pgh_obj_id"), pgh_id__gt=OuterRef("pgh_id")))
-        newer_any = Exists(
-            model._default_manager.filter(pgh_obj_id=OuterRef("pgh_obj_id"), pgh_id__gt=OuterRef("pgh_id"))
+        survivors = model._default_manager.filter(pgh_obj_id=OuterRef("pgh_obj_id")).filter(
+            Q(pgh_created_at__gte=before) | Q(pgh_label__in=RETAINED_LABELS)
         )
-        return deletable.filter(newer_deletable | ~newer_any)
+        oldest_survivor = survivors.order_by("pgh_id").values("pgh_id")[:1]
+        newest_survivor = survivors.order_by("-pgh_id").values("pgh_id")[:1]
+        predecessor = (
+            model._default_manager.filter(
+                pgh_obj_id=OuterRef("pgh_obj_id"),
+                pgh_id__lt=Subquery(oldest_survivor),
+            )
+            .order_by("-pgh_id")
+            .values("pgh_id")[:1]
+        )
+        keep_from = Coalesce(
+            Subquery(predecessor),
+            Subquery(oldest_survivor),
+            output_field=model._meta.pk,
+        )
+        keep_through = Subquery(newest_survivor)
+
+        # A NULL ``pgh_obj_id`` correlates with no survivor, so ``keep_from`` is
+        # NULL and the row is deleted -- correct, since a row with no object has
+        # no successor whose base it could provide.
+        return deletable.annotate(_keep_from=keep_from, _keep_through=keep_through).filter(
+            Q(_keep_from__isnull=True) | Q(pgh_id__lt=F("_keep_from")) | Q(pgh_id__gt=F("_keep_through"))
+        )
 
     @classmethod
     def _purge_event_model(cls, model: Any, before: datetime.datetime, batch_size: int, dry_run: bool) -> int:
@@ -197,7 +222,8 @@ class Command(BaseCommand):
             # Count the whole set. Returning after the first batch would report at
             # most ``batch_size`` rows no matter how much is older than the cutoff,
             # and this total is the only pre-flight signal before an irreversible
-            # delete. Boundary rows are excluded: they are deliberately retained.
+            # delete. Rows inside a retained interval are excluded: they are the
+            # diff bases the survivors need.
             return cast(int, rows.count())
 
         deleted_total = 0
@@ -205,7 +231,7 @@ class Command(BaseCommand):
             # Rebuild the slice each pass so it re-queries. Rows deleted in the
             # previous pass no longer match the filter, so the slice already
             # advances; a growing ``pk__in`` exclusion is unnecessary and would
-            # bloat the statement (and pin the RDS Proxy connection).
+            # bloat the statement with the number of objects already processed.
             ids = list(rows.values_list("pk", flat=True)[:batch_size])
             if not ids:
                 return deleted_total

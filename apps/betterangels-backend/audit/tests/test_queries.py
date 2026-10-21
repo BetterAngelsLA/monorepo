@@ -342,9 +342,10 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
     def test_ba_review_fields_are_hidden_from_scoped_operator(self) -> None:
         """#2559 gates BA review globally; the audit log must not bypass it.
 
-        Fails today: ``operatorShelter`` correctly returns ``None`` for this
-        scoped user, but ``objectAuditLog`` renders the review fields in
-        ``fieldChanges`` and in the opt-in snapshot.
+        ``operatorShelter`` returns ``None`` for this scoped user, and the log
+        has to agree: without the global grant neither ``fieldChanges`` nor the
+        opt-in snapshot may carry the review fields, or the log becomes a read
+        side door around the gate.
         """
         with audit_context(user=self.org_1_case_manager_1):
             self.shelter.overall_rating = 5
@@ -419,4 +420,3 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self.assertIn("Visible Shelter Rename", dumped)
         self.assertNotIn("Hidden Bed", dumped)
         self.assertNotIn("Hidden Room", dumped)
-
