@@ -1,3 +1,8 @@
-export * from './formSchema';
-export { defaultContactValues, type ContactFormData } from './formSchema';
+export {
+  contactFormSchema,
+  defaultContactValues,
+  recoverableContactFields,
+  type ContactFormData,
+} from './formSchema';
 export { ShelterContacts } from './ShelterContacts';
+export { ShelterContactsForm } from './ShelterContactsForm';
