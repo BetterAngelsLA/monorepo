@@ -6,6 +6,9 @@ the GraphQL surface because that is where a mistake is invisible: the old
 shape (model-level permission + org-membership bound) let a Caseworker at one
 org read and update another org's referral as long as they were *a member*
 there.  The adversary tests below are the regression guard for exactly that.
+
+``ffReferrals`` is deliberately NOT authority here: it is a UI rollout switch.
+The capability decides API access; the flag decides whether the tab is shown.
 """
 
 from typing import Any, Dict, cast
@@ -20,7 +23,6 @@ from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from notes.groups import CASEWORKER
 from referrals.models import Referral
-from referrals.schema import REFERRALS_FLAG
 from shelters.tests.baker_recipes import shelter_recipe
 
 LIST_QUERY = "query { referrals { results { id } } }"
@@ -57,8 +59,6 @@ mutation($data: DeleteDjangoObjectInput!) {
 class ReferralApiTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.flag = get_waffle_flag_model().objects.create(name=REFERRALS_FLAG, everyone=True)
-        self.flag.flush()
 
         self.client_profile = baker.make(ClientProfile)
         self.shelter = shelter_recipe.make(organization=self.org_1)
@@ -89,32 +89,19 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         data.update(overrides)
         return {"data": data}
 
-    # ── feature flag ────────────────────────────────────────────────────
+    # ── the flag is not authority ───────────────────────────────────────
 
-    def test_flag_off_denies_the_api(self) -> None:
-        self.flag.everyone = False
-        self.flag.save()
-        self.flag.flush()
+    def test_the_api_ignores_ff_referrals(self) -> None:
+        # A deliberate design decision: ``ffReferrals`` is a UI rollout switch,
+        # not an API gate. The capability is the control, so a flag-off account
+        # with the Caseworker Grant still has API access.
+        flag = get_waffle_flag_model().objects.create(name="ffReferrals", everyone=False)
+        flag.flush()
 
         payload = self.execute_graphql(LIST_QUERY)
+        ids = {row["id"] for row in self._results(payload)}
 
-        self.assertTrue(payload.get("errors"), payload)
-
-    def test_flag_off_denies_mutations(self) -> None:
-        self.flag.everyone = False
-        self.flag.save()
-        self.flag.flush()
-
-        create_payload = self.execute_graphql(CREATE_MUTATION, self._create_data(self.org_1.id))
-        update_payload = self.execute_graphql(
-            UPDATE_MUTATION, {"data": {"id": str(self.referral_1.pk), "status": "ACCEPTED"}}
-        )
-        delete_payload = self.execute_graphql(DELETE_MUTATION, {"data": {"id": str(self.referral_1.pk)}})
-
-        for payload in (create_payload, update_payload, delete_payload):
-            self.assertTrue(payload.get("errors"), payload)
-        self.referral_1.refresh_from_db()
-        self.assertEqual(self.referral_1.status, Referral.Status.PENDING)
+        self.assertEqual(ids, {str(self.referral_1.pk)})
 
     # ── reads ───────────────────────────────────────────────────────────
 

@@ -4,7 +4,6 @@ import strawberry
 import strawberry_django
 from django.core.exceptions import PermissionDenied, ValidationError
 from strawberry import asdict
-from strawberry.permission import BasePermission
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
@@ -15,7 +14,6 @@ from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import ORG_PERMISSION_DENIED_MESSAGE, get_object_or_permission_error, org_or_deny
 from common.permissions.selectors import visible
 from common.permissions.utils import IsAuthenticated, require_can
-from common.services.feature_flags import flag_is_active
 from common.utils import get_or_none
 from referrals.models import Referral
 from referrals.selectors import referral_get, referral_list
@@ -27,22 +25,6 @@ from .types import (
     ReferralType,
     UpdateReferralInput,
 )
-
-REFERRALS_FLAG = "ffReferrals"
-
-
-class IsReferralsEnabled(BasePermission):
-    """The feature flag is an access control, not only a UI hint.
-
-    The capability says who *may* use referrals; ``ffReferrals`` says whether
-    the rollout is on for this account.  Checking it server-side keeps a
-    capability holder out of the API while their team is not in the pilot.
-    """
-
-    message = "Referrals are not enabled for this account."
-
-    def has_permission(self, source: object, info: Info, **kwargs: object) -> bool:
-        return flag_is_active(info, REFERRALS_FLAG)
 
 
 def _active_organization_id(info: Info) -> int | None:
@@ -66,7 +48,7 @@ def _active_organization_id(info: Info) -> int | None:
 
 @strawberry.type
 class Query:
-    @strawberry_django.field(permission_classes=[IsAuthenticated, IsReferralsEnabled])
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
     def referral(self, info: Info, pk: strawberry.ID) -> ReferralType:
         current_user = cast(User, get_current_user(info))
         # Load-by-id is authority-only (ADR 0001 §2.6): the header confines a
@@ -76,7 +58,7 @@ class Query:
             raise PermissionDenied("Referral not found.")
         return cast(ReferralType, referral)
 
-    @strawberry_django.offset_paginated(permission_classes=[IsAuthenticated, IsReferralsEnabled])
+    @strawberry_django.offset_paginated(permission_classes=[IsAuthenticated])
     def referrals(
         self,
         info: Info,
@@ -90,7 +72,7 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated, IsReferralsEnabled])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
         """Create a referral at an explicit organization (ADR 0001 §2.6).
 
@@ -122,7 +104,7 @@ class Mutation:
         )
         return cast(ReferralType, referral)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated, IsReferralsEnabled])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_referral(self, info: Info, data: UpdateReferralInput) -> ReferralType:
         current_user = cast(User, get_current_user(info))
         qs = visible(Referral.objects.all(), current_user, Referral.perms.CHANGE)
@@ -134,7 +116,7 @@ class Mutation:
         referral = referral_update(referral=referral, data=asdict(data))
         return cast(ReferralType, referral)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated, IsReferralsEnabled])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_referral(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         current_user = cast(User, get_current_user(info))
         referral = get_or_none(
