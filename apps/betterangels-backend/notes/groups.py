@@ -41,10 +41,10 @@ CASEWORKER = TemplateConfig(
         SocialMediaProfile.perms.CHANGE,
         SocialMediaProfile.perms.DELETE,
         SocialMediaProfile.perms.VIEW,
-        # Referral: ADD + CHANGE + VIEW (DELETE is per-object at creation)
-        Referral.perms.ADD,
-        Referral.perms.CHANGE,
-        Referral.perms.VIEW,
+        # Referral: grant-only — the capability rides CASEWORKER_ROLE below.
+        # Keeping it out of the template is what makes the legacy
+        # ``PermissionGroup`` arm inert for referrals (ADR 0001 §4.1); a
+        # model-level copy here would be global and bypass the org scope.
         # Task: ADD + VIEW only
         Task.perms.ADD,
         Task.perms.VIEW,
@@ -59,16 +59,28 @@ CASEWORKER = TemplateConfig(
 )
 
 
-# ── Role definition (ADR 0001 §2.2 — caseworker teams-read slice) ────────
-# RFC 0003 first step: a scoped ``Caseworker`` Role carrying
-# ``teams.view_team`` lets the ``teams`` read authorize via ``can()`` (pure
-# grant) instead of org membership.  Only the teams permission rides the Role
-# today; the rest of the caseworker bundle — including the referral
-# add/change/view permissions — stays legacy until RFC 0003, so keep
-# ``CASEWORKER_ROLE`` a deliberate subset rather than deriving it from the
-# template.
+# ── Role definition (ADR 0001 §2.2 — scoped caseworker capability) ───────
+# The scoped ``Caseworker`` Role is exercised only through a ``Grant``
+# (``OrgRoleManager`` / ``backfill_caseworker_grants``), so these stay
+# org-scoped: a caseworker at org A reaches org A's rows and nothing else.
+#
+# Referrals are the first domain to ride the Role for its whole bundle
+# (add/change/view/delete) instead of the legacy template.  DELETE is
+# deliberately here rather than per-object at creation: the scoped Role cannot
+# leak globally, so "any caseworker at this org may delete this org's
+# referral" is the same authority the creation-time guardian rows granted to
+# the whole org group, without writing per-record rows (ADR 0001 §2.1 rule 4).
+# The rest of the bundle — notes, clients, tasks — stays legacy until RFC 0003,
+# so keep ``CASEWORKER_ROLE`` a deliberate subset rather than deriving it from
+# the template.
 CASEWORKER_ROLE = RoleDef(
     name=CASEWORKER.name,
-    permissions=[Team.perms.VIEW],
+    permissions=[
+        Team.perms.VIEW,
+        Referral.perms.ADD,
+        Referral.perms.CHANGE,
+        Referral.perms.VIEW,
+        Referral.perms.DELETE,
+    ],
     is_invitable=CASEWORKER.is_invitable,
 )

@@ -4,10 +4,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from model_bakery import baker
 
-from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
-from notes.groups import CASEWORKER
 from referrals.models import Referral
 from referrals.selectors import referral_list
 from referrals.services import referral_create, referral_delete, referral_update
@@ -19,12 +17,11 @@ class ReferralCreateTests(GraphQLBaseTestCase):
         super().setUp()
         self.client_profile = baker.make(ClientProfile)
         self.shelter = shelter_recipe.make(organization=self.org_1)
-        self.permission_group = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
 
     def test_creates_referral_with_pending_status(self) -> None:
         referral = referral_create(
             user=self.org_1_case_manager_1,
-            permission_group=self.permission_group,
+            organization=self.org_1,
             client_profile=self.client_profile,
             shelter=self.shelter,
         )
@@ -33,12 +30,12 @@ class ReferralCreateTests(GraphQLBaseTestCase):
         self.assertEqual(referral.client_profile, self.client_profile)
         self.assertEqual(referral.shelter, self.shelter)
         self.assertEqual(referral.created_by, self.org_1_case_manager_1)
-        self.assertEqual(referral.organization, self.permission_group.organization)
+        self.assertEqual(referral.organization, self.org_1)
 
     def test_creates_referral_with_notes(self) -> None:
         referral = referral_create(
             user=self.org_1_case_manager_1,
-            permission_group=self.permission_group,
+            organization=self.org_1,
             client_profile=self.client_profile,
             shelter=self.shelter,
             notes="Client prefers bottom bunk",
@@ -46,16 +43,19 @@ class ReferralCreateTests(GraphQLBaseTestCase):
 
         self.assertEqual(referral.notes, "Client prefers bottom bunk")
 
-    def test_assigns_change_and_delete_permissions(self) -> None:
+    def test_does_not_write_guardian_rows(self) -> None:
+        # Authority is the scoped Grant (ADR 0001 §2.1 rule 4), so creation
+        # writes no per-record permission rows.  This is the legacy arm that
+        # made the object-level check diverge from the org check.
         referral = referral_create(
             user=self.org_1_case_manager_1,
-            permission_group=self.permission_group,
+            organization=self.org_1,
             client_profile=self.client_profile,
             shelter=self.shelter,
         )
 
-        self.assertTrue(self.org_1_case_manager_1.has_perm("referrals.change_referral", referral))
-        self.assertTrue(self.org_1_case_manager_1.has_perm("referrals.delete_referral", referral))
+        self.assertFalse(self.org_1_case_manager_1.has_perm("referrals.change_referral", referral))
+        self.assertFalse(self.org_1_case_manager_1.has_perm("referrals.delete_referral", referral))
 
     def test_integrity_error_is_logged_and_returns_a_generic_message(self) -> None:
         db_error = 'duplicate key value violates unique constraint "referrals_referral_pkey"'
@@ -65,7 +65,7 @@ class ReferralCreateTests(GraphQLBaseTestCase):
                 with self.assertRaises(ValidationError) as raised:
                     referral_create(
                         user=self.org_1_case_manager_1,
-                        permission_group=self.permission_group,
+                        organization=self.org_1,
                         client_profile=self.client_profile,
                         shelter=self.shelter,
                     )
@@ -84,10 +84,9 @@ class ReferralUpdateTests(GraphQLBaseTestCase):
         super().setUp()
         self.client_profile = baker.make(ClientProfile)
         self.shelter = shelter_recipe.make(organization=self.org_1)
-        self.permission_group = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
         self.referral = referral_create(
             user=self.org_1_case_manager_1,
-            permission_group=self.permission_group,
+            organization=self.org_1,
             client_profile=self.client_profile,
             shelter=self.shelter,
         )
@@ -136,10 +135,9 @@ class ReferralDeleteTests(GraphQLBaseTestCase):
         super().setUp()
         self.client_profile = baker.make(ClientProfile)
         self.shelter = shelter_recipe.make(organization=self.org_1)
-        self.permission_group = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
         self.referral = referral_create(
             user=self.org_1_case_manager_1,
-            permission_group=self.permission_group,
+            organization=self.org_1,
             client_profile=self.client_profile,
             shelter=self.shelter,
         )
@@ -157,19 +155,17 @@ class ReferralListSelectorTests(GraphQLBaseTestCase):
         super().setUp()
         self.client_profile = baker.make(ClientProfile)
         self.shelter = shelter_recipe.make(organization=self.org_1)
-        self.permission_group_1 = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
-        self.permission_group_2 = resolve_permission_group(self.org_2_case_manager_1, template=CASEWORKER)
 
-    def test_returns_referrals_in_the_users_organizations(self) -> None:
+    def test_returns_referrals_in_the_users_scopes(self) -> None:
         referral_create(
             user=self.org_1_case_manager_1,
-            permission_group=self.permission_group_1,
+            organization=self.org_1,
             client_profile=self.client_profile,
             shelter=self.shelter,
         )
         referral_create(
             user=self.org_2_case_manager_1,
-            permission_group=self.permission_group_2,
+            organization=self.org_2,
             client_profile=self.client_profile,
             shelter=self.shelter,
         )
@@ -184,7 +180,7 @@ class ReferralListSelectorTests(GraphQLBaseTestCase):
     def test_returns_colleague_referrals_within_the_same_org(self) -> None:
         referral_create(
             user=self.org_1_case_manager_2,
-            permission_group=self.permission_group_1,
+            organization=self.org_1,
             client_profile=self.client_profile,
             shelter=self.shelter,
         )
@@ -196,7 +192,7 @@ class ReferralListSelectorTests(GraphQLBaseTestCase):
     def test_organization_id_narrows_to_the_active_org(self) -> None:
         referral_create(
             user=self.org_1_case_manager_1,
-            permission_group=self.permission_group_1,
+            organization=self.org_1,
             client_profile=self.client_profile,
             shelter=self.shelter,
         )

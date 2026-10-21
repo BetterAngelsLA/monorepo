@@ -354,17 +354,25 @@ class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
 
 
 class RoleDefTemplateConsistencyTestCase(TestCase):
-    """Every scoped ``RoleDef`` bundle must fit inside its template's bundle.
+    """A scoped ``RoleDef`` must not add *dual-write* authority its template lacks.
 
-    "Template ≈ Role" is the cutover contract: the template is what the org
-    pages and the per-org report read, the Role is what ``can()`` reads.  A
-    permission added to one list and forgotten in the other would make the FE
-    offer an action the backend refuses (or hide one it allows), and nothing
-    else would catch it.
+    "Template ≈ Role" is the cutover contract for **dual-write** domains: the
+    template is what the org pages and the per-org report read, the Role is what
+    ``can()`` reads.  A permission added to one list and forgotten in the other
+    would make the FE offer an action the backend refuses (or hide one it
+    allows), and nothing else would catch it.
+
+    Grant-only domains (``LEGACY_INERT_APPS``) are exempt by design: the Role is
+    the ONLY authority there, and the template must deliberately *not* carry the
+    capability — a legacy copy would be a global, org-crossing permission.  The
+    subset rule therefore covers the dual-write permissions only; each grant-only
+    domain pins its own split (``referrals/tests/test_permissions.py`` asserts
+    the template carries none).
     """
 
-    def test_scoped_role_defs_are_template_subsets(self) -> None:
+    def test_scoped_role_defs_are_template_subsets_for_dual_write_domains(self) -> None:
         from accounts.services import _all_role_defs
+        from common.permissions.domain import LEGACY_INERT_APPS
 
         for role_def in _all_role_defs():
             if role_def.is_global:
@@ -375,10 +383,13 @@ class RoleDefTemplateConsistencyTestCase(TestCase):
                     f"{app_label}.{codename}"
                     for app_label, codename in template.permissions.values_list("content_type__app_label", "codename")
                 }
+                dual_write_perms = {
+                    perm for perm in role_def.permissions if perm.split(".", 1)[0] not in LEGACY_INERT_APPS
+                }
                 self.assertLessEqual(
-                    set(role_def.permissions),
+                    dual_write_perms,
                     template_perms,
-                    f"{role_def.name} grants permissions its template does not",
+                    f"{role_def.name} grants dual-write permissions its template does not",
                 )
 
 
