@@ -32,23 +32,24 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - tapOn: 'See Details'
 
-# The client tabs are a horizontal ScrollView, so Referrals starts off-screen
-# on every device narrower than the strip. `scrollUntilVisible` does not help:
-# it swipes the first scrollable view it finds (the vertical client page), so
-# the strip never moves.
+# The client tabs are a horizontal ScrollView, so Referrals starts off-screen on
+# everything narrower than the strip. `scrollUntilVisible` does not help: it
+# swipes the first scrollable view it finds (the vertical client page) and only
+# at the screen centre, so the strip never moves.
 #
-# The strip's Y depends on the client header height and the device, so measure
-# rather than assume — 31% on the iOS 6.3" simulator, 38% on a 1080x2424 phone,
-# 45% on the 320x640 CI emulator, 53% on a 320x640 with a taller header (the
-# header wraps more). Swipe at each of those offsets, tapping after each, and
-# stop as soon as the Referrals screen is up. A horizontal swipe that lands
-# outside the strip is a no-op, so the extra attempts are cheap.
+# The strip's Y depends on the client header and the device, and the two
+# platforms differ enough to need their own offsets:
+#   - iOS: strip sits at ~31% on the 6.3" simulator; nudge by 1% per attempt.
+#   - Android: measured at 45% on the 320x640 CI emulator and 38% on a
+#     1080x2424 phone (53% when the header wraps), so sweep that band.
+# Swipe until the Referrals tab is on screen, then tap it. A horizontal swipe
+# that lands off the strip is a no-op, so the extra attempts are cheap.
 - assertVisible:
     id: client-tabs-strip
 
-# 30% — iOS simulator (strip ~31%)
 - runFlow:
     when:
+      platform: ios
       notVisible:
         id: referrals-screen
     commands:
@@ -61,9 +62,69 @@ appId: ${MAESTRO_APP_ID}
           id: client-tab-referrals
           optional: true
 
-# 44% / 50% — 320x640 emulator (CI and local, short and tall headers)
 - runFlow:
     when:
+      platform: ios
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          start: '90%, 31%'
+          end: '10%, 31%'
+          duration: 400
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      platform: ios
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          start: '90%, 32%'
+          end: '10%, 32%'
+          duration: 400
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      platform: ios
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          start: '90%, 33%'
+          end: '10%, 33%'
+          duration: 400
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      platform: android
+      notVisible:
+        id: referrals-screen
+    commands:
+      - swipe:
+          start: '90%, 38%'
+          end: '10%, 38%'
+          duration: 400
+      - waitForAnimationToEnd
+      - tapOn:
+          id: client-tab-referrals
+          optional: true
+
+- runFlow:
+    when:
+      platform: android
       notVisible:
         id: referrals-screen
     commands:
@@ -78,6 +139,7 @@ appId: ${MAESTRO_APP_ID}
 
 - runFlow:
     when:
+      platform: android
       notVisible:
         id: referrals-screen
     commands:
@@ -90,24 +152,9 @@ appId: ${MAESTRO_APP_ID}
           id: client-tab-referrals
           optional: true
 
-# 38% — tall phones (1080x2424)
 - runFlow:
     when:
-      notVisible:
-        id: referrals-screen
-    commands:
-      - swipe:
-          start: '90%, 38%'
-          end: '10%, 38%'
-          duration: 400
-      - waitForAnimationToEnd
-      - tapOn:
-          id: client-tab-referrals
-          optional: true
-
-# 56% — safety margin for short screens with a tall header
-- runFlow:
-    when:
+      platform: android
       notVisible:
         id: referrals-screen
     commands:
