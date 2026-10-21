@@ -22,33 +22,39 @@ appId: ${MAESTRO_APP_ID}
 - evalScript: ${output.draftMarker = "draft-e2e-" + Date.now()}
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: create-referral-btn
 
 # Allow multiple scrolls to settle on a physical device.
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: storage-AMNESTY_LOCKERS-btn
     direction: DOWN
     timeout: 30000
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: storage-AMNESTY_LOCKERS-btn
 
 # A typed answer as well as a selected chip: the text is the cross-platform
 # proof that the resumed draft rehydrated (see the assertion after the resume).
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: intake-notes-input
     direction: DOWN
     timeout: 30000
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: intake-notes-input
 - inputText: ${output.draftMarker}
 - hideKeyboard
 
 # ── Pause → the draft becomes visible in the list ───────────────────────────
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: intake-pause-btn
 
 - assertVisible:
@@ -77,12 +83,14 @@ appId: ${MAESTRO_APP_ID}
     id: referral-draft-card
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-draft-card
 
 - assertVisible:
     id: referral-intake-screen
 
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: storage-AMNESTY_LOCKERS-btn
     direction: DOWN
@@ -103,6 +111,7 @@ appId: ${MAESTRO_APP_ID}
 
 # The answer typed before the pause must still be in the field after the resume.
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: intake-notes-input
     direction: DOWN
@@ -112,9 +121,11 @@ appId: ${MAESTRO_APP_ID}
 
 # ── Discard → confirm, and the draft is gone ────────────────────────────────
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: intake-pause-btn
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: draft-discard-btn
 
 # `?` is a regex quantifier in Maestro text selectors, so the raw title never
@@ -122,6 +133,7 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible: '.*Discard draft.*'
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: discard-modal-confirm
 
 - assertNotVisible:

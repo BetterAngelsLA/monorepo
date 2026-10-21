@@ -9,9 +9,12 @@ appId: ${MAESTRO_APP_ID}
 
 # visit create client profile page
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'main-plus-tab-btn'
 
-- tapOn: 'Add client'
+- tapOn:
+    text: 'Add client'
+    waitToSettleTimeoutMs: 300
 
 ################################
 ######## CREATE PROFILE ########
@@ -25,12 +28,14 @@ appId: ${MAESTRO_APP_ID}
 
 # fill out form
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'firstName'
 - inputText: ${output.clientFirstName}
 - hideKeyboard
 
 # Submit
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'action-btn-primary'
 - waitForAnimationToEnd
 
@@ -44,6 +49,7 @@ appId: ${MAESTRO_APP_ID}
 
 # Edit Personal Info
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'expand-personal-info'
 - waitForAnimationToEnd
 
@@ -53,32 +59,42 @@ appId: ${MAESTRO_APP_ID}
     id: 'expand-full-name' # Full Name section should be collapsed
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'edit-personal-info'
 - waitForAnimationToEnd
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'californiaId'
 - inputText: ${output.caId}
 - hideKeyboard
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'datepicker-input'
 - inputText: '5/31/1992' # bypasses actual datepicker for now and just enters date
-- tapOn: 'Done'
+- tapOn:
+    text: 'Done'
+    waitToSettleTimeoutMs: 300
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'living-situation-select'
 - waitForAnimationToEnd
-- tapOn: 'Tent'
+- tapOn:
+    text: 'Tent'
+    waitToSettleTimeoutMs: 300
 
 # Submit
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'action-btn-primary'
 - waitForAnimationToEnd
 
 - assertVisible: ${output.caId}
 - assertVisible: '05/31/1992'
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       text: 'Tent'
 - assertVisible: 'Tent'
@@ -87,9 +103,11 @@ appId: ${MAESTRO_APP_ID}
 # ######## DELETE PROFILE ########
 # ################################
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'client-nav-menu-open-btn'
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'client-nav-menu-delete-profile-btn'
 - waitForAnimationToEnd
 
@@ -98,6 +116,7 @@ appId: ${MAESTRO_APP_ID}
       id: 'delete-modal-confirm-btn'
     timeout: 3000
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'delete-modal-confirm-btn'
 - waitForAnimationToEnd
 

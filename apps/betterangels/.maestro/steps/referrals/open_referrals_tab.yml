@@ -20,6 +20,7 @@ appId: ${MAESTRO_APP_ID}
     id: clients-screen
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     # ids are built by toTestId(['client-card', firstName]), so match the
     # prefix rather than a specific seeded client.
     id: 'client-card-.*'
@@ -30,7 +31,9 @@ appId: ${MAESTRO_APP_ID}
     when:
       visible: 'See Details'
     commands:
-      - tapOn: 'See Details'
+      - tapOn:
+          text: 'See Details'
+          waitToSettleTimeoutMs: 300
 
 # The client tabs are a horizontal ScrollView, so Referrals starts off-screen on
 # everything narrower than the strip. `scrollUntilVisible` does not help: it
@@ -54,12 +57,14 @@ appId: ${MAESTRO_APP_ID}
         id: referrals-screen
     commands:
       - swipe:
+          waitToSettleTimeoutMs: 300
           start: '90%, 31%'
           end: '10%, 31%'
           duration: 400
       - waitForAnimationToEnd:
           timeout: 2000
       - tapOn:
+          waitToSettleTimeoutMs: 300
           id: client-tab-referrals
           optional: true
 
@@ -70,12 +75,14 @@ appId: ${MAESTRO_APP_ID}
         id: referrals-screen
     commands:
       - swipe:
+          waitToSettleTimeoutMs: 300
           start: '90%, 32%'
           end: '10%, 32%'
           duration: 400
       - waitForAnimationToEnd:
           timeout: 2000
       - tapOn:
+          waitToSettleTimeoutMs: 300
           id: client-tab-referrals
           optional: true
 
@@ -86,12 +93,14 @@ appId: ${MAESTRO_APP_ID}
         id: referrals-screen
     commands:
       - swipe:
+          waitToSettleTimeoutMs: 300
           start: '90%, 44%'
           end: '10%, 44%'
           duration: 400
       - waitForAnimationToEnd:
           timeout: 2000
       - tapOn:
+          waitToSettleTimeoutMs: 300
           id: client-tab-referrals
           optional: true
 
@@ -102,12 +111,14 @@ appId: ${MAESTRO_APP_ID}
         id: referrals-screen
     commands:
       - swipe:
+          waitToSettleTimeoutMs: 300
           start: '90%, 38%'
           end: '10%, 38%'
           duration: 400
       - waitForAnimationToEnd:
           timeout: 2000
       - tapOn:
+          waitToSettleTimeoutMs: 300
           id: client-tab-referrals
           optional: true
 

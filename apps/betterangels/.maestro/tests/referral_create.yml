@@ -21,6 +21,7 @@ appId: ${MAESTRO_APP_ID}
 
 # ── Start a new referral ────────────────────────────────────────────────────
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: create-referral-btn
 
 # The form opens as a full-screen modal; let it settle before asserting content
@@ -43,36 +44,43 @@ appId: ${MAESTRO_APP_ID}
 # Storage's requirement is pending; the test supplies it to verify persistence.
 # Allow multiple scrolls to settle on a physical device.
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: storage-AMNESTY_LOCKERS-btn
     direction: DOWN
     timeout: 30000
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: storage-AMNESTY_LOCKERS-btn
 
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: transportation-AUTOMOBILE-btn
     direction: DOWN
     timeout: 30000
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: transportation-AUTOMOBILE-btn
 
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: intake-notes-input
     direction: DOWN
     timeout: 30000
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: intake-notes-input
 - inputText: ${output.referralMarker}
 - hideKeyboard
 
 # ── Pick a shelter ──────────────────────────────────────────────────────────
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: intake-next-btn
 
 - assertVisible:
@@ -84,12 +92,14 @@ appId: ${MAESTRO_APP_ID}
 # Back is the only exit past intake that keeps the answers. The form remounts
 # scrolled to the top, so scroll back down to prove the answer survived.
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: picker-back-btn
 
 - assertVisible:
     id: referral-intake-screen
 
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: intake-notes-input
     direction: DOWN
@@ -98,6 +108,7 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible: ${output.referralMarker}
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: intake-next-btn
 
 - assertVisible:
@@ -106,10 +117,12 @@ appId: ${MAESTRO_APP_ID}
 # tap the radio, not the row — the row also contains the "View in Shelter
 # Directory" link, and a centre-tap on the row opens the browser instead
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'shelter-option-radio-.*'
     index: 0
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: submit-referral-btn
 
 # ── Submitted: back on the list, values round-tripped from the server ───────
@@ -136,6 +149,7 @@ appId: ${MAESTRO_APP_ID}
 # The intake line renders human labels (field label: option label); the notes
 # line is the raw staff observation, so it keeps the unique marker.
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: 'referral-card-.*'
       containsDescendants:

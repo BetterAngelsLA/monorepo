@@ -12,10 +12,12 @@ appId: ${MAESTRO_APP_ID}
     id: referral-share-preview
     text: '(?s).*Staff Observations / Notes \[Sensitive\]: Excluded \(sensitive\).*'
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-image-mode
 - assertVisible:
     id: referral-image-preview
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-share-png
 # Framework chooser identifiers, not a particular installed recipient app.
 # The headline also proves Android recognizes this attachment as an image.
@@ -27,23 +29,28 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible:
     id: referral-image-preview
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-image-mode
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-share-include-private
 - assertVisible:
     id: referral-share-include-private
     checked: true
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 100
     element:
       text: ${'(?s).*' + output.editedMarker + '.*'}
     direction: DOWN
     timeout: 30000
     visibilityPercentage: 10
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-image-mode
 - assertVisible:
     id: referral-image-preview
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-share-png
 - assertVisible:
     id: '.*:id/content_preview_container'
@@ -51,14 +58,17 @@ appId: ${MAESTRO_APP_ID}
 - takeScreenshot: referral-png-inclusive-chooser
 - back
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-share-include-private
 - assertVisible:
     id: referral-share-include-private
     checked: false
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-image-mode
 - assertVisible: 'Share text'
 - assertVisible: 'Share text file \(\.txt\)'
 - assertNotVisible: ${'(?s).*' + output.editedMarker + '.*'}
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: referral-share-close

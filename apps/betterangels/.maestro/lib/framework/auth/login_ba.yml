@@ -13,6 +13,7 @@ appId: ${MAESTRO_APP_ID}
         id: landing-screen
     commands:
       - tapOn:
+          waitToSettleTimeoutMs: 300
           id: better-angels-login
 
 # Ensure the login form is visible
@@ -20,6 +21,7 @@ appId: ${MAESTRO_APP_ID}
     id: sign-in-screen
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'ba-email-input'
 - inputText: ${MAESTRO_BA_USER_EMAIL}
 
@@ -33,6 +35,7 @@ appId: ${MAESTRO_APP_ID}
     id: ba-password-input
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'ba-password-input'
 - inputText: ${MAESTRO_BA_USER_PASSWORD}
 
@@ -45,11 +48,13 @@ appId: ${MAESTRO_APP_ID}
 - waitForAnimationToEnd
 
 - scrollUntilVisible:
+    waitToSettleTimeoutMs: 300
     element:
       id: ba-login-submit
     direction: DOWN
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'ba-login-submit'
 
 # iOS may raise the AutoFill "Save Password?" alert after a successful
@@ -65,6 +70,7 @@ appId: ${MAESTRO_APP_ID}
       platform: ios
     commands:
       - tapOn:
+          waitToSettleTimeoutMs: 300
           text: 'Not Now'
           optional: true
 
