@@ -272,6 +272,29 @@ export MAESTRO_DEEPLINK="exp+betterangels://expo-development-client/?url=http://
 
 `MAESTRO_EXPO_HOST=<LAN-IP>` has the same effect when using `setup-maestro.sh`.
 
+### Android shows "There was a problem loading the project / Failed to open app"
+
+The dev client could not open the EAS Update manifest. Check the update group
+URL: if it carries a query string (`?platform=android&disableOnboarding=1`),
+older Android dev clients do not percent-decode the nested `url` parameter, so
+`platform` arrives as `android&disableOnboarding=1` and EAS Update answers
+**400**:
+
+```
+"platform": "android&disableOnboarding=1" is not supported by EAS Update
+```
+
+Keep the URL in `url=` free of a query string — the platform comes from the
+dev client's `expo-platform` header — and pass `disableOnboarding=1` as a
+sibling parameter:
+
+```
+betterangels-dev://expo-development-client/?url=https://u.expo.dev/<project>/group/<group>&disableOnboarding=1
+```
+
+`launch_app.yml` also taps "Continue" if the onboarding screen appears, so
+dropping `disableOnboarding` entirely is safe.
+
 ### A flow fails during "Loading from Metro…"
 
 The dev client shows a native splash until the JS bundle is fetched; no app

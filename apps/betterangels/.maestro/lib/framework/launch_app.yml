@@ -15,11 +15,20 @@ appId: ${MAESTRO_APP_ID}
 #
 # Note on the Expo dev-client onboarding screen (with a "Continue" button):
 # This screen normally appears once on the very first app launch after
-# install. The `disableOnboarding=1` query param in MAESTRO_DEEPLINK (set in
-# setup-maestro.sh) suppresses it so tests can run on a fresh install
-# without manual intervention. If you need to see the onboarding flow
-# locally, drop `disableOnboarding=1` from the deep link AND reinstall the
-# app (the onboarding "seen" flag is stored in app data):
+# install. The `disableOnboarding=1` param in MAESTRO_DEEPLINK suppresses it
+# so tests can run on a fresh install without manual intervention; the loop
+# below also taps "Continue" if it slips through.
+#
+# Keep the update URL inside `url=` free of a query string. Older Android dev
+# clients do not percent-decode that nested value, so an encoded `&` (as in
+# `?platform=android%26disableOnboarding%3D1`) reaches EAS Update as part of
+# the platform name and it answers 400 — the app then shows "There was a
+# problem loading the project / Failed to open app". `disableOnboarding=1` is
+# therefore a sibling param, and the group URL stands alone.
+#
+# If you need to see the onboarding flow locally, drop `disableOnboarding=1`
+# from the deep link AND reinstall the app (the onboarding "seen" flag is
+# stored in app data):
 #   xcrun simctl uninstall booted la.betterangels.dev.app   # iOS
 #   adb shell pm clear la.betterangels.dev.app              # Android
 
