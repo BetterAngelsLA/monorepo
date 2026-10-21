@@ -185,8 +185,9 @@ jobs:
           docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
           # logical (not auto): xdist's "auto" counts physical cores and
-          # under-provisions SMT runners. Cap keeps per-worker DBs bounded.
-          export PYTEST_ADDOPTS="-n logical --maxprocesses 4 --durations=25"
+          # under-provisions SMT runners. Each worker gets its own test DB.
+          # Scale with the runner; cap with --maxprocesses only if needed.
+          export PYTEST_ADDOPTS="-n logical --durations=25"
           yarn nx affected -t test
           EOF
 

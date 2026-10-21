@@ -98,21 +98,21 @@ yarn nx test betterangels-backend
 To run an individual test, add the full path of the test in dot notation. Example:
 
 ```bash
-yarn nx test betterangels-backend accounts.tests.UsersManagersTests.test_create_user
+yarn nx test betterangels-backend accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
 ```
 
 To run the suite in parallel locally:
 
 ```bash
-uv run pytest -n logical --maxprocesses 8
+uv run pytest -n logical
 ```
 
-`-n logical` uses logical CPUs (the suite is DB-bound; xdist's `-n auto` counts
-physical cores and under-provisions SMT machines). Each worker creates its own
-test database (`test_postgres_gw0`, …) and runs migrations the first time, so
-the cap matters — keep it at or below 8. CI uses
-`PYTEST_ADDOPTS="-n logical --maxprocesses 4 --durations=25"` (see the Test step
-in `.github/workflows/default.yml`).
+`-n logical` uses all logical CPUs (the suite is DB-bound; xdist's `-n auto`
+counts physical cores and under-provisions SMT machines). Each worker creates
+its own test database (`test_postgres_gw0`, …) and runs migrations the first
+time; add `--maxprocesses N` if the machine is DB- or memory-constrained. CI
+scales the same way and adds `--durations=25` through
+`PYTEST_ADDOPTS` (see the Test step in `.github/workflows/default.yml`).
 
 `manage.py test` accepts `--keepdb`, `--parallel N|auto`, `--failfast` and `-k`
 and forwards them to pytest (`--parallel auto` means logical CPUs).
