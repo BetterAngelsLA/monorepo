@@ -13,7 +13,8 @@ or any deployed environment (branch preview, DEV).
   browser binaries — it inherits the `playwright` stage, which installs from the
   same `yarn.lock` as `node_modules`. `tools/scripts/post-create.sh` still runs
   `yarn playwright install chromium`, which covers an older image and the
-  `dev_home` volume that shadows the baked cache.
+  `dev_home` volume that shadows the baked cache. The install is non-fatal, so a
+  CDN blip cannot fail container creation.
 - Running the suite from a **host** checkout instead of the container works the
   same way, but needs its own install there: `yarn install` and
   `yarn playwright install chromium`.
@@ -41,10 +42,12 @@ BASE_URL=https://shelter.dev.betterangels.la/branches/<branch>/ yarn nx run shel
 
 Notes:
 
-- Runs are headless (the container has no display — `--headed`/`--ui` are not
-  available here).
-- Debugging: re-run with `--trace on` and open the HTML report from
-  `dist/.playwright/apps/shelter-e2e/`.
+- Runs are headless: `--ui` needs a display, and `--headed` only works under
+  `xvfb-run` (`xvfb` is in the image).
+- Debugging: re-run with `--trace on` — through Nx, Playwright flags go after
+  `--`: `yarn nx run shelter-e2e:e2e -- --trace on`. The report lands in
+  `dist/.playwright/apps/shelter-e2e/playwright-report/`;
+  `yarn playwright show-report <that path>` opens it.
 
 ## How it works
 
@@ -62,7 +65,7 @@ Notes:
   host server.
 - The server command is `npx nx run shelter-web:dev`, which is the form
   `@nx/playwright` recognises: Nx runs that target as a dependency and infers
-  the `dev--wait-for-webserver` gate, so Playwright waits on the port Nx's own
+  the `e2e--wait-for-webserver` gate, so Playwright waits on the port Nx's own
   `vite` process serves. The target carries the port, so no arguments are passed
   and there is no separate `vite` binary path to keep in sync.
 - Setting `BASE_URL` targets a deployed environment. It is used verbatim apart
@@ -109,10 +112,13 @@ Anonymous, client-side flows so far:
   - `pages/sign-in/form.spec.ts`: sign-in form enable/disable logic.
 - `lib/` is imported through `lib/index.ts` (e.g.
   `import { VIEWPORTS, assertInlineNav } from '../../../lib'`):
-  `framework/constants.ts` holds `VIEWPORTS`;
-  `navigation/constants.ts` (the link set both bands assert),
-  `navigation/inline-nav.ts` (`assertInlineNav`) and
-  `navigation/flyout-nav.ts` (`assertCollapsedNav`, `assertFlyoutNav`).
+  `framework/constants.ts` holds `VIEWPORTS`; `navigation/` holds the link set
+  (`constants.ts`), the header queries (`queries.ts`: `navLink`, `navToggle`,
+  `expectedHref`) and the two band assertions (`inline-nav.ts`
+  `assertInlineNav`; `flyout-nav.ts` `assertCollapsedNav`, `assertFlyoutNav`);
+  `map/` holds the control names and ids (`constants.ts`), the drag and camera
+  seam (`interactions.ts`), the element queries (`queries.ts`) and `assertMapUi`
+  / `assertCurrentLocation` (`ui.ts`).
 
 Specs must not create data or submit forms unless the flow explicitly requires it.
 
@@ -133,21 +139,22 @@ Environment notes for the home specs:
 
 ## Troubleshooting
 
-| Symptom                                                                       | Fix                                                                                                                                                                      |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `error while loading shared libraries: libgbm.so.1` (or similar)              | Container predates the Playwright Dockerfile block — Rerun "Dev Containers: Rebuild Container".                                                                          |
-| `Executable doesn't exist...` for the browser                                 | `yarn playwright install chromium`.                                                                                                                                      |
-| Chromium sandbox errors in the container                                      | Fallback: add `--no-sandbox` (or `chromiumSandbox: false`) — container-only; prefer fixing the container instead.                                                        |
-| Firefox/WebKit runs fail                                                      | They are not provisioned locally yet (other suites list them in their configs). Use CI for cross-browser runs, or add their image deps + binaries using the same recipe. |
-| `Timed out waiting 60000ms from config.webServer`                             | The dev server didn't come up. Run `yarn shelter` on its own to see its error — usually a port clash or a missing `apps/shelter-web/.env.local`.                         |
-| Page shows "The server is configured with a public base URL of /branches/..." | A deployed `BASE_URL` missed the branch-scoped base path — include the full `/branches/<branch>/` segment.                                                               |
+| Symptom                                                                                   | Fix                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `error while loading shared libraries: libgbm.so.1` (or similar)                          | Container predates the Playwright Dockerfile block — Rerun "Dev Containers: Rebuild Container".                                                                          |
+| `Executable doesn't exist...` for the browser                                             | `yarn playwright install chromium`.                                                                                                                                      |
+| Chromium sandbox errors in the container                                                  | Fallback: add `--no-sandbox` (or `chromiumSandbox: false`) — container-only; prefer fixing the container instead.                                                        |
+| Firefox/WebKit runs fail                                                                  | They are not provisioned locally yet (other suites list them in their configs). Use CI for cross-browser runs, or add their image deps + binaries using the same recipe. |
+| `e2e--wait-for-webserver` times out, or `Timed out waiting 60000ms from config.webServer` | The dev server didn't come up. Run `yarn shelter` on its own to see its error — usually a port clash or a missing `apps/shelter-web/.env.local`.                         |
+| Page shows "The server is configured with a public base URL of /branches/..."             | A deployed `BASE_URL` missed the branch-scoped base path — include the full `/branches/<branch>/` segment.                                                               |
 
 ## CI
 
 Runs in the `🧪 E2E shelter-web (preview)` step of
 [`.github/workflows/default.yml`](../../.github/workflows/default.yml), inside
 the same monorepo container every other CI step uses — not a host runner with
-`setup-node`, so nothing is installed at test time:
+`setup-node`, so the image supplies everything except the browser, which the run
+installs itself:
 
 - **Browsers** are installed by the run itself
   (`yarn playwright install chromium` in `tools/scripts/e2e-shelter.sh`). CI
@@ -167,8 +174,9 @@ the same monorepo container every other CI step uses — not a host runner with
   revision just built, so the run describes this commit rather than whatever was
   deployed before it.
 - **Run through Playwright, not Nx**: the script calls
-  `yarn playwright test -c apps/shelter-e2e`, so there is no Nx cache that could
-  replay a run from before the deploy.
+  `yarn playwright test -c apps/shelter-e2e`. A deployed run asserts something
+  about a live site, so its result is never replayed: the deployed revision can
+  change without any input in this repo changing.
 
 `nx affected -t e2e` is deliberately not used: `BASE_URL` is one value for the
 whole container, so a second suite in the same invocation would be handed the

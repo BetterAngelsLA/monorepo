@@ -38,7 +38,7 @@ const baseURL = rawBaseURL.endsWith('/') ? rawBaseURL : `${rawBaseURL}/`;
  * listening is reused.
  *
  * `nx run <project>:<target>` is the form @nx/playwright recognises: it runs
- * the target as a dependency and infers the `dev--wait-for-webserver` gate, so
+ * the target as a dependency and infers the `e2e--wait-for-webserver` gate, so
  * Playwright waits on the port Nx's own `vite` process is serving. The target
  * supplies the port (`apps/shelter-web/vite.config.mts`), so no arguments are
  * passed.
