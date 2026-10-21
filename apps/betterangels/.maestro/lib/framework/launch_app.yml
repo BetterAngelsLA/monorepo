@@ -90,11 +90,15 @@ appId: ${MAESTRO_APP_ID}
           commands:
             - tapOn: 'Open'
 
-      # if see `landing-screen`: break out of loop
+      # Break as soon as the app has mounted. `app-root` is rendered before the
+      # auth query settles, so it covers the landing screen, the authorized
+      # shell and the pending state alike. Checking it — rather than only
+      # `landing-screen` — keeps a signed-in app from spinning the remaining
+      # iterations, each of which costs a fresh hierarchy query.
       - runFlow:
           when:
             visible:
-              id: landing-screen
+              id: app-root
           commands:
             - evalScript: ${output.counter = 999}
 
@@ -102,6 +106,6 @@ appId: ${MAESTRO_APP_ID}
       - runFlow:
           when:
             notVisible:
-              id: landing-screen
+              id: app-root
           commands:
             - evalScript: ${output.counter = output.counter + 1}
