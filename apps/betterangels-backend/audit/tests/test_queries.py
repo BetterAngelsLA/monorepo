@@ -420,3 +420,29 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self.assertIn("Visible Shelter Rename", dumped)
         self.assertNotIn("Hidden Bed", dumped)
         self.assertNotIn("Hidden Room", dumped)
+
+    def test_hidden_only_bed_action_has_no_false_summary_or_empty_events(self) -> None:
+        """A hidden bed-only write must not leave a false, empty action.
+
+        The fix for the name/id leak skips the Bed/Room summary event, but the
+        action remains: it currently says the shelter was *created* and carries
+        no events. This test fails on the current head by design.
+        """
+        shelter_only = baker.make(User)
+        self._grant_permission(
+            shelter_only,
+            Shelter.perms.VIEW,
+            self.org_1,
+            role_name="Hidden Only Viewer",
+        )
+        with audit_context(user=shelter_only):
+            Bed.objects.create(shelter=self.shelter, name="Hidden Only Bed")
+
+        self.graphql_client.force_login(shelter_only)
+        response = self._query("SHELTER", self.shelter.id)
+        self.assertIsNone(response.get("errors"))
+        self.assertNotIn("Hidden Only Bed", json.dumps(response))
+
+        for action in response["data"]["objectAuditLog"]["results"]:
+            self.assertNotIn("created shelter", action["summary"])
+            self.assertTrue(action["events"], f"hidden-only action has no events: {action}")

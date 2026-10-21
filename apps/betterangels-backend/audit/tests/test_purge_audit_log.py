@@ -293,6 +293,63 @@ class PurgeAuditLogTestCase(TestCase):
         after = status_change_diff()
         self.assertEqual(after, before, "retained status_change diff was rebased by the purge")
 
+    def test_retention_interval_keeps_unneeded_rows_on_an_active_reservation(self) -> None:
+        """Characterizes the accepted over-retention of the contiguous interval.
+
+        ``reservation.add`` is retained and oldest, so the interval spans from it
+        to the newest survivor; every interior row is kept, including B and C,
+        which are not the immediate predecessor of any survivor. If the interval
+        is narrowed to immediate predecessors, B/C become deletable and this test
+        must change.
+        """
+        shelter = baker.make(Shelter, name="Over-retention Shelter")
+        bed = Bed.objects.create(shelter=shelter, name="Over-retention Bed")
+        with audit_context():
+            reservation = Reservation.objects.create(
+                bed=bed, notes="A", status=ReservationStatusChoices.CONFIRMED
+            )
+        with audit_context():
+            reservation.notes = "B"
+            reservation.save()
+        with audit_context():
+            reservation.notes = "B2"
+            reservation.save()
+        with audit_context():
+            reservation.status = ReservationStatusChoices.CHECKED_IN
+            reservation.save()
+        with audit_context():
+            reservation.notes = "C"
+            reservation.save()
+        with audit_context():
+            reservation.notes = "C2"
+            reservation.save()
+        with audit_context():
+            reservation.notes = "D"
+            reservation.save()
+
+        ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
+        rows = list(ReservationEvent.objects.filter(pgh_obj_id=reservation.pk).order_by("pgh_id"))
+        by_label_notes = {(row.pgh_label, row.notes): row.pk for row in rows}
+        backdate_event_rows(
+            ReservationEvent.objects.filter(pk__in=[row.pk for row in rows[:-1]]),
+            pgh_created_at=_OLD,
+        )
+        call_command("purge_audit_log", before=_CUTOFF)
+
+        survivors = set(ReservationEvent.objects.filter(pgh_obj_id=reservation.pk).values_list("pk", flat=True))
+        self.assertIn(by_label_notes[("reservation.update", "B2")], survivors)
+        self.assertIn(by_label_notes[("reservation.update", "C2")], survivors)
+        self.assertIn(
+            by_label_notes[("reservation.update", "B")],
+            survivors,
+            "the contiguous interval keeps a non-predecessor interior row",
+        )
+        self.assertIn(
+            by_label_notes[("reservation.update", "C")],
+            survivors,
+            "the contiguous interval keeps a non-predecessor interior row",
+        )
+
     def test_boundary_row_is_not_retained_without_a_newer_event(self) -> None:
         """A fully-aged object deletes cleanly; the boundary rule adds no row."""
         shelter = Shelter.objects.create(name="Fully Aged")
