@@ -1,8 +1,8 @@
 """Referral permissions: the Caseworker capability and the effective report.
 
-The referrals app contributes its slice of the Caseworker bundle via
-``referrals.permissions``; these tests pin that contribution so a template edit
-cannot silently drop or over-grant referral access.  ``ffReferrals`` (waffle,
+The Caseworker template lists the referral permissions inline like every other
+model; these tests pin that contribution so a template edit cannot silently drop
+or over-grant referral access.  ``ffReferrals`` (waffle,
 scoped to users and groups) decides which teams actually get the feature, so no
 other role bundle should carry referral permissions.
 """

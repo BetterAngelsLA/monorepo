@@ -15,7 +15,7 @@ from accounts.seed import sync_group_permissions
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from referrals.models import Referral
-from referrals.permissions import REFERRALS_FLAG
+from referrals.schema import REFERRALS_FLAG
 from shelters.tests.baker_recipes import shelter_recipe
 
 LIST_QUERY = "query { referrals { results { id } } }"

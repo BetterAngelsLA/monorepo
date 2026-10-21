@@ -21,7 +21,6 @@ from common.permissions.utils import IsAuthenticated
 from common.services.feature_flags import flag_is_active
 from notes.groups import CASEWORKER
 from referrals.models import Referral
-from referrals.permissions import REFERRALS_FLAG
 from referrals.selectors import referral_get, referral_list, user_organization_ids
 from referrals.services import referral_create, referral_delete, referral_update
 from shelters.models import Shelter
@@ -31,6 +30,8 @@ from .types import (
     ReferralType,
     UpdateReferralInput,
 )
+
+REFERRALS_FLAG = "ffReferrals"
 
 
 class IsReferralsEnabled(BasePermission):
