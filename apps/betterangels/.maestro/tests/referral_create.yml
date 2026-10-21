@@ -78,6 +78,14 @@ appId: ${MAESTRO_APP_ID}
     retryTapIfNoChange: true
     id: transportation-AUTOMOBILE-btn
 
+- runFlow:
+    when:
+      platform: android
+    commands:
+      - assertVisible:
+          id: transportation-AUTOMOBILE-btn
+          checked: true
+
 - scrollUntilVisible:
     waitToSettleTimeoutMs: 300
     element:

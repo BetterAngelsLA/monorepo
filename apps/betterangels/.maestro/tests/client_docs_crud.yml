@@ -24,12 +24,10 @@ appId: ${MAESTRO_APP_ID}
 # Tabs are in a horizontal ScrollView — Docs may be off-screen on narrower
 # devices. scrollUntilVisible ensures it's in view before tapping.
 - scrollUntilVisible:
-    waitToSettleTimeoutMs: 300
     element:
       id: 'client-tab-docs'
     direction: RIGHT
 - tapOn:
-    waitToSettleTimeoutMs: 300
     id: 'client-tab-docs'
 - waitForAnimationToEnd
 
@@ -40,7 +38,6 @@ appId: ${MAESTRO_APP_ID}
 # Go to Docs Uploads Screen ######
 # ################################
 - tapOn:
-    waitToSettleTimeoutMs: 300
     id: 'open-client-docs-upload-screen-btn'
 - waitForAnimationToEnd
 
@@ -53,9 +50,7 @@ appId: ${MAESTRO_APP_ID}
 # if there is a pre-existing upload.
 # Should we create fixture profiles unique to each test run,
 # as per ticket DEV-2498, then we can update.
-- tapOn:
-    text: 'Consent Forms'
-    waitToSettleTimeoutMs: 300
+- tapOn: 'Consent Forms'
 
 - assertVisible:
     id: 'media-picker-menu'
@@ -64,7 +59,6 @@ appId: ${MAESTRO_APP_ID}
 # Capture Camera Image ######
 # ###########################
 - tapOn:
-    waitToSettleTimeoutMs: 300
     id: 'media-picker-camera-btn'
 
 # Camera permission: iOS has NO setPermissions (flaky in CI + unreliable), so
@@ -79,17 +73,13 @@ appId: ${MAESTRO_APP_ID}
       visible:
         text: 'Allow'
     commands:
-      - tapOn:
-          text: 'Allow'
-          waitToSettleTimeoutMs: 300
+      - tapOn: 'Allow'
 - runFlow:
     when:
       visible:
         text: 'While using the app'
     commands:
-      - tapOn:
-          text: 'While using the app'
-          waitToSettleTimeoutMs: 300
+      - tapOn: 'While using the app'
 - waitForAnimationToEnd
 
 - extendedWaitUntil:
@@ -98,7 +88,6 @@ appId: ${MAESTRO_APP_ID}
     timeout: 4000
 
 - tapOn:
-    waitToSettleTimeoutMs: 300
     id: 'camera-capture-btn'
 
 # #####################################
@@ -110,7 +99,6 @@ appId: ${MAESTRO_APP_ID}
     timeout: 15000
 
 - tapOn:
-    waitToSettleTimeoutMs: 300
     id: 'client-docs-accordion-forms'
 - waitForAnimationToEnd
 
@@ -130,14 +118,12 @@ appId: ${MAESTRO_APP_ID}
 # We can't be sure that this is the most recent upload,
 # but allows us to test deletion anyway.
 - tapOn:
-    waitToSettleTimeoutMs: 300
     id: 'file-card-.*jpg'
     index: 0
 
 - waitForAnimationToEnd
 
 - tapOn:
-    waitToSettleTimeoutMs: 300
     id: 'delete-file-btn'
 
 - extendedWaitUntil:
@@ -146,6 +132,5 @@ appId: ${MAESTRO_APP_ID}
     timeout: 3000
 
 - tapOn:
-    waitToSettleTimeoutMs: 300
     id: 'delete-modal-confirm-btn'
 - waitForAnimationToEnd
