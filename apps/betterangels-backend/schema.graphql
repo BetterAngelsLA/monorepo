@@ -3226,6 +3226,8 @@ input UpdateShelterInput {
   phone: PhoneNumber
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
+  totalBeds: Int
+  roomStylesOther: String
   maxStay: Int
   onSiteSecurity: Boolean
   visitorsAllowed: Boolean
@@ -3234,6 +3236,8 @@ input UpdateShelterInput {
   otherRules: String
   otherServices: String
   entryInfo: String
+  bedFees: String
+  programFees: String
   subjectiveReview: String
   overallRating: Int
   declinedBaVisit: Boolean
