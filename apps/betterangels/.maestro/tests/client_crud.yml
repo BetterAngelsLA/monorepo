@@ -23,8 +23,9 @@ appId: ${MAESTRO_APP_ID}
 
 # generate unique test data
 - evalScript: ${output.runId = Date.now()}
+- evalScript: ${output.runSuffix = Math.floor(Math.random() * 1000000)}
 - evalScript: ${output.caId = String.fromCharCode(65 + Math.floor(Math.random() * 26)) + String(output.runId).slice(-7)}
-- evalScript: ${output.clientFirstName = "e2e-test-firstName-" + String(output.runId)}
+- evalScript: ${output.clientFirstName = "e2e-test-firstName-" + String(output.runId) + "-" + String(output.runSuffix)}
 
 # fill out form
 - tapOn:

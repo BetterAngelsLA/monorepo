@@ -26,7 +26,7 @@ appId: ${MAESTRO_APP_ID}
 # ###############################
 
 # generate unique test data
-- evalScript: ${output.interactionId = Date.now()}
+- evalScript: ${output.interactionId = Date.now() + "-" + Math.floor(Math.random() * 1000000)}
 - evalScript: ${output.interactionPurpose = "interaction-" + String(output.interactionId)}
 - evalScript: ${output.noteCardTestId = "note-card-" + String(output.interactionPurpose)}
 

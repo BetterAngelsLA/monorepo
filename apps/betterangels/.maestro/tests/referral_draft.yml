@@ -19,7 +19,7 @@ appId: ${MAESTRO_APP_ID}
 # ── Start a draft and answer one field ──────────────────────────────────────
 # `output` is generated per run so the assertions below cannot be satisfied by a
 # draft left over from an earlier run.
-- evalScript: ${output.draftMarker = "draft-e2e-" + Date.now()}
+- evalScript: ${output.draftMarker = "draft-e2e-" + Date.now() + "-" + Math.floor(Math.random() * 1000000)}
 
 - tapOn:
     waitToSettleTimeoutMs: 300
