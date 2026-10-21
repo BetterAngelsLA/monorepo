@@ -34,9 +34,10 @@ export function ShelterReview(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
+  const [disabled, setDisabled] = useState<boolean>(false);
 
   const { shelter } = useShelterOperatorProfile(shelterId);
-  const { updateShelter, loading } = useUpdateShelterProfile();
+  const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
   const { canEditShelter } = useShelterPermissions();
   const { baReviewPermissions } = useBaPrivatePermissions();
@@ -46,6 +47,8 @@ export function ShelterReview(props: TProps) {
     setError: UseFormSetError<ReviewFormData>,
   ) {
     try {
+      setDisabled(true);
+
       const response = await updateShelter({
         variables: { data: toUpdateInput(shelterId, data) },
       });
@@ -82,6 +85,8 @@ export function ShelterReview(props: TProps) {
         title: 'Update failed',
         description: userMessage,
       });
+    } finally {
+      setDisabled(false);
     }
   }
 
@@ -102,7 +107,7 @@ export function ShelterReview(props: TProps) {
       isViewMode={!isEditMode}
       onEditClick={canEditReview ? () => setEditMode(true) : undefined}
       onCancel={onCancel}
-      disabled={loading}
+      disabled={disabled}
     />
   );
 }
