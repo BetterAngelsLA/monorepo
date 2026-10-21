@@ -255,10 +255,8 @@ jobs:
 
       - name: 🧪 E2E shelter-web (preview)
         # Runs after deploy, because the suite drives the deployed preview: the
-        # deploy step has uploaded and invalidated this build before it returns,
+        # deploy step only returns once the edge serves the revision just built,
         # so these tests describe this commit rather than whatever was there.
-        # (Whether the invalidation itself is waited on depends on the deploy
-        # role — see tools/deploy/cloudfront-deploy.mjs.)
         #
         # Choosing the target — this branch's preview when `shelter-web` was
         # deployed, the existing preview or a skip when only the specs changed —

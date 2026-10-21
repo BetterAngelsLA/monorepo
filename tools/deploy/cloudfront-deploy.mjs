@@ -67,16 +67,41 @@ console.log('✅ S3 sync complete.');
  * invalidating them cannot change what is served — the enumeration was an
  * optimization nobody measured, and one path is the cheapest thing CloudFront
  * processes.
- *
- * Nothing waits for the invalidation to complete. Confirming it needs
- * `cloudfront:GetInvalidation`, which the deploy role does not carry (it only
- * has `cloudfront:CreateInvalidation`), so the check cannot run from here. What
- * follows — the e2e step, which installs the browser before it starts — is the
- * gap the edge gets in practice. If the role ever gains that permission,
- * `aws cloudfront wait invalidation-completed --id <id>` belongs here.
  */
 const invalidationId = execSync(
   `aws cloudfront create-invalidation --distribution-id "${CF_DISTRIBUTION_ID}" --paths "${cfPath}/*" --query 'Invalidation.Id' --output text --no-cli-pager`,
   { encoding: 'utf8' },
 ).trim();
 console.log(`✅ CloudFront invalidation sent: ${invalidationId}`);
+
+/*
+ * Wait for the edge rather than polling the deployed HTML ourselves: a deploy
+ * that reports success while the previous revision is still being served would
+ * make the e2e run describe someone else's code. AWS already knows when the
+ * invalidation completes, and its waiter gives up on its own.
+ *
+ * The waiter needs `cloudfront:GetInvalidation` on the assumed deploy role, in
+ * addition to `cloudfront:CreateInvalidation` for the call above.
+ *
+ * Only the preview configuration has a consumer for this: the e2e step reads
+ * the preview right after the deploy, so a stale edge there means a run that
+ * silently describes someone else's revision — fail rather than let that pass.
+ * Production has no such consumer (no e2e step runs there), so an unconfirmed
+ * invalidation is a warning: the upload already happened and CloudFront finishes
+ * on its own, and failing would turn a successful main push red for nothing.
+ * `/*` is also the invalidation most likely to be slow, and re-running the job
+ * only re-confirms what AWS already did.
+ */
+const isProduction = process.env.NX_TASK_TARGET_CONFIGURATION === 'production';
+try {
+  execSync(
+    `timeout 300 aws cloudfront wait invalidation-completed --distribution-id "${CF_DISTRIBUTION_ID}" --id "${invalidationId}" --no-cli-pager`,
+    { stdio: 'inherit' },
+  );
+  console.log('✅ Edge is serving the new revision.');
+} catch (err) {
+  if (!isProduction) throw err;
+  console.warn(
+    `⚠️  Invalidation ${invalidationId} not confirmed (${err.message}); the S3 upload is complete and CloudFront will finish the invalidation on its own.`,
+  );
+}

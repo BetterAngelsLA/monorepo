@@ -163,9 +163,9 @@ the same monorepo container every other CI step uses — not a host runner with
   branch path returns 403, and the page has no `<base>` at all. The script
   exports `BASE_URL`, which is also what stops the suite starting its own dev
   server and testing a local build instead — which looks like a pass.
-- **Order** is after `deploy`, which uploads the build and invalidates it before
-  returning, so the run describes this commit rather than whatever was deployed
-  before it.
+- **Order** is after `deploy`, which returns only once the edge serves the
+  revision just built, so the run describes this commit rather than whatever was
+  deployed before it.
 - **Run through Playwright, not Nx**: the script calls
   `yarn playwright test -c apps/shelter-e2e`, so there is no Nx cache that could
   replay a run from before the deploy.
