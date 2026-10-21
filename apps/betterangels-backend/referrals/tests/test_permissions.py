@@ -8,6 +8,7 @@ only through a ``Grant``.  These tests pin that split so a template edit cannot
 silently re-create the crossing capability.
 """
 
+from django.contrib.auth.models import Permission
 from django.test import TestCase
 from model_bakery import baker
 
@@ -78,6 +79,11 @@ class ReferralRoleSyncTests(TestCase):
     def test_sync_group_permissions_strips_referrals_from_the_legacy_group(self) -> None:
         org = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         group = make_permission_group(organization=org, template_name=CASEWORKER.name)
+        # Simulate the pre-cutover row: the group *did* carry the referral
+        # bundle.  Without this the test asserts empty == empty and proves
+        # nothing.
+        group.permissions.add(*Permission.objects.filter(content_type__app_label="referrals"))
+        self.assertTrue(group.permissions.filter(content_type__app_label="referrals").exists())
 
         sync_group_permissions(organization=org)
 

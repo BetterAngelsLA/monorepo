@@ -69,7 +69,9 @@ class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated, IsReferralsEnabled])
     def referral(self, info: Info, pk: strawberry.ID) -> ReferralType:
         current_user = cast(User, get_current_user(info))
-        referral = referral_get(user=current_user, pk=pk, organization_id=_active_organization_id(info))
+        # Load-by-id is authority-only (ADR 0001 §2.6): the header confines a
+        # list view, it must not hide a row the caller's grant reaches.
+        referral = referral_get(user=current_user, pk=pk)
         if referral is None:
             raise PermissionDenied("Referral not found.")
         return cast(ReferralType, referral)
