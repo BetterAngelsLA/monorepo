@@ -25,4 +25,17 @@ yarn nx start betterangels-admin
 
 # Shelter Web
 yarn nx test shelter-web
+
+# Shelter E2E (Playwright) — see apps/shelter-e2e/README.md
+yarn nx run shelter-e2e:e2e
 ```
+
+### Test file naming
+
+Repo convention (the runners accept both patterns — this is about consistency):
+
+- E2E specs: `*.spec.ts` — what `shelter-e2e` collects (see
+  [`apps/shelter-e2e/README.md`](../apps/shelter-e2e/README.md)).
+- Unit tests: prefer `*.test.ts` / `*.test.tsx`. The runners collect both
+  patterns and the codebase already has more `*.spec.tsx` files than
+  `*.test.tsx`, so this is a preference for new files, not a renaming backlog.
