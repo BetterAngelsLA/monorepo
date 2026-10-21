@@ -4,6 +4,7 @@ import json
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple, Union
 
+import waffle
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.contrib.sites.models import Site
@@ -15,6 +16,7 @@ from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from common.constants import HMIS_SESSION_KEY_NAME
+from common.imgproxy import IMGPROXY_SWITCH
 from common.models import Address, Location
 from test_utils.assert_mixins import GraphQLAssertionsMixin
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -143,6 +145,26 @@ class _MaxNumQueriesContext:
 
 
 class NumQueriesWithoutCacheMixin:
+    @staticmethod
+    def _warm_imgproxy_switch() -> None:
+        """Warm waffle's switch cache outside the captured query block.
+
+        ``is_imgproxy_enabled()`` (and therefore every image URL) consults the
+        ``imgproxy_enabled`` waffle switch, which waffle caches in Django's
+        cache.  The entry is primed at ``post_migrate`` or by whichever test
+        ran first; a cold entry adds one query.  Without warming it here, an
+        exact query count depends on test order and flakes under xdist (for
+        example, ``test_images.py`` uses ``override_switch``, which deletes the
+        key for every worker sharing the cache).
+        """
+        switch_model = waffle.get_waffle_switch_model()
+        try:
+            waffle.switch_is_active(IMGPROXY_SWITCH)
+        except switch_model.DoesNotExist:
+            # Not every settings module seeds the switch (it is local-dev
+            # only); leave the cache cold in that case, exactly as production.
+            pass
+
     def assertNumQueriesWithoutCache(self: Any, query_count: int) -> Any:
         """
         Resets all caches that may prevent query execution.
@@ -153,6 +175,7 @@ class NumQueriesWithoutCacheMixin:
         """
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
+        self._warm_imgproxy_switch()
         return self.assertNumQueries(query_count)
 
     def assertMaxNumQueriesWithoutCache(self: Any, max_query_count: int) -> _MaxNumQueriesContext:
@@ -162,6 +185,7 @@ class NumQueriesWithoutCacheMixin:
         """
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
+        self._warm_imgproxy_switch()
         return _MaxNumQueriesContext(self, max_query_count)
 
 

@@ -83,6 +83,9 @@ Once started, you can access the Django development server at
 
 #### Running Tests
 
+The backend suite runs under **pytest** (not `manage.py test`). Test runs use
+`betterangels_backend.settings_test` automatically; see [Test settings](#test-settings).
+
 To run the full test suite:
 
 ```bash
@@ -94,6 +97,36 @@ To run an individual test, add the full path of the test in dot notation. Exampl
 ```bash
 yarn nx test betterangels-backend accounts.tests.UsersManagersTests.test_create_user
 ```
+
+To run the suite in parallel locally:
+
+```bash
+uv run pytest -n logical --maxprocesses 8
+```
+
+`-n logical` uses logical CPUs (the suite is DB-bound; xdist's `-n auto` counts
+physical cores and under-provisions SMT machines). Each worker creates its own
+test database (`test_postgres_gw0`, …) and runs migrations the first time, so
+the cap matters — keep it at or below 8. CI uses
+`PYTEST_ADDOPTS="-n logical --maxprocesses 4"` (see the Test step in
+`.github/workflows/default.yml`).
+
+`manage.py test` is unsupported and its old `PytestTestRunner` has been
+removed; use `uv run pytest` (or the Nx target) for everything.
+
+#### Test settings
+
+`betterangels_backend/settings_test.py` inherits the normal settings and then:
+
+- sets `DEBUG = False` (otherwise Django logs every query for the whole run),
+- namespaces the shared Redis cache per process, so parallel workers cannot
+  invalidate each other's waffle/session entries (a local-memory cache is not
+  an option: tests use `time_machine`, which would expire its TTLs),
+- uses `MD5PasswordHasher` (password strength is not under test).
+
+This is selected by `[tool.pytest.ini_options] DJANGO_SETTINGS_MODULE` in both
+`pyproject.toml` files. Do not point tests back at `betterangels_backend.settings`;
+several query-count assertions depend on the deterministic cache behaviour above.
 
 #### Working in more than one checkout
 
@@ -110,6 +143,19 @@ POSTGRES_TEST_NAME=test_myworktree uv run pytest -q --create-db
 
 Per command, not in `.env` — the shared database stays the default so that
 running the suite by hand behaves the same way everywhere.
+
+#### Stale test databases
+
+`--reuse-db` is the default, so `test_postgres` survives between runs. After
+pulling migrations, switching branches, or seeing failures like
+`relation "…" does not exist` in an app you did not touch, rebuild it:
+
+```bash
+uv run pytest --create-db
+```
+
+(`--create-db` drops the database; see the warning above if other worktrees are
+using it.)
 
 #### Debugging Tests
 

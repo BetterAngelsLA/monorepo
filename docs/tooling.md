@@ -12,7 +12,8 @@ yarn nx start betterangels-backend
 # Backend (via uv)
 uv sync                          # install/sync Python dependencies
 uv run python script.py          # run a script within the venv
-uv run pytest                    # run Django tests
+uv run pytest                    # run Django tests (serial, settings_test)
+uv run pytest -n logical --maxprocesses 8   # parallel, one test DB per worker
 uv run pytest --reuse-db          # skip DB setup (default), add --create-db to rebuild
 
 # Frontend (Expo)
