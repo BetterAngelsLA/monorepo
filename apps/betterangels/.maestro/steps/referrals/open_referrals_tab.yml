@@ -5,9 +5,9 @@ appId: ${MAESTRO_APP_ID}
 # Precondition:
 #   - the clients list is visible (`clients-screen`)
 #   - at least one client exists
-#   - `ffReferrals` is ENABLED in the target environment — the tab is hidden
-#     otherwise, and an unknown/absent waffle flag resolves to false. See
-#     README.md → "Feature Flags (ffReferrals)".
+#   - `ffReferrals` is ENABLED for the caller in the target environment — the
+#     tab is hidden otherwise, and an unknown/absent waffle flag resolves to
+#     false. See README.md → "Feature Flags (ffReferrals)".
 # Input env vars: none.
 # Output vars: none.
 # Side effects: navigates from the clients list into the first client's
@@ -20,19 +20,52 @@ appId: ${MAESTRO_APP_ID}
     id: clients-screen
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     # ids are built by toTestId(['client-card', firstName]), so match the
     # prefix rather than a specific seeded client.
     id: 'client-card-.*'
     index: 0
 
-# the tab strip scrolls horizontally; Referrals sits after Docs
-- scrollUntilVisible:
-    element:
-      id: client-tab-referrals
-    direction: RIGHT
-    timeout: 10000
+# Client cards now open the profile summary before the full client screen.
+- runFlow:
+    when:
+      visible: 'See Details'
+    commands:
+      - tapOn:
+          text: 'See Details'
+          waitToSettleTimeoutMs: 300
 
+# The client tabs are a horizontal ScrollView, so Referrals is off-screen (or
+# only clipped at the edge) on everything narrower than the strip. Anchor the
+# swipe to the strip element rather than a screen percentage: the strip's Y moves
+# with the client header, so a fixed Y misses it on taller headers.
+#
+# Do NOT take a "if the tab is visible, just tap it" shortcut: Maestro counts a
+# partially clipped tab as visible, and its centre can sit outside the viewport,
+# so the tap lands nowhere and the strip never scrolls. Always scroll the strip
+# to its end first; both swipes are no-ops on screens wide enough to fit the tabs.
+- assertVisible:
+    id: client-tabs-strip
+
+- swipe:
+    waitToSettleTimeoutMs: 300
+    from:
+      id: client-tabs-strip
+    direction: LEFT
+
+- swipe:
+    waitToSettleTimeoutMs: 300
+    from:
+      id: client-tabs-strip
+    direction: LEFT
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# `retryTapIfNoChange` covers a tap swallowed by the strip's scroll momentum.
 - tapOn:
+    waitToSettleTimeoutMs: 300
+    retryTapIfNoChange: true
     id: client-tab-referrals
 
 - assertVisible:

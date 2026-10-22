@@ -21,6 +21,11 @@ import SnackbarProvider from '../providers/snackbar/SnackbarProvider';
 import UserProvider, { useUser } from '../providers/user/UserProvider';
 import ConsentModal from './ConsentModal';
 
+vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
+  useApiConfig: () => ({ apiUrl: 'https://consent-test.invalid' }),
+}));
+
 // `Link` renders its children inside a `Text`, as expo-router does. The mock has
 // to match: returning the raw string puts text straight inside a View, which the
 // renderer rejects with "Text strings must be rendered within a <Text>".

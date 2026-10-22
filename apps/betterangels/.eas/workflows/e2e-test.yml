@@ -138,27 +138,27 @@ jobs:
     type: maestro
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=android%26disableOnboarding%3D1
+      MAESTRO_DEEPLINK: 'betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}&disableOnboarding=1'
       MAESTRO_BA_USER_EMAIL: ${{ inputs.MAESTRO_BA_USER_EMAIL }}
       MAESTRO_BA_USER_PASSWORD: ${{ inputs.MAESTRO_BA_USER_PASSWORD }}
     params:
       build_id: ${{ inputs.android_build_id }}
       flow_path: ['.maestro/tests/']
-      retries: 2
-      record_screen: true
+      retries: 1
+      record_screen: false
 
   maestro_ios_test:
     needs: [wait_ios_build]
     type: maestro
     env:
       MAESTRO_APP_ID: la.betterangels.dev.app
-      MAESTRO_DEEPLINK: betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}?platform=ios%26disableOnboarding%3D1
+      MAESTRO_DEEPLINK: 'betterangels-dev://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/${{ inputs.update_group_id }}&disableOnboarding=1'
       MAESTRO_BA_USER_EMAIL: ${{ inputs.MAESTRO_BA_USER_EMAIL }}
       MAESTRO_BA_USER_PASSWORD: ${{ inputs.MAESTRO_BA_USER_PASSWORD }}
     params:
       build_id: ${{ inputs.ios_build_id }}
       flow_path: ['.maestro/tests/']
-      retries: 2
+      retries: 1
       record_screen: true
 
   set_final_github_status:

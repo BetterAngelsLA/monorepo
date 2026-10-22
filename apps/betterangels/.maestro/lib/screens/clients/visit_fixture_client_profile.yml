@@ -43,18 +43,23 @@ appId: ${MAESTRO_APP_ID}
     commands:
       # Open create client modal
       - tapOn:
+          waitToSettleTimeoutMs: 300
           id: 'main-plus-tab-btn'
-      - tapOn: 'Add client'
+      - tapOn:
+          text: 'Add client'
+          waitToSettleTimeoutMs: 300
       - assertVisible: 'Create Client Profile'
 
       # Fill in first name
       - tapOn:
+          waitToSettleTimeoutMs: 300
           id: 'firstName'
       - inputText: ${output.fixtureClientName}
       - hideKeyboard
 
       # Submit — navigates to profile
       - tapOn:
+          waitToSettleTimeoutMs: 300
           id: 'action-btn-primary'
       - waitForAnimationToEnd
       - assertVisible: ${output.fixtureClientName}
@@ -63,6 +68,7 @@ appId: ${MAESTRO_APP_ID}
 
       # Go back to clients list and re-select
       - tapOn:
+          waitToSettleTimeoutMs: 300
           id: 'client-screen-back-btn'
 
       - runFlow:
@@ -80,7 +86,9 @@ appId: ${MAESTRO_APP_ID}
     when:
       visible: 'See Details'
     commands:
-      - tapOn: 'See Details'
+      - tapOn:
+          text: 'See Details'
+          waitToSettleTimeoutMs: 300
       - waitForAnimationToEnd
 
 # Both paths must land on the client's Profile tab.

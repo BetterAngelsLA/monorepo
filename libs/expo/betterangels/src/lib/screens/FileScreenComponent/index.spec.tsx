@@ -11,7 +11,7 @@ import { ReactNode } from 'react';
 import { Text, TextInput } from 'react-native';
 import { AttachmentType, ClientDocumentNamespaceEnum } from '../../apollo';
 import { ClientDocumentDocument } from './__generated__/Document.generated';
-import FileScreenComponent from './index';
+import FileScreenComponent from '.';
 
 /**
  * Regression test for the edit-screen input reset introduced by

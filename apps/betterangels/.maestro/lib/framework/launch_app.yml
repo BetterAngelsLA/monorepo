@@ -15,11 +15,20 @@ appId: ${MAESTRO_APP_ID}
 #
 # Note on the Expo dev-client onboarding screen (with a "Continue" button):
 # This screen normally appears once on the very first app launch after
-# install. The `disableOnboarding=1` query param in MAESTRO_DEEPLINK (set in
-# setup-maestro.sh) suppresses it so tests can run on a fresh install
-# without manual intervention. If you need to see the onboarding flow
-# locally, drop `disableOnboarding=1` from the deep link AND reinstall the
-# app (the onboarding "seen" flag is stored in app data):
+# install. The `disableOnboarding=1` param in MAESTRO_DEEPLINK suppresses it
+# so tests can run on a fresh install without manual intervention; the loop
+# below also taps "Continue" if it slips through.
+#
+# Keep the update URL inside `url=` free of a query string. Older Android dev
+# clients do not percent-decode that nested value, so an encoded `&` (as in
+# `?platform=android%26disableOnboarding%3D1`) reaches EAS Update as part of
+# the platform name and it answers 400 — the app then shows "There was a
+# problem loading the project / Failed to open app". `disableOnboarding=1` is
+# therefore a sibling param, and the group URL stands alone.
+#
+# If you need to see the onboarding flow locally, drop `disableOnboarding=1`
+# from the deep link AND reinstall the app (the onboarding "seen" flag is
+# stored in app data):
 #   xcrun simctl uninstall booted la.betterangels.dev.app   # iOS
 #   adb shell pm clear la.betterangels.dev.app              # Android
 
@@ -42,6 +51,19 @@ appId: ${MAESTRO_APP_ID}
     while:
       true: ${output.counter < 10}
     commands:
+      # Break as soon as the app has mounted. `app-root` is rendered before the
+      # auth query settles, so it covers the landing screen, the authorized
+      # shell and the pending state alike.
+      # Check it FIRST: every `runFlow when` below is a hierarchy query, so a
+      # healthy launch must not pay for the recovery checks on every iteration
+      # (that was ~6 queries per pass, tens of seconds per flow on CI).
+      - runFlow:
+          when:
+            visible:
+              id: app-root
+          commands:
+            - evalScript: ${output.counter = 999}
+
       # Expo dev-client onboarding screen ("Continue" button). Normally
       # suppressed by `disableOnboarding=1` in MAESTRO_DEEPLINK, but appears
       # on first launch after install if the deep link doesn't bypass it
@@ -90,18 +112,22 @@ appId: ${MAESTRO_APP_ID}
           commands:
             - tapOn: 'Open'
 
-      # if see `landing-screen`: break out of loop
-      - runFlow:
-          when:
-            visible:
-              id: landing-screen
-          commands:
-            - evalScript: ${output.counter = 999}
-
       # otherwise increment counter
       - runFlow:
           when:
             notVisible:
-              id: landing-screen
+              id: app-root
           commands:
             - evalScript: ${output.counter = output.counter + 1}
+
+# The loop exhausted without `app-root`: on a cold emulator the update download
+# may still be in flight, or the dev client landed back on its home screen.
+# Kill and re-open once before the (longer) auth wait takes over, instead of
+# failing the flow on the first attempt.
+- runFlow:
+    when:
+      notVisible:
+        id: app-root
+    commands:
+      - killApp
+      - openLink: ${MAESTRO_DEEPLINK}

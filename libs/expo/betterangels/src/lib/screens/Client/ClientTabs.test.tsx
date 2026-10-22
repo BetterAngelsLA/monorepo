@@ -1,17 +1,26 @@
 /**
- * Referrals tab gates: `ffReferrals` AND the org's `referrals.view_referral`.
+ * ffReferrals gate at the tab strip.
  *
- * The flag decides whether the pilot is on for this account; the capability
- * (grant-backed, surfaced in the per-org effective report) decides who may use
- * it. Neither alone is enough: flag-only shows the tab to users the API will
- * refuse, capability-only would expose an unfinished feature.
+ * Production default: the flag is absent or off (waffle flags resolve to false
+ * when unknown), so the tab must not exist at all. The Referrals screen tests
+ * cover the feature itself; this covers that it cannot be reached without the
+ * flag.
  */
-import { ActiveOrgProvider, type Org } from '@monorepo/ba-platform';
 import { render, screen } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 
-const flags = vi.hoisted(() => ({ referrals: false }));
+const flags = vi.hoisted(() => ({ referrals: false, canView: true }));
+
+// Partial mock: the real module stays in place, so an import the component
+// grows later fails loudly instead of resolving to `undefined` from an empty
+// mock.
+vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
+  useActiveOrg: () => ({
+    hasPermission: () => flags.canView,
+  }),
+}));
 
 vi.mock('@monorepo/react/shared', () => ({
   useFeatureFlagActive: (name: string) =>
@@ -28,40 +37,33 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 
 const noop = () => undefined;
 
-const withReferralCapability: Org[] = [
-  { id: 'org-1', name: 'Org 1', permissions: ['referrals.view_referral'] },
-];
-const withoutReferralCapability: Org[] = [
-  { id: 'org-1', name: 'Org 1', permissions: ['notes.add_note'] },
-];
-
-function renderTabs(organizations: Org[]) {
-  return render(
-    <ActiveOrgProvider organizations={organizations}>
-      <ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />
-    </ActiveOrgProvider>,
-  );
-}
-
 it('hides the Referrals tab while ffReferrals is off', async () => {
   flags.referrals = false;
-  await renderTabs(withReferralCapability);
+  await render(
+    <ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />,
+  );
 
   expect(screen.queryByTestId('client-tab-referrals')).toBeNull();
   expect(screen.getByTestId('client-tab-profile')).toBeOnTheScreen();
 });
 
-it('hides the Referrals tab when the org lacks view_referral', async () => {
+it('shows the Referrals tab when ffReferrals is on and referrals.view_referral is granted', async () => {
   flags.referrals = true;
-  await renderTabs(withoutReferralCapability);
-
-  expect(screen.queryByTestId('client-tab-referrals')).toBeNull();
-  expect(screen.getByTestId('client-tab-profile')).toBeOnTheScreen();
-});
-
-it('shows the Referrals tab when the flag is on and the org can view referrals', async () => {
-  flags.referrals = true;
-  await renderTabs(withReferralCapability);
+  flags.canView = true;
+  await render(
+    <ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />,
+  );
 
   expect(screen.getByTestId('client-tab-referrals')).toBeOnTheScreen();
+});
+
+it('hides the Referrals tab without referrals.view_referral, even when the flag is on', async () => {
+  flags.referrals = true;
+  flags.canView = false;
+  await render(
+    <ClientTabs selectedTab={ClientViewTabEnum.Profile} setTab={noop} />,
+  );
+
+  expect(screen.queryByTestId('client-tab-referrals')).toBeNull();
+  expect(screen.getByTestId('client-tab-profile')).toBeOnTheScreen();
 });

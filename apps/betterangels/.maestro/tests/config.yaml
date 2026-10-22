@@ -1,0 +1,19 @@
+# Explicit flow order: Maestro otherwise runs the directory in filesystem order,
+# which put the logout flow first and forced every later flow to log in again.
+# Keep the logout last; everything else runs in a cheap-to-expensive order so a
+# failure surfaces before the slow referral forms run.
+flows:
+  - '*.yml'
+executionOrder:
+  continueOnFailure: true
+  flowsOrder:
+    - clients_page
+    - tasks_page
+    - client_crud
+    - client_docs_crud
+    - create_delete_client_interaction
+    - referrals_page
+    - referral_create
+    - referral_draft
+    - referral_workflow
+    - zz_logout

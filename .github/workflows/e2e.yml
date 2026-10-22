@@ -108,6 +108,20 @@ jobs:
           ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 0
 
+      - name: 🧾 Record tested revision
+        # `issue_comment` runs are dispatched from the default branch, so the
+        # run's displayed headSha is main even though the code under test is the
+        # PR head. Write the ref/SHA that was actually checked out to the job
+        # summary so a result can be tied back to a commit.
+        run: |
+          {
+            echo "### Tested revision"
+            echo ""
+            echo "| Ref | SHA | Scope |"
+            echo "| --- | --- | --- |"
+            echo "| \`${{ steps.pr.outputs.ref }}\` | \`${{ steps.pr.outputs.sha }}\` | \`${{ steps.pr.outputs.project || 'affected' }}\` |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: 🔎 Preflight — ffReferrals on the target API
         # Reports whether the referral flows' prerequisite flag is enabled in the
         # environment the preview/dev builds point at, so a failing run explains

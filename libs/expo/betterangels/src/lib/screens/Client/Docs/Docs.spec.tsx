@@ -2,7 +2,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import Docs from './index';
+import Docs from '.';
 
 const mocks = vi.hoisted(() => ({
   showModalScreen: vi.fn(),

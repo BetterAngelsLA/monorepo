@@ -1,0 +1,226 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Physical Android workflow. iOS behavior is covered by the library suite;
+# native iOS interaction is not asserted by this device-specific flow.
+- runFlow:
+    when:
+      platform: android
+    commands:
+      # Creates fictional test records through the real API. Never use real client data.
+      # The nested create flow supplies a unique marker and verifies the saved card.
+      - runFlow: referral_create.yml
+      - evalScript: ${output.editedMarker = output.referralMarker + '-edited'}
+      - evalScript: ${output.reusedMarker = output.referralMarker + '-another-shelter'}
+
+      # Edit the newest saved referral, not an unrelated historical record.
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            id: 'edit-referral-.*'
+            childOf:
+              id: 'referral-card-.*'
+              containsDescendants:
+                - text: '${"Notes: " + output.referralMarker}'
+          direction: DOWN
+          timeout: 30000
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: 'edit-referral-.*'
+          childOf:
+            id: 'referral-card-.*'
+            containsDescendants:
+              - text: '${"Notes: " + output.referralMarker}'
+      - assertVisible: 'Changes apply only to this referral.*'
+      # Select a date using the native Android dialog.
+      - runFlow:
+          when:
+            platform: android
+          commands:
+            - scrollUntilVisible:
+                waitToSettleTimeoutMs: 300
+                element:
+                  id: requestedArrivalDate-input
+                direction: DOWN
+                timeout: 30000
+            - tapOn:
+                waitToSettleTimeoutMs: 300
+                id: requestedArrivalDate-input
+            - tapOn:
+                text: 'OK'
+                waitToSettleTimeoutMs: 300
+            - assertVisible:
+                id: requestedArrivalDate-input
+                text: '\d{2}/\d{2}/\d{4}'
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            text: '.*Client gave consent.*'
+          direction: DOWN
+          timeout: 30000
+      - tapOn:
+          text: '.*Client gave consent.*'
+          waitToSettleTimeoutMs: 300
+      - assertVisible:
+          text: '.*Client gave consent.*'
+          checked: true
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            id: intake-notes-input
+          direction: DOWN
+          timeout: 30000
+      - assertVisible:
+          id: intake-notes-input
+          text: ${output.referralMarker}
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: intake-notes-input
+      - assertVisible:
+          id: intake-notes-input
+      # Dismiss the IME before selecting. Otherwise its opening animation can
+      # move this multiline field under the long-press target on Android.
+      - hideKeyboard
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            id: intake-notes-input
+          direction: DOWN
+          timeout: 30000
+      - longPressOn:
+          waitToSettleTimeoutMs: 300
+          id: intake-notes-input
+      - runFlow:
+          when:
+            visible: 'Select [Aa]ll'
+          commands:
+            - tapOn:
+                text: 'Select [Aa]ll'
+                waitToSettleTimeoutMs: 300
+      - tapOn:
+          text: 'Cut'
+          waitToSettleTimeoutMs: 300
+      - inputText: ${output.editedMarker}
+      - assertVisible:
+          id: intake-notes-input
+          text: ${output.editedMarker}
+      # Save is pinned above the keyboard. Do not hide it blindly: after Cut,
+      # the IME can already be closed and Android would treat that as Back.
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: intake-next-btn
+      - extendedWaitUntil:
+          visible:
+            id: referrals-screen
+          timeout: 30000
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            text: '${"Notes: " + output.editedMarker}'
+          direction: UP
+          timeout: 30000
+
+      # Check text privacy and PNG native choosers for this exact saved record.
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            id: 'share-referral-.*'
+            childOf:
+              id: 'referral-card-.*'
+              containsDescendants:
+                - text: '${"Notes: " + output.editedMarker}'
+          direction: DOWN
+          timeout: 30000
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: 'share-referral-.*'
+          childOf:
+            id: 'referral-card-.*'
+            containsDescendants:
+              - text: '${"Notes: " + output.editedMarker}'
+      - runFlow: ../steps/referrals/check_summary_sharing.yml
+
+      # Reuse is a new referral: review notice, blank staff notes, no shelter chosen.
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            id: 'reuse-referral-.*'
+            childOf:
+              id: 'referral-card-.*'
+              containsDescendants:
+                - text: '${"Notes: " + output.editedMarker}'
+          direction: UP
+          timeout: 30000
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: 'reuse-referral-.*'
+          childOf:
+            id: 'referral-card-.*'
+            containsDescendants:
+              - text: '${"Notes: " + output.editedMarker}'
+      - assertVisible:
+          id: referral-reuse-review
+      - runFlow:
+          when:
+            platform: android
+          commands:
+            - scrollUntilVisible:
+                waitToSettleTimeoutMs: 300
+                element:
+                  id: requestedArrivalDate-input
+                direction: DOWN
+                timeout: 30000
+            - assertVisible:
+                id: requestedArrivalDate-input
+                text: '\d{2}/\d{2}/\d{4}'
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            text: '.*Client gave consent.*'
+          direction: DOWN
+          timeout: 30000
+      - assertVisible:
+          text: '.*Client gave consent.*'
+          checked: false
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            id: intake-notes-input
+          direction: DOWN
+          timeout: 30000
+      - assertVisible:
+          id: intake-notes-input
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: intake-notes-input
+      - inputText: ${output.reusedMarker}
+      - assertVisible:
+          id: intake-notes-input
+          text: ${output.reusedMarker}
+      - hideKeyboard
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: intake-next-btn
+      - assertVisible:
+          id: shelter-picker-screen
+      - assertNotVisible:
+          id: 'shelter-option-radio-.*'
+          selected: true
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: 'shelter-option-radio-.*'
+          index: 1
+      - tapOn:
+          waitToSettleTimeoutMs: 300
+          id: submit-referral-btn
+      - extendedWaitUntil:
+          visible:
+            id: referrals-screen
+          timeout: 30000
+      - scrollUntilVisible:
+          waitToSettleTimeoutMs: 300
+          element:
+            text: '${"Notes: " + output.reusedMarker}'
+          direction: UP
+          timeout: 30000
+      - assertNotVisible:
+          id: referral-draft-card

@@ -2,7 +2,11 @@ query ClientReferrals(
   $filters: ReferralFilter
   $pagination: OffsetPaginationInput
 ) {
-  referrals(filters: $filters, pagination: $pagination) {
+  referrals(
+    filters: $filters
+    pagination: $pagination
+    ordering: [{ createdAt: DESC }, { id: DESC }]
+  ) {
     results {
       id
       status
@@ -31,6 +35,23 @@ query ClientReferrals(
       }
     }
     totalCount
+  }
+}
+
+mutation UpdateReferral($data: UpdateReferralInput!) {
+  updateReferral(data: $data) {
+    ... on ReferralType {
+      id
+      notes
+      status
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
   }
 }
 

@@ -14,7 +14,16 @@ import {
 import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { Pressable, Text } from 'react-native';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import UserProfile from './index';
+import { uiComponents } from '../../../__mocks__/sharedBarrels';
+import UserProfile from '.';
+
+vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
+  useApiConfig: () => ({ apiUrl: 'https://profile-test.invalid' }),
+}));
+vi.mock('@monorepo/react/shared', () => ({
+  useFeatureFlagActive: () => false,
+}));
 
 /**
  * Deleting the account is refused while it still owns an organization.  The
@@ -55,7 +64,7 @@ vi.mock('../../hooks', () => ({
 // two-step contract: the trigger opens the confirmation and `onDelete` runs from
 // the modal's own confirm button.
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
-  Avatar: () => null,
+  ...uiComponents(),
   Button: ({
     title,
     onPress,
@@ -109,11 +118,6 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
       </>
     );
   },
-  TextBold: ({ children }: { children?: ReactNode }) => <Text>{children}</Text>,
-  TextButton: ({ title }: { title?: string }) => <Text>{title}</Text>,
-  TextMedium: ({ children }: { children?: ReactNode }) => (
-    <Text>{children}</Text>
-  ),
 }));
 
 const REFUSAL_MESSAGE =

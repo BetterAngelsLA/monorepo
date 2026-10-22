@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import { Text } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
-import UploadModal from './index';
+import UploadModal from '.';
 
 const mocks = vi.hoisted(() => ({
   startSession: vi.fn(),

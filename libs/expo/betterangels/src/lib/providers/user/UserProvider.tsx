@@ -1,9 +1,14 @@
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import { createUserProvider } from '@monorepo/ba-platform';
+import {
+  createUserProvider,
+  useActiveOrg,
+  useApiConfig,
+} from '@monorepo/ba-platform';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import useAppState from '../../hooks/appState/useAppState';
+import { useReferralDraftSession } from '../../draft/useReferralDraftSession';
 import {
   CurrentUserDocument,
   CurrentUserQuery,
@@ -88,6 +93,13 @@ interface ExpoShellProps {
 
 function ExpoShell({ children }: ExpoShellProps) {
   const { user, isLoading, refetchUser } = useUser();
+  const { apiUrl } = useApiConfig();
+  const { activeOrg } = useActiveOrg();
+  useReferralDraftSession({
+    apiUrl,
+    userId: user?.id,
+    organizationId: activeOrg?.id,
+  });
   const { appBecameActive } = useAppState();
   const [settled, setSettled] = useState(false);
 
@@ -100,17 +112,22 @@ function ExpoShell({ children }: ExpoShellProps) {
   }, [appBecameActive, refetchUser]);
 
   return (
-    <View
-      testID={
-        !settled
-          ? 'authorized-pending'
-          : user
-            ? 'authorized-root'
-            : 'unauthorized-root'
-      }
-      style={{ flex: 1 }}
-    >
-      {children}
+    // `app-root` is mounted as soon as the bundle has rendered, before the
+    // auth query settles. E2E flows wait for it so they never inspect auth
+    // state while the dev client is still on its native splash.
+    <View testID="app-root" style={{ flex: 1 }}>
+      <View
+        testID={
+          !settled
+            ? 'authorized-pending'
+            : user
+              ? 'authorized-root'
+              : 'unauthorized-root'
+        }
+        style={{ flex: 1 }}
+      >
+        {children}
+      </View>
     </View>
   );
 }

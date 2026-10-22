@@ -1,8 +1,8 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { TagRow } from './ShelterCard';
-import type { TTag } from './shelterAttributes';
+import { TagRow } from './shelter/ShelterCard';
+import type { TTag } from './shared/shelterAttributes';
 
 /**
  * Help for the referrals list — chiefly the attribute-tag legend, which is not

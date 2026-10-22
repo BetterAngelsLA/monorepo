@@ -5,6 +5,7 @@ appId: ${MAESTRO_APP_ID}
     id: 'nav-menu-btn'
 
 - tapOn:
+    waitToSettleTimeoutMs: 300
     id: 'nav-menu-btn'
 
 - assertVisible:

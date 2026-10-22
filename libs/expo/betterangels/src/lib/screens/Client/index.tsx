@@ -25,7 +25,7 @@ import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import { InteractionLocations } from './Locations';
-import { ReferralsTab } from './Referrals/ReferralsTab';
+import { ReferralsTab } from './Referrals';
 import { TasksTab } from './Tasks';
 
 import { useQuery } from '@apollo/client/react';
