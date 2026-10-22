@@ -2,6 +2,7 @@ export * from './BaPrivate';
 export * from './BasicInfo';
 export * from './Details';
 export * from './Ecosystem';
+export * from './EntryRequirements';
 export * from './Media';
 export * from './Policies';
 export * from './Schedules';
