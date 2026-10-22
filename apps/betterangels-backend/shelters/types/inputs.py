@@ -188,6 +188,7 @@ class UpdateShelterInput:
     shelter_types_other: Maybe[Optional[str]] = UNSET
     city_council_district: Maybe[Optional[int]] = UNSET
     supervisorial_district: Maybe[Optional[int]] = UNSET
+    shelter_programs_other: Maybe[Optional[str]] = UNSET
     funders_other: Maybe[Optional[str]] = UNSET
 
     # M2M enum fields

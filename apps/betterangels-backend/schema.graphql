@@ -3285,6 +3285,7 @@ input UpdateShelterInput {
   shelterTypesOther: String
   cityCouncilDistrict: Int
   supervisorialDistrict: Int
+  shelterProgramsOther: String
   fundersOther: String
   accessibility: [AccessibilityChoices!]
   demographics: [DemographicChoices!]
