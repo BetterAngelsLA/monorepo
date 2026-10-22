@@ -110,6 +110,43 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(ids, {str(self.referral_1.pk)})
 
+    def test_list_includes_a_colleagues_referral(self) -> None:
+        # Org-tier read: every caseworker at the org sees the org's referrals,
+        # not only the ones they created (the pre-cutover selector filtered
+        # ``created_by``).  Deliberate, and the reason the UI has no "mine"
+        # filter today.
+        colleague = Referral.objects.create(
+            client_profile=self.client_profile,
+            shelter=self.shelter,
+            created_by=self.org_1_case_manager_2,
+            organization=self.org_1,
+        )
+
+        ids = {row["id"] for row in self._results(self.execute_graphql(LIST_QUERY))}
+
+        self.assertEqual(ids, {str(self.referral_1.pk), str(colleague.pk)})
+
+    def test_referral_without_an_organization_is_invisible(self) -> None:
+        # ``organization`` is ``SET_NULL`` for legacy rows and ``visible()``
+        # filters on it, so an org-less referral is unreachable through grants —
+        # fail-closed, and only the global tier sees it.
+        orphan = Referral.objects.create(
+            client_profile=self.client_profile,
+            shelter=self.shelter,
+            created_by=self.org_1_case_manager_1,
+            organization=None,
+        )
+
+        ids = {row["id"] for row in self._results(self.execute_graphql(LIST_QUERY))}
+
+        self.assertEqual(ids, {str(self.referral_1.pk)})
+        self.assertNotIn(str(orphan.pk), ids)
+
+        superuser = baker.make(User, is_superuser=True, is_staff=True)
+        self.graphql_client.force_login(superuser)
+        all_ids = {row["id"] for row in self._results(self.execute_graphql(LIST_QUERY))}
+        self.assertIn(str(orphan.pk), all_ids)
+
     def test_single_referral_outside_the_grant_is_denied(self) -> None:
         payload = self.execute_graphql(SINGLE_QUERY, {"pk": str(self.referral_2.pk)})
 
