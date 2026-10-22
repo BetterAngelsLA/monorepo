@@ -7,17 +7,11 @@ from referrals.models import Referral
 
 
 def referral_list(*, user: User, organization_id: int | None = None) -> QuerySet[Referral]:
-    """Referrals the *user* may see, optionally narrowed to the active org.
+    """Referrals *user* may see, optionally narrowed to the active org.
 
-    Authority is the grant predicate (ADR 0001 §2.6): ``visible`` keeps the rows
-    whose organization is in the user's ``scopes()`` for ``view_referral`` — the
-    organizations where they hold the scoped ``Caseworker`` Grant.  Org
-    membership alone is not authority: a plain member of another org reaching a
-    referral there is exactly the hole this shape closes.
-
-    *organization_id* is the ``X-Organization-ID`` view hint.  It only narrows a
-    finite scope (a global holder is never confined) and never grants: an org the
-    caller has no grant at yields no rows.
+    Authority is ``view_referral`` at the row's organization (ADR 0001 §2.6) —
+    org membership alone is not.  *organization_id* is the header hint: it can
+    only narrow a finite scope, never widen it.
     """
     return visible(
         Referral.objects.all(),
@@ -28,16 +22,11 @@ def referral_list(*, user: User, organization_id: int | None = None) -> QuerySet
 
 
 def referral_get(*, user: User, pk: str | int) -> Referral | None:
-    """A single referral the *user* may see, or ``None`` outside their scope.
+    """A single referral *user* may see, or ``None``.
 
-    Authority-only, no header: ADR 0001 §2.6 says load-by-id is
-    ``visible(qs, perm).get(pk=…)`` — the header only confines a list view.  A
-    stale ``X-Organization-ID`` must not hide a row the caller may read.
-
-    ``get_or_none`` (not ``filter(pk=…).first()``) so a non-numeric id is a
-    miss, not a ``ValueError`` escaping the resolver.  ``select_related`` keeps
-    the hand-written single-object resolver at the optimizer's join count for
-    the fields ``ReferralType`` exposes.
+    Load-by-id is authority-only (ADR 0001 §2.6): a stale header must not hide a
+    row the caller's grant reaches.  ``get_or_none`` makes a non-numeric id a
+    miss, not a ``ValueError``.
     """
     return get_or_none(
         visible(Referral.objects.all(), user, Referral.perms.VIEW).select_related(
