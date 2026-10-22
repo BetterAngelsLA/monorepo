@@ -12,6 +12,7 @@ import { Form } from '../../../form/Form';
 import {
   BOOLEAN_OPTIONS_WITH_UNKNOWN,
   EXIT_POLICY_OPTIONS,
+  SEARCHABLE_DROPDOWN_MIN,
 } from '../../constants';
 import { defaultFormValues, formSchema, PoliciesFormData } from './formSchema';
 
@@ -169,6 +170,9 @@ export function ShelterPoliciesForm(props: TProps) {
               label="Exit Policy"
               inputLabel="Other Exit Policy"
               options={EXIT_POLICY_OPTIONS}
+              isSearchable={
+                EXIT_POLICY_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
+              }
               triggerValue={ExitPolicyChoices.Other}
               inputError={errors.exitPolicyOther?.message}
               isViewMode={isViewMode}

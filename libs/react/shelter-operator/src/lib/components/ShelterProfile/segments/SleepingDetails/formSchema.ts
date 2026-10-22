@@ -11,14 +11,14 @@ const baseSchema = z.object({
     .nullable()
     .optional(),
   roomStyles: z.array(z.enum(RoomStyleChoices)),
-  roomStylesOther: z.string().nullable().optional(),
+  roomStylesOther: z.string().trim().nullable().optional(),
   addNotesSleepingDetails: z.string(),
 });
 
 export const formSchema = baseSchema.superRefine((data, ctx) => {
   if (
     data.roomStyles.includes(RoomStyleChoices.Other) &&
-    !data.roomStylesOther?.trim()
+    !data.roomStylesOther
   ) {
     ctx.addIssue({
       code: 'custom',

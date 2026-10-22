@@ -1,5 +1,6 @@
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { applyFieldErrors } from '@monorepo/react/shared';
+import { RoomStyleChoices } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import {
@@ -25,7 +26,9 @@ function toUpdateInput(
     id: shelterId,
     totalBeds: data.totalBeds ?? null,
     roomStyles: data.roomStyles,
-    roomStylesOther: data.roomStylesOther ?? null,
+    roomStylesOther: data.roomStyles.includes(RoomStyleChoices.Other)
+      ? (data.roomStylesOther ?? null)
+      : null,
     addNotesSleepingDetails: data.addNotesSleepingDetails,
   };
 }

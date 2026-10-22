@@ -24,7 +24,7 @@ const baseSchema = z.object({
 export const formSchema = baseSchema.superRefine((data, ctx) => {
   if (
     data.shelterPrograms.includes(ShelterProgramChoices.Other) &&
-    !data.shelterProgramsOther?.trim()
+    !data.shelterProgramsOther
   ) {
     ctx.addIssue({
       code: 'custom',
@@ -33,10 +33,7 @@ export const formSchema = baseSchema.superRefine((data, ctx) => {
     });
   }
 
-  if (
-    data.funders.includes(FunderChoices.Other) &&
-    !data.fundersOther?.trim()
-  ) {
+  if (data.funders.includes(FunderChoices.Other) && !data.fundersOther) {
     ctx.addIssue({
       code: 'custom',
       path: ['fundersOther'],
