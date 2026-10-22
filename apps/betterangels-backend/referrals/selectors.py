@@ -17,7 +17,7 @@ def referral_list(*, user: User, organization_id: int | None = None) -> QuerySet
         Referral.objects.all(),
         user,
         Referral.perms.VIEW,
-        in_org=str(organization_id) if organization_id is not None else None,
+        in_org=organization_id,
     )
 
 

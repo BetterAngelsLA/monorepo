@@ -290,6 +290,10 @@ class GraphQLBaseTestCase(
         """Set the X-Organization-ID header for the current test client."""
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(org.id)
 
+    def _clear_active_org(self) -> None:
+        """Drop the X-Organization-ID header, so a request carries no org hint."""
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
     def _grant_permission(
         self,
         user: User,
