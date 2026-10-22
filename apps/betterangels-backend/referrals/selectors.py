@@ -11,8 +11,8 @@ def referral_list(*, user: User, organization_id: int | None = None) -> QuerySet
 
     Authority is ``view_referral`` at the row's organization (ADR 0001 §2.6) —
     org membership alone is not.  *organization_id* can only narrow a finite
-    scope, never widen it; the API list no longer supplies one (DEV-2566
-    retired the request header), so callers see every org their grants reach.
+    scope, never widen it; the API list supplies no org, so callers see every
+    org their grants reach.
     """
     return visible(
         Referral.objects.all(),

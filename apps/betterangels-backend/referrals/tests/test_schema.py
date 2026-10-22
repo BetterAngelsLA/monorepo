@@ -112,9 +112,8 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
 
     def test_list_includes_a_colleagues_referral(self) -> None:
         # Org-tier read: every caseworker at the org sees the org's referrals,
-        # not only the ones they created (the pre-cutover selector filtered
-        # ``created_by``).  Deliberate, and the reason the UI has no "mine"
-        # filter today.
+        # not only the ones they created.  Deliberate, and the reason the UI
+        # has no "mine" filter.
         colleague = Referral.objects.create(
             client_profile=self.client_profile,
             shelter=self.shelter,
@@ -127,8 +126,8 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(ids, {str(self.referral_1.pk), str(colleague.pk)})
 
     def test_referral_without_an_organization_is_invisible(self) -> None:
-        # ``organization`` is ``SET_NULL`` for legacy rows and ``visible()``
-        # filters on it, so an org-less referral is unreachable through grants —
+        # ``organization`` is nullable (``SET_NULL``) and ``visible()`` filters
+        # on it, so an org-less referral is unreachable through grants —
         # fail-closed, and only the global tier sees it.
         orphan = Referral.objects.create(
             client_profile=self.client_profile,
@@ -235,8 +234,8 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertNotIn("invalid literal", str(payload))
 
     def test_delete_within_the_grant_succeeds(self) -> None:
-        # Positive delete through the API: production delete rides the scoped
-        # Role, not a guardian row, so this is the only test that proves it.
+        # Positive delete through the API: delete rides the scoped Role, so
+        # this is the only test that proves the production path.
         payload = self.execute_graphql(DELETE_MUTATION, {"data": {"id": str(self.referral_1.pk)}})
 
         self.assertEqual(payload["data"]["deleteReferral"]["__typename"], "DeletedObjectType", payload)
@@ -244,9 +243,8 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertFalse(Referral.objects.filter(pk=self.referral_1.pk).exists())
 
     def test_delete_by_a_colleague_in_the_same_org_succeeds(self) -> None:
-        # Org-tier DELETE: a colleague's referral is deleteable by any
-        # caseworker at the org, matching the pre-cutover guardian grant that
-        # was assigned to the whole org group.
+        # Org-tier DELETE: any caseworker at the org may delete the org's
+        # referrals, a colleague's included.
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
         payload = self.execute_graphql(DELETE_MUTATION, {"data": {"id": str(self.referral_1.pk)}})
@@ -297,10 +295,9 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(Referral.objects.count(), 2)
 
     def test_create_without_an_organization_is_rejected(self) -> None:
-        # Optional in the schema for one release, but there is no header
-        # fallback (DEV-2566): reject rather than guess — and say so as a field
-        # error, not a permission one: the caller is allowed to create, they
-        # just did not say where.
+        # Optional in the schema but required in practice: reject rather than
+        # guess — and say so as a field error, not a permission one: the caller
+        # is allowed to create, they just did not say where.
         variables = self._create_data(self.org_1.id)
         del variables["data"]["organizationId"]
 
@@ -314,7 +311,7 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
 
     def test_create_with_a_blank_organization_id_is_denied(self) -> None:
         # An explicitly blank id is not an absent field: it denies rather than
-        # guessing an org.  There is no header to fall back to (DEV-2566).
+        # guessing an org.
         variables = self._create_data(self.org_1.id)
         variables["data"]["organizationId"] = ""
 
@@ -323,11 +320,11 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
         self.assertEqual(Referral.objects.count(), 2)
 
-    # ── the retired header is not consulted (DEV-2566) ──────────────────
+    # ── request headers carry no org authority ──────────────────────────
 
     def test_list_includes_every_grant_org(self) -> None:
-        # No header narrows the list any more: a caller with grants in two orgs
-        # sees both orgs' referrals.
+        # A caller with grants in two orgs sees both orgs' referrals; the list
+        # spans every grant scope.
         self.org_2.add_user(self.org_1_case_manager_1)
         OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
 
@@ -347,8 +344,8 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["data"]["referral"]["id"], str(self.referral_2.pk))
 
     def test_organization_header_is_ignored(self) -> None:
-        # The middleware is gone (DEV-2566). A client that still sends the
-        # header does not narrow the list: the grant scope decides.
+        # An X-Organization-ID header carries no authority: it does not narrow
+        # the list; the grant scope decides.
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_2.id)
 
         ids = {row["id"] for row in self._results(self.execute_graphql(LIST_QUERY))}
@@ -356,7 +353,7 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(ids, {str(self.referral_1.pk)})
 
     def test_malformed_organization_header_is_ignored(self) -> None:
-        # A value that cannot be read as an org id must not error either.
+        # An unparseable header value is inert and must not error.
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "abc"
 
         payload = self.execute_graphql(LIST_QUERY)

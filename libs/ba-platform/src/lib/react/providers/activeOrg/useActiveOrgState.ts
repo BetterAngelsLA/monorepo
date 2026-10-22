@@ -100,9 +100,8 @@ export function useActiveOrgState(
   // here (an effect, not a render).
   //
   // Disposed from the cleanup, so an unmounting (or changing) provider restores
-  // whatever was installed beneath it. Nesting is a supported contract even
-  // though the app currently mounts only one provider: a provider mounted
-  // inside another shadows the outer list until it unmounts (see the test).
+  // whatever was installed beneath it: a provider mounted inside another
+  // shadows the outer list until it unmounts (see the test).
   useLayoutEffect(() => {
     // Nothing to contribute while the list is unknown: leaving the slot alone
     // lets an outer provider's list stay in play, which is what keeps requests

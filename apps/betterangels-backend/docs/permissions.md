@@ -9,7 +9,7 @@ BetterAngels uses a **two-layer permission model** — org-scoped authority gate
 | **Org-scoped**   | Grants: `can()` / `require_can()` / `scopes()` / `visible()`     | "Can this user perform action X in organization Y?" | Teams, reports, member management, shelters, referrals, operator queries |
 | **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm in progress) | "Can this user access this specific object?"        | Notes, tasks, client documents                      |
 
-Referrals are **grant-only**: the scoped `Caseworker` `Role` carries add/change/view/delete, the legacy template carries none, and both reads and writes go through `visible()`/`require_can()`.  `CreateReferralInput.organizationId` names the target org explicitly; no request header is read (DEV-2566).
+Referrals are **grant-only**: the scoped `Caseworker` `Role` carries add/change/view/delete, the legacy template carries none, and both reads and writes go through `visible()`/`require_can()`.  `CreateReferralInput.organizationId` names the target org explicitly; no request header is read.
 
 Both layers sit on Django's permission primitives, but they ask different questions and are checked independently.  **ADR 0001 is the source of truth** for the target model — this page describes the current backend wiring.
 
@@ -17,7 +17,7 @@ Both layers sit on Django's permission primitives, but they ask different questi
 
 ### Where the org comes from
 
-The org always travels in the **payload**: query filters and mutation inputs carry the organization (`TeamFilter.organizationId`, `CreateTeamInput.organizationId`, `CreateReferralInput.organizationId`), and row-scoped mutations derive it from the row they name.  The `X-Organization-ID` header and its `OrganizationMiddleware` were removed with the mobile cutover (DEV-2566) — no backend surface reads a request header.
+The org always travels in the **payload**: query filters and mutation inputs carry the organization (`TeamFilter.organizationId`, `CreateTeamInput.organizationId`, `CreateReferralInput.organizationId`), and row-scoped mutations derive it from the row they name.  No backend surface reads a request header.
 
 ### Grants — the authority
 

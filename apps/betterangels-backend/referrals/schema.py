@@ -30,10 +30,10 @@ from .types import (
 def _target_organization(requested: object) -> Organization:
     """The create target: the ``organizationId`` on the payload.
 
-    Optional in the schema for one release, but there is no fallback: an absent
-    org is a field error (the caller may well be allowed to create, they just
-    did not say where), while a blank or unknown id denies.  No request header
-    is read (DEV-2566).
+    Optional in the schema but required in practice: an absent org is a field
+    error (the caller may well be allowed to create, they just did not say
+    where), while a blank or unknown id denies.  The org comes only from the
+    payload.
     """
     if requested in (None, UNSET):
         raise ValidationError({"organization_id": "Select an organization to create this referral."})
@@ -63,9 +63,9 @@ class Query:
     ) -> OffsetPaginated[ReferralType]:
         """Referrals the caller's ``view_referral`` grants reach.
 
-        Authority-only: no request header narrows the list (DEV-2566 retired
-        the header).  The ``ReferralFilter`` arguments narrow within the grant
-        scope; they can never widen it.
+        Authority-only: the list spans every org the caller's grants cover, and
+        the ``ReferralFilter`` arguments narrow within that scope; they can
+        never widen it.
         """
         current_user = cast(User, get_current_user(info))
         return cast(
@@ -80,10 +80,9 @@ class Mutation:
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
         """Create a referral in the org named on the payload (ADR 0001 §2.6).
 
-        ``organizationId`` is optional in the schema for one release, but it is
-        required in practice: an absent org is a field error, and
-        ``require_can`` authorizes the named org.  No request header is read
-        (DEV-2566).
+        ``organizationId`` is optional in the schema but required in practice:
+        an absent org is a field error, and ``require_can`` authorizes the
+        named org.  The org comes only from the payload.
         """
         current_user = cast(User, get_current_user(info))
         organization = _target_organization(data.organization_id)

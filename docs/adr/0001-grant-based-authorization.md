@@ -777,8 +777,7 @@ still needs at its cutover:
 > the legacy `CASEWORKER` template carries none (so the `PermissionGroup` arm is
 > inert), and the resolvers use `visible()`/`require_can()` — the
 > `HasPerm`/`HasRetvalPerm`/`PermissionedQuerySet` directives are gone. Creation takes
-> an explicit `organizationId` input and reads no request header — the retired
-> `X-Organization-ID` header is not a fallback (DEV-2566) — and writes no
+> an explicit `organizationId` input, reads no request header, and writes no
 > guardian rows. Because `_resolve_org_paths` still has no
 > "own org **or** via shelter" form, the cutover deliberately preserves the pre-existing
 > scope: a referral is reachable in its own `organization` only. Reads are org-tier —

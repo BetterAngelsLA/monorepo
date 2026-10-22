@@ -1,6 +1,6 @@
 """Referral capability: the scoped Caseworker Role, and nothing else.
 
-Referrals are the first fully grant-only domain in the caseworker bundle.  The
+Referrals are a fully grant-only domain in the caseworker bundle.  The
 legacy ``CASEWORKER`` template carries **no** referral permission — a
 model-level copy there is global and would bypass the org scope — and
 add/change/view/delete ride the scoped ``Caseworker`` Role, which is exercised
@@ -39,8 +39,8 @@ class ReferralCapabilityDefinitionTests(TestCase):
         self.assertEqual(referral_perms(CASEWORKER_ROLE.permissions), REFERRAL_PERMS)
 
     def test_caseworker_template_carries_no_referrals(self) -> None:
-        # The point of the cutover: no legacy, model-level copy exists, so the
-        # PermissionGroup arm is inert and cannot reach across organizations.
+        # No legacy, model-level copy exists, so the PermissionGroup arm is
+        # inert and cannot reach across organizations.
         self.assertEqual(referral_perms(CASEWORKER.permissions), set())
 
     def test_no_other_template_or_role_carries_referrals(self) -> None:
@@ -75,9 +75,8 @@ class ReferralRoleSyncTests(TestCase):
     def test_sync_group_permissions_strips_referrals_from_the_legacy_group(self) -> None:
         org = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         group = make_permission_group(organization=org, template_name=CASEWORKER.name)
-        # Simulate the pre-cutover row: the group *did* carry the referral
-        # bundle.  Without this the test asserts empty == empty and proves
-        # nothing.
+        # Seed the group with the referral bundle so the assertion is not
+        # empty == empty: sync_group_permissions must strip it.
         group.permissions.add(*Permission.objects.filter(content_type__app_label="referrals"))
         self.assertTrue(group.permissions.filter(content_type__app_label="referrals").exists())
 

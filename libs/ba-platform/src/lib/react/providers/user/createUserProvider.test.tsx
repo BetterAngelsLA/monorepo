@@ -286,8 +286,7 @@ describe('UserProvider keeps the user across an empty read', () => {
 
 describe('UserProvider keeps the user when a refetch rejects', () => {
   // A rejected `refetch()` is a transport failure (the foreground refetch in
-  // `ExpoShell`), not a sign-out. Only `isUnauthenticated` may clear the user;
-  // blanking here flipped the app to unauthorized on a network blip.
+  // `ExpoShell`), not a sign-out: only `isUnauthenticated` may clear the user.
   let refetchUserRef: (() => Promise<void>) | undefined;
 
   function RefetchProbe() {
