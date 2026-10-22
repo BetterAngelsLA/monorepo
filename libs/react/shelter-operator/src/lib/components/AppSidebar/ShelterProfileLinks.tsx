@@ -66,6 +66,19 @@ export function ShelterProfileLinks(props: IProps) {
         <Sidebar.Link
           to={shelterProfileRoute(
             shelterId,
+            profileRouteConfig.children.entryRequirements,
+          )}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: profileRouteConfig.children.entryRequirements,
+          })}
+          collapsed={!isOpen}
+          replace
+        >
+          Entry Requirements
+        </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterProfileRoute(
+            shelterId,
             profileRouteConfig.children.operatingHours,
           )}
           isActive={isShelterProfileRoute(pathname, {
