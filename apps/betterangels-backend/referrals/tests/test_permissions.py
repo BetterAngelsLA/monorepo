@@ -12,7 +12,6 @@ from django.contrib.auth.models import Permission
 from django.test import TestCase
 from model_bakery import baker
 
-from accounts.groups import ORG_ADMIN, ORG_ADMIN_ROLE, ORG_SUPERUSER, ORG_SUPERUSER_ROLE
 from accounts.models import Role, User
 from accounts.seed import sync_group_permissions
 from accounts.selectors import organization_effective_permissions
@@ -21,12 +20,7 @@ from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import make_permission_group
 from notes.groups import CASEWORKER, CASEWORKER_ROLE
 from referrals.models import Referral
-from shelters.groups import (
-    GLOBAL_SHELTER_OPERATOR,
-    GLOBAL_SHELTER_OPERATOR_ROLE,
-    SHELTER_OPERATOR,
-    SHELTER_OPERATOR_ROLE,
-)
+from shelters.groups import SHELTER_OPERATOR
 
 REFERRAL_PERMS = {
     Referral.perms.ADD,
@@ -51,18 +45,20 @@ class ReferralCapabilityDefinitionTests(TestCase):
 
     def test_no_other_template_or_role_carries_referrals(self) -> None:
         # Rollout is flag-driven, so the capability must not leak onto every role.
-        definitions = (
-            ORG_ADMIN,
-            ORG_SUPERUSER,
-            SHELTER_OPERATOR,
-            GLOBAL_SHELTER_OPERATOR,
-            ORG_ADMIN_ROLE,
-            ORG_SUPERUSER_ROLE,
-            SHELTER_OPERATOR_ROLE,
-            GLOBAL_SHELTER_OPERATOR_ROLE,
-        )
-        for definition in definitions:
-            self.assertEqual(referral_perms(definition.permissions), set(), definition.name)
+        # Walked, not enumerated: a new role or template fails here instead of
+        # silently inheriting it — the subset rule in ``accounts/tests/test_roles``
+        # exempts this app, so this is the guard for it.
+        from accounts.services import _all_role_defs
+        from common.org_types import REGISTRY
+
+        for role_def in _all_role_defs():
+            if role_def.name != CASEWORKER_ROLE.name:
+                self.assertEqual(referral_perms(role_def.permissions), set(), role_def.name)
+
+        for name in REGISTRY.template_names():
+            template = REGISTRY.template(name)
+            if template is not None and name != CASEWORKER.name:
+                self.assertEqual(referral_perms(template.permissions), set(), name)
 
 
 class ReferralRoleSyncTests(TestCase):
