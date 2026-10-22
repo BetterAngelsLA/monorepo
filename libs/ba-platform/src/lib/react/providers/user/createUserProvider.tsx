@@ -232,7 +232,9 @@ export function createUserProvider<
         const res = await refetch();
         updateUser(res);
       } catch {
-        setUser(undefined);
+        // A thrown refetch is a transport failure, not a sign-out. Keep the
+        // last known user: only `isUnauthenticated` on a read ends the session.
+        // Blanking here flipped the app to unauthorized on a network blip.
       }
     }, [refetch, updateUser]);
 

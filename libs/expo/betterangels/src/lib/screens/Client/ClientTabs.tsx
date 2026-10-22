@@ -37,6 +37,21 @@ interface IClientTabsProps {
   setTab: (tab: ClientViewTabEnum) => void;
 }
 
+/**
+ * The requested tab, or `undefined` when it is Referrals and the gate is closed.
+ *
+ * The gate is `ffReferrals` AND the active org's `referrals.view_referral`.
+ * Callers choose the fallback: the deep-link effect ignores `undefined`; the
+ * active-tab derivation clamps it to Profile.
+ */
+export function resolveClientTab(
+  tab: ClientViewTabEnum | undefined,
+  canViewReferrals: boolean,
+): ClientViewTabEnum | undefined {
+  if (tab !== ClientViewTabEnum.Referrals) return tab;
+  return canViewReferrals ? tab : undefined;
+}
+
 export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
   // Two gates: the flag decides whether the pilot is on for this account, the
   // active org's grant-backed `view_referral` decides who may use it. Without

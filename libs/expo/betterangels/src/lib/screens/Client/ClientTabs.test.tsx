@@ -9,7 +9,10 @@
 import { ActiveOrgProvider, type Org } from '@monorepo/ba-platform';
 import { render, screen } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
-import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
+import ClientTabs, {
+  ClientViewTabEnum,
+  resolveClientTab,
+} from './ClientTabs';
 
 const flags = vi.hoisted(() => ({ referrals: false }));
 
@@ -64,4 +67,27 @@ it('shows the Referrals tab when the flag is on and the org can view referrals',
   await renderTabs(withReferralCapability);
 
   expect(screen.getByTestId('client-tab-referrals')).toBeOnTheScreen();
+});
+
+describe('resolveClientTab', () => {
+  // The tab button gate is not enough: a deep link or a selected tab that
+  // predates a capability/flag change must not keep rendering the screen.
+  it('drops Referrals when the gate is closed', () => {
+    expect(
+      resolveClientTab(ClientViewTabEnum.Referrals, false),
+    ).toBeUndefined();
+  });
+
+  it('keeps Referrals when the gate is open', () => {
+    expect(resolveClientTab(ClientViewTabEnum.Referrals, true)).toBe(
+      ClientViewTabEnum.Referrals,
+    );
+  });
+
+  it('leaves other tabs alone', () => {
+    expect(resolveClientTab(ClientViewTabEnum.Tasks, false)).toBe(
+      ClientViewTabEnum.Tasks,
+    );
+    expect(resolveClientTab(undefined, false)).toBeUndefined();
+  });
 });

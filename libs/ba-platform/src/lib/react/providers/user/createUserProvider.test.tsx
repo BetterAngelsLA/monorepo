@@ -1,5 +1,6 @@
 import { ShelterPermissions } from '@monorepo/ba-platform/permissions';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
+import { useEffect } from 'react';
 import { CurrentOrgUserDocument } from '../../../apollo';
 import {
   createUserProvider,
@@ -280,5 +281,53 @@ describe('UserProvider keeps the user across an empty read', () => {
     );
 
     expect(screen.getByTestId('probe').textContent).toBe('false:false');
+  });
+});
+
+describe('UserProvider keeps the user when a refetch rejects', () => {
+  // A rejected `refetch()` is a transport failure (the foreground refetch in
+  // `ExpoShell`), not a sign-out. Only `isUnauthenticated` may clear the user;
+  // blanking here flipped the app to unauthorized on a network blip.
+  let refetchUserRef: (() => Promise<void>) | undefined;
+
+  function RefetchProbe() {
+    const { refetchUser, hasGlobalPermission } = useUser();
+
+    useEffect(() => {
+      refetchUserRef = refetchUser;
+    }, [refetchUser]);
+
+    return (
+      <span data-testid="refetch-probe">
+        {String(hasGlobalPermission(ShelterPermissions.Add))}
+      </span>
+    );
+  }
+
+  beforeEach(() => {
+    mockUseQuery.mockReset();
+    refetchUserRef = undefined;
+  });
+
+  it('keeps the last known user on a transport failure', async () => {
+    mockUseQuery.mockReturnValue({
+      data: { currentUser: { permissions: [ShelterPermissions.Add] } },
+      loading: false,
+      error: undefined,
+      refetch: vi.fn().mockRejectedValue(new Error('network')),
+    });
+
+    render(
+      <UserProvider>
+        <RefetchProbe />
+      </UserProvider>,
+    );
+    expect(screen.getByTestId('refetch-probe').textContent).toBe('true');
+
+    await act(async () => {
+      await refetchUserRef?.();
+    });
+
+    expect(screen.getByTestId('refetch-probe').textContent).toBe('true');
   });
 });

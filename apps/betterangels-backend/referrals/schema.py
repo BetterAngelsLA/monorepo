@@ -4,7 +4,7 @@ import strawberry
 import strawberry_django
 from django.core.exceptions import PermissionDenied, ValidationError
 from organizations.models import Organization
-from strawberry import asdict
+from strawberry import UNSET, asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
@@ -41,14 +41,19 @@ def _active_organization_id(info: Info) -> int | None:
         return None
 
 
-def _target_organization(info: Info, requested: str | None) -> Organization:
+def _target_organization(info: Info, requested: object) -> Organization:
     """The create target: the payload org, else the header hint.
 
     ``organizationId`` is optional for one release so app builds that predate it
     keep working.  Whichever org wins is authorized by the caller with
     ``require_can`` — neither source is authority on its own.
+
+    An absent payload field (``None``/``UNSET``) falls back to the header; an
+    explicitly blank id does not.  It denies, so a blank value can never
+    silently create in whatever org the header names (mirrors
+    ``teams/schema.py``).
     """
-    raw = requested or _active_organization_id(info)
+    raw = requested if requested not in (None, UNSET) else _active_organization_id(info)
     if raw is None:
         # Not a permission problem: the caller may well be allowed to create,
         # they just did not say where.  A field error says that honestly.

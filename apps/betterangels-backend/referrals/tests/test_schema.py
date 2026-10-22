@@ -349,6 +349,19 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         created = Referral.objects.exclude(pk__in=[self.referral_1.pk, self.referral_2.pk]).get()
         self.assertEqual(created.organization, self.org_1)
 
+    def test_create_with_a_blank_organization_id_does_not_fall_back_to_the_header(self) -> None:
+        # An explicitly blank id is not an absent field: it denies. Otherwise a
+        # blank value would silently create in whatever org the header names,
+        # which is the "header as authority" shape this cutover removes.
+        self._set_active_org(self.org_1)
+        variables = self._create_data(self.org_1.id)
+        variables["data"]["organizationId"] = ""
+
+        payload = self.execute_graphql(CREATE_MUTATION, variables)
+
+        self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
+        self.assertEqual(Referral.objects.count(), 2)
+
     # ── the header narrows, and only narrows ────────────────────────────
 
     def test_header_narrows_a_multi_org_caller(self) -> None:
