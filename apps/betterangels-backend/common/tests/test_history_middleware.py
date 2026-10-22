@@ -79,13 +79,14 @@ class HistoryMiddlewareTests(TestCase):
         self.assertNotIn("user_name", event.pgh_context.metadata)
 
     def test_write_injects_transaction_local_context_only(self) -> None:
-        """The context GUCs must be transaction-local so RDS Proxy does not pin.
+        """The context GUCs must be transaction-local so they cannot leak.
 
         pghistory prepends ``set_config(<name>, <value>, true)`` (``is_local``,
-        i.e. ``SET LOCAL``) to every write. AWS documents that ``SET LOCAL`` does
-        not pin a proxy connection, but a session-scoped ``set_config(..., false)``
-        or ``SET SESSION`` does. Guard the write path against regressing to the
-        session-scoped form (ADR 0004 §10, "RDS Proxy interaction").
+        i.e. ``SET LOCAL``) to every write. A session-scoped
+        ``set_config(..., false)`` or ``SET SESSION`` would survive the
+        transaction and annotate the next request served by the same persistent
+        connection. Guard the write path against regressing to that form (ADR 0004
+        §10, "Connection behavior").
         """
         user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
 
@@ -104,9 +105,9 @@ class HistoryMiddlewareTests(TestCase):
         self.assertIn(", true)", sql)
         self.assertIsNone(
             re.search(r"set_config\([^)]*,\s*false\s*\)", sql, re.IGNORECASE),
-            "session-scoped set_config(..., false) would pin the RDS Proxy connection",
+            "session-scoped set_config(..., false) would leak into the next request",
         )
         self.assertIsNone(
             re.search(r"\bSET\s+SESSION\b", sql, re.IGNORECASE),
-            "SET SESSION would pin the RDS Proxy connection",
+            "SET SESSION would leak into the next request",
         )

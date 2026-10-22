@@ -5,6 +5,7 @@ from strawberry_django.optimizer import DjangoOptimizerExtension
 
 from accounts.schema import Mutation as AccountsMutation
 from accounts.schema import Query as AccountsQuery
+from audit.schema import Query as AuditQuery
 from clients.schema import Mutation as ClientsMutation
 from clients.schema import Query as ClientsQuery
 from common.graphql.schema import Query as CommonQuery
@@ -28,6 +29,7 @@ from teams.schema import Query as TeamsQuery
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
 queries = (
     AccountsQuery,
+    AuditQuery,
     ClientsQuery,
     CommonQuery,
     HmisQuery,

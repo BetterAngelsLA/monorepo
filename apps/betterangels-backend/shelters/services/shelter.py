@@ -9,15 +9,13 @@ from strawberry import UNSET
 from common.permissions.selectors import can_globally
 from common.permissions.utils import require_can
 from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
-from shelters.permissions import can_change_ba_review
+from shelters.permissions import BA_REVIEW_FIELDS, can_change_ba_review
 from shelters.selectors import shelter_get
 from shelters.services.utils import _SHELTER_M2M_FIELDS, _create_schedules, _prepare_shelter_data, _set_m2m_from_enums
 
-_BA_REVIEW_FIELDS = ("overall_rating", "subjective_review", "declined_ba_visit")
-
 
 def _require_permission_on_ba_review_change(user: "User", data: Dict[str, Any]) -> None:
-    if any(field in data for field in _BA_REVIEW_FIELDS) and not can_change_ba_review(user):
+    if any(field in data for field in BA_REVIEW_FIELDS) and not can_change_ba_review(user):
         raise PermissionDenied("Editing BA review fields is not allowed with this role.")
 
 
