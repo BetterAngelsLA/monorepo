@@ -3,6 +3,7 @@ from typing import cast
 import strawberry
 import strawberry_django
 from django.core.exceptions import PermissionDenied, ValidationError
+from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -28,13 +29,9 @@ from .types import (
 
 
 def _active_organization_id(info: Info) -> int | None:
-    """The organization the caller is acting in, from ``X-Organization-ID``.
-
-    A view hint only (ADR 0001 §2.1 rule 3): it narrows a finite scope in
-    :func:`referrals.selectors.referral_list` and never grants.  A malformed
-    value fails closed with the house permission error rather than leaking a
-    ``ValueError`` — the same contract as :func:`common.graphql.utils.org_or_deny`
-    for payload organization ids.
+    """The ``X-Organization-ID`` view hint: narrows a finite scope, never grants
+    (ADR 0001 §2.1 rule 3).  A malformed value denies rather than escaping as a
+    ``ValueError``.
     """
     request = getattr(info.context, "request", None)
     raw = getattr(request, "organization_id", None)
@@ -44,6 +41,19 @@ def _active_organization_id(info: Info) -> int | None:
         return int(raw)
     except (TypeError, ValueError) as exc:
         raise PermissionDenied(ORG_PERMISSION_DENIED_MESSAGE) from exc
+
+
+def _target_organization(info: Info, requested: str | None) -> Organization:
+    """The create target: the payload org, else the header hint.
+
+    ``organizationId`` is optional for one release so app builds that predate it
+    keep working.  Whichever org wins is authorized by the caller with
+    ``require_can`` — neither source is authority on its own.
+    """
+    raw = requested or _active_organization_id(info)
+    if raw is None:
+        raise PermissionDenied("Select an organization to create this referral.")
+    return org_or_deny(raw)
 
 
 @strawberry.type
@@ -74,16 +84,13 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
-        """Create a referral at an explicit organization (ADR 0001 §2.6).
+        """Create a referral in an explicit organization (ADR 0001 §2.6).
 
-        The org is on the wire, not in a header: ``org_or_deny`` resolves it
-        (existence, failing closed) and ``require_can`` authorizes the ADD at
-        that org.  This is the grant check — the caseworker Grant is scoped to
-        the organization, so a capability holder at one org cannot create in
-        another.
+        ``organizationId`` wins; the header is a compatibility fallback for app
+        builds that predate it.  ``require_can`` authorizes the ADD either way.
         """
         current_user = cast(User, get_current_user(info))
-        organization = org_or_deny(data.organization_id)
+        organization = _target_organization(info, data.organization_id)
         require_can(current_user, Referral.perms.ADD, org=organization)
 
         referral_data = asdict(data)
