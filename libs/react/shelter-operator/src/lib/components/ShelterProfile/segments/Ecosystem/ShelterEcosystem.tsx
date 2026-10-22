@@ -30,6 +30,7 @@ function toUpdateInput(
     cityCouncilDistrict: data.cityCouncilDistrict ?? null,
     supervisorialDistrict: data.supervisorialDistrict ?? null,
     shelterPrograms: data.shelterPrograms,
+    shelterProgramsOther: data.shelterProgramsOther ?? null,
     funders: data.funders,
     fundersOther: data.fundersOther ?? null,
   };
