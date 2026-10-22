@@ -12,8 +12,7 @@ from strawberry_django.pagination import OffsetPaginated
 from accounts.models import User
 from clients.models import ClientProfile
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import ORG_PERMISSION_DENIED_MESSAGE, get_object_or_permission_error, org_or_deny
-from common.permissions.selectors import visible
+from common.graphql.utils import ORG_PERMISSION_DENIED_MESSAGE, org_or_deny
 from common.permissions.utils import IsAuthenticated, require_can
 from common.utils import get_or_none
 from referrals.models import Referral
@@ -56,16 +55,20 @@ def _target_organization(info: Info, requested: str | None) -> Organization:
     return org_or_deny(raw)
 
 
+def _referral_or_deny(user: User, referral_id: str | int, perm: str, message: str) -> Referral:
+    """Load a referral *user* may exercise *perm* on, or deny with *message*."""
+    referral = referral_get(user=user, pk=referral_id, perm=perm)
+    if referral is None:
+        raise PermissionDenied(message)
+    return referral
+
+
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def referral(self, info: Info, pk: strawberry.ID) -> ReferralType:
         current_user = cast(User, get_current_user(info))
-        # Load-by-id is authority-only (ADR 0001 §2.6): the header confines a
-        # list view, it must not hide a row the caller's grant reaches.
-        referral = referral_get(user=current_user, pk=pk)
-        if referral is None:
-            raise PermissionDenied("Referral not found.")
+        referral = _referral_or_deny(current_user, pk, Referral.perms.VIEW, "Referral not found.")
         return cast(ReferralType, referral)
 
     @strawberry_django.offset_paginated(permission_classes=[IsAuthenticated])
@@ -114,10 +117,10 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_referral(self, info: Info, data: UpdateReferralInput) -> ReferralType:
         current_user = cast(User, get_current_user(info))
-        qs = visible(Referral.objects.all(), current_user, Referral.perms.CHANGE)
-        referral = get_object_or_permission_error(
-            qs,
+        referral = _referral_or_deny(
+            current_user,
             data.id,
+            Referral.perms.CHANGE,
             "You do not have permission to update this referral.",
         )
         referral = referral_update(referral=referral, data=asdict(data))
@@ -126,11 +129,11 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_referral(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         current_user = cast(User, get_current_user(info))
-        referral = get_or_none(
-            visible(Referral.objects.all(), current_user, Referral.perms.DELETE),
+        referral = _referral_or_deny(
+            current_user,
             data.id,
+            Referral.perms.DELETE,
+            "You do not have permission to delete this referral.",
         )
-        if referral is None:
-            raise PermissionDenied("You do not have permission to delete this referral.")
         deleted_id = referral_delete(referral=referral)
         return DeletedObjectType(id=deleted_id)

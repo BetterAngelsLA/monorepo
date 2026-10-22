@@ -21,15 +21,16 @@ def referral_list(*, user: User, organization_id: int | None = None) -> QuerySet
     )
 
 
-def referral_get(*, user: User, pk: str | int) -> Referral | None:
-    """A single referral *user* may see, or ``None``.
+def referral_get(*, user: User, pk: str | int, perm: str = Referral.perms.VIEW) -> Referral | None:
+    """A single referral *user* may exercise *perm* on, or ``None``.
 
-    Load-by-id is authority-only (ADR 0001 §2.6): a stale header must not hide a
-    row the caller's grant reaches.  ``get_or_none`` makes a non-numeric id a
-    miss, not a ``ValueError``.
+    Every by-id access — read, update, delete — goes through here so the grant
+    filter is applied in one place.  Load-by-id is authority-only (ADR 0001
+    §2.6): a stale header must not hide a row the caller's grant reaches.
+    ``get_or_none`` makes a non-numeric id a miss, not a ``ValueError``.
     """
     return get_or_none(
-        visible(Referral.objects.all(), user, Referral.perms.VIEW).select_related(
+        visible(Referral.objects.all(), user, perm).select_related(
             "client_profile",
             "shelter",
             "created_by",
