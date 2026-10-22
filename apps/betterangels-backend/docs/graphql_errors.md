@@ -160,8 +160,8 @@ In addition to the mutation-level `_handle_exception`, Strawberry's permission e
 
 | Extension         | Defined in                                 | Used for                                                   | `fail_silently` default   |
 | ----------------- | ------------------------------------------ | ---------------------------------------------------------- | ------------------------- |
-| `require_can()`   | `common/permissions/utils.py` (not an extension — a resolver guard) | Org-scoped writes (teams, reports, member management, shelters) | n/a — raises `PermissionDenied` |
-| `HasRetvalPerm`   | `strawberry_django` (built-in)             | Object-level mutations (notes, tasks, referrals)           | `True` (built-in default) |
+| `require_can()`   | `common/permissions/utils.py` (not an extension — a resolver guard) | Org-scoped writes (teams, reports, member management, shelters, referrals) | n/a — raises `PermissionDenied` |
+| `HasRetvalPerm`   | `strawberry_django` (built-in)             | Object-level mutations (notes, tasks)                      | `True` (built-in default) |
 | `HasPerm`         | `strawberry_django` (built-in)             | Create mutations (clients, documents)                      | `True` (built-in default) |
 | `IsAuthenticated` | `common/permissions/utils.py` (BetterAngels override) | All mutations; raises `UnauthenticatedGQLError` when anonymous | n/a                       |
 

@@ -238,6 +238,22 @@ describe('useActiveOrgState', () => {
     expect(seen).not.toContain(null);
   });
 
+  it("leaves an outer provider's list in play until it knows its own", async () => {
+    // The provider factory can be mounted inside another; an inner provider with
+    // no list must not shadow the outer one with "unknown", which would drop
+    // the header.
+    configureActiveOrgStorage(createSyncStorage());
+    const outer = [makeOrg({ id: 'org-2' })];
+
+    await render(
+      <ActiveOrgProvider organizations={outer}>
+        <ActiveOrgProvider organizations={undefined}>{null}</ActiveOrgProvider>
+      </ActiveOrgProvider>,
+    );
+
+    expect(getActiveOrgId()).toBe('org-2');
+  });
+
   it('still defaults a genuinely org-less user to nothing', async () => {
     configureActiveOrgStorage(createSyncStorage());
 

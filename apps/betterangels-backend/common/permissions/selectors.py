@@ -240,7 +240,7 @@ def invalidate_scope_cache(user: "User") -> None:
     user.__dict__.pop("_org_effective_permissions", None)
 
 
-def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":
+def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: int | str | None = None) -> "QuerySet":
     """The rows of *qs* on which *user* may exercise *perm*.
 
     * ``ALL`` (global tier) — the queryset, unconfined.

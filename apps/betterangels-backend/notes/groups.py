@@ -8,6 +8,7 @@ from clients.models import (
 from common.models import Attachment
 from common.permissions.config import RoleDef, TemplateConfig
 from notes.models import Note, ServiceRequest
+from referrals.models import Referral
 from tasks.models import Task
 from teams.models import Team
 
@@ -54,13 +55,15 @@ CASEWORKER = TemplateConfig(
 )
 
 
-# ── Role definition (ADR 0001 §2.2 — caseworker teams-read slice) ────────
-# RFC 0003 first step: a scoped ``Caseworker`` Role carrying
-# ``teams.view_team`` lets the ``teams`` read authorize via ``can()`` (pure
-# grant) instead of org membership.  Only the teams permission rides the Role
-# today; the rest of the caseworker bundle stays legacy until RFC 0003.
+# ── Role definition (ADR 0001 §2.2 — scoped caseworker capability) ───────
 CASEWORKER_ROLE = RoleDef(
     name=CASEWORKER.name,
-    permissions=[Team.perms.VIEW],
+    permissions=[
+        Team.perms.VIEW,
+        Referral.perms.ADD,
+        Referral.perms.CHANGE,
+        Referral.perms.VIEW,
+        Referral.perms.DELETE,
+    ],
     is_invitable=CASEWORKER.is_invitable,
 )
