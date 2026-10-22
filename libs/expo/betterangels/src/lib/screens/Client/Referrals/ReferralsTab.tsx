@@ -1,5 +1,6 @@
 import { useApolloClient, useMutation } from '@apollo/client/react';
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
+import { useActiveOrgId } from '@monorepo/ba-platform';
 import { useRouter } from 'expo-router';
 import { InfoIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -97,6 +98,9 @@ function ReferralsContent({ client, clientId }: TContentProps) {
   });
 
   const [createReferral] = useMutation(CreateReferralDocument);
+  // The referral's organization is explicit on the payload (ADR 0001 §2.6):
+  // the backend authorizes the create at the org named there.
+  const activeOrgId = useActiveOrgId();
 
   const hasDraft = draft?.clientId === clientId;
   const totalCount = total ?? 0;
@@ -106,10 +110,19 @@ function ReferralsContent({ client, clientId }: TContentProps) {
     notes: string | undefined,
     closeForm: () => void,
   ): Promise<boolean> => {
+    if (!activeOrgId) {
+      showSnackbar({
+        message: 'Select an organization before creating a referral.',
+        type: 'error',
+      });
+      return false;
+    }
+
     try {
       const result = await createReferral({
         variables: {
           data: {
+            organizationId: activeOrgId,
             clientProfile: clientId,
             shelter: shelterId,
             notes,

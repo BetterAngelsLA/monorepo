@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { Observable } from 'rxjs';
+import { setActiveOrgId } from '@monorepo/ba-platform';
 import {
   OperationMessageKind,
   ReferralStatusEnum,
@@ -49,6 +50,8 @@ vi.mock(
 );
 const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
 vi.mock('../../../hooks', () => ({ useSnackbar: () => ({ showSnackbar }) }));
+
+const ACTIVE_ORG_ID = 'org-1';
 
 const client: ClientProfileQuery = {
   __typename: 'Query',
@@ -103,6 +106,9 @@ async function setup(options?: {
   initialReferrals?: ClientReferralsQuery['referrals']['results'];
   refreshedReferrals?: ClientReferralsQuery['referrals']['results'];
 }) {
+  // The create payload names its organization (ADR 0001 §2.6); the component
+  // reads it from the active-org store.
+  setActiveOrgId(ACTIVE_ORG_ID);
   const initialReferrals = options?.initialReferrals ?? [];
   const refreshedReferrals = options?.refreshedReferrals ?? [newReferral];
   const store = createReferralDraftStore({
@@ -275,7 +281,12 @@ it('submits current answers once, consumes the draft only on success, and displa
   const before = store.getSnapshot();
   const request = await submit(requests);
   expect(request.variables).toEqual({
-    data: { clientProfile: 'client-1', shelter: 's-1', notes },
+    data: {
+      organizationId: ACTIVE_ORG_ID,
+      clientProfile: 'client-1',
+      shelter: 's-1',
+      notes,
+    },
   });
   expect(decodeReferralNotes(request.variables.data.notes)).toEqual({
     humanNotes: answers.notes,

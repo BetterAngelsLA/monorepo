@@ -4,7 +4,7 @@ from django_choices_field import IntegerChoicesField
 from organizations.models import Organization
 
 from accounts.models import User
-from common.models import BaseModel
+from common.models import BaseModel, OrgScoped
 
 
 class ReferralTestShelter(BaseModel):
@@ -23,7 +23,9 @@ class ReferralTestShelter(BaseModel):
     pghistory.UpdateEvent("referral.update"),
     pghistory.DeleteEvent("referral.remove"),
 )
-class Referral(BaseModel):
+class Referral(OrgScoped, BaseModel):
+    """Referral, scoped to its own ``organization``."""
+
     class Status(models.IntegerChoices):
         PENDING = 0, "Pending"
         ACCEPTED = 1, "Accepted"

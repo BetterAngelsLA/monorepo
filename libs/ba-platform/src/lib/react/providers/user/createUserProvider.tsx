@@ -186,9 +186,13 @@ export function createUserProvider<
           extensions?: Record<string, unknown>;
         }[];
       }) => {
+        // A payload without a user is not a sign-out (`isUnauthenticated` is).
+        // It is a read that resolved empty — a failed request, a reset cache,
+        // one that resolved across a local write — and replacing the user there
+        // blanked every permission and the org list until the next read.
         if (isUnauthenticated(res.errors)) {
           setUser(undefined);
-        } else {
+        } else if (res.data?.currentUser != null) {
           // Functional update so `parseUser` sees the user already in context:
           // a read issued before a local write can resolve after it, and the
           // app decides what wins rather than the resolution order doing so.
@@ -228,7 +232,8 @@ export function createUserProvider<
         const res = await refetch();
         updateUser(res);
       } catch {
-        setUser(undefined);
+        // A thrown refetch is a transport failure, not a sign-out. Keep the
+        // last known user: only `isUnauthenticated` on a read ends the session.
       }
     }, [refetch, updateUser]);
 

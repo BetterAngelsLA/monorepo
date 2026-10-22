@@ -220,7 +220,8 @@ class InteractionMapBaseTestCase(GraphQLBaseTestCase):
       ``ORG_ADMIN``/``ORG_SUPERUSER`` satisfy it;
     * the note read scope — a **legacy** ``PermissionGroup`` permission, because notes
       are gated on RFC 0003 and **no ``Role`` carries ``notes.view_note``**
-      (``CASEWORKER_ROLE`` carries only ``Team.perms.VIEW``).
+      (``CASEWORKER_ROLE`` carries ``Team.perms.VIEW`` plus the referral grants,
+      not note permissions).
 
     So a caller must satisfy both, and the roles that do are caseworkers, not
     ``ORG_ADMIN``. Gating the map on ``require_can(..., NotePermissions.VIEW)`` instead would

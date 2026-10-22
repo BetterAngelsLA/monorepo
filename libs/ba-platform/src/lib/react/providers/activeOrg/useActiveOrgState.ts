@@ -100,8 +100,8 @@ export function useActiveOrgState(
   // here (an effect, not a render).
   //
   // Disposed from the cleanup, so an unmounting (or changing) provider restores
-  // whatever was installed beneath it — nesting is real: shelter-web mounts one
-  // provider around the app and another inside it on /operator.
+  // whatever was installed beneath it: a provider mounted inside another
+  // shadows the outer list until it unmounts (see the test).
   useLayoutEffect(() => {
     // Nothing to contribute while the list is unknown: leaving the slot alone
     // lets an outer provider's list stay in play, which is what keeps requests
