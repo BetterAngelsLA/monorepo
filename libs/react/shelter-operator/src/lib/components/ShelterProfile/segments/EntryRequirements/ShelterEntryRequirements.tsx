@@ -26,9 +26,9 @@ function toUpdateInput(
     entryRequirements: data.entryRequirements,
     referralRequirement: data.referralRequirement,
     vaccinationRequirement: data.vaccinationRequirement,
-    bedFees: data.bedFees,
-    programFees: data.programFees,
-    entryInfo: data.entryInfo,
+    bedFees: data.bedFees || null,
+    programFees: data.programFees || null,
+    entryInfo: data.entryInfo || null,
   };
 }
 

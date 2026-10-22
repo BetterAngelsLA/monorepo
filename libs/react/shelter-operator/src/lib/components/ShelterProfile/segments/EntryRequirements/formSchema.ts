@@ -11,8 +11,8 @@ export const formSchema = z.object({
   entryRequirements: z.array(z.enum(EntryRequirementChoices)),
   referralRequirement: z.array(z.enum(ReferralRequirementChoices)),
   vaccinationRequirement: z.array(z.enum(VaccinationRequirementChoices)),
-  bedFees: z.string(),
-  programFees: z.string(),
+  bedFees: z.string().trim(),
+  programFees: z.string().trim(),
   entryInfo: z.string(),
 });
 

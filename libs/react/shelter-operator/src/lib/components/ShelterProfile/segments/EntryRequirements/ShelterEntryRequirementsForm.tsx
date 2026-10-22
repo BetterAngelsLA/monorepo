@@ -10,6 +10,7 @@ import { Form } from '../../../form/Form';
 import {
   ENTRY_REQUIREMENT_OPTIONS,
   REFERRAL_REQUIREMENT_OPTIONS,
+  SEARCHABLE_DROPDOWN_MIN,
   VACCINATION_REQUIREMENT_OPTIONS,
 } from '../../constants';
 import {
@@ -86,10 +87,14 @@ export function ShelterEntryRequirementsForm(props: TProps) {
                     field.value.includes(o.value),
                   )}
                   options={ENTRY_REQUIREMENT_OPTIONS}
+                  isSearchable={
+                    ENTRY_REQUIREMENT_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
+                  }
                   onChange={(options) => {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -105,10 +110,15 @@ export function ShelterEntryRequirementsForm(props: TProps) {
                     field.value.includes(o.value),
                   )}
                   options={REFERRAL_REQUIREMENT_OPTIONS}
+                  isSearchable={
+                    REFERRAL_REQUIREMENT_OPTIONS.length >
+                    SEARCHABLE_DROPDOWN_MIN
+                  }
                   onChange={(options) => {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -130,6 +140,7 @@ export function ShelterEntryRequirementsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -140,6 +151,7 @@ export function ShelterEntryRequirementsForm(props: TProps) {
                 <Input
                   label="Bed Fees"
                   dataType="string"
+                  maxLength={255}
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -157,6 +169,7 @@ export function ShelterEntryRequirementsForm(props: TProps) {
                 <Input
                   label="Program Fees"
                   dataType="string"
+                  maxLength={255}
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
