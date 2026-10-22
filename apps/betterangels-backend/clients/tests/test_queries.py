@@ -183,8 +183,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }}
         """
 
-        # Warm waffle cache so is_imgproxy_enabled() doesn't add a flaky extra query
-        # when resolving profilePhoto.url for each result.
+        # Keep the switch cached; a lookup inside the count assertion below
+        # would otherwise be an extra query.
         waffle.switch_is_active(IMGPROXY_SWITCH)
 
         expected_query_count = 4
