@@ -2,15 +2,18 @@ import {
   DemographicChoices,
   enumDisplayAccessibilityChoices,
   enumDisplayDemographics,
+  enumDisplayEntryRequirementChoices,
   enumDisplayExitPolicyChoices,
   enumDisplayFunderChoices,
   enumDisplayParkingChoices,
   enumDisplayPetChoices,
+  enumDisplayReferralRequirementChoices,
   enumDisplayRoomStyles,
   enumDisplayShelterChoices,
   enumDisplayShelterProgramChoices,
   enumDisplaySpecialSituationRestrictionChoices,
   enumDisplayStorageChoices,
+  enumDisplayVaccinationRequirementChoices,
   enumStatusChoices,
   ExitPolicyChoices,
   FunderChoices,
@@ -66,6 +69,18 @@ export const PARKING_OPTIONS = toDropdownOptions(enumDisplayParkingChoices, [
 export const EXIT_POLICY_OPTIONS = toDropdownOptions(
   enumDisplayExitPolicyChoices,
   [ExitPolicyChoices.Other],
+);
+
+export const ENTRY_REQUIREMENT_OPTIONS = toDropdownOptions(
+  enumDisplayEntryRequirementChoices,
+);
+
+export const REFERRAL_REQUIREMENT_OPTIONS = toDropdownOptions(
+  enumDisplayReferralRequirementChoices,
+);
+
+export const VACCINATION_REQUIREMENT_OPTIONS = toDropdownOptions(
+  enumDisplayVaccinationRequirementChoices,
 );
 
 export const SHELTER_PROGRAMS_OPTIONS = toDropdownOptions(

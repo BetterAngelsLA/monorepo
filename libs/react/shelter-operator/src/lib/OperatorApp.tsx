@@ -35,6 +35,7 @@ import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
   ShelterEcosystemPage,
+  ShelterEntryRequirementsPage,
   ShelterMediaPage,
   ShelterOperatingHoursPage,
   ShelterPoliciesPage,
@@ -99,6 +100,10 @@ export function OperatorApp() {
             <Route
               path={profileRouteConfig.children.sleepingDetails}
               element={<ShelterSleepingDetailsPage />}
+            />
+            <Route
+              path={profileRouteConfig.children.entryRequirements}
+              element={<ShelterEntryRequirementsPage />}
             />
             <Route
               path={profileRouteConfig.children.services}
