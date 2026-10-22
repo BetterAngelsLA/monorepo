@@ -186,9 +186,15 @@ export function createUserProvider<
           extensions?: Record<string, unknown>;
         }[];
       }) => {
+        // A payload without a user is not a sign-out — that is the
+        // `isUnauthenticated` branch. It is a read that resolved empty (a
+        // failed request under `errorPolicy: 'all'`, a reset cache, one that
+        // resolved across a local write), and keeping the previous user is what
+        // stops one empty read from blanking every permission and the org list
+        // until the next successful one.
         if (isUnauthenticated(res.errors)) {
           setUser(undefined);
-        } else {
+        } else if (res.data?.currentUser != null) {
           // Functional update so `parseUser` sees the user already in context:
           // a read issued before a local write can resolve after it, and the
           // app decides what wins rather than the resolution order doing so.

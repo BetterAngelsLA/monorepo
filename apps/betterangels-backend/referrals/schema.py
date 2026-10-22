@@ -12,7 +12,7 @@ from strawberry_django.pagination import OffsetPaginated
 from accounts.models import User
 from clients.models import ClientProfile
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import ORG_PERMISSION_DENIED_MESSAGE, org_or_deny
+from common.graphql.utils import org_or_deny
 from common.permissions.utils import IsAuthenticated, require_can
 from common.utils import get_or_none
 from referrals.models import Referral
@@ -29,17 +29,16 @@ from .types import (
 
 def _active_organization_id(info: Info) -> int | None:
     """The ``X-Organization-ID`` view hint: narrows a finite scope, never grants
-    (ADR 0001 §2.1 rule 3).  A malformed value denies rather than escaping as a
-    ``ValueError``.
+    (ADR 0001 §2.1 rule 3).  A value that does not parse is treated as absent —
+    a hint that cannot be read simply does not narrow, and the grant scope still
+    bounds the result.
     """
     request = getattr(info.context, "request", None)
     raw = getattr(request, "organization_id", None)
-    if not raw:
-        return None
     try:
-        return int(raw)
-    except (TypeError, ValueError) as exc:
-        raise PermissionDenied(ORG_PERMISSION_DENIED_MESSAGE) from exc
+        return int(raw) if raw else None
+    except TypeError, ValueError:
+        return None
 
 
 def _target_organization(info: Info, requested: str | None) -> Organization:
@@ -96,12 +95,11 @@ class Mutation:
         organization = _target_organization(info, data.organization_id)
         require_can(current_user, Referral.perms.ADD, org=organization)
 
-        referral_data = asdict(data)
-        client_profile = get_or_none(ClientProfile.objects.all(), referral_data.pop("client_profile"))
+        client_profile = get_or_none(ClientProfile.objects.all(), data.client_profile)
         if client_profile is None:
             raise ValidationError({"client_profile": "Client profile not found."})
 
-        shelter = get_or_none(Shelter.objects.all(), referral_data.pop("shelter"))
+        shelter = get_or_none(Shelter.objects.all(), data.shelter)
         if shelter is None:
             raise ValidationError({"shelter": "Shelter not found."})
 
@@ -110,7 +108,7 @@ class Mutation:
             organization=organization,
             client_profile=client_profile,
             shelter=shelter,
-            notes=str(referral_data.get("notes")) if referral_data.get("notes") else None,
+            notes=str(data.notes) if data.notes else None,
         )
         return cast(ReferralType, referral)
 

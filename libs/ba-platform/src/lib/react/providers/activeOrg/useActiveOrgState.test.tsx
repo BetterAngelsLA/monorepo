@@ -254,25 +254,6 @@ describe('useActiveOrgState', () => {
     expect(getActiveOrgId()).toBe('org-2');
   });
 
-  it('keeps the active org permissions while the org list is refetching', async () => {
-    // `organizations` goes undefined during a currentUser refetch (e.g. right
-    // after creating a client). Reading that as "no permissions" blinked every
-    // org-scoped control — the Referrals tab among them — out of existence.
-    configureActiveOrgStorage(createSyncStorage());
-    const orgs = [makeOrg({ permissions: ['referrals.view_referral'] })];
-
-    const { result, rerender } = await renderHook(
-      (props: { organizations: Org[] | undefined }) =>
-        useActiveOrgState(props.organizations),
-      { initialProps: { organizations: orgs } },
-    );
-    expect(result.current.hasPermission('referrals.view_referral')).toBe(true);
-
-    await rerender({ organizations: undefined });
-
-    expect(result.current.hasPermission('referrals.view_referral')).toBe(true);
-  });
-
   it('still defaults a genuinely org-less user to nothing', async () => {
     configureActiveOrgStorage(createSyncStorage());
 

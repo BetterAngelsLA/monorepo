@@ -1,7 +1,7 @@
 import { isPermission } from '@monorepo/ba-platform/permissions';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo } from 'react';
 
 import {
   pushActiveOrgSource,
@@ -75,40 +75,40 @@ export function useActiveOrgState(
   // ``app.codename`` strings are filtered once here, so ``activeOrg`` and
   // ``organizations`` never leak a permission ``hasPermission`` cannot check.
   //
-  // The last known list stays on screen while a refetch is in flight. Reading
-  // `undefined` as "no permissions" blinked every org-scoped control — the
-  // Referrals tab among them — out of existence after a mutation invalidated the
-  // user query. The remaining `?? []` is for rendering only; the store is told
-  // "unknown" separately, by the `null` reader below.
-  const lastKnownOrgs = useRef<Org[] | undefined>(undefined);
-  if (organizations !== undefined) lastKnownOrgs.current = organizations;
-  const visibleOrgs = organizations ?? lastKnownOrgs.current;
-
+  // The `?? []` is for *rendering* only — it does not decide the "list not loaded
+  // yet" case. The store is never handed this array while the list is unknown:
+  // the effect below pushes no source in that state. Keep both halves of that:
+  // pushing an empty list would read as "belongs to nothing" and would also
+  // shadow an outer provider's list, which is what keeps requests attributed
+  // during a refetch. Pinned by the "before the organization list is known",
+  // "before the org list loads" and "genuinely org-less user" tests.
   const cleanOrgs = useMemo(
     () =>
-      (visibleOrgs ?? []).map((org) => ({
+      (organizations ?? []).map((org) => ({
         ...org,
         permissions: (org.permissions ?? []).filter(isPermission),
       })),
-    [visibleOrgs],
+    [organizations],
   );
 
-  // Where the store learns who the user belongs to. The reader goes through the
-  // same retained ref, so it survives the refetch window above: unloading it
-  // falls the store back to the remembered *choice*, which is nothing on a fresh
-  // launch, taking the derived id with it. `null` means "not known yet" —
-  // deliberately distinct from `[]` ("belongs to nothing").
+  // This is where the store learns who the user belongs to. `undefined` means
+  // "not known yet", which is not the same as belonging to nothing: requests keep
+  // the remembered id in that window rather than going out unattributed.
   //
-  // A layout effect because a child's query can be issued from a passive effect
-  // and has to see it. Disposed from the cleanup, so an unmounting or changing
-  // provider restores whatever sits beneath it.
+  // A layout effect because a query issued from a child's passive effect has to
+  // see it, and layout effects all run before any of those. The push is legal
+  // here (an effect, not a render).
+  //
+  // Disposed from the cleanup, so an unmounting (or changing) provider restores
+  // whatever was installed beneath it — nesting is real: shelter-web mounts one
+  // provider around the app and another inside it on /operator.
   useLayoutEffect(() => {
-    // Nothing known yet and nothing remembered: leave the slot alone so an outer
-    // provider's list stays in play. Once this provider has seen a list, its
-    // reader answers with the last known one instead.
-    if (lastKnownOrgs.current === undefined) return;
+    // Nothing to contribute while the list is unknown: leaving the slot alone
+    // lets an outer provider's list stay in play, which is what keeps requests
+    // attributed during a refetch.
+    if (organizations === undefined) return;
 
-    return pushActiveOrgSource(() => lastKnownOrgs.current ?? null);
+    return pushActiveOrgSource(() => cleanOrgs);
   }, [organizations, cleanOrgs]);
 
   // No reconciliation: the store derives the id from the same two inputs this

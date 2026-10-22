@@ -301,7 +301,7 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         # no payload org and no header.  Fail closed rather than guess.
         variables = self._create_data(self.org_1.id)
         del variables["data"]["organizationId"]
-        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+        self._clear_active_org()
 
         payload = self.execute_graphql(CREATE_MUTATION, variables)
 
@@ -384,13 +384,15 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(ids, {str(self.referral_1.pk), str(self.referral_2.pk)})
 
-    def test_malformed_header_is_a_permission_error(self) -> None:
+    def test_malformed_header_does_not_narrow(self) -> None:
+        # The header is a hint, not authority: a value that cannot be read as an
+        # org id is treated as absent, and the grant scope still bounds the list.
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "abc"
 
         payload = self.execute_graphql(LIST_QUERY)
 
-        self.assertTrue(payload.get("errors"), payload)
-        self.assertNotIn("invalid literal", str(payload))
+        self.assertFalse(payload.get("errors"), payload)
+        self.assertEqual({row["id"] for row in self._results(payload)}, {str(self.referral_1.pk)})
 
     # ── global tier ─────────────────────────────────────────────────────
 
