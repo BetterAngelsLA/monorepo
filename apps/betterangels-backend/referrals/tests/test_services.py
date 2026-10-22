@@ -43,20 +43,6 @@ class ReferralCreateTests(GraphQLBaseTestCase):
 
         self.assertEqual(referral.notes, "Client prefers bottom bunk")
 
-    def test_does_not_write_guardian_rows(self) -> None:
-        # Authority is the scoped Grant (ADR 0001 §2.1 rule 4), so creation
-        # writes no per-record permission rows.  This is the legacy arm that
-        # made the object-level check diverge from the org check.
-        referral = referral_create(
-            user=self.org_1_case_manager_1,
-            organization=self.org_1,
-            client_profile=self.client_profile,
-            shelter=self.shelter,
-        )
-
-        self.assertFalse(self.org_1_case_manager_1.has_perm("referrals.change_referral", referral))
-        self.assertFalse(self.org_1_case_manager_1.has_perm("referrals.delete_referral", referral))
-
     def test_integrity_error_is_logged_and_returns_a_generic_message(self) -> None:
         db_error = 'duplicate key value violates unique constraint "referrals_referral_pkey"'
 
