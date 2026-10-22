@@ -666,7 +666,7 @@ input CreateProfileDataImportInput {
 }
 
 input CreateReferralInput {
-  organizationId: ID!
+  organizationId: ID
   clientProfile: ID!
   shelter: ID!
   notes: String

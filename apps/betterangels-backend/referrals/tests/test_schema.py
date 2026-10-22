@@ -259,13 +259,41 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
         self.assertEqual(Referral.objects.count(), 2)
 
-    def test_create_without_an_organization_is_rejected(self) -> None:
+    def test_create_without_an_organization_is_denied(self) -> None:
+        # Optional for one release, but there is nothing to fall back to here:
+        # no payload org and no header.  Fail closed rather than guess.
         variables = self._create_data(self.org_1.id)
         del variables["data"]["organizationId"]
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
 
         payload = self.execute_graphql(CREATE_MUTATION, variables)
 
-        self.assertTrue(payload.get("errors"), payload)
+        self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
+        self.assertEqual(Referral.objects.count(), 2)
+
+    def test_create_falls_back_to_the_header(self) -> None:
+        # Compatibility for app builds that predate ``organizationId``: the
+        # header names the org, and ``require_can`` authorizes it exactly as the
+        # payload form does.
+        variables = self._create_data(self.org_1.id)
+        del variables["data"]["organizationId"]
+        self._set_active_org(self.org_1)
+
+        payload = self.execute_graphql(CREATE_MUTATION, variables)
+
+        self.assertFalse(payload.get("errors"), payload)
+        created = Referral.objects.exclude(pk__in=[self.referral_1.pk, self.referral_2.pk]).get()
+        self.assertEqual(created.organization, self.org_1)
+
+    def test_create_falling_back_to_the_header_still_requires_the_grant(self) -> None:
+        variables = self._create_data(self.org_1.id)
+        del variables["data"]["organizationId"]
+        self.org_2.add_user(self.org_1_case_manager_1)
+        self._set_active_org(self.org_2)
+
+        payload = self.execute_graphql(CREATE_MUTATION, variables)
+
+        self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
         self.assertEqual(Referral.objects.count(), 2)
 
     def test_create_ignores_the_header(self) -> None:

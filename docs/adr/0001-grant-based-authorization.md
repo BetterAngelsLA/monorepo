@@ -781,7 +781,8 @@ still needs at its cutover:
 > inert), and the resolvers use `visible()`/`require_can()` — the
 > `HasPerm`/`HasRetvalPerm`/`PermissionedQuerySet` directives are gone. Creation takes
 > an explicit `organizationId` input (the `X-Organization-ID` header is no longer read
-> for authority) and writes no guardian rows. Because `_resolve_org_paths` still has no
+> for authority; it is a one-release fallback for selecting the org) and writes no
+> guardian rows. Because `_resolve_org_paths` still has no
 > "own org **or** via shelter" form, the cutover deliberately preserves the pre-existing
 > scope: a referral is reachable in its own `organization` only. Reaching it through the
 > shelter's organization remains a product decision that needs the extension above.
