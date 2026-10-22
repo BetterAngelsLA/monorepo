@@ -222,3 +222,63 @@ describe('UserProvider parseUser receives the current user', () => {
     );
   });
 });
+
+describe('UserProvider keeps the user across an empty read', () => {
+  // An empty payload is not a sign-out — `isUnauthenticated` is. It is a read
+  // that resolved empty (a failed request under `errorPolicy: 'all'`, a reset
+  // cache, one that resolved across a local write). Replacing the user with
+  // `undefined` there blanked every permission and the org list until the next
+  // successful read, which is what removed the Referrals tab after a mutation.
+  const loaded = () => ({
+    data: { currentUser: { permissions: [ShelterPermissions.Add] } },
+    loading: false,
+    error: undefined,
+    refetch: vi.fn(),
+  });
+  const empty = () => ({
+    data: undefined,
+    loading: false,
+    error: new Error('network'),
+    refetch: vi.fn(),
+  });
+
+  beforeEach(() => {
+    mockUseQuery.mockReset();
+  });
+
+  it('keeps the previous user', () => {
+    mockUseQuery.mockReturnValue(loaded());
+    const { rerender } = render(
+      <UserProvider>
+        <PermissionProbe />
+      </UserProvider>,
+    );
+    expect(screen.getByTestId('probe').textContent).toBe('true:false');
+
+    mockUseQuery.mockReturnValue(empty());
+    rerender(
+      <UserProvider>
+        <PermissionProbe />
+      </UserProvider>,
+    );
+
+    expect(screen.getByTestId('probe').textContent).toBe('true:false');
+  });
+
+  it('still starts empty before the first read resolves', () => {
+    mockUseQuery.mockReturnValue({
+      data: undefined,
+      loading: true,
+      error: undefined,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <UserProvider>
+        <PermissionProbe />
+      </UserProvider>,
+    );
+
+    expect(screen.getByTestId('probe').textContent).toBe('false:false');
+  });
+});
