@@ -25,10 +25,8 @@ def referral_create(
 ) -> Referral:
     """Create a referral in *organization*.
 
-    Authority is the caller's scoped ``Caseworker`` Grant at *organization*,
-    checked by the resolver with ``require_can`` (no row exists yet, so there is
-    nothing to scope).  No guardian rows are written: ADR 0001 §2.1 rule 4 —
-    authority comes from the Grant, not a per-record copy at creation.
+    Authority is checked by the resolver; no guardian rows are written (ADR 0001
+    §2.1 rule 4).
     """
     referral = Referral(
         client_profile=client_profile,
