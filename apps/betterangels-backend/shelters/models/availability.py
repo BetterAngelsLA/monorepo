@@ -15,7 +15,11 @@ from .shelter import Shelter
     pghistory.UpdateEvent("shelter.availability.update"),
     pghistory.DeleteEvent("shelter.availability.remove"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelteravail_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="shelteravail_evt_obj_idx"),
+            models.Index(fields=["shelter", "pgh_id"], name="shelteravail_evt_shltr_idx"),
+            models.Index(fields=["pgh_created_at"], name="shelteravail_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )
