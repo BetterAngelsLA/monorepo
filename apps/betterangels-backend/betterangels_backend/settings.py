@@ -530,6 +530,8 @@ CKEDITOR_5_CONFIGS = {
 }
 
 # Test Runner
+# ``manage.py test`` delegates to pytest.  ``pytest_django`` is a dev
+# dependency, so this only resolves where dev dependencies are installed.
 TEST_RUNNER = "pytest_django.runner.TestRunner"
 
 SITE_ID = 1

@@ -183,7 +183,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }}
         """
 
-        # Keep the switch lookup out of the count below.
+        # Keep the switch cached; a lookup inside the count assertion below
+        # would otherwise be an extra query.
         waffle.switch_is_active(IMGPROXY_SWITCH)
 
         expected_query_count = 4

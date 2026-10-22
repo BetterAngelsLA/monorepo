@@ -3,8 +3,9 @@
 Selected with ``DJANGO_SETTINGS_MODULE=betterangels_backend.settings_test``
 (see ``pyproject.toml``).  Test-only; production settings are unchanged.
 
-* ``DEBUG = False`` — Django otherwise wraps every cursor in
-  ``CursorDebugWrapper`` and keeps ``connection.queries`` for the whole run.
+* ``DEBUG = False`` — pytest-django already forces this (``django_debug_mode``
+  defaults to false); kept explicit so the module is self-describing and so
+  the value is right if these settings are loaded outside pytest.
 * A process-local ``LocMemCache`` — the suite has tests that call
   ``cache.clear()`` (the region density tests).  Against Redis that is
   ``FLUSHDB``, which wipes the cache for every xdist worker and logs their

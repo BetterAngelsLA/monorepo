@@ -83,7 +83,7 @@ Once started, you can access the Django development server at
 
 #### Running Tests
 
-The backend suite runs under **pytest**. Test runs use
+The backend suite runs under **pytest**. Both `pytest` and `manage.py test` use
 `betterangels_backend.settings_test` automatically; see [Test settings](#test-settings).
 `manage.py test` delegates to pytest through pytest-django's built-in runner
 (`pytest_django.runner.TestRunner`), so it keeps `conftest.py`, fixtures and
@@ -95,7 +95,7 @@ To run the full test suite:
 yarn nx test betterangels-backend
 ```
 
-To run an individual test, add the full path of the test in dot notation. Example:
+To run an individual test, pass its pytest node ID. Example:
 
 ```bash
 yarn nx test betterangels-backend accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
@@ -129,7 +129,8 @@ The built-in runner does not accept Django's `--parallel`; use pytest's `-n`.
 
 `betterangels_backend/settings_test.py` inherits the normal settings and then:
 
-- sets `DEBUG = False` (otherwise Django keeps every query for the whole run),
+- forces `DEBUG = False` (pytest-django's `django_debug_mode` already defaults
+  to false; kept explicit so the module is self-describing),
 - uses a process-local `LocMemCache`: the region tests call `cache.clear()`,
   which against Redis is `FLUSHDB` and logs out every other parallel worker.
   The cache session backend's TTL follows `time_machine`, so
@@ -159,16 +160,21 @@ running the suite by hand behaves the same way everywhere.
 
 #### Stale test databases
 
-`--reuse-db` is the default, so `test_postgres` survives between runs. After
+`--reuse-db` is the default, so the test databases survive between runs. After
 pulling migrations, switching branches, or seeing failures like
-`relation "…" does not exist` in an app you did not touch, rebuild it:
+`relation "…" does not exist` in an app you did not touch, rebuild them:
 
 ```bash
-uv run pytest --create-db
+uv run pytest -n logical --create-db
 ```
 
-(`--create-db` drops the database; see the warning above if other worktrees are
-using it.)
+`--create-db` drops the databases the run is about to use; see the warning
+above if other worktrees are using them. Under `-n logical` every worker gets
+its own database (`test_postgres_gw0`, …), so a **serial**
+`uv run pytest --create-db` only rebuilds `test_postgres` — the existing
+`test_postgres_gw*` databases are reused on the next parallel run and stay
+stale. If you changed the worker count or want to start clean, drop them and
+rerun with `-n logical --create-db`.
 
 #### Debugging Tests
 

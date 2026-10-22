@@ -1,7 +1,6 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-import pytest
 import waffle
 from django.test import TestCase
 from model_bakery import baker
@@ -16,9 +15,14 @@ from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.utils import ShelterTestCase
 
 
-@pytest.fixture(autouse=True)
 def _warm_imgproxy_switch() -> None:
-    """Keep the switch cached; a lookup inside a count assertion adds a query."""
+    """Keep the switch cached; a lookup inside a count assertion adds a query.
+
+    Called from ``setUp`` rather than from a pytest fixture: the class-level
+    ``override_switch`` runs ``enable()`` inside ``setUp`` and flushes waffle's
+    cache whenever it has to activate the row, so a fixture that warms before
+    ``setUp`` is discarded whenever the switch was not already seeded.
+    """
     waffle.switch_is_active(IMGPROXY_SWITCH)
 
 
@@ -48,6 +52,7 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        _warm_imgproxy_switch()
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.graphql_client.force_login(self.operator)
 
@@ -213,6 +218,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        _warm_imgproxy_switch()
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.graphql_client.force_login(self.operator)
 
@@ -465,6 +471,7 @@ class DeleteShelterPhotosMutationTest(ShelterTestCase, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        _warm_imgproxy_switch()
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.graphql_client.force_login(self.operator)
 
@@ -557,6 +564,7 @@ class UpdateShelterPhotoMutationTest(ShelterTestCase, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        _warm_imgproxy_switch()
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.graphql_client.force_login(self.operator)
 
@@ -672,6 +680,7 @@ class ShelterPhotoMutationPermissionTestCase(ShelterTestCase, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        _warm_imgproxy_switch()
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.graphql_client.force_login(self.operator)
         self.viewer = baker.make(User)

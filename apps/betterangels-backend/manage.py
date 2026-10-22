@@ -38,7 +38,15 @@ _silence_geos_gevent_warnings()
 
 def main() -> None:
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "betterangels_backend.settings")
+    # ``manage.py test`` delegates to pytest, but Django is already initialized
+    # by the time pytest-django runs, and pytest-django prefers the
+    # ``DJANGO_SETTINGS_MODULE`` environment variable over the pyproject ini
+    # value.  Point it at the test settings so ``manage.py test`` and plain
+    # ``pytest`` use the same (parallel-safe) settings.
+    os.environ.setdefault(
+        "DJANGO_SETTINGS_MODULE",
+        "betterangels_backend.settings_test" if sys.argv[1:2] == ["test"] else "betterangels_backend.settings",
+    )
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
