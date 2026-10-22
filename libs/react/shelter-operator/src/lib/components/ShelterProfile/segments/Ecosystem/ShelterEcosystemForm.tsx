@@ -252,7 +252,9 @@ export function ShelterEcosystemForm(props: TProps) {
               inputName="shelterProgramsOther"
               label="Shelter Programs"
               inputLabel="Other Shelter Program"
-              isSearchable={cities.length > SEARCHABLE_DROPDOWN_MIN}
+              isSearchable={
+                SHELTER_PROGRAMS_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
+              }
               options={SHELTER_PROGRAMS_OPTIONS}
               triggerValue={ShelterProgramChoices.Other}
               inputError={errors.shelterProgramsOther?.message}
@@ -266,7 +268,7 @@ export function ShelterEcosystemForm(props: TProps) {
               inputName="fundersOther"
               label="Funders"
               inputLabel="Other Funder"
-              isSearchable={cities.length > SEARCHABLE_DROPDOWN_MIN}
+              isSearchable={FUNDERS_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN}
               options={FUNDERS_OPTIONS}
               triggerValue={FunderChoices.Other}
               inputError={errors.fundersOther?.message}
