@@ -12,7 +12,11 @@ import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 
 const flags = vi.hoisted(() => ({ referrals: false, canView: true }));
 
-vi.mock('@monorepo/ba-platform', () => ({
+// Partial mock: the real module stays in place, so an import the component
+// grows later fails loudly instead of resolving to `undefined` from an empty
+// mock.
+vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
   useActiveOrg: () => ({
     hasPermission: () => flags.canView,
   }),
