@@ -784,7 +784,12 @@ still needs at its cutover:
 > for authority; it is a one-release fallback for selecting the org) and writes no
 > guardian rows. Because `_resolve_org_paths` still has no
 > "own org **or** via shelter" form, the cutover deliberately preserves the pre-existing
-> scope: a referral is reachable in its own `organization` only. Reaching it through the
+> scope: a referral is reachable in its own `organization` only. Reads are org-tier —
+> every caseworker at the org sees the org's referrals, not only the ones they created
+> (the pre-cutover selector filtered `created_by`). `Referral.organization` stays
+> nullable (`SET_NULL`) and `visible()` filters on it, so an org-less row — including
+> one orphaned by deleting an organization — is unreachable through grants and only the
+> global tier sees it. Reaching a referral through the
 > shelter's organization remains a product decision that needs the extension above.
 
 "Mechanical" here means the *domain path* is clean: org-scoped with no guardian rows
