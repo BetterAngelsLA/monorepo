@@ -50,7 +50,9 @@ def _target_organization(info: Info, requested: str | None) -> Organization:
     """
     raw = requested or _active_organization_id(info)
     if raw is None:
-        raise PermissionDenied("Select an organization to create this referral.")
+        # Not a permission problem: the caller may well be allowed to create,
+        # they just did not say where.  A field error says that honestly.
+        raise ValidationError({"organization_id": "Select an organization to create this referral."})
     return org_or_deny(raw)
 
 
