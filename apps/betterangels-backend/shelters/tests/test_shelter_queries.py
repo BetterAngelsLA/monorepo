@@ -1,13 +1,10 @@
 import datetime
 from unittest.mock import ANY, Mock, patch
 
-import waffle
 from django.test import override_settings
 from places import Places
-from waffle.testutils import override_switch
 
 from accounts.tests.baker_recipes import organization_recipe
-from common.imgproxy import IMGPROXY_SWITCH
 from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import (
     AccessibilityChoices,
@@ -52,12 +49,10 @@ from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
 
 
 @override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
-@override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.setup_shelter_graphql_fixtures()
-        waffle.switch_is_active(IMGPROXY_SWITCH)
 
     @patch("common.graphql.types.build_img_url")
     def test_shelter_query(self, mock_build_img_url: Mock) -> None:
