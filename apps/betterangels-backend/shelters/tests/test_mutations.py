@@ -533,6 +533,10 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                         website
                         instagram
                         isPrivate
+                        totalBeds
+                        roomStylesOther
+                        bedFees
+                        programFees
                     }
                 }
             }
@@ -548,6 +552,10 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                 "website": "https://shelter.org",
                 "instagram": "@helloInstaHandle",
                 "isPrivate": True,
+                "totalBeds": 42,
+                "roomStylesOther": "Updated room styles other",
+                "bedFees": "Updated bed fees",
+                "programFees": "Updated program fees",
             }
         }
 
@@ -563,6 +571,10 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(result["website"], "https://shelter.org")
         self.assertEqual(result["instagram"], "@helloInstaHandle")
         self.assertTrue(result["isPrivate"])
+        self.assertEqual(result["totalBeds"], 42)
+        self.assertEqual(result["roomStylesOther"], "Updated room styles other")
+        self.assertEqual(result["bedFees"], "Updated bed fees")
+        self.assertEqual(result["programFees"], "Updated program fees")
 
     def test_update_shelter_patch_semantics(self) -> None:
         """Fields absent from UpdateShelterInput are not overwritten."""

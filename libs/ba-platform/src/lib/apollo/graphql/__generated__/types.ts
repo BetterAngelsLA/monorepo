@@ -4073,6 +4073,7 @@ export type UpdateShelterInput = {
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
   additionalContacts?: InputMaybe<Array<ShelterContactInfoInput>>;
+  bedFees?: InputMaybe<Scalars['String']['input']>;
   citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   cityId?: InputMaybe<Scalars['ID']['input']>;
@@ -4102,8 +4103,10 @@ export type UpdateShelterInput = {
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
   phone?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  programFees?: InputMaybe<Scalars['String']['input']>;
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
+  roomStylesOther?: InputMaybe<Scalars['String']['input']>;
   schedules?: InputMaybe<Array<ScheduleInput>>;
   services?: InputMaybe<Array<ServiceInput>>;
   shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
@@ -4116,6 +4119,7 @@ export type UpdateShelterInput = {
   storage?: InputMaybe<Array<StorageChoices>>;
   subjectiveReview?: InputMaybe<Scalars['String']['input']>;
   supervisorialDistrict?: InputMaybe<Scalars['Int']['input']>;
+  totalBeds?: InputMaybe<Scalars['Int']['input']>;
   vaccinationRequirement?: InputMaybe<Array<VaccinationRequirementChoices>>;
   visitorsAllowed?: InputMaybe<Scalars['Boolean']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;

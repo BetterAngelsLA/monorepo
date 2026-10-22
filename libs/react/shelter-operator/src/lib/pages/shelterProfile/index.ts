@@ -6,3 +6,4 @@ export { ShelterMediaPage } from './MediaPage';
 export { ShelterOperatingHoursPage } from './OperatingHoursPage';
 export { ShelterPoliciesPage } from './PoliciesPage';
 export { ShelterServicesPage } from './ServicesPage';
+export { ShelterSleepingDetailsPage } from './SleepingDetailsPage';

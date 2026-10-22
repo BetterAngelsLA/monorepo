@@ -14,7 +14,12 @@
     },
     "build": {
       "executor": "@nx/storybook:build",
-      "inputs": ["production", "^production", "{projectRoot}/.storybook/**/*"],
+      "inputs": [
+        "production",
+        "^production",
+        "{projectRoot}/.storybook/**/*",
+        "{workspaceRoot}/tools/shared/**/*"
+      ],
       "outputs": ["{workspaceRoot}/dist/apps/storybook-react"],
       "options": {
         "configDir": "apps/storybook-react/.storybook",

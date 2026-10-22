@@ -169,6 +169,8 @@ class UpdateShelterInput:
     phone: Maybe[Optional[PhoneNumberScalar]] = UNSET
     add_notes_sleeping_details: Maybe[Optional[str]] = UNSET
     add_notes_shelter_details: Maybe[Optional[str]] = UNSET
+    total_beds: Maybe[Optional[int]] = UNSET
+    room_styles_other: Maybe[Optional[str]] = UNSET
     max_stay: Maybe[Optional[int]] = UNSET
     on_site_security: Maybe[Optional[bool]] = UNSET
     visitors_allowed: Maybe[Optional[bool]] = UNSET
@@ -177,6 +179,8 @@ class UpdateShelterInput:
     other_rules: Maybe[Optional[str]] = UNSET
     other_services: Maybe[Optional[str]] = UNSET
     entry_info: Maybe[Optional[str]] = UNSET
+    bed_fees: Maybe[Optional[str]] = UNSET
+    program_fees: Maybe[Optional[str]] = UNSET
     subjective_review: Maybe[Optional[str]] = UNSET
     overall_rating: Maybe[Optional[int]] = UNSET
     declined_ba_visit: Maybe[Optional[bool]] = UNSET
