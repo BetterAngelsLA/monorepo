@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from organizations.models import Organization
 
     from accounts.models import PermissionGroup
+    from teams.models import Team
 
 
 # ---------------------------------------------------------------------------
@@ -231,10 +232,33 @@ def make_legacy_only_holder(*, organization: Organization, template_name: str, u
 class GraphQLBaseTestCase(
     GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase
 ):
+    user_labels: List[str]
+    user_map: Dict[str, User]
+    org_1: Organization
+    org_2: Organization
+    org_1_team_1: Team
+    org_1_team_2: Team
+    org_2_team_1: Team
+    org_1_case_manager_1: User
+    org_1_case_manager_2: User
+    org_2_case_manager_1: User
+    non_case_manager_user: User
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        """Build the shared org/user/team graph once per test class.
+
+        Rebuilding it in ``setUp`` cost ~164 queries for every test: two
+        organizations with full permission presets, three teams, and the
+        case-worker role assignments.  ``TestCase`` rolls each test back into
+        the class-level data, so a test's writes cannot escape it.
+        """
+        cls._setup_users()
+        cls._setup_groups_and_permissions()
+
     def setUp(self) -> None:
         super().setUp()
-        self._setup_users()
-        self._setup_groups_and_permissions()
+        self._refresh_shared_fixtures()
 
         # This is for the address used by most tests
         self.street = "106 West 1st Street"
@@ -242,44 +266,62 @@ class GraphQLBaseTestCase(
         self.state = "CA"
         self.zip_code = "90012"
 
-    def _setup_users(self) -> None:
-        self.user_labels = [
+    def _refresh_shared_fixtures(self) -> None:
+        """Re-read the class-level rows after the previous test's rollback.
+
+        Rollback restores the database but not the Python objects' attribute
+        cache, and a handful of tests rename or deactivate a shared user/org.
+        """
+        for obj in (
+            self.org_1,
+            self.org_2,
+            self.org_1_team_1,
+            self.org_1_team_2,
+            self.org_2_team_1,
+            *self.user_map.values(),
+        ):
+            obj.refresh_from_db()
+
+    @classmethod
+    def _setup_users(cls) -> None:
+        cls.user_labels = [
             "org_1_case_manager_1",
             "org_1_case_manager_2",
             "org_2_case_manager_1",
             "non_case_manager_user",
         ]
-        self.user_map = {
-            user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}") for user_label in self.user_labels
+        cls.user_map = {
+            user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}") for user_label in cls.user_labels
         }
-        self.org_1_case_manager_1 = self.user_map["org_1_case_manager_1"]
-        self.org_1_case_manager_2 = self.user_map["org_1_case_manager_2"]
-        self.org_2_case_manager_1 = self.user_map["org_2_case_manager_1"]
-        self.non_case_manager_user = self.user_map["non_case_manager_user"]
+        cls.org_1_case_manager_1 = cls.user_map["org_1_case_manager_1"]
+        cls.org_1_case_manager_2 = cls.user_map["org_1_case_manager_2"]
+        cls.org_2_case_manager_1 = cls.user_map["org_2_case_manager_1"]
+        cls.non_case_manager_user = cls.user_map["non_case_manager_user"]
 
-    def _setup_groups_and_permissions(self) -> None:
+    @classmethod
+    def _setup_groups_and_permissions(cls) -> None:
         from notes.groups import CASEWORKER
         from teams.models import Team
 
-        self.org_1 = organization_recipe.make(name="org_1")
-        self.org_2 = organization_recipe.make(name="org_2")
+        cls.org_1 = organization_recipe.make(name="org_1")
+        cls.org_2 = organization_recipe.make(name="org_2")
 
         # Two in org_1 so a multi-value ``teamIds`` filter has something to sort;
         # one in org_2 for cross-org tests.
-        self.org_1_team_1 = baker.make(Team, organization=self.org_1)
-        self.org_1_team_2 = baker.make(Team, organization=self.org_1)
-        self.org_2_team_1 = baker.make(Team, organization=self.org_2)
+        cls.org_1_team_1 = baker.make(Team, organization=cls.org_1)
+        cls.org_1_team_2 = baker.make(Team, organization=cls.org_1)
+        cls.org_2_team_1 = baker.make(Team, organization=cls.org_2)
 
         # Permission groups are created by create_organization_with_presets
         # (via the recipe helper). Roles are assigned explicitly instead of
         # relying on the deleted handle_organization_user_added signal.
-        self.org_1.add_user(self.org_1_case_manager_1)
-        self.org_1.add_user(self.org_1_case_manager_2)
-        self.org_2.add_user(self.org_2_case_manager_1)
+        cls.org_1.add_user(cls.org_1_case_manager_1)
+        cls.org_1.add_user(cls.org_1_case_manager_2)
+        cls.org_2.add_user(cls.org_2_case_manager_1)
 
-        OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_1, CASEWORKER)
-        OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_2, CASEWORKER)
-        OrgRoleManager(self.org_2).add_roles(self.org_2_case_manager_1, CASEWORKER)
+        OrgRoleManager(cls.org_1).add_roles(cls.org_1_case_manager_1, CASEWORKER)
+        OrgRoleManager(cls.org_1).add_roles(cls.org_1_case_manager_2, CASEWORKER)
+        OrgRoleManager(cls.org_2).add_roles(cls.org_2_case_manager_1, CASEWORKER)
 
     def _grant_permission(
         self,
