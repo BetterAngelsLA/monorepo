@@ -297,13 +297,12 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(Referral.objects.count(), 2)
 
     def test_create_without_an_organization_is_rejected(self) -> None:
-        # Optional for one release, but there is nothing to fall back to here:
-        # no payload org and no header.  Reject rather than guess — and say so
-        # as a field error, not a permission one: the caller is allowed to
-        # create, they just did not say where.
+        # Optional in the schema for one release, but there is no header
+        # fallback (DEV-2566): reject rather than guess — and say so as a field
+        # error, not a permission one: the caller is allowed to create, they
+        # just did not say where.
         variables = self._create_data(self.org_1.id)
         del variables["data"]["organizationId"]
-        self._clear_active_org()
 
         payload = self.execute_graphql(CREATE_MUTATION, variables)
 
@@ -313,47 +312,9 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(result["messages"][0]["field"], "organizationId", payload)
         self.assertEqual(Referral.objects.count(), 2)
 
-    def test_create_falls_back_to_the_header(self) -> None:
-        # Compatibility for app builds that predate ``organizationId``: the
-        # header names the org, and ``require_can`` authorizes it exactly as the
-        # payload form does.
-        variables = self._create_data(self.org_1.id)
-        del variables["data"]["organizationId"]
-        self._set_active_org(self.org_1)
-
-        payload = self.execute_graphql(CREATE_MUTATION, variables)
-
-        self.assertFalse(payload.get("errors"), payload)
-        created = Referral.objects.exclude(pk__in=[self.referral_1.pk, self.referral_2.pk]).get()
-        self.assertEqual(created.organization, self.org_1)
-
-    def test_create_falling_back_to_the_header_still_requires_the_grant(self) -> None:
-        variables = self._create_data(self.org_1.id)
-        del variables["data"]["organizationId"]
-        self.org_2.add_user(self.org_1_case_manager_1)
-        self._set_active_org(self.org_2)
-
-        payload = self.execute_graphql(CREATE_MUTATION, variables)
-
-        self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
-        self.assertEqual(Referral.objects.count(), 2)
-
-    def test_create_ignores_the_header(self) -> None:
-        # The header is a view hint, never authority: the payload org wins even
-        # when the header names another org the caller has no grant at.
-        self._set_active_org(self.org_2)
-
-        payload = self.execute_graphql(CREATE_MUTATION, self._create_data(self.org_1.id))
-
-        self.assertFalse(payload.get("errors"), payload)
-        created = Referral.objects.exclude(pk__in=[self.referral_1.pk, self.referral_2.pk]).get()
-        self.assertEqual(created.organization, self.org_1)
-
-    def test_create_with_a_blank_organization_id_does_not_fall_back_to_the_header(self) -> None:
-        # An explicitly blank id is not an absent field: it denies. Otherwise a
-        # blank value would silently create in whatever org the header names,
-        # which is the "header as authority" shape this cutover removes.
-        self._set_active_org(self.org_1)
+    def test_create_with_a_blank_organization_id_is_denied(self) -> None:
+        # An explicitly blank id is not an absent field: it denies rather than
+        # guessing an org.  There is no header to fall back to (DEV-2566).
         variables = self._create_data(self.org_1.id)
         variables["data"]["organizationId"] = ""
 
@@ -362,49 +323,40 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
         self.assertEqual(Referral.objects.count(), 2)
 
-    # ── the header narrows, and only narrows ────────────────────────────
+    # ── the retired header is not consulted (DEV-2566) ──────────────────
 
-    def test_header_narrows_a_multi_org_caller(self) -> None:
+    def test_list_includes_every_grant_org(self) -> None:
+        # No header narrows the list any more: a caller with grants in two orgs
+        # sees both orgs' referrals.
         self.org_2.add_user(self.org_1_case_manager_1)
         OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
-        self._set_active_org(self.org_2)
 
         ids = {row["id"] for row in self._results(self.execute_graphql(LIST_QUERY))}
 
-        self.assertEqual(ids, {str(self.referral_2.pk)})
+        self.assertEqual(ids, {str(self.referral_1.pk), str(self.referral_2.pk)})
 
-    def test_single_referral_is_not_confined_by_the_header(self) -> None:
-        # ADR 0001 §2.6: load-by-id is authority-only.  A stale header must not
-        # hide a row the caller's grant reaches.
+    def test_single_referral_is_authority_only(self) -> None:
+        # ADR 0001 §2.6: load-by-id is authority-only, never confined by the
+        # caller's current org context.
         self.org_2.add_user(self.org_1_case_manager_1)
         OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
-        self._set_active_org(self.org_1)
 
         payload = self.execute_graphql(SINGLE_QUERY, {"pk": str(self.referral_2.pk)})
 
         self.assertFalse(payload.get("errors"), payload)
         self.assertEqual(payload["data"]["referral"]["id"], str(self.referral_2.pk))
 
-    def test_header_cannot_widen_the_scope(self) -> None:
-        self._set_active_org(self.org_2)
+    def test_organization_header_is_ignored(self) -> None:
+        # The middleware is gone (DEV-2566). A client that still sends the
+        # header does not narrow the list: the grant scope decides.
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_2.id)
 
         ids = {row["id"] for row in self._results(self.execute_graphql(LIST_QUERY))}
 
-        self.assertEqual(ids, set())
+        self.assertEqual(ids, {str(self.referral_1.pk)})
 
-    def test_header_does_not_confine_a_global_holder(self) -> None:
-        # ADR 0001 §2.4: a global holder is never confined by a stale header.
-        superuser = baker.make(User, is_superuser=True, is_staff=True)
-        self.graphql_client.force_login(superuser)
-        self._set_active_org(self.org_1)
-
-        ids = {row["id"] for row in self._results(self.execute_graphql(LIST_QUERY))}
-
-        self.assertEqual(ids, {str(self.referral_1.pk), str(self.referral_2.pk)})
-
-    def test_malformed_header_does_not_narrow(self) -> None:
-        # The header is a hint, not authority: a value that cannot be read as an
-        # org id is treated as absent, and the grant scope still bounds the list.
+    def test_malformed_organization_header_is_ignored(self) -> None:
+        # A value that cannot be read as an org id must not error either.
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "abc"
 
         payload = self.execute_graphql(LIST_QUERY)

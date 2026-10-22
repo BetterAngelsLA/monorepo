@@ -99,8 +99,8 @@ function ReferralsContent({ client, clientId }: TContentProps) {
 
   const [createReferral] = useMutation(CreateReferralDocument);
   // The referral's organization is explicit on the payload (ADR 0001 §2.6):
-  // the backend authorizes the create at the org named there, never from the
-  // X-Organization-ID header.
+  // the backend authorizes the create at the org named there and reads no
+  // request header (DEV-2566 retired X-Organization-ID).
   const activeOrgId = useActiveOrgId();
 
   const hasDraft = draft?.clientId === clientId;

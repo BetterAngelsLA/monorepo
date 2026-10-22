@@ -27,38 +27,17 @@ from .types import (
 )
 
 
-def _active_organization_id(info: Info) -> int | None:
-    """The ``X-Organization-ID`` view hint: narrows a finite scope, never grants
-    (ADR 0001 §2.1 rule 3).  A value that does not parse is treated as absent —
-    a hint that cannot be read simply does not narrow, and the grant scope still
-    bounds the result.
+def _target_organization(requested: object) -> Organization:
+    """The create target: the ``organizationId`` on the payload.
+
+    Optional in the schema for one release, but there is no fallback: an absent
+    org is a field error (the caller may well be allowed to create, they just
+    did not say where), while a blank or unknown id denies.  No request header
+    is read (DEV-2566).
     """
-    request = getattr(info.context, "request", None)
-    raw = getattr(request, "organization_id", None)
-    try:
-        return int(raw) if raw else None
-    except TypeError, ValueError:
-        return None
-
-
-def _target_organization(info: Info, requested: object) -> Organization:
-    """The create target: the payload org, else the header hint.
-
-    ``organizationId`` is optional for one release so app builds that predate it
-    keep working.  Whichever org wins is authorized by the caller with
-    ``require_can`` — neither source is authority on its own.
-
-    An absent payload field (``None``/``UNSET``) falls back to the header; an
-    explicitly blank id does not.  It denies, so a blank value can never
-    silently create in whatever org the header names (mirrors
-    ``teams/schema.py``).
-    """
-    raw = requested if requested not in (None, UNSET) else _active_organization_id(info)
-    if raw is None:
-        # Not a permission problem: the caller may well be allowed to create,
-        # they just did not say where.  A field error says that honestly.
+    if requested in (None, UNSET):
         raise ValidationError({"organization_id": "Select an organization to create this referral."})
-    return org_or_deny(raw)
+    return org_or_deny(requested)
 
 
 def _referral_or_deny(user: User, referral_id: str | int, perm: str, message: str) -> Referral:
@@ -82,10 +61,16 @@ class Query:
         self,
         info: Info,
     ) -> OffsetPaginated[ReferralType]:
+        """Referrals the caller's ``view_referral`` grants reach.
+
+        Authority-only: no request header narrows the list (DEV-2566 retired
+        the header).  The ``ReferralFilter`` arguments narrow within the grant
+        scope; they can never widen it.
+        """
         current_user = cast(User, get_current_user(info))
         return cast(
             OffsetPaginated[ReferralType],
-            referral_list(user=current_user, organization_id=_active_organization_id(info)),
+            referral_list(user=current_user),
         )
 
 
@@ -93,13 +78,15 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
-        """Create a referral in an explicit organization (ADR 0001 §2.6).
+        """Create a referral in the org named on the payload (ADR 0001 §2.6).
 
-        ``organizationId`` wins; the header is a compatibility fallback for app
-        builds that predate it.  ``require_can`` authorizes the ADD either way.
+        ``organizationId`` is optional in the schema for one release, but it is
+        required in practice: an absent org is a field error, and
+        ``require_can`` authorizes the named org.  No request header is read
+        (DEV-2566).
         """
         current_user = cast(User, get_current_user(info))
-        organization = _target_organization(info, data.organization_id)
+        organization = _target_organization(data.organization_id)
         require_can(current_user, Referral.perms.ADD, org=organization)
 
         client_profile = get_or_none(ClientProfile.objects.all(), data.client_profile)

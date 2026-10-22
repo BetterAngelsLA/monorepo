@@ -602,7 +602,6 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         """
         org, user = self._setup_org_user_with_access()
         baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 5, 30, tzinfo=UTC))
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         january = summary_variables(org)
 

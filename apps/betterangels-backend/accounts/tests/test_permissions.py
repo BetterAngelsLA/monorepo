@@ -23,7 +23,6 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
 
         self.org_1.add_user(self.org_member)
         self.org_2.add_user(self.org_member)
-        self._set_active_org(self.org_1)
 
     @parametrize(
         "user, expected_error",
@@ -81,7 +80,6 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
         expected_members: list[str],
     ) -> None:
         self.graphql_client.force_login(getattr(self, f"{user}"))
-        self._set_active_org(getattr(self, org))
 
         query = """
             query ($organizationId: String!) {
@@ -130,7 +128,6 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
         self.org_2 = organization_recipe.make(name="org 2", owner=self.org_2_admin)
 
         self.org_1.add_user(self.org_member)
-        self._set_active_org(self.org_1)
 
     @parametrize(
         "user, expected_error",
@@ -202,7 +199,6 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
 
         self.org_1.add_user(self.org_member)
         self.org_1.add_user(self.removable_member)
-        self._set_active_org(self.org_1)
 
     @parametrize(
         "user, expected_error",

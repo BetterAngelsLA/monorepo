@@ -7,11 +7,12 @@ from referrals.models import Referral
 
 
 def referral_list(*, user: User, organization_id: int | None = None) -> QuerySet[Referral]:
-    """Referrals *user* may see, optionally narrowed to the active org.
+    """Referrals *user* may see, optionally narrowed to one org.
 
     Authority is ``view_referral`` at the row's organization (ADR 0001 §2.6) —
-    org membership alone is not.  *organization_id* is the header hint: it can
-    only narrow a finite scope, never widen it.
+    org membership alone is not.  *organization_id* can only narrow a finite
+    scope, never widen it; the API list no longer supplies one (DEV-2566
+    retired the request header), so callers see every org their grants reach.
     """
     return visible(
         Referral.objects.all(),
@@ -26,8 +27,8 @@ def referral_get(*, user: User, pk: str | int, perm: str = Referral.perms.VIEW) 
 
     Every by-id access — read, update, delete — goes through here so the grant
     filter is applied in one place.  Load-by-id is authority-only (ADR 0001
-    §2.6): a stale header must not hide a row the caller's grant reaches.
-    ``get_or_none`` makes a non-numeric id a miss, not a ``ValueError``.
+    §2.6): the caller's current org context must not hide a row their grant
+    reaches.  ``get_or_none`` makes a non-numeric id a miss, not a ``ValueError``.
     """
     return get_or_none(
         visible(Referral.objects.all(), user, perm).select_related(

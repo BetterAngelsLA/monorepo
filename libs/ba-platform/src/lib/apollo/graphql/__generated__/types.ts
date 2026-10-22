@@ -4111,6 +4111,7 @@ export type UpdateShelterInput = {
   schedules?: InputMaybe<Array<ScheduleInput>>;
   services?: InputMaybe<Array<ServiceInput>>;
   shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
+  shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   shelterTypesOther?: InputMaybe<Scalars['String']['input']>;
   spaId?: InputMaybe<Scalars['ID']['input']>;

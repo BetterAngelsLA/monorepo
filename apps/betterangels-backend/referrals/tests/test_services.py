@@ -175,7 +175,7 @@ class ReferralListSelectorTests(GraphQLBaseTestCase):
 
         self.assertEqual(result.count(), 1)
 
-    def test_organization_id_narrows_to_the_active_org(self) -> None:
+    def test_organization_id_narrows_the_visible_scope(self) -> None:
         referral_create(
             user=self.org_1_case_manager_1,
             organization=self.org_1,
