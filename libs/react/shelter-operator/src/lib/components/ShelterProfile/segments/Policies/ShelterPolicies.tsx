@@ -32,7 +32,7 @@ function toUpdateInput(
     exitPolicyOther: data.exitPolicy.includes(ExitPolicyChoices.Other)
       ? (data.exitPolicyOther ?? null)
       : null,
-    otherRules: data.otherRules ?? null,
+    otherRules: data.otherRules || null,
   };
 }
 

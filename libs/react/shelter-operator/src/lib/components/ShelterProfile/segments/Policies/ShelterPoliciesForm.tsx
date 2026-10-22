@@ -125,6 +125,7 @@ export function ShelterPoliciesForm(props: TProps) {
                     field.onChange(option.value === 'true');
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -157,6 +158,7 @@ export function ShelterPoliciesForm(props: TProps) {
                     field.onChange(option.value === 'true');
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -174,6 +176,7 @@ export function ShelterPoliciesForm(props: TProps) {
                 EXIT_POLICY_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
               }
               triggerValue={ExitPolicyChoices.Other}
+              inputMaxLength={255}
               inputError={errors.exitPolicyOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}
@@ -209,6 +212,7 @@ export function ShelterPoliciesForm(props: TProps) {
                     field.onChange(option.value === 'true');
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />

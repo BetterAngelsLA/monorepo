@@ -29,7 +29,7 @@ function toUpdateInput(
     roomStylesOther: data.roomStyles.includes(RoomStyleChoices.Other)
       ? (data.roomStylesOther ?? null)
       : null,
-    addNotesSleepingDetails: data.addNotesSleepingDetails,
+    addNotesSleepingDetails: data.addNotesSleepingDetails || null,
   };
 }
 

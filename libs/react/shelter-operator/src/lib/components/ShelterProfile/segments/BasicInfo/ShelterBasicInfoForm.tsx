@@ -106,6 +106,7 @@ export function ShelterBasicInfoForm(props: TProps) {
                 <Input
                   label="Name"
                   dataType="string"
+                  maxLength={255}
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -156,6 +157,7 @@ export function ShelterBasicInfoForm(props: TProps) {
                     }}
                     label="Status"
                     isViewMode={isViewMode}
+                    disabled={disabled}
                     className="min-w-44"
                   />
                 )}

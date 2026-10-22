@@ -103,6 +103,7 @@ export function ShelterSleepingDetailsForm(props: TProps) {
               options={ROOM_STYLE_OPTIONS}
               isSearchable={ROOM_STYLE_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN}
               triggerValue={RoomStyleChoices.Other}
+              inputMaxLength={255}
               inputError={errors.roomStylesOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}

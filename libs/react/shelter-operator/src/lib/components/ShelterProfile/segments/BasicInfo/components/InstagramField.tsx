@@ -61,6 +61,7 @@ export function InstagramField(props: TProps) {
           {...INSTAGRAM_LABEL}
           isViewMode={false}
           dataType="string"
+          maxLength={255}
           value={field.value}
           onChange={field.onChange}
           onBlur={field.onBlur}

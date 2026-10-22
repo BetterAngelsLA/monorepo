@@ -33,7 +33,7 @@ function toUpdateInput(
     storage: data.storage,
     pets: data.pets,
     parking: data.parking,
-    addNotesShelterDetails: data.addNotesShelterDetails,
+    addNotesShelterDetails: data.addNotesShelterDetails || null,
   };
 }
 
