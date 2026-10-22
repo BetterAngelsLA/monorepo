@@ -47,9 +47,9 @@ export interface ActiveOrgSource {
 /**
  * Installed readers, innermost last.
  *
- * A stack because providers nest: `apps/shelter-web` mounts one around the whole
- * app and `OperatorApp` another on a route inside it. A single slot let the inner
- * provider's unmount disarm the outer one, which then sent no organization at all.
+ * A stack rather than a single slot: a provider mounted inside another must not
+ * disarm the outer one when it unmounts, which is what a single slot did — the
+ * app then sent no organization at all.
  */
 const organizationSources: ActiveOrgSource[] = [];
 
