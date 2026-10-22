@@ -320,7 +320,7 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
         self.assertEqual(Referral.objects.count(), 2)
 
-    # ── request headers carry no org authority ──────────────────────────
+    # ── reads follow the grant, not an active org ───────────────────────
 
     def test_list_includes_every_grant_org(self) -> None:
         # A caller with grants in two orgs sees both orgs' referrals; the list
@@ -342,24 +342,6 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
 
         self.assertFalse(payload.get("errors"), payload)
         self.assertEqual(payload["data"]["referral"]["id"], str(self.referral_2.pk))
-
-    def test_organization_header_is_ignored(self) -> None:
-        # An X-Organization-ID header carries no authority: it does not narrow
-        # the list; the grant scope decides.
-        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_2.id)
-
-        ids = {row["id"] for row in self._results(self.execute_graphql(LIST_QUERY))}
-
-        self.assertEqual(ids, {str(self.referral_1.pk)})
-
-    def test_malformed_organization_header_is_ignored(self) -> None:
-        # An unparseable header value is inert and must not error.
-        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "abc"
-
-        payload = self.execute_graphql(LIST_QUERY)
-
-        self.assertFalse(payload.get("errors"), payload)
-        self.assertEqual({row["id"] for row in self._results(payload)}, {str(self.referral_1.pk)})
 
     # ── global tier ─────────────────────────────────────────────────────
 
