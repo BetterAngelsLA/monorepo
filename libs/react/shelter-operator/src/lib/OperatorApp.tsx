@@ -39,6 +39,7 @@ import {
   ShelterOperatingHoursPage,
   ShelterPoliciesPage,
   ShelterServicesPage,
+  ShelterSleepingDetailsPage,
 } from './pages/shelterProfile';
 import { SignIn } from './pages/signIn';
 import { OperatorAuthProvider } from './providers';
@@ -94,6 +95,10 @@ export function OperatorApp() {
             <Route
               path={profileRouteConfig.children.details}
               element={<ShelterDetailsPage />}
+            />
+            <Route
+              path={profileRouteConfig.children.sleepingDetails}
+              element={<ShelterSleepingDetailsPage />}
             />
             <Route
               path={profileRouteConfig.children.services}
