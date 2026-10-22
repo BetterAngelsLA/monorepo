@@ -296,16 +296,21 @@ class ReferralApiTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
         self.assertEqual(Referral.objects.count(), 2)
 
-    def test_create_without_an_organization_is_denied(self) -> None:
+    def test_create_without_an_organization_is_rejected(self) -> None:
         # Optional for one release, but there is nothing to fall back to here:
-        # no payload org and no header.  Fail closed rather than guess.
+        # no payload org and no header.  Reject rather than guess — and say so
+        # as a field error, not a permission one: the caller is allowed to
+        # create, they just did not say where.
         variables = self._create_data(self.org_1.id)
         del variables["data"]["organizationId"]
         self._clear_active_org()
 
         payload = self.execute_graphql(CREATE_MUTATION, variables)
 
-        self.assertEqual(payload["data"]["createReferral"]["__typename"], "OperationInfo", payload)
+        result = payload["data"]["createReferral"]
+        self.assertEqual(result["__typename"], "OperationInfo", payload)
+        self.assertEqual(result["messages"][0]["kind"], "VALIDATION", payload)
+        self.assertEqual(result["messages"][0]["field"], "organizationId", payload)
         self.assertEqual(Referral.objects.count(), 2)
 
     def test_create_falls_back_to_the_header(self) -> None:
