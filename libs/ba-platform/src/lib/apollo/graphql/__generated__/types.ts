@@ -85,6 +85,48 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
+export type AuditActionPage = {
+  __typename: 'AuditActionPage';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+  results: Array<AuditActionType>;
+};
+
+export type AuditActionType = {
+  __typename: 'AuditActionType';
+  actor: Scalars['String']['output'];
+  events: Array<AuditEventType>;
+  fieldChanges: Scalars['JSON']['output'];
+  summary: Scalars['String']['output'];
+  timestamp: Scalars['DateTime']['output'];
+  truncated: Scalars['Boolean']['output'];
+};
+
+export enum AuditEventKind {
+  Delete = 'DELETE',
+  Insert = 'INSERT',
+  Update = 'UPDATE'
+}
+
+export type AuditEventType = {
+  __typename: 'AuditEventType';
+  action: Scalars['String']['output'];
+  actor: Scalars['String']['output'];
+  fieldChanges?: Maybe<Scalars['JSON']['output']>;
+  kind: AuditEventKind;
+  snapshot?: Maybe<Scalars['JSON']['output']>;
+  summary?: Maybe<Scalars['String']['output']>;
+  targetId: Scalars['ID']['output'];
+  targetType: AuditTargetType;
+  timestamp: Scalars['DateTime']['output'];
+};
+
+export enum AuditTargetType {
+  Bed = 'BED',
+  Room = 'ROOM',
+  Shelter = 'SHELTER'
+}
+
 export type AuthResponse = {
   __typename: 'AuthResponse';
   status_code: Scalars['String']['output'];
@@ -2602,6 +2644,7 @@ export type Query = {
   interactionsByRegion: Array<RegionCountType>;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
+  objectAuditLog: AuditActionPage;
   operatorShelter: OperatorShelterType;
   operatorShelters: OperatorShelterTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
@@ -2792,6 +2835,15 @@ export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryObjectAuditLogArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  includeSnapshot?: Scalars['Boolean']['input'];
+  limit?: Scalars['Int']['input'];
+  objectId: Scalars['ID']['input'];
+  targetType: AuditTargetType;
 };
 
 
