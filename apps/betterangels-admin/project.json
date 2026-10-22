@@ -23,6 +23,7 @@
       "inputs": [
         "production",
         "^production",
+        "{workspaceRoot}/tools/shared/**/*",
         { "env": "VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY" },
         { "env": "VITE_BETTERANGELS_ADMIN_API_URL" }
       ],

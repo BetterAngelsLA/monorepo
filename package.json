@@ -12,6 +12,7 @@
     "ba:e2e": "nx e2e betterangels -c ios",
     "ba:e2e:android": "nx e2e betterangels -c android",
     "shelter": "nx serve shelter-web --port 8083",
+    "shelter:e2e": "nx run shelter-e2e:e2e",
     "fires": "nx serve wildfires --port 8200",
     "admin": "nx serve betterangels-admin --port 8084",
     "pretty": "nx format:check --verbose",

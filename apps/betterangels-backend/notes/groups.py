@@ -41,10 +41,6 @@ CASEWORKER = TemplateConfig(
         SocialMediaProfile.perms.CHANGE,
         SocialMediaProfile.perms.DELETE,
         SocialMediaProfile.perms.VIEW,
-        # Referral: ADD + CHANGE + VIEW (DELETE is per-object at creation)
-        Referral.perms.ADD,
-        Referral.perms.CHANGE,
-        Referral.perms.VIEW,
         # Task: ADD + VIEW only
         Task.perms.ADD,
         Task.perms.VIEW,
@@ -59,16 +55,15 @@ CASEWORKER = TemplateConfig(
 )
 
 
-# ── Role definition (ADR 0001 §2.2 — caseworker teams-read slice) ────────
-# RFC 0003 first step: a scoped ``Caseworker`` Role carrying
-# ``teams.view_team`` lets the ``teams`` read authorize via ``can()`` (pure
-# grant) instead of org membership.  Only the teams permission rides the Role
-# today; the rest of the caseworker bundle — including the referral
-# add/change/view permissions — stays legacy until RFC 0003, so keep
-# ``CASEWORKER_ROLE`` a deliberate subset rather than deriving it from the
-# template.
+# ── Role definition (ADR 0001 §2.2 — scoped caseworker capability) ───────
 CASEWORKER_ROLE = RoleDef(
     name=CASEWORKER.name,
-    permissions=[Team.perms.VIEW],
+    permissions=[
+        Team.perms.VIEW,
+        Referral.perms.ADD,
+        Referral.perms.CHANGE,
+        Referral.perms.VIEW,
+        Referral.perms.DELETE,
+    ],
     is_invitable=CASEWORKER.is_invitable,
 )

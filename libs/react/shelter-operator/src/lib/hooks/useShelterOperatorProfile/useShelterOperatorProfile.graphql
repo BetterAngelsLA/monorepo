@@ -1,50 +1,10 @@
 query GetShelterOperatorProfile($id: ID!) {
   operatorShelter(pk: $id) {
-    bedFees
-    cityCouncilDistrict
-    curfew
-    demographicsOther
-    description
-    email
-    entryInfo
-    heroImage(preset: SHELTER_HERO) {
-      id
-      url
-    }
-    id
-    instagram
-    isPrivate
-    maxStay
-    name
-    onSiteSecurity
-    fundersOther
-    otherRules
-    otherServices
-    addNotesShelterDetails
-    addNotesSleepingDetails
-    overallRating
-    phone
-    programFees
-    roomStylesOther
-    shelterProgramsOther
-    shelterTypesOther
-    status
-    subjectiveReview
-    supervisorialDistrict
-    totalBeds
-    website
-    visitorsAllowed
-    emergencySurge
-    exitPolicy {
-      name
-    }
-    exitPolicyOther
-    referralRequirement {
-      name
-    }
     accessibility {
       name
     }
+    addNotesShelterDetails
+    addNotesSleepingDetails
     additionalContacts {
       id
       contactName
@@ -53,20 +13,72 @@ query GetShelterOperatorProfile($id: ID!) {
       contactTitle
       isClaimant
     }
-    city {
-      id
-      name
-    }
+    bedFees
     citiesServed {
       id
       name
     }
+    city {
+      id
+      name
+    }
+    cityCouncilDistrict
+    curfew
+    declinedBaVisit
     demographics {
       name
     }
+    demographicsOther
+    description
+    email
+    emergencySurge
+    entryInfo
     entryRequirements {
       name
     }
+    exitPolicy {
+      name
+    }
+    exitPolicyOther
+    funders {
+      name
+    }
+    fundersOther
+    heroImage(preset: SHELTER_HERO) {
+      id
+      url
+    }
+    id
+    instagram
+    isPrivate
+    location {
+      latitude
+      longitude
+      place
+    }
+    maxStay
+    mediaLinks {
+      id
+      url
+      title
+      mediaType
+    }
+    name
+    onSiteSecurity
+    organization {
+      id
+      name
+    }
+    otherRules
+    otherServices
+    overallRating
+    parking {
+      name
+    }
+    pets {
+      name
+    }
+    phone
     photos {
       id
       type
@@ -78,30 +90,14 @@ query GetShelterOperatorProfile($id: ID!) {
         urlLg: url(processingOptions: "rs:fit:2400:2000/f:jpg")
       }
     }
-    vaccinationRequirement {
-      name
-    }
-    funders {
-      name
-    }
-    location {
-      latitude
-      longitude
-      place
-    }
-    organization {
-      id
-      name
-    }
-    parking {
-      name
-    }
-    pets {
+    programFees
+    referralRequirement {
       name
     }
     roomStyles {
       name
     }
+    roomStylesOther
     schedules {
       id
       scheduleType
@@ -129,9 +125,11 @@ query GetShelterOperatorProfile($id: ID!) {
     shelterPrograms {
       name
     }
+    shelterProgramsOther
     shelterTypes {
       name
     }
+    shelterTypesOther
     spa {
       id
       name
@@ -144,15 +142,18 @@ query GetShelterOperatorProfile($id: ID!) {
     specialSituationRestrictions {
       name
     }
+    status
     storage {
       name
     }
+    subjectiveReview
+    supervisorialDistrict
+    totalBeds
     updatedAt
-    mediaLinks {
-      id
-      url
-      title
-      mediaType
+    vaccinationRequirement {
+      name
     }
+    visitorsAllowed
+    website
   }
 }

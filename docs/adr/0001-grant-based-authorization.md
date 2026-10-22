@@ -758,7 +758,7 @@ still needs at its cutover:
 | Domain | Model path | `org_via` at cutover | Current authority | Migration shape | Gate |
 |---|---|---|---|---|---|
 | **Tasks** | `Task.organization` | `()` | legacy template + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
-| **Referrals** | `Referral.organization` (+ shelter) | `()` — but "own org **or** via shelter" is inexpressible today (§4.1 note) | legacy + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
+| **Referrals** | `Referral.organization` | `()` — own org only; "or via shelter" still inexpressible (§4.1 note) | **Cut over** — scoped `Caseworker` `Role` (add/change/view/delete), no guardian rows | grant-only: `visible()` reads, `require_can()` create with an explicit `organizationId`, `visible()` update/delete | none for own-org reach; shelter-OR reach is a separate product decision |
 | **Teams** | `Team.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — no scoped `Role` row yet | **Cut over (§5.3)** — no guardian rows; org reads/writes via `can()`/`can_obj` on the role-backed admin roles | None (after §5.3) |
 | **Reports** | report row `.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — role-backed as of §5.3 | **Cut over (§5.3)** — DRF + GraphQL reads authorize through the grant predicate | None (after §5.3) |
 | **Notes** | `Note.organization` | `()` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
@@ -774,15 +774,35 @@ still needs at its cutover:
 > inexpressible:** `_resolve_org_paths` treats `()` and a hop tuple as mutually
 > exclusive, so "own org **or** via shelter" has no declaration. `OrgScoped` needs an
 > `own_org_or=("shelter",)` form (or similar) before Referral can cut over.
+>
+> **Update (2026-10-21) — referrals cut over, own-org reach only.** The domain now
+> runs grant-only: the scoped `Caseworker` `RoleDef` carries add/change/view/delete,
+> the legacy `CASEWORKER` template carries none (so the `PermissionGroup` arm is
+> inert), and the resolvers use `visible()`/`require_can()` — the
+> `HasPerm`/`HasRetvalPerm`/`PermissionedQuerySet` directives are gone. Creation takes
+> an explicit `organizationId` input (the `X-Organization-ID` header is no longer read
+> for authority; it is a one-release fallback for selecting the org) and writes no
+> guardian rows. Because `_resolve_org_paths` still has no
+> "own org **or** via shelter" form, the cutover deliberately preserves the pre-existing
+> scope: a referral is reachable in its own `organization` only. Reads are org-tier —
+> every caseworker at the org sees the org's referrals, not only the ones they created
+> (the pre-cutover selector filtered `created_by`). `Referral.organization` stays
+> nullable (`SET_NULL`) and `visible()` filters on it, so an org-less row — including
+> one orphaned by deleting an organization — is unreachable through grants and only the
+> global tier sees it. Reaching a referral through the
+> shelter's organization remains a product decision that needs the extension above.
 
 "Mechanical" here means the *domain path* is clean: org-scoped with no guardian rows
 written at creation, so no §5-style redesign of CHANGE/DELETE semantics is needed.
 Two distinct gates still block a cutover:
 
-- **Tasks / Referrals** write guardian rows at creation (`assign_object_permissions`),
+- **Tasks** still writes guardian rows at creation (`assign_object_permissions`),
   the same over-permission pattern as notes §5: promoting CHANGE/DELETE onto the org
   role lets every role-holder at the org mutate every row in the org's scope, including
-  cross-org rows the org should only view. They need the §5-equivalence design first.
+  cross-org rows the org should only view. It needs the §5-equivalence design first.
+  Referrals had the same shape and cut over by moving CHANGE/DELETE onto the scoped
+  `Caseworker` `Role` and dropping the guardian writes — the org tier is exactly the
+  authority the creation-time grant handed the whole org group.
 - **Teams / Reports** have clean domain paths but their permissions live on the legacy
   `ORG_ADMIN` / `ORG_SUPERUSER` templates (§5.3). The grant predicate reads *Grants
   only*, and a scoped `Role` row does not exist for those templates, so no holder has a
@@ -794,7 +814,7 @@ Two distinct gates still block a cutover:
 The shelter playbook (declare `OrgScoped`, add `RoleDef`s, wire `visible()`/`can()` in
 services/schema, drop legacy directives, regenerate schema + FE types) applies once a
 domain's authority template is role-backed. The non-mechanical / blocked domains
-(notes §5, clients §5.1, tasks/referrals §5, teams/reports §5.3) are the phase-4
+(notes §5, clients §5.1, tasks §5, teams/reports §5.3) are the phase-4
 design work; nothing in the predicate blocks them once those designs land.
 
 ## 5. Phase-4 cutover designs — notes/guardian and the migration's forward designs
@@ -830,7 +850,8 @@ product rule (2026-09-02) is **not** "writes stay org-owned" — **reads and wri
 both platform-shared today**: client CHANGE/DELETE ride model-level permissions on the
 legacy `CASEWORKER` group (`notes/groups.py`), so any caseworker in any org edits or
 deletes any client. There are **no per-record guardian rows for `ClientProfile`**
-(guardian per-record exists for notes/tasks/referrals/documents, not clients).
+(guardian per-record exists for notes/tasks/documents; referrals cut over to grants,
+not clients).
 
 Under v2 with `org_via = None`, org-scoped writes are inexpressible — `scopes()` returns
 org ids and the client has no org — and the object arm only covers per-record sharing.
@@ -983,7 +1004,7 @@ Why this is a milestone and not a "teams PR": the change set is *one template* �
 `ORG_ADMIN`/`ORG_SUPERUSER` — cut over across its four consumers. Doing teams alone
 either leaves the legacy group in place (predicate still returns nothing → broken) or
 role-backs the template (members + reports break in the same deploy). It is scheduled
-after the tasks/referrals §5-equivalence design only because that design is orthogonal
+after the tasks §5-equivalence design only because that design is orthogonal
 and already on the critical path for notes/clients; it can land in either order.
 
 **Reviewability — the milestone ships as a stacked series, not one PR.** A single

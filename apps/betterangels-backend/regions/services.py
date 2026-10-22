@@ -218,6 +218,28 @@ def resolve_region_scope(*, dimension: str | None, codes: Sequence[str] | None) 
     return dimension, list(codes)
 
 
+def resolve_group_scope(*, dimension: str | None, codes: Sequence[str] | None) -> tuple[str | None, list[str] | None]:
+    """The report summary's reading of ``(dimension, codes)``.
+
+    Differs from :func:`resolve_region_scope` in one way: a dimension with no codes means every
+    region of it ("all cities"), not an error. That is a meaningful population for the summary,
+    though not for the map. ``[]`` still matches nothing, and non-empty codes still require a
+    dimension.
+    """
+    if dimension is None:
+        if codes:
+            raise RegionScopeError(
+                "regionCodes requires a dimension",
+                code=RegionScopeErrorCodes.REGION_CODES_REQUIRE_DIMENSION,
+                field="regionCodes",
+            )
+        if codes is not None:
+            # No dimension and no named region: an empty selection is an answer of zero.
+            return None, []
+        return None, None
+    return dimension, None if codes is None else list(codes)
+
+
 @dataclass(frozen=True)
 class RegionCodeFilter:
     """``regionCodes`` interpreted for one dimension.

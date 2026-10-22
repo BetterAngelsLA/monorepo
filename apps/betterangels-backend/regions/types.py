@@ -119,3 +119,18 @@ class InteractionScopeType:
     """
 
     withheld: bool
+
+
+@strawberry.type
+class DensityScaleType:
+    """Quantiles of the non-empty density cells at one zoom — the map's colour domain.
+
+    The map uses ``p95`` as the red end so the ramp spans 95% of the cells and the top 5%
+    clamp. Quantiles are relative to the zoom because the cell size changes with it; the
+    legend must say so.
+    """
+
+    p50: float
+    p90: float
+    p95: float
+    max: int

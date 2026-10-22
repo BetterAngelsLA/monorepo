@@ -6,8 +6,10 @@ BetterAngels uses a **two-layer permission model** — org-scoped authority gate
 
 | Layer            | Mechanism                                                        | Scope                                               | Used for                                            |
 | ---------------- | ---------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
-| **Org-scoped**   | Grants: `can()` / `require_can()` / `scopes()` / `visible()`     | "Can this user perform action X in organization Y?" | Teams, reports, member management, shelters, operator queries |
-| **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm in progress) | "Can this user access this specific object?"        | Notes, tasks, referrals, client documents           |
+| **Org-scoped**   | Grants: `can()` / `require_can()` / `scopes()` / `visible()`     | "Can this user perform action X in organization Y?" | Teams, reports, member management, shelters, referrals, operator queries |
+| **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm in progress) | "Can this user access this specific object?"        | Notes, tasks, client documents                      |
+
+Referrals are **grant-only**: the scoped `Caseworker` `Role` carries add/change/view/delete, the legacy template carries none, and both reads and writes go through `visible()`/`require_can()`.  `CreateReferralInput.organizationId` names the target org explicitly; the header is never authority.
 
 Both layers sit on Django's permission primitives, but they ask different questions and are checked independently.  **ADR 0001 is the source of truth** for the target model — this page describes the current backend wiring.
 
@@ -15,7 +17,7 @@ Both layers sit on Django's permission primitives, but they ask different questi
 
 ### Where the org comes from
 
-Prefer the **payload**: query filters and mutation inputs carry the organization (`TeamFilter.organizationId`, `CreateTeamInput.organizationId`), and row-scoped mutations derive it from the row they name.  The `X-Organization-ID` header (set by `OrganizationMiddleware` in `common/middleware/organization.py`) survives in exactly one place — the *teams list read* keeps it as a deprecated fallback so mobile's `useOrgTeams` callers (still sending only `{ isActive }`) keep working until they pass `organizationId` (DEV-2566).  Every other cut-over surface is header-free.
+Prefer the **payload**: query filters and mutation inputs carry the organization (`TeamFilter.organizationId`, `CreateTeamInput.organizationId`, `CreateReferralInput.organizationId`), and row-scoped mutations derive it from the row they name.  The `X-Organization-ID` header (set by `OrganizationMiddleware` in `common/middleware/organization.py`) is never authority.  It survives in three places only: the *teams list read* keeps it as a deprecated fallback so mobile's `useOrgTeams` callers (still sending only `{ isActive }`) keep working until they pass `organizationId` (DEV-2566); the *referrals list read* accepts it as an optional narrowing hint (`visible(..., in_org=…)`) — a malformed value fails closed, and it can only narrow, never widen, the grant scope; and *referral create* reads it as a one-release fallback for the organization when `CreateReferralInput.organizationId` is omitted, so app builds that predate the field keep working — `require_can` authorizes the chosen org either way.
 
 ### Grants — the authority
 

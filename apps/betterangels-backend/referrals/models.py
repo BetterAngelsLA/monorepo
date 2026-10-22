@@ -24,15 +24,7 @@ class ReferralTestShelter(BaseModel):
     pghistory.DeleteEvent("referral.remove"),
 )
 class Referral(OrgScoped, BaseModel):
-    """Referral, scoped to its own ``organization``.
-
-    ``OrgScoped`` is metadata only (no fields, no migration): it declares that
-    the row belongs to one organization through the ``organization`` FK below,
-    which is the same relation every referral query already filters on.
-    ``permissions.E005`` requires the declaration because the role templates
-    grant referral permissions to org-scoped roles (caseworker, org admin,
-    shelter operator).  ``organization`` stays nullable for legacy rows.
-    """
+    """Referral, scoped to its own ``organization``."""
 
     class Status(models.IntegerChoices):
         PENDING = 0, "Pending"

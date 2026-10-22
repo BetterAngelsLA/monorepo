@@ -1,4 +1,3 @@
-import validator from 'validator';
 import {
   INSTAGRAM_BASE_URL,
   INSTAGRAM_HANDLE_REGEX,
@@ -8,15 +7,6 @@ import {
 /** True when a hostname points at Instagram (legacy short domain included). */
 export function isInstagramHostname(hostname: string): boolean {
   return INSTAGRAM_HOST_REGEX.test(hostname);
-}
-
-function isWebUrl(value: string): boolean {
-  return validator.isURL(value, {
-    protocols: ['http', 'https'],
-    require_protocol: false,
-    require_tld: true,
-    allow_underscores: false,
-  });
 }
 
 /** Matches an `http(s)://` scheme. Schemes are case-insensitive. */
@@ -35,8 +25,11 @@ function parseUrl(value: string): URL | null {
   }
 }
 
+/** Matches an all-dot value (`.`, `..`, ...), which the URL parser would normalize away. */
+const ALL_DOTS_REGEX = /^\.+$/;
+
 function toProfileUrl(handle: string): string | null {
-  if (!INSTAGRAM_HANDLE_REGEX.test(handle)) {
+  if (!INSTAGRAM_HANDLE_REGEX.test(handle) || ALL_DOTS_REGEX.test(handle)) {
     return null;
   }
 
@@ -51,8 +44,10 @@ function toProfileUrl(handle: string): string | null {
  *   `https://instagram.com/betterangels`
  * - Instagram deep links (posts, reels, stories, ...) are returned as an
  *   absolute URL, normalised so the scheme and host are lower-cased
- * - anything else — a non-Instagram URL, a bare domain, or an unusable value →
- *   `null`
+ * - a non-Instagram URL, or an unusable value → `null`
+ * - any other value is treated as a bare handle, even when it's dotted:
+ *   `example.com` → `https://instagram.com/example.com`, because a dotted handle
+ *   like `first.last` is syntactically indistinguishable from a domain
  */
 export function toInstagramUrl(hrefOrHandle?: string | null): string | null {
   const value = hrefOrHandle?.trim();
@@ -85,12 +80,7 @@ export function toInstagramUrl(hrefOrHandle?: string | null): string | null {
     return null;
   }
 
-  if (isWebUrl(value)) {
-    // A real web URL (it has a TLD) that isn't Instagram — e.g. a pasted
-    // website — is not an Instagram link. Rejecting it here also stops a bare
-    // domain like `example.com` from being mistaken for a handle.
-    return null;
-  }
-
+  // Not an Instagram URL: fall back to the handle path. `toProfileUrl` below
+  // rejects anything containing `/` or `:`, so pasted URLs land here as `null`.
   return toProfileUrl(value);
 }

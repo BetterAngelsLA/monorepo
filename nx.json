@@ -6,7 +6,11 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/tools/shared/**/*"
+      ],
       "cache": true
     },
     "test": {
@@ -110,6 +114,7 @@
       "include": [
         "apps/betterangels/**/*",
         "apps/betterangels-admin/**/*",
+        "apps/shelter-e2e/**/*",
         "apps/shelter-web/**/*",
         "apps/wildfires/**/*",
         "libs/apollo/**/*",

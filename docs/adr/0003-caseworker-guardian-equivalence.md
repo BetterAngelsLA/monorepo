@@ -1,6 +1,7 @@
 # RFC 0003 — Caseworker guardian-equivalence (notes, tasks, referrals)
 
-**Status:** Proposed — design for the §5 cutover PRs.
+**Status:** Proposed — design for the §5 cutover PRs. **Referrals cut over
+2026-10-21** (own-org reach only; see the update below).
 **Date:** 2026-09-02
 **Scope:** Resolves the "Not mechanical — guardian-at-creation (§5)" rows of ADR
 0001 §4.1. Gates the notes / tasks / referrals cutovers to the grant model (ADR
@@ -17,8 +18,16 @@ authority does not come from the role at all — it comes from **guardian
 per-record rows written at creation**, tied to the creating org's group:
 
 - `tasks/services.py` — `assign_object_permissions(permission_group, task, [Task.CHANGE, Task.DELETE])`
-- `referrals/services.py` — `assign_object_permissions(permission_group, referral, [VIEW, CHANGE, DELETE])`
+- `referrals/services.py` — **cut over 2026-10-21: no longer writes guardian rows** (see the update below)
 - `notes/services.py` (service requests) — `assign_object_permissions(permission_group, sr, [VIEW, CHANGE, DELETE])`
+
+> **Update (2026-10-21) — referrals cut over, own-org reach only.** Referrals no
+> longer write guardian rows. `referral_create` takes the organization from
+> `CreateReferralInput.organizationId`, and the resolvers authorize with
+> `visible()`/`require_can()` against the scoped `Caseworker` `Role`
+> (add/change/view/delete). Tasks and notes are the remaining §5 cases.
+> Referrals keep their pre-existing reach — their own `organization` — because
+> the `own_org_or` prerequisite in **Open items 3** is still undecided.
 
 That is ADR 0001 §2.1 rule 4's forbidden shape — "grant rows written at
 record-creation time" — and the reason these cutovers are **not mechanical**
@@ -131,15 +140,19 @@ org-scoped … Shared/foreign notes: per-record control via the object arm").
    provenance + revoke-on-exit; non-member collaborators until explicit unshare). An
    org-level *data edge* remains future (ADR §7.4) — never an org-principal `Grant`
    (ADR §2.5).
-3. **Referral `own_org_or`** — **[open — prerequisite design, before Referral can cut
-   over]** `OrgScoped` needs an `own_org_or=("shelter",)`
-   declaration form before Referral cuts over (ADR §4.1). This RFC does not
-   design the multi-path form; it is called out as a prerequisite. Note that
+3. **Referral `own_org_or`** — **[open — shelter-OR reach only; referrals cut over
+   for their own org on 2026-10-21]** `OrgScoped` needs an `own_org_or=("shelter",)`
+   declaration form to reach a referral through its shelter's organization. The
+   cutover does not need it because it preserves the pre-existing own-org scope;
+   it is a prerequisite only for that wider reach. Note that
    `Referral.organization` **and** `Referral.shelter` are both nullable
    (`SET_NULL`), so even with `own_org_or` a referral with org NULL and no
    shelter is an orphan — the same class as RFC 0002's `created_by_org` backfill
-   orphans. The cutover must decide default-org or global-only handling for
-   those rows before the org-scoped write arm can anchor on them.
+   orphans. That reach must decide default-org or global-only handling for
+   those rows before it can anchor on them. Deleting an organization reaches the
+   same state today: `Referral.organization` is `SET_NULL`, so its referrals become
+   unreachable through the grant predicate — an audit/backfill concern for whoever
+   first deletes one.
 4. **Notes' sibling rows** — **[action — at the notes cutover]** notes create related
    rows at write time (service
    requests in `notes/services.py`) that also take guardian perms. Each related
