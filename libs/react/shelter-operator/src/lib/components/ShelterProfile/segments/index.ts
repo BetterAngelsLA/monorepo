@@ -6,3 +6,4 @@ export * from './Media';
 export * from './Policies';
 export * from './Schedules';
 export * from './Services';
+export * from './SleepingDetails';

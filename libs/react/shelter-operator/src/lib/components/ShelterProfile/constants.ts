@@ -6,6 +6,7 @@ import {
   enumDisplayFunderChoices,
   enumDisplayParkingChoices,
   enumDisplayPetChoices,
+  enumDisplayRoomStyles,
   enumDisplayShelterChoices,
   enumDisplayShelterProgramChoices,
   enumDisplaySpecialSituationRestrictionChoices,
@@ -15,6 +16,7 @@ import {
   FunderChoices,
   ParkingChoices,
   PetChoices,
+  RoomStyleChoices,
   ShelterChoices,
   ShelterProgramChoices,
   SpecialSituationRestrictionChoices,
@@ -33,6 +35,10 @@ export const STATUS_OPTIONS = toDropdownOptions(enumStatusChoices);
 
 export const DEMOGRAPHICS_OPTIONS = toDropdownOptions(enumDisplayDemographics, [
   DemographicChoices.Other,
+]);
+
+export const ROOM_STYLE_OPTIONS = toDropdownOptions(enumDisplayRoomStyles, [
+  RoomStyleChoices.Other,
 ]);
 
 export const SPECIAL_SITUATION_OPTIONS = toDropdownOptions(

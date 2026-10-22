@@ -61,6 +61,7 @@ export const profileRouteConfig = {
     operatingHours: 'operating-hours',
     policies: 'policies',
     details: 'details',
+    sleepingDetails: 'sleeping-details',
     services: 'services',
     ecosystem: 'ecosystem',
     media: 'media',
