@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from django.core.exceptions import PermissionDenied
 from django.db.models import Model, QuerySet
+from strawberry import UNSET
 
 from common.utils import get_or_none
 
@@ -18,7 +19,8 @@ ORG_PERMISSION_DENIED_MESSAGE = "You do not have access to this organization."
 def org_or_deny(org_id: object) -> "Organization":
     """Resolve a client-supplied organization id, failing closed.
 
-    A missing, unknown, or malformed id (``""``, a UUID string, ``None``) is a permission
+    A missing, unknown, or malformed id (``""``, a UUID string, ``None``, or the
+    ``strawberry.UNSET`` an omitted optional filter field carries) is a permission
     problem — ``PermissionDenied`` — never a ``DoesNotExist`` crash or a ``ValueError``.
     ``get_or_none`` is the house guard for exactly that (``common.utils``).
 
@@ -30,6 +32,11 @@ def org_or_deny(org_id: object) -> "Organization":
     ``regions``, ``teams``) share one refusal instead of four that can drift apart.
     Module-level rather than a method: strawberry-django resolvers are invoked unbound.
     """
+    # An omitted optional filter field carries ``strawberry.UNSET``, not ``None``:
+    # it names no org, so deny before the lookup.
+    if org_id is UNSET:
+        raise PermissionDenied(ORG_PERMISSION_DENIED_MESSAGE)
+
     from organizations.models import Organization
 
     org = get_or_none(Organization.objects.all(), org_id)

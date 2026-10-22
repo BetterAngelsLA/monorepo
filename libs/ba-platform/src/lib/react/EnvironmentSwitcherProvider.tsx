@@ -53,7 +53,7 @@ export interface EnvironmentSwitcherProviderProps {
   /** Storage key (default: ``'ba_environment'``). */
   storageKey?: string;
   /**
-   * Factory that builds a CSRF + Org-ID pre-wired fetch function for a
+   * Factory that builds a CSRF pre-wired fetch function for a
    * given ``apiUrl``. Called whenever the environment changes so the
    * interceptor chain always targets the correct backend.
    *
