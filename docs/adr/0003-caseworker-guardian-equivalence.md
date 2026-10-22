@@ -149,7 +149,10 @@ org-scoped … Shared/foreign notes: per-record control via the object arm").
    (`SET_NULL`), so even with `own_org_or` a referral with org NULL and no
    shelter is an orphan — the same class as RFC 0002's `created_by_org` backfill
    orphans. That reach must decide default-org or global-only handling for
-   those rows before it can anchor on them.
+   those rows before it can anchor on them. Deleting an organization reaches the
+   same state today: `Referral.organization` is `SET_NULL`, so its referrals become
+   unreachable through the grant predicate — an audit/backfill concern for whoever
+   first deletes one.
 4. **Notes' sibling rows** — **[action — at the notes cutover]** notes create related
    rows at write time (service
    requests in `notes/services.py`) that also take guardian perms. Each related
