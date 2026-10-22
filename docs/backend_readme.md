@@ -110,9 +110,14 @@ uv run pytest -n logical
 `-n logical` uses all logical CPUs (the suite is DB-bound; xdist's `-n auto`
 counts physical cores and under-provisions SMT machines). Each worker creates
 its own test database (`test_postgres_gw0`, …) and runs migrations the first
-time; add `--maxprocesses N` if the machine is DB- or memory-constrained. CI
-scales the same way and adds `--durations=25` through
-`PYTEST_ADDOPTS` (see the Test step in `.github/workflows/default.yml`).
+time; add `--maxprocesses N` if the machine is DB- or memory-constrained.
+
+The backend `addopts` also includes `--dist loadscope`, which keeps a test
+class on one worker. Class-scoped fixtures (`setUpTestData`) are then built
+once per class, and a `transaction=True` test cannot flush them between two
+tests of the same class. CI scales the same way and adds `--durations=25`
+through `PYTEST_ADDOPTS` (see the Test step in
+`.github/workflows/default.yml`).
 
 `manage.py test` uses pytest-django's built-in runner. Django options go before
 `--` and pytest options after it:

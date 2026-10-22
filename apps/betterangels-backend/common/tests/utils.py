@@ -232,7 +232,12 @@ def make_legacy_only_holder(*, organization: Organization, template_name: str, u
 class GraphQLBaseTestCase(
     GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase
 ):
-    user_labels: List[str]
+    user_labels: List[str] = [
+        "org_1_case_manager_1",
+        "org_1_case_manager_2",
+        "org_2_case_manager_1",
+        "non_case_manager_user",
+    ]
     user_map: Dict[str, User]
     org_1: Organization
     org_2: Organization
@@ -252,9 +257,31 @@ class GraphQLBaseTestCase(
         organizations with full permission presets, three teams, and the
         case-worker role assignments.  ``TestCase`` rolls each test back into
         the class-level data, so a test's writes cannot escape it.
+
+        pytest may call this more than once for a class: it tears a class down
+        and re-enters it when another class's test is interleaved, and a
+        ``transaction=True`` test flushes the database.  ``_clear_stale_...``
+        makes the rebuild safe in both cases.
         """
+        cls._clear_stale_shared_fixtures()
         cls._setup_users()
         cls._setup_groups_and_permissions()
+
+    @classmethod
+    def _clear_stale_shared_fixtures(cls) -> None:
+        """Remove rows left by an earlier setup of this class, if any.
+
+        ``Organization.slug`` is unique, so a re-entry that skipped teardown
+        would otherwise fail on ``org_1``/``org_2``.  The user rows are keyed
+        by the labels above; the owner users created by the org recipe are not
+        reused by tests.
+        """
+        from django.db.models import Q
+        from organizations.models import Organization
+
+        Organization.objects.filter(Q(name__in=("org_1", "org_2")) | Q(slug__in=("org_1", "org_2"))).delete()
+        for label in cls.user_labels:
+            User.objects.filter(username__startswith=f"{label}_").delete()
 
     def setUp(self) -> None:
         super().setUp()
@@ -271,6 +298,9 @@ class GraphQLBaseTestCase(
 
         Rollback restores the database but not the Python objects' attribute
         cache, and a handful of tests rename or deactivate a shared user/org.
+        This is nine GETs per test, still far cheaper than rebuilding the
+        ~164-query graph.  Only these nine rows are reset; tests must not stash
+        custom Python attributes on them, because those are not rolled back.
         """
         for obj in (
             self.org_1,
@@ -284,12 +314,6 @@ class GraphQLBaseTestCase(
 
     @classmethod
     def _setup_users(cls) -> None:
-        cls.user_labels = [
-            "org_1_case_manager_1",
-            "org_1_case_manager_2",
-            "org_2_case_manager_1",
-            "non_case_manager_user",
-        ]
         cls.user_map = {
             user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}") for user_label in cls.user_labels
         }
