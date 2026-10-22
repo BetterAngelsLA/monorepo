@@ -183,7 +183,12 @@ jobs:
       - name: 🧪 Test
         run: |
           docker compose run better-angels bash <<'EOF'
-          # Exclude Betterangels Frontend Given its CI is not setup yet
+          # nx affected runs every affected project with a test target,
+          # including the Vitest frontend/admin/shelter-web suites.
+          # logical (not auto): xdist's "auto" counts physical cores and
+          # under-provisions SMT runners. Each worker gets its own test DB.
+          # Scale with the runner; cap with --maxprocesses only if needed.
+          export PYTEST_ADDOPTS="-n logical --durations=25"
           yarn nx affected -t test
           EOF
 
