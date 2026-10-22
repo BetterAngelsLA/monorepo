@@ -51,7 +51,7 @@ dev = [
     "types-requests>=2.33.0.20261006,<3",
     "unittest-parametrize>=1.9.0,<2",
     "vcrpy>=8.3.0,<9",
-    "virtualenv>=21.1.0,<22",
+    "virtualenv>=21.14.11,<22",
 ]
 
 [tool.pytest.ini_options]
