@@ -238,6 +238,41 @@ describe('useActiveOrgState', () => {
     expect(seen).not.toContain(null);
   });
 
+  it("leaves an outer provider's list in play until it knows its own", async () => {
+    // Nesting is real: shelter-web mounts one provider around the app and another
+    // inside it. An inner provider with no list must not shadow the outer one
+    // with "unknown", which would drop the header.
+    configureActiveOrgStorage(createSyncStorage());
+    const outer = [makeOrg({ id: 'org-2' })];
+
+    await render(
+      <ActiveOrgProvider organizations={outer}>
+        <ActiveOrgProvider organizations={undefined}>{null}</ActiveOrgProvider>
+      </ActiveOrgProvider>,
+    );
+
+    expect(getActiveOrgId()).toBe('org-2');
+  });
+
+  it('keeps the active org permissions while the org list is refetching', async () => {
+    // `organizations` goes undefined during a currentUser refetch (e.g. right
+    // after creating a client). Reading that as "no permissions" blinked every
+    // org-scoped control — the Referrals tab among them — out of existence.
+    configureActiveOrgStorage(createSyncStorage());
+    const orgs = [makeOrg({ permissions: ['referrals.view_referral'] })];
+
+    const { result, rerender } = await renderHook(
+      (props: { organizations: Org[] | undefined }) =>
+        useActiveOrgState(props.organizations),
+      { initialProps: { organizations: orgs } },
+    );
+    expect(result.current.hasPermission('referrals.view_referral')).toBe(true);
+
+    await rerender({ organizations: undefined });
+
+    expect(result.current.hasPermission('referrals.view_referral')).toBe(true);
+  });
+
   it('still defaults a genuinely org-less user to nothing', async () => {
     configureActiveOrgStorage(createSyncStorage());
 
