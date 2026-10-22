@@ -686,6 +686,26 @@ def _allowed_event_models(obj: Model, excluded: Sequence[str]) -> list[type[Mode
     ]
 
 
+def _event_model_labels(tracked_model_labels: Collection[str]) -> tuple[str, ...]:
+    """Map tracked model labels to their pghistory event-model labels.
+
+    Used when a caller may not see a related model at all: the event model is
+    added to the ``across()`` exclusions, so its table is never read and an
+    action containing only its rows disappears instead of rendering as an empty
+    action with a misleading summary.
+    """
+    labels: list[str] = []
+    for model_label in tracked_model_labels:
+        try:
+            tracked_model = apps.get_model(model_label)
+        except LookupError:
+            continue
+        event_model = getattr(tracked_model, "pgh_event_model", None)
+        if event_model is not None:
+            labels.append(event_model._meta.label)
+    return tuple(labels)
+
+
 def _page_filter(page_keys: Sequence[str]) -> Q:
     """A SQL predicate selecting the page's rows by the raw columns, not the key.
 
@@ -743,10 +763,14 @@ def object_audit_log(
 
     *hidden_fields* maps a model label to the raw attnames that must not be
     rendered for that model, and *hidden_summary_models* lists models whose
-    one-line summaries must be omitted. Both are authorization decisions made by
-    the caller (``audit/schema.py``), because this layer has no request context;
-    they are applied before rendering so a withheld value cannot leak through
-    either ``field_changes`` or ``snapshot``.
+    one-line summaries must be omitted. The latter is enforced twice: its event
+    model is passed to ``across()`` so the branch is pruned from the aggregate
+    (an action containing only those rows then disappears instead of becoming an
+    empty action), and the per-row check in ``_build_action`` is a second
+    defence. Both are authorization decisions made by the caller
+    (``audit/schema.py``), because this layer has no request context; they are
+    applied before rendering so a withheld value cannot leak through either
+    ``field_changes`` or ``snapshot``.
 
     Pagination is done in SQL (§10): only the page's action keys are fetched
     from the aggregate CTE. Raises ``ValueError`` for a non-positive/oversized
@@ -758,7 +782,11 @@ def object_audit_log(
     cursor = _decode_cursor(after) if after is not None else None
 
     target_id = str(obj.pk)
-    excluded = (*_EXCLUDED_EVENT_MODELS, *_SCOPED_EXCLUSIONS.get(target_type, ()))
+    excluded = (
+        *_EXCLUDED_EVENT_MODELS,
+        *_SCOPED_EXCLUSIONS.get(target_type, ()),
+        *_event_model_labels(hidden_summary_models),
+    )
     base = AuditWriteEvent.objects.across(*_allowed_event_models(obj, excluded)).references([obj]).exclude(label="seed")
     key_expr = _action_key_expr()
 
@@ -979,8 +1007,14 @@ def _build_action(
         if removed or added:
             action_changes[_action_change_key(owner, obj_id, field_name, target_model_label)] = [removed, added]
 
-    # Derive the verb from every row, not the (possibly capped) rendered events.
-    kinds = {_kind(row.pgh_label) for row in rows}
+    # Derive the verb from the anchored object's rows, not every related row.
+    # ``references()`` spans the target's neighbors, so deriving from all rows
+    # let a Bed/media INSERT alone read as "created shelter" even though the
+    # shelter itself was untouched. A related-only action is a modification of
+    # the anchor. The row list is used rather than the rendered events so a
+    # capped action still contributes its operation kind.
+    anchor_rows = [row for row in rows if row.pgh_obj_model == target_model_label]
+    kinds = {_kind(row.pgh_label) for row in anchor_rows}
     if kinds == {"INSERT"}:
         verb = "created"
     elif kinds == {"DELETE"}:

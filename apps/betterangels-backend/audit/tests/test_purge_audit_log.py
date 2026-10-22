@@ -305,9 +305,7 @@ class PurgeAuditLogTestCase(TestCase):
         shelter = baker.make(Shelter, name="Over-retention Shelter")
         bed = Bed.objects.create(shelter=shelter, name="Over-retention Bed")
         with audit_context():
-            reservation = Reservation.objects.create(
-                bed=bed, notes="A", status=ReservationStatusChoices.CONFIRMED
-            )
+            reservation = Reservation.objects.create(bed=bed, notes="A", status=ReservationStatusChoices.CONFIRMED)
         with audit_context():
             reservation.notes = "B"
             reservation.save()

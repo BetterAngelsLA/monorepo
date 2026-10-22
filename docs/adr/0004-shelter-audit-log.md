@@ -1336,10 +1336,11 @@ at `MAX_EVENTS_PER_ACTION` (500) and `AuditActionType.truncated` reports that
 rendering stopped early. Rendering breaks out of the row loop at the cap, so the
 action-level `field_changes` covers the same rendered rows and a bulk action's
 before/after pair can stop mid-sequence; `truncated` is the only signal. The
-action verb is still derived from every row's label (it reads the full row list,
-not the accumulated events). `limit` bounds actions, not events, so on its own it
-would leave a one-action response unbounded — and even with this cap a
-`limit=200` page could render 100k events.
+action verb is still derived from the anchored object's rows in the full row list,
+not the accumulated events, so the cap cannot change it (§32). `limit` bounds
+actions, not events, so on its own it would leave a one-action response
+unbounded — and even with this cap a `limit=200` page could render 100k
+events.
 
 **Page event budget (decided).** `MAX_EVENTS_PER_PAGE` (2000) bounds the events
 rendered across one page. Actions are started in page order and the budget is
@@ -2028,8 +2029,12 @@ writes appear as one line per object per kind: `Created <name> (<id>)`,
 empty `field_changes` and never a snapshot, even when `include_snapshot=True`.
 The line is omitted unless the caller holds `Bed.VIEW` / `Room.VIEW` in the
 shelter's organization, so a shelter-only reader cannot learn a bed or room name
-from the log when the corresponding query is empty. Repeated saves of the same
-object under one context collapse to one line, keyed by
+from the log when the corresponding query is empty. The hidden event model is
+pruned from the aggregate with `across()`, so an action containing only hidden
+rows disappears instead of surfacing as an empty action; the action verb is
+derived from the anchored object's rows, so a related-only write reads as a
+modification of the anchor rather than creating or deleting it. Repeated saves of
+the same object under one context collapse to one line, keyed by
 `(model, obj id, kind)`. `Bed.name` is nullable, so a nameless bed falls back
 to `Bed #<id>`. The shelter's **own** fields, media, schedules, availability, and
 M2M rows keep full detail; `ContactInfo` events are excluded entirely (§7b.6),

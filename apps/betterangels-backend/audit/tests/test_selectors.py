@@ -968,8 +968,10 @@ class ObjectAuditLogSelectorTestCase(TestCase):
     # (each branch adds a few KB). They are a growth guard over the measured SQL,
     # not a hard bound the design must meet: pagination bounds rows fetched, not
     # the statement text, because the aggregate CTE still names every matched
-    # table. The target-scoped exclusions filter rows, not UNION branches, so
-    # they barely change the statement size.
+    # table. Target-scoped exclusions are passed to ``across()`` as well, so they
+    # prune UNION branches and shrink the statement rather than filtering rows
+    # after the scan; the ceilings below are measured with those exclusions in
+    # place.
     #
     # Recorded from the interpolated SQL the selector actually issues (the max
     # over its grouped key query and page query, measured by the test below),
@@ -1057,6 +1059,17 @@ class AuditDisplayScopeTestCase(TestCase):
         # Nothing else about either object reaches the shelter-level rollup.
         self.assertEqual(actions[0].field_changes, {})
         self.assertEqual([event.field_changes for event in actions[0].events], [{}, {}])
+
+    def test_related_only_insert_does_not_claim_the_shelter_was_created(self) -> None:
+        """The action verb follows the anchor, not a related row's label."""
+        with audit_context(user=self.user):
+            Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        actions = self._log()
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].summary, f"{self.user.full_name} modified shelter {self.shelter.pk}")
+        self.assertNotIn("created shelter", actions[0].summary)
 
     def test_shelter_summary_does_not_leak_bed_detail_or_snapshot(self) -> None:
         with audit_context(label="seed"):
