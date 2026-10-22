@@ -23,3 +23,16 @@ class SharedGraphQLFixtureIsolationTest(GraphQLBaseTestCase):
         self.assertNotEqual(self.org_1_case_manager_1.first_name, "Renamed")
         self.assertTrue(Team.objects.filter(pk=self.org_1_team_1.pk).exists())
         self.assertEqual(self.org_1.users.count(), 3)
+
+
+class SharedGraphQLFixtureRebuildTest(GraphQLBaseTestCase):
+    """A class re-entry must be able to rebuild the shared graph safely."""
+
+    def test_rebuilding_shared_fixtures_is_idempotent(self) -> None:
+        from organizations.models import Organization
+
+        before = Organization.objects.filter(name__in=("org_1", "org_2")).count()
+        type(self).setUpTestData()
+        after = Organization.objects.filter(name__in=("org_1", "org_2")).count()
+        self.assertEqual(before, 2)
+        self.assertEqual(after, 2)
