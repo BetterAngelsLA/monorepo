@@ -111,11 +111,14 @@ jobs:
       - name: Cache Nx
         uses: actions/cache@v4
         with:
-          path: .nx/cache
-          key: nx-cache-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          # Nx 23 indexes cache outputs in SQLite under workspace-data.
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+          key: nx-cache-v2-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
-            nx-cache-${{ runner.os }}-${{ github.ref_name }}-
-            nx-cache-${{ runner.os }}-
+            nx-cache-v2-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-v2-${{ runner.os }}-
 
       - name: 🔑 Prep Container Permissions
         run: |
