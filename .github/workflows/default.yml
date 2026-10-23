@@ -108,6 +108,15 @@ jobs:
           cache-to: |
             ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || format('type=registry,ref={0},mode=max', env.BRANCH_CACHE) }}
 
+      - name: Cache Nx
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-cache-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            nx-cache-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-${{ runner.os }}-
+
       - name: 🔑 Prep Container Permissions
         run: |
           sudo chown -R 1000:1000 $GITHUB_WORKSPACE
@@ -180,20 +189,8 @@ jobs:
           yarn nx affected -t typecheck
           EOF
 
-      - name: Cache Nx
-        uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: nx-cache-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
-          restore-keys: |
-            nx-cache-${{ runner.os }}-${{ github.ref_name }}-
-            nx-cache-${{ runner.os }}-
-
       - name: 🧪 Test
         run: |
-          # actions/cache restores .nx/cache as the runner UID; Nx runs as
-          # UID 1000 in the container and needs to write/restore outputs.
-          if [ -d .nx/cache ]; then sudo chown -R 1000:1000 .nx/cache; fi
           docker compose run better-angels bash <<'EOF'
           # nx affected runs every affected project with a test target,
           # including the Vitest frontend/admin/shelter-web suites.
