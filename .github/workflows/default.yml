@@ -191,6 +191,9 @@ jobs:
 
       - name: 🧪 Test
         run: |
+          # actions/cache restores .nx/cache as the runner UID; Nx runs as
+          # UID 1000 in the container and needs to write/restore outputs.
+          if [ -d .nx/cache ]; then sudo chown -R 1000:1000 .nx/cache; fi
           docker compose run better-angels bash <<'EOF'
           # nx affected runs every affected project with a test target,
           # including the Vitest frontend/admin/shelter-web suites.
