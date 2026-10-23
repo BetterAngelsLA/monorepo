@@ -46,6 +46,7 @@ class SharedGraphQLFixtureIsolationTest(GraphQLBaseTestCase):
 
         # Assert the writes, otherwise this test passes if they silently no-op.
         self.assertEqual(Organization.objects.get(pk=self.org_1.pk).name, "renamed-org")
+        self.org_1_case_manager_1.refresh_from_db()
         self.assertEqual(self.org_1_case_manager_1.first_name, "Renamed")
         self.assertEqual(self.org_1.users.count(), 4)
         self.assertFalse(Team.objects.filter(pk=self.org_1_team_1.pk).exists())
