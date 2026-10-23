@@ -180,6 +180,15 @@ jobs:
           yarn nx affected -t typecheck
           EOF
 
+      - name: Cache Nx
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-cache-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            nx-cache-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-${{ runner.os }}-
+
       - name: 🧪 Test
         run: |
           docker compose run better-angels bash <<'EOF'

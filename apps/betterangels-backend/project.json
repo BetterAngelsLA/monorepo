@@ -125,14 +125,32 @@
         "parallel": false
       }
     },
+    "prepare-test-db": {
+      "executor": "@nxlv/python:run-commands",
+      "cache": true,
+      "inputs": [
+        "production",
+        "{workspaceRoot}/uv.lock",
+        "{workspaceRoot}/Dockerfile",
+        "{workspaceRoot}/docker-compose.yml",
+        "{workspaceRoot}/docker-compose-ci.yml"
+      ],
+      "outputs": ["{workspaceRoot}/.cache/test-db.dump"],
+      "options": {
+        "command": "bash scripts/prepare_test_db_cache.sh",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
     "test": {
+      "dependsOn": ["prepare-test-db"],
+      "cache": false,
       "executor": "@nxlv/python:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/apps/betterangels-backend/unittests",
         "{workspaceRoot}/coverage/apps/betterangels-backend"
       ],
       "options": {
-        "command": "uv run pytest",
+        "command": "bash scripts/restore_test_db_cache.sh && uv run pytest",
         "cwd": "apps/betterangels-backend"
       }
     },
