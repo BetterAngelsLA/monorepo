@@ -262,6 +262,10 @@ class GraphQLBaseTestCase(
         and re-enters it when another class's test is interleaved, and a
         ``transaction=True`` test flushes the database.  ``_clear_stale_...``
         makes the rebuild safe in both cases.
+
+        Django wraps the attributes assigned here in ``TestData`` descriptors
+        and deep-copies them for each test instance, so every test still starts
+        from this exact graph without a per-test refresh.
         """
         cls._clear_stale_shared_fixtures()
         cls._setup_users()
@@ -285,32 +289,12 @@ class GraphQLBaseTestCase(
 
     def setUp(self) -> None:
         super().setUp()
-        self._refresh_shared_fixtures()
 
         # This is for the address used by most tests
         self.street = "106 West 1st Street"
         self.city = "Los Angeles"
         self.state = "CA"
         self.zip_code = "90012"
-
-    def _refresh_shared_fixtures(self) -> None:
-        """Re-read the class-level rows after the previous test's rollback.
-
-        Rollback restores the database but not the Python objects' attribute
-        cache, and a handful of tests rename or deactivate a shared user/org.
-        This is nine GETs per test, still far cheaper than rebuilding the
-        ~164-query graph.  Only these nine rows are reset; tests must not stash
-        custom Python attributes on them, because those are not rolled back.
-        """
-        for obj in (
-            self.org_1,
-            self.org_2,
-            self.org_1_team_1,
-            self.org_1_team_2,
-            self.org_2_team_1,
-            *self.user_map.values(),
-        ):
-            obj.refresh_from_db()
 
     @classmethod
     def _setup_users(cls) -> None:
