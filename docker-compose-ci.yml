@@ -1,10 +1,17 @@
 services:
   better-angels:
-    image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
+    image: ${MONOREPO_IMAGE}:ci-base
+    # The CI image contains only the toolchain. The checkout and dependencies
+    # are bind-mounted, so Docker never copies a 2.6 GB named volume and the
+    # source is always this commit's checkout.
     volumes:
-      - ${GITHUB_WORKSPACE}:/workspace # Mounts the full repository
+      - ${GITHUB_WORKSPACE}:/workspace
+      - ${GITHUB_WORKSPACE}/node_modules:/workspace/node_modules
+      - ${GITHUB_WORKSPACE}/.venv:/workspace/.venv
+      - ${GITHUB_WORKSPACE}/.yarn:/workspace/.yarn
       - ${HOME}/.docker/:/home/betterangels/.docker/
       - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     # Pass in GitHub Actions Envs into the container
     environment:
       - AWS_REGION
@@ -13,12 +20,21 @@ services:
       - ECR_REGISTRY
       - NX_BASE
       - NX_HEAD
+      # Keep Nx from leaving a daemon writing the cache while Actions archives
+      # .nx; CI has no cross-command daemon benefit worth the race.
+      - NX_DAEMON=false
       - BRANCH_NAME
       - SHORT_SHA
       - IMAGE_TAG_PREFIX
       - DOCKER_TAG
       - GITHUB_ACTIONS
       - CI
+      # The checkout's .git is mounted over the image's /workspace. Pass
+      # safe.directory through Git's env config so the image (and the test DB
+      # cache key that hashes the Dockerfile) does not need to change.
+      - GIT_CONFIG_COUNT=1
+      - GIT_CONFIG_KEY_0=safe.directory
+      - GIT_CONFIG_VALUE_0=/workspace
       - GITHUB_EVENT_PATH
       - GITHUB_REPOSITORY
       - GITHUB_TOKEN

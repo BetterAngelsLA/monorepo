@@ -20,6 +20,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/wildfires"],
       "options": {
         "command": "vite build",
         "cwd": "apps/wildfires"

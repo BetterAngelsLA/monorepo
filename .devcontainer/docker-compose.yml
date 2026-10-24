@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   # Update this to the name of the service you want to work with in your docker-compose.yml file
   better-angels:
@@ -16,6 +15,11 @@ services:
       - AWS_PROFILE=Development
 
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+      - venv:/workspace/.venv
+      - .bash_aliases:/home/betterangels/.bash_aliases
       # Persist developer state (gh config, VS Code settings, etc.) across rebuilds.
       # If VS Code Server updates break things, clear with: docker volume rm <project>_dev_home
       - dev_home:/home/betterangels
@@ -31,3 +35,5 @@ services:
 
 volumes:
   dev_home:
+  node_modules:
+  venv:

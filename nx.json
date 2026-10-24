@@ -10,7 +10,14 @@
       "inputs": [
         "production",
         "^production",
-        "{workspaceRoot}/tools/shared/**/*"
+        "{workspaceRoot}/tools/shared/**/*",
+        { "env": "CI" },
+        { "env": "BRANCH_NAME" },
+        { "env": "VITE_APP_BASE_PATH" },
+        { "env": "VITE_SHELTER_API_URL" },
+        { "env": "VITE_SHELTER_GOOGLE_MAPS_API_KEY" },
+        { "env": "VITE_BETTERANGELS_ADMIN_API_URL" },
+        { "env": "VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY" }
       ],
       "cache": true
     },
@@ -64,14 +71,12 @@
       "!{projectRoot}/.storybook/**/*",
       "!{projectRoot}/tsconfig.storybook.json"
     ],
-    "sharedGlobals": [
-      "{workspaceRoot}/Dockerfile",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/mypy.ini",
-      "{workspaceRoot}/uv.*",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/docker-pyproject.toml"
-    ]
+    "sharedGlobals": []
+  },
+  "pluginsConfig": {
+    "@nx/js": {
+      "projectsAffectedByDependencyUpdates": "auto"
+    }
   },
   "plugins": [
     "@nxlv/python",
