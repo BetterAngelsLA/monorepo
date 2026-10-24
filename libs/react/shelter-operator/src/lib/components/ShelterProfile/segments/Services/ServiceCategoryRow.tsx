@@ -204,6 +204,7 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
         options={options}
         onChange={handleOfficialChange}
         isViewMode={isViewMode}
+        disabled={disabled}
       />
 
       <Dropdown

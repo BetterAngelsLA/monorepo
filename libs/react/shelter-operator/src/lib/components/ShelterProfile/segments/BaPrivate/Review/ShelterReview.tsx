@@ -22,7 +22,7 @@ function toUpdateInput(
     id: shelterId,
     overallRating: data.overallRating,
     declinedBaVisit: data.declinedBaVisit,
-    subjectiveReview: data.subjectiveReview,
+    subjectiveReview: data.subjectiveReview || null,
   };
 }
 

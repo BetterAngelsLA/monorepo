@@ -1,5 +1,6 @@
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { applyFieldErrors } from '@monorepo/react/shared';
+import { DemographicChoices, ShelterChoices } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import {
@@ -20,15 +21,19 @@ function toUpdateInput(
   return {
     id: shelterId,
     demographics: data.demographics,
-    demographicsOther: data.demographicsOther,
+    demographicsOther: data.demographics.includes(DemographicChoices.Other)
+      ? (data.demographicsOther ?? null)
+      : null,
     specialSituationRestrictions: data.specialSituationRestrictions,
     shelterTypes: data.shelterTypes,
-    shelterTypesOther: data.shelterTypesOther,
+    shelterTypesOther: data.shelterTypes.includes(ShelterChoices.Other)
+      ? (data.shelterTypesOther ?? null)
+      : null,
     accessibility: data.accessibility,
     storage: data.storage,
     pets: data.pets,
     parking: data.parking,
-    addNotesShelterDetails: data.addNotesShelterDetails,
+    addNotesShelterDetails: data.addNotesShelterDetails || null,
   };
 }
 
