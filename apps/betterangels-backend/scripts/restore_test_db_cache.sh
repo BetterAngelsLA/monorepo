@@ -5,53 +5,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$APP_ROOT/../.." && pwd)"
 cd "$APP_ROOT"
+source "$SCRIPT_DIR/test_db_common.sh"
 
-opts="${PYTEST_ADDOPTS:-}"
-workers=""
-if [[ "$opts" =~ -n[[:space:]]+([^[:space:]]+) ]]; then
-  workers="${BASH_REMATCH[1]}"
-elif [[ "$opts" =~ --numprocesses=([^[:space:]]+) ]]; then
-  workers="${BASH_REMATCH[1]}"
-elif [[ "$opts" =~ --numprocesses[[:space:]]+([^[:space:]]+) ]]; then
-  workers="${BASH_REMATCH[1]}"
+PYTHON_BIN="$(test_db_python_bin)"
+if ! test_db_pg_dump_ok; then
+  echo "test DB cache: pg_dump is older than 17; skipping restore"
+  exit 0
 fi
 
-if [[ -z "$workers" ]]; then
+if ! workers="$(test_db_workers)"; then
   echo "test DB cache: serial run; skipping restore"
   exit 0
 fi
-
-PYTHON_BIN="${PYTHON_BIN:-/workspace/.venv/bin/python}"
-if [[ ! -x "$PYTHON_BIN" ]]; then
-  PYTHON_BIN="$(command -v python)"
-fi
-
-if ! pg_dump --version | grep -qE '\(PostgreSQL\) 1[7-9]'; then
-  echo "test DB cache: pg_dump is older than the PostgreSQL server; skipping restore"
+if [[ "$workers" -lt 1 ]]; then
+  echo "test DB cache: invalid worker count $workers; skipping restore"
   exit 0
 fi
 
-if [[ "$workers" == "logical" ]]; then
-  workers="$(nproc)"
-elif [[ "$workers" == "auto" ]]; then
-  workers="$("$PYTHON_BIN" -c 'import psutil; print(psutil.cpu_count(logical=False))')"
-elif [[ ! "$workers" =~ ^[0-9]+$ ]]; then
-  echo "test DB cache: unsupported worker count '$workers'; skipping restore"
-  exit 0
-fi
-
-if [[ "$opts" =~ --maxprocesses[[:space:]]+([0-9]+) ]]; then
-  cap="${BASH_REMATCH[1]}"
-  if (( workers > cap )); then
-    workers="$cap"
-  fi
-fi
-
-BASE_DB="${POSTGRES_TEST_NAME:-test_${POSTGRES_NAME:-postgres}}"
-export PGHOST="${POSTGRES_HOST:-db}"
-export PGUSER="${POSTGRES_USER:-postgres}"
-export PGPASSWORD="${POSTGRES_PASSWORD:-postgres}"
-CACHE_FILE="${CACHE_FILE:-$REPO_ROOT/.cache/test-db.dump}"
+test_db_export_pg_env
+BASE_DB="$(test_db_base_db)"
+CACHE_FILE="$(test_db_cache_file)"
 
 if [[ ! -f "$CACHE_FILE" ]]; then
   echo "test DB cache: no dump; using normal test DB creation"

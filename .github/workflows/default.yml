@@ -115,13 +115,15 @@ jobs:
           path: |
             .nx/cache
             .nx/workspace-data/*.db*
+            .cache/test-db.dump
+            .cache/test-db.manifest.json
           # Main seeds this cache; PRs fall back to the default branch's
           # latest cache before their own branch prefix.
-          key: nx-cache-v2-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          key: nx-cache-v3-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
-            nx-cache-v2-${{ runner.os }}-${{ github.ref_name }}-
-            nx-cache-v2-${{ runner.os }}-${{ github.event.repository.default_branch }}-
-            nx-cache-v2-${{ runner.os }}-
+            nx-cache-v3-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-v3-${{ runner.os }}-${{ github.event.repository.default_branch }}-
+            nx-cache-v3-${{ runner.os }}-
 
       - name: 🔑 Prep Container Permissions
         run: |
@@ -144,7 +146,7 @@ jobs:
           docker compose run better-angels bash <<'EOF'
           # prepare-test-db runs alongside lint on a cold cache, so its
           # migration/dump time is off the test critical path.
-          export PYTEST_ADDOPTS="-n logical --durations=25"
+          export TEST_DB_WORKERS=logical
           yarn nx affected -t lint prepare-test-db
           EOF
 
@@ -206,6 +208,7 @@ jobs:
           # logical (not auto): xdist's "auto" counts physical cores and
           # under-provisions SMT runners. Each worker gets its own test DB.
           # Scale with the runner; cap with --maxprocesses only if needed.
+          export TEST_DB_WORKERS=logical
           export PYTEST_ADDOPTS="-n logical --durations=25"
           yarn nx affected -t test
           EOF

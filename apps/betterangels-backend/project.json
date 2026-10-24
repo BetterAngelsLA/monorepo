@@ -137,11 +137,13 @@
         "{projectRoot}/scripts/prepare_test_db_cache.sh",
         "{projectRoot}/scripts/setup_test_db.py",
         "{projectRoot}/scripts/validate_test_db.py",
+        "{projectRoot}/scripts/test_db_common.sh",
+        "{projectRoot}/scripts/test_db_cache_manifest.py",
         "{workspaceRoot}/uv.lock",
         "{workspaceRoot}/Dockerfile",
         "{workspaceRoot}/docker-compose.yml",
         "{workspaceRoot}/docker-compose-ci.yml",
-        { "env": "PYTEST_ADDOPTS" }
+        { "env": "TEST_DB_WORKERS" }
       ],
       "outputs": ["{workspaceRoot}/.cache/test-db.dump"],
       "options": {
