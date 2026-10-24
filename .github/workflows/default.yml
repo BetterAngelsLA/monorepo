@@ -91,13 +91,6 @@ jobs:
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.4.1
 
-      # Warm Docker's layer store with the last main image. The Docker exporter
-      # can then reuse those layer blobs instead of extracting the full image
-      # from scratch. Missing tags are harmless.
-      - name: Pull CI base layers
-        continue-on-error: true
-        run: docker pull ${{ env.MONOREPO_IMAGE }}:ci-base
-
       # Build Monorepo Image with ECR layer caching
       # - Pull from main cache (shared) + branch cache for incremental builds.
       #   On main these are the same ref, which is harmless for cache imports.
@@ -267,9 +260,7 @@ jobs:
       - name: 🏗️ Push Monorepo Docker image
         if: matrix.environment == 'production'
         run: |
-          docker tag ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }} ${{ env.MONOREPO_IMAGE }}:ci-base
           docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
-          docker push ${{ env.MONOREPO_IMAGE }}:ci-base
 
       - name: 🚀 Deploy Changes
         # `deploy` depends on `export-web` and `export-web` is not cached, so the
