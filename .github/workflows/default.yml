@@ -133,7 +133,7 @@ jobs:
         run: |
           # These host directories are bind-mounted into the container. Create
           # them first so Docker doesn't create root-owned mount points.
-          mkdir -p .nx/cache .nx/workspace-data .cache .ruff_cache .mypy_cache dist reports coverage
+          mkdir -p .nx/cache .nx/workspace-data .cache .ruff_cache .mypy_cache dist tmp reports coverage
           sudo chown -R 1000:1000 $GITHUB_WORKSPACE
           sudo setfacl --modify user:1000:rw /var/run/docker.sock
           sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker

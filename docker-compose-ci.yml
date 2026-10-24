@@ -10,7 +10,7 @@ services:
     #   .nx     — restored Nx cache / workspace index
     #   .cache  — restored test DB dump + manifest
     #   .ruff_cache/.mypy_cache — writable tool caches
-    #   dist    — build/E2E artifacts that Actions uploads
+    #   dist/tmp — build/E2E artifacts
     #   reports/coverage — test outputs
     volumes:
       - ${GITHUB_WORKSPACE}/.git:/workspace/.git
@@ -21,6 +21,8 @@ services:
       - ${GITHUB_WORKSPACE}/.ruff_cache:/workspace/.ruff_cache
       - ${GITHUB_WORKSPACE}/.mypy_cache:/workspace/.mypy_cache
       - ${GITHUB_WORKSPACE}/dist:/workspace/dist
+      # Some Nx build targets stage under tmp/ (e.g. apollo:build).
+      - ${GITHUB_WORKSPACE}/tmp:/workspace/tmp
       - ${GITHUB_WORKSPACE}/reports:/workspace/reports
       - ${GITHUB_WORKSPACE}/coverage:/workspace/coverage
       - ${HOME}/.docker/:/home/betterangels/.docker/
