@@ -64,14 +64,12 @@
       "!{projectRoot}/.storybook/**/*",
       "!{projectRoot}/tsconfig.storybook.json"
     ],
-    "sharedGlobals": [
-      "{workspaceRoot}/Dockerfile",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/mypy.ini",
-      "{workspaceRoot}/uv.*",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/docker-pyproject.toml"
-    ]
+    "sharedGlobals": []
+  },
+  "pluginsConfig": {
+    "@nx/js": {
+      "projectsAffectedByDependencyUpdates": "auto"
+    }
   },
   "plugins": [
     "@nxlv/python",
