@@ -91,22 +91,65 @@ jobs:
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.4.1
 
-      # Build Monorepo Image with ECR layer caching
-      # - Pull from main cache (shared) + branch cache for incremental builds.
-      #   On main these are the same ref, which is harmless for cache imports.
-      # - Push to main cache on main pushes, branch cache otherwise.
-      - name: 🏗️ Build Monorepo Docker image
-        uses: docker/build-push-action@v7.4.0
+      # Dependencies live in the Actions cache, not in the CI image. The image
+      # contains only the toolchain and source; node_modules/.venv are mounted.
+      - name: Restore dependency cache
+        id: deps-cache
+        uses: actions/cache/restore@v6
         with:
-          file: Dockerfile
-          load: true
-          tags: |
-            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
-          cache-from: |
-            type=registry,ref=${{ env.CACHE_IMAGE }}-main
-            type=registry,ref=${{ env.BRANCH_CACHE }}
-          cache-to: |
-            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || format('type=registry,ref={0},mode=max', env.BRANCH_CACHE) }}
+          path: |
+            node_modules
+            .venv
+            .yarn/cache
+            .yarn/install-state.gz
+          key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
+
+      - name: Ensure CI base image
+        run: |
+          set -euo pipefail
+          if [[ -n "${NX_BASE:-}" ]] && git diff --name-only "$NX_BASE" HEAD -- Dockerfile | grep -q .; then
+            echo "Dockerfile changed; building ci-base from this revision"
+            docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
+          elif docker pull "$MONOREPO_IMAGE:ci-base"; then
+            echo "Using main ci-base"
+          else
+            echo "No ci-base image available; building locally"
+            docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
+          fi
+
+      - name: Prepare dependency mounts
+        run: |
+          mkdir -p node_modules .venv .yarn/cache
+          sudo chown -R -h 1000:1000 node_modules .venv .yarn
+
+      - name: Install dependencies
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        run: |
+          docker run --rm --user 1000:1000 -e CI=true -e HOME=/home/betterangels \
+            -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
+            "$MONOREPO_IMAGE:ci-base" \
+            bash -lc 'yarn install --immutable && uv sync --locked'
+
+      - name: Save dependency cache
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            node_modules
+            .venv
+            .yarn/cache
+            .yarn/install-state.gz
+          key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
+
+      - name: Build CI source image
+        run: |
+          # Build directly from the local base image; this adds only the source
+          # layer and does not need a full image export/import.
+          docker build \
+            --file Dockerfile.ci \
+            --build-arg CI_BASE_IMAGE="$MONOREPO_IMAGE:ci-base" \
+            --tag "$MONOREPO_IMAGE:$DOCKER_TAG" \
+            .
 
       - name: Restore Nx cache
         id: nx-cache
@@ -134,7 +177,7 @@ jobs:
           # These host directories are bind-mounted into the container. Create
           # them first so Docker doesn't create root-owned mount points.
           mkdir -p .nx/cache .nx/workspace-data .cache .ruff_cache .mypy_cache dist tmp reports coverage
-          sudo chown -R 1000:1000 $GITHUB_WORKSPACE
+          sudo chown -R -h 1000:1000 $GITHUB_WORKSPACE
           sudo setfacl --modify user:1000:rw /var/run/docker.sock
           sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
 
@@ -257,10 +300,31 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
 
-      - name: 🏗️ Push Monorepo Docker image
-        if: matrix.environment == 'production'
-        run: |
-          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+      - name: 🏗️ Build and push CI base image
+        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v7.4.0
+        with:
+          target: ci-base
+          push: true
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:ci-base
+          cache-from: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main
+          cache-to: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main,mode=max
+
+      - name: 🏗️ Build and push production image
+        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v7.4.0
+        with:
+          target: production
+          push: true
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main
+          cache-to: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main,mode=max
 
       - name: 🚀 Deploy Changes
         # `deploy` depends on `export-web` and `export-web` is not cached, so the
@@ -315,4 +379,4 @@ jobs:
         if: always()
         run: |
           docker compose down
-          sudo chown -R 1001:1001 $GITHUB_WORKSPACE
+          sudo chown -R -h 1001:1001 $GITHUB_WORKSPACE

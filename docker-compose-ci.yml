@@ -16,6 +16,10 @@ services:
       - ${GITHUB_WORKSPACE}/.git:/workspace/.git
       - ${GITHUB_WORKSPACE}/.nx:/workspace/.nx
       - ${GITHUB_WORKSPACE}/.cache:/workspace/.cache
+      # Dependencies live in the Actions cache, not in the CI image.
+      - ${GITHUB_WORKSPACE}/node_modules:/workspace/node_modules
+      - ${GITHUB_WORKSPACE}/.venv:/workspace/.venv
+      - ${GITHUB_WORKSPACE}/.yarn:/workspace/.yarn
       # Tool caches are writable state like .nx/.cache. Mounting them also
       # avoids depending on the ownership of cache dirs copied into the image.
       - ${GITHUB_WORKSPACE}/.ruff_cache:/workspace/.ruff_cache
