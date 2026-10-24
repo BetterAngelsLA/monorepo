@@ -92,7 +92,10 @@ def migration_hash(loader: MigrationLoader, key: tuple[str, str]) -> str:
     if migration is None:
         raise KeyError(f"{key[0]}.{key[1]}")
     module = importlib.import_module(migration.__class__.__module__)
-    return sha256_file(Path(module.__file__))
+    module_file = module.__file__
+    if module_file is None:
+        raise KeyError(f"{key[0]}.{key[1]}")
+    return sha256_file(Path(module_file))
 
 
 def write_manifest(output: Path) -> None:
@@ -125,7 +128,7 @@ def check_manifest(manifest_path: Path) -> None:
         raise ValueError("DB-affecting inputs changed")
 
     loader = build_loader()
-    replaced = {key for values in loader.replacements.values() for key in values}
+    replaced = set(loader.replacements)
     for qualified, expected in manifest.get("migrations", {}).items():
         app_label, name = qualified.split(".", 1)
         key = (app_label, name)
