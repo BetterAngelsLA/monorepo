@@ -144,10 +144,7 @@ jobs:
       - name: 🧹 Lint
         run: |
           docker compose run better-angels bash <<'EOF'
-          # prepare-test-db runs alongside lint on a cold cache, so its
-          # migration/dump time is off the test critical path.
-          export TEST_DB_WORKERS=logical
-          yarn nx affected -t lint prepare-test-db
+          yarn nx affected -t lint
           EOF
 
       - name: 🩺 Expo Doctor
