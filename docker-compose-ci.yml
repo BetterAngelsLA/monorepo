@@ -1,34 +1,14 @@
 services:
   better-angels:
-    image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
-    # The image already contains this commit's source, node_modules, and .venv.
-    # Do NOT bind-mount the checkout over /workspace: that would hide those
-    # dependencies and force Docker to copy 2.6 GB into named volumes.
-    #
-    # Only mutable state is mounted from the runner:
-    #   .git    — nx affected needs history; GraphQL checks need `git diff`
-    #   .nx     — restored Nx cache / workspace index
-    #   .cache  — restored test DB dump + manifest
-    #   .ruff_cache/.mypy_cache — writable tool caches
-    #   dist/tmp — build/E2E artifacts
-    #   reports/coverage — test outputs
+    image: ${MONOREPO_IMAGE}:ci-base
+    # The CI image contains only the toolchain. The checkout and dependencies
+    # are bind-mounted, so Docker never copies a 2.6 GB named volume and the
+    # source is always this commit's checkout.
     volumes:
-      - ${GITHUB_WORKSPACE}/.git:/workspace/.git
-      - ${GITHUB_WORKSPACE}/.nx:/workspace/.nx
-      - ${GITHUB_WORKSPACE}/.cache:/workspace/.cache
-      # Dependencies live in the Actions cache, not in the CI image.
+      - ${GITHUB_WORKSPACE}:/workspace
       - ${GITHUB_WORKSPACE}/node_modules:/workspace/node_modules
       - ${GITHUB_WORKSPACE}/.venv:/workspace/.venv
       - ${GITHUB_WORKSPACE}/.yarn:/workspace/.yarn
-      # Tool caches are writable state like .nx/.cache. Mounting them also
-      # avoids depending on the ownership of cache dirs copied into the image.
-      - ${GITHUB_WORKSPACE}/.ruff_cache:/workspace/.ruff_cache
-      - ${GITHUB_WORKSPACE}/.mypy_cache:/workspace/.mypy_cache
-      - ${GITHUB_WORKSPACE}/dist:/workspace/dist
-      # Some Nx build targets stage under tmp/ (e.g. apollo:build).
-      - ${GITHUB_WORKSPACE}/tmp:/workspace/tmp
-      - ${GITHUB_WORKSPACE}/reports:/workspace/reports
-      - ${GITHUB_WORKSPACE}/coverage:/workspace/coverage
       - ${HOME}/.docker/:/home/betterangels/.docker/
       - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro
       - /var/run/docker.sock:/var/run/docker.sock

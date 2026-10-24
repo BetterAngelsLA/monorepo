@@ -1,7 +1,0 @@
-# syntax=docker/dockerfile:1
-# CI-only source layer. The base image is built from the Dockerfile's ci-base
-# target and contains the toolchain but no application source or dependencies.
-ARG CI_BASE_IMAGE
-FROM ${CI_BASE_IMAGE}
-
-COPY --chown=betterangels . /workspace

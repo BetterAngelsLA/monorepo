@@ -177,9 +177,8 @@ RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betteran
 WORKDIR /workspace
 USER betterangels
 
-# Dependency-free base for CI. node_modules/.venv are restored from the
-# Actions dependency cache and bind-mounted over /workspace, so PRs only
-# need to add their source layer (see Dockerfile.ci).
+# Dependency-free base for CI. The checkout and node_modules/.venv are
+# bind-mounted at runtime; ECS uses the production stage below.
 FROM base AS ci-base
 
 FROM base AS uv-stage

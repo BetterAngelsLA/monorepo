@@ -92,7 +92,7 @@ jobs:
         uses: docker/setup-buildx-action@v4.4.1
 
       # Dependencies live in the Actions cache, not in the CI image. The image
-      # contains only the toolchain and source; node_modules/.venv are mounted.
+      # contains only the toolchain; the checkout and dependencies are mounted.
       - name: Restore dependency cache
         id: deps-cache
         uses: actions/cache/restore@v6
@@ -140,16 +140,6 @@ jobs:
             .yarn/cache
             .yarn/install-state.gz
           key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
-
-      - name: Build CI source image
-        run: |
-          # Build directly from the local base image; this adds only the source
-          # layer and does not need a full image export/import.
-          docker build \
-            --file Dockerfile.ci \
-            --build-arg CI_BASE_IMAGE="$MONOREPO_IMAGE:ci-base" \
-            --tag "$MONOREPO_IMAGE:$DOCKER_TAG" \
-            .
 
       - name: Restore Nx cache
         id: nx-cache
