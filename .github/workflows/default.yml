@@ -117,6 +117,7 @@ jobs:
             .nx/workspace-data/*.db*
             .cache/test-db.dump
             .cache/test-db.manifest.json
+          save-always: false
           # Main seeds this cache; PRs fall back to the default branch's
           # latest cache before their own branch prefix.
           key: nx-cache-v3-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}

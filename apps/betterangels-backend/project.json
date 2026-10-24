@@ -155,10 +155,6 @@
       "dependsOn": ["prepare-test-db"],
       "cache": false,
       "executor": "@nxlv/python:run-commands",
-      "outputs": [
-        "{workspaceRoot}/reports/apps/betterangels-backend/unittests",
-        "{workspaceRoot}/coverage/apps/betterangels-backend"
-      ],
       "options": {
         "command": "bash scripts/restore_test_db_cache.sh && uv run pytest",
         "cwd": "apps/betterangels-backend"

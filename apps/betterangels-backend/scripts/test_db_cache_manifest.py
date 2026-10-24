@@ -37,6 +37,7 @@ MANIFEST_VERSION = 1
 APP_INPUTS = [
     "**/signals.py",
     "**/apps.py",
+    "**/models.py",
     "betterangels_backend/settings*.py",
     "pyproject.toml",
     "scripts/prepare_test_db_cache.sh",
