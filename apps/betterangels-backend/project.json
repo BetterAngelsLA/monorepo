@@ -140,7 +140,8 @@
         "{workspaceRoot}/uv.lock",
         "{workspaceRoot}/Dockerfile",
         "{workspaceRoot}/docker-compose.yml",
-        "{workspaceRoot}/docker-compose-ci.yml"
+        "{workspaceRoot}/docker-compose-ci.yml",
+        { "env": "PYTEST_ADDOPTS" }
       ],
       "outputs": ["{workspaceRoot}/.cache/test-db.dump"],
       "options": {
