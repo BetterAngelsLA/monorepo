@@ -62,6 +62,7 @@
     "build": {
       "executor": "nx:run-commands",
       "defaultConfiguration": "preview",
+      "cache": false,
       "configurations": {
         "preview": {
           "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile preview"

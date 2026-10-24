@@ -16,6 +16,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/shelter-web"],
       "options": {
         "command": "vite build",
         "cwd": "apps/shelter-web"
