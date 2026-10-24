@@ -115,9 +115,12 @@ jobs:
           path: |
             .nx/cache
             .nx/workspace-data/*.db*
+          # Main seeds this cache; PRs fall back to the default branch's
+          # latest cache before their own branch prefix.
           key: nx-cache-v2-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
             nx-cache-v2-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-v2-${{ runner.os }}-${{ github.event.repository.default_branch }}-
             nx-cache-v2-${{ runner.os }}-
 
       - name: 🔑 Prep Container Permissions
@@ -139,7 +142,9 @@ jobs:
       - name: 🧹 Lint
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t lint
+          # prepare-test-db runs alongside lint on a cold cache, so its
+          # migration/dump time is off the test critical path.
+          yarn nx affected -t lint prepare-test-db
           EOF
 
       - name: 🩺 Expo Doctor
