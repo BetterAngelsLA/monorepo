@@ -99,7 +99,10 @@ jobs:
         uses: docker/build-push-action@v7.4.0
         with:
           file: Dockerfile
-          load: true
+          # Write a zstd-compressed docker archive and load it explicitly.
+          # This is faster than the default gzip docker exporter on the
+          # GitHub-hosted runner and keeps the image tags.
+          outputs: type=docker,compression=zstd,dest=/tmp/monorepo-image.tar
           tags: |
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
           cache-from: |
@@ -107,6 +110,9 @@ jobs:
             type=registry,ref=${{ env.BRANCH_CACHE }}
           cache-to: |
             ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || format('type=registry,ref={0},mode=max', env.BRANCH_CACHE) }}
+
+      - name: Load Docker image
+        run: docker load -i /tmp/monorepo-image.tar
 
       - name: Restore Nx cache
         id: nx-cache
