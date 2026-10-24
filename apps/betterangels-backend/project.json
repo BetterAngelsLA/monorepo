@@ -119,6 +119,11 @@
     },
     "lint": {
       "executor": "@nxlv/python:run-commands",
+      "inputs": [
+        "default",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock"
+      ],
       "options": {
         "commands": ["uv run ruff check .", "uv run ruff format --check ."],
         "cwd": "apps/betterangels-backend",
@@ -145,7 +150,10 @@
         "{workspaceRoot}/docker-compose-ci.yml",
         { "env": "TEST_DB_WORKERS" }
       ],
-      "outputs": ["{workspaceRoot}/.cache/test-db.dump"],
+      "outputs": [
+        "{workspaceRoot}/.cache/test-db.dump",
+        "{workspaceRoot}/.cache/test-db.manifest.json"
+      ],
       "options": {
         "command": "bash scripts/prepare_test_db_cache.sh",
         "cwd": "apps/betterangels-backend"
@@ -155,6 +163,13 @@
       "dependsOn": ["prepare-test-db"],
       "cache": false,
       "executor": "@nxlv/python:run-commands",
+      "inputs": [
+        "default",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock",
+        { "env": "PYTEST_ADDOPTS" },
+        { "env": "TEST_DB_WORKERS" }
+      ],
       "options": {
         "command": "bash scripts/restore_test_db_cache.sh && uv run pytest",
         "cwd": "apps/betterangels-backend"
@@ -162,6 +177,12 @@
     },
     "typecheck": {
       "executor": "@nxlv/python:run-commands",
+      "inputs": [
+        "default",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock",
+        "{workspaceRoot}/mypy.ini"
+      ],
       "options": {
         "commands": ["uv run mypy --config-file=../../mypy.ini ."],
         "cwd": "apps/betterangels-backend",
