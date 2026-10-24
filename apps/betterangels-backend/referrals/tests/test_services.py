@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -45,8 +46,12 @@ class ReferralCreateTests(GraphQLBaseTestCase):
 
     def test_integrity_error_is_logged_and_returns_a_generic_message(self) -> None:
         db_error = 'duplicate key value violates unique constraint "referrals_referral_pkey"'
+        logger = logging.getLogger("referrals.services")
+        previously_disabled = logger.disabled
+        logger.disabled = False
+        self.addCleanup(setattr, logger, "disabled", previously_disabled)
 
-        with self.assertLogs("referrals.services", level="ERROR") as captured:
+        with self.assertLogs(logger, level="ERROR") as captured:
             with patch.object(Referral, "save", side_effect=IntegrityError(db_error)):
                 with self.assertRaises(ValidationError) as raised:
                     referral_create(

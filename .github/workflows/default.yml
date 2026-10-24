@@ -108,6 +108,24 @@ jobs:
           cache-to: |
             ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || format('type=registry,ref={0},mode=max', env.BRANCH_CACHE) }}
 
+      - name: Cache Nx
+        uses: actions/cache@v4
+        with:
+          # Nx 23 indexes cache outputs in SQLite under workspace-data.
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+            .cache/test-db.dump
+            .cache/test-db.manifest.json
+          save-always: false
+          # Main seeds this cache; PRs fall back to the default branch's
+          # latest cache before their own branch prefix.
+          key: nx-cache-v3-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            nx-cache-v3-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-v3-${{ runner.os }}-${{ github.event.repository.default_branch }}-
+            nx-cache-v3-${{ runner.os }}-
+
       - name: 🔑 Prep Container Permissions
         run: |
           sudo chown -R 1000:1000 $GITHUB_WORKSPACE
@@ -188,6 +206,7 @@ jobs:
           # logical (not auto): xdist's "auto" counts physical cores and
           # under-provisions SMT runners. Each worker gets its own test DB.
           # Scale with the runner; cap with --maxprocesses only if needed.
+          export TEST_DB_WORKERS=logical
           export PYTEST_ADDOPTS="-n logical --durations=25"
           # stream task output so pytest's durations/slowest-test table lands in CI
           yarn nx affected -t test --output-style=stream
