@@ -202,7 +202,7 @@ jobs:
           export TEST_DB_WORKERS=logical
           export PYTEST_ADDOPTS="-n logical --durations=25"
           # stream task output so pytest's durations/slowest-test table lands in CI
-          yarn nx affected -t lint typecheck test build --configuration ${{ matrix.environment }} --output-style=stream
+          yarn nx affected -t lint typecheck test build --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
