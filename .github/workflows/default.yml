@@ -189,7 +189,8 @@ jobs:
           # under-provisions SMT runners. Each worker gets its own test DB.
           # Scale with the runner; cap with --maxprocesses only if needed.
           export PYTEST_ADDOPTS="-n logical --durations=25"
-          yarn nx affected -t test
+          # stream task output so pytest's durations/slowest-test table lands in CI
+          yarn nx affected -t test --output-style=stream
           EOF
 
       - name: 🕵🏻‍♂️ GraphQL Inspector

@@ -70,7 +70,7 @@ dev = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "betterangels_backend.settings_test"
 python_files = ["test_*.py", "*_test.py"]
-addopts = "--reuse-db"
+addopts = "--reuse-db --dist loadscope"
 
 [build-system]
 requires = ["hatchling"]
