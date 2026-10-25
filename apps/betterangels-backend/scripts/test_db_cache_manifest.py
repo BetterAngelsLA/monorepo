@@ -96,10 +96,7 @@ def input_files() -> list[Path]:
 
 
 def input_hashes() -> dict[str, str]:
-    hashes = {
-        path.relative_to(REPO_ROOT).as_posix(): sha256_file(path)
-        for path in input_files()
-    }
+    hashes = {path.relative_to(REPO_ROOT).as_posix(): sha256_file(path) for path in input_files()}
     hashes["docker-compose.yml#db"] = hashlib.sha256(compose_db_config()).hexdigest()
     return hashes
 
@@ -159,11 +156,7 @@ def check_manifest(manifest_path: Path) -> None:
     if manifest.get("inputs_sha256") != inputs_digest():
         current = input_hashes()
         previous = manifest.get("input_hashes", {})
-        changed = sorted(
-            name
-            for name in set(current) | set(previous)
-            if current.get(name) != previous.get(name)
-        )
+        changed = sorted(name for name in set(current) | set(previous) if current.get(name) != previous.get(name))
         detail = f": {', '.join(changed)}" if changed else ""
         raise ValueError(f"DB-affecting inputs changed{detail}")
 
