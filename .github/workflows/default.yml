@@ -179,7 +179,7 @@ jobs:
           # A pull_request run's cache is scoped to refs/pull/.../merge.
           # Re-runs of the same PR can restore it; it cannot seed main.
           # main seeds the shared cache with its own push-triggered run.
-          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           # Fallback keys are intentional: the artifact validator below drops
           # DB rows whose cache directories are absent, so a fallback cannot
           # turn into a phantom hit.
@@ -301,7 +301,7 @@ jobs:
       # would otherwise throw away the seeded test DB. Explicit save also
       # replaces the deprecated, non-functional `save-always` input.
       - name: Save Nx cache
-        if: success() && steps.nx-cache.outputs.cache-hit != 'true'
+        if: success()
         uses: actions/cache/save@v6
         with:
           path: |
@@ -309,7 +309,7 @@ jobs:
             .nx/workspace-data/*.db*
             .cache/test-db.dump
             .cache/test-db.manifest.json
-          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: 🕵🏻‍♂️ GraphQL Inspector
         uses: kamilkisiela/graphql-inspector@v4.0.0
