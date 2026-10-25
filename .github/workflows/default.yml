@@ -128,7 +128,7 @@ jobs:
           echo "branch_tag=$BRANCH_CI_BASE" >> "$GITHUB_OUTPUT"
 
       - name: Push branch CI base
-        if: github.event_name == 'pull_request' && steps.ci-base.outputs.built == 'true'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && steps.ci-base.outputs.built == 'true'
         continue-on-error: true
         run: |
           # ECR's monorepo lifecycle policy expires non-main tags after 7 days,
