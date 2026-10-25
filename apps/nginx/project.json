@@ -11,7 +11,7 @@
         "context": "apps/nginx",
         "file": "apps/nginx/Dockerfile",
         "push": true,
-        "platforms": ["linux/amd64", "linux/arm64"],
+        "platforms": ["linux/amd64"],
         "cache-from": [
           "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME}",
           "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-main"
@@ -26,8 +26,7 @@
       },
       "configurations": {
         "preview": {
-          "push": false,
-          "platforms": ["linux/amd64"]
+          "push": false
         }
       }
     },
