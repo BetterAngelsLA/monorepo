@@ -95,17 +95,22 @@ def input_files() -> list[Path]:
     return sorted(files, key=lambda path: path.relative_to(REPO_ROOT).as_posix())
 
 
+def input_hashes() -> dict[str, str]:
+    hashes = {
+        path.relative_to(REPO_ROOT).as_posix(): sha256_file(path)
+        for path in input_files()
+    }
+    hashes["docker-compose.yml#db"] = hashlib.sha256(compose_db_config()).hexdigest()
+    return hashes
+
+
 def inputs_digest() -> str:
     digest = hashlib.sha256()
-    for path in input_files():
-        relative = path.relative_to(REPO_ROOT).as_posix()
+    for relative, file_hash in sorted(input_hashes().items()):
         digest.update(relative.encode())
         digest.update(b"\0")
-        digest.update(path.read_bytes())
+        digest.update(file_hash.encode())
         digest.update(b"\0")
-    digest.update(b"docker-compose.yml:db\0")
-    digest.update(compose_db_config())
-    digest.update(b"\0")
     return digest.hexdigest()
 
 
@@ -138,6 +143,7 @@ def write_manifest(output: Path) -> None:
             {
                 "version": MANIFEST_VERSION,
                 "inputs_sha256": inputs_digest(),
+                "input_hashes": input_hashes(),
                 "migrations": dict(sorted(migrations.items())),
             },
             indent=2,
@@ -151,7 +157,15 @@ def check_manifest(manifest_path: Path) -> None:
     if manifest.get("version") != MANIFEST_VERSION:
         raise ValueError("manifest version changed")
     if manifest.get("inputs_sha256") != inputs_digest():
-        raise ValueError("DB-affecting inputs changed")
+        current = input_hashes()
+        previous = manifest.get("input_hashes", {})
+        changed = sorted(
+            name
+            for name in set(current) | set(previous)
+            if current.get(name) != previous.get(name)
+        )
+        detail = f": {', '.join(changed)}" if changed else ""
+        raise ValueError(f"DB-affecting inputs changed{detail}")
 
     loader = build_loader()
     manifest_migrations = set(manifest.get("migrations", {}))
