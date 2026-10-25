@@ -152,6 +152,12 @@ def check_manifest(manifest_path: Path) -> None:
         raise ValueError("DB-affecting inputs changed")
 
     loader = build_loader()
+    manifest_migrations = set(manifest.get("migrations", {}))
+    disk_migrations = {f"{app}.{name}" for app, name in loader.disk_migrations}
+    new_migrations = sorted(disk_migrations - manifest_migrations)
+    if new_migrations:
+        raise ValueError(f"new migrations: {', '.join(new_migrations)}")
+
     replaced = set(loader.replacements)
     for qualified, expected in manifest.get("migrations", {}).items():
         app_label, name = qualified.split(".", 1)
