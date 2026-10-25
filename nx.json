@@ -7,11 +7,7 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "production",
-        "^production",
-        "{workspaceRoot}/tools/shared/**/*"
-      ],
+      "inputs": ["production", "^production"],
       "cache": true
     },
     "test": {
@@ -65,13 +61,16 @@
       "!{projectRoot}/tsconfig.storybook.json"
     ],
     "sharedGlobals": [
-      "{workspaceRoot}/Dockerfile",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/mypy.ini",
-      "{workspaceRoot}/uv.*",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/docker-pyproject.toml"
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/yarn.lock",
+      "{workspaceRoot}/tsconfig.base.json"
     ]
+  },
+  "pluginsConfig": {
+    "@nx/js": {
+      "projectsAffectedByDependencyUpdates": "auto"
+    }
   },
   "plugins": [
     "@nxlv/python",

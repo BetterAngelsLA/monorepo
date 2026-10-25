@@ -2,7 +2,8 @@ node_modules
 .vscode
 .devcontainer
 .git
-.nx/cache
+.nx
+.cache
 .yarn
 !.yarn/releases
 !.yarn/plugins

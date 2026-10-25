@@ -32,7 +32,7 @@ from django.db import connection  # noqa: E402
 from django.db.migrations.loader import MigrationLoader  # noqa: E402
 from django.db.migrations.recorder import MigrationRecorder  # noqa: E402
 
-MANIFEST_VERSION = 1
+MANIFEST_VERSION = 2
 
 APP_INPUTS = [
     "**/signals.py",
@@ -46,12 +46,34 @@ APP_INPUTS = [
     "scripts/test_db_common.sh",
     "scripts/test_db_cache_manifest.py",
 ]
+# post_migrate handlers seed the dump with code from the installed dependency
+# set, so a lockfile change can still change its contents.
 REPO_INPUTS = [
     "uv.lock",
-    "Dockerfile",
-    "docker-compose.yml",
-    "docker-compose-ci.yml",
 ]
+
+
+def compose_db_config() -> bytes:
+    """Return only the Compose ``db`` service block.
+
+    The whole Compose file changes for app mounts and CI-only services, which
+    must not invalidate the test database. The db service (image, command,
+    environment) does affect it, so hash that block instead of the file.
+    """
+    lines = (REPO_ROOT / "docker-compose.yml").read_text().splitlines()
+    block: list[str] = []
+    in_db = False
+    for line in lines:
+        if line.startswith("  db:") and not line.startswith("    "):
+            in_db = True
+            continue
+        if in_db:
+            if line.startswith("  ") and not line.startswith("    ") and line.strip():
+                break
+            block.append(line)
+    if not block:
+        raise ValueError("docker-compose.yml has no db service")
+    return "\n".join(block).encode()
 
 
 def sha256_file(path: Path) -> str:
@@ -73,13 +95,18 @@ def input_files() -> list[Path]:
     return sorted(files, key=lambda path: path.relative_to(REPO_ROOT).as_posix())
 
 
+def input_hashes() -> dict[str, str]:
+    hashes = {path.relative_to(REPO_ROOT).as_posix(): sha256_file(path) for path in input_files()}
+    hashes["docker-compose.yml#db"] = hashlib.sha256(compose_db_config()).hexdigest()
+    return hashes
+
+
 def inputs_digest() -> str:
     digest = hashlib.sha256()
-    for path in input_files():
-        relative = path.relative_to(REPO_ROOT).as_posix()
+    for relative, file_hash in sorted(input_hashes().items()):
         digest.update(relative.encode())
         digest.update(b"\0")
-        digest.update(path.read_bytes())
+        digest.update(file_hash.encode())
         digest.update(b"\0")
     return digest.hexdigest()
 
@@ -113,6 +140,7 @@ def write_manifest(output: Path) -> None:
             {
                 "version": MANIFEST_VERSION,
                 "inputs_sha256": inputs_digest(),
+                "input_hashes": input_hashes(),
                 "migrations": dict(sorted(migrations.items())),
             },
             indent=2,
@@ -126,9 +154,19 @@ def check_manifest(manifest_path: Path) -> None:
     if manifest.get("version") != MANIFEST_VERSION:
         raise ValueError("manifest version changed")
     if manifest.get("inputs_sha256") != inputs_digest():
-        raise ValueError("DB-affecting inputs changed")
+        current = input_hashes()
+        previous = manifest.get("input_hashes", {})
+        changed = sorted(name for name in set(current) | set(previous) if current.get(name) != previous.get(name))
+        detail = f": {', '.join(changed)}" if changed else ""
+        raise ValueError(f"DB-affecting inputs changed{detail}")
 
     loader = build_loader()
+    manifest_migrations = set(manifest.get("migrations", {}))
+    disk_migrations = {f"{app}.{name}" for app, name in loader.disk_migrations}
+    new_migrations = sorted(disk_migrations - manifest_migrations)
+    if new_migrations:
+        raise ValueError(f"new migrations: {', '.join(new_migrations)}")
+
     replaced = set(loader.replacements)
     for qualified, expected in manifest.get("migrations", {}).items():
         app_label, name = qualified.split(".", 1)

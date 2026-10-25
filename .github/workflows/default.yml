@@ -36,13 +36,13 @@ jobs:
 
     steps:
       - name: 🚦 Turnstyle
-        uses: softprops/turnstyle@master
+        uses: softprops/turnstyle@v3.3.3
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🏗 Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
@@ -52,7 +52,7 @@ jobs:
         run: git branch --track main origin/main
 
       - name: 🔧 Configure NX SHAs
-        uses: nrwl/nx-set-shas@v4
+        uses: nrwl/nx-set-shas@v5
 
       - name: 🔧 Set Environment Variables
         run: |
@@ -79,56 +79,139 @@ jobs:
           echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-${BRANCH_NAME}" >> $GITHUB_ENV
 
       - name: 🐳 Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.AWS_REGION }}
 
       - name: 🐳 Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@v2.1.7
 
       - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v4.4.1
 
-      # Build Monorepo Image with ECR layer caching
-      # - Pull from main cache (shared) + branch cache for incremental builds.
-      #   On main these are the same ref, which is harmless for cache imports.
-      # - Push to main cache on main pushes, branch cache otherwise.
-      - name: 🏗️ Build Monorepo Docker image
-        uses: docker/build-push-action@v7
+      # Dependencies live in the Actions cache, not in the CI image. The image
+      # contains only the toolchain; the checkout and dependencies are mounted.
+      - name: Restore dependency cache
+        id: deps-cache
+        uses: actions/cache/restore@v6
         with:
-          file: Dockerfile
-          load: true
-          tags: |
-            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
-          cache-from: |
-            type=registry,ref=${{ env.CACHE_IMAGE }}-main
-            type=registry,ref=${{ env.BRANCH_CACHE }}
-          cache-to: |
-            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || format('type=registry,ref={0},mode=max', env.BRANCH_CACHE) }}
+          path: |
+            node_modules
+            .venv
+            .yarn/cache
+            .yarn/install-state.gz
+          key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
 
-      - name: Cache Nx
-        uses: actions/cache@v4
+      - name: Ensure CI base image
+        id: ci-base
+        run: |
+          set -euo pipefail
+          DOCKERFILE_HASH="$(sha256sum Dockerfile | cut -c1-12)"
+          BRANCH_SLUG="$(printf '%s' "$BRANCH_NAME" | sha256sum | cut -c1-16)"
+          BRANCH_CI_BASE="$MONOREPO_IMAGE:ci-base-${BRANCH_SLUG}-${DOCKERFILE_HASH}"
+          built=false
+
+          if docker pull "$BRANCH_CI_BASE"; then
+            echo "Using ${BRANCH_CI_BASE}"
+            docker tag "$BRANCH_CI_BASE" "$MONOREPO_IMAGE:ci-base"
+          elif [[ -n "${NX_BASE:-}" ]] && git diff --quiet "$NX_BASE" HEAD -- Dockerfile && docker pull "$MONOREPO_IMAGE:ci-base"; then
+            echo "Using main ci-base"
+          else
+            echo "No matching ci-base image; building locally"
+            docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
+            built=true
+          fi
+
+          echo "built=$built" >> "$GITHUB_OUTPUT"
+          echo "branch_tag=$BRANCH_CI_BASE" >> "$GITHUB_OUTPUT"
+
+      - name: Push branch CI base
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && steps.ci-base.outputs.built == 'true'
+        continue-on-error: true
+        run: |
+          # ECR's monorepo lifecycle policy expires non-main tags after 7 days,
+          # so these per-branch base tags are bounded.
+          docker tag "$MONOREPO_IMAGE:ci-base" "${{ steps.ci-base.outputs.branch_tag }}"
+          docker push "${{ steps.ci-base.outputs.branch_tag }}"
+
+      - name: Prepare dependency mounts
+        run: |
+          mkdir -p node_modules .venv .yarn/cache
+          sudo chown -R -h 1000:1000 node_modules .venv .yarn
+
+      - name: Ensure dependencies
+        run: |
+          if [[ -x node_modules/.bin/nx && -x .venv/bin/python ]]; then
+            echo "dependency cache is complete"
+            exit 0
+          fi
+          echo "dependency cache is incomplete; reinstalling"
+          docker run --rm --user 1000:1000 -e CI=true -e HOME=/home/betterangels \
+            -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
+            "$MONOREPO_IMAGE:ci-base" \
+            bash -lc 'yarn install --immutable && uv sync --locked'
+
+      - name: Save dependency cache
+        if: steps.deps-cache.outputs.cache-matched-key == ''
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            node_modules
+            .venv
+            .yarn/cache
+            .yarn/install-state.gz
+          key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
+
+      - name: Restore Nx cache
+        id: nx-cache
+        uses: actions/cache/restore@v6
         with:
           # Nx 23 indexes cache outputs in SQLite under workspace-data.
+          # Cache the directory and its index together: a cache index without
+          # its outputs can produce a phantom hit.
           path: |
             .nx/cache
             .nx/workspace-data/*.db*
             .cache/test-db.dump
             .cache/test-db.manifest.json
-          save-always: false
-          # Main seeds this cache; PRs fall back to the default branch's
-          # latest cache before their own branch prefix.
-          key: nx-cache-v3-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          # A pull_request run's cache is scoped to refs/pull/.../merge.
+          # Re-runs of the same PR can restore it; it cannot seed main.
+          # main seeds the shared cache with its own push-triggered run.
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          # Fallback keys are intentional: the artifact validator below drops
+          # DB rows whose cache directories are absent, so a fallback cannot
+          # turn into a phantom hit.
           restore-keys: |
-            nx-cache-v3-${{ runner.os }}-${{ github.ref_name }}-
-            nx-cache-v3-${{ runner.os }}-${{ github.event.repository.default_branch }}-
-            nx-cache-v3-${{ runner.os }}-
+            nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-
+            nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
+            nx-cache-v4-${{ runner.os }}-
+
+      - name: Validate Nx cache artifacts
+        run: |
+          stale=0
+          for db in .nx/workspace-data/*.db; do
+            [[ -f "$db" ]] || continue
+            while IFS= read -r hash; do
+              if [[ ! -d ".nx/cache/$hash" ]]; then
+                echo "Nx cache has a DB row without artifacts: $hash"
+                stale=1
+              fi
+            done < <(sqlite3 "$db" "select hash from cache_outputs where is_cache_entry=1;" 2>/dev/null)
+          done
+          if (( stale )); then
+            echo "Clearing the Nx workspace DB so Nx does not report phantom hits"
+            rm -f .nx/workspace-data/*.db*
+          fi
 
       - name: 🔑 Prep Container Permissions
         run: |
-          sudo chown -R 1000:1000 $GITHUB_WORKSPACE
+          # These host directories are bind-mounted into the container. Create
+          # them first so Docker doesn't create root-owned mount points.
+          mkdir -p .nx/cache .nx/workspace-data .cache .ruff_cache .mypy_cache dist tmp reports coverage
+          sudo chown -R -h 1000:1000 $GITHUB_WORKSPACE
           sudo setfacl --modify user:1000:rw /var/run/docker.sock
           sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
 
@@ -140,12 +223,6 @@ jobs:
         run: |
           docker compose run better-angels bash <<'EOF'
           uv lock --check
-          EOF
-
-      - name: 🧹 Lint
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t lint
           EOF
 
       - name: 🩺 Expo Doctor
@@ -192,41 +269,17 @@ jobs:
           fi
           EOF
 
-      - name: 🔬 Typecheck
+      - name: 🧹 Lint, typecheck, test, and build
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t typecheck
-          EOF
-
-      - name: 🧪 Test
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          # nx affected runs every affected project with a test target,
-          # including the Vitest frontend/admin/shelter-web suites.
-          # logical (not auto): xdist's "auto" counts physical cores and
-          # under-provisions SMT runners. Each worker gets its own test DB.
-          # Scale with the runner; cap with --maxprocesses only if needed.
+          # One Nx invocation lets independent targets overlap: lint/typecheck
+          # while prepare-test-db builds the database, and the EAS build while
+          # the backend suite runs. logical (not auto): xdist's "auto" counts
+          # physical cores and under-provisions SMT runners.
           export TEST_DB_WORKERS=logical
           export PYTEST_ADDOPTS="-n logical --durations=25"
           # stream task output so pytest's durations/slowest-test table lands in CI
-          yarn nx affected -t test --output-style=stream
-          EOF
-
-      - name: 🕵🏻‍♂️ GraphQL Inspector
-        uses: kamilkisiela/graphql-inspector@master
-        # Warning: This now skips schema breaking checks in forked repositories.
-        # Resolve in: https://betterangels.atlassian.net/browse/DEV-690
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          schema: main:apps/betterangels-backend/schema.graphql
-          fail-on-breaking: true
-          approve-label: graphql-inspector:approved-breaking-change
-
-      - name: 🛠️ Build and Push Artifacts
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t build --configuration ${{ matrix.environment }}
+          yarn nx affected -t lint typecheck test build --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
@@ -244,6 +297,33 @@ jobs:
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
 
+      # Save before deploy/E2E. actions/cache's automatic save is a post-job
+      # action and only runs when the whole job succeeds; a deploy failure
+      # would otherwise throw away the seeded test DB. Explicit save also
+      # replaces the deprecated, non-functional `save-always` input.
+      - name: Save Nx cache
+        if: success()
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+            .cache/test-db.dump
+            .cache/test-db.manifest.json
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: 🕵🏻‍♂️ GraphQL Inspector
+        uses: kamilkisiela/graphql-inspector@v4.0.0
+        # Warning: This now skips schema breaking checks in forked repositories.
+        # Resolve in: https://betterangels.atlassian.net/browse/DEV-690
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          schema: main:apps/betterangels-backend/schema.graphql
+          fail-on-breaking: true
+          approve-label: graphql-inspector:approved-breaking-change
+
       - name: 💬 Post preview link to PR
         if: github.event_name == 'pull_request'
         run: |
@@ -255,10 +335,41 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
 
-      - name: 🏗️ Push Monorepo Docker image
+      - name: 🏗️ Build and push CI base image
+        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v7.4.0
+        with:
+          target: ci-base
+          push: true
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:ci-base
+          cache-from: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main
+          cache-to: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main,mode=max
+
+      - name: 🏗️ Build and push production image
+        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v7.4.0
+        with:
+          target: production
+          push: true
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main
+          cache-to: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main,mode=max
+
+      - name: Build production side-effect images
         if: matrix.environment == 'production'
         run: |
-          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+          # imgproxy/nginx push during their build. Their preview builds are
+          # cacheable, but a production cache hit would skip the push for this
+          # commit's image tag.
+          docker compose run better-angels bash <<'EOF'
+          yarn nx run-many -t build --projects=imgproxy,nginx --configuration production --skip-nx-cache
+          EOF
 
       - name: 🚀 Deploy Changes
         # `deploy` depends on `export-web` and `export-web` is not cached, so the
@@ -302,7 +413,7 @@ jobs:
 
       - name: 📎 Upload shelter-e2e report
         if: always() && matrix.environment == 'preview'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: shelter-e2e-report-${{ env.BRANCH_NAME }}
           path: dist/.playwright/apps/shelter-e2e
@@ -313,4 +424,4 @@ jobs:
         if: always()
         run: |
           docker compose down
-          sudo chown -R 1001:1001 $GITHUB_WORKSPACE
+          sudo chown -R -h 1001:1001 $GITHUB_WORKSPACE

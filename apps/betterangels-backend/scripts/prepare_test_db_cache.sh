@@ -27,34 +27,22 @@ BASE_DB="$(test_db_base_db)"
 CACHE_FILE="$(test_db_cache_file)"
 MANIFEST_FILE="$(test_db_manifest_file)"
 BUILD_PREFIX="${BASE_DB}_build"
-INCREMENTAL_DB="${BASE_DB}_incremental"
 mkdir -p "$(dirname "$CACHE_FILE")"
 
 cleanup_build_dbs() {
   for i in $(seq 0 $((workers - 1))); do
     dropdb --if-exists "${BUILD_PREFIX}${i}" >/dev/null 2>&1 || true
   done
-  dropdb --if-exists "$INCREMENTAL_DB" >/dev/null 2>&1 || true
 }
 trap cleanup_build_dbs EXIT
 
-echo "test DB cache: checking for an incremental base"
+echo "test DB cache: checking for a current base"
 if [[ -f "$CACHE_FILE" && -f "$MANIFEST_FILE" ]] &&
   POSTGRES_NAME=postgres "$PYTHON_BIN" scripts/test_db_cache_manifest.py check --manifest "$MANIFEST_FILE"; then
-  dropdb --if-exists "$INCREMENTAL_DB"
-  if createdb "$INCREMENTAL_DB" &&
-    pg_restore --dbname="$INCREMENTAL_DB" "$CACHE_FILE" &&
-    POSTGRES_NAME="$INCREMENTAL_DB" "$PYTHON_BIN" manage.py migrate --noinput &&
-    POSTGRES_NAME="$INCREMENTAL_DB" "$PYTHON_BIN" scripts/validate_test_db.py; then
-    rm -f "$CACHE_FILE"
-    pg_dump --format=custom --dbname="$INCREMENTAL_DB" --file="$CACHE_FILE"
-    POSTGRES_NAME="$INCREMENTAL_DB" "$PYTHON_BIN" scripts/test_db_cache_manifest.py write --output "$MANIFEST_FILE"
-    echo "test DB cache: applied new migrations on top of the previous dump"
-    exit 0
-  fi
-  echo "test DB cache: incremental path failed; falling back to a full build" >&2
-  dropdb --if-exists "$INCREMENTAL_DB" >/dev/null 2>&1 || true
-  rm -f "$CACHE_FILE" "$MANIFEST_FILE"
+  # The manifest already covers every migration, settings, and DB input that
+  # can change the dump. A matching manifest means there is nothing to apply.
+  echo "test DB cache: cache is current"
+  exit 0
 fi
 
 rm -f "$CACHE_FILE" "$MANIFEST_FILE"
