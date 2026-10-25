@@ -108,29 +108,27 @@ jobs:
         id: ci-base
         run: |
           set -euo pipefail
-          BRANCH_CI_BASE="$MONOREPO_IMAGE:ci-base-${BRANCH_NAME}"
+          DOCKERFILE_HASH="$(sha256sum Dockerfile | cut -c1-12)"
+          BRANCH_CI_BASE="$MONOREPO_IMAGE:ci-base-${BRANCH_NAME}-${DOCKERFILE_HASH}"
           built=false
-          if [[ -n "${NX_BASE:-}" ]] && git diff --name-only "$NX_BASE" HEAD -- Dockerfile | grep -q .; then
-            echo "Dockerfile changed; building ci-base from this revision"
-            docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
-            built=true
-          elif docker pull "$BRANCH_CI_BASE"; then
+          if docker pull "$BRANCH_CI_BASE"; then
             echo "Using ${BRANCH_CI_BASE}"
             docker tag "$BRANCH_CI_BASE" "$MONOREPO_IMAGE:ci-base"
-          elif docker pull "$MONOREPO_IMAGE:ci-base"; then
+          elif git diff --quiet "${NX_BASE:-origin/main}" HEAD -- Dockerfile && docker pull "$MONOREPO_IMAGE:ci-base"; then
             echo "Using main ci-base"
           else
-            echo "No ci-base image available; building locally"
+            echo "No matching ci-base image; building locally"
             docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
             built=true
           fi
           echo "built=$built" >> "$GITHUB_OUTPUT"
+          echo "branch_tag=$BRANCH_CI_BASE" >> "$GITHUB_OUTPUT"
 
       - name: Push branch CI base
         if: github.event_name == 'pull_request' && steps.ci-base.outputs.built == 'true'
         run: |
-          docker tag "$MONOREPO_IMAGE:ci-base" "$MONOREPO_IMAGE:ci-base-${BRANCH_NAME}"
-          docker push "$MONOREPO_IMAGE:ci-base-${BRANCH_NAME}"
+          docker tag "$MONOREPO_IMAGE:ci-base" "${{ steps.ci-base.outputs.branch_tag }}"
+          docker push "${{ steps.ci-base.outputs.branch_tag }}"
 
       - name: Prepare dependency mounts
         run: |
