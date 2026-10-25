@@ -23,8 +23,6 @@ services:
       # Keep Nx from leaving a daemon writing the cache while Actions archives
       # .nx; CI has no cross-command daemon benefit worth the race.
       - NX_DAEMON=false
-      - NX_CACHE_DIRECTORY=/workspace/.nx/cache
-      - NX_WORKSPACE_DATA_DIRECTORY=/workspace/.nx/workspace-data
       - BRANCH_NAME
       - SHORT_SHA
       - IMAGE_TAG_PREFIX

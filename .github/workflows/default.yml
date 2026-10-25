@@ -161,10 +161,9 @@ jobs:
           # Nx 23 indexes cache outputs in SQLite under workspace-data.
           # Cache the directory and its index together: a cache index without
           # its outputs can produce a phantom hit.
-          # Capture the cache artifacts and the index DB together. Saving only
-          # one half produces rows whose artifacts are missing.
           path: |
-            .nx
+            .nx/cache
+            .nx/workspace-data/*.db*
             .cache/test-db.dump
             .cache/test-db.manifest.json
           # A pull_request run's cache is scoped to refs/pull/.../merge.
@@ -275,10 +274,9 @@ jobs:
         if: success() && steps.nx-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
-          # Capture the cache artifacts and the index DB together. Saving only
-          # one half produces rows whose artifacts are missing.
           path: |
-            .nx
+            .nx/cache
+            .nx/workspace-data/*.db*
             .cache/test-db.dump
             .cache/test-db.manifest.json
           key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
