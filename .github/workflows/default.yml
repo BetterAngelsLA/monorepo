@@ -175,6 +175,16 @@ jobs:
             nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
             nx-cache-v4-${{ runner.os }}-
 
+      - name: Inspect restored Nx cache
+        if: always()
+        run: |
+          du -sh .nx .nx/cache .nx/workspace-data 2>/dev/null || true
+          echo "cache hash dirs: $(find .nx/cache -mindepth 1 -maxdepth 1 -type d | wc -l)"
+          for db in .nx/workspace-data/*.db; do
+            echo "DB:$db"
+            sqlite3 "$db" "select count(*) from cache_outputs;" 2>/dev/null || true
+          done
+
       - name: 🔑 Prep Container Permissions
         run: |
           # These host directories are bind-mounted into the container. Create
@@ -270,6 +280,18 @@ jobs:
       # action and only runs when the whole job succeeds; a deploy failure
       # would otherwise throw away the seeded test DB. Explicit save also
       # replaces the deprecated, non-functional `save-always` input.
+      - name: Inspect Nx cache before save
+        if: always()
+        run: |
+          echo "NX_CACHE_DIRECTORY=${NX_CACHE_DIRECTORY:-unset}"
+          du -sh .nx .nx/cache .nx/workspace-data 2>/dev/null || true
+          echo "cache hash dirs: $(find .nx/cache -mindepth 1 -maxdepth 1 -type d | wc -l)"
+          find .nx/cache -mindepth 1 -maxdepth 1 -type d | head -5
+          for db in .nx/workspace-data/*.db; do
+            echo "DB:$db"
+            sqlite3 "$db" "select count(*) from cache_outputs;" 2>/dev/null || true
+          done
+
       - name: Save Nx cache
         if: success() && steps.nx-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
