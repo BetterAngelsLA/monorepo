@@ -105,17 +105,32 @@ jobs:
           key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
 
       - name: Ensure CI base image
+        id: ci-base
         run: |
           set -euo pipefail
+          BRANCH_CI_BASE="$MONOREPO_IMAGE:ci-base-${BRANCH_NAME}"
+          built=false
           if [[ -n "${NX_BASE:-}" ]] && git diff --name-only "$NX_BASE" HEAD -- Dockerfile | grep -q .; then
             echo "Dockerfile changed; building ci-base from this revision"
             docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
+            built=true
+          elif docker pull "$BRANCH_CI_BASE"; then
+            echo "Using ${BRANCH_CI_BASE}"
+            docker tag "$BRANCH_CI_BASE" "$MONOREPO_IMAGE:ci-base"
           elif docker pull "$MONOREPO_IMAGE:ci-base"; then
             echo "Using main ci-base"
           else
             echo "No ci-base image available; building locally"
             docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
+            built=true
           fi
+          echo "built=$built" >> "$GITHUB_OUTPUT"
+
+      - name: Push branch CI base
+        if: github.event_name == 'pull_request' && steps.ci-base.outputs.built == 'true'
+        run: |
+          docker tag "$MONOREPO_IMAGE:ci-base" "$MONOREPO_IMAGE:ci-base-${BRANCH_NAME}"
+          docker push "$MONOREPO_IMAGE:ci-base-${BRANCH_NAME}"
 
       - name: Prepare dependency mounts
         run: |
