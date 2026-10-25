@@ -395,8 +395,9 @@ jobs:
           yarn nx run-many -t build --projects=imgproxy,nginx --configuration production --skip-nx-cache
           EOF
         env:
-          # @nx-tools/nx-container reads GitHub context for image metadata.
+          # @nx-tools/nx-container reads its action-style input for image metadata.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🚀 Deploy Changes
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
