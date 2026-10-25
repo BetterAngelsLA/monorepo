@@ -48,7 +48,6 @@ APP_INPUTS = [
 ]
 REPO_INPUTS = [
     "uv.lock",
-    "docker-compose.yml",
 ]
 
 
