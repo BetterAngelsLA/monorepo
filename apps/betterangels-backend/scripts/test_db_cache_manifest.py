@@ -32,7 +32,7 @@ from django.db import connection  # noqa: E402
 from django.db.migrations.loader import MigrationLoader  # noqa: E402
 from django.db.migrations.recorder import MigrationRecorder  # noqa: E402
 
-MANIFEST_VERSION = 1
+MANIFEST_VERSION = 2
 
 APP_INPUTS = [
     "**/signals.py",
@@ -44,6 +44,7 @@ APP_INPUTS = [
     "scripts/setup_test_db.py",
     "scripts/validate_test_db.py",
     "scripts/test_db_common.sh",
+    "scripts/test_db_cache_manifest.py",
 ]
 # post_migrate handlers seed the dump with code from the installed dependency
 # set, so a lockfile change can still change its contents.
