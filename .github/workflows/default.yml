@@ -105,39 +105,30 @@ jobs:
           key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
 
       - name: Ensure CI base image
-        id: ci-base
         run: |
           set -euo pipefail
-          DOCKERFILE_HASH="$(sha256sum Dockerfile | cut -c1-12)"
-          BRANCH_CI_BASE="$MONOREPO_IMAGE:ci-base-${BRANCH_NAME}-${DOCKERFILE_HASH}"
-          built=false
-          if docker pull "$BRANCH_CI_BASE"; then
-            echo "Using ${BRANCH_CI_BASE}"
-            docker tag "$BRANCH_CI_BASE" "$MONOREPO_IMAGE:ci-base"
-          elif git diff --quiet "${NX_BASE:-origin/main}" HEAD -- Dockerfile && docker pull "$MONOREPO_IMAGE:ci-base"; then
+          if [[ -z "${NX_BASE:-}" ]] || ! git diff --quiet "$NX_BASE" HEAD -- Dockerfile; then
+            echo "Dockerfile differs from the base revision; building ci-base locally"
+            docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
+          elif docker pull "$MONOREPO_IMAGE:ci-base"; then
             echo "Using main ci-base"
           else
-            echo "No matching ci-base image; building locally"
+            echo "No main ci-base available; building locally"
             docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
-            built=true
           fi
-          echo "built=$built" >> "$GITHUB_OUTPUT"
-          echo "branch_tag=$BRANCH_CI_BASE" >> "$GITHUB_OUTPUT"
-
-      - name: Push branch CI base
-        if: github.event_name == 'pull_request' && steps.ci-base.outputs.built == 'true'
-        run: |
-          docker tag "$MONOREPO_IMAGE:ci-base" "${{ steps.ci-base.outputs.branch_tag }}"
-          docker push "${{ steps.ci-base.outputs.branch_tag }}"
 
       - name: Prepare dependency mounts
         run: |
           mkdir -p node_modules .venv .yarn/cache
           sudo chown -R -h 1000:1000 node_modules .venv .yarn
 
-      - name: Install dependencies
-        if: steps.deps-cache.outputs.cache-hit != 'true'
+      - name: Ensure dependencies
         run: |
+          if [[ -x node_modules/.bin/nx && -x .venv/bin/python ]]; then
+            echo "dependency cache is complete"
+            exit 0
+          fi
+          echo "dependency cache is incomplete; reinstalling"
           docker run --rm --user 1000:1000 -e CI=true -e HOME=/home/betterangels \
             -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
             "$MONOREPO_IMAGE:ci-base" \
