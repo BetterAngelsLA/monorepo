@@ -105,17 +105,36 @@ jobs:
           key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
 
       - name: Ensure CI base image
+        id: ci-base
         run: |
           set -euo pipefail
-          if [[ -z "${NX_BASE:-}" ]] || ! git diff --quiet "$NX_BASE" HEAD -- Dockerfile; then
-            echo "Dockerfile differs from the base revision; building ci-base locally"
-            docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
-          elif docker pull "$MONOREPO_IMAGE:ci-base"; then
+          DOCKERFILE_HASH="$(sha256sum Dockerfile | cut -c1-12)"
+          BRANCH_SLUG="$(printf '%s' "$BRANCH_NAME" | sha256sum | cut -c1-16)"
+          BRANCH_CI_BASE="$MONOREPO_IMAGE:ci-base-${BRANCH_SLUG}-${DOCKERFILE_HASH}"
+          built=false
+
+          if docker pull "$BRANCH_CI_BASE"; then
+            echo "Using ${BRANCH_CI_BASE}"
+            docker tag "$BRANCH_CI_BASE" "$MONOREPO_IMAGE:ci-base"
+          elif [[ -n "${NX_BASE:-}" ]] && git diff --quiet "$NX_BASE" HEAD -- Dockerfile && docker pull "$MONOREPO_IMAGE:ci-base"; then
             echo "Using main ci-base"
           else
-            echo "No main ci-base available; building locally"
+            echo "No matching ci-base image; building locally"
             docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
+            built=true
           fi
+
+          echo "built=$built" >> "$GITHUB_OUTPUT"
+          echo "branch_tag=$BRANCH_CI_BASE" >> "$GITHUB_OUTPUT"
+
+      - name: Push branch CI base
+        if: github.event_name == 'pull_request' && steps.ci-base.outputs.built == 'true'
+        continue-on-error: true
+        run: |
+          # ECR's monorepo lifecycle policy expires non-main tags after 7 days,
+          # so these per-branch base tags are bounded.
+          docker tag "$MONOREPO_IMAGE:ci-base" "${{ steps.ci-base.outputs.branch_tag }}"
+          docker push "${{ steps.ci-base.outputs.branch_tag }}"
 
       - name: Prepare dependency mounts
         run: |
@@ -161,6 +180,9 @@ jobs:
           # Re-runs of the same PR can restore it; it cannot seed main.
           # main seeds the shared cache with its own push-triggered run.
           key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          # Fallback keys are intentional: the artifact validator below drops
+          # DB rows whose cache directories are absent, so a fallback cannot
+          # turn into a phantom hit.
           restore-keys: |
             nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-
             nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
