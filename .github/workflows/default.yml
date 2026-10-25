@@ -79,6 +79,10 @@ jobs:
           echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-${BRANCH_NAME}" >> $GITHUB_ENV
 
       - name: 🐳 Configure AWS credentials
+        # Trusted provenance only — forked PRs must never hold cloud credentials.
+        # (Defense in depth: PRs can edit workflow files, so the real boundary is
+        # credential placement + the AWS role trust policy, not this guard.)
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
@@ -86,6 +90,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: 🐳 Login to Amazon ECR
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: aws-actions/amazon-ecr-login@v2.1.7
 
       - name: 🐳 Set up Docker Buildx
@@ -280,7 +285,14 @@ jobs:
           export TEST_DB_WORKERS=logical
           export PYTEST_ADDOPTS="-n logical --durations=25"
           # stream task output so pytest's durations/slowest-test table lands in CI
-          yarn nx affected -t lint typecheck test build --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
+          # EAS/vite builds consume EXPO_TOKEN and cloud credentials; forked
+          # PRs still run lint/typecheck/test but must not run build.
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
+            TARGETS="lint typecheck test"
+          else
+            TARGETS="lint typecheck test build"
+          fi
+          yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
@@ -326,7 +338,7 @@ jobs:
           approve-label: graphql-inspector:approved-breaking-change
 
       - name: 💬 Post preview link to PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
         run: |
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t post-pr-preview
@@ -375,6 +387,7 @@ jobs:
           EOF
 
       - name: 🚀 Deploy Changes
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         # `deploy` depends on `export-web` and `export-web` is not cached, so the
         # browser bundle is built here rather than in a second invocation.
         run: |
@@ -410,12 +423,12 @@ jobs:
         # app with `implicitDependencies`. (Which is also why this can't be
         # `nx affected -t e2e`: `BASE_URL` is one value for the whole container,
         # so a second suite in the same step would be handed the wrong origin.)
-        if: matrix.environment == 'preview'
+        if: matrix.environment == 'preview' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
         run: |
           docker compose run --rm better-angels bash tools/scripts/e2e-shelter.sh
 
       - name: 📎 Upload shelter-e2e report
-        if: always() && matrix.environment == 'preview'
+        if: always() && matrix.environment == 'preview' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
         uses: actions/upload-artifact@v7
         with:
           name: shelter-e2e-report-${{ env.BRANCH_NAME }}
