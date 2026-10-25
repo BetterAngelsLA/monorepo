@@ -80,7 +80,7 @@ jobs:
 
       - name: 🐳 Configure AWS credentials
         # Fork PRs must not request cloud credentials; mirrors #2479.
-        if: github.event.pull_request.head.repo.fork != true
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
@@ -88,7 +88,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: 🐳 Login to Amazon ECR
-        if: github.event.pull_request.head.repo.fork != true
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
         uses: aws-actions/amazon-ecr-login@v2.1.7
 
       - name: 🐳 Set up Docker Buildx
@@ -131,7 +131,7 @@ jobs:
           echo "branch_tag=$BRANCH_CI_BASE" >> "$GITHUB_OUTPUT"
 
       - name: Push branch CI base
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true && steps.ci-base.outputs.built == 'true'
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && steps.ci-base.outputs.built == 'true' }}
         continue-on-error: true
         run: |
           # ECR's monorepo lifecycle policy expires non-main tags after 7 days,
@@ -335,7 +335,7 @@ jobs:
         uses: kamilkisiela/graphql-inspector@v4.0.0
         # Warning: This now skips schema breaking checks in forked repositories.
         # Resolve in: https://betterangels.atlassian.net/browse/DEV-690
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           schema: main:apps/betterangels-backend/schema.graphql
@@ -343,7 +343,7 @@ jobs:
           approve-label: graphql-inspector:approved-breaking-change
 
       - name: 💬 Post preview link to PR
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
         run: |
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t post-pr-preview
@@ -396,7 +396,7 @@ jobs:
           EOF
 
       - name: 🚀 Deploy Changes
-        if: github.event.pull_request.head.repo.fork != true
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
         # `deploy` depends on `export-web` and `export-web` is not cached, so the
         # browser bundle is built here rather than in a second invocation.
         run: |
@@ -415,7 +415,7 @@ jobs:
           EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
 
       - name: 🧪 E2E shelter-web (preview)
-        if: github.event.pull_request.head.repo.fork != true
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
         # Runs after deploy, because the suite drives the deployed preview: the
         # deploy step only returns once the edge serves the revision just built,
         # so these tests describe this commit rather than whatever was there.
