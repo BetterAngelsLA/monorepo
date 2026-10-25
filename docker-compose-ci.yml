@@ -23,6 +23,9 @@ services:
       # Keep Nx from leaving a daemon writing the cache while Actions archives
       # .nx; CI has no cross-command daemon benefit worth the race.
       - NX_DAEMON=false
+      # Never let a test/typecheck command rewrite uv.lock mid-run; the test DB
+      # manifest hashes uv.lock and a rewritten lock invalidates the next run.
+      - UV_FROZEN=1
       - BRANCH_NAME
       - SHORT_SHA
       - IMAGE_TAG_PREFIX
