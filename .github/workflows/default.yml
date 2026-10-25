@@ -193,6 +193,13 @@ jobs:
             nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
             nx-cache-v4-${{ runner.os }}-
 
+      - name: Restore the test DB manifest from the Nx cache
+        run: |
+          mkdir -p .nx/cache
+          if [[ -f .nx/cache/test-db.manifest.json ]]; then
+            cp .nx/cache/test-db.manifest.json .cache/test-db.manifest.json
+          fi
+
       - name: Validate Nx cache artifacts
         run: |
           stale=0
@@ -305,6 +312,14 @@ jobs:
       # action and only runs when the whole job succeeds; a deploy failure
       # would otherwise throw away the seeded test DB. Explicit save also
       # replaces the deprecated, non-functional `save-always` input.
+      - name: Stash the test DB manifest in the Nx cache
+        if: success()
+        run: |
+          mkdir -p .nx/cache
+          if [[ -f .cache/test-db.manifest.json ]]; then
+            cp .cache/test-db.manifest.json .nx/cache/test-db.manifest.json
+          fi
+
       - name: Save Nx cache
         if: success()
         uses: actions/cache/save@v6
