@@ -154,7 +154,7 @@ jobs:
             bash -lc 'yarn install --immutable && uv sync --locked'
 
       - name: Save dependency cache
-        if: steps.deps-cache.outputs.cache-hit != 'true'
+        if: steps.deps-cache.outputs.cache-matched-key == ''
         uses: actions/cache/save@v6
         with:
           path: |
@@ -189,15 +189,6 @@ jobs:
             nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-
             nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
             nx-cache-v4-${{ runner.os }}-
-
-      - name: Restore the test DB manifest
-        id: db-manifest
-        uses: actions/cache/restore@v6
-        with:
-          path: .cache/test-db.manifest.json
-          key: test-db-manifest-v1-${{ runner.os }}-${{ github.sha }}-${{ github.run_attempt }}
-          restore-keys: |
-            test-db-manifest-v1-${{ runner.os }}-${{ github.sha }}-
 
       - name: Validate Nx cache artifacts
         run: |
@@ -311,13 +302,6 @@ jobs:
       # action and only runs when the whole job succeeds; a deploy failure
       # would otherwise throw away the seeded test DB. Explicit save also
       # replaces the deprecated, non-functional `save-always` input.
-      - name: Save the test DB manifest
-        if: success() && hashFiles('.cache/test-db.manifest.json') != ''
-        uses: actions/cache/save@v6
-        with:
-          path: .cache/test-db.manifest.json
-          key: test-db-manifest-v1-${{ runner.os }}-${{ github.sha }}-${{ github.run_attempt }}
-
       - name: Save Nx cache
         if: success()
         uses: actions/cache/save@v6
