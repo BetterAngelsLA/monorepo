@@ -184,7 +184,6 @@ jobs:
           # DB rows whose cache directories are absent, so a fallback cannot
           # turn into a phantom hit.
           restore-keys: |
-            nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
             nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-
             nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-
             nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
@@ -304,6 +303,7 @@ jobs:
       # replaces the deprecated, non-functional `save-always` input.
       - name: Save Nx cache
         if: success()
+        continue-on-error: true
         uses: actions/cache/save@v6
         with:
           path: |
