@@ -7,18 +7,7 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "production",
-        "^production",
-        "{workspaceRoot}/tools/shared/**/*",
-        { "env": "CI" },
-        { "env": "BRANCH_NAME" },
-        { "env": "VITE_APP_BASE_PATH" },
-        { "env": "VITE_SHELTER_API_URL" },
-        { "env": "VITE_SHELTER_GOOGLE_MAPS_API_KEY" },
-        { "env": "VITE_BETTERANGELS_ADMIN_API_URL" },
-        { "env": "VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY" }
-      ],
+      "inputs": ["production", "^production"],
       "cache": true
     },
     "test": {
@@ -71,7 +60,12 @@
       "!{projectRoot}/.storybook/**/*",
       "!{projectRoot}/tsconfig.storybook.json"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": [
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/yarn.lock",
+      "{workspaceRoot}/tsconfig.base.json"
+    ]
   },
   "pluginsConfig": {
     "@nx/js": {
