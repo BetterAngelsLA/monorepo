@@ -175,6 +175,23 @@ jobs:
             nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
             nx-cache-v4-${{ runner.os }}-
 
+      - name: Validate Nx cache artifacts
+        run: |
+          stale=0
+          for db in .nx/workspace-data/*.db; do
+            [[ -f "$db" ]] || continue
+            while IFS= read -r hash; do
+              if [[ ! -d ".nx/cache/$hash" ]]; then
+                echo "Nx cache has a DB row without artifacts: $hash"
+                stale=1
+              fi
+            done < <(sqlite3 "$db" "select hash from cache_outputs where is_cache_entry=1;" 2>/dev/null)
+          done
+          if (( stale )); then
+            echo "Clearing the Nx workspace DB so Nx does not report phantom hits"
+            rm -f .nx/workspace-data/*.db*
+          fi
+
       - name: 🔑 Prep Container Permissions
         run: |
           # These host directories are bind-mounted into the container. Create
@@ -328,6 +345,16 @@ jobs:
             type=registry,ref=${{ env.CACHE_IMAGE }}-main
           cache-to: |
             type=registry,ref=${{ env.CACHE_IMAGE }}-main,mode=max
+
+      - name: Build production side-effect images
+        if: matrix.environment == 'production'
+        run: |
+          # imgproxy/nginx push during their build. Their preview builds are
+          # cacheable, but a production cache hit would skip the push for this
+          # commit's image tag.
+          docker compose run better-angels bash <<'EOF'
+          yarn nx run-many -t build --projects=imgproxy,nginx --configuration production --skip-nx-cache
+          EOF
 
       - name: 🚀 Deploy Changes
         # `deploy` depends on `export-web` and `export-web` is not cached, so the

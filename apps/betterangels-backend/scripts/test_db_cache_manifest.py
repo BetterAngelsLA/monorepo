@@ -48,9 +48,7 @@ APP_INPUTS = [
 ]
 REPO_INPUTS = [
     "uv.lock",
-    "Dockerfile",
     "docker-compose.yml",
-    "docker-compose-ci.yml",
 ]
 
 

@@ -145,9 +145,7 @@
         "{projectRoot}/scripts/test_db_common.sh",
         "{projectRoot}/scripts/test_db_cache_manifest.py",
         "{workspaceRoot}/uv.lock",
-        "{workspaceRoot}/Dockerfile",
-        "{workspaceRoot}/docker-compose.yml",
-        "{workspaceRoot}/docker-compose-ci.yml"
+        "{workspaceRoot}/docker-compose.yml"
       ],
       "outputs": [
         "{workspaceRoot}/.cache/test-db.dump",
@@ -166,8 +164,7 @@
         "default",
         "{workspaceRoot}/pyproject.toml",
         "{workspaceRoot}/uv.lock",
-        { "env": "PYTEST_ADDOPTS" },
-        { "env": "TEST_DB_WORKERS" }
+        { "env": "PYTEST_ADDOPTS" }
       ],
       "options": {
         "command": "bash scripts/restore_test_db_cache.sh && uv run pytest",
