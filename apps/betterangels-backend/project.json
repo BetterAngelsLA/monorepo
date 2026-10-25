@@ -125,7 +125,7 @@
         "{workspaceRoot}/uv.lock"
       ],
       "options": {
-        "commands": ["uv run ruff check .", "uv run ruff format --check ."],
+        "commands": ["uv run --locked ruff check .", "uv run --locked ruff format --check ."],
         "cwd": "apps/betterangels-backend",
         "parallel": false
       }
@@ -166,7 +166,7 @@
         { "env": "PYTEST_ADDOPTS" }
       ],
       "options": {
-        "command": "bash scripts/restore_test_db_cache.sh && uv run pytest",
+        "command": "bash scripts/restore_test_db_cache.sh && uv run --locked pytest",
         "cwd": "apps/betterangels-backend"
       }
     },
@@ -179,7 +179,7 @@
         "{workspaceRoot}/mypy.ini"
       ],
       "options": {
-        "commands": ["uv run mypy --config-file=../../mypy.ini ."],
+        "commands": ["uv run --locked mypy --config-file=../../mypy.ini ."],
         "cwd": "apps/betterangels-backend",
         "parallel": false
       }

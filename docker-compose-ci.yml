@@ -26,6 +26,7 @@ services:
       # Never let a test/typecheck command rewrite uv.lock mid-run; the test DB
       # manifest hashes uv.lock and a rewritten lock invalidates the next run.
       - UV_FROZEN=1
+      - UV_LOCKED=1
       - BRANCH_NAME
       - SHORT_SHA
       - IMAGE_TAG_PREFIX
