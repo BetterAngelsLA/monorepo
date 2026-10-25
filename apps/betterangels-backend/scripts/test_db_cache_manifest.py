@@ -44,7 +44,6 @@ APP_INPUTS = [
     "scripts/setup_test_db.py",
     "scripts/validate_test_db.py",
     "scripts/test_db_common.sh",
-    "scripts/test_db_cache_manifest.py",
 ]
 # post_migrate handlers seed the dump with code from the installed dependency
 # set, so a lockfile change can still change its contents.
@@ -158,12 +157,6 @@ def check_manifest(manifest_path: Path) -> None:
         previous = manifest.get("input_hashes", {})
         changed = sorted(name for name in set(current) | set(previous) if current.get(name) != previous.get(name))
         detail = f": {', '.join(changed)}" if changed else ""
-        sample = "apps/betterangels-backend/accounts/apps.py"
-        print(
-            f"test DB manifest debug: cwd={os.getcwd()} root={REPO_ROOT} "
-            f"sample_current={current.get(sample)} sample_previous={previous.get(sample)}",
-            file=sys.stderr,
-        )
         raise ValueError(f"DB-affecting inputs changed{detail}")
 
     loader = build_loader()
