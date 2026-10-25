@@ -144,7 +144,6 @@
         "{projectRoot}/scripts/validate_test_db.py",
         "{projectRoot}/scripts/test_db_common.sh",
         "{projectRoot}/scripts/test_db_cache_manifest.py",
-        "{workspaceRoot}/uv.lock",
         "{workspaceRoot}/docker-compose.yml"
       ],
       "outputs": [

@@ -46,9 +46,10 @@ APP_INPUTS = [
     "scripts/test_db_common.sh",
     "scripts/test_db_cache_manifest.py",
 ]
-REPO_INPUTS = [
-    "uv.lock",
-]
+# The test DB dump is schema/data from migrations, not the installed Python
+# package set. Lockfile changes therefore do not invalidate it; bump
+# MANIFEST_VERSION if a dependency upgrade changes migration behavior.
+REPO_INPUTS: list[str] = []
 
 
 def compose_db_config() -> bytes:
