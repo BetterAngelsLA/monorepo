@@ -195,7 +195,9 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: .cache/test-db.manifest.json
-          key: test-db-manifest-v1-${{ runner.os }}-${{ github.sha }}
+          key: test-db-manifest-v1-${{ runner.os }}-${{ github.sha }}-${{ github.run_attempt }}
+          restore-keys: |
+            test-db-manifest-v1-${{ runner.os }}-${{ github.sha }}-
 
       - name: Validate Nx cache artifacts
         run: |
@@ -310,11 +312,11 @@ jobs:
       # would otherwise throw away the seeded test DB. Explicit save also
       # replaces the deprecated, non-functional `save-always` input.
       - name: Save the test DB manifest
-        if: success() && steps.db-manifest.outputs.cache-hit != 'true' && hashFiles('.cache/test-db.manifest.json') != ''
+        if: success() && hashFiles('.cache/test-db.manifest.json') != ''
         uses: actions/cache/save@v6
         with:
           path: .cache/test-db.manifest.json
-          key: test-db-manifest-v1-${{ runner.os }}-${{ github.sha }}
+          key: test-db-manifest-v1-${{ runner.os }}-${{ github.sha }}-${{ github.run_attempt }}
 
       - name: Save Nx cache
         if: success()
