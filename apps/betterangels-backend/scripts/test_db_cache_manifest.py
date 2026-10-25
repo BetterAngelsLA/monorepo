@@ -51,6 +51,29 @@ REPO_INPUTS = [
 ]
 
 
+def compose_db_config() -> bytes:
+    """Return only the Compose ``db`` service block.
+
+    The whole Compose file changes for app mounts and CI-only services, which
+    must not invalidate the test database. The db service (image, command,
+    environment) does affect it, so hash that block instead of the file.
+    """
+    lines = (REPO_ROOT / "docker-compose.yml").read_text().splitlines()
+    block: list[str] = []
+    in_db = False
+    for line in lines:
+        if line.startswith("  db:") and not line.startswith("    "):
+            in_db = True
+            continue
+        if in_db:
+            if line.startswith("  ") and not line.startswith("    ") and line.strip():
+                break
+            block.append(line)
+    if not block:
+        raise ValueError("docker-compose.yml has no db service")
+    return "\n".join(block).encode()
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -78,6 +101,9 @@ def inputs_digest() -> str:
         digest.update(b"\0")
         digest.update(path.read_bytes())
         digest.update(b"\0")
+    digest.update(b"docker-compose.yml:db\0")
+    digest.update(compose_db_config())
+    digest.update(b"\0")
     return digest.hexdigest()
 
 
