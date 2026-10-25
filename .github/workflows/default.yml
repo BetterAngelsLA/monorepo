@@ -200,6 +200,12 @@ jobs:
             test-db-manifest-v1-${{ runner.os }}-${{ github.ref_name }}-
             test-db-manifest-v1-${{ runner.os }}-
 
+      - name: Show restored test DB manifest
+        run: |
+          echo "restored manifest:"
+          head -c 600 .cache/test-db.manifest.json || true
+          echo
+
       - name: Validate Nx cache artifacts
         run: |
           stale=0
@@ -312,6 +318,12 @@ jobs:
       # action and only runs when the whole job succeeds; a deploy failure
       # would otherwise throw away the seeded test DB. Explicit save also
       # replaces the deprecated, non-functional `save-always` input.
+      - name: Show test DB manifest before save
+        run: |
+          echo "manifest before save:"
+          head -c 600 .cache/test-db.manifest.json || true
+          echo
+
       - name: Save the test DB manifest
         if: success() && hashFiles('.cache/test-db.manifest.json') != ''
         uses: actions/cache/save@v6
