@@ -9,7 +9,7 @@ services:
       - ${GITHUB_WORKSPACE}/node_modules:/workspace/node_modules
       - ${GITHUB_WORKSPACE}/.venv:/workspace/.venv
       - ${GITHUB_WORKSPACE}/.yarn:/workspace/.yarn
-      - ${HOME}/.docker/:/home/betterangels/.docker/
+      - ${CI_DOCKER_CONFIG}:/home/betterangels/.docker/
       - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro
       - /var/run/docker.sock:/var/run/docker.sock
     # Pass in GitHub Actions Envs into the container

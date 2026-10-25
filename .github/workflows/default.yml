@@ -217,9 +217,18 @@ jobs:
           # These host directories are bind-mounted into the container. Create
           # them first so Docker doesn't create root-owned mount points.
           mkdir -p .nx/cache .nx/workspace-data .cache .ruff_cache .mypy_cache dist tmp reports coverage
+          # The container gets a writable copy of the runner's Docker config.
+          # Buildx activity and state it writes stay in this copy instead of
+          # corrupting the host's ~/.docker (the runner and container use
+          # different uids). The copy still carries ECR credentials and the
+          # builder created by setup-buildx-action.
+          mkdir -p "$HOME/.docker"
+          rm -rf "$RUNNER_TEMP/ci-docker"
+          sudo cp -a "$HOME/.docker" "$RUNNER_TEMP/ci-docker"
+          sudo chown -R 1000:1000 "$RUNNER_TEMP/ci-docker"
+          echo "CI_DOCKER_CONFIG=$RUNNER_TEMP/ci-docker" >> "$GITHUB_ENV"
           sudo chown -R -h 1000:1000 $GITHUB_WORKSPACE
           sudo setfacl --modify user:1000:rw /var/run/docker.sock
-          sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
 
       - name: Spin up monorepo environment
         run: |
@@ -348,15 +357,6 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
 
-      - name: 🐳 Grant the runner access to its Docker config
-        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          # The CI container runs as 1000 and writes Buildx activity files into
-          # the bind-mounted ~/.docker. The runner is 1001, so the cache-exporting
-          # push cannot open that activity file until the runner is granted
-          # access. Default ACLs keep working for files created later.
-          sudo setfacl -Rm "u:$(id -u):rwX,d:u:$(id -u):rwX" "$HOME/.docker"
-
       - name: 🏗️ Build and push CI base image
         if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v7.4.0
@@ -394,6 +394,9 @@ jobs:
           docker compose run better-angels bash <<'EOF'
           yarn nx run-many -t build --projects=imgproxy,nginx --configuration production --skip-nx-cache
           EOF
+        env:
+          # @nx-tools/nx-container reads GitHub context for image metadata.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🚀 Deploy Changes
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
