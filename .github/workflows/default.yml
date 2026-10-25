@@ -348,6 +348,15 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
 
+      - name: 🐳 Grant the runner access to its Docker config
+        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # The CI container runs as 1000 and writes Buildx activity files into
+          # the bind-mounted ~/.docker. The runner is 1001, so the cache-exporting
+          # push cannot open that activity file until the runner is granted
+          # access. Default ACLs keep working for files created later.
+          sudo setfacl -Rm "u:$(id -u):rwX,d:u:$(id -u):rwX" "$HOME/.docker"
+
       - name: 🏗️ Build and push CI base image
         if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v7.4.0
