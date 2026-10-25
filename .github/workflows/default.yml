@@ -377,12 +377,6 @@ jobs:
           cache-to: |
             type=registry,ref=${{ env.CACHE_IMAGE }}-main,mode=max
 
-      - name: Set up QEMU for arm64 side-effect images
-        if: matrix.environment == 'production'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
       - name: Build production side-effect images
         if: matrix.environment == 'production'
         run: |
