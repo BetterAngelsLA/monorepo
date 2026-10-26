@@ -1,18 +1,14 @@
 query ObjectAuditLog(
   $targetType: AuditTargetType!
   $objectId: ID!
-  $dateFrom: DateTime
-  $dateTo: DateTime
-  $actorId: ID
+  $filters: AuditEventFilter
   $limit: Int!
   $after: String
 ) {
   objectAuditLog(
     targetType: $targetType
     objectId: $objectId
-    dateFrom: $dateFrom
-    dateTo: $dateTo
-    actorId: $actorId
+    filters: $filters
     limit: $limit
     after: $after
   ) {

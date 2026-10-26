@@ -48,17 +48,28 @@ export function useObjectAuditLog({
   dateTo,
   actorId,
 }: UseObjectAuditLogArgs) {
-  const variables = useMemo(
-    () => ({
+  const variables = useMemo<ObjectAuditLogQueryVariables>(() => {
+    const filters: NonNullable<ObjectAuditLogQueryVariables['filters']> = {};
+
+    if (dateFrom) {
+      filters.dateFrom = dateFrom;
+    }
+    if (dateTo) {
+      filters.dateTo = dateTo;
+    }
+    if (actorId) {
+      filters.actorId = actorId;
+    }
+
+    return {
       targetType,
       objectId,
-      dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
-      actorId: actorId || undefined,
       limit: pageSize,
-    }),
-    [targetType, objectId, dateFrom, dateTo, actorId, pageSize],
-  );
+      // Omit the input entirely when nothing is set: the server defaults to
+      // "no filters", and the variable set stays identical to the initial one.
+      ...(Object.keys(filters).length > 0 ? { filters } : {}),
+    };
+  }, [targetType, objectId, dateFrom, dateTo, actorId, pageSize]);
 
   const { data, loading, error, fetchMore } = useQuery<
     ObjectAuditLogQuery,
