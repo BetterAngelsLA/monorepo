@@ -70,6 +70,7 @@ export function ShelterContactsForm(props: TProps) {
                   onRemove={() => onRemove(index)}
                   errors={contactErrors}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                   className={contactFormClassName}
                 />
               )}
