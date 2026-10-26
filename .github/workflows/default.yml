@@ -76,6 +76,7 @@ jobs:
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
           echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
           echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-${BRANCH_NAME}" >> $GITHUB_ENV
+          echo "MAIN_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-main" >> $GITHUB_ENV
 
       - name: 🐳 Configure AWS credentials
         # Trusted provenance only — forked PRs must never hold cloud credentials.
@@ -365,14 +366,14 @@ jobs:
         if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx run monorepo-image:image:ci-base-push --skip-nx-cache
+          yarn nx run monorepo-image:publish:ci-base --skip-nx-cache
           EOF
 
       - name: 🏗️ Build and push production image
         if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx run monorepo-image:image:production-push --skip-nx-cache
+          yarn nx run monorepo-image:publish:production --skip-nx-cache
           EOF
 
       - name: Build production side-effect images
