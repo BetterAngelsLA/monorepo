@@ -7,12 +7,12 @@ import {
   formatReferralTimestamp,
   localReferralDay,
   referralArrival,
-} from './referralPresentation';
-import { referralProfileRows, type ProfileCardData } from './referralProfile';
+} from './shared/referralPresentation';
+import { referralProfileRows, type ProfileCardData } from './shared/referralProfile';
 import {
   canEditReferralNotes,
   decodeReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 export type ExportReferral =
   ClientReferralsQuery['referrals']['results'][number];

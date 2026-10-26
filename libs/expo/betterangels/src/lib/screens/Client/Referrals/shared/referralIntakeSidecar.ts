@@ -4,7 +4,7 @@ import {
   normalizeIntakeValue,
   type IntakeFieldDefinition,
   type StoredIntake,
-} from '../../../draft/intakeFields';
+} from '../../../../draft/intakeFields';
 
 /**
  * Compatibility adapter for intake stored in Referral.notes. Preserve the v1

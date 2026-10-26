@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useSnackbar } from '../../../hooks';
+import { useSnackbar } from '../../../hooks/index';
 
 /** UI writes share one failure boundary; the store publishes only persisted changes. */
 export function useLocalDraftAction() {

@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { ReferralSubmission } from '../../../draft/referralDraft';
-import { formatReferralEdited } from './referralPresentation';
+import { formatReferralEdited } from './shared/referralPresentation';
 import { RequestedArrivalDate } from './RequestedArrivalDate';
 
 // The in-progress local draft, made visible in the list (tap to resume). Styled

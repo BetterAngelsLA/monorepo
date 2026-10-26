@@ -1,4 +1,4 @@
-import { PetChoices } from '../../../apollo';
+import { PetChoices } from '../../../apollo/index';
 import {
   INTAKE_FIELDS,
   getIntakeField,
@@ -8,7 +8,7 @@ import { prepareIntakeReuse } from './intakeReuse';
 import {
   buildReferralNotes,
   decodeReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 describe('referral answer reuse', () => {
   it('prefills stable answers, identifies review items, and resets referral-specific answers', () => {

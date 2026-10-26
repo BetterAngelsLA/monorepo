@@ -1,6 +1,6 @@
 import { ApolloLink } from '@apollo/client';
 import { createApolloCache } from '@monorepo/apollo';
-import { createBaTypePolicies } from '../../../apollo/cachePolicies';
+import { createBaTypePolicies } from '../../../apollo/cachePolicies/index';
 import { MockedProvider } from '@apollo/client/testing/react';
 import {
   ApiConfigProvider,
@@ -30,7 +30,7 @@ import {
   getPersistentReferralDraft,
   releaseReferralDraftSession,
 } from '../../../draft/referralDraftStorage';
-import { buildReferralNotes } from './referralIntakeSidecar';
+import { buildReferralNotes } from './shared/referralIntakeSidecar';
 
 const imageSharing = vi.hoisted(() => ({
   capture: vi.fn(),

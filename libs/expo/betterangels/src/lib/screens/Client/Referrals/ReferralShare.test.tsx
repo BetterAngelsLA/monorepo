@@ -8,11 +8,11 @@ import {
 import { View } from 'react-native';
 import { isValidElement, type ReactNode } from 'react';
 import { Colors } from '@monorepo/expo/shared/static';
-import { AdaAccommodationEnum } from '../../../apollo';
+import { AdaAccommodationEnum } from '../../../apollo/index';
 import { uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ReferralShare } from './ReferralShare';
 import type { ExportReferral } from './referralExport';
-import { encodeReferralNotes } from './referralIntakeSidecar';
+import { encodeReferralNotes } from './shared/referralIntakeSidecar';
 import {
   shareReferralPng,
   shareReferralText,

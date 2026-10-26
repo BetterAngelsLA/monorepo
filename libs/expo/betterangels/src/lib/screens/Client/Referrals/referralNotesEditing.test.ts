@@ -5,7 +5,7 @@ import {
   decodeReferralNotes,
   encodeReferralNotes,
   updateReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 const START = '\n\n<<<referral-intake:v1>>>\n';
 const END = '\n<<<end-referral-intake>>>';

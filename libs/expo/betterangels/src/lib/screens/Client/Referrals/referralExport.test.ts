@@ -4,7 +4,7 @@ import {
   DemographicChoices,
   ReferralStatusEnum,
   VeteranStatusEnum,
-} from '../../../apollo';
+} from '../../../apollo/index';
 import type { ProfileCardData } from './ProfileCard';
 import { INTAKE_FIELDS } from '../../../draft/intakeFields';
 import {
@@ -12,7 +12,7 @@ import {
   buildReferralDocumentCopy,
   type ExportReferral,
 } from './referralExport';
-import { encodeReferralNotes } from './referralIntakeSidecar';
+import { encodeReferralNotes } from './shared/referralIntakeSidecar';
 
 const referral: ExportReferral = {
   __typename: 'ReferralType',

@@ -21,7 +21,7 @@ import {
   shareReferralText,
   shareReferralTextFile,
 } from './shareReferralText';
-import type { ProfileCardData } from './referralProfile';
+import type { ProfileCardData } from './shared/referralProfile';
 import { ReferralImagePreview } from './ReferralImagePreview';
 import { layoutReferralImage } from './referralImage';
 import useSnackbar from '../../../hooks/snackbar/useSnackbar';

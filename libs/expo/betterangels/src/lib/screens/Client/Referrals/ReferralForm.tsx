@@ -9,10 +9,10 @@ import { useMemo, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { ShelterCard } from './ShelterCard';
-import { shelterAttributeLabels } from './shelterAttributes';
+import { shelterAttributeLabels } from './shared/shelterAttributes';
 import { CancelReferralButton } from './CancelReferralButton';
 import { FocusedInfiniteList } from '../../../ui-components/InfiniteList/FocusedInfiniteList';
-import { rankShelters, type TCoords } from './shelterAttributes';
+import { rankShelters, type TCoords } from './shared/shelterAttributes';
 import { useReferralShelters } from './useReferralShelters';
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 
