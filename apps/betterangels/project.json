@@ -62,6 +62,7 @@
     "build": {
       "executor": "nx:run-commands",
       "defaultConfiguration": "preview",
+      "cache": false,
       "configurations": {
         "preview": {
           "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile preview"
@@ -88,7 +89,10 @@
       "inputs": [
         "production",
         "^production",
-        "{workspaceRoot}/tools/shared/**/*"
+        "{workspaceRoot}/tools/shared/**/*",
+        { "env": "CI" },
+        { "env": "BRANCH_NAME" },
+        { "env": "VITE_APP_BASE_PATH" }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/betterangels"],
       "options": {

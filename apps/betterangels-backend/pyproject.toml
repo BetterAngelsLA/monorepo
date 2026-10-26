@@ -34,10 +34,10 @@ dependencies = [
     "django-import-export>=4.4.0,<5",
     "django-organizations>=2.5.0,<3",
     "django-pghistory>=3.9.1,<4",
-    "django-phonenumber-field[phonenumbers]>=8.4.0,<9",
+    "django-phonenumber-field[phonenumbers]>=9.0.0,<10",
     "django-post-office>=3.11.0,<4",
     "django-select2>=8.4.8,<9",
-    "django-ses>=4.8.0,<5",
+    "django-ses>=4.8.2,<5",
     "django-storages[s3]>=1.14.6,<2",
     "django-structlog>=10.0.0,<11",
     "django-waffle>=5.0.0,<6",
@@ -70,7 +70,7 @@ dev = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "betterangels_backend.settings_test"
 python_files = ["test_*.py", "*_test.py"]
-addopts = "--reuse-db"
+addopts = "--reuse-db --dist loadscope"
 
 [build-system]
 requires = ["hatchling"]

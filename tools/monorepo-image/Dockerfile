@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     apt-get update \
     && apt-get install -y postgresql-common \
     && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
-    && apt-get install -y postgresql-client-16
+    && apt-get install -y postgresql-client-17
 
 # Pin due to: https://github.com/aws/aws-cli/issues/8320
 ENV AWS_CLI_VERSION=2.33.14
@@ -176,6 +176,10 @@ RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betteran
     && chown -R betterangels:betterangels /workspace /home/betterangels
 WORKDIR /workspace
 USER betterangels
+
+# Dependency-free base for CI. The checkout and node_modules/.venv are
+# bind-mounted at runtime; ECS uses the production stage below.
+FROM base AS ci-base
 
 FROM base AS uv-stage
 COPY --chown=betterangels --parents \

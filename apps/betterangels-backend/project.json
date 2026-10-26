@@ -119,25 +119,52 @@
     },
     "lint": {
       "executor": "@nxlv/python:run-commands",
+      "inputs": [
+        "default",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock"
+      ],
       "options": {
         "commands": ["uv run ruff check .", "uv run ruff format --check ."],
         "cwd": "apps/betterangels-backend",
         "parallel": false
       }
     },
-    "test": {
+    "prepare-test-db": {
       "executor": "@nxlv/python:run-commands",
+      "cache": false,
       "outputs": [
-        "{workspaceRoot}/reports/apps/betterangels-backend/unittests",
-        "{workspaceRoot}/coverage/apps/betterangels-backend"
+        "{workspaceRoot}/.cache/test-db.dump",
+        "{workspaceRoot}/.cache/test-db.manifest.json"
       ],
       "options": {
-        "command": "uv run pytest",
+        "command": "bash scripts/prepare_test_db_cache.sh",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "test": {
+      "dependsOn": ["prepare-test-db"],
+      "cache": false,
+      "executor": "@nxlv/python:run-commands",
+      "inputs": [
+        "default",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock",
+        { "env": "PYTEST_ADDOPTS" }
+      ],
+      "options": {
+        "command": "bash scripts/restore_test_db_cache.sh && uv run pytest",
         "cwd": "apps/betterangels-backend"
       }
     },
     "typecheck": {
       "executor": "@nxlv/python:run-commands",
+      "inputs": [
+        "default",
+        "{workspaceRoot}/pyproject.toml",
+        "{workspaceRoot}/uv.lock",
+        "{workspaceRoot}/mypy.ini"
+      ],
       "options": {
         "commands": ["uv run mypy --config-file=../../mypy.ini ."],
         "cwd": "apps/betterangels-backend",

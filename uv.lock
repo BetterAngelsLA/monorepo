@@ -115,10 +115,10 @@ requires-dist = [
     { name = "django-import-export", specifier = ">=4.4.0,<5" },
     { name = "django-organizations", specifier = ">=2.5.0,<3" },
     { name = "django-pghistory", specifier = ">=3.9.1,<4" },
-    { name = "django-phonenumber-field", extras = ["phonenumbers"], specifier = ">=8.4.0,<9" },
+    { name = "django-phonenumber-field", extras = ["phonenumbers"], specifier = ">=9.0.0,<10" },
     { name = "django-post-office", specifier = ">=3.11.0,<4" },
     { name = "django-select2", specifier = ">=8.4.8,<9" },
-    { name = "django-ses", specifier = ">=4.8.0,<5" },
+    { name = "django-ses", specifier = ">=4.8.2,<5" },
     { name = "django-storages", extras = ["s3"], specifier = ">=1.14.6,<2" },
     { name = "django-structlog", specifier = ">=10.0.0,<11" },
     { name = "django-waffle", specifier = ">=5.0.0,<6" },
@@ -514,15 +514,6 @@ wheels = [
 ]
 
 [[package]]
-name = "decorator"
-version = "5.3.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/60/8b/32f9823da46cde7df2087faa08cd98d01b908f8dcab982cdba9c84e85355/decorator-5.3.1.tar.gz", hash = "sha256:4cbcdd55a6efadb9dbea26b858f4fb3264567b52d69ca0d25b721b553f60ea82", size = 58084, upload-time = "2026-05-18T06:03:28.057Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl", hash = "sha256:f47fe6fdbd2edd623ecfe36875d37aba411624e2670dd395dddae1358689bb3c", size = 10365, upload-time = "2026-05-18T06:03:26.517Z" },
-]
-
-[[package]]
 name = "deepdiff"
 version = "8.6.2"
 source = { registry = "https://pypi.org/simple" }
@@ -818,14 +809,14 @@ wheels = [
 
 [[package]]
 name = "django-phonenumber-field"
-version = "8.4.0"
+version = "9.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/87/bf/8aa60c9834773b955dff1ddea842e361e8daaf6b0945d5bfc29fc66d53ab/django_phonenumber_field-8.4.0.tar.gz", hash = "sha256:2b83e843dac35eec6a69880a166487235b737a71a1e38c9a52e5ad67d6996083", size = 45512, upload-time = "2025-11-24T15:09:51.904Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/22/e4de820d243224a16fd6156583d2ee401f9ac98d4caa68db1a5b58f29c01/django_phonenumber_field-9.0.0.tar.gz", hash = "sha256:b4a641fc8ae3fdec7aeaf28e3af92bb8d36aefad085b955420807de7e8d37abe", size = 46891, upload-time = "2026-10-21T22:07:59.992Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/a3/f6b85a9246e22cf719752ad83f5e95aa9ba12419b2f9eff70f20d30e55df/django_phonenumber_field-8.4.0-py3-none-any.whl", hash = "sha256:7a1cb3a6456edb54d879f11ffa0acb227ded08c93b587035d0f28093f0e46511", size = 69528, upload-time = "2025-11-24T15:09:45.479Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/fd/f1b1c1ba78af197f12d430795e84b92732ab1aa220cd0f3e5fd2d1999102/django_phonenumber_field-9.0.0-py3-none-any.whl", hash = "sha256:53731bf139ba82004aff6087ccdd55f8ba5c4e11c623557cc1873eeed46eba2a", size = 69494, upload-time = "2026-10-21T22:07:58.694Z" },
 ]
 
 [package.optional-dependencies]
@@ -861,15 +852,15 @@ wheels = [
 
 [[package]]
 name = "django-ses"
-version = "4.8.0"
+version = "4.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/cf/9ecd938a2fde48e427f0899fbca4dfb176426c5e9d0808477a27dd702b54/django_ses-4.8.0.tar.gz", hash = "sha256:7be2907bbd86aaac115f3bb97fc5653b7ada70743e34cd144949eed93820302e", size = 72936, upload-time = "2026-09-03T23:39:19.946Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/8b/6fa3269f78012930544139aa5d71703a6bfb53d20257e63bafb5c722de05/django_ses-4.8.2.tar.gz", hash = "sha256:35f193be4c71c358e71eedc290eabf48227777377e58acdc67f3e8b6867ba651", size = 75632, upload-time = "2026-10-12T20:28:54.193Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7c/e7/ea705f99f8db91f1718e26a7fccd6a0d5cb03a4ffbb5a8138d8e07be2d24/django_ses-4.8.0-py3-none-any.whl", hash = "sha256:6c3e625e6b0c2032153859ef20ea6774c47f35a3794a8163b2357ae4b48e7c3c", size = 38233, upload-time = "2026-09-03T23:39:18.423Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/2e/4b2f232b84051577902f0d016fd216593a6c5be70aa95071e30e82b8b564/django_ses-4.8.2-py3-none-any.whl", hash = "sha256:07c2a847bb5e7494439f9c03a8827efb937d3dfc41b1a5d08c8dff9eab38b106", size = 39588, upload-time = "2026-10-12T20:28:52.654Z" },
 ]
 
 [[package]]
@@ -1215,24 +1206,23 @@ wheels = [
 
 [[package]]
 name = "ipython"
-version = "9.14.1"
+version = "9.17.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "decorator" },
     { name = "ipython-pygments-lexers" },
     { name = "jedi" },
     { name = "matplotlib-inline" },
     { name = "pexpect", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
     { name = "prompt-toolkit" },
-    { name = "psutil", marker = "sys_platform != 'emscripten'" },
+    { name = "psutil", marker = "sys_platform != 'cygwin' and sys_platform != 'emscripten'" },
     { name = "pygments" },
     { name = "stack-data" },
     { name = "traitlets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e2/23/3a27530575643c8bb7bfc757a28e2e7ef80092afbf59a2bc5716320b6602/ipython-9.14.1.tar.gz", hash = "sha256:f913bf74df06d458e46ced84ca506c23797590d594b236fe60b14df213291e7b", size = 4433457, upload-time = "2026-06-05T08:12:34.921Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b9/32/99451b1283ec5d92ad77073f12e1c667dc10775384d8f15c2914207149dd/ipython-9.17.1.tar.gz", hash = "sha256:8919be8c27f20a6f4423145028063f6637b42a03ce57665bb12015ee1f073529", size = 4539289, upload-time = "2026-09-01T08:29:32.6Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/22/58818a63eaf8982b67632b1bc20585c811611b15a8da19d6012323dc76a5/ipython-9.14.1-py3-none-any.whl", hash = "sha256:5d4a9ecaa3b10e6e5f269dd0948bdb58ca9cb851899cd23e07c320d3eb11613c", size = 627770, upload-time = "2026-06-05T08:12:33.045Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/1e/65b59cf518c106aa755e7f7da3099027738687a862ec785060702a481320/ipython-9.17.1-py3-none-any.whl", hash = "sha256:6d1645743cfd1a07eb695d85aa2b5fa66721f8cbae9431d4049f7084bbf06509", size = 639038, upload-time = "2026-09-01T08:29:30.673Z" },
 ]
 
 [[package]]
@@ -1357,14 +1347,14 @@ wheels = [
 
 [[package]]
 name = "model-bakery"
-version = "1.24.1"
+version = "1.24.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/39/e7/dcd5854ba8b984510407c08b363af8f44556675cb8fe98a1413ac8967649/model_bakery-1.24.1.tar.gz", hash = "sha256:36e448446794b1a29f2bd247d76c1af990e38cb38e9e39870580f4d79899e6a7", size = 29657, upload-time = "2026-09-22T11:31:20.659Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/39/a5c5e2263e6d4448c255ee19b1e5ffb8dcd1edf57f8b2391116e3724bb8a/model_bakery-1.24.2.tar.gz", hash = "sha256:de9ffb98acaaf558aa5522425db7f2a714358ef3d98d318b3a37c837a61932e3", size = 30314, upload-time = "2026-10-06T15:53:09.058Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/22/00/9cadd0e5d36ba732e3b58ccf7567b9e80059da2780a1b281096f0e91e846/model_bakery-1.24.1-py3-none-any.whl", hash = "sha256:58eae4ab3ed3504bbac965daf89626a034021233ad7bc81482aef75228cafb5c", size = 32028, upload-time = "2026-09-22T11:31:19.302Z" },
+    { url = "https://files.pythonhosted.org/packages/79/a6/cada15b3d9e1e9505179b5701c95b47d5ac662b86bac0f28e7eda1e4a832/model_bakery-1.24.2-py3-none-any.whl", hash = "sha256:1823831965ad99edc83ff0dd009fe15a88e91f0ed8573cadb5a52d77b30b2a60", size = 32676, upload-time = "2026-10-06T15:53:07.845Z" },
 ]
 
 [[package]]
@@ -1412,8 +1402,8 @@ dev = [
     { name = "djangorestframework-stubs", extras = ["compatible-mypy"], specifier = ">=3.18.1,<4" },
     { name = "djlint", specifier = ">=1.46.4,<2" },
     { name = "faker", specifier = ">=40.15.0,<41" },
-    { name = "ipython", specifier = ">=9.9.0,<10" },
-    { name = "model-bakery", specifier = ">=1.24.1,<2" },
+    { name = "ipython", specifier = ">=9.17.1,<10" },
+    { name = "model-bakery", specifier = ">=1.24.2,<2" },
     { name = "pre-commit", specifier = ">=4.7.0,<5" },
     { name = "pytest-django", specifier = ">=4.12,<5" },
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
@@ -1421,7 +1411,7 @@ dev = [
     { name = "time-machine", specifier = ">=3.5.0,<4" },
     { name = "types-gevent", specifier = ">=26.8.0.20260811,<27" },
     { name = "types-openpyxl", specifier = ">=3.1.5.20261017,<4" },
-    { name = "types-python-dateutil", specifier = ">=2.9.0.20260807,<3" },
+    { name = "types-python-dateutil", specifier = ">=2.9.0.20261021,<3" },
     { name = "types-requests", specifier = ">=2.33.0.20261006,<3" },
     { name = "unittest-parametrize", specifier = ">=1.9.0,<2" },
     { name = "vcrpy", specifier = ">=8.3.0,<9" },
@@ -2187,11 +2177,11 @@ wheels = [
 
 [[package]]
 name = "types-python-dateutil"
-version = "2.9.0.20260807"
+version = "2.9.0.20261021"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c8/4e/b3fa538f9cb38dfece0d6ccf6d3d0d925bdedb144fb9c8129dfc007cd003/types_python_dateutil-2.9.0.20260807.tar.gz", hash = "sha256:e0b8a90d464c8684c66b7b8e4556d9074afdddcc56ca45323f0987134f9e7034", size = 17618, upload-time = "2026-08-07T04:17:13.491Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/66/4783d826afabb22f29f47b22514298efaedee4718eac0a76c37bea381a07/types_python_dateutil-2.9.0.20261021.tar.gz", hash = "sha256:62d66fcdd293e38745eae644e5da4cb399b98799c0ae61f03a54896fb51b3140", size = 17792, upload-time = "2026-10-21T06:42:00.127Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/5e/3715867caea2f4cea56ccb04c851cde23ed063449c3b004c7a047f20dd48/types_python_dateutil-2.9.0.20260807-py3-none-any.whl", hash = "sha256:54aa3707350ed7a9cc0776fd2f6739679d6967d11b40150985e81edcb86df4db", size = 18486, upload-time = "2026-08-07T04:17:12.504Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/06/acccde409bf5719a80d6653659fb23aad1784095348df4ffd0212510a6d5/types_python_dateutil-2.9.0.20261021-py3-none-any.whl", hash = "sha256:12aab3bdfe55e1d9de7f54301e025d6276ce17e6a08e31644f2202d59c8d1fca", size = 18509, upload-time = "2026-10-21T06:41:58.922Z" },
 ]
 
 [[package]]
