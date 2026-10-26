@@ -157,7 +157,7 @@
     {
       "plugin": "@nx/expo/plugin",
       "options": {
-        "buildTargetName": "eas-build",
+        "buildTargetName": "eas-build-inferred",
         "exportTargetName": "export",
         "installTargetName": "install",
         "prebuildTargetName": "prebuild",

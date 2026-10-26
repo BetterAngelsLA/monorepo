@@ -220,7 +220,7 @@
         }
       }
     },
-    "eas-build-native": {
+    "eas-build": {
       "executor": "@nx/expo:build",
       "cache": false,
       "dependsOn": ["write-eas-env", "sync-deps", "copy-lockfile"],

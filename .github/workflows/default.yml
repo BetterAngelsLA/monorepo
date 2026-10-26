@@ -581,10 +581,10 @@ jobs:
               IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios --workflow generic)"
 
               yarn nx run betterangels:build-list --platform=all --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl.json
-              node tools/scripts/has-build.mjs /tmp/bl.json || yarn nx run betterangels:eas-build-native:preview --platform=all --wait=false --freezeCredentials=true --json=true
+              node tools/scripts/has-build.mjs /tmp/bl.json || yarn nx run betterangels:eas-build:preview --platform=all --wait=false --freezeCredentials=true --json=true
 
               yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=development-simulator --json=true > /tmp/bl-sim.json
-              node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build-native --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
+              node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
 
               # Update and web deploy are independent; one graph lets them overlap.
               yarn nx affected -t update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
