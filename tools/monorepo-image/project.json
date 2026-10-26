@@ -19,6 +19,12 @@
         },
         "production": {
           "command": "docker buildx build --load --file tools/monorepo-image/Dockerfile --target production --tag monorepo:production ."
+        },
+        "ci-base-push": {
+          "command": "docker buildx build --builder \"$BUILDX_BUILDER\" --push --file tools/monorepo-image/Dockerfile --target ci-base --tag \"$MONOREPO_IMAGE:ci-base\" --cache-from \"type=registry,ref=$CACHE_IMAGE-main\" --cache-to \"type=registry,ref=$CACHE_IMAGE-main,mode=max\" ."
+        },
+        "production-push": {
+          "command": "docker buildx build --builder \"$BUILDX_BUILDER\" --push --file tools/monorepo-image/Dockerfile --target production --tag \"$MONOREPO_IMAGE:$DOCKER_TAG\" --cache-from \"type=registry,ref=$CACHE_IMAGE-main\" --cache-to \"type=registry,ref=$CACHE_IMAGE-main,mode=max\" ."
         }
       }
     }

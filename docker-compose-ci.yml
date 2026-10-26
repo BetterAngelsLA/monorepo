@@ -30,6 +30,8 @@ services:
       - SHORT_SHA
       - IMAGE_TAG_PREFIX
       - DOCKER_TAG
+      - CACHE_IMAGE
+      - BUILDX_BUILDER
       - GITHUB_ACTIONS
       - CI
       # The checkout's .git is mounted over the image's /workspace. Pass
