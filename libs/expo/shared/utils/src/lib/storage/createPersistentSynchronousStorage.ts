@@ -32,5 +32,9 @@ export function createPersistentSynchronousStorage(
     clearAll(): void {
       mmkv.clearAll();
     },
+
+    keys(): string[] {
+      return mmkv.getAllKeys();
+    },
   };
 }

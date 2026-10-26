@@ -1,5 +1,3 @@
-import { useActiveOrg } from '@monorepo/ba-platform';
-import { ReferralPermissions } from '@monorepo/ba-platform/permissions';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { toTestId } from '@monorepo/expo/shared/utils';
@@ -13,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { FeatureFlags } from '../../static';
+import { useActiveReferralGates } from '../../hooks/referral/useReferralGates';
 
 export enum ClientViewTabEnum {
   Profile = 'Profile',
@@ -58,8 +57,9 @@ export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
   // the second, a flagged user with no Caseworker grant sees the tab and gets
   // an empty list / a refusal from the API.
   const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
-  const { hasPermission } = useActiveOrg();
-  const canViewReferrals = hasPermission(ReferralPermissions.View);
+  // One gate source for the tab strip and the screen: the hook reads the active
+  // org's effective permission, so the two cannot drift apart.
+  const { canView: canViewReferrals } = useActiveReferralGates();
 
   const visibleTabs = useMemo(
     () =>
@@ -68,7 +68,7 @@ export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
           t !== ClientViewTabEnum.Referrals ||
           (referralsEnabled && canViewReferrals),
       ),
-    [referralsEnabled, canViewReferrals],
+    [canViewReferrals, referralsEnabled],
   );
 
   return (

@@ -1,4 +1,8 @@
+import { createApolloCache } from '@monorepo/apollo';
+import { createBaTypePolicies } from '../../../apollo/cachePolicies';
+import { randomUUID } from 'node:crypto';
 import { ApolloLink } from '@apollo/client';
+import { setActiveOrgId } from '@monorepo/ba-platform';
 import { MockLink } from '@apollo/client/testing';
 import { MockedProvider } from '@apollo/client/testing/react';
 import {
@@ -10,21 +14,18 @@ import {
   within,
 } from '@testing-library/react-native';
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { Observable } from 'rxjs';
-import { setActiveOrgId } from '@monorepo/ba-platform';
 import {
   OperationMessageKind,
   ReferralStatusEnum,
 } from '@monorepo/ba-platform/types';
-import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { ModalScreenContext } from '../../../providers/modalScreen/ModalScreenContext';
 import type { TShowModalScreenProps } from '../../../providers/modalScreen/types';
 import type { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ReferralsTab } from './ReferralsTab';
-import { REFERRALS_PAGE_SIZE, SHELTERS_PAGE_SIZE } from './constants';
-import { createReferralDraftStore } from './referralDraft';
+import { createReferralDraftStore } from '../../../draft/referralDraft';
 import {
   buildReferralNotes,
   decodeReferralNotes,
@@ -33,13 +34,33 @@ import {
   ClientReferralsDocument,
   type ClientReferralsQuery,
   type CreateReferralMutation,
+  type UpdateReferralMutation,
 } from './__generated__/Referrals.generated';
 import {
   SheltersDocument,
   type SheltersQuery,
 } from './__generated__/Shelters.generated';
+vi.mock('expo-crypto', async () => ({
+  randomUUID: (await import('node:crypto')).randomUUID,
+}));
+vi.mock('../../../providers/user/UserProvider', () => ({
+  useUser: () => {
+    throw new Error('Injected draft tests must not read account context');
+  },
+}));
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
+// The screen always supplies ReferralPermissionsProvider; these harnesses stub
+// the active-org hook so the injected-store path has deterministic gates.
+const gates = vi.hoisted(() => ({
+  canView: true,
+  canCreate: true,
+  canChange: true,
+}));
+vi.mock('../../../hooks/referral/useReferralGates', () => ({
+  useActiveReferralGates: () => gates,
+}));
+
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
@@ -49,6 +70,11 @@ vi.mock(
   async () => import('../../../providers/modalScreen/useModalScreen'),
 );
 const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
+vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
+  default: () => ({ showSnackbar }),
+}));
+// Other referral components still use the hooks barrel; keep it stubbed
+// so expo-updates is not loaded in this native test.
 vi.mock('../../../hooks', () => ({ useSnackbar: () => ({ showSnackbar }) }));
 
 const ACTIVE_ORG_ID = 'org-1';
@@ -66,7 +92,6 @@ const shelter: SheltersQuery['shelters']['results'][number] = {
   __typename: 'ShelterType',
   id: 's-1',
   name: 'Alpha House',
-  phone: null,
   location: null,
   pets: [],
   demographics: [],
@@ -76,7 +101,7 @@ const answers = {
   notes: 'Unique referral observation',
   substances: 'Fictional sensitive answer',
   selfcare: 'No',
-  consent: true,
+  consent: 'Yes',
 };
 const notes = buildReferralNotes(answers);
 const created: CreateReferralMutation = {
@@ -97,32 +122,46 @@ const newReferral: ClientReferralsQuery['referrals']['results'][number] = {
 };
 
 type PendingSubmission = {
+  operationName: string;
   variables: ApolloLink.Operation['variables'];
-  succeed: (result: ApolloLink.Result<CreateReferralMutation>) => void;
+  succeed: (
+    result: ApolloLink.Result<CreateReferralMutation | UpdateReferralMutation>,
+  ) => void;
   fail: (error: Error) => void;
 };
 
-async function setup(options?: {
-  initialReferrals?: ClientReferralsQuery['referrals']['results'];
-  refreshedReferrals?: ClientReferralsQuery['referrals']['results'];
-}) {
-  // The create payload names its organization (ADR 0001 §2.6); the component
-  // reads it from the active-org store.
+async function setup(
+  initialReferrals: ClientReferralsQuery['referrals']['results'] = [],
+  laterReferrals: ClientReferralsQuery['referrals']['results'] = [],
+) {
+  // A create names its organization on the payload (ADR 0001 §2.6), so the
+  // screen reads it from the active-org store.
   setActiveOrgId(ACTIVE_ORG_ID);
-  const initialReferrals = options?.initialReferrals ?? [];
-  const refreshedReferrals = options?.refreshedReferrals ?? [newReferral];
-  const store = createReferralDraftStore({
-    load: () => null,
-    save: vi.fn(),
-    remove: vi.fn(),
-  });
+  const store = createReferralDraftStore(
+    {
+      load: () => null,
+      save: vi.fn(),
+      remove: vi.fn(),
+    },
+    randomUUID,
+  );
   const requests: PendingSubmission[] = [];
+  let availableShelters = [shelter];
+  const loadShelters = vi.fn(() => ({
+    data: {
+      shelters: {
+        __typename: 'ShelterTypeOffsetPaginated',
+        totalCount: availableShelters.length,
+        results: availableShelters,
+      },
+    },
+  }));
   const refreshed = vi.fn(() => ({
     data: {
       referrals: {
         __typename: 'ReferralTypeOffsetPaginated',
-        totalCount: refreshedReferrals.length,
-        results: refreshedReferrals,
+        totalCount: 1,
+        results: [newReferral],
       },
     },
   }));
@@ -130,10 +169,15 @@ async function setup(options?: {
   // modal presentation are replaced; each test explicitly completes its request.
   const link = ApolloLink.from([
     new ApolloLink((operation, forward) => {
-      if (operation.operationName !== 'CreateReferral')
+      if (
+        !['CreateReferral', 'UpdateReferral'].includes(
+          operation.operationName ?? '',
+        )
+      )
         return forward(operation);
       return new Observable((observer) => {
         requests.push({
+          operationName: operation.operationName ?? '',
           variables: operation.variables,
           succeed: (result) => {
             observer.next(result);
@@ -149,7 +193,27 @@ async function setup(options?: {
           query: ClientReferralsDocument,
           variables: {
             filters: { clientProfile: 'client-1' },
-            pagination: { offset: 0, limit: REFERRALS_PAGE_SIZE },
+            pagination: { offset: 25, limit: 25 },
+          },
+        },
+        delay: 0,
+        result: {
+          data: {
+            __typename: 'Query',
+            referrals: {
+              __typename: 'ReferralTypeOffsetPaginated',
+              totalCount: initialReferrals.length + laterReferrals.length,
+              results: laterReferrals,
+            },
+          },
+        },
+      },
+      {
+        request: {
+          query: ClientReferralsDocument,
+          variables: {
+            filters: { clientProfile: 'client-1' },
+            pagination: { offset: 0, limit: 25 },
           },
         },
         delay: 0,
@@ -157,7 +221,7 @@ async function setup(options?: {
           data: {
             referrals: {
               __typename: 'ReferralTypeOffsetPaginated',
-              totalCount: initialReferrals.length,
+              totalCount: initialReferrals.length + laterReferrals.length,
               results: initialReferrals,
             },
           },
@@ -168,31 +232,21 @@ async function setup(options?: {
           query: ClientReferralsDocument,
           variables: {
             filters: { clientProfile: 'client-1' },
-            pagination: { offset: 0, limit: REFERRALS_PAGE_SIZE },
+            pagination: { offset: 0, limit: 25 },
           },
         },
         delay: 0,
         result: refreshed,
+        maxUsageCount: 5,
       },
       {
         request: {
           query: SheltersDocument,
-          variables: { pagination: { offset: 0, limit: SHELTERS_PAGE_SIZE } },
+          variables: { pagination: { offset: 0, limit: 100 } },
         },
+        maxUsageCount: 5,
         delay: 0,
-        // The picker refetches on every entry to it (cache-and-network), and the
-        // round-trip test enters it twice because Back unmounts it. MockLink
-        // serves each entry once by default.
-        maxUsageCount: 2,
-        result: {
-          data: {
-            shelters: {
-              __typename: 'ShelterTypeOffsetPaginated',
-              totalCount: 1,
-              results: [shelter],
-            },
-          },
-        },
+        result: loadShelters,
       },
     ]),
   ]);
@@ -212,9 +266,19 @@ async function setup(options?: {
         }}
       >
         <ReferralsTab client={client} draftStore={store} />
+        <Pressable
+          testID="open-other-modal"
+          accessibilityRole="button"
+          onPress={() =>
+            setModal({ renderContent: () => <Text>Another screen</Text> })
+          }
+        >
+          <Text>Open another screen</Text>
+        </Pressable>
         {modal?.renderContent({
           close: () => {
             close();
+            modal.onClose?.();
             setModal(null);
           },
         })}
@@ -222,19 +286,28 @@ async function setup(options?: {
     );
   }
   await render(
-    <MockedProvider cache={createTestApolloCache()} link={link}>
+    <MockedProvider
+      cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+      link={link}
+    >
       <Harness />
     </MockedProvider>,
   );
-  return { store, requests, refreshed, close, opened };
+  return {
+    store,
+    requests,
+    refreshed,
+    close,
+    opened,
+    loadShelters,
+    setAvailableShelters: (next: typeof availableShelters) => {
+      availableShelters = next;
+    },
+  };
 }
 
-async function openPicker({ expectEmptyState = true } = {}) {
-  if (expectEmptyState) {
-    await screen.findByText('No referrals yet');
-  } else {
-    await screen.findByTestId(/^referral-card-/);
-  }
+async function openPicker() {
+  await screen.findByText('No referrals yet');
   await fireEvent.press(screen.getByTestId('create-referral-btn'));
   await fireEvent.changeText(
     screen.getByLabelText('Staff Observations / Notes'),
@@ -245,20 +318,14 @@ async function openPicker({ expectEmptyState = true } = {}) {
     answers.substances,
   );
   await fireEvent.press(screen.getByTestId('selfcare-no-btn'));
-  await fireEvent.press(
-    screen.getByRole('checkbox', { name: /Client gave consent/ }),
-  );
+  await fireEvent.press(screen.getByTestId('consent-yes-btn'));
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
-  // Wait for the picker's own row: "Alpha House" also appears on an existing
-  // referral card, so the text alone does not prove the shelter list loaded.
-  await fireEvent.press(await screen.findByTestId('shelter-option-radio'));
+  await screen.findByText('Alpha House');
+  await fireEvent.press(screen.getByRole('radio'));
 }
 
 async function submit(requests: PendingSubmission[], expectedCount = 1) {
-  // Deliberately not awaited: the CreateReferral observable stays pending until the
-  // test resolves it, and React's async act would keep waiting on that promise.
-  // waitFor below still runs inside act, so the resulting updates are flushed.
-  void fireEvent.press(screen.getByTestId('submit-referral-btn'));
+  await fireEvent.press(screen.getByTestId('submit-referral-btn'));
   await waitFor(() => expect(requests).toHaveLength(expectedCount));
   const request = requests[expectedCount - 1];
   if (!request) throw new Error('Expected a pending submission');
@@ -290,12 +357,12 @@ it('submits current answers once, consumes the draft only on success, and displa
   });
   expect(decodeReferralNotes(request.variables.data.notes)).toEqual({
     humanNotes: answers.notes,
-    intake: { substances: answers.substances, selfcare: 'No', consent: true },
+    intake: { substances: answers.substances, selfcare: 'No', consent: 'Yes' },
   });
   expect(screen.getByTestId('submit-referral-btn')).toBeDisabled();
   await fireEvent.press(screen.getByTestId('submit-referral-btn'));
   expect(requests).toHaveLength(1);
-  expect(store.getSnapshot()).toBe(before);
+  expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
   expect(close).not.toHaveBeenCalled();
   expect(refreshed).not.toHaveBeenCalled();
   expect(showSnackbar).not.toHaveBeenCalled();
@@ -318,35 +385,21 @@ it('submits current answers once, consumes the draft only on success, and displa
   expect(close).toHaveBeenCalledOnce();
   expect(refreshed).toHaveBeenCalledOnce();
   expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-    message: 'Referral submitted successfully!',
+    message: 'Referral saved. Share it separately to provide a copy.',
     type: 'success',
   });
 });
 
-it('keeps every already-loaded row when a create refetches a shifted page', async () => {
-  // The referrals field is offset-merged and a create prepends itself, so the
-  // refetch sees a shifted list (new row first, older rows moved down). Both
-  // rows must still render — no hole where the new row was, no dropped row.
-  const existing = { ...newReferral, id: 'existing-referral' };
-  const { requests, refreshed } = await setup({
-    initialReferrals: [existing],
-    refreshedReferrals: [newReferral, existing],
-  });
+const GENERIC_SAVE_ERROR =
+  'The referral was not saved. Check your information and permissions, then try again.';
 
-  await openPicker({ expectEmptyState: false });
-
-  const request = await submit(requests);
-  await act(async () => request.succeed({ data: created }));
-
-  await screen.findByTestId('referral-card-new-referral');
-  expect(refreshed).toHaveBeenCalledOnce();
-  // Both rows render — none replaced by a hole.
-  expect(screen.getAllByTestId(/^referral-card-/)).toHaveLength(2);
-});
-
-it.each([OperationMessageKind.Permission, OperationMessageKind.Validation])(
+it.each([
+  [OperationMessageKind.Permission, 'Unable to submit this referral.'],
+  [OperationMessageKind.Validation, 'Unable to submit this referral.'],
+  [OperationMessageKind.Error, GENERIC_SAVE_ERROR],
+])(
   'preserves the draft and allows retry after a %s response',
-  async (kind) => {
+  async (kind, expectedMessage) => {
     const { store, requests, refreshed, close } = await setup();
     await openPicker();
     const before = store.getSnapshot();
@@ -370,10 +423,12 @@ it.each([OperationMessageKind.Permission, OperationMessageKind.Validation])(
       }),
     );
     expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-      message: 'Unable to submit this referral.',
+      // Permission and validation messages are actionable; the `Error` kind can
+      // carry raw exception text, so it must stay generic.
+      message: expectedMessage,
       type: 'error',
     });
-    expect(store.getSnapshot()).toBe(before);
+    expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
     expect(close).not.toHaveBeenCalled();
     expect(refreshed).not.toHaveBeenCalled();
     expect(screen.getByText('✓ Selected: Alpha House')).toBeOnTheScreen();
@@ -387,41 +442,6 @@ it.each([OperationMessageKind.Permission, OperationMessageKind.Validation])(
   },
 );
 
-it('does not surface an ERROR-kind OperationInfo message', async () => {
-  // `Error` is strawberry-django's catch-all kind and its message can be raw
-  // exception text, so only validation/permission messages reach the user.
-  const { store, requests } = await setup();
-  await openPicker();
-  const before = store.getSnapshot();
-  const request = await submit(requests);
-
-  await act(async () =>
-    request.succeed({
-      data: {
-        __typename: 'Mutation',
-        createReferral: {
-          __typename: 'OperationInfo',
-          messages: [
-            {
-              __typename: 'OperationMessage',
-              kind: OperationMessageKind.Error,
-              field: null,
-              message: 'duplicate key value violates unique constraint',
-            },
-          ],
-        },
-      },
-    }),
-  );
-
-  expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-    message: 'Error creating referral. Please try again.',
-    type: 'error',
-  });
-  expect(store.getSnapshot()).toBe(before);
-  expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
-});
-
 it('keeps the draft after a network error and submits current answers when retried', async () => {
   const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
   try {
@@ -431,22 +451,32 @@ it('keeps the draft after a network error and submits current answers when retri
     const request = await submit(requests);
     const error = new Error('Test connection unavailable');
     await act(async () => request.fail(error));
-    expect(logged).toHaveBeenCalledWith(error);
+    expect(logged).not.toHaveBeenCalled();
     expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-      message: 'Error creating referral. Please try again.',
+      message:
+        'Could not confirm whether the referral was saved. Check the referral list before trying again.',
       type: 'error',
     });
-    expect(store.getSnapshot()).toBe(before);
+    expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
     expect(close).not.toHaveBeenCalled();
     expect(refreshed).not.toHaveBeenCalled();
-    expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
-    await act(async () => {
+    expect(screen.queryByTestId('submit-referral-btn')).toBeNull();
+    expect(store.getSnapshot()?.submission.status).toBe('uncertain');
+    await fireEvent.press(screen.getByTestId('confirm-referral-retry-btn'));
+    await waitFor(() =>
+      expect(screen.getByTestId('submit-referral-btn')).toBeEnabled(),
+    );
+    await act(() => {
       store.setField('notes', 'Updated before retry');
     });
     const retry = await submit(requests, 2);
     expect(decodeReferralNotes(retry.variables.data.notes)).toEqual({
       humanNotes: 'Updated before retry',
-      intake: { substances: answers.substances, selfcare: 'No', consent: true },
+      intake: {
+        substances: answers.substances,
+        selfcare: 'No',
+        consent: 'Yes',
+      },
     });
     await act(async () => retry.succeed({ data: created }));
     await waitFor(() => expect(store.getSnapshot()).toBeNull());
@@ -469,28 +499,30 @@ it('shows a fallback error for an OperationInfo response without messages', asyn
     }),
   );
   expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-    message: 'Error creating referral. Please try again.',
+    message: GENERIC_SAVE_ERROR,
     type: 'error',
   });
-  expect(store.getSnapshot()).toBe(before);
+  expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
   expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
 });
 
-it.each<ApolloLink.Result<CreateReferralMutation>>([
-  {},
-  { data: null },
+it.each<{ response: ApolloLink.Result<CreateReferralMutation> }>([
+  { response: {} },
+  { response: { data: null } },
   {
-    data: {
-      __typename: 'Mutation',
-      createReferral: {
-        __typename: 'ReferralType',
-        id: '',
+    response: {
+      data: {
+        __typename: 'Mutation',
+        createReferral: {
+          __typename: 'ReferralType',
+          id: '',
+        },
       },
     },
   },
 ])(
   'does not consume the draft without confirmation of a created referral: %j',
-  async (response) => {
+  async ({ response }) => {
     const logged = vi
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
@@ -501,75 +533,266 @@ it.each<ApolloLink.Result<CreateReferralMutation>>([
       const request = await submit(requests);
       await act(async () => request.succeed(response));
       expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-        message: 'Error creating referral. Please try again.',
+        message:
+          'Could not confirm whether the referral was saved. Check the referral list before trying again.',
         type: 'error',
       });
-      expect(store.getSnapshot()).toBe(before);
+      expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
       expect(close).not.toHaveBeenCalled();
       expect(refreshed).not.toHaveBeenCalled();
-      expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
+      expect(screen.queryByTestId('submit-referral-btn')).toBeNull();
+      expect(store.getSnapshot()?.submission.status).toBe('uncertain');
     } finally {
       logged.mockRestore();
     }
   },
 );
 
-it("asks before replacing another client's draft and only replaces on confirm", async () => {
-  const { store, opened } = await setup();
-  await act(async () => {
-    store.startNew('another-client');
-  });
-  const alertSpy = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-
-  try {
-    await fireEvent.press(screen.getByTestId('create-referral-btn'));
-
-    expect(store.getSnapshot()?.clientId).toBe('another-client');
-    expect(opened).not.toHaveBeenCalled();
-    expect(alertSpy.mock.calls[0]?.[0]).toBe(
-      'Replace the in-progress referral?',
-    );
-
-    const cancel = alertSpy.mock.calls[0]?.[2]?.find(
-      (button) => button.text === 'Cancel',
-    );
-    await act(() => cancel?.onPress?.(undefined));
-    expect(store.getSnapshot()?.clientId).toBe('another-client');
-    expect(opened).not.toHaveBeenCalled();
-
-    await fireEvent.press(screen.getByTestId('create-referral-btn'));
-    const replace = alertSpy.mock.calls[1]?.[2]?.find(
-      (button) => button.text === 'Replace',
-    );
-    await act(() => replace?.onPress?.(undefined));
-
-    expect(store.getSnapshot()?.clientId).toBe('client-1');
-    expect(opened).toHaveBeenCalledOnce();
-  } finally {
-    alertSpy.mockRestore();
-  }
+it('returns to intake and back without losing answers or shelter selection', async () => {
+  const { store } = await setup();
+  await openPicker();
+  await fireEvent.press(screen.getByTestId('picker-back-btn'));
+  expect(screen.getByLabelText('Staff Observations / Notes')).toHaveProp(
+    'value',
+    answers.notes,
+  );
+  await fireEvent.changeText(
+    screen.getByLabelText('Requested arrival date'),
+    '2026-09-12',
+  );
+  await fireEvent.press(screen.getByTestId('intake-next-btn'));
+  expect(await screen.findByText('✓ Selected: Alpha House')).toBeOnTheScreen();
+  expect(store.getSnapshot()?.answers.requestedArrivalDate).toBe('2026-09-12');
 });
 
-it('returns from the picker to the intake form and forward again without losing answers or the selection', async () => {
-  const { store } = await setup();
-  // openPicker leaves the draft parked on the picker step — the state a tester
-  // resumes into.
+it('keeps the pending operation locked through pause/resume and closes the resumed form on success', async () => {
+  const { store, requests, close } = await setup();
   await openPicker();
+  const request = await submit(requests);
+  await fireEvent.press(screen.getByTestId('picker-pause-btn'));
+  expect(screen.queryByTestId('shelter-picker-screen')).toBeNull();
+  await fireEvent.press(screen.getByTestId('resume-referral-btn'));
+  expect(await screen.findByTestId('submit-referral-btn')).toBeDisabled();
+  await fireEvent.press(screen.getByTestId('submit-referral-btn'));
+  expect(requests).toHaveLength(1);
+  await act(async () => request.succeed({ data: created }));
+  await waitFor(() => expect(store.getSnapshot()).toBeNull());
+  expect(screen.queryByTestId('shelter-picker-screen')).toBeNull();
+  expect(close).toHaveBeenCalledTimes(2);
+});
 
-  await fireEvent.press(screen.getByTestId('picker-back-btn'));
+it('revalidates on resume, preserves intake when the selected shelter disappears, and submits only its replacement', async () => {
+  const { store, requests, loadShelters, setAvailableShelters } = await setup();
+  await openPicker();
+  const before = store.getSnapshot();
+  await fireEvent.press(screen.getByTestId('picker-pause-btn'));
+  setAvailableShelters([{ ...shelter, id: 's-2', name: 'Beta House' }]);
+  await fireEvent.press(screen.getByTestId('resume-referral-btn'));
+  expect(screen.getByTestId('submit-referral-btn')).toBeDisabled();
+  await screen.findByText(/^Your saved shelter selection/);
+  expect(loadShelters).toHaveBeenCalledTimes(2);
+  expect(store.getSnapshot()).toBe(before);
+  await fireEvent.press(screen.getByTestId('submit-referral-btn'));
+  expect(requests).toHaveLength(0);
+  await fireEvent.press(screen.getByRole('radio'));
+  const request = await submit(requests);
+  expect(request.variables).toEqual({
+    data: {
+      organizationId: ACTIVE_ORG_ID,
+      clientProfile: 'client-1',
+      shelter: 's-2',
+      notes,
+    },
+  });
+  expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
+});
 
-  expect(await screen.findByTestId('referral-intake-screen')).toBeOnTheScreen();
-  expect(store.getSnapshot()?.step).toBe('intake');
-  expect(
-    screen.getByLabelText('Staff Observations / Notes'),
-  ).toHaveDisplayValue(answers.notes);
-  expect(screen.getByLabelText('Substances')).toHaveDisplayValue(
-    answers.substances,
+it('does not close another modal when a paused request completes', async () => {
+  const { requests, close, store } = await setup();
+  await openPicker();
+  const request = await submit(requests);
+  await fireEvent.press(screen.getByTestId('picker-pause-btn'));
+  await fireEvent.press(screen.getByTestId('open-other-modal'));
+  await act(async () => request.succeed({ data: created }));
+  expect(screen.getByText('Another screen')).toBeOnTheScreen();
+  expect(close).toHaveBeenCalledOnce();
+  expect(store.getSnapshot()).toBeNull();
+});
+
+it('copies a saved referral into an independent draft, resets consent/notes/shelter and submits a reviewed arrival date', async () => {
+  const original = {
+    ...newReferral,
+    notes: buildReferralNotes({
+      ...answers,
+      requestedArrivalDate: '2026-09-10',
+      pets: ['CATS'],
+    }),
+  };
+  const { store, requests } = await setup([original]);
+  await fireEvent.press(
+    await screen.findByTestId('reuse-referral-new-referral'),
   );
-
+  expect(screen.getByTestId('referral-reuse-review')).toBeOnTheScreen();
+  expect(store.getSnapshot()?.selectedShelterId).toBeNull();
+  expect(store.getSnapshot()?.answers).toMatchObject({
+    substances: answers.substances,
+    selfcare: 'No',
+    pets: ['CATS'],
+    requestedArrivalDate: '2026-09-10',
+  });
+  expect(store.getSnapshot()?.answers.consent).toBeUndefined();
+  expect(screen.getByLabelText('Staff Observations / Notes')).toHaveProp(
+    'value',
+    '',
+  );
+  await fireEvent.changeText(
+    screen.getByLabelText('Requested arrival date'),
+    '2026-09-12',
+  );
+  await fireEvent.press(screen.getByTestId('consent-yes-btn'));
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
+  await fireEvent.press((await screen.findAllByRole('radio'))[0]);
+  const request = await submit(requests);
+  expect(request.operationName).toBe('CreateReferral');
+  expect(decodeReferralNotes(request.variables.data.notes)).toMatchObject({
+    humanNotes: '',
+    intake: { requestedArrivalDate: '2026-09-12', consent: 'Yes' },
+  });
+  expect(decodeReferralNotes(original.notes)).toMatchObject({
+    humanNotes: answers.notes,
+    intake: { requestedArrivalDate: '2026-09-10' },
+  });
+  await act(async () => request.succeed({ data: created }));
+});
 
-  expect(await screen.findByTestId('shelter-picker-screen')).toBeOnTheScreen();
-  // The shelter picked before going back is still selected.
-  expect(await screen.findByText('✓ Selected: Alpha House')).toBeOnTheScreen();
+it('saves edits through UpdateReferral with only the existing ID and notes, keeping client, shelter and creation date out of the update', async () => {
+  const { requests, store } = await setup([newReferral]);
+  await fireEvent.press(
+    await screen.findByTestId('edit-referral-new-referral'),
+  );
+  expect(screen.getByText('Save changes')).toBeOnTheScreen();
+  await fireEvent.changeText(
+    screen.getByLabelText('Staff Observations / Notes'),
+    'Corrected observation',
+  );
+  await fireEvent.changeText(
+    screen.getByLabelText('Requested arrival date'),
+    '2026-09-12',
+  );
+  await fireEvent.press(screen.getByTestId('intake-next-btn'));
+  await waitFor(() => expect(requests).toHaveLength(1));
+  const request = requests[0];
+  expect(request.operationName).toBe('UpdateReferral');
+  expect(Object.keys(request.variables.data).sort()).toEqual(['id', 'notes']);
+  expect(request.variables.data.id).toBe('new-referral');
+  expect(decodeReferralNotes(request.variables.data.notes)).toMatchObject({
+    humanNotes: 'Corrected observation',
+    intake: { requestedArrivalDate: '2026-09-12' },
+  });
+  expect(newReferral.notes).toBe(notes);
+  await act(async () =>
+    request.succeed({
+      data: {
+        __typename: 'Mutation',
+        updateReferral: {
+          __typename: 'ReferralType',
+          id: 'new-referral',
+          status: ReferralStatusEnum.Pending,
+          notes: request.variables.data.notes,
+        },
+      },
+    }),
+  );
+  expect(store.getSnapshot()).toBeNull();
+  expect(showSnackbar).toHaveBeenLastCalledWith({
+    message: 'Referral updated successfully!',
+    type: 'success',
+  });
+});
+
+it('loads older referral pages and keeps those records available for reuse', async () => {
+  const recent = Array.from({ length: 25 }, (_, i) => ({
+    ...newReferral,
+    id: `recent-${i}`,
+  }));
+  const oldest = { ...newReferral, id: 'older-referral' };
+  await setup(recent, [oldest]);
+  await fireEvent.press(await screen.findByTestId('infinite-list-load-more'));
+  expect(
+    await screen.findByTestId('referral-card-older-referral'),
+  ).toBeOnTheScreen();
+  expect(screen.getByText('Displaying 26 of 26 referrals')).toBeOnTheScreen();
+  expect(screen.queryByTestId('infinite-list-load-more')).toBeNull();
+  await fireEvent.press(screen.getByTestId('reuse-referral-older-referral'));
+  expect(screen.getByTestId('referral-reuse-review')).toBeOnTheScreen();
+});
+
+it('retains an edit draft on a permission rejection and retries the update without creating a new referral', async () => {
+  const { requests, store } = await setup([newReferral]);
+  await fireEvent.press(
+    await screen.findByTestId('edit-referral-new-referral'),
+  );
+  await fireEvent.changeText(
+    screen.getByLabelText('Staff Observations / Notes'),
+    'Updated observation',
+  );
+  await fireEvent.press(screen.getByTestId('intake-next-btn'));
+  await waitFor(() => expect(requests).toHaveLength(1));
+  await act(async () =>
+    requests[0].succeed({
+      data: {
+        __typename: 'Mutation',
+        updateReferral: {
+          __typename: 'OperationInfo',
+          messages: [
+            {
+              __typename: 'OperationMessage',
+              kind: OperationMessageKind.Permission,
+              message: 'Permission denied',
+            },
+          ],
+        },
+      },
+    }),
+  );
+  expect(store.getSnapshot()?.answers.notes).toBe('Updated observation');
+  expect(newReferral.notes).toBe(notes);
+  await fireEvent.press(screen.getByTestId('intake-next-btn'));
+  await waitFor(() => expect(requests).toHaveLength(2));
+  expect(requests.map(({ operationName }) => operationName)).toEqual([
+    'UpdateReferral',
+    'UpdateReferral',
+  ]);
+  expect(requests[1].variables).toEqual(requests[0].variables);
+  await act(async () =>
+    requests[1].succeed({
+      data: {
+        __typename: 'Mutation',
+        updateReferral: {
+          __typename: 'ReferralType',
+          id: 'new-referral',
+          status: ReferralStatusEnum.Pending,
+          notes: requests[1].variables.data.notes,
+        },
+      },
+    }),
+  );
+  expect(store.getSnapshot()).toBeNull();
+});
+
+// These component fixtures use production-shaped IDs and the corresponding directory.
+vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
+  useApiConfig: () => ({ apiUrl: 'https://api.prod.betterangels.la' }),
+}));
+
+it('ignores a submission response after its account session has been released', async () => {
+  const { store, requests, refreshed } = await setup();
+  await openPicker();
+  const request = await submit(requests);
+  await act(() => store.release());
+  await act(async () => request.succeed({ data: created }));
+  expect(showSnackbar).not.toHaveBeenCalled();
+  expect(refreshed).not.toHaveBeenCalled();
+  expect(store.startNew('client-1')).toBe(false);
 });

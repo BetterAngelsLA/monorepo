@@ -1,4 +1,5 @@
-import type { CreateReferralInput } from '../../../apollo';
+import { parseDateString, toDateString } from '@monorepo/shared/scalars';
+import type { CreateReferralInput } from '../apollo';
 import {
   enumDisplayAccessibilityChoices,
   enumDisplayDemographics,
@@ -6,8 +7,8 @@ import {
   enumDisplayPetChoices,
   enumDisplaySpecialSituationRestrictionChoices,
   enumDisplayStorageChoices,
-} from '../../../static';
-import type { SheltersQuery } from './__generated__/Shelters.generated';
+} from '../static';
+import { compareReferralLabels } from '../util/compareReferralLabels';
 
 export type IntakeOption<TValue extends string = string> = {
   readonly value: TValue;
@@ -21,12 +22,15 @@ function optionsFrom<TValue extends string>(
   for (const value in labels) {
     options.push({ value, label: labels[value] });
   }
-  return options.sort((a, b) => a.label.localeCompare(b.label));
+  return options.sort((a, b) => compareReferralLabels(a.label, b.label));
 }
 
 // Only destinations supported by the current notes adapter are expressible.
 // A new API destination needs an adapter implementation as well as codegen.
 type NotesField = Extract<keyof CreateReferralInput, 'notes'>;
+// `unmapped` is deliberately kept: it is the shape a future field takes when
+// the backend has nowhere to store it yet, and the encoder/UI already handle
+// it. No catalog field uses it today.
 export type IntakeBackendMapping =
   | { readonly mode: 'unmapped' }
   | { readonly mode: 'direct'; readonly field: NotesField }
@@ -36,21 +40,30 @@ export type IntakeBackendMapping =
       readonly payloadKey: string;
     };
 
-type QueriedShelter = SheltersQuery['shelters']['results'][number];
-export type ShelterMatchCategory = Extract<
-  keyof QueriedShelter,
-  'pets' | 'demographics' | 'accessibility'
->;
+// Mirrors the three attribute lists the shelters query returns. Declared here
+// rather than derived from the generated query so the intake contract does not
+// depend on a screen's __generated__ folder.
+export type ShelterMatchCategory = 'pets' | 'demographics' | 'accessibility';
 
 type FieldMetadata = {
   readonly key: string;
   readonly label: string;
   readonly section: 'needs' | 'additional';
   readonly sensitive: boolean;
+  readonly reuse: 'prefill' | 'review' | 'reset';
   readonly persistence: { readonly localDraft: boolean };
-  // Pending requirements retain their marker but do not block the prototype.
+  // Pending means requiredness is under review; answering is currently
+  // optional. `required` is scaffolding: no field uses it yet, so the submit
+  // guard and its dialog stay unreachable until one does.
   readonly requirement: 'optional' | 'pending' | 'required';
   readonly help?: string;
+  /**
+   * A field that was a checkbox before it became a yes/no: the old control
+   * stored `false` for "unchecked", which was the same state as "never
+   * answered". Coercing that to "No" would invent a refusal, so a legacy
+   * `false` reads as unanswered instead.
+   */
+  readonly legacyFalseMeansUnanswered?: boolean;
 };
 
 export type IntakeFieldDefinition = FieldMetadata &
@@ -63,8 +76,8 @@ export type IntakeFieldDefinition = FieldMetadata &
         // Direct notes accept text; structured answers need the sidecar.
         readonly backend: Exclude<IntakeBackendMapping, { mode: 'direct' }>;
       } & (
+        | { readonly control: 'date' }
         | { readonly control: 'yesno' }
-        | { readonly control: 'checkbox'; readonly checkboxLabel: string }
         | {
             readonly control: 'multiselect';
             readonly options: readonly IntakeOption[];
@@ -83,6 +96,7 @@ export type IntakeFieldDefinition = FieldMetadata &
 export const INTAKE_FIELDS = [
   {
     key: 'substances',
+    reuse: 'review',
     label: 'Substances',
     section: 'needs',
     control: 'text',
@@ -94,6 +108,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'pets',
+    reuse: 'prefill',
     label: 'Animals with the client',
     section: 'needs',
     control: 'multiselect',
@@ -107,12 +122,15 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'demographics',
+    reuse: 'prefill',
     label: 'Household / demographic fit',
     section: 'needs',
     control: 'multiselect',
     options: optionsFrom(enumDisplayDemographics),
     matching: { shelterAttribute: 'demographics' },
-    sensitive: false,
+    // Protected-class data (LGBTQ+, family status): withheld from the default
+    // share copy like the other health/DV answers.
+    sensitive: true,
     requirement: 'optional',
     help: 'Matched against who each shelter serves',
     persistence: { localDraft: true },
@@ -124,12 +142,15 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'accessibility',
+    reuse: 'prefill',
     label: 'Accessibility needs',
     section: 'needs',
     control: 'multiselect',
     options: optionsFrom(enumDisplayAccessibilityChoices),
     matching: { shelterAttribute: 'accessibility' },
-    sensitive: false,
+    // Disability/medical-equipment needs are health data; the equivalent
+    // profile row ("Accommodations") is already sensitive.
+    sensitive: true,
     requirement: 'optional',
     help: 'Matched against what each shelter provides',
     persistence: { localDraft: true },
@@ -141,6 +162,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'storage',
+    reuse: 'prefill',
     label: 'Storage needed',
     section: 'needs',
     control: 'multiselect',
@@ -152,6 +174,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'transportation',
+    reuse: 'prefill',
     label: 'Vehicle needing parking',
     section: 'needs',
     control: 'multiselect',
@@ -168,6 +191,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'selfcare',
+    reuse: 'review',
     label: 'Able to practice self-care',
     section: 'needs',
     control: 'yesno',
@@ -179,6 +203,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'special',
+    reuse: 'review',
     label: 'Special Situations',
     section: 'needs',
     control: 'multiselect',
@@ -189,12 +214,30 @@ export const INTAKE_FIELDS = [
     backend: { mode: 'notesSidecar', field: 'notes', payloadKey: 'special' },
   },
   {
+    key: 'requestedArrivalDate',
+    label: 'Requested arrival date',
+    section: 'additional',
+    control: 'date',
+    sensitive: false,
+    reuse: 'review',
+    requirement: 'optional',
+    help: 'When the client hopes to arrive. This does not confirm a bed or reservation.',
+    persistence: { localDraft: true },
+    backend: {
+      mode: 'notesSidecar',
+      field: 'notes',
+      payloadKey: 'requestedArrivalDate',
+    },
+  },
+  {
     key: 'consent',
+    reuse: 'reset',
     label: 'DHS data-sharing consent',
     section: 'additional',
-    control: 'checkbox',
-    checkboxLabel: 'Client gave consent',
+    control: 'yesno',
     sensitive: false,
+    // Was a checkbox: an unticked box meant "not answered", not "No".
+    legacyFalseMeansUnanswered: true,
     requirement: 'optional',
     help: 'Records that the client consented to DHS data sharing (a plain yes/no — not PII). Consent content, signer, and delivery are unresolved — see GAP-21.',
     persistence: { localDraft: true },
@@ -202,6 +245,7 @@ export const INTAKE_FIELDS = [
   },
   {
     key: 'notes',
+    reuse: 'reset',
     label: 'Staff Observations / Notes',
     section: 'additional',
     control: 'textarea',
@@ -220,11 +264,9 @@ type ValueFor<TField> = TField extends {
   options: readonly IntakeOption<infer TValue>[];
 }
   ? TValue[]
-  : TField extends { control: 'checkbox' }
-    ? boolean
-    : TField extends { control: 'yesno' }
-      ? 'Yes' | 'No'
-      : string;
+  : TField extends { control: 'yesno' }
+    ? 'Yes' | 'No'
+    : string;
 
 export type IntakeValues = {
   [TField in DefinedField as TField['key']]?: ValueFor<TField>;
@@ -245,7 +287,7 @@ export type IntakeFieldWrite = {
 // Stored records also contain older formats and fields absent from this version.
 // Keep them intact at the persistence boundary; only narrow values for controls.
 export type StoredIntake = Record<string, unknown>;
-export type IntakeControlValue = string | string[] | boolean;
+export type IntakeControlValue = string | string[];
 
 export function getIntakeField(
   key: string,
@@ -254,13 +296,38 @@ export function getIntakeField(
   return definitions.find((field) => field.key === key);
 }
 
+/**
+ * Coerce answers written by older versions into the current control
+ * vocabulary. Older referrals stored yes/no controls as booleans; the current
+ * controls use the chip labels. Unknown fields and values pass through.
+ *
+ * A field that used to be a checkbox reads a legacy `false` as unanswered: the
+ * old control stored "unticked" for both "no" and "never asked", so treating it
+ * as a refusal would fabricate an answer.
+ */
+export function normalizeIntakeValue(
+  field: IntakeFieldDefinition | undefined,
+  value: unknown,
+): unknown {
+  if (field?.control === 'yesno' && typeof value === 'boolean') {
+    if (value === false && field.legacyFalseMeansUnanswered) return undefined;
+    return value ? 'Yes' : 'No';
+  }
+  return value;
+}
+
 export function isIntakeControlValue(
   field: IntakeFieldDefinition,
   value: unknown,
 ): value is IntakeControlValue {
   switch (field.control) {
-    case 'checkbox':
-      return typeof value === 'boolean';
+    case 'date': {
+      if (value === '') return true;
+      if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value))
+        return false;
+      const date = parseDateString(value);
+      return !!date && toDateString(date) === value;
+    }
     case 'yesno':
       return value === 'Yes' || value === 'No';
     case 'multiselect':
@@ -290,7 +357,7 @@ export function readIntakeAnswers(
   const answers: IntakeValues = {};
   const readField = <K extends IntakeFieldKey>(key: K) => {
     const field = getIntakeField(key);
-    let value = values[key];
+    let value = normalizeIntakeValue(field, values[key]);
     // Keep valid selections visible when an older draft also has retired ones.
     if (field?.control === 'multiselect' && Array.isArray(value)) {
       value = value.filter((item) =>
@@ -306,12 +373,23 @@ export function readIntakeAnswers(
   return Object.freeze(answers);
 }
 
+export function isRequiredIntakeField(field: IntakeFieldDefinition): boolean {
+  return field.requirement === 'required';
+}
+
+export function intakeRequirementLabel(field: IntakeFieldDefinition): string {
+  if (isRequiredIntakeField(field)) return 'Required';
+  return field.requirement === 'pending'
+    ? 'Optional · requirement under review'
+    : 'Optional';
+}
+
 export function missingRequiredIntakeFields(
   values: StoredIntake,
   definitions: readonly IntakeFieldDefinition[] = INTAKE_FIELDS,
 ): IntakeFieldDefinition[] {
   return definitions.filter((field) => {
-    if (field.requirement !== 'required') return false;
+    if (!isRequiredIntakeField(field)) return false;
     const value = values[field.key];
     if (!isIntakeControlValue(field, value)) return true;
     if (typeof value === 'string') return value.trim().length === 0;

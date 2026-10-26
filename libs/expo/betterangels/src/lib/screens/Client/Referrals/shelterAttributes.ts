@@ -4,6 +4,8 @@
  */
 import { Colors } from '@monorepo/expo/shared/static';
 import { isNonNullish } from 'remeda';
+import haversine from 'haversine-distance';
+import { compareReferralLabels } from '../../../util/compareReferralLabels';
 import {
   AccessibilityChoices,
   DemographicChoices,
@@ -13,7 +15,7 @@ import {
   INTAKE_FIELDS,
   type IntakeFieldDefinition,
   type ShelterMatchCategory,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 
 // Why a tag is on the card, independent of its colour. Callers partition on
 // this rather than comparing against Colors.* — a palette change shouldn't
@@ -131,7 +133,8 @@ export function matchTags(
   // first so a consumer can collapse the tail without re-sorting. See
   // ShelterCard.
   return [
-    ...attributes
+    ...[...offered]
+      .sort(compareReferralLabels)
       .filter((label) => needed.has(label))
       .map((label) => ({
         label,
@@ -139,7 +142,8 @@ export function matchTags(
         kind: 'match' as const,
         variant: 'solid' as const,
       })),
-    ...desired
+    ...[...needed]
+      .sort(compareReferralLabels)
       .filter((label) => !offered.has(label))
       .map((label) => {
         const confirmed = isConfirmedGap(label);
@@ -150,7 +154,8 @@ export function matchTags(
           variant: confirmed ? ('solid' as const) : ('outline' as const),
         };
       }),
-    ...attributes
+    ...[...offered]
+      .sort(compareReferralLabels)
       .filter((label) => !needed.has(label))
       .map((label) => ({
         label,
@@ -159,4 +164,92 @@ export function matchTags(
         variant: 'solid' as const,
       })),
   ];
+}
+
+export type TCoords = { latitude?: number | null; longitude?: number | null };
+
+// How many of the client's stated needs this shelter actually offers. Counting
+// here rather than filtering matchTags keeps the caller from paying for tag
+// construction just to sort.
+export function countMatches(
+  attributes: readonly string[],
+  desired: readonly string[],
+): number {
+  if (!desired.length) return 0;
+  const offered = new Set(attributes);
+  return [...new Set(desired)].reduce(
+    (n, need) => n + (offered.has(need) ? 1 : 0),
+    0,
+  );
+}
+
+// Distance in metres, via the same helper the Map screens use. Returns null
+// unless both points are fully specified, so a missing coordinate can never
+// masquerade as "very close".
+export function distanceMetres(
+  a?: TCoords | null,
+  b?: TCoords | null,
+): number | null {
+  if (
+    a?.latitude == null ||
+    a?.longitude == null ||
+    b?.latitude == null ||
+    b?.longitude == null ||
+    ![a.latitude, a.longitude, b.latitude, b.longitude].every(
+      Number.isFinite,
+    ) ||
+    Math.abs(a.latitude) > 90 ||
+    Math.abs(b.latitude) > 90 ||
+    Math.abs(a.longitude) > 180 ||
+    Math.abs(b.longitude) > 180
+  ) {
+    return null;
+  }
+  return haversine(
+    { latitude: a.latitude, longitude: a.longitude },
+    { latitude: b.latitude, longitude: b.longitude },
+  );
+}
+
+/**
+ * Order shelters so the best fit is first: most matched needs, then nearest,
+ * then name.
+ *
+ * Without this the list arrives in server order, so the one shelter that meets a
+ * need can sit well below the fold — the volunteer has to scroll the whole list
+ * to find out whether a match exists at all.
+ *
+ * Distance only participates when an origin and the shelter's own coordinates
+ * are both present; otherwise it is skipped rather than treated as zero, which
+ * would sort unlocated shelters to the top. Name is the final tiebreak so the
+ * order is stable between renders rather than depending on sort implementation.
+ */
+export function rankShelters<T>(
+  shelters: readonly T[],
+  opts: {
+    attributesOf: (shelter: T) => string[];
+    desired: readonly string[];
+    nameOf: (shelter: T) => string;
+    coordsOf?: (shelter: T) => TCoords | null | undefined;
+    origin?: TCoords | null;
+  },
+): T[] {
+  const { attributesOf, desired, nameOf, coordsOf, origin } = opts;
+
+  // Decorate a copy so query results and the Apollo cache are never mutated.
+  return shelters
+    .map((shelter) => ({
+      shelter,
+      matches: countMatches(attributesOf(shelter), desired),
+      metres: coordsOf ? distanceMetres(origin, coordsOf(shelter)) : null,
+    }))
+    .sort((a, b) => {
+      if (a.matches !== b.matches) return b.matches - a.matches;
+      if (a.metres != null && b.metres != null && a.metres !== b.metres)
+        return a.metres - b.metres;
+      if (a.metres != null && b.metres == null) return -1;
+      if (a.metres == null && b.metres != null) return 1;
+      return compareReferralLabels(nameOf(a.shelter), nameOf(b.shelter));
+    })
+    .map(({ shelter }) => shelter);
 }

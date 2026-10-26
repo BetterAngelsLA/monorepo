@@ -1,3 +1,10 @@
+import {
+  AdaAccommodationEnum,
+  VeteranStatusEnum,
+} from '@monorepo/ba-platform/types';
+import { createApolloCache } from '@monorepo/apollo';
+import { createBaTypePolicies } from '../../../apollo/cachePolicies';
+import { randomUUID } from 'node:crypto';
 /**
  * T4 — the first screen a brand-new client shows.
  *
@@ -13,28 +20,51 @@
  *
  * Test-plan reference: referral-test-brief.md, case T4.
  */
-import { createTestApolloCache } from '../../../../__mocks__/apolloCache';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
-import { render, screen } from '@testing-library/react-native';
-import { AdaAccommodationEnum, VeteranStatusEnum } from '../../../apollo';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import * as notesAdapter from './referralIntakeSidecar';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { ReferralsTab } from './ReferralsTab';
-import { REFERRALS_PAGE_SIZE } from './constants';
 import { ClientReferralsDocument } from './__generated__/Referrals.generated';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,
-} from './referralDraft';
+} from '../../../draft/referralDraft';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
+vi.mock('expo-crypto', async () => ({
+  randomUUID: (await import('node:crypto')).randomUUID,
+}));
+vi.mock('../../../providers/user/UserProvider', () => ({
+  useUser: () => {
+    throw new Error('Injected draft tests must not read account context');
+  },
+}));
 
 // See sharedBarrels.tsx: the shared barrels pull in native-backed components
 // whose native halves don't exist under test. `static` stays real.
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
+// The screen always supplies ReferralPermissionsProvider; these harnesses stub
+// the active-org hook so the injected-store path has deterministic gates.
+const gates = vi.hoisted(() => ({
+  canView: true,
+  canCreate: true,
+  canChange: true,
+}));
+vi.mock('../../../hooks/referral/useReferralGates', () => ({
+  useActiveReferralGates: () => gates,
+}));
+
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
+vi.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 24, left: 0, right: 0 }),
+}));
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
+  default: () => ({ showSnackbar: vi.fn() }),
+}));
 vi.mock('../../../hooks', () => ({
   useSnackbar: () => ({ showSnackbar: vi.fn() }),
 }));
@@ -46,11 +76,14 @@ vi.mock('../../../providers', () => ({
 }));
 
 const createStore = () =>
-  createReferralDraftStore({
-    load: () => null,
-    save: vi.fn(),
-    remove: vi.fn(),
-  });
+  createReferralDraftStore(
+    {
+      load: () => null,
+      save: vi.fn(),
+      remove: vi.fn(),
+    },
+    randomUUID,
+  );
 let draftStore: ReferralDraftStore;
 
 const CLIENT_ID = 'c-1';
@@ -61,7 +94,7 @@ const emptyReferrals = [
       query: ClientReferralsDocument,
       variables: {
         filters: { clientProfile: CLIENT_ID },
-        pagination: { offset: 0, limit: REFERRALS_PAGE_SIZE },
+        pagination: { offset: 0, limit: 25 },
       },
     },
     result: {
@@ -91,9 +124,27 @@ describe('empty referral history', () => {
     draftStore = createStore();
   });
 
+  it('keeps the list viewport above system navigation', async () => {
+    await render(
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
+        <ReferralsTab client={client} draftStore={draftStore} />
+      </MockedProvider>,
+    );
+    await screen.findByText('No referrals yet');
+    expect(screen.getByTestId('referrals-screen')).toHaveStyle({
+      paddingBottom: 24,
+    });
+  });
+
   it('says there are no referrals yet instead of showing a blank screen', async () => {
     await render(
-      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -103,7 +154,10 @@ describe('empty referral history', () => {
 
   it('tells the user how to create the first one', async () => {
     await render(
-      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -115,7 +169,10 @@ describe('empty referral history', () => {
 
   it('shows a spinner first, then replaces it with the empty message', async () => {
     await render(
-      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -132,7 +189,10 @@ describe('empty referral history', () => {
 
   it('still offers the + button so an empty history is not a dead end', async () => {
     await render(
-      <MockedProvider cache={createTestApolloCache()} mocks={emptyReferrals}>
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={emptyReferrals}
+      >
         <ReferralsTab client={client} draftStore={draftStore} />
       </MockedProvider>,
     );
@@ -140,6 +200,125 @@ describe('empty referral history', () => {
 
     expect(screen.getByLabelText('create new referral')).toBeOnTheScreen();
   });
+});
+
+it('does not reparse saved referrals when draft answers change, while draft controls stay live', async () => {
+  const store = createStore();
+  const decode = vi.spyOn(notesAdapter, 'decodeReferralNotes');
+  try {
+    await render(
+      <MockedProvider
+        cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+        mocks={[
+          {
+            ...emptyReferrals[0],
+            result: {
+              data: {
+                referrals: {
+                  __typename: 'ReferralTypeOffsetPaginated',
+                  totalCount: 1,
+                  results: [
+                    {
+                      __typename: 'ReferralType',
+                      id: 'saved-1',
+                      status: 'PENDING',
+                      createdAt: '2026-10-14T12:00:00Z',
+                      notes: 'Saved observation',
+                      createdBy: null,
+                      shelter: null,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ]}
+      >
+        <ReferralsTab client={client} draftStore={store} />
+      </MockedProvider>,
+    );
+    await screen.findByText('Notes: Saved observation');
+    const parsed = decode.mock.calls.length;
+    expect(parsed).toBeGreaterThan(0);
+    await act(() => {
+      store.startNew(CLIENT_ID);
+    });
+    expect(screen.getByTestId('resume-referral-btn')).toBeOnTheScreen();
+    for (const value of ['F', 'Fi', 'Fictional observation']) {
+      await act(() => {
+        store.setField('notes', value);
+      });
+    }
+    expect(decode).toHaveBeenCalledTimes(parsed);
+    expect(screen.getByTestId('referral-draft-card')).toBeOnTheScreen();
+    await act(() => {
+      store.clear();
+    });
+    expect(screen.getByTestId('create-referral-btn')).toBeOnTheScreen();
+    expect(screen.queryByTestId('referral-draft-card')).toBeNull();
+    expect(decode).toHaveBeenCalledTimes(parsed);
+  } finally {
+    decode.mockRestore();
+  }
+});
+
+it('passes current profile details through the saved card to its reviewed export', async () => {
+  if (!client) throw new Error('Missing fictional client fixture');
+  const fullClient = {
+    ...client,
+    clientProfile: {
+      ...client.clientProfile,
+      age: 35,
+      displayGender: 'Woman',
+      adaAccommodation: [AdaAccommodationEnum.Mobility],
+    },
+  };
+  await render(
+    <MockedProvider
+      cache={createApolloCache({ typePolicies: createBaTypePolicies(false) })}
+      mocks={[
+        {
+          ...emptyReferrals[0],
+          result: {
+            data: {
+              referrals: {
+                __typename: 'ReferralTypeOffsetPaginated',
+                totalCount: 1,
+                results: [
+                  {
+                    __typename: 'ReferralType',
+                    id: 'profile-export',
+                    status: 'PENDING',
+                    createdAt: '2026-10-15T12:00:00Z',
+                    notes: null,
+                    createdBy: null,
+                    shelter: null,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ]}
+    >
+      <ReferralsTab client={fullClient} draftStore={createStore()} />
+    </MockedProvider>,
+  );
+  await screen.findByTestId('share-referral-profile-export');
+  await fireEvent.press(screen.getByTestId('share-referral-profile-export'));
+  expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
+    /Age: 35/,
+  );
+  expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
+    /Gender: Woman/,
+  );
+  expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
+    /Accommodations \[Sensitive\]: Excluded \(sensitive\)/,
+  );
+  await fireEvent.press(screen.getByTestId('referral-share-include-private'));
+  expect(screen.getByTestId('referral-share-preview')).toHaveTextContent(
+    /Accommodations \[Sensitive\]: Mobility/,
+  );
 });
 
 describe('sparse client profile in the intake form', () => {
@@ -160,7 +339,7 @@ describe('sparse client profile in the intake form', () => {
   it('marks every absent field "Not on file" rather than leaving it blank', async () => {
     await renderIntake({});
 
-    // Name, Gender, Age, Accommodations, Veteran — five of the six rows.
+    // Name, Gender, Age (DOB), Mobility, Veteran — five of the six rows.
     expect(screen.getAllByText('Not on file')).toHaveLength(5);
   });
 
@@ -190,15 +369,18 @@ describe('sparse client profile in the intake form', () => {
     await renderIntake({
       firstName: 'Client',
       lastName: 'One',
-      veteranStatus: VeteranStatusEnum.PreferNotToSay,
-      adaAccommodation: [AdaAccommodationEnum.Mobility],
+      veteranStatus: VeteranStatusEnum.Yes,
     });
 
     expect(screen.getByText('Client One')).toBeOnTheScreen();
-    // Enum values render as their display labels, not the wire names.
-    expect(screen.getByText('Prefer not to say')).toBeOnTheScreen();
-    expect(screen.getByText('Mobility')).toBeOnTheScreen();
-    // Gender and Age are still absent.
-    expect(screen.getAllByText('Not on file')).toHaveLength(2);
+    expect(screen.getAllByText('Yes').length).toBeGreaterThan(0);
+    // Gender, DOB and Mobility are still absent.
+    expect(screen.getAllByText('Not on file')).toHaveLength(3);
   });
 });
+
+// These component fixtures use production-shaped IDs and the corresponding directory.
+vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
+  useApiConfig: () => ({ apiUrl: 'https://api.prod.betterangels.la' }),
+}));

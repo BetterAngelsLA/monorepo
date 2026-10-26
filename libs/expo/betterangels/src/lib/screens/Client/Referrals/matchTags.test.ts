@@ -24,6 +24,35 @@ const kindOf = (tags: TTag[], label: string) =>
   tags.find((t) => t.label === label)?.kind;
 
 describe('matchTags', () => {
+  it('orders each decision bucket consistently and deduplicates without mutating either input', () => {
+    const offered = ['Pet Area', 'Cats', 'Exotics', 'Cats', 'Service Animals'];
+    const needed = ['Dogs (< 25 lbs)', 'Cats', 'ADA Rooms Available', 'Cats'];
+    const result = matchTags(offered, needed);
+    expect(labels(result)).toEqual([
+      'Cats',
+      'ADA Rooms Available',
+      'Dogs (< 25 lbs)',
+      'Exotics',
+      'Pet Area',
+      'Service Animals',
+    ]);
+    expect(matchTags([...offered].reverse(), [...needed].reverse())).toEqual(
+      result,
+    );
+    expect(offered).toEqual([
+      'Pet Area',
+      'Cats',
+      'Exotics',
+      'Cats',
+      'Service Animals',
+    ]);
+    expect(needed).toEqual([
+      'Dogs (< 25 lbs)',
+      'Cats',
+      'ADA Rooms Available',
+      'Cats',
+    ]);
+  });
   it('marks an offered + needed attribute green', () => {
     const tags = matchTags(['Cats'], ['Cats']);
 
