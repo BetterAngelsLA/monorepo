@@ -540,8 +540,9 @@ jobs:
             -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
             -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
             -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
+            -v "$GITHUB_EVENT_PATH:$GITHUB_EVENT_PATH:ro" \
             -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME -e PR_NUMBER \
-            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA \
+            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA -e GITHUB_EVENT_PATH \
             -e EXPO_TOKEN \
             -e VITE_SHELTER_GOOGLE_MAPS_API_KEY \
             -e VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY \
