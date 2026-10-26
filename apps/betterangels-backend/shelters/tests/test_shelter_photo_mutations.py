@@ -1,12 +1,10 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-import waffle
 from django.test import TestCase
 from model_bakery import baker
 
 from accounts.models import User
-from common.imgproxy import IMGPROXY_SWITCH
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from shelters.enums import ShelterPhotoTypeChoices
 from shelters.models import Shelter, ShelterPhoto
@@ -254,9 +252,6 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
             MagicMock(file_path="shelters/b.jpg"),
         ]
         initial_count = ShelterPhoto.objects.count()
-
-        # Warm waffle cache so is_imgproxy_enabled() doesn't add a flaky extra query
-        waffle.switch_is_active(IMGPROXY_SWITCH)
 
         expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):

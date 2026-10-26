@@ -1,3 +1,5 @@
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { ReferralPermissions } from '@monorepo/ba-platform/permissions';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   Loading,
@@ -21,7 +23,10 @@ import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
 import { ClientNavMenu } from './ClientNavMenu';
 import ClientProfileView from './ClientProfile';
-import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
+import ClientTabs, {
+  ClientViewTabEnum,
+  resolveClientTab,
+} from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import { InteractionLocations } from './Locations';
@@ -94,13 +99,14 @@ export default function Client({
   const router = useRouter();
   const { newTab } = useLocalSearchParams<{ newTab?: ClientViewTabEnum }>();
   const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
+  const { hasPermission } = useActiveOrg();
+  const canViewReferrals =
+    referralsEnabled && hasPermission(ReferralPermissions.View);
 
   useEffect(() => {
-    if (newTab) {
-      if (newTab === ClientViewTabEnum.Referrals && !referralsEnabled) return;
-      setTab(newTab);
-    }
-  }, [newTab, referralsEnabled]);
+    const requestedTab = resolveClientTab(newTab, canViewReferrals);
+    if (requestedTab) setTab(requestedTab);
+  }, [newTab, canViewReferrals]);
 
   if (loading) {
     return (
@@ -123,11 +129,10 @@ export default function Client({
   }
 
   // A stale or deep-linked Referrals tab must not render the referral screen
-  // once the flag is off; derive the active tab so no frame shows it.
+  // once either gate closes (flag or the active org's capability); derive the
+  // active tab so no frame shows it.
   const activeTab =
-    tab === ClientViewTabEnum.Referrals && !referralsEnabled
-      ? ClientViewTabEnum.Profile
-      : tab;
+    resolveClientTab(tab, canViewReferrals) ?? ClientViewTabEnum.Profile;
 
   // Referral work changed the header/navbar layout; keep the pre-referral look
   // while the flag is off so production users see no change. With the flag, the

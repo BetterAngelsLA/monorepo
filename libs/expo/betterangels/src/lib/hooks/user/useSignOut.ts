@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { clearPersistedReferralDraft } from '../../screens/Client/Referrals/referralDraftStorage';
+import { endReferralDraftSession } from '../../draft/referralDraftStorage';
 import useClearLocalSession from './useClearLocalSession';
 
 export const LOGOUT_MUTATION = gql`
@@ -18,7 +18,7 @@ export default function useSignOut() {
     // Wipe the unowned legacy draft and revoke loaded scoped draft callbacks
     // before any await can reject. Scoped disk records remain account-isolated
     // and can be explicitly removed in the profile's retention controls.
-    clearPersistedReferralDraft();
+    endReferralDraftSession();
 
     try {
       await logout();

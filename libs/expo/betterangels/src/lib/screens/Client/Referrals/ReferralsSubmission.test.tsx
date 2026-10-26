@@ -2,6 +2,7 @@ import { createApolloCache } from '@monorepo/apollo';
 import { createBaTypePolicies } from '../../../apollo/cachePolicies';
 import { randomUUID } from 'node:crypto';
 import { ApolloLink } from '@apollo/client';
+import { setActiveOrgId } from '@monorepo/ba-platform';
 import { MockLink } from '@apollo/client/testing';
 import { MockedProvider } from '@apollo/client/testing/react';
 import {
@@ -24,7 +25,7 @@ import { ModalScreenContext } from '../../../providers/modalScreen/ModalScreenCo
 import type { TShowModalScreenProps } from '../../../providers/modalScreen/types';
 import type { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ReferralsTab } from './ReferralsTab';
-import { createReferralDraftStore } from './referralDraft';
+import { createReferralDraftStore } from '../../../draft/referralDraft';
 import {
   buildReferralNotes,
   decodeReferralNotes,
@@ -49,6 +50,17 @@ vi.mock('../../../providers/user/UserProvider', () => ({
 }));
 
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
+// The screen always supplies ReferralPermissionsProvider; these harnesses stub
+// the active-org hook so the injected-store path has deterministic gates.
+const gates = vi.hoisted(() => ({
+  canView: true,
+  canCreate: true,
+  canChange: true,
+}));
+vi.mock('../../../hooks/referral/useReferralGates', () => ({
+  useActiveReferralGates: () => gates,
+}));
+
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
@@ -58,7 +70,14 @@ vi.mock(
   async () => import('../../../providers/modalScreen/useModalScreen'),
 );
 const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
+vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
+  default: () => ({ showSnackbar }),
+}));
+// Other referral components still use the hooks barrel; keep it stubbed
+// so expo-updates is not loaded in this native test.
 vi.mock('../../../hooks', () => ({ useSnackbar: () => ({ showSnackbar }) }));
+
+const ACTIVE_ORG_ID = 'org-1';
 
 const client: ClientProfileQuery = {
   __typename: 'Query',
@@ -82,7 +101,7 @@ const answers = {
   notes: 'Unique referral observation',
   substances: 'Fictional sensitive answer',
   selfcare: 'No',
-  consent: true,
+  consent: 'Yes',
 };
 const notes = buildReferralNotes(answers);
 const created: CreateReferralMutation = {
@@ -115,6 +134,9 @@ async function setup(
   initialReferrals: ClientReferralsQuery['referrals']['results'] = [],
   laterReferrals: ClientReferralsQuery['referrals']['results'] = [],
 ) {
+  // A create names its organization on the payload (ADR 0001 §2.6), so the
+  // screen reads it from the active-org store.
+  setActiveOrgId(ACTIVE_ORG_ID);
   const store = createReferralDraftStore(
     {
       load: () => null,
@@ -296,9 +318,7 @@ async function openPicker() {
     answers.substances,
   );
   await fireEvent.press(screen.getByTestId('selfcare-no-btn'));
-  await fireEvent.press(
-    screen.getByRole('checkbox', { name: /Client gave consent/ }),
-  );
+  await fireEvent.press(screen.getByTestId('consent-yes-btn'));
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   await screen.findByText('Alpha House');
   await fireEvent.press(screen.getByRole('radio'));
@@ -328,11 +348,16 @@ it('submits current answers once, consumes the draft only on success, and displa
   const before = store.getSnapshot();
   const request = await submit(requests);
   expect(request.variables).toEqual({
-    data: { clientProfile: 'client-1', shelter: 's-1', notes },
+    data: {
+      organizationId: ACTIVE_ORG_ID,
+      clientProfile: 'client-1',
+      shelter: 's-1',
+      notes,
+    },
   });
   expect(decodeReferralNotes(request.variables.data.notes)).toEqual({
     humanNotes: answers.notes,
-    intake: { substances: answers.substances, selfcare: 'No', consent: true },
+    intake: { substances: answers.substances, selfcare: 'No', consent: 'Yes' },
   });
   expect(screen.getByTestId('submit-referral-btn')).toBeDisabled();
   await fireEvent.press(screen.getByTestId('submit-referral-btn'));
@@ -365,50 +390,57 @@ it('submits current answers once, consumes the draft only on success, and displa
   });
 });
 
+const GENERIC_SAVE_ERROR =
+  'The referral was not saved. Check your information and permissions, then try again.';
+
 it.each([
-  OperationMessageKind.Permission,
-  OperationMessageKind.Validation,
-  OperationMessageKind.Error,
-])('preserves the draft and allows retry after a %s response', async (kind) => {
-  const { store, requests, refreshed, close } = await setup();
-  await openPicker();
-  const before = store.getSnapshot();
-  const request = await submit(requests);
-  await act(async () =>
-    request.succeed({
-      data: {
-        __typename: 'Mutation',
-        createReferral: {
-          __typename: 'OperationInfo',
-          messages: [
-            {
-              __typename: 'OperationMessage',
-              kind,
-              field: 'shelter',
-              message: 'Unable to submit this referral.',
-            },
-          ],
+  [OperationMessageKind.Permission, 'Unable to submit this referral.'],
+  [OperationMessageKind.Validation, 'Unable to submit this referral.'],
+  [OperationMessageKind.Error, GENERIC_SAVE_ERROR],
+])(
+  'preserves the draft and allows retry after a %s response',
+  async (kind, expectedMessage) => {
+    const { store, requests, refreshed, close } = await setup();
+    await openPicker();
+    const before = store.getSnapshot();
+    const request = await submit(requests);
+    await act(async () =>
+      request.succeed({
+        data: {
+          __typename: 'Mutation',
+          createReferral: {
+            __typename: 'OperationInfo',
+            messages: [
+              {
+                __typename: 'OperationMessage',
+                kind,
+                field: 'shelter',
+                message: 'Unable to submit this referral.',
+              },
+            ],
+          },
         },
-      },
-    }),
-  );
-  expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-    message:
-      'The referral was not saved. Check your information and permissions, then try again.',
-    type: 'error',
-  });
-  expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
-  expect(close).not.toHaveBeenCalled();
-  expect(refreshed).not.toHaveBeenCalled();
-  expect(screen.getByText('✓ Selected: Alpha House')).toBeOnTheScreen();
-  expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
-  const retry = await submit(requests, 2);
-  expect(retry.variables).toEqual(request.variables);
-  await act(async () => retry.succeed({ data: created }));
-  await screen.findByTestId('referral-card-new-referral');
-  expect(store.getSnapshot()).toBeNull();
-  expect(close).toHaveBeenCalledOnce();
-});
+      }),
+    );
+    expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
+      // Permission and validation messages are actionable; the `Error` kind can
+      // carry raw exception text, so it must stay generic.
+      message: expectedMessage,
+      type: 'error',
+    });
+    expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
+    expect(close).not.toHaveBeenCalled();
+    expect(refreshed).not.toHaveBeenCalled();
+    expect(screen.getByText('✓ Selected: Alpha House')).toBeOnTheScreen();
+    expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
+    const retry = await submit(requests, 2);
+    expect(retry.variables).toEqual(request.variables);
+    await act(async () => retry.succeed({ data: created }));
+    await screen.findByTestId('referral-card-new-referral');
+    expect(store.getSnapshot()).toBeNull();
+    expect(close).toHaveBeenCalledOnce();
+  },
+);
 
 it('keeps the draft after a network error and submits current answers when retried', async () => {
   const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -440,7 +472,11 @@ it('keeps the draft after a network error and submits current answers when retri
     const retry = await submit(requests, 2);
     expect(decodeReferralNotes(retry.variables.data.notes)).toEqual({
       humanNotes: 'Updated before retry',
-      intake: { substances: answers.substances, selfcare: 'No', consent: true },
+      intake: {
+        substances: answers.substances,
+        selfcare: 'No',
+        consent: 'Yes',
+      },
     });
     await act(async () => retry.succeed({ data: created }));
     await waitFor(() => expect(store.getSnapshot()).toBeNull());
@@ -463,8 +499,7 @@ it('shows a fallback error for an OperationInfo response without messages', asyn
     }),
   );
   expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-    message:
-      'The referral was not saved. Check your information and permissions, then try again.',
+    message: GENERIC_SAVE_ERROR,
     type: 'error',
   });
   expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
@@ -562,7 +597,12 @@ it('revalidates on resume, preserves intake when the selected shelter disappears
   await fireEvent.press(screen.getByRole('radio'));
   const request = await submit(requests);
   expect(request.variables).toEqual({
-    data: { clientProfile: 'client-1', shelter: 's-2', notes },
+    data: {
+      organizationId: ACTIVE_ORG_ID,
+      clientProfile: 'client-1',
+      shelter: 's-2',
+      notes,
+    },
   });
   expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
 });
@@ -609,16 +649,14 @@ it('copies a saved referral into an independent draft, resets consent/notes/shel
     screen.getByLabelText('Requested arrival date'),
     '2026-09-12',
   );
-  await fireEvent.press(
-    screen.getByRole('checkbox', { name: /Client gave consent/ }),
-  );
+  await fireEvent.press(screen.getByTestId('consent-yes-btn'));
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   await fireEvent.press((await screen.findAllByRole('radio'))[0]);
   const request = await submit(requests);
   expect(request.operationName).toBe('CreateReferral');
   expect(decodeReferralNotes(request.variables.data.notes)).toMatchObject({
     humanNotes: '',
-    intake: { requestedArrivalDate: '2026-09-12', consent: true },
+    intake: { requestedArrivalDate: '2026-09-12', consent: 'Yes' },
   });
   expect(decodeReferralNotes(original.notes)).toMatchObject({
     humanNotes: answers.notes,

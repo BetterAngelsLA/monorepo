@@ -1,9 +1,10 @@
 import {
   INTAKE_FIELDS,
   getIntakeField,
+  normalizeIntakeValue,
   type IntakeFieldDefinition,
   type StoredIntake,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 
 /**
  * Compatibility adapter for intake stored in Referral.notes. Preserve the v1
@@ -34,9 +35,10 @@ export function encodeReferralNotes(
   const fields: Intake = {};
   const pii: Intake = {};
 
-  for (const [key, value] of Object.entries(intake ?? {})) {
-    if (isEmpty(value)) continue;
+  for (const [key, rawValue] of Object.entries(intake ?? {})) {
     const definition = getIntakeField(key, definitions);
+    const value = normalizeIntakeValue(definition, rawValue);
+    if (isEmpty(value)) continue;
     const mapping = definition?.backend;
     if (mapping?.mode === 'unmapped') continue;
     if (mapping?.mode === 'direct') {
@@ -110,7 +112,7 @@ function toIntake(
           candidate.backend.mode === 'notesSidecar' &&
           candidate.backend.payloadKey === payloadKey,
       );
-      return [field?.key ?? payloadKey, value];
+      return [field?.key ?? payloadKey, normalizeIntakeValue(field, value)];
     }),
   );
 }
@@ -204,7 +206,7 @@ export function updateReferralNotes(
     const key = definition.backend.payloadKey;
     delete fields[key];
     delete pii[key];
-    const value = values[definition.key];
+    const value = normalizeIntakeValue(definition, values[definition.key]);
     if (!isEmpty(value)) (definition.sensitive ? pii : fields)[key] = value;
   }
   const humanNotes =
@@ -255,6 +257,13 @@ export function summarizeIntake(
 ): string {
   const mask = opts?.maskPII ?? true;
   return Object.entries(intake ?? {})
+    .map(
+      ([key, value]) =>
+        [
+          key,
+          normalizeIntakeValue(getIntakeField(key, definitions), value),
+        ] as const,
+    )
     .filter(([, value]) => !isEmpty(value))
     .map(([key, value]) => {
       const field = getIntakeField(key, definitions);

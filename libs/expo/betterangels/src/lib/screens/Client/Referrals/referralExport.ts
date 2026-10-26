@@ -1,5 +1,8 @@
 import type { ClientReferralsQuery } from './__generated__/Referrals.generated';
-import { INTAKE_FIELDS, isIntakeControlValue } from './intakeFields';
+import {
+  INTAKE_FIELDS,
+  isIntakeControlValue,
+} from '../../../draft/intakeFields';
 import {
   formatReferralTimestamp,
   localReferralDay,
@@ -20,6 +23,8 @@ export type ReferralDocumentBlock =
   | { kind: 'space' };
 export type ReferralDocumentCopy = ReferralTextCopy & {
   blocks: readonly ReferralDocumentBlock[];
+  /** Whether this copy had a sensitive answer to leave out. */
+  withholdsSensitive: boolean;
 };
 
 type ReferralExportInput = {
@@ -68,6 +73,23 @@ export function buildReferralDocumentCopy({
       ? 'Unrecognized saved answer; review the original referral'
       : 'Not recorded';
   const profileRows = referralProfileRows(profile, clientName);
+  // Whether there is anything sensitive to withhold at all. A sparse record must
+  // not imply the sharer hid answers that were never recorded.
+  const isRecorded = (value: unknown) =>
+    value != null &&
+    !(typeof value === 'string' && !value.trim()) &&
+    !(Array.isArray(value) && !value.length);
+  const hasSensitiveProfile = profileRows.some(
+    (row) => row.sensitive && isRecorded(row.value),
+  );
+  const hasSensitiveIntake = INTAKE_FIELDS.some((field) => {
+    const sensitive = field.sensitive || field.backend.mode === 'direct';
+    if (!sensitive) return false;
+    return isRecorded(
+      field.backend.mode === 'direct' ? humanNotes : intake[field.key],
+    );
+  });
+  const hasSensitive = hasSensitiveProfile || hasSensitiveIntake;
   const referrer =
     [referral.createdBy?.firstName, referral.createdBy?.lastName]
       .filter(Boolean)
@@ -111,7 +133,9 @@ export function buildReferralDocumentCopy({
     note(
       includePrivate
         ? 'Sensitive information: Included when recorded.'
-        : 'Sensitive information: Excluded.',
+        : hasSensitive
+          ? 'Sensitive information: Excluded.'
+          : 'Sensitive information: None recorded for this referral.',
     ),
     note(
       'Client identity and basic profile facts are included in both copies.',
@@ -126,12 +150,19 @@ export function buildReferralDocumentCopy({
     },
   ];
   for (const row of profileRows) {
-    const value =
-      row.sensitive && !includePrivate
-        ? 'Excluded (sensitive)'
-        : (row.value ?? 'Not recorded');
     const label = row.label + (row.sensitive ? ' [Sensitive]' : '');
-    blocks.push(documentField(label, value));
+    // Unanswered is not the same as withheld: only claim exclusion when there
+    // is actually a value to exclude.
+    if (row.value == null || !row.value.trim()) {
+      blocks.push(documentField(label, 'Not recorded'));
+      continue;
+    }
+    blocks.push(
+      documentField(
+        label,
+        row.sensitive && !includePrivate ? 'Excluded (sensitive)' : row.value,
+      ),
+    );
   }
   blocks.push(
     { kind: 'space' },
@@ -148,18 +179,20 @@ export function buildReferralDocumentCopy({
     // describes a direct text mapping rather than a sensitive sidecar bucket.
     const sensitive = field.sensitive || field.backend.mode === 'direct';
     const label = field.label + (sensitive ? ' [Sensitive]' : '');
-    if (sensitive && !includePrivate) {
-      blocks.push(documentField(label, 'Excluded (sensitive)'));
-      continue;
-    }
     const value =
       field.backend.mode === 'direct' ? humanNotes : intake[field.key];
-    if (
-      value == null ||
-      (typeof value === 'string' && !value.trim()) ||
-      (Array.isArray(value) && !value.length)
-    ) {
+    const recorded =
+      value != null &&
+      !(typeof value === 'string' && !value.trim()) &&
+      !(Array.isArray(value) && !value.length);
+    // Unanswered is not the same as withheld: a sensitive field with no answer
+    // must read as unknown, not as something the sharer chose to hide.
+    if (!recorded) {
       blocks.push(documentField(label, 'Not recorded'));
+      continue;
+    }
+    if (sensitive && !includePrivate) {
+      blocks.push(documentField(label, 'Excluded (sensitive)'));
       continue;
     }
     if (!isIntakeControlValue(field, value)) {
@@ -196,7 +229,7 @@ export function buildReferralDocumentCopy({
       'The consent answer is a recorded yes/no, not a signed consent document.',
     ),
   );
-  if (!includePrivate)
+  if (!includePrivate && hasSensitive)
     blocks.push(
       { kind: 'space' },
       note('Sensitive intake and staff notes excluded from this copy.'),
@@ -215,7 +248,12 @@ export function buildReferralDocumentCopy({
       ),
     );
   const text = blocks.map(referralDocumentBlockText).join('\n');
-  return { title: 'Better Angels referral summary', text, blocks };
+  return {
+    title: 'Better Angels referral summary',
+    text,
+    blocks,
+    withholdsSensitive: hasSensitive,
+  };
 }
 
 export function buildReferralTextCopy(

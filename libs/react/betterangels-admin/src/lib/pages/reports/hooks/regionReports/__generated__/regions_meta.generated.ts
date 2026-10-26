@@ -3,6 +3,7 @@
 import type { RegionDimensionsQuery } from './regions.generated';
 import type { InteractionsByRegionQuery } from './regions.generated';
 import type { InteractionMapQuery } from './regions.generated';
+import type { DensityScaleQuery } from './regions.generated';
 import type { InteractionScopeQuery } from './regions.generated';
 
 export const regionDimensionsOperationKey: keyof Omit<RegionDimensionsQuery, '__typename'> = 'regionDimensions';
@@ -42,6 +43,19 @@ export const interactionMapSuccessTypename: Extract<
 export const interactionMapMeta = {
   operationKey: interactionMapOperationKey,
   successTypename: interactionMapSuccessTypename,
+} as const;
+
+export const densityScaleOperationKey: keyof Omit<DensityScaleQuery, '__typename'> = 'densityScale';
+export const densityScaleSuccessTypename: Extract<
+  NonNullable<DensityScaleQuery['densityScale']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DensityScaleQuery['densityScale']>,
+  { __typename: 'DensityScaleType' }
+>['__typename'] = 'DensityScaleType';
+
+export const densityScaleMeta = {
+  operationKey: densityScaleOperationKey,
+  successTypename: densityScaleSuccessTypename,
 } as const;
 
 export const interactionScopeOperationKey: keyof Omit<InteractionScopeQuery, '__typename'> = 'interactionScope';

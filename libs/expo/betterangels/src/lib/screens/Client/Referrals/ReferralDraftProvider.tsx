@@ -4,7 +4,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
-import type { ReferralDraftStore } from './referralDraft';
+import type { ReferralDraftStore } from '../../../draft/referralDraft';
 
 const ReferralDraftContext = createContext<ReferralDraftStore | null>(null);
 

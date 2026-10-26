@@ -30,7 +30,7 @@ import { ClientReferralsDocument } from './__generated__/Referrals.generated';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,
-} from './referralDraft';
+} from '../../../draft/referralDraft';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
 vi.mock('expo-crypto', async () => ({
   randomUUID: (await import('node:crypto')).randomUUID,
@@ -44,6 +44,17 @@ vi.mock('../../../providers/user/UserProvider', () => ({
 // See sharedBarrels.tsx: the shared barrels pull in native-backed components
 // whose native halves don't exist under test. `static` stays real.
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
+// The screen always supplies ReferralPermissionsProvider; these harnesses stub
+// the active-org hook so the injected-store path has deterministic gates.
+const gates = vi.hoisted(() => ({
+  canView: true,
+  canCreate: true,
+  canChange: true,
+}));
+vi.mock('../../../hooks/referral/useReferralGates', () => ({
+  useActiveReferralGates: () => gates,
+}));
+
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
 vi.mock('react-native-safe-area-context', () => ({
@@ -51,6 +62,9 @@ vi.mock('react-native-safe-area-context', () => ({
 }));
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
+  default: () => ({ showSnackbar: vi.fn() }),
+}));
 vi.mock('../../../hooks', () => ({
   useSnackbar: () => ({ showSnackbar: vi.fn() }),
 }));

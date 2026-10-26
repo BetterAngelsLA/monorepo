@@ -10,7 +10,7 @@ import {
 } from './referralExport';
 import { encodeReferralNotes } from './referralIntakeSidecar';
 import { AdaAccommodationEnum } from '../../../apollo';
-import { INTAKE_FIELDS } from './intakeFields';
+import { INTAKE_FIELDS } from '../../../draft/intakeFields';
 import { Colors } from '@monorepo/expo/shared/static';
 
 it('preserves the past-date label and red arrival value in PNG without recoloring other fields', () => {

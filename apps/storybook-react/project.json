@@ -14,7 +14,15 @@
     },
     "build": {
       "executor": "@nx/storybook:build",
-      "inputs": ["production", "^production", "{projectRoot}/.storybook/**/*"],
+      "inputs": [
+        "production",
+        "^production",
+        "{projectRoot}/.storybook/**/*",
+        "{workspaceRoot}/tools/shared/**/*",
+        { "env": "CI" },
+        { "env": "BRANCH_NAME" },
+        { "env": "VITE_APP_BASE_PATH" }
+      ],
       "outputs": ["{workspaceRoot}/dist/apps/storybook-react"],
       "options": {
         "configDir": "apps/storybook-react/.storybook",

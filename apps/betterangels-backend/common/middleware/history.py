@@ -19,7 +19,7 @@ class HistoryMiddleware(pghistory.middleware.HistoryMiddleware):
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
         # ``pghistory`` ships ``py.typed`` but leaves this ``__init__``
         # unannotated; re-declaring it here keeps ``disallow_untyped_calls``
-        # from firing at every construction site (mirrors OrganizationMiddleware).
+        # from firing at every construction site (mirrors TimezoneMiddleware).
         super().__init__(get_response)  # type: ignore[no-untyped-call]
 
     def get_context(self, request: HttpRequest) -> dict[str, Any]:

@@ -3,11 +3,9 @@ from unittest.mock import PropertyMock, patch
 
 from django.db.models.fields.files import FieldFile
 from django.test import TestCase, override_settings
-from waffle.testutils import override_switch
 
 from common.enums import ImagePresetEnum
 from common.images import build_img_url
-from common.imgproxy import IMGPROXY_SWITCH
 
 TEST_KEY = "736563726574"
 TEST_SALT = "68656C6C6F"
@@ -35,7 +33,6 @@ def _make_field_file(
 @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT)
 class BuildImgUrlTest(TestCase):
     @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
     def test_returns_imgproxy_url_with_preset(self) -> None:
         file = _make_field_file()
         url = build_img_url(file, preset=ImagePresetEnum.MD)
@@ -43,7 +40,6 @@ class BuildImgUrlTest(TestCase):
         self.assertIn("rs:fill:400:400", url)
 
     @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
     def test_returns_imgproxy_url_with_processing_options(self) -> None:
         file = _make_field_file()
         url = build_img_url(file, processing_options="rs:fit:800:600/q:80")
@@ -51,7 +47,6 @@ class BuildImgUrlTest(TestCase):
         self.assertIn("rs:fit:800:600", url)
 
     @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
     def test_processing_options_take_precedence_over_preset(self) -> None:
         file = _make_field_file()
         url = build_img_url(file, preset=ImagePresetEnum.SM, processing_options="rs:fit:999:999")
@@ -59,13 +54,12 @@ class BuildImgUrlTest(TestCase):
         self.assertNotIn("rs:fill:100:100", url)
 
     @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
     def test_no_preset_or_options_uses_original(self) -> None:
         file = _make_field_file()
         url = build_img_url(file)
         self.assertIn("rs:force:0:0", url)
 
-    @override_switch(IMGPROXY_SWITCH, active=False)
+    @override_settings(IMGPROXY_KEY="", IMGPROXY_SALT="")
     def test_falls_back_when_imgproxy_disabled(self) -> None:
         file = _make_field_file()
         with patch.object(FieldFile, "url", new_callable=PropertyMock, return_value="https://cdn/fallback.jpg"):
@@ -73,7 +67,6 @@ class BuildImgUrlTest(TestCase):
         self.assertEqual(url, "https://cdn/fallback.jpg")
 
     @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
     def test_falls_back_when_no_source_url(self) -> None:
         """imgproxy enabled but build_imgproxy_url can't build a URL (no storage)."""
         file = FieldFile.__new__(FieldFile)
@@ -83,7 +76,6 @@ class BuildImgUrlTest(TestCase):
             url = build_img_url(file, preset=ImagePresetEnum.MD)
         self.assertEqual(url, "https://cdn/fallback.jpg")
 
-    @override_switch(IMGPROXY_SWITCH, active=True)
     def test_falls_back_when_imgproxy_raises(self) -> None:
         """If build_imgproxy_url raises, fall back to file.url."""
         file = _make_field_file()

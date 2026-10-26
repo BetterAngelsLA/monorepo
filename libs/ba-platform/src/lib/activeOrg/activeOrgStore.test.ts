@@ -195,8 +195,8 @@ describe('activeOrgStore', () => {
 
       clearActiveOrgId();
 
-      // Deriving from the list would put an organization straight back into the
-      // header of a session that is being torn down, and the persisted choice has
+      // Deriving from the list would put an organization straight back into a
+      // request from the session being torn down, and the persisted choice has
       // to be gone as well.
       expect(getActiveOrgId()).toBeNull();
       expect(storage.get()).toBeNull();

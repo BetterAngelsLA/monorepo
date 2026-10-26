@@ -23,10 +23,6 @@ const DISTANCE_ITEMS: { value: TOriginMode; displayValue: string }[] = [
   { value: 'device', displayValue: 'Near me' },
 ];
 
-// Sole option today. Present as its own control so the ordering rule is visible
-// and additional sorts have an obvious home.
-const SORT_ITEMS = [{ value: 'match', displayValue: 'Most matches' }];
-
 type TProps = {
   // Returns to the intake step. Not a cancel: discarding is offered on the
   // draft card in the referral list, so this slot is better spent letting the
@@ -250,13 +246,6 @@ export function ReferralForm({
             )}
             <View style={styles.sortRow}>
               <SingleSelect
-                label="Sort"
-                maxRadioItems={0}
-                selectedValue="match"
-                items={SORT_ITEMS}
-                onChange={() => undefined}
-              />
-              <SingleSelect
                 label="Distance"
                 placeholder="None"
                 modalTitle="Distance from"
@@ -441,9 +430,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacings.md,
     paddingTop: Spacings.md,
   },
-  // Stacked rather than side by side: the shared Picker clips its value instead
-  // of ellipsizing it, and at half width neither "Most matches" nor "Near me"
-  // fits — widening one only clipped the other.
+  // The shared Picker clips its value instead of ellipsizing it, so the
+  // distance control gets the full width rather than half of it.
   sortRow: {
     paddingHorizontal: Spacings.sm,
     paddingBottom: Spacings.sm,

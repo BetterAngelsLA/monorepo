@@ -7,9 +7,10 @@ import {
   isIntakeControlValue,
   intakeRequirementLabel,
   missingRequiredIntakeFields,
+  readIntakeAnswers,
   type IntakeFieldDefinition,
   type IntakeValues,
-} from './intakeFields';
+} from '../../../draft/intakeFields';
 import {
   buildReferralNotes,
   decodeReferralNotes,
@@ -41,7 +42,7 @@ describe('field value contracts', () => {
       PetChoices[] | undefined
     >();
     expectTypeOf<IntakeValues['consent']>().toEqualTypeOf<
-      boolean | undefined
+      'Yes' | 'No' | undefined
     >();
     expectTypeOf<IntakeValues['selfcare']>().toEqualTypeOf<
       'Yes' | 'No' | undefined
@@ -135,16 +136,37 @@ describe('catalog vocabulary and mapping integrity', () => {
     expect(new Set(payloadKeys).size).toBe(payloadKeys.length);
   });
 
+  it('coerces a legacy checked consent box but never invents a refusal', () => {
+    // `true` was an explicit tick. `false` was an unticked box, which the old
+    // control could not distinguish from "never asked", so it stays unanswered
+    // rather than being recorded as a refusal.
+    expect(buildReferralNotes({ consent: true })).toContain('"consent":"Yes"');
+    expect(buildReferralNotes({ consent: false }) ?? '').not.toContain(
+      'consent',
+    );
+  });
+
+  it('hydrates a legacy unticked consent box as unanswered, never as a refusal', () => {
+    // The old control stored `false` for "unticked", which it could not tell
+    // apart from "never asked"; a draft saved before the change must not
+    // surface as a recorded "No".
+    expect(readIntakeAnswers({ consent: false })).not.toHaveProperty(
+      'consent',
+    );
+    expect(readIntakeAnswers({ consent: true })).toEqual({ consent: 'Yes' });
+    expect(readIntakeAnswers({ consent: 'No' })).toEqual({ consent: 'No' });
+  });
+
   it('preserves the exact existing v1 payload, including ordinary and sensitive buckets', () => {
     const values: IntakeValues = {
       notes: 'Fictional observation',
       pets: [PetChoices.Cats],
       substances: '30 days',
-      consent: true,
+      consent: 'Yes',
     };
     expect(buildReferralNotes(values)).toBe(
       'Fictional observation\n\n<<<referral-intake:v1>>>\n' +
-        '{"v":1,"fields":{"pets":["CATS"],"consent":true},"PII":{"substances":"30 days"}}' +
+        '{"v":1,"fields":{"pets":["CATS"],"consent":"Yes"},"PII":{"substances":"30 days"}}' +
         '\n<<<end-referral-intake>>>',
     );
   });

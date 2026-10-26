@@ -1,4 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { memo, useMemo } from 'react';
 import {
   Avatar,
   TextBold,
@@ -14,26 +15,30 @@ import { shelterAttributeLabels } from './shelterAttributes';
 import { formatReferralDate } from './referralPresentation';
 import type { ProfileCardData } from './referralProfile';
 import { RequestedArrivalDate } from './RequestedArrivalDate';
+import { useReferralPermissions } from './ReferralPermissions';
 
 // A card reads the intake answers stored on the referral (in the shelter's own
 // vocabulary — see clientNeeds.ts), so it reflects the needs as they were
 // recorded at the time rather than whatever is on screen now.
 
+type Referral = ClientReferralsQuery['referrals']['results'][number];
+
 export type ReferralCardProps = {
-  referral: ClientReferralsQuery['referrals']['results'][number];
+  referral: Referral;
   clientName: string;
   profile?: ProfileCardData | null;
-  onEdit: () => void;
-  onReferAgain: () => void;
+  onEdit: (referral: Referral) => void;
+  onReferAgain: (referral: Referral) => void;
 };
 
-export function ReferralCard({
+export const ReferralCard = memo(function ReferralCard({
   referral,
   clientName,
   profile,
   onEdit,
   onReferAgain,
 }: ReferralCardProps) {
+  const { canChange, canCreate } = useReferralPermissions();
   const referrerName = referral.createdBy
     ? `${referral.createdBy.firstName ?? ''} ${
         referral.createdBy.lastName ?? ''
@@ -50,9 +55,31 @@ export function ReferralCard({
         : Colors.WARNING;
 
   // TEMPORARY: split the human notes from the intake sidecar for display.
-  const { humanNotes, intake } = decodeReferralNotes(referral.notes);
-  const { requestedArrivalDate, ...otherIntake } = intake;
-  const intakeSummary = summarizeIntake(otherIntake); // PII masked
+  // Decoding parses JSON, so keep it tied to the saved notes rather than to
+  // every render (the list re-renders on refresh and modal changes).
+  const decoded = useMemo(
+    () => decodeReferralNotes(referral.notes),
+    [referral.notes],
+  );
+  const { humanNotes } = decoded;
+  const requestedArrivalDate = decoded.intake.requestedArrivalDate;
+  const intakeSummary = useMemo(() => {
+    const { requestedArrivalDate: _arrival, ...otherIntake } = decoded.intake;
+    return summarizeIntake(otherIntake); // PII masked
+  }, [decoded]);
+  const attributes = useMemo(
+    () => (referral.shelter ? shelterAttributeLabels(referral.shelter) : []),
+    [referral.shelter],
+  );
+  const desiredAttributes = useMemo(
+    // The summary masks sensitive answers; the tag row must not print them.
+    // The shelter picker still ranks on the full set.
+    () =>
+      needLabelsFromIntake(decoded.intake, undefined, {
+        includeSensitive: false,
+      }),
+    [decoded],
+  );
 
   return (
     <View style={styles.card} testID={`referral-card-${referral.id}`}>
@@ -74,8 +101,8 @@ export function ReferralCard({
           id={referral.shelter.id}
           name={referral.shelter.name}
           place={referral.shelter.location?.place}
-          attributes={shelterAttributeLabels(referral.shelter)}
-          desiredAttributes={needLabelsFromIntake(intake)}
+          attributes={attributes}
+          desiredAttributes={desiredAttributes}
         />
       ) : (
         <TextBold size="sm">Unknown Shelter</TextBold>
@@ -102,22 +129,30 @@ export function ReferralCard({
           Notes: {humanNotes}
         </TextRegular>
       ) : null}
-      <View style={styles.cardTopRow}>
-        <Pressable
-          testID={`edit-referral-${referral.id}`}
-          accessibilityRole="button"
-          onPress={onEdit}
-        >
-          <TextBold color={Colors.PRIMARY}>Edit referral</TextBold>
-        </Pressable>
-        <Pressable
-          testID={`reuse-referral-${referral.id}`}
-          accessibilityRole="button"
-          onPress={onReferAgain}
-        >
-          <TextBold color={Colors.PRIMARY}>Refer to another shelter</TextBold>
-        </Pressable>
-      </View>
+      {(canChange || canCreate) && (
+        <View style={styles.cardTopRow}>
+          {canChange && (
+            <Pressable
+              testID={`edit-referral-${referral.id}`}
+              accessibilityRole="button"
+              onPress={() => onEdit(referral)}
+            >
+              <TextBold color={Colors.PRIMARY}>Edit referral</TextBold>
+            </Pressable>
+          )}
+          {canCreate && (
+            <Pressable
+              testID={`reuse-referral-${referral.id}`}
+              accessibilityRole="button"
+              onPress={() => onReferAgain(referral)}
+            >
+              <TextBold color={Colors.PRIMARY}>
+                Refer to another shelter
+              </TextBold>
+            </Pressable>
+          )}
+        </View>
+      )}
       {intakeSummary ? (
         <TextRegular size="xs" color={Colors.NEUTRAL}>
           Intake (temporary): {intakeSummary}
@@ -130,7 +165,7 @@ export function ReferralCard({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

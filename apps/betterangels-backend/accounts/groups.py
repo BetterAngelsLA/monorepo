@@ -42,8 +42,9 @@ ORG_SUPERUSER = TemplateConfig(
 # mirrored Grant can never drift from, or amplify beyond, the legacy bundle.
 # ``RoleDef.from_template`` copies the permission list, so the two cannot
 # diverge by hand.  (This is deliberate for ORG_ADMIN/ORG_SUPERUSER only:
-# ``CASEWORKER_ROLE`` carries a strict subset of its template — RFC 0003 step
-# 1 — and is defined by hand in notes/groups.py.)
+# ``CASEWORKER_ROLE`` is defined by hand in notes/groups.py and is NOT a
+# subset of its template — it carries the grant-only referral capability the
+# inert template does not — RFC 0003 step 1.)
 ORG_ADMIN_ROLE = RoleDef.from_template(ORG_ADMIN)
 ORG_SUPERUSER_ROLE = RoleDef.from_template(ORG_SUPERUSER)
 

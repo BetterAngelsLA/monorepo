@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { FeatureFlags } from '../../static';
+import { useActiveReferralGates } from '../../hooks/referral/useReferralGates';
 
 export enum ClientViewTabEnum {
   Profile = 'Profile',
@@ -35,15 +36,39 @@ interface IClientTabsProps {
   setTab: (tab: ClientViewTabEnum) => void;
 }
 
+/**
+ * The requested tab, or `undefined` when it is Referrals and the gate is closed.
+ *
+ * The gate is `ffReferrals` AND the active org's `referrals.view_referral`.
+ * Callers choose the fallback: the deep-link effect ignores `undefined`; the
+ * active-tab derivation clamps it to Profile.
+ */
+export function resolveClientTab(
+  tab: ClientViewTabEnum | undefined,
+  canViewReferrals: boolean,
+): ClientViewTabEnum | undefined {
+  if (tab !== ClientViewTabEnum.Referrals) return tab;
+  return canViewReferrals ? tab : undefined;
+}
+
 export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
+  // Two gates: the flag decides whether the pilot is on for this account, the
+  // active org's grant-backed `view_referral` decides who may use it. Without
+  // the second, a flagged user with no Caseworker grant sees the tab and gets
+  // an empty list / a refusal from the API.
   const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
+  // One gate source for the tab strip and the screen: the hook reads the active
+  // org's effective permission, so the two cannot drift apart.
+  const { canView: canViewReferrals } = useActiveReferralGates();
 
   const visibleTabs = useMemo(
     () =>
       orderedTabs.filter(
-        (t) => t !== ClientViewTabEnum.Referrals || referralsEnabled,
+        (t) =>
+          t !== ClientViewTabEnum.Referrals ||
+          (referralsEnabled && canViewReferrals),
       ),
-    [referralsEnabled],
+    [canViewReferrals, referralsEnabled],
   );
 
   return (

@@ -1,11 +1,9 @@
-import { parseDateString, toDateString } from '@monorepo/shared/scalars';
-
-/** Fixed English collation keeps labels stable across device locale settings. */
-export function compareReferralLabels(a: string, b: string): number {
-  const order = a.localeCompare(b, 'en-US');
-  if (order || a === b) return order;
-  return a < b ? -1 : 1;
-}
+import {
+  formatScalarDate,
+  parseDateString,
+  toDateString,
+  type DateTimeString,
+} from '@monorepo/shared/scalars';
 
 function dateOf(value?: string | number): Date | null {
   if (value === undefined || value === '') return null;
@@ -15,13 +13,13 @@ function dateOf(value?: string | number): Date | null {
 
 /** Screen dates use the device's local day, consistently in MM/DD/YYYY form. */
 export function formatReferralDate(value?: string | number): string {
-  return (
-    dateOf(value)?.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric',
-    }) ?? ''
-  );
+  if (typeof value === 'number') {
+    const date = dateOf(value);
+    // Normalize to the same Date scalar the string path uses, so both paths
+    // share one parser/formatter and one invalid-value behavior.
+    return date ? formatScalarDate(toDateString(date), 'MM/dd/yyyy') : '';
+  }
+  return formatScalarDate(value as DateTimeString | undefined, 'MM/dd/yyyy');
 }
 
 export function formatReferralEdited(
@@ -53,7 +51,7 @@ export function referralArrival(value: unknown, today = localReferralDay()) {
   if (!date || toDateString(date) !== value) return null;
   return {
     value,
-    label: formatReferralDate(date.getTime()),
+    label: formatReferralDate(toDateString(date)),
     isPast: !!today && value < today,
   };
 }

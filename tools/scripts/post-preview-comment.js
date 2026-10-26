@@ -13,6 +13,10 @@ async function fetchAllComments(owner, repo, issueNumber, token) {
         Accept: 'application/vnd.github+json',
       },
     });
+    // Read-only tokens (e.g. fork PR runs) cannot comment — skip quietly.
+    if (res.status === 403) {
+      return null;
+    }
     if (!res.ok) {
       const err = await res.text();
       throw new Error(`Failed to fetch comments: ${err}`);
@@ -87,6 +91,12 @@ async function main() {
 
   // Fetch existing comments (handling pagination)
   const comments = await fetchAllComments(owner, repo, prNumber, GITHUB_TOKEN);
+  if (comments === null) {
+    console.log(
+      'Insufficient permissions to comment (e.g. fork PR with read-only token); skipping preview comment.',
+    );
+    return;
+  }
   const existing = comments.find((c) => c.body.startsWith(commentPrefix));
 
   if (existing) {
@@ -100,6 +110,12 @@ async function main() {
       },
       body: JSON.stringify({ body: fullComment }),
     });
+    if (updateRes.status === 403) {
+      console.log(
+        'Insufficient permissions to comment (e.g. fork PR with read-only token); skipping preview comment.',
+      );
+      return;
+    }
     if (!updateRes.ok) {
       const errText = await updateRes.text();
       throw new Error(`Failed to update comment: ${errText}`);
@@ -119,6 +135,12 @@ async function main() {
         body: JSON.stringify({ body: fullComment }),
       },
     );
+    if (createRes.status === 403) {
+      console.log(
+        'Insufficient permissions to comment (e.g. fork PR with read-only token); skipping preview comment.',
+      );
+      return;
+    }
     if (!createRes.ok) {
       const errText = await createRes.text();
       throw new Error(`Failed to post comment: ${errText}`);

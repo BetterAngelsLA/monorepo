@@ -295,9 +295,11 @@ export const ShelterAvailabilityPermissions = {
 export const ShelterPermissions = {
   Add: 'shelters.add_shelter',
   Change: 'shelters.change_shelter',
+  ChangeBaReview: 'shelters.change_shelter_ba_review',
   ChangeIsReviewed: 'shelters.change_shelter_is_reviewed',
   Delete: 'shelters.delete_shelter',
   View: 'shelters.view_shelter',
+  ViewBaReview: 'shelters.view_shelter_ba_review',
   ViewPrivate: 'shelters.view_private_shelter',
 } as const;
 
