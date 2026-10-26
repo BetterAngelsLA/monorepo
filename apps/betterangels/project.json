@@ -219,23 +219,6 @@
           "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile production"
         }
       }
-    },
-    "eas-build": {
-      "executor": "@nx/expo:build",
-      "cache": false,
-      "dependsOn": ["write-eas-env", "sync-deps", "copy-lockfile"],
-      "options": {},
-      "configurations": {
-        "preview": {
-          "profile": "preview"
-        },
-        "production": {
-          "profile": "production"
-        },
-        "simulator": {
-          "profile": "development-simulator"
-        }
-      }
     }
   }
 }

@@ -44,6 +44,21 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
+    },
+    "eas-build": {
+      "cache": false,
+      "dependsOn": ["write-eas-env", "sync-deps", "copy-lockfile"],
+      "configurations": {
+        "preview": {
+          "profile": "preview"
+        },
+        "production": {
+          "profile": "production"
+        },
+        "simulator": {
+          "profile": "development-simulator"
+        }
+      }
     }
   },
   "namedInputs": {
@@ -157,7 +172,7 @@
     {
       "plugin": "@nx/expo/plugin",
       "options": {
-        "buildTargetName": "eas-build-inferred",
+        "buildTargetName": "eas-build",
         "exportTargetName": "export",
         "installTargetName": "install",
         "prebuildTargetName": "prebuild",
