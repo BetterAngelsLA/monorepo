@@ -52,11 +52,15 @@ def resolve_upload(
     """Validate tokens + S3 → create Attachment rows for a client profile (Phase 3).
 
     Assigns object-level CHANGE + DELETE permissions to the caseworker
-    permission group so the uploader can manage the resulting attachments.
+    permission group so the uploader's org can manage the resulting attachments,
+    and records that same org on ``Attachment.upload_org`` — the anchor the grant
+    cutover will check instead of guardian rows (RFC 0002 / ADR 0002, decision 2).
+
+    Resolution is unchanged from ``main``: ``resolve_permission_group`` alone, so
+    the anchor is by construction the org that receives the object permissions.
+    The caller does not name it, which is what makes this a pure data capture —
+    there is no input that changes who can do what.
     """
-    # TODO(org-scoping): Migrate from resolve_permission_group (first-match org)
-    # to the clients grant cutover (ADR 0001 §5.1 / RFC 0002): object-grant
-    # ownership on ClientProfile rows rather than an org-level header.
     permission_group = resolve_permission_group(user, template=CASEWORKER)
 
     with transaction.atomic():
@@ -65,6 +69,7 @@ def resolve_upload(
             content_object=client_profile,
             uploads=documents,
             config=CLIENT_DOCUMENT_CONFIG,
+            upload_org_id=permission_group.organization_id,
         )
 
         for att in attached:
