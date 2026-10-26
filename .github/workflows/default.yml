@@ -507,7 +507,7 @@ jobs:
           node tools/scripts/has-build.mjs /tmp/bl.json || yarn nx run betterangels:eas-build:preview --platform=all --wait=false --freezeCredentials=true --json=true
 
           yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=development-simulator --json=true > /tmp/bl-sim.json
-          node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:simulator --platform=ios --wait=false --freezeCredentials=true --json=true
+          node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
 
           # Update and web deploy are independent; one graph lets them overlap.
           yarn nx affected -t update export-web deploy post-pr-preview --exclude=shelter-web --configuration preview --output-style=stream --parallel=6
