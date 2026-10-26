@@ -62,7 +62,12 @@ const ActionModalStub = ({
         <Pressable
           testID="action-modal-secondary"
           accessibilityRole="button"
-          onPress={() => onSecondaryPress?.()}
+          onPress={() => {
+            // Matches ActionModalFooter: secondary dismisses the dialog, and a
+            // caller that forgets onSecondaryPress still gets a Cancel.
+            onSecondaryPress?.();
+            setVisible?.(false);
+          }}
         >
           <Text>{secondaryButtonTitle}</Text>
         </Pressable>
@@ -71,18 +76,14 @@ const ActionModalStub = ({
         <Pressable
           testID="action-modal-tertiary"
           accessibilityRole="button"
-          onPress={() => onTertiaryPress?.()}
+          onPress={() => {
+            onTertiaryPress?.();
+            setVisible?.(false);
+          }}
         >
           <Text>{tertiaryButtonTitle}</Text>
         </Pressable>
       )}
-      <Pressable
-        testID="action-modal-close"
-        accessibilityRole="button"
-        onPress={() => setVisible?.(false)}
-      >
-        <Text>Close</Text>
-      </Pressable>
     </View>
   );
 };

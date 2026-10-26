@@ -20,7 +20,12 @@ type ProfileRow = {
   label: string;
   value: string | null;
   pii?: boolean;
-  sensitive?: boolean;
+  /**
+   * Required on purpose: the export shares every row it is not told to
+   * withhold, so a new profile fact must state its classification instead of
+   * defaulting into the standard copy.
+   */
+  sensitive: boolean;
 };
 
 /** The same current-profile facts in the intake form and the reviewed export. */
@@ -39,12 +44,18 @@ export function referralProfileRows(
     .map((value) => enumDisplayAdaAccommodationEnum[value])
     .join(', ');
   return [
-    { label: 'Name', value: name || null, pii: true },
-    { label: 'Gender', value: p.displayGender || null, pii: true },
+    { label: 'Name', value: name || null, pii: true, sensitive: false },
+    {
+      label: 'Gender',
+      value: p.displayGender || null,
+      pii: true,
+      sensitive: false,
+    },
     {
       label: 'Age',
       value: p.age != null ? String(p.age) : null,
       pii: true,
+      sensitive: false,
     },
     {
       label: 'Accommodations',
@@ -56,10 +67,12 @@ export function referralProfileRows(
       value: p.householdMembers?.length
         ? `${p.householdMembers.length} on file`
         : 'None on file',
+      sensitive: false,
     },
     {
       label: 'Veteran',
       value: p.veteranStatus ? enumDisplayVeteranStatus[p.veteranStatus] : null,
+      sensitive: false,
     },
   ];
 }

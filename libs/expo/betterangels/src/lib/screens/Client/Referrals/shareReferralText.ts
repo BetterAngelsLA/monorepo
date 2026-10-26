@@ -5,6 +5,23 @@ import * as Sharing from 'expo-sharing';
 import { randomUUID } from 'expo-crypto';
 import type { ReferralTextCopy } from './referralExport';
 
+/**
+ * Remove the referral summaries this feature wrote to the cache.
+ *
+ * The share sheet keeps the file for a short while after the chooser closes,
+ * so it deliberately outlives the modal; a sign-out is the point at which it
+ * must not outlive the session.
+ */
+export function clearReferralExportCache(): void {
+  if (Platform.OS === 'web') return;
+  try {
+    const directory = new Directory(Paths.cache, 'referral-exports');
+    if (directory.exists) directory.delete();
+  } catch (error) {
+    if (__DEV__) console.warn('Could not clear referral exports', error);
+  }
+}
+
 function referralFileName(extension: 'txt' | 'png') {
   return `referral-${randomUUID()}.${extension}`;
 }
