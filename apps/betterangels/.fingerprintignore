@@ -1,0 +1,4 @@
+# Nx/build metadata and local env, not native runtime inputs.
+project.json
+.eas-deploy-results.json
+.env

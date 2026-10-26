@@ -307,15 +307,11 @@ jobs:
           elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             TARGETS="lint typecheck test build"
           else
-            TARGETS="lint typecheck test build deploy eas-deploy"
+            TARGETS="lint typecheck test build deploy eas-build update"
           fi
-          if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]]; then
-            export EAS_FINGERPRINT=1
-          fi
-          # The EAS update and web deploy share one graph. `eas-fingerprint`
-          # runs before sync-deps/copy-lockfile so the runtime matches the
-          # existing builds, and eas-deploy calls `eas build` directly instead
-          # of a nested `nx run`.
+          export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
+          # The EAS build/update use the Expo fingerprint runtime policy; the
+          # web export/deploy use the built-in Expo executors.
           yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
           EOF
         env:
@@ -455,7 +451,6 @@ jobs:
       EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
-      EAS_FINGERPRINT: '1'
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v7
@@ -516,17 +511,16 @@ jobs:
             "$MONOREPO_IMAGE:ci-base" \
             bash -c 'yarn install --immutable'
 
-      - name: 🚀 Preview deploys (web + EAS + post + e2e)
+      - name: 🚀 Preview deploys
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/workspace" \
             -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
             -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
             -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
-            -v "$GITHUB_EVENT_PATH:$GITHUB_EVENT_PATH:ro" \
             -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME -e PR_NUMBER \
-            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA -e GITHUB_EVENT_PATH \
-            -e EXPO_TOKEN -e EAS_FINGERPRINT \
+            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA \
+            -e EXPO_TOKEN \
             -e VITE_SHELTER_GOOGLE_MAPS_API_KEY \
             -e VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY \
             -e EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY \
@@ -543,9 +537,23 @@ jobs:
             "$MONOREPO_IMAGE:ci-base" \
             bash -c '
               set -euo pipefail
-              # eas-fingerprint runs before sync-deps/copy-lockfile, so the EAS
-              # runtime stays the pre-sync one; post/e2e depend on deploy.
-              yarn nx affected -t deploy eas-deploy post-pr-preview e2e --configuration preview --output-style=stream --parallel=6
+              export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
+              ANDROID_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform android)"
+              IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios)"
+
+              yarn nx run betterangels:build-list --platform=android --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl-android.json
+              node tools/scripts/has-build.mjs /tmp/bl-android.json || yarn nx run betterangels:eas-build:preview --platform=android --wait=false --freezeCredentials=true --json=true
+
+              yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=preview --json=true > /tmp/bl-ios.json
+              node tools/scripts/has-build.mjs /tmp/bl-ios.json || yarn nx run betterangels:eas-build:preview --platform=ios --wait=false --freezeCredentials=true --json=true
+
+              yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=development-simulator --json=true > /tmp/bl-sim.json
+              node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:simulator --platform=ios --wait=false --freezeCredentials=true --json=true
+
+              yarn nx run betterangels:update:preview --branch="$BRANCH_NAME" --auto=true --json=true
+
+              yarn nx affected -t export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
+              yarn nx run shelter-e2e:e2e:preview
             '
 
       - name: 📎 Upload shelter-e2e report

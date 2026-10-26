@@ -177,7 +177,7 @@ export default {
       webGoogleMapsApiKey: process.env.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY,
     },
     owner: 'better-angels',
-    runtimeVersion: process.env.RUNTIME_VERSION,
+    runtimeVersion: { policy: 'fingerprint' },
     experiments: {
       // Subpath the web export is hosted under, e.g. `/branches/<branch>`. Set by
       // the export-web target; empty for native and root deployments.
