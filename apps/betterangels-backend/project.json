@@ -132,28 +132,7 @@
     },
     "prepare-test-db": {
       "executor": "@nxlv/python:run-commands",
-      "cache": true,
-      "inputs": [
-        "{projectRoot}/**/migrations/*.py",
-        "{projectRoot}/**/models.py",
-        "{projectRoot}/**/signals.py",
-        "{projectRoot}/**/apps.py",
-        "{projectRoot}/**/seed.py",
-        "{projectRoot}/accounts/services.py",
-        "{projectRoot}/accounts/role_manager.py",
-        "{projectRoot}/accounts/groups.py",
-        "{projectRoot}/common/org_types.py",
-        "{projectRoot}/common/permissions/**/*.py",
-        "{projectRoot}/betterangels_backend/settings*.py",
-        "{projectRoot}/pyproject.toml",
-        "{projectRoot}/scripts/prepare_test_db_cache.sh",
-        "{projectRoot}/scripts/setup_test_db.py",
-        "{projectRoot}/scripts/validate_test_db.py",
-        "{projectRoot}/scripts/test_db_common.sh",
-        "{projectRoot}/scripts/test_db_cache_manifest.py",
-        "{workspaceRoot}/uv.lock",
-        "{workspaceRoot}/docker-compose.yml"
-      ],
+      "cache": false,
       "outputs": [
         "{workspaceRoot}/.cache/test-db.dump",
         "{workspaceRoot}/.cache/test-db.manifest.json"

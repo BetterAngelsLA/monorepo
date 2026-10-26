@@ -6,5 +6,5 @@
 /tools/deploy/ @BetterAngelsLA/developers
 /tools/scripts/eas-* @BetterAngelsLA/developers
 /tools/scripts/post-preview-comment.js @BetterAngelsLA/developers
-/Dockerfile @BetterAngelsLA/developers
+/tools/monorepo-image/ @BetterAngelsLA/developers
 /docker-compose*.yml @BetterAngelsLA/developers

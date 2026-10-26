@@ -24,5 +24,4 @@ coverage/
 .coverage
 .github/
 **/*.md
-Dockerfile
 docker-compose*.yml
