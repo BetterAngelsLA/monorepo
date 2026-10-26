@@ -30,7 +30,7 @@ services:
       - SHORT_SHA
       - IMAGE_TAG_PREFIX
       - DOCKER_TAG
-      - CACHE_IMAGE
+      - BRANCH_CACHE
       - BUILDX_BUILDER
       - GITHUB_ACTIONS
       - CI
