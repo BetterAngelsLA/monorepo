@@ -99,13 +99,17 @@ it('lists every collected form field even when the sparse saved record has no an
   expect(text).toContain('Reference-only Smartsheet fields are not collected');
 });
 
-it('does not invent a negative consent answer when the legacy format stored no answer', () => {
+it('does not invent a negative consent answer from legacy plain-text notes', () => {
+  // An unencoded legacy note takes the parsing path, not the "no notes" one,
+  // so a regression there cannot slip through.
   const { text } = buildReferralTextCopy({
     ...source,
-    referral: { ...referral, notes: null },
+    referral: { ...referral, notes: 'Legacy plain-text note, no intake envelope' },
   });
   expect(text).toContain('DHS data-sharing consent: Not recorded');
   expect(text).not.toMatch(/^DHS data-sharing consent: No$/m);
+  // Legacy plain text is staff notes, so the standard copy still withholds it.
+  expect(text).not.toContain('Legacy plain-text note');
 });
 
 it('includes every collected answer for a fully populated fictional form', () => {

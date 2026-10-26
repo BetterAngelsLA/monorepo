@@ -670,6 +670,23 @@ it('preserves the original draft if replacing it from a saved referral fails', a
   ).toHaveDisplayValue('Saved referral notes');
 });
 
+it('does not open an unrelated draft while another submission is in flight', async () => {
+  // Tapping edit on a saved referral must not surface the draft that is
+  // currently being submitted; the caller did not ask for that one.
+  // `pending` is the in-flight status; a reload normalizes it to `uncertain`.
+  seedDraft('pending');
+  await setup({ history: true });
+  await fireEvent.press(await screen.findByTestId('edit-referral-saved-1'));
+  expect(screen.queryByTestId('referral-intake-screen')).toBeNull();
+  expect(showSnackbar).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      message: expect.stringContaining(
+        'Finish or discard your in-progress referral',
+      ),
+    }),
+  );
+});
+
 it('sends nothing when the pending submission cannot be stored', async () => {
   const app = await setup();
   await openPicker();

@@ -326,7 +326,14 @@ function ReferralsContent({
         return;
       }
       if (existing.submission.status !== 'idle') {
-        openReferralForm();
+        // A submission that is still landing (or unconfirmed) owns the screen.
+        // Opening it here would ignore the referral the caller tapped and show
+        // an unrelated draft, so ask the user to resolve it first.
+        showSnackbar({
+          message:
+            'Finish or discard your in-progress referral before starting another.',
+          type: 'error',
+        });
         return;
       }
       setPendingStart({ existingId: existing.id, begin });
