@@ -6,7 +6,7 @@ import {
   canEditReferralNotes,
   decodeReferralNotes,
   updateReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 const source = {
   id: 'old-referral',

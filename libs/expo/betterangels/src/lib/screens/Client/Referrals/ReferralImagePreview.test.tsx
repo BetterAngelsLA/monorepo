@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import { ReferralImagePreview } from './ReferralImagePreview';
 import { buildReferralDocumentCopy } from './referralExport';
 import { layoutReferralImage } from './referralImage';
-import { encodeReferralNotes } from './referralIntakeSidecar';
+import { encodeReferralNotes } from './shared/referralIntakeSidecar';
 
 const native = vi.hoisted(() => ({ capture: vi.fn() }));
 type NativeProps = Record<string, unknown> & { children?: ReactNode };

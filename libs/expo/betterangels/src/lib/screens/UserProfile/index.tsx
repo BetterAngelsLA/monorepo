@@ -16,9 +16,9 @@ import { discardAccountReferralDrafts } from '../../draft/referralDraftStorage';
 import {
   DeleteCurrentUserDocument,
   extractOperationInfoMessage,
-} from '../../apollo';
-import { useSignOut, useSnackbar, useUser } from '../../hooks';
-import { HeaderSlot } from '../../navigation';
+} from '../../apollo/index';
+import { useSignOut, useSnackbar, useUser } from '../../hooks/index';
+import { HeaderSlot } from '../../navigation/index';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {

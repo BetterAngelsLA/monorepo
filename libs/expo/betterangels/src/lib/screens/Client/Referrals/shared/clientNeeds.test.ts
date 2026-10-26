@@ -14,9 +14,9 @@ import {
   DemographicChoices,
   PetChoices,
   StorageChoices,
-} from '../../../apollo';
+} from '../../../../apollo/index';
 import { needLabelsFromIntake } from './clientNeeds';
-import { INTAKE_FIELDS } from '../../../draft/intakeFields';
+import { INTAKE_FIELDS } from '../../../../draft/intakeFields';
 import { matchTags } from './shelterAttributes';
 
 describe('needLabelsFromIntake', () => {

@@ -1,9 +1,9 @@
 import { isNonNullish } from 'remeda';
-import type { AdaAccommodationEnum, VeteranStatusEnum } from '../../../apollo';
+import type { AdaAccommodationEnum, VeteranStatusEnum } from '../../../../apollo/index';
 import {
   enumDisplayAdaAccommodationEnum,
   enumDisplayVeteranStatus,
-} from '../../../static';
+} from '../../../../static/index';
 
 export type ProfileCardData = {
   firstName?: string | null;

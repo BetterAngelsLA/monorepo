@@ -14,7 +14,7 @@ import {
   buildReferralNotes,
   decodeReferralNotes,
   summarizeIntake,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 const STAFF_NOTES = 'Prefers westside; needs bottom bunk';
 

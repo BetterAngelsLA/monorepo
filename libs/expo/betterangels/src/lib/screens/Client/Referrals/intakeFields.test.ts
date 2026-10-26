@@ -1,6 +1,6 @@
-import { PetChoices } from '../../../apollo';
-import { needLabelsFromIntake } from './clientNeeds';
-import { shelterAttributeLabels } from './shelterAttributes';
+import { PetChoices } from '../../../apollo/index';
+import { needLabelsFromIntake } from './shared/clientNeeds';
+import { shelterAttributeLabels } from './shared/shelterAttributes';
 import {
   INTAKE_FIELDS,
   getIntakeField,
@@ -16,7 +16,7 @@ import {
   decodeReferralNotes,
   encodeReferralNotes,
   summarizeIntake,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 const choices = {
   key: 'bar',

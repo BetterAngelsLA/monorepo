@@ -5,17 +5,17 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { isNonNullish } from 'remeda';
 import haversine from 'haversine-distance';
-import { compareReferralLabels } from '../../../util/compareReferralLabels';
+import { compareReferralLabels } from '../../../../util/compareReferralLabels';
 import {
   AccessibilityChoices,
   DemographicChoices,
   PetChoices,
-} from '../../../apollo';
+} from '../../../../apollo/index';
 import {
   INTAKE_FIELDS,
   type IntakeFieldDefinition,
   type ShelterMatchCategory,
-} from '../../../draft/intakeFields';
+} from '../../../../draft/intakeFields';
 
 // Why a tag is on the card, independent of its colour. Callers partition on
 // this rather than comparing against Colors.* — a palette change shouldn't

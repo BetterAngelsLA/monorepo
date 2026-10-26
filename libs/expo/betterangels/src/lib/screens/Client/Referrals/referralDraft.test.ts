@@ -3,7 +3,7 @@ import {
   PetChoices,
   StorageChoices,
   SpecialSituationRestrictionChoices,
-} from '../../../apollo';
+} from '../../../apollo/index';
 import {
   createReferralDraftStore,
   type DraftPersistence,
@@ -12,7 +12,7 @@ import type { IntakeFieldKey } from '../../../draft/intakeFields';
 import {
   buildReferralNotes,
   decodeReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 const CLIENT = 'client-1';
 const oldDraft = (

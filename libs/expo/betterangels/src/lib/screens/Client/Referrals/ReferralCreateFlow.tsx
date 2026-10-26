@@ -5,7 +5,7 @@ import type { ComponentProps } from 'react';
 import { ReferralForm } from './ReferralForm';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { useReferralDraft } from './ReferralDraftProvider';
-import { needLabelsFromIntake } from './clientNeeds';
+import { needLabelsFromIntake } from './shared/clientNeeds';
 import { useLocalDraftAction } from './useLocalDraftAction';
 
 // Two-step create flow: Required-Info intake (prototype) → shelter picker.

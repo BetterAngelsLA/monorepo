@@ -8,8 +8,8 @@ import {
   buildReferralTextCopy,
   type ExportReferral,
 } from './referralExport';
-import { encodeReferralNotes } from './referralIntakeSidecar';
-import { AdaAccommodationEnum } from '../../../apollo';
+import { encodeReferralNotes } from './shared/referralIntakeSidecar';
+import { AdaAccommodationEnum } from '../../../apollo/index';
 import { INTAKE_FIELDS } from '../../../draft/intakeFields';
 import { Colors } from '@monorepo/expo/shared/static';
 

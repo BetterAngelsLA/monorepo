@@ -3,7 +3,7 @@ import { MockedProvider } from '@apollo/client/testing/react';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
-import { PetChoices } from '../../../apollo';
+import { PetChoices } from '../../../apollo/index';
 import { ReferralCreateFlow } from './ReferralCreateFlow';
 import {
   ReferralDraftProvider,

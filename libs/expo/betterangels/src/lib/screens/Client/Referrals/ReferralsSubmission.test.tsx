@@ -1,5 +1,5 @@
 import { createApolloCache } from '@monorepo/apollo';
-import { createBaTypePolicies } from '../../../apollo/cachePolicies';
+import { createBaTypePolicies } from '../../../apollo/cachePolicies/index';
 import { randomUUID } from 'node:crypto';
 import { ApolloLink } from '@apollo/client';
 import { setActiveOrgId } from '@monorepo/ba-platform';
@@ -29,7 +29,7 @@ import { createReferralDraftStore } from '../../../draft/referralDraft';
 import {
   buildReferralNotes,
   decodeReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 import {
   ClientReferralsDocument,
   type ClientReferralsQuery,

@@ -5,7 +5,7 @@ import { DraftCard } from './DraftCard';
 import { ReferralCard } from './ReferralCard';
 import { ReferralPermissionsProvider } from './ReferralPermissions';
 import { RequestedArrivalDate } from './RequestedArrivalDate';
-import { encodeReferralNotes } from './referralIntakeSidecar';
+import { encodeReferralNotes } from './shared/referralIntakeSidecar';
 
 vi.mock('../../../hooks/referral/useReferralGates', () => ({
   useActiveReferralGates: () => ({

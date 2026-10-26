@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
-import { localReferralDay } from './referralPresentation';
+import { localReferralDay } from './shared/referralPresentation';
 
 /**
  * One shared "today" for every card on screen.

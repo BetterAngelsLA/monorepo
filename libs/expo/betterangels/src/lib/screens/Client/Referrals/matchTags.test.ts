@@ -15,7 +15,7 @@
  * RVTM §7 Tier 1.
  */
 import { Colors } from '@monorepo/expo/shared/static';
-import { type TTag, matchTags } from './shelterAttributes';
+import { type TTag, matchTags } from './shared/shelterAttributes';
 
 const labels = (tags: { label: string }[]) => tags.map((t) => t.label);
 const colorOf = (tags: TTag[], label: string) =>

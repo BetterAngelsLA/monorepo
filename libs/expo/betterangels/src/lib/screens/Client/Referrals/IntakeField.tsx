@@ -8,7 +8,7 @@ import {
 import { Pressable, TextInput, View } from 'react-native';
 import { MemoryIcon } from './IntakeFieldMarkers';
 import { GREEN, RED, styles } from './intakeFormStyles';
-import { referralArrival } from './referralPresentation';
+import { referralArrival } from './shared/referralPresentation';
 import { useReferralDay } from './useReferralDay';
 import {
   intakeRequirementLabel,

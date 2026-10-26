@@ -3,7 +3,7 @@ import {
   VeteranStatusEnum,
 } from '@monorepo/ba-platform/types';
 import { createApolloCache } from '@monorepo/apollo';
-import { createBaTypePolicies } from '../../../apollo/cachePolicies';
+import { createBaTypePolicies } from '../../../apollo/cachePolicies/index';
 import { randomUUID } from 'node:crypto';
 /**
  * T4 — the first screen a brand-new client shows.
@@ -23,7 +23,7 @@ import { randomUUID } from 'node:crypto';
 import { icons, svg, uiComponents } from '../../../../__mocks__/sharedBarrels';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import * as notesAdapter from './referralIntakeSidecar';
+import * as notesAdapter from './shared/referralIntakeSidecar';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
 import { ReferralsTab } from './ReferralsTab';
 import { ClientReferralsDocument } from './__generated__/Referrals.generated';

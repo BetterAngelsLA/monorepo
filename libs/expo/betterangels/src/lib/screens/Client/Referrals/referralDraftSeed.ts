@@ -3,7 +3,7 @@ import { prepareIntakeReuse } from './intakeReuse';
 import {
   canEditReferralNotes,
   decodeReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 export function referralDraftSeed(
   referral: {

@@ -1,6 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { referralArrival } from './referralPresentation';
+import { referralArrival } from './shared/referralPresentation';
 import { useReferralDay } from './useReferralDay';
 
 export function RequestedArrivalDate({ value }: { value: unknown }) {

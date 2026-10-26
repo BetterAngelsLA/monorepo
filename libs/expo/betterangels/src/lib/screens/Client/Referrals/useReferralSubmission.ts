@@ -4,8 +4,8 @@ import { useCallback } from 'react';
 import {
   OperationMessageKind,
   extractOperationInfoMessages,
-} from '../../../apollo';
-import { useSnackbar } from '../../../hooks';
+} from '../../../apollo/index';
+import { useSnackbar } from '../../../hooks/index';
 import {
   CreateReferralDocument,
   UpdateReferralDocument,
@@ -23,7 +23,7 @@ import type {
 import {
   buildReferralNotes,
   updateReferralNotes,
-} from './referralIntakeSidecar';
+} from './shared/referralIntakeSidecar';
 
 /**
  * Only validation and permission messages are user-facing. `Error` is the

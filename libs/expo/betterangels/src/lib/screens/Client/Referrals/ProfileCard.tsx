@@ -3,8 +3,8 @@ import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Pressable, View } from 'react-native';
 import { MemoryIcon, PiiTag } from './IntakeFieldMarkers';
 import { GREEN, styles } from './intakeFormStyles';
-import { referralProfileRows, type ProfileCardData } from './referralProfile';
-export type { ProfileCardData } from './referralProfile';
+import { referralProfileRows, type ProfileCardData } from './shared/referralProfile';
+export type { ProfileCardData } from './shared/referralProfile';
 
 /** Read-only profile fields (name + the profile-backed required fields). */
 export function ProfileCard({

@@ -1,4 +1,4 @@
-import { compareReferralLabels } from '../../../util/compareReferralLabels';
+import { compareReferralLabels } from '../../../../util/compareReferralLabels';
 import {
   formatReferralDate,
   formatReferralEdited,

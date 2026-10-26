@@ -9,15 +9,15 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ReferralShare } from './ReferralShare';
 import { ClientReferralsQuery } from './__generated__/Referrals.generated';
 import { ShelterCard, TagRow } from './ShelterCard';
-import { needLabelsFromIntake } from './clientNeeds';
+import { needLabelsFromIntake } from './shared/clientNeeds';
 import {
   canEditReferralNotes,
   decodeReferralNotes,
   summarizeIntake,
-} from './referralIntakeSidecar';
-import { shelterAttributeLabels } from './shelterAttributes';
-import { formatReferralDate } from './referralPresentation';
-import type { ProfileCardData } from './referralProfile';
+} from './shared/referralIntakeSidecar';
+import { shelterAttributeLabels } from './shared/shelterAttributes';
+import { formatReferralDate } from './shared/referralPresentation';
+import type { ProfileCardData } from './shared/referralProfile';
 import { RequestedArrivalDate } from './RequestedArrivalDate';
 import { useReferralPermissions } from './ReferralPermissions';
 

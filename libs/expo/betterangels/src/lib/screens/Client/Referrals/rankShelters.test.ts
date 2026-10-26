@@ -17,7 +17,7 @@ import {
   countMatches,
   distanceMetres,
   rankShelters,
-} from './shelterAttributes';
+} from './shared/shelterAttributes';
 
 type TShelter = {
   name: string;
