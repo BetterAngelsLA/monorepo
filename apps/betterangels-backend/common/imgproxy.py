@@ -6,12 +6,10 @@ import posixpath
 from typing import Optional, cast
 from urllib.parse import urlunsplit
 
-import waffle
 from django.conf import settings
 
 from common.enums import ImagePresetEnum
 
-IMGPROXY_SWITCH = "imgproxy_enabled"
 IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
     ImagePresetEnum.ORIGINAL: "rs:force:0:0",
     ImagePresetEnum.SHELTER_HERO: "rs:fit:800:800/g:ce/q:80/sm:1",
@@ -112,7 +110,7 @@ def build_imgproxy_url(
 ) -> Optional[str]:
     """Return a signed imgproxy URL, CloudFront-signed in production.
 
-    Returns None when imgproxy is disabled (waffle switch / missing keys)
+    Returns None when imgproxy is disabled (missing keys)
     or when the URL cannot be built for any other reason.
 
     Args:
@@ -123,7 +121,7 @@ def build_imgproxy_url(
     Returns:
         The complete imgproxy URL, or None if the URL cannot be built.
     """
-    if not is_imgproxy_enabled():
+    if not (settings.IMGPROXY_KEY and settings.IMGPROXY_SALT):
         return None
 
     source_url = _get_image_source_url(file)
@@ -156,11 +154,3 @@ def build_imgproxy_url(
     expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=expire_seconds)
 
     return cast(str, storage.cloudfront_signer.generate_presigned_url(url, date_less_than=expiration))
-
-
-def is_imgproxy_enabled() -> bool:
-    """Runtime check: imgproxy is usable only when keys and waffle switch are set."""
-    if not (settings.IMGPROXY_KEY and settings.IMGPROXY_SALT):
-        return False
-
-    return waffle.switch_is_active(IMGPROXY_SWITCH)

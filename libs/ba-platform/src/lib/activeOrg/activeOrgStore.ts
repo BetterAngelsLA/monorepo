@@ -1,25 +1,19 @@
 /**
  * The active organization id, held outside React.
  *
- * Non-component consumers need the id synchronously and lag-free: React state
- * mirrored into storage produced copies that trailed the UI — by a commit on
- * web, by an ``AsyncStorage`` round trip on React Native — so org-scoped
- * requests went out against a stale organization.  (The ``X-Organization-ID``
- * header this store once fed is retired; orgs now travel in the query
- * variables, e.g. ``useOrgTeams``.)
+ * One value, derived on every read from two inputs — the id the user chose (or
+ * the one remembered from last launch) and the organizations they belong to — so
+ * the UI and the org a request carries cannot disagree, and nothing has to be
+ * written during render.
  *
- * The id is *derived* on every read from two inputs — the id the user chose (or
- * the one remembered from last launch) and the organizations the user belongs to
- * — so the UI and the request scope cannot disagree, and nothing has to be
- * written during render. React reads it via ``useSyncExternalStore``; non-React
- * callers via :func:`getActiveOrgId`. Persistence is a write-behind detail, not a
- * channel between the two.
+ * React reads it through :func:`useActiveOrgId` (``useSyncExternalStore``);
+ * non-component callers use :func:`getActiveOrgId`. Persistence is a
+ * write-behind detail, not a channel between the two.
  *
  * Scope: per JavaScript context. Two browser tabs each keep their own active
- * organization and do not follow each other, which is deliberate — a tab's UI
- * and its request scope now always agree, where previously a switch in one
- * tab changed the other's headers without changing what it displayed. Add a
- * ``storage`` event listener here if cross-tab following is ever wanted.
+ * organization and do not follow each other, which is deliberate — a tab's UI and
+ * the org its requests carry agree with each other. Add a ``storage`` event
+ * listener here if cross-tab following is ever wanted.
  */
 
 /**
@@ -38,10 +32,10 @@ export interface ActiveOrgPersistence {
  * Where the store finds the signed-in user's organizations, or ``null`` while
  * that is still unknown.
  *
- * A function rather than a published value: it is read when the request scope is
- * needed (at request time) and in ``getSnapshot``, so it cannot lag a render. A published
- * list would have to be in place before the first render that mounts a component
- * which queries, which no render-order-independent point in React offers.
+ * A function rather than a published value: it is read when a request needs the
+ * org and in ``getSnapshot``, so it cannot lag a render. A published list would
+ * have to be in place before the first render that mounts a component which
+ * queries, which no render-order-independent point in React offers.
  */
 export interface ActiveOrgSource {
   (): readonly { id: string }[] | null;
@@ -50,9 +44,9 @@ export interface ActiveOrgSource {
 /**
  * Installed readers, innermost last.
  *
- * A stack because providers nest: `apps/shelter-web` mounts one around the whole
- * app and `OperatorApp` another on a route inside it. A single slot let the inner
- * provider's unmount disarm the outer one, which then sent no organization at all.
+ * A stack rather than a single slot: a provider mounted inside another must not
+ * disarm the outer one when it unmounts, which is what a single slot did — the
+ * app then sent no organization at all.
  */
 const organizationSources: ActiveOrgSource[] = [];
 
@@ -72,7 +66,7 @@ const readOrganizations = (): readonly { id: string }[] | null => {
 /**
  * Install an organization reader, returning the function that removes it again.
  *
- * Reads nothing: the reader is consulted lazily, when the request scope is needed or
+ * Reads nothing: the reader is consulted lazily, when a request needs the org or
  * the snapshot is taken. Callers dispose it from an effect cleanup, so a provider
  * that unmounts (or whose list changes) restores whatever was installed beneath
  * it. Notifies only when the change moves the *derived* id, so a caller that
@@ -89,7 +83,7 @@ export const pushActiveOrgSource = (next: ActiveOrgSource): (() => void) => {
     // Always, not only when the derived id moved: tracking "the last value we
     // announced" in one place and mutating the stack in several is how a removal
     // that restores an older value ends up notifying nobody, which leaves
-    // subscribers rendering one organization while a request scopes to another.
+    // subscribers rendering one organization while a request carries another.
     notify();
   };
 };
@@ -217,21 +211,21 @@ export const setActiveOrgId = (id: string | null): void => {
  * Forget the active organization.
  *
  * Call on logout and when switching API environments: an id from one user or
- * environment means nothing in another, and leaving it set scopes requests to a
- * stale organization until a new organization list reconciles it.
+ * environment means nothing in another, and leaving it set lets a stale org reach
+ * a request until a new organization list reconciles it.
  */
 export const clearActiveOrgId = (): void => {
   // Forget the readers along with the choice. The organizations belong to the
   // session being torn down (logout, an environment switch), and a derivation
-  // that kept reading them would put an organization straight back into the
-  // request scope. Providers still mounted re-install theirs on their next render.
+  // that kept reading them would put an organization straight back into a
+  // request. Providers still mounted re-install theirs on their next render.
   organizationSources.length = 0;
 
   // `write` then `notify`, not `setActiveOrgId`: dropping the sources changes the
   // *derived* id on its own, and `setActiveOrgId` broadcasts only when the
   // *selected* id moves. With the selected id already null it stays silent, leaving
-  // every subscriber on the organization just discarded — org-scoped requests then
-  // keep an id belonging to the session that was torn down.
+  // every subscriber on the organization just discarded — the next request then
+  // carries an id belonging to the session that was torn down.
   write(null);
   notify();
 };

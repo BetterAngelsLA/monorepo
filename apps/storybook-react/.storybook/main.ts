@@ -2,9 +2,9 @@ import type { StorybookConfig } from '@storybook/react-native-web-vite';
 import tailwindcss from '@tailwindcss/postcss';
 import { resolve } from 'path';
 import { mergeConfig, searchForWorkspaceRoot } from 'vite';
-import { getBranchBasePath } from '../../../tools/shared/get-base-path.mjs';
-import { monorepoTsconfigAliases } from '../../../libs/vite-utils/src/index';
 import svgr from 'vite-plugin-svgr';
+import { monorepoTsconfigAliases } from '../../../libs/vite-utils/src/index';
+import { getBuildBasePath } from '../../../tools/shared/get-base-path.mjs';
 import {
   PLATFORM_STORIES,
   REACT_APP_LIB_STORIES,
@@ -15,7 +15,7 @@ import { appendReactQueryForRnSvg } from './plugins/appendReactQueryForRnSvg.ts'
 import { rawSvgPlugin } from './plugins/rawSvgPlugin.ts';
 
 function getBaseHref() {
-  const p = getBranchBasePath();
+  const p = getBuildBasePath();
   return p.endsWith('/') ? p : p + '/';
 }
 
@@ -60,7 +60,7 @@ const config: StorybookConfig = {
   },
 
   viteFinal: async (base) => {
-    const basePath = getBranchBasePath();
+    const basePath = getBuildBasePath();
     const workspaceRoot = searchForWorkspaceRoot(process.cwd());
     const isDev = process.env.NODE_ENV === 'development';
 

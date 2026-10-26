@@ -9,13 +9,13 @@ import {
   AccessibilityChoices,
   DemographicChoices,
   PetChoices,
-} from '../../../apollo';
+} from '../../../apollo/index';
 import {
   enumDisplayAccessibilityChoices,
   enumDisplayDemographics,
   enumDisplayPetChoices,
-} from '../../../static';
-import { shelterAttributeLabels } from './shelterAttributes';
+} from '../../../static/index';
+import { shelterAttributeLabels } from './shared/shelterAttributes';
 
 describe('shelterAttributeLabels', () => {
   it('maps pet enum names to display labels', () => {

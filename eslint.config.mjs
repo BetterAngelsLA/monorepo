@@ -190,6 +190,12 @@ export default [
             // which does not resolve tsconfig path aliases, so a scoped import
             // fails at runtime with "Cannot find module".
             'tools/codegen/.*',
+            // tools/shared holds plain files with no project.json, so they are
+            // not in the project graph: a relative import of one is reported as
+            // an "external resource". Storybook's .storybook/main.ts is a `.ts`
+            // file, so unlike the vite.config.mts consumers it is linted and the
+            // import is rejected there.
+            'tools/shared/.*',
           ],
           depConstraints,
         },

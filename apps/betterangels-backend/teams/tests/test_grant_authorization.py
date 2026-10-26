@@ -1,9 +1,8 @@
 """Teams authority — grant-only reads + writes (ADR 0001 §5.3, teams cutover).
 
-The three team mutations authorize through ``require_can`` (``can()``) since
-``ORG_ADMIN`` / ``ORG_SUPERUSER`` are role-backed with backfilled Grants; the
-``teams`` read is grant-only too (role-backed ``CASEWORKER`` with
-``teams.view_team``).
+The three team mutations authorize through ``require_can`` (``can()``):
+``ORG_ADMIN`` / ``ORG_SUPERUSER`` are role-backed and hold Grants. The ``teams`` read is
+grant-only too (role-backed ``CASEWORKER`` with ``teams.view_team``).
 """
 
 from typing import Any
@@ -22,7 +21,7 @@ from .utils import TeamGraphQLUtilsMixin
 
 
 class TeamGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
-    """Grant holders manage teams after the grant-only cutover."""
+    """A Grant is what authorizes team management."""
 
     def setUp(self) -> None:
         super().setUp()
@@ -94,10 +93,10 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self.graphql_client.force_login(user)
 
     def test_legacy_only_org_admin_is_denied(self) -> None:
-        """A legacy PermissionGroup ORG_ADMIN with no Grant no longer manages teams.
+        """A legacy PermissionGroup ORG_ADMIN with no Grant has no team authority.
 
-        Reconcile retires org-admin rows (ADR 0001 teardown) — this simulates a
-        stale leftover row; even if one exists it confers no team authority.
+        Reconcile retires org-admin rows (ADR 0001 teardown), so a legacy row can survive
+        as a stale leftover; even when one exists it confers nothing.
         """
         legacy_admin = make_legacy_only_holder(
             user=baker.make(User), organization=self.org_1, template_name=ORG_ADMIN.name
@@ -157,7 +156,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
     def test_create_team_with_an_unknown_organization_is_denied(self) -> None:
-        """``_org_or_deny`` on the payload org fails closed — unknown is not found.
+        """``org_or_deny`` on the payload org fails closed — unknown is not found.
 
         The read side of the shared resolver is pinned in the read suite; the
         mutation path (create carries the org in the payload, with no row to
@@ -178,8 +177,8 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
     def test_create_team_with_a_malformed_organization_is_denied(self) -> None:
         """A payload org the column cannot hold denies like an unknown one.
 
-        Regression: a non-numeric or blank id used to reach Django as an
-        unhandled ``ValueError`` — a 500-class error, not a refusal.
+        Without the guard a non-numeric or blank id reaches Django as an unhandled
+        ``ValueError`` — a 500-class error rather than a refusal.
         """
         admin = baker.make(User)
         self.org_1.add_user(admin)
@@ -286,7 +285,7 @@ class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         self.assertEqual(self._ids(response), self._expected_ids())
 
     def test_member_without_grant_is_denied(self) -> None:
-        """Membership alone no longer reads — the read is grant-only."""
+        """Membership alone does not authorize a read: the read is grant-only."""
         member = baker.make(User)
         self.org_2.add_user(member)
         self.assertFalse(member.grants.filter(scope_org=self.org_2).exists())

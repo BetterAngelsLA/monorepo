@@ -88,6 +88,45 @@ enum AttachmentType {
   UNKNOWN
 }
 
+type AuditActionPage {
+  results: [AuditActionType!]!
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+type AuditActionType {
+  timestamp: DateTime!
+  actor: String!
+  summary: String!
+  events: [AuditEventType!]!
+  fieldChanges: JSON!
+  truncated: Boolean!
+}
+
+enum AuditEventKind {
+  INSERT
+  UPDATE
+  DELETE
+}
+
+type AuditEventType {
+  timestamp: DateTime!
+  actor: String!
+  kind: AuditEventKind!
+  action: String!
+  targetType: AuditTargetType!
+  targetId: ID!
+  fieldChanges: JSON
+  snapshot: JSON
+  summary: String
+}
+
+enum AuditTargetType {
+  SHELTER
+  ROOM
+  BED
+}
+
 type AuthResponse {
   status_code: String!
 }
@@ -666,6 +705,7 @@ input CreateProfileDataImportInput {
 }
 
 input CreateReferralInput {
+  organizationId: ID
   clientProfile: ID!
   shelter: ID!
   notes: String
@@ -904,6 +944,13 @@ enum DemographicChoices {
 
 type DemographicType {
   name: DemographicChoices
+}
+
+type DensityScaleType {
+  p50: Float!
+  p90: Float!
+  p95: Float!
+  max: Int!
 }
 
 type DjangoFileType {
@@ -1410,6 +1457,22 @@ type InteractionAuthorTypeOffsetPaginated {
   results: [InteractionAuthorType!]!
 }
 
+type InteractionMapType {
+  points: [InteractionPointType!]!
+  truncated: Boolean!
+  withheld: Boolean!
+}
+
+type InteractionPointType {
+  latitude: LatitudeScalar!
+  longitude: LongitudeScalar!
+  interactedAt: DateTime!
+}
+
+type InteractionScopeType {
+  withheld: Boolean!
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
@@ -1586,8 +1649,8 @@ type Mutation {
   resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload!
   updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload!
   deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload!
-  createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
-  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
+  createReferral(data: CreateReferralInput!): CreateReferralPayload!
+  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload!
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
 }
 
@@ -1803,7 +1866,6 @@ type OperatorShelterType {
   organization: OrganizationType
   otherRules: String
   otherServices: String
-  overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
   phone: PhoneNumber
@@ -1824,7 +1886,6 @@ type OperatorShelterType {
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
-  subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
@@ -1838,6 +1899,9 @@ type OperatorShelterType {
   distanceInMiles: Float
   bedCounts: BedCountType!
   roomCounts: RoomCountType!
+  overallRating: Int
+  subjectiveReview: String
+  declinedBaVisit: Boolean
   additionalContacts: [ShelterContactInfoType!]!
 }
 
@@ -2096,6 +2160,7 @@ type Query {
   currentUser: CurrentUserType!
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
+  objectAuditLog(targetType: AuditTargetType!, objectId: ID!, after: String = null, limit: Int! = 50, includeSnapshot: Boolean! = false): AuditActionPage!
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -2121,7 +2186,12 @@ type Query {
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
-  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
+  interactionsByRegion(organizationId: ID!, dimension: RegionDimension = null, startDate: Date = null, endDate: Date = null, regionCodes: [String!] = null): [RegionCountType!]!
+  interactionMap(organizationId: ID!, startDate: Date = null, endDate: Date = null, limit: Int = null, dimension: RegionDimension = null, regionCodes: [String!] = null): InteractionMapType!
+  interactionScope(organizationId: ID!, startDate: Date = null, endDate: Date = null): InteractionScopeType!
+  densityScale(organizationId: ID!, zoom: Int!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): DensityScaleType
+  regionDimensions: [RegionDimensionInfo!]!
+  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
@@ -2141,8 +2211,8 @@ type Query {
   shelterOrganizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   shelterMaxStay: Int
   shelterOccupancyMetrics(shelterId: ID!, startDate: Date = null, endDate: Date = null): ShelterOccupancyMetricsType!
-  referral(pk: ID!): ReferralType! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
-  referrals(filters: ReferralFilter, ordering: [ReferralOrder!]! = [], pagination: OffsetPaginationInput): ReferralTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
+  referral(pk: ID!): ReferralType!
+  referrals(filters: ReferralFilter, ordering: [ReferralOrder!]! = [], pagination: OffsetPaginationInput): ReferralTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -2209,6 +2279,30 @@ type ReferralTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ReferralType!]!
+}
+
+type RegionCountType {
+  kind: String!
+  code: String!
+  name: String!
+  count: Int!
+  isUnassigned: Boolean!
+  unassignedReason: UnassignedReason
+}
+
+enum RegionDimension {
+  ZIP
+  CITY
+  COUNCIL_DISTRICT
+  SUPERVISORIAL_DISTRICT
+  SPA
+  COC
+}
+
+type RegionDimensionInfo {
+  value: RegionDimension!
+  label: String!
+  plural: String!
 }
 
 enum RelationshipTypeEnum {
@@ -2728,7 +2822,6 @@ type ShelterType {
   organization: OrganizationType
   otherRules: String
   otherServices: String
-  overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
   phone: PhoneNumber
@@ -2749,7 +2842,6 @@ type ShelterType {
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
-  subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
@@ -2945,6 +3037,11 @@ type TeamTypeOffsetPaginated {
 scalar Time
 
 scalar UUID
+
+enum UnassignedReason {
+  OUTSIDE_ALL_REGIONS
+  NO_LOCATION
+}
 
 input UpdateBedInput {
   id: ID!
@@ -3170,6 +3267,8 @@ input UpdateShelterInput {
   phone: PhoneNumber
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
+  totalBeds: Int
+  roomStylesOther: String
   maxStay: Int
   onSiteSecurity: Boolean
   visitorsAllowed: Boolean
@@ -3178,11 +3277,16 @@ input UpdateShelterInput {
   otherRules: String
   otherServices: String
   entryInfo: String
+  bedFees: String
+  programFees: String
   subjectiveReview: String
+  overallRating: Int
+  declinedBaVisit: Boolean
   demographicsOther: String
   shelterTypesOther: String
   cityCouncilDistrict: Int
   supervisorialDistrict: Int
+  shelterProgramsOther: String
   fundersOther: String
   accessibility: [AccessibilityChoices!]
   demographics: [DemographicChoices!]

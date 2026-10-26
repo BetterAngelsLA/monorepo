@@ -14,7 +14,12 @@ export default function BasicModal(props: IBasicModalProps) {
   const { children, visible, onClose } = props;
 
   return (
-    <Modal transparent visible={visible} onDismiss={onClose}>
+    <Modal
+      transparent
+      visible={visible}
+      onDismiss={onClose}
+      onRequestClose={onClose}
+    >
       <Pressable
         // keep accessible=false
         // backdrop being "accessible" breaks e2e tests as nestged buttons become unreachable

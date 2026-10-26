@@ -68,7 +68,11 @@ ACTIVE_RESERVATION_STATUSES = (
     pghistory.UpdateEvent("shelter.update"),
     pghistory.DeleteEvent("shelter.remove"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelter_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="shelter_evt_obj_idx"),
+            # Retention filters on ``pgh_created_at``; the aggregate pages on it.
+            models.Index(fields=["pgh_created_at"], name="shelter_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )
@@ -76,6 +80,8 @@ class Shelter(OrgScoped, BaseModel):
     class perms(PermissionSet):
         CHANGE_IS_REVIEWED = perm("change_shelter_is_reviewed", "Can change shelter is reviewed")
         VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
+        VIEW_BA_REVIEW = perm("view_shelter_ba_review", "Can view shelter BA review")
+        CHANGE_BA_REVIEW = perm("change_shelter_ba_review", "Can change shelter BA review")
 
     objects: ShelterManager = ShelterManager()
 
@@ -228,7 +234,14 @@ class Shelter(OrgScoped, BaseModel):
     pghistory.DeleteEvent("bed.remove"),
     pghistory.UpdateEvent("bed.update"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="bed_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="bed_evt_obj_idx"),
+            # Reached through the shelter (``references(shelter)``).
+            models.Index(fields=["shelter", "pgh_id"], name="bed_evt_shelter_idx"),
+            # Reached through the room (``references(room)``).
+            models.Index(fields=["room", "pgh_id"], name="bed_evt_room_idx"),
+            models.Index(fields=["pgh_created_at"], name="bed_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )
@@ -313,7 +326,12 @@ class Bed(CloneMixin, OrgScoped, BaseModel):
     pghistory.UpdateEvent("room.update"),
     pghistory.DeleteEvent("room.remove"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="room_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="room_evt_obj_idx"),
+            # Reached through the shelter (``references(shelter)``).
+            models.Index(fields=["shelter", "pgh_id"], name="room_evt_shelter_idx"),
+            models.Index(fields=["pgh_created_at"], name="room_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )
@@ -389,7 +407,11 @@ class Room(CloneMixin, OrgScoped, BaseModel):
     pghistory.UpdateEvent("shelter.contact_info.update"),
     pghistory.DeleteEvent("shelter.contact_info.remove"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="contactinfo_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="contactinfo_evt_obj_idx"),
+            models.Index(fields=["shelter", "pgh_id"], name="contactinfo_evt_shelter_idx"),
+            models.Index(fields=["pgh_created_at"], name="contactinfo_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )

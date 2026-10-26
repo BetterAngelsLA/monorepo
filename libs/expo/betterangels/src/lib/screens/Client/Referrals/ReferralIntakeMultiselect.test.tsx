@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 /**
  * The intake form's multi-select controls.
  *
@@ -15,12 +16,12 @@ import {
   render as renderNative,
   screen,
 } from '@testing-library/react-native';
-import { PetChoices } from '../../../apollo';
 import { ReferralIntakeForm } from './ReferralIntakeForm';
+import { PetChoices } from '@monorepo/ba-platform/types';
 import {
   createReferralDraftStore,
   type ReferralDraftStore,
-} from './referralDraft';
+} from '../../../draft/referralDraft';
 import { ReferralDraftProvider } from './ReferralDraftProvider';
 
 // See sharedBarrels.tsx: the shared barrels pull in native-backed components
@@ -28,16 +29,22 @@ import { ReferralDraftProvider } from './ReferralDraftProvider';
 vi.mock('@monorepo/expo/shared/ui-components', () => uiComponents());
 vi.mock('@monorepo/expo/shared/icons', () => icons());
 vi.mock('react-native-svg', () => svg());
+vi.mock('../../../hooks', () => ({
+  useSnackbar: () => ({ showSnackbar: vi.fn() }),
+}));
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
 const CLIENT_ID = 'c-1';
 
 let referralDraft: ReferralDraftStore;
 const createStore = (initial: unknown = null) =>
-  createReferralDraftStore({
-    load: () => initial,
-    save: vi.fn(),
-    remove: vi.fn(),
-  });
+  createReferralDraftStore(
+    {
+      load: () => initial,
+      save: vi.fn(),
+      remove: vi.fn(),
+    },
+    randomUUID,
+  );
 beforeEach(() => {
   referralDraft = createStore();
 });
@@ -194,11 +201,11 @@ describe('multi-select intake fields', () => {
 
   it('reflects writes from another consumer and clears without keeping a stale local copy', async () => {
     await renderForm();
-    await act(async () => {
+    await act(() => {
       referralDraft.setField('pets', [PetChoices.Cats]);
     });
     expect(isOn('pets', 'CATS')).toBe(true);
-    await act(async () => {
+    await act(() => {
       referralDraft.clear();
     });
     expect(isOn('pets', 'CATS')).toBe(false);

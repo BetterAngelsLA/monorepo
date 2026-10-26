@@ -162,12 +162,14 @@ INSTALLED_APPS = [
     "waffle",
     # Our Apps
     "accounts",
+    "audit",
     "clients",
     "common",
     "hmis",
     "legal",
     "notes",
     "proxy",
+    "regions",
     "reports",
     "shelters",
     "referrals",
@@ -528,7 +530,9 @@ CKEDITOR_5_CONFIGS = {
 }
 
 # Test Runner
-TEST_RUNNER = "betterangels_backend.runner.PytestTestRunner"
+# ``manage.py test`` delegates to pytest.  ``pytest_django`` is a dev
+# dependency, so this only resolves where dev dependencies are installed.
+TEST_RUNNER = "pytest_django.runner.TestRunner"
 
 SITE_ID = 1
 
@@ -541,7 +545,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = env("CORS_ALLOWED_ORIGIN_REGEXES")
 CORS_ALLOW_HEADERS = [
     *default_headers,
     "x-goog-fieldmask",
-    "x-organization-id",
 ]
 CSRF_COOKIE_DOMAIN = env("CSRF_COOKIE_DOMAIN")
 CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")

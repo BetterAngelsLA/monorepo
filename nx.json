@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "cacheDirectory": ".nx/cache",
   "tasksRunnerOptions": {
     "default": {}
   },
@@ -11,7 +12,7 @@
     },
     "test": {
       "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
-      "cache": true
+      "cache": false
     },
     "lint": {
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
@@ -60,13 +61,16 @@
       "!{projectRoot}/tsconfig.storybook.json"
     ],
     "sharedGlobals": [
-      "{workspaceRoot}/Dockerfile",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/mypy.ini",
-      "{workspaceRoot}/uv.*",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/docker-pyproject.toml"
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/yarn.lock",
+      "{workspaceRoot}/tsconfig.base.json"
     ]
+  },
+  "pluginsConfig": {
+    "@nx/js": {
+      "projectsAffectedByDependencyUpdates": "auto"
+    }
   },
   "plugins": [
     "@nxlv/python",
@@ -110,6 +114,7 @@
       "include": [
         "apps/betterangels/**/*",
         "apps/betterangels-admin/**/*",
+        "apps/shelter-e2e/**/*",
         "apps/shelter-web/**/*",
         "apps/wildfires/**/*",
         "libs/apollo/**/*",

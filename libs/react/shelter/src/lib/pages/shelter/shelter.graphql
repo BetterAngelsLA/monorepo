@@ -32,7 +32,6 @@ query ViewShelter($id: ID!) {
     shelterProgramsOther
     shelterTypesOther
     status
-    subjectiveReview
     supervisorialDistrict
     totalBeds
     website

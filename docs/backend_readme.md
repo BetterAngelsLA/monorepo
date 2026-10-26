@@ -83,17 +83,69 @@ Once started, you can access the Django development server at
 
 #### Running Tests
 
+The backend suite runs under **pytest**. Both `pytest` and `manage.py test` use
+`betterangels_backend.settings_test` automatically; see [Test settings](#test-settings).
+`manage.py test` delegates to pytest through pytest-django's built-in runner
+(`pytest_django.runner.TestRunner`), so it keeps `conftest.py`, fixtures and
+xdist; prefer `uv run pytest` (or the Nx target) for day-to-day work.
+
 To run the full test suite:
 
 ```bash
 yarn nx test betterangels-backend
 ```
 
-To run an individual test, add the full path of the test in dot notation. Example:
+To run an individual test, pass its pytest node ID. Example:
 
 ```bash
-yarn nx test betterangels-backend accounts.tests.UsersManagersTests.test_create_user
+yarn nx test betterangels-backend accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
 ```
+
+To run the suite in parallel locally:
+
+```bash
+uv run pytest -n logical
+```
+
+`-n logical` uses all logical CPUs (the suite is DB-bound; xdist's `-n auto`
+counts physical cores and under-provisions SMT machines). Each worker creates
+its own test database (`test_postgres_gw0`, …) and runs migrations the first
+time; add `--maxprocesses N` if the machine is DB- or memory-constrained.
+
+The backend `addopts` also includes `--dist loadscope`, which keeps a test
+class on one worker. Class-scoped fixtures (`setUpTestData`) are then built
+once per class, and a `transaction=True` test cannot flush them between two
+tests of the same class. CI scales the same way and adds `--durations=25`
+through `PYTEST_ADDOPTS` (see the Test step in
+`.github/workflows/default.yml`).
+
+`manage.py test` uses pytest-django's built-in runner. Django options go before
+`--` and pytest options after it:
+
+```bash
+uv run python manage.py test --keepdb -- -n logical
+uv run python manage.py test --keepdb -- -k test_create
+uv run python manage.py test --keepdb -- --pyargs accounts.tests.test_user_manager
+```
+
+The built-in runner does not accept Django's `--parallel`; use pytest's `-n`.
+
+#### Test settings
+
+`betterangels_backend/settings_test.py` inherits the normal settings and then:
+
+- forces `DEBUG = False` (pytest-django's `django_debug_mode` already defaults
+  to false; kept explicit so the module is self-describing),
+- uses a process-local `LocMemCache`: the region tests call `cache.clear()`,
+  which against Redis is `FLUSHDB` and logs out every other parallel worker.
+  The cache session backend's TTL follows `time_machine`, so
+  `SESSION_COOKIE_AGE` is extended for the run (no test asserts expiry),
+- uses `MD5PasswordHasher` (password strength is not under test).
+
+This is selected by `[tool.pytest.ini_options] DJANGO_SETTINGS_MODULE` in both
+`pyproject.toml` files. Keep tests on it: `cache.clear()` in the region tests
+would flush the shared cache under the normal settings and make parallel runs
+flaky.
 
 #### Working in more than one checkout
 
@@ -110,6 +162,24 @@ POSTGRES_TEST_NAME=test_myworktree uv run pytest -q --create-db
 
 Per command, not in `.env` — the shared database stays the default so that
 running the suite by hand behaves the same way everywhere.
+
+#### Stale test databases
+
+`--reuse-db` is the default, so the test databases survive between runs. After
+pulling migrations, switching branches, or seeing failures like
+`relation "…" does not exist` in an app you did not touch, rebuild them:
+
+```bash
+uv run pytest -n logical --create-db
+```
+
+`--create-db` drops the databases the run is about to use; see the warning
+above if other worktrees are using them. Under `-n logical` every worker gets
+its own database (`test_postgres_gw0`, …), so a **serial**
+`uv run pytest --create-db` only rebuilds `test_postgres` — the existing
+`test_postgres_gw*` databases are reused on the next parallel run and stay
+stale. If you changed the worker count or want to start clean, drop them and
+rerun with `-n logical --create-db`.
 
 #### Debugging Tests
 

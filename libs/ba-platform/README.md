@@ -14,9 +14,9 @@ BetterAngels has four frontend apps sharing one backend:
 | `shelter-operator`   | Web (Vite)    | React + Apollo        |
 | `betterangels`       | Mobile (Expo) | React Native + Apollo |
 
-Each app needs the same backend-specific behavior — sending the
-`X-Organization-ID` header, managing the active organization, CSRF
-protection, and so on. This code doesn't belong in the generic shared
+Each app needs the same backend-specific behavior — managing the active
+organization, carrying it in the operation's variables, CSRF protection,
+and so on. This code doesn't belong in the generic shared
 libraries (`libs/react/shared`, `libs/apollo`) because those are designed
 to be backend-agnostic (`scope:shared`). `ba-platform` is the dedicated
 home for that glue.
@@ -138,7 +138,7 @@ code.
 
 | ✅ Belongs here                                                                                     | ❌ Does NOT belong here                                                   |
 | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Code that depends on BA backend conventions (`X-Organization-ID`, `HasOrgPerm`, org-scoped queries) | Generic React hooks or utilities → `libs/react/shared`                    |
+| Code that depends on BA backend conventions (`HasOrgPerm`, org-scoped queries, the active-org store) | Generic React hooks or utilities → `libs/react/shared`                    |
 | Code shared by **two or more** BA frontend apps                                                     | App-specific pages or components → the app's own lib                      |
 | BA-specific integration for any layer (React, Apollo, pure TS)                                      | Generic Apollo or storage utilities → `libs/apollo`, `libs/react/shared`  |
 | GQL operations + generated types for the BA schema                                                  | Code with no BA dependency at all                                         |
@@ -157,20 +157,20 @@ code.
 | `react/ApiConfigProvider`           | React  | `ApiConfigProvider` + `useApiConfig` — provides base `apiUrl`, `rawFetch` (for Apollo `HttpLink`), and `fetch` (URL-baked, for REST calls)                                         |
 | `react/ApolloClientProvider`        | React  | Thin `ApolloProvider` wrapper — accepts an `ApolloLink`, `TypePolicies`, and optional cache                                                                                        |
 | `react/EnvironmentSwitcherProvider` | React  | `EnvironmentSwitcherProvider` + `useEnvironment` — wraps `ApiConfigProvider` with environment switching (persisted via storage). Only needed by apps that toggle API environments. |
-| `react/providers/activeOrg/`        | React  | `ActiveOrgContext`, `ActiveOrgProvider`, `useActiveOrg`, `useActiveOrgState` — shared org management. Factory exports (`createActiveOrgContext<T>()`, etc.) for custom org types.  |
+| `react/providers/activeOrg/`        | React  | `ActiveOrgContext`, `ActiveOrgProvider`, `useActiveOrg`, `useActiveOrgId`, `useActiveOrgState` — shared org management. Factory exports (`createActiveOrgContext<T>()`, etc.) for custom org types.  |
 | `react/providers/user/`             | React  | `UserProvider`, `useUser` — shared current-user context. Factory export (`createUserProvider`) for custom user types.                                                              |
 
 ### Web-only (`@monorepo/ba-platform/web`)
 
 | Module                   | Layer | Purpose                                                                                                                                                                                                                    |
 | ------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `createWebFetchClient()` | Fetch | Returns a `fetch`-compatible function — pre-composed web fetch (org-id injection + CSRF token refresh via browser localStorage / cookies). Pass to `ApiConfigProvider` (as `buildFetch`) and to `new HttpLink({ fetch })`. |
+| `createWebFetchClient()` | Fetch | Returns a `fetch`-compatible function — pre-composed web fetch (CSRF token refresh + credential inclusion via browser localStorage / cookies). Pass to `ApiConfigProvider` (as `buildFetch`) and to `new HttpLink({ fetch })`. |
 
 ### Expo-only (`@monorepo/ba-platform/expo`)
 
 | Module                                              | Layer | Purpose                                                                                                                                                                                                                                                                                  |
 | --------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `createExpoFetchClient(apiUrl, extraInterceptors?)` | Fetch | Returns a `fetch`-compatible function — pre-composed Expo fetch (org-id + CSRF via CookieManager / AsyncStorage, body, credentials). App-specific interceptors passed via `extraInterceptors`. Pass to `EnvironmentSwitcherProvider` (as `buildFetch`) and to `new HttpLink({ fetch })`. |
+| `createExpoFetchClient(apiUrl, extraInterceptors?)` | Fetch | Returns a `fetch`-compatible function — pre-composed Expo fetch (CSRF via CookieManager / AsyncStorage, body, credentials). App-specific interceptors passed via `extraInterceptors`. Pass to `EnvironmentSwitcherProvider` (as `buildFetch`) and to `new HttpLink({ fetch })`. |
 | `createNativeTokenReader(baseUrl)`                  | Fetch | React Native `TokenReader` — reads cookies via `CookieManager` for CSRF token detection.                                                                                                                                                                                                 |
 
 ### Types only (`@monorepo/ba-platform/types`)
