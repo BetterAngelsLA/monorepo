@@ -265,15 +265,27 @@ export function createReferralDraftStore(
       clearTimeout(persistTimer);
       persistTimer = undefined;
     }
+    // Drain what is queued first: it is the whole current draft, so a
+    // successful write makes any earlier failure moot. Only report after the
+    // write has actually been attempted, otherwise the newest answers would be
+    // dropped by a failure from an older one.
+    const draft = pending;
+    pending = null;
+    let writeError: unknown = null;
+    if (draft) {
+      try {
+        writePersisted(draft);
+        deferredError = null;
+      } catch (error) {
+        writeError = error;
+      }
+    }
+    if (writeError) throw writeError;
     if (deferredError) {
       const error = deferredError;
       deferredError = null;
       throw error;
     }
-    if (!pending) return;
-    const draft = pending;
-    pending = null;
-    writePersisted(draft);
   }
 
   function commit(draft: ReferralDraft | null, opts?: { defer?: boolean }) {
@@ -357,13 +369,23 @@ export function createReferralDraftStore(
     },
     /** Make a deferred write durable now; throws if it fails. */
     flush: flushPending,
-    release() {
-      // Session boundaries revoke old forms/callbacks without deleting disk data,
-      // but the last keystrokes still belong to this session's draft.
-      try {
-        flushPending();
-      } catch (error) {
-        if (__DEV__) console.warn('Could not persist the referral draft', error);
+    release(opts?: { discard?: boolean }) {
+      if (opts?.discard) {
+        // The record was just deleted, or is being dropped on purpose: writing
+        // the queued snapshot now would resurrect it.
+        if (persistTimer) clearTimeout(persistTimer);
+        persistTimer = undefined;
+        pending = null;
+        deferredError = null;
+      } else {
+        // Session boundaries revoke old forms/callbacks without deleting disk
+        // data, but the last keystrokes still belong to this session's draft.
+        try {
+          flushPending();
+        } catch (error) {
+          if (__DEV__)
+            console.warn('Could not persist the referral draft', error);
+        }
       }
       active = false;
       snapshot = null;

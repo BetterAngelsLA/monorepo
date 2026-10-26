@@ -180,13 +180,13 @@ export function discardAccountReferralDrafts(account: ReferralDraftAccount) {
   for (const key of backing.keys()) {
     if (!belongsTo(key, account)) continue;
     backing.remove(key);
-    stores.get(key)?.release();
+    stores.get(key)?.release({ discard: true });
     stores.delete(key);
   }
   // Also revoke empty stores, so previously captured actions cannot recreate data.
   for (const [key, store] of stores) {
     if (!belongsTo(key, account)) continue;
     stores.delete(key);
-    store.release();
+    store.release({ discard: true });
   }
 }

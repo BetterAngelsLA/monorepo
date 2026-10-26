@@ -620,6 +620,14 @@ it('retains saved answers and the current step when field or navigation writes f
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   expectWriteFailure();
   expect(screen.getByTestId('referral-intake-screen')).toBeOnTheScreen();
+  // The failed type-ahead did not clobber what was on disk: the saved answer
+  // is still there, so nothing was lost behind the in-memory snapshot.
+  expect(backing.get('referral-drafts-v2')?.get(key)).toContain(
+    'Retained local notes',
+  );
+  expect(backing.get('referral-drafts-v2')?.get(key)).not.toContain(
+    'Unsaved edit',
+  );
   fault.operation = '';
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   await screen.findByText('Fictional House');
