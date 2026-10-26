@@ -8,8 +8,8 @@ services:
     #
     build:
       context: .
+      dockerfile: tools/monorepo-image/Dockerfile
       target: development
-      # dockerfile: .devcontainer/Dockerfile
     environment:
       - AWS_CONFIG_FILE=/workspace/.aws/config
       - AWS_PROFILE=Development
