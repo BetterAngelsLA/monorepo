@@ -218,14 +218,10 @@
       "options": {},
       "configurations": {
         "preview": {
-          "options": {
-            "auto": true
-          }
+          "auto": true
         },
         "production": {
-          "options": {
-            "auto": true
-          }
+          "auto": true
         }
       }
     }
