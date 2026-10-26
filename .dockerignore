@@ -12,6 +12,11 @@ node_modules
 !.yarn/patches
 dist
 reports
+# The quality step builds while the image builds, so keep generated output
+# out of the context: a partial apps/*/dist must never enter the image. Web
+# bundles are deployed from the workflow, not from this image.
+**/dist
+**/reports
 **/.venv
 **/.mypy_cache
 **/.pytest_cache
