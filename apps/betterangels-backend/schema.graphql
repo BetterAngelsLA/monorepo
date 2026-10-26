@@ -1564,6 +1564,8 @@ type MediaLinkType {
   url: String!
   title: String!
   mediaType: MediaLinkTypeChoices!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 enum MediaLinkTypeChoices {

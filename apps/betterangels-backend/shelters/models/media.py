@@ -147,6 +147,11 @@ class MediaLink(OrgScoped, BaseModel):
     )
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="media_links")
 
+    class Meta:
+        # Curated list — render in insertion order, and make it deterministic
+        # (``created_at`` can tie on bulk inserts, ``id`` never does).
+        ordering = ["id"]
+
     def clean(self) -> None:
         super().clean()
         validator = MEDIA_TYPE_VALIDATORS.get(self.media_type)

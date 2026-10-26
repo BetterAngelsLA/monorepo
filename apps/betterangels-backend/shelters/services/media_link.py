@@ -84,10 +84,13 @@ def media_link_update(*, user: "User", data: Dict[str, Any]) -> MediaLink:
 
 @transaction.atomic
 def media_link_delete(*, user: "User", ids: list[int]) -> list[int]:
-    """Delete media links.
+    """Delete media links and return the deleted IDs.
 
     The queryset is reach-scoped by the user's grants — only media links of
     shelters the user may change are eligible.
+
+    Deleted IDs are returned in the order they were requested (duplicates
+    collapsed) — the response must not depend on the DB's row order.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when any id is missing or
@@ -97,12 +100,12 @@ def media_link_delete(*, user: "User", ids: list[int]) -> list[int]:
         shelter__in=shelter_queryset(user=user, permission=Shelter.perms.CHANGE),
         pk__in=ids,
     )
-    deleted_ids = list(media_links.values_list("pk", flat=True))
+    deletable_ids = set(media_links.values_list("pk", flat=True))
 
-    missing = set(ids) - set(deleted_ids)
+    missing = set(ids) - deletable_ids
     if missing:
         raise ObjectDoesNotExist(f"MediaLink IDs not found or not accessible: {sorted(missing)}")
 
     media_links.delete()
 
-    return deleted_ids
+    return [media_link_id for media_link_id in dict.fromkeys(ids) if media_link_id in deletable_ids]

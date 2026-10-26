@@ -17,6 +17,8 @@ MEDIA_LINK_FIELDS = """
     url
     title
     mediaType
+    createdAt
+    updatedAt
 """
 
 
@@ -306,6 +308,19 @@ class DeleteMediaLinksMutationTestCase(MediaLinkMutationTestCase):
         self.assertIsNone(response.get("errors"))
         self.assertCountEqual(response["data"]["deleteMediaLinks"]["ids"], [str(media_link_1.pk), str(media_link_2.pk)])
         self.assertFalse(MediaLink.objects.filter(pk__in=[media_link_1.pk, media_link_2.pk]).exists())
+
+    def test_deletes_multiple_media_links_returns_ids_in_request_order(self) -> None:
+        """The response follows the request order, not the DB's row order."""
+        media_link_1: Any = baker.make(MediaLink, shelter=self.shelter, url=YOUTUBE_URL)
+        media_link_2: Any = baker.make(MediaLink, shelter=self.shelter, url=OTHER_YOUTUBE_URL)
+        requested_ids = [str(media_link_2.pk), str(media_link_1.pk)]
+
+        expected_query_count = 8
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.MUTATION, {"data": {"ids": requested_ids}})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["deleteMediaLinks"]["ids"], requested_ids)
 
     def test_returns_error_for_unauthorized_media_link(self) -> None:
         authorized: Any = baker.make(MediaLink, shelter=self.shelter, url=YOUTUBE_URL)

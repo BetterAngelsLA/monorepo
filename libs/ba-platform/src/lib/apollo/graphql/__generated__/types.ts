@@ -1588,9 +1588,11 @@ export type MaxStayInput = {
 
 export type MediaLinkType = {
   __typename: 'MediaLinkType';
+  createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   mediaType: MediaLinkTypeChoices;
   title: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
 };
 
