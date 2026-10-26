@@ -307,16 +307,13 @@ jobs:
           elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             TARGETS="lint typecheck test build"
           else
-            TARGETS="lint typecheck test build eas-deploy"
+            TARGETS="lint typecheck test build deploy eas-deploy"
           fi
+          # The EAS update and web deploy share one graph. `eas-fingerprint`
+          # runs before sync-deps/copy-lockfile so the runtime matches the
+          # existing builds, and eas-deploy calls `eas build` directly instead
+          # of a nested `nx run`.
           yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
-
-          # The EAS script shells out to `nx run …:eas-build`, so keep the web
-          # deploy out of its parent graph: an outer `export-web -> sync-deps`
-          # chain makes Nx reject the nested sync-deps as a recursive task.
-          if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]]; then
-            yarn nx affected -t deploy --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
-          fi
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
@@ -515,50 +512,24 @@ jobs:
             "$MONOREPO_IMAGE:ci-base" \
             bash -c 'yarn install --immutable'
 
-      - name: 🚀 EAS preview
+      - name: 🚀 Preview deploys (web + EAS + post + e2e)
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/workspace" \
             -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
             -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
             -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
+            -v "$GITHUB_EVENT_PATH:$GITHUB_EVENT_PATH:ro" \
             -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME -e PR_NUMBER \
-            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA \
+            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA -e GITHUB_EVENT_PATH \
             -e EXPO_TOKEN \
+            -e VITE_SHELTER_GOOGLE_MAPS_API_KEY \
+            -e VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY \
+            -e EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY \
             -e EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY \
             -e EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY \
             -e EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS \
             -e EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID \
-            -e GIT_CONFIG_COUNT=1 \
-            -e GIT_CONFIG_KEY_0=safe.directory \
-            -e GIT_CONFIG_VALUE_0=/workspace \
-            -w /workspace \
-            "$MONOREPO_IMAGE:ci-base" \
-            bash -c '
-              set -euo pipefail
-              affected="$(yarn nx show projects --affected --with-target eas-deploy)"
-              if grep -qx betterangels <<<"$affected"; then
-                yarn nx run betterangels:eas-deploy:preview
-              else
-                echo "betterangels is not affected; skipping the EAS preview"
-              fi
-            '
-
-      - name: 🚀 Web preview deploys
-        id: web-preview
-        # Independent of the EAS preview: run it even if the EAS step failed.
-        if: always()
-        run: |
-          docker run --rm \
-            -v "$GITHUB_WORKSPACE:/workspace" \
-            -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
-            -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
-            -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
-            -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME \
-            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA \
-            -e VITE_SHELTER_GOOGLE_MAPS_API_KEY \
-            -e VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY \
-            -e EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY \
             -e AWS_REGION -e AWS_DEFAULT_REGION -e AWS_ACCOUNT_ID \
             -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN \
             -e GIT_CONFIG_COUNT=1 \
@@ -568,51 +539,10 @@ jobs:
             "$MONOREPO_IMAGE:ci-base" \
             bash -c '
               set -euo pipefail
-              # Separate Nx process from the EAS update: the EAS script shells
-              # out to nx run …:eas-build, and a parent graph containing this
-              # the deploy export-web -> sync-deps chain is a recursive task.
-              yarn nx affected -t deploy --configuration preview --output-style=stream --parallel=6
+              # eas-fingerprint runs before sync-deps/copy-lockfile, so the EAS
+              # runtime stays the pre-sync one; post/e2e depend on deploy.
+              yarn nx affected -t deploy eas-deploy post-pr-preview e2e --configuration preview --output-style=stream --parallel=6
             '
-
-      - name: 💬 Post web preview link
-        if: always() && steps.web-preview.outcome == 'success'
-        run: |
-          docker run --rm \
-            -v "$GITHUB_WORKSPACE:/workspace" \
-            -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
-            -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
-            -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
-            -v "$GITHUB_EVENT_PATH:$GITHUB_EVENT_PATH:ro" \
-            -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME \
-            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_PATH \
-            -e GIT_CONFIG_COUNT=1 \
-            -e GIT_CONFIG_KEY_0=safe.directory \
-            -e GIT_CONFIG_VALUE_0=/workspace \
-            -w /workspace \
-            "$MONOREPO_IMAGE:ci-base" \
-            bash -c '
-              set -euo pipefail
-              yarn nx affected -t post-pr-preview
-            '
-
-      - name: 🧪 E2E shelter-web (preview)
-        # Runs after the web deploy above. The script decides whether this
-        # branch's preview exists and skips when neither shelter-web nor
-        # shelter-e2e is affected.
-        if: always() && steps.web-preview.outcome == 'success'
-        run: |
-          docker run --rm \
-            -v "$GITHUB_WORKSPACE:/workspace" \
-            -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
-            -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
-            -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
-            -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME \
-            -e GIT_CONFIG_COUNT=1 \
-            -e GIT_CONFIG_KEY_0=safe.directory \
-            -e GIT_CONFIG_VALUE_0=/workspace \
-            -w /workspace \
-            "$MONOREPO_IMAGE:ci-base" \
-            bash tools/scripts/e2e-shelter.sh
 
       - name: 📎 Upload shelter-e2e report
         if: always()

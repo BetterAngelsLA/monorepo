@@ -46,7 +46,6 @@ import {
   run,
   runJson,
   runJsonAsync,
-  setupEnvAndFingerprint,
 } from './eas-utils';
 
 // ---------------------------------------------------------------------------
@@ -166,10 +165,13 @@ async function checkOrTriggerBuild(
       console.log(
         `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`,
       );
-      // Sequential on purpose: a missing native build is the rare path, and
-      // the target runs sync-deps/copy-lockfile before the EAS build.
+      // Sequential on purpose: a missing native build is the rare path.
+      // Call the EAS CLI directly instead of `nx run …:eas-build`: the
+      // eas-deploy target already depends on sync-deps/copy-lockfile, and a
+      // nested Nx invocation is rejected when the parent graph contains them.
       data = await runJsonAsync<BuildInfo[]>(
-        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json --no-wait`,
+        `"${easBin}" build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json --no-wait`,
+        { cwd: projectDir },
       );
     }
 
@@ -461,8 +463,21 @@ async function main(): Promise<void> {
 
   const projectDir = resolveProjectDir(project);
 
-  // 1. Setup secrets and get runtime version
-  const runtimeVersion = setupEnvAndFingerprint(projectDir, profile);
+  // 1. Read the runtime version computed by the eas-fingerprint target, which
+  // runs before sync-deps/copy-lockfile so it sees the pre-sync tree the
+  // existing EAS builds were keyed to. Recomputing here would see the mutated
+  // tree and miss every existing build.
+  const runtimeFile = path.resolve(
+    process.cwd(),
+    '.nx/eas-fingerprint',
+    `${project}-${profile}.runtime`,
+  );
+  if (!fs.existsSync(runtimeFile)) {
+    throw new Error(
+      `Missing EAS runtime version at ${runtimeFile}. Run the eas-fingerprint target first.`,
+    );
+  }
+  const runtimeVersion = fs.readFileSync(runtimeFile, 'utf-8').trim();
 
   // 2. Check/trigger builds. Sequential across profiles: both can miss and
   // trigger an eas-build, and concurrent Nx processes would race copy-lockfile

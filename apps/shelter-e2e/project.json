@@ -8,8 +8,16 @@
   "// targets": "to see all targets run: nx show project shelter-e2e --web",
   "targets": {
     "e2e": {
-      "// inputs": "Declaring inputs replaces the ones @nx/playwright infers, so `...` keeps them and appends the one thing they miss: a deployed run is only replayable for the URL it ran against.",
-      "inputs": ["...", { "env": "BASE_URL" }]
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["^deploy"],
+      "options": {
+        "command": "bash tools/scripts/e2e-shelter.sh"
+      },
+      "configurations": {
+        "preview": {},
+        "production": {}
+      }
     },
     "typecheck": {
       "executor": "nx:run-commands",

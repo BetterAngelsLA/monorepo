@@ -59,10 +59,24 @@
       },
       "dependsOn": ["sync-deps", "copy-lockfile"]
     },
+    "eas-fingerprint": {
+      "executor": "nx:run-commands",
+      "defaultConfiguration": "preview",
+      "cache": false,
+      "configurations": {
+        "preview": {
+          "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-fingerprint.ts --project betterangels --profile preview"
+        },
+        "production": {
+          "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-fingerprint.ts --project betterangels --profile production"
+        }
+      }
+    },
     "eas-deploy": {
       "executor": "nx:run-commands",
       "defaultConfiguration": "preview",
       "cache": false,
+      "dependsOn": ["sync-deps", "copy-lockfile"],
       "configurations": {
         "preview": {
           "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile preview"
@@ -132,6 +146,7 @@
     },
     "deploy": {
       "executor": "nx:run-commands",
+      "cache": false,
       "dependsOn": ["export-web"],
       "options": {
         "command": "node tools/deploy/cloudfront-deploy.mjs"
@@ -143,8 +158,14 @@
     },
     "post-pr-preview": {
       "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["deploy"],
       "options": {
         "command": "node tools/scripts/post-preview-comment.js --url=https://outreach.dev.betterangels.la"
+      },
+      "configurations": {
+        "preview": {},
+        "production": {}
       }
     },
     "test": {
@@ -195,11 +216,23 @@
       }
     },
     "copy-lockfile": {
-      "command": "node tools/scripts/eas-build-pre-install.mjs . apps/betterangels"
+      "command": "node tools/scripts/eas-build-pre-install.mjs . apps/betterangels",
+      "cache": false,
+      "dependsOn": ["eas-fingerprint"],
+      "configurations": {
+        "preview": {},
+        "production": {}
+      }
     },
     "sync-deps": {
       "executor": "@nx/expo:sync-deps",
-      "options": {}
+      "options": {},
+      "cache": false,
+      "dependsOn": ["eas-fingerprint"],
+      "configurations": {
+        "preview": {},
+        "production": {}
+      }
     },
     "expo-doctor": {
       "executor": "nx:run-commands",
