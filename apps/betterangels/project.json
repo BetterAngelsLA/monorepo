@@ -220,9 +220,19 @@
         }
       }
     },
-    "eas-build": {
+    "eas-build-native": {
+      "executor": "@nx/expo:build",
+      "cache": false,
       "dependsOn": ["write-eas-env", "sync-deps", "copy-lockfile"],
-      "cache": false
+      "options": {},
+      "configurations": {
+        "preview": {
+          "profile": "preview"
+        },
+        "production": {
+          "profile": "production"
+        }
+      }
     }
   }
 }
