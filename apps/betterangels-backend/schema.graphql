@@ -645,6 +645,15 @@ union CreateHmisNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union CreateHmisProfilePayload = HmisProfileType | OperationInfo
 
+input CreateMediaLinkInput {
+  shelterId: ID!
+  url: NonEmptyString!
+  title: String = null
+  mediaType: MediaLinkTypeChoices! = YOUTUBE
+}
+
+union CreateMediaLinkPayload = MediaLinkType | OperationInfo
+
 input CreateNoteDataImportInput {
   sourceFile: String!
   notes: String!
@@ -903,6 +912,8 @@ input DeleteDjangoObjectInput {
 union DeleteHmisNotePayload = DeletedObjectType | OperationInfo
 
 union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
+
+union DeleteMediaLinksPayload = BulkDeleteResult | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
 
@@ -1649,6 +1660,9 @@ type Mutation {
   resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload!
   updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload!
   deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload!
+  createMediaLink(data: CreateMediaLinkInput!): CreateMediaLinkPayload!
+  updateMediaLink(data: UpdateMediaLinkInput!): UpdateMediaLinkPayload!
+  deleteMediaLinks(data: BulkDeleteInput!): DeleteMediaLinksPayload!
   createReferral(data: CreateReferralInput!): CreateReferralPayload!
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload!
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
@@ -3183,6 +3197,15 @@ union UpdateHmisNoteLocationPayload = HmisNoteType | OperationInfo
 union UpdateHmisNotePayload = HmisNoteType | OperationInfo
 
 union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
+
+input UpdateMediaLinkInput {
+  id: ID!
+  url: NonBlankString
+  title: String
+  mediaType: MediaLinkTypeChoices
+}
+
+union UpdateMediaLinkPayload = MediaLinkType | OperationInfo
 
 input UpdateNoteInput {
   id: ID!

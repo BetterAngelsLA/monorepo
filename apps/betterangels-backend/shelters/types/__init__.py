@@ -16,6 +16,7 @@ from shelters.types.filters import (
 )
 from shelters.types.inputs import (
     CreateBedInput,
+    CreateMediaLinkInput,
     CreateReservationInput,
     CreateRoomInput,
     CreateShelterInput,
@@ -28,6 +29,7 @@ from shelters.types.inputs import (
     ShelterPhotoFromUploadInput,
     ShelterPhotoUploadItemInput,
     UpdateBedInput,
+    UpdateMediaLinkInput,
     UpdateReservationInput,
     UpdateRoomInput,
     UpdateShelterInput,
@@ -54,6 +56,7 @@ from shelters.types.lookups import (
 )
 from shelters.types.outputs import (
     BedType,
+    MediaLinkType,
     OperatorShelterType,
     ReservationType,
     RoomType,
@@ -105,6 +108,7 @@ __all__ = [
     "ShelterPropertyInput",
     # inputs
     "CreateBedInput",
+    "CreateMediaLinkInput",
     "CreateRoomInput",
     "CreateReservationInput",
     "CreateShelterInput",
@@ -112,6 +116,7 @@ __all__ = [
     "ResolveShelterPhotoUploadsInput",
     "UpdateShelterPhotoInput",
     "UpdateBedInput",
+    "UpdateMediaLinkInput",
     "UpdateReservationInput",
     "UpdateRoomInput",
     "UpdateShelterInput",
@@ -123,6 +128,7 @@ __all__ = [
     "ShelterPhotoUploadItemInput",
     # outputs
     "BedType",
+    "MediaLinkType",
     "OperatorShelterType",
     "ReservationType",
     "RoomType",
