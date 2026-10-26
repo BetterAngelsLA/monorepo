@@ -77,7 +77,7 @@
     "export-web": {
       "executor": "@nx/expo:export",
       "cache": true,
-      "dependsOn": ["sync-deps"],
+      "dependsOn": ["sync-deps", "copy-lockfile"],
       "options": {
         "platform": "web",
         "outputDir": "dist/apps/betterangels",
