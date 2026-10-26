@@ -10,7 +10,11 @@ import { ReferralShare } from './ReferralShare';
 import { ClientReferralsQuery } from './__generated__/Referrals.generated';
 import { ShelterCard, TagRow } from './ShelterCard';
 import { needLabelsFromIntake } from './clientNeeds';
-import { decodeReferralNotes, summarizeIntake } from './referralIntakeSidecar';
+import {
+  canEditReferralNotes,
+  decodeReferralNotes,
+  summarizeIntake,
+} from './referralIntakeSidecar';
 import { shelterAttributeLabels } from './shelterAttributes';
 import { formatReferralDate } from './referralPresentation';
 import type { ProfileCardData } from './referralProfile';
@@ -57,9 +61,20 @@ export const ReferralCard = memo(function ReferralCard({
   // TEMPORARY: split the human notes from the intake sidecar for display.
   // Decoding parses JSON, so keep it tied to the saved notes rather than to
   // every render (the list re-renders on refresh and modal changes).
-  const decoded = useMemo(
-    () => decodeReferralNotes(referral.notes),
+  //
+  // A newer envelope cannot be split, and the decoder would fall back to the
+  // raw stored string — which carries the sensitive sidecar. Refuse to render
+  // it here like the export does, rather than printing PII on the card.
+  const notesReadable = useMemo(
+    () => canEditReferralNotes(referral.notes),
     [referral.notes],
+  );
+  const decoded = useMemo(
+    () =>
+      notesReadable
+        ? decodeReferralNotes(referral.notes)
+        : { humanNotes: '', intake: {} },
+    [notesReadable, referral.notes],
   );
   const { humanNotes } = decoded;
   const requestedArrivalDate = decoded.intake.requestedArrivalDate;
@@ -127,6 +142,12 @@ export const ReferralCard = memo(function ReferralCard({
       {humanNotes ? (
         <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
           Notes: {humanNotes}
+        </TextRegular>
+      ) : null}
+      {!notesReadable ? (
+        <TextRegular size="sm" color={Colors.NEUTRAL}>
+          Saved answers use a format this app version cannot read. Open the
+          referral to review it.
         </TextRegular>
       ) : null}
       {(canChange || canCreate) && (

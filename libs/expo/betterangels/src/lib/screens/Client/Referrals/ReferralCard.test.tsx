@@ -87,3 +87,32 @@ it('renders neither action when the org grants neither', async () => {
   expect(screen.queryByTestId('edit-referral-r1')).toBeNull();
   expect(screen.queryByTestId('reuse-referral-r1')).toBeNull();
 });
+
+it('does not print a newer notes envelope, which carries the sensitive sidecar', async () => {
+  // The decoder falls back to the raw string when the version marker is
+  // unknown; that string contains `PII`, so the card must refuse it.
+  const raw = JSON.stringify({
+    fields: { consent: 'No' },
+    PII: { substances: 'thirty days' },
+  });
+  await render(
+    <ReferralPermissionsProvider>
+      <ReferralCard
+        referral={
+          {
+            ...referral,
+            notes: `Human note\n\n<<<referral-intake:v9>>>\n${raw}\n<<<end-referral-intake>>>`,
+          } as never
+        }
+        clientName="Client"
+        onEdit={vi.fn()}
+        onReferAgain={vi.fn()}
+      />
+    </ReferralPermissionsProvider>,
+  );
+
+  expect(
+    screen.getByText(/Saved answers use a format this app version cannot read/),
+  ).toBeOnTheScreen();
+  expect(screen.queryByText(/thirty days/)).toBeNull();
+});
