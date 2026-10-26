@@ -1,0 +1,64 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Android-only caller opens the exact newly edited referral's summary first.
+# output.editedMarker identifies that run's saved staff notes. Never select a
+# recipient: these checks open and dismiss the native chooser only.
+- assertVisible: 'Review referral summary'
+- assertVisible:
+    id: referral-share-include-private
+    checked: false
+- assertNotVisible: ${'(?s).*' + output.editedMarker + '.*'}
+- assertVisible:
+    id: referral-share-preview
+    text: '(?s).*Staff Observations / Notes \[Sensitive\]: Excluded \(sensitive\).*'
+- tapOn:
+    id: referral-image-mode
+- assertVisible:
+    id: referral-image-preview
+- tapOn:
+    id: referral-share-png
+# Framework chooser identifiers, not a particular installed recipient app.
+# The headline also proves Android recognizes this attachment as an image.
+- assertVisible:
+    id: '.*:id/content_preview_container'
+- assertVisible: '(?i).*1 image.*'
+- takeScreenshot: referral-png-default-chooser
+- back
+- assertVisible:
+    id: referral-image-preview
+- tapOn:
+    id: referral-image-mode
+- tapOn:
+    id: referral-share-include-private
+- assertVisible:
+    id: referral-share-include-private
+    checked: true
+- scrollUntilVisible:
+    element:
+      text: ${'(?s).*' + output.editedMarker + '.*'}
+    direction: DOWN
+    timeout: 30000
+    visibilityPercentage: 10
+- tapOn:
+    id: referral-image-mode
+- assertVisible:
+    id: referral-image-preview
+- tapOn:
+    id: referral-share-png
+- assertVisible:
+    id: '.*:id/content_preview_container'
+- assertVisible: '(?i).*1 image.*'
+- takeScreenshot: referral-png-inclusive-chooser
+- back
+- tapOn:
+    id: referral-share-include-private
+- assertVisible:
+    id: referral-share-include-private
+    checked: false
+- tapOn:
+    id: referral-image-mode
+- assertVisible: 'Share text'
+- assertVisible: 'Share text file \(\.txt\)'
+- assertNotVisible: ${'(?s).*' + output.editedMarker + '.*'}
+- tapOn:
+    id: referral-share-close

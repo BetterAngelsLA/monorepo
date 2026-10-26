@@ -1,71 +1,110 @@
-import { useInfiniteScrollQuery } from '@monorepo/apollo';
-import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { FocusedInfiniteList } from '../../../ui-components/InfiniteList/FocusedInfiniteList';
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { CancelReferralButton } from './CancelReferralButton';
-import { SHELTERS_PAGE_SIZE } from './constants';
-import { ShelterCard } from './ShelterCard';
-import { shelterAttributeLabels } from './shelterAttributes';
 import {
-  SheltersDocument,
-  SheltersQuery,
-  SheltersQueryVariables,
-} from './__generated__/Shelters.generated';
+  SingleSelect,
+  TextBold,
+  TextRegular,
+  getUserLocation,
+} from '@monorepo/expo/shared/ui-components';
+import { useMemo, useRef, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ShelterCard } from './ShelterCard';
+import { shelterAttributeLabels } from './shared/shelterAttributes';
+import { CancelReferralButton } from './CancelReferralButton';
+import { FocusedInfiniteList } from '../../../ui-components/InfiniteList/FocusedInfiniteList';
+import { rankShelters, type TCoords } from './shared/shelterAttributes';
+import { useReferralShelters } from './useReferralShelters';
+import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
+
+type TOriginMode = 'none' | 'device';
+
+const DISTANCE_ITEMS: { value: TOriginMode; displayValue: string }[] = [
+  { value: 'none', displayValue: 'None' },
+  { value: 'device', displayValue: 'Near me' },
+];
 
 type TProps = {
+  // Returns to the intake step. Not a cancel: discarding is offered on the
+  // draft card in the referral list, so this slot is better spent letting the
+  // volunteer correct an answer. Without it the intake answers become
+  // unreachable once Next is tapped — and since those answers now drive the
+  // match tags, a mis-tapped need would otherwise mean starting over.
+  onBack: () => void;
   onCancel: () => void;
   onPause?: () => void;
-  // Returns to the intake step. Required, because past intake it is the only
-  // exit that keeps the draft — Cancel discards it and Pause reopens here.
-  onBack: () => void;
   onSubmit: (shelterId: string, notes: string | undefined) => Promise<boolean>;
   // client-needed attributes for match coloring; omit for a neutral list
   desiredAttributes?: string[];
-  // Controlled by the shared draft; null means no current selection.
+  // seed + persist the shelter choice so it survives Pause / resume.
+  // null = the volunteer cleared their choice.
   selectedShelterId: string | null;
+  submitting?: boolean;
   onSelectShelter: (shelterId: string | null) => void;
 };
 
-type ShelterResult = SheltersQuery['shelters']['results'][number];
-
-// A resumed selection can sit on a page that is not loaded yet, so the name is
-// only known once its card has been rendered.
-function selectionLabel(selectedShelter: ShelterResult | undefined): string {
-  if (!selectedShelter) return '✓ Shelter selected';
-  return `✓ Selected: ${selectedShelter.name}`;
-}
-
 export function ReferralForm({
+  onBack,
   onCancel,
   onPause,
-  onBack,
   onSubmit,
   desiredAttributes,
   selectedShelterId,
+  submitting = false,
   onSelectShelter,
 }: TProps) {
-  const [submitted, setSubmitted] = useState(false);
+  const insets = useSafeAreaInsets();
+  const [locationMessage, setLocationMessage] = useState('');
+  const locationRequest = useRef(0);
+
+  // Which point distance is measured from when breaking ties between shelters
+  // with equal match counts. Defaults to 'none': asking for GPS the moment the
+  // picker opens would interrupt a volunteer mid-referral, with a guest in
+  // front of them, for a preference they may not want.
+  const [originMode, setOriginMode] = useState<TOriginMode>('none');
+  const [deviceOrigin, setDeviceOrigin] = useState<TCoords | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  async function chooseOrigin(mode: TOriginMode) {
+    const request = ++locationRequest.current;
+    setLocationMessage('');
+    if (mode !== 'device') {
+      setLocating(false);
+      setOriginMode(mode);
+      return;
+    }
+    // Reuse the position we already have rather than re-prompting.
+    if (deviceOrigin) {
+      setOriginMode('device');
+      return;
+    }
+    setLocating(true);
+    const result = await getUserLocation().catch(() => undefined);
+    if (request !== locationRequest.current) return;
+    setLocating(false);
+
+    const coords = result?.location?.coords;
+    if (!coords) {
+      // Denied, unavailable, or the OS wants the user in Settings. Stay on
+      // 'none' rather than silently selecting a mode that sorts by nothing.
+      setLocationMessage(
+        result?.requireSettingsUpdate
+          ? 'Location is off for this app. Enable it in Settings to sort by distance.'
+          : 'Could not get your location. Shelters stay in their current order.',
+      );
+      return;
+    }
+    setDeviceOrigin({ latitude: coords.latitude, longitude: coords.longitude });
+    setOriginMode('device');
+  }
+
+  const origin = originMode === 'device' ? deviceOrigin : null;
 
   const {
-    items: shelters,
-    total,
+    shelters: allShelters,
     loading,
-    loadingMore,
-    hasMore,
     error,
-    loadMore,
-  } = useInfiniteScrollQuery<
-    ShelterResult,
-    SheltersQuery,
-    SheltersQueryVariables
-  >({
-    document: SheltersDocument,
-    queryFieldName: 'shelters',
-    pageSize: SHELTERS_PAGE_SIZE,
-  });
+    retry,
+  } = useReferralShelters();
 
   // No status filter here: the `shelters` query is already restricted to
   // approved records server-side (ShelterType.get_queryset -> shelter_list ->
@@ -73,35 +112,59 @@ export function ReferralForm({
   // the user holds view_private_shelter. Re-filtering client-side could never
   // remove a row the server sent, and implied a protection the client wasn't
   // providing.
+  // Best fit first: most matched needs, then nearest, then name. Server order
+  // buries a match below the fold — a volunteer shouldn't have to scroll the
+  // whole list to learn whether one exists.
+  const shelters = useMemo(
+    () =>
+      rankShelters(allShelters, {
+        attributesOf: shelterAttributeLabels,
+        desired: desiredAttributes ?? [],
+        nameOf: (s) => s.name ?? '',
+        coordsOf: (s) => s.location,
+        origin,
+      }),
+    [allShelters, desiredAttributes, origin],
+  );
   const selectedShelter = shelters.find((s) => s.id === selectedShelterId);
+  const selectionVerified = !loading && !error && !!selectedShelter;
+  const canSubmit = selectionVerified && !submitting;
+  const selectionMissing =
+    !loading && !error && !!selectedShelterId && !selectedShelter;
 
   async function handleSubmit() {
-    if (!selectedShelterId || submitted) return;
-    setSubmitted(true);
-    const created = await onSubmit(selectedShelterId, undefined);
-    // re-enable Submit so a failed referral can be retried
-    if (!created) {
-      setSubmitted(false);
-    }
+    if (!canSubmit || !selectedShelter) return;
+    await onSubmit(selectedShelter.id, undefined);
   }
 
   return (
-    <View style={styles.container} testID="shelter-picker-screen">
+    <View
+      style={[styles.container, { paddingBottom: insets.bottom }]}
+      testID="shelter-picker-screen"
+    >
+      {/* Back uses the app's existing chevron. Save remains an explicit action. */}
       <View style={styles.header}>
         <Pressable
           testID="picker-back-btn"
+          style={[styles.headerBtn, styles.headerIconBtn]}
           onPress={onBack}
-          hitSlop={8}
+          disabled={submitting}
           accessibilityRole="button"
-          accessibilityLabel="back to the referral form"
-          accessibilityHint="returns to the required information form"
+          accessibilityLabel="back to referral information"
+          accessibilityHint="returns to the intake form to change answers"
         >
-          <ChevronLeftIcon size="md" color={Colors.PRIMARY} />
+          <View
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+          >
+            <ChevronLeftIcon size="sm" color={Colors.PRIMARY} />
+          </View>
         </Pressable>
         <CancelReferralButton
           testID="picker-cancel-btn"
           style={[styles.headerBtn, styles.headerBtnFlex]}
           onCancel={onCancel}
+          disabled={submitting}
         />
         {onPause && (
           <Pressable
@@ -112,7 +175,7 @@ export function ReferralForm({
             accessibilityLabel="pause referral"
             accessibilityHint="saves a draft you can resume later"
           >
-            <TextRegular size="sm" color={Colors.PRIMARY}>
+            <TextRegular size="sm" color={Colors.PRIMARY} numberOfLines={1}>
               Pause
             </TextRegular>
           </Pressable>
@@ -122,137 +185,205 @@ export function ReferralForm({
           style={[
             styles.headerBtn,
             styles.headerBtnFlex,
-            (!selectedShelterId || submitted) && styles.headerBtnDisabled,
+            !canSubmit && styles.headerBtnDisabled,
           ]}
-          onPress={handleSubmit}
-          disabled={!selectedShelterId || submitted}
+          onPress={() => {
+            void handleSubmit();
+          }}
+          disabled={!canSubmit}
           accessibilityRole="button"
-          accessibilityLabel="submit referral"
-          accessibilityHint="submits referral to selected shelter"
+          accessibilityLabel="save referral"
+          accessibilityHint="saves a referral record for the selected shelter"
         >
-          <TextBold size="sm" color={Colors.PRIMARY}>
-            Submit
+          <TextBold size="sm" color={Colors.PRIMARY} numberOfLines={1}>
+            {submitting ? 'Saving…' : 'Save'}
           </TextBold>
         </Pressable>
       </View>
+      <TextRegular
+        size="xs"
+        color={Colors.NEUTRAL_DARK}
+        style={{ paddingHorizontal: Spacings.md }}
+      >
+        Saving records the referral in the app. Share it separately and contact
+        the shelter to confirm availability.
+      </TextRegular>
 
-      <View style={styles.body}>
-        {/* Shelter picker */}
-        <TextBold size="sm" style={styles.sectionLabel}>
-          Select a Shelter
-        </TextBold>
-
-        {loading && (
-          <View style={styles.centered}>
-            <ActivityIndicator size="large" color={Colors.PRIMARY} />
-          </View>
-        )}
-
-        {error && shelters.length === 0 && (
-          <View style={styles.centered}>
-            <TextRegular color={Colors.ERROR}>
-              Error loading shelters. Please try again.
-            </TextRegular>
-          </View>
-        )}
-
-        {!loading && !error && shelters.length === 0 && (
-          <View style={styles.noShelters}>
-            <TextBold size="sm" color={Colors.NEUTRAL_DARK}>
-              No shelters available
+      <FocusedInfiniteList
+        testID="shelter-choice-group"
+        accessibilityRole="radiogroup"
+        accessibilityLabel="Shelter choices"
+        accessibilityHint="select one shelter using its radio; links open shelter details separately"
+        // Keep child radios and directory links separately reachable.
+        accessible={false}
+        style={styles.body}
+        data={!loading && !error ? shelters : []}
+        keyExtractor={(shelter) => shelter.id}
+        renderResultsHeader={null}
+        itemGap={0}
+        ListHeaderComponent={
+          <View>
+            {/* Shelter picker */}
+            <TextBold size="lg" style={styles.sectionLabel}>
+              Select a Shelter
             </TextBold>
-            <TextRegular size="sm" color={Colors.NEUTRAL}>
-              Please check back later or contact your supervisor.
-            </TextRegular>
-          </View>
-        )}
 
-        {!loading && shelters.length > 0 && (
-          <FocusedInfiniteList<ShelterResult>
-            data={shelters}
-            keyExtractor={(shelter) => shelter.id}
-            totalItems={total}
-            renderResultsHeader={null}
-            loadMore={loadMore}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
-            // Cards carry their own bottom margin; keep their spacing only.
-            itemGap={0}
-            renderItem={(shelter) => {
-              const isSelected = shelter.id === selectedShelterId;
-              // Radio semantics for picking (tapping any card moves the
-              // selection here), plus tap-again-to-clear — a volunteer who
-              // selects the wrong shelter would otherwise have no way back
-              // to "nothing chosen" without cancelling the referral.
-              const toggleSelection = () => {
-                onSelectShelter(isSelected ? null : shelter.id);
-              };
-              return (
-                <Pressable
-                  testID="shelter-option"
-                  style={[
-                    styles.shelterCard,
-                    isSelected && styles.shelterCardSelected,
-                  ]}
-                  onPress={toggleSelection}
-                  // The card contains the directory link and the "more
-                  // attributes" toggle, so it must not group its children into
-                  // one inaccessible element. The radio itself carries the
-                  // selection semantics.
-                  accessible={false}
+            {selectionMissing && (
+              <TextRegular
+                testID="shelter-selection-missing"
+                accessibilityLiveRegion="polite"
+                color={Colors.ERROR}
+              >
+                Your saved shelter selection is not in the current list. Choose
+                another shelter to continue. Your intake answers are saved.
+              </TextRegular>
+            )}
+
+            {!!locationMessage && (
+              <TextRegular accessibilityLiveRegion="polite">
+                {locationMessage}
+              </TextRegular>
+            )}
+            <View style={styles.sortRow}>
+              <SingleSelect
+                label="Distance"
+                placeholder="None"
+                modalTitle="Distance from"
+                maxRadioItems={0}
+                selectedValue={originMode}
+                items={DISTANCE_ITEMS}
+                onChange={(value) =>
+                  void chooseOrigin(value === 'device' ? value : 'none')
+                }
+              />
+              <TextRegular size="xs" color={Colors.NEUTRAL}>
+                Residence distance is not available yet.
+              </TextRegular>
+              {/* The first "Near me" can sit for several seconds behind the OS
+              permission prompt and the GPS fix. Without this the control looks
+              like it ignored the tap, and volunteers tap it again. */}
+              {locating && (
+                <View style={styles.locatingRow}>
+                  <ActivityIndicator size="small" color={Colors.PRIMARY} />
+                  <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+                    Getting your location…
+                  </TextRegular>
+                </View>
+              )}
+            </View>
+
+            {loading && (
+              <View style={styles.centered}>
+                <ActivityIndicator size="large" color={Colors.PRIMARY} />
+              </View>
+            )}
+
+            {error && (
+              <View style={styles.centered}>
+                <TextRegular
+                  color={Colors.ERROR}
+                  accessibilityLiveRegion="polite"
                 >
-                  <View style={styles.shelterRow}>
-                    {/* testID sits on the radio, not the row: the row also
-                        contains the directory link, and a centre-tap would open
-                        the browser instead of selecting. */}
-                    <Pressable
-                      testID="shelter-option-radio"
-                      style={styles.shelterRadio}
-                      onPress={toggleSelection}
-                      hitSlop={8}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: isSelected }}
-                      accessibilityLabel={shelter.name}
-                      accessibilityHint={
-                        isSelected
-                          ? 'double tap to clear this shelter selection'
-                          : 'double tap to select this shelter'
-                      }
-                    >
-                      {isSelected && <View style={styles.shelterRadioInner} />}
-                    </Pressable>
-                    <View style={styles.shelterInfo}>
-                      <ShelterCard
-                        id={shelter.id}
-                        name={shelter.name}
-                        place={shelter.location?.place}
-                        attributes={shelterAttributeLabels(shelter)}
-                        desiredAttributes={desiredAttributes}
-                      />
-                    </View>
-                  </View>
+                  Could not check the shelter list. Your draft is saved. Retry
+                  before submitting.
+                </TextRegular>
+                <Pressable
+                  testID="retry-shelters-btn"
+                  accessibilityRole="button"
+                  accessibilityLabel="retry loading shelters"
+                  accessibilityHint="refreshes the list and checks your saved shelter selection"
+                  disabled={loading || submitting}
+                  onPress={() => {
+                    // The query's error state presents any retry failure. Do not
+                    // discard the saved selection because a request failed.
+                    retry();
+                  }}
+                >
+                  <TextBold color={Colors.PRIMARY}>Retry</TextBold>
                 </Pressable>
-              );
-            }}
-            ListFooterComponent={
-              <>
-                {loadingMore && (
-                  <View style={styles.centered}>
-                    <ActivityIndicator size="small" color={Colors.PRIMARY} />
-                  </View>
-                )}
-                {selectedShelterId && (
-                  <View style={styles.confirmationBox}>
-                    <TextBold size="sm" color={Colors.SUCCESS}>
-                      {selectionLabel(selectedShelter)}
-                    </TextBold>
-                  </View>
-                )}
-              </>
-            }
-          />
-        )}
-      </View>
+              </View>
+            )}
+
+            {!loading && !error && shelters.length === 0 && (
+              <View style={styles.noShelters}>
+                <TextBold size="sm" color={Colors.NEUTRAL_DARK}>
+                  No shelters available
+                </TextBold>
+                <TextRegular size="sm" color={Colors.NEUTRAL}>
+                  Please check back later or contact your supervisor.
+                </TextRegular>
+              </View>
+            )}
+          </View>
+        }
+        renderItem={(shelter) => {
+          const isSelected = shelter.id === selectedShelterId;
+          return (
+            <Pressable
+              testID={`shelter-option-row-${shelter.id}`}
+              style={[
+                styles.shelterCard,
+                isSelected && styles.shelterCardSelected,
+              ]}
+              onPress={() => {
+                // Radio semantics for picking (tapping any card moves the
+                // selection here), plus tap-again-to-clear — a volunteer who
+                // selects the wrong shelter would otherwise have no way back
+                // to "nothing chosen" without cancelling the referral.
+                const next = isSelected ? null : shelter.id;
+                onSelectShelter(next);
+              }}
+              disabled={submitting}
+              accessible={false}
+            >
+              <View style={styles.shelterRow}>
+                {/* Automation targets the radio, not the whole row: a centre
+                    tap on the row can hit its separate directory link. */}
+                <Pressable
+                  testID={`shelter-option-radio-${shelter.id}`}
+                  onPress={() =>
+                    onSelectShelter(isSelected ? null : shelter.id)
+                  }
+                  disabled={submitting}
+                  hitSlop={8}
+                  accessibilityRole="radio"
+                  accessibilityState={{
+                    selected: isSelected,
+                    checked: isSelected,
+                    disabled: submitting,
+                  }}
+                  accessibilityLabel={shelter.name}
+                  accessibilityHint="selects this shelter; tap again to clear"
+                  style={styles.shelterRadio}
+                >
+                  {isSelected && <View style={styles.shelterRadioInner} />}
+                </Pressable>
+                <View style={styles.shelterInfo}>
+                  <ShelterCard
+                    id={shelter.id}
+                    name={shelter.name}
+                    place={shelter.location?.place}
+                    attributes={shelterAttributeLabels(shelter)}
+                    desiredAttributes={desiredAttributes}
+                  />
+                </View>
+              </View>
+            </Pressable>
+          );
+        }}
+        ListFooterComponent={
+          <View>
+            {/* Confirmation section - shown when shelter is selected */}
+            {selectionVerified && selectedShelter && (
+              <View style={styles.confirmationBox}>
+                <TextBold size="sm" color={Colors.SUCCESS}>
+                  ✓ Selected: {selectedShelter.name}
+                </TextBold>
+              </View>
+            )}
+          </View>
+        }
+      />
     </View>
   );
 }
@@ -264,6 +395,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: Spacings.xs,
     backgroundColor: Colors.WHITE,
@@ -276,11 +408,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.PRIMARY,
     borderRadius: 8,
-    paddingHorizontal: Spacings.sm,
+    paddingHorizontal: Spacings.xs,
     paddingVertical: Spacings.xxs,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   headerBtnFlex: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
+    alignItems: 'center',
+  },
+  headerIconBtn: {
+    width: 48,
     alignItems: 'center',
   },
   headerBtnDisabled: {
@@ -290,6 +429,18 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacings.md,
     paddingTop: Spacings.md,
+  },
+  // The shared Picker clips its value instead of ellipsizing it, so the
+  // distance control gets the full width rather than half of it.
+  sortRow: {
+    paddingHorizontal: Spacings.sm,
+    paddingBottom: Spacings.sm,
+    gap: Spacings.xs,
+  },
+  locatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.xs,
   },
   sectionLabel: {
     marginBottom: Spacings.xs,

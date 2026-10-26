@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { clearPersistedReferralDraft } from '../../screens/Client/Referrals/referralDraftStorage';
+import { endReferralDraftSession } from '../../draft/referralDraftStorage';
 import useClearLocalSession from './useClearLocalSession';
 
 export const LOGOUT_MUTATION = gql`
@@ -15,12 +15,10 @@ export default function useSignOut() {
   const [logout, { loading, error }] = useMutation(LOGOUT_MUTATION);
 
   const signOut = useCallback(async () => {
-    // The referral draft is a single on-device record that can hold sensitive
-    // answers; it must not survive into another user's session. Clear it first,
-    // before any await that can reject, so a failed cookie/store cleanup cannot
-    // skip it. `clearLocalSession` does not touch this record — it clears
-    // cookies, HMIS storage pointers, and cached queries.
-    clearPersistedReferralDraft();
+    // Wipe the unowned legacy draft and revoke loaded scoped draft callbacks
+    // before any await can reject. Scoped disk records remain account-isolated
+    // and can be explicitly removed in the profile's retention controls.
+    endReferralDraftSession();
 
     try {
       await logout();

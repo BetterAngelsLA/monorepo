@@ -1,6 +1,6 @@
 import {
   AuthContainer,
-  clearPersistedReferralDraft,
+  endReferralDraftSession,
   useClearLocalSession,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -29,12 +29,10 @@ export default function Auth() {
   // Clear local user data when landing on this screen — also covers sessions
   // that ended without a sign-out (expired session, 401 redirect, app restart).
   useEffect(() => {
-    // This screen is where an expired/401 session lands, which bypasses
-    // useSignOut. The referral draft can hold sensitive answers, so it is wiped
-    // on every session teardown, not only on an explicit sign-out — and before
-    // the await below, which can reject. `clearLocalSession` clears everything
-    // else (cookies, HMIS storage pointers, cached queries, active org).
-    clearPersistedReferralDraft();
+    // Expired/401 sessions bypass useSignOut. Wipe the unowned legacy draft and
+    // revoke loaded scoped draft callbacks before async cleanup. Scoped disk
+    // records can only be reopened by their authenticated account/environment.
+    endReferralDraftSession();
     void clearLocalSession();
   }, [clearLocalSession]);
 

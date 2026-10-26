@@ -10,10 +10,8 @@
  * commit-inventory-and-submission-plan.md). RVTM §7 Tier 1.
  */
 import {
-  PII_KEYS,
   decodeReferralNotes,
   encodeReferralNotes,
-  stripSidecar,
   summarizeIntake,
 } from './referralIntakeSidecar';
 
@@ -28,15 +26,29 @@ describe('encodeReferralNotes', () => {
   });
 
   it('drops empty values rather than storing them', () => {
-    // '' / null / false / [] are "unanswered", not answers.
+    // '' / null / [] are "unanswered", not answers. A false answer to a yes/no
+    // control is an answer and is covered separately below.
     const encoded = encodeReferralNotes(HUMAN, {
       storage: '',
       pets: null,
-      consent: false,
       tags: [],
     });
 
     expect(encoded).toBe(HUMAN);
+  });
+
+  it('stores a refused yes/no answer instead of treating it as unanswered', () => {
+    const encoded = encodeReferralNotes(HUMAN, { consent: 'No' });
+
+    expect(encoded).toContain('"consent":"No"');
+  });
+
+  it('does not turn a legacy unticked consent box into a refusal', () => {
+    // The old checkbox stored `false` for "unticked", which could not be told
+    // apart from "never asked"; recording "No" would invent an answer.
+    const encoded = encodeReferralNotes(HUMAN, { consent: false });
+
+    expect(encoded).not.toContain('consent');
   });
 
   it('appends a fenced JSON sidecar after the human notes', () => {
@@ -152,12 +164,11 @@ describe('decodeReferralNotes', () => {
   });
 });
 
-describe('stripSidecar', () => {
+describe('decoded human notes', () => {
   it('returns only the human notes — the sidecar must never leak', () => {
-    // Every human-facing path (display / email / export) relies on this.
     const encoded = encodeReferralNotes(HUMAN, { substances: '30 days' });
 
-    const stripped = stripSidecar(encoded);
+    const stripped = decodeReferralNotes(encoded).humanNotes;
 
     expect(stripped).toBe(HUMAN);
     expect(stripped).not.toContain('referral-intake');
@@ -190,15 +201,19 @@ describe('summarizeIntake', () => {
   });
 
   it('does NOT mask consent — a yes/no acknowledgement is not identifying', () => {
-    // GAP-21: consent was removed from PII_KEYS.
-    expect(PII_KEYS).not.toContain('consent');
+    // A yes/no acknowledgment is not identifying; verify both recorded answers.
     expect(summarizeIntake({ consent: true })).toBe(
       'DHS data-sharing consent: Yes',
     );
+    expect(summarizeIntake({ consent: 'No' })).toBe(
+      'DHS data-sharing consent: No',
+    );
+    // A legacy unticked box reads as unanswered, not as a refusal.
+    expect(summarizeIntake({ consent: false })).toBe('');
   });
 
   it('omits empty values from the summary', () => {
-    expect(summarizeIntake({ storage: 'Yes', pets: '', consent: false })).toBe(
+    expect(summarizeIntake({ storage: 'Yes', pets: '' })).toBe(
       'Storage needed: Yes',
     );
   });

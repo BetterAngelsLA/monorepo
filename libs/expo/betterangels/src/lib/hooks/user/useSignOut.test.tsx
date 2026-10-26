@@ -53,8 +53,8 @@ vi.mock('../../providers/user/UserProvider', () => ({
 
 // The draft is a separate on-device record that `useClearLocalSession` does not
 // touch, so `useSignOut` clears it itself.
-vi.mock('../../screens/Client/Referrals/referralDraftStorage', () => ({
-  clearPersistedReferralDraft: mocks.clearReferralDraft,
+vi.mock('../../draft/referralDraftStorage', () => ({
+  endReferralDraftSession: mocks.clearReferralDraft,
 }));
 
 describe('useSignOut', () => {

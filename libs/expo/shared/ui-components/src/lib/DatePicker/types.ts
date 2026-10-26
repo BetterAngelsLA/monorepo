@@ -1,7 +1,7 @@
 import { TMarginProps } from '@monorepo/expo/shared/static';
 import { ComponentProps } from 'react';
 import { Control, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import { StyleProp, ViewStyle } from 'react-native';
+import { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { DatePickerInput } from 'react-native-paper-dates';
 
 export type INumericDatePickerProps = Omit<
@@ -27,6 +27,8 @@ export interface IWheelDatePickerProps extends TMarginProps {
   mode: 'date' | 'time';
   onChange: (date?: Date) => void;
   style?: StyleProp<ViewStyle>;
+  /** Optional date-value styling; leaves other date pickers unchanged. */
+  inputStyle?: StyleProp<TextStyle>;
   label?: string;
   placeholder?: string;
   required?: boolean;

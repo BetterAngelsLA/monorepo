@@ -25,6 +25,13 @@ appId: ${MAESTRO_APP_ID}
     id: 'client-card-.*'
     index: 0
 
+# Client cards now open the profile summary before the full client screen.
+- runFlow:
+    when:
+      visible: 'See Details'
+    commands:
+      - tapOn: 'See Details'
+
 # the tab strip scrolls horizontally; Referrals sits after Docs
 - scrollUntilVisible:
     element:
