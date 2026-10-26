@@ -365,14 +365,14 @@ jobs:
         if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx run monorepo-image:image:ci-base-push --skip-nx-cache
+          yarn nx run monorepo-image:publish:ci-base --skip-nx-cache
           EOF
 
       - name: 🏗️ Build and push production image
         if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx run monorepo-image:image:production-push --skip-nx-cache
+          yarn nx run monorepo-image:publish:production --skip-nx-cache
           EOF
 
       - name: Build production side-effect images
