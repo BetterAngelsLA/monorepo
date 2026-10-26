@@ -7,18 +7,46 @@
   "tags": ["type:app", "scope:ci"],
   "targets": {
     "image": {
-      "executor": "nx:run-commands",
+      "executor": "@nx-tools/nx-container:build",
       "cache": false,
       "options": {
-        "command": "docker buildx build --load --file tools/monorepo-image/Dockerfile --target production --tag monorepo:production .",
-        "cwd": "."
+        "context": ".",
+        "file": "tools/monorepo-image/Dockerfile",
+        "load": true,
+        "push": false,
+        "tags": ["monorepo:local"]
       },
       "configurations": {
         "ci-base": {
-          "command": "docker buildx build --load --file tools/monorepo-image/Dockerfile --target ci-base --tag monorepo:ci-base ."
+          "target": "ci-base",
+          "tags": ["monorepo:ci-base"]
         },
         "production": {
-          "command": "docker buildx build --load --file tools/monorepo-image/Dockerfile --target production --tag monorepo:production ."
+          "target": "production",
+          "tags": ["monorepo:production"]
+        }
+      }
+    },
+    "publish": {
+      "executor": "@nx-tools/nx-container:build",
+      "cache": false,
+      "options": {
+        "context": ".",
+        "file": "tools/monorepo-image/Dockerfile",
+        "builder": "${BUILDX_BUILDER}",
+        "push": true,
+        "provenance": "false",
+        "cache-from": ["type=registry,ref=${BRANCH_CACHE}", "type=registry,ref=${MAIN_CACHE}"],
+        "cache-to": ["type=registry,ref=${BRANCH_CACHE},mode=max"]
+      },
+      "configurations": {
+        "ci-base": {
+          "target": "ci-base",
+          "tags": ["${MONOREPO_IMAGE}:ci-base"]
+        },
+        "production": {
+          "target": "production",
+          "tags": ["${MONOREPO_IMAGE}:${DOCKER_TAG}"]
         }
       }
     }
