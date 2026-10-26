@@ -51,8 +51,14 @@ export interface UserProviderConfig<TUser, TQuery> {
   /**
    * Map the raw GraphQL ``currentUser`` (or ``undefined``) to the
    * app-specific user object.
+   *
+   * ``prev`` is the user currently in context (``undefined`` on the first
+   * load).  It is passed so an implementation can merge a payload *over* the
+   * current user instead of replacing it: a read that was already in flight
+   * when the app wrote locally resolves afterwards still carrying the older
+   * server state, and applying it verbatim would undo the newer local truth.
    */
-  parseUser: (data: unknown) => TUser | undefined;
+  parseUser: (data: unknown, prev: TUser | undefined) => TUser | undefined;
 
   /**
    * Return ``true`` when the errors indicate the session is expired or
@@ -180,21 +186,28 @@ export function createUserProvider<
           extensions?: Record<string, unknown>;
         }[];
       }) => {
+        // A payload without a user is not a sign-out (`isUnauthenticated` is).
+        // It is a read that resolved empty — a failed request, a reset cache,
+        // one that resolved across a local write — and replacing the user there
+        // blanked every permission and the org list until the next read.
         if (isUnauthenticated(res.errors)) {
           setUser(undefined);
-        } else {
-          setUser(parseUser(res.data?.currentUser));
+        } else if (res.data?.currentUser != null) {
+          // Functional update so `parseUser` sees the user already in context:
+          // a read issued before a local write can resolve after it, and the
+          // app decides what wins rather than the resolution order doing so.
+          setUser((prev) => parseUser(res.data?.currentUser, prev));
         }
       },
-      // parseUser and isUnauthenticated are factory-level params — they're
-      // stable references captured once at module init, so omitting them from
-      // the dep array is intentional and safe.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // parseUser and isUnauthenticated are factory-level params — stable
+      // references captured once at module init — so the empty dep array is
+      // intentional.
       [],
     );
 
     useEffect(() => {
       if (!loading) {
+
         // error is typed as ErrorLike but is an ApolloError at runtime
         // with graphQLErrors — narrow via runtime check.
         const gqlErrors =
@@ -208,12 +221,19 @@ export function createUserProvider<
       }
     }, [loading, data, error, updateUser]);
 
+    const organizations = useMemo(
+      () =>
+        user?.organizations ? mapOrganizations(user.organizations) : undefined,
+      [user, mapOrganizations],
+    );
+
     const refetchUser = useCallback(async () => {
       try {
         const res = await refetch();
         updateUser(res);
       } catch {
-        setUser(undefined);
+        // A thrown refetch is a transport failure, not a sign-out. Keep the
+        // last known user: only `isUnauthenticated` on a read ends the session.
       }
     }, [refetch, updateUser]);
 
@@ -236,11 +256,7 @@ export function createUserProvider<
 
     return (
       <UserContext.Provider value={contextValue}>
-        <ActiveOrgProvider
-          organizations={
-            user?.organizations ? mapOrganizations(user.organizations) : []
-          }
-        >
+        <ActiveOrgProvider organizations={organizations}>
           {children}
         </ActiveOrgProvider>
       </UserContext.Provider>

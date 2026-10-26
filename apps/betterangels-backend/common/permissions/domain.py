@@ -11,9 +11,9 @@ one of two states:
   enforceable at any org, and legacy ``PermissionGroup`` rows are INERT: not
   reported and never consulted for authority.  ``LEGACY_INERT_APPS`` lists
   these — shelters, teams, reports, member management (``organizations.*`` on
-  the org root), and the client family (clients, RFC 0002).  Every
-  ORG_ADMIN/ORG_SUPERUSER template permission is grant-backed, so the legacy
-  arm is fully redundant for them.
+  the org root), the client family (clients, RFC 0002), and referrals.  Every
+  permission of those apps is grant-backed by a scoped Role, so the legacy arm
+  is fully redundant for them.
 * legacy-only — enforced via legacy ``PermissionGroup`` rows + guardian (the
   notes / service-request domains; task and client-document writes ride their
   own tiers next, RFC 0002/0003); grant rows are irrelevant and the global tier
@@ -29,9 +29,13 @@ over.
 
 #: Grant-only domains — legacy ``PermissionGroup`` rows are inert: not reported
 #: and never consulted for authority.  Shelters, teams, reports, member
-#: management (``organizations.*`` — bound to the org-root Organization model),
-#: and the client family (RFC 0002 — SHARED read / SHARED write).
-LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams", "reports", "organizations", "clients"})
+#: management (organizations.* — bound to the org-root Organization model), the
+#: client family (RFC 0002 — SHARED read / SHARED write), and referrals (the
+#: whole bundle rides the scoped ``Caseworker`` Role; the template carries no
+#: referral permission, so nothing legacy is left to consult).
+LEGACY_INERT_APPS: frozenset[str] = frozenset(
+    {"shelters", "teams", "reports", "organizations", "clients", "referrals"}
+)
 
 #: Domains where the global tier is enforceable at any org — exactly the
 #: grant-only set (the effective per-org report may fold global-tier

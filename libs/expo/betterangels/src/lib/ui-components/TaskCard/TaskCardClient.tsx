@@ -42,7 +42,7 @@ export default function TaskCardClient(props: TaskCardClientProps) {
         imageUrl={profilePhotoUrl || undefined}
       />
       <TextBold size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-        {firstName} {lastName}
+        {[firstName, lastName].filter(Boolean).join(' ')}
       </TextBold>
     </Pressable>
   );

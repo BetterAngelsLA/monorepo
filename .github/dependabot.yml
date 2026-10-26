@@ -45,12 +45,17 @@ updates:
           - 'boto3-stubs'
 
   - package-ecosystem: 'docker'
-    directory: '/'
+    directory: '/tools/monorepo-image'
     schedule:
       interval: 'weekly'
 
   # App Level Scanning
   - package-ecosystem: 'docker'
     directory: '/apps/nginx'
+    schedule:
+      interval: 'weekly'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
       interval: 'weekly'

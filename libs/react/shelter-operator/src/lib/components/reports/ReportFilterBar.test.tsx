@@ -1,4 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { getDefaultStore } from 'jotai';
+import { dateRangeFilterAtom } from '../date-range-filter';
 import { ReportFilterBar } from './ReportFilterBar';
 
 const fetchMock = vi.fn();
@@ -13,13 +15,10 @@ vi.mock('../base-ui/toast', () => ({
 }));
 
 // The atom defaults to LAST_30_DAYS off the real clock; pin it so the
-// start/end params are predictable.
-vi.mock('jotai', () => ({
-  useAtomValue: () => ({
-    preset: 'LAST_30_DAYS',
-    range: { from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) },
-  }),
-}));
+// start/end params are predictable. The bar now renders the real date
+// controls, which read and write this atom, so seed the store rather than
+// mocking jotai out from under them.
+const store = getDefaultStore();
 
 function exportResponse(filename = '20260601_20260630_shelter_report.zip') {
   return {
@@ -41,6 +40,10 @@ function openModalAndExport() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  store.set(dateRangeFilterAtom, {
+    preset: 'LAST_30_DAYS',
+    range: { from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) },
+  });
   URL.createObjectURL = vi.fn(() => 'blob:report');
   URL.revokeObjectURL = vi.fn();
   HTMLAnchorElement.prototype.click = vi.fn();

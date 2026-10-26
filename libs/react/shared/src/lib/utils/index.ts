@@ -8,4 +8,5 @@ export * from './instagram';
 export * from './maps';
 export * from './platform';
 export * from './storage';
+export * from './stripEnvironmentTag';
 export * from './youtube';

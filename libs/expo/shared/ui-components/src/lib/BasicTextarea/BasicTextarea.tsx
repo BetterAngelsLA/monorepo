@@ -71,7 +71,7 @@ export function BasicTextarea(props: IBasicTextareaProps) {
         },
       ]}
     >
-      {label && (
+      {!!label && (
         <View style={styles.label}>
           <Text style={styles.labelText}>{label}</Text>
           {required && <Text style={styles.required}>*</Text>}

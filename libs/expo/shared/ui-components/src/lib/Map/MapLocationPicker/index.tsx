@@ -3,12 +3,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { LocationObject } from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
-import RNMapView, {
-  MapPressEvent,
-  Marker,
-  PoiClickEvent,
-  PROVIDER_GOOGLE,
-} from 'react-native-maps';
+import type { MapPressEvent, PoiClickEvent } from 'react-native-maps';
 import openMap from 'react-native-open-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BasicInput from '../../BasicInput';
@@ -16,6 +11,7 @@ import TextRegular from '../../TextRegular';
 import { useGooglePlaces } from '../../providers/GooglePlacesProvider';
 import { MapDirectionsActionSheet } from '../MapDirectionsActionSheet';
 import { MapLocateMeBtn } from '../MapLocateMeBtn';
+import RNMapView, { Marker, PROVIDER_GOOGLE } from '../mapsApi';
 import type { TMapView } from '../types';
 import { SelectedLocationPanel } from './SelectedLocationPanel';
 import { IMapLocationPickerProps, TLocationData } from './types';

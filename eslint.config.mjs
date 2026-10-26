@@ -190,8 +190,36 @@ export default [
             // which does not resolve tsconfig path aliases, so a scoped import
             // fails at runtime with "Cannot find module".
             'tools/codegen/.*',
+            // tools/shared holds plain files with no project.json, so they are
+            // not in the project graph: a relative import of one is reported as
+            // an "external resource". Storybook's .storybook/main.ts is a `.ts`
+            // file, so unlike the vite.config.mts consumers it is linted and the
+            // import is rejected there.
+            'tools/shared/.*',
           ],
           depConstraints,
+        },
+      ],
+    },
+  },
+
+  // Packages that must never be imported directly: `react-native-keyboard-controller`
+  // is native-only and breaks the web bundle before React renders. Import it through
+  // the Keyboard seam instead, which resolves its `.web.tsx` twin; the seam's native
+  // half disables this rule inline.
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-native-keyboard-controller',
+              message:
+                "Import from '@monorepo/expo/shared/ui-components' (the Keyboard seam) instead. The package is native-only and is not bundled for web.",
+            },
+          ],
         },
       ],
     },

@@ -1,3 +1,5 @@
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { ReferralPermissions } from '@monorepo/ba-platform/permissions';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   Loading,
@@ -6,15 +8,25 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ComponentType, ReactElement, useEffect, useState } from 'react';
+import {
+  Activity,
+  ComponentType,
+  ReactElement,
+  useEffect,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
+import { HeaderSlot } from '../../navigation';
 import { FeatureFlags } from '../../static';
 import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
 import { ClientNavMenu } from './ClientNavMenu';
 import ClientProfileView from './ClientProfile';
-import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
+import ClientTabs, {
+  ClientViewTabEnum,
+  resolveClientTab,
+} from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import { InteractionLocations } from './Locations';
@@ -87,13 +99,14 @@ export default function Client({
   const router = useRouter();
   const { newTab } = useLocalSearchParams<{ newTab?: ClientViewTabEnum }>();
   const referralsEnabled = useFeatureFlagActive(FeatureFlags.REFERRALS);
+  const { hasPermission } = useActiveOrg();
+  const canViewReferrals =
+    referralsEnabled && hasPermission(ReferralPermissions.View);
 
   useEffect(() => {
-    if (newTab) {
-      if (newTab === ClientViewTabEnum.Referrals && !referralsEnabled) return;
-      setTab(newTab);
-    }
-  }, [newTab, referralsEnabled]);
+    const requestedTab = resolveClientTab(newTab, canViewReferrals);
+    if (requestedTab) setTab(requestedTab);
+  }, [newTab, canViewReferrals]);
 
   if (loading) {
     return (
@@ -116,11 +129,10 @@ export default function Client({
   }
 
   // A stale or deep-linked Referrals tab must not render the referral screen
-  // once the flag is off; derive the active tab so no frame shows it.
+  // once either gate closes (flag or the active org's capability); derive the
+  // active tab so no frame shows it.
   const activeTab =
-    tab === ClientViewTabEnum.Referrals && !referralsEnabled
-      ? ClientViewTabEnum.Profile
-      : tab;
+    resolveClientTab(tab, canViewReferrals) ?? ClientViewTabEnum.Profile;
 
   // Referral work changed the header/navbar layout; keep the pre-referral look
   // while the flag is off so production users see no change. With the flag, the
@@ -153,23 +165,27 @@ export default function Client({
             </TextBold>
           ),
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
-              accessibilityHint="goes to previous screen"
-              onPress={() => router.dismissTo(arrivedFrom || '/')}
-              testID="client-screen-back-btn"
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            <HeaderSlot side="left">
+              <Pressable
+                accessibilityRole="button"
+                accessible
+                accessibilityHint="goes to previous screen"
+                onPress={() => router.dismissTo(arrivedFrom || '/')}
+                testID="client-screen-back-btn"
+              >
+                <TextRegular color={Colors.WHITE}>Back</TextRegular>
+              </Pressable>
+            </HeaderSlot>
           ),
           headerRight: () => (
-            <ClientNavMenu
-              clientProfileId={clientProfileId}
-              onDeleted={() => {
-                router.dismissTo(arrivedFrom || '/');
-              }}
-            />
+            <HeaderSlot side="right">
+              <ClientNavMenu
+                clientProfileId={clientProfileId}
+                onDeleted={() => {
+                  router.dismissTo(arrivedFrom || '/');
+                }}
+              />
+            </HeaderSlot>
           ),
         }}
       />
@@ -180,7 +196,11 @@ export default function Client({
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         px={0}
       >
-        {showHeader && <ClientHeader client={data?.clientProfile} />}
+        {/* Hidden rather than unmounted: a fresh image element means the browser
+            lays out and decodes the profile photo again. */}
+        <Activity mode={showHeader ? 'visible' : 'hidden'}>
+          <ClientHeader client={data?.clientProfile} />
+        </Activity>
         <UploadProgressBar />
         <ClientTabs selectedTab={activeTab} setTab={setTab} />
         {getTabComponent(activeTab, data, openCard)}

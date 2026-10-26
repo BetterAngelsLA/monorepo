@@ -47,7 +47,7 @@ export default function NoteByline(props: INoteBylineProps) {
         </TextMedium>
         <TextRegular selectable size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
-          {team?.name && (
+          {!!team?.name && (
             <TextRegular selectable size="xs">
               {' - '}
               {team.name}

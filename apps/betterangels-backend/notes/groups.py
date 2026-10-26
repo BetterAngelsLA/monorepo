@@ -8,6 +8,7 @@ from clients.models import (
 from common.models import Attachment
 from common.permissions.config import RoleDef, TemplateConfig
 from notes.models import Note, ServiceRequest
+from referrals.models import Referral
 from tasks.models import Task
 from teams.models import Team
 
@@ -54,11 +55,11 @@ CASEWORKER = TemplateConfig(
 )
 
 
-# ── Role definition (ADR 0001 §2.2 — caseworker teams-read slice) ────────
+# ── Role definition (ADR 0001 §2.2 — scoped caseworker capability) ───────
 # The scoped ``Caseworker`` Role backs the cut-over slices of the caseworker
-# template.  Teams read shipped first (``teams.view_team``); the clients
-# cutover (ADR 0001 §5.1, RFC 0002) adds the client family — grant-only now
-# (SHARED read / SHARED write).  Notes/tasks stay legacy until RFC 0003.
+# template: teams read (``teams.view_team``), the client family (ADR 0001 §5.1,
+# RFC 0002 — SHARED read / SHARED write) and referrals (RFC 0003).  Notes/tasks
+# stay legacy until their own cutover.
 CASEWORKER_ROLE = RoleDef(
     name=CASEWORKER.name,
     permissions=[
@@ -84,6 +85,11 @@ CASEWORKER_ROLE = RoleDef(
         SocialMediaProfile.perms.CHANGE,
         SocialMediaProfile.perms.DELETE,
         SocialMediaProfile.perms.VIEW,
+        # Referrals ride the same scoped Role (RFC 0003 / #2574).
+        Referral.perms.ADD,
+        Referral.perms.CHANGE,
+        Referral.perms.VIEW,
+        Referral.perms.DELETE,
     ],
     is_invitable=CASEWORKER.is_invitable,
 )

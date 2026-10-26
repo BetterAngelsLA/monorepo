@@ -1,15 +1,23 @@
+import { parseDateString, toDateString } from '@monorepo/shared/scalars';
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  DatePicker,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { Pressable, TextInput, View } from 'react-native';
 import { MemoryIcon } from './IntakeFieldMarkers';
 import { GREEN, RED, styles } from './intakeFormStyles';
-import type {
-  IntakeAnswers,
-  IntakeControlValue,
-  IntakeFieldDefinition,
-  IntakeFieldKey,
-} from './intakeFields';
-
+import { referralArrival } from './shared/referralPresentation';
+import { useReferralDay } from './useReferralDay';
+import {
+  intakeRequirementLabel,
+  isRequiredIntakeField,
+  type IntakeAnswers,
+  type IntakeControlValue,
+  type IntakeFieldDefinition,
+  type IntakeFieldKey,
+} from '../../../draft/intakeFields';
 type FormField = IntakeFieldDefinition & { key: IntakeFieldKey };
 
 export function Field({
@@ -26,11 +34,6 @@ export function Field({
       <View style={styles.fieldHead}>
         <View style={styles.fieldLabelRow}>
           <TextBold size="sm">{f.label}</TextBold>
-          {f.requirement !== 'optional' && (
-            <TextRegular size="xs" color={Colors.ERROR}>
-              *
-            </TextRegular>
-          )}
         </View>
         <View style={styles.fieldMarkers}>
           {f.backend.mode === 'unmapped' ? (
@@ -42,6 +45,14 @@ export function Field({
           )}
         </View>
       </View>
+
+      <TextRegular
+        testID={`intake-${f.key}-requirement`}
+        size="xs"
+        color={isRequiredIntakeField(f) ? Colors.ERROR : Colors.NEUTRAL_DARK}
+      >
+        {intakeRequirementLabel(f)}
+      </TextRegular>
 
       {f.help && (
         <TextRegular size="xs" color={Colors.NEUTRAL} style={styles.help}>
@@ -63,6 +74,60 @@ export function Control({
   value: IntakeAnswers[IntakeFieldKey];
   onChange: (v: IntakeControlValue) => void;
 }) {
+  if (f.control === 'date') {
+    return <ArrivalDateControl f={f} value={value} onChange={onChange} />;
+  }
+  return <NonDateControl f={f} value={value} onChange={onChange} />;
+}
+
+function ArrivalDateControl({
+  f,
+  value,
+  onChange,
+}: Parameters<typeof Control>[0]) {
+  const arrival = referralArrival(value, useReferralDay());
+  return (
+    <View>
+      <DatePicker
+        type="wheel"
+        mode="date"
+        format="MM/dd/yyyy"
+        placeholder={f.label}
+        testId={`${f.key}-input`}
+        inputStyle={arrival?.isPast ? { color: Colors.ERROR } : undefined}
+        value={
+          typeof value === 'string' && value
+            ? parseDateString(value)
+            : undefined
+        }
+        onChange={(date) => onChange(date ? toDateString(date) : '')}
+      />
+      {arrival?.isPast && (
+        <TextRegular
+          testID="requested-arrival-past-warning"
+          color={Colors.ERROR}
+          accessibilityLiveRegion="polite"
+        >
+          Past date. Saving is still allowed.
+        </TextRegular>
+      )}
+      {!!value && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Clear ${f.label}`}
+          accessibilityHint="removes the requested date"
+          onPress={() => onChange('')}
+        >
+          <TextRegular size="sm" color={Colors.PRIMARY}>
+            Clear date
+          </TextRegular>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+function NonDateControl({ f, value, onChange }: Parameters<typeof Control>[0]) {
   if (f.control === 'yesno') {
     return (
       <View style={styles.chips}>
@@ -76,6 +141,8 @@ export function Control({
               style={[styles.chip, on && styles.chipOn]}
               accessibilityRole="radio"
               accessibilityState={{ selected: on }}
+              accessibilityLabel={`${f.label}: ${opt}`}
+              accessibilityHint={`selects ${opt} for ${f.label}`}
             >
               <TextRegular
                 size="xs"
@@ -126,29 +193,6 @@ export function Control({
           );
         })}
       </View>
-    );
-  }
-
-  if (f.control === 'checkbox') {
-    const checked = value === true;
-    return (
-      <Pressable
-        style={styles.checkboxRow}
-        onPress={() => onChange(!checked)}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked }}
-      >
-        <View style={[styles.checkbox, checked && styles.checkboxOn]}>
-          {checked && (
-            <TextRegular size="xs" color={Colors.WHITE}>
-              ✓
-            </TextRegular>
-          )}
-        </View>
-        <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
-          {f.checkboxLabel}
-        </TextRegular>
-      </Pressable>
     );
   }
 

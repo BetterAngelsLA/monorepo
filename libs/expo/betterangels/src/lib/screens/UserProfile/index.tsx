@@ -1,4 +1,5 @@
 import { useMutation } from '@apollo/client/react';
+import { useApiConfig } from '@monorepo/ba-platform';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Avatar,
@@ -9,16 +10,24 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { DeleteCurrentUserDocument } from '../../apollo';
-import { useSignOut, useSnackbar, useUser } from '../../hooks';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { ReferralDraftRetention } from '../Client/Referrals/ReferralDraftRetention';
+import { discardAccountReferralDrafts } from '../../draft/referralDraftStorage';
+import {
+  DeleteCurrentUserDocument,
+  extractOperationInfoMessage,
+} from '../../apollo/index';
+import { useSignOut, useSnackbar, useUser } from '../../hooks/index';
+import { HeaderSlot } from '../../navigation/index';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {
   const { user } = useUser();
+  const { apiUrl } = useApiConfig();
   const { showSnackbar } = useSnackbar();
 
   if (!user) throw new Error('Something went wrong');
+  const userId = user.id;
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -26,13 +35,15 @@ export default function UserProfile() {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TextButton
-          color={Colors.WHITE}
-          regular
-          title="Edit"
-          accessibilityHint="goes to the edit user profile screen"
-          onPress={() => router.navigate({ pathname: '/user-profile/edit' })}
-        />
+        <HeaderSlot side="right">
+          <TextButton
+            color={Colors.WHITE}
+            regular
+            title="Edit"
+            accessibilityHint="goes to the edit user profile screen"
+            onPress={() => router.navigate({ pathname: '/user-profile/edit' })}
+          />
+        </HeaderSlot>
       ),
     });
   }, [user, navigation, router]);
@@ -57,7 +68,39 @@ export default function UserProfile() {
 
   async function deleteCurrentUserFunction() {
     try {
-      await deleteCurrentUser();
+      const result = await deleteCurrentUser();
+
+      // A refusal (e.g. the account still owns an organization) arrives as a
+      // resolved `OperationInfo` payload rather than a thrown error — see
+      // apps/betterangels-backend/docs/graphql_errors.md. The account still
+      // exists, so signing out here would strand the user without one.
+      if (result.data?.deleteCurrentUser?.__typename === 'OperationInfo') {
+        showSnackbar({
+          message:
+            extractOperationInfoMessage(result, 'deleteCurrentUser') ??
+            'Your account could not be deleted. Please try again.',
+          type: 'error',
+        });
+
+        return;
+      }
+
+      if (result.data?.deleteCurrentUser?.__typename !== 'DeletedObjectType') {
+        showSnackbar({
+          message: 'Your account could not be deleted. Please try again.',
+          type: 'error',
+        });
+        return;
+      }
+      try {
+        discardAccountReferralDrafts({ apiUrl, userId });
+      } catch {
+        showSnackbar({
+          message:
+            'Your account was deleted, but some local referral drafts could not be removed.',
+          type: 'error',
+        });
+      }
       router.navigate('/auth');
       signOut();
     } catch (err) {
@@ -71,7 +114,7 @@ export default function UserProfile() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View
         style={{
           alignItems: 'center',
@@ -88,7 +131,7 @@ export default function UserProfile() {
           accessibilityHint="user profile image"
         />
         <TextBold>
-          {user?.firstName} {user?.lastName}
+          {[user?.firstName, user?.lastName].filter(Boolean).join(' ')}
         </TextBold>
       </View>
       <View style={{ paddingHorizontal: Spacings.sm, gap: Spacings.xs }}>
@@ -96,6 +139,7 @@ export default function UserProfile() {
           <InfoCard key={index} title={item.title} value={item.value} />
         ))}
 
+        <ReferralDraftRetention account={{ apiUrl, userId: user.id }} />
         <DeleteModal
           body={`All data associated with your account will be deleted. This action cannot be undone.`}
           title={`Permanently delete your account?`}
@@ -111,7 +155,7 @@ export default function UserProfile() {
           }
         />
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

@@ -1,10 +1,11 @@
 import { execSync } from 'child_process';
 
 /**
- * Computes the base path for the current context.
+ * The base path the *deployed* URL uses — what the deploy tooling addresses.
  *
  * - Dev server → "/"
- * - VITE_APP_BASE_PATH env (explicit override) → use as-is
+ * - VITE_APP_BASE_PATH env (explicit override) → use as-is (it must start with
+ *   `/`; without that, web asset URLs come out relative and the page is blank)
  * - Production configuration → "/"
  * - CI: BRANCH_NAME env → "/branches/{branch}"
  * - Git fallback → "/branches/{branch}"
@@ -28,6 +29,23 @@ export function getBranchBasePath() {
     }
   }
   return `/branches/${branch}`;
+}
+
+/**
+ * The base path a *build* should use — what the app bakes into `base` and
+ * `<base href>`.
+ *
+ * Local builds, and the preview server they are served by, live at the root;
+ * only CI produces a branch-scoped build. Deploy and preview-comment code calls
+ * `getBranchBasePath()` instead: a local `nx run <app>:deploy --configuration
+ * preview` still uploads to `/branches/<branch>/`, which is not where a local
+ * build would have put its assets.
+ */
+export function getBuildBasePath() {
+  if (process.env.NODE_ENV === 'development') return '/';
+  if (process.env.VITE_APP_BASE_PATH) return process.env.VITE_APP_BASE_PATH;
+  if (!process.env.CI) return '/';
+  return getBranchBasePath();
 }
 
 /**

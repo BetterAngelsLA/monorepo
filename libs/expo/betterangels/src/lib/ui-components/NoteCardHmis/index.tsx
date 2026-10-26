@@ -44,7 +44,7 @@ export default function NoteCardHmis(props: INoteCardProps) {
         !!hmisNote.requestedServices?.length) && (
         <NoteCardServicesHmis note={hmisNote} />
       )}
-      {date && <TextRegular size="sm">{date}</TextRegular>}
+      {!!date && <TextRegular size="sm">{date}</TextRegular>}
     </Pressable>
   );
 }

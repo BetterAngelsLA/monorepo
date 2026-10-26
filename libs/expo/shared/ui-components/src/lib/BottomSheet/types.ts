@@ -20,6 +20,7 @@
 import { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { ComponentType, ReactNode } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
+import type { BottomSheetTopBarProps } from './core/BottomSheetTopBar';
 
 export type StackBehavior = BottomSheetModalProps['stackBehavior'];
 
@@ -145,13 +146,19 @@ export type BottomSheetWrapperOptions = {
    * If undefined, resolved dynamically based on variant + snapPoints.
    */
   showHandle?: boolean;
+
+  /**
+   * Optional customization for the unified `BottomSheetTopBar` — styles, left
+   * slot, header, indicator style. Passed straight through as its props.
+   */
+  topBarProps?: BottomSheetTopBarProps;
 };
 
 /**
  * Header-Level Options
  *
- * These options control rendering of the `BottomSheetHeader`
- * component and do NOT belong to Gorhom.
+ * Content and appearance for the sheet's header region — the close button and
+ * the optional second row of `BottomSheetTopBar`. Not part of Gorhom's API.
  */
 export interface BottomSheetHeaderOptions {
   /**

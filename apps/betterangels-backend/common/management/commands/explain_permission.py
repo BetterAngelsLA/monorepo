@@ -10,7 +10,15 @@ Prints the verdict from the canonical predicate (``can`` / ``can_obj`` /
 behind it: global tier, direct grant, delegated grant, object grant (not wired
 yet), and the legacy ``PermissionGroup`` arm with its live/inert domain posture.
 
-Exits 0 when allowed, 1 when denied — script-friendly.  See
+Exits 0 when the verdict is ALLOWED, 1 when DENIED — script-friendly.
+
+**Read the posture before trusting the exit code.**  For a domain that has not
+cut over to grants (today: notes, clients) enforcement still rides the legacy
+``PermissionGroup`` arm, and the verdict printed here is what the grant model
+*would* answer after cutover — so it can disagree with live enforcement in
+either direction.  Those runs are labelled ``legacy domain — NOT cut over yet``
+and carry an explanatory note; a caller that needs the live answer for such a
+domain must consult ``user.has_perm()`` as well.  See
 ``common.permissions.explain`` and ``docs/adr/0001-grant-based-authorization.md``.
 """
 
@@ -70,6 +78,13 @@ class Command(BaseCommand):
         self.stdout.write(
             f"verdict     {'ALLOWED' if explanation.verdict else 'DENIED'}  ({explanation.mode} predicate)"
         )
+        if not explanation.cut_over:
+            # The verdict is the grant model's, not live enforcement's — spell
+            # that out where the verdict is read, not only in --help.
+            self.stdout.write(
+                "            ^ grant-model answer — this domain is not cut over, so live enforcement "
+                "may differ (see notes)"
+            )
         self.stdout.write("arms")
         for arm in explanation.arms:
             self.stdout.write(f"  {arm.label:<13} {'YES' if arm.holds else 'no':<4} {arm.detail}")

@@ -109,3 +109,10 @@ logs/
 apps/betterangels/android/
 libs/expo/modules/*/android/build/
 .vitest
+
+# Local git worktrees (full checkouts — never commit)
+.worktrees/
+
+# Playwright browser binaries (installed into the workspace: the default
+# ~/Library/Caches/ms-playwright is outside the writable workspace).
+.pw-browsers/

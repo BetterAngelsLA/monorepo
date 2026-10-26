@@ -22,7 +22,7 @@ export function FileUploadsPreview(props: IUploadPreview) {
         paddingTop: Spacings.sm,
       }}
     >
-      {title && (
+      {!!title && (
         <TextBold mb="sm" size="md">
           {title}
         </TextBold>

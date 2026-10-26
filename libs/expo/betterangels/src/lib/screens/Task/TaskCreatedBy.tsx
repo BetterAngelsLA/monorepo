@@ -31,10 +31,14 @@ export default function TaskCreatedBy(props: TaskCreatedByProps) {
       />
       <View>
         <TextBold size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-          {createdBy?.firstName} {createdBy?.lastName}
+          {[createdBy?.firstName, createdBy?.lastName]
+            .filter(Boolean)
+            .join(' ')}
         </TextBold>
         <TextRegular size="sm">
-          {organization?.name} {team?.name && ` - ${team.name}`}
+          {[organization?.name, team?.name && `- ${team.name}`]
+            .filter(Boolean)
+            .join(' ')}
         </TextRegular>
       </View>
     </View>

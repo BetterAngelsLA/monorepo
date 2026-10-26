@@ -2,6 +2,7 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { CloseButton, TextBold } from '@monorepo/expo/shared/ui-components';
 import { TModalHeaderConfig, TModalPresentationType } from '../providers';
 import { HeaderLeftButton } from './HeaderLeftButton';
+import { HeaderSlot } from './HeaderSlot';
 import { headerStyles, THeaderStyleName } from './headerStyles';
 
 /**
@@ -41,14 +42,16 @@ function getModalCloseBtn(props: TModalCloseBtnProps) {
   const { onClose, iconColor = Colors.WHITE, label } = props;
 
   return (
-    <CloseButton
-      onClose={onClose}
-      testId="modal-screen-close-btn"
-      iconColor={iconColor}
-      accessibilityHint="close modal"
-    >
-      {label ? <TextBold color={iconColor}>{label}</TextBold> : undefined}
-    </CloseButton>
+    <HeaderSlot side="right">
+      <CloseButton
+        onClose={onClose}
+        testId="modal-screen-close-btn"
+        iconColor={iconColor}
+        accessibilityHint="close modal"
+      >
+        {label ? <TextBold color={iconColor}>{label}</TextBold> : undefined}
+      </CloseButton>
+    </HeaderSlot>
   );
 }
 

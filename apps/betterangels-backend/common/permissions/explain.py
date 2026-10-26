@@ -20,7 +20,8 @@ difference between the two is exactly the cutover's remaining surface.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from difflib import get_close_matches
+from typing import TYPE_CHECKING, Any, Optional
 
 from common.permissions.domain import LEGACY_INERT_APPS
 
@@ -59,17 +60,40 @@ class Explanation:
 
 
 def _split_perm(perm: str) -> tuple[str, str]:
+    """Split and validate *perm* — format *and* existence in the modeled registry.
+
+    A typo (``shelters.view_shelterx``) would otherwise walk every arm, find
+    nothing, and report a denial indistinguishable from a real one: a debugger
+    answering "no authority" for a permission that does not exist.
+    """
     app_label, _, codename = perm.partition(".")
     if not app_label or not codename:
         raise ValueError(f"permission must be 'app_label.codename', got {perm!r}")
+
+    from common.permissions.utils import modeled_permission_strings
+
+    modeled = modeled_permission_strings()
+    if perm not in modeled:
+        hint = get_close_matches(perm, sorted(modeled), n=3, cutoff=0.6)
+        suggestion = f"  Did you mean: {', '.join(hint)}?" if hint else ""
+        raise ValueError(f"unknown permission {perm!r} — not a product-modeled permission.{suggestion}")
     return app_label, codename
 
 
-def _grant_carries(app_label: str, codename: str) -> dict[str, str]:
-    return {
-        "role__permissions__content_type__app_label": app_label,
-        "role__permissions__codename": codename,
-    }
+def _grant_carries(app_label: str, codename: str) -> dict[str, Any]:
+    """Filter kwargs for a ``Grant`` whose role carries ``app_label.codename``.
+
+    Role matching goes through ``selectors._roles_carrying_perm`` — the same
+    scoped-role definition (``is_global=False``) enforcement uses — rather than
+    re-deriving it here, so an arm can never report YES where ``scopes()``
+    returns DENIED.  A Grant referencing a global role is reachable in
+    production data (``loaddata``/shell; ``Grant.clean()`` blocks it, no DB
+    constraint does), and this is exactly the drift that would show up as a
+    debugger disagreeing with enforcement.
+    """
+    from common.permissions.selectors import _roles_carrying_perm
+
+    return {"role__in": _roles_carrying_perm(f"{app_label}.{codename}")}
 
 
 def _legacy_carries(app_label: str, codename: str) -> dict[str, str]:
@@ -198,6 +222,10 @@ def _object_arm(user: "User", app_label: str, codename: str) -> Arm:
     )
     wired = bool(OBJECT_GRANT_WHITELIST)
     if rows and not wired:
+        # Unreachable while OBJECT_GRANT_WHITELIST is empty: Grant.clean()
+        # refuses object-scoped rows, so `rows` is empty too.  Kept because the
+        # two guards are independent — the whitelist can be populated before
+        # the arm is wired, and permissions.E003 flags exactly that window.
         return Arm(
             "object grant",
             False,
@@ -273,6 +301,12 @@ def _notes(
     from common.permissions.selectors import ALL, scopes
 
     notes: list[str] = []
+    if not user.is_active:
+        # scopes() deliberately ignores is_active, so the verdict below still
+        # says ALLOWED.  The authority is real but unreachable — say so rather
+        # than letting the caller read the verdict as "this user can act".
+        notes.append("account is inactive — this authority is moot until reactivation")
+
     if not cut_over:
         app_label = _split_perm(perm)[0]
         notes.append(
@@ -287,8 +321,10 @@ def _notes(
             )
 
     s = scopes(user, perm)
-    if s is not ALL:
-        other_ids = [pk for pk in s.values_list("scope_org", flat=True) if org is None or pk != org.pk]
+    # Only meaningful against a reference org: in anywhere/object mode there is
+    # no "this org" for the others to be other than.
+    if org is not None and s is not ALL:
+        other_ids = [pk for pk in s.values_list("scope_org", flat=True) if pk != org.pk]
         if other_ids:
             from organizations.models import Organization
 
@@ -310,8 +346,17 @@ def explain(
     """Explain *user*'s authority for *perm* — at *org*, on *obj*, or anywhere.
 
     Pass at most one of *org* / *obj*.  The verdict is the canonical predicate
-    for the mode (``can`` / ``can_obj`` / ``can_anywhere``) — exactly what
-    enforcement would decide; the arms and notes explain how it got there.
+    for the mode (``can`` / ``can_obj`` / ``can_anywhere``), so it agrees with
+    anything already cut over to grants; the arms and notes explain how it got
+    there.
+
+    Read the caveat for legacy-only domains (today: notes, clients) from the
+    module docstring — it is not repeated here in full.  In short: enforcement
+    for those domains still rides the legacy ``PermissionGroup`` arm, so the
+    verdict is what the grant model *would* answer after cutover, which is not
+    necessarily what enforcement answers today.  ``Explanation.cut_over`` and
+    the notes flag which of the two worlds a given call is in; a caller that
+    needs the live answer must consult ``user.has_perm()`` as well.
     """
     from common.permissions.selectors import can, can_anywhere, can_obj
 

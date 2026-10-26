@@ -1,0 +1,46 @@
+query ReportSummary(
+  $organizationId: ID!
+  $startDate: Date
+  $endDate: Date
+  $dimension: RegionDimension
+  $regionCodes: [String!]
+) {
+  reportSummary(
+    organizationId: $organizationId
+    startDate: $startDate
+    endDate: $endDate
+    # The geographic group the whole page is scoped to. Omitting both is the unfiltered
+    # report; a dimension alone means every region of that dimension (see the resolver).
+    dimension: $dimension
+    regionCodes: $regionCodes
+  ) {
+    totalNotes
+    uniqueClients
+    startDate
+    endDate
+    notesByDate {
+      date
+      count
+    }
+    notesByTeam {
+      name
+      count
+    }
+    notesByPurpose {
+      name
+      count
+    }
+    uniqueClientsByDate {
+      date
+      count
+    }
+    topProvidedServices {
+      name
+      count
+    }
+    topRequestedServices {
+      name
+      count
+    }
+  }
+}

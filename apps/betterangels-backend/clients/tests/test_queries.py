@@ -3,12 +3,10 @@ from typing import Optional
 from unittest.mock import ANY
 
 import time_machine
-import waffle
 from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from model_bakery import baker
 from unittest_parametrize import parametrize
-from waffle.testutils import override_switch
 
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
@@ -39,7 +37,6 @@ from clients.tests.utils import (
 )
 from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS, MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from common.enums import ImagePresetEnum
-from common.imgproxy import IMGPROXY_SWITCH
 from notes.models import Note
 
 
@@ -73,9 +70,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 33
+        expected_query_count = 15
 
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         client_profile = response["data"]["clientProfile"]
@@ -145,8 +142,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }}
         """
 
-        expected_query_count = 24
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         client_profiles_data = response["data"]["clientProfiles"]
@@ -159,7 +156,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         IMGPROXY_SALT="68656C6C6F",
         IMGPROXY_LOCAL_URL="http://localhost:8080",
     )
-    @override_switch(IMGPROXY_SWITCH, active=True)
     def test_client_profiles_query_with_processed_photo(self) -> None:
         self._set_client_profile_photo(self.client_profile_2["id"])
 
@@ -183,12 +179,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }}
         """
 
-        # Warm waffle cache so is_imgproxy_enabled() doesn't add a flaky extra query
-        # when resolving profilePhoto.url for each result.
-        waffle.switch_is_active(IMGPROXY_SWITCH)
-
-        expected_query_count = 6
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         client_profiles_data = response["data"]["clientProfiles"]
@@ -215,8 +207,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 6
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"ordering": [{"firstName": sort_order}]})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], ClientProfile.objects.count())
@@ -262,8 +254,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             baker.make(Note, organization=organization, client_profile_id=self.client_profile_2["id"])
             baker.make(Note, organization=organization, client_profile_id=self.client_profile_2["id"])
 
-            expected_query_count = 6
-            with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+            expected_query_count = 4
+            with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self.execute_graphql(query, variables={"isActive": is_active})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
@@ -301,8 +293,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
 
-        expected_query_count = 7
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"search": search_value})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
@@ -394,8 +386,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             # Make two notes for Client 2 (active)
             baker.make(Note, organization=organization, client_profile=client_profile_2)
             baker.make(Note, organization=organization, client_profile=client_profile_2)
-            expected_query_count = 6
-            with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+            expected_query_count = 4
+            with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
@@ -504,8 +496,8 @@ class ClientContactQueryTestCase(ClientContactBaseTestCase):
         """
         variables = {"id": self.client_contact_1["id"]}
 
-        expected_query_count = 8
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         expected_client_contact = {
@@ -534,9 +526,9 @@ class ClientContactQueryTestCase(ClientContactBaseTestCase):
             }}
         """
 
-        expected_query_count = 6
+        expected_query_count = 4
 
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         results = response["data"]["clientContacts"]["results"]
@@ -561,8 +553,8 @@ class ClientHouseholdMemberQueryTestCase(ClientHouseholdMemberBaseTestCase):
         """
         variables = {"id": self.client_household_member_1["id"]}
 
-        expected_query_count = 8
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         expected_client_household_member = {
@@ -591,9 +583,9 @@ class ClientHouseholdMemberQueryTestCase(ClientHouseholdMemberBaseTestCase):
             }}
         """
 
-        expected_query_count = 6
+        expected_query_count = 4
 
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         results = response["data"]["clientHouseholdMembers"]["results"]
@@ -618,8 +610,8 @@ class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
         """
         variables = {"id": self.hmis_profile_1["id"]}
 
-        expected_query_count = 8
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         expected_hmis_profile = {
@@ -643,9 +635,9 @@ class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
             }}
         """
 
-        expected_query_count = 6
+        expected_query_count = 4
 
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         results = response["data"]["hmisProfiles"]["results"]
@@ -670,8 +662,8 @@ class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
         """
         variables = {"id": self.social_media_profile_1["id"]}
 
-        expected_query_count = 8
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         expected_social_media_profile = {
@@ -695,9 +687,9 @@ class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
             }}
         """
 
-        expected_query_count = 6
+        expected_query_count = 4
 
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         results = response["data"]["socialMediaProfiles"]["results"]

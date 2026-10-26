@@ -7,19 +7,29 @@ import TextButton from '../TextButton';
 export default function ActionModalFooter({
   onPrimaryPress,
   onSecondaryPress,
+  onTertiaryPress,
   secondaryButtonTitle,
+  tertiaryButtonTitle,
   primaryButtonTitle,
   setVisible,
 }: {
   onPrimaryPress: () => void;
   onSecondaryPress?: () => void;
+  onTertiaryPress?: () => void;
   secondaryButtonTitle?: string;
+  tertiaryButtonTitle?: string;
   primaryButtonTitle: string;
   setVisible: Dispatch<SetStateAction<boolean>>;
 }) {
   const handleSecondaryPress = () => {
     if (onSecondaryPress) {
       onSecondaryPress();
+    }
+    setVisible(false);
+  };
+  const handleTertiaryPress = () => {
+    if (onTertiaryPress) {
+      onTertiaryPress();
     }
     setVisible(false);
   };
@@ -33,23 +43,43 @@ export default function ActionModalFooter({
         gap: Spacings.xs,
       }}
     >
-      {secondaryButtonTitle && (
-        <View
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: Spacings.sm,
-          }}
-        >
-          <TextButton
-            fontSize="sm"
-            onPress={handleSecondaryPress}
-            color={Colors.PRIMARY}
-            accessibilityHint="cancel button"
-            title={secondaryButtonTitle}
-          />
-        </View>
-      )}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {!!secondaryButtonTitle && (
+          <View
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: Spacings.sm,
+            }}
+          >
+            <TextButton
+              fontSize="sm"
+              onPress={handleSecondaryPress}
+              color={Colors.PRIMARY}
+              accessibilityHint="cancel button"
+              title={secondaryButtonTitle}
+            />
+          </View>
+        )}
+        {!!tertiaryButtonTitle && (
+          <View
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: Spacings.sm,
+            }}
+          >
+            <TextButton
+              testId="action-modal-tertiary"
+              fontSize="sm"
+              onPress={handleTertiaryPress}
+              color={Colors.ERROR}
+              accessibilityHint="destructive alternative"
+              title={tertiaryButtonTitle}
+            />
+          </View>
+        )}
+      </View>
       <View style={{ flex: 1 }}>
         <Button
           size="full"

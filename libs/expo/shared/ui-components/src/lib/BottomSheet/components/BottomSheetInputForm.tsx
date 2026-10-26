@@ -56,13 +56,13 @@ export function BottomSheetInputForm(props: TBottomSheetInputFormProps) {
   return (
     <View style={[styles.container, style]}>
       <View style={[styles.content, contentStyle]}>
-        {title && (
+        {!!title && (
           <TextBold color={Colors.PRIMARY_EXTRA_DARK} size="lg">
             {title}
           </TextBold>
         )}
 
-        {subtitle && (
+        {!!subtitle && (
           <TextRegular color={Colors.PRIMARY_EXTRA_DARK} size="md">
             {subtitle}
           </TextRegular>
