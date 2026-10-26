@@ -159,20 +159,15 @@ export function resolveProjectDir(project: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Write .env with build-profile env vars + EXPO_PUBLIC_* secrets,
- * then compute the Expo fingerprint hash. Returns the hash.
+ * Collect EXPO_PUBLIC_* / MAESTRO_* from the environment, then layer the
+ * eas.json build-profile env on top (the profile wins).
  */
-export function setupEnvAndFingerprint(
+export function collectEnv(
   projectDir: string,
   profile: string,
-): string {
-  console.log(`\n=== Setting up env for profile: ${profile} ===`);
-
-  const envPath = path.join(projectDir, '.env');
+): Map<string, string> {
   const envMap = new Map<string, string>();
 
-  // Collect EXPO_PUBLIC_* and MAESTRO_* from process.env first (may include
-  // values from the committed .env loaded by NX, or CI secrets).
   for (const [key, value] of Object.entries(process.env)) {
     if (
       (key.startsWith('EXPO_PUBLIC_') || key.startsWith('MAESTRO_')) &&
@@ -182,9 +177,6 @@ export function setupEnvAndFingerprint(
     }
   }
 
-  // Then apply eas.json build profile env vars, which take precedence.
-  // This ensures profile-specific values (e.g., production API URL) override
-  // any stale values that NX loaded from the committed .env file.
   const easJsonPath = path.join(projectDir, 'eas.json');
   if (fs.existsSync(easJsonPath)) {
     const easConfig = JSON.parse(fs.readFileSync(easJsonPath, 'utf-8'));
@@ -196,14 +188,21 @@ export function setupEnvAndFingerprint(
     }
   }
 
-  // Write .env (without RUNTIME_VERSION) so fingerprint includes env var values.
-  const envLines: string[] = [];
-  envMap.forEach((v, k) => {
-    envLines.push(`${k}=${v}`);
-  });
-  fs.writeFileSync(envPath, envLines.join('\n') + '\n');
+  return envMap;
+}
 
-  // Compute fingerprint — this hash becomes the runtimeVersion.
+export function writeEnvFile(
+  projectDir: string,
+  envMap: Map<string, string>,
+): void {
+  const envLines: string[] = [];
+  envMap.forEach((value, key) => {
+    envLines.push(`${key}=${value}`);
+  });
+  fs.writeFileSync(path.join(projectDir, '.env'), envLines.join('\n') + '\n');
+}
+
+export function computeFingerprint(projectDir: string): string {
   console.log('Computing fingerprint...');
   const fingerprintJson = run(
     `node -e "const fp = require('@expo/fingerprint'); fp.createFingerprintAsync('.').then(r => console.log(JSON.stringify(r)));"`,
@@ -211,9 +210,69 @@ export function setupEnvAndFingerprint(
   );
   const hash = JSON.parse(fingerprintJson).hash as string;
   console.log(`Runtime version (fingerprint): ${hash}`);
+  return hash;
+}
 
-  // Append RUNTIME_VERSION to .env and propagate everything to process.env.
-  fs.appendFileSync(envPath, `RUNTIME_VERSION=${hash}\n`);
+/**
+ * Compute the fingerprint with a temporary .env, then restore the original
+ * file. The required checks run sync-deps too, and .env is tracked, so
+ * leaving the profile env behind would fail the generated-types git diff.
+ */
+export function computeFingerprintForTarget(
+  projectDir: string,
+  profile: string,
+): string {
+  console.log(`\n=== Computing fingerprint for profile: ${profile} ===`);
+
+  const envPath = path.join(projectDir, '.env');
+  const original = fs.existsSync(envPath) ? fs.readFileSync(envPath) : null;
+
+  try {
+    writeEnvFile(projectDir, collectEnv(projectDir, profile));
+    return computeFingerprint(projectDir);
+  } finally {
+    if (original === null) {
+      if (fs.existsSync(envPath)) fs.unlinkSync(envPath);
+    } else {
+      fs.writeFileSync(envPath, original);
+    }
+  }
+}
+
+/**
+ * Write the profile .env for an actual EAS build/update. Only the deploy
+ * tasks call this; checks use computeFingerprintForTarget and leave .env alone.
+ */
+export function writeEasEnv(
+  projectDir: string,
+  profile: string,
+  runtimeVersion: string,
+): void {
+  const envMap = collectEnv(projectDir, profile);
+  envMap.set('RUNTIME_VERSION', runtimeVersion);
+  writeEnvFile(projectDir, envMap);
+  envMap.forEach((value, key) => {
+    process.env[key] = value;
+  });
+}
+
+/**
+ * Compute and leave the .env in place. Kept for callers that need the
+ * profile env afterwards; the deploy path uses writeEasEnv with a runtime
+ * computed earlier by eas-fingerprint.
+ */
+export function setupEnvAndFingerprint(
+  projectDir: string,
+  profile: string,
+): string {
+  console.log(`\n=== Setting up env for profile: ${profile} ===`);
+
+  const envMap = collectEnv(projectDir, profile);
+  writeEnvFile(projectDir, envMap);
+
+  const hash = computeFingerprint(projectDir);
+
+  fs.appendFileSync(path.join(projectDir, '.env'), `RUNTIME_VERSION=${hash}\n`);
   envMap.set('RUNTIME_VERSION', hash);
   envMap.forEach((value, key) => {
     process.env[key] = value;

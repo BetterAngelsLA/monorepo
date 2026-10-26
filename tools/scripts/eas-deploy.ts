@@ -46,6 +46,7 @@ import {
   run,
   runJson,
   runJsonAsync,
+  writeEasEnv,
 } from './eas-utils';
 
 // ---------------------------------------------------------------------------
@@ -479,7 +480,12 @@ async function main(): Promise<void> {
   }
   const runtimeVersion = fs.readFileSync(runtimeFile, 'utf-8').trim();
 
-  // 2. Check/trigger builds. Sequential across profiles: both can miss and
+  // 2. Write the profile .env now that we are actually deploying. The
+  // fingerprint target restored the tracked .env so required checks stay
+  // clean; the build/update still need the profile values.
+  writeEasEnv(projectDir, profile, runtimeVersion);
+
+  // 3. Check/trigger builds. Sequential across profiles: both can miss and
   // trigger an eas-build, and concurrent Nx processes would race copy-lockfile
   // and the workspace data DB. Each call still looks its platforms up
   // concurrently. A simulator-only failure must not abort the preview update.
