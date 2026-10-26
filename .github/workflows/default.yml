@@ -310,6 +310,22 @@ jobs:
             TARGETS="lint typecheck test build deploy eas-build update"
           fi
           export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
+          if [ "${{ matrix.environment }}" = "production" ]; then
+            export APP_VARIANT=production
+            export EXPO_PUBLIC_APP_ENV=production
+            export EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL=WARN
+            export EXPO_PUBLIC_API_URL=https://api.prod.betterangels.la
+            export EXPO_PUBLIC_DEMO_API_URL=https://api.dev.betterangels.la
+            export EXPO_PUBLIC_LOCAL_API_URL=""
+            export EXPO_PUBLIC_SHELTER_WEB_URL=https://shelter.betterangels.la
+          else
+            export EXPO_PUBLIC_APP_ENV=development
+            export EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL=INFO
+            export EXPO_PUBLIC_API_URL=https://api.dev.betterangels.la
+            export EXPO_PUBLIC_DEMO_API_URL=https://api.dev.betterangels.la
+            export EXPO_PUBLIC_LOCAL_API_URL=""
+            export EXPO_PUBLIC_SHELTER_WEB_URL=https://shelter.dev.betterangels.la
+          fi
           # The EAS build/update use the Expo fingerprint runtime policy; the
           # web export/deploy use the built-in Expo executors.
           yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
@@ -451,6 +467,12 @@ jobs:
       EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+      EXPO_PUBLIC_API_URL: https://api.dev.betterangels.la
+      EXPO_PUBLIC_DEMO_API_URL: https://api.dev.betterangels.la
+      EXPO_PUBLIC_LOCAL_API_URL: ''
+      EXPO_PUBLIC_SHELTER_WEB_URL: https://shelter.dev.betterangels.la
+      EXPO_PUBLIC_APP_ENV: development
+      EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL: INFO
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v7
