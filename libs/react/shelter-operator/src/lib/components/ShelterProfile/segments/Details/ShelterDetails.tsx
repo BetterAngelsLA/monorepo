@@ -45,7 +45,6 @@ export function ShelterDetails(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
-  const [formKey, setFormKey] = useState(0);
 
   const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
@@ -74,7 +73,6 @@ export function ShelterDetails(props: TProps) {
       }
 
       setEditMode(false);
-      setFormKey((k) => k + 1);
 
       showToast({
         status: 'success',
@@ -107,7 +105,6 @@ export function ShelterDetails(props: TProps) {
 
   return (
     <ShelterDetailsForm
-      key={formKey}
       values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}
