@@ -298,6 +298,21 @@ jobs:
           fi
           EOF
 
+      # Start the image build after the checks that can rewrite the tree, then
+      # let it run alongside lint/typecheck/test instead of after them. The
+      # build is the longest step on main (~6 min) and shares no inputs with
+      # the test run. -T because CI has no TTY; the container gets its own Nx
+      # data dir so it cannot contend for the SQLite DB the test run uses.
+      - name: 🏗️ Start production image build
+        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker compose run -d -T --name image-build \
+            -e NX_WORKSPACE_DATA_DIRECTORY=/tmp/nx-image \
+            better-angels bash -c '
+              yarn nx run monorepo-image:publish:ci-base --skip-nx-cache &&
+              yarn nx run monorepo-image:publish:production --skip-nx-cache
+            '
+
       - name: 🧹 Lint, typecheck, test, and build
         run: |
           docker compose run better-angels bash <<'EOF'
@@ -374,21 +389,21 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
 
-      - name: 🏗️ Build and push CI base image
-        # Nx owns the Dockerfile/target/cache configuration; the container has
-        # the copied Buildx state and ECR config.
+      - name: 🏗️ Wait for the production image build
+        # The build started before the quality step; by now it is usually done.
+        # Wait, surface its log, and fail the job before deploy if it failed.
         if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        timeout-minutes: 30
         run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx run monorepo-image:publish:ci-base --skip-nx-cache
-          EOF
+          set -euo pipefail
+          status="$(docker wait image-build)"
+          docker logs image-build || true
+          exit "$status"
 
-      - name: 🏗️ Build and push production image
-        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx run monorepo-image:publish:production --skip-nx-cache
-          EOF
+      - name: 🏗️ Remove the production image build container
+        # always(): also covers a cancelled job or a failure before the wait.
+        if: always() && matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker rm -f image-build || true
 
       - name: Build production side-effect images
         if: matrix.environment == 'production'
