@@ -15,10 +15,11 @@ const baseSchema = z.object({
   emergencySurge: z.boolean().nullable().optional(),
   exitPolicy: z.array(z.enum(ExitPolicyChoices)),
   exitPolicyOther: z.string().trim().nullable().optional(),
-  otherRules: z.string().nullable().optional(),
+  otherRules: z.string().nullable().optional(), // RichTextEditor field
 });
 
 export const formSchema = baseSchema.superRefine((data, ctx) => {
+  // `other` fields already trimmed via baseSchema
   if (
     data.exitPolicy.includes(ExitPolicyChoices.Other) &&
     !data.exitPolicyOther

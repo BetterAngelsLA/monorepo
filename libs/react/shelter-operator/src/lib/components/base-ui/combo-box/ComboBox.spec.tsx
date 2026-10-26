@@ -1,4 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { Mock } from 'vitest';
+import type { DropdownOption } from '../dropdown/types';
 import { ComboBox } from './ComboBox';
 
 // The dropdown portal measures its anchor with ResizeObserver, which jsdom lacks.
@@ -23,17 +25,20 @@ const OPTIONS = [
   { value: 'other', label: 'Other' },
 ];
 
-const OTHER_SELECTED = [{ value: 'other', label: 'Other' }];
-const OTHER_NOT_SELECTED = [{ value: 'dorm', label: 'Dorm' }];
+const OTHER_SELECTED = OPTIONS.filter((option) => option.value === 'other');
+const OTHER_NOT_SELECTED = OPTIONS.filter((option) => option.value === 'dorm');
+
+type OnChange = (value: DropdownOption<string>[] | null) => void;
+type OnInputChange = (value: string | null) => void;
 
 function renderComboBox(overrides: {
-  value?: { value: string; label: string }[];
+  value?: DropdownOption<string>[];
   inputValue?: string;
-  onChange?: ReturnType<typeof vi.fn>;
-  onInputChange?: ReturnType<typeof vi.fn>;
+  onChange?: Mock<OnChange>;
+  onInputChange?: Mock<OnInputChange>;
 }) {
-  const onChange = overrides.onChange ?? vi.fn();
-  const onInputChange = overrides.onInputChange ?? vi.fn();
+  const onChange = overrides.onChange ?? vi.fn<OnChange>();
+  const onInputChange = overrides.onInputChange ?? vi.fn<OnInputChange>();
 
   render(
     <ComboBox

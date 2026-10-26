@@ -23,10 +23,11 @@ const baseSchema = z.object({
   storage: z.array(z.enum(StorageChoices)),
   pets: z.array(z.enum(PetChoices)),
   parking: z.array(z.enum(ParkingChoices)),
-  addNotesShelterDetails: z.string(),
+  addNotesShelterDetails: z.string(), // RichTextEditor field
 });
 
 export const formSchema = baseSchema.superRefine((data, ctx) => {
+  // `other` fields already trimmed via baseSchema
   if (
     data.demographics.includes(DemographicChoices.Other) &&
     !data.demographicsOther

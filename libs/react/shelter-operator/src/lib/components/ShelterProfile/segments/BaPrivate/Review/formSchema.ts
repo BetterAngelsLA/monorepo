@@ -4,7 +4,7 @@ import { ShelterProfileType } from '../../../types';
 export const formSchema = z.object({
   overallRating: z.number().int().min(1).max(5).nullable(),
   declinedBaVisit: z.boolean(),
-  subjectiveReview: z.string(),
+  subjectiveReview: z.string(), // RichTextEditor field
 });
 
 export type ReviewFormData = z.infer<typeof formSchema>;

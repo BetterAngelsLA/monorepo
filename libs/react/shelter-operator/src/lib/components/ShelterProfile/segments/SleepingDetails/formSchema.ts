@@ -12,10 +12,11 @@ const baseSchema = z.object({
     .optional(),
   roomStyles: z.array(z.enum(RoomStyleChoices)),
   roomStylesOther: z.string().trim().nullable().optional(),
-  addNotesSleepingDetails: z.string(),
+  addNotesSleepingDetails: z.string(), // RichTextEditor field
 });
 
 export const formSchema = baseSchema.superRefine((data, ctx) => {
+  // `other` fields already trimmed via baseSchema
   if (
     data.roomStyles.includes(RoomStyleChoices.Other) &&
     !data.roomStylesOther

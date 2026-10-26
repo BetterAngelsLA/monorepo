@@ -1,3 +1,4 @@
+import { ExitPolicyChoices } from '@monorepo/react/shelter';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { UseFormSetError } from 'react-hook-form';
 import { defaultFormValues, type PoliciesFormData } from './formSchema';
@@ -99,5 +100,29 @@ describe('ShelterPoliciesForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+  });
+
+  it('requires exitPolicyOther when Other is selected', async () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <ShelterPoliciesForm
+        values={{
+          ...defaultFormValues,
+          maxStay: 10,
+          exitPolicy: [ExitPolicyChoices.Other],
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(
+      await screen.findByText(
+        "This field is required when 'Other' is selected.",
+      ),
+    ).toBeTruthy();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
