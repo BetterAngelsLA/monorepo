@@ -4,21 +4,6 @@
   "projectType": "application",
   "sourceRoot": "apps/betterangels-backend/betterangels_backend",
   "tags": ["type:app", "scope:ba-backend"],
-  "namedInputs": {
-    "testDb": [
-      "{projectRoot}/**/migrations/*.py",
-      "{projectRoot}/**/{models,signals,apps,seed}.py",
-      "{projectRoot}/accounts/{services,role_manager,groups}.py",
-      "{projectRoot}/common/org_types.py",
-      "{projectRoot}/common/permissions/**/*.py",
-      "{projectRoot}/betterangels_backend/settings*.py",
-      "{projectRoot}/scripts/*.py",
-      "{projectRoot}/scripts/*.sh",
-      "{projectRoot}/pyproject.toml",
-      "{workspaceRoot}/uv.lock",
-      "{workspaceRoot}/docker-compose.yml"
-    ]
-  },
   "targets": {
     "lock": {
       "executor": "@nxlv/python:lock",
@@ -147,8 +132,7 @@
     },
     "prepare-test-db": {
       "executor": "@nxlv/python:run-commands",
-      "cache": true,
-      "inputs": ["testDb"],
+      "cache": false,
       "outputs": [
         "{workspaceRoot}/.cache/test-db.dump",
         "{workspaceRoot}/.cache/test-db.manifest.json"
