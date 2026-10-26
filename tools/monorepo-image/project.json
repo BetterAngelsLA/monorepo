@@ -36,7 +36,7 @@
         "builder": "${BUILDX_BUILDER}",
         "push": true,
         "provenance": "false",
-        "cache-from": ["type=registry,ref=${BRANCH_CACHE}"],
+        "cache-from": ["type=registry,ref=${BRANCH_CACHE}", "type=registry,ref=${MAIN_CACHE}"],
         "cache-to": ["type=registry,ref=${BRANCH_CACHE},mode=max"]
       },
       "configurations": {

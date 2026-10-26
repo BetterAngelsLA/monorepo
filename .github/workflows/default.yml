@@ -76,6 +76,7 @@ jobs:
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
           echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
           echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-${BRANCH_NAME}" >> $GITHUB_ENV
+          echo "MAIN_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-main" >> $GITHUB_ENV
 
       - name: 🐳 Configure AWS credentials
         # Trusted provenance only — forked PRs must never hold cloud credentials.

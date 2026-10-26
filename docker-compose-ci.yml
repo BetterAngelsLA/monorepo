@@ -31,6 +31,7 @@ services:
       - IMAGE_TAG_PREFIX
       - DOCKER_TAG
       - BRANCH_CACHE
+      - MAIN_CACHE
       - BUILDX_BUILDER
       - GITHUB_ACTIONS
       - CI
