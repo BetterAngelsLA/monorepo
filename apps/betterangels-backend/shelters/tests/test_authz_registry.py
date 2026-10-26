@@ -59,6 +59,9 @@ MUTATION_AUTHZ_ROUTES: dict[str, str] = {
     "resolve_shelter_photo_uploads": "shelter_photo.resolve_uploads -> shelter_get(CHANGE)",
     "update_shelter_photo": "shelter_photo.update_shelter_photo -> shelter_queryset(CHANGE)",
     "delete_shelter_photos": "shelter_photo.delete_shelter_photos -> shelter_queryset(CHANGE)",
+    "create_media_link": "media_link_create -> shelter_get(CHANGE)",
+    "update_media_link": "media_link_update -> shelter_queryset(CHANGE)",
+    "delete_media_links": "media_link_delete -> shelter_queryset(CHANGE)",
 }
 
 
