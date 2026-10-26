@@ -14,6 +14,11 @@ above ``SYNTHETIC_BASE_ID`` so they can be cleaned up with an ordinary ``DELETE`
 are removed on the way out too, even with ``--keep``: both are fixture
 scaffolding, not measurement data.
 
+Safety: this writes and deletes rows in the live event table. It refuses to run
+unless ``DEBUG`` is on or ``BENCH_AUDIT_ALLOWED=true`` is set; it refuses if a
+live ``Shelter`` uses the synthetic id range; and it removes samples left by a
+killed run before inserting anything.
+
 What each flag is for:
 
 * ``--objects``        how many objects to spread events over. Grow this to test
@@ -36,12 +41,14 @@ from __future__ import annotations
 
 import datetime
 import json
+import os
 import re
 import statistics
 import time
 from typing import Any, cast
 
 import pgtrigger
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
 from django.utils import timezone
@@ -54,6 +61,10 @@ from shelters.models import Shelter, ShelterAvailability
 # Synthetic object ids start here so they never collide with real rows and can be
 # identified (and deleted) by a single predicate.
 SYNTHETIC_BASE_ID = 900_000_000
+
+# Name of the real ``Shelter`` used to derive the event template; stale copies
+# from a killed run are removed by name (and null organization) on the next run.
+_SAMPLE_NAME = "bench-sample"
 
 _SKIPPED_TEMPLATE_FIELDS = frozenset({"pgh_id", "pgh_created_at", "pgh_label", "pgh_obj", "pgh_context"})
 
@@ -92,6 +103,9 @@ class Command(BaseCommand):
         if objects < 1 or events_per_object < 1:
             raise CommandError("--objects and --events-per-object must both be >= 1.")
 
+        self._require_safe_environment()
+        self._assert_synthetic_range_is_free()
+
         spread_start = self._parse_date(options["date_from"]) or (timezone.now() - datetime.timedelta(days=365 * 2))
         date_from = self._parse_date(options["date_from"])
         date_to = self._parse_date(options["date_to"])
@@ -99,8 +113,11 @@ class Command(BaseCommand):
 
         event_model = Shelter.pgh_event_model  # type: ignore[attr-defined]
 
+        stale_rows = self._delete_stale_samples(event_model)
+        if stale_rows:
+            self.stdout.write(f"removed {stale_rows} stale sample event rows")
         self._delete_synthetic(event_model)
-        sample = baker.make(Shelter, name="bench-sample")
+        sample = baker.make(Shelter, name=_SAMPLE_NAME)
         try:
             sample_row = event_model.objects.filter(pgh_obj_id=sample.pk).first()
             if sample_row is None:
@@ -152,6 +169,50 @@ class Command(BaseCommand):
             else:
                 removed = self._delete_synthetic(event_model)
                 self.stdout.write(f"deleted {removed} synthetic event rows and {sample_rows} sample event rows")
+
+    # -- safety --------------------------------------------------------------
+
+    @staticmethod
+    def _require_safe_environment() -> None:
+        """Fail closed unless this is a dev database or the caller opted in.
+
+        The command writes and deletes rows in the live event table; the
+        ``SYNTHETIC_BASE_ID`` range is the only separation from real data.
+        """
+        env_allowed = os.environ.get("BENCH_AUDIT_ALLOWED", "").strip().lower() == "true"
+        if not (settings.DEBUG or env_allowed):
+            raise CommandError(
+                "refusing to run: bench_audit_read writes and deletes real event rows. "
+                "Run with DEBUG=true or set BENCH_AUDIT_ALLOWED=true."
+            )
+
+    @staticmethod
+    def _assert_synthetic_range_is_free() -> None:
+        """Refuse if a live Shelter uses the synthetic id range.
+
+        ``_delete_synthetic`` and ``_spread_created_at`` key on
+        ``pgh_obj_id >= SYNTHETIC_BASE_ID``; a real shelter there would lose its
+        event rows or have their timestamps rewritten. Orphan event rows of an
+        already-deleted object cannot be told apart from a previous ``--keep``
+        run, so this guards the live rows.
+        """
+        clashing = Shelter.objects.filter(pk__gte=SYNTHETIC_BASE_ID).values_list("pk", flat=True).first()
+        if clashing is not None:
+            raise CommandError(
+                f"refusing: Shelter pk {clashing} is inside the synthetic id range "
+                f"(>= {SYNTHETIC_BASE_ID}); use a scratch database or raise SYNTHETIC_BASE_ID."
+            )
+
+    @classmethod
+    def _delete_stale_samples(cls, event_model: Any) -> int:
+        """Remove samples left by a run killed before its ``finally``.
+
+        Only ``bench-sample`` shelters with no organization qualify: that is
+        exactly what ``baker.make`` creates, and a real shelter would normally
+        carry an organization.
+        """
+        stale = list(Shelter.objects.filter(name=_SAMPLE_NAME, organization__isnull=True))
+        return sum(cls._delete_sample(event_model, sample) for sample in stale)
 
     # -- fixture -------------------------------------------------------------
 
