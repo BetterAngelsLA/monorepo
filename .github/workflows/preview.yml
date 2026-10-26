@@ -91,8 +91,11 @@ jobs:
           ANDROID_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform android --workflow generic)"
           IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios --workflow generic)"
 
-          yarn nx run betterangels:build-list --platform=all --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl.json
-          node tools/scripts/has-build.mjs /tmp/bl.json || yarn nx run betterangels:eas-build:preview --platform=all --wait=false --freezeCredentials=true --json=true
+          yarn nx run betterangels:build-list --platform=android --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl-android.json
+          node tools/scripts/has-build.mjs /tmp/bl-android.json || yarn nx run betterangels:eas-build:preview --platform=android --wait=false --freezeCredentials=true --json=true
+
+          yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=preview --json=true > /tmp/bl-ios.json
+          node tools/scripts/has-build.mjs /tmp/bl-ios.json || yarn nx run betterangels:eas-build:preview --platform=ios --wait=false --freezeCredentials=true --json=true
 
           yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=development-simulator --json=true > /tmp/bl-sim.json
           node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
