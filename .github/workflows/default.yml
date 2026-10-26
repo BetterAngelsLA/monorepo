@@ -521,6 +521,18 @@ jobs:
           sudo chown -R -h 1000:1000 node_modules .venv .yarn
           sudo chown -R -h 1000:1000 "$GITHUB_WORKSPACE"
 
+      - name: Restore Nx cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
+            nx-cache-v4-${{ runner.os }}-
+
       - name: Ensure dependencies
         run: |
           if [[ -x node_modules/.bin/nx ]]; then
@@ -564,20 +576,27 @@ jobs:
               ANDROID_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform android)"
               IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios)"
 
-              yarn nx run betterangels:build-list --platform=android --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl-android.json
-              node tools/scripts/has-build.mjs /tmp/bl-android.json || yarn nx run betterangels:eas-build:preview --platform=android --wait=false --freezeCredentials=true --json=true
-
-              yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=preview --json=true > /tmp/bl-ios.json
-              node tools/scripts/has-build.mjs /tmp/bl-ios.json || yarn nx run betterangels:eas-build:preview --platform=ios --wait=false --freezeCredentials=true --json=true
+              yarn nx run betterangels:build-list --platform=all --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl.json
+              node tools/scripts/has-build.mjs /tmp/bl.json || yarn nx run betterangels:eas-build:preview --platform=all --wait=false --freezeCredentials=true --json=true
 
               yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=development-simulator --json=true > /tmp/bl-sim.json
               node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:simulator --platform=ios --wait=false --freezeCredentials=true --json=true
 
-              yarn nx run betterangels:update:preview --branch="$BRANCH_NAME" --auto=true --json=true
-
-              yarn nx affected -t export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
-              yarn nx run shelter-e2e:e2e:preview
+              # Update and web deploy are independent; one graph lets them overlap.
+              yarn nx affected -t update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
+              # Only run the shelter E2E when its app or specs are affected.
+              yarn nx affected -t e2e --projects=shelter-e2e --configuration preview --output-style=stream --parallel=1
             '
+
+      - name: Save Nx cache
+        if: always() && !cancelled()
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: 📎 Upload shelter-e2e report
         if: always()

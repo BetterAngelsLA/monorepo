@@ -217,8 +217,16 @@
       "dependsOn": ["sync-deps", "copy-lockfile"],
       "options": {},
       "configurations": {
-        "preview": {},
-        "production": {}
+        "preview": {
+          "options": {
+            "auto": true
+          }
+        },
+        "production": {
+          "options": {
+            "auto": true
+          }
+        }
       }
     }
   }
