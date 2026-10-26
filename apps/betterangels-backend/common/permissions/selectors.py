@@ -237,6 +237,8 @@ def invalidate_scope_cache(user: "User") -> None:
     user.__dict__.pop("_scope_cache", None)
     user.__dict__.pop("_global_tier_cache", None)
     user.__dict__.pop("_can_anywhere_cache", None)
+    # The client list-read gate caches its own boolean around can_anywhere.
+    user.__dict__.pop("_visible_client_rows_cache", None)
     user.__dict__.pop("_global_permissions", None)
     user.__dict__.pop("_org_effective_permissions", None)
 

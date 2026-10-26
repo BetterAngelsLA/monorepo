@@ -292,7 +292,6 @@ def upsert_or_delete_client_related_object(
 
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
-    items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys())
     args: dict[str, Any]
 
     if isinstance(related_cls.remote_field, ForeignKey):
@@ -303,6 +302,11 @@ def upsert_or_delete_client_related_object(
             "content_type": ContentType.objects.get_for_model(ClientProfile),
             "object_id": client_profile.pk,
         }
+
+    # Scoped to this client: an id from another client's row must be a miss,
+    # not an edit. The payload also cannot reparent a row, because `args`
+    # overrides whatever the caller sent.
+    items_to_update = model_cls.objects.filter(**args, id__in=item_updates_by_id.keys())
 
     model_cls.objects.filter(**args).exclude(id__in=item_updates_by_id).delete()
 
@@ -320,7 +324,7 @@ def upsert_or_delete_client_related_object(
         resolvers.update(
             info,
             item,
-            item_updates_by_id[str(item.id)],
+            {**item_updates_by_id[str(item.id)], **args},
         )
 
 
