@@ -573,8 +573,9 @@ jobs:
             bash -c '
               set -euo pipefail
               export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
-              ANDROID_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform android)"
-              IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios)"
+              yarn nx run betterangels:write-eas-env:preview
+              ANDROID_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform android --workflow prebuild)"
+              IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios --workflow prebuild)"
 
               yarn nx run betterangels:build-list --platform=all --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl.json
               node tools/scripts/has-build.mjs /tmp/bl.json || yarn nx run betterangels:eas-build:preview --platform=all --wait=false --freezeCredentials=true --json=true
