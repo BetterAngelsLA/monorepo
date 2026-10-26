@@ -443,6 +443,7 @@ class ClientProfileType(ClientProfileBaseType):
 
     profile_photo: auto
 
+
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     contacts: Optional[List[ClientContactInput]]

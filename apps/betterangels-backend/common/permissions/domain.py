@@ -33,9 +33,7 @@ over.
 #: client family (RFC 0002 — SHARED read / SHARED write), and referrals (the
 #: whole bundle rides the scoped ``Caseworker`` Role; the template carries no
 #: referral permission, so nothing legacy is left to consult).
-LEGACY_INERT_APPS: frozenset[str] = frozenset(
-    {"shelters", "teams", "reports", "organizations", "clients", "referrals"}
-)
+LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams", "reports", "organizations", "clients", "referrals"})
 
 #: Domains where the global tier is enforceable at any org — exactly the
 #: grant-only set (the effective per-org report may fold global-tier
