@@ -69,9 +69,16 @@ describe('hydrateWeekly', () => {
 
   it('leaves days without hours empty', () => {
     const weekly = hydrateWeekly([
-      schedule({ day: DayOfWeekChoices.Monday, startTime: '09:00:00' }),
+      schedule({
+        day: DayOfWeekChoices.Monday,
+        startTime: '09:00:00',
+        endTime: '17:00:00',
+      }),
     ]);
 
+    expect(weekly[DayOfWeekChoices.Monday].ranges).toStrictEqual([
+      { _id: 's1', startTime: '09:00', endTime: '17:00' },
+    ]);
     expect(weekly[DayOfWeekChoices.Sunday].ranges).toStrictEqual([]);
     expect(weekly[DayOfWeekChoices.Tuesday].ranges).toStrictEqual([]);
   });

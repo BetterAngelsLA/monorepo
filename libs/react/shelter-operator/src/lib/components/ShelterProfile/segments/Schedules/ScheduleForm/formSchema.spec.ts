@@ -136,11 +136,12 @@ describe('scheduleFormSchema', () => {
   });
 
   it('keeps an exception condition', () => {
-    expect(
-      issueMessages({
-        weekly: buildDefaultWeeklyState(),
-        exceptions: [{ ...openException, condition: ConditionChoices.Heat }],
-      }),
-    ).toStrictEqual([]);
+    const result = scheduleFormSchema.safeParse({
+      weekly: buildDefaultWeeklyState(),
+      exceptions: [{ ...openException, condition: ConditionChoices.Heat }],
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.exceptions[0].condition).toBe(ConditionChoices.Heat);
   });
 });
