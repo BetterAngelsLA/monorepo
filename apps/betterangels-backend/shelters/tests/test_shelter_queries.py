@@ -1,7 +1,8 @@
 import datetime
 from unittest.mock import ANY, Mock, patch
 
-from django.test import override_settings
+from django.test import TestCase, override_settings
+from model_bakery import baker
 from places import Places
 
 from accounts.tests.baker_recipes import organization_recipe
@@ -31,6 +32,7 @@ from shelters.models import (
     EntryRequirement,
     ExitPolicy,
     Funder,
+    MediaLink,
     Parking,
     Pet,
     ReferralRequirement,
@@ -46,6 +48,7 @@ from shelters.models import (
 )
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
+from shelters.tests.utils import ShelterTestCase
 
 
 @override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
@@ -433,3 +436,31 @@ class ShelterMaxStayQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCas
 
         self.assertIsNone(response.get("errors"))
         self.assertIsNone(response["data"]["shelterMaxStay"])
+
+
+class MediaLinkOrderingQueryTestCase(ShelterTestCase, TestCase):
+    """``MediaLink.Meta.ordering`` pins insertion order, not the DB's row order."""
+
+    OPERATOR_SHELTER_MEDIA_LINKS_QUERY = """
+        query OperatorShelterMediaLinks($pk: ID!) {
+            operatorShelter(pk: $pk) {
+                mediaLinks { id }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.shelter = shelter_recipe.make(organization=self.org)
+        self.graphql_client.force_login(self.operator)
+
+    def test_media_links_are_returned_in_creation_order(self) -> None:
+        created = [baker.make(MediaLink, shelter=self.shelter) for _ in range(3)]
+
+        response = self.execute_graphql(self.OPERATOR_SHELTER_MEDIA_LINKS_QUERY, {"pk": str(self.shelter.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(
+            [media_link["id"] for media_link in response["data"]["operatorShelter"]["mediaLinks"]],
+            [str(media_link.pk) for media_link in created],
+        )

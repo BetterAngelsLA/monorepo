@@ -19,6 +19,7 @@ from shelters.selectors import shelter_get, shelter_metrics_window, shelter_orga
 from shelters.selectors import shelter_occupancy_metrics as shelter_occupancy_metrics_selector
 from shelters.services import shelter_photo
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
+from shelters.services.media_link import media_link_create, media_link_delete, media_link_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_delete, shelter_update
@@ -27,10 +28,12 @@ from shelters.types import (
     BedType,
     CityType,
     CreateBedInput,
+    CreateMediaLinkInput,
     CreateReservationInput,
     CreateRoomInput,
     CreateShelterInput,
     GenerateShelterPhotoUploadsInput,
+    MediaLinkType,
     OperatorShelterType,
     ReservationType,
     ResolveShelterPhotoUploadsInput,
@@ -42,6 +45,7 @@ from shelters.types import (
     ShelterType,
     SPAType,
     UpdateBedInput,
+    UpdateMediaLinkInput,
     UpdateReservationInput,
     UpdateRoomInput,
     UpdateShelterInput,
@@ -284,4 +288,28 @@ class Mutation:
         user = cast(User, get_current_user(info))
         ids = [int(id) for id in data.ids]
         deleted_ids = shelter_photo.delete_shelter_photos(user=user, ids=ids)
+        return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
+
+    # ── Media Links ────────────────────────────────────────────────────────
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def create_media_link(self, info: Info, data: CreateMediaLinkInput) -> MediaLinkType:
+        """Create a media link — authorization lives in :func:`media_link_create`."""
+        user = cast(User, get_current_user(info))
+        clean = strawberry.asdict(data)
+        return cast(MediaLinkType, media_link_create(user=user, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_media_link(self, info: Info, data: UpdateMediaLinkInput) -> MediaLinkType:
+        """Update a media link — authorization lives in :func:`media_link_update`."""
+        user = cast(User, get_current_user(info))
+        clean = strawberry.asdict(data)
+        return cast(MediaLinkType, media_link_update(user=user, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def delete_media_links(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
+        """Bulk-delete media links — authorization lives in :func:`media_link_delete`."""
+        user = cast(User, get_current_user(info))
+        ids = [int(id) for id in data.ids]
+        deleted_ids = media_link_delete(user=user, ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])

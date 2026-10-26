@@ -105,6 +105,8 @@ class MediaLinkType:
     url: str
     title: str
     media_type: auto
+    created_at: datetime
+    updated_at: datetime
 
 
 @strawberry_django.type(models.ShelterAvailability)

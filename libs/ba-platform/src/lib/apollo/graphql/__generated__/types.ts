@@ -658,6 +658,15 @@ export type CreateHmisNoteServiceRequestPayload = OperationInfo | ServiceRequest
 
 export type CreateHmisProfilePayload = HmisProfileType | OperationInfo;
 
+export type CreateMediaLinkInput = {
+  mediaType?: MediaLinkTypeChoices;
+  shelterId: Scalars['ID']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
+  url: Scalars['NonEmptyString']['input'];
+};
+
+export type CreateMediaLinkPayload = MediaLinkType | OperationInfo;
+
 export type CreateNoteDataImportInput = {
   notes: Scalars['String']['input'];
   sourceFile: Scalars['String']['input'];
@@ -924,6 +933,8 @@ export type DeleteDjangoObjectInput = {
 export type DeleteHmisNotePayload = DeletedObjectType | OperationInfo;
 
 export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
+
+export type DeleteMediaLinksPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteNotePayload = NoteType | OperationInfo;
 
@@ -1583,9 +1594,11 @@ export type MaxStayInput = {
 
 export type MediaLinkType = {
   __typename: 'MediaLinkType';
+  createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   mediaType: MediaLinkTypeChoices;
   title: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
 };
 
@@ -1621,6 +1634,7 @@ export type Mutation = {
   createHmisNote: CreateHmisNotePayload;
   createHmisNoteServiceRequest: CreateHmisNoteServiceRequestPayload;
   createHmisProfile: CreateHmisProfilePayload;
+  createMediaLink: CreateMediaLinkPayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
@@ -1641,6 +1655,7 @@ export type Mutation = {
   deleteCurrentUser: DeleteCurrentUserPayload;
   deleteHmisNote: DeleteHmisNotePayload;
   deleteHmisProfile: DeleteHmisProfilePayload;
+  deleteMediaLinks: DeleteMediaLinksPayload;
   deleteNote: DeleteNotePayload;
   deleteReferral: DeleteReferralPayload;
   deleteReservations: DeleteReservationsPayload;
@@ -1677,6 +1692,7 @@ export type Mutation = {
   updateHmisNote: UpdateHmisNotePayload;
   updateHmisNoteLocation: UpdateHmisNoteLocationPayload;
   updateHmisProfile: UpdateHmisProfilePayload;
+  updateMediaLink: UpdateMediaLinkPayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateReferral: UpdateReferralPayload;
@@ -1759,6 +1775,11 @@ export type MutationCreateHmisNoteServiceRequestArgs = {
 
 export type MutationCreateHmisProfileArgs = {
   data: HmisProfileInput;
+};
+
+
+export type MutationCreateMediaLinkArgs = {
+  data: CreateMediaLinkInput;
 };
 
 
@@ -1854,6 +1875,11 @@ export type MutationDeleteHmisNoteArgs = {
 
 export type MutationDeleteHmisProfileArgs = {
   data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteMediaLinksArgs = {
+  data: BulkDeleteInput;
 };
 
 
@@ -2030,6 +2056,11 @@ export type MutationUpdateHmisNoteLocationArgs = {
 
 export type MutationUpdateHmisProfileArgs = {
   data: HmisProfileInput;
+};
+
+
+export type MutationUpdateMediaLinkArgs = {
+  data: UpdateMediaLinkInput;
 };
 
 
@@ -4009,6 +4040,15 @@ export type UpdateHmisNoteLocationPayload = HmisNoteType | OperationInfo;
 export type UpdateHmisNotePayload = HmisNoteType | OperationInfo;
 
 export type UpdateHmisProfilePayload = HmisProfileType | OperationInfo;
+
+export type UpdateMediaLinkInput = {
+  id: Scalars['ID']['input'];
+  mediaType?: InputMaybe<MediaLinkTypeChoices>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  url?: InputMaybe<Scalars['NonBlankString']['input']>;
+};
+
+export type UpdateMediaLinkPayload = MediaLinkType | OperationInfo;
 
 export type UpdateNoteInput = {
   id: Scalars['ID']['input'];
