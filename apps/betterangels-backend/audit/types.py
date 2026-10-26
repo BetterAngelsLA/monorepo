@@ -30,6 +30,22 @@ class AuditTargetType(enum.Enum):
     BED = "BED"
 
 
+@strawberry.input
+class AuditEventFilter:
+    """Filters for one object's write audit log (ADR 0004 §21).
+
+    ``date_from``/``date_to`` are inclusive bounds on the event timestamp;
+    ``actor_id`` is the acting ``User.id`` frozen into the context metadata. A
+    single input object keeps ``objectAuditLog``'s argument list stable as
+    filters are added: the §30 ``kinds`` filter slots in here rather than
+    growing the field's signature.
+    """
+
+    date_from: Optional[datetime] = None
+    date_to: Optional[datetime] = None
+    actor_id: Optional[strawberry.ID] = None
+
+
 @strawberry.type
 class AuditEventType:
     """A single pghistory write event, normalized across tracked models."""

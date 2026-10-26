@@ -1,6 +1,7 @@
-"""GraphQL tests for ``objectAuditLog`` (ADR 0004 §20)."""
+"""GraphQL tests for ``objectAuditLog`` (ADR 0004 §20–§21)."""
 
 import json
+from datetime import datetime, timezone
 
 from model_bakery import baker
 
@@ -12,6 +13,10 @@ from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import DemographicChoices, ReservationStatusChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 from shelters.models import Bed, ContactInfo, Demographic, Reservation, Room, Shelter
+from test_utils.pghistory import backdate_event_rows
+
+_T1 = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+_T2 = datetime(2026, 2, 1, 12, 0, tzinfo=timezone.utc)
 
 BA_REVIEW_QUERY = """
     query OperatorShelter($pk: ID!) {
@@ -33,8 +38,22 @@ BEDS_QUERY = """
 """
 
 OBJECT_AUDIT_LOG_QUERY = """
-    query ObjectAuditLog($targetType: AuditTargetType!, $objectId: ID!, $limit: Int, $after: String, $includeSnapshot: Boolean) {
-        objectAuditLog(targetType: $targetType, objectId: $objectId, limit: $limit, after: $after, includeSnapshot: $includeSnapshot) {
+    query ObjectAuditLog(
+        $targetType: AuditTargetType!,
+        $objectId: ID!,
+        $filters: AuditEventFilter,
+        $limit: Int,
+        $after: String,
+        $includeSnapshot: Boolean
+    ) {
+        objectAuditLog(
+            targetType: $targetType,
+            objectId: $objectId,
+            filters: $filters,
+            limit: $limit,
+            after: $after,
+            includeSnapshot: $includeSnapshot
+        ) {
             endCursor
             hasNextPage
             results {
@@ -446,3 +465,45 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         for action in response["data"]["objectAuditLog"]["results"]:
             self.assertNotIn("created shelter", action["summary"])
             self.assertTrue(action["events"], f"hidden-only action has no events: {action}")
+
+    # ── date / actor filters (§21) ───────────────────────────────────────────
+
+    def _rename_at(self, name: str, *, at: datetime, user: User) -> None:
+        with audit_context(user=user):
+            self.shelter.name = name
+            self.shelter.save()
+        backdate_event_rows(
+            Shelter.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+                pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name
+            ),
+            pgh_created_at=at,
+        )
+
+    def test_date_filters_narrow_the_log(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self._rename_at("Early", at=_T1, user=self.org_1_case_manager_1)
+        self._rename_at("Late", at=_T2, user=self.org_1_case_manager_1)
+
+        response = self._query("SHELTER", self.shelter.id, filters={"dateFrom": _T2.isoformat()})
+        actions = response["data"]["objectAuditLog"]["results"]
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["Early", "Late"])
+
+        response = self._query("SHELTER", self.shelter.id, filters={"dateTo": _T1.isoformat()})
+        actions = response["data"]["objectAuditLog"]["results"]
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["Query Shelter", "Early"])
+
+    def test_actor_filter_narrows_the_log(self) -> None:
+        self._grant_permission(self.org_1_case_manager_2, Shelter.perms.VIEW, self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self._rename_at("By Casey", at=_T1, user=self.org_1_case_manager_1)
+        self._rename_at("By Dana", at=_T2, user=self.org_1_case_manager_2)
+
+        response = self._query("SHELTER", self.shelter.id, filters={"actorId": str(self.org_1_case_manager_1.id)})
+        actions = response["data"]["objectAuditLog"]["results"]
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["Query Shelter", "By Casey"])
