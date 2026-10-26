@@ -7,6 +7,7 @@ import {
   isIntakeControlValue,
   intakeRequirementLabel,
   missingRequiredIntakeFields,
+  readIntakeAnswers,
   type IntakeFieldDefinition,
   type IntakeValues,
 } from '../../../draft/intakeFields';
@@ -143,6 +144,17 @@ describe('catalog vocabulary and mapping integrity', () => {
     expect(buildReferralNotes({ consent: false }) ?? '').not.toContain(
       'consent',
     );
+  });
+
+  it('hydrates a legacy unticked consent box as unanswered, never as a refusal', () => {
+    // The old control stored `false` for "unticked", which it could not tell
+    // apart from "never asked"; a draft saved before the change must not
+    // surface as a recorded "No".
+    expect(readIntakeAnswers({ consent: false })).not.toHaveProperty(
+      'consent',
+    );
+    expect(readIntakeAnswers({ consent: true })).toEqual({ consent: 'Yes' });
+    expect(readIntakeAnswers({ consent: 'No' })).toEqual({ consent: 'No' });
   });
 
   it('preserves the exact existing v1 payload, including ordinary and sensitive buckets', () => {
