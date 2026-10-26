@@ -49,6 +49,8 @@ async function setup() {
   return {
     store,
     restart: async () => {
+      // A clean restart persists what type-ahead still had queued.
+      store.flush();
       await view.unmount();
       const reloaded = createReferralDraftStore(persistence, randomUUID);
       await mountForm(reloaded);

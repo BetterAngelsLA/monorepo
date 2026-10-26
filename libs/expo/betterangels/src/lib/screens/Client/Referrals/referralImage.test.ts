@@ -135,7 +135,7 @@ it.each([false, true])(
     expect(rendered.includes('Private answer')).toBe(includePrivate);
     expect(rendered.includes('Private staff note')).toBe(includePrivate);
     expect(layout.outputWidth).toBe(1080);
-    expect(layout.outputHeight).toBeLessThanOrEqual(8192);
+    expect(layout.outputHeight).toBeLessThanOrEqual(4096);
     expect(
       layout.lines.some(
         (line) => line.text === 'Name:' && line.fontWeight === '700',

@@ -39,10 +39,16 @@ function harness(initial: unknown = null) {
       saved = 'null';
     }),
   };
+  const store = createReferralDraftStore(persistence, randomUUID);
   return {
     persistence,
-    store: createReferralDraftStore(persistence, randomUUID),
-    reload: () => createReferralDraftStore(persistence, randomUUID),
+    store,
+    // A clean reload persists what type-ahead still had queued; a crash inside
+    // the debounce window is the accepted gap.
+    reload: () => {
+      store.flush();
+      return createReferralDraftStore(persistence, randomUUID);
+    },
   };
 }
 
@@ -280,19 +286,34 @@ describe('snapshot ownership and subscriptions', () => {
     expect(store.getSnapshot()?.step).toBe('intake');
   });
 
-  it('does not publish a changed answer if persistence fails', () => {
+  it('coalesces type-ahead writes and persists the latest value on flush', () => {
+    const { store, persistence } = harness();
+    store.startNew(CLIENT);
+    vi.mocked(persistence.save).mockClear();
+    store.setField('notes', 'a');
+    store.setField('notes', 'ab');
+    store.setField('notes', 'abc');
+    expect(persistence.save).not.toHaveBeenCalled();
+    store.flush();
+    expect(persistence.save).toHaveBeenCalledTimes(1);
+    expect(store.getSnapshot()?.storedValues.notes).toBe('abc');
+  });
+
+  it('publishes a type-ahead edit but never swallows a failed write', () => {
     const { store, persistence } = harness(oldDraft({ consent: false }));
-    const before = store.getSnapshot();
     const listener = vi.fn();
     store.subscribe(listener);
     vi.mocked(persistence.save).mockImplementation(() => {
       throw new Error('Storage unavailable');
     });
-    expect(() => store.setField('consent', 'Yes')).toThrow(
-      'Storage unavailable',
-    );
-    expect(store.getSnapshot()).toBe(before);
-    expect(listener).not.toHaveBeenCalled();
+    // The character the user typed is not a save claim: it renders, and the
+    // store keeps it until the write is attempted.
+    expect(store.setField('consent', 'Yes')).toBe(true);
+    expect(store.getSnapshot()?.storedValues.consent).toBe('Yes');
+    expect(listener).toHaveBeenCalled();
+    // The next durable action re-attempts the write and reports the failure
+    // instead of losing the edit silently.
+    expect(() => store.flush()).toThrow('Storage unavailable');
   });
 });
 

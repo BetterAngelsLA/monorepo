@@ -8,6 +8,9 @@ import {
   type StoredIntake,
 } from './intakeFields';
 
+/** Coalescing window for type-ahead writes; durable actions flush first. */
+const PERSIST_DEBOUNCE_MS = 250;
+
 export type ReferralSubmission = Readonly<
   | { status: 'idle' }
   | { status: 'pending' | 'uncertain' | 'saved'; attemptId: string }
@@ -202,6 +205,11 @@ export function createReferralDraftStore(
   let active = true;
   let recovery: 'unreadable' | 'read-error' | null = null;
   let snapshot: ReferralDraftSnapshot | null = null;
+  // Type-ahead publishes immediately and writes shortly; every action that has
+  // to be durable flushes this first.
+  let pending: ReferralDraftSnapshot | null = null;
+  let persistTimer: ReturnType<typeof setTimeout> | undefined;
+  let deferredError: unknown = null;
   const listeners = new Set<() => void>();
 
   function load() {
@@ -216,38 +224,85 @@ export function createReferralDraftStore(
   }
   load();
 
-  function commit(draft: ReferralDraft | null) {
-    const next = makeSnapshot(draft);
-    // Persist first: a failed write must not publish a successful UI update.
-    if (next) {
-      const {
-        id,
-        submission,
-        source,
-        clientId,
-        step,
-        fields,
-        pii,
-        selectedShelterId,
-        updatedAt,
-      } = next;
-      persistence.save({
-        version: 1,
-        id,
-        submission,
-        ...(source ? { source } : {}),
-        clientId,
-        step,
-        fields,
-        pii,
-        selectedShelterId,
-        updatedAt,
-      });
-    } else {
-      persistence.remove();
+  function persistedOf(next: ReferralDraftSnapshot) {
+    const {
+      id,
+      submission,
+      source,
+      clientId,
+      step,
+      fields,
+      pii,
+      selectedShelterId,
+      updatedAt,
+    } = next;
+    return {
+      version: 1 as const,
+      id,
+      submission,
+      ...(source ? { source } : {}),
+      clientId,
+      step,
+      fields,
+      pii,
+      selectedShelterId,
+      updatedAt,
+    };
+  }
+
+  function writePersisted(draft: ReferralDraftSnapshot | null) {
+    if (draft) persistence.save(persistedOf(draft));
+    else persistence.remove();
+  }
+
+  /**
+   * Make a deferred write durable now. Throws if the write it was covering
+   * failed, so a caller that needs durability (submit, clear) still fails
+   * loudly instead of losing the edit silently.
+   */
+  function flushPending() {
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = undefined;
     }
+    if (deferredError) {
+      const error = deferredError;
+      deferredError = null;
+      throw error;
+    }
+    if (!pending) return;
+    const draft = pending;
+    pending = null;
+    writePersisted(draft);
+  }
+
+  function commit(draft: ReferralDraft | null, opts?: { defer?: boolean }) {
+    const next = makeSnapshot(draft);
+    if (!opts?.defer) {
+      // Persist first: a failed write must not publish a successful UI update.
+      flushPending();
+      writePersisted(next);
+      snapshot = next;
+      listeners.forEach((listener) => listener());
+      return;
+    }
+    // Type-ahead: the character the user just typed is not a save claim, so
+    // publish it and write once the typing settles.
     snapshot = next;
     listeners.forEach((listener) => listener());
+    pending = next;
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      persistTimer = undefined;
+      if (!pending) return;
+      const queued = pending;
+      pending = null;
+      try {
+        writePersisted(queued);
+      } catch (error) {
+        deferredError = error;
+      }
+    }, PERSIST_DEBOUNCE_MS);
   }
 
   function setControlValue(key: IntakeFieldKey, value: unknown): boolean {
@@ -265,7 +320,7 @@ export function createReferralDraftStore(
     delete pii[key];
     const bucket = field.sensitive ? pii : fields;
     bucket[key] = value;
-    commit({ ...snapshot, fields, pii, updatedAt: Date.now() });
+    commit({ ...snapshot, fields, pii, updatedAt: Date.now() }, { defer: true });
     return true;
   }
 
@@ -287,14 +342,29 @@ export function createReferralDraftStore(
     },
     discardUnreadable() {
       if (!active || !recovery) return false;
+      // A queued write would resurrect the record we are dropping.
+      if (persistTimer) {
+        clearTimeout(persistTimer);
+        persistTimer = undefined;
+      }
+      pending = null;
+      deferredError = null;
       // Explicit user action only. If removal fails, keep the recovery state.
       persistence.remove();
       recovery = null;
       listeners.forEach((listener) => listener());
       return true;
     },
+    /** Make a deferred write durable now; throws if it fails. */
+    flush: flushPending,
     release() {
-      // Session boundaries revoke old forms/callbacks without deleting disk data.
+      // Session boundaries revoke old forms/callbacks without deleting disk data,
+      // but the last keystrokes still belong to this session's draft.
+      try {
+        flushPending();
+      } catch (error) {
+        if (__DEV__) console.warn('Could not persist the referral draft', error);
+      }
       active = false;
       snapshot = null;
       recovery = null;
