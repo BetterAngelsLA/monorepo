@@ -26,7 +26,8 @@
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.dev.betterangels.la",
-        "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO"
+        "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO",
+        "EXPO_PUBLIC_LOCAL_API_URL": ""
       },
       "node": "22.21.1"
     },
@@ -41,7 +42,8 @@
         "EXPO_PUBLIC_API_URL": "https://api.prod.betterangels.la",
         "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "WARN",
-        "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.betterangels.la"
+        "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.betterangels.la",
+        "EXPO_PUBLIC_LOCAL_API_URL": ""
       },
       "channel": "production",
       "node": "22.21.1"
