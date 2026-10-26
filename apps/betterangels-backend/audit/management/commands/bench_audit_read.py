@@ -7,17 +7,19 @@ numbers are machine-dependent, so it must not gate a build.
     python manage.py bench_audit_read --objects 50 --events-per-object 2000 --analyze
 
 Synthetic rows are written straight into the event table with ``bulk_create``
-(``INSERT`` is unaffected by the update guard) and tagged with object ids at or
-above ``SYNTHETIC_BASE_ID`` so they can be cleaned up with an ordinary ``DELETE``
--- the very operation the guard no longer blocks. The templating ``Shelter``, the
-``ShelterAvailability`` its ``post_save`` signal creates, and their event rows
-are removed on the way out too, even with ``--keep``: both are fixture
-scaffolding, not measurement data.
+(``INSERT`` is unaffected by the update guard), use object ids at or above
+``SYNTHETIC_BASE_ID`` and carry the ``bench.`` label prefix, so they can be
+identified and deleted with an ordinary ``DELETE`` -- the very operation the
+guard no longer blocks. The templating ``Shelter``, the ``ShelterAvailability``
+its ``post_save`` signal creates, and their event rows are always removed on the
+way out: they are fixture scaffolding, not measurement data. There is no
+``--keep``; ``--cleanup`` removes leftovers from a hard-killed run without
+inserting a new fixture.
 
 Safety: this writes and deletes rows in the live event table. It refuses to run
-unless ``DEBUG`` is on or ``BENCH_AUDIT_ALLOWED=true`` is set; it refuses if a
-live ``Shelter`` uses the synthetic id range; and it removes samples left by a
-killed run before inserting anything.
+unless ``DEBUG`` is on or ``BENCH_AUDIT_ALLOWED=true`` is set; a normal run
+refuses if a live ``Shelter`` uses the synthetic id range; and it removes
+samples left by a killed run before inserting anything.
 
 What each flag is for:
 
@@ -35,6 +37,8 @@ What each flag is for:
                        has no ``references()`` anchor.
 * ``--analyze``        run ``EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`` on the
                        selector's own SQL instead of guessing from timing.
+* ``--cleanup``        delete leftover synthetic/sample rows and exit without
+                       inserting or measuring.
 """
 
 from __future__ import annotations
@@ -51,6 +55,7 @@ import pgtrigger
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
+from django.db.models import Q
 from django.utils import timezone
 from model_bakery import baker
 
@@ -65,6 +70,11 @@ SYNTHETIC_BASE_ID = 900_000_000
 # Name of the real ``Shelter`` used to derive the event template; stale copies
 # from a killed run are removed by name (and null organization) on the next run.
 _SAMPLE_NAME = "bench-sample"
+
+# Synthetic event labels carry this prefix, so cleanup (including ``--cleanup``
+# after a hard-killed run) can target the harness's own rows without relying on
+# the object-id range.
+_SYNTHETIC_LABEL_PREFIX = "bench."
 
 _SKIPPED_TEMPLATE_FIELDS = frozenset({"pgh_id", "pgh_created_at", "pgh_label", "pgh_obj", "pgh_context"})
 
@@ -92,9 +102,9 @@ class Command(BaseCommand):
         parser.add_argument("--analyze", action="store_true", help="EXPLAIN (ANALYZE, BUFFERS) the captured SQL.")
         parser.add_argument("--batch-size", type=int, default=5000, help="bulk_create batch size.")
         parser.add_argument(
-            "--keep",
+            "--cleanup",
             action="store_true",
-            help="Keep the synthetic event rows (the sample shelter is always removed).",
+            help="Delete leftover synthetic/sample rows and exit without inserting a fixture.",
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
@@ -104,19 +114,25 @@ class Command(BaseCommand):
             raise CommandError("--objects and --events-per-object must both be >= 1.")
 
         self._require_safe_environment()
-        self._assert_synthetic_range_is_free()
+
+        event_model = Shelter.pgh_event_model  # type: ignore[attr-defined]
+        cleanup = options["cleanup"]
+        if not cleanup:
+            self._assert_synthetic_range_is_free()
+
+        stale_rows = self._delete_stale_samples(event_model)
+        removed = self._delete_synthetic(event_model)
+        if cleanup:
+            self.stdout.write(f"removed {removed} synthetic event rows and {stale_rows} stale sample event rows")
+            return
+        if stale_rows or removed:
+            self.stdout.write(f"removed {removed} synthetic and {stale_rows} stale sample event rows")
 
         spread_start = self._parse_date(options["date_from"]) or (timezone.now() - datetime.timedelta(days=365 * 2))
         date_from = self._parse_date(options["date_from"])
         date_to = self._parse_date(options["date_to"])
         event_filter = AuditEventFilter(date_from=date_from, date_to=date_to)
 
-        event_model = Shelter.pgh_event_model  # type: ignore[attr-defined]
-
-        stale_rows = self._delete_stale_samples(event_model)
-        if stale_rows:
-            self.stdout.write(f"removed {stale_rows} stale sample event rows")
-        self._delete_synthetic(event_model)
         sample = baker.make(Shelter, name=_SAMPLE_NAME)
         try:
             sample_row = event_model.objects.filter(pgh_obj_id=sample.pk).first()
@@ -161,14 +177,11 @@ class Command(BaseCommand):
             if options["unbounded"]:
                 self._measure_unanchored(options["analyze"])
         finally:
-            # Cleanup runs even when a measurement fails: a half-finished run must
-            # not leave synthetic rows (unless --keep) or the sample behind.
+            # Cleanup runs even when a measurement fails or is interrupted: a
+            # half-finished run must not leave synthetic rows or the sample.
             sample_rows = self._delete_sample(event_model, sample)
-            if options["keep"]:
-                self.stdout.write(f"kept synthetic event rows (--keep); deleted {sample_rows} sample event rows")
-            else:
-                removed = self._delete_synthetic(event_model)
-                self.stdout.write(f"deleted {removed} synthetic event rows and {sample_rows} sample event rows")
+            removed = self._delete_synthetic(event_model)
+            self.stdout.write(f"deleted {removed} synthetic event rows and {sample_rows} sample event rows")
 
     # -- safety --------------------------------------------------------------
 
@@ -176,8 +189,8 @@ class Command(BaseCommand):
     def _require_safe_environment() -> None:
         """Fail closed unless this is a dev database or the caller opted in.
 
-        The command writes and deletes rows in the live event table; the
-        ``SYNTHETIC_BASE_ID`` range is the only separation from real data.
+        The command writes and deletes rows in the live event table, so a
+        non-DEBUG database needs a deliberate opt-in.
         """
         env_allowed = os.environ.get("BENCH_AUDIT_ALLOWED", "").strip().lower() == "true"
         if not (settings.DEBUG or env_allowed):
@@ -190,11 +203,10 @@ class Command(BaseCommand):
     def _assert_synthetic_range_is_free() -> None:
         """Refuse if a live Shelter uses the synthetic id range.
 
-        ``_delete_synthetic`` and ``_spread_created_at`` key on
-        ``pgh_obj_id >= SYNTHETIC_BASE_ID``; a real shelter there would lose its
-        event rows or have their timestamps rewritten. Orphan event rows of an
-        already-deleted object cannot be told apart from a previous ``--keep``
-        run, so this guards the live rows.
+        A normal run inserts events for ``SYNTHETIC_BASE_ID + offset``; a real
+        shelter owning one of those ids would have the fixture's events mixed
+        into its history. ``--cleanup`` skips this check because it deletes by
+        the harness's own labels, not by the id range.
         """
         clashing = Shelter.objects.filter(pk__gte=SYNTHETIC_BASE_ID).values_list("pk", flat=True).first()
         if clashing is not None:
@@ -255,7 +267,9 @@ class Command(BaseCommand):
                 fields[obj_field] = obj_id
                 if context_field is not None:
                     fields[context_field] = None
-                fields["pgh_label"] = "shelter.add" if i == 0 else "shelter.update"
+                fields["pgh_label"] = (
+                    f"{_SYNTHETIC_LABEL_PREFIX}shelter.add" if i == 0 else f"{_SYNTHETIC_LABEL_PREFIX}shelter.update"
+                )
                 # ``pgh_data``/``pgh_diff`` are not columns: the aggregate derives
                 # them by diffing a row's tracked columns against the previous row
                 # of the same object. Vary a tracked column so the derived diff is
@@ -288,13 +302,13 @@ class Command(BaseCommand):
         step = max((timezone.now() - spread_start).total_seconds(), 1.0) / max(events_per_object - 1, 1)
         sql = (
             f'WITH numbered AS (SELECT pgh_id, ROW_NUMBER() OVER (PARTITION BY "{obj_col}" ORDER BY pgh_id) - 1 AS n '
-            f'FROM "{table}" WHERE "{obj_col}" >= %s) '
+            f'FROM "{table}" WHERE "pgh_label" LIKE %s) '
             f'UPDATE "{table}" t SET pgh_created_at = %s + make_interval(secs => (n.n * %s)::double precision) '
             f"FROM numbered n WHERE n.pgh_id = t.pgh_id"
         )
         with pgtrigger.ignore(f"{event_model._meta.label}:protect_updates"):
             with connection.cursor() as cursor:
-                cursor.execute(sql, [SYNTHETIC_BASE_ID, spread_start, step])
+                cursor.execute(sql, [f"{_SYNTHETIC_LABEL_PREFIX}%", spread_start, step])
 
     @staticmethod
     def _analyze(event_model: Any) -> None:
@@ -312,7 +326,14 @@ class Command(BaseCommand):
     @staticmethod
     def _delete_synthetic(event_model: Any) -> int:
         obj_field = Command._attname(event_model, "pgh_obj") or "pgh_obj_id"
-        deleted, _ = event_model.objects.filter(**{f"{obj_field}__gte": SYNTHETIC_BASE_ID}).delete()
+        synthetic = Q(pgh_label__startswith=_SYNTHETIC_LABEL_PREFIX)
+        # Rows written before the label prefix existed (old ``--keep`` leftovers).
+        legacy = Q(
+            **{f"{obj_field}__gte": SYNTHETIC_BASE_ID},
+            pgh_label__in=("shelter.add", "shelter.update"),
+            name__startswith="Synthetic ",
+        )
+        deleted, _ = event_model.objects.filter(synthetic | legacy).delete()
         return int(deleted)
 
     @staticmethod

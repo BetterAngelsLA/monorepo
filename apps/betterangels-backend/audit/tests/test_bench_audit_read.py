@@ -10,7 +10,12 @@ from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 from model_bakery import baker
 
-from audit.management.commands.bench_audit_read import _SAMPLE_NAME, SYNTHETIC_BASE_ID
+from audit.management.commands.bench_audit_read import (
+    _SAMPLE_NAME,
+    _SYNTHETIC_LABEL_PREFIX,
+    SYNTHETIC_BASE_ID,
+    Command,
+)
 from shelters.models import Shelter, ShelterAvailability
 
 ShelterEvent = Shelter.pgh_event_model  # type: ignore[attr-defined]
@@ -42,6 +47,7 @@ class BenchAuditReadSafetyTestCase(TestCase):
         self.assertFalse(Shelter.objects.filter(name=_SAMPLE_NAME).exists())
         self.assertFalse(ShelterAvailability.objects.exists())
         self.assertFalse(ShelterEvent.objects.filter(pgh_obj_id__gte=SYNTHETIC_BASE_ID).exists())
+        self.assertFalse(ShelterEvent.objects.filter(pgh_label__startswith=_SYNTHETIC_LABEL_PREFIX).exists())
         # The sample's cascade-deleted availability keeps its own event table.
         self.assertFalse(ShelterAvailabilityEvent.objects.exists())
 
@@ -73,6 +79,28 @@ class BenchAuditReadSafetyTestCase(TestCase):
         self._run()
 
         self.assertFalse(Shelter.objects.filter(pk=stale.pk).exists())
+        self._assert_clean()
+
+    def test_cleanup_removes_leftovers_without_inserting(self) -> None:
+        # Suppress cleanup to simulate a run killed after insertion.
+        with mock.patch.object(Command, "_delete_synthetic", return_value=0):
+            self._run()
+        self.assertTrue(ShelterEvent.objects.filter(pgh_label__startswith=_SYNTHETIC_LABEL_PREFIX).exists())
+
+        self._run(cleanup=True)
+
+        self._assert_clean()
+
+    def test_cleanup_removes_legacy_kept_rows(self) -> None:
+        ShelterEvent.objects.create(
+            id=SYNTHETIC_BASE_ID,
+            pgh_obj_id=SYNTHETIC_BASE_ID,
+            pgh_label="shelter.update",
+            name="Synthetic legacy",
+        )
+
+        self._run(cleanup=True)
+
         self._assert_clean()
 
     def test_run_removes_the_sample_and_synthetic_rows(self) -> None:
