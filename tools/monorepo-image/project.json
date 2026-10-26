@@ -1,0 +1,26 @@
+{
+  "name": "monorepo-image",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "root": "tools/monorepo-image",
+  "sourceRoot": "tools/monorepo-image",
+  "projectType": "application",
+  "tags": ["type:app", "scope:ci"],
+  "targets": {
+    "image": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "docker buildx build --load --file tools/monorepo-image/Dockerfile --target production --tag monorepo:production .",
+        "cwd": "."
+      },
+      "configurations": {
+        "ci-base": {
+          "command": "docker buildx build --load --file tools/monorepo-image/Dockerfile --target ci-base --tag monorepo:ci-base ."
+        },
+        "production": {
+          "command": "docker buildx build --load --file tools/monorepo-image/Dockerfile --target production --tag monorepo:production ."
+        }
+      }
+    }
+  }
+}

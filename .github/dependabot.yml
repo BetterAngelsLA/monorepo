@@ -45,7 +45,7 @@ updates:
           - 'boto3-stubs'
 
   - package-ecosystem: 'docker'
-    directory: '/'
+    directory: '/tools/monorepo-image'
     schedule:
       interval: 'weekly'
 
