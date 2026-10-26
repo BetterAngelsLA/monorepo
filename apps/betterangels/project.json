@@ -194,7 +194,19 @@
         "cwd": "apps/betterangels"
       }
     },
-    "update": {
+    "write-eas-env": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "configurations": {
+        "preview": {
+          "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile preview"
+        },
+        "production": {
+          "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile production"
+        }
+      }
+    },
+    "eas-update": {
       "executor": "@nx/expo:update",
       "cache": false,
       "dependsOn": ["write-eas-env", "sync-deps", "copy-lockfile"],
@@ -205,18 +217,6 @@
         },
         "production": {
           "auto": true
-        }
-      }
-    },
-    "write-eas-env": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "configurations": {
-        "preview": {
-          "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile preview"
-        },
-        "production": {
-          "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile production"
         }
       }
     }

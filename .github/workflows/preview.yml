@@ -98,7 +98,7 @@ jobs:
           node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
 
           # Update and web deploy are independent; one graph lets them overlap.
-          yarn nx affected -t update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
+          yarn nx affected -t eas-update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
 
       - name: 🧪 E2E
         env:

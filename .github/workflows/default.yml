@@ -307,7 +307,7 @@ jobs:
           elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             TARGETS="lint typecheck test build"
           else
-            TARGETS="lint typecheck test build deploy eas-build update"
+            TARGETS="lint typecheck test build deploy eas-build eas-update"
           fi
           export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
           # The EAS build/update use the Expo fingerprint runtime policy; the
