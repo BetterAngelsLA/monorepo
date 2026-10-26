@@ -58,6 +58,7 @@ from django.db import connection
 from django.db.models import Q
 from django.utils import timezone
 from model_bakery import baker
+from pghistory.core import event_models
 
 from audit.selectors import object_audit_log
 from audit.types import AuditEventFilter
@@ -391,13 +392,17 @@ class Command(BaseCommand):
         return timings, query_count, captured_sql, captured_params
 
     def _measure_unanchored(self, analyze: bool) -> None:
-        """Time the aggregate with no ``references()`` anchor (admin, exports)."""
+        """Time the aggregate with no ``references()`` anchor (admin, exports).
+
+        ``across(*event_models())`` is required: an aggregate proxy with no
+        explicit ``across`` compiles an empty CTE and would measure nothing.
+        """
         from audit.models import AuditWriteEvent
 
         captured = self._capture()
         with connection.execute_wrapper(captured.wrapper):
             started = time.perf_counter()
-            rows = list(AuditWriteEvent.objects.exclude(label="seed")[:50])
+            rows = list(AuditWriteEvent.objects.across(*event_models()).exclude(label="seed")[:50])
             elapsed = (time.perf_counter() - started) * 1000.0
         self.stdout.write(f"unanchored aggregate (limit 50): {elapsed:.2f} ms for {len(rows)} rows")
         if analyze:

@@ -7,8 +7,11 @@ from unittest import mock
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
+from pghistory.core import event_models
 
 from audit.management.commands.bench_audit_read import (
     _SAMPLE_NAME,
@@ -104,9 +107,33 @@ class BenchAuditReadSafetyTestCase(TestCase):
         self._assert_clean()
 
     def test_run_removes_the_sample_and_synthetic_rows(self) -> None:
-        self._run()
+        observed: dict[str, bool] = {}
+        original = Command._delete_sample
 
+        def spy(*args: Any, **kwargs: Any) -> Any:
+            sample = args[1]
+            observed["sample"] = Shelter.objects.filter(pk=sample.pk).exists()
+            observed["events"] = ShelterEvent.objects.filter(pgh_obj_id__gte=SYNTHETIC_BASE_ID).exists()
+            return original(*args, **kwargs)
+
+        with mock.patch.object(Command, "_delete_sample", autospec=True, side_effect=spy):
+            self._run()
+
+        # Proves the run inserted the sample and synthetic events it removes.
+        self.assertTrue(observed["sample"])
+        self.assertTrue(observed["events"])
         self._assert_clean()
+
+    def test_unbounded_aggregate_covers_every_event_table(self) -> None:
+        command = Command(stdout=StringIO())
+
+        with CaptureQueriesContext(connection) as captured:
+            command._measure_unanchored(analyze=False)
+
+        self.assertTrue(captured.captured_queries)
+        sql = max((query["sql"] for query in captured.captured_queries), key=len)
+        # Without ``across(*event_models())`` the aggregate compiles an empty CTE.
+        self.assertGreaterEqual(sql.count("UNION ALL"), len(event_models()) - 1)
 
     def test_failure_still_cleans_up(self) -> None:
         with mock.patch(
