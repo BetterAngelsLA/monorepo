@@ -236,6 +236,7 @@ def invalidate_scope_cache(user: "User") -> None:
     """
     user.__dict__.pop("_scope_cache", None)
     user.__dict__.pop("_global_tier_cache", None)
+    user.__dict__.pop("_can_anywhere_cache", None)
     user.__dict__.pop("_global_permissions", None)
     user.__dict__.pop("_org_effective_permissions", None)
 
@@ -315,9 +316,19 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
 
 
 def can_anywhere(user: "User", perm: str) -> bool:
-    """Authority anywhere — the check for creates on platform-shared models."""
-    s = scopes(user, perm)
-    return s is ALL or s.exists()
+    """Authority anywhere — the check for creates on platform-shared models.
+
+    Memoized per request: :func:`scopes` caches the lazy queryset, but
+    ``.exists()`` evaluates it, so an unmemoized predicate re-queries once per
+    call site (every row of a list field, every nested type).  The boolean is
+    what callers ask for, so cache that; :func:`invalidate_scope_cache` drops
+    it with the other authority memos.
+    """
+    cache: dict[str, bool] = user.__dict__.setdefault("_can_anywhere_cache", {})
+    if perm not in cache:
+        s = scopes(user, perm)
+        cache[perm] = s is ALL or s.exists()
+    return cache[perm]
 
 
 def can_globally(user: "User", perm: str) -> bool:

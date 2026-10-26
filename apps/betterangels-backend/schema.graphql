@@ -430,11 +430,6 @@ input ClientProfileOrder {
   id: Ordering
 }
 
-input ClientProfilePhotoInput {
-  clientProfile: ID!
-  photo: Upload
-}
-
 type ClientProfileType {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
@@ -460,7 +455,6 @@ type ClientProfileType {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: DjangoImageType
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -480,6 +474,7 @@ type ClientProfileType {
   docReadyDocuments: [ClientDocumentType!]
   consentFormDocuments: [ClientDocumentType!]
   otherDocuments: [ClientDocumentType!]
+  profilePhoto: DjangoImageType
   displayCaseManager: String!
 }
 
@@ -567,7 +562,6 @@ input CreateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -1603,7 +1597,6 @@ type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
-  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true) @deprecated(reason: "Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.")
   deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
@@ -3107,7 +3100,6 @@ input UpdateClientProfileInput {
   placeOfBirth: String
   preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
-  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
@@ -3125,8 +3117,6 @@ input UpdateClientProfileInput {
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
-
-union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union UpdateCurrentUserPayload = UserType | CurrentUserType | OperationInfo
 
@@ -3363,9 +3353,6 @@ input UpdateUserProfileInput {
 }
 
 union UpdateUserProfilePayload = CurrentUserType | OperationInfo
-
-"""Represents a file upload."""
-scalar Upload
 
 type UserType {
   firstName: NonBlankString

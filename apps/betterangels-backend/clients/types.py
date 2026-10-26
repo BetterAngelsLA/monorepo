@@ -10,7 +10,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import CharField, Exists, F, Func, Max, OuterRef, Q, QuerySet, Value
 from django.utils import timezone
 from strawberry import ID, Info, auto
-from strawberry.file_uploads import Upload
 from strawberry_django.auth.utils import get_current_user
 
 from accounts.models import User
@@ -170,7 +169,7 @@ class ClientProfileFilter:
         if value is None:
             return queryset, Q()
 
-        earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
+        earliest_interaction_threshold = timezone.now() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
         # Filter profiles based on the maximum interacted_at date being within the threshold
         comparison = "gte" if value else "lt"
 
@@ -325,12 +324,6 @@ class SocialMediaProfileInput(SocialMediaProfileBaseType):
     platform_user_id: NonBlankString | None
 
 
-@strawberry.input
-class ClientProfilePhotoInput:
-    client_profile: ID
-    photo: Optional[Upload]
-
-
 @strawberry_django.type(ClientContact)
 class ClientContactBaseType:
     name: auto
@@ -411,7 +404,6 @@ class ClientProfileBaseType:
     place_of_birth: auto
     preferred_communication: Optional[List[PreferredCommunicationEnum]]
     preferred_language: auto
-    profile_photo: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
@@ -449,6 +441,7 @@ class ClientProfileType(ClientProfileBaseType):
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet:
         return _visible_client_rows(queryset, info, ClientProfile.perms.VIEW)
 
+    profile_photo: auto
 
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
