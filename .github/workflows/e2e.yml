@@ -75,7 +75,14 @@ jobs:
         env:
           CI: 'true'
           NX_DAEMON: 'false'
-        run: yarn nx run shelter-e2e:e2e:preview --output-style=stream
+        run: |
+          set -euo pipefail
+          origin="$(sed -n 's/^SITE_URL=//p' apps/shelter-web/.env.deploy.preview)"
+          base_path="/branches/${BRANCH_NAME}/"
+          export BASE_URL="${origin%/}${base_path}"
+          yarn playwright install chromium
+          curl -fsS "$BASE_URL" >/dev/null
+          yarn nx affected -t e2e --projects=shelter-e2e --configuration preview --output-style=stream
 
       - name: 📎 Upload shelter-e2e report
         if: always()

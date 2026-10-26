@@ -59,6 +59,14 @@
           "profile": "development-simulator"
         }
       }
+    },
+    "e2e": {
+      "cache": false,
+      "dependsOn": ["^deploy"],
+      "configurations": {
+        "preview": {},
+        "production": {}
+      }
     }
   },
   "namedInputs": {
