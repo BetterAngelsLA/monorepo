@@ -55,33 +55,25 @@ publish_cache() {
   fi
 }
 
-echo "test DB cache: checking for a current base"
+echo "test DB cache: restoring the previous dump"
 if [[ -f "$CACHE_FILE" && -f "$MANIFEST_FILE" ]] &&
-  POSTGRES_NAME=postgres "$PYTHON_BIN" scripts/test_db_cache_manifest.py check \
-    --manifest "$MANIFEST_FILE" --allow-new-migrations; then
-  if POSTGRES_NAME=postgres "$PYTHON_BIN" scripts/test_db_cache_manifest.py check \
-    --manifest "$MANIFEST_FILE" >/dev/null 2>&1; then
-    # The manifest already covers every migration, settings, and DB input that
-    # can change the dump. A matching manifest means there is nothing to apply.
-    echo "test DB cache: cache is current"
-    exit 0
-  fi
-
-  # A new migration changes the Nx key but not the dump's existing schema. Apply
-  # it to a restored copy instead of replaying the whole migration chain.
-  echo "test DB cache: applying new migrations to the previous dump"
+  POSTGRES_NAME=postgres "$PYTHON_BIN" scripts/test_db_cache_manifest.py check --manifest "$MANIFEST_FILE"; then
+  # Always run migrate on the restored dump, even with no new migrations.
+  # Then flush and let post_migrate reseed, so current seed code is authoritative.
   dropdb --force --if-exists "$INCREMENTAL_DB" >/dev/null 2>&1 || true
   if createdb "$INCREMENTAL_DB" &&
     pg_restore --dbname="$INCREMENTAL_DB" "$CACHE_FILE" &&
     POSTGRES_NAME="$INCREMENTAL_DB" "$PYTHON_BIN" scripts/test_db_cache_manifest.py verify --manifest "$MANIFEST_FILE" &&
     POSTGRES_NAME="$INCREMENTAL_DB" "$PYTHON_BIN" manage.py migrate --noinput \
       --settings=betterangels_backend.settings_test &&
+    POSTGRES_NAME="$INCREMENTAL_DB" "$PYTHON_BIN" manage.py flush --noinput \
+      --settings=betterangels_backend.settings_test &&
     POSTGRES_NAME="$INCREMENTAL_DB" "$PYTHON_BIN" scripts/validate_test_db.py &&
     publish_cache "$INCREMENTAL_DB"; then
-    echo "test DB cache: applied new migrations on top of the previous dump"
+    echo "test DB cache: refreshed the previous dump"
     exit 0
   fi
-  echo "test DB cache: incremental path failed; falling back to a full build" >&2
+  echo "test DB cache: restore path failed; falling back to a full build" >&2
   dropdb --force --if-exists "$INCREMENTAL_DB" >/dev/null 2>&1 || true
   rm -f "$CACHE_FILE" "$MANIFEST_FILE"
 fi
@@ -106,6 +98,8 @@ if (( failed )); then
 fi
 
 SOURCE_DB="${BUILD_PREFIX}0"
+POSTGRES_NAME="$SOURCE_DB" "$PYTHON_BIN" manage.py flush --noinput \
+  --settings=betterangels_backend.settings_test
 if ! POSTGRES_NAME="$SOURCE_DB" "$PYTHON_BIN" scripts/validate_test_db.py; then
   rm -f "$CACHE_FILE" "$MANIFEST_FILE"
   echo "test DB cache is stale; remove the cache entry and retry" >&2

@@ -8,7 +8,7 @@ or any deployed environment (branch preview, DEV).
 **Prerequisites** (dev container):
 
 - The image ships Chromium's system libraries (see the Playwright block in the
-  root `Dockerfile`), so no `--with-deps` install is needed.
+  `tools/monorepo-image/Dockerfile`), so no `--with-deps` install is needed.
 - The dev container builds the `development` stage, which also carries the
   browser binaries — it inherits the `playwright` stage, which installs from the
   same `yarn.lock` as `node_modules`. `tools/scripts/post-create.sh` still runs
