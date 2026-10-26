@@ -102,6 +102,12 @@ export type AuditActionType = {
   truncated: Scalars['Boolean']['output'];
 };
 
+export type AuditEventFilter = {
+  actorId?: InputMaybe<Scalars['ID']['input']>;
+  dateFrom?: InputMaybe<Scalars['DateTime']['input']>;
+  dateTo?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
 export enum AuditEventKind {
   Delete = 'DELETE',
   Insert = 'INSERT',
@@ -2841,6 +2847,7 @@ export type QueryNotesArgs = {
 
 export type QueryObjectAuditLogArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<AuditEventFilter>;
   includeSnapshot?: Scalars['Boolean']['input'];
   limit?: Scalars['Int']['input'];
   objectId: Scalars['ID']['input'];
