@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { cancelAllUploadRunners } from '../../providers/uploadProgress/uploadRunnerRegistry';
+import { clearReferralExportCache } from '../../screens/Client/Referrals/shareReferralText';
 import { useUser } from '../../providers/user/UserProvider';
 import { clearSessionCookies } from './clearSessionCookies';
 
@@ -54,6 +55,10 @@ export default function useClearLocalSession() {
     // Cached query data (e.g. direct-HMIS client search/detail responses)
     // would otherwise surface for the next user on this device.
     queryClient.clear();
+
+    // Exported referral summaries are the most sensitive artifact the app
+    // writes to disk, so they do not survive the session either.
+    clearReferralExportCache();
 
     // The next user must not inherit this one's organization.
     clearActiveOrgId();

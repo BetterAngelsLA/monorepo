@@ -51,9 +51,14 @@ export const ReferralCard = memo(function ReferralCard({
 
   const dateStr = formatReferralDate(referral.createdAt);
 
+  // A null status is "not recorded", not "awaiting a shelter decision" — the
+  // export says "Not recorded" for the same record, so the card must agree.
+  const statusLabel = referral.status ?? 'Not recorded';
   const statusColor =
-    referral.status === 'ACCEPTED'
-      ? Colors.SUCCESS
+    referral.status == null
+      ? Colors.NEUTRAL_DARK
+      : referral.status === 'ACCEPTED'
+        ? Colors.SUCCESS
       : referral.status === 'DECLINED'
         ? Colors.ERROR
         : Colors.WARNING;
@@ -104,7 +109,7 @@ export const ReferralCard = memo(function ReferralCard({
           Referred: {dateStr || 'Not recorded'}
         </TextRegular>
         <TagRow
-          tags={[{ label: referral.status ?? 'PENDING', color: statusColor }]}
+          tags={[{ label: statusLabel, color: statusColor }]}
         />
       </View>
 
@@ -155,6 +160,7 @@ export const ReferralCard = memo(function ReferralCard({
           {canChange && (
             <Pressable
               testID={`edit-referral-${referral.id}`}
+              style={styles.action}
               accessibilityRole="button"
               onPress={() => onEdit(referral)}
             >
@@ -164,6 +170,7 @@ export const ReferralCard = memo(function ReferralCard({
           {canCreate && (
             <Pressable
               testID={`reuse-referral-${referral.id}`}
+              style={styles.action}
               accessibilityRole="button"
               onPress={() => onReferAgain(referral)}
             >
@@ -189,6 +196,11 @@ export const ReferralCard = memo(function ReferralCard({
 });
 
 const styles = StyleSheet.create({
+  // Both card actions are text-only links; give them a real touch target.
+  action: {
+    minHeight: 48,
+    justifyContent: 'center',
+  },
   card: {
     backgroundColor: Colors.WHITE,
     borderRadius: 8,

@@ -314,11 +314,11 @@ async function setup(
 
 async function modalButton(text: string) {
   const testIds: Record<string, string> = {
+    // A dialog must render an explicit Cancel; there is no generic close
+    // affordance to fall back to.
     Cancel: screen.queryByTestId('discard-modal-cancel')
       ? 'discard-modal-cancel'
-      : screen.queryByTestId('action-modal-secondary')
-        ? 'action-modal-secondary'
-        : 'action-modal-close',
+      : 'action-modal-secondary',
     Discard: 'discard-modal-confirm',
     Recover: 'action-modal-primary',
     'Resume draft': 'action-modal-primary',
