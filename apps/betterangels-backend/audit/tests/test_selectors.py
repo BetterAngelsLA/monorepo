@@ -1282,6 +1282,7 @@ class ObjectAuditLogFilterTestCase(TestCase):
     T1 = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
     T2 = datetime(2026, 2, 1, 12, 0, tzinfo=timezone.utc)
     T3 = datetime(2026, 3, 1, 12, 0, tzinfo=timezone.utc)
+    T4 = datetime(2026, 4, 1, 12, 0, tzinfo=timezone.utc)
 
     def setUp(self) -> None:
         self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
@@ -1384,7 +1385,49 @@ class ObjectAuditLogFilterTestCase(TestCase):
 
         self.assertEqual(len(actions), 1)
         self.assertEqual([event.action for event in actions[0].events], ["shelter.update"])
+        # The T1 event is gone from ``events``, but the surviving T2 event's diff
+        # was computed against it: an action's before/after may start before the
+        # window even though the action itself is in it.
         self.assertEqual(actions[0].field_changes["name"], ["Early", "Late"])
+
+    def test_filters_apply_to_cursor_pages(self) -> None:
+        """The cursor walks the filtered aggregate, so a filtered-out action is
+        never served and a surviving action is not repeated across pages."""
+        self._rename("One", at=self.T1, user=self.user)
+        self._rename("By Grace", at=self.T2, user=self.other_user)
+        self._rename("Three", at=self.T3, user=self.user)
+        self._rename("Four", at=self.T4, user=self.user)
+
+        # The date window excludes T1; the actor filter excludes the T2 action.
+        filters: dict[str, Any] = {"date_from": self.T2, "actor_id": self.user.pk}
+
+        first = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, **filters)
+        self.assertEqual([action.field_changes["name"][1] for action in first.results], ["Four"])
+        self.assertTrue(first.has_next_page)
+        self.assertIsNotNone(first.end_cursor)
+
+        second = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, after=first.end_cursor, **filters)
+        self.assertEqual([action.field_changes["name"][1] for action in second.results], ["Three"])
+        self.assertFalse(second.has_next_page)
+
+        past_end = object_audit_log(
+            obj=self.shelter, target_type="SHELTER", limit=1, after=second.end_cursor, **filters
+        )
+        self.assertEqual(past_end.results, [])
+        self.assertIsNone(past_end.end_cursor)
+
+
+def _outer_select(sql: str) -> str:
+    """The statement after pghistory's aggregate CTE.
+
+    Every union branch in the CTE projects ``pgh_created_at`` and each proxy
+    field (``actor_id``), so a substring check against the whole statement
+    cannot tell a pushed-down predicate from a projected column. The selector's
+    filters compile into the outer SELECT that reads the CTE.
+    """
+    index = sql.rfind(")\nSELECT")
+    assert index > 0, "expected a pghistory CTE followed by the outer SELECT"
+    return sql[index:]
 
 
 class ObjectAuditLogQueryBudgetTestCase(TestCase):
@@ -1448,7 +1491,7 @@ class ObjectAuditLogQueryBudgetTestCase(TestCase):
     # ── §10 filter pushdown ──────────────────────────────────────────────────
 
     def test_filters_are_pushed_to_sql_and_short_circuit(self) -> None:
-        """Filters are predicates on the CTE, not a Python post-filter (§10, §21)."""
+        """Filters are predicates on the outer SELECT, not a Python post-filter (§10, §21)."""
         self._rename(5)
 
         future = datetime.now(timezone.utc) + timedelta(days=1)
@@ -1460,6 +1503,8 @@ class ObjectAuditLogQueryBudgetTestCase(TestCase):
         self.assertEqual(actions, [])
         self.assertEqual(len(queries), 1)
 
-        sql = queries[0]["sql"]
-        self.assertIn("pgh_created_at", sql)
-        self.assertIn("actor_id", sql)
+        # Assert on the outer SELECT: the CTE itself always projects both
+        # columns, so a substring check on the whole statement is vacuous.
+        outer = _outer_select(queries[0]["sql"])
+        self.assertRegex(outer, r'pgh_created_at"?\s*>=')
+        self.assertRegex(outer, r'actor_id"?\s*=')

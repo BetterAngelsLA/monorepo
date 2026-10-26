@@ -768,7 +768,11 @@ def object_audit_log(
     ``actor_id`` restricts to a single acting user (ADR 0004 §21). All three are
     applied as predicates on the aggregate CTE's outer SELECT — in SQL, before
     the key grouping and the Python grouping below (§10) — so a filtered-out
-    event never contributes to an action.
+    event cannot keep an otherwise-empty action on the page or widen its time
+    span. It can still be visible *through* a surviving event: pghistory
+    computes ``pgh_diff`` against the row's predecessor before filtering, so the
+    earliest surviving event's before/after may start outside the window, and an
+    action's verb is derived only from the anchor rows that survive.
 
     *hidden_fields* maps a model label to the raw attnames that must not be
     rendered for that model, and *hidden_summary_models* lists models whose

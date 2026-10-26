@@ -55,7 +55,7 @@ todos:
     status: done
   - id: audit-write-filters
     content: 'Phase 3: Add dateFrom/dateTo/actorId filters to objectAuditLog'
-    status: pending
+    status: done
   - id: audit-event-model
     content: 'Phase 4: Add AuditReadEvent model (single-object read attribution)'
     status: pending
@@ -96,18 +96,18 @@ isProject: false
 
 ## Status
 
-Accepted. Phase 1 (write tracking) and Phase 2 (the write audit log) are
-implemented, including the review follow-ups: cursor pagination with a
-total-order cursor, `across()` branch pruning, raw-column page predicates (only
-the context arm is indexable), a per-page event budget, retention scoped to
-`--apps` with per-object retention intervals, field-level authorization for the
-BA-review fields and related Bed/Room summaries (§18), and the complete
-`ContactInfo` read exclusion.
+Accepted. Phase 1 (write tracking), Phase 2 (the write audit log), and Phase 3
+(the `dateFrom`/`dateTo`/`actorId` filters, §21) are implemented, including the
+review follow-ups: cursor pagination with a total-order cursor, `across()` branch
+pruning, raw-column page predicates (only the context arm is indexable), a
+per-page event budget, retention scoped to `--apps` with per-object retention
+intervals, field-level authorization for the BA-review fields and related
+Bed/Room summaries (§18), and the complete `ContactInfo` read exclusion.
 
-Not in this change: the Phase 3 `dateFrom`/`dateTo`/`actorId` filters (§21), the
-read path (§22-§29), the kind filter (§30), and the operator-portal UI that
-consumes the query (the §32 routes land with the frontend change). The
-frontmatter `todos` mark what is delivered and what is still pending.
+Not in this change: the read path (§22-§29), the kind filter (§30), and the
+operator-portal UI that consumes the query (the §32 routes land with the
+frontend change). The frontmatter `todos` mark what is delivered and what is
+still pending.
 
 ## Context
 
@@ -1588,7 +1588,7 @@ derivation regression, so it is the stronger guard.
 - **No diff base:** an UPDATE whose predecessor row was purged renders `fieldChanges: null`, not `{}` — distinguishable from a write that changed nothing renderable (§13, §31).
 - **Cursor/limit validation:** a malformed `after`, an `after` with a naive (offset-less) timestamp, and an out-of-range `limit` all surface as GraphQL errors, not 500s (§10, §17).
 - **`RETAINED_LABELS` covers the reports (§31):** the labels `shelters/selectors/reports.py` reads are derived from its source and asserted to be a subset of `RETAINED_LABELS`, so a new report label cannot be added without also being retained (the other retention tests import the same constant the command uses, which cannot catch that).
-- **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that the `label` predicate is pushed to SQL (§10 performance note), not applied in Python after fetching. Date/actor filters are Phase 3 (§21) and are not part of this query.
+- **Query-count/latency guard:** for a representative busy object (e.g. a shelter with dozens of events across several event models), assert the selector issues a bounded number of queries and that the `label` predicate is pushed to SQL (§10 performance note), not applied in Python after fetching. The §21 date/actor predicates are asserted against the outer SELECT that reads the aggregate CTE: the CTE always projects those columns, so a substring check on the whole statement would pass without a filter.
 - **No server-side cursor:** `objectAuditLog` must not emit a `DECLARE` (Django's `.iterator()`); the page's row set is already bounded. Assert the captured queries contain no `DECLARE` (§10).
 - **Connection-shape guards:** (a) the write path's injected SQL uses the transaction-local `set_config(..., true)` form and never a session-scoped `set_config(..., false)`; (b) the statement the selector **actually issues** (the max over its grouped key query and page query, measured as interpolated SQL) stays within the documented per-target ceilings, recording the measured sizes from §10 rather than asserting a bound the design cannot meet.
 
@@ -1598,11 +1598,7 @@ derivation regression, so it is the stronger guard.
 
 ## 21. Date-range and actor filters
 
-**Not implemented in this change.** This is the Phase 3 plan; the Phase 2 query
-(§17) has no `dateFrom`/`dateTo`/`actorId` arguments yet.
-
-Add the timestamp-window and actor filters to the write audit log (before reads
-exist, `kinds` has nothing to filter on):
+Implemented on the write path. `objectAuditLog` accepts:
 
 ```graphql
 objectAuditLog(
@@ -1616,8 +1612,25 @@ objectAuditLog(
 ): AuditActionPage!
 ```
 
-- `dateFrom`/`dateTo` — timestamp window.
-- `actorId` — restrict to a single actor.
+- `dateFrom`/`dateTo` — inclusive bounds on `pgh_created_at`.
+- `actorId` — the acting `User.id` as the §8 middleware froze it into the context
+  metadata, not the display name/email and not an `OrganizationUser`
+  `membershipId`.
+- All three are predicates on the aggregate CTE's outer SELECT (§10), applied
+  before the key grouping: a filtered-out event cannot keep an otherwise-empty
+  action on the page or widen an action's time span. They do not push into the
+  per-object CTE branches, so a date filter does not reduce the scanned work
+  (§9c, H3).
+- Filtering is per event, so the earliest surviving event in an action still
+  renders a `pgh_diff` computed against its predecessor before the window: an
+  action's before/after may start outside the selected window, and its verb is
+  derived only from the anchor rows that survive. The selector's docstring
+  states this rather than claiming that a filtered-out event is invisible.
+
+**Tests:** inclusive bounds on both ends, filter composition, actor semantics
+(the frozen `User.id`; context-less events excluded), within-action filtering,
+cursor pagination under a composed filter, and the §20 query-count/pushdown
+guard (asserted on the CTE's outer SELECT, not on the whole statement).
 
 The `kinds` argument is deferred to §30, where `READ` exists to filter. These
 `dateFrom`/`dateTo`/`actorId` filters are extended to the read source in §28

@@ -9,7 +9,10 @@ numbers are machine-dependent, so it must not gate a build.
 Synthetic rows are written straight into the event table with ``bulk_create``
 (``INSERT`` is unaffected by the update guard) and tagged with object ids at or
 above ``SYNTHETIC_BASE_ID`` so they can be cleaned up with an ordinary ``DELETE``
--- the very operation the guard no longer blocks.
+-- the very operation the guard no longer blocks. The templating ``Shelter``, the
+``ShelterAvailability`` its ``post_save`` signal creates, and their event rows
+are removed on the way out too, even with ``--keep``: both are fixture
+scaffolding, not measurement data.
 
 What each flag is for:
 
@@ -45,7 +48,7 @@ from django.utils import timezone
 from model_bakery import baker
 
 from audit.selectors import object_audit_log
-from shelters.models import Shelter
+from shelters.models import Shelter, ShelterAvailability
 
 # Synthetic object ids start here so they never collide with real rows and can be
 # identified (and deleted) by a single predicate.
@@ -76,7 +79,11 @@ class Command(BaseCommand):
         parser.add_argument("--unbounded", action="store_true", help="Also measure the unanchored aggregate.")
         parser.add_argument("--analyze", action="store_true", help="EXPLAIN (ANALYZE, BUFFERS) the captured SQL.")
         parser.add_argument("--batch-size", type=int, default=5000, help="bulk_create batch size.")
-        parser.add_argument("--keep", action="store_true", help="Do not delete synthetic rows on the way out.")
+        parser.add_argument(
+            "--keep",
+            action="store_true",
+            help="Keep the synthetic event rows (the sample shelter is always removed).",
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
         objects = options["objects"]
@@ -92,53 +99,57 @@ class Command(BaseCommand):
 
         self._delete_synthetic(event_model)
         sample = baker.make(Shelter, name="bench-sample")
-        sample_row = event_model.objects.filter(pgh_obj_id=sample.pk).first()
-        if sample_row is None:
-            raise CommandError("The sample Shelter produced no event row; is write tracking enabled?")
+        try:
+            sample_row = event_model.objects.filter(pgh_obj_id=sample.pk).first()
+            if sample_row is None:
+                raise CommandError("The sample Shelter produced no event row; is write tracking enabled?")
 
-        template = self._template_row(event_model, sample_row)
-        inserted = self._bulk_insert(
-            event_model,
-            template,
-            objects=objects,
-            events_per_object=events_per_object,
-            batch_size=options["batch_size"],
-        )
-        self._spread_created_at(event_model, spread_start, events_per_object)
-        self._analyze(event_model)
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"inserted {inserted} synthetic event rows across {objects} objects, "
-                f"spread from {spread_start.date()} to now"
+            template = self._template_row(event_model, sample_row)
+            inserted = self._bulk_insert(
+                event_model,
+                template,
+                objects=objects,
+                events_per_object=events_per_object,
+                batch_size=options["batch_size"],
             )
-        )
+            self._spread_created_at(event_model, spread_start, events_per_object)
+            self._analyze(event_model)
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"inserted {inserted} synthetic event rows across {objects} objects, "
+                    f"spread from {spread_start.date()} to now"
+                )
+            )
 
-        measured_id = SYNTHETIC_BASE_ID + objects - 1
-        measured = Shelter(pk=measured_id)
-        self.stdout.write(
-            f"measuring object pgh_obj_id={measured_id} "
-            f"(history={events_per_object}, limit={options['limit']}, runs={options['runs']})"
-        )
+            measured_id = SYNTHETIC_BASE_ID + objects - 1
+            measured = Shelter(pk=measured_id)
+            self.stdout.write(
+                f"measuring object pgh_obj_id={measured_id} "
+                f"(history={events_per_object}, limit={options['limit']}, runs={options['runs']})"
+            )
 
-        timings, query_count, captured_sql, captured_params = self._time_selector(
-            measured, date_from, date_to, options["limit"], options["runs"]
-        )
-        self._report(timings, query_count, captured_sql)
+            timings, query_count, captured_sql, captured_params = self._time_selector(
+                measured, date_from, date_to, options["limit"], options["runs"]
+            )
+            self._report(timings, query_count, captured_sql)
 
-        if options["analyze"]:
-            self._explain(captured_sql, captured_params)
+            if options["analyze"]:
+                self._explain(captured_sql, captured_params)
 
-        cte_has, outer_has = self._date_predicate_placement(captured_sql)
-        self.stdout.write(f"date predicate -> CTE branches: {cte_has}; outer SELECT: {outer_has}")
+            cte_has, outer_has = self._date_predicate_placement(captured_sql)
+            self.stdout.write(f"date predicate -> CTE branches: {cte_has}; outer SELECT: {outer_has}")
 
-        if options["unbounded"]:
-            self._measure_unanchored(options["analyze"])
-
-        if options["keep"]:
-            self.stdout.write("kept synthetic rows (--keep)")
-        else:
-            removed = self._delete_synthetic(event_model)
-            self.stdout.write(f"deleted {removed} synthetic event rows")
+            if options["unbounded"]:
+                self._measure_unanchored(options["analyze"])
+        finally:
+            # Cleanup runs even when a measurement fails: a half-finished run must
+            # not leave synthetic rows (unless --keep) or the sample behind.
+            sample_rows = self._delete_sample(event_model, sample)
+            if options["keep"]:
+                self.stdout.write(f"kept synthetic event rows (--keep); deleted {sample_rows} sample event rows")
+            else:
+                removed = self._delete_synthetic(event_model)
+                self.stdout.write(f"deleted {removed} synthetic event rows and {sample_rows} sample event rows")
 
     # -- fixture -------------------------------------------------------------
 
@@ -240,6 +251,26 @@ class Command(BaseCommand):
         obj_field = Command._attname(event_model, "pgh_obj") or "pgh_obj_id"
         deleted, _ = event_model.objects.filter(**{f"{obj_field}__gte": SYNTHETIC_BASE_ID}).delete()
         return int(deleted)
+
+    @staticmethod
+    def _delete_sample(event_model: Any, sample: Any) -> int:
+        """Remove the templating Shelter and the event rows its lifecycle wrote.
+
+        ``Shelter`` is tracked, so ``delete()`` writes a ``shelter.remove`` event
+        of its own. The ``post_save`` signal also creates a tracked
+        ``ShelterAvailability``; that object is deleted by cascade, but its
+        add/remove events live in a *different* table and outlive it. Both trails
+        are deleted after the object, otherwise every run leaves history behind
+        for rows that no longer exist.
+        """
+        sample_pk = sample.pk
+        sample.delete()
+        obj_field = Command._attname(event_model, "pgh_obj") or "pgh_obj_id"
+        deleted, _ = event_model.objects.filter(**{f"{obj_field}": sample_pk}).delete()
+
+        availability_event_model = ShelterAvailability.pgh_event_model  # type: ignore[attr-defined]
+        availability_deleted, _ = availability_event_model.objects.filter(shelter_id=sample_pk).delete()
+        return int(deleted + availability_deleted)
 
     # -- measurement ---------------------------------------------------------
 
