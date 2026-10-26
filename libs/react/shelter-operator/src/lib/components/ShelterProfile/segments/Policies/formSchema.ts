@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { toDropdownValues } from '../../../base-ui/dropdown';
 import { ShelterProfileType } from '../../types';
 
-export const formSchema = z.object({
+const baseSchema = z.object({
   maxStay: z
     .number()
     .int('Max stay must be a whole number')
@@ -14,13 +14,27 @@ export const formSchema = z.object({
   visitorsAllowed: z.boolean().nullable().optional(),
   emergencySurge: z.boolean().nullable().optional(),
   exitPolicy: z.array(z.enum(ExitPolicyChoices)),
-  exitPolicyOther: z.string().nullable().optional(),
-  otherRules: z.string().nullable().optional(),
+  exitPolicyOther: z.string().trim().nullable().optional(),
+  otherRules: z.string().nullable().optional(), // RichTextEditor field
+});
+
+export const formSchema = baseSchema.superRefine((data, ctx) => {
+  // `other` fields already trimmed via baseSchema
+  if (
+    data.exitPolicy.includes(ExitPolicyChoices.Other) &&
+    !data.exitPolicyOther
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['exitPolicyOther'],
+      message: "This field is required when 'Other' is selected.",
+    });
+  }
 });
 
 export type PoliciesFormData = z.infer<typeof formSchema>;
 
-export const formFieldNames = Object.keys(formSchema.shape);
+export const formFieldNames = Object.keys(baseSchema.shape);
 
 export const defaultFormValues: PoliciesFormData = {
   maxStay: undefined,

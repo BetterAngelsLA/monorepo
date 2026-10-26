@@ -11,24 +11,49 @@ import { z } from 'zod';
 import { toDropdownValues } from '../../../base-ui/dropdown';
 import { ShelterProfileType } from '../../types';
 
-export const formSchema = z.object({
+const baseSchema = z.object({
   demographics: z.array(z.enum(DemographicChoices)),
-  demographicsOther: z.string().nullable().optional(),
+  demographicsOther: z.string().trim().nullable().optional(),
   specialSituationRestrictions: z.array(
     z.enum(SpecialSituationRestrictionChoices),
   ),
   shelterTypes: z.array(z.enum(ShelterChoices)),
-  shelterTypesOther: z.string().nullable().optional(),
+  shelterTypesOther: z.string().trim().nullable().optional(),
   accessibility: z.array(z.enum(AccessibilityChoices)),
   storage: z.array(z.enum(StorageChoices)),
   pets: z.array(z.enum(PetChoices)),
   parking: z.array(z.enum(ParkingChoices)),
-  addNotesShelterDetails: z.string(),
+  addNotesShelterDetails: z.string(), // RichTextEditor field
+});
+
+export const formSchema = baseSchema.superRefine((data, ctx) => {
+  // `other` fields already trimmed via baseSchema
+  if (
+    data.demographics.includes(DemographicChoices.Other) &&
+    !data.demographicsOther
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['demographicsOther'],
+      message: "This field is required when 'Other' is selected.",
+    });
+  }
+
+  if (
+    data.shelterTypes.includes(ShelterChoices.Other) &&
+    !data.shelterTypesOther
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['shelterTypesOther'],
+      message: "This field is required when 'Other' is selected.",
+    });
+  }
 });
 
 export type DetailsFormData = z.infer<typeof formSchema>;
 
-export const formFieldNames = Object.keys(formSchema.shape);
+export const formFieldNames = Object.keys(baseSchema.shape);
 
 export const defaultFormValues: DetailsFormData = {
   demographics: [],

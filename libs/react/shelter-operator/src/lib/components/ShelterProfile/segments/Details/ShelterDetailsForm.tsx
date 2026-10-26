@@ -88,6 +88,7 @@ export function ShelterDetailsForm(props: TProps) {
                 DEMOGRAPHICS_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
               }
               triggerValue={DemographicChoices.Other}
+              inputMaxLength={255}
               inputError={errors.demographicsOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}
@@ -108,6 +109,7 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -123,6 +125,7 @@ export function ShelterDetailsForm(props: TProps) {
                 SHELTER_TYPE_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
               }
               triggerValue={ShelterChoices.Other}
+              inputMaxLength={255}
               inputError={errors.shelterTypesOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}
@@ -145,6 +148,7 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -164,6 +168,7 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -183,6 +188,7 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -204,6 +210,7 @@ export function ShelterDetailsForm(props: TProps) {
                     field.onChange(options ? options.map((o) => o.value) : []);
                   }}
                   isViewMode={isViewMode}
+                  disabled={disabled}
                 />
               )}
             />

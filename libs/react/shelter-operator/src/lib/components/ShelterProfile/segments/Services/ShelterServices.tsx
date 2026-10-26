@@ -55,6 +55,11 @@ export function ShelterServices(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
+  // Unlike the other segments, this form keeps state the `values` prop cannot
+  // reset: the "Other" options created from user input live in
+  // `ShelterServicesForm` and only `onCancel` clears them. Remounting after a
+  // save drops the pre-save `custom:<categoryId>:<label>` options so they don't
+  // linger next to the services the category refetch brings back.
   const [formKey, setFormKey] = useState(0);
 
   const client = useApolloClient();
