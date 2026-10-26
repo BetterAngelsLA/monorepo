@@ -4,9 +4,12 @@ import * as path from 'path';
 import { vi } from 'vitest';
 import { setupEnvAndFingerprint } from './eas-utils';
 
-// Mock execSync (used by `run`) to return a fake fingerprint
+// Mock execSync (used by `run`) to return a fake fingerprint. `exec` is
+// promisified at module load by runJsonAsync, so it must be present even
+// though these tests never call the async path.
 vi.mock('child_process', () => ({
   execSync: vi.fn(() => JSON.stringify({ hash: 'abc123' })),
+  exec: vi.fn(),
 }));
 
 describe('setupEnvAndFingerprint', () => {

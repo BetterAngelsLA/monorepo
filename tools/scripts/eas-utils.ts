@@ -8,11 +8,14 @@
  *   - .env / fingerprint setup
  */
 
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
 import * as fs from 'fs';
 import minimist from 'minimist';
 import * as path from 'path';
 import stripAnsi from 'strip-ansi';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export const argv = minimist(process.argv.slice(2));
 
@@ -73,13 +76,7 @@ export function run(
   }
 }
 
-/**
- * Run a command and parse its stdout as JSON.
- * Handles nx/eas CLI output that may contain ANSI codes and non-JSON text
- * by finding the first valid JSON array or object in the output.
- */
-export function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
-  const raw = run(cmd, { silent: true, ...opts });
+function parseJsonOutput<T>(raw: string): T {
   const cleaned = stripAnsi(raw);
 
   // Find the first valid JSON object or array in the output.
@@ -109,6 +106,37 @@ export function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
   throw new Error(
     `Could not parse JSON from output:\n${cleaned.slice(0, 500)}`,
   );
+}
+
+/**
+ * Run a command and parse its stdout as JSON.
+ * Handles nx/eas CLI output that may contain ANSI codes and non-JSON text.
+ */
+export function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
+  return parseJsonOutput<T>(run(cmd, { silent: true, ...opts }));
+}
+
+/**
+ * Async variant of {@link runJson}, for callers that can run independent
+ * commands concurrently (e.g. the per-platform EAS build lookups).
+ */
+export async function runJsonAsync<T>(
+  cmd: string,
+  opts?: { cwd?: string },
+): Promise<T> {
+  const cwd = opts?.cwd ?? process.cwd();
+  try {
+    const { stdout } = await execAsync(cmd, {
+      cwd,
+      encoding: 'utf-8',
+      maxBuffer: 10 * 1024 * 1024,
+    });
+    return parseJsonOutput<T>(stdout.toString());
+  } catch (error: any) {
+    if (error.stderr) console.error(error.stderr);
+    if (error.stdout) console.error(error.stdout);
+    throw error;
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -287,11 +287,11 @@ jobs:
           fi
           EOF
 
-      - name: 🧹 Lint, typecheck, test, and build
+      - name: 🧹 Lint, typecheck, test, build, and deploy
         run: |
           docker compose run better-angels bash <<'EOF'
           # One Nx invocation lets independent targets overlap: lint/typecheck
-          # while prepare-test-db builds the database, and the EAS build while
+          # while prepare-test-db builds the database, and the EAS update while
           # the backend suite runs. logical (not auto): xdist's "auto" counts
           # physical cores and under-provisions SMT runners.
           export TEST_DB_WORKERS=logical
@@ -299,12 +299,24 @@ jobs:
           # stream task output so pytest's durations/slowest-test table lands in CI
           # EAS/vite builds consume EXPO_TOKEN and cloud credentials; forked
           # PRs still run lint/typecheck/test but must not run build.
+          # Both PR previews (web deploy and EAS update) run in the separate
+          # Preview job, so the required check only runs checks. main and
+          # merge_group still deploy here.
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
             TARGETS="lint typecheck test"
-          else
+          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             TARGETS="lint typecheck test build"
+          else
+            TARGETS="lint typecheck test build eas-deploy"
           fi
           yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
+
+          # The EAS script shells out to `nx run …:eas-build`, so keep the web
+          # deploy out of its parent graph: an outer `export-web -> sync-deps`
+          # chain makes Nx reject the nested sync-deps as a recursive task.
+          if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]]; then
+            yarn nx affected -t deploy --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
+          fi
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
@@ -312,6 +324,7 @@ jobs:
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
           VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
@@ -322,12 +335,12 @@ jobs:
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
 
-      # Save before deploy/E2E. actions/cache's automatic save is a post-job
-      # action and only runs when the whole job succeeds; a deploy failure
-      # would otherwise throw away the seeded test DB. Explicit save also
-      # replaces the deprecated, non-functional `save-always` input.
+      # Save even when the job fails: main/merge_group still deploy in the
+      # quality step, and an `actions/cache` post-job save only runs on success.
+      # A deploy failure must not throw away the seeded test DB. (Failed Nx
+      # tasks are not cached; the artifact validator still runs on restore.)
       - name: Save Nx cache
-        if: success()
+        if: always() && !cancelled()
         continue-on-error: true
         uses: actions/cache/save@v6
         with:
@@ -348,17 +361,6 @@ jobs:
           schema: main:apps/betterangels-backend/schema.graphql
           fail-on-breaking: true
           approve-label: graphql-inspector:approved-breaking-change
-
-      - name: 💬 Post preview link to PR
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t post-pr-preview
-          EOF
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_EVENT_PATH: ${{ github.event_path }}
 
       - name: 🏗️ Build and push CI base image
         # Nx owns the Dockerfile/target/cache configuration; the container has
@@ -390,28 +392,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🚀 Deploy Changes
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-        # `deploy` depends on `export-web` and `export-web` is not cached, so the
-        # browser bundle is built here rather than in a second invocation.
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t deploy --configuration ${{ matrix.environment }}
-          EOF
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # `deploy` depends on `build`, so shelter-web and betterangels-admin
-          # are rebuilt here too. Their bundles inline their Maps keys at build
-          # time; without the keys the deployed apps render no map.
-          VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
-          VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
-          # `deploy` runs `export-web`, so the key must be here or the bundle
-          # ships without it.
-          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
-
       - name: 🧪 E2E shelter-web (preview)
-        # Runs after deploy, because the suite drives the deployed preview: the
-        # deploy step only returns once the edge serves the revision just built,
+        # Runs on main/merge_group after the in-job deploy. PR previews run the
+        # same script in the Preview job, after the web deploy there.
+        #
+        # It runs after deploy, because the suite drives the deployed preview: the
+        # deploy target only returns once the edge serves the revision just built,
         # so these tests describe this commit rather than whatever was there.
         #
         # Choosing the target — this branch's preview when `shelter-web` was
@@ -427,12 +413,12 @@ jobs:
         # app with `implicitDependencies`. (Which is also why this can't be
         # `nx affected -t e2e`: `BASE_URL` is one value for the whole container,
         # so a second suite in the same step would be handed the wrong origin.)
-        if: matrix.environment == 'preview' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+        if: matrix.environment == 'preview' && github.event_name != 'pull_request'
         run: |
           docker compose run --rm better-angels bash tools/scripts/e2e-shelter.sh
 
       - name: 📎 Upload shelter-e2e report
-        if: always() && matrix.environment == 'preview' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+        if: always() && matrix.environment == 'preview' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7
         with:
           name: shelter-e2e-report-${{ env.BRANCH_NAME }}
@@ -445,3 +431,198 @@ jobs:
         run: |
           docker compose down
           sudo chown -R -h 1001:1001 $GITHUB_WORKSPACE
+
+  # Both PR preview artifacts live here: the web deploy (betterangels and the
+  # other affected web apps) and the EAS mobile update. One CI base image and
+  # dependency cache serve both; neither is a required check, so the required
+  # BuildTestDeploy job only runs checks. No Postgres/Compose is needed.
+  Preview:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    environment: preview
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
+      VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
+      EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
+      EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+      EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v5
+
+      - name: 🔧 Set Environment Variables
+        env:
+          RAW_BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
+          echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> "$GITHUB_ENV"
+
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2.1.7
+
+      - name: Pull CI base image
+        run: |
+          docker pull "$MONOREPO_IMAGE:ci-base" || \
+            docker build --file tools/monorepo-image/Dockerfile --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
+
+      - name: Restore dependency cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            node_modules
+            .venv
+            .yarn/cache
+            .yarn/install-state.gz
+          key: deps-v1-${{ runner.os }}-${{ hashFiles('tools/monorepo-image/Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
+
+      - name: Prepare dependency mounts
+        run: |
+          mkdir -p node_modules .venv .yarn/cache
+          sudo chown -R -h 1000:1000 node_modules .venv .yarn
+          sudo chown -R -h 1000:1000 "$GITHUB_WORKSPACE"
+
+      - name: Ensure dependencies
+        run: |
+          if [[ -x node_modules/.bin/nx ]]; then
+            echo "dependency cache is complete"
+            exit 0
+          fi
+          echo "dependency cache is incomplete; reinstalling"
+          docker run --rm --user 1000:1000 -e CI=true -e HOME=/home/betterangels \
+            -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
+            "$MONOREPO_IMAGE:ci-base" \
+            bash -c 'yarn install --immutable'
+
+      - name: 🚀 EAS preview
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
+            -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
+            -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
+            -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME -e PR_NUMBER \
+            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA \
+            -e EXPO_TOKEN \
+            -e EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY \
+            -e EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY \
+            -e EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS \
+            -e EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID \
+            -e GIT_CONFIG_COUNT=1 \
+            -e GIT_CONFIG_KEY_0=safe.directory \
+            -e GIT_CONFIG_VALUE_0=/workspace \
+            -w /workspace \
+            "$MONOREPO_IMAGE:ci-base" \
+            bash -c '
+              set -euo pipefail
+              affected="$(yarn nx show projects --affected --with-target eas-deploy)"
+              if grep -qx betterangels <<<"$affected"; then
+                yarn nx run betterangels:eas-deploy:preview
+              else
+                echo "betterangels is not affected; skipping the EAS preview"
+              fi
+            '
+
+      - name: 🚀 Web preview deploys
+        id: web-preview
+        # Independent of the EAS preview: run it even if the EAS step failed.
+        if: always()
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
+            -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
+            -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
+            -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME \
+            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA \
+            -e VITE_SHELTER_GOOGLE_MAPS_API_KEY \
+            -e VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY \
+            -e EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY \
+            -e AWS_REGION -e AWS_DEFAULT_REGION -e AWS_ACCOUNT_ID \
+            -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN \
+            -e GIT_CONFIG_COUNT=1 \
+            -e GIT_CONFIG_KEY_0=safe.directory \
+            -e GIT_CONFIG_VALUE_0=/workspace \
+            -w /workspace \
+            "$MONOREPO_IMAGE:ci-base" \
+            bash -c '
+              set -euo pipefail
+              # Separate Nx process from the EAS update: the EAS script shells
+              # out to nx run …:eas-build, and a parent graph containing this
+              # the deploy export-web -> sync-deps chain is a recursive task.
+              yarn nx affected -t deploy --configuration preview --output-style=stream --parallel=6
+            '
+
+      - name: 💬 Post web preview link
+        if: always() && steps.web-preview.outcome == 'success'
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
+            -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
+            -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
+            -v "$GITHUB_EVENT_PATH:$GITHUB_EVENT_PATH:ro" \
+            -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME \
+            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_PATH \
+            -e GIT_CONFIG_COUNT=1 \
+            -e GIT_CONFIG_KEY_0=safe.directory \
+            -e GIT_CONFIG_VALUE_0=/workspace \
+            -w /workspace \
+            "$MONOREPO_IMAGE:ci-base" \
+            bash -c '
+              set -euo pipefail
+              yarn nx affected -t post-pr-preview
+            '
+
+      - name: 🧪 E2E shelter-web (preview)
+        # Runs after the web deploy above. The script decides whether this
+        # branch's preview exists and skips when neither shelter-web nor
+        # shelter-e2e is affected.
+        if: always() && steps.web-preview.outcome == 'success'
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
+            -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
+            -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
+            -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME \
+            -e GIT_CONFIG_COUNT=1 \
+            -e GIT_CONFIG_KEY_0=safe.directory \
+            -e GIT_CONFIG_VALUE_0=/workspace \
+            -w /workspace \
+            "$MONOREPO_IMAGE:ci-base" \
+            bash tools/scripts/e2e-shelter.sh
+
+      - name: 📎 Upload shelter-e2e report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
+          path: dist/.playwright/apps/shelter-e2e
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: ⏹️ Restore workspace ownership
+        if: always()
+        run: sudo chown -R -h 1001:1001 "$GITHUB_WORKSPACE"

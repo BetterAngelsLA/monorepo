@@ -59,7 +59,7 @@
       },
       "dependsOn": ["sync-deps", "copy-lockfile"]
     },
-    "build": {
+    "eas-deploy": {
       "executor": "nx:run-commands",
       "defaultConfiguration": "preview",
       "cache": false,
@@ -86,13 +86,22 @@
     "export-web": {
       "executor": "nx:run-commands",
       "defaultConfiguration": "preview",
+      "cache": true,
       "inputs": [
         "production",
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
         { "env": "CI" },
         { "env": "BRANCH_NAME" },
-        { "env": "VITE_APP_BASE_PATH" }
+        { "env": "VITE_APP_BASE_PATH" },
+        { "env": "EXPO_PUBLIC_API_URL" },
+        { "env": "EXPO_PUBLIC_DEMO_API_URL" },
+        { "env": "EXPO_PUBLIC_LOCAL_API_URL" },
+        { "env": "EXPO_PUBLIC_SHELTER_WEB_URL" },
+        { "env": "APP_VARIANT" },
+        { "env": "EXPO_PUBLIC_APP_ENV" },
+        { "env": "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL" },
+        { "env": "EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY" }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/betterangels"],
       "options": {

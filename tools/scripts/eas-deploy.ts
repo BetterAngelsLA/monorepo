@@ -45,6 +45,7 @@ import {
   resolveProjectDir,
   run,
   runJson,
+  runJsonAsync,
   setupEnvAndFingerprint,
 } from './eas-utils';
 
@@ -109,40 +110,55 @@ function parseArgs(): { project: string; profile: string } {
 // Step 1: Check/Trigger EAS Build
 // ---------------------------------------------------------------------------
 
-function checkOrTriggerBuild(
+async function checkOrTriggerBuild(
   project: string,
   profile: string,
   runtimeVersion: string,
   platforms: string[],
-): {
+): Promise<{
   slug: string;
   projectId: string;
   builds: Record<string, PlatformBuildResult>;
-} {
+}> {
   console.log(
     `\n=== Checking/triggering ${profile} builds for platforms: ${platforms.join(
       ', ',
     )} ===`,
   );
 
+  const projectDir = resolveProjectDir(project);
+  const easBin = path.resolve(projectDir, '../../node_modules/.bin/eas');
+
+  // The per-platform lookups are independent API calls; run them concurrently.
+  // Use the workspace's EAS binary rather than a bare `eas`, and log a failure
+  // instead of silently treating it as "no existing build".
+  const lookups = await Promise.all(
+    platforms.map(async (platform) => {
+      try {
+        const buildData = await runJsonAsync<BuildInfo[]>(
+          `"${easBin}" build:list --platform ${platform} --build-profile ${profile} --runtime-version ${runtimeVersion} --limit 1 --json --non-interactive`,
+          { cwd: projectDir },
+        );
+        return { platform, buildData };
+      } catch (error) {
+        console.error(
+          `build:list failed for ${platform} (${profile}, runtime ${runtimeVersion}); assuming no existing build`,
+          error,
+        );
+        return { platform, buildData: [] as BuildInfo[] };
+      }
+    }),
+  );
+
   const builds: Record<string, PlatformBuildResult> = {};
   let slug = '';
   let projectId = '';
-
-  for (const platform of platforms) {
+  for (const { platform, buildData } of lookups) {
     console.log(`--- ${platform} ---`);
 
-    let buildData: BuildInfo[];
-    try {
-      buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:build-list --platform ${platform} --build-profile ${profile} --runtime-version ${runtimeVersion} --limit 1 --json --non-interactive`,
-      );
-    } catch {
-      buildData = [];
-    }
-
+    let data = buildData;
     // Skip if existing build found — avoid redundant CI builds
-    if (buildData.length > 0) {
+    if (data.length > 0) {
       console.log(
         `Found existing ${platform} build for runtime ${runtimeVersion}, skipping.`,
       );
@@ -150,12 +166,19 @@ function checkOrTriggerBuild(
       console.log(
         `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`,
       );
-      buildData = runJson<BuildInfo[]>(
+      // Sequential on purpose: a missing native build is the rare path, and
+      // the target runs sync-deps/copy-lockfile before the EAS build.
+      data = await runJsonAsync<BuildInfo[]>(
         `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json --no-wait`,
       );
     }
 
-    const info = buildData[0];
+    const info = data[0];
+    if (!info) {
+      throw new Error(
+        `No EAS build returned for ${platform} (${profile}, runtime ${runtimeVersion})`,
+      );
+    }
     slug = info.app.slug;
     projectId = info.app.id;
     builds[platform] = toBuildResult(info, slug);
@@ -441,27 +464,35 @@ async function main(): Promise<void> {
   // 1. Setup secrets and get runtime version
   const runtimeVersion = setupEnvAndFingerprint(projectDir, profile);
 
-  // 2. Check/trigger builds
+  // 2. Check/trigger builds. Sequential across profiles: both can miss and
+  // trigger an eas-build, and concurrent Nx processes would race copy-lockfile
+  // and the workspace data DB. Each call still looks its platforms up
+  // concurrently. A simulator-only failure must not abort the preview update.
   const isPreview = profile === 'preview';
   const buildPlatforms = ['android', 'ios'];
-  const { slug, projectId, builds } = checkOrTriggerBuild(
+  const buildResult = await checkOrTriggerBuild(
     project,
     profile,
     runtimeVersion,
     buildPlatforms,
   );
-
-  // 3. Simulator build (preview only)
-  let simulatorBuilds: Record<string, PlatformBuildResult> = {};
-  if (isPreview) {
-    const simResult = checkOrTriggerBuild(
-      project,
-      'development-simulator',
-      runtimeVersion,
-      ['ios'],
-    );
-    simulatorBuilds = simResult.builds;
-  }
+  const simResult = isPreview
+    ? await checkOrTriggerBuild(
+        project,
+        'development-simulator',
+        runtimeVersion,
+        ['ios'],
+      ).catch((error) => {
+        console.error(
+          'Simulator build lookup failed; continuing without simulator builds',
+          error,
+        );
+        return { slug: '', projectId: '', builds: {} };
+      })
+    : null;
+  const { slug, projectId, builds } = buildResult;
+  const simulatorBuilds: Record<string, PlatformBuildResult> =
+    simResult?.builds ?? {};
 
   // 4. EAS Update
   const { updates, groupId } = performEasUpdate(
