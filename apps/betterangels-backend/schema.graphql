@@ -1595,7 +1595,7 @@ type Mutation {
   updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "change_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
+  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "delete_clientprofile"}], any: true)
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)

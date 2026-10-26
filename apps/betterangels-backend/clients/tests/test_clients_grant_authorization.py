@@ -178,3 +178,42 @@ class ClientsGrantAuthorityTestCase(ClientProfileGraphQLBaseTestCase):
 
         deleted = self._delete_client_profile(self.client_profile_1["id"])
         self.assertNotIn("messages", deleted["data"]["deleteClientProfile"])
+
+    def test_change_without_delete_updates_but_cannot_delete(self) -> None:
+        """CHANGE and DELETE are separate gates; DELETE is not implied by CHANGE."""
+        editor = baker.make(User)
+        self.org_1.add_user(editor)
+        self._grant(
+            editor,
+            self.org_1,
+            "Change Only",
+            (ClientProfile.perms.VIEW, ClientProfile.perms.CHANGE),
+        )
+        self.graphql_client.force_login(editor)
+
+        updated = self._update_client_profile_fixture({"id": self.client_profile_1["id"], "firstName": "changed"})
+        self.assertIsNone(updated.get("errors"))
+        self.assertEqual(updated["data"]["updateClientProfile"]["firstName"], "changed")
+
+        deleted = self._delete_client_profile(self.client_profile_1["id"])
+        self.assertIn("errors", deleted)
+        self.assertTrue(ClientProfile.objects.filter(pk=self.client_profile_1["id"]).exists())
+
+    def test_delete_without_change_deletes_but_cannot_update(self) -> None:
+        """The mirror: DELETE alone does not authorize an edit."""
+        editor = baker.make(User)
+        self.org_1.add_user(editor)
+        self._grant(
+            editor,
+            self.org_1,
+            "Delete Only",
+            (ClientProfile.perms.VIEW, ClientProfile.perms.DELETE),
+        )
+        self.graphql_client.force_login(editor)
+
+        updated = self._update_client_profile_fixture({"id": self.client_profile_1["id"], "firstName": "nope"})
+        self.assertIn("errors", updated)
+
+        deleted = self._delete_client_profile(self.client_profile_1["id"])
+        self.assertNotIn("messages", deleted["data"]["deleteClientProfile"])
+        self.assertFalse(ClientProfile.objects.filter(pk=self.client_profile_1["id"]).exists())

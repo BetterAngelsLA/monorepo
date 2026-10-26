@@ -12,6 +12,15 @@ from referrals.models import Referral
 from tasks.models import Task
 from teams.models import Team
 
+# The client family's full-CRUD bundle, shared by the legacy template and the
+# scoped Role so the two cannot drift apart while both exist (ADR 0001 §5.1).
+# Order is per model, ADD/CHANGE/DELETE/VIEW, matching the previous hand lists.
+CLIENT_FAMILY_PERMS = [
+    perm
+    for model in (ClientProfile, ClientContact, ClientHouseholdMember, HmisProfile, SocialMediaProfile)
+    for perm in (model.perms.ADD, model.perms.CHANGE, model.perms.DELETE, model.perms.VIEW)
+]
+
 CASEWORKER = TemplateConfig(
     name="Caseworker",
     permissions=[
@@ -21,26 +30,7 @@ CASEWORKER = TemplateConfig(
         # ServiceRequest: ADD only (VIEW, CHANGE, DELETE granted per-object at creation)
         ServiceRequest.perms.ADD,
         # Client models: full CRUD
-        ClientProfile.perms.ADD,
-        ClientProfile.perms.CHANGE,
-        ClientProfile.perms.DELETE,
-        ClientProfile.perms.VIEW,
-        ClientContact.perms.ADD,
-        ClientContact.perms.CHANGE,
-        ClientContact.perms.DELETE,
-        ClientContact.perms.VIEW,
-        ClientHouseholdMember.perms.ADD,
-        ClientHouseholdMember.perms.CHANGE,
-        ClientHouseholdMember.perms.DELETE,
-        ClientHouseholdMember.perms.VIEW,
-        HmisProfile.perms.ADD,
-        HmisProfile.perms.CHANGE,
-        HmisProfile.perms.DELETE,
-        HmisProfile.perms.VIEW,
-        SocialMediaProfile.perms.ADD,
-        SocialMediaProfile.perms.CHANGE,
-        SocialMediaProfile.perms.DELETE,
-        SocialMediaProfile.perms.VIEW,
+        *CLIENT_FAMILY_PERMS,
         # Task: ADD + VIEW only
         Task.perms.ADD,
         Task.perms.VIEW,
@@ -65,26 +55,7 @@ CASEWORKER_ROLE = RoleDef(
     permissions=[
         Team.perms.VIEW,
         # Client family — the RFC 0002 cutover bundle.
-        ClientProfile.perms.ADD,
-        ClientProfile.perms.CHANGE,
-        ClientProfile.perms.DELETE,
-        ClientProfile.perms.VIEW,
-        ClientContact.perms.ADD,
-        ClientContact.perms.CHANGE,
-        ClientContact.perms.DELETE,
-        ClientContact.perms.VIEW,
-        ClientHouseholdMember.perms.ADD,
-        ClientHouseholdMember.perms.CHANGE,
-        ClientHouseholdMember.perms.DELETE,
-        ClientHouseholdMember.perms.VIEW,
-        HmisProfile.perms.ADD,
-        HmisProfile.perms.CHANGE,
-        HmisProfile.perms.DELETE,
-        HmisProfile.perms.VIEW,
-        SocialMediaProfile.perms.ADD,
-        SocialMediaProfile.perms.CHANGE,
-        SocialMediaProfile.perms.DELETE,
-        SocialMediaProfile.perms.VIEW,
+        *CLIENT_FAMILY_PERMS,
         # Referrals ride the same scoped Role (RFC 0003 / #2574).
         Referral.perms.ADD,
         Referral.perms.CHANGE,

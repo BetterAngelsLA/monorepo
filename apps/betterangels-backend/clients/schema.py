@@ -523,7 +523,12 @@ class Mutation:
 
             return cast(ClientProfileType, client_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[
+            HasPerm(perms=[ClientProfile.perms.DELETE], perm_checker=can_anywhere_checker, fail_silently=False)
+        ],
+    )
     def delete_client_profile(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
@@ -722,11 +727,17 @@ class Mutation:
     ) -> AuthorizedPresignedS3UploadType:
         user = cast(User, get_current_user(info))
 
-        _ = visible(
-            ClientProfile.objects.all(),
-            user,
-            ClientProfile.perms.CHANGE,
-        ).get(id=data.client_profile_id)
+        try:
+            _ = visible(
+                ClientProfile.objects.all(),
+                user,
+                ClientProfile.perms.CHANGE,
+            ).get(id=data.client_profile_id)
+        except ClientProfile.DoesNotExist:
+            # Same refusal the other write mutations raise: a missing or
+            # unauthorized profile is one permission error, not a DoesNotExist
+            # crash.
+            raise PermissionError("You do not have permission to modify this client.")
 
         result = client_profile_photo.create_presigned_upload(
             user=user,
