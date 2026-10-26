@@ -231,6 +231,9 @@
         },
         "production": {
           "profile": "production"
+        },
+        "simulator": {
+          "profile": "development-simulator"
         }
       }
     }
