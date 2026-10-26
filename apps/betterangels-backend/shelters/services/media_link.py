@@ -73,8 +73,14 @@ def media_link_update(*, user: "User", data: Dict[str, Any]) -> MediaLink:
     )
 
     for key, value in data.items():
-        if value is not UNSET:
-            setattr(media_link, key, value)
+        if value is UNSET:
+            continue
+
+        # ``title`` is a non-null CharField — an explicit ``null`` clears it.
+        if key == "title" and value is None:
+            value = ""
+
+        setattr(media_link, key, value)
 
     media_link.full_clean()
     media_link.save()

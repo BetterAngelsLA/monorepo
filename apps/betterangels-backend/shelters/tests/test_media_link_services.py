@@ -123,6 +123,13 @@ class MediaLinkUpdateTestCase(MediaLinkServiceTestCase):
         self.assertEqual(self.media_link.url, YOUTUBE_URL)
         self.assertEqual(self.media_link.media_type, MediaLinkTypeChoices.YOUTUBE)
 
+    def test_title_none_clears_it(self) -> None:
+        """``title`` is a non-null CharField, so an explicit null stores blank."""
+        media_link_update(user=self.user, data={"id": self.media_link.pk, "title": None})
+
+        self.media_link.refresh_from_db()
+        self.assertEqual(self.media_link.title, "")
+
     def test_unset_values_are_skipped(self) -> None:
         media_link_update(
             user=self.user,
@@ -208,4 +215,5 @@ class MediaLinkDeleteTestCase(MediaLinkServiceTestCase):
         with self.assertRaises(ObjectDoesNotExist):
             media_link_delete(user=self.user, ids=[media_link.pk, other_link.pk])
 
-        self.assertTrue(MediaLink.objects.filter(pk__in=[media_link.pk, other_link.pk]).exists())
+        self.assertTrue(MediaLink.objects.filter(pk=media_link.pk).exists())
+        self.assertTrue(MediaLink.objects.filter(pk=other_link.pk).exists())
