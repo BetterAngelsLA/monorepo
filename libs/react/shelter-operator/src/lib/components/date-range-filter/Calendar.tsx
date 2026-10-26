@@ -1,10 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import {
-  addMonths,
-  differenceInCalendarDays,
-  format,
-  subMonths,
-} from 'date-fns';
+import { addMonths, format, subMonths } from 'date-fns';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createContext, useCallback, useContext } from 'react';
 import {
@@ -22,6 +17,10 @@ import {
   TEXT_PRIMARY,
   TEXT_SECONDARY,
 } from './colors';
+import {
+  resolveRangeSelection,
+  type RangeEndpoint,
+} from './dateRangeCalendarUtils';
 
 export type { RdpDateRange };
 
@@ -31,6 +30,11 @@ export interface CalendarProps {
   month?: Date;
   onMonthChange?: (month: Date) => void;
   onMonthLabelClick?: (month: Date) => void;
+  /**
+   * Which end of the range this calendar edits. Set by the paired From/To panes
+   * so an inside-range click moves the date the user is looking at.
+   */
+  endpoint?: RangeEndpoint;
   className?: string;
 }
 
@@ -109,38 +113,27 @@ const customComponents = {
 /**
  * react-day-picker moves the end endpoint for any click after the start, so
  * clicking near the start of a completed range collapses it from the wrong
- * side. Move whichever endpoint is closer to the clicked day instead.
+ * side. `resolveRangeSelection` moves the edge the click belongs to instead —
+ * see its doc comment for why distance alone is not enough.
  */
-function nearestEndpointRange(from: Date, to: Date, date: Date): RdpDateRange {
-  if (differenceInCalendarDays(date, from) < 0) return { from: date, to };
-  if (differenceInCalendarDays(date, to) > 0) return { from, to: date };
-
-  const distanceToStart = Math.abs(differenceInCalendarDays(date, from));
-  const distanceToEnd = Math.abs(differenceInCalendarDays(date, to));
-  return distanceToStart < distanceToEnd
-    ? { from: date, to }
-    : { from, to: date };
-}
-
 export function Calendar({
   selected,
   onSelect,
   month,
   onMonthChange,
   onMonthLabelClick,
+  endpoint,
   className,
 }: CalendarProps) {
   const handleSelect = useCallback(
     (next: RdpDateRange | undefined, triggerDate: Date) => {
       if (selected?.from && selected?.to && triggerDate) {
-        onSelect?.(
-          nearestEndpointRange(selected.from, selected.to, triggerDate),
-        );
+        onSelect?.(resolveRangeSelection(selected, triggerDate, endpoint));
         return;
       }
       onSelect?.(next);
     },
-    [onSelect, selected],
+    [onSelect, selected, endpoint],
   );
 
   return (
