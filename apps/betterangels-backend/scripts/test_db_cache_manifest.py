@@ -2,10 +2,10 @@
 """Write, check, or verify the manifest for the cached test database.
 
 The manifest records the content hash of every applied migration. It is not a
-source-code fingerprint: ``prepare_test_db_cache.sh`` always restores the dump
-and runs ``migrate``, so post-migrate seed code runs on every use. The manifest
-only protects against reusing a dump whose already-applied migrations were
-edited, removed, or replaced.
+source-code fingerprint: ``prepare_test_db_cache.sh`` always restores the dump,
+runs ``migrate``, then flushes and re-runs the post-migrate seed handlers. The
+manifest only protects against reusing a dump whose already-applied migrations
+were edited, removed, or replaced.
 """
 
 from __future__ import annotations

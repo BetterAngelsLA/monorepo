@@ -58,8 +58,8 @@ publish_cache() {
 echo "test DB cache: restoring the previous dump"
 if [[ -f "$CACHE_FILE" && -f "$MANIFEST_FILE" ]] &&
   POSTGRES_NAME=postgres "$PYTHON_BIN" scripts/test_db_cache_manifest.py check --manifest "$MANIFEST_FILE"; then
-  # Always run migrate on the restored dump, even with no new migrations:
-  # post_migrate handlers re-run and bring seed rows in line with current code.
+  # Always run migrate on the restored dump, even with no new migrations.
+  # Then flush and let post_migrate reseed, so current seed code is authoritative.
   dropdb --force --if-exists "$INCREMENTAL_DB" >/dev/null 2>&1 || true
   if createdb "$INCREMENTAL_DB" &&
     pg_restore --dbname="$INCREMENTAL_DB" "$CACHE_FILE" &&
