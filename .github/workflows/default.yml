@@ -55,12 +55,14 @@ jobs:
         uses: nrwl/nx-set-shas@v5
 
       - name: 🔧 Set Environment Variables
+        # A fork PR controls head_ref, so never interpolate it into the script.
+        env:
+          RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
-          RAW_BRANCH_NAME=${{ github.head_ref || github.ref_name }}
-          SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
+          SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c 1-7)
 
           # Sanitize branch name by replacing '/' with '-' and removing any other invalid characters
-          BRANCH_NAME=$(echo $RAW_BRANCH_NAME | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+          BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
 
           if [ "$BRANCH_NAME" == "main" ]; then
             IMAGE_TAG_PREFIX="main"
@@ -93,11 +95,20 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: aws-actions/amazon-ecr-login@v2.1.7
 
+      # Only the production leg publishes images. Keeping Buildx out of the
+      # preview/PR legs also keeps its post-job cleanup out of them.
       - name: 🐳 Set up Docker Buildx
         id: buildx
+        if: matrix.environment == 'production'
         uses: docker/setup-buildx-action@v4.4.1
+        with:
+          # GitHub-hosted runners are discarded when the job ends; removing the
+          # builder in the post step costs 50–100 s on the image leg and buys
+          # nothing. Revisit if this ever runs on a persistent runner.
+          cleanup: false
 
       - name: Export Buildx builder
+        if: matrix.environment == 'production'
         run: echo "BUILDX_BUILDER=${{ steps.buildx.outputs.name }}" >> "$GITHUB_ENV"
 
       # Dependencies live in the Actions cache, not in the CI image. The image
@@ -294,8 +305,11 @@ jobs:
           # while prepare-test-db builds the database, and the EAS build while
           # the backend suite runs. logical (not auto): xdist's "auto" counts
           # physical cores and under-provisions SMT runners.
+          # The cap bounds the per-worker databases as well as the workers:
+          # test_db_common.sh reads --maxprocesses to size the DB fan-out, so a
+          # larger runner cannot turn a test run into an unbounded DB fan-out.
           export TEST_DB_WORKERS=logical
-          export PYTEST_ADDOPTS="-n logical --durations=25"
+          export PYTEST_ADDOPTS="-n logical --maxprocesses 4 --durations=25"
           # stream task output so pytest's durations/slowest-test table lands in CI
           # EAS/vite builds consume EXPO_TOKEN and cloud credentials; forked
           # PRs still run lint/typecheck/test but must not run build.
