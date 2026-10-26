@@ -45,13 +45,9 @@ const s3Path = BASE_PATH.replace(/^\//, '').replace(/\/$/, '');
 const cfPath = BASE_PATH.replace(/\/$/, '');
 const s3Dest = `s3://${S3_BUCKET}/${s3Path}`;
 
-const { root } = JSON.parse(
-  execSync(
-    `yarn nx show project "${NX_TASK_TARGET_PROJECT}" --json 2>/dev/null | sed -n '/^{/,$p'`,
-    { encoding: 'utf8' },
-  ),
-);
-const distPath = `dist/${root}`;
+// Nx writes every web build under dist/apps/<project>; avoid shelling out to
+// `nx show project` (it can be empty when the graph fails) just to learn that.
+const distPath = `dist/apps/${NX_TASK_TARGET_PROJECT}`;
 
 console.log(`📦 ${NX_TASK_TARGET_PROJECT} → ${s3Dest}`);
 
