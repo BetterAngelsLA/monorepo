@@ -612,10 +612,11 @@ it('retains saved answers and the current step when field or navigation writes f
     screen.getByLabelText('Staff Observations / Notes'),
     'Unsaved edit',
   );
-  expectWriteFailure();
+  // Type-ahead is published immediately and written shortly after, so the text
+  // stays on screen; the failed write is reported by the next durable action.
   expect(
     screen.getByLabelText('Staff Observations / Notes'),
-  ).toHaveDisplayValue('Retained local notes');
+  ).toHaveDisplayValue('Unsaved edit');
   await fireEvent.press(screen.getByTestId('intake-next-btn'));
   expectWriteFailure();
   expect(screen.getByTestId('referral-intake-screen')).toBeOnTheScreen();

@@ -21,7 +21,9 @@ export type ReferralImageLayout = {
 const WIDTH = 720;
 const MARGIN = 32;
 const SCALE = 1.5;
-const MAX_OUTPUT_HEIGHT = 8192;
+// 720 * 1.5 wide by this tall is ~17MB decoded. The layout throws before any
+// capture happens, so an oversized summary never allocates the bitmap.
+const MAX_OUTPUT_HEIGHT = 4096;
 
 /** Conservative wrapping without browser/canvas font measurement. Keeps every
  * code point and explicit line break; long tokens are wrapped, never clipped.

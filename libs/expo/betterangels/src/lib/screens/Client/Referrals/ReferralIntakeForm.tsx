@@ -4,7 +4,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CancelReferralButton } from './CancelReferralButton';
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
@@ -19,7 +19,6 @@ import {
   INTAKE_FIELDS,
   getIntakeField,
   isRequiredIntakeField,
-  missingRequiredIntakeFields,
 } from '../../../draft/intakeFields';
 
 const NEEDS_FIELDS = INTAKE_FIELDS.filter((field) => field.section === 'needs');
@@ -51,17 +50,9 @@ export function ReferralIntakeForm({
   const { draft, store } = useReferralDraft();
   const insets = useSafeAreaInsets();
   const runDraftAction = useLocalDraftAction();
-  const continueToShelters = () => {
-    const missing = missingRequiredIntakeFields(draft?.answers ?? {});
-    if (missing.length) {
-      Alert.alert(
-        'Complete required information',
-        missing.map((field) => field.label).join(', '),
-      );
-      return;
-    }
-    onContinue();
-  };
+  // No catalog field is required yet, so there is nothing to gate here. When
+  // the first one lands, this is where the checklist belongs — an Alert would
+  // be a silent no-op on web.
 
   return (
     <View
@@ -94,7 +85,7 @@ export function ReferralIntakeForm({
             styles.headerBtn,
             editing ? styles.headerBtnFlex : styles.headerIconBtn,
           ]}
-          onPress={continueToShelters}
+          onPress={onContinue}
           accessibilityRole="button"
           accessibilityLabel={
             editing

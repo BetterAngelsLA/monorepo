@@ -20,7 +20,6 @@ import type {
   ReferralDraftStore,
   ReferralSubmissionAttempt,
 } from '../../../draft/referralDraft';
-import { missingRequiredIntakeFields } from '../../../draft/intakeFields';
 import {
   buildReferralNotes,
   updateReferralNotes,
@@ -63,8 +62,7 @@ export function useReferralSubmission(
       if (
         !draft ||
         draft.id !== draftId ||
-        (draft.source?.kind !== 'edit' && !draft.selectedShelterId) ||
-        missingRequiredIntakeFields(draft.answers).length
+        (draft.source?.kind !== 'edit' && !draft.selectedShelterId)
       )
         return false;
       // A create names its organization on the payload; without one the request
