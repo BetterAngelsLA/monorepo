@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import { ShelterProfileType } from '../../types';
-import { contactFormSchema, recoverableContactFields } from './Contacts';
+// Import the leaf schema module directly, not the `./Contacts` barrel: the
+// barrel re-exports `ShelterContacts`, which imports this file back. Deep
+// import keeps this module cycle-free and avoids dragging the contacts React
+// tree into every consumer of the schema.
+import {
+  contactFormSchema,
+  recoverableContactFields,
+} from './Contacts/formSchema';
 
 export const formSchema = z.object({
   additionalContacts: z.array(contactFormSchema),

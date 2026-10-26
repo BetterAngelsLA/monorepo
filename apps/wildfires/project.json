@@ -20,6 +20,15 @@
     },
     "build": {
       "executor": "nx:run-commands",
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/tools/shared/**/*",
+        { "env": "CI" },
+        { "env": "BRANCH_NAME" },
+        { "env": "VITE_APP_BASE_PATH" }
+      ],
+      "outputs": ["{workspaceRoot}/dist/apps/wildfires"],
       "options": {
         "command": "vite build",
         "cwd": "apps/wildfires"

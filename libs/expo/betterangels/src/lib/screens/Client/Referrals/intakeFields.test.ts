@@ -135,9 +135,14 @@ describe('catalog vocabulary and mapping integrity', () => {
     expect(new Set(payloadKeys).size).toBe(payloadKeys.length);
   });
 
-  it('coerces legacy boolean yes/no answers to the chip vocabulary', () => {
+  it('coerces a legacy checked consent box but never invents a refusal', () => {
+    // `true` was an explicit tick. `false` was an unticked box, which the old
+    // control could not distinguish from "never asked", so it stays unanswered
+    // rather than being recorded as a refusal.
     expect(buildReferralNotes({ consent: true })).toContain('"consent":"Yes"');
-    expect(buildReferralNotes({ consent: false })).toContain('"consent":"No"');
+    expect(buildReferralNotes({ consent: false }) ?? '').not.toContain(
+      'consent',
+    );
   });
 
   it('preserves the exact existing v1 payload, including ordinary and sensitive buckets', () => {

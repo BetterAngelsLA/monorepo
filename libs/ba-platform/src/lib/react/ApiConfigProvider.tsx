@@ -7,7 +7,7 @@ import { createContext, ReactNode, useContext, useMemo } from 'react';
 export interface ApiConfigContextType {
   apiUrl: string;
   /**
-   * Raw interceptor chain (CSRF + Org-ID headers pre-injected).
+   * Raw interceptor chain (CSRF headers pre-injected).
    * Pass directly to Apollo ``HttpLink`` as its ``fetch`` option.
    * Rebuilt by ``EnvironmentSwitcherProvider`` when the environment changes.
    */

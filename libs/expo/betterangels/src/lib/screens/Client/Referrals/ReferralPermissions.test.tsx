@@ -18,9 +18,7 @@ vi.mock('../../../hooks/referral/useReferralGates', () => ({
 
 function Probe() {
   const { canView, canCreate, canChange } = useReferralPermissions();
-  return (
-    <Text testID="gates">{`${canView}/${canCreate}/${canChange}`}</Text>
-  );
+  return <Text testID="gates">{`${canView}/${canCreate}/${canChange}`}</Text>;
 }
 
 it('exposes the active gates through the provider', async () => {

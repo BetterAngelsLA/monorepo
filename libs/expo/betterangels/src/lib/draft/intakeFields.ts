@@ -57,6 +57,13 @@ type FieldMetadata = {
   // guard and its dialog stay unreachable until one does.
   readonly requirement: 'optional' | 'pending' | 'required';
   readonly help?: string;
+  /**
+   * A field that was a checkbox before it became a yes/no: the old control
+   * stored `false` for "unchecked", which was the same state as "never
+   * answered". Coercing that to "No" would invent a refusal, so a legacy
+   * `false` reads as unanswered instead.
+   */
+  readonly legacyFalseMeansUnanswered?: boolean;
 };
 
 export type IntakeFieldDefinition = FieldMetadata &
@@ -229,6 +236,8 @@ export const INTAKE_FIELDS = [
     section: 'additional',
     control: 'yesno',
     sensitive: false,
+    // Was a checkbox: an unticked box meant "not answered", not "No".
+    legacyFalseMeansUnanswered: true,
     requirement: 'optional',
     help: 'Records that the client consented to DHS data sharing (a plain yes/no — not PII). Consent content, signer, and delivery are unresolved — see GAP-21.',
     persistence: { localDraft: true },
@@ -291,13 +300,19 @@ export function getIntakeField(
  * Coerce answers written by older versions into the current control
  * vocabulary. Older referrals stored yes/no controls as booleans; the current
  * controls use the chip labels. Unknown fields and values pass through.
+ *
+ * A field that used to be a checkbox reads a legacy `false` as unanswered: the
+ * old control stored "unticked" for both "no" and "never asked", so treating it
+ * as a refusal would fabricate an answer.
  */
 export function normalizeIntakeValue(
   field: IntakeFieldDefinition | undefined,
   value: unknown,
 ): unknown {
-  if (field?.control === 'yesno' && typeof value === 'boolean')
+  if (field?.control === 'yesno' && typeof value === 'boolean') {
+    if (value === false && field.legacyFalseMeansUnanswered) return undefined;
     return value ? 'Yes' : 'No';
+  }
   return value;
 }
 

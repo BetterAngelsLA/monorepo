@@ -2,6 +2,7 @@ import {
   INTAKE_FIELDS,
   getIntakeField,
   isIntakeControlValue,
+  normalizeIntakeValue,
   type IntakeFieldDefinition,
   type StoredIntake,
 } from '../../../draft/intakeFields';
@@ -36,11 +37,13 @@ export function prepareIntakeReuse(
     if (field.reuse === 'reset' || !field.persistence.localDraft) continue;
     if (field.reuse === 'review') reviewKeys.add(key);
 
-    let value = original;
+    let value: unknown = original;
     // Explicit legacy conversions only. Never guess a value from a similar label.
+    // One seam for the whole app: a checkbox field's legacy `false` stays
+    // unanswered instead of becoming a "No" this form never recorded.
     if (field.control === 'yesno' && typeof value === 'boolean') {
-      value = value ? 'Yes' : 'No';
-      reviewKeys.add(key);
+      value = normalizeIntakeValue(field, value);
+      if (value !== undefined) reviewKeys.add(key);
     }
     if (field.control === 'multiselect') {
       if (

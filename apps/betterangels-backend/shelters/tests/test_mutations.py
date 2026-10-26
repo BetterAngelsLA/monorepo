@@ -332,15 +332,18 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertIn("field 'name'", error_message)
 
     def test_create_shelter_with_rating(self) -> None:
-        """Test creating a shelter with rating and review"""
+        """A Global Shelter Operator may seed the BA review fields at create."""
+        role_assign(
+            user=self.operator,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
+
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
                     ... on ShelterType {
                         id
                         name
-                        overallRating
-                        subjectiveReview
                     }
                 }
             }
@@ -359,10 +362,10 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         response = self.execute_graphql(mutation, variables)
 
         self.assertIsNone(response.get("errors"))
-        shelter = response["data"]["createShelter"]
+        shelter = Shelter.objects.get(pk=response["data"]["createShelter"]["id"])
 
-        self.assertEqual(shelter["overallRating"], 4)
-        self.assertEqual(shelter["subjectiveReview"], "Clean facilities with helpful staff")
+        self.assertEqual(shelter.overall_rating, 4)
+        self.assertEqual(shelter.subjective_review, "Clean facilities with helpful staff")
 
     def test_create_shelter_invalid_email_returns_operation_info(self) -> None:
         mutation = """
@@ -530,6 +533,10 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                         website
                         instagram
                         isPrivate
+                        totalBeds
+                        roomStylesOther
+                        bedFees
+                        programFees
                     }
                 }
             }
@@ -545,6 +552,10 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                 "website": "https://shelter.org",
                 "instagram": "@helloInstaHandle",
                 "isPrivate": True,
+                "totalBeds": 42,
+                "roomStylesOther": "Updated room styles other",
+                "bedFees": "Updated bed fees",
+                "programFees": "Updated program fees",
             }
         }
 
@@ -560,6 +571,10 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(result["website"], "https://shelter.org")
         self.assertEqual(result["instagram"], "@helloInstaHandle")
         self.assertTrue(result["isPrivate"])
+        self.assertEqual(result["totalBeds"], 42)
+        self.assertEqual(result["roomStylesOther"], "Updated room styles other")
+        self.assertEqual(result["bedFees"], "Updated bed fees")
+        self.assertEqual(result["programFees"], "Updated program fees")
 
     def test_update_shelter_patch_semantics(self) -> None:
         """Fields absent from UpdateShelterInput are not overwritten."""
@@ -1110,6 +1125,121 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
             kind="PERMISSION",
         )
         self.assertEqual(self.shelter.additional_contacts.count(), 0)
+
+    def test_update_shelter_ba_review_allowed_for_global_shelter_operator(self) -> None:
+        """The BA review fields are a global-tier gate: the GSO may write them."""
+        role_assign(
+            user=self.operator,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "overallRating": 5,
+                    "subjectiveReview": "Excellent",
+                    "declinedBaVisit": True,
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.shelter.refresh_from_db()
+        self.assertEqual(self.shelter.overall_rating, 5)
+        self.assertEqual(self.shelter.subjective_review, "Excellent")
+        self.assertTrue(self.shelter.declined_ba_visit)
+
+    def test_update_shelter_ba_review_denied_for_scoped_operator(self) -> None:
+        """A scoped operator (no global BA review perm) may not write the fields."""
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.shelter.pk), "overallRating": 5}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(
+            response,
+            "updateShelter",
+            "Editing BA review fields is not allowed with this role.",
+            kind="PERMISSION",
+        )
+        self.shelter.refresh_from_db()
+        self.assertIsNone(self.shelter.overall_rating)
+
+    def test_create_shelter_ba_review_allowed_for_global_shelter_operator(self) -> None:
+        role_assign(
+            user=self.operator,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.CREATE_MUTATION,
+            {
+                "data": {
+                    "name": "GSO Created",
+                    "description": "has review data",
+                    "organizationId": str(self.org.pk),
+                    "overallRating": 4,
+                    "subjectiveReview": "Solid",
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        shelter = Shelter.objects.get(pk=response["data"]["createShelter"]["id"])
+        self.assertEqual(shelter.overall_rating, 4)
+        self.assertEqual(shelter.subjective_review, "Solid")
+
+    def test_create_shelter_ba_review_denied_for_scoped_operator(self) -> None:
+        """ADD alone does not let a scoped operator seed review data at create."""
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.CREATE_MUTATION,
+            {
+                "data": {
+                    "name": "Scoped Review Create",
+                    "organizationId": str(self.org.pk),
+                    "overallRating": 5,
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(
+            response,
+            "createShelter",
+            "Editing BA review fields is not allowed with this role.",
+            kind="PERMISSION",
+        )
+        self.assertFalse(Shelter.objects.filter(name="Scoped Review Create").exists())
+
+    def test_create_shelter_null_optionals_are_not_treated_as_supplied(self) -> None:
+        """Explicit null is not review data: the scoped operator may send it."""
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.CREATE_MUTATION,
+            {
+                "data": {
+                    "name": "Null Optionals Create",
+                    "description": None,
+                    "overallRating": None,
+                    "organizationId": str(self.org.pk),
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        created = Shelter.objects.get(pk=response["data"]["createShelter"]["id"])
+        self.assertEqual(created.description, "")
+        self.assertIsNone(created.overall_rating)
 
     # ── deleteShelter ────────────────────────────────────────────────────────
 

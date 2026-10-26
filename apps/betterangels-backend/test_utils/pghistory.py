@@ -21,8 +21,9 @@ def backdate_event_rows(queryset: QuerySet, **fields: Any) -> int:
     batched delete (ADR 0004 §31).
 
     Test-only. ``pgtrigger.ignore`` flushes with ``set_config(..., false)``
-    (session-scoped), which must never appear on a request path -- see the
-    "RDS Proxy interaction" note in ADR 0004 §10.
+    (session-scoped), which must never appear on a request path because it would
+    leak GUC state into the next request on a persistent connection -- see the
+    "Connection behavior" note in ADR 0004 §10.
 
     The guard is ignored *by name*, never with a bare ``pgtrigger.ignore()``:
     ignoring every trigger would also suppress the event-*creation* triggers,

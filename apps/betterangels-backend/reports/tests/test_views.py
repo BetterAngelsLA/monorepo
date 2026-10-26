@@ -14,6 +14,7 @@ import pytest
 import time_machine
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
@@ -22,9 +23,13 @@ from rest_framework.test import APIClient
 
 from accounts.models import Role, User
 from accounts.services import grant_create
+from clients.models import ClientProfile
+from common.models import Location
 from common.tests.utils import GraphQLBaseTestCase
 from notes.admin import NoteResource
 from notes.models import Note, OrganizationService, ServiceRequest
+from regions.models import Region, RegionKind
+from regions.tests.helpers import BOX_A, BOX_B, OUTSIDE, box
 from reports.models import ScheduledReport
 from teams.models import Team
 from test_utils.timezones import SITE_TIME_ZONE, SITE_TZ
@@ -333,10 +338,75 @@ class TestExportInteractionDataView:
         response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id=not-a-number")
         assert response.status_code == 403
 
+    def _export_rows(self, api_client: APIClient, org: Organization, query: str) -> list[dict[str, str]]:
+        """The CSV's data rows for *query*, asserting the download succeeded."""
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-01-31&{query}")
+        assert response.status_code == 200, response.content
+        return list(csv.DictReader(io.StringIO(response.content.decode("utf-8"))))
+
+    def test_export_follows_the_same_group_as_the_charts(
+        self, api_client: APIClient, user_with_access: User, org: Organization
+    ) -> None:
+        """The download covers the page's group, not the whole organisation behind it."""
+        Region.objects.create(kind=RegionKind.CITY, code="beverly-hills", name="Beverly Hills", geom=box(BOX_A))
+        Region.objects.create(kind=RegionKind.CITY, code="culver-city", name="Culver City", geom=box(BOX_B))
+        when = timezone.make_aware(datetime(2025, 1, 15, 12, 0, 0))
+        for point in (
+            Point(-118.24, 34.05, srid=4326),
+            Point(-118.25, 34.06, srid=4326),
+            Point(-118.54, 34.35, srid=4326),
+            Point(*OUTSIDE, srid=4326),
+        ):
+            baker.make(Note, organization=org, interacted_at=when, location=baker.make(Location, point=point))
+        api_client.force_authenticate(user=user_with_access)
+
+        assert len(self._export_rows(api_client, org, "")) == 4
+        # A dimension alone is every region of it: the county-wide outside note is excluded.
+        assert len(self._export_rows(api_client, org, "dimension=city")) == 3
+        # Codes narrow to the named regions, in either spelling of the parameter.
+        assert len(self._export_rows(api_client, org, "dimension=city&codes=beverly-hills")) == 2
+        assert len(self._export_rows(api_client, org, "dimension=city&codes=beverly-hills,culver-city")) == 3
+        # Explicitly empty is a selection of no regions, not "every region".
+        assert self._export_rows(api_client, org, "dimension=city&codes=") == []
+
+    def test_export_refuses_codes_without_a_dimension(
+        self, api_client: APIClient, user_with_access: User, org: Organization
+    ) -> None:
+        """A code is ambiguous across dimensions, so it is a 400 rather than a guess."""
+        api_client.force_authenticate(user=user_with_access)
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-01-31&codes=1")
+
+        assert response.status_code == 400
+        assert "regionCodes" in response.json()
+
+    def test_export_rejects_an_unknown_dimension(
+        self, api_client: APIClient, user_with_access: User, org: Organization
+    ) -> None:
+        """The dimension is a closed vocabulary; a typo does not silently export everything."""
+        api_client.force_authenticate(user=user_with_access)
+        response = api_client.get(
+            f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-01-31&dimension=province"
+        )
+
+        assert response.status_code == 400
+        assert "dimension" in response.json()
+
 
 REPORT_SUMMARY_QUERY = """
-    query ReportSummary($organizationId: ID!, $startDate: Date, $endDate: Date) {
-        reportSummary(organizationId: $organizationId, startDate: $startDate, endDate: $endDate) {
+    query ReportSummary(
+        $organizationId: ID!
+        $startDate: Date
+        $endDate: Date
+        $dimension: RegionDimension
+        $regionCodes: [String!]
+    ) {
+        reportSummary(
+            organizationId: $organizationId
+            startDate: $startDate
+            endDate: $endDate
+            dimension: $dimension
+            regionCodes: $regionCodes
+        ) {
             totalNotes
             uniqueClients
             startDate
@@ -532,7 +602,6 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         """
         org, user = self._setup_org_user_with_access()
         baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 5, 30, tzinfo=UTC))
-        self._set_active_org(org)
         self.graphql_client.force_login(user)
         january = summary_variables(org)
 
@@ -608,6 +677,179 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertIsNone(response.get("errors"))
         data = response["data"]["reportSummary"]
         self.assertEqual(data["totalNotes"], 2)
+
+    def _note_at(
+        self,
+        org: Organization,
+        *,
+        point: Point | None = None,
+        when: datetime | None = None,
+        purpose: str = "Outreach",
+        team: Team | None = None,
+        client: ClientProfile | None = None,
+    ) -> Note:
+        """One note in *org*, optionally pinned to a point and attributed to a client."""
+        return baker.make(
+            Note,
+            organization=org,
+            interacted_at=when or timezone.make_aware(datetime(2025, 1, 15, 12, 0, 0)),
+            purpose=purpose,
+            team=team,
+            client_profile=client,
+            location=baker.make(Location, point=point) if point is not None else None,
+        )
+
+    def _summary(self, org: Organization, user: User, **variables: object) -> dict[str, object]:
+        """The summary query, with any group variables, asserting it succeeded."""
+        self.graphql_client.force_login(user)
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org, **variables))
+        self.assertIsNone(response.get("errors"), response.get("errors"))
+        return response["data"]["reportSummary"]  # type: ignore[no-any-return]
+
+    def test_summary_scopes_every_chart_to_the_chosen_dimension(self) -> None:
+        """A dimension alone narrows every chart; the district note is not in the city group."""
+        org, user = self._setup_org_user_with_access()
+        Region.objects.create(kind=RegionKind.CITY, code="beverly-hills", name="Beverly Hills", geom=box(BOX_A))
+        Region.objects.create(kind=RegionKind.COUNCIL_DISTRICT, code="1", name="District 1", geom=box(BOX_B))
+
+        team_morning = baker.make(Team, name="Morning Outreach", organization=org)
+        team_dropin = baker.make(Team, name="Drop-in Center", organization=org)
+        meal = baker.make(OrganizationService, label="Meal", organization=org)
+        shower = baker.make(OrganizationService, label="Shower", organization=org)
+
+        jan_10 = timezone.make_aware(datetime(2025, 1, 10, 12, 0, 0))
+        jan_20 = timezone.make_aware(datetime(2025, 1, 20, 12, 0, 0))
+        first = self._note_at(
+            org,
+            point=Point(-118.24, 34.05, srid=4326),
+            when=jan_10,
+            team=team_morning,
+            client=baker.make(ClientProfile),
+        )
+        second = self._note_at(
+            org,
+            point=Point(-118.25, 34.06, srid=4326),
+            when=jan_20,
+            team=team_morning,
+            client=baker.make(ClientProfile),
+        )
+        district = self._note_at(
+            org,
+            point=Point(-118.54, 34.35, srid=4326),
+            purpose="Follow-up",
+            team=team_dropin,
+            client=baker.make(ClientProfile),
+        )
+        # Located, but outside every boundary; and not located at all.
+        self._note_at(org, point=Point(*OUTSIDE, srid=4326), team=team_morning)
+        self._note_at(org)
+
+        first.provided_services.add(baker.make(ServiceRequest, service=meal))
+        second.provided_services.add(baker.make(ServiceRequest, service=meal))
+        district.requested_services.add(baker.make(ServiceRequest, service=shower))
+
+        data = self._summary(org, user, dimension="CITY")
+
+        self.assertEqual(data["totalNotes"], 2)
+        self.assertEqual(data["uniqueClients"], 2)
+        self.assertEqual(
+            data["notesByDate"],
+            [{"date": "2025-01-10", "count": 1}, {"date": "2025-01-20", "count": 1}],
+        )
+        self.assertEqual(
+            data["uniqueClientsByDate"],
+            [{"date": "2025-01-10", "count": 1}, {"date": "2025-01-20", "count": 1}],
+        )
+        self.assertEqual(data["notesByTeam"], [{"name": "Morning Outreach", "count": 2}])
+        self.assertEqual(data["notesByPurpose"], [{"name": "Outreach", "count": 2}])
+        self.assertEqual(data["topProvidedServices"], [{"name": "Meal", "count": 2}])
+        self.assertEqual(data["topRequestedServices"], [])
+
+        self.assertEqual(self._summary(org, user)["totalNotes"], 5)
+
+    def test_summary_scopes_to_the_selected_regions(self) -> None:
+        """Codes narrow the same population further; both charts and KPIs follow."""
+        org, user = self._setup_org_user_with_access()
+        Region.objects.create(kind=RegionKind.CITY, code="beverly-hills", name="Beverly Hills", geom=box(BOX_A))
+        Region.objects.create(kind=RegionKind.CITY, code="culver-city", name="Culver City", geom=box(BOX_B))
+
+        team = baker.make(Team, name="Outreach", organization=org)
+        self._note_at(org, point=Point(-118.24, 34.05, srid=4326), team=team, purpose="Outreach")
+        self._note_at(org, point=Point(-118.25, 34.06, srid=4326), team=team, purpose="Outreach")
+        self._note_at(org, point=Point(-118.54, 34.35, srid=4326), team=team, purpose="Follow-up")
+        self._note_at(org, point=Point(*OUTSIDE, srid=4326), team=team)
+
+        beverly_hills = self._summary(org, user, dimension="CITY", regionCodes=["beverly-hills"])
+        self.assertEqual(beverly_hills["totalNotes"], 2)
+        self.assertEqual(beverly_hills["notesByPurpose"], [{"name": "Outreach", "count": 2}])
+        self.assertEqual(beverly_hills["notesByTeam"], [{"name": "Outreach", "count": 2}])
+
+        both = self._summary(org, user, dimension="CITY", regionCodes=["beverly-hills", "culver-city"])
+        self.assertEqual(both["totalNotes"], 3)
+        self.assertEqual(
+            both["notesByPurpose"],
+            [{"name": "Outreach", "count": 2}, {"name": "Follow-up", "count": 1}],
+        )
+
+    def test_summary_explicitly_empty_codes_match_nothing(self) -> None:
+        """``[]`` is a selection of no regions, not "every region"."""
+        org, user = self._setup_org_user_with_access()
+        Region.objects.create(kind=RegionKind.CITY, code="beverly-hills", name="Beverly Hills", geom=box(BOX_A))
+        self._note_at(org, point=Point(-118.24, 34.05, srid=4326))
+
+        data = self._summary(org, user, dimension="CITY", regionCodes=[])
+
+        self.assertEqual(data["totalNotes"], 0)
+        self.assertEqual(data["notesByDate"], [])
+        self.assertEqual(data["notesByTeam"], [])
+
+    def test_summary_empty_codes_without_a_dimension_match_nothing(self) -> None:
+        """The empty-selection rule is the same with or without a dimension."""
+        org, user = self._setup_org_user_with_access()
+        self._note_at(org, point=Point(-118.24, 34.05, srid=4326))
+
+        data = self._summary(org, user, regionCodes=[])
+
+        self.assertEqual(data["totalNotes"], 0)
+
+    def test_summary_region_codes_without_a_dimension_are_refused(self) -> None:
+        """A code is ambiguous across dimensions, so the pair is refused like the map does."""
+        org, user = self._setup_org_user_with_access()
+        self.graphql_client.force_login(user)
+        response = self.execute_graphql(REPORT_SUMMARY_QUERY, summary_variables(org, regionCodes=["1"]))
+
+        self.assertIsNone(response.get("data"))
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertEqual(
+            response["errors"][0]["extensions"]["errors"][0]["errorCode"],
+            "REGION_CODES_REQUIRE_DIMENSION",
+        )
+
+    def test_summary_group_survives_a_range_change(self) -> None:
+        """The group is a scope on the window, so it applies to whichever range is asked for."""
+        org, user = self._setup_org_user_with_access()
+        Region.objects.create(kind=RegionKind.CITY, code="beverly-hills", name="Beverly Hills", geom=box(BOX_A))
+        self._note_at(
+            org,
+            point=Point(-118.24, 34.05, srid=4326),
+            when=timezone.make_aware(datetime(2025, 2, 10, 12, 0, 0)),
+        )
+        self._note_at(
+            org,
+            point=Point(*OUTSIDE, srid=4326),
+            when=timezone.make_aware(datetime(2025, 2, 10, 12, 0, 0)),
+        )
+
+        february = self._summary(
+            org,
+            user,
+            dimension="CITY",
+            startDate="2025-02-01",
+            endDate="2025-02-28",
+        )
+        self.assertEqual(february["totalNotes"], 1)
+        self.assertEqual(february["startDate"], "2025-02-01")
+        self.assertEqual(february["endDate"], "2025-02-28")
 
     def test_summary_defaults_when_no_dates(self) -> None:
         org, user = self._setup_org_user_with_access()

@@ -6,7 +6,6 @@ import strawberry
 import strawberry_django
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
-from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
@@ -17,7 +16,6 @@ from common.graphql.utils import org_or_deny
 from common.permissions.utils import (
     PERMISSION_DENIED_MESSAGE,
     IsAuthenticated,
-    get_current_organization,
     require_can,
 )
 
@@ -36,32 +34,14 @@ class Query:
     def teams(self, info: Info, filters: Optional[TeamFilter] = None) -> QuerySet[Team]:
         """List an organization's teams — grant-only at the payload org.
 
-        The org comes from the ``organizationId`` filter when provided; the
-        ``X-Organization-ID`` header remains a deprecated fallback while the
-        mobile team pickers migrate (see ``_resolve_read_org`` for which send
-        only it, and the ADR §5.3 note for the strip checklist).
+        The org comes from the ``organizationId`` filter, and nowhere else — a
+        caller who names no org (or an unknown one) is denied.  Teams is
+        header-free like reports and member management (ADR 0001 §5.3).
         """
         user = cast(AccountUser, get_current_user(info))
-        org = _resolve_read_org(info, filters)
+        org = org_or_deny(getattr(filters, "organization_id", None) if filters else None)
         require_can(user, Team.perms.VIEW, org=org)
         return team_list(organization=org)
-
-
-def _resolve_read_org(info: Info, filters: Optional[TeamFilter]) -> Organization:
-    """The org whose teams are listed: the ``organizationId`` filter when the
-    client sends one, otherwise the deprecated ``X-Organization-ID`` header
-    (mobile's ``useOrgTeams`` callers still send only ``{ isActive }``; they
-    must pass ``organizationId`` before the header is stripped).
-
-    An absent filter field arrives as ``None`` — or ``strawberry.UNSET`` when a
-    filter of another kind is given — and keeps the header fallback; an
-    explicitly empty id is NOT treated as absent — it denies, so a blank value
-    can never silently fall back to the header.
-    """
-    filter_org_id = getattr(filters, "organization_id", None) if filters else None
-    if filter_org_id in (None, strawberry.UNSET):
-        return org_or_deny(get_current_organization(info))
-    return org_or_deny(filter_org_id)
 
 
 @strawberry.type
@@ -71,8 +51,7 @@ class Mutation:
     Each authorizes via :func:`common.permissions.utils.require_can` at the org
     resolved from the payload: ``createTeam`` carries ``organizationId`` (no
     row exists to scope by yet); update/delete use the team row's org.  The
-    ``X-Organization-ID`` header and legacy ``PermissionGroup`` arm are not
-    consulted.
+    legacy ``PermissionGroup`` arm is not consulted.
     """
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])

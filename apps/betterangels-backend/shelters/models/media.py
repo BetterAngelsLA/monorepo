@@ -38,7 +38,11 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     pghistory.UpdateEvent("shelter_photo.update"),
     pghistory.DeleteEvent("shelter_photo.remove"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="shelterphoto_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="shelterphoto_evt_obj_idx"),
+            models.Index(fields=["shelter", "pgh_id"], name="shelterphoto_evt_shltr_idx"),
+            models.Index(fields=["pgh_created_at"], name="shelterphoto_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )
@@ -94,7 +98,11 @@ class ExteriorShelterPhoto(ShelterPhoto):
     pghistory.UpdateEvent("video.update"),
     pghistory.DeleteEvent("video.remove"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="video_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="video_evt_obj_idx"),
+            models.Index(fields=["shelter", "pgh_id"], name="video_evt_shelter_idx"),
+            models.Index(fields=["pgh_created_at"], name="video_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )
@@ -120,7 +128,11 @@ MEDIA_TYPE_VALIDATORS: dict[str, RegexValidator] = {
     pghistory.UpdateEvent("media_link.update"),
     pghistory.DeleteEvent("media_link.remove"),
     meta={
-        "indexes": [models.Index(fields=["pgh_obj", "pgh_id"], name="medialink_evt_obj_idx")],
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="medialink_evt_obj_idx"),
+            models.Index(fields=["shelter", "pgh_id"], name="medialink_evt_shelter_idx"),
+            models.Index(fields=["pgh_created_at"], name="medialink_evt_ca_idx"),
+        ],
         "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
     },
 )

@@ -154,7 +154,7 @@ it('includes profile accommodations in the reviewed copy and file only while the
   }
 });
 
-it('makes the privacy mode visible even when a sparse record has no saved private answers', async () => {
+it('does not claim sensitive details were withheld when a sparse record has none', async () => {
   await render(
     <ReferralShare
       referral={{ ...referral, notes: null }}
@@ -163,7 +163,7 @@ it('makes the privacy mode visible even when a sparse record has no saved privat
   );
   await open();
   expect(screen.getByTestId('referral-share-privacy-status')).toHaveTextContent(
-    /Sensitive details excluded/,
+    /No sensitive details recorded/,
   );
   // A sparse record must not imply that sensitive answers were withheld: there
   // is nothing to withhold, so the field reads as unanswered in both modes.
@@ -284,7 +284,7 @@ it('locks duplicate PNG taps and privacy changes, recovers from a capture failur
 it.each(['close', 'unmount'] as const)(
   'revokes an in-flight PNG on %s and suppresses late error UI',
   async (boundary) => {
-      const warning = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
+    const warning = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
     try {
       let fail!: (error: Error) => void;
       vi.mocked(shareReferralPng).mockReturnValueOnce(
@@ -323,7 +323,7 @@ it.each(['close', 'unmount'] as const)(
         expect(isCurrent()).toBe(false);
       }
     } finally {
-        warning.mockRestore();
+      warning.mockRestore();
     }
   },
 );

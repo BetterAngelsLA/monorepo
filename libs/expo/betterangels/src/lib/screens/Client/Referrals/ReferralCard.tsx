@@ -72,7 +72,12 @@ export const ReferralCard = memo(function ReferralCard({
     [referral.shelter],
   );
   const desiredAttributes = useMemo(
-    () => needLabelsFromIntake(decoded.intake),
+    // The summary masks sensitive answers; the tag row must not print them.
+    // The shelter picker still ranks on the full set.
+    () =>
+      needLabelsFromIntake(decoded.intake, undefined, {
+        includeSensitive: false,
+      }),
     [decoded],
   );
 

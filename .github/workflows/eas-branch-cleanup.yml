@@ -6,13 +6,15 @@ on:
 
 jobs:
   cleanup:
+    # Fork PRs cannot access EXPO_TOKEN and have no EAS branches of ours to clean up.
+    if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     permissions:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
     steps:
       - name: 🏗 Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -20,10 +22,10 @@ jobs:
         run: git branch --track main origin/main
 
       - name: 🔧 Configure NX SHAs
-        uses: nrwl/nx-set-shas@v4
+        uses: nrwl/nx-set-shas@v5
 
       - name: 🔧 Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22.21.1'
           cache: 'yarn'
@@ -41,6 +43,10 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
+          if [ -z "${EXPO_TOKEN:-}" ]; then
+            echo "EXPO_TOKEN is not configured; nothing to clean up."
+            exit 0
+          fi
           BRANCH_NAME='${{ github.head_ref || github.ref_name }}'
           affected=$(yarn nx show projects --affected --withTarget eas-update)
           if [ -z "$affected" ]; then

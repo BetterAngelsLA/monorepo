@@ -31,6 +31,7 @@ from django.db.models import QuerySet
 from common.models import Location
 from notes.models import Note
 
+from .grid import density_cell_xy_sql, density_cells_per_tile
 from .models import REGION_LOOKUP_VIEW
 from .selectors import REGION_MEMBERSHIP_SQL, REGION_TABLE
 from .services import resolve_region_scope
@@ -124,25 +125,19 @@ def region_tile(*, kind: str, z: int, x: int, y: int, layer: str = "regions") ->
 
 # --- Interaction density -------------------------------------------------------------------
 #
-# A **fraction of the tile**, not a distance and not a count of metres. That choice is what
-# makes one cell the same number of *screen pixels* at every zoom — deck.gl draws a 512 px
-# tile, so 64 cells is an 8 px cell from z0 to z16 — and the reader's sense of "how
-# concentrated is this" therefore does not quietly change scale when they zoom. It also keeps
-# adjacent tiles lined up: a tile edge in Web Mercator is a multiple of the tile width, which
-# is a multiple of the cell size whenever the cell size is the tile divided by a whole number.
+# A **roughly fixed ground size**, not a fixed fraction of the tile. A fixed 64×64 grid makes
+# a cell four times smaller with every zoom step in; below a few hundred metres a single
+# interaction is a large density and every occupied cell turns red. So the tile uses as many
+# cells as it takes to keep a cell near ``DENSITY_TARGET_CELL_M``, capped for the county view.
+# Above tile zoom 10 that is a constant ~500 m cell; below it the cap gives 1–4 km cells. The
+# cell size is still a whole division of the tile width, so adjacent tiles line up.
+#
+# The client's ``densityCellsPerTile`` mirrors this exactly; it divides the count by the same
+# area to get the colour, so the two must stay in step.
 #
 # Measured on the LA County fixture, a county-scale tile holds ~1,250 non-empty cells and
 # ~30 kB of MVT at z9 (~370 cells, ~9 kB at z8), against ~1.1 MB for the same month's points
 # through ``interactionMap``.
-#
-# **z9 is not the zoom the admin map asks for.** deck.gl's tiles are 512 px while Google's
-# zoom levels are 256 px, so a map at Google zoom 9 requests **z8** — which is why the client's
-# colour reference is measured against z8 cell counts and not these. The number here is kept
-# at z9 because that is the zoom ``curl`` at a tile is read at, and the ratio is what matters:
-# four times the cells at a quarter of the count each.
-DENSITY_CELLS_PER_TILE = 64
-
-#: The layer name inside the tile, and what the client selects on.
 DENSITY_LAYER = "density"
 
 #: **Zero**, unlike the boundary tiles. Their 64-unit margin exists so a line crossing the
@@ -190,8 +185,7 @@ _DENSITY_BOUNDS = """
 #: over-selects and the exact grouping discards the rest.
 _DENSITY_CELLS = """
 , cells AS (
-    SELECT floor((ST_X(ST_Transform(l.point_geom, 3857)) - o.x0) / o.size)::int AS cx,
-           floor((ST_Y(ST_Transform(l.point_geom, 3857)) - o.y0) / o.size)::int AS cy,
+    SELECT {cell_xy},
            count(*) AS count
     FROM scoped s
     JOIN {location_table} l ON l.id = s.location_id
@@ -299,12 +293,15 @@ def density_tile(
     sql = "WITH " + _DENSITY_SCOPED.format(scoped=scoped_sql)
 
     sql += _DENSITY_BOUNDS
-    params += [z, x, y, DENSITY_CELLS_PER_TILE]
+    # The grid is sized to a ground distance, so the cell a count is over stays comparable as
+    # the reader zooms; the client computes the same area for the colour.
+    params += [z, x, y, density_cells_per_tile(z)]
 
     # The region parameters follow the tile's rather than preceding them: the join they bind
     # sits inside `cells`, which the bounds CTE precedes in the statement. A `%s` must be bound
     # in the order it appears, and nothing type-checks that beyond these two lines.
     sql += _DENSITY_CELLS.format(
+        cell_xy=density_cell_xy_sql(origin_x="o.x0", origin_y="o.y0", size="o.size"),
         location_table=_LOCATION_TABLE,
         region_filter=_DENSITY_REGION_FILTER if region_codes is not None else "",
     )

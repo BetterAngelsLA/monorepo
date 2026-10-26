@@ -2,6 +2,7 @@ import { createApolloCache } from '@monorepo/apollo';
 import { createBaTypePolicies } from '../../../apollo/cachePolicies';
 import { randomUUID } from 'node:crypto';
 import { ApolloLink } from '@apollo/client';
+import { setActiveOrgId } from '@monorepo/ba-platform';
 import { MockLink } from '@apollo/client/testing';
 import { MockedProvider } from '@apollo/client/testing/react';
 import {
@@ -76,6 +77,8 @@ vi.mock('../../../hooks/snackbar/useSnackbar', () => ({
 // so expo-updates is not loaded in this native test.
 vi.mock('../../../hooks', () => ({ useSnackbar: () => ({ showSnackbar }) }));
 
+const ACTIVE_ORG_ID = 'org-1';
+
 const client: ClientProfileQuery = {
   __typename: 'Query',
   clientProfile: {
@@ -131,6 +134,9 @@ async function setup(
   initialReferrals: ClientReferralsQuery['referrals']['results'] = [],
   laterReferrals: ClientReferralsQuery['referrals']['results'] = [],
 ) {
+  // A create names its organization on the payload (ADR 0001 §2.6), so the
+  // screen reads it from the active-org store.
+  setActiveOrgId(ACTIVE_ORG_ID);
   const store = createReferralDraftStore(
     {
       load: () => null,
@@ -342,7 +348,12 @@ it('submits current answers once, consumes the draft only on success, and displa
   const before = store.getSnapshot();
   const request = await submit(requests);
   expect(request.variables).toEqual({
-    data: { clientProfile: 'client-1', shelter: 's-1', notes },
+    data: {
+      organizationId: ACTIVE_ORG_ID,
+      clientProfile: 'client-1',
+      shelter: 's-1',
+      notes,
+    },
   });
   expect(decodeReferralNotes(request.variables.data.notes)).toEqual({
     humanNotes: answers.notes,
@@ -386,47 +397,50 @@ it.each([
   [OperationMessageKind.Permission, 'Unable to submit this referral.'],
   [OperationMessageKind.Validation, 'Unable to submit this referral.'],
   [OperationMessageKind.Error, GENERIC_SAVE_ERROR],
-])('preserves the draft and allows retry after a %s response', async (kind, expectedMessage) => {
-  const { store, requests, refreshed, close } = await setup();
-  await openPicker();
-  const before = store.getSnapshot();
-  const request = await submit(requests);
-  await act(async () =>
-    request.succeed({
-      data: {
-        __typename: 'Mutation',
-        createReferral: {
-          __typename: 'OperationInfo',
-          messages: [
-            {
-              __typename: 'OperationMessage',
-              kind,
-              field: 'shelter',
-              message: 'Unable to submit this referral.',
-            },
-          ],
+])(
+  'preserves the draft and allows retry after a %s response',
+  async (kind, expectedMessage) => {
+    const { store, requests, refreshed, close } = await setup();
+    await openPicker();
+    const before = store.getSnapshot();
+    const request = await submit(requests);
+    await act(async () =>
+      request.succeed({
+        data: {
+          __typename: 'Mutation',
+          createReferral: {
+            __typename: 'OperationInfo',
+            messages: [
+              {
+                __typename: 'OperationMessage',
+                kind,
+                field: 'shelter',
+                message: 'Unable to submit this referral.',
+              },
+            ],
+          },
         },
-      },
-    }),
-  );
-  expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
-    // Permission and validation messages are actionable; the `Error` kind can
-    // carry raw exception text, so it must stay generic.
-    message: expectedMessage,
-    type: 'error',
-  });
-  expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
-  expect(close).not.toHaveBeenCalled();
-  expect(refreshed).not.toHaveBeenCalled();
-  expect(screen.getByText('✓ Selected: Alpha House')).toBeOnTheScreen();
-  expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
-  const retry = await submit(requests, 2);
-  expect(retry.variables).toEqual(request.variables);
-  await act(async () => retry.succeed({ data: created }));
-  await screen.findByTestId('referral-card-new-referral');
-  expect(store.getSnapshot()).toBeNull();
-  expect(close).toHaveBeenCalledOnce();
-});
+      }),
+    );
+    expect(showSnackbar).toHaveBeenCalledExactlyOnceWith({
+      // Permission and validation messages are actionable; the `Error` kind can
+      // carry raw exception text, so it must stay generic.
+      message: expectedMessage,
+      type: 'error',
+    });
+    expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
+    expect(close).not.toHaveBeenCalled();
+    expect(refreshed).not.toHaveBeenCalled();
+    expect(screen.getByText('✓ Selected: Alpha House')).toBeOnTheScreen();
+    expect(screen.getByTestId('submit-referral-btn')).toBeEnabled();
+    const retry = await submit(requests, 2);
+    expect(retry.variables).toEqual(request.variables);
+    await act(async () => retry.succeed({ data: created }));
+    await screen.findByTestId('referral-card-new-referral');
+    expect(store.getSnapshot()).toBeNull();
+    expect(close).toHaveBeenCalledOnce();
+  },
+);
 
 it('keeps the draft after a network error and submits current answers when retried', async () => {
   const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -458,7 +472,11 @@ it('keeps the draft after a network error and submits current answers when retri
     const retry = await submit(requests, 2);
     expect(decodeReferralNotes(retry.variables.data.notes)).toEqual({
       humanNotes: 'Updated before retry',
-      intake: { substances: answers.substances, selfcare: 'No', consent: 'Yes' },
+      intake: {
+        substances: answers.substances,
+        selfcare: 'No',
+        consent: 'Yes',
+      },
     });
     await act(async () => retry.succeed({ data: created }));
     await waitFor(() => expect(store.getSnapshot()).toBeNull());
@@ -579,7 +597,12 @@ it('revalidates on resume, preserves intake when the selected shelter disappears
   await fireEvent.press(screen.getByRole('radio'));
   const request = await submit(requests);
   expect(request.variables).toEqual({
-    data: { clientProfile: 'client-1', shelter: 's-2', notes },
+    data: {
+      organizationId: ACTIVE_ORG_ID,
+      clientProfile: 'client-1',
+      shelter: 's-2',
+      notes,
+    },
   });
   expect(store.getSnapshot()?.storedValues).toEqual(before?.storedValues);
 });

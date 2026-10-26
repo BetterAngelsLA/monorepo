@@ -50,6 +50,19 @@ def _user_permission_holds(user: "User", perm: str) -> bool:
     return user.user_permissions.filter(content_type__app_label=app_label, codename=codename).exists()
 
 
+def _global_tier_holds(user: "User", perm: str) -> bool:
+    """Whether *user* holds *perm* through a global Role or a direct permission.
+
+    Memoized per request on the user instance: ``scopes`` is consulted once per
+    row by per-field permission gates (e.g. the BA-review output fields), so the
+    two ``EXISTS`` queries below would otherwise be paid N times per list query.
+    """
+    cache: dict[str, bool] = user.__dict__.setdefault("_global_tier_cache", {})
+    if perm not in cache:
+        cache[perm] = _global_role_holds(user, perm) or _user_permission_holds(user, perm)
+    return cache[perm]
+
+
 def _roles_carrying_perm(perm: str) -> "QuerySet":
     """Scoped ``Role`` ids that carry *perm* — the roles a Grant may reference."""
     app_label, codename = _perm_parts(perm)
@@ -163,8 +176,11 @@ def scopes(user: "User", perm: str) -> Any:
     queryset used as a subquery — caching it does not evaluate it.  Authority
     write services invalidate it via :func:`invalidate_scope_cache` when they
     change the user's grants.
+
+    The global-tier arm is memoized the same way (``_global_tier_cache``), since
+    per-row field gates call this once per object per field.
     """
-    if user.is_superuser or _global_role_holds(user, perm) or _user_permission_holds(user, perm):
+    if user.is_superuser or _global_tier_holds(user, perm):
         return ALL
 
     from accounts.models import Grant, Organization
@@ -207,22 +223,24 @@ def invalidate_scope_cache(user: "User") -> None:
     The memoized values live in ``user.__dict__`` — not model fields — so
     ``refresh_from_db()`` does not clear them; this is the only way to
     invalidate.  Authority write services (``grant_create`` / ``grant_delete``
-    for a user principal) call this after changing *user*'s grants so a
-    request that grants/revokes and then re-reads authority on the same user
-    instance never serves the stale decision (a cached ``ALL`` sentinel is the
-    hard-stale case).  The same request-scope staleness applies to the newer
-    global-tier and effective-report memos (``global_permissions`` /
-    ``organization_effective_permissions``), so they are dropped here too.
-    Org→org delegation rows have no single user principal, and the selectors
-    are consumed per request on fresh user instances, so those flows need no
-    per-user invalidation here.
+    for a user principal, and ``role_assign`` / ``role_remove`` for the global
+    tier) call this after changing *user*'s authority so a request that
+    grants/revokes and then re-reads authority on the same user instance never
+    serves the stale decision (a cached ``ALL`` sentinel is the hard-stale
+    case).  The same request-scope staleness applies to the newer global-tier
+    and effective-report memos (``_global_tier_cache`` /
+    ``global_permissions`` / ``organization_effective_permissions``), so they
+    are dropped here too.  Org→org delegation rows have no single user
+    principal, and the selectors are consumed per request on fresh user
+    instances, so those flows need no per-user invalidation here.
     """
     user.__dict__.pop("_scope_cache", None)
+    user.__dict__.pop("_global_tier_cache", None)
     user.__dict__.pop("_global_permissions", None)
     user.__dict__.pop("_org_effective_permissions", None)
 
 
-def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":
+def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: int | str | None = None) -> "QuerySet":
     """The rows of *qs* on which *user* may exercise *perm*.
 
     * ``ALL`` (global tier) — the queryset, unconfined.

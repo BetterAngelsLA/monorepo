@@ -38,9 +38,17 @@ describe('encodeReferralNotes', () => {
   });
 
   it('stores a refused yes/no answer instead of treating it as unanswered', () => {
-    const encoded = encodeReferralNotes(HUMAN, { consent: false });
+    const encoded = encodeReferralNotes(HUMAN, { consent: 'No' });
 
     expect(encoded).toContain('"consent":"No"');
+  });
+
+  it('does not turn a legacy unticked consent box into a refusal', () => {
+    // The old checkbox stored `false` for "unticked", which could not be told
+    // apart from "never asked"; recording "No" would invent an answer.
+    const encoded = encodeReferralNotes(HUMAN, { consent: false });
+
+    expect(encoded).not.toContain('consent');
   });
 
   it('appends a fenced JSON sidecar after the human notes', () => {
@@ -193,14 +201,15 @@ describe('summarizeIntake', () => {
   });
 
   it('does NOT mask consent — a yes/no acknowledgement is not identifying', () => {
-    // A yes/no acknowledgment is not identifying; verify both answers, including
-    // the legacy boolean form.
+    // A yes/no acknowledgment is not identifying; verify both recorded answers.
     expect(summarizeIntake({ consent: true })).toBe(
       'DHS data-sharing consent: Yes',
     );
-    expect(summarizeIntake({ consent: false })).toBe(
+    expect(summarizeIntake({ consent: 'No' })).toBe(
       'DHS data-sharing consent: No',
     );
+    // A legacy unticked box reads as unanswered, not as a refusal.
+    expect(summarizeIntake({ consent: false })).toBe('');
   });
 
   it('omits empty values from the summary', () => {

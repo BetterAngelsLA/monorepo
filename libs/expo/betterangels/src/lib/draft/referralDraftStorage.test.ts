@@ -32,8 +32,9 @@ beforeEach(() => {
 });
 
 it('clears unowned legacy data and revokes callbacks at sign-out while retaining scoped drafts on disk', async () => {
-  const { getPersistentReferralDraft, endReferralDraftSession } =
-    await import('./referralDraftStorage');
+  const { getPersistentReferralDraft, endReferralDraftSession } = await import(
+    './referralDraftStorage'
+  );
   const draft = getPersistentReferralDraft(scope);
   draft.startNew(scope.clientId);
   draft.setField('notes', 'Fictional retained answer');

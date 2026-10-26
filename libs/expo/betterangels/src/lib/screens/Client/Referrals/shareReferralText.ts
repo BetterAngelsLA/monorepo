@@ -37,18 +37,13 @@ export async function shareReferralText(copy: ReferralTextCopy) {
       // No Web Share API (most desktop browsers): hand over a text download
       // rather than leaving the button dead.
       if (
-        downloadBlobInBrowser(
-          copy.text,
-          referralFileName('txt'),
-          'text/plain',
-        )
+        downloadBlobInBrowser(copy.text, referralFileName('txt'), 'text/plain')
       )
         return;
       // `new Error(msg, { cause })` needs lib ES2022; the app targets ES2020.
-      throw Object.assign(
-        new Error('Sharing is unavailable in this browser'),
-        { cause: error },
-      );
+      throw Object.assign(new Error('Sharing is unavailable in this browser'), {
+        cause: error,
+      });
     }
   }
 

@@ -9,7 +9,7 @@ import {
 } from '../../libs/vite-utils/src/index';
 import {
   baseHrefPlugin,
-  getBranchBasePath,
+  getBuildBasePath,
 } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8084;
@@ -30,7 +30,7 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
-  const basePath = getBranchBasePath();
+  const basePath = getBuildBasePath();
   return {
     base: basePath,
     root: import.meta.dirname,

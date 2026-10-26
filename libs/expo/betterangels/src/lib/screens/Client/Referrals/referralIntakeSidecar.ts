@@ -112,10 +112,7 @@ function toIntake(
           candidate.backend.mode === 'notesSidecar' &&
           candidate.backend.payloadKey === payloadKey,
       );
-      return [
-        field?.key ?? payloadKey,
-        normalizeIntakeValue(field, value),
-      ];
+      return [field?.key ?? payloadKey, normalizeIntakeValue(field, value)];
     }),
   );
 }
