@@ -1,8 +1,9 @@
-"""Tests for the object audit-log selector (ADR 0004 §20)."""
+"""Tests for the object audit-log selector (ADR 0004 §20–§21)."""
 
 import base64
 import json
 import re
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Any
 from unittest import mock
@@ -13,6 +14,7 @@ from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
 from pghistory.core import event_models
+from strawberry import ID
 
 from accounts.models import User
 from audit.selectors import (
@@ -27,6 +29,7 @@ from audit.selectors import (
     object_audit_log,
 )  # noqa: F401 -- the cursor-aware API is exercised directly by the pagination tests
 from audit.tests.utils import audit_context, audit_log, clear_history_context
+from audit.types import AuditEventFilter
 from clients.models import ClientProfile
 from shelters.enums import (
     DemographicChoices,
@@ -1273,3 +1276,243 @@ _EXPECTED_ROOM_REFERENCES = {
     "shelters.TrackedRoomFunderEvent",
     "shelters.TrackedRoomPetEvent",
 }
+
+
+class ObjectAuditLogFilterTestCase(TestCase):
+    """Date/actor filters (ADR 0004 §21), applied in SQL before grouping (§10)."""
+
+    T1 = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+    T2 = datetime(2026, 2, 1, 12, 0, tzinfo=timezone.utc)
+    T3 = datetime(2026, 3, 1, 12, 0, tzinfo=timezone.utc)
+    T4 = datetime(2026, 4, 1, 12, 0, tzinfo=timezone.utc)
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        self.other_user = baker.make(User, first_name="Grace", last_name="Hopper", email="grace@example.com")
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Filter Shelter")
+
+    def _rename(self, name: str, *, at: datetime, user: User | None = None) -> None:
+        """Rename the shelter, then pin the event's timestamp for determinism."""
+        with audit_context(user=user):
+            self.shelter.name = name
+            self.shelter.save()
+        backdate_event_rows(
+            Shelter.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+                pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name
+            ),
+            pgh_created_at=at,
+        )
+
+    def _log(self, **kwargs: Any) -> list[Any]:
+        return audit_log(obj=self.shelter, target_type="SHELTER", **kwargs)
+
+    def test_date_from_is_inclusive_and_excludes_earlier_actions(self) -> None:
+        self._rename("Early", at=self.T1, user=self.user)
+        self._rename("Late", at=self.T2, user=self.user)
+
+        actions = self._log(filters=AuditEventFilter(date_from=self.T2))
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Early", "Late"])
+
+    def test_date_to_is_inclusive_and_excludes_later_actions(self) -> None:
+        self._rename("Early", at=self.T1, user=self.user)
+        self._rename("Late", at=self.T2, user=self.user)
+
+        actions = self._log(filters=AuditEventFilter(date_to=self.T1))
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Filter Shelter", "Early"])
+
+    def test_date_window_bounds_both_ends(self) -> None:
+        self._rename("Early", at=self.T1, user=self.user)
+        self._rename("Middle", at=self.T2, user=self.user)
+        self._rename("Late", at=self.T3, user=self.user)
+
+        actions = self._log(filters=AuditEventFilter(date_from=self.T2, date_to=self.T2))
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Early", "Middle"])
+
+    def test_actor_id_restricts_to_a_single_actor(self) -> None:
+        self._rename("By Ada", at=self.T1, user=self.user)
+        self._rename("By Grace", at=self.T2, user=self.other_user)
+
+        actions = self._log(filters=AuditEventFilter(actor_id=ID(str(self.user.pk))))
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Filter Shelter", "By Ada"])
+
+    def test_unknown_actor_id_yields_no_actions(self) -> None:
+        self._rename("By Ada", at=self.T1, user=self.user)
+
+        self.assertEqual(self._log(filters=AuditEventFilter(actor_id=ID("999999"))), [])
+
+    def test_actor_id_excludes_context_less_system_events(self) -> None:
+        clear_history_context()
+        self.shelter.name = "System Write"
+        self.shelter.save()
+
+        self.assertEqual(self._log(filters=AuditEventFilter(actor_id=ID(str(self.user.pk)))), [])
+        # The system write is still present when no actor filter is applied.
+        self.assertIsNotNone(_action_with(self._log(), "System Write"))
+
+    def test_date_and_actor_filters_compose(self) -> None:
+        self._rename("Ada One", at=self.T1, user=self.user)
+        self._rename("Grace One", at=self.T2, user=self.other_user)
+        self._rename("Ada Two", at=self.T3, user=self.user)
+
+        actions = self._log(
+            filters=AuditEventFilter(date_from=self.T1, date_to=self.T2, actor_id=ID(str(self.user.pk)))
+        )
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Filter Shelter", "Ada One"])
+
+    def test_date_filter_applies_before_grouping_within_one_action(self) -> None:
+        # Two writes under one context (one pgh_context_id) → one action.
+        with audit_context(user=self.user):
+            self.shelter.name = "Early"
+            self.shelter.save()
+            self.shelter.name = "Late"
+            self.shelter.save()
+        events = Shelter.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+            pgh_obj_id=self.shelter.pk, pgh_label="shelter.update"
+        )
+        backdate_event_rows(events.filter(name="Early"), pgh_created_at=self.T1)
+        backdate_event_rows(events.filter(name="Late"), pgh_created_at=self.T2)
+
+        self.assertEqual(len(self._log()[0].events), 2)
+
+        actions = self._log(filters=AuditEventFilter(date_from=self.T2))
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual([event.action for event in actions[0].events], ["shelter.update"])
+        # The T1 event is gone from ``events``, but the surviving T2 event's diff
+        # was computed against it: an action's before/after may start before the
+        # window even though the action itself is in it.
+        self.assertEqual(actions[0].field_changes["name"], ["Early", "Late"])
+
+    def test_filters_apply_to_cursor_pages(self) -> None:
+        """The cursor walks the filtered aggregate, so a filtered-out action is
+        never served and a surviving action is not repeated across pages."""
+        self._rename("One", at=self.T1, user=self.user)
+        self._rename("By Grace", at=self.T2, user=self.other_user)
+        self._rename("Three", at=self.T3, user=self.user)
+        self._rename("Four", at=self.T4, user=self.user)
+
+        # The date window excludes T1; the actor filter excludes the T2 action.
+        event_filter = AuditEventFilter(date_from=self.T2, actor_id=ID(str(self.user.pk)))
+
+        first = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, filters=event_filter)
+        self.assertEqual([action.field_changes["name"][1] for action in first.results], ["Four"])
+        self.assertTrue(first.has_next_page)
+        self.assertIsNotNone(first.end_cursor)
+
+        second = object_audit_log(
+            obj=self.shelter, target_type="SHELTER", limit=1, after=first.end_cursor, filters=event_filter
+        )
+        self.assertEqual([action.field_changes["name"][1] for action in second.results], ["Three"])
+        self.assertFalse(second.has_next_page)
+
+        past_end = object_audit_log(
+            obj=self.shelter, target_type="SHELTER", limit=1, after=second.end_cursor, filters=event_filter
+        )
+        self.assertEqual(past_end.results, [])
+        self.assertIsNone(past_end.end_cursor)
+
+
+def _outer_select(sql: str) -> str:
+    """The statement after pghistory's aggregate CTE.
+
+    Every union branch in the CTE projects ``pgh_created_at`` and each proxy
+    field (``actor_id``), so a substring check against the whole statement
+    cannot tell a pushed-down predicate from a projected column. The selector's
+    filters compile into the outer SELECT that reads the CTE.
+    """
+    index = sql.rfind(")\nSELECT")
+    assert index > 0, "expected a pghistory CTE followed by the outer SELECT"
+    return sql[index:]
+
+
+class ObjectAuditLogQueryBudgetTestCase(TestCase):
+    """Query-count and SQL-pushdown guards (ADR 0004 §20, §10 performance note).
+
+    §20 requires that a representative busy object cost a *bounded* number of
+    queries — not one that tracks the object's history — and that label/date/
+    actor filters run in SQL rather than as a Python post-filter. §9c measured
+    that history size barely moves latency (H1/H2); these tests pin the
+    mechanism behind that result, so a refactor cannot quietly reintroduce an
+    N+1 or move filtering back into Python.
+
+    Plan *shape* — which index the planner picks, and H4's seq-scan cliff on the
+    unanchored aggregate — is deliberately not asserted here: test fixtures are
+    far too small for the optimizer's choices to mean anything, so that is
+    measured by ``bench_audit_read`` against loaded tables (§9c) rather than
+    pinned in the unit suite.
+    """
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Busy Shelter")
+
+    def _rename(self, count: int) -> None:
+        """Append *count* shelter updates, each its own context → its own action."""
+        for i in range(count):
+            with audit_context(user=self.user):
+                self.shelter.name = f"Rename {i}"
+                self.shelter.save()
+
+    def _log_and_count(self, **kwargs: Any) -> tuple[list[Any], list[dict[str, Any]]]:
+        with CaptureQueriesContext(connection) as captured:
+            page = object_audit_log(obj=self.shelter, target_type="SHELTER", **kwargs)
+        return page.results, list(captured.captured_queries)
+
+    # ── §20 query-count guard ────────────────────────────────────────────────
+
+    def test_query_count_does_not_scale_with_object_history(self) -> None:
+        self._rename(10)
+        small_actions, small = self._log_and_count()
+
+        self._rename(90)  # 100 events on the same object in total
+        large_actions, large = self._log_and_count()
+
+        self.assertTrue(small_actions and large_actions)
+        # Paging happens in SQL (the key query carries LIMIT), so the round-trip
+        # count is identical at 10 and at 100 events — it does not track history.
+        self.assertEqual(len(small), len(large))
+        self.assertLessEqual(len(large), 6)
+
+    def test_key_query_pages_in_sql(self) -> None:
+        """Pagination must be a LIMIT on the key query, not a slice in Python."""
+        self._rename(30)
+
+        _, queries = self._log_and_count(limit=5)
+
+        self.assertTrue(queries)
+        self.assertRegex(queries[0]["sql"], r"\bLIMIT\b")
+
+    # ── §10 filter pushdown ──────────────────────────────────────────────────
+
+    def test_filters_are_pushed_to_sql_and_short_circuit(self) -> None:
+        """Filters are predicates on the outer SELECT, not a Python post-filter (§10, §21)."""
+        self._rename(5)
+
+        future = datetime.now(timezone.utc) + timedelta(days=1)
+        actions, queries = self._log_and_count(
+            filters=AuditEventFilter(date_from=future, actor_id=ID(str(self.user.pk)))
+        )
+
+        # Nothing survives the window, so the selector must short-circuit after
+        # the key query — proof the predicate ran in SQL, since a Python-side
+        # filter would have had to fetch the rows before dropping them.
+        self.assertEqual(actions, [])
+        self.assertEqual(len(queries), 1)
+
+        # Assert on the outer SELECT: the CTE itself always projects both
+        # columns, so a substring check on the whole statement is vacuous.
+        outer = _outer_select(queries[0]["sql"])
+        self.assertRegex(outer, r'pgh_created_at"?\s*>=')
+        self.assertRegex(outer, r'actor_id"?\s*=')
