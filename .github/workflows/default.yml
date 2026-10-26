@@ -451,7 +451,6 @@ jobs:
       EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
-      EXPO_PUBLIC_LOCAL_API_URL: ''
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v7
@@ -467,7 +466,6 @@ jobs:
         run: |
           BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
-          echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> "$GITHUB_ENV"
 
       - name: 🐳 Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -476,29 +474,19 @@ jobs:
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: 🐳 Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2.1.7
-
-      - name: Pull CI base image
-        run: |
-          docker pull "$MONOREPO_IMAGE:ci-base" || \
-            docker build --file tools/monorepo-image/Dockerfile --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
-
-      - name: Restore dependency cache
-        uses: actions/cache/restore@v6
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: |
-            node_modules
-            .venv
-            .yarn/cache
-            .yarn/install-state.gz
-          key: deps-v1-${{ runner.os }}-${{ hashFiles('tools/monorepo-image/Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
+          node-version: 22.21.1
+          cache: yarn
 
-      - name: Prepare dependency mounts
+      - name: 📦 Install dependencies
         run: |
-          mkdir -p node_modules .venv .yarn/cache
-          sudo chown -R -h 1000:1000 node_modules .venv .yarn
-          sudo chown -R -h 1000:1000 "$GITHUB_WORKSPACE"
+          corepack enable
+          yarn install --immutable
+
+      - name: 🥟 Install EAS CLI
+        run: npm install -g eas-cli@24.8.0
 
       - name: Restore Nx cache
         uses: actions/cache/restore@v6
@@ -512,64 +500,33 @@ jobs:
             nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
             nx-cache-v4-${{ runner.os }}-
 
-      - name: Ensure dependencies
-        run: |
-          if [[ -x node_modules/.bin/nx ]]; then
-            echo "dependency cache is complete"
-            exit 0
-          fi
-          echo "dependency cache is incomplete; reinstalling"
-          docker run --rm --user 1000:1000 -e CI=true -e HOME=/home/betterangels \
-            -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
-            "$MONOREPO_IMAGE:ci-base" \
-            bash -c 'yarn install --immutable'
-
       - name: 🚀 Preview deploys
+        env:
+          CI: 'true'
+          NX_DAEMON: 'false'
         run: |
-          docker run --rm \
-            -v "$GITHUB_WORKSPACE:/workspace" \
-            -v "$GITHUB_WORKSPACE/node_modules:/workspace/node_modules" \
-            -v "$GITHUB_WORKSPACE/.venv:/workspace/.venv" \
-            -v "$GITHUB_WORKSPACE/.yarn:/workspace/.yarn" \
-            -v "$GITHUB_EVENT_PATH:$GITHUB_EVENT_PATH:ro" \
-            -e CI=true -e NX_DAEMON=false -e NX_BASE -e NX_HEAD -e BRANCH_NAME -e PR_NUMBER \
-            -e GITHUB_TOKEN -e GITHUB_REPOSITORY -e GITHUB_EVENT_NAME -e GITHUB_SHA -e GITHUB_EVENT_PATH \
-            -e EXPO_TOKEN \
-            -e VITE_SHELTER_GOOGLE_MAPS_API_KEY \
-            -e VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY \
-            -e EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY \
-            -e EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY \
-            -e EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY \
-            -e EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS \
-            -e EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID \
-            -e AWS_REGION -e AWS_DEFAULT_REGION -e AWS_ACCOUNT_ID \
-            -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN \
-            -e GIT_CONFIG_COUNT=1 \
-            -e GIT_CONFIG_KEY_0=safe.directory \
-            -e GIT_CONFIG_VALUE_0=/workspace \
-            -w /workspace \
-            "$MONOREPO_IMAGE:ci-base" \
-            bash -c '
-              set -euo pipefail
-              export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
-              yarn nx run betterangels:write-eas-env:preview
-              # EAS prebuilds before fingerprinting; mirror that locally so the
-              # runtime version matches the one the build calculates.
-              npx expo prebuild --no-install
-              ANDROID_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform android --workflow generic)"
-              IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios --workflow generic)"
+          set -euo pipefail
+          export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
+          yarn nx run betterangels:write-eas-env:preview
+          # EAS prebuilds before fingerprinting; mirror that locally so the
+          # runtime version matches the one the build calculates.
+          npx expo prebuild --no-install
+          ANDROID_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform android --workflow generic)"
+          IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios --workflow generic)"
 
-              yarn nx run betterangels:build-list --platform=all --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl.json
-              node tools/scripts/has-build.mjs /tmp/bl.json || yarn nx run betterangels:eas-build:preview --platform=all --wait=false --freezeCredentials=true --json=true
+          yarn nx run betterangels:build-list --platform=all --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl.json
+          node tools/scripts/has-build.mjs /tmp/bl.json || yarn nx run betterangels:eas-build:preview --platform=all --wait=false --freezeCredentials=true --json=true
 
-              yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=development-simulator --json=true > /tmp/bl-sim.json
-              node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:simulator --platform=ios --wait=false --freezeCredentials=true --json=true
+          yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=development-simulator --json=true > /tmp/bl-sim.json
+          node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:simulator --platform=ios --wait=false --freezeCredentials=true --json=true
 
-              # Update and web deploy are independent; one graph lets them overlap.
-              yarn nx affected -t update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
-              # Only run the shelter E2E when its app or specs are affected.
-              yarn nx affected -t e2e --projects=shelter-e2e --configuration preview --output-style=stream --parallel=1
-            '
+          # Update and web deploy are independent; one graph lets them overlap.
+          yarn nx affected -t update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
+
+      - name: 🧪 E2E
+        run: |
+          yarn playwright install --with-deps chromium
+          yarn nx affected -t e2e --projects=shelter-e2e --configuration preview --output-style=stream --parallel=1
 
       - name: Save Nx cache
         if: always() && !cancelled()
@@ -589,7 +546,3 @@ jobs:
           path: dist/.playwright/apps/shelter-e2e
           if-no-files-found: ignore
           retention-days: 7
-
-      - name: ⏹️ Restore workspace ownership
-        if: always()
-        run: sudo chown -R -h 1001:1001 "$GITHUB_WORKSPACE"
