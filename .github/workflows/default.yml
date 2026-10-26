@@ -108,13 +108,13 @@ jobs:
             .venv
             .yarn/cache
             .yarn/install-state.gz
-          key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
+          key: deps-v1-${{ runner.os }}-${{ hashFiles('tools/monorepo-image/Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
 
       - name: Ensure CI base image
         id: ci-base
         run: |
           set -euo pipefail
-          DOCKERFILE_HASH="$(sha256sum Dockerfile | cut -c1-12)"
+          DOCKERFILE_HASH="$(sha256sum tools/monorepo-image/Dockerfile | cut -c1-12)"
           BRANCH_SLUG="$(printf '%s' "$BRANCH_NAME" | sha256sum | cut -c1-16)"
           BRANCH_CI_BASE="$MONOREPO_IMAGE:ci-base-${BRANCH_SLUG}-${DOCKERFILE_HASH}"
           built=false
@@ -122,11 +122,11 @@ jobs:
           if docker pull "$BRANCH_CI_BASE"; then
             echo "Using ${BRANCH_CI_BASE}"
             docker tag "$BRANCH_CI_BASE" "$MONOREPO_IMAGE:ci-base"
-          elif [[ -n "${NX_BASE:-}" ]] && git diff --quiet "$NX_BASE" HEAD -- Dockerfile && docker pull "$MONOREPO_IMAGE:ci-base"; then
+          elif [[ -n "${NX_BASE:-}" ]] && git diff --quiet "$NX_BASE" HEAD -- tools/monorepo-image/Dockerfile && docker pull "$MONOREPO_IMAGE:ci-base"; then
             echo "Using main ci-base"
           else
             echo "No matching ci-base image; building locally"
-            docker build --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
+            docker build --file tools/monorepo-image/Dockerfile --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
             built=true
           fi
 
@@ -168,7 +168,7 @@ jobs:
             .venv
             .yarn/cache
             .yarn/install-state.gz
-          key: deps-v1-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
+          key: deps-v1-${{ runner.os }}-${{ hashFiles('tools/monorepo-image/Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
 
       - name: Restore Nx cache
         id: nx-cache
@@ -362,6 +362,7 @@ jobs:
         uses: docker/build-push-action@v7.4.0
         with:
           builder: ${{ steps.buildx.outputs.name }}
+          file: tools/monorepo-image/Dockerfile
           target: ci-base
           push: true
           tags: |
@@ -376,6 +377,7 @@ jobs:
         uses: docker/build-push-action@v7.4.0
         with:
           builder: ${{ steps.buildx.outputs.name }}
+          file: tools/monorepo-image/Dockerfile
           target: production
           push: true
           tags: |
