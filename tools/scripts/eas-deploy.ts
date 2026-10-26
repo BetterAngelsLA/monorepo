@@ -125,7 +125,8 @@ async function checkOrTriggerBuild(
   );
 
   const projectDir = resolveProjectDir(project);
-  const easBin = path.resolve(projectDir, '../../node_modules/.bin/eas');
+  // The CI image installs the EAS CLI on PATH; there is no workspace .bin/eas.
+  const easBin = 'eas';
 
   // The per-platform lookups are independent API calls; run them concurrently.
   // Use the workspace's EAS binary rather than a bare `eas`, and log a failure
@@ -218,7 +219,7 @@ async function performEasUpdate(
   // Direct CLI, like the build: a nested `nx run …:eas-update` would hit the
   // same recursive-task guard as the build once sync-deps is in the graph.
   const projectDir = resolveProjectDir(project);
-  const easBin = path.resolve(projectDir, '../../node_modules/.bin/eas');
+  const easBin = 'eas';
   const updateData = await runJsonAsync<UpdateResult[]>(
     `"${easBin}" update --branch "${branch}" --auto --json --non-interactive`,
     { cwd: projectDir },

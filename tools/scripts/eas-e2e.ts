@@ -47,7 +47,7 @@ const androidProfile = 'preview';
 const iosProfile = 'development-simulator';
 const branch = getEnv('BRANCH_NAME');
 const projectDir = resolveProjectDir(project);
-const easBin = path.resolve(projectDir, '../../node_modules/.bin/eas');
+const easBin = 'eas';
 
 // 1. Read the runtime computed by the eas-fingerprint target. It runs before
 // sync-deps/copy-lockfile, so this is the same pre-sync fingerprint the

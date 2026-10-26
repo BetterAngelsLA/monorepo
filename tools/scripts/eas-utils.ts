@@ -205,7 +205,7 @@ export function writeEnvFile(
 export function computeFingerprint(projectDir: string): string {
   console.log('Computing fingerprint...');
   const fingerprintJson = run(
-    `node -e "const fp = require('@expo/fingerprint'); fp.createFingerprintAsync('.').then(r => console.log(JSON.stringify(r)));"`,
+    `node -e "const fp = require('@expo/fingerprint'); fp.createFingerprintAsync('.', { ignorePaths: ['project.json', '.eas-deploy-results.json'] }).then(r => console.log(JSON.stringify(r)));"`,
     { cwd: projectDir },
   );
   const hash = JSON.parse(fingerprintJson).hash as string;
