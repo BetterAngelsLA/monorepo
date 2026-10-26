@@ -210,15 +210,31 @@ it('removes only the selected account and API, including unopened/corrupted draf
 });
 
 it('does not resurrect a draft from a queued write after account deletion', async () => {
-  const { getPersistentReferralDraft, discardAccountReferralDrafts } =
-    await import('./referralDraftStorage');
-  const store = getPersistentReferralDraft(scope);
-  store.startNew(scope.clientId);
-  // Type-ahead is queued, not yet written, when the account is wiped.
-  store.setField('notes', 'typed but not yet written');
-  discardAccountReferralDrafts(scope);
-  expect(stores.get('referral-drafts-v2')?.size).toBe(0);
+  vi.useFakeTimers();
+  try {
+    const { getPersistentReferralDraft, discardAccountReferralDrafts } =
+      await import('./referralDraftStorage');
+    const store = getPersistentReferralDraft(scope);
+    store.startNew(scope.clientId);
+    expect(stores.get('referral-drafts-v2')?.size).toBe(1);
 
-  const reopened = getPersistentReferralDraft(scope);
-  expect(reopened.getSnapshot()).toBeNull();
+    // The new text is published but still queued: only `startNew` has written.
+    store.setField('notes', 'typed but not yet written');
+    expect(store.getSnapshot()?.storedValues.notes).toBe(
+      'typed but not yet written',
+    );
+    expect(stores.get('referral-drafts-v2')?.size).toBe(1);
+
+    discardAccountReferralDrafts(scope);
+    expect(stores.get('referral-drafts-v2')?.size).toBe(0);
+
+    // Past the debounce window the cancelled write must not come back.
+    vi.advanceTimersByTime(1000);
+    expect(stores.get('referral-drafts-v2')?.size).toBe(0);
+
+    const reopened = getPersistentReferralDraft(scope);
+    expect(reopened.getSnapshot()).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
 });
