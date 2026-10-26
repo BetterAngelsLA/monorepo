@@ -15,11 +15,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {
-  argv,
-  computeFingerprintForTarget,
-  resolveProjectDir,
-} from './eas-utils';
+import { argv, resolveProjectDir, setupEnvAndFingerprint } from './eas-utils';
 
 function main(): void {
   const { project, profile } = argv;
@@ -32,7 +28,7 @@ function main(): void {
   }
 
   const projectDir = resolveProjectDir(project);
-  const runtimeVersion = computeFingerprintForTarget(projectDir, profile);
+  const runtimeVersion = setupEnvAndFingerprint(projectDir, profile);
 
   const outDir = path.resolve(process.cwd(), '.nx/eas-fingerprint');
   fs.mkdirSync(outDir, { recursive: true });

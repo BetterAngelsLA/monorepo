@@ -210,6 +210,7 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           BRANCH_NAME: ${{ steps.pr.outputs.ref }}
+          EAS_FINGERPRINT: '1'
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_STATUS_SHA: ${{ steps.pr.outputs.sha }}
           EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}

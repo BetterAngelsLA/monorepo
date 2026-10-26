@@ -214,52 +214,9 @@ export function computeFingerprint(projectDir: string): string {
 }
 
 /**
- * Compute the fingerprint with a temporary .env, then restore the original
- * file. The required checks run sync-deps too, and .env is tracked, so
- * leaving the profile env behind would fail the generated-types git diff.
- */
-export function computeFingerprintForTarget(
-  projectDir: string,
-  profile: string,
-): string {
-  console.log(`\n=== Computing fingerprint for profile: ${profile} ===`);
-
-  const envPath = path.join(projectDir, '.env');
-  const original = fs.existsSync(envPath) ? fs.readFileSync(envPath) : null;
-
-  try {
-    writeEnvFile(projectDir, collectEnv(projectDir, profile));
-    return computeFingerprint(projectDir);
-  } finally {
-    if (original === null) {
-      if (fs.existsSync(envPath)) fs.unlinkSync(envPath);
-    } else {
-      fs.writeFileSync(envPath, original);
-    }
-  }
-}
-
-/**
- * Write the profile .env for an actual EAS build/update. Only the deploy
- * tasks call this; checks use computeFingerprintForTarget and leave .env alone.
- */
-export function writeEasEnv(
-  projectDir: string,
-  profile: string,
-  runtimeVersion: string,
-): void {
-  const envMap = collectEnv(projectDir, profile);
-  envMap.set('RUNTIME_VERSION', runtimeVersion);
-  writeEnvFile(projectDir, envMap);
-  envMap.forEach((value, key) => {
-    process.env[key] = value;
-  });
-}
-
-/**
- * Compute and leave the .env in place. Kept for callers that need the
- * profile env afterwards; the deploy path uses writeEasEnv with a runtime
- * computed earlier by eas-fingerprint.
+ * Compute the fingerprint and leave the profile .env (with RUNTIME_VERSION)
+ * in place. The eas-fingerprint target runs this only for a deploy; required
+ * checks skip the target via EAS_FINGERPRINT.
  */
 export function setupEnvAndFingerprint(
   projectDir: string,

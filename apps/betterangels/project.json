@@ -65,10 +65,10 @@
       "cache": false,
       "configurations": {
         "preview": {
-          "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-fingerprint.ts --project betterangels --profile preview"
+          "command": "if [ \"${EAS_FINGERPRINT:-0}\" != \"1\" ]; then echo \"Skipping EAS fingerprint (not a deploy)\"; exit 0; fi; npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-fingerprint.ts --project betterangels --profile preview"
         },
         "production": {
-          "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-fingerprint.ts --project betterangels --profile production"
+          "command": "if [ \"${EAS_FINGERPRINT:-0}\" != \"1\" ]; then echo \"Skipping EAS fingerprint (not a deploy)\"; exit 0; fi; npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-fingerprint.ts --project betterangels --profile production"
         }
       }
     },
@@ -211,6 +211,8 @@
     },
     "eas-e2e": {
       "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["sync-deps", "copy-lockfile"],
       "options": {
         "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-e2e.ts --project betterangels"
       }

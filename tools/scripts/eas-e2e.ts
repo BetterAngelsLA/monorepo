@@ -34,7 +34,6 @@ import {
   resolveProjectDir,
   run,
   runJson,
-  setupEnvAndFingerprint,
 } from './eas-utils';
 
 const project = argv.project as string | undefined;
@@ -48,9 +47,22 @@ const androidProfile = 'preview';
 const iosProfile = 'development-simulator';
 const branch = getEnv('BRANCH_NAME');
 const projectDir = resolveProjectDir(project);
+const easBin = path.resolve(projectDir, '../../node_modules/.bin/eas');
 
-// 1. Setup env and compute fingerprint (env vars are identical across profiles)
-const fingerprint = setupEnvAndFingerprint(projectDir, androidProfile);
+// 1. Read the runtime computed by the eas-fingerprint target. It runs before
+// sync-deps/copy-lockfile, so this is the same pre-sync fingerprint the
+// existing builds are keyed to.
+const runtimeFile = path.resolve(
+  process.cwd(),
+  '.nx/eas-fingerprint',
+  `${project}-${androidProfile}.runtime`,
+);
+if (!fs.existsSync(runtimeFile)) {
+  throw new Error(
+    `Missing EAS runtime version at ${runtimeFile}. Run the eas-fingerprint target first.`,
+  );
+}
+const fingerprint = fs.readFileSync(runtimeFile, 'utf-8').trim();
 
 // 2. Find or trigger builds for both platforms
 console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
@@ -58,7 +70,8 @@ console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
 function findBuildId(platform: string, profile: string): string | undefined {
   try {
     const builds = runJson<Array<{ id: string; status: string }>>(
-      `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --non-interactive`,
+      `"${easBin}" build:list --platform ${platform} --build-profile ${profile} --runtime-version ${fingerprint} --limit 1 --json --non-interactive`,
+      { cwd: projectDir },
     );
     if (builds.length > 0) {
       console.log(
@@ -81,7 +94,8 @@ if (!androidBuildId) {
     `\nTriggering android build (profile: ${androidProfile}, --wait false)...`,
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${androidProfile} --platform android --freeze-credentials --non-interactive --json --no-wait`,
+    `"${easBin}" build --profile ${androidProfile} --platform android --freeze-credentials --non-interactive --json --no-wait`,
+    { cwd: projectDir },
   );
   androidBuildId = newBuilds[0]?.id;
   console.log(`Triggered android build: ${androidBuildId}`);
@@ -91,7 +105,8 @@ if (!iosBuildId) {
     `\nTriggering ios build (profile: ${iosProfile}, --wait false)...`,
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${iosProfile} --platform ios --freeze-credentials --non-interactive --json --no-wait`,
+    `"${easBin}" build --profile ${iosProfile} --platform ios --freeze-credentials --non-interactive --json --no-wait`,
+    { cwd: projectDir },
   );
   iosBuildId = newBuilds[0]?.id;
   console.log(`Triggered ios build: ${iosBuildId}`);
@@ -112,7 +127,8 @@ console.log(`\nPublishing update on branch: ${branch}`);
 process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
 
 const updates = runJson<Array<{ group: string; platform: string }>>(
-  `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --non-interactive`,
+  `"${easBin}" update --branch "${branch}" --auto --json --non-interactive`,
+  { cwd: projectDir },
 );
 const groupId = updates[0]?.group;
 if (!groupId) {

@@ -44,9 +44,7 @@ import {
   getOptionalEnv,
   resolveProjectDir,
   run,
-  runJson,
   runJsonAsync,
-  writeEasEnv,
 } from './eas-utils';
 
 // ---------------------------------------------------------------------------
@@ -206,19 +204,24 @@ function toBuildResult(info: BuildInfo, slug: string): PlatformBuildResult {
 // Step 3: EAS Update
 // ---------------------------------------------------------------------------
 
-function performEasUpdate(
+async function performEasUpdate(
   project: string,
   branch: string,
   slug: string,
   projectId: string,
-): {
+): Promise<{
   updates: DeployResults['updates'];
   groupId: string;
-} {
+}> {
   console.log(`\n=== Performing EAS Update on branch: ${branch} ===`);
 
-  const updateData = runJson<UpdateResult[]>(
-    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --non-interactive`,
+  // Direct CLI, like the build: a nested `nx run …:eas-update` would hit the
+  // same recursive-task guard as the build once sync-deps is in the graph.
+  const projectDir = resolveProjectDir(project);
+  const easBin = path.resolve(projectDir, '../../node_modules/.bin/eas');
+  const updateData = await runJsonAsync<UpdateResult[]>(
+    `"${easBin}" update --branch "${branch}" --auto --json --non-interactive`,
+    { cwd: projectDir },
   );
   const updates: DeployResults['updates'] = {};
   let groupId = '';
@@ -480,12 +483,7 @@ async function main(): Promise<void> {
   }
   const runtimeVersion = fs.readFileSync(runtimeFile, 'utf-8').trim();
 
-  // 2. Write the profile .env now that we are actually deploying. The
-  // fingerprint target restored the tracked .env so required checks stay
-  // clean; the build/update still need the profile values.
-  writeEasEnv(projectDir, profile, runtimeVersion);
-
-  // 3. Check/trigger builds. Sequential across profiles: both can miss and
+  // 2. Check/trigger builds. Sequential across profiles: both can miss and
   // trigger an eas-build, and concurrent Nx processes would race copy-lockfile
   // and the workspace data DB. Each call still looks its platforms up
   // concurrently. A simulator-only failure must not abort the preview update.
@@ -515,8 +513,8 @@ async function main(): Promise<void> {
   const simulatorBuilds: Record<string, PlatformBuildResult> =
     simResult?.builds ?? {};
 
-  // 4. EAS Update
-  const { updates, groupId } = performEasUpdate(
+  // 3. EAS Update
+  const { updates, groupId } = await performEasUpdate(
     project,
     branchName,
     slug,
