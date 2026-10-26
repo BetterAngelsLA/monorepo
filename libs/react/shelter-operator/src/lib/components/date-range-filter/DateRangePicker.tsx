@@ -224,7 +224,11 @@ export function DateRangePicker({
     setToError(result.toError);
     if (!result.valid) return;
 
-    setSaveError(null);
+    // A blur caused by clicking back into the control must not erase the
+    // explanation for a Save that is still blocked, so only clear the alert
+    // once the range is actually complete. Typing clears it in the change
+    // handlers.
+    if (result.next?.from && result.next?.to) setSaveError(null);
     setDraft(result.next);
     if (result.next?.from) {
       // Keep the two visible months ordered even when only one endpoint was

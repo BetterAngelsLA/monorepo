@@ -243,6 +243,9 @@ describe('DateRangePicker', () => {
     const start = input('Start date');
     act(() => start.focus());
 
+    // Focusing the field must actually open the popover, and focus must stay
+    // on the field the user is typing in.
+    expect(dialog()).not.toBeNull();
     expect(document.activeElement).toBe(start);
   });
 
@@ -321,6 +324,45 @@ describe('DateRangePicker', () => {
     expect(screen.getByRole('alert').textContent).toBe(
       'Select both a start and end date.',
     );
+  });
+
+  it('keeps the blocked-Save alert when the fields blur again', () => {
+    renderCalendar();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
+    fireEvent.change(input('End date'), { target: { value: '' } });
+    fireEvent.blur(input('End date'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Select both a start and end date.',
+    );
+
+    // Re-entering the control blurs a field again; the range is still
+    // incomplete, so the reason the Save was refused must stay visible.
+    fireEvent.blur(input('End date'));
+
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Select both a start and end date.',
+    );
+  });
+
+  it('clears the blocked-Save alert once the range is completed', () => {
+    renderCalendar();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
+    fireEvent.change(input('End date'), { target: { value: '' } });
+    fireEvent.blur(input('End date'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+
+    fireEvent.change(input('Start date'), {
+      target: { value: '06/01/2026' },
+    });
+    fireEvent.change(input('End date'), { target: { value: '06/30/2026' } });
+    fireEvent.blur(input('End date'));
+
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('keeps the right pane ahead of a typed start date', () => {
