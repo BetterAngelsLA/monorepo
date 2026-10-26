@@ -1,0 +1,133 @@
+name: 🚀 Preview
+
+on:
+  pull_request:
+
+env:
+  AWS_REGION: us-west-2
+  AWS_ACCOUNT_ID: 174477281453
+  ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+
+jobs:
+  Preview:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    environment: preview
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
+      VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
+      EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
+      EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+      EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v5
+
+      - name: 🔧 Set Environment Variables
+        env:
+          RAW_BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
+
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+          cache: yarn
+
+      - name: 📦 Install dependencies
+        run: |
+          corepack enable
+          yarn install --immutable
+
+      - name: 🥟 Install EAS CLI
+        run: npm install -g eas-cli@24.8.0
+
+      - name: Restore Nx cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
+            nx-cache-v4-${{ runner.os }}-
+
+      - name: 🚀 Preview deploys
+        env:
+          CI: 'true'
+          NX_DAEMON: 'false'
+        run: |
+          set -euo pipefail
+          export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
+          yarn nx run betterangels:write-eas-env:preview
+          # EAS prebuilds before fingerprinting; mirror that locally so the
+          # runtime version matches the one the build calculates.
+          npx expo prebuild --no-install
+          ANDROID_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform android --workflow generic)"
+          IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios --workflow generic)"
+
+          yarn nx run betterangels:build-list --platform=all --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl.json
+          node tools/scripts/has-build.mjs /tmp/bl.json || yarn nx run betterangels:eas-build:preview --platform=all --wait=false --freezeCredentials=true --json=true
+
+          yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=development-simulator --json=true > /tmp/bl-sim.json
+          node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
+
+          # Update and web deploy are independent; one graph lets them overlap.
+          yarn nx affected -t update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
+
+      - name: 🧪 E2E
+        env:
+          CI: 'true'
+          NX_DAEMON: 'false'
+        run: |
+          set -euo pipefail
+          origin="$(sed -n 's/^SITE_URL=//p' apps/shelter-web/.env.deploy.preview)"
+          base_path="/branches/${BRANCH_NAME}/"
+          export BASE_URL="${origin%/}${base_path}"
+          yarn playwright install chromium
+          curl -fsS "$BASE_URL" >/dev/null
+          yarn nx run-many -t e2e --projects=shelter-e2e --configuration preview --output-style=stream
+
+      - name: Save Nx cache
+        if: always() && !cancelled()
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: 📎 Upload shelter-e2e report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
+          path: dist/.playwright/apps/shelter-e2e
+          if-no-files-found: ignore
+          retention-days: 7
