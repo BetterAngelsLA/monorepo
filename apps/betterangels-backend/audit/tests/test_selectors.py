@@ -14,6 +14,7 @@ from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
 from pghistory.core import event_models
+from strawberry import ID
 
 from accounts.models import User
 from audit.selectors import (
@@ -28,6 +29,7 @@ from audit.selectors import (
     object_audit_log,
 )  # noqa: F401 -- the cursor-aware API is exercised directly by the pagination tests
 from audit.tests.utils import audit_context, audit_log, clear_history_context
+from audit.types import AuditEventFilter
 from clients.models import ClientProfile
 from shelters.enums import (
     DemographicChoices,
@@ -1309,7 +1311,7 @@ class ObjectAuditLogFilterTestCase(TestCase):
         self._rename("Early", at=self.T1, user=self.user)
         self._rename("Late", at=self.T2, user=self.user)
 
-        actions = self._log(date_from=self.T2)
+        actions = self._log(filters=AuditEventFilter(date_from=self.T2))
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].field_changes["name"], ["Early", "Late"])
@@ -1318,7 +1320,7 @@ class ObjectAuditLogFilterTestCase(TestCase):
         self._rename("Early", at=self.T1, user=self.user)
         self._rename("Late", at=self.T2, user=self.user)
 
-        actions = self._log(date_to=self.T1)
+        actions = self._log(filters=AuditEventFilter(date_to=self.T1))
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].field_changes["name"], ["Filter Shelter", "Early"])
@@ -1328,7 +1330,7 @@ class ObjectAuditLogFilterTestCase(TestCase):
         self._rename("Middle", at=self.T2, user=self.user)
         self._rename("Late", at=self.T3, user=self.user)
 
-        actions = self._log(date_from=self.T2, date_to=self.T2)
+        actions = self._log(filters=AuditEventFilter(date_from=self.T2, date_to=self.T2))
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].field_changes["name"], ["Early", "Middle"])
@@ -1337,7 +1339,7 @@ class ObjectAuditLogFilterTestCase(TestCase):
         self._rename("By Ada", at=self.T1, user=self.user)
         self._rename("By Grace", at=self.T2, user=self.other_user)
 
-        actions = self._log(actor_id=self.user.pk)
+        actions = self._log(filters=AuditEventFilter(actor_id=ID(str(self.user.pk))))
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].field_changes["name"], ["Filter Shelter", "By Ada"])
@@ -1345,14 +1347,14 @@ class ObjectAuditLogFilterTestCase(TestCase):
     def test_unknown_actor_id_yields_no_actions(self) -> None:
         self._rename("By Ada", at=self.T1, user=self.user)
 
-        self.assertEqual(self._log(actor_id=999_999), [])
+        self.assertEqual(self._log(filters=AuditEventFilter(actor_id=ID("999999"))), [])
 
     def test_actor_id_excludes_context_less_system_events(self) -> None:
         clear_history_context()
         self.shelter.name = "System Write"
         self.shelter.save()
 
-        self.assertEqual(self._log(actor_id=self.user.pk), [])
+        self.assertEqual(self._log(filters=AuditEventFilter(actor_id=ID(str(self.user.pk)))), [])
         # The system write is still present when no actor filter is applied.
         self.assertIsNotNone(_action_with(self._log(), "System Write"))
 
@@ -1361,7 +1363,9 @@ class ObjectAuditLogFilterTestCase(TestCase):
         self._rename("Grace One", at=self.T2, user=self.other_user)
         self._rename("Ada Two", at=self.T3, user=self.user)
 
-        actions = self._log(date_from=self.T1, date_to=self.T2, actor_id=self.user.pk)
+        actions = self._log(
+            filters=AuditEventFilter(date_from=self.T1, date_to=self.T2, actor_id=ID(str(self.user.pk)))
+        )
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].field_changes["name"], ["Filter Shelter", "Ada One"])
@@ -1381,7 +1385,7 @@ class ObjectAuditLogFilterTestCase(TestCase):
 
         self.assertEqual(len(self._log()[0].events), 2)
 
-        actions = self._log(date_from=self.T2)
+        actions = self._log(filters=AuditEventFilter(date_from=self.T2))
 
         self.assertEqual(len(actions), 1)
         self.assertEqual([event.action for event in actions[0].events], ["shelter.update"])
@@ -1399,19 +1403,21 @@ class ObjectAuditLogFilterTestCase(TestCase):
         self._rename("Four", at=self.T4, user=self.user)
 
         # The date window excludes T1; the actor filter excludes the T2 action.
-        filters: dict[str, Any] = {"date_from": self.T2, "actor_id": self.user.pk}
+        event_filter = AuditEventFilter(date_from=self.T2, actor_id=ID(str(self.user.pk)))
 
-        first = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, **filters)
+        first = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, filters=event_filter)
         self.assertEqual([action.field_changes["name"][1] for action in first.results], ["Four"])
         self.assertTrue(first.has_next_page)
         self.assertIsNotNone(first.end_cursor)
 
-        second = object_audit_log(obj=self.shelter, target_type="SHELTER", limit=1, after=first.end_cursor, **filters)
+        second = object_audit_log(
+            obj=self.shelter, target_type="SHELTER", limit=1, after=first.end_cursor, filters=event_filter
+        )
         self.assertEqual([action.field_changes["name"][1] for action in second.results], ["Three"])
         self.assertFalse(second.has_next_page)
 
         past_end = object_audit_log(
-            obj=self.shelter, target_type="SHELTER", limit=1, after=second.end_cursor, **filters
+            obj=self.shelter, target_type="SHELTER", limit=1, after=second.end_cursor, filters=event_filter
         )
         self.assertEqual(past_end.results, [])
         self.assertIsNone(past_end.end_cursor)
@@ -1495,7 +1501,9 @@ class ObjectAuditLogQueryBudgetTestCase(TestCase):
         self._rename(5)
 
         future = datetime.now(timezone.utc) + timedelta(days=1)
-        actions, queries = self._log_and_count(date_from=future, actor_id=self.user.pk)
+        actions, queries = self._log_and_count(
+            filters=AuditEventFilter(date_from=future, actor_id=ID(str(self.user.pk)))
+        )
 
         # Nothing survives the window, so the selector must short-circuit after
         # the key query — proof the predicate ran in SQL, since a Python-side

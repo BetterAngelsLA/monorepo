@@ -41,9 +41,7 @@ OBJECT_AUDIT_LOG_QUERY = """
     query ObjectAuditLog(
         $targetType: AuditTargetType!,
         $objectId: ID!,
-        $dateFrom: DateTime,
-        $dateTo: DateTime,
-        $actorId: ID,
+        $filters: AuditEventFilter,
         $limit: Int,
         $after: String,
         $includeSnapshot: Boolean
@@ -51,9 +49,7 @@ OBJECT_AUDIT_LOG_QUERY = """
         objectAuditLog(
             targetType: $targetType,
             objectId: $objectId,
-            dateFrom: $dateFrom,
-            dateTo: $dateTo,
-            actorId: $actorId,
+            filters: $filters,
             limit: $limit,
             after: $after,
             includeSnapshot: $includeSnapshot
@@ -472,12 +468,14 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
     # ── date / actor filters (§21) ───────────────────────────────────────────
 
-    def _rename_at(self, name: str, *, at: datetime, user: object) -> None:
+    def _rename_at(self, name: str, *, at: datetime, user: User) -> None:
         with audit_context(user=user):
             self.shelter.name = name
             self.shelter.save()
         backdate_event_rows(
-            Shelter.pgh_event_model.objects.filter(pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name),
+            Shelter.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+                pgh_obj_id=self.shelter.pk, pgh_label="shelter.update", name=name
+            ),
             pgh_created_at=at,
         )
 
@@ -486,13 +484,13 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self._rename_at("Early", at=_T1, user=self.org_1_case_manager_1)
         self._rename_at("Late", at=_T2, user=self.org_1_case_manager_1)
 
-        response = self._query("SHELTER", self.shelter.id, dateFrom=_T2.isoformat())
+        response = self._query("SHELTER", self.shelter.id, filters={"dateFrom": _T2.isoformat()})
         actions = response["data"]["objectAuditLog"]["results"]
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["Early", "Late"])
 
-        response = self._query("SHELTER", self.shelter.id, dateTo=_T1.isoformat())
+        response = self._query("SHELTER", self.shelter.id, filters={"dateTo": _T1.isoformat()})
         actions = response["data"]["objectAuditLog"]["results"]
 
         self.assertEqual(len(actions), 1)
@@ -504,7 +502,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self._rename_at("By Casey", at=_T1, user=self.org_1_case_manager_1)
         self._rename_at("By Dana", at=_T2, user=self.org_1_case_manager_2)
 
-        response = self._query("SHELTER", self.shelter.id, actorId=str(self.org_1_case_manager_1.id))
+        response = self._query("SHELTER", self.shelter.id, filters={"actorId": str(self.org_1_case_manager_1.id)})
         actions = response["data"]["objectAuditLog"]["results"]
 
         self.assertEqual(len(actions), 1)

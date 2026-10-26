@@ -1,6 +1,5 @@
 """GraphQL surface for the object audit log (ADR 0004 §18, §21)."""
 
-from datetime import datetime
 from typing import Optional, assert_never, cast
 
 import strawberry
@@ -16,7 +15,7 @@ from shelters.permissions import BA_REVIEW_FIELDS, can_view_ba_review
 from shelters.selectors.operator import bed_get, room_get, shelter_get
 
 from .selectors import object_audit_log
-from .types import AuditActionPage, AuditTargetType, to_action_page
+from .types import AuditActionPage, AuditEventFilter, AuditTargetType, to_action_page
 
 
 def _resolve_target(user: AccountUser, target_type: AuditTargetType, object_id: ID) -> object:
@@ -45,9 +44,7 @@ class Query:
         info: Info,
         target_type: AuditTargetType,
         object_id: ID,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        actor_id: Optional[ID] = None,
+        filters: Optional[AuditEventFilter] = None,
         after: Optional[str] = None,
         limit: int = 50,
         include_snapshot: bool = False,
@@ -59,8 +56,10 @@ class Query:
         repeat or skip an action the way ``offset`` can. ``includeSnapshot``
         opts each event into a full-object-state snapshot rendered from the
         event's ``pgh_data`` (ADR 0004 §13).
-        ``dateFrom``/``dateTo`` window ``timestamp`` (inclusive) and ``actorId``
-        restricts to one actor (ADR 0004 §21).
+        ``filters`` windows the log (ADR 0004 §21): ``dateFrom``/``dateTo``
+        bound ``timestamp`` (inclusive) and ``actorId`` restricts to one actor.
+        It is one input object so later filters (the §30 ``kinds``) can be
+        added without growing this field's argument list.
 
         Field-level authorization is enforced here, not in the selector: the
         BA-review fields follow ``operatorShelter``'s global-tier gate (#2559),
@@ -90,9 +89,7 @@ class Query:
             page = object_audit_log(
                 obj=obj,
                 target_type=target_type.value,
-                date_from=date_from,
-                date_to=date_to,
-                actor_id=actor_id,
+                filters=filters,
                 after=after,
                 limit=limit,
                 include_snapshot=include_snapshot,

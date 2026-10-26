@@ -48,6 +48,7 @@ from django.utils import timezone
 from model_bakery import baker
 
 from audit.selectors import object_audit_log
+from audit.types import AuditEventFilter
 from shelters.models import Shelter, ShelterAvailability
 
 # Synthetic object ids start here so they never collide with real rows and can be
@@ -94,6 +95,7 @@ class Command(BaseCommand):
         spread_start = self._parse_date(options["date_from"]) or (timezone.now() - datetime.timedelta(days=365 * 2))
         date_from = self._parse_date(options["date_from"])
         date_to = self._parse_date(options["date_to"])
+        event_filter = AuditEventFilter(date_from=date_from, date_to=date_to)
 
         event_model = Shelter.pgh_event_model  # type: ignore[attr-defined]
 
@@ -129,7 +131,7 @@ class Command(BaseCommand):
             )
 
             timings, query_count, captured_sql, captured_params = self._time_selector(
-                measured, date_from, date_to, options["limit"], options["runs"]
+                measured, event_filter, options["limit"], options["runs"]
             )
             self._report(timings, query_count, captured_sql)
 
@@ -277,8 +279,7 @@ class Command(BaseCommand):
     def _time_selector(
         self,
         obj: Any,
-        date_from: datetime.datetime | None,
-        date_to: datetime.datetime | None,
+        filters: AuditEventFilter,
         limit: int,
         runs: int,
     ) -> tuple[list[float], int, str, list[Any]]:
@@ -295,8 +296,7 @@ class Command(BaseCommand):
                 page = object_audit_log(
                     obj=obj,
                     target_type="SHELTER",
-                    date_from=date_from,
-                    date_to=date_to,
+                    filters=filters,
                     limit=limit,
                 )
                 timings.append((time.perf_counter() - started) * 1000.0)

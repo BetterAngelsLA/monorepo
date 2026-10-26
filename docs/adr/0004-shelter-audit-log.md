@@ -1604,17 +1604,25 @@ Implemented on the write path. `objectAuditLog` accepts:
 objectAuditLog(
   targetType: AuditTargetType!,
   objectId: ID!,
-  dateFrom: DateTime,
-  dateTo: DateTime,
-  actorId: ID,
+  filters: AuditEventFilter,
   after: String = null,
   limit: Int = 50
 ): AuditActionPage!
+
+input AuditEventFilter {
+  dateFrom: DateTime
+  dateTo: DateTime
+  actorId: ID
+}
 ```
 
-- `dateFrom`/`dateTo` — inclusive bounds on `pgh_created_at`.
-- `actorId` — the acting `User.id` as the §8 middleware froze it into the context
-  metadata, not the display name/email and not an `OrganizationUser`
+The filters are one input object rather than three top-level arguments so the
+field's signature stays stable as filters are added: the §30 `kinds` filter
+slots in here.
+
+- `filters.dateFrom`/`filters.dateTo` — inclusive bounds on `pgh_created_at`.
+- `filters.actorId` — the acting `User.id` as the §8 middleware froze it into the
+  context metadata, not the display name/email and not an `OrganizationUser`
   `membershipId`.
 - All three are predicates on the aggregate CTE's outer SELECT (§10), applied
   before the key grouping: a filtered-out event cannot keep an otherwise-empty
@@ -1632,9 +1640,10 @@ objectAuditLog(
 cursor pagination under a composed filter, and the §20 query-count/pushdown
 guard (asserted on the CTE's outer SELECT, not on the whole statement).
 
-The `kinds` argument is deferred to §30, where `READ` exists to filter. These
-`dateFrom`/`dateTo`/`actorId` filters are extended to the read source in §28
-once reads are merged (Phase 5), so a date/actor filter spans both sources.
+The `kinds` field is deferred to §30, where `READ` exists to filter; it belongs
+in `AuditEventFilter`, so adding it does not change the field's signature. These
+filter fields are extended to the read source in §28 once reads are merged
+(Phase 5), so a date/actor filter spans both sources.
 
 ---
 
