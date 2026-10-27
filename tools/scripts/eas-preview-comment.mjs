@@ -122,9 +122,14 @@ if (!android && !ios && !updates.android && !updates.ios) {
 }
 const simulator = builds['ios/development-simulator'];
 
+// `eas build:list` reports the runtime under `runtime.version` (and the
+// fingerprint hash alongside); there is no top-level `runtimeVersion`.
+const runtimeOf = (build) =>
+  build?.runtime?.version ?? build?.fingerprint?.hash ?? 'N/A';
+
 const cell = (build) =>
   build
-    ? `[Build Permalink](${buildUrl(build.id)})<br /><details><summary>Details</summary>Status: \`${build.status}\`<br />Distribution: \`${build.distribution ?? ''}\`<br />Build profile: \`${build.buildProfile ?? ''}\`<br />Runtime version: \`${build.runtimeVersion ?? ''}\`<br />App version: \`${build.appVersion ?? ''}\`<br />Git commit: \`${build.gitCommitHash ?? ''}\`</details>`
+    ? `[Build Permalink](${buildUrl(build.id)})<br /><details><summary>Details</summary>Status: \`${build.status}\`<br />Distribution: \`${build.distribution ?? ''}\`<br />Build profile: \`${build.buildProfile ?? ''}\`<br />Runtime version: \`${runtimeOf(build)}\`<br />App version: \`${build.appVersion ?? ''}\`<br />Git commit: \`${build.gitCommitHash ?? ''}\`</details>`
     : 'N/A';
 
 const updateCell = (update) =>
@@ -147,7 +152,7 @@ const body = `<!-- continuous-deploy-fingerprint-projectId:${argv.projectId} -->
 
 &nbsp; | 🤖 Android | 🍎 iOS
 --- | --- | ---
-Runtime Version | \`${android?.runtimeVersion ?? 'N/A'}\` | \`${ios?.runtimeVersion ?? 'N/A'}\`
+Runtime Version | \`${runtimeOf(android)}\` | \`${runtimeOf(ios)}\`
 Build Details | ${cell(android)} | ${cell(ios)}
 Update Details | ${updateCell(updates.android)} | ${updateCell(updates.ios)}
 Update QR | ${qrCell(updates.android)} | ${qrCell(updates.ios)}
@@ -227,7 +232,7 @@ async function notifySlack() {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `📱 *${argv.project}* deployed to \`${branch}\` (runtime \`${android?.runtimeVersion ?? ios?.runtimeVersion ?? 'unknown'}\`)`,
+            text: `📱 *${argv.project}* deployed to \`${branch}\` (runtime \`${runtimeOf(android) === 'N/A' ? runtimeOf(ios) : runtimeOf(android)}\`)`,
           },
         },
         section('Android', android, updates.android),
