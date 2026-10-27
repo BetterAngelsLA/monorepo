@@ -32,7 +32,6 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      # `EAS_BUILD_PLATFORMS` is set per run in "Set Environment Variables".
       # Build even though a build exists for the fingerprint.
       FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
       # Re-push the EAS environment even when every var is present.
@@ -62,37 +61,10 @@ jobs:
       - name: 🔧 Set Environment Variables
         env:
           RAW_BRANCH_NAME: ${{ github.head_ref }}
-          PREVIEW_PLATFORMS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'preview-platforms') }}
         run: |
           set -euo pipefail
           BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
-
-          # Build what this change can affect, not one platform and not all of
-          # them. Android is always built: it is the installable artifact a
-          # reviewer uses. iOS is added only when the native binary or its config
-          # changed, because a JS-only change reaches the device through the EAS
-          # Update — paying for an ios build then buys nothing. The
-          # `preview-platforms` label forces both.
-          NATIVE_PATTERN='^(package\.json|yarn\.lock|apps/betterangels/(app\.config\.js|app\.json|eas\.json|package\.json|ios/|android/))'
-          CHANGED="$(git diff --name-only "$NX_BASE" "$NX_HEAD" || true)"
-          if [ "${PREVIEW_PLATFORMS_LABEL:-false}" = 'true' ]; then
-            PLATFORMS='android,ios'
-            echo 'preview-platforms label: building both platforms.'
-          elif [ -z "$CHANGED" ]; then
-            # No range to inspect (nx-set-shas had nothing to diff). Build both
-            # rather than silently deciding this was JS-only.
-            PLATFORMS='android,ios'
-            echo "::warning::Could not determine changed files ($NX_BASE..$NX_HEAD); building both platforms."
-          elif printf '%s\n' "$CHANGED" | grep -Eq "$NATIVE_PATTERN"; then
-            PLATFORMS='android,ios'
-            echo 'Native code or build config changed; building both platforms:'
-            printf '%s\n' "$CHANGED" | grep -E "$NATIVE_PATTERN" | head -10
-          else
-            PLATFORMS='android'
-            echo 'JS-only change; android only (iOS ships through the update).'
-          fi
-          echo "EAS_BUILD_PLATFORMS=$PLATFORMS" >> "$GITHUB_ENV"
 
       - name: 🐳 Configure AWS credentials
         if: github.event.pull_request.head.repo.fork == false

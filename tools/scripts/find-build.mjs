@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 /**
- * Print the build id that already exists for a fingerprint, or nothing.
+ * Print the build that already exists for a fingerprint, or `{"id":null}`.
+ *
+ * With `--json` the whole build is printed, not just its id: callers render its
+ * distribution, app version and commit, and re-deriving those downstream only
+ * loses them.
  *
  *   node tools/scripts/find-build.mjs --project <name> --platform <p> \
  *     --profile <profile> --runtime <hash> [--json] [--force]
@@ -16,6 +20,7 @@ import { join, resolve } from 'path';
 import minimist from 'minimist';
 
 import { bestBuild, isDeadBuild } from './build-rank.mjs';
+import { parseJsonOutput } from './cli-json.mjs';
 
 const argv = minimist(process.argv.slice(2));
 const { platform, profile, runtime, project } = argv;
@@ -40,19 +45,14 @@ if (argv.force || process.env.FORCE_EAS_BUILD === 'true') {
   process.exit(0);
 }
 
-// EAS prints notices ("eas-cli is now available") ahead of the JSON payload.
 const parseBuilds = (raw) => {
-  const start = raw.indexOf('[');
-  const end = raw.lastIndexOf(']');
-  if (start < 0 || end < start) throw new Error('no JSON array in output');
-  const builds = JSON.parse(raw.slice(start, end + 1));
-  if (!Array.isArray(builds)) throw new Error('output is not an array');
+  const builds = parseJsonOutput(raw);
+  if (!Array.isArray(builds))
+    throw new Error('build:list did not return an array');
   return builds;
 };
 
-const cwd = project
-  ? resolve(process.cwd(), 'apps', project)
-  : process.cwd();
+const cwd = project ? resolve(process.cwd(), 'apps', project) : process.cwd();
 const localEas = resolve(process.cwd(), 'node_modules/.bin/eas');
 const eas = existsSync(localEas) ? localEas : 'eas';
 
@@ -86,7 +86,8 @@ for (let attempt = 1; attempt <= attempts; attempt++) {
       console.log(argv.json ? JSON.stringify({ id: null }) : '');
       process.exit(0);
     }
-    const { id, status } = bestBuild(builds) ?? {};
+    const build = bestBuild(builds) ?? {};
+    const { id, status } = build;
     console.error(
       `Found ${platform} build ${id} for ${profile}/${runtime} (status: ${status ?? '?'}).`,
     );
@@ -99,7 +100,7 @@ for (let attempt = 1; attempt <= attempts; attempt++) {
           `Re-run with the force-eas-build label to build it again.`,
       );
     }
-    console.log(argv.json ? JSON.stringify({ id }) : id);
+    console.log(argv.json ? JSON.stringify(build) : id);
     process.exit(0);
   } catch (error) {
     lastError = error;

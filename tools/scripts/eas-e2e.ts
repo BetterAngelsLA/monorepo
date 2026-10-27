@@ -30,6 +30,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { ensureBuilds } from './eas-builds';
 import { easConfiguration } from './eas-configurations';
 import {
   EAS_ACCOUNT,
@@ -37,7 +38,6 @@ import {
   getEnv,
   getOptionalEnv,
   resolveProjectDir,
-  resolveRuntime,
   run,
   runJson,
   setupEnv,
@@ -62,6 +62,8 @@ const configuration =
   'preview';
 
 const eas = easConfiguration(configuration);
+// Narrowed once: TypeScript does not carry the `--project` guard into helpers.
+const projectName: string = project;
 
 // Maestro drives the simulator binary for a preview, and the device build for
 // production — the simulator profile is the only build a simulator installs.
@@ -79,63 +81,28 @@ console.log(`Profiles: android=${androidProfile}, ios=${iosProfile}`);
 // runtime, and a runtime computed from a different workspace state is a runtime
 // no build ever produces.
 setupEnv(projectDir, androidProfile);
-run(`yarn nx run ${project}:copy-lockfile`);
+run('yarn', ['nx', 'run', `${project}:copy-lockfile`]);
 
-// Resolve each platform's runtime separately: the fingerprints differ, and
-// looking a build up with the other platform's hash always misses.
-const androidRuntime = resolveRuntime(projectDir, 'android');
-const iosRuntime = resolveRuntime(projectDir, 'ios');
-
-// 2. Find or trigger builds for both platforms
-console.log(
-  `\nChecking for builds: android ${androidRuntime}, ios ${iosRuntime}`,
-);
-
-function findBuildId(
-  platform: string,
-  profile: string,
-  runtime: string,
-): string | undefined {
-  // `find-build.mjs` is the same reuse rule the preview pipeline applies: a
-  // fingerprint builds once, in any status, and never twice. It retries a failed
-  // lookup and exits non-zero if EAS never answers, rather than reporting "no
-  // build" and paying for a duplicate.
-  const result = runJson<{ id: string | null }>(
-    `node tools/scripts/find-build.mjs --project ${project} --platform ${platform} --profile ${profile} --runtime ${runtime} --json`,
-  );
-  return result.id ?? undefined;
-}
-
-let androidBuildId = findBuildId('android', androidProfile, androidRuntime);
-let iosBuildId = findBuildId('ios', iosProfile, iosRuntime);
-
-// Trigger missing builds separately (different profiles per platform). The
-// configuration supplies the default profile and runs the env dependencies; the
-// explicit --profile still wins for the simulator.
-if (!androidBuildId) {
-  console.log(
-    `\nTriggering android build (profile: ${androidProfile}, --wait false)...`,
-  );
-  const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build:${configuration} --profile ${androidProfile} --platform android --freezeCredentials=true --json=true --wait=false`,
-  );
-  androidBuildId = newBuilds[0]?.id;
-  console.log(`Triggered android build: ${androidBuildId}`);
-}
-if (!iosBuildId) {
-  console.log(
-    `\nTriggering ios build (profile: ${iosProfile}, --wait false)...`,
-  );
-  const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build:${configuration} --profile ${iosProfile} --platform ios --freezeCredentials=true --json=true --wait=false`,
-  );
-  iosBuildId = newBuilds[0]?.id;
-  console.log(`Triggered ios build: ${iosBuildId}`);
-}
-
-if (!androidBuildId || !iosBuildId) {
+// 2. Find or queue both builds. This is the preview/main pipelines' rule, so a
+// fingerprint is never built twice across them; the runtimes it returns are the
+// ones the workflow's get-build filter must match.
+const builds = ensureBuilds({
+  project: projectName,
+  targets: [
+    { platform: 'android', profile: androidProfile },
+    { platform: 'ios', profile: iosProfile },
+  ],
+});
+const androidBuild = builds.find((build) => build.platform === 'android');
+const iosBuild = builds.find((build) => build.platform === 'ios');
+if (!androidBuild?.build?.id || !iosBuild?.build?.id) {
   throw new Error('Failed to resolve build IDs for both platforms');
 }
+const androidBuildId = androidBuild.build.id;
+const iosBuildId = iosBuild.build.id;
+const androidRuntime = androidBuild.runtime;
+const iosRuntime = iosBuild.runtime;
+console.log(`\nBuilds: android ${androidBuildId}, ios ${iosBuildId}`);
 
 // 3. Publish update
 console.log(`\nPublishing update on branch: ${branch}`);
@@ -150,9 +117,11 @@ process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
 // `eas-update` is a run-commands target: it takes no CLI flags of its own — the
 // branch comes from BRANCH_NAME (set by the workflow) and the machine-readable
 // payload is what the script prints on stdout.
-const updates = runJson<Array<{ group: string; platform: string }>>(
-  `yarn nx run ${project}:eas-update:${configuration}`,
-);
+const updates = runJson<Array<{ group: string; platform: string }>>('yarn', [
+  'nx',
+  'run',
+  `${project}:eas-update:${configuration}`,
+]);
 const groupId = updates[0]?.group;
 if (!groupId) {
   throw new Error('Failed to publish update — no group ID returned');
@@ -186,22 +155,42 @@ if (githubRepository && githubStatusSha) {
 
 // 5. Trigger EAS workflow with build IDs + update group + filter params for wait
 console.log('\nTriggering EAS Maestro workflow...');
+// The workflow inputs include the Maestro account password; `run` echoes its
+// argv, so silence it rather than rely on the log masker.
+console.log(
+  '> npx eas workflow:run .eas/workflows/e2e-test.yml … (build ids, group, credentials)',
+);
 run(
-  `npx eas workflow:run .eas/workflows/e2e-test.yml ` +
-    `-F android_build_id=${androidBuildId} ` +
-    `-F ios_build_id=${iosBuildId} ` +
-    `-F update_group_id=${groupId} ` +
-    `-F MAESTRO_BA_USER_EMAIL=${process.env.MAESTRO_BA_USER_EMAIL} ` +
-    `-F MAESTRO_BA_USER_PASSWORD=${process.env.MAESTRO_BA_USER_PASSWORD} ` +
-    `-F app_id=${eas.appId} ` +
-    `-F scheme=${eas.scheme} ` +
-    `-F android_runtime_version=${androidRuntime} ` +
-    `-F ios_runtime_version=${iosRuntime} ` +
+  'npx',
+  [
+    'eas',
+    'workflow:run',
+    '.eas/workflows/e2e-test.yml',
+    '-F',
+    `android_build_id=${androidBuildId}`,
+    '-F',
+    `ios_build_id=${iosBuildId}`,
+    '-F',
+    `update_group_id=${groupId}`,
+    '-F',
+    `MAESTRO_BA_USER_EMAIL=${process.env.MAESTRO_BA_USER_EMAIL}`,
+    '-F',
+    `MAESTRO_BA_USER_PASSWORD=${process.env.MAESTRO_BA_USER_PASSWORD}`,
+    '-F',
+    `app_id=${eas.appId}`,
+    '-F',
+    `scheme=${eas.scheme}`,
+    '-F',
+    `android_runtime_version=${androidRuntime}`,
+    '-F',
+    `ios_runtime_version=${iosRuntime}`,
     // The workflow derives the build profiles from the configuration, so an
     // override here would desync the get-build filter from the build.
-    `-F configuration=${configuration} ` +
-    `--non-interactive`,
-  { cwd: projectDir },
+    '-F',
+    `configuration=${configuration}`,
+    '--non-interactive',
+  ],
+  { cwd: projectDir, silent: true },
 );
 
 console.log('\nE2E tests triggered on EAS');
