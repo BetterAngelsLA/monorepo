@@ -22,9 +22,18 @@
  * The trade-off is deliberate: a *rotated* secret has the same name, so it is
  * not re-pushed automatically. Rotate with `--force` (or the
  * `force-eas-env-sync` label) so the rotation is a deliberate, visible step.
+ *
+ * Reading the list is best effort. `env:list` has no `--json` (eas-cli 24.8) and
+ * a CI robot token can come back with an empty list even though it can push, so
+ * "no names" is not treated as "nothing is there": the values come from the same
+ * secrets either way, and skipping would leave a fresh EAS project without the
+ * vars the fingerprint needs. A marker in the temp dir keeps that fallback to
+ * one push per job instead of one per target that depends on this one.
  */
-import { execFileSync } from 'child_process';
-import { existsSync, readFileSync } from 'fs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve } from 'path';
 import minimist from 'minimist';
 
@@ -59,6 +68,24 @@ const local = readFileSync(envPath, 'utf8')
   .filter(Boolean);
 
 const force = Boolean(argv.force) || process.env.FORCE_EAS_ENV_SYNC === 'true';
+
+// One push per job: `.env.local` is written by `write-eas-env`, and both
+// `eas-build` and `eas-update` depend on this target, so without a marker the
+// same content is pushed twice per pipeline run. Temp dir, not the repo: it must
+// not show up as a workspace change.
+const content = readFileSync(envPath, 'utf8');
+const contentHash = createHash('sha256').update(content).digest('hex').slice(0, 16);
+const marker = resolve(tmpdir(), `eas-env-synced-${project}-${environment}`);
+if (
+  !force &&
+  existsSync(marker) &&
+  readFileSync(marker, 'utf8').trim() === contentHash
+) {
+  console.log(
+    `Already pushed this exact .env.local to ${environment} in this job; skipping.`,
+  );
+  process.exit(0);
+}
 
 const localEas = resolve(process.cwd(), 'node_modules/.bin/eas');
 const eas = existsSync(localEas) ? localEas : 'eas';
@@ -97,6 +124,11 @@ const missing = local.filter((name) => !remoteNames.has(name));
 console.log(
   `EAS ${environment} environment: ${remoteNames.size} vars; .env.local: ${local.length} vars.`,
 );
+if (remoteNames.size === 0) {
+  console.log(
+    'Could not read any var names back (robot token, or env:list output changed); pushing to be safe.',
+  );
+}
 
 if (!force && remoteNames.size > 0 && missing.length === 0) {
   console.log(
@@ -107,9 +139,10 @@ if (!force && remoteNames.size > 0 && missing.length === 0) {
 
 if (force) {
   console.log('--force: pushing every var regardless of what EAS has.');
-} else {
+} else if (remoteNames.size > 0) {
   console.log(`Pushing ${missing.length} missing var(s): ${missing.join(', ')}`);
 }
 
 run(['env:push', '--environment', environment, '--path', '.env.local', '--force']);
+writeFileSync(marker, contentHash + '\n');
 console.log(`Pushed ${envPath} to the ${environment} environment.`);
