@@ -10,7 +10,12 @@
  *      for builds to complete before running Maestro tests)
  *
  * Usage:
- *   npx ts-node tools/scripts/eas-e2e.ts --project betterangels
+ *   npx ts-node tools/scripts/eas-e2e.ts --project betterangels \
+ *     [--configuration preview|production]
+ *
+ * The configuration (default `preview`) decides the EAS environment the build
+ * and update resolve through `write-eas-env`/`sync-eas-env`, and the default
+ * build profiles per platform.
  *
  * Required env vars:
  *   EXPO_TOKEN   - EAS authentication token
@@ -40,15 +45,50 @@ import {
 
 const project = argv.project as string | undefined;
 if (!project) {
-  console.error('Usage: eas-e2e.ts --project <name>');
+  console.error(
+    'Usage: eas-e2e.ts --project <name> [--configuration preview|production] [--android-profile <p>] [--ios-profile <p>]',
+  );
   process.exit(1);
 }
 
-// Android APKs work on emulators directly; only iOS needs a simulator build
-const androidProfile = 'preview';
-const iosProfile = 'development-simulator';
+/**
+ * The Nx configuration, not just an EAS profile.
+ *
+ * It is not cosmetic: `write-eas-env` and `sync-eas-env` are configuration-scoped
+ * (preview → the EAS `development` environment, production → `production`), and
+ * they are the reason a build resolves the same runtime the update publishes to.
+ * Running `eas-build` without a configuration cannot work — those targets define
+ * no default command — and running it with the wrong one pairs a production
+ * profile with the development environment.
+ */
+const configuration =
+  (argv.configuration as string | undefined) ??
+  getOptionalEnv('EAS_CONFIGURATION') ??
+  'preview';
+
+/** EAS profiles per configuration. Extend here, not with a hardcoded literal. */
+const PROFILES: Record<string, { android: string; ios: string }> = {
+  preview: { android: 'preview', ios: 'development-simulator' },
+  production: { android: 'production', ios: 'production' },
+};
+
+const profiles = PROFILES[configuration];
+if (!profiles) {
+  throw new Error(
+    `Unsupported configuration "${configuration}". Add its profiles to PROFILES in tools/scripts/eas-e2e.ts.`,
+  );
+}
+
+// Android APKs work on emulators directly; only iOS needs a simulator build. The
+// profile is the configuration's default, overridable per platform for the rare
+// case (e.g. a simulator build of a production app).
+const androidProfile = (argv['android-profile'] as string) ?? profiles.android;
+const iosProfile = (argv['ios-profile'] as string) ?? profiles.ios;
 const branch = getEnv('BRANCH_NAME');
 const projectDir = resolveProjectDir(project);
+
+console.log(`EAS configuration: ${configuration}`);
+console.log(`Profiles: android=${androidProfile}, ios=${iosProfile}`);
 
 // 1. Setup env once (it is identical across profiles). `copy-lockfile` comes
 // next, before anything is resolved or looked up, because it rewrites the
@@ -87,14 +127,14 @@ let androidBuildId = findBuildId('android', androidProfile, androidRuntime);
 let iosBuildId = findBuildId('ios', iosProfile, iosRuntime);
 
 // Trigger missing builds separately (different profiles per platform). The
-// `preview` configuration supplies the profile and runs the env/prebuild
-// dependencies; the explicit --profile still wins for the simulator.
+// configuration supplies the default profile and runs the env dependencies; the
+// explicit --profile still wins for the simulator.
 if (!androidBuildId) {
   console.log(
     `\nTriggering android build (profile: ${androidProfile}, --wait false)...`,
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build:preview --profile ${androidProfile} --platform android --freezeCredentials=true --json=true --wait=false`,
+    `yarn nx run ${project}:eas-build:${configuration} --profile ${androidProfile} --platform android --freezeCredentials=true --json=true --wait=false`,
   );
   androidBuildId = newBuilds[0]?.id;
   console.log(`Triggered android build: ${androidBuildId}`);
@@ -104,7 +144,7 @@ if (!iosBuildId) {
     `\nTriggering ios build (profile: ${iosProfile}, --wait false)...`,
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build:preview --profile ${iosProfile} --platform ios --freezeCredentials=true --json=true --wait=false`,
+    `yarn nx run ${project}:eas-build:${configuration} --profile ${iosProfile} --platform ios --freezeCredentials=true --json=true --wait=false`,
   );
   iosBuildId = newBuilds[0]?.id;
   console.log(`Triggered ios build: ${iosBuildId}`);
@@ -128,7 +168,7 @@ process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
 // branch comes from BRANCH_NAME (set by the workflow) and the machine-readable
 // payload is what the script prints on stdout.
 const updates = runJson<Array<{ group: string; platform: string }>>(
-  `yarn nx run ${project}:eas-update:preview`,
+  `yarn nx run ${project}:eas-update:${configuration}`,
 );
 const groupId = updates[0]?.group;
 if (!groupId) {

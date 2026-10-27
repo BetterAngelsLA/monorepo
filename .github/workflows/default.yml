@@ -391,44 +391,38 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🧪 E2E shelter-web (preview)
+      - name: 🧪 E2E (Playwright)
         # Runs on main/merge_group after the in-job deploy. PR previews run the
-        # same resolver and suite in the Preview job, after the web deploy there.
+        # same suites run in the Preview job, after the web deploy there.
         #
         # It runs after deploy, because the suite drives the deployed preview: the
         # deploy target only returns once the edge serves the revision just built,
         # so these tests describe this commit rather than whatever was there.
         #
-        # Choosing the target — this branch's preview when `shelter-web` was
-        # deployed, the existing preview or a skip when only the specs changed —
-        # lives in tools/shared/resolve-preview-url.mjs, which is runnable locally
-        # too. The preview is only rebuilt and redeployed for affected projects,
-        # so an untouched shelter-web means the deployed site is unchanged and a
-        # run would report on someone else's revision.
+        # Choosing the target lives in each suite's config, through
+        # tools/shared/e2e-base-url.mjs: the branch preview when this run deployed
+        # the app under test, otherwise that suite's own dev server. Nothing here
+        # names an app or a suite.
         if: matrix.environment == 'preview' && github.event_name != 'pull_request'
         run: |
+          # Which apps this run deployed, from Nx: each suite's config uses it to
+          # pick its branch preview over its own dev server, so no app or project
+          # is named here (`--projects=tag:ci-e2e` selects the suites).
           docker compose run --rm better-angels bash -c '
             set -euo pipefail
-            set +e
-            BASE_URL="$(node tools/shared/resolve-preview-url.mjs)"
-            status=$?
-            set -e
-            if [ "$status" -eq 78 ]; then
-              echo "Skipping e2e: no preview for this branch."
-              exit 0
-            fi
-            [ "$status" -eq 0 ] || exit "$status"
-            export BASE_URL
+            PREVIEW_DEPLOYED_APPS="$(yarn nx show projects --affected --with-target deploy --configuration preview | tr "\n" ",")"
+            export PREVIEW_DEPLOYED_APPS
+            echo "Deployed for this run: ${PREVIEW_DEPLOYED_APPS:-none}"
             yarn playwright install chromium
-            yarn nx run-many -t e2e --projects=shelter-e2e --configuration preview --output-style=stream
+            yarn nx run-many -t e2e --projects=tag:ci-e2e --configuration preview --output-style=stream
           '
 
-      - name: 📎 Upload shelter-e2e report
+      - name: 📎 Upload Playwright reports
         if: always() && matrix.environment == 'preview' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7
         with:
-          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
-          path: dist/.playwright/apps/shelter-e2e
+          name: playwright-report-${{ env.BRANCH_NAME }}
+          path: dist/.playwright/apps
           if-no-files-found: ignore
           retention-days: 7
 

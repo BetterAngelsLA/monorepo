@@ -127,33 +127,23 @@ jobs:
           # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
 
-      - name: 🧪 E2E
+      - name: 🧪 E2E (Playwright)
         if: github.event.pull_request.head.repo.fork == false
         env:
           CI: 'true'
           NX_DAEMON: 'false'
         run: |
           set -euo pipefail
-          set +e
-          BASE_URL="$(node tools/shared/resolve-preview-url.mjs)"
-          status=$?
-          set -e
-          if [ "$status" -eq 78 ]; then
-            # Legitimate only when neither shelter-web nor shelter-e2e was
-            # affected. Say so where a reviewer looks, instead of leaving a
-            # green step that implies the suite ran.
-            echo "::notice::E2E skipped: no shelter-web preview applies to this change."
-            {
-              echo "### E2E skipped"
-              echo
-              echo "Neither \`shelter-web\` nor \`shelter-e2e\` was affected, so there is no preview of this change to test."
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          [ "$status" -eq 0 ] || exit "$status"
-          export BASE_URL
+          # Which apps this run deployed, straight from Nx. Each suite's config
+          # reads it to choose between its branch preview and its own dev server
+          # (tools/shared/e2e-base-url.mjs), so the workflow names no app and no
+          # project: `nx run-many --projects=tag:ci-e2e` picks the suites, and a
+          # project opts in by carrying the tag.
+          PREVIEW_DEPLOYED_APPS="$(yarn nx show projects --affected --with-target deploy --configuration preview | tr '\n' ',')"
+          export PREVIEW_DEPLOYED_APPS
+          echo "Deployed for this run: ${PREVIEW_DEPLOYED_APPS:-none}"
           yarn playwright install chromium
-          yarn nx run-many -t e2e --projects=shelter-e2e --configuration preview --output-style=stream
+          yarn nx run-many -t e2e --projects=tag:ci-e2e --configuration preview --output-style=stream
 
       - name: 🥟 Install EAS CLI
         if: github.event.pull_request.head.repo.fork == false
@@ -240,11 +230,13 @@ jobs:
             .nx/workspace-data/*.db*
           key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: 📎 Upload shelter-e2e report
+      - name: 📎 Upload Playwright reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
-          path: dist/.playwright/apps/shelter-e2e
+          # Every suite's preset writes under dist/.playwright/apps/<project>,
+          # so one upload covers whichever suites ran.
+          name: playwright-report-${{ env.BRANCH_NAME }}
+          path: dist/.playwright/apps
           if-no-files-found: ignore
           retention-days: 7
