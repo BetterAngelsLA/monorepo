@@ -27,7 +27,7 @@ const deviceBuild = {
   gitCommitHash: 'ee66cdc',
 };
 
-const simulateur = {
+const simulatorBuild = {
   id: 'sim-ios',
   status: 'FINISHED',
   distribution: 'INTERNAL',
@@ -63,6 +63,7 @@ describe('buildCell', () => {
 
   it('says when this run queued the build it found', () => {
     const cell = render({
+      runtime: '96b88652',
       device: deviceBuild,
       triggered: {
         platform: 'android',
@@ -78,6 +79,7 @@ describe('buildCell', () => {
 
   it('says when the build was reused from an earlier run', () => {
     const cell = render({
+      runtime: '96b88652',
       device: deviceBuild,
       triggered: {
         platform: 'android',
@@ -114,11 +116,11 @@ describe('buildCell', () => {
   });
 
   it('falls back to the iOS simulator binary when no device build exists', () => {
-    const cell = render({ simulator: simulateur });
+    const cell = render({ simulator: simulatorBuild });
 
     assert.match(
       cell,
-      new RegExp(`\\[Build Permalink\\]\\(${url(simulateur.id)}\\)`),
+      new RegExp(`\\[Build Permalink\\]\\(${url(simulatorBuild.id)}\\)`),
     );
     assert.match(
       cell,
@@ -129,7 +131,7 @@ describe('buildCell', () => {
 
   it('prefers a device build over the simulator binary', () => {
     const iosDevice = { ...deviceBuild, id: 'device-ios' };
-    const cell = render({ device: iosDevice, simulator: simulateur });
+    const cell = render({ device: iosDevice, simulator: simulatorBuild });
 
     assert.match(
       cell,
@@ -137,6 +139,23 @@ describe('buildCell', () => {
     );
     assert.doesNotMatch(cell, /simulator build/);
     assert.match(cell, /Source: `existing build for this runtime`/);
+  });
+
+  it('ignores a recorded build for a different runtime', () => {
+    // The record file outlives a CI job on a laptop; a stale id would link a
+    // binary this update can never reach.
+    const cell = render({
+      triggered: {
+        platform: 'ios',
+        profile: 'preview',
+        runtime: 'deadbeef',
+        buildId: 'stale-ios',
+        reused: false,
+      },
+    });
+
+    assert.equal(cell, 'No build for `e906c369`');
+    assert.doesNotMatch(cell, /stale-ios/);
   });
 
   it('names the runtime when nothing exists, instead of N/A', () => {
@@ -147,11 +166,11 @@ describe('buildCell', () => {
   });
 
   it('says the lookup failed when it falls back to the simulator', () => {
-    const cell = render({ simulator: simulateur, error: 'EAS is down' });
+    const cell = render({ simulator: simulatorBuild, error: 'EAS is down' });
 
     assert.match(
       cell,
-      new RegExp(`\\[Build Permalink\\]\\(${url(simulateur.id)}\\)`),
+      new RegExp(`\\[Build Permalink\\]\\(${url(simulatorBuild.id)}\\)`),
     );
     assert.match(
       cell,

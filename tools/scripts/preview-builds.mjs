@@ -49,18 +49,42 @@ export const fromRecord = ({ buildId, profile, runtime }) => ({
   runtime: { version: runtime },
 });
 
-const noteFor = ({ device, triggered, simulator, error }) => {
+/**
+ * Which binary the cell shows, and what it says about where it came from.
+ *
+ * The recorded build is only trusted for the runtime being reported: on a laptop
+ * the file outlives the run that wrote it, and a stale id would link a binary
+ * this update can never reach.
+ */
+const pick = ({ device, triggered, simulator, runtime, error }) => {
+  const record =
+    triggered?.buildId &&
+    (!runtime || !triggered.runtime || triggered.runtime === runtime)
+      ? triggered
+      : undefined;
+
   if (device) {
-    if (triggered?.buildId === device.id) {
-      return triggered.reused ? NOTES.reused : NOTES.queued;
-    }
-    return NOTES.listed;
+    const note =
+      record?.buildId === device.id
+        ? record.reused
+          ? NOTES.reused
+          : NOTES.queued
+        : NOTES.listed;
+    return { build: device, note };
   }
-  if (triggered?.buildId) {
-    return triggered.reused ? NOTES.reused : NOTES.unlisted;
+  if (record) {
+    return {
+      build: fromRecord(record),
+      note: record.reused ? NOTES.reused : NOTES.unlisted,
+    };
   }
-  if (simulator) return error ? NOTES.simulatorAfterError : NOTES.simulator;
-  return NOTES.listed;
+  if (simulator) {
+    return {
+      build: simulator,
+      note: error ? NOTES.simulatorAfterError : NOTES.simulator,
+    };
+  }
+  return {};
 };
 
 /**
@@ -79,8 +103,13 @@ export function buildCell({
   simulator,
   error,
 }) {
-  const queued = triggered?.buildId ? fromRecord(triggered) : undefined;
-  const build = device ?? queued ?? simulator;
+  const { build, note } = pick({
+    device,
+    triggered,
+    simulator,
+    runtime,
+    error,
+  });
   if (!build) {
     const which = runtime ? `\`${runtime}\`` : 'this runtime';
     return error
@@ -94,7 +123,7 @@ export function buildCell({
     field('Runtime version', runtimeOf(build) ?? runtime),
     field('App version', build.appVersion),
     field('Git commit', build.gitCommitHash),
-    field('Source', noteFor({ device, triggered, simulator, error })),
+    field('Source', note),
   ];
 
   return `[Build Permalink](${buildUrl(

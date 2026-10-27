@@ -154,27 +154,25 @@ for (const { platform, profile } of targets) {
     continue;
   }
   console.log(`Queueing ${platform} build (profile: ${profile})...`);
-  const output = String(
-    execFileSync(
-      'eas',
-      [
-        'build',
-        '--platform',
-        platform,
-        '--profile',
-        profile,
-        '--non-interactive',
-        '--no-wait',
-        '--freeze-credentials',
-        '--json',
-      ],
-      {
-        cwd: projectDir,
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'inherit'],
-        env: process.env,
-      },
-    ),
+  const output = execFileSync(
+    'eas',
+    [
+      'build',
+      '--platform',
+      platform,
+      '--profile',
+      profile,
+      '--non-interactive',
+      '--no-wait',
+      '--freeze-credentials',
+      '--json',
+    ],
+    {
+      cwd: projectDir,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'inherit'],
+      env: process.env,
+    },
   );
   // Keep the CLI's own output: it is what a human reads in the job log.
   process.stdout.write(output);

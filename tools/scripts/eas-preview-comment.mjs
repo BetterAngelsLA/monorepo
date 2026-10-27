@@ -36,6 +36,12 @@ if (!argv.project || !argv.account || !argv.slug || !argv.projectId) {
 }
 
 const projectDir = path.resolve('apps', argv.project);
+// Local runs have no `eas` on PATH; fail with this rather than an ENOENT from
+// the first EAS call.
+if (!existsSync(path.join(projectDir, 'eas.json'))) {
+  console.error(`${projectDir}/eas.json is missing.`);
+  process.exit(1);
+}
 const branch = process.env.BRANCH_NAME;
 if (!branch) {
   console.error('BRANCH_NAME is required (the EAS Update branch).');
@@ -380,13 +386,6 @@ async function notifySlack() {
       `Slack notification failed: ${response.status} ${await response.text()}`,
     );
   }
-}
-
-// Local runs have no `eas` on PATH and no PR/Slack context; make that explicit
-// rather than failing half way.
-if (!existsSync(path.join(projectDir, 'eas.json'))) {
-  console.error(`${projectDir}/eas.json is missing.`);
-  process.exit(1);
 }
 
 // Best effort: the preview itself already succeeded, and this step should not
