@@ -298,6 +298,54 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
 
+class TaskAssigneeFilterTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+    """`assignees` narrows the list to tasks held by the chosen members."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        self.mine = baker.make(
+            Task,
+            organization=self.org_1,
+            assignee=self.org_1_case_manager_1,
+            created_by=self.org_1_case_manager_1,
+            client_profile=baker.make(ClientProfile),
+        )
+        self.theirs = baker.make(
+            Task,
+            organization=self.org_1,
+            assignee=self.org_1_case_manager_2,
+            created_by=self.org_1_case_manager_1,
+            client_profile=baker.make(ClientProfile),
+        )
+        self.unassigned = baker.make(
+            Task,
+            organization=self.org_1,
+            created_by=self.org_1_case_manager_1,
+            client_profile=baker.make(ClientProfile),
+        )
+
+    def test_filters_by_assignee(self) -> None:
+        response = self.execute_graphql(
+            self.get_tasks_query(),
+            variables={
+                "filters": {"assignees": [str(self.org_1_case_manager_2.pk)]},
+            },
+        )
+
+        ids = {row["id"] for row in response["data"]["tasks"]["results"]}
+
+        self.assertEqual(ids, {str(self.theirs.pk)})
+
+    def test_filter_includes_unassigned_tasks_only_when_not_filtering(self) -> None:
+        response = self.execute_graphql(self.get_tasks_query(), variables={"filters": {}})
+
+        ids = {row["id"] for row in response["data"]["tasks"]["results"]}
+
+        self.assertEqual(ids, {str(self.mine.pk), str(self.theirs.pk), str(self.unassigned.pk)})
+
+
 class TaskListAssigneeQueryCountTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     """The list must join the assignee, not fetch it per row."""
 

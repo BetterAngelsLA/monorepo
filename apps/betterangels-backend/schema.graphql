@@ -3018,6 +3018,7 @@ input TaskFilter {
   clientProfiles: [ID!]
   hmisClientProfiles: [ID!]
   authors: [ID!]
+  assignees: [ID!]
   organizations: [ID!]
   status: [TaskStatusEnum!]
   teamIds: [ID!]

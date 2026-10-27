@@ -29,6 +29,7 @@ class TaskFilter:
     client_profiles = make_in_filter("client_profile", ID)
     hmis_client_profiles = make_in_filter("hmis_client_profile", ID)
     authors = make_in_filter("created_by", ID)
+    assignees = make_in_filter("assignee", ID)
     organizations = make_in_filter("organization", ID)
     status = make_in_filter("status", TaskStatusEnum)
     team_ids = make_in_filter("team", ID)
