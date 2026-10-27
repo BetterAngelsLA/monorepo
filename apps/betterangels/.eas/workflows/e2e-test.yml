@@ -58,14 +58,10 @@ on:
         type: string
         required: true
         description: 'Deep-link scheme the build registers (dev and production differ)'
-      android_profile:
+      configuration:
         type: string
         required: true
-        description: 'EAS build profile used for Android'
-      ios_profile:
-        type: string
-        required: true
-        description: 'EAS build profile used for iOS'
+        description: 'EAS configuration: preview or production. Selects the build profiles.'
 
 jobs:
   set_pending_github_status:
@@ -134,7 +130,7 @@ jobs:
     type: get-build
     params:
       platform: android
-      profile: ${{ inputs.android_profile }}
+      profile: ${{ inputs.configuration }}
       runtime_version: ${{ inputs.android_runtime_version }}
       wait_for_in_progress: true
 
@@ -143,7 +139,7 @@ jobs:
     type: get-build
     params:
       platform: ios
-      profile: ${{ inputs.ios_profile }}
+      profile: ${{ inputs.configuration == 'production' && 'production' || 'development-simulator' }}
       runtime_version: ${{ inputs.ios_runtime_version }}
       wait_for_in_progress: true
 

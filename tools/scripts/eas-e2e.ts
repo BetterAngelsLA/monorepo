@@ -46,7 +46,7 @@ import {
 const project = argv.project as string | undefined;
 if (!project) {
   console.error(
-    'Usage: eas-e2e.ts --project <name> [--configuration preview|production] [--android-profile <p>] [--ios-profile <p>]',
+    'Usage: eas-e2e.ts --project <name> [--configuration preview|production]',
   );
   process.exit(1);
 }
@@ -96,11 +96,12 @@ if (!profiles) {
   );
 }
 
-// Android APKs work on emulators directly; only iOS needs a simulator build. The
-// profile is the configuration's default, overridable per platform for the rare
-// case (e.g. a simulator build of a production app).
-const androidProfile = (argv['android-profile'] as string) ?? profiles.android;
-const iosProfile = (argv['ios-profile'] as string) ?? profiles.ios;
+// Android APKs work on emulators directly; only iOS needs a simulator build.
+// Both the build trigger and the workflow's `get-build` filter read these, so
+// they are not overridable: an override here would leave the workflow waiting on
+// a profile nobody built.
+const androidProfile = profiles.android;
+const iosProfile = profiles.ios;
 const branch = getEnv('BRANCH_NAME');
 const projectDir = resolveProjectDir(project);
 
@@ -231,8 +232,9 @@ run(
     `-F scheme=${profiles.scheme} ` +
     `-F android_runtime_version=${androidRuntime} ` +
     `-F ios_runtime_version=${iosRuntime} ` +
-    `-F android_profile=${androidProfile} ` +
-    `-F ios_profile=${iosProfile} ` +
+    // The workflow derives the build profiles from the configuration, so an
+    // override here would desync the get-build filter from the build.
+    `-F configuration=${configuration} ` +
     `--non-interactive`,
   { cwd: projectDir },
 );
