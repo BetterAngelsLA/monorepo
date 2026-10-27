@@ -152,8 +152,21 @@ jobs:
           echo "log url length: ${#url}"
           code=$(curl -sS -L --compressed -o /tmp/phase.log -w '%{http_code}' "$url")
           echo "http=$code bytes=$(wc -c < /tmp/phase.log)"
-          echo '--- tail of the build log ---'
-          tail -60 /tmp/phase.log
+          echo '--- phases and errors ---'
+          node -e '
+            const fs = require("fs");
+            for (const line of fs.readFileSync("/tmp/phase.log", "utf8").split("\n")) {
+              if (!line.trim()) continue;
+              let e;
+              try { e = JSON.parse(line); } catch { continue; }
+              const isMarker = e.marker === "START_PHASE" || e.marker === "END_PHASE";
+              const isProblem = typeof e.level === "number" && e.level >= 40;
+              if (isMarker) console.log(e.marker, e.phase, e.result || "", (e.msg || "").slice(0, 120));
+              else if (isProblem) console.log("!!", e.phase, e.level, (e.msg || "").slice(0, 400));
+            }
+          '
+          echo '--- last lines ---'
+          wc -l /tmp/phase.log
 
           # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t eas-update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
