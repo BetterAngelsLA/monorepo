@@ -403,8 +403,13 @@ jobs:
             PREVIEW_DEPLOYED_APPS="$(yarn nx show projects --affected --with-target deploy --configuration preview | tr "\n" ",")"
             export PREVIEW_DEPLOYED_APPS
             echo "Deployed for this run: ${PREVIEW_DEPLOYED_APPS:-none}"
+            PROJECTS="$(node tools/shared/e2e-projects.mjs)"
+            if [ -z "$PROJECTS" ]; then
+              echo "::notice::E2E skipped: none of the apps under test was deployed for this run."
+              exit 0
+            fi
             yarn playwright install chromium
-            yarn nx run-many -t e2e --projects=tag:ci-e2e --configuration preview --output-style=stream
+            yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview --output-style=stream
           '
 
       - name: 📎 Upload Playwright reports
