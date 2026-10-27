@@ -39,6 +39,22 @@ if (!branch) {
 const environment = argv.profile === 'production' ? 'production' : 'development';
 const projectDir = path.resolve('apps', argv.project);
 
+// Non-interactive `eas update` insists on a branch *and* a message. `--auto`
+// would supply the message but also re-derives the branch, which is what the
+// explicit `--branch` is here to prevent, so take the subject ourselves.
+function commitSubject() {
+  try {
+    return execFileSync('git', ['log', '-1', '--pretty=%s'], {
+      encoding: 'utf8',
+    })
+      .trim()
+      .slice(0, 200);
+  } catch {
+    return '';
+  }
+}
+const message = commitSubject() || `Deploy ${branch}`;
+
 let raw;
 try {
   raw = execFileSync(
@@ -47,6 +63,8 @@ try {
       'update',
       '--branch',
       branch,
+      '--message',
+      message,
       '--environment',
       environment,
       '--platform',
