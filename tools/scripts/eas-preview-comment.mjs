@@ -252,59 +252,50 @@ async function notifySlack() {
   if (!webhook || process.env.GITHUB_EVENT_NAME === 'pull_request') return;
 
   const link = (label, url) => (url ? `<${url}|${label}>` : label);
-  const section = (platform, build, update) => ({
-    type: 'section',
-    text: {
-      type: 'mrkdwn',
-      text: `*${platform}*\n${link('Update', update ? updateUrl(update.group) : undefined)} · ${link(
-        'Build',
-        build ? buildUrl(build.id) : undefined,
-      )}`,
-    },
-  });
+  const section = (title, platform) => {
+    const build = forPlatform(platform);
+    const sim = platform === 'ios' ? simulator : undefined;
+    const lines = [
+      `*${title}*`,
+      '',
+      link('Update', updates[platform] ? updateUrl(updates[platform].group) : undefined),
+      link('Build', build ? buildUrl(build.id) : undefined),
+      ...(sim ? [link('Simulator Build', buildUrl(sim.id))] : []),
+    ];
+    const runtime = build ? runtimeOf(build) : updates[platform]?.runtimeVersion;
+    if (runtime) lines.push(`_Runtime:_ \`${runtime}\``);
+    return { type: 'section', text: { type: 'mrkdwn', text: lines.join('\n') } };
+  };
 
-  const runtime = PLATFORMS.map((platform) => runtimeOf(forPlatform(platform))).find(
-    (value) => value !== 'N/A',
-  );
+  const commit = execFileSync('git', ['rev-parse', 'HEAD'], {
+    encoding: 'utf8',
+  }).trim();
+  const message = execFileSync('git', ['log', '-1', '--pretty=%s'], {
+    encoding: 'utf8',
+  }).trim();
+
+  // Matches the notification this pipeline has always posted: a header, then one
+  // block per platform with Update / Build / Simulator Build links.
+  const blocks = [
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*New code has landed in main for project ${argv.project}!* \n*Commit:* \`${commit}\`\n*Message:* ${message}`,
+      },
+    },
+    section('📱 iOS', 'ios'),
+    { type: 'divider' },
+    section('🤖 Android', 'android'),
+  ];
 
   const response = await fetch(webhook, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text: `📱 ${argv.project} deployed to *${branch}*`,
-      blocks: [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `📱 *${argv.project}* deployed to \`${branch}\` (runtime \`${runtime ?? 'N/A'}\`)`,
-          },
-        },
-        ...PLATFORMS.map((platform) =>
-          section(
-            PLATFORM_LABELS[platform] ?? platform,
-            forPlatform(platform),
-            updates[platform],
-          ),
-        ),
-        ...(simulator
-          ? [
-              {
-                type: 'section',
-                text: {
-                  type: 'mrkdwn',
-                  text: link('iOS simulator build', buildUrl(simulator.id)),
-                },
-              },
-            ]
-          : []),
-      ],
-    }),
+    body: JSON.stringify({ channel: '#tech-outreach-main', blocks }),
   });
   if (!response.ok) {
-    console.error(`Slack webhook failed: ${response.status}`);
-  } else {
-    console.log('Posted the deploy summary to Slack.');
+    console.error(`Slack notification failed: ${response.status} ${await response.text()}`);
   }
 }
 
