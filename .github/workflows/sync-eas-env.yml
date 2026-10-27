@@ -58,10 +58,15 @@ jobs:
               return 0
             fi
             for target in development production; do
-              eas env:create --name "$name" --value "$value" \
+              if out=$(eas env:create --name "$name" --value "$value" \
                 --environment "$target" --visibility sensitive \
-                --scope project --non-interactive --force > /dev/null
-              echo "✅ $name → $target"
+                --scope project --non-interactive --force 2>&1); then
+                echo "✅ $name → $target"
+              else
+                echo "❌ $name → $target"
+                printf '%s\n' "$out" | tail -5
+                return 1
+              fi
             done
           }
 
