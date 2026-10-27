@@ -36,9 +36,11 @@ if (!branch) {
   process.exit(1);
 }
 
-// A preview run builds a single platform to keep EAS costs down, so the table
-// follows whatever was built (`EAS_BUILD_PLATFORMS`) instead of hard-coding both.
-const PLATFORMS = (process.env.EAS_BUILD_PLATFORMS ?? 'android,ios')
+// Both platforms always get a column: the app supports both, and the update is
+// published for both even when a run only built one of them. Which builds exist
+// is what `EAS_BUILD_PLATFORMS` decides, per column.
+const PLATFORMS = ['android', 'ios'];
+const BUILT = (process.env.EAS_BUILD_PLATFORMS ?? PLATFORMS.join(','))
   .split(',')
   .map((platform) => platform.trim())
   .filter(Boolean);
@@ -46,8 +48,8 @@ const PLATFORMS = (process.env.EAS_BUILD_PLATFORMS ?? 'android,ios')
 // the simulator link only exists for preview.
 const profile = process.env.EAS_PROFILE || 'preview';
 const BUILDS = [
-  ...PLATFORMS.map((platform) => ({ platform, profile })),
-  ...(profile === 'preview' && PLATFORMS.includes('ios')
+  ...BUILT.map((platform) => ({ platform, profile })),
+  ...(profile === 'preview'
     ? [{ platform: 'ios', profile: 'development-simulator' }]
     : []),
 ];
@@ -150,7 +152,7 @@ const runtimeOf = (build) =>
 
 const cell = (build) =>
   build
-    ? `[Build Permalink](${buildUrl(build.id)})<br /><details><summary>Details</summary>Status: \`${build.status}\`<br />Distribution: \`${build.distribution ?? ''}\`<br />Build profile: \`${build.buildProfile ?? ''}\`<br />Runtime version: \`${runtimeOf(build)}\`<br />App version: \`${build.appVersion ?? ''}\`<br />Git commit: \`${build.gitCommitHash ?? ''}\`</details>`
+    ? `[Build Permalink](${buildUrl(build.id)})<br /><details><summary>Details</summary>Distribution: \`${build.distribution ?? ''}\`<br />Build profile: \`${build.buildProfile ?? ''}\`<br />Runtime version: \`${runtimeOf(build)}\`<br />App version: \`${build.appVersion ?? ''}\`<br />Git commit: \`${build.gitCommitHash ?? ''}\`</details>`
     : 'N/A';
 
 const updateCell = (update) =>
@@ -164,10 +166,18 @@ const qrCell = (update) =>
     : 'N/A';
 
 const PLATFORM_LABELS = { android: '🤖 Android', ios: '🍎 iOS' };
+// Slack's headings use the shortcodes the old notification used; the table keeps
+// the glyph labels it has always had. Both are keyed off PLATFORMS.
+const SLACK_LABELS = { android: ':robot_face: Android', ios: ':iphone: iOS' };
 const table = [
   ['&nbsp;', ...PLATFORMS.map((platform) => PLATFORM_LABELS[platform] ?? platform)],
   ['---', ...PLATFORMS.map(() => '---')],
-  ['Runtime Version', ...PLATFORMS.map((p) => `\`${runtimeOf(forPlatform(p))}\``)],
+  [
+    'Runtime Version',
+    ...PLATFORMS.map(
+      (p) => `\`${forPlatform(p) ? runtimeOf(forPlatform(p)) : (updates[p]?.runtimeVersion ?? 'N/A')}\``,
+    ),
+  ],
   ['Build Details', ...PLATFORMS.map((p) => cell(forPlatform(p)))],
   ['Update Details', ...PLATFORMS.map((p) => updateCell(updates[p]))],
   ['Update QR', ...PLATFORMS.map((p) => qrCell(updates[p]))],
@@ -179,7 +189,7 @@ const body = `<!-- continuous-deploy-fingerprint-projectId:${argv.projectId} -->
 🚀 Expo continuous deployment is ready for **${argv.project}**!
 
 - Project → **${argv.project}**
-- Environment → **${profile}**
+- Environment → **${profile.charAt(0).toUpperCase()}${profile.slice(1)}**
 - Platforms → ${PLATFORMS.map((platform) => `**${platform}**`).join(', ')}
 - Scheme → **${argv.slug}**
 
@@ -235,60 +245,61 @@ async function notifySlack() {
   // PR previews get the comment above; only deployments get a Slack ping.
   if (!webhook || process.env.GITHUB_EVENT_NAME === 'pull_request') return;
 
-  const link = (label, url) => (url ? `<${url}|${label}>` : label);
-  const section = (platform, build, update) => ({
-    type: 'section',
-    text: {
-      type: 'mrkdwn',
-      text: `*${platform}*\n${link('Update', update ? updateUrl(update.group) : undefined)} · ${link(
-        'Build',
-        build ? buildUrl(build.id) : undefined,
-      )}`,
-    },
-  });
+  const link = (label, url) =>
+    url ? `<${url}|${label}>` : `${label}: not built for this run`;
+  const section = (title, platform) => {
+    const build = forPlatform(platform);
+    const sim = platform === 'ios' ? simulator : undefined;
+    // The platform headings are not bold in the message this pipeline has always
+    // posted; only the header is.
+    const lines = [
+      title,
+      '',
+      link('Update', updates[platform] ? updateUrl(updates[platform].group) : undefined),
+      link('Build', build ? buildUrl(build.id) : undefined),
+      ...(sim ? [link('Simulator Build', buildUrl(sim.id))] : []),
+    ];
+    const runtime = build ? runtimeOf(build) : updates[platform]?.runtimeVersion;
+    if (runtime) lines.push(`_Runtime:_ \`${runtime}\``);
+    return { type: 'section', text: { type: 'mrkdwn', text: lines.join('\n') } };
+  };
 
-  const runtime = PLATFORMS.map((platform) => runtimeOf(forPlatform(platform))).find(
-    (value) => value !== 'N/A',
-  );
+  const commit = execFileSync('git', ['rev-parse', 'HEAD'], {
+    encoding: 'utf8',
+  }).trim();
+  const message = execFileSync('git', ['log', '-1', '--pretty=%s'], {
+    encoding: 'utf8',
+  })
+    .trim()
+    // The subject is a PR title, i.e. attacker-controlled for anyone who can open
+    // one: escape the three characters Slack treats as mrkdwn.
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Matches the notification this pipeline has always posted: a header, then one
+  // block per platform with Update / Build / Simulator Build links.
+  const blocks = [
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*New code has landed in main for project ${argv.project}!* \n*Commit:* \`${commit}\`\n*Message:* ${message}`,
+      },
+    },
+    ...PLATFORMS.flatMap((platform, index) => [
+      ...(index > 0 ? [{ type: 'divider' }] : []),
+      section(SLACK_LABELS[platform] ?? platform, platform),
+    ]),
+  ];
 
   const response = await fetch(webhook, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text: `📱 ${argv.project} deployed to *${branch}*`,
-      blocks: [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `📱 *${argv.project}* deployed to \`${branch}\` (runtime \`${runtime ?? 'N/A'}\`)`,
-          },
-        },
-        ...PLATFORMS.map((platform) =>
-          section(
-            PLATFORM_LABELS[platform] ?? platform,
-            forPlatform(platform),
-            updates[platform],
-          ),
-        ),
-        ...(simulator
-          ? [
-              {
-                type: 'section',
-                text: {
-                  type: 'mrkdwn',
-                  text: link('iOS simulator build', buildUrl(simulator.id)),
-                },
-              },
-            ]
-          : []),
-      ],
-    }),
+    body: JSON.stringify({ channel: '#tech-outreach-main', blocks }),
   });
   if (!response.ok) {
-    console.error(`Slack webhook failed: ${response.status}`);
-  } else {
-    console.log('Posted the deploy summary to Slack.');
+    console.error(`Slack notification failed: ${response.status} ${await response.text()}`);
   }
 }
 

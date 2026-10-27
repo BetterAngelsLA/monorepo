@@ -30,6 +30,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { easConfiguration } from './eas-configurations';
 import {
   EAS_ACCOUNT,
   argv,
@@ -60,46 +61,12 @@ const configuration =
   getOptionalEnv('EAS_CONFIGURATION') ??
   'preview';
 
-/**
- * Per-configuration EAS profiles, and the identity of the app they install.
- *
- * `appId`/`scheme` mirror `BUNDLE_IDENTIFIER` and `scheme` in `app.config.js`
- * (driven by `APP_VARIANT`): Maestro has to drive the binary the build actually
- * produced, and a dev build launches a different package than a production one.
- * They are passed to the EAS workflow as inputs rather than hardcoded there, so
- * the workflow is not tied to the dev variant.
- */
-const PROFILES: Record<
-  string,
-  { android: string; ios: string; appId: string; scheme: string }
-> = {
-  preview: {
-    android: 'preview',
-    ios: 'development-simulator',
-    appId: 'la.betterangels.dev.app',
-    scheme: 'betterangels-dev',
-  },
-  production: {
-    android: 'production',
-    ios: 'production',
-    appId: 'la.betterangels.app',
-    scheme: 'betterangels',
-  },
-};
+const eas = easConfiguration(configuration);
 
-const profiles = PROFILES[configuration];
-if (!profiles) {
-  throw new Error(
-    `Unsupported configuration "${configuration}". Add its profiles to PROFILES in tools/scripts/eas-e2e.ts.`,
-  );
-}
-
-// Android APKs work on emulators directly; only iOS needs a simulator build.
-// Both the build trigger and the workflow's `get-build` filter read these, so
-// they are not overridable: an override here would leave the workflow waiting on
-// a profile nobody built.
-const androidProfile = profiles.android;
-const iosProfile = profiles.ios;
+// Maestro drives the simulator binary for a preview, and the device build for
+// production — the simulator profile is the only build a simulator installs.
+const androidProfile = eas.device.android;
+const iosProfile = eas.simulatorProfile ?? eas.device.ios;
 const branch = getEnv('BRANCH_NAME');
 const projectDir = resolveProjectDir(project);
 
@@ -226,8 +193,8 @@ run(
     `-F update_group_id=${groupId} ` +
     `-F MAESTRO_BA_USER_EMAIL=${process.env.MAESTRO_BA_USER_EMAIL} ` +
     `-F MAESTRO_BA_USER_PASSWORD=${process.env.MAESTRO_BA_USER_PASSWORD} ` +
-    `-F app_id=${profiles.appId} ` +
-    `-F scheme=${profiles.scheme} ` +
+    `-F app_id=${eas.appId} ` +
+    `-F scheme=${eas.scheme} ` +
     `-F android_runtime_version=${androidRuntime} ` +
     `-F ios_runtime_version=${iosRuntime} ` +
     // The workflow derives the build profiles from the configuration, so an
