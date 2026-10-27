@@ -10,6 +10,7 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
             clientProfile { id firstName lastName }
             createdAt
             createdBy { id firstName lastName }
+            assignee { id firstName lastName }
             team { id name }
             description
             note { pk }
