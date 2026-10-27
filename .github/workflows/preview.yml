@@ -15,8 +15,9 @@ env:
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
 
 jobs:
-  # One job, in dependency order: web deploy -> its E2E -> mobile. The mobile step
-  # has to be last: `eas-build`/`eas-update` run `copy-lockfile`
+  # One job: the EAS update publishes while the web deploy runs (they need nothing
+  # from each other), then the E2E suite, then the mobile build. The mobile step
+  # has to be last: `eas-build` runs `copy-lockfile`
   # (tools/scripts/eas-build-pre-install.mjs), which rewrites the workspace for
   # EAS Build (root package.json becomes a single-app workspace). A later
   # `yarn install` — which `sync-deps` triggers — then prunes the other projects
@@ -117,15 +118,53 @@ jobs:
             nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
             nx-cache-v4-${{ runner.os }}-
 
-      - name: 🚀 Preview deploy
+      - name: 🥟 Install EAS CLI
+        if: github.event.pull_request.head.repo.fork == false
+        run: npm install -g eas-cli@24.8.0
+
+      - name: 🚀 Preview deploy and EAS update
         if: github.event.pull_request.head.repo.fork == false
         env:
           CI: 'true'
           NX_DAEMON: 'false'
         run: |
           set -euo pipefail
+
+          # The update runs while the web deploy does, because it is the other
+          # ~2 minutes of a preview and the two do not share anything that
+          # conflicts. It needs neither `copy-lockfile` nor `sync-deps`:
+          # `copy-lockfile` reshapes the workspace for the *build* archive, and the
+          # runtime version is identical either way — resolving the fingerprint
+          # before and after it returns the same hash.
+          #
+          # Both scripts are called directly rather than through `nx run`: the
+          # deploy below is a second Nx process, and two of them on one workspace
+          # contend on the project graph and its locks.
+          node tools/scripts/write-eas-env.mjs --project betterangels --profile preview
+          node tools/scripts/sync-eas-env.mjs --project betterangels --environment development
+          # `.env.local` was only the input to that push: the update and the build
+          # both take their env from EAS (`--environment`), and leaving the file
+          # here would also load it into the *web* export below, which resolves
+          # `EXPO_PUBLIC_*` from `.env` today.
+          rm -f apps/betterangels/.env.local
+          (
+            node tools/scripts/eas-update.mjs --project betterangels --profile preview \
+              > /tmp/eas-update.log 2>&1
+            echo $? > /tmp/eas-update.status
+          ) &
+          UPDATE_PID=$!
+
           # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
+
+          # Reap the update: its output is buffered, so replay it, and fail the
+          # step if it failed. Waiting is cheap — it has had the whole deploy to
+          # finish.
+          set +e
+          wait "$UPDATE_PID"
+          set -e
+          cat /tmp/eas-update.log
+          [ "$(cat /tmp/eas-update.status)" = '0' ]
 
       - name: 🧪 E2E (Playwright)
         if: github.event.pull_request.head.repo.fork == false
@@ -144,10 +183,6 @@ jobs:
           echo "Deployed for this run: ${PREVIEW_DEPLOYED_APPS:-none}"
           yarn playwright install chromium
           yarn nx run-many -t e2e --projects=tag:ci-e2e --configuration preview --output-style=stream
-
-      - name: 🥟 Install EAS CLI
-        if: github.event.pull_request.head.repo.fork == false
-        run: npm install -g eas-cli@24.8.0
 
       - name: 📱 Mobile preview
         if: github.event.pull_request.head.repo.fork == false
@@ -208,12 +243,12 @@ jobs:
             yarn nx run betterangels:eas-build:preview --platform="$PLATFORM" --wait=false --freezeCredentials=true --json=true
           done
 
-          # Publishes the update for every platform the app supports. The target
-          # pins the branch and the EAS environment: `--auto` would read the git
-          # branch and a CI checkout is a detached HEAD (publishing to a branch
-          # named "HEAD"), and without --environment eas-cli skips the EAS env
-          # vars, so the update gets a different runtime than the build.
-          yarn nx affected -t eas-update --configuration preview --output-style=stream
+          # The update itself was published by the deploy step, in parallel with
+          # the web deploy. It pins the branch and the EAS environment:
+          # `--auto` would read the git branch and a CI checkout is a detached
+          # HEAD (publishing to a branch named "HEAD"), and without --environment
+          # eas-cli skips the EAS env vars, so the update would get a different
+          # runtime than the build.
 
           # Mobile preview links (build, update, QR) on the PR.
           yarn nx run betterangels:preview-comment
