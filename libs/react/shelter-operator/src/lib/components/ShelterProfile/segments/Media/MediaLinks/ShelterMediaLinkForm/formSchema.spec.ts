@@ -40,16 +40,27 @@ describe('media link formSchema', () => {
   });
 
   it('rejects a title longer than 255 characters', () => {
-    expect(parse({ title: 'a'.repeat(256) }).success).toBe(false);
+    const result = parse({ title: 'a'.repeat(256) });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe(
+      'Title must be 255 characters or fewer',
+    );
   });
 
   it('rejects a URL longer than 255 characters', () => {
-    expect(parse({ url: `${YOUTUBE_URL}&x=${'a'.repeat(255)}` }).success).toBe(
-      false,
+    const result = parse({ url: `${YOUTUBE_URL}&x=${'a'.repeat(255)}` });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe(
+      'URL must be 255 characters or fewer',
     );
   });
 
   it('rejects an unknown media type', () => {
-    expect(parse({ mediaType: 'VIMEO' }).success).toBe(false);
+    const result = parse({ mediaType: 'VIMEO' });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe('Media type is required');
   });
 });

@@ -32,19 +32,21 @@ vi.mock('./Photos/ShelterPhotos', () => ({
 
 const shelterPhotos = () => screen.getByTestId('shelter-photos');
 
-// Same reasoning as the photo grid: assert what the tab shell hands down.
+// Same reasoning as the photo grid: assert what the tab shell hands down. The
+// mock must NOT coalesce `null` itself, otherwise the fallback test below
+// would pass even if `ShelterMedia` stopped passing `mediaLinks ?? []`.
 vi.mock('./MediaLinks/ShelterMediaLinks', () => ({
   ShelterMediaLinks: ({
     shelterId,
     mediaLinks,
   }: {
     shelterId: string;
-    mediaLinks: { id: string }[] | null;
+    mediaLinks: { id: string }[];
   }) => (
     <div
       data-testid="shelter-media-links"
       data-shelter-id={shelterId}
-      data-media-link-ids={(mediaLinks ?? []).map((link) => link.id).join()}
+      data-media-link-ids={mediaLinks.map((link) => link.id).join()}
     />
   ),
 }));
