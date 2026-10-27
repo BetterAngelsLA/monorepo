@@ -19,16 +19,36 @@ export function YouTubeThumbnail(props: TProps) {
 
   const label = title || 'YouTube video';
 
+  const parentCss = [
+    'group',
+    'relative',
+    'w-24',
+    'aspect-video',
+    'rounded',
+    'overflow-hidden',
+    'bg-gray-100',
+    'border-none',
+    'p-0',
+    'cursor-pointer',
+  ];
+
+  const overlayCss = [
+    'absolute',
+    'inset-0',
+    'flex',
+    'items-center',
+    'justify-center',
+    'bg-black/20',
+    'group-hover:bg-black/40',
+    'transition-colors',
+  ];
+
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={`Play ${label}`}
-      className={mergeCss([
-        'group relative w-24 aspect-video rounded overflow-hidden bg-gray-100',
-        'border-none p-0 cursor-pointer',
-        className,
-      ])}
+      className={mergeCss([parentCss, className])}
     >
       <img
         src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
@@ -36,10 +56,7 @@ export function YouTubeThumbnail(props: TProps) {
         loading="lazy"
         className="w-full h-full object-cover"
       />
-      <span
-        aria-hidden="true"
-        className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors"
-      >
+      <span aria-hidden="true" className={mergeCss(overlayCss)}>
         <Play size={20} className="text-white fill-white" />
       </span>
     </button>

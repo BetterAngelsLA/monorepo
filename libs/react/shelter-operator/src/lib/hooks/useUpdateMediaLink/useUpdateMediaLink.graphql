@@ -1,6 +1,5 @@
 mutation UpdateMediaLink($data: UpdateMediaLinkInput!) {
   updateMediaLink(data: $data) {
-    __typename
     ... on MediaLinkType {
       id
       url

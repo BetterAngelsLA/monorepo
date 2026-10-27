@@ -40,9 +40,9 @@ export function MediaLinkPreview(props: TProps) {
     return <PreviewPlaceholder label="No preview" />;
   }
 
-  const videoId = extractYouTubeVideoId(url);
+  const ytVideoId = extractYouTubeVideoId(url);
 
-  if (!videoId) {
+  if (!ytVideoId) {
     return <PreviewPlaceholder label="Invalid video URL" />;
   }
 
@@ -55,7 +55,7 @@ export function MediaLinkPreview(props: TProps) {
   return (
     <>
       <YouTubeThumbnail
-        videoId={videoId}
+        videoId={ytVideoId}
         title={label}
         onClick={() => setIsOpen(true)}
       />
@@ -71,8 +71,9 @@ export function MediaLinkPreview(props: TProps) {
         </ModalHeader>
         <ModalBody className="pt-4 pb-12">
           <VideoEmbed
-            src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+            src={`https://www.youtube-nocookie.com/embed/${ytVideoId}`}
             title={label}
+            className="border border-gray-200 rounded"
           />
         </ModalBody>
       </Modal>

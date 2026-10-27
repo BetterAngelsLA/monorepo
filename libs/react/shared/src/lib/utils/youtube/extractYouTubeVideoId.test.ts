@@ -16,7 +16,7 @@ describe('extractYouTubeVideoId', () => {
       [`https://www.youtube.com/shorts/${VIDEO_ID}`, VIDEO_ID],
       [`https://music.youtube.com/watch?v=${VIDEO_ID}`, VIDEO_ID],
       [`youtu.be/${VIDEO_ID}`, VIDEO_ID],
-      ['https://youtu.be/a-b_c-d_e-f', 'a-b_c-d_e-f'],
+      ['https://youtu.be/a-B_c-d_0-9', 'a-B_c-d_0-9'],
     ])('"%s"', (url, expected) => {
       expect(extractYouTubeVideoId(url)).toBe(expected);
     });

@@ -9,18 +9,13 @@ import { z } from 'zod';
  */
 const MEDIA_TYPE_URL_RULES: Record<
   MediaLinkTypeChoices,
-  { label: string; placeholder: string; isValid: (url: string) => boolean }
+  { label: string; isValidUrl: (url: string) => boolean }
 > = {
   [MediaLinkTypeChoices.Youtube]: {
     label: 'YouTube',
-    placeholder: 'https://www.youtube.com/watch?v=...',
-    isValid: (url) => extractYouTubeVideoId(url) !== null,
+    isValidUrl: (url) => extractYouTubeVideoId(url) !== null,
   },
 };
-
-export function getUrlRule(mediaType?: MediaLinkTypeChoices) {
-  return MEDIA_TYPE_URL_RULES[mediaType ?? MediaLinkTypeChoices.Youtube];
-}
 
 export const formSchema = z
   .object({
@@ -37,7 +32,7 @@ export const formSchema = z
   .superRefine((values, ctx) => {
     const rule = MEDIA_TYPE_URL_RULES[values.mediaType];
 
-    if (rule && !rule.isValid(values.url)) {
+    if (rule && !rule.isValidUrl(values.url)) {
       ctx.addIssue({
         code: 'custom',
         path: ['url'],

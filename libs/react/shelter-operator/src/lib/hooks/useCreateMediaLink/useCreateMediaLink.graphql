@@ -1,6 +1,5 @@
 mutation CreateMediaLink($data: CreateMediaLinkInput!) {
   createMediaLink(data: $data) {
-    __typename
     ... on MediaLinkType {
       id
       url

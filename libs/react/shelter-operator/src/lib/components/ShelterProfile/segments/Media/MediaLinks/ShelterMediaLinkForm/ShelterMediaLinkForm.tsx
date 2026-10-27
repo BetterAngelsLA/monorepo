@@ -1,12 +1,25 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
-import { enumDisplayMediaLinkTypeChoices } from '@monorepo/react/shelter';
+import {
+  enumDisplayMediaLinkTypeChoices,
+  MediaLinkTypeChoices,
+} from '@monorepo/react/shelter';
 import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Dropdown, toDropdownOptions } from '../../../../../base-ui/dropdown';
+import { Input } from '../../../../../base-ui/input';
 import { Form } from '../../../../../form/Form';
-import { TextField } from '../../../../../form/TextField';
-import { formSchema, getUrlRule, type MediaLinkFormData } from './formSchema';
+import { formSchema, type MediaLinkFormData } from './formSchema';
+
+const MEDIA_TYPE_INPUT_CONFIG: Record<
+  MediaLinkTypeChoices,
+  { label: string; placeholder: string }
+> = {
+  [MediaLinkTypeChoices.Youtube]: {
+    label: 'YouTube',
+    placeholder: 'https://www.youtube.com/watch?v=...',
+  },
+};
 
 const MEDIA_TYPE_OPTIONS = toDropdownOptions(enumDisplayMediaLinkTypeChoices);
 
@@ -42,7 +55,6 @@ export function ShelterMediaLinkForm(props: TProps) {
   });
 
   const mediaType = useWatch({ control, name: 'mediaType' });
-  const urlRule = getUrlRule(mediaType);
 
   return (
     <div className={mergeCss(['flex-col flex-1', className])}>
@@ -73,16 +85,17 @@ export function ShelterMediaLinkForm(props: TProps) {
           name="url"
           control={control}
           render={({ field }) => (
-            <TextField
-              id="media-link-url"
-              name="url"
-              label={`${urlRule.label} URL`}
-              placeholder={urlRule.placeholder}
+            <Input
+              label={`${MEDIA_TYPE_INPUT_CONFIG[mediaType].label} URL`}
+              labelVariant="offset"
+              placeholder={MEDIA_TYPE_INPUT_CONFIG[mediaType].placeholder}
+              dataType="url"
               value={field.value}
               onChange={field.onChange}
               onBlur={field.onBlur}
+              disabled={disabled}
+              required={true}
               error={errors.url?.message}
-              required
             />
           )}
         />
@@ -91,14 +104,14 @@ export function ShelterMediaLinkForm(props: TProps) {
           name="title"
           control={control}
           render={({ field }) => (
-            <TextField
-              id="media-link-title"
-              name="title"
+            <Input
               label="Title"
-              helperText="Optional."
+              labelVariant="offset"
+              dataType="string"
               value={field.value}
               onChange={field.onChange}
               onBlur={field.onBlur}
+              disabled={disabled}
               error={errors.title?.message}
             />
           )}

@@ -55,8 +55,11 @@ export function TableActionBtn(props: TProps) {
   const preset = action ? actionPresets[action] : undefined;
 
   const parentCss = [
-    'opacity-70 hover:opacity-100',
-    'p-2 rounded-full hover:bg-white',
+    'opacity-70',
+    'hover:opacity-100',
+    'p-2',
+    'rounded-full',
+    'hover:bg-white',
     'hover:shadow-xl',
     'cursor-pointer',
   ];

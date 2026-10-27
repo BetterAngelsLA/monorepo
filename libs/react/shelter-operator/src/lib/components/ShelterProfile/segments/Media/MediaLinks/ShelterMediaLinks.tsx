@@ -21,16 +21,10 @@ import {
   ModalBody,
   ModalHeader,
 } from '../../../../base-ui/modal';
-import {
-  Table,
-  TableActionBtn,
-  type TableColumn,
-} from '../../../../base-ui/table';
 import { useToast } from '../../../../base-ui/toast';
 import { Form } from '../../../../form/Form';
 import type { ShelterProfileMediaLinkType } from '../../../types';
-import { MediaLinkContent } from './components/MediaLinkContent';
-import { MediaLinkPreview } from './components/MediaLinkPreview';
+import { MediaLinksTable } from './components/MediaLinksTable';
 import {
   defaultFormValues,
   formFieldNames,
@@ -57,65 +51,6 @@ function toFormValues(
   };
 }
 
-function buildColumns(
-  mediaLinksDisabled: boolean,
-  onEdit: (mediaLink: ShelterProfileMediaLinkType) => void,
-  onDelete: (mediaLink: ShelterProfileMediaLinkType) => void,
-  canEdit: boolean,
-): TableColumn<ShelterProfileMediaLinkType>[] {
-  const columns: TableColumn<ShelterProfileMediaLinkType>[] = [
-    {
-      key: 'preview',
-      label: 'Preview',
-      width: '120px',
-      render: (mediaLink) => (
-        <MediaLinkPreview
-          mediaType={mediaLink.mediaType}
-          url={mediaLink.url}
-          title={mediaLink.title}
-        />
-      ),
-    },
-    {
-      key: 'mediaLink',
-      label: 'Media link',
-      render: (mediaLink) => (
-        <MediaLinkContent
-          title={mediaLink.title}
-          mediaType={mediaLink.mediaType}
-          url={mediaLink.url}
-        />
-      ),
-    },
-  ];
-
-  if (canEdit) {
-    columns.push({
-      key: 'actions',
-      label: 'Actions',
-      width: '140px',
-      render: (mediaLink) => (
-        <div className="flex items-center gap-3">
-          <TableActionBtn
-            action="edit"
-            label="Edit media link"
-            disabled={mediaLinksDisabled}
-            onClick={() => onEdit(mediaLink)}
-          />
-          <TableActionBtn
-            action="delete"
-            label="Delete media link"
-            disabled={mediaLinksDisabled}
-            onClick={() => onDelete(mediaLink)}
-          />
-        </div>
-      ),
-    });
-  }
-
-  return columns;
-}
-
 export function ShelterMediaLinks(props: TProps) {
   const { shelterId, mediaLinks = [] } = props;
 
@@ -136,7 +71,7 @@ export function ShelterMediaLinks(props: TProps) {
     shelterId,
   });
 
-  const saving = creating || updating;
+  const isSaving = creating || updating;
 
   async function handleCreate(
     data: MediaLinkFormData,
@@ -265,28 +200,16 @@ export function ShelterMediaLinks(props: TProps) {
     setFormTarget(null);
   }
 
-  const columns = buildColumns(
-    saving || deleting,
-    (mediaLink) => setFormTarget({ mode: 'edit', mediaLink }),
-    setPendingDelete,
-    canEditShelter,
-  );
-
   const isEditing = formTarget?.mode === 'edit';
 
   return (
     <div className="p-8 flex flex-col gap-6">
-      <Table
-        columns={columns}
-        rows={mediaLinks}
-        getRowKey={(mediaLink) => mediaLink.id}
-        headerClassName="px-0"
-        rowClassName="mx-0 px-0"
-        emptyState={
-          <div className="p-6 text-center text-gray-500">
-            No media links yet.
-          </div>
-        }
+      <MediaLinksTable
+        mediaLinks={mediaLinks}
+        canEdit={canEditShelter}
+        disabled={isSaving || deleting}
+        onEdit={(mediaLink) => setFormTarget({ mode: 'edit', mediaLink })}
+        onDelete={setPendingDelete}
       />
 
       {canEditShelter && (
@@ -298,17 +221,20 @@ export function ShelterMediaLinks(props: TProps) {
         />
       )}
 
+      {/* Form modal */}
       <Modal
         isOpen={!!formTarget}
         onClose={handleCloseForm}
         size="sm"
         className="min-w-112"
       >
-        <ModalHeader onClose={handleCloseForm}>
-          <div className="font-medium text-xl">
-            {isEditing ? 'Edit Media Link' : 'Add Media Link'}
-          </div>
+        <ModalHeader
+          onClose={handleCloseForm}
+          className="font-medium text-xl mb-4"
+        >
+          {isEditing ? 'Edit Media Link' : 'Add Media Link'}
         </ModalHeader>
+
         <ModalBody>
           {formTarget && (
             <ShelterMediaLinkForm
@@ -321,12 +247,13 @@ export function ShelterMediaLinks(props: TProps) {
                 formTarget.mode === 'edit' ? handleUpdate : handleCreate
               }
               onCancel={handleCloseForm}
-              disabled={saving}
+              disabled={isSaving}
             />
           )}
         </ModalBody>
       </Modal>
 
+      {/* Delete Confirmation modal */}
       <ConfirmationModal
         isOpen={!!pendingDelete}
         onClose={() => setPendingDelete(null)}

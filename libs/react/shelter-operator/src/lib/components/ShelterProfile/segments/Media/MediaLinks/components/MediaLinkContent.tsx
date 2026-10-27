@@ -9,8 +9,6 @@ type TProps = {
   url: string;
 };
 
-const labelClassName = 'text-xs text-[#747A82]';
-
 type TFieldProps = {
   label: string;
   children: ReactNode;
@@ -21,7 +19,7 @@ function Field(props: TFieldProps) {
 
   return (
     <>
-      <span className={labelClassName}>{label}</span>
+      <span className="text-xs text-[#747A82]">{label}</span>
       <span className="min-w-0">{children}</span>
     </>
   );
