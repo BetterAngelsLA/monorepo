@@ -4,7 +4,13 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { Pressable, StyleSheet, View } from 'react-native';
+import {
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 type TVariant = 'inline' | 'stacked';
 
@@ -24,6 +30,12 @@ type TProps = {
    * detail uses.
    */
   variant?: TVariant;
+  /**
+   * Drop the fixed label column so the row can sit in a narrow cell of the
+   * card's person grid. Names then truncate rather than pushing the label off.
+   */
+  compact?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
 /**
@@ -43,6 +55,8 @@ export function TaskPersonRow(props: TProps) {
     accessibilityLabel,
     accessibilityHint,
     variant = 'inline',
+    compact = false,
+    style,
   } = props;
 
   const isStacked = variant === 'stacked';
@@ -62,7 +76,7 @@ export function TaskPersonRow(props: TProps) {
             <TextRegular
               size="sm"
               color={Colors.NEUTRAL_DARK}
-              style={styles.label}
+              style={compact ? styles.labelCompact : styles.label}
             >
               {label}
             </TextRegular>
@@ -111,7 +125,13 @@ export function TaskPersonRow(props: TProps) {
   );
 
   if (!isStacked) {
-    return <View style={styles.inlineWrap}>{personRow}</View>;
+    return (
+      <View
+        style={[styles.inlineWrap, compact ? styles.compactWrap : null, style]}
+      >
+        {personRow}
+      </View>
+    );
   }
 
   // The label is a caption for the whole row, so it sits above the avatar
@@ -151,6 +171,12 @@ const styles = StyleSheet.create({
   // the label's length.
   label: {
     minWidth: 88,
+  },
+  labelCompact: {
+    marginRight: Spacings.xs,
+  },
+  compactWrap: {
+    marginBottom: 0,
   },
   name: {
     flexShrink: 1,

@@ -34,39 +34,53 @@ export function TaskCard(props: TaskCardProps) {
           {task.summary}
         </TextBold>
 
-        {variant !== 'withoutClient' && clientProfile && (
-          <TaskCardClient
-            firstName={clientProfile.firstName}
-            lastName={clientProfile.lastName}
-            profilePhotoUrl={clientProfile.profilePhoto?.url}
-            onPress={
-              onClientPress
-                ? () => onClientPress(clientProfile.id, 'clientProfile')
-                : undefined
-            }
+        {/*
+          Two columns of people rather than one full-width row each: the names
+          are short and the right half of the card was empty. Client and
+          Created by always render, Assignee only when set, so an unassigned
+          task fills one row and an assigned one wraps to two.
+        */}
+        <View style={styles.people}>
+          {variant !== 'withoutClient' && clientProfile && (
+            <TaskCardClient
+              compact
+              firstName={clientProfile.firstName}
+              lastName={clientProfile.lastName}
+              profilePhotoUrl={clientProfile.profilePhoto?.url}
+              onPress={
+                onClientPress
+                  ? () => onClientPress(clientProfile.id, 'clientProfile')
+                  : undefined
+              }
+            />
+          )}
+
+          {variant !== 'withoutClient' && hmisClientProfile && (
+            <TaskCardClient
+              compact
+              firstName={hmisClientProfile.firstName}
+              lastName={hmisClientProfile.lastName}
+              profilePhotoUrl={hmisClientProfile.profilePhoto?.url}
+              onPress={
+                onClientPress
+                  ? () =>
+                      onClientPress(hmisClientProfile.id, 'hmisClientProfile')
+                  : undefined
+              }
+            />
+          )}
+
+          {task.assignee && (
+            <TaskCardAssignee compact assignee={task.assignee} />
+          )}
+
+          <TaskCardCreatedBy
+            compact
+            organization={task.organization}
+            createdBy={task.createdBy}
+            team={task.team}
           />
-        )}
-
-        {variant !== 'withoutClient' && hmisClientProfile && (
-          <TaskCardClient
-            firstName={hmisClientProfile.firstName}
-            lastName={hmisClientProfile.lastName}
-            profilePhotoUrl={hmisClientProfile.profilePhoto?.url}
-            onPress={
-              onClientPress
-                ? () => onClientPress(hmisClientProfile.id, 'hmisClientProfile')
-                : undefined
-            }
-          />
-        )}
-
-        <TaskCardCreatedBy
-          organization={task.organization}
-          createdBy={task.createdBy}
-          team={task.team}
-        />
-
-        {task.assignee && <TaskCardAssignee assignee={task.assignee} />}
+        </View>
         <TaskCardBody
           description={task.description}
           createdAt={task.createdAt}
@@ -85,5 +99,12 @@ const styles = StyleSheet.create({
   body: {
     padding: Spacings.sm,
     paddingBottom: Spacings.xxs,
+  },
+  people: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: Spacings.sm,
+    rowGap: Spacings.xs,
+    marginBottom: Spacings.xs,
   },
 });

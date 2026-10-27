@@ -5,10 +5,11 @@ type TaskCardCreatedByProps = {
   createdBy: TasksQuery['tasks']['results'][number]['createdBy'];
   team?: { name?: string | null } | null;
   organization?: TasksQuery['tasks']['results'][number]['organization'];
+  compact?: boolean;
 };
 
 export default function TaskCardCreatedBy(props: TaskCardCreatedByProps) {
-  const { createdBy, team, organization } = props;
+  const { createdBy, team, organization, compact } = props;
 
   const name = [createdBy?.firstName, createdBy?.lastName]
     .filter(Boolean)
@@ -17,5 +18,12 @@ export default function TaskCardCreatedBy(props: TaskCardCreatedByProps) {
     .filter(Boolean)
     .join(' ');
 
-  return <TaskPersonRow label="Created by" name={name} secondary={secondary} />;
+  return (
+    <TaskPersonRow
+      label="Created by"
+      name={name}
+      secondary={secondary}
+      compact={compact}
+    />
+  );
 }

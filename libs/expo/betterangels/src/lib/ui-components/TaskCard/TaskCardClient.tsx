@@ -5,10 +5,11 @@ type TaskCardClientProps = {
   lastName?: string | null;
   profilePhotoUrl?: string | null;
   onPress?: () => void;
+  compact?: boolean;
 };
 
 export default function TaskCardClient(props: TaskCardClientProps) {
-  const { firstName, lastName, profilePhotoUrl, onPress } = props;
+  const { firstName, lastName, profilePhotoUrl, onPress, compact } = props;
 
   if (!firstName && !lastName && !profilePhotoUrl) {
     return null;
@@ -20,6 +21,7 @@ export default function TaskCardClient(props: TaskCardClientProps) {
     <TaskPersonRow
       label="Client"
       name={fullName}
+      compact={compact}
       avatarUrl={profilePhotoUrl}
       onPress={onPress}
       accessibilityLabel={

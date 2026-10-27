@@ -4,6 +4,7 @@ import { TaskPersonRow } from '../TaskPersonRow';
 
 type TaskCardAssigneeProps = {
   assignee: NonNullable<TaskType['assignee']>;
+  compact?: boolean;
 };
 
 export default function TaskCardAssignee(props: TaskCardAssigneeProps) {
