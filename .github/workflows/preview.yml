@@ -136,7 +136,17 @@ jobs:
           has_build ios "$IOS_RUNTIME" development-simulator \
             || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
 
-          # Update and web deploy are independent; one graph lets them overlap.
+      - name: 🩺 Inspect the failing EAS builds (temporary)
+        continue-on-error: true
+        run: |
+          cd apps/betterangels
+          eas build:list --platform all --limit 8 --json --non-interactive             | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const b=JSON.parse(s.slice(s.indexOf("["),s.lastIndexOf("]")+1));for(const x of b)console.log([x.id,x.status,x.platform,x.buildProfile,x.runtime?.version??"-",(x.gitCommitHash||"").slice(0,9)].join(" "))})'
+          for id in b36c331e-5596-4edc-9416-2c0db99bd2db eb05eb9b-72c7-4854-a9dc-62204621f555; do
+            echo "=== $id ==="
+            eas build:view "$id" --json --non-interactive > /tmp/b.json 2>&1 || true
+            node -e 'const fs=require("fs");const raw=fs.readFileSync("/tmp/b.json","utf8");const s=raw.indexOf("{"),e=raw.lastIndexOf("}");if(s<0){console.log(raw.slice(0,500));process.exit(0)}const b=JSON.parse(raw.slice(s,e+1));console.log("status:",b.status);console.log("error:",JSON.stringify(b.error??null));console.log("logs:",JSON.stringify(b.logFiles??null))'
+          done
+
           # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t eas-update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
 
