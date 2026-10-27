@@ -1,3 +1,4 @@
+import { StyleProp, ViewStyle } from 'react-native';
 import { TaskPersonRow } from '../TaskPersonRow';
 
 type TaskCardClientProps = {
@@ -5,11 +6,11 @@ type TaskCardClientProps = {
   lastName?: string | null;
   profilePhotoUrl?: string | null;
   onPress?: () => void;
-  compact?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
 export default function TaskCardClient(props: TaskCardClientProps) {
-  const { firstName, lastName, profilePhotoUrl, onPress, compact } = props;
+  const { firstName, lastName, profilePhotoUrl, onPress, style } = props;
 
   if (!firstName && !lastName && !profilePhotoUrl) {
     return null;
@@ -21,9 +22,9 @@ export default function TaskCardClient(props: TaskCardClientProps) {
     <TaskPersonRow
       label="Client"
       name={fullName}
-      compact={compact}
       avatarUrl={profilePhotoUrl}
       onPress={onPress}
+      style={style}
       accessibilityLabel={
         onPress
           ? `Open client profile${fullName ? `: ${fullName}` : ''}`

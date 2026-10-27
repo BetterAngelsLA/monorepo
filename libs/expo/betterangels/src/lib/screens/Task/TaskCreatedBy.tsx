@@ -17,12 +17,5 @@ export default function TaskCreatedBy(props: TaskCreatedByProps) {
     .filter(Boolean)
     .join(' ');
 
-  return (
-    <TaskPersonRow
-      variant="stacked"
-      label="Created by"
-      name={name}
-      secondary={secondary}
-    />
-  );
+  return <TaskPersonRow label="Created by" name={name} secondary={secondary} />;
 }

@@ -10,10 +10,6 @@ export default function TaskAssignee(props: TaskAssigneeProps) {
   const { assignee } = props;
 
   return (
-    <TaskPersonRow
-      variant="stacked"
-      label="Assigned to"
-      name={formatMemberName(assignee)}
-    />
+    <TaskPersonRow label="Assigned to" name={formatMemberName(assignee)} />
   );
 }

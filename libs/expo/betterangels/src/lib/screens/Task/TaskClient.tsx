@@ -14,7 +14,6 @@ export default function TaskClient(props: TaskClientProps) {
 
   return (
     <TaskPersonRow
-      variant="stacked"
       label="Client"
       name={fullName}
       avatarUrl={clientProfile?.profilePhoto?.url}

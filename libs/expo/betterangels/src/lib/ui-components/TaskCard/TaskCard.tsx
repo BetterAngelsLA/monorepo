@@ -35,15 +35,15 @@ export function TaskCard(props: TaskCardProps) {
         </TextBold>
 
         {/*
-          Two columns of people rather than one full-width row each: the names
-          are short and the right half of the card was empty. Client and
-          Created by always render, Assignee only when set, so an unassigned
-          task fills one row and an assigned one wraps to two.
+          Client and assignee sit two-up as labelled people; the creator is a
+          single muted line beneath them. Roles are overline captions so they
+          label without competing with the names, and a task with no assignee
+          simply drops that column rather than leaving a hole.
         */}
         <View style={styles.people}>
           {variant !== 'withoutClient' && clientProfile && (
             <TaskCardClient
-              compact
+              style={styles.person}
               firstName={clientProfile.firstName}
               lastName={clientProfile.lastName}
               profilePhotoUrl={clientProfile.profilePhoto?.url}
@@ -57,7 +57,7 @@ export function TaskCard(props: TaskCardProps) {
 
           {variant !== 'withoutClient' && hmisClientProfile && (
             <TaskCardClient
-              compact
+              style={styles.person}
               firstName={hmisClientProfile.firstName}
               lastName={hmisClientProfile.lastName}
               profilePhotoUrl={hmisClientProfile.profilePhoto?.url}
@@ -71,16 +71,16 @@ export function TaskCard(props: TaskCardProps) {
           )}
 
           {task.assignee && (
-            <TaskCardAssignee compact assignee={task.assignee} />
+            <TaskCardAssignee style={styles.person} assignee={task.assignee} />
           )}
-
-          <TaskCardCreatedBy
-            compact
-            organization={task.organization}
-            createdBy={task.createdBy}
-            team={task.team}
-          />
         </View>
+
+        <TaskCardCreatedBy
+          organization={task.organization}
+          createdBy={task.createdBy}
+          team={task.team}
+        />
+
         <TaskCardBody
           description={task.description}
           createdAt={task.createdAt}
@@ -104,7 +104,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     columnGap: Spacings.sm,
-    rowGap: Spacings.xs,
-    marginBottom: Spacings.xs,
+    marginBottom: Spacings.xxs,
+  },
+  person: {
+    flexBasis: '45%',
+    flexGrow: 1,
   },
 });
