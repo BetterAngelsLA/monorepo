@@ -15,7 +15,6 @@ for (const [key, value] of Object.entries(process.env)) {
   if (
     (key.startsWith('EXPO_PUBLIC_') ||
       key.startsWith('MAESTRO_') ||
-      key === 'EXPO_BASE_URL' ||
       key === 'APP_VARIANT') &&
     value
   ) {
@@ -32,8 +31,14 @@ for (const [key, value] of Object.entries(
   env.set(key, String(value));
 }
 
+// `.env.local` rather than the committed `.env`: Expo loads it with higher
+// precedence, it is gitignored, and EAS still uploads it (`.easignore` does not
+// exclude it), so the build sees exactly what the fingerprint was computed
+// from. The web base path is deliberately absent — it belongs to the web
+// export only and would otherwise make the native runtime branch-specific.
+const envPath = path.join(projectDir, '.env.local');
 fs.writeFileSync(
-  path.join(projectDir, '.env'),
+  envPath,
   [...env].map(([key, value]) => `${key}=${value}`).join('\n') + '\n',
 );
-console.log(`Wrote ${projectDir}/.env for ${argv.profile} (${env.size} vars)`);
+console.log(`Wrote ${envPath} for ${argv.profile} (${env.size} vars)`);

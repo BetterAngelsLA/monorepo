@@ -1,4 +1,5 @@
-# Nx/build metadata and local env, not native runtime inputs.
+# Nx metadata and local env files: not native runtime inputs. The values that
+# matter reach the fingerprint through `expoConfig`, in app.config.js.
 project.json
-.eas-deploy-results.json
 .env
+.env.local

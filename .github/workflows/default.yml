@@ -309,9 +309,8 @@ jobs:
           else
             TARGETS="lint typecheck test build deploy eas-build eas-update"
           fi
-          export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
           # The EAS build/update use the Expo fingerprint runtime policy; the
-          # web export/deploy use the built-in Expo executors.
+          # web export/deploy compute their own base path inside export-web.
           yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
           EOF
         env:
@@ -390,7 +389,7 @@ jobs:
 
       - name: 🧪 E2E shelter-web (preview)
         # Runs on main/merge_group after the in-job deploy. PR previews run the
-        # same script in the Preview job, after the web deploy there.
+        # same resolver and suite in the Preview job, after the web deploy there.
         #
         # It runs after deploy, because the suite drives the deployed preview: the
         # deploy target only returns once the edge serves the revision just built,
@@ -398,25 +397,52 @@ jobs:
         #
         # Choosing the target — this branch's preview when `shelter-web` was
         # deployed, the existing preview or a skip when only the specs changed —
-        # lives in tools/scripts/e2e-shelter.sh, which is runnable locally too.
-        # The preview is only rebuilt and redeployed for affected projects, so an
-        # untouched shelter-web means the deployed site is unchanged and a run
-        # would report on someone else's revision.
-        #
-        # One step per web property, because each has its own origin. That origin
-        # already has a home — `SITE_URL` in the app's `.env.deploy.<config>` —
-        # and the script takes it from there. An e2e project already names its
-        # app with `implicitDependencies`. (Which is also why this can't be
-        # `nx affected -t e2e`: `BASE_URL` is one value for the whole container,
-        # so a second suite in the same step would be handed the wrong origin.)
+        # lives in tools/shared/resolve-preview-url.mjs, which is runnable locally
+        # too. The preview is only rebuilt and redeployed for affected projects,
+        # so an untouched shelter-web means the deployed site is unchanged and a
+        # run would report on someone else's revision.
         if: matrix.environment == 'preview' && github.event_name != 'pull_request'
         run: |
           docker compose run --rm better-angels bash -c '
             set -euo pipefail
-            origin="$(sed -n "s/^SITE_URL=//p" apps/shelter-web/.env.deploy.preview)"
-            base_path="/branches/${BRANCH_NAME}/"
-            export BASE_URL="${origin%/}${base_path}"
+            set +e
+            BASE_URL="$(node tools/shared/resolve-preview-url.mjs)"
+            status=$?
+            set -e
+            if [ "$status" -eq 78 ]; then
+              echo "Skipping e2e: no preview for this branch."
+              exit 0
+            fi
+            [ "$status" -eq 0 ] || exit "$status"
+            export BASE_URL
             yarn playwright install chromium
-            curl -fsS "$BASE_URL" >/dev/null
-            yarn nx run shelter-e2e:e2e --configuration preview --output-style=stream
+            yarn nx run-many -t e2e --projects=shelter-e2e --configuration preview --output-style=stream
           '
+
+      - name: 📎 Upload shelter-e2e report
+        if: always() && matrix.environment == 'preview' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
+          path: dist/.playwright/apps/shelter-e2e
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: 📣 Announce the deployment
+        # Slack summary of the mobile builds/updates; no-ops on PRs. Runs once
+        # per environment matrix leg, reporting that leg's builds.
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        run: |
+          docker compose run --rm better-angels bash -c 'yarn nx run betterangels:preview-comment'
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          EAS_PROFILE: ${{ matrix.environment }}
+
+      - name: ⏹️ Spin down monorepo environment
+        if: always()
+        run: |
+          docker compose down
+          sudo chown -R -h 1001:1001 $GITHUB_WORKSPACE

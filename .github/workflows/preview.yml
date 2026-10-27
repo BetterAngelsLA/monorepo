@@ -3,6 +3,12 @@ name: 🚀 Preview
 on:
   pull_request:
 
+# One preview per branch: overlapping runs would race on the same
+# /branches/<branch>/ prefix and on the comment.
+concurrency:
+  group: preview-${{ github.head_ref }}
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-west-2
   AWS_ACCOUNT_ID: 174477281453
@@ -83,7 +89,6 @@ jobs:
           NX_DAEMON: 'false'
         run: |
           set -euo pipefail
-          export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
           yarn nx run betterangels:write-eas-env:preview
 
           # Mirror the build environment before fingerprinting: the pre-install
@@ -105,7 +110,7 @@ jobs:
 
           # Skip a build when one already exists for this runtime and profile.
           # A queued build counts: the update only needs the runtime to be the one
-          # the binary will ship with. Failed builds are ignored by the script.
+          # the binary will ship with; a failed one is ignored by the script.
           # Any lookup failure falls back to building.
           has_build() {
             if (cd apps/betterangels && eas build:list --platform "$1" --runtime-version "$2" \
@@ -132,7 +137,11 @@ jobs:
             || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
 
           # Update and web deploy are independent; one graph lets them overlap.
+          # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t eas-update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
+
+          # Mobile preview links (builds, updates, QR, simulator) on the PR.
+          yarn nx run betterangels:preview-comment
 
       - name: 🧪 E2E
         env:
@@ -140,11 +149,17 @@ jobs:
           NX_DAEMON: 'false'
         run: |
           set -euo pipefail
-          origin="$(sed -n 's/^SITE_URL=//p' apps/shelter-web/.env.deploy.preview)"
-          base_path="/branches/${BRANCH_NAME}/"
-          export BASE_URL="${origin%/}${base_path}"
+          set +e
+          BASE_URL="$(node tools/shared/resolve-preview-url.mjs)"
+          status=$?
+          set -e
+          if [ "$status" -eq 78 ]; then
+            echo "Skipping e2e: no preview for this branch."
+            exit 0
+          fi
+          [ "$status" -eq 0 ] || exit "$status"
+          export BASE_URL
           yarn playwright install chromium
-          curl -fsS "$BASE_URL" >/dev/null
           yarn nx run-many -t e2e --projects=shelter-e2e --configuration preview --output-style=stream
 
       - name: Save Nx cache

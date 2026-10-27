@@ -59,7 +59,6 @@
     },
     "e2e": {
       "cache": false,
-      "dependsOn": ["^deploy"],
       "configurations": {
         "preview": {},
         "production": {}
@@ -67,7 +66,13 @@
     }
   },
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals",
+      "!{projectRoot}/android/**",
+      "!{projectRoot}/ios/**",
+      "!{projectRoot}/.env.local"
+    ],
     "production": [
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
