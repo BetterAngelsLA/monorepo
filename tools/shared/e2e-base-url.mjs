@@ -96,19 +96,34 @@ export function e2eBaseUrl(app, options = {}) {
 
   if (!previewDeployedApps(env).includes(app)) return undefined;
 
+  // Never throw from here. The Nx Playwright plugin imports every
+  // `playwright.config.ts` to infer its targets, so a config that throws does
+  // not fail one suite — it fails the project graph, and therefore every task in
+  // the job. An unresolvable URL falls back to the suite's own dev server, and
+  // says so: running locally is honest, but it must not look like the preview
+  // was tested.
   const branch = env.BRANCH_NAME;
   if (!branch) {
-    throw new Error(
-      `BRANCH_NAME is required to address the "${app}" branch preview (set PREVIEW_DEPLOYED_APPS and BRANCH_NAME together).`,
+    warn(
+      `"${app}" was deployed but BRANCH_NAME is unset; falling back to the local server.`,
     );
+    return undefined;
   }
 
   const siteUrl = siteUrlFor(app);
   if (!siteUrl) {
-    throw new Error(
-      `No SITE_URL in apps/${app}/.env.deploy.preview, so the "${app}" preview URL is unknown. Add one, or set BASE_URL explicitly.`,
+    warn(
+      `No SITE_URL in apps/${app}/.env.deploy.preview, so the "${app}" preview URL is unknown; falling back to the local server (set BASE_URL to override).`,
     );
+    return undefined;
   }
 
   return `${siteUrl.replace(/\/+$/, '')}/branches/${branch.replace(/\//g, '-')}/`;
+}
+
+const warned = new Set();
+function warn(message) {
+  if (warned.has(message)) return;
+  warned.add(message);
+  console.warn(`[e2e-base-url] ${message}`);
 }
