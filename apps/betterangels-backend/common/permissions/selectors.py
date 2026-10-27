@@ -332,7 +332,24 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
     if not issubclass(model, OrgScoped):
         return False
     if model.org_via is not None:
-        return visible(model._base_manager.filter(pk=obj.pk), user, perm).exists()
+        # Resolve the row's orgs from the request snapshot instead of asking the
+        # database again: this is the per-row check, so `visible(...).exists()`
+        # here would be one query per object per field.
+        s = scopes(user, perm)
+        if s is ALL:
+            return True
+        if not s:
+            return False
+        for path in model.org_paths():
+            value: Any = obj
+            for part in path.split("__"):
+                value = getattr(value, part, None)
+                if value is None:
+                    break
+            else:
+                if value in s:
+                    return True
+        return False
     if model.write_tier == WRITE_SHARED:
         return can_anywhere(user, perm)
     s = scopes(user, perm)
