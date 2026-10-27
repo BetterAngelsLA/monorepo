@@ -13,6 +13,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { resolveStarDeps } from './fill-star-deps.mjs';
+import { workspaceMutations } from './workspace-mutation.mjs';
 
 if (!process.env.CI) {
   console.log('[eas-build-pre-install] Skipping — not in CI.');
@@ -21,9 +22,11 @@ if (!process.env.CI) {
 
 const [workspaceRoot, projectRoot] = process.argv.slice(2);
 const appDir = resolve(workspaceRoot, projectRoot);
-const rootPkg = JSON.parse(
-  readFileSync(join(workspaceRoot, 'package.json'), 'utf-8'),
-);
+// Same list `restore-workspace.mjs` undoes.
+const [rootPkgPath, appPkgPath] = workspaceMutations(
+  projectRoot.replace(/^apps\//, ''),
+).map((path) => join(workspaceRoot, path));
+const rootPkg = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
 
 // Resolve * deps using the canonical implementation (shared with expo-doctor)
 const { unresolved } = resolveStarDeps(workspaceRoot, appDir);
@@ -40,22 +43,16 @@ if (unresolved.length > 0) {
 
 // EAS-specific extras: copy packageManager and resolutions so EAS Build
 // uses the same package manager version and dependency resolution as local
-const appPkg = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf-8'));
+const appPkg = JSON.parse(readFileSync(appPkgPath, 'utf-8'));
 
 if (rootPkg.packageManager) appPkg.packageManager = rootPkg.packageManager;
 if (rootPkg.overrides) appPkg.overrides = rootPkg.overrides;
 else if (rootPkg.resolutions) appPkg.resolutions = rootPkg.resolutions;
 
-writeFileSync(
-  join(appDir, 'package.json'),
-  JSON.stringify(appPkg, null, 2) + '\n',
-);
+writeFileSync(appPkgPath, JSON.stringify(appPkg, null, 2) + '\n');
 
 // Tell EAS this is a Yarn workspace so it runs install from root
 rootPkg.workspaces = [projectRoot];
-writeFileSync(
-  join(workspaceRoot, 'package.json'),
-  JSON.stringify(rootPkg, null, 2) + '\n',
-);
+writeFileSync(rootPkgPath, JSON.stringify(rootPkg, null, 2) + '\n');
 
 console.log('[eas-build-pre-install] Star deps resolved + EAS config applied.');

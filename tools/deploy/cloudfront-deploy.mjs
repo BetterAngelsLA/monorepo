@@ -1,23 +1,20 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
+import { existsSync } from 'fs';
 
 import { getBranchBasePath } from '../shared/get-base-path.mjs';
 
 // --- Validate env ---
-const required = [
-  'S3_BUCKET',
-  'CF_DISTRIBUTION_ID',
-  'NX_TASK_TARGET_PROJECT',
-  'ASSUME_ROLE',
-];
+const required = ['S3_BUCKET', 'CF_DISTRIBUTION_ID', 'ASSUME_ROLE'];
 const missing = required.filter((v) => !process.env[v]);
 if (missing.length) {
   console.error(`❌ Missing required env vars: ${missing.join(', ')}`);
   process.exit(1);
 }
 
-const { S3_BUCKET, CF_DISTRIBUTION_ID, NX_TASK_TARGET_PROJECT, ASSUME_ROLE } =
-  process.env;
+const { S3_BUCKET, CF_DISTRIBUTION_ID, ASSUME_ROLE } = process.env;
+// Set by Nx; only a label here, so a manual --dist run works without it.
+const NX_TASK_TARGET_PROJECT = process.env.NX_TASK_TARGET_PROJECT || 'web';
 const BASE_PATH = getBranchBasePath();
 console.log(`📌 Base path: ${BASE_PATH}`);
 
@@ -45,15 +42,25 @@ const s3Path = BASE_PATH.replace(/^\//, '').replace(/\/$/, '');
 const cfPath = BASE_PATH.replace(/\/$/, '');
 const s3Dest = `s3://${S3_BUCKET}/${s3Path}`;
 
-const { root } = JSON.parse(
-  execSync(
-    `yarn nx show project "${NX_TASK_TARGET_PROJECT}" --json 2>/dev/null | sed -n '/^{/,$p'`,
-    { encoding: 'utf8' },
-  ),
-);
-const distPath = `dist/${root}`;
+// Web builds land in dist/apps/<project> (the convention every deploy target
+// follows). Prefer an explicit --dist, then that convention, then dist/<project>
+// — and fail if none exist: `aws s3 sync --delete` against a missing directory
+// would happily empty the bucket prefix.
+const distFlag = process.env.npm_config_dist;
+const candidates = [
+  distFlag,
+  `dist/apps/${NX_TASK_TARGET_PROJECT}`,
+  `dist/${NX_TASK_TARGET_PROJECT}`,
+].filter(Boolean);
+const distPath = candidates.find((candidate) => existsSync(candidate));
+if (!distPath) {
+  console.error(
+    `❌ No build output found (looked for ${candidates.join(', ')}). Run the project's export/build target first, or pass --dist.`,
+  );
+  process.exit(1);
+}
 
-console.log(`📦 ${NX_TASK_TARGET_PROJECT} → ${s3Dest}`);
+console.log(`📦 ${NX_TASK_TARGET_PROJECT} → ${s3Dest} (from ${distPath})`);
 
 // --- Deploy ---
 execSync(`aws s3 sync "${distPath}" "${s3Dest}" --delete --no-cli-pager`, {

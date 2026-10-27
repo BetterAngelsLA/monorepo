@@ -1,6 +1,6 @@
 /**
  * Print the build base path for the current context, for `experiments.baseUrl`:
- *   EXPO_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) expo export ...
+ *   EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) expo export ...
  * No trailing newline, so it interpolates directly.
  *
  * A web-style path: `/` for root, `/branches/<branch>` for a branch. Expo's
