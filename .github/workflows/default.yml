@@ -25,7 +25,7 @@ jobs:
       matrix:
         environment: >-
           ${{ fromJson(
-            github.event_name == 'push' && github.ref == 'refs/heads/main'
+            (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
             && '["preview", "production"]'
             || '["preview"]'
           ) }}
@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: 🚦 Turnstyle
         uses: softprops/turnstyle@v3.3.3
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -368,14 +368,14 @@ jobs:
       - name: 🏗️ Build and push CI base image
         # Nx owns the Dockerfile/target/cache configuration; the container has
         # the copied Buildx state and ECR config.
-        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: matrix.environment == 'production' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           docker compose run better-angels bash <<'EOF'
           yarn nx run monorepo-image:publish:ci-base --skip-nx-cache
           EOF
 
       - name: 🏗️ Build and push production image
-        if: matrix.environment == 'production' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: matrix.environment == 'production' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           docker compose run better-angels bash <<'EOF'
           yarn nx run monorepo-image:publish:production --skip-nx-cache
@@ -429,7 +429,7 @@ jobs:
       # Last, outside the quality step: `eas-build`/`eas-update` reshape the
       # workspace for EAS Build. Push only — a merge-queue run has no real branch.
       - name: 📱 Mobile builds and update
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           # Restores what `copy-lockfile` rewrites, even when the build fails.
           docker compose run --rm better-angels bash -c '
@@ -466,7 +466,7 @@ jobs:
 
       - name: 📣 Announce the deployment
         # Slack summary per matrix leg; push only.
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         continue-on-error: true
         run: |
           docker compose run --rm better-angels bash -c 'yarn nx run betterangels:preview-comment'

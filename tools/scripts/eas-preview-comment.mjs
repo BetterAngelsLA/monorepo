@@ -40,7 +40,7 @@ if (!branch) {
 // published for both even when a run only built one of them. Which builds exist
 // is what `EAS_BUILD_PLATFORMS` decides, per column.
 const PLATFORMS = ['android', 'ios'];
-const BUILT = (process.env.EAS_BUILD_PLATFORMS ?? 'android,ios')
+const BUILT = (process.env.EAS_BUILD_PLATFORMS ?? PLATFORMS.join(','))
   .split(',')
   .map((platform) => platform.trim())
   .filter(Boolean);
@@ -166,6 +166,9 @@ const qrCell = (update) =>
     : 'N/A';
 
 const PLATFORM_LABELS = { android: '🤖 Android', ios: '🍎 iOS' };
+// Slack's headings use the shortcodes the old notification used; the table keeps
+// the glyph labels it has always had. Both are keyed off PLATFORMS.
+const SLACK_LABELS = { android: ':robot_face: Android', ios: ':iphone: iOS' };
 const table = [
   ['&nbsp;', ...PLATFORMS.map((platform) => PLATFORM_LABELS[platform] ?? platform)],
   ['---', ...PLATFORMS.map(() => '---')],
@@ -242,7 +245,8 @@ async function notifySlack() {
   // PR previews get the comment above; only deployments get a Slack ping.
   if (!webhook || process.env.GITHUB_EVENT_NAME === 'pull_request') return;
 
-  const link = (label, url) => (url ? `<${url}|${label}>` : label);
+  const link = (label, url) =>
+    url ? `<${url}|${label}>` : `${label}: not built for this run`;
   const section = (title, platform) => {
     const build = forPlatform(platform);
     const sim = platform === 'ios' ? simulator : undefined;
@@ -265,7 +269,13 @@ async function notifySlack() {
   }).trim();
   const message = execFileSync('git', ['log', '-1', '--pretty=%s'], {
     encoding: 'utf8',
-  }).trim();
+  })
+    .trim()
+    // The subject is a PR title, i.e. attacker-controlled for anyone who can open
+    // one: escape the three characters Slack treats as mrkdwn.
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
   // Matches the notification this pipeline has always posted: a header, then one
   // block per platform with Update / Build / Simulator Build links.
@@ -277,9 +287,10 @@ async function notifySlack() {
         text: `*New code has landed in main for project ${argv.project}!* \n*Commit:* \`${commit}\`\n*Message:* ${message}`,
       },
     },
-    section(':iphone: iOS', 'ios'),
-    { type: 'divider' },
-    section(':robot_face: Android', 'android'),
+    ...PLATFORMS.flatMap((platform, index) => [
+      ...(index > 0 ? [{ type: 'divider' }] : []),
+      section(SLACK_LABELS[platform] ?? platform, platform),
+    ]),
   ];
 
   const response = await fetch(webhook, {
