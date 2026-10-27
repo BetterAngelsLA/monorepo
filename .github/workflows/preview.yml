@@ -33,6 +33,7 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       # A PR preview builds one platform (an installable APK) instead of paying
       # for android + ios + an ios simulator binary on every push; the EAS Update
       # is still published for every platform. Also drives the PR comment columns.
