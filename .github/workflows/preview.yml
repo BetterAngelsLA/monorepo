@@ -38,6 +38,10 @@ jobs:
       # for android + ios + an ios simulator binary on every push; the EAS Update
       # is still published for every platform. Also drives the PR comment columns.
       EAS_BUILD_PLATFORMS: android
+      # Applying this label rebuilds even though a build already exists for the
+      # fingerprint — the escape hatch for a build that failed for a reason we
+      # have since fixed.
+      FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
       VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
       VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
       EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
@@ -154,9 +158,15 @@ jobs:
 
           # Skip the build when one already exists for this runtime and profile.
           # Status does not matter: a fingerprint builds once, so a queued,
-          # finished, or even a failed build is reused instead of rebuilt. Any
-          # lookup failure falls back to building.
+          # finished, or even a failed build is reused instead of rebuilt. That
+          # also means a failed build poisons its fingerprint for good, which is
+          # why `FORCE_EAS_BUILD` (the `force-eas-build` label) exists as the
+          # manual way out. Any lookup failure falls back to building.
           has_build() {
+            if [ "${FORCE_EAS_BUILD:-false}" = "true" ]; then
+              echo "force-eas-build: ignoring existing $1 builds."
+              return 1
+            fi
             if (cd apps/betterangels && eas build:list --platform "$1" --runtime-version "$3" \
               --build-profile "$2" --limit 1 --json --non-interactive) \
               > /tmp/build-list.json 2>&1; then
