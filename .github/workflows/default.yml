@@ -444,10 +444,8 @@ jobs:
             set -euo pipefail
             yarn nx affected -t eas-build --configuration ${{ matrix.environment }} \
               --wait=false --freezeCredentials=true --output-style=stream
-            # --branch is explicit: --auto reads the git branch, and a CI checkout
-            # is a detached HEAD, which publishes to a branch named "HEAD".
-            yarn nx affected -t eas-update --configuration ${{ matrix.environment }} \
-              --branch "$BRANCH_NAME" --output-style=stream
+            # The target pins the branch and the EAS environment for the update.
+            yarn nx affected -t eas-update --configuration ${{ matrix.environment }} --output-style=stream
           '
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

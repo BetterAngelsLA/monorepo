@@ -236,22 +236,23 @@
       }
     },
     "eas-update": {
-      "executor": "@nx/expo:update",
+      "executor": "nx:run-commands",
       "cache": false,
       "dependsOn": [
         "write-eas-env",
+        "sync-eas-env",
         "sync-deps",
         "copy-lockfile"
       ],
       "options": {
-        "interactive": false
+        "cwd": "apps/betterangels"
       },
       "configurations": {
         "preview": {
-          "auto": true
+          "command": "eas update --branch \"$BRANCH_NAME\" --environment development --platform all --non-interactive"
         },
         "production": {
-          "auto": true
+          "command": "eas update --branch \"$BRANCH_NAME\" --environment production --platform all --non-interactive"
         }
       }
     }
