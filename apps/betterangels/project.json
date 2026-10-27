@@ -229,7 +229,6 @@
       "cache": false,
       "dependsOn": [
         "write-eas-env",
-        "sync-deps",
         "copy-lockfile"
       ],
       "configurations": {

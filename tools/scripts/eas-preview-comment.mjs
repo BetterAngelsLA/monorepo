@@ -36,9 +36,11 @@ if (!branch) {
   process.exit(1);
 }
 
-// A preview run builds a single platform to keep EAS costs down, so the table
-// follows whatever was built (`EAS_BUILD_PLATFORMS`) instead of hard-coding both.
-const PLATFORMS = (process.env.EAS_BUILD_PLATFORMS ?? 'android,ios')
+// Both platforms always get a column: the app supports both, and the update is
+// published for both even when a run only built one of them. Which builds exist
+// is what `EAS_BUILD_PLATFORMS` decides, per column.
+const PLATFORMS = ['android', 'ios'];
+const BUILT = (process.env.EAS_BUILD_PLATFORMS ?? 'android,ios')
   .split(',')
   .map((platform) => platform.trim())
   .filter(Boolean);
@@ -46,8 +48,8 @@ const PLATFORMS = (process.env.EAS_BUILD_PLATFORMS ?? 'android,ios')
 // the simulator link only exists for preview.
 const profile = process.env.EAS_PROFILE || 'preview';
 const BUILDS = [
-  ...PLATFORMS.map((platform) => ({ platform, profile })),
-  ...(profile === 'preview' && PLATFORMS.includes('ios')
+  ...BUILT.map((platform) => ({ platform, profile })),
+  ...(profile === 'preview'
     ? [{ platform: 'ios', profile: 'development-simulator' }]
     : []),
 ];
@@ -151,7 +153,8 @@ const runtimeOf = (build) =>
 const cell = (build) =>
   build
     ? `[Build Permalink](${buildUrl(build.id)})<br /><details><summary>Details</summary>Status: \`${build.status}\`<br />Distribution: \`${build.distribution ?? ''}\`<br />Build profile: \`${build.buildProfile ?? ''}\`<br />Runtime version: \`${runtimeOf(build)}\`<br />App version: \`${build.appVersion ?? ''}\`<br />Git commit: \`${build.gitCommitHash ?? ''}\`</details>`
-    : 'N/A';
+    : // A missing build is a fact about this run, not a missing value.
+      'Not built for this run';
 
 const updateCell = (update) =>
   update
@@ -167,8 +170,22 @@ const PLATFORM_LABELS = { android: '🤖 Android', ios: '🍎 iOS' };
 const table = [
   ['&nbsp;', ...PLATFORMS.map((platform) => PLATFORM_LABELS[platform] ?? platform)],
   ['---', ...PLATFORMS.map(() => '---')],
-  ['Runtime Version', ...PLATFORMS.map((p) => `\`${runtimeOf(forPlatform(p))}\``)],
-  ['Build Details', ...PLATFORMS.map((p) => cell(forPlatform(p)))],
+  [
+    'Runtime Version',
+    ...PLATFORMS.map(
+      (p) => `\`${forPlatform(p) ? runtimeOf(forPlatform(p)) : (updates[p]?.runtimeVersion ?? 'N/A')}\``,
+    ),
+  ],
+  [
+    'Build Details',
+    ...PLATFORMS.map((platform) => {
+      const build = cell(forPlatform(platform));
+      const simulator = platform === 'ios' ? simulator : undefined;
+      return simulator
+        ? `${build}<br />Simulator: [Build Permalink](${buildUrl(simulator.id)})`
+        : build;
+    }),
+  ],
   ['Update Details', ...PLATFORMS.map((p) => updateCell(updates[p]))],
   ['Update QR', ...PLATFORMS.map((p) => qrCell(updates[p]))],
 ]
@@ -183,8 +200,7 @@ const body = `<!-- continuous-deploy-fingerprint-projectId:${argv.projectId} -->
 - Platforms → ${PLATFORMS.map((platform) => `**${platform}**`).join(', ')}
 - Scheme → **${argv.slug}**
 
-${table}
-${simulator ? `\n**iOS Simulator Build:** [Simulator Build Link](${buildUrl(simulator.id)})` : ''}`;
+${table}`;
 
 async function upsertPrComment() {
   const token = process.env.GITHUB_TOKEN;
