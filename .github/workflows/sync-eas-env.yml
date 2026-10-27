@@ -83,13 +83,3 @@ jobs:
           set_var EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID "${EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID}"
           set_var MAESTRO_BA_USER_EMAIL "${MAESTRO_BA_USER_EMAIL}"
           set_var MAESTRO_BA_USER_PASSWORD "${MAESTRO_BA_USER_PASSWORD}"
-
-      - name: 🧾 Confirm what EAS now stores
-        working-directory: apps/betterangels
-        run: |
-          set -euo pipefail
-          for target in development production; do
-            echo "--- $target ---"
-            eas env:list --environment "$target" --format long --non-interactive \
-              | grep -E 'EXPO_PUBLIC_|MAESTRO_' || true
-          done
