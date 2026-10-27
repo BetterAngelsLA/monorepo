@@ -205,6 +205,16 @@ describe('buildCell', () => {
     );
   });
 
+  it('reports a failed lookup when the runtime is unknown', () => {
+    // `update:list` failed, so there is nothing to filter the build lookup by.
+    const cell = render({
+      runtime: undefined,
+      error: 'no ios runtime from the update',
+    });
+
+    assert.equal(cell, 'Lookup failed for this runtime — see the job log');
+  });
+
   it('does not report a failed lookup as a missing build', () => {
     const cell = render({ error: 'EAS is down' });
 

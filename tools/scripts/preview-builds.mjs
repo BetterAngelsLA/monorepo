@@ -15,7 +15,7 @@
  * instead of what exists for the runtime. So resolve, in order:
  *
  *   1. a device build that exists for this runtime — this run's or an earlier one,
- *   2. the build this run queued, recorded in `.eas-builds.json` by
+ *   2. the build this run resolved, recorded in `.eas-builds.json` by
  *      `build-missing.ts` (its link is valid the moment EAS answers, before
  *      `build:list` lists it),
  *   3. the iOS simulator binary, the artifact a reviewer on a laptop installs,

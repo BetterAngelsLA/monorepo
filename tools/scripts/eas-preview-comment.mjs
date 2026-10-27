@@ -86,22 +86,24 @@ const qrUrl = (groupId) =>
 
 function latestBuild(platform, profile, runtime) {
   try {
-    const args = [
+    // Only the build that ships this update's runtime. Callers only ask once they
+    // have one: unfiltered, `build:list` reports the newest build for any commit,
+    // and the comment would pair this update with a binary it can never reach.
+    const builds = runJson([
       'build:list',
       '--platform',
       platform,
       '--build-profile',
       profile,
+      '--runtime-version',
+      runtime,
+      // Same allowance as `find-build.mjs`: enough to see past a canceled
+      // duplicate to the build that actually exists.
       '--limit',
-      '5',
+      '10',
       '--json',
       '--non-interactive',
-    ];
-    // Only the build that ships this update's runtime: without the filter the
-    // newest FINISHED build can belong to a previous commit, and the comment
-    // would pair this update with a binary it can never reach.
-    if (runtime) args.push('--runtime-version', runtime);
-    const builds = runJson(args);
+    ]);
     if (builds.length === 0) return { build: undefined };
     // A real artifact wins over a newer dead one: the reuse rule is "a
     // fingerprint builds once", so a canceled or failed attempt can sit in front
@@ -165,10 +167,18 @@ function triggeredBuilds() {
 const updates = Object.fromEntries(PLATFORMS.map((p) => [p, latestUpdate(p)]));
 const triggered = triggeredBuilds();
 const lookups = Object.fromEntries(
-  BUILDS.map(({ platform, profile }) => [
-    `${platform}/${profile}`,
-    latestBuild(platform, profile, updates[platform]?.runtimeVersion),
-  ]),
+  BUILDS.map(({ platform, profile }) => {
+    const runtime = updates[platform]?.runtimeVersion;
+    if (!runtime) {
+      // No runtime, no lookup: the filter is what keeps the comment from pairing
+      // an update with a binary it cannot reach. Say so instead.
+      return [
+        `${platform}/${profile}`,
+        { error: `no ${platform} runtime from the update` },
+      ];
+    }
+    return [`${platform}/${profile}`, latestBuild(platform, profile, runtime)];
+  }),
 );
 
 const lookupFor = (platform) => lookups[`${platform}/${profile}`] ?? {};

@@ -155,6 +155,11 @@ if (githubRepository && githubStatusSha) {
 
 // 5. Trigger EAS workflow with build IDs + update group + filter params for wait
 console.log('\nTriggering EAS Maestro workflow...');
+// The workflow inputs include the Maestro account password; `run` echoes its
+// argv, so silence it rather than rely on the log masker.
+console.log(
+  '> npx eas workflow:run .eas/workflows/e2e-test.yml … (build ids, group, credentials)',
+);
 run(
   'npx',
   [
@@ -185,7 +190,7 @@ run(
     `configuration=${configuration}`,
     '--non-interactive',
   ],
-  { cwd: projectDir },
+  { cwd: projectDir, silent: true },
 );
 
 console.log('\nE2E tests triggered on EAS');

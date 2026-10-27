@@ -101,7 +101,11 @@ export function ensureBuilds({
     const runtime = runtimeFor(platform);
     const reusedBuild = existing(platform, profile, runtime);
     if (reusedBuild) {
-      console.log(`Reusing the existing ${platform} build: ${reusedBuild.id}`);
+      // Name the profile: a preview has both `ios/preview` and
+      // `ios/development-simulator`, and "ios" alone cannot tell them apart.
+      console.log(
+        `Reusing the existing ${platform}/${profile} build: ${reusedBuild.id}`,
+      );
       return { platform, profile, runtime, build: reusedBuild, reused: true };
     }
 

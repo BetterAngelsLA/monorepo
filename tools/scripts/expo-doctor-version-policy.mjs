@@ -15,7 +15,7 @@
  *   - ⚠️ minor / 🔧 patch / ➿ other -> WARN (usually "Expo released an update";
  *                                    must not fail CI)
  *
- * Pure module: no child_process, no fs, no deps. Tested with `node --test`.
+ * Pure module: no child_process, no fs, no npm deps. Tested with `node --test`.
  */
 import { parseJsonOutput } from './cli-json.mjs';
 
