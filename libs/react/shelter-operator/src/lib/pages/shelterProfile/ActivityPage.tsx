@@ -10,9 +10,6 @@ export function ShelterActivityPage() {
   }
 
   return (
-    <ObjectAuditLog
-      targetType={AuditTargetType.Shelter}
-      objectId={shelterId}
-    />
+    <ObjectAuditLog targetType={AuditTargetType.Shelter} objectId={shelterId} />
   );
 }
