@@ -141,24 +141,19 @@ jobs:
         run: |
           cd apps/betterangels
           eas build:view 16c3ca8c-c448-45b6-9676-353c302b4141 --json > /tmp/b.json 2>&1 || true
-          node -e '
+          url=$(node -e '
             const fs = require("fs");
             const raw = fs.readFileSync("/tmp/b.json", "utf8");
             const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
             const b = JSON.parse(raw.slice(s, e + 1));
-            console.log("status:", b.status);
-            const files = b.logFiles || [];
-            console.log("logFiles:", JSON.stringify(files).slice(0, 400));
-            for (const f of files) {
-              const url = typeof f === "string" ? f : f.url;
-              if (url) console.log(url);
-            }
-          ' > /tmp/urls
-          cat /tmp/urls
-          grep -E '^https?://' /tmp/urls | while read -r url; do
-            echo "=== $url"
-            curl -sSL "$url" | tail -60
-          done
+            const f = (b.logFiles || [])[0];
+            console.log(typeof f === "string" ? f : (f && f.url) || "");
+          ')
+          echo "log url length: ${#url}"
+          code=$(curl -sS -L --compressed -o /tmp/phase.log -w '%{http_code}' "$url")
+          echo "http=$code bytes=$(wc -c < /tmp/phase.log)"
+          echo '--- tail of the build log ---'
+          tail -60 /tmp/phase.log
 
           # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t eas-update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
