@@ -1,0 +1,52 @@
+name: 🩺 Debug EAS builds
+
+# Temporary: dumps recent build statuses and the failure message of one build.
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: 'EAS build id to inspect'
+        required: true
+        type: string
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v7
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+
+      - name: 🥟 Install EAS CLI
+        run: npm install -g eas-cli@24.8.0
+
+      - name: 🔍 Recent builds
+        working-directory: apps/betterangels
+        run: |
+          eas build:list --platform all --limit 8 --json --non-interactive \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const b=JSON.parse(s.slice(s.indexOf("["),s.lastIndexOf("]")+1));for(const x of b)console.log([x.id,x.status,x.platform,x.buildProfile,x.runtime?.version??"-",x.gitCommitHash?.slice(0,9)].join(" "))})'
+
+      - name: 🧾 Build detail
+        working-directory: apps/betterangels
+        run: |
+          set +e
+          eas build:view "${{ inputs.build_id }}" --json --non-interactive > /tmp/build.json 2>&1
+          cat /tmp/build.json
+          node -e '
+            const fs=require("fs");
+            const raw=fs.readFileSync("/tmp/build.json","utf8");
+            const start=raw.indexOf("{"), end=raw.lastIndexOf("}");
+            if(start<0){process.exit(0)}
+            try{
+              const b=JSON.parse(raw.slice(start,end+1));
+              console.log("STATUS", b.status);
+              console.log("ERROR", JSON.stringify(b.error ?? null));
+              console.log("LOGS", JSON.stringify(b.logFiles ?? null));
+            }catch(e){console.log("parse failed", e.message)}
+          '
