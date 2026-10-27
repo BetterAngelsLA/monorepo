@@ -39,6 +39,12 @@ jobs:
         with:
           node-version: 22.21.1
 
+      - name: 📦 Install dependencies
+        # EAS reads app.config.js to resolve the project, and that imports dotenv.
+        run: |
+          corepack enable
+          yarn install --immutable
+
       - name: 🥟 Install EAS CLI
         run: npm install -g eas-cli@24.8.0
 
@@ -58,9 +64,9 @@ jobs:
               return 0
             fi
             for target in development production; do
-              if out=$(eas env:create --name "$name" --value "$value" \
+              if out=$(eas env:set --name "$name" --value "$value" \
                 --environment "$target" --visibility sensitive \
-                --scope project --non-interactive --force 2>&1); then
+                --scope project --non-interactive 2>&1); then
                 echo "✅ $name → $target"
               else
                 echo "❌ $name → $target"
