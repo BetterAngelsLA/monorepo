@@ -1,11 +1,12 @@
 import type { AuditTargetType } from '@monorepo/ba-platform/types';
 import { LoadingView } from '@monorepo/react/components';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useObjectAuditLog, type ObjectAuditLogFilters } from '../../hooks';
 import { Button } from '../base-ui/buttons';
 import { Text } from '../base-ui/text/text';
 import { AuditActionRow } from './AuditActionRow';
 import { AuditFilterBar } from './AuditFilterBar';
+import { hasRenderableContent } from './auditChanges';
 
 type ObjectAuditLogProps = {
   targetType: AuditTargetType;
@@ -19,8 +20,22 @@ type ObjectAuditLogProps = {
  */
 export function ObjectAuditLog({ targetType, objectId }: ObjectAuditLogProps) {
   const [filters, setFilters] = useState<ObjectAuditLogFilters>({});
-  const { actions, loading, loadingMore, error, hasMore, loadMore } =
-    useObjectAuditLog({ targetType, objectId, ...filters });
+  const {
+    actions,
+    loading,
+    loadingMore,
+    error,
+    loadMoreError,
+    hasMore,
+    loadMore,
+  } = useObjectAuditLog({ targetType, objectId, ...filters });
+
+  // An action with nothing to render (e.g. an unchanged schedule save netted to
+  // zero events) is a blank card; drop it from the list.
+  const visibleActions = useMemo(
+    () => actions.filter(hasRenderableContent),
+    [actions],
+  );
 
   const handleFilterChange = useCallback((next: ObjectAuditLogFilters) => {
     setFilters(next);
@@ -38,23 +53,30 @@ export function ObjectAuditLog({ targetType, objectId }: ObjectAuditLogProps) {
             Unable to load activity. Please try again.
           </Text>
         </div>
-      ) : actions.length === 0 ? (
-        <div className="py-16 text-center">
-          <Text variant="body" textColor="text-neutral-50">
-            No activity yet.
-          </Text>
-        </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {actions.map((action, index) => (
+          {visibleActions.map((action, index) => (
             <AuditActionRow
               key={`${action.timestamp}-${index}`}
               action={action}
             />
           ))}
 
+          {visibleActions.length === 0 && !hasMore && (
+            <div className="py-16 text-center">
+              <Text variant="body" textColor="text-neutral-50">
+                No activity yet.
+              </Text>
+            </div>
+          )}
+
           {hasMore && (
-            <div className="flex justify-center pt-2">
+            <div className="flex flex-col items-center gap-2 pt-2">
+              {loadMoreError && (
+                <Text variant="caption" textColor="text-red-700">
+                  Unable to load more activity.
+                </Text>
+              )}
               <Button
                 variant="primary"
                 color="blue"
@@ -63,7 +85,11 @@ export function ObjectAuditLog({ targetType, objectId }: ObjectAuditLogProps) {
                   void loadMore();
                 }}
               >
-                {loadingMore ? 'Loading...' : 'Load more'}
+                {loadingMore
+                  ? 'Loading...'
+                  : loadMoreError
+                    ? 'Retry'
+                    : 'Load more'}
               </Button>
             </div>
           )}

@@ -57,7 +57,7 @@ export type ParseFieldChangesOptions = {
  * `parseFieldChanges` drops the rest.
  */
 export function displayOptionsForAction(
-  action?: string
+  action?: string,
 ): ParseFieldChangesOptions {
   if (action?.startsWith(SCHEDULE_ACTION_PREFIX)) {
     return {
@@ -124,7 +124,7 @@ function isArrayPair(value: unknown): value is [unknown[], unknown[]] {
 
 export function parseFieldChanges(
   value: unknown,
-  options: ParseFieldChangesOptions = {}
+  options: ParseFieldChangesOptions = {},
 ): AuditChange[] {
   const {
     pinnedFields = [],
@@ -137,7 +137,7 @@ export function parseFieldChanges(
 
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     for (const [field, raw] of Object.entries(
-      value as Record<string, unknown>
+      value as Record<string, unknown>,
     )) {
       if (HIDDEN_FIELDS.has(field)) {
         continue;
@@ -158,7 +158,11 @@ export function parseFieldChanges(
 
       const [oldValue, newValue] = Array.isArray(raw) ? raw : [undefined, raw];
 
-      if (dropWhenBothFalsey.includes(field) && isFalsey(oldValue) && isFalsey(newValue)) {
+      if (
+        dropWhenBothFalsey.includes(field) &&
+        isFalsey(oldValue) &&
+        isFalsey(newValue)
+      ) {
         continue;
       }
 
@@ -195,4 +199,52 @@ export function parseFieldChanges(
   const rest = parsed.filter((change) => !pinned.has(change.field));
 
   return [...injected, ...pinnedChanges, ...rest];
+}
+
+/** The event action that drives display options for an action's merged changes. */
+export function subjectActionFor(action: {
+  events: ReadonlyArray<{ action: string }>;
+}): string | undefined {
+  return action.events.find((event) =>
+    event.action.startsWith(SCHEDULE_ACTION_PREFIX),
+  )?.action;
+}
+
+type RenderableAction = {
+  truncated?: boolean;
+  fieldChanges?: unknown;
+  events: ReadonlyArray<{
+    action: string;
+    summary?: string | null;
+    fieldChanges?: unknown;
+  }>;
+};
+
+function rendersChanges(value: unknown, action?: string): boolean {
+  return parseFieldChanges(value, displayOptionsForAction(action)).length > 0;
+}
+
+/**
+ * Whether an action has anything to show.
+ *
+ * Netting can leave an action with no renderable content (an unchanged
+ * schedule save leaves only a no-op `shelter.update` whose changes are
+ * mechanical), so the list hides those entries instead of rendering an empty
+ * card. A `null` event diff is kept: it means "no diff base", not "no change".
+ */
+export function hasRenderableContent(action: RenderableAction): boolean {
+  if (rendersChanges(action.fieldChanges, subjectActionFor(action))) {
+    return true;
+  }
+
+  if (action.truncated) {
+    return true;
+  }
+
+  return action.events.some(
+    (event) =>
+      Boolean(event.summary) ||
+      event.fieldChanges === null ||
+      rendersChanges(event.fieldChanges, event.action),
+  );
 }

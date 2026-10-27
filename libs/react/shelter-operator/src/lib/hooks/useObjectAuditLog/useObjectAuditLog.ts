@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import {
   ObjectAuditLogDocument,
@@ -85,37 +85,64 @@ export function useObjectAuditLog({
   const hasMore = data?.objectAuditLog.hasNextPage ?? false;
   const endCursor = data?.objectAuditLog.endCursor ?? null;
 
+  const [pageError, setPageError] = useState<Error | null>(null);
+  const inFlight = useRef(false);
+
   const loadMore = useCallback(async () => {
-    if (!endCursor) {
+    // Guard against a double click appending the same page twice, and against a
+    // retry racing the request that failed.
+    if (!endCursor || inFlight.current) {
       return;
     }
 
-    await fetchMore({
-      variables: { ...variables, after: endCursor },
-      updateQuery: (previous, { fetchMoreResult }) => {
-        if (!fetchMoreResult) {
-          return previous;
-        }
+    inFlight.current = true;
+    setPageError(null);
 
-        return {
-          ...previous,
-          objectAuditLog: {
-            ...fetchMoreResult.objectAuditLog,
-            results: [
-              ...previous.objectAuditLog.results,
-              ...fetchMoreResult.objectAuditLog.results,
-            ],
-          },
-        };
-      },
-    });
+    try {
+      await fetchMore({
+        variables: { ...variables, after: endCursor },
+        updateQuery: (previous, { fetchMoreResult }) => {
+          if (!fetchMoreResult) {
+            return previous;
+          }
+
+          return {
+            ...previous,
+            objectAuditLog: {
+              ...fetchMoreResult.objectAuditLog,
+              results: [
+                ...previous.objectAuditLog.results,
+                ...fetchMoreResult.objectAuditLog.results,
+              ],
+            },
+          };
+        },
+      });
+    } catch (error) {
+      // Apollo does not set the query-level ``error`` for a failed ``fetchMore``,
+      // so a page failure is otherwise silent.
+      setPageError(
+        error instanceof Error
+          ? error
+          : new Error('Unable to load more activity.'),
+      );
+    } finally {
+      inFlight.current = false;
+    }
   }, [endCursor, fetchMore, variables]);
+
+  // A filter change starts a new page sequence; a failure from the previous
+  // variables must not stick to the new list.
+  useEffect(() => {
+    setPageError(null);
+  }, [variables]);
 
   return {
     actions,
     loading: loading && !data,
     loadingMore: loading && Boolean(data),
     error,
+    loadMoreError: pageError,
     hasMore,
     loadMore,
   };

@@ -24,6 +24,7 @@ function makeAction(overrides: Partial<AuditAction>): AuditAction {
     timestamp: '2026-07-01T12:00:00Z',
     actor: 'Ada Lovelace',
     summary: 'Ada Lovelace created bed 7',
+    truncated: false,
     fieldChanges: {},
     events: [],
     ...overrides,
@@ -102,5 +103,19 @@ describe('AuditActionRow', () => {
     expect(
       screen.getByRole('button', { name: /hide details/i }),
     ).not.toBeNull();
+  });
+
+  it('flags an action whose event list was truncated', () => {
+    render(
+      <AuditActionRow
+        action={makeAction({
+          truncated: true,
+          fieldChanges: { name: ['Bed A', 'Bed B'] },
+          events: [makeEvent({ fieldChanges: { name: ['Bed A', 'Bed B'] } })],
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Some events are not shown.')).not.toBeNull();
   });
 });

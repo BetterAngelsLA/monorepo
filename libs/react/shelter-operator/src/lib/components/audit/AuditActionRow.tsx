@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { AuditAction } from '../../hooks';
 import { AuditEventRow } from './AuditEventRow';
 import { AuditChangesView } from './AuditChangesView';
+import { subjectActionFor } from './auditChanges';
 import {
   formatAuditTimestamp,
   formatAuditTimestampAbsolute,
@@ -17,9 +18,7 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
 
   // The merged action-level changes belong to one subject; use its action so
   // schedule actions get day/type pinned and no-op fields dropped.
-  const subjectAction = action.events.find((event) =>
-    event.action.startsWith('shelter.schedule'),
-  )?.action;
+  const subjectAction = subjectActionFor(action);
 
   // Summarized events (§32) are one-liners, not field changes: a shelter action
   // that only touches a bed would otherwise render an empty card body.
@@ -78,6 +77,16 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
         action={subjectAction}
         className="mt-3"
       />
+
+      {action.truncated && (
+        <Text
+          variant="caption"
+          textColor="text-neutral-50"
+          className="mt-2 block"
+        >
+          Some events are not shown.
+        </Text>
+      )}
 
       {expanded && hasEvents && (
         <div className="mt-2 flex flex-col">

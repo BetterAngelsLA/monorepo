@@ -18,6 +18,7 @@ query ObjectAuditLog(
       timestamp
       actor
       summary
+      truncated
       fieldChanges
       events {
         timestamp
