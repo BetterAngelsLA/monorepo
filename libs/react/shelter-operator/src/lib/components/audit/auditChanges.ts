@@ -4,6 +4,10 @@
  * The backend emits two shapes:
  *   - scalar change:  { "field": [old, new] }
  *   - multi-value:    { "field": [[removed...], [added...]] }
+ *
+ * Keys are display names (`start time`, not `start_time`), and every entry is a
+ * real change: unchanged identity for synthesized events arrives separately as
+ * `AuditEvent.context`, never in `fieldChanges`.
  */
 
 export type AuditScalarChange = {
@@ -34,16 +38,14 @@ const ACTION_VERBS = new Set(['add', 'remove', 'update', 'status_change']);
 const HIDDEN_FIELDS = new Set([
   'id',
   'start_cycle_minutes',
+  'start cycle minutes',
   'duration_minutes',
+  'duration minutes',
 ]);
 
 const SCHEDULE_ACTION_PREFIX = 'shelter.schedule';
 
 export type ParseFieldChangesOptions = {
-  /** Fields always shown as context, even when unchanged. */
-  pinnedFields?: readonly string[];
-  /** Fallback value for a pinned field missing from the payload. */
-  pinnedFallbacks?: Record<string, string>;
   /** Fields dropped when both the old and new values are falsey. */
   dropWhenBothFalsey?: readonly string[];
 };
@@ -51,20 +53,16 @@ export type ParseFieldChangesOptions = {
 /**
  * Display rules keyed off the event's action.
  *
- * Schedule rows are saved via full replacement (delete + bulk_create), so their
- * merged `fieldChanges` carry every populated column as a no-op pair. Pinning
- * `day`/`schedule_type` keeps the row identifiable and the no-op filter in
- * `parseFieldChanges` drops the rest.
+ * A schedule create/delete carries every populated column, including the
+ * `is_exception` default as ``[null, false]`` — that is not a change, so drop it.
+ * The backend sends the field under its display name; the raw name is kept too so
+ * the rule survives either keying.
  */
 export function displayOptionsForAction(
   action?: string,
 ): ParseFieldChangesOptions {
   if (action?.startsWith(SCHEDULE_ACTION_PREFIX)) {
-    return {
-      pinnedFields: ['day', 'schedule_type'],
-      pinnedFallbacks: { day: 'Every day' },
-      dropWhenBothFalsey: ['is_exception'],
-    };
+    return { dropWhenBothFalsey: ['is_exception', 'is exception'] };
   }
 
   return {};
@@ -126,12 +124,7 @@ export function parseFieldChanges(
   value: unknown,
   options: ParseFieldChangesOptions = {},
 ): AuditChange[] {
-  const {
-    pinnedFields = [],
-    pinnedFallbacks = {},
-    dropWhenBothFalsey = [],
-  } = options;
-  const pinned = new Set(pinnedFields);
+  const { dropWhenBothFalsey = [] } = options;
 
   const parsed: AuditChange[] = [];
 
@@ -166,9 +159,8 @@ export function parseFieldChanges(
         continue;
       }
 
-      // Only surface fields the update actually touched; pinned context
-      // fields are kept even when unchanged.
-      if (!pinned.has(field) && oldValue === newValue) {
+      // Only surface fields the write actually changed.
+      if (oldValue === newValue) {
         continue;
       }
 
@@ -176,29 +168,7 @@ export function parseFieldChanges(
     }
   }
 
-  if (pinnedFields.length === 0) {
-    return parsed;
-  }
-
-  const present = new Set(parsed.map((change) => change.field));
-  const injected: AuditChange[] = pinnedFields
-    .filter((field) => !present.has(field))
-    .map((field) => {
-      const fallback = pinnedFallbacks[field];
-
-      return {
-        kind: 'scalar',
-        field,
-        label: humanizeFieldName(field),
-        oldValue: fallback,
-        newValue: fallback,
-      };
-    });
-
-  const pinnedChanges = parsed.filter((change) => pinned.has(change.field));
-  const rest = parsed.filter((change) => !pinned.has(change.field));
-
-  return [...injected, ...pinnedChanges, ...rest];
+  return parsed;
 }
 
 /** The event action that drives display options for an action's merged changes. */

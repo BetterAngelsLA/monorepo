@@ -34,6 +34,7 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
     targetType: AuditTargetType.Bed,
     targetId: '7',
     summary: null,
+    context: null,
     fieldChanges: { name: ['Bed A', 'Bed B'] },
     ...overrides,
   };

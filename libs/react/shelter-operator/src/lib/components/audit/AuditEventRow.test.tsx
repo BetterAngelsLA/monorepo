@@ -13,6 +13,7 @@ function makeEvent(overrides: Partial<AuditEvent>): AuditEvent {
     targetType: AuditTargetType.Bed,
     targetId: '7',
     fieldChanges: {},
+    context: null,
     summary: null,
     ...overrides,
   } as AuditEvent;
@@ -34,6 +35,39 @@ describe('AuditEventRow', () => {
     expect(screen.getByText('Updated Bed A (7)')).not.toBeNull();
     expect(screen.queryByText('Bed B')).toBeNull();
     expect(screen.queryByText('Name:')).toBeNull();
+  });
+
+  it('renders the unchanged slot context of a netted schedule change', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          action: 'shelter.schedule.update',
+          context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+          fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
+    expect(screen.getByText('Start time:')).not.toBeNull();
+  });
+
+  it('renders "Every day" when the slot context has no day', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          action: 'shelter.schedule.update',
+          context: { day: null, 'schedule type': 'Operating Hours' },
+          fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText('Day: Every day \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
   });
 
   it('renders field changes when there is no summary', () => {

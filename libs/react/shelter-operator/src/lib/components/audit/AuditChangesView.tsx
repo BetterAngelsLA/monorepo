@@ -31,24 +31,6 @@ function renderChange(change: AuditChange): ReactNode {
     );
   }
 
-  // Pinned context fields (e.g. Day/Type) render as a single value when the
-  // update did not change them.
-  if (change.oldValue === change.newValue) {
-    return (
-      <div
-        key={change.field}
-        className="flex flex-wrap items-baseline gap-x-1.5 py-0.5"
-      >
-        <Text variant="caption" textColor="text-neutral-50">
-          {change.label}:
-        </Text>
-        <Text variant="caption" textColor="text-neutral-20">
-          {formatValue(change.newValue)}
-        </Text>
-      </div>
-    );
-  }
-
   return (
     <div
       key={change.field}

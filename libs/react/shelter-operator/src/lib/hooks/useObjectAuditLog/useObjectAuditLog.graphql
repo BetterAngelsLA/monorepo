@@ -28,6 +28,7 @@ query ObjectAuditLog(
         targetType
         targetId
         summary
+        context
         fieldChanges
       }
     }

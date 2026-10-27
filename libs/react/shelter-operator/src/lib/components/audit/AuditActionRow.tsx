@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { AuditAction } from '../../hooks';
 import { AuditEventRow } from './AuditEventRow';
 import { AuditChangesView } from './AuditChangesView';
+import { AuditEventContext } from './AuditEventContext';
 import { subjectActionFor } from './auditChanges';
 import {
   formatAuditTimestamp,
@@ -16,9 +17,20 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
   const [expanded, setExpanded] = useState(false);
   const hasEvents = action.events.length > 0;
 
-  // The merged action-level changes belong to one subject; use its action so
-  // schedule actions get day/type pinned and no-op fields dropped.
+  // The merged action-level changes belong to one subject; use its action for
+  // schedule-specific display options.
   const subjectAction = subjectActionFor(action);
+
+  // A netted schedule change carries the slot's unchanged identity (day/type) in
+  // `context`. One action can cover several slots (Mon–Fri hours), so show each
+  // distinct context rather than only the first.
+  const contexts = Array.from(
+    new Map(
+      action.events
+        .filter((event) => event.context)
+        .map((event) => [JSON.stringify(event.context), event.context]),
+    ).values(),
+  );
 
   // Summarized events (§32) are one-liners, not field changes: a shelter action
   // that only touches a bed would otherwise render an empty card body.
@@ -68,6 +80,17 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
             >
               {summary}
             </Text>
+          ))}
+        </div>
+      )}
+
+      {contexts.length > 0 && (
+        <div className="mt-3 flex flex-col gap-1">
+          {contexts.map((context) => (
+            <AuditEventContext
+              key={JSON.stringify(context)}
+              context={context}
+            />
           ))}
         </div>
       )}

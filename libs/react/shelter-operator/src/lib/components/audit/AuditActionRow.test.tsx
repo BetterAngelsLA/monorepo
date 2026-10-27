@@ -13,6 +13,7 @@ function makeEvent(overrides: Partial<AuditEvent>): AuditEvent {
     targetType: AuditTargetType.Bed,
     targetId: '7',
     fieldChanges: {},
+    context: null,
     summary: null,
     ...overrides,
   } as AuditEvent;
@@ -85,6 +86,55 @@ describe('AuditActionRow', () => {
 
     expect(screen.getByText('Name:')).not.toBeNull();
     expect(screen.getByText('Shelter B')).not.toBeNull();
+  });
+
+  it('shows the schedule slot context on the collapsed card', () => {
+    render(
+      <AuditActionRow
+        action={makeAction({
+          fieldChanges: { 'Schedule 7 start time': ['09:00:00', '10:00:00'] },
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.update',
+              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
+  });
+
+  it('shows a line per slot when an action nets several schedule slots', () => {
+    render(
+      <AuditActionRow
+        action={makeAction({
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.update',
+              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+            }),
+            makeEvent({
+              action: 'shelter.schedule.update',
+              context: { day: 'Tuesday', 'schedule type': 'Operating Hours' },
+              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
+    expect(
+      screen.getByText('Day: Tuesday \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
   });
 
   it('keeps event rows in the expanded details', () => {

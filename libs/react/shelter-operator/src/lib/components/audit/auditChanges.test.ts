@@ -6,23 +6,21 @@ import {
 } from './auditChanges';
 
 describe('parseFieldChanges', () => {
-  it('pins the every-day fallback when the backend omits a null day', () => {
+  it('drops the falsey is_exception default a schedule create carries', () => {
     const changes = parseFieldChanges(
       {
-        start_time: ['09:00:00', '10:00:00'],
-        end_time: ['17:00:00', '18:00:00'],
+        'is exception': [null, false],
+        'start time': ['09:00:00', '10:00:00'],
+        'end time': ['17:00:00', '18:00:00'],
       },
-      displayOptionsForAction('shelter.schedule.update'),
+      displayOptionsForAction('shelter.schedule.add'),
     );
 
-    const day = changes.find((change) => change.field === 'day');
-    expect(day).toMatchObject({
-      oldValue: 'Every day',
-      newValue: 'Every day',
-    });
-
-    const start = changes.find((change) => change.field === 'start_time');
-    expect(start).toMatchObject({
+    expect(changes.map((change) => change.field)).toEqual([
+      'start time',
+      'end time',
+    ]);
+    expect(changes[0]).toMatchObject({
       oldValue: '09:00:00',
       newValue: '10:00:00',
     });
@@ -31,6 +29,8 @@ describe('parseFieldChanges', () => {
   it('drops mechanical/unchanged fields and keeps multi-value changes', () => {
     const changes = parseFieldChanges({
       id: [1, 2],
+      'start cycle minutes': [60, 120],
+      'duration minutes': [90, 120],
       start_cycle_minutes: [60, 120],
       name: ['Same', 'Same'],
       demographics: [['Women'], ['Men']],
