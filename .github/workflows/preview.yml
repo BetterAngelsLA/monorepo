@@ -15,9 +15,13 @@ env:
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
 
 jobs:
-  # Web preview + its E2E suite. Kept apart from the mobile job because the EAS
-  # targets rewrite the workspace (see Mobile below) and everything here needs a
-  # pristine install.
+  # One job, in dependency order: web deploy -> its E2E -> mobile. The mobile step
+  # has to be last: `eas-build`/`eas-update` run `copy-lockfile`
+  # (tools/scripts/eas-build-pre-install.mjs), which rewrites the workspace for
+  # EAS Build (root package.json becomes a single-app workspace). A later
+  # `yarn install` — which `sync-deps` triggers — then prunes the other projects
+  # and the web export dies, so everything that needs the pristine install runs
+  # above it.
   Preview:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
@@ -29,6 +33,10 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # A PR preview builds one platform (an installable APK) instead of paying
+      # for android + ios + an ios simulator binary on every push; the EAS Update
+      # is still published for every platform. Also drives the PR comment columns.
+      EAS_BUILD_PLATFORMS: android
       VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
       VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
       EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
@@ -110,81 +118,6 @@ jobs:
           yarn playwright install chromium
           yarn nx run-many -t e2e --projects=shelter-e2e --configuration preview --output-style=stream
 
-      - name: Save Nx cache
-        if: always() && !cancelled()
-        continue-on-error: true
-        uses: actions/cache/save@v6
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data/*.db*
-          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - name: 📎 Upload shelter-e2e report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
-          path: dist/.playwright/apps/shelter-e2e
-          if-no-files-found: ignore
-          retention-days: 7
-
-  # Mobile preview: one EAS Build per fingerprint, the EAS Update for the branch,
-  # and the PR comment linking both.
-  #
-  # Its own job on purpose: `eas-build`/`eas-update` run `copy-lockfile`
-  # (tools/scripts/eas-build-pre-install.mjs), which rewrites the root
-  # package.json into a single-package workspace so EAS Build's `yarn install`
-  # can resolve the app. That mutation is what EAS needs and is exactly what any
-  # later `nx` target in the same workspace must not see.
-  Mobile:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-    runs-on: ubuntu-latest
-    environment: preview
-    permissions:
-      contents: read
-      pull-requests: write
-    env:
-      PR_NUMBER: ${{ github.event.pull_request.number }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      # Builds are the expensive part of this pipeline, so a PR preview builds a
-      # single platform — an APK anyone can install — rather than paying for
-      # android + ios + an ios simulator binary on every push. The EAS Update is
-      # still published for every platform. Also drives the PR comment's columns.
-      EAS_BUILD_PLATFORMS: android
-      EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
-      EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
-      EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
-      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
-      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
-    steps:
-      - name: 🏗 Check out repo
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: 🔧 Configure NX SHAs
-        uses: nrwl/nx-set-shas@v5
-
-      - name: 🔧 Set Environment Variables
-        env:
-          RAW_BRANCH_NAME: ${{ github.head_ref }}
-        run: |
-          BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
-          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
-
-      - name: 🏗 Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.21.1
-          cache: yarn
-
-      - name: 📦 Install dependencies
-        run: |
-          corepack enable
-          yarn install --immutable
-
       - name: 🥟 Install EAS CLI
         run: npm install -g eas-cli@24.8.0
 
@@ -206,8 +139,9 @@ jobs:
           # (copy-lockfile pins the star deps and declares the app the single
           # workspace), and the runtime it sends is computed from that state. Do
           # the same here, or we look up and then build a runtime the build will
-          # never produce. Nothing after this point needs the pristine workspace:
-          # the rest of the job is EAS calls.
+          # never produce. Everything that needs the pristine install — the web
+          # export and the E2E suite — has already run; what follows is EAS calls
+          # and archiving.
           yarn nx run betterangels:copy-lockfile
 
           # The resolver prints the whole fingerprint, so take just the runtime.
@@ -253,3 +187,24 @@ jobs:
 
           # Mobile preview links (build, update, QR) on the PR.
           yarn nx run betterangels:preview-comment
+
+      # Neither of these touches the workspace; they only archive what the E2E
+      # step produced, which is why they can follow the mobile work.
+      - name: Save Nx cache
+        if: always() && !cancelled()
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: 📎 Upload shelter-e2e report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
+          path: dist/.playwright/apps/shelter-e2e
+          if-no-files-found: ignore
+          retention-days: 7
