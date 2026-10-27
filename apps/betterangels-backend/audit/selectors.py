@@ -675,7 +675,13 @@ def _schedule_events(
     Netting is scoped to the *time window*: an edit that changes an identity field
     (dates, condition, demographic, exception flag, schedule type, day) is still
     rendered as a DELETE plus an INSERT, because pairing across identities could
-    merge two unrelated slots.
+    merge two unrelated slots. A paired UPDATE is emitted only for the
+    unambiguous case -- exactly one residual remove and one residual add for the
+    identity -- because a replacement re-creates every row and more than one
+    residual has no stable provenance to pair on; those rows render as genuine
+    DELETE/INSERT events. *hidden_fields* filters the synthesized diff, its
+    context and the snapshot alike, so a withheld value cannot reach any output
+    shape (§18).
 
     *max_events* is the remaining per-action event budget (the same
     ``MAX_EVENTS_PER_ACTION`` counter the caller uses): netting shares it rather
@@ -750,29 +756,31 @@ def _schedule_events(
         removes = removes_by_identity.get(ident, [])
 
         # First pair slots whose times are identical: the replacement re-created
-        # them unchanged, so they are not a change at all.
+        # them unchanged, so they are not a change at all. The removes are bucketed
+        # by their time window, so this match is a dict lookup; rows in a bucket are
+        # interchangeable (they carry identical times).
+        unchanged: dict[tuple[Any, Any], list[Any]] = defaultdict(list)
+        for rem in removes:
+            rd = rem.pgh_data or {}
+            unchanged[(rd.get("start_time"), rd.get("end_time"))].append(rem)
+
         changed_adds: list[Any] = []
         for add in adds:
             data = add.pgh_data or {}
-            match = next(
-                (
-                    index
-                    for index, rem in enumerate(removes)
-                    if (rem.pgh_data or {}).get("start_time") == data.get("start_time")
-                    and (rem.pgh_data or {}).get("end_time") == data.get("end_time")
-                ),
-                None,
-            )
-            if match is None:
-                changed_adds.append(add)
+            matching = unchanged.get((data.get("start_time"), data.get("end_time")))
+            if matching:
+                matching.pop()
             else:
-                removes.pop(match)
+                changed_adds.append(add)
 
-        # What remains are time edits (or genuine add/remove). Pair by start_time
-        # so multiple slots of the same day/type cannot rotate into false diffs.
-        removes.sort(key=lambda r: str((r.pgh_data or {}).get("start_time")))
-        changed_adds.sort(key=lambda a: str((a.pgh_data or {}).get("start_time")))
-        paired = min(len(removes), len(changed_adds))
+        # Whatever is left are time edits (or genuine add/remove). A full
+        # replacement re-creates every row, so more than one residual add/remove
+        # for an identity has no stable provenance: pairing them positionally
+        # would invent a before/after (two shifted windows can zip into the wrong
+        # pairs). Net only the unambiguous 1:1 case and render the rest as real
+        # DELETE + INSERT events.
+        removes = [rem for bucket in unchanged.values() for rem in bucket]
+        paired = 1 if len(removes) == 1 and len(changed_adds) == 1 else 0
 
         for add, rem in zip(changed_adds[:paired], removes[:paired]):
             data = add.pgh_data or {}
@@ -786,10 +794,14 @@ def _schedule_events(
             ) -> Any:
                 return _render_value(field, value, _fk, _fields, resolver)
 
+            # A withheld field must not reach any output shape, exactly as in
+            # ``_scalar_changes``/``_snapshot`` (§18); the same set filters the
+            # synthesized diff and its context.
+            hidden = (hidden_fields or {}).get(model_label, ())
             diffs = {
                 field: [render(field, old.get(field)), render(field, data.get(field))]
                 for field in ("start_time", "end_time")
-                if old.get(field) != data.get(field)
+                if field not in hidden and old.get(field) != data.get(field)
             }
             if not diffs:
                 continue
@@ -799,8 +811,7 @@ def _schedule_events(
             # happened. A null ``day`` means "every day" (Schedule.day help text)
             # and stays null, so the UI owns that copy.
             context = {
-                "day": render("day", data.get("day")),
-                "schedule_type": render("schedule_type", data.get("schedule_type")),
+                field: render(field, data.get(field)) for field in ("day", "schedule_type") if field not in hidden
             }
             # Render raw attnames to display names at the edge, like every other
             # path (§13): a netted update and an add/remove for the same model must
@@ -810,16 +821,18 @@ def _schedule_events(
                 _render_keys(diffs, model_label),
                 kind="UPDATE",
                 action="shelter.schedule.update",
-                context=_render_keys(context, model_label),
+                context=_render_keys(context, model_label) or None,
             ):
                 return events, action_changes, True
 
         for add in changed_adds[paired:]:  # genuinely new slots
-            if not emit(add, _render_keys(_scalar_changes(add, resolver), add.pgh_obj_model)):
+            hidden = (hidden_fields or {}).get(add.pgh_obj_model, ())
+            if not emit(add, _render_keys(_scalar_changes(add, resolver, hidden), add.pgh_obj_model)):
                 return events, action_changes, True
 
         for rem in removes[paired:]:  # genuinely deleted slots
-            if not emit(rem, _render_keys(_scalar_changes(rem, resolver), rem.pgh_obj_model)):
+            hidden = (hidden_fields or {}).get(rem.pgh_obj_model, ())
+            if not emit(rem, _render_keys(_scalar_changes(rem, resolver, hidden), rem.pgh_obj_model)):
                 return events, action_changes, True
 
     # Identities with removes but no adds: every slot of that shape was deleted.
@@ -827,7 +840,8 @@ def _schedule_events(
         if ident in adds_by_identity:
             continue
         for rem in removes:
-            if not emit(rem, _render_keys(_scalar_changes(rem, resolver), rem.pgh_obj_model)):
+            hidden = (hidden_fields or {}).get(rem.pgh_obj_model, ())
+            if not emit(rem, _render_keys(_scalar_changes(rem, resolver, hidden), rem.pgh_obj_model)):
                 return events, action_changes, True
 
     events.sort(key=lambda event: event.timestamp)

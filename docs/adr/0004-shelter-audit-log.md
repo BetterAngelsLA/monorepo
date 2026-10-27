@@ -1398,6 +1398,14 @@ action-level rollup:
   `start time`/`end time` diffs in `field_changes` and the slot identity in
   `context` (above). Keys are rendered to display names like every other path, so
   a netted update and an add/remove for the same model share one key shape.
+  A paired update is emitted only when the residuals are exactly one remove and
+  one add for that identity: a replacement re-creates every row, so with more
+  residual slots there is no stable provenance and a positional pairing would
+  invent a before/after. Those rows render as genuine `DELETE` + `INSERT`.
+- **Redaction applies to the netted path too.** A field withheld for the caller
+  (§18) is filtered from the synthesized diff, its `context` and its snapshot —
+  and from the add/remove `field_changes` — exactly as `_scalar_changes`/
+  `_snapshot` do for every other row.
 - **Identity edits** (dates, condition, demographic, exception flag, schedule
   type, day) still render as a `DELETE` plus an `INSERT`: pairing across
   identities could merge two unrelated slots, so netting is deliberately scoped

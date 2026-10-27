@@ -1719,6 +1719,73 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
         self.assertEqual(actions[0].events, [])
         self.assertEqual(actions[0].field_changes, {})
 
+    def test_multiple_residual_slots_render_as_delete_and_insert(self) -> None:
+        """No stable provenance across a replacement: only a 1:1 residual nets."""
+        with audit_context(label="seed"):
+            self.shelter.schedules.all().delete()
+            for start, end in ((time(9, 0), time(12, 0)), (time(10, 0), time(11, 0))):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=end,
+                )
+        # Two windows edited in one save; a positional zip used to pair them
+        # across (09:00→09:30, 10:00→10:30) and invent that story.
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            for start, end in ((time(10, 30), time(12, 0)), (time(9, 30), time(11, 0))):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=end,
+                )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(
+            sorted(event.kind for event in actions[0].events),
+            ["DELETE", "DELETE", "INSERT", "INSERT"],
+        )
+        self.assertTrue(all(event.context is None for event in actions[0].events))
+
+    def test_hidden_fields_are_redacted_from_genuine_events(self) -> None:
+        """A withheld raw attname never reaches a schedule add/remove field map (§18)."""
+        with audit_context(user=self.user):
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.TUESDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            hidden_fields={"shelters.Schedule": ("day",)},
+        )
+        event = next(event for event in actions[0].events if event.action == "shelter.schedule.add")
+
+        changes = event.field_changes or {}
+        self.assertNotIn("day", changes)
+        self.assertIn("start time", changes)
+
+    def test_hidden_fields_are_redacted_from_netted_changes_and_context(self) -> None:
+        """The synthesized diff and context honour the same withheld set (§18)."""
+        self._replace_schedules(start=time(10, 0), end=time(18, 0))
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            hidden_fields={"shelters.Schedule": ("start_time", "day")},
+        )
+        event = actions[0].events[0]
+
+        self.assertEqual(set(event.field_changes or {}), {"end time"})
+        self.assertEqual(event.context, {"schedule type": "Operating Hours"})
+
     def test_deleted_slots_keep_delete_events(self) -> None:
         """Removes with no matching add are genuine deletions, not a netted update."""
         with audit_context(user=self.user):
