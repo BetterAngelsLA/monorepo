@@ -72,7 +72,7 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
             }
         }
 
-        expected_query_count = 35
+        expected_query_count = 32
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -103,7 +103,7 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
 
         variables = {"data": {"shelterId": self.shelter.pk, "name": "Room-101"}}
 
-        expected_query_count = 13
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -322,7 +322,7 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
         variables = {"id": str(source.pk)}
 
         # The clone now checks can(ADD) too (create convention, ADR 0001 §2.6).
-        expected_query_count = 35
+        expected_query_count = 32
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 

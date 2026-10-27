@@ -324,7 +324,7 @@ def _notes(
     # Only meaningful against a reference org: in anywhere/object mode there is
     # no "this org" for the others to be other than.
     if org is not None and s is not ALL:
-        other_ids = [pk for pk in s.values_list("scope_org", flat=True) if pk != org.pk]
+        other_ids = [pk for pk in s if pk != org.pk]
         if other_ids:
             from organizations.models import Organization
 

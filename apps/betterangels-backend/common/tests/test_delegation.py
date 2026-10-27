@@ -44,7 +44,8 @@ class DelegationTestCase(TestCase):
 
     def _scoped_orgs(self, user: User, perm: str) -> set[int]:
         """Org ids from ``scopes`` — the union yields ``{"scope_org": id}`` rows."""
-        return {row["scope_org"] for row in scopes(user, perm)}
+        s = scopes(user, perm)
+        return set() if s is ALL else set(s)
 
     def _visible_pks(self, user: User, perm: str) -> list[int]:
         return list(visible(Shelter.objects.all(), user, perm).values_list("pk", flat=True))
@@ -271,8 +272,8 @@ class DelegationTestCase(TestCase):
         user = baker.make(User)
         grant = grant_create(user=user, role=self.shelter_role, scope_org=self.org_b)
         scopes(user, Shelter.perms.VIEW)  # memoizes the decision on the instance
-        self.assertIn("_scope_cache", user.__dict__)
+        self.assertIn("_authority_cache", user.__dict__)
 
         grant_delete(grant=grant)
 
-        self.assertNotIn("_scope_cache", user.__dict__)
+        self.assertNotIn("_authority_cache", user.__dict__)

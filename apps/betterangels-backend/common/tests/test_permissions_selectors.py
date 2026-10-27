@@ -129,7 +129,7 @@ class GrantSelectorsTestCase(TestCase):
         s = scopes(alice, Shelter.perms.VIEW)
 
         self.assertIsNot(s, ALL)
-        self.assertIn("_scope_cache", alice.__dict__)
+        self.assertIn("_authority_cache", alice.__dict__)
         self.assertIs(scopes(alice, Shelter.perms.VIEW), s)
 
     def test_global_tier_check_is_memoized_per_request(self) -> None:
@@ -164,11 +164,11 @@ class GrantSelectorsTestCase(TestCase):
         gso = baker.make(User)
         role_assign(user=gso, role=self.gso_role)
         can_globally(gso, Shelter.perms.VIEW)
-        self.assertIn("_global_tier_cache", gso.__dict__)
+        self.assertIn("_authority_cache", gso.__dict__)
 
         invalidate_scope_cache(gso)
 
-        self.assertNotIn("_global_tier_cache", gso.__dict__)
+        self.assertNotIn("_authority_cache", gso.__dict__)
 
     def test_can_checks_authority_in_an_org(self) -> None:
         alice = baker.make(User)
