@@ -187,6 +187,26 @@ class GrantSelectorsTestCase(TestCase):
         self.assertTrue(can_obj(alice, Shelter.perms.VIEW, self.shelter_a))
         self.assertFalse(can_obj(alice, Shelter.perms.VIEW, self.shelter_b))
 
+    def test_can_obj_ignores_a_stale_cached_parent(self) -> None:
+        """A re-pointed hop is read from the row, not the object graph."""
+        from shelters.models import ContactInfo
+
+        contact = baker.make(ContactInfo, shelter=self.shelter_a, contact_number="2125551212")
+        contact = ContactInfo.objects.select_related("shelter").get(pk=contact.pk)
+        ContactInfo.objects.filter(pk=contact.pk).update(shelter=self.shelter_b)
+
+        role = Role.objects.create(name="Contact Viewer", is_global=False)
+        role.permissions.add(
+            Permission.objects.get(codename=ContactInfo.perms.VIEW.split(".")[1], content_type__app_label="shelters")
+        )
+        alice = baker.make(User)
+        grant_create(user=alice, role=role, scope_org=self.org_a)
+        bob = baker.make(User)
+        grant_create(user=bob, role=role, scope_org=self.org_b)
+
+        self.assertFalse(can_obj(alice, ContactInfo.perms.VIEW, contact))
+        self.assertTrue(can_obj(bob, ContactInfo.perms.VIEW, contact))
+
     def test_can_obj_shared_tier_is_any_holder_anywhere(self) -> None:
         """ClientProfile declares WRITE_SHARED (RFC 0002 #1): can_obj == can_anywhere."""
         from clients.models import ClientProfile

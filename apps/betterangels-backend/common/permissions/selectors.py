@@ -332,23 +332,25 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
     if not issubclass(model, OrgScoped):
         return False
     if model.org_via is not None:
-        # Resolve the row's orgs from the request snapshot instead of asking the
-        # database again: this is the per-row check, so `visible(...).exists()`
-        # here would be one query per object per field.
+        # Resolve single-column org ids from the row and the request snapshot.
+        # A hop (``shelter__organization_id``) needs the parent row, and a cached
+        # relation can be stale after a re-point, so that case reads the row.
         s = scopes(user, perm)
         if s is ALL:
             return True
         if not s:
             return False
         for path in model.org_paths():
-            value: Any = obj
-            for part in path.split("__"):
-                value = getattr(value, part, None)
-                if value is None:
-                    break
-            else:
-                if value in s:
-                    return True
+            parts = path.split("__")
+            if len(parts) > 1:
+                # A hop needs the parent row. A cached relation can be stale
+                # after a re-point (merge, ``queryset.update()``) or absent on a
+                # row built from the FK id, so read the current row instead of
+                # trusting the object graph.
+                return visible(model._base_manager.filter(pk=obj.pk), user, perm).exists()
+            value = getattr(obj, parts[0], None)
+            if value is not None and value in s:
+                return True
         return False
     if model.write_tier == WRITE_SHARED:
         return can_anywhere(user, perm)
