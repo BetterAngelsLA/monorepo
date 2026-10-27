@@ -120,6 +120,9 @@ describe('ObjectAuditLog', () => {
   });
 
   it('keeps the loaded rows and offers a retry when loading more fails', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
     const failingPage = {
       request: {
         query: ObjectAuditLogDocument,
@@ -136,6 +139,9 @@ describe('ObjectAuditLog', () => {
     await screen.findByText('Unable to load more activity.');
     expect(screen.getByText('Name:')).not.toBeNull();
     expect(screen.getByRole('button', { name: /retry/i })).not.toBeNull();
+    // The actual error is logged; the user only sees the generic message.
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 
   it('does not append the same page twice on a double click', async () => {

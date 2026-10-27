@@ -1,5 +1,6 @@
 import type { AuditTargetType } from '@monorepo/ba-platform/types';
 import { LoadingView } from '@monorepo/react/components';
+import { mergeCss } from '@monorepo/react/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { useObjectAuditLog, type ObjectAuditLogFilters } from '../../hooks';
 import { Button } from '../base-ui/buttons';
@@ -11,6 +12,7 @@ import { hasRenderableContent } from './auditChanges';
 type ObjectAuditLogProps = {
   targetType: AuditTargetType;
   objectId: string;
+  className?: string;
 };
 
 /**
@@ -18,7 +20,11 @@ type ObjectAuditLogProps = {
  * can be mounted for shelters, beds, and rooms. Bed/Room writes appear on the
  * shelter log as one-line summaries; their own logs carry the detail.
  */
-export function ObjectAuditLog({ targetType, objectId }: ObjectAuditLogProps) {
+export function ObjectAuditLog({
+  targetType,
+  objectId,
+  className,
+}: ObjectAuditLogProps) {
   const [filters, setFilters] = useState<ObjectAuditLogFilters>({});
   const {
     actions,
@@ -41,60 +47,72 @@ export function ObjectAuditLog({ targetType, objectId }: ObjectAuditLogProps) {
     setFilters(next);
   }, []);
 
-  return (
-    <div className="flex flex-col gap-4">
-      <AuditFilterBar onChange={handleFilterChange} />
+  const renderContent = () => {
+    if (loading) {
+      return <LoadingView className="py-16" />;
+    }
 
-      {loading ? (
-        <LoadingView className="py-16" />
-      ) : error ? (
+    if (error) {
+      return (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
           <Text variant="body" textColor="text-red-700">
             Unable to load activity. Please try again.
           </Text>
         </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {visibleActions.map((action, index) => (
-            <AuditActionRow
-              key={`${action.timestamp}-${index}`}
-              action={action}
-            />
-          ))}
+      );
+    }
 
-          {visibleActions.length === 0 && !hasMore && (
-            <div className="py-16 text-center">
-              <Text variant="body" textColor="text-neutral-50">
-                No activity yet.
+    let loadMoreLabel = 'Load more';
+    if (loadingMore) {
+      loadMoreLabel = 'Loading...';
+    } else if (loadMoreError) {
+      loadMoreLabel = 'Retry';
+    }
+
+    return (
+      <div className="flex flex-col gap-3">
+        {visibleActions.map((action, index) => (
+          <AuditActionRow
+            key={`${action.timestamp}-${index}`}
+            action={action}
+          />
+        ))}
+
+        {visibleActions.length === 0 && !hasMore && (
+          <div className="py-16 text-center">
+            <Text variant="body" textColor="text-neutral-50">
+              No activity yet.
+            </Text>
+          </div>
+        )}
+
+        {hasMore && (
+          <div className="flex flex-col items-center gap-2 pt-2">
+            {loadMoreError && (
+              <Text variant="caption" textColor="text-red-700">
+                Unable to load more activity.
               </Text>
-            </div>
-          )}
+            )}
+            <Button
+              variant="primary"
+              color="blue"
+              disabled={loadingMore}
+              onClick={() => {
+                void loadMore();
+              }}
+            >
+              {loadMoreLabel}
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
-          {hasMore && (
-            <div className="flex flex-col items-center gap-2 pt-2">
-              {loadMoreError && (
-                <Text variant="caption" textColor="text-red-700">
-                  Unable to load more activity.
-                </Text>
-              )}
-              <Button
-                variant="primary"
-                color="blue"
-                disabled={loadingMore}
-                onClick={() => {
-                  void loadMore();
-                }}
-              >
-                {loadingMore
-                  ? 'Loading...'
-                  : loadMoreError
-                    ? 'Retry'
-                    : 'Load more'}
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+  return (
+    <div className={mergeCss(['flex flex-col gap-4', className])}>
+      <AuditFilterBar onChange={handleFilterChange} />
+      {renderContent()}
     </div>
   );
 }

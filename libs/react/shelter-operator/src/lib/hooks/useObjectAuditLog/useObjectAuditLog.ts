@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toError } from '@monorepo/react/shared';
 import { useQuery } from '@apollo/client/react';
 import {
   ObjectAuditLogDocument,
@@ -121,11 +122,9 @@ export function useObjectAuditLog({
     } catch (error) {
       // Apollo does not set the query-level ``error`` for a failed ``fetchMore``,
       // so a page failure is otherwise silent.
-      setPageError(
-        error instanceof Error
-          ? error
-          : new Error('Unable to load more activity.'),
-      );
+      const normalized = toError(error);
+      console.error('Failed to load more audit activity', normalized);
+      setPageError(normalized);
     } finally {
       inFlight.current = false;
     }
