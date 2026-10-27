@@ -199,10 +199,12 @@ class TaskAssigneeType:
     def get_queryset(cls, queryset: QuerySet[User], info: Info) -> QuerySet[User]:
         """Restrict to members of the organizations the caller belongs to.
 
-        This is the same set ``Task.clean()`` accepts: offering anyone else
-        would let the picker hand back an assignee the mutation then rejects.
-        ``distinct()`` because a user in several of the caller's orgs matches
-        once per shared org.
+        For the common single-org caller this is exactly the set
+        ``Task.clean()`` accepts. A caller in several orgs sees the union —
+        there is no request-scoped "active org" on this side to narrow it with
+        — so the write path is still the authority: it rejects an assignee who
+        is not in the *task's* org. ``distinct()`` because a user in several of
+        the caller's orgs matches once per shared org.
         """
         current_user = cast(User, get_current_user(info))
         caller_org_ids = current_user.organizations_organization.values("pk")
