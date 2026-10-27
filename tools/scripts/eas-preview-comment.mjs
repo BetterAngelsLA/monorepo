@@ -65,8 +65,10 @@ function runJson(args) {
 
 const buildUrl = (id) =>
   `https://expo.dev/accounts/${argv.account}/projects/${argv.slug}/builds/${id}`;
-const updateUrl = (id) =>
-  `https://expo.dev/projects/${argv.projectId}/updates/${id}`;
+// `eas update:list` has no per-update id: an update group is the addressable
+// unit, and it is what the EAS dashboard links to.
+const updateUrl = (group) =>
+  `https://expo.dev/projects/${argv.projectId}/updates/${group}`;
 const qrUrl = (groupId) =>
   `https://qr.expo.dev/eas-update?appScheme=${argv.slug}&projectId=${argv.projectId}&groupId=${groupId}`;
 
@@ -157,7 +159,7 @@ const cell = (build) =>
 
 const updateCell = (update) =>
   update
-    ? `[Update Permalink](${updateUrl(update.id)})<br /><details><summary>Details</summary>Branch: \`${update.branch ?? ''}\`<br />Runtime version: \`${update.runtimeVersion ?? ''}\`<br />Git commit: \`${update.gitCommitHash ?? ''}\`</details>`
+    ? `[Update Permalink](${updateUrl(update.group)})<br /><details><summary>Details</summary>Branch: \`${update.branch ?? ''}\`<br />Runtime version: \`${update.runtimeVersion ?? ''}\`<br />Git commit: \`${update.gitCommitHash ?? ''}\`</details>`
     : 'N/A';
 
 const qrCell = (update) =>
@@ -242,7 +244,7 @@ async function notifySlack() {
     type: 'section',
     text: {
       type: 'mrkdwn',
-      text: `*${platform}*\n${link('Update', update ? updateUrl(update.id) : undefined)} · ${link(
+      text: `*${platform}*\n${link('Update', update ? updateUrl(update.group) : undefined)} · ${link(
         'Build',
         build ? buildUrl(build.id) : undefined,
       )}`,
