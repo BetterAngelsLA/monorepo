@@ -1,18 +1,18 @@
-"""GraphQL tests for ``objectAuditLog`` (ADR 0004 §20–§21)."""
+"""GraphQL tests for the audit-log queries (ADR 0004 §20–§21)."""
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 
 from model_bakery import baker
 
 from accounts.models import Role, User
 from accounts.services import role_assign, sync_roles
-from audit.selectors import MAX_LIMIT
+from audit.selectors import MAX_ACTOR_LIMIT, MAX_LIMIT
 from audit.tests.utils import audit_context
 from common.tests.utils import GraphQLBaseTestCase
-from shelters.enums import DemographicChoices, ReservationStatusChoices
+from shelters.enums import DayOfWeekChoices, DemographicChoices, ReservationStatusChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-from shelters.models import Bed, ContactInfo, Demographic, Reservation, Room, Shelter
+from shelters.models import Bed, ContactInfo, Demographic, Reservation, Room, Schedule, Shelter
 from test_utils.pghistory import backdate_event_rows
 
 _T1 = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
@@ -41,8 +41,8 @@ OBJECT_AUDIT_ACTORS_QUERY = """
     query ObjectAuditActors(
         $targetType: AuditTargetType!,
         $objectId: ID!,
-        $search: String,
-        $limit: Int
+        $search: String!,
+        $limit: Int!
     ) {
         objectAuditActors(
             targetType: $targetType,
@@ -90,6 +90,7 @@ OBJECT_AUDIT_LOG_QUERY = """
                     actor
                     summary
                     fieldChanges
+                    context
                     snapshot
                 }
             }
@@ -128,7 +129,13 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
     def _actors(self, target_type: str, object_id: int, **variables: object) -> dict:
         return self.execute_graphql(
             OBJECT_AUDIT_ACTORS_QUERY,
-            variables={"targetType": target_type, "objectId": str(object_id), **variables},
+            variables={
+                "targetType": target_type,
+                "objectId": str(object_id),
+                "search": "",
+                "limit": 20,
+                **variables,
+            },
         )
 
     # ── grouping / ordering / attribution ────────────────────────────────────
@@ -533,3 +540,104 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["Query Shelter", "By Casey"])
+
+    # ── schedule netting (§13) ───────────────────────────────────────────────
+
+    def test_schedule_update_exposes_slot_context_not_a_noop_change(self) -> None:
+        """A netted slot's identity is ``context``; ``fieldChanges`` is only diffs."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        with audit_context(user=self.org_1_case_manager_1):
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+        # ``shelter_update`` replaces the schedule set wholesale.
+        with audit_context(user=self.org_1_case_manager_1):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+
+        response = self._query("SHELTER", self.shelter.id)
+        actions = response["data"]["objectAuditLog"]["results"]
+        event = next(
+            event for action in actions for event in action["events"] if event["action"] == "shelter.schedule.update"
+        )
+
+        self.assertEqual(event["context"], {"day": "Monday", "schedule type": "Operating Hours"})
+        self.assertEqual(
+            event["fieldChanges"],
+            {"start time": ["09:00:00", "10:00:00"], "end time": ["17:00:00", "18:00:00"]},
+        )
+
+    # ── actor list (§21) ─────────────────────────────────────────────────────
+
+    def test_actors_lists_the_objects_actors(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        with audit_context(user=self.org_1_case_manager_1):
+            self.shelter.name = "Renamed"
+            self.shelter.save()
+
+        response = self._actors("SHELTER", self.shelter.id)
+
+        actors = response["data"]["objectAuditActors"]
+        self.assertEqual([actor["label"] for actor in actors], ["Casey Manager"])
+        self.assertEqual(actors[0]["id"], str(self.org_1_case_manager_1.pk))
+        self.assertFalse(actors[0]["isSystem"])
+
+    def test_actors_system_entry_has_no_id(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        with audit_context(label="import"):
+            self.shelter.name = "Imported"
+            self.shelter.save()
+
+        response = self._actors("SHELTER", self.shelter.id, search="sys")
+
+        self.assertEqual(
+            response["data"]["objectAuditActors"],
+            [{"id": None, "label": "System", "isSystem": True}],
+        )
+
+    def test_actors_search_has_a_two_character_floor(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        with audit_context(user=self.org_1_case_manager_1):
+            self.shelter.name = "Renamed"
+            self.shelter.save()
+
+        response = self._actors("SHELTER", self.shelter.id, search="c")
+
+        self.assertEqual(response["data"]["objectAuditActors"], [])
+
+    def test_actors_limit_over_the_cap_is_a_graphql_error(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        response = self._actors("SHELTER", self.shelter.id, limit=MAX_ACTOR_LIMIT + 1)
+
+        self.assertGraphQLError(response, "limit must be between")
+
+    def test_actors_requires_authentication(self) -> None:
+        self.graphql_client.logout()
+
+        response = self._actors("SHELTER", self.shelter.id)
+
+        self.assertGraphQLUnauthenticated(response)
+
+    def test_actors_without_view_permission_fails_closed(self) -> None:
+        self.graphql_client.force_login(self.non_case_manager_user)
+
+        response = self._actors("SHELTER", self.shelter.id)
+
+        self.assertGraphQLError(response, "could not be found")
+
+    def test_actors_cross_org_object_fails_closed(self) -> None:
+        self._grant_permission(self.org_2_case_manager_1, Shelter.perms.VIEW, self.org_2)
+        self.graphql_client.force_login(self.org_2_case_manager_1)
+
+        response = self._actors("SHELTER", self.shelter.id)
+
+        self.assertGraphQLError(response, "could not be found")

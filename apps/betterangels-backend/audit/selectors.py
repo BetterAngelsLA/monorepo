@@ -193,6 +193,11 @@ class AuditEventData:
     # (§32, e.g. "Created Bed A (7)"). When set, the UI shows this and no field
     # changes; ``field_changes`` is empty.
     summary: str | None = None
+    # Unchanged identity fields that keep a synthesized event identifiable -- a
+    # netted schedule slot's day and schedule type. It is *context*, never a
+    # change: ``field_changes`` holds only real before/after pairs, so a client
+    # can trust every entry there.
+    context: dict[str, Any] | None = None
 
 
 @dataclass
@@ -656,6 +661,8 @@ def _schedule_events(
     target_id: str,
     resolver: _LabelResolver,
     max_events: int | None = None,
+    include_snapshot: bool = False,
+    hidden_fields: Mapping[str, Collection[str]] | None = None,
 ) -> tuple[list[AuditEventData], dict[tuple[str, Any, str], list[Any]], bool]:
     """Net a full-replacement schedule save into per-slot changes (§13).
 
@@ -665,9 +672,18 @@ def _schedule_events(
     UPDATE event per slot whose times actually changed. Slots that were genuinely
     added or removed keep their INSERT/DELETE events.
 
+    Netting is scoped to the *time window*: an edit that changes an identity field
+    (dates, condition, demographic, exception flag, schedule type, day) is still
+    rendered as a DELETE plus an INSERT, because pairing across identities could
+    merge two unrelated slots.
+
     *max_events* is the remaining per-action event budget (the same
     ``MAX_EVENTS_PER_ACTION`` counter the caller uses): netting shares it rather
-    than emitting past the cap. Returns ``(events, per_slot_changes, truncated)``.
+    than emitting past the cap. *include_snapshot*/*hidden_fields* mirror
+    ``object_audit_log``: a netted UPDATE snapshots the post-change state (the
+    old row is gone). A netted event's unchanged slot identity (day, schedule
+    type) is returned in the event's ``context``, never in ``field_changes``.
+    Returns ``(events, per_slot_changes, truncated)``.
     """
 
     def identity(data: dict[str, Any]) -> tuple[Any, ...]:
@@ -696,14 +712,24 @@ def _schedule_events(
         for field_name, pair in changes.items():
             action_changes[(owner, row.pgh_obj_id, field_name)] = pair
 
-    def emit(row: Any, changes: dict[str, list[Any]], *, kind: str | None = None, action: str | None = None) -> bool:
+    def emit(
+        row: Any,
+        changes: dict[str, list[Any]],
+        *,
+        kind: str | None = None,
+        action: str | None = None,
+        context: dict[str, Any] | None = None,
+    ) -> bool:
         """Append one netted event, respecting the caller's remaining budget.
 
+        *context* is the event's unchanged identity (a netted slot's day/type),
+        kept out of ``changes`` so ``field_changes`` never reports a no-op.
         Returns False when the budget is exhausted, so callers stop netting and
         report ``truncated`` instead of emitting past the per-action cap.
         """
         if max_events is not None and len(events) >= max_events:
             return False
+        hidden = (hidden_fields or {}).get(row.pgh_obj_model, ())
         events.append(
             AuditEventData(
                 timestamp=row.pgh_created_at,
@@ -713,6 +739,8 @@ def _schedule_events(
                 target_type=target_type,
                 target_id=target_id,
                 field_changes={f: list(pair) for f, pair in changes.items()},
+                snapshot=_snapshot(row, resolver, hidden) if include_snapshot else None,
+                context=context,
             )
         )
         remember(row, changes)
@@ -765,17 +793,25 @@ def _schedule_events(
             }
             if not diffs:
                 continue
-            # A null ``day`` means "every day" (Schedule.day help text); omit it
-            # so the UI's pinned fallback renders "Every day" rather than "—".
-            slot: dict[str, list[Any]] = {}
-            day = render("day", data.get("day"))
-            if day is not None:
-                slot["day"] = [day, day]
-            schedule_type = render("schedule_type", data.get("schedule_type"))
-            if schedule_type is not None:
-                slot["schedule_type"] = [schedule_type, schedule_type]
-            slot.update(diffs)
-            if not emit(add, slot, kind="UPDATE", action="shelter.schedule.update"):
+            # ``field_changes`` carries only the real time diffs (§13). The slot's
+            # unchanged identity travels separately in ``context`` so the UI can
+            # label the event without the API reporting a change that never
+            # happened. A null ``day`` means "every day" (Schedule.day help text)
+            # and stays null, so the UI owns that copy.
+            context = {
+                "day": render("day", data.get("day")),
+                "schedule_type": render("schedule_type", data.get("schedule_type")),
+            }
+            # Render raw attnames to display names at the edge, like every other
+            # path (§13): a netted update and an add/remove for the same model must
+            # key ``field_changes`` identically.
+            if not emit(
+                add,
+                _render_keys(diffs, model_label),
+                kind="UPDATE",
+                action="shelter.schedule.update",
+                context=_render_keys(context, model_label),
+            ):
                 return events, action_changes, True
 
         for add in changed_adds[paired:]:  # genuinely new slots
@@ -1070,6 +1106,11 @@ def object_audit_log(
             event.field_changes = _finalize(event.field_changes, resolver)
             if event.snapshot is not None:
                 event.snapshot = _finalize(event.snapshot, resolver)
+            if event.context is not None:
+                # No deferred refs today (day/type are choices), but a context
+                # field that is ever an FK must not reach the JSON scalar as a
+                # ``_Ref``.
+                event.context = _finalize(event.context, resolver)
 
     actions.sort(key=lambda a: (a.timestamp, a.order), reverse=True)
     return AuditActionPageData(
@@ -1138,7 +1179,13 @@ def object_audit_actors(
             key = str(actor_id)
             actor = AuditActorData(id=key, label=name or email or "Unknown")
         existing = entries.get(key)
-        entries[key] = (actor, row["event_count"] + (existing[1] if existing else 0))
+        if existing is None:
+            # Rows arrive ordered ``-event_count``, so an actor's first row
+            # carries its most frequent frozen name; later rows (a rename, or
+            # the same name under a different label) only contribute counts.
+            entries[key] = (actor, row["event_count"])
+        else:
+            entries[key] = (existing[0], existing[1] + row["event_count"])
 
     ordered = sorted(entries.values(), key=lambda entry: entry[1], reverse=True)
     actors = [entry[0] for entry in ordered]
@@ -1286,6 +1333,8 @@ def _build_action(
         target_id=target_id,
         resolver=resolver,
         max_events=max(0, MAX_EVENTS_PER_ACTION - len(events)),
+        include_snapshot=include_snapshot,
+        hidden_fields=hidden_by_model,
     )
     truncated = truncated or schedule_truncated
     events.extend(schedule_events)

@@ -81,6 +81,10 @@ class AuditEventType:
     # One-line acknowledgment for summarized events (§32); the UI shows this
     # instead of ``field_changes`` when present.
     summary: Optional[str] = None
+    # Unchanged identity fields that keep a synthesized event identifiable (a
+    # netted schedule slot's ``day``/``schedule type``). Never a change:
+    # ``field_changes`` holds only real before/after pairs.
+    context: Optional[JSON] = None
 
 
 @strawberry.type
@@ -124,6 +128,7 @@ def to_event_type(event: Any) -> AuditEventType:
         field_changes=event.field_changes,
         snapshot=event.snapshot,
         summary=event.summary,
+        context=event.context,
     )
 
 

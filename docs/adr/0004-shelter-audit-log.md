@@ -56,6 +56,15 @@ todos:
   - id: audit-write-filters
     content: 'Phase 3: Add dateFrom/dateTo/actorId filters to objectAuditLog'
     status: done
+  - id: audit-system-filter
+    content: 'Phase 3: Add systemOnly filter (events rendered as system) to objectAuditLog'
+    status: done
+  - id: audit-actors
+    content: 'Phase 3: Add objectAuditActors (the object''s distinct actors plus a synthetic System entry)'
+    status: done
+  - id: audit-schedule-netting
+    content: 'Phase 3: Net full-replacement schedule saves into per-slot updates with an event context'
+    status: done
   - id: audit-event-model
     content: 'Phase 4: Add AuditReadEvent model (single-object read attribution)'
     status: pending
@@ -97,7 +106,8 @@ isProject: false
 ## Status
 
 Accepted. Phase 1 (write tracking), Phase 2 (the write audit log), and Phase 3
-(the `dateFrom`/`dateTo`/`actorId` filters, §21) are implemented, including the
+(the `dateFrom`/`dateTo`/`actorId`/`systemOnly` filters and the
+`objectAuditActors` actor list, §21) are implemented, including the
 review follow-ups: cursor pagination with a total-order cursor, `across()` branch
 pruning, raw-column page predicates (only the context arm is indexable), a
 per-page event budget, retention scoped to `--apps` with per-object retention
@@ -1009,9 +1019,9 @@ with each exclusion. The list is derived from
 included automatically.
 
 SQL-level predicates stay on the aggregate CTE's **outer SELECT**: the §7b
-`seed` `label` exclusion and the Phase 3 `dateFrom`/`dateTo`/`actorId` filters
-must be applied **before** the action-key grouping, so pagination windows match
-the filtered set. `filter`/`exclude` compile to that outer `WHERE` over the
+`seed` `label` exclusion and the Phase 3
+`dateFrom`/`dateTo`/`actorId`/`systemOnly` filters must be applied **before** the
+action-key grouping, so pagination windows match the filtered set. `filter`/`exclude` compile to that outer `WHERE` over the
 `pghistory_events` CTE; Postgres may or may not push the predicate into each
 `UNION ALL` branch — the load-bearing guarantee (filters and pagination run in
 SQL before Python grouping) holds either way. The `pgh_context__label` proxy
@@ -1253,6 +1263,18 @@ related `Room`/`Bed` writes in a Shelter log — which renders one line
 snapshot, even when `include_snapshot=True`, because the object's own log is the
 detail surface.
 
+**Synthesized-event context (decided).** An event the server *synthesizes* —
+today only a netted schedule slot update (§13, below) — may carry unchanged
+identity fields in a separate `context: JSON` field on `AuditEventType` (§17)
+rather than in `field_changes`. The netted update therefore holds only the real
+`start time`/`end time` diffs in `field_changes`, while its slot identity travels
+as `context: {"day": "Monday", "schedule type": "Operating Hours"}` (display keys,
+§13). `context` is **never** a change: every `field_changes` entry a client reads
+is a real before/after pair. A `null` `day` in context means "every day" (the
+copy belongs to the UI), and `context` is `null` for every non-synthesized event;
+the action-level rollup never contains `context` fields either, because they are
+not merged as changes.
+
 **Exclude the primary key:** the pk is present in `pgh_data` for INSERT/REMOVE
 but can never change (the UPDATE branch renders `pgh_diff`, which never contains
 it), so it is dropped from those two branches rather than rendered as
@@ -1355,6 +1377,39 @@ Load is bounded, not fetched: the page query still reads every row of the
 selected actions, so a pathological bulk action is bounded in rendering and in
 `field_changes` but not in rows fetched.
 
+**Full-replacement child models: schedule netting (decided).** `shelter_update`
+applies full-replacement semantics to schedules — it deletes every `Schedule`
+row and bulk-creates the new set
+([services/shelter.py](apps/betterangels-backend/shelters/services/shelter.py)) —
+so one logical slot edit emits a `.remove` and an `.add` under the same context.
+Rendered naively that is a deletion and a creation the user never made, and the
+action-level merge, keyed by `(owner, row id, field)`, then flattened changes
+across distinct `Schedule` rows, fabricating pairs such as `day friday -> sunday`
+from two unrelated rows. The selector nets the remove/add set per slot before the
+action-level rollup:
+
+- **Pair by identity then time.** Identity is every column except the editable
+  time window (`schedule_type`, `day`, `start_date`, `end_date`, `is_exception`,
+  `condition`, `demographic`); rows sharing it are matched on exact
+  `start_time`/`end_time`. A slot the save re-created with identical times is not
+  a change and emits **no event at all**.
+- **Time edits** become one `UPDATE` event per changed slot
+  (`action = shelter.schedule.update`), carrying only the real
+  `start time`/`end time` diffs in `field_changes` and the slot identity in
+  `context` (above). Keys are rendered to display names like every other path, so
+  a netted update and an add/remove for the same model share one key shape.
+- **Identity edits** (dates, condition, demographic, exception flag, schedule
+  type, day) still render as a `DELETE` plus an `INSERT`: pairing across
+  identities could merge two unrelated slots, so netting is deliberately scoped
+  to the time window. This is a documented limitation, not an oversight.
+- **Genuinely added/removed slots** keep their `INSERT`/`DELETE` events, rendered
+  exactly like any other row.
+- **The cap and snapshot rules still hold.** Netting shares the action's
+  remaining `MAX_EVENTS_PER_ACTION` budget and sets `truncated` when it runs out,
+  so a schedule-heavy save cannot render past the cap. `snapshot` (opt-in) is
+  populated for netted events too, from the add row — the post-change state,
+  since the replaced row is gone.
+
 ## 14. Resolve FK ids to labels
 
 `pgh_data`/`pgh_diff` store FK fields as ids (`shelter_id`, `demographic_id`,
@@ -1421,15 +1476,18 @@ mechanism is gone: under disjoint conditions the paired row no longer exists, so
 the empty-diff reconciliation and the Python-side drop are both obsolete.
 
 **Exclusion mechanism:** the only label exclusions that remain are SQL-level and
-unrelated to reservations — the §7b context-`label` seed exclusion and the Phase 3
-`dateFrom`/`dateTo`/`actorId` filters, applied on the aggregate CTE's outer
-`SELECT` before grouping (§10, §11). No Python-side event dropping is needed.
+unrelated to reservations — the §7b context-`label` seed exclusion and the Phase
+3 `dateFrom`/`dateTo`/`actorId`/`systemOnly` filters, applied on the aggregate
+CTE's outer `SELECT` before grouping (§10, §11). No Python-side event dropping is
+needed.
 
 ## 17. GraphQL types + query
 
 - Add `AuditActionType` (an action grouped by `pgh_context_id`, exposing `timestamp`, `actor`, `summary`, and a nested `events: [AuditEventType!]!` list), `AuditEventType`, `AuditEventKind` enum (`INSERT`/`UPDATE`/`DELETE`; `READ` is added in §28), and `AuditTargetType` enum in the `audit` app's types (e.g. `audit/types.py`).
 - `AuditEventType` gains an optional `snapshot: JSON` field (opt-in, §13) rendered from the event's `pgh_data`.
 - `AuditEventType` gains an optional `summary: String` (§32) for events that are acknowledged with one line instead of field detail; it is `null` for every detailed event.
+- `AuditEventType` gains an optional `context: JSON` field (§13): unchanged identity fields that keep a synthesized event identifiable (a netted schedule slot's `day`/`schedule type`). It is never a change — `fieldChanges` holds only real before/after pairs — and it is `null` for every non-synthesized event.
+- `AuditActorType` (`id: ID`, `label: String!`, `isSystem: Boolean!`) plus the `objectAuditActors(targetType, objectId, search, limit)` query expose one object's selectable actors (§21). Its `id` is `null` for the single synthetic `System` entry, which the log selects with `AuditEventFilter.systemOnly`.
 - `AuditActionType` gains `truncated: Boolean!` (§13) — the action carried more events than the server renders.
 - Add one query to a new `Query` class in `audit/schema.py`, `permission_classes=[IsAuthenticated]`. It returns an `AuditActionPage`, not a plain list and not an `OffsetPaginated` wrapper — the selector produces grouped Python actions (not a queryset), so `strawberry_django.offset_paginated` cannot wrap it. Pagination is applied in SQL by the selector (§10), not as an in-memory slice of a fully-grouped list: the resolver forwards the opaque `after` cursor and `limit`.
 
@@ -1613,7 +1671,15 @@ input AuditEventFilter {
   dateFrom: DateTime
   dateTo: DateTime
   actorId: ID
+  systemOnly: Boolean = false
 }
+
+objectAuditActors(
+  targetType: AuditTargetType!,
+  objectId: ID!,
+  search: String = "",
+  limit: Int = 20
+): [AuditActorType!]!
 ```
 
 The filters are one input object rather than three top-level arguments so the
@@ -1624,7 +1690,13 @@ slots in here.
 - `filters.actorId` — the acting `User.id` as the §8 middleware froze it into the
   context metadata, not the display name/email and not an `OrganizationUser`
   `membershipId`.
-- All three are predicates on the aggregate CTE's outer SELECT (§10), applied
+- `filters.systemOnly` — selects the events the UI renders as system: no frozen
+  `actorName`/`actorEmail`, or a system reason label (`import`/`clone`, §11).
+  The SQL predicate mirrors `_actor()`'s precedence exactly (the label check
+  first), so "renders as system" and "selected by `systemOnly`" cannot diverge.
+  It takes **precedence over** `actorId` (they are mutually exclusive in the UI);
+  `actorId` cannot express "no actor" because it is also the "no filter" value.
+- All four are predicates on the aggregate CTE's outer SELECT (§10), applied
   before the key grouping: a filtered-out event cannot keep an otherwise-empty
   action on the page or widen an action's time span. They do not push into the
   per-object CTE branches, so a date filter does not reduce the scanned work
@@ -1635,10 +1707,43 @@ slots in here.
   derived only from the anchor rows that survive. The selector's docstring
   states this rather than claiming that a filtered-out event is invisible.
 
+**Actor list (`objectAuditActors`, decided).** The actor filter's options cannot
+come from `organizationMembers`: a global/BA user who acted on the object without
+belonging to its organization must still be selectable, and the list must match
+what the log can actually render.
+
+- **Scoped to the object's own history**, authorized exactly like `objectAuditLog`
+  (the target is resolved through `*_get` with `VIEW`, so a cross-org or missing
+  id fails closed, §18). One aggregate query over the same event models, so the
+  §10/§32 exclusions (`ContactInfo`, target-scoped models, withheld Bed/Room
+  summaries) apply: an actor whose only events the caller cannot see does not
+  appear, for the same reason those events are absent from the log.
+- **One entry per frozen user id**, labelled with the most frequent frozen
+  name/email for that id, ordered by event count. A frozen name without a user id
+  cannot be expressed by `actorId`, so those rare pre-middleware rows are omitted
+  from the selectable list (documented, not silently wrong).
+- **`System` is one synthetic entry** (`id: null`, `isSystem: true`) aggregating
+  every event rendered as system — including `system (import)`/`system (clone)`,
+  whose context user id is dropped for display (§11) — and is selected with
+  `systemOnly`.
+- **`search`** filters labels case-insensitively with the UI's two-character
+  floor (shorter terms return `[]` without a query); `limit` is capped at
+  `MAX_ACTOR_LIMIT` (50) and rejected with a `ValueError` → `GraphQLError` like
+  the other caps. Search is applied before the limit, so any actor is reachable.
+- **The list is time-independent by design.** It answers "who has ever acted on
+  this object"; `dateFrom`/`dateTo` stay a filter on events. Selecting an actor
+  whose activity is all outside the selected window legitimately yields an empty
+  log — the same contract as a repo's author filter.
+
 **Tests:** inclusive bounds on both ends, filter composition, actor semantics
 (the frozen `User.id`; context-less events excluded), within-action filtering,
 cursor pagination under a composed filter, and the §20 query-count/pushdown
-guard (asserted on the CTE's outer SELECT, not on the whole statement).
+guard (asserted on the CTE's outer SELECT, not on the whole statement). For
+`systemOnly`: the import/clone label arm, context-less (no frozen name/email)
+events, and per-event composition with the date bounds. For `objectAuditActors`
+at the GraphQL boundary: the list payload, the `System` entry's null `id`, the
+two-character search floor, `limit` over the cap as a GraphQL error (not a 500),
+and unauthenticated / no-`VIEW` / cross-org fail-closed.
 
 The `kinds` field is deferred to §30, where `READ` exists to filter; it belongs
 in `AuditEventFilter`, so adding it does not change the field's signature. These

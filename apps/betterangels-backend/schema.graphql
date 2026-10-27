@@ -132,6 +132,7 @@ type AuditEventType {
   fieldChanges: JSON
   snapshot: JSON
   summary: String
+  context: JSON
 }
 
 enum AuditTargetType {

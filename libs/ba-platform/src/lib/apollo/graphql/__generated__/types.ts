@@ -126,6 +126,7 @@ export type AuditEventType = {
   __typename: 'AuditEventType';
   action: Scalars['String']['output'];
   actor: Scalars['String']['output'];
+  context?: Maybe<Scalars['JSON']['output']>;
   fieldChanges?: Maybe<Scalars['JSON']['output']>;
   kind: AuditEventKind;
   snapshot?: Maybe<Scalars['JSON']['output']>;
