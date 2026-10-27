@@ -69,6 +69,7 @@
       "cache": false,
       "dependsOn": [
         "write-eas-env",
+        "sync-eas-env",
         "sync-deps",
         "copy-lockfile"
       ],

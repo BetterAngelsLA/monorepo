@@ -217,6 +217,24 @@
         }
       }
     },
+    "sync-eas-env": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "write-eas-env"
+      ],
+      "options": {
+        "cwd": "apps/betterangels"
+      },
+      "configurations": {
+        "preview": {
+          "command": "eas env:push --environment development --path .env.local --force"
+        },
+        "production": {
+          "command": "eas env:push --environment production --path .env.local --force"
+        }
+      }
+    },
     "eas-update": {
       "executor": "@nx/expo:update",
       "cache": false,
