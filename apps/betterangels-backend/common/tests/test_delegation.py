@@ -45,7 +45,9 @@ class DelegationTestCase(TestCase):
     def _scoped_orgs(self, user: User, perm: str) -> set[int]:
         """Org ids from ``scopes`` — the union yields ``{"scope_org": id}`` rows."""
         s = scopes(user, perm)
-        return set() if s is ALL else set(s)
+        if s is ALL:
+            raise AssertionError("unexpected global scope in a scoped-org assertion")
+        return set(s)
 
     def _visible_pks(self, user: User, perm: str) -> list[int]:
         return list(visible(Shelter.objects.all(), user, perm).values_list("pk", flat=True))
@@ -277,3 +279,19 @@ class DelegationTestCase(TestCase):
         grant_delete(grant=grant)
 
         self.assertNotIn("_authority_cache", user.__dict__)
+
+    def test_delegation_write_invalidates_the_acting_users_snapshot(self) -> None:
+        """A delegation write clears the caller's request cache, not a DB reload."""
+        bob = self._acting_member(self.org_b)
+        self.assertNotIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+
+        delegation = grant_delegate(
+            principal_org=self.org_b,
+            role=self.shelter_role,
+            scope_org=self.org_c,
+            acting_user=bob,
+        )
+        self.assertIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+
+        grant_delete(grant=delegation, acting_user=bob)
+        self.assertNotIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))

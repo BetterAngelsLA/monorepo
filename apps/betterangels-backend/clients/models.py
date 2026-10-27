@@ -101,6 +101,10 @@ class ClientFamilyMember(models.Model):
             instance._loaded_client_profile_id = getattr(instance, "client_profile_id", None)
         return instance
 
+    def refresh_from_db(self, *args: Any, **kwargs: Any) -> None:
+        super().refresh_from_db(*args, **kwargs)
+        self._loaded_client_profile_id = getattr(self, "client_profile_id", None)
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         original = getattr(self, "_loaded_client_profile_id", None)
         current = getattr(self, "client_profile_id", None)

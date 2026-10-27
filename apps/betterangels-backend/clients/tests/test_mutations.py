@@ -818,7 +818,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             "hmisId": hmis_id,
             "agency": HmisAgencyEnum.LAHSA.name,
         }
-        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_hmis_profile_fixture(variables)["data"]["updateHmisProfile"]
 
         if expected_error_message:

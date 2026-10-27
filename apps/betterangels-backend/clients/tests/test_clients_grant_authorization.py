@@ -286,7 +286,9 @@ class ClientsGrantAuthorityTestCase(ClientProfileGraphQLBaseTestCase):
             {"data": {"id": contact_id, "clientProfile": self.client_profile_2["id"], "name": "moved"}},
         )
 
-        self.assertTrue("messages" in response["data"]["updateClientContact"] or "errors" in response)
+        result = response["data"]["updateClientContact"]
+        self.assertIn("messages", result)
+        self.assertEqual(result["messages"][0]["kind"], "VALIDATION")
         self.assertEqual(
             ClientContact.objects.get(id=contact_id).client_profile_id,
             int(self.client_profile_1["id"]),
