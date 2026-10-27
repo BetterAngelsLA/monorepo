@@ -22,6 +22,7 @@ import path from 'node:path';
 import minimist from 'minimist';
 
 import { bestBuild } from './build-rank.mjs';
+import { parseJsonOutput } from './cli-json.mjs';
 import { buildCell } from './preview-builds.mjs';
 
 const argv = minimist(process.argv.slice(2), {
@@ -64,18 +65,14 @@ const BUILDS = [
     : []),
 ];
 
-/** `eas` prints notices before the JSON; take the outermost array. */
 function runJson(args) {
-  const raw = execFileSync('eas', args, {
-    cwd: projectDir,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  const start = raw.indexOf('[');
-  const end = raw.lastIndexOf(']');
-  if (start < 0 || end < start)
-    throw new Error(`No JSON in eas ${args[0]} output`);
-  return JSON.parse(raw.slice(start, end + 1));
+  return parseJsonOutput(
+    execFileSync('eas', args, {
+      cwd: projectDir,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }),
+  );
 }
 
 const buildUrl = (id) =>
@@ -141,11 +138,12 @@ function latestUpdate(platform) {
 }
 
 /**
- * Builds this run queued, as `build-missing.ts` recorded them.
+ * Builds this run resolved, as `build-missing.ts` recorded them — the full `eas`
+ * build object, plus whether it was queued here or reused.
  *
  * `eas build --json --no-wait` answers with the build the moment it is queued —
- * the id and permalink the old `eas-deploy.ts` linked. `build:list` can lag that
- * slightly, so this file is the fallback, not a second source of truth.
+ * the object the old `eas-deploy.ts` linked. `build:list` can lag that slightly,
+ * so this file is the fallback, not a second source of truth.
  */
 function triggeredBuilds() {
   const file = path.join(projectDir, '.eas-builds.json');

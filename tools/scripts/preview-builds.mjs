@@ -42,20 +42,14 @@ const runtimeOf = (build) =>
 
 const field = (label, value) => `${label}: \`${value ?? '—'}\``;
 
-/** A queued build as `build-missing.ts` records it, shaped like `build:list`. */
-const fromRecord = ({ buildId, profile, runtime }) => ({
-  id: buildId,
-  buildProfile: profile,
-  runtime: { version: runtime },
-});
-
 /**
  * A record is only trusted for the runtime being reported: on a laptop the file
  * outlives the run that wrote it, and a stale id would link a binary this update
  * can never reach.
  */
 const usable = (record, runtime) =>
-  record?.buildId && (!runtime || !record.runtime || record.runtime === runtime)
+  record?.build?.id &&
+  (!runtime || !record.runtime || record.runtime === runtime)
     ? record
     : undefined;
 
@@ -69,13 +63,12 @@ const pick = ({
   error,
 }) => {
   const record = usable(triggered, runtime);
-  const simulatorRecord = usable(simulatorTriggered, runtime);
   const simulatorBuild =
-    simulator ?? (simulatorRecord ? fromRecord(simulatorRecord) : undefined);
+    simulator ?? usable(simulatorTriggered, runtime)?.build;
 
   if (device) {
     const note =
-      record?.buildId === device.id
+      record?.build.id === device.id
         ? record.reused
           ? NOTES.reused
           : NOTES.queued
@@ -84,7 +77,7 @@ const pick = ({
   }
   if (record) {
     return {
-      build: fromRecord(record),
+      build: record.build,
       note: record.reused ? NOTES.reused : NOTES.unlisted,
     };
   }

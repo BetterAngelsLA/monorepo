@@ -15,11 +15,12 @@
  * `force-eas-build` label / FORCE_EAS_BUILD, for a build that failed for a reason
  * that has since been fixed.
  *
- * Every target is written to `<project>/.eas-builds.json` with its build id,
- * whether it was reused or queued here. `eas build --json --no-wait` answers with
- * the build the moment it is queued, so that id is a working permalink before
- * `build:list` lists it — which is what the preview comment needs (the old
- * `eas-deploy.ts` used the same response, and this replaces it).
+ * Every target is written to `<project>/.eas-builds.json` with the build object
+ * `eas` returned, whether it was reused or queued here. `eas build --json
+ * --no-wait` answers with the build the moment it is queued, so that object is a
+ * working permalink — and carries the distribution, app version and commit the
+ * preview comment renders — before `build:list` lists it. (The old
+ * `eas-deploy.ts` used the same response; this replaces it.)
  */
 import { execFileSync } from 'child_process';
 import { writeFileSync } from 'fs';
@@ -75,7 +76,16 @@ const runtimeFor = (platform: string) => {
   return runtimes.get(platform)!;
 };
 
-const existingBuild = (platform: string, profile: string, runtime: string) => {
+interface EasBuild {
+  id: string;
+  [field: string]: unknown;
+}
+
+const existingBuild = (
+  platform: string,
+  profile: string,
+  runtime: string,
+): EasBuild | undefined => {
   const output = execFileSync(
     'node',
     [
@@ -93,7 +103,9 @@ const existingBuild = (platform: string, profile: string, runtime: string) => {
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] },
   );
   try {
-    return (JSON.parse(output) as { id: string | null }).id;
+    // `find-build --json` prints the build, or `{ id: null }` when none exists.
+    const build = JSON.parse(output) as Partial<EasBuild> | null;
+    return build?.id ? (build as EasBuild) : undefined;
   } catch {
     // `find-build` prints JSON on stdout; a stray log line must not look like
     // "no build" or crash with a raw SyntaxError.
@@ -105,7 +117,8 @@ interface RecordedBuild {
   platform: string;
   profile: string;
   runtime: string;
-  buildId: string | null;
+  /** The build as `eas` returned it: from `build:list` on reuse, `eas build` here. */
+  build: EasBuild | null;
   /** True when the build already existed for this runtime, false when queued here. */
   reused: boolean;
 }
@@ -118,7 +131,7 @@ writeFileSync(resultsPath, '[]\n');
 const recorded: RecordedBuild[] = [];
 
 /** `eas build --json` prints one build object, or an array when it fans out. */
-function queuedBuildId(output: string): string | null {
+function queuedBuild(output: string): EasBuild | undefined {
   for (const [open, close] of [
     ['[', ']'],
     ['{', '}'],
@@ -129,27 +142,27 @@ function queuedBuildId(output: string): string | null {
     try {
       const payload = JSON.parse(output.slice(start, end + 1)) as unknown;
       const build = (Array.isArray(payload) ? payload[0] : payload) as
-        | { id?: string }
+        | EasBuild
         | undefined;
-      if (build?.id) return build.id;
+      if (build?.id) return build;
     } catch {
       // Not the payload; try the other bracket pair.
     }
   }
-  return null;
+  return undefined;
 }
 
 for (const { platform, profile } of targets) {
   const runtime = runtimeFor(platform);
   const existing = existingBuild(platform, profile, runtime);
   if (existing) {
-    console.log(`Reusing the existing ${platform} build: ${existing}`);
+    console.log(`Reusing the existing ${platform} build: ${existing.id}`);
     recorded.push({
       platform,
       profile,
       runtime,
-      buildId: existing,
       reused: true,
+      build: existing,
     });
     continue;
   }
@@ -176,13 +189,19 @@ for (const { platform, profile } of targets) {
   );
   // Keep the CLI's own output: it is what a human reads in the job log.
   process.stdout.write(output);
-  const buildId = queuedBuildId(output);
-  if (!buildId) {
+  const build = queuedBuild(output);
+  if (!build) {
     console.warn(
-      `Could not read the ${platform} build id from eas build output; the comment will fall back to build:list.`,
+      `Could not read the ${platform} build from eas build output; the comment will fall back to build:list.`,
     );
   }
-  recorded.push({ platform, profile, runtime, buildId, reused: false });
+  recorded.push({
+    platform,
+    profile,
+    runtime,
+    reused: false,
+    build: build ?? null,
+  });
 }
 
 writeFileSync(resultsPath, `${JSON.stringify(recorded, null, 2)}\n`);

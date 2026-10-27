@@ -69,7 +69,7 @@ describe('buildCell', () => {
         platform: 'android',
         profile: 'preview',
         runtime: '96b88652',
-        buildId: deviceBuild.id,
+        build: deviceBuild,
         reused: false,
       },
     });
@@ -85,7 +85,7 @@ describe('buildCell', () => {
         platform: 'android',
         profile: 'preview',
         runtime: '96b88652',
-        buildId: deviceBuild.id,
+        build: deviceBuild,
         reused: true,
       },
     });
@@ -101,8 +101,12 @@ describe('buildCell', () => {
         platform: 'ios',
         profile: 'preview',
         runtime: 'e906c369',
-        buildId: 'queued-ios',
         reused: false,
+        build: {
+          id: 'queued-ios',
+          buildProfile: 'preview',
+          runtime: { version: 'e906c369' },
+        },
       },
     });
 
@@ -149,8 +153,8 @@ describe('buildCell', () => {
         platform: 'ios',
         profile: 'preview',
         runtime: 'deadbeef',
-        buildId: 'stale-ios',
         reused: false,
+        build: { id: 'stale-ios' },
       },
     });
 
@@ -163,8 +167,12 @@ describe('buildCell', () => {
       platform: 'ios',
       profile: 'development-simulator',
       runtime: 'e906c369',
-      buildId: 'sim-queued',
       reused: false,
+      build: {
+        id: 'sim-queued',
+        buildProfile: 'development-simulator',
+        runtime: { version: 'e906c369' },
+      },
     };
 
     assert.match(

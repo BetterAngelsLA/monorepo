@@ -17,6 +17,8 @@
  *
  * Pure module: no child_process, no fs, no deps. Tested with `node --test`.
  */
+import { parseJsonOutput } from './cli-json.mjs';
+
 export const BUCKETS = Object.freeze({
   MAJOR: 'major',
   MINOR: 'minor',
@@ -109,7 +111,7 @@ export function parseInstallCheckJson(stdout) {
 
   let output;
   try {
-    output = extractJsonPayload(stdout);
+    output = parseJsonOutput(stdout);
   } catch {
     throw new Error(
       'Could not parse JSON from expo install --check --json output',
@@ -130,41 +132,6 @@ export function parseInstallCheckJson(stdout) {
     .filter(Boolean);
 
   return { upToDate: Boolean(output.upToDate), mismatches };
-}
-
-/**
- * Extract a JSON object from command output, tolerating leading/trailing
- * non-JSON lines (env-loading or npm warnings) — even when those lines
- * themselves contain braces, e.g.:
- *
- *   ◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
- *   {"dependencies":[],"upToDate":true}
- *
- * @param {string} stdout
- * @returns {object}
- */
-function extractJsonPayload(stdout) {
-  const trimmed = stdout.trim();
-  if (trimmed.startsWith('{')) {
-    try {
-      return JSON.parse(trimmed);
-    } catch {
-      // fall through to brace scanning
-    }
-  }
-
-  const lastClose = stdout.lastIndexOf('}');
-  for (let i = 0; i < stdout.length; i++) {
-    if (stdout[i] === '{' && lastClose > i) {
-      try {
-        return JSON.parse(stdout.slice(i, lastClose + 1));
-      } catch {
-        // keep scanning for the next '{'
-      }
-    }
-  }
-
-  throw new Error('no JSON object found');
 }
 
 /**
