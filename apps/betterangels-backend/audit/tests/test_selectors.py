@@ -1814,6 +1814,37 @@ class ObjectAuditActorsSelectorTestCase(TestCase):
 
         self.assertEqual(by_id[str(renamed.pk)].label, "Rosa Parks")
 
+    def test_equally_frequent_names_break_the_tie_by_recency(self) -> None:
+        """One event under each name picks the most recently written one."""
+        # The older name is the one that would win an alphabetical tie-break, so
+        # this asserts recency rather than merely asserting determinism.
+        renamed = baker.make(User, first_name="Rosa", last_name="P.", email="rosa@example.com")
+
+        with audit_context(user=renamed):
+            self.shelter.name = "Older"
+            self.shelter.save()
+        renamed.last_name = "Parks"
+        renamed.save()
+        with audit_context(user=renamed):
+            self.shelter.name = "Newer"
+            self.shelter.save()
+
+        # Every event in one test transaction shares NOW(), so pin the two rows
+        # apart: the tie-break is a real chronological comparison, not a name sort.
+        events = Shelter.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+            pgh_obj_id=self.shelter.pk, pgh_label="shelter.update"
+        )
+        backdate_event_rows(
+            events.filter(name="Older"), pgh_created_at=datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+        )
+        backdate_event_rows(
+            events.filter(name="Newer"), pgh_created_at=datetime(2026, 1, 2, 12, 0, tzinfo=timezone.utc)
+        )
+
+        by_id = {actor.id: actor for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")}
+
+        self.assertEqual(by_id[str(renamed.pk)].label, "Rosa Parks")
+
     def test_idless_named_actor_is_not_selectable(self) -> None:
         with audit_context(user_name="Ghost", user_email="ghost@example.com"):
             self.shelter.name = "Ghosted"

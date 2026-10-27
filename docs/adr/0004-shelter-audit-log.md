@@ -1388,11 +1388,11 @@ across distinct `Schedule` rows, fabricating pairs such as `day friday -> sunday
 from two unrelated rows. The selector nets the remove/add set per slot before the
 action-level rollup:
 
-- **Pair by identity then time.** Identity is every column except the editable
-  time window (`schedule_type`, `day`, `start_date`, `end_date`, `is_exception`,
-  `condition`, `demographic`); rows sharing it are matched on exact
-  `start_time`/`end_time`. A slot the save re-created with identical times is not
-  a change and emits **no event at all**.
+- **Pair by identity then time.** Identity is every field except the editable
+  time window — `schedule_type`, `day`, `start_date`, `end_date`, `is_exception`,
+  `condition`, `demographic` — while `start_time`/`end_time` are matched exactly.
+  A slot the save re-created with identical times is not a change and emits **no
+  event at all**.
 - **Time edits** become one `UPDATE` event per changed slot
   (`action = shelter.schedule.update`), carrying only the real
   `start time`/`end time` diffs in `field_changes` and the slot identity in
@@ -1719,7 +1719,9 @@ what the log can actually render.
   summaries) apply: an actor whose only events the caller cannot see does not
   appear, for the same reason those events are absent from the log.
 - **One entry per frozen user id**, labelled with the most frequent frozen
-  name/email for that id, ordered by event count. A frozen name without a user id
+  name/email for that id; equally frequent names break by recency, then
+  alphabetically, so the label never depends on the query plan. The list is
+  ordered by event count, then label, then id. A frozen name without a user id
   cannot be expressed by `actorId`, so those rare pre-middleware rows are omitted
   from the selectable list (documented, not silently wrong).
 - **`System` is one synthetic entry** (`id: null`, `isSystem: true`) aggregating

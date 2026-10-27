@@ -1136,6 +1136,10 @@ def object_audit_actors(
     system (no frozen name/email, or an import/clone reason label); it carries
     ``id=None`` and is selected with ``AuditEventFilter.system_only``.
 
+    An actor is shown under its most frequent frozen name/email; equally frequent
+    names break by recency, then alphabetically, so the label never depends on
+    the query plan. The list is ordered by event count, then label, then id.
+
     *hidden_summary_models* mirrors ``object_audit_log``: actors whose only
     events are withheld Bed/Room summaries must not appear either. A frozen
     name/email without a user id cannot be expressed by the ``actorId`` filter,
@@ -1158,8 +1162,12 @@ def object_audit_actors(
 
     rows = (
         base.values("actor", "actor_name", "actor_email", "label")
-        .annotate(event_count=Count("*"))
-        .order_by("-event_count")
+        .annotate(event_count=Count("*"), last_seen=Max("pgh_created_at"))
+        # Deterministic row order: an actor id can own several frozen names (a
+        # rename), so the first row per id decides the label it is shown under.
+        # Frequency wins, then recency, then the name/id as a final tie-break --
+        # Postgres does not define the order of equal sort keys.
+        .order_by("-event_count", "-last_seen", "actor_name", "actor")
     )
 
     # One entry per actor id (a frozen name can change over time; the most
@@ -1187,7 +1195,12 @@ def object_audit_actors(
         else:
             entries[key] = (existing[0], existing[1] + row["event_count"])
 
-    ordered = sorted(entries.values(), key=lambda entry: entry[1], reverse=True)
+    # Deterministic output order: most active first, then label, then id. The SQL
+    # row order above decides which frozen name is kept; this decides list order.
+    ordered = sorted(
+        entries.values(),
+        key=lambda entry: (-entry[1], entry[0].label.lower(), entry[0].id or ""),
+    )
     actors = [entry[0] for entry in ordered]
     if term:
         lowered = term.lower()

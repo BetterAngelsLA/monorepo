@@ -501,8 +501,8 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
     # ── date / actor filters (§21) ───────────────────────────────────────────
 
-    def _rename_at(self, name: str, *, at: datetime, user: User) -> None:
-        with audit_context(user=user):
+    def _rename_at(self, name: str, *, at: datetime, user: User | None = None, label: str | None = None) -> None:
+        with audit_context(user=user, label=label):
             self.shelter.name = name
             self.shelter.save()
         backdate_event_rows(
@@ -528,6 +528,30 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["Query Shelter", "Early"])
+
+    def test_system_only_filter_narrows_the_log(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self._rename_at("By Casey", at=_T1, user=self.org_1_case_manager_1)
+        self._rename_at("Imported", at=_T2, label="import")
+
+        response = self._query("SHELTER", self.shelter.id, filters={"systemOnly": True})
+        actions = response["data"]["objectAuditLog"]["results"]
+
+        self.assertEqual([action["actor"] for action in actions], ["system (import)"])
+        # The diff is computed against the predecessor before filtering (§21).
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["By Casey", "Imported"])
+
+    def test_system_only_filter_composes_with_the_date_bounds(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self._rename_at("Imported early", at=_T1, label="import")
+        self._rename_at("Imported late", at=_T2, label="import")
+
+        response = self._query("SHELTER", self.shelter.id, filters={"systemOnly": True, "dateFrom": _T2.isoformat()})
+        actions = response["data"]["objectAuditLog"]["results"]
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["actor"], "system (import)")
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["Imported early", "Imported late"])
 
     def test_actor_filter_narrows_the_log(self) -> None:
         self._grant_permission(self.org_1_case_manager_2, Shelter.perms.VIEW, self.org_1)
