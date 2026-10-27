@@ -22,6 +22,13 @@ type TProps = {
   onPress?: () => void;
   accessibilityLabel?: string;
   accessibilityHint?: string;
+  /**
+   * Grow the tap target to the 44pt guideline. Off by default: on the card the
+   * row sits inside the card's own pressable, and a taller target would steal
+   * taps meant to open the task. Safe on the detail page, where nothing else
+   * competes.
+   */
+  expandTouchTarget?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -42,6 +49,7 @@ export function TaskPersonRow(props: TProps) {
     onPress,
     accessibilityLabel,
     accessibilityHint,
+    expandTouchTarget = false,
     style,
   } = props;
 
@@ -88,9 +96,11 @@ export function TaskPersonRow(props: TProps) {
           accessibilityLabel={accessibilityLabel}
           accessibilityHint={accessibilityHint}
           onPress={onPress}
-          // The avatar-and-name row is 24pt tall on its own; grow the touch
-          // target to the 44pt the platform guidelines ask for.
-          hitSlop={{ top: Spacings.sm, bottom: Spacings.sm, left: 0, right: 0 }}
+          hitSlop={
+            expandTouchTarget
+              ? { top: Spacings.sm, bottom: Spacings.sm, left: 0, right: 0 }
+              : undefined
+          }
           style={({ pressed }) => [styles.person, pressed && styles.pressed]}
         >
           {person}

@@ -2,11 +2,11 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { TaskType } from '../../apollo';
+import { formatCreatedBy } from '../../util/formatCreatedBy';
 import TaskStatusBtn from '../TaskStatusBtn';
 import TaskCardAssignee from './TaskCardAssignee';
 import TaskCardBody from './TaskCardBody';
 import TaskCardClient from './TaskCardClient';
-import TaskCardCreatedBy from './TaskCardCreatedBy';
 
 type TaskCardVariant = 'default' | 'withoutClient';
 
@@ -75,15 +75,14 @@ export function TaskCard(props: TaskCardProps) {
           )}
         </View>
 
-        <TaskCardCreatedBy
-          organization={task.organization}
-          createdBy={task.createdBy}
-          team={task.team}
-        />
-
         <TaskCardBody
           description={task.description}
           createdAt={task.createdAt}
+          createdBy={formatCreatedBy(
+            task.createdBy,
+            task.organization,
+            task.team,
+          )}
         />
       </Pressable>
       <TaskStatusBtn id={task.id} status={task.status} />

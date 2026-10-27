@@ -7,10 +7,12 @@ import { TaskType } from '../../apollo';
 type TaskCardBodyProps = {
   description: TaskType['description'];
   createdAt: TaskType['createdAt'];
+  /** `Created by …`, rendered with the date as the card's footer. */
+  createdBy?: string;
 };
 
 export default function TaskCardBody(props: TaskCardBodyProps) {
-  const { description, createdAt } = props;
+  const { description, createdAt, createdBy } = props;
 
   return (
     <View>
@@ -28,8 +30,14 @@ export default function TaskCardBody(props: TaskCardBodyProps) {
           </TextBold>
         </>
       ) : null}
-      <TextRegular color={Colors.NEUTRAL_DARK} size="sm">
-        {formatScalarDate(createdAt, 'MM/dd/yyyy')}
+      {/*
+        Date and provenance share the footer: both answer "where did this come
+        from", and neither is worth a row of its own above the description.
+      */}
+      <TextRegular color={Colors.NEUTRAL_DARK} size="xs" numberOfLines={1}>
+        {[formatScalarDate(createdAt, 'MM/dd/yyyy'), createdBy]
+          .filter(Boolean)
+          .join(' · ')}
       </TextRegular>
     </View>
   );

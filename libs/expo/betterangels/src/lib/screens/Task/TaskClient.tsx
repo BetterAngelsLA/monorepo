@@ -18,6 +18,7 @@ export default function TaskClient(props: TaskClientProps) {
       name={fullName}
       avatarUrl={clientProfile?.profilePhoto?.url}
       onPress={onPress}
+      expandTouchTarget
       accessibilityLabel={
         onPress
           ? `Open client profile${fullName ? `: ${fullName}` : ''}`

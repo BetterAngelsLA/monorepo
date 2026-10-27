@@ -100,8 +100,9 @@ export default function NoteTasks(props: INoteTasksProps) {
       summary: data.summary,
       description: data.description || '',
       status: (data.status as TaskStatusEnum) || TaskStatusEnum.ToDo,
-      teamId: data.teamId ?? teamId ?? null,
-      assigneeId: data.assigneeId ?? null,
+      // `||`, not `??`: a cleared select reports '' and must land as null.
+      teamId: data.teamId || teamId || null,
+      assigneeId: data.assigneeId || null,
     };
 
     if (existingId) {

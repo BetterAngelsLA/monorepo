@@ -47,6 +47,11 @@ query ViewNoteHmis($id: ID!) {
           id
           name
         }
+        assignee {
+          id
+          firstName
+          lastName
+        }
       }
       providedServices {
         id

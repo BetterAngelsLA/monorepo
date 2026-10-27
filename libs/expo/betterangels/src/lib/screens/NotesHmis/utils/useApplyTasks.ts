@@ -5,6 +5,7 @@ import { DeleteTaskDocument } from '../../../ui-components/TaskForm/__generated_
 import { UpdateTaskDocument } from '../../../ui-components/TaskForm/__generated__/updateTask.generated';
 import type { DraftTask } from '../NoteFormHmis';
 import splitTasks from './splitTasks';
+import { toClearableId } from './toClearableId';
 
 export function useApplyTasks() {
   const [createTask] = useMutation(CreateTaskDocument);
@@ -24,8 +25,8 @@ export function useApplyTasks() {
           variables: {
             data: {
               summary: s.summary || '',
-              teamId: s.teamId ?? undefined,
-              assigneeId: s.assigneeId ?? undefined,
+              teamId: s.teamId || undefined,
+              assigneeId: s.assigneeId || undefined,
               description: s.description,
               status: s.status,
               hmisClientProfile: hmisClientProfileId,
@@ -49,8 +50,8 @@ export function useApplyTasks() {
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               id: s.id!,
               summary: s.summary,
-              teamId: s.teamId ?? undefined,
-              assigneeId: s.assigneeId ?? undefined,
+              teamId: toClearableId(s.teamId),
+              assigneeId: toClearableId(s.assigneeId),
               description: s.description,
               status: s.status,
             },
