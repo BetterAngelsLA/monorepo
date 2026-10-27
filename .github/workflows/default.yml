@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Re-run the pipeline for `main` on demand. A merge can land without a push
+  # event (a queue merge that fast-forwards to the commit it already tested), and
+  # then nothing deploys until the next push.
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-west-2
