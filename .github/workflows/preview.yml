@@ -95,10 +95,21 @@ jobs:
           IOS_RUNTIME="$(cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" runtimeversion:resolve --platform ios --workflow generic)"
 
           # Skip a build when one already finished for this runtime and profile.
+          # Any lookup failure falls back to building, so a flaky list can never
+          # fail the job.
           has_build() {
-            eas build:list --platform "$1" --runtime-version "$2" --build-profile "$3" \
+            if eas build:list --platform "$1" --runtime-version "$2" --build-profile "$3" \
               --status finished --limit 1 --json --non-interactive \
-              | node tools/scripts/has-build.mjs
+              > /tmp/build-list.json 2>&1; then
+              if node tools/scripts/has-build.mjs < /tmp/build-list.json; then
+                echo "Reusing the finished $1 build for $3."
+                return 0
+              fi
+              return 1
+            fi
+            echo "build:list failed for $1/$3; building instead:"
+            tail -5 /tmp/build-list.json
+            return 1
           }
 
           has_build android "$ANDROID_RUNTIME" preview \
