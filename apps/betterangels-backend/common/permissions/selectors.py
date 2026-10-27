@@ -332,26 +332,27 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
     if not issubclass(model, OrgScoped):
         return False
     if model.org_via is not None:
-        # Resolve single-column org ids from the row and the request snapshot.
-        # A hop (``shelter__organization_id``) needs the parent row, and a cached
-        # relation can be stale after a re-point, so that case reads the row.
+        # Own-org columns are read from the row; a hop reads just the org id
+        # column from the database, because a cached parent can be stale after a
+        # re-point and the object graph cannot prove it is current.
         s = scopes(user, perm)
         if s is ALL:
             return True
         if not s:
             return False
-        for path in model.org_paths():
-            parts = path.split("__")
-            if len(parts) > 1:
-                # A hop needs the parent row. A cached relation can be stale
-                # after a re-point (merge, ``queryset.update()``) or absent on a
-                # row built from the FK id, so read the current row instead of
-                # trusting the object graph.
-                return visible(model._base_manager.filter(pk=obj.pk), user, perm).exists()
-            value = getattr(obj, parts[0], None)
-            if value is not None and value in s:
-                return True
-        return False
+        paths = model.org_paths()
+        if not any("__" in path for path in paths):
+            # Own-org columns live on the row — no query, no stale relation.
+            return any(getattr(obj, path, None) in s for path in paths)
+
+        # A hop needs the parent row, and a cached relation can be stale after a
+        # re-point (merge, ``queryset.update()``) or absent on a row built from
+        # the FK id.  Read only the org id column(s): one cheap query, not the
+        # full permission-filtered queryset the old check compiled per row.
+        row = model._base_manager.filter(pk=obj.pk).values_list(*paths).first()
+        if row is None:
+            return False
+        return any(value in s for value in row if value is not None)
     if model.write_tier == WRITE_SHARED:
         return can_anywhere(user, perm)
     s = scopes(user, perm)
