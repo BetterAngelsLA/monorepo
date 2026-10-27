@@ -148,12 +148,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          # The update publishes while the web deploy runs: it needs no workspace
-          # reshaping, and its env comes from EAS. The env file stays in the temp
-          # dir so the web export below cannot pick it up.
-          ENV_FILE="$RUNNER_TEMP/eas-env"
-          node tools/scripts/write-eas-env.mjs --project betterangels --profile preview --out "$ENV_FILE"
-          node tools/scripts/sync-eas-env.mjs --project betterangels --environment development --path "$ENV_FILE"
+          # The update publishes while the web deploy runs. Its env is the tracked
+          # `.env`, rewritten for this profile: that file ships inside the EAS
+          # archive, which is what the build and the update both resolve app.config
+          # against. The mobile step restores it afterwards.
+          node tools/scripts/write-eas-env.mjs --project betterangels --profile preview
           (
             node tools/scripts/eas-update.mjs --project betterangels --profile preview \
               > /tmp/eas-update.log 2>&1

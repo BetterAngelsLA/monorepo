@@ -217,21 +217,6 @@
         }
       }
     },
-    "sync-eas-env": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "dependsOn": [
-        "write-eas-env"
-      ],
-      "configurations": {
-        "preview": {
-          "command": "node tools/scripts/sync-eas-env.mjs --project betterangels --environment development"
-        },
-        "production": {
-          "command": "node tools/scripts/sync-eas-env.mjs --project betterangels --environment production"
-        }
-      }
-    },
     "restore-workspace": {
       "executor": "nx:run-commands",
       "cache": false,
@@ -244,7 +229,6 @@
       "cache": false,
       "dependsOn": [
         "write-eas-env",
-        "sync-eas-env",
         "sync-deps",
         "copy-lockfile"
       ],

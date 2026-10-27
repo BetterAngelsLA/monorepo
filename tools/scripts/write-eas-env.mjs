@@ -33,15 +33,13 @@ for (const [key, value] of Object.entries(
   env.set(key, String(value));
 }
 
-// `.env.local` rather than the committed `.env`: Expo loads it with higher
-// precedence and it stays out of git. It is only the input to `sync-eas-env`,
-// which pushes these values into the EAS environment (`eas env:push`) — that
-// store, not this file, is what the build evaluates app.config.js against. The
-// web base path is deliberately absent: it belongs to the web export only and
-// would otherwise make the native runtime branch-specific.
-const envPath = path.resolve(
-  argv.out ?? path.join(projectDir, '.env.local'),
-);
+// Writes the tracked `.env`, which is what ships inside the EAS archive: the
+// build and the update both evaluate app.config.js against it, so the values
+// here are the ones EAS resolves. (An untracked `.env.local` does not travel —
+// the upload is git-based.) CI rewrites this file and restores it afterwards.
+// The web base path is deliberately absent: it belongs to the web export only
+// and would otherwise make the native runtime branch-specific.
+const envPath = path.resolve(argv.out ?? path.join(projectDir, '.env'));
 fs.writeFileSync(
   envPath,
   [...env].map(([key, value]) => `${key}=${value}`).join('\n') + '\n',

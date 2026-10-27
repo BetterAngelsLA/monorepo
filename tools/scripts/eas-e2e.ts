@@ -13,9 +13,8 @@
  *   npx ts-node tools/scripts/eas-e2e.ts --project betterangels \
  *     [--configuration preview|production]
  *
- * The configuration (default `preview`) decides the EAS environment the build
- * and update resolve through `write-eas-env`/`sync-eas-env`, and the default
- * build profiles per platform.
+ * The configuration (default `preview`) picks the profile env written into the
+ * tracked `.env` and the default build profiles per platform.
  *
  * Required env vars:
  *   EXPO_TOKEN   - EAS authentication token
@@ -52,10 +51,9 @@ if (!project) {
 }
 
 /**
- * The Nx configuration selects more than an EAS profile: `write-eas-env` and
- * `sync-eas-env` are configuration-scoped, and they are what makes the build and
- * the update resolve the same runtime. The targets have no default command, so
- * this cannot be omitted.
+ * The Nx configuration selects more than an EAS profile: it also picks the env
+ * written into the tracked `.env`, which is what the build and the update
+ * resolve. The targets have no default command, so this cannot be omitted.
  */
 const configuration =
   (argv.configuration as string | undefined) ??
