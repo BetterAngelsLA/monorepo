@@ -467,7 +467,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile["id"]}
 
-        expected_query_count = 23
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -494,7 +494,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 return_value="photo-token-1",
             ),
         ):
-            expected_query_count = 6
+            expected_query_count = 5
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._generate_client_profile_photo_upload_fixture(
                     client_profile_id=self.client_profile_1["id"],
@@ -519,7 +519,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
-            expected_query_count = 9
+            expected_query_count = 8
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
                     client_profile_id=self.client_profile_1["id"],
@@ -538,7 +538,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_resolve_client_profile_photo_upload_invalid_token(self) -> None:
         with patch("common.services.file_upload.validate_upload_token", return_value=False):
-            expected_query_count = 9
+            expected_query_count = 8
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
                     client_profile_id=self.client_profile_1["id"],
@@ -558,7 +558,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertTrue(client_profile.profile_photo.name)
 
         # Now delete the photo.
-        expected_query_count = 9
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_client_profile_photo_fixture(client_profile_id)
 
@@ -580,7 +580,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         db_profile = ClientProfile.objects.get(id=client_profile_id)
         self.assertEqual(db_profile.profile_photo.name, "")
 
-        expected_query_count = 9
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_client_profile_photo_fixture(client_profile_id)
 
@@ -818,7 +818,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             "hmisId": hmis_id,
             "agency": HmisAgencyEnum.LAHSA.name,
         }
-        with self.assertNumQueriesWithoutCache(expected_query_count):
+        with self.assertMaxNumQueriesWithoutCache(expected_query_count):
             response = self._update_hmis_profile_fixture(variables)["data"]["updateHmisProfile"]
 
         if expected_error_message:

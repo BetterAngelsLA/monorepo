@@ -359,6 +359,7 @@ class Query:
 
     client_profiles: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(perms=[ClientProfile.perms.VIEW], perm_checker=can_anywhere_checker, fail_silently=True)],
     )
 
     client_document: ClientDocumentType = strawberry_django.field(
@@ -383,6 +384,7 @@ class Query:
 
     client_contacts: OffsetPaginated[ClientContactType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(perms=[ClientContact.perms.VIEW], perm_checker=can_anywhere_checker, fail_silently=True)],
     )
 
     client_household_member: ClientHouseholdMemberType = strawberry_django.field(
@@ -392,6 +394,9 @@ class Query:
 
     client_household_members: OffsetPaginated[ClientHouseholdMemberType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
+        extensions=[
+            HasPerm(perms=[ClientHouseholdMember.perms.VIEW], perm_checker=can_anywhere_checker, fail_silently=True)
+        ],
     )
 
     hmis_profile: HmisProfileType = strawberry_django.field(
@@ -401,6 +406,7 @@ class Query:
 
     hmis_profiles: OffsetPaginated[HmisProfileType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(perms=[HmisProfile.perms.VIEW], perm_checker=can_anywhere_checker, fail_silently=True)],
     )
 
     social_media_profile: SocialMediaProfileType = strawberry_django.field(
@@ -410,6 +416,9 @@ class Query:
 
     social_media_profiles: OffsetPaginated[SocialMediaProfileType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
+        extensions=[
+            HasPerm(perms=[SocialMediaProfile.perms.VIEW], perm_checker=can_anywhere_checker, fail_silently=True)
+        ],
     )
 
     # Data Import
@@ -438,7 +447,7 @@ class Mutation:
     """Client mutations — grant authority via the checkers (ADR 0001 §5.1).
 
     Creates evaluate ``can_anywhere`` (the platform-shared create rule) and
-    row-scoped writes evaluate ``can_obj`` on the resolved row — SHARED tier on
+    row-scoped writes load the row through ``visible()`` (the fetch is the gate) — SHARED tier on
     the client family (RFC 0002): any holder of the permission may act, exactly
     what the legacy model-level CASEWORKER permissions did.  The profile
     fetch/edit bodies load through ``visible()``.  Document and import surfaces
@@ -768,11 +777,17 @@ class Mutation:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
 
-            client_profile = visible(
-                ClientProfile.objects.all(),
-                user,
-                ClientProfile.perms.CHANGE,
-            ).get(id=data.client_profile_id)
+            try:
+                client_profile = visible(
+                    ClientProfile.objects.all(),
+                    user,
+                    ClientProfile.perms.CHANGE,
+                ).get(id=data.client_profile_id)
+            except ClientProfile.DoesNotExist:
+                # Same refusal as generate_client_profile_photo_upload: a
+                # missing or unauthorized profile is one permission error, not
+                # a DoesNotExist crash.
+                raise PermissionError("You do not have permission to modify this client.")
 
             client_profile = client_profile_photo.resolve_upload(
                 user=user,

@@ -74,7 +74,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 30
+        expected_query_count = 18
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -146,7 +146,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }}
         """
 
-        expected_query_count = 24
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
@@ -158,7 +158,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def test_client_profiles_query_authority_cost_is_row_invariant(self) -> None:
         """The permission lookups are per permission, not per rendered row.
 
-        Pins the claim `_visible_client_rows` makes: adding a profile must not
+        Pins the claim the root list gate makes: adding a profile must not
         add authority queries.  A count that moves with rows here is a per-row
         check that needs memoising, not a pin to raise.
         """
@@ -178,12 +178,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        with self.assertNumQueriesWithoutCache(24):
+        with self.assertNumQueriesWithoutCache(12):
             self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         baker.make(ClientProfile)
 
-        with self.assertNumQueriesWithoutCache(24):
+        with self.assertNumQueriesWithoutCache(12):
             self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
     @override_settings(

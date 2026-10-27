@@ -11,9 +11,13 @@ one of two states:
   enforceable at any org, and legacy ``PermissionGroup`` rows are INERT: not
   reported and never consulted for authority.  ``LEGACY_INERT_APPS`` lists
   these — shelters, teams, reports, member management (``organizations.*`` on
-  the org root), the client family (clients, RFC 0002), and referrals.  Every
-  permission of those apps is grant-backed by a scoped Role, so the legacy arm
-  is fully redundant for them.
+  the org root), the client family's profile/family surfaces (clients, RFC
+  0002), and referrals.  Every permission of those apps is grant-backed by a
+  scoped Role, so the legacy arm is fully redundant for them — **except client
+  documents**: their ownership still rides guardian object rows and two
+  mutations still load the parent through ``filter_for_user`` until the
+  CREATOR/UPLOADER tier lands, so the document surface is the remaining legacy
+  consumer in ``clients.schema`` (see the gating-test exemptions).
 * legacy-only — enforced via legacy ``PermissionGroup`` rows + guardian (the
   notes / service-request domains; task and client-document writes ride their
   own tiers next, RFC 0002/0003); grant rows are irrelevant and the global tier
@@ -33,6 +37,11 @@ over.
 #: client family (RFC 0002 — SHARED read / SHARED write), and referrals (the
 #: whole bundle rides the scoped ``Caseworker`` Role; the template carries no
 #: referral permission, so nothing legacy is left to consult).
+#:
+#: **Client documents are the exception.**  They are still owned through
+#: guardian object rows and two upload mutations still load the parent through
+#: ``filter_for_user``, so the document surface keeps a live legacy consumer
+#: until the CREATOR/UPLOADER tier lands.  Don't rely on "inert" for docs.
 LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams", "reports", "organizations", "clients", "referrals"})
 
 #: Domains where the global tier is enforceable at any org — exactly the

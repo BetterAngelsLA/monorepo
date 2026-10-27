@@ -280,3 +280,26 @@ The anchor is deliberately not an `org_via` hop: reads stay platform-shared, and
 authority is an org-scope check against the column (`can(user, perm, org=…)`), not
 an object grant. Object grants remain person-granular by E006 and are reserved for
 explicit sharing.
+
+## Amendment (2026-10-27) — nested gating and the document carve-out
+
+The clients cutover landed (profile + family grant-enforced) with two consequences
+worth recording explicitly:
+
+- **Read gates live on the root list fields, not on the types.** A type-level
+  `get_queryset` hook is a scoping hook: it applies to every occurrence of the
+  type (including nested ones) and re-evaluates once per type, which both broke
+  nested parity for profile-only roles and multiplied the permission lookups.
+  The root list fields instead carry
+  `HasPerm(..., perm_checker=can_anywhere_checker, fail_silently=True)`, which
+  returns an empty page on denial — the empty-not-error shape `main` had — and
+  shows the gate in the SDL. Nested family lists ride the parent profile's
+  `VIEW`, exactly as on `main`; per-model visibility inside a profile would be a
+  deliberate later change with its own mechanism, not a side effect.
+- **Client documents remain on the legacy gates.** They are still owned through
+  guardian object rows; the two upload mutations still load the parent through
+  `filter_for_user`, and the read fields still use `HasRetvalPerm`. `clients`
+  joining `LEGACY_INERT_APPS` therefore covers the profile/family surfaces only —
+  the document surface is the remaining legacy consumer and is listed in the
+  gating test's exemptions. The CREATOR/UPLOADER cutover (uploader-org anchor,
+  RFC 0002 decision 2) removes it.

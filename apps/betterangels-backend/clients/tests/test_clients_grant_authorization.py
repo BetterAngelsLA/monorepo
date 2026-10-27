@@ -217,3 +217,102 @@ class ClientsGrantAuthorityTestCase(ClientProfileGraphQLBaseTestCase):
         deleted = self._delete_client_profile(self.client_profile_1["id"])
         self.assertNotIn("messages", deleted["data"]["deleteClientProfile"])
         self.assertFalse(ClientProfile.objects.filter(pk=self.client_profile_1["id"]).exists())
+
+    def test_shelter_operator_sees_nested_family(self) -> None:
+        """Nested family rides the parent profile's VIEW — main parity.
+
+        Only the root list fields are gated per model; a nested occurrence is
+        resolved from the profile, exactly as on ``main``.  A role with only
+        ``ClientProfile.VIEW`` therefore still sees the family under the profile
+        while the root ``clientContacts``-style lists stay empty.
+        """
+        operator = baker.make(User)
+        self.org_1.add_user(operator)
+        make_permission_group(organization=self.org_1, template_name=SHELTER_OPERATOR.name)
+        OrgRoleManager(self.org_1).add_roles(operator, SHELTER_OPERATOR)
+        self.graphql_client.force_login(operator)
+
+        response = self.execute_graphql(
+            """
+            query ($id: ID!) {
+              clientProfile(pk: $id) {
+                id
+                contacts { id }
+                hmisProfiles { id }
+                householdMembers { id }
+                socialMediaProfiles { id }
+              }
+            }
+            """,
+            {"id": self.client_profile_1["id"]},
+        )
+
+        profile = response["data"]["clientProfile"]
+        self.assertEqual(profile["id"], self.client_profile_1["id"])
+        for field, fixture in (
+            ("contacts", "contacts"),
+            ("hmisProfiles", "hmisProfiles"),
+            ("householdMembers", "householdMembers"),
+            ("socialMediaProfiles", "socialMediaProfiles"),
+        ):
+            self.assertEqual(
+                {item["id"] for item in profile[field]},
+                {item["id"] for item in self.client_profile_1[fixture]},
+                field,
+            )
+
+    def test_update_contact_cannot_reparent_to_another_client(self) -> None:
+        """A direct child update cannot move a row between clients."""
+        editor = baker.make(User)
+        self.org_1.add_user(editor)
+        self._grant(
+            editor,
+            self.org_1,
+            "Contact Editor",
+            (ClientContact.perms.VIEW, ClientContact.perms.CHANGE),
+        )
+        self.graphql_client.force_login(editor)
+
+        contact_id = self.client_profile_1["contacts"][0]["id"]
+        response = self.execute_graphql(
+            """
+            mutation ($data: ClientContactInput!) {
+              updateClientContact(data: $data) {
+                ... on OperationInfo { messages { kind message } }
+                ... on ClientContactType { id }
+              }
+            }
+            """,
+            {"data": {"id": contact_id, "clientProfile": self.client_profile_2["id"], "name": "moved"}},
+        )
+
+        self.assertTrue("messages" in response["data"]["updateClientContact"] or "errors" in response)
+        self.assertEqual(
+            ClientContact.objects.get(id=contact_id).client_profile_id,
+            int(self.client_profile_1["id"]),
+        )
+
+    def test_nested_write_rides_the_profile_gate(self) -> None:
+        """The family rides the profile tier: profile CHANGE edits nested rows.
+
+        Deliberate: ``updateClientProfile`` is the unit of authority for its
+        related rows, even when the caller has no direct ``ClientContact.CHANGE``.
+        Pinned so a later per-model split is a conscious change.
+        """
+        editor = baker.make(User)
+        self.org_1.add_user(editor)
+        self._grant(
+            editor,
+            self.org_1,
+            "Profile Editor",
+            (ClientProfile.perms.VIEW, ClientProfile.perms.CHANGE),
+        )
+        self.graphql_client.force_login(editor)
+
+        contacts = [{"id": contact["id"], "name": contact["name"]} for contact in self.client_profile_1["contacts"]]
+        contacts[0]["name"] = "nested edit"
+
+        updated = self._update_client_profile_fixture({"id": self.client_profile_1["id"], "contacts": contacts})
+        self.assertIsNone(updated.get("errors"))
+
+        self.assertEqual(ClientContact.objects.get(id=contacts[0]["id"]).name, "nested edit")

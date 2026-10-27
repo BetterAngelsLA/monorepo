@@ -2183,16 +2183,16 @@ type Query {
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
   objectAuditLog(targetType: AuditTargetType!, objectId: ID!, filters: AuditEventFilter = null, after: String = null, limit: Int! = 50, includeSnapshot: Boolean! = false): AuditActionPage!
-  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated!
+  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
-  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated!
+  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
-  clientHouseholdMembers(pagination: OffsetPaginationInput): ClientHouseholdMemberTypeOffsetPaginated!
+  clientHouseholdMembers(pagination: OffsetPaginationInput): ClientHouseholdMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
   hmisProfile(pk: ID!): HmisProfileType! @hasPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
-  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated!
+  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
-  socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated!
+  socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)

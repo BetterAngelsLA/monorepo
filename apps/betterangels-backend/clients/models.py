@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Model, QuerySet
@@ -80,12 +81,41 @@ def get_client_profile_photo_file_path(instance: Model, filename: str) -> str:
     return os.path.join("client_profile_photos/", unique_filename)
 
 
+class ClientFamilyMember(models.Model):
+    """A client-family row cannot be moved to a different client.
+
+    The nested ``updateClientProfile`` path already pins the parent through
+    ``args``; this covers the direct mutations (and any other ``save()`` path)
+    so a payload cannot reparent a contact, HMIS, household, or social row.
+    The merge service moves rows with ``queryset.update()``, which bypasses
+    ``save()``, so merges are unaffected.
+    """
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def from_db(cls, db: Any, field_names: Any, values: Any, *args: Any, **kwargs: Any) -> "ClientFamilyMember":
+        instance = super().from_db(db, field_names, values, *args, **kwargs)
+        if "client_profile_id" in field_names:
+            instance._loaded_client_profile_id = getattr(instance, "client_profile_id", None)
+        return instance
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        original = getattr(self, "_loaded_client_profile_id", None)
+        current = getattr(self, "client_profile_id", None)
+        if original is not None and current != original:
+            raise ValidationError("A client's related record cannot be moved to another client.")
+        super().save(*args, **kwargs)
+        self._loaded_client_profile_id = current
+
+
 @pghistory.track(
     pghistory.InsertEvent("hmis_profile.add"),
     pghistory.UpdateEvent("hmis_profile.update"),
     pghistory.DeleteEvent("hmis_profile.remove"),
 )
-class HmisProfile(OrgScoped, BaseModel):
+class HmisProfile(ClientFamilyMember, OrgScoped, BaseModel):
     # The client family rides ClientProfile's tier (RFC 0002): platform-shared
     # for reads, SHARED for writes — any holder of the permission may act.
     org_via = None
@@ -279,7 +309,7 @@ class ClientDocument(Attachment):
     pghistory.UpdateEvent("social_media_profile.update"),
     pghistory.DeleteEvent("social_media_profile.remove"),
 )
-class SocialMediaProfile(OrgScoped, BaseModel):
+class SocialMediaProfile(ClientFamilyMember, OrgScoped, BaseModel):
     # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
     org_via = None
     write_tier = WRITE_SHARED
@@ -294,7 +324,7 @@ class SocialMediaProfile(OrgScoped, BaseModel):
     pghistory.UpdateEvent("client_contact.update"),
     pghistory.DeleteEvent("client_contact.remove"),
 )
-class ClientContact(OrgScoped, BaseModel):
+class ClientContact(ClientFamilyMember, OrgScoped, BaseModel):
     # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
     org_via = None
     write_tier = WRITE_SHARED
@@ -313,7 +343,7 @@ class ClientContact(OrgScoped, BaseModel):
     pghistory.UpdateEvent("client_household_member.update"),
     pghistory.DeleteEvent("client_household_member.remove"),
 )
-class ClientHouseholdMember(OrgScoped, BaseModel):
+class ClientHouseholdMember(ClientFamilyMember, OrgScoped, BaseModel):
     # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
     org_via = None
     write_tier = WRITE_SHARED

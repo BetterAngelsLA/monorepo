@@ -237,8 +237,6 @@ def invalidate_scope_cache(user: "User") -> None:
     user.__dict__.pop("_scope_cache", None)
     user.__dict__.pop("_global_tier_cache", None)
     user.__dict__.pop("_can_anywhere_cache", None)
-    # The client list-read gate caches its own boolean around can_anywhere.
-    user.__dict__.pop("_visible_client_rows_cache", None)
     user.__dict__.pop("_global_permissions", None)
     user.__dict__.pop("_org_effective_permissions", None)
 
@@ -266,8 +264,10 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: int | str | None
     if s is ALL:
         qs = qs
     elif not paths:
-        # platform-shared: perm held anywhere (finite s) ⇒ all rows
-        qs = qs if s.exists() else qs.none()
+        # platform-shared: perm held anywhere (finite s) ⇒ all rows.
+        # `can_anywhere` is the memoized form of `s.exists()`, so a caller that
+        # just ran the permission checker does not pay for the same scope twice.
+        qs = qs if can_anywhere(user, perm) else qs.none()
     elif s:
         qs = qs.filter(reduce(or_, (Q(**{f"{p}__in": s}) for p in paths)))
     else:
