@@ -1,5 +1,5 @@
-import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { MockedProvider } from '@apollo/client/testing/react';
+import { AuditTargetType } from '@monorepo/ba-platform/types';
 import {
   act,
   fireEvent,
@@ -10,23 +10,6 @@ import {
 import { AuditFilterBar } from './AuditFilterBar';
 import { AuditActorsDocument } from '../../hooks/useAuditActors/__generated__/useAuditActors.generated';
 
-const org = vi.hoisted(() => ({
-  activeOrg: undefined as
-    | { id: string; name: string; permissions: string[] }
-    | undefined,
-  permissions: [] as string[],
-}));
-
-vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
-  useActiveOrg: () => ({
-    activeOrg: org.activeOrg,
-    organizations: [],
-    setActiveOrgId: () => undefined,
-    hasPermission: (permission: string) => org.permissions.includes(permission),
-  }),
-}));
-
 class ResizeObserverStub {
   observe = vi.fn();
   unobserve = vi.fn();
@@ -35,31 +18,55 @@ class ResizeObserverStub {
 (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
   ResizeObserverStub;
 
+const actorVariables = (search: string) => ({
+  targetType: AuditTargetType.Bed,
+  objectId: '7',
+  search,
+  limit: 20,
+});
+
 function actorMock(search: string, calls?: string[]) {
   return {
     request: {
       query: AuditActorsDocument,
-      variables: { organizationId: 'org-1', search },
+      variables: actorVariables(search),
     },
     result: () => {
       calls?.push(search);
       return {
         data: {
-          organizationMembers: {
-            __typename: 'OrganizationMemberTypeOffsetPaginated',
-            results: [
-              {
-                __typename: 'OrganizationMemberType',
-                id: 'user-1',
-                firstName: 'Ada',
-                lastName: 'Lovelace',
-                email: 'ada@example.com',
-              },
-            ],
-          },
+          objectAuditActors: [
+            {
+              __typename: 'AuditActorType',
+              id: 'user-1',
+              label: 'Ada Lovelace',
+              isSystem: false,
+            },
+          ],
         },
       };
     },
+  };
+}
+
+function systemActorMock(search: string) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: actorVariables(search),
+    },
+    result: () => ({
+      data: {
+        objectAuditActors: [
+          {
+            __typename: 'AuditActorType',
+            id: null,
+            label: 'System',
+            isSystem: true,
+          },
+        ],
+      },
+    }),
   };
 }
 
@@ -69,35 +76,40 @@ function renderBar(
 ) {
   return render(
     <MockedProvider mocks={mocks as never} showWarnings={false}>
-      <AuditFilterBar onChange={onChange} />
+      <AuditFilterBar
+        targetType={AuditTargetType.Bed}
+        objectId="7"
+        onChange={onChange}
+      />
     </MockedProvider>,
   );
 }
 
 describe('AuditFilterBar', () => {
-  beforeEach(() => {
-    org.activeOrg = undefined;
-    org.permissions = [];
-  });
+  /** The date preset is the first of the two comboboxes (actor search is the other). */
+  function openDatePresets() {
+    const [datePreset] = screen.getAllByRole('combobox');
+    expect(datePreset).toBeDefined();
+    fireEvent.click(datePreset);
+  }
 
   it('applies a shared preset range', async () => {
     const onChange = vi.fn();
     renderBar([], onChange);
 
-    fireEvent.click(screen.getByRole('combobox'));
+    openDatePresets();
     fireEvent.click(await screen.findByText('Last 7 Days'));
 
     expect(onChange).toHaveBeenCalledWith({
       dateFrom: expect.any(String),
       dateTo: expect.any(String),
-      actorId: null,
     });
   });
 
   it('opens the shared date picker for a custom range', async () => {
     renderBar();
 
-    fireEvent.click(screen.getByRole('combobox'));
+    openDatePresets();
     fireEvent.click(await screen.findByText('Custom'));
 
     expect(
@@ -106,9 +118,6 @@ describe('AuditFilterBar', () => {
   });
 
   it('queries actors only after two debounced characters', async () => {
-    org.activeOrg = { id: 'org-1', name: 'Org', permissions: [] };
-    org.permissions = [UserOrganizationPermissions.ViewOrgMembers];
-
     const calls: string[] = [];
     renderBar([actorMock('', calls), actorMock('ad', calls)]);
 
@@ -131,8 +140,6 @@ describe('AuditFilterBar', () => {
   });
 
   it('selects a searched actor with the keyboard', async () => {
-    org.activeOrg = { id: 'org-1', name: 'Org', permissions: [] };
-    org.permissions = [UserOrganizationPermissions.ViewOrgMembers];
     const onChange = vi.fn();
 
     renderBar([actorMock('ad')], onChange);
@@ -154,8 +161,6 @@ describe('AuditFilterBar', () => {
   });
 
   it('applies and clears the selected actor', async () => {
-    org.activeOrg = { id: 'org-1', name: 'Org', permissions: [] };
-    org.permissions = [UserOrganizationPermissions.ViewOrgMembers];
     const onChange = vi.fn();
 
     renderBar([actorMock('ad')], onChange);
@@ -176,18 +181,27 @@ describe('AuditFilterBar', () => {
 
     fireEvent.click(screen.getByLabelText('Clear actor filter'));
 
-    expect(onChange).toHaveBeenLastCalledWith(
-      expect.objectContaining({ actorId: null }),
-    );
+    const cleared = onChange.mock.calls.at(-1)?.[0];
+    expect(cleared).not.toHaveProperty('actorId');
+    expect(cleared).not.toHaveProperty('systemOnly');
     expect(screen.getByPlaceholderText('Search actors')).not.toBeNull();
   });
 
-  it('does not render the actor filter without view_org_members', () => {
-    org.activeOrg = { id: 'org-1', name: 'Org', permissions: [] };
-    org.permissions = [];
+  it('filters system events when the system actor is selected', async () => {
+    const onChange = vi.fn();
 
-    renderBar();
+    renderBar([systemActorMock('sys')], onChange);
 
-    expect(screen.queryByPlaceholderText('Search actors')).toBeNull();
+    const input = screen.getByPlaceholderText('Search actors');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'sys' } });
+
+    fireEvent.click(await screen.findByRole('option', { name: 'System' }));
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ systemOnly: true }),
+    );
+    expect(onChange.mock.calls.at(-1)?.[0]).not.toHaveProperty('actorId');
+    expect(screen.getByText('System')).not.toBeNull();
   });
 });

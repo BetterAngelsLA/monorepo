@@ -1,57 +1,60 @@
 import { useQuery } from '@apollo/client/react';
-import { useActiveOrg } from '@monorepo/ba-platform';
+import type { AuditTargetType } from '@monorepo/ba-platform/types';
 import { AuditActorsDocument } from './__generated__/useAuditActors.generated';
 
 export type AuditActorOption = {
-  id: string;
+  /** Null for the synthetic ``System`` entry, selected via ``systemOnly``. */
+  id: string | null;
   label: string;
+  isSystem: boolean;
 };
 
 /** The backend ignores shorter terms; don't spend a request on them either. */
 export const MIN_ACTOR_SEARCH_LENGTH = 2;
 
+/** The endpoint's default page of actors, which is also its UI cap. */
+const ACTOR_RESULT_LIMIT = 20;
+
 type UseAuditActorsArgs = {
-  /** Gate the request on `view_org_members` (the backend requires it). */
-  enabled?: boolean;
+  targetType: AuditTargetType;
+  objectId: string;
   /** Search term; the query only runs at two or more characters. */
   search?: string;
 };
 
 /**
- * Organization members matching *search*, for the audit log's actor filter.
+ * Distinct actors from one object's own audit history, for the actor filter.
  *
- * The API exposes no actor list for an object's history, so members are the
- * practical source. Requests are on demand: nothing is fetched until *search*
- * has at least two characters (the backend's own floor), and the query is
- * skipped entirely unless *enabled* — callers gate on `view_org_members`, which
- * the backend requires.
+ * Unlike `organizationMembers`, this includes global/BA users who acted on the
+ * object without belonging to its organization, plus one synthetic `System`
+ * entry (`id: null`, selected with `systemOnly`). Requests are on demand:
+ * nothing is fetched until *search* has at least two characters.
  */
 export function useAuditActors({
-  enabled = true,
+  targetType,
+  objectId,
   search = '',
-}: UseAuditActorsArgs = {}) {
-  const { activeOrg } = useActiveOrg();
-  const organizationId = activeOrg?.id ?? '';
+}: UseAuditActorsArgs) {
   const term = search.trim();
-  const canSearch =
-    enabled &&
-    Boolean(organizationId) &&
-    term.length >= MIN_ACTOR_SEARCH_LENGTH;
+  const canSearch = Boolean(objectId) && term.length >= MIN_ACTOR_SEARCH_LENGTH;
 
   const { data, loading } = useQuery(AuditActorsDocument, {
-    variables: { organizationId, search: term },
+    variables: {
+      targetType,
+      objectId,
+      search: term,
+      limit: ACTOR_RESULT_LIMIT,
+    },
     skip: !canSearch,
   });
 
-  const options: AuditActorOption[] = (
-    data?.organizationMembers.results ?? []
-  ).map((member) => ({
-    id: member.id,
-    label:
-      [member.firstName, member.lastName].filter(Boolean).join(' ').trim() ||
-      member.email ||
-      'Unknown',
-  }));
+  const options: AuditActorOption[] = (data?.objectAuditActors ?? []).map(
+    (actor) => ({
+      id: actor.id ?? null,
+      label: actor.label,
+      isSystem: actor.isSystem,
+    }),
+  );
 
   return { options, loading };
 }

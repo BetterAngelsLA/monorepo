@@ -1,14 +1,17 @@
-query AuditActors($organizationId: String!, $search: String) {
-  organizationMembers(
-    organizationId: $organizationId
-    filters: { search: $search }
-    pagination: { limit: 20 }
+query AuditActors(
+  $targetType: AuditTargetType!
+  $objectId: ID!
+  $search: String!
+  $limit: Int!
+) {
+  objectAuditActors(
+    targetType: $targetType
+    objectId: $objectId
+    search: $search
+    limit: $limit
   ) {
-    results {
-      id
-      firstName
-      lastName
-      email
-    }
+    id
+    label
+    isSystem
   }
 }

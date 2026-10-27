@@ -1,6 +1,5 @@
-import { useActiveOrg } from '@monorepo/ba-platform';
-import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { mergeCss, useDebounce } from '@monorepo/react/shared';
+import type { AuditTargetType } from '@monorepo/ba-platform/types';
 import { endOfDay, startOfDay } from 'date-fns';
 import { X } from 'lucide-react';
 import {
@@ -27,6 +26,12 @@ import {
 
 type AuditDatePreset = 'ALL' | DateRangePreset;
 
+type ActorSelection = {
+  id: string | null;
+  label: string;
+  isSystem: boolean;
+};
+
 const DATE_PRESET_OPTIONS: ReadonlyArray<DropdownOption<AuditDatePreset>> = [
   { value: 'ALL', label: 'All time' },
   ...(Object.entries(PRESET_LABELS) as Array<[DateRangePreset, string]>).map(
@@ -39,13 +44,20 @@ const ACTOR_SEARCH_DEBOUNCE_MS = 300;
 
 function rangeToFilters(
   range: DateRange,
-  actorId: string | null,
+  selection: ActorSelection | null,
 ): ObjectAuditLogFilters {
-  return {
+  const filters: ObjectAuditLogFilters = {
     dateFrom: range.from ? startOfDay(range.from).toISOString() : null,
     dateTo: range.to ? endOfDay(range.to).toISOString() : null,
-    actorId,
   };
+
+  if (selection?.isSystem) {
+    filters.systemOnly = true;
+  } else if (selection?.id) {
+    filters.actorId = selection.id;
+  }
+
+  return filters;
 }
 
 /**
@@ -56,18 +68,25 @@ function rangeToFilters(
  * `view_org_members`, which the backend requires.
  */
 function ActorFilter({
-  actorId,
+  targetType,
+  objectId,
+  selection,
   onChange,
 }: {
-  actorId: string | null;
-  onChange: (actorId: string | null) => void;
+  targetType: AuditTargetType;
+  objectId: string;
+  selection: ActorSelection | null;
+  onChange: (selection: ActorSelection | null) => void;
 }) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, ACTOR_SEARCH_DEBOUNCE_MS);
-  const { options, loading } = useAuditActors({ search: debouncedSearch });
+  const { options, loading } = useAuditActors({
+    targetType,
+    objectId,
+    search: debouncedSearch,
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
@@ -112,15 +131,17 @@ function ActorFilter({
       : undefined;
 
   const selectActor = (option: AuditActorOption) => {
-    setSelectedLabel(option.label);
     setSearch('');
     setIsOpen(false);
     setActiveIndex(-1);
-    onChange(option.id);
+    onChange({
+      id: option.id,
+      label: option.label,
+      isSystem: option.isSystem,
+    });
   };
 
   const clearActor = () => {
-    setSelectedLabel(null);
     setSearch('');
     setIsOpen(false);
     setActiveIndex(-1);
@@ -189,7 +210,7 @@ function ActorFilter({
     }
   };
 
-  if (actorId) {
+  if (selection) {
     return (
       <div className="flex w-56 flex-col gap-1">
         <Text variant="caption" textColor="text-neutral-50">
@@ -197,7 +218,7 @@ function ActorFilter({
         </Text>
         <div className="flex h-12 items-center justify-between gap-2 rounded-full border border-neutral-90 px-4">
           <Text variant="body" textColor="text-neutral-20" className="truncate">
-            {selectedLabel ?? 'Selected actor'}
+            {selection.label}
           </Text>
           <button
             type="button"
@@ -290,23 +311,24 @@ function ActorFilter({
 
 /**
  * Date-range and actor filters for the audit log. Emits the derived
- * `dateFrom`/`dateTo`/`actorId` filter object on every change.
+ * `dateFrom`/`dateTo`/`actorId`/`systemOnly` filter object on every change.
  */
 export function AuditFilterBar({
+  targetType,
+  objectId,
   onChange,
 }: {
+  targetType: AuditTargetType;
+  objectId: string;
   onChange: (filters: ObjectAuditLogFilters) => void;
 }) {
-  const { hasPermission } = useActiveOrg();
-  const canViewActors = hasPermission(
-    UserOrganizationPermissions.ViewOrgMembers,
-  );
-
   const [preset, setPreset] = useState<AuditDatePreset>('ALL');
   const [range, setRange] = useState<DateRange>({ from: null, to: null });
   const [previewCustom, setPreviewCustom] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [actorId, setActorId] = useState<string | null>(null);
+  const [actorSelection, setActorSelection] = useState<ActorSelection | null>(
+    null,
+  );
 
   const presetValue = useMemo(() => {
     const value = previewCustom ? 'CUSTOM' : preset;
@@ -331,9 +353,9 @@ export function AuditFilterBar({
       setPreviewCustom(false);
       setRange(nextRange);
       setIsPickerOpen(false);
-      onChange(rangeToFilters(nextRange, actorId));
+      onChange(rangeToFilters(nextRange, actorSelection));
     },
-    [actorId, onChange],
+    [actorSelection, onChange],
   );
 
   const handlePickerOpenChange = useCallback((isOpen: boolean) => {
@@ -349,15 +371,15 @@ export function AuditFilterBar({
       setPreviewCustom(false);
       setRange(next);
       setIsPickerOpen(false);
-      onChange(rangeToFilters(next, actorId));
+      onChange(rangeToFilters(next, actorSelection));
     },
-    [actorId, onChange],
+    [actorSelection, onChange],
   );
 
   const handleActorChange = useCallback(
-    (nextActorId: string | null) => {
-      setActorId(nextActorId);
-      onChange(rangeToFilters(range, nextActorId));
+    (next: ActorSelection | null) => {
+      setActorSelection(next);
+      onChange(rangeToFilters(range, next));
     },
     [range, onChange],
   );
@@ -382,9 +404,12 @@ export function AuditFilterBar({
         onCommit={handlePickerCommit}
       />
 
-      {canViewActors && (
-        <ActorFilter actorId={actorId} onChange={handleActorChange} />
-      )}
+      <ActorFilter
+        targetType={targetType}
+        objectId={objectId}
+        selection={actorSelection}
+        onChange={handleActorChange}
+      />
     </div>
   );
 }

@@ -2,13 +2,13 @@
 
 import type { AuditActorsQuery } from './useAuditActors.generated';
 
-export const auditActorsOperationKey: keyof Omit<AuditActorsQuery, '__typename'> = 'organizationMembers';
+export const auditActorsOperationKey: keyof Omit<AuditActorsQuery, '__typename'> = 'objectAuditActors';
 export const auditActorsSuccessTypename: Extract<
-  NonNullable<AuditActorsQuery['organizationMembers']> extends readonly (infer _T)[]
+  NonNullable<AuditActorsQuery['objectAuditActors']> extends readonly (infer _T)[]
     ? _T
-    : NonNullable<AuditActorsQuery['organizationMembers']>,
-  { __typename: 'OrganizationMemberTypeOffsetPaginated' }
->['__typename'] = 'OrganizationMemberTypeOffsetPaginated';
+    : NonNullable<AuditActorsQuery['objectAuditActors']>,
+  { __typename: 'AuditActorType' }
+>['__typename'] = 'AuditActorType';
 
 export const auditActorsMeta = {
   operationKey: auditActorsOperationKey,

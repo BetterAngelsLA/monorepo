@@ -20,6 +20,8 @@ export type ObjectAuditLogFilters = {
   dateTo?: string | null;
   /** Restrict to a single acting user. */
   actorId?: string | null;
+  /** Restrict to events rendered as system (no attributed user). */
+  systemOnly?: boolean | null;
 };
 
 type UseObjectAuditLogArgs = ObjectAuditLogFilters & {
@@ -48,6 +50,7 @@ export function useObjectAuditLog({
   dateFrom,
   dateTo,
   actorId,
+  systemOnly,
 }: UseObjectAuditLogArgs) {
   const variables = useMemo<ObjectAuditLogQueryVariables>(() => {
     const filters: NonNullable<ObjectAuditLogQueryVariables['filters']> = {};
@@ -58,7 +61,9 @@ export function useObjectAuditLog({
     if (dateTo) {
       filters.dateTo = dateTo;
     }
-    if (actorId) {
+    if (systemOnly) {
+      filters.systemOnly = true;
+    } else if (actorId) {
       filters.actorId = actorId;
     }
 
@@ -70,7 +75,7 @@ export function useObjectAuditLog({
       // "no filters", and the variable set stays identical to the initial one.
       ...(Object.keys(filters).length > 0 ? { filters } : {}),
     };
-  }, [targetType, objectId, dateFrom, dateTo, actorId, pageSize]);
+  }, [targetType, objectId, dateFrom, dateTo, actorId, systemOnly, pageSize]);
 
   const { data, loading, error, fetchMore } = useQuery<
     ObjectAuditLogQuery,
