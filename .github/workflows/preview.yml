@@ -91,11 +91,7 @@ jobs:
           set -euo pipefail
           yarn nx run betterangels:write-eas-env:preview
 
-          # Mirror the build environment before fingerprinting: the pre-install
-          # hook resolves star deps and copies packageManager/overrides into the
-          # app package.json, and those files are part of the fingerprint. EAS
-          # prebuilds inside the app, so do the same instead of from the root.
-          yarn nx run betterangels:copy-lockfile
+          # EAS prebuilds inside the app, so do the same instead of from the root.
           yarn nx run betterangels:prebuild
           # The resolver prints the whole fingerprint, so take just the runtime.
           runtime_version() {

@@ -55,8 +55,7 @@
       "cache": true,
       "dependsOn": [
         "write-eas-env",
-        "sync-deps",
-        "copy-lockfile"
+        "sync-deps"
       ],
       "options": {
         "cwd": "apps/betterangels",
@@ -223,8 +222,7 @@
       "cache": false,
       "dependsOn": [
         "write-eas-env",
-        "sync-deps",
-        "copy-lockfile"
+        "sync-deps"
       ],
       "options": {},
       "configurations": {
