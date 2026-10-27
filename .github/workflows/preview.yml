@@ -39,13 +39,8 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      # Cost control while the pipeline is being proven: one installable APK
-      # instead of paying for android + ios + an ios simulator binary on every
-      # push. The `preview-platforms` label widens it for a PR that needs iOS.
-      # Once proven, this is the knob to replace with "the platforms this change
-      # needs" — do not leave it pinned to one platform for good. The EAS Update
-      # is published for every platform either way.
-      EAS_BUILD_PLATFORMS: ${{ contains(github.event.pull_request.labels.*.name, 'preview-platforms') && 'android,ios' || 'android' }}
+      # `EAS_BUILD_PLATFORMS` is decided per run in "Set Environment Variables"
+      # from what the change can affect — see the comment there.
       # Applying this label rebuilds even though a build already exists for the
       # fingerprint — the escape hatch for a build that failed for a reason we
       # have since fixed.
@@ -83,9 +78,32 @@ jobs:
       - name: 🔧 Set Environment Variables
         env:
           RAW_BRANCH_NAME: ${{ github.head_ref }}
+          PREVIEW_PLATFORMS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'preview-platforms') }}
         run: |
+          set -euo pipefail
           BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
+
+          # Build what this change can affect, not one platform and not all of
+          # them. Android is always built: it is the installable artifact a
+          # reviewer uses. iOS is added only when the native binary or its config
+          # changed, because a JS-only change reaches the device through the EAS
+          # Update — paying for an ios build then buys nothing. The
+          # `preview-platforms` label forces both.
+          NATIVE_PATTERN='^(package\.json|yarn\.lock|apps/betterangels/(app\.config\.js|app\.json|eas\.json|package\.json|ios/|android/))'
+          CHANGED="$(git diff --name-only "$NX_BASE" "$NX_HEAD" || true)"
+          if [ "${PREVIEW_PLATFORMS_LABEL:-false}" = 'true' ]; then
+            PLATFORMS='android,ios'
+            echo 'preview-platforms label: building both platforms.'
+          elif printf '%s\n' "$CHANGED" | grep -Eq "$NATIVE_PATTERN"; then
+            PLATFORMS='android,ios'
+            echo 'Native code or build config changed; building both platforms:'
+            printf '%s\n' "$CHANGED" | grep -E "$NATIVE_PATTERN" | head -10
+          else
+            PLATFORMS='android'
+            echo 'JS-only change; android only (iOS ships through the update).'
+          fi
+          echo "EAS_BUILD_PLATFORMS=$PLATFORMS" >> "$GITHUB_ENV"
 
       - name: 🐳 Configure AWS credentials
         if: github.event.pull_request.head.repo.fork == false
@@ -100,6 +118,19 @@ jobs:
         with:
           node-version: 22.21.1
           cache: yarn
+
+      # `--immutable` still reconciles anything stale; the cache only skips the
+      # work of rebuilding an identical tree. Keyed on the lockfile, so a
+      # dependency change is a miss by construction.
+      - name: ♻️ Restore node_modules
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
 
       - name: 📦 Install dependencies
         run: |

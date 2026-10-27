@@ -66,10 +66,31 @@ const configuration =
   getOptionalEnv('EAS_CONFIGURATION') ??
   'preview';
 
-/** EAS profiles per configuration. Extend here, not with a hardcoded literal. */
-const PROFILES: Record<string, { android: string; ios: string }> = {
-  preview: { android: 'preview', ios: 'development-simulator' },
-  production: { android: 'production', ios: 'production' },
+/**
+ * Per-configuration EAS profiles, and the identity of the app they install.
+ *
+ * `appId`/`scheme` mirror `BUNDLE_IDENTIFIER` and `scheme` in `app.config.js`
+ * (driven by `APP_VARIANT`): Maestro has to drive the binary the build actually
+ * produced, and a dev build launches a different package than a production one.
+ * They are passed to the EAS workflow as inputs rather than hardcoded there, so
+ * the workflow is not tied to the dev variant.
+ */
+const PROFILES: Record<
+  string,
+  { android: string; ios: string; appId: string; scheme: string }
+> = {
+  preview: {
+    android: 'preview',
+    ios: 'development-simulator',
+    appId: 'la.betterangels.dev.app',
+    scheme: 'betterangels-dev',
+  },
+  production: {
+    android: 'production',
+    ios: 'production',
+    appId: 'la.betterangels.app',
+    scheme: 'betterangels',
+  },
 };
 
 const profiles = PROFILES[configuration];
@@ -210,6 +231,8 @@ run(
     `-F update_group_id=${groupId} ` +
     `-F MAESTRO_BA_USER_EMAIL=${process.env.MAESTRO_BA_USER_EMAIL} ` +
     `-F MAESTRO_BA_USER_PASSWORD=${process.env.MAESTRO_BA_USER_PASSWORD} ` +
+    `-F app_id=${profiles.appId} ` +
+    `-F scheme=${profiles.scheme} ` +
     `-F android_runtime_version=${androidRuntime} ` +
     `-F ios_runtime_version=${iosRuntime} ` +
     `-F android_profile=${androidProfile} ` +
