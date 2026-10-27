@@ -76,6 +76,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     try {
       const cleanStatus = formData.status || undefined;
       const cleanTeamId = !formData.teamId ? null : formData.teamId;
+      const cleanAssigneeId = !formData.assigneeId ? null : formData.assigneeId;
 
       if (task?.id) {
         await updateTask({
@@ -86,6 +87,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
               description: formData.description,
               status: cleanStatus,
               teamId: cleanTeamId,
+              assigneeId: cleanAssigneeId,
             },
           },
         });
@@ -97,6 +99,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
               description: formData.description,
               status: cleanStatus,
               teamId: cleanTeamId ?? teamId ?? undefined,
+              assigneeId: cleanAssigneeId,
 
               // FIX: Map IDs correctly based on which props are present
               clientProfile: clientProfileId ?? undefined,
@@ -149,6 +152,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     description: task?.description || '',
     status: task?.status || TaskStatusEnum.ToDo,
     teamId: task?.teamId ?? teamId ?? '',
+    assigneeId: task?.assigneeId ?? '',
   };
 
   const showDelete = !!onDelete || !!task?.id;

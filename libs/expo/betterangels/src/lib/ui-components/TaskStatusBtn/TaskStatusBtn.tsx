@@ -128,6 +128,7 @@ export function TaskStatusBtn(props: TaskStatusBtnProps) {
       onChange={(status) => onUpdateTask(status as TaskStatusEnum)}
       options={OPTIONS}
       value={value}
+      title="Status"
     />
   );
 }

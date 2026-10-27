@@ -3,6 +3,7 @@ import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { TaskType } from '../../apollo';
 import TaskStatusBtn from '../TaskStatusBtn';
+import TaskCardAssignee from './TaskCardAssignee';
 import TaskCardBody from './TaskCardBody';
 import TaskCardClient from './TaskCardClient';
 import TaskCardCreatedBy from './TaskCardCreatedBy';
@@ -64,6 +65,8 @@ export function TaskCard(props: TaskCardProps) {
           createdBy={task.createdBy}
           team={task.team}
         />
+
+        {task.assignee && <TaskCardAssignee assignee={task.assignee} />}
         <TaskCardBody
           description={task.description}
           createdAt={task.createdAt}

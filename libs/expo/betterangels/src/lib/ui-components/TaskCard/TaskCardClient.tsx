@@ -1,6 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, TextBold } from '@monorepo/expo/shared/ui-components';
-import { Pressable, StyleSheet } from 'react-native';
+import { TaskPersonRow } from '../TaskPersonRow';
 
 type TaskCardClientProps = {
   firstName?: string | null;
@@ -16,46 +14,20 @@ export default function TaskCardClient(props: TaskCardClientProps) {
     return null;
   }
 
-  const fullName = `${firstName ?? ''} ${lastName ?? ''}`.trim();
+  const fullName = [firstName, lastName].filter(Boolean).join(' ');
 
   return (
-    <Pressable
-      accessibilityRole={onPress ? 'link' : undefined}
+    <TaskPersonRow
+      label="Client"
+      name={fullName}
+      avatarUrl={profilePhotoUrl}
+      onPress={onPress}
       accessibilityLabel={
         onPress
           ? `Open client profile${fullName ? `: ${fullName}` : ''}`
           : undefined
       }
       accessibilityHint={onPress ? "Opens the client's profile" : undefined}
-      disabled={!onPress}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.container,
-        pressed && onPress ? styles.pressed : null,
-      ]}
-    >
-      <Avatar
-        mr="xs"
-        size="sm"
-        accessibilityLabel={`client's profile photo`}
-        accessibilityHint={`client's profile photo`}
-        imageUrl={profilePhotoUrl || undefined}
-      />
-      <TextBold size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-        {[firstName, lastName].filter(Boolean).join(' ')}
-      </TextBold>
-    </Pressable>
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    marginBottom: Spacings.xs,
-  },
-  pressed: {
-    opacity: 0.6,
-  },
-});

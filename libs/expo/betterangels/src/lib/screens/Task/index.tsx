@@ -7,6 +7,7 @@ import { MainScrollContainer, TaskStatusBtn } from '../../ui-components';
 import { useUser } from '../../hooks';
 
 import { useQuery } from '@apollo/client/react';
+import TaskAssignee from './TaskAssignee';
 import TaskBody from './TaskBody';
 import TaskClient from './TaskClient';
 import TaskCreatedBy from './TaskCreatedBy';
@@ -72,7 +73,8 @@ export default function Task({
             team={task.team}
           />
         </View>
-        {!!(task.description) && <TaskBody description={task.description} />}
+        {!!task.assignee && <TaskAssignee assignee={task.assignee} />}
+        {!!task.description && <TaskBody description={task.description} />}
       </View>
       <TaskStatusBtn id={task.id} status={task.status} />
     </MainScrollContainer>

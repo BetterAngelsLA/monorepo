@@ -23,6 +23,7 @@ export interface TaskFormData {
   description?: string | null;
   status?: TaskStatusEnum | null;
   teamId?: string | null;
+  assigneeId?: string | null;
 }
 
 interface INoteTasksProps {
@@ -100,6 +101,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       description: data.description || '',
       status: (data.status as TaskStatusEnum) || TaskStatusEnum.ToDo,
       teamId: data.teamId ?? teamId ?? null,
+      assigneeId: data.assigneeId ?? null,
     };
 
     if (existingId) {

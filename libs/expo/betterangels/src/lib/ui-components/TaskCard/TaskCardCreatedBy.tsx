@@ -1,10 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  Avatar,
-  TextBold,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import { TaskPersonRow } from '../TaskPersonRow';
 import { TasksQuery } from '../TaskList/__generated__/Tasks.generated';
 
 type TaskCardCreatedByProps = {
@@ -16,32 +10,12 @@ type TaskCardCreatedByProps = {
 export default function TaskCardCreatedBy(props: TaskCardCreatedByProps) {
   const { createdBy, team, organization } = props;
 
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        marginBottom: Spacings.sm,
-      }}
-    >
-      <Avatar
-        mr="xs"
-        size="sm"
-        accessibilityLabel={`creator's profile photo`}
-        accessibilityHint={`creator's profile photo`}
-        imageUrl={''}
-      />
-      <View>
-        <TextBold size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-          {[createdBy?.firstName, createdBy?.lastName]
-            .filter(Boolean)
-            .join(' ')}
-        </TextBold>
-        <TextRegular size="sm">
-          {[organization?.name, team?.name && `- ${team.name}`]
-            .filter(Boolean)
-            .join(' ')}
-        </TextRegular>
-      </View>
-    </View>
-  );
+  const name = [createdBy?.firstName, createdBy?.lastName]
+    .filter(Boolean)
+    .join(' ');
+  const secondary = [organization?.name, team?.name && `- ${team.name}`]
+    .filter(Boolean)
+    .join(' ');
+
+  return <TaskPersonRow label="Created by" name={name} secondary={secondary} />;
 }

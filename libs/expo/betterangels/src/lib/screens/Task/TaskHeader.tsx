@@ -82,6 +82,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
             description: task.description,
             status: task.status,
             teamId: task.teamId ?? undefined,
+            assigneeId: task.assigneeId || null,
           },
         },
       });
@@ -122,7 +123,11 @@ export default function TaskHeader(props: TTaskHeaderProps) {
         <TaskForm
           initialValues={{
             summary: task.summary || '',
-            teamId: task.team?.id ?? undefined,
+            // `null`, not `undefined`: every field in the task form schema is
+            // `.nullable()` but not optional, so an `undefined` team makes
+            // `zodResolver` reject the submit on a team-less task.
+            teamId: task.team?.id ?? null,
+            assigneeId: task.assignee?.id ?? '',
             description: task.description || '',
             status: task.status || TaskStatusEnum.ToDo,
           }}

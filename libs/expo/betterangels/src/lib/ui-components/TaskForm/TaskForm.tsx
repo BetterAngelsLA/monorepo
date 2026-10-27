@@ -12,8 +12,9 @@ import {
   SubmitHandler,
   useForm,
 } from 'react-hook-form';
-import { useOrgTeams } from '../../hooks';
+import { useOrgTeams, useTaskAssignees } from '../../hooks';
 import { enumDisplayTaskStatus } from '../../static';
+import { AssigneeSelect } from '../AssigneeSelect';
 
 import DeleteTask from './DeleteTask';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
@@ -40,7 +41,19 @@ export function TaskForm(props: TProps) {
   });
 
   const { teams } = useOrgTeams();
+  const { assignees } = useTaskAssignees();
   const initialTeamId = useMemo(() => initialValues?.teamId, []);
+
+  const teamItems = useMemo(
+    () =>
+      teams
+        .filter((t) => t.isActive || t.id === initialTeamId)
+        .map((t) => ({
+          value: t.id,
+          displayValue: formatTeamDisplayName(t),
+        })),
+    [teams, initialTeamId],
+  );
 
   const {
     control,
@@ -90,25 +103,45 @@ export function TaskForm(props: TProps) {
               errorMessage={errors.summary?.message}
             />
 
+            {/*
+              Skip the field entirely when the org has no teams: `SingleSelect`
+              renders only a label for an empty item list, which reads as a
+              control that failed to load and breaks the sheet's field rhythm.
+              A team already on the task stays listed even if it was deactivated.
+            */}
+            {teamItems.length > 0 && (
+              <Controller
+                name="teamId"
+                control={control}
+                render={({ field }) => (
+                  <SingleSelect
+                    allowSelectNone={true}
+                    label="Team"
+                    modalTitle="Team"
+                    maxRadioItems={0}
+                    placeholder="Select team"
+                    disabled={isSubmitting}
+                    items={teamItems}
+                    selectedValue={field.value}
+                    onChange={(value) => field.onChange(value || '')}
+                    error={errors.teamId?.message}
+                  />
+                )}
+              />
+            )}
+
             <Controller
-              name="teamId"
+              name="assigneeId"
               control={control}
               render={({ field }) => (
-                <SingleSelect
-                  allowSelectNone={true}
-                  label="Team"
-                  maxRadioItems={0}
-                  placeholder="Select team"
+                <AssigneeSelect
+                  label="Assigned To"
+                  placeholder="Select assignee"
                   disabled={isSubmitting}
-                  items={teams
-                    .filter((t) => t.isActive || t.id === initialTeamId)
-                    .map((t) => ({
-                      value: t.id,
-                      displayValue: formatTeamDisplayName(t),
-                    }))}
+                  items={assignees}
                   selectedValue={field.value}
                   onChange={(value) => field.onChange(value || '')}
-                  error={errors.teamId?.message}
+                  error={errors.assigneeId?.message}
                 />
               )}
             />
@@ -132,6 +165,7 @@ export function TaskForm(props: TProps) {
               render={({ field }) => (
                 <SingleSelect
                   label="Status"
+                  modalTitle="Status"
                   placeholder="Select status"
                   disabled={isSubmitting}
                   maxRadioItems={0}
