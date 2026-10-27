@@ -430,10 +430,12 @@ jobs:
             # both, so they have to match what the build uploads. `sync-deps` is
             # deliberately absent — it installs, and installing after
             # `copy-lockfile` prunes the other projects.
-            yarn nx affected -t write-eas-env sync-eas-env \
-              --configuration ${{ matrix.environment }} --output-style=stream
-            yarn nx affected -t copy-lockfile \
-              --configuration ${{ matrix.environment }} --output-style=stream
+            # Not `nx affected`: an unaffected app would resolve a runtime without
+            # its env and queue a build for a fingerprint nothing uses. The reuse
+            # check below is what makes this a no-op when nothing changed.
+            yarn nx run betterangels:write-eas-env:${{ matrix.environment }} --output-style=stream
+            yarn nx run betterangels:sync-eas-env:${{ matrix.environment }} --output-style=stream
+            yarn nx run betterangels:copy-lockfile --output-style=stream
             # One build per fingerprint, in any status — same rule as the preview.
             npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
               --project betterangels --configuration ${{ matrix.environment }}
