@@ -199,6 +199,14 @@ jobs:
           # EAS prebuilds inside the app, so do the same instead of from the root.
           yarn nx run betterangels:prebuild
 
+          # `eas-build` rewrites the workspace for EAS Build before it uploads
+          # (copy-lockfile pins the star deps and declares the app the single
+          # workspace), and the runtime it sends is computed from that state. Do
+          # the same here, or we look up and then build a runtime the build will
+          # never produce. Nothing after this point needs the pristine workspace:
+          # the rest of the job is EAS calls.
+          yarn nx run betterangels:copy-lockfile
+
           # The resolver prints the whole fingerprint, so take just the runtime.
           runtime_version() {
             (cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" \
@@ -233,8 +241,10 @@ jobs:
               || yarn nx run betterangels:eas-build:preview --platform="$PLATFORM" --wait=false --freezeCredentials=true --json=true
           done
 
-          # Publishes the update for every platform the app supports.
-          yarn nx affected -t eas-update --configuration preview --output-style=stream
+          # Publishes the update for every platform the app supports. The branch
+          # is explicit: `--auto` reads the git branch, and a CI checkout is a
+          # detached HEAD, which publishes to a branch literally named "HEAD".
+          yarn nx affected -t eas-update --configuration preview --branch "$BRANCH_NAME" --output-style=stream
 
           # Mobile preview links (build, update, QR) on the PR.
           yarn nx run betterangels:preview-comment

@@ -243,7 +243,9 @@
         "sync-deps",
         "copy-lockfile"
       ],
-      "options": {},
+      "options": {
+        "interactive": false
+      },
       "configurations": {
         "preview": {
           "auto": true

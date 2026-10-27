@@ -291,9 +291,9 @@ jobs:
         run: |
           docker compose run better-angels bash <<'EOF'
           # One Nx invocation lets independent targets overlap: lint/typecheck
-          # while prepare-test-db builds the database, and the EAS update while
-          # the backend suite runs. logical (not auto): xdist's "auto" counts
-          # physical cores and under-provisions SMT runners.
+          # while prepare-test-db builds the database. logical (not auto):
+          # xdist's "auto" counts physical cores and under-provisions SMT
+          # runners.
           export TEST_DB_WORKERS=logical
           export PYTEST_ADDOPTS="-n logical --durations=25"
           # stream task output so pytest's durations/slowest-test table lands in CI
@@ -302,15 +302,19 @@ jobs:
           # Both PR previews (web deploy and EAS update) run in the separate
           # Preview job, so the required check only runs checks. main and
           # merge_group still deploy here.
+          #
+          # The mobile targets are deliberately absent: `eas-build`/`eas-update`
+          # rewrite the workspace for EAS Build (copy-lockfile narrows the root
+          # package.json to the app), which must not happen while the web export
+          # and the test suite are using it. They run in the 📱 step at the end.
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
             TARGETS="lint typecheck test"
           elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             TARGETS="lint typecheck test build"
           else
-            TARGETS="lint typecheck test build deploy eas-build eas-update"
+            TARGETS="lint typecheck test build deploy"
           fi
-          # The EAS build/update use the Expo fingerprint runtime policy; the
-          # web export/deploy compute their own base path inside export-web.
+          # The web export/deploy compute their own base path inside export-web.
           yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
           EOF
         env:
@@ -427,6 +431,34 @@ jobs:
           path: dist/.playwright/apps/shelter-e2e
           if-no-files-found: ignore
           retention-days: 7
+
+      # The mobile half of a deploy: one EAS Build per fingerprint and the EAS
+      # Update for the branch. Deliberately the last thing to touch the checkout
+      # and outside the quality step, because `eas-build`/`eas-update` rewrite the
+      # workspace for EAS Build (`copy-lockfile` narrows the root package.json to
+      # the app) — the web export and the suites above must not see that.
+      - name: 📱 Mobile builds and update
+        if: github.event_name != 'pull_request'
+        run: |
+          docker compose run --rm better-angels bash -c '
+            set -euo pipefail
+            yarn nx affected -t eas-build --configuration ${{ matrix.environment }} \
+              --wait=false --freezeCredentials=true --output-style=stream
+            # --branch is explicit: --auto reads the git branch, and a CI checkout
+            # is a detached HEAD, which publishes to a branch named "HEAD".
+            yarn nx affected -t eas-update --configuration ${{ matrix.environment }} \
+              --branch "$BRANCH_NAME" --output-style=stream
+          '
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
+          EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
 
       - name: 📣 Announce the deployment
         # Slack summary of the mobile builds/updates; no-ops on PRs. Runs once
