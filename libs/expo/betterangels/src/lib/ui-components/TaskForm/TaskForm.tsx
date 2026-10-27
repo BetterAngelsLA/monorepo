@@ -42,7 +42,10 @@ export function TaskForm(props: TProps) {
 
   const { teams } = useOrgTeams();
   const { assignees } = useTaskAssignees();
-  const initialTeamId = useMemo(() => initialValues?.teamId, []);
+  // Deliberately not memoised with empty deps: `initialValues` can arrive after
+  // mount, and a frozen id would drop the task's own (deactivated) team from
+  // the item list, leaving the Team field blank.
+  const initialTeamId = initialValues?.teamId;
 
   const teamItems = useMemo(
     () =>
