@@ -70,19 +70,36 @@ const updateUrl = (id) =>
 const qrUrl = (groupId) =>
   `https://qr.expo.dev/eas-update?appScheme=${argv.slug}&projectId=${argv.projectId}&groupId=${groupId}`;
 
+// Newest build, but a real artifact wins over a newer dead one: the reuse rule
+// is "a fingerprint builds once", so a canceled or failed attempt can sit in
+// front of the build that actually exists. Reporting the canceled one would
+// link a QR code to nothing.
+const BUILD_RANK = (status) => {
+  const value = String(status ?? '').toUpperCase();
+  if (value === 'FINISHED') return 2;
+  if (['NEW', 'IN_QUEUE', 'IN_PROGRESS'].includes(value)) return 1;
+  return 0;
+};
+
 function latestBuild(platform, profile) {
   try {
-    return runJson([
+    const builds = runJson([
       'build:list',
       '--platform',
       platform,
       '--build-profile',
       profile,
       '--limit',
-      '1',
+      '5',
       '--json',
       '--non-interactive',
-    ])[0];
+    ]);
+    if (builds.length === 0) return undefined;
+    // build:list returns newest first, so a stable maximum keeps recency within
+    // the same rank.
+    return builds.reduce((best, build) =>
+      BUILD_RANK(build.status) > BUILD_RANK(best.status) ? build : best,
+    );
   } catch (error) {
     console.error(`Could not list ${platform}/${profile} builds: ${error.message}`);
     return undefined;
