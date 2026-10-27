@@ -445,8 +445,14 @@ jobs:
       - name: 📱 Mobile builds and update
         if: github.event_name == 'push'
         run: |
+          # The trap restores what `copy-lockfile` rewrites (root package.json
+          # narrowed to the app), so nothing after this step reads an EAS-shaped
+          # workspace even when the step fails. Same container, same uid, same
+          # Node version, and no project graph needed — which is why it is not a
+          # separate `yarn nx run` step.
           docker compose run --rm better-angels bash -c '
             set -euo pipefail
+            trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
             yarn nx affected -t eas-build --configuration ${{ matrix.environment }} \
               --wait=false --freezeCredentials=true --output-style=stream
             # The target pins the branch and the EAS environment for the update.
@@ -462,15 +468,6 @@ jobs:
           EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
-
-      # Put the workspace back the way the checkout had it: the mobile step runs
-      # `copy-lockfile`, which rewrites the root and app `package.json` for EAS
-      # Build. The runner is discarded afterwards, but restoring here means "mobile
-      # is last" is no longer the only thing protecting anything added below. It
-      # cannot un-prune node_modules, so ordering still matters for installs.
-      - name: 🧹 Restore the workspace
-        if: always() && !cancelled()
-        run: yarn nx run betterangels:restore-workspace --output-style=stream
 
       - name: 📣 Announce the deployment
         # Slack summary of the mobile builds/updates, once per environment matrix

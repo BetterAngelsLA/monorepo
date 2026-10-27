@@ -166,6 +166,15 @@ jobs:
           NX_DAEMON: 'false'
         run: |
           set -euo pipefail
+          # `copy-lockfile` below rewrites the root package.json for EAS Build.
+          # Undo that however this step ends — success, failure, or cancel — so no
+          # later step (or a step someone adds later) reads an EAS-shaped
+          # workspace. It cannot un-prune `node_modules`, which is why the mobile
+          # work still runs after the web export and E2E.
+          #
+          # Called directly rather than through `nx run`: this must not need a
+          # project graph built from the manifests it is undoing.
+          trap 'node tools/scripts/restore-workspace.mjs --project betterangels || true' EXIT
           yarn nx run betterangels:write-eas-env:preview
 
           # No `expo prebuild` here on purpose: it would leave `android/` and
@@ -218,15 +227,6 @@ jobs:
 
           # Mobile preview links (build, update, QR) on the PR.
           yarn nx run betterangels:preview-comment
-
-      # Put the workspace back the way the checkout had it. The mobile step runs
-      # `copy-lockfile`, which rewrites the root and app `package.json` for EAS
-      # Build; this undoes that, so the rest of the job (and anything added after
-      # it) no longer sees an EAS-shaped workspace. It cannot un-prune
-      # `node_modules`, which is why the mobile work still runs last.
-      - name: 🧹 Restore the workspace
-        if: always() && !cancelled()
-        run: yarn nx run betterangels:restore-workspace --output-style=stream
 
       # Neither of these touches the workspace; they only archive what the E2E
       # step produced, which is why they can follow the mobile work.
