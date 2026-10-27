@@ -181,11 +181,14 @@ export default {
     runtimeVersion: { policy: 'fingerprint' },
     experiments: {
       // Subpath the web export is hosted under, e.g. `/branches/<branch>`. Set by
-      // the export-web invocation only; empty for native and root deployments.
+      // the export-web invocation only; absent for native and root deployments.
       //
       // It is deliberately not `EXPO_BASE_URL`: this value lands in the fingerprint
       // (via expoConfig), so a branch-scoped native runtime would make every branch
       // need its own EAS builds. Web-only config must not move the native runtime.
+      //
+      // Omitted entirely when unset rather than set to `''`: an empty baseUrl is not
+      // a root path to Expo, and the expo-updates build phase rejects the config.
       //
       // Without it the export writes root-absolute `/_expo/...` URLs while the
       // files live under the branch path, so every asset 403s and the page is
@@ -196,9 +199,11 @@ export default {
       // does not, raw-joining it into asset URLs — so a root deploy's `/` shipped
       // `//assets/...` (protocol-relative, i.e. a host called `assets`). Branch
       // paths carry no trailing slash and were already fine.
-      baseUrl: (process.env.EXPO_WEB_BASE_URL || '')
-        .trim()
-        .replace(/\/+$/, ''),
+      ...((process.env.EXPO_WEB_BASE_URL || '').trim().replace(/\/+$/, '')
+        ? {
+            baseUrl: process.env.EXPO_WEB_BASE_URL.trim().replace(/\/+$/, ''),
+          }
+        : {}),
     },
   },
 };
