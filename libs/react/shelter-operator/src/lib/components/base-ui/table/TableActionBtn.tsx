@@ -62,6 +62,7 @@ export function TableActionBtn(props: TProps) {
     'hover:bg-white',
     'hover:shadow-xl',
     'cursor-pointer',
+    'disabled:opacity-60',
   ];
 
   return (

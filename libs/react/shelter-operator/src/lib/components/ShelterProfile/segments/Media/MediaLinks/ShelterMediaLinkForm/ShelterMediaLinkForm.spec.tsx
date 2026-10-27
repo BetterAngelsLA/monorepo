@@ -21,7 +21,10 @@ beforeAll(() => {
 
 function renderForm() {
   return render(
-    <ShelterMediaLinkForm defaultValues={defaultFormValues} onSubmit={vi.fn()} />,
+    <ShelterMediaLinkForm
+      defaultValues={defaultFormValues}
+      onSubmit={vi.fn()}
+    />,
   );
 }
 
@@ -47,6 +50,7 @@ describe('ShelterMediaLinkForm', () => {
     expect(() => fireEvent.click(youtubeOption)).not.toThrow();
 
     // The form must survive the empty selection: the schema, not the render,
+
     // owns reporting that a media type is required.
     expect(screen.getByLabelText(/YouTube URL/)).toBeTruthy();
   });

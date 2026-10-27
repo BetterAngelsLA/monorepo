@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import type { ShelterProfileMediaLinkType } from '../../../../types';
 import { MediaLinksTable } from './MediaLinksTable';
 
-const noop = () => {};
+const noop = () => undefined;
 
 const mediaLink: ShelterProfileMediaLinkType = {
   __typename: 'MediaLinkType',

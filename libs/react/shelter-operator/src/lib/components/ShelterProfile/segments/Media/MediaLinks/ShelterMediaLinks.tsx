@@ -2,9 +2,7 @@ import {
   BaError,
   BaPermissionError,
   getFieldErrorsOrThrow,
-  getPermissionErrorMessage,
   isMutationSuccess,
-  type GraphQLResponse,
 } from '@monorepo/ba-platform';
 import { applyFieldErrors } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
@@ -12,13 +10,13 @@ import { useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import {
   createMediaLinkMeta,
+  deleteMediaLinksMeta,
   updateMediaLinkMeta,
   useCreateMediaLink,
   useDeleteMediaLinks,
   useShelterPermissions,
   useUpdateMediaLink,
 } from '../../../../../hooks';
-import { deleteMediaLinksMeta } from '../../../../../hooks/useDeleteMediaLinks/__generated__/useDeleteMediaLinks_meta.generated';
 import {
   ConfirmationModal,
   Modal,
@@ -53,18 +51,6 @@ function toFormValues(
     url: mediaLink.url,
     title: mediaLink.title,
   };
-}
-
-/** Turns a failed delete payload into the error the toast layer understands. */
-function toDeleteError(response: GraphQLResponse): Error {
-  const permissionMessage = getPermissionErrorMessage(
-    response,
-    deleteMediaLinksMeta.operationKey,
-  );
-
-  return permissionMessage
-    ? new BaPermissionError(permissionMessage)
-    : new Error('Delete failed');
 }
 
 export function ShelterMediaLinks(props: TProps) {
@@ -176,7 +162,16 @@ export function ShelterMediaLinks(props: TProps) {
       const result = response.data?.[deleteMediaLinksMeta.operationKey];
 
       if (!isMutationSuccess(result, deleteMediaLinksMeta.successTypename)) {
-        throw toDeleteError(response);
+        // `media_link_delete` raises ObjectDoesNotExist for missing *and*
+        // inaccessible ids, and the backend keeps the two indistinguishable
+        // on purpose (ADR 0001 §2.6), so there is exactly one message to show.
+        showToast({
+          status: 'error',
+          title: 'Delete failed',
+          description: 'This media link may have already been removed.',
+        });
+
+        return;
       }
 
       showToast({ status: 'success', title: 'Media link deleted.' });

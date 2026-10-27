@@ -23,6 +23,18 @@ const MEDIA_TYPE_INPUT_CONFIG: Record<
 
 const MEDIA_TYPE_OPTIONS = toDropdownOptions(enumDisplayMediaLinkTypeChoices);
 
+/**
+ * `mediaType` is non-nullable in `formSchema`, but the single-select Dropdown
+ * deselects when the already-selected option is clicked again, so it can be
+ * `null` at runtime. Fall back to the default config and let `formSchema`
+ * report "Media type is required" instead of throwing on the lookup.
+ */
+function getMediaTypeConfig(
+  mediaType: MediaLinkTypeChoices | null | undefined,
+): (typeof MEDIA_TYPE_INPUT_CONFIG)[MediaLinkTypeChoices] {
+  return MEDIA_TYPE_INPUT_CONFIG[mediaType ?? MediaLinkTypeChoices.Youtube];
+}
+
 type TProps = {
   defaultValues: MediaLinkFormData;
   onSubmit: (
@@ -55,6 +67,7 @@ export function ShelterMediaLinkForm(props: TProps) {
   });
 
   const mediaType = useWatch({ control, name: 'mediaType' });
+  const mediaTypeConfig = getMediaTypeConfig(mediaType);
 
   return (
     <div className={mergeCss(['flex-col flex-1', className])}>
@@ -86,9 +99,9 @@ export function ShelterMediaLinkForm(props: TProps) {
           control={control}
           render={({ field }) => (
             <Input
-              label={`${MEDIA_TYPE_INPUT_CONFIG[mediaType].label} URL`}
+              label={`${mediaTypeConfig.label} URL`}
               labelVariant="offset"
-              placeholder={MEDIA_TYPE_INPUT_CONFIG[mediaType].placeholder}
+              placeholder={mediaTypeConfig.placeholder}
               dataType="url"
               value={field.value}
               onChange={field.onChange}
