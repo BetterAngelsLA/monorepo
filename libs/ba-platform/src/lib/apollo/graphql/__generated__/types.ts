@@ -102,10 +102,18 @@ export type AuditActionType = {
   truncated: Scalars['Boolean']['output'];
 };
 
+export type AuditActorType = {
+  __typename: 'AuditActorType';
+  id?: Maybe<Scalars['ID']['output']>;
+  isSystem: Scalars['Boolean']['output'];
+  label: Scalars['String']['output'];
+};
+
 export type AuditEventFilter = {
   actorId?: InputMaybe<Scalars['ID']['input']>;
   dateFrom?: InputMaybe<Scalars['DateTime']['input']>;
   dateTo?: InputMaybe<Scalars['DateTime']['input']>;
+  systemOnly?: Scalars['Boolean']['input'];
 };
 
 export enum AuditEventKind {
@@ -2682,6 +2690,7 @@ export type Query = {
   interactionsByRegion: Array<RegionCountType>;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
+  objectAuditActors: Array<AuditActorType>;
   objectAuditLog: AuditActionPage;
   operatorShelter: OperatorShelterType;
   operatorShelters: OperatorShelterTypeOffsetPaginated;
@@ -2873,6 +2882,14 @@ export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryObjectAuditActorsArgs = {
+  limit?: Scalars['Int']['input'];
+  objectId: Scalars['ID']['input'];
+  search?: Scalars['String']['input'];
+  targetType: AuditTargetType;
 };
 
 

@@ -30,7 +30,7 @@ from typing import Any, Collection, Mapping, Sequence
 from uuid import UUID
 
 from django.apps import apps
-from django.db.models import Max, Model, Q, TextField
+from django.db.models import Count, Max, Model, Q, TextField
 from django.db.models.functions import Cast, Coalesce
 from django.utils import timezone
 from pghistory.core import event_models
@@ -46,6 +46,9 @@ _MECHANICAL_FIELDS = frozenset({"created_at", "updated_at"})
 # with ``include_snapshot=True`` each event carries the object's full state, so
 # an uncapped ``limit`` is an easy way to request an unbounded response (§10).
 MAX_LIMIT = 200
+
+# Upper bound on the distinct actors returned by ``object_audit_actors``.
+MAX_ACTOR_LIMIT = 50
 
 # Upper bound on the events rendered for a single action. One ``pghistory``
 # context can wrap an arbitrarily large write (a CSV import wraps its whole
@@ -222,6 +225,19 @@ class AuditActionPageData:
     results: list[AuditActionData] = field(default_factory=list)
     end_cursor: str | None = None
     has_next_page: bool = False
+
+
+@dataclass(frozen=True)
+class AuditActorData:
+    """One selectable actor for an object's audit log (§21).
+
+    ``id`` is the frozen acting user id; it is ``None`` for the single synthetic
+    ``System`` entry, which the log filters with ``system_only``.
+    """
+
+    id: str | None
+    label: str
+    is_system: bool = False
 
 
 @dataclass(frozen=True)
@@ -965,7 +981,16 @@ def object_audit_log(
             base = base.filter(pgh_created_at__gte=filters.date_from)
         if filters.date_to is not None:
             base = base.filter(pgh_created_at__lte=filters.date_to)
-        if filters.actor_id is not None:
+        if filters.system_only:
+            # The event's rendered actor is "system" when it has no frozen
+            # name/email, and "system (import|clone)" for those reason labels --
+            # the label check comes first, exactly as ``_actor`` does. Matches
+            # those events regardless of whether a context user id survived.
+            base = base.filter(
+                Q(label__in=_SYSTEM_REASON_LABELS)
+                | ((Q(actor_name="") | Q(actor_name__isnull=True)) & (Q(actor_email="") | Q(actor_email__isnull=True)))
+            )
+        elif filters.actor_id is not None:
             base = base.filter(actor_id=filters.actor_id)
 
     key_expr = _action_key_expr()
@@ -1052,6 +1077,79 @@ def object_audit_log(
         end_cursor=_encode_cursor(actions[-1]) if actions else None,
         has_next_page=has_next_page,
     )
+
+
+def object_audit_actors(
+    *,
+    obj: Any,
+    target_type: str,
+    search: str = "",
+    limit: int = 20,
+    hidden_summary_models: Collection[str] = (),
+) -> list[AuditActorData]:
+    """Return the distinct actors in *obj*'s audit log, most active first.
+
+    Unlike ``organizationMembers``, this is scoped to the object's own history,
+    so it includes global/BA users who acted on it without belonging to its
+    organization. ``System`` is one synthetic entry for every event rendered as
+    system (no frozen name/email, or an import/clone reason label); it carries
+    ``id=None`` and is selected with ``AuditEventFilter.system_only``.
+
+    *hidden_summary_models* mirrors ``object_audit_log``: actors whose only
+    events are withheld Bed/Room summaries must not appear either. A frozen
+    name/email without a user id cannot be expressed by the ``actorId`` filter,
+    so those rare pre-middleware rows are omitted from the selectable list.
+    Raises ``ValueError`` for an out-of-range ``limit``.
+    """
+    if limit < 1 or limit > MAX_ACTOR_LIMIT:
+        raise ValueError(f"limit must be between 1 and {MAX_ACTOR_LIMIT}.")
+
+    term = search.strip()
+    if term and len(term) < 2:
+        return []
+
+    excluded = (
+        *_EXCLUDED_EVENT_MODELS,
+        *_SCOPED_EXCLUSIONS.get(target_type, ()),
+        *_event_model_labels(hidden_summary_models),
+    )
+    base = AuditWriteEvent.objects.across(*_allowed_event_models(obj, excluded)).references([obj]).exclude(label="seed")
+
+    rows = (
+        base.values("actor", "actor_name", "actor_email", "label")
+        .annotate(event_count=Count("*"))
+        .order_by("-event_count")
+    )
+
+    # One entry per actor id (a frozen name can change over time; the most
+    # frequent label wins) plus one aggregated System entry.
+    entries: dict[str, tuple[AuditActorData, int]] = {}
+    for row in rows:
+        name = row["actor_name"] or ""
+        email = row["actor_email"] or ""
+        is_system = row["label"] in _SYSTEM_REASON_LABELS or (not name and not email)
+        if is_system:
+            key = "__system__"
+            actor = AuditActorData(id=None, label="System", is_system=True)
+        else:
+            actor_id = row["actor"]
+            if actor_id is None:
+                continue
+            key = str(actor_id)
+            actor = AuditActorData(id=key, label=name or email or "Unknown")
+        existing = entries.get(key)
+        entries[key] = (actor, row["event_count"] + (existing[1] if existing else 0))
+
+    ordered = sorted(entries.values(), key=lambda entry: entry[1], reverse=True)
+    actors = [entry[0] for entry in ordered]
+    if term:
+        lowered = term.lower()
+        actors = [
+            actor
+            for actor in actors
+            if lowered in actor.label.lower() or (actor.is_system and "system".startswith(lowered))
+        ]
+    return actors[:limit]
 
 
 def _build_action(

@@ -20,12 +20,14 @@ from accounts.models import User
 from audit.selectors import (
     _EXCLUDED_EVENT_MODELS,
     _LABEL_FIELD_OVERRIDES,
+    MAX_ACTOR_LIMIT,
     MAX_LIMIT,
     _label_field,
     _LabelResolver,
     _m2m_meta,
     _scalar_changes,
     _through_event_meta,
+    object_audit_actors,
     object_audit_log,
 )  # noqa: F401 -- the cursor-aware API is exercised directly by the pagination tests
 from audit.tests.utils import audit_context, audit_log, clear_history_context
@@ -1627,3 +1629,97 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertTrue(actions[0].truncated)
         self.assertEqual(len(actions[0].events), 2)
+
+
+class ObjectAuditActorsSelectorTestCase(TestCase):
+    """``object_audit_actors`` is scoped to the object's own history, not org members."""
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        self.other_user = baker.make(User, first_name="Grace", last_name="Hopper", email="grace@example.com")
+        self.bed_user = baker.make(User, first_name="Carol", last_name="Shaw", email="carol@example.com")
+
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Actors Shelter")
+            self.bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        for name in ("First", "Second"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+        with audit_context(user=self.other_user):
+            self.shelter.name = "Third"
+            self.shelter.save()
+        with audit_context(label="import"):
+            self.shelter.name = "Imported"
+            self.shelter.save()
+
+    def test_lists_distinct_actors_with_one_system_entry(self) -> None:
+        actors = object_audit_actors(obj=self.shelter, target_type="SHELTER")
+        by_label = {actor.label: actor for actor in actors}
+
+        self.assertEqual(set(by_label), {"Ada Lovelace", "Grace Hopper", "System"})
+        self.assertEqual(by_label["Ada Lovelace"].id, str(self.user.pk))
+        self.assertFalse(by_label["Ada Lovelace"].is_system)
+        self.assertIsNone(by_label["System"].id)
+        self.assertTrue(by_label["System"].is_system)
+
+    def test_search_filters_user_labels_and_system(self) -> None:
+        self.assertEqual(
+            [actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER", search="ada")],
+            ["Ada Lovelace"],
+        )
+        self.assertEqual(
+            [actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER", search="sys")],
+            ["System"],
+        )
+        self.assertEqual(object_audit_actors(obj=self.shelter, target_type="SHELTER", search="zz"), [])
+        # The search has the same two-character floor as the UI.
+        self.assertEqual(object_audit_actors(obj=self.shelter, target_type="SHELTER", search="a"), [])
+
+    def test_system_only_filter_returns_only_system_events(self) -> None:
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            filters=AuditEventFilter(system_only=True),
+        )
+
+        self.assertEqual([action.actor for action in actions], ["system (import)"])
+        self.assertEqual(actions[0].field_changes["name"], ["Third", "Imported"])
+
+    def test_hidden_summary_actor_is_omitted(self) -> None:
+        with audit_context(user=self.bed_user):
+            self.bed.name = "Bed B"
+            self.bed.save()
+
+        labels = {actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")}
+        self.assertIn("Carol Shaw", labels)
+
+        hidden = {
+            actor.label
+            for actor in object_audit_actors(
+                obj=self.shelter,
+                target_type="SHELTER",
+                hidden_summary_models={Bed._meta.label},
+            )
+        }
+        self.assertNotIn("Carol Shaw", hidden)
+
+    def test_limit_and_validation(self) -> None:
+        actors = object_audit_actors(obj=self.shelter, target_type="SHELTER", limit=1)
+
+        # Ada wrote twice, Grace and System once each.
+        self.assertEqual([actor.label for actor in actors], ["Ada Lovelace"])
+        with self.assertRaises(ValueError):
+            object_audit_actors(obj=self.shelter, target_type="SHELTER", limit=0)
+        with self.assertRaises(ValueError):
+            object_audit_actors(obj=self.shelter, target_type="SHELTER", limit=MAX_ACTOR_LIMIT + 1)
+
+    def test_idless_named_actor_is_not_selectable(self) -> None:
+        with audit_context(user_name="Ghost", user_email="ghost@example.com"):
+            self.shelter.name = "Ghosted"
+            self.shelter.save()
+
+        labels = {actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")}
+
+        self.assertNotIn("Ghost", labels)

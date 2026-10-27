@@ -14,8 +14,15 @@ from shelters.models import Bed, Room, Shelter
 from shelters.permissions import BA_REVIEW_FIELDS, can_view_ba_review
 from shelters.selectors.operator import bed_get, room_get, shelter_get
 
+from .selectors import object_audit_actors as select_object_audit_actors
 from .selectors import object_audit_log
-from .types import AuditActionPage, AuditEventFilter, AuditTargetType, to_action_page
+from .types import (
+    AuditActionPage,
+    AuditActorType,
+    AuditEventFilter,
+    AuditTargetType,
+    to_action_page,
+)
 
 
 def _resolve_target(user: AccountUser, target_type: AuditTargetType, object_id: ID) -> object:
@@ -34,6 +41,23 @@ def _resolve_target(user: AccountUser, target_type: AuditTargetType, object_id: 
     # enum member fails this check at type-check time, which is the reminder to
     # restore ``reservation_get`` (the selector path is already retained).
     assert_never(target_type)
+
+
+def _hidden_summary_models(user: AccountUser, target_type: AuditTargetType, obj: object) -> frozenset[str]:
+    """Bed/Room summary models the caller may not see in *obj*'s log.
+
+    Shared by ``objectAuditLog`` and ``objectAuditActors`` so an actor whose only
+    events are withheld summaries disappears from the actor list too.
+    """
+    if target_type is not AuditTargetType.SHELTER:
+        return frozenset()
+    shelter = cast(Shelter, obj)
+    # ``can`` is row-independent on purpose: a shelter with no current beds (or
+    # only deleted-bed events) must still hide the summaries. ``visible(...)``
+    # would tie the answer to today's rows.
+    return frozenset(
+        model._meta.label for model in (Bed, Room) if not can(user, model.perms.VIEW, org=shelter.organization_id)
+    )
 
 
 @strawberry.type
@@ -73,17 +97,7 @@ class Query:
         if not can_view_ba_review(info):
             hidden_fields[Shelter._meta.label] = BA_REVIEW_FIELDS
 
-        hidden_summary_models: frozenset[str] = frozenset()
-        if target_type is AuditTargetType.SHELTER:
-            shelter = cast(Shelter, obj)
-            # ``can`` is row-independent on purpose: a shelter with no current
-            # beds (or only deleted-bed events) must still hide the summaries.
-            # ``visible(...).exists()`` would tie the answer to today's rows.
-            hidden_summary_models = frozenset(
-                model._meta.label
-                for model in (Bed, Room)
-                if not can(user, model.perms.VIEW, org=shelter.organization_id)
-            )
+        hidden_summary_models = _hidden_summary_models(user, target_type, obj)
 
         try:
             page = object_audit_log(
@@ -101,3 +115,46 @@ class Query:
             # surface it as a GraphQL error rather than a 500 (§10 cap).
             raise GraphQLError(str(error)) from error
         return to_action_page(page)
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def object_audit_actors(
+        self,
+        info: Info,
+        target_type: AuditTargetType,
+        object_id: ID,
+        search: str = "",
+        limit: int = 20,
+    ) -> list[AuditActorType]:
+        """Distinct actors in one object's audit log, most active first.
+
+        Scoped to the object's own history (authorized like ``objectAuditLog``),
+        so global/BA users who acted on it appear even when they are not
+        organization members. ``System`` is a single synthetic entry (``id`` is
+        null) for events rendered as system; filter it with
+        ``AuditEventFilter.systemOnly``.
+
+        ``search`` filters labels (minimum two characters, matching the UI);
+        ``limit`` is capped at ``MAX_ACTOR_LIMIT``. Bed/Room summary actors the
+        caller cannot see are excluded, matching ``objectAuditLog``.
+        """
+        user = cast(AccountUser, get_current_user(info))
+        obj = _resolve_target(user, target_type, object_id)
+        try:
+            actors = select_object_audit_actors(
+                obj=obj,
+                target_type=target_type.value,
+                search=search,
+                limit=limit,
+                hidden_summary_models=_hidden_summary_models(user, target_type, obj),
+            )
+        except ValueError as error:
+            raise GraphQLError(str(error)) from error
+
+        return [
+            AuditActorType(
+                id=ID(actor.id) if actor.id is not None else None,
+                label=actor.label,
+                is_system=actor.is_system,
+            )
+            for actor in actors
+        ]

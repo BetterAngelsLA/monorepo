@@ -37,6 +37,26 @@ BEDS_QUERY = """
     }
 """
 
+OBJECT_AUDIT_ACTORS_QUERY = """
+    query ObjectAuditActors(
+        $targetType: AuditTargetType!,
+        $objectId: ID!,
+        $search: String,
+        $limit: Int
+    ) {
+        objectAuditActors(
+            targetType: $targetType,
+            objectId: $objectId,
+            search: $search,
+            limit: $limit
+        ) {
+            id
+            label
+            isSystem
+        }
+    }
+"""
+
 OBJECT_AUDIT_LOG_QUERY = """
     query ObjectAuditLog(
         $targetType: AuditTargetType!,
@@ -102,6 +122,12 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
     def _query(self, target_type: str, object_id: int, **variables: object) -> dict:
         return self.execute_graphql(
             OBJECT_AUDIT_LOG_QUERY,
+            variables={"targetType": target_type, "objectId": str(object_id), **variables},
+        )
+
+    def _actors(self, target_type: str, object_id: int, **variables: object) -> dict:
+        return self.execute_graphql(
+            OBJECT_AUDIT_ACTORS_QUERY,
             variables={"targetType": target_type, "objectId": str(object_id), **variables},
         )
 

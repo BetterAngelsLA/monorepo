@@ -44,6 +44,23 @@ class AuditEventFilter:
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
     actor_id: Optional[strawberry.ID] = None
+    # ``actor_id`` cannot express "no actor": it is also the "no filter" value.
+    # ``system_only`` selects the events the UI labels as system (no frozen
+    # name/email, or a system reason label such as import/clone).
+    system_only: bool = False
+
+
+@strawberry.type
+class AuditActorType:
+    """One selectable actor for an object's audit log (§21).
+
+    ``id`` is the frozen acting user id; it is null for the single synthetic
+    ``System`` entry, which is selected via ``AuditEventFilter.system_only``.
+    """
+
+    id: Optional[strawberry.ID]
+    label: str
+    is_system: bool = False
 
 
 @strawberry.type

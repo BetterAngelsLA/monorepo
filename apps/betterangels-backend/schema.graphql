@@ -103,10 +103,17 @@ type AuditActionType {
   truncated: Boolean!
 }
 
+type AuditActorType {
+  id: ID
+  label: String!
+  isSystem: Boolean!
+}
+
 input AuditEventFilter {
   dateFrom: DateTime = null
   dateTo: DateTime = null
   actorId: ID = null
+  systemOnly: Boolean! = false
 }
 
 enum AuditEventKind {
@@ -2183,6 +2190,7 @@ type Query {
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
   objectAuditLog(targetType: AuditTargetType!, objectId: ID!, filters: AuditEventFilter = null, after: String = null, limit: Int! = 50, includeSnapshot: Boolean! = false): AuditActionPage!
+  objectAuditActors(targetType: AuditTargetType!, objectId: ID!, search: String! = "", limit: Int! = 20): [AuditActorType!]!
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
