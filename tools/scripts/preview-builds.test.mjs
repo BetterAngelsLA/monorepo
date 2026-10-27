@@ -1,0 +1,168 @@
+/**
+ * Run with: node --test tools/scripts/preview-builds.test.mjs
+ * (the `tools-scripts:test` target globs `tools/scripts/*.test.mjs`).
+ *
+ * These pin the fallback order the preview comment relies on: a build that
+ * exists for the runtime, then the build this run queued (its trigger answer is
+ * a valid permalink before `build:list` lists it), then the iOS simulator
+ * binary — and never a bare `N/A`, which is what #2455 showed for iOS.
+ */
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+
+import { buildCell } from './preview-builds.mjs';
+
+const account = 'better-angels';
+const slug = 'betterangels';
+const url = (id) =>
+  `https://expo.dev/accounts/${account}/projects/${slug}/builds/${id}`;
+
+const deviceBuild = {
+  id: 'device-android',
+  status: 'FINISHED',
+  distribution: 'INTERNAL',
+  buildProfile: 'preview',
+  runtime: { version: '96b88652' },
+  appVersion: '1.2.15',
+  gitCommitHash: 'ee66cdc',
+};
+
+const simulateur = {
+  id: 'sim-ios',
+  status: 'FINISHED',
+  distribution: 'INTERNAL',
+  buildProfile: 'development-simulator',
+  runtime: { version: 'e906c369' },
+  appVersion: '1.2.15',
+  gitCommitHash: 'ee66cdc',
+};
+
+const render = (overrides = {}) =>
+  buildCell({
+    account,
+    slug,
+    runtime: 'e906c369',
+    device: undefined,
+    triggered: undefined,
+    simulator: undefined,
+    error: undefined,
+    ...overrides,
+  });
+
+describe('buildCell', () => {
+  it('links an existing device build for the runtime', () => {
+    const cell = render({ device: deviceBuild });
+
+    assert.match(
+      cell,
+      new RegExp(`\\[Build Permalink\\]\\(${url(deviceBuild.id)}\\)`),
+    );
+    assert.match(cell, /Source: `existing build for this runtime`/);
+    assert.match(cell, /Runtime version: `96b88652`/);
+  });
+
+  it('says when this run queued the build it found', () => {
+    const cell = render({
+      device: deviceBuild,
+      triggered: {
+        platform: 'android',
+        profile: 'preview',
+        runtime: '96b88652',
+        buildId: deviceBuild.id,
+        reused: false,
+      },
+    });
+
+    assert.match(cell, /Source: `queued by this run`/);
+  });
+
+  it('says when the build was reused from an earlier run', () => {
+    const cell = render({
+      device: deviceBuild,
+      triggered: {
+        platform: 'android',
+        profile: 'preview',
+        runtime: '96b88652',
+        buildId: deviceBuild.id,
+        reused: true,
+      },
+    });
+
+    assert.match(cell, /Source: `reused — built for this runtime earlier`/);
+  });
+
+  it('falls back to the link the build trigger returned', () => {
+    // `build:list` has not listed the queued build yet: the recorded id is still
+    // a working permalink, and this is the case that used to render N/A.
+    const cell = render({
+      triggered: {
+        platform: 'ios',
+        profile: 'preview',
+        runtime: 'e906c369',
+        buildId: 'queued-ios',
+        reused: false,
+      },
+    });
+
+    assert.match(
+      cell,
+      new RegExp(`\\[Build Permalink\\]\\(${url('queued-ios')}\\)`),
+    );
+    assert.match(cell, /Source: `queued by this run — not listed by EAS yet`/);
+    assert.match(cell, /Build profile: `preview`/);
+    assert.match(cell, /Runtime version: `e906c369`/);
+  });
+
+  it('falls back to the iOS simulator binary when no device build exists', () => {
+    const cell = render({ simulator: simulateur });
+
+    assert.match(
+      cell,
+      new RegExp(`\\[Build Permalink\\]\\(${url(simulateur.id)}\\)`),
+    );
+    assert.match(
+      cell,
+      /Source: `simulator build — no device build for this runtime`/,
+    );
+    assert.match(cell, /Build profile: `development-simulator`/);
+  });
+
+  it('prefers a device build over the simulator binary', () => {
+    const iosDevice = { ...deviceBuild, id: 'device-ios' };
+    const cell = render({ device: iosDevice, simulator: simulateur });
+
+    assert.match(
+      cell,
+      new RegExp(`\\[Build Permalink\\]\\(${url(iosDevice.id)}\\)`),
+    );
+    assert.doesNotMatch(cell, /simulator build/);
+    assert.match(cell, /Source: `existing build for this runtime`/);
+  });
+
+  it('names the runtime when nothing exists, instead of N/A', () => {
+    const cell = render();
+
+    assert.equal(cell, 'No build for `e906c369`');
+    assert.doesNotMatch(cell, /N\/A/);
+  });
+
+  it('says the lookup failed when it falls back to the simulator', () => {
+    const cell = render({ simulator: simulateur, error: 'EAS is down' });
+
+    assert.match(
+      cell,
+      new RegExp(`\\[Build Permalink\\]\\(${url(simulateur.id)}\\)`),
+    );
+    assert.match(
+      cell,
+      /Source: `simulator build — device-build lookup failed`/,
+    );
+  });
+
+  it('does not report a failed lookup as a missing build', () => {
+    const cell = render({ error: 'EAS is down' });
+
+    assert.equal(cell, 'Lookup failed for `e906c369` — see the job log');
+    assert.doesNotMatch(cell, /No build/);
+  });
+});

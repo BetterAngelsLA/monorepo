@@ -14,8 +14,15 @@
  * build — queued, finished or failed — is skipped. The one exception is the
  * `force-eas-build` label / FORCE_EAS_BUILD, for a build that failed for a reason
  * that has since been fixed.
+ *
+ * Every target is written to `<project>/.eas-builds.json` with its build id,
+ * whether it was reused or queued here. `eas build --json --no-wait` answers with
+ * the build the moment it is queued, so that id is a working permalink before
+ * `build:list` lists it — which is what the preview comment needs (the old
+ * `eas-deploy.ts` used the same response, and this replaces it).
  */
 import { execFileSync } from 'child_process';
+import { writeFileSync } from 'fs';
 import * as path from 'path';
 
 import { easConfiguration } from './eas-configurations';
@@ -94,26 +101,91 @@ const existingBuild = (platform: string, profile: string, runtime: string) => {
   }
 };
 
+interface RecordedBuild {
+  platform: string;
+  profile: string;
+  runtime: string;
+  buildId: string | null;
+  /** True when the build already existed for this runtime, false when queued here. */
+  reused: boolean;
+}
+
+const resultsPath = path.join(projectDir, '.eas-builds.json');
+// Empty first: a crash mid-run must not leave a previous run's ids looking like
+// this run's builds to the comment that runs next.
+writeFileSync(resultsPath, '[]\n');
+
+const recorded: RecordedBuild[] = [];
+
+/** `eas build --json` prints one build object, or an array when it fans out. */
+function queuedBuildId(output: string): string | null {
+  for (const [open, close] of [
+    ['[', ']'],
+    ['{', '}'],
+  ]) {
+    const start = output.indexOf(open);
+    const end = output.lastIndexOf(close);
+    if (start < 0 || end < start) continue;
+    try {
+      const payload = JSON.parse(output.slice(start, end + 1)) as unknown;
+      const build = (Array.isArray(payload) ? payload[0] : payload) as
+        | { id?: string }
+        | undefined;
+      if (build?.id) return build.id;
+    } catch {
+      // Not the payload; try the other bracket pair.
+    }
+  }
+  return null;
+}
+
 for (const { platform, profile } of targets) {
-  const existing = existingBuild(platform, profile, runtimeFor(platform));
+  const runtime = runtimeFor(platform);
+  const existing = existingBuild(platform, profile, runtime);
   if (existing) {
     console.log(`Reusing the existing ${platform} build: ${existing}`);
+    recorded.push({
+      platform,
+      profile,
+      runtime,
+      buildId: existing,
+      reused: true,
+    });
     continue;
   }
   console.log(`Queueing ${platform} build (profile: ${profile})...`);
-  execFileSync(
-    'eas',
-    [
-      'build',
-      '--platform',
-      platform,
-      '--profile',
-      profile,
-      '--non-interactive',
-      '--no-wait',
-      '--freeze-credentials',
-      '--json',
-    ],
-    { cwd: projectDir, stdio: 'inherit', env: process.env },
+  const output = String(
+    execFileSync(
+      'eas',
+      [
+        'build',
+        '--platform',
+        platform,
+        '--profile',
+        profile,
+        '--non-interactive',
+        '--no-wait',
+        '--freeze-credentials',
+        '--json',
+      ],
+      {
+        cwd: projectDir,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'inherit'],
+        env: process.env,
+      },
+    ),
   );
+  // Keep the CLI's own output: it is what a human reads in the job log.
+  process.stdout.write(output);
+  const buildId = queuedBuildId(output);
+  if (!buildId) {
+    console.warn(
+      `Could not read the ${platform} build id from eas build output; the comment will fall back to build:list.`,
+    );
+  }
+  recorded.push({ platform, profile, runtime, buildId, reused: false });
 }
+
+writeFileSync(resultsPath, `${JSON.stringify(recorded, null, 2)}\n`);
+console.log(`Recorded ${recorded.length} build(s) in ${resultsPath}`);

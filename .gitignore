@@ -76,6 +76,9 @@ cache/
 apps/*/yarn.lock
 libs/*/*/yarn.lock
 
+# build-missing.ts -> eas-preview-comment.mjs hand-off for one CI run
+apps/*/.eas-builds.json
+
 # iOS build files
 apps/betterangels/ios/
 
