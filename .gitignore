@@ -13,6 +13,9 @@ dist
 tmp
 /out-tsc
 
+# CI-only: the Nx run report the container writes for the job summary
+/nx-run-report.md
+
 # dependencies
 node_modules
 

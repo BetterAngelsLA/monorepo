@@ -300,7 +300,6 @@ jobs:
           # runners.
           export TEST_DB_WORKERS=logical
           export PYTEST_ADDOPTS="-n logical --durations=25"
-          # stream task output so pytest's durations/slowest-test table lands in CI
           # EAS/vite builds consume EXPO_TOKEN and cloud credentials; forked
           # PRs still run lint/typecheck/test but must not run build.
           # Both PR previews (web deploy and EAS update) run in the separate
@@ -319,7 +318,13 @@ jobs:
             TARGETS="lint typecheck test build deploy"
           fi
           # The web export/deploy compute their own base path inside export-web.
-          yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
+          #
+          # No --output-style: CI already defaults to Nx's "static-failures-only"
+          # renderer, which collapses passing tasks to one line, prints the failing
+          # task's output in a labelled `::group::` fold, and ends with the failed
+          # task list. `stream` interleaved every project *and* opted out of that
+          # grouping, which buried the failure in hundreds of passing lines.
+          yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
@@ -413,7 +418,7 @@ jobs:
               exit 0
             fi
             yarn playwright install chromium
-            yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview --output-style=stream
+            yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview
           '
 
       - name: 📎 Upload Playwright reports
@@ -442,8 +447,8 @@ jobs:
             # Not `nx affected`: an unaffected app would resolve a runtime without
             # its env and queue a build for a fingerprint nothing uses. The reuse
             # check below is what makes this a no-op when nothing changed.
-            yarn nx run betterangels:write-eas-env:${{ matrix.environment }} --output-style=stream
-            yarn nx run betterangels:copy-lockfile --output-style=stream
+            yarn nx run betterangels:write-eas-env:${{ matrix.environment }}
+            yarn nx run betterangels:copy-lockfile
             # One build per fingerprint, in any status — same rule as the preview.
             # Both platforms: on main the binary is the release artifact, not a
             # preview convenience.
@@ -451,7 +456,7 @@ jobs:
               --project betterangels --configuration ${{ matrix.environment }} \
               --platforms android,ios
             # The target pins the branch and the EAS environment for the update.
-            yarn nx affected -t eas-update --configuration ${{ matrix.environment }} --output-style=stream
+            yarn nx affected -t eas-update --configuration ${{ matrix.environment }}
           '
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -481,3 +486,14 @@ jobs:
         run: |
           docker compose down
           sudo chown -R -h 1001:1001 $GITHUB_WORKSPACE
+
+      # Nx writes its run report (failed tasks, timings) to $GITHUB_STEP_SUMMARY.
+      # The container cannot append to the runner's own summary file — it runs as
+      # uid 1000, the file belongs to 1001 — so compose points the variable at this
+      # workspace file and the job summary is published from here.
+      - name: 📊 Publish Nx run report
+        if: failure() && !cancelled()
+        run: |
+          if [ -s nx-run-report.md ]; then
+            cat nx-run-report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
