@@ -1,34 +1,16 @@
 /**
- * Which URL a Playwright suite should point at, for one app.
- *
- * Every e2e project's config used to spell this out: `BASE_URL` if CI exports
- * one, else a localhost server. That worked while exactly one suite was wired
- * for a deployed preview, because the workflow could resolve that one URL and
- * export it. With several suites the workflow cannot: one `BASE_URL` cannot
- * describe a shelter-web preview and a storybook preview at once.
- *
- * So the choice moves into each config, where the app under test is known:
+ * The base URL a Playwright suite should test, resolved per suite.
  *
  *   const preview = e2eBaseUrl('shelter-web');
  *   const baseURL = preview ?? LOCAL_DEV_SERVER_URL;
- *   const webServer = preview ? undefined : { … start the dev server … };
+ *   const webServer = preview ? undefined : { ...start the dev server... };
  *
- * Resolution order:
- *   1. `BASE_URL` — explicit target (a developer, or a run against something
- *      already deployed). Wins over everything.
- *   2. The app is in `PREVIEW_DEPLOYED_APPS` — this run deployed it, so test the
- *      branch preview the deploy just published, read from the app's own
- *      `apps/<app>/.env.deploy.preview` (`SITE_URL`), at
- *      `/branches/<branch>/` — the same base path the deploy bakes into the
- *      build (`tools/shared/get-base-path.mjs`).
- *   3. Otherwise `undefined`: the caller falls back to its own dev server. This
- *      is the "nothing was deployed for this branch" case — a specs-only change
- *      on a PR, or a local run — and it is deliberately a local run rather than
- *      a 404 at a branch URL that does not exist.
+ * Order: explicit `BASE_URL`; else the branch preview when `PREVIEW_DEPLOYED_APPS`
+ * (computed by CI from `nx show projects --affected --with-target deploy`) lists
+ * the app; else `undefined`, and the suite starts its own server.
  *
- * `PREVIEW_DEPLOYED_APPS` is computed by the workflows from Nx
- * (`nx show projects --affected --with-target deploy`), so no project names are
- * hardcoded in CI, and the list is empty for a local run.
+ * It must never throw: the Nx Playwright plugin imports every config to infer
+ * targets, so an exception here fails the project graph, not one suite.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

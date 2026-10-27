@@ -1,15 +1,9 @@
 /**
- * Which build of a fingerprint is the one worth reporting on, in one place.
+ * Which build of a fingerprint to report on.
  *
- * A fingerprint can have several builds: an early failure, a retry that
- * succeeded, a duplicate someone canceled. They all share the runtime, so the
- * "newest" one is not necessarily the one that describes the fingerprint — a
- * canceled duplicate is newer than the build that finished. Rank by what the
- * build can tell you, and take the newest within a rank (EAS lists newest first,
- * so a strict `>` keeps the first of equal rank).
- *
- * This does not change reuse: `find-build.mjs` treats *any* build for a
- * fingerprint as "do not build again". It only decides which one to name.
+ * A fingerprint can hold a failed attempt, a retry and a canceled duplicate. Rank
+ * by what the build can tell you and keep the newest within a rank. This does not
+ * affect reuse: `find-build.mjs` treats any build as "do not build again".
  */
 export const BUILD_STATUS_RANK = {
   FINISHED: 3,

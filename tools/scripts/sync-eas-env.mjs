@@ -1,34 +1,18 @@
 #!/usr/bin/env node
 /**
- * Push the pipeline's env into the EAS environment, but only when it is missing.
+ * Push the pipeline env into the EAS environment for a profile.
  *
- * Usage:
- *   node tools/scripts/sync-eas-env.mjs --project betterangels \
- *     --environment development [--force]
+ *   node tools/scripts/sync-eas-env.mjs --project <name> \
+ *     --environment <development|production> [--path <file>] [--force]
  *
- * Why this exists: `eas build` and `eas update` evaluate `app.config.js` on the
- * EAS side, where only the eas.json profile vars and the *EAS environment*
- * variables exist. The fingerprint is computed from that config, so if a var
- * (e.g. the Google Maps keys) is absent there, EAS resolves a different runtime
- * than CI and the update reaches no build. Pushing these values is what keeps
- * the two sides in agreement.
+ * EAS resolves `app.config.js` on its own side, where only the eas.json profile
+ * vars and the EAS environment exist — and the fingerprint depends on that
+ * config, so the two sides have to agree. This is what makes them agree; a
+ * `.env.local` in the upload is not relied on.
  *
- * Why not just `eas env:push --force` on every build: that rewrites every
- * variable (and its visibility) on every pipeline run, in production as well,
- * so a value edited in the dashboard is silently reverted by the next deploy and
- * the audit trail fills with no-op versions. Instead this lists what EAS has and
- * only pushes when a variable is missing.
- *
- * The trade-off is deliberate: a *rotated* secret has the same name, so it is
- * not re-pushed automatically. Rotate with `--force` (or the
- * `force-eas-env-sync` label) so the rotation is a deliberate, visible step.
- *
- * Reading the list is best effort. `env:list` has no `--json` (eas-cli 24.8) and
- * a CI robot token can come back with an empty list even though it can push, so
- * "no names" is not treated as "nothing is there": the values come from the same
- * secrets either way, and skipping would leave a fresh EAS project without the
- * vars the fingerprint needs. A marker in the temp dir keeps that fallback to
- * one push per job instead of one per target that depends on this one.
+ * Reads what EAS already has and pushes only when a variable is missing, so a
+ * value edited in the dashboard survives. `--force` is the deliberate path for
+ * rotating a secret.
  */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -42,7 +26,7 @@ const { project, environment } = argv;
 
 if (!project || !environment) {
   console.error(
-    'Usage: sync-eas-env.mjs --project <name> --environment <development|production> [--force]',
+    'Usage: sync-eas-env.mjs --project <name> --environment <development|production> [--path <file>] [--force]',
   );
   process.exit(2);
 }
@@ -52,7 +36,7 @@ if (!process.env.EXPO_TOKEN) {
 }
 
 const projectDir = resolve(process.cwd(), 'apps', project);
-const envPath = resolve(projectDir, '.env.local');
+const envPath = resolve(argv.path ?? resolve(projectDir, '.env.local'));
 if (!existsSync(envPath)) {
   console.error(
     `No ${envPath}; run write-eas-env first (it is a dependency of this target).`,
@@ -68,6 +52,9 @@ const local = readFileSync(envPath, 'utf8')
   .filter(Boolean);
 
 const force = Boolean(argv.force) || process.env.FORCE_EAS_ENV_SYNC === 'true';
+// Absolute: `eas env:push` resolves a relative path from the project directory,
+// and the env file can live outside it (CI writes it to the temp dir).
+const pathForCli = envPath;
 
 // One push per job: `.env.local` is written by `write-eas-env`, and both
 // `eas-build` and `eas-update` depend on this target, so without a marker the
@@ -82,7 +69,7 @@ if (
   readFileSync(marker, 'utf8').trim() === contentHash
 ) {
   console.log(
-    `Already pushed this exact .env.local to ${environment} in this job; skipping.`,
+    `Already pushed ${envPath} to ${environment} in this job; skipping.`,
   );
   process.exit(0);
 }
@@ -122,7 +109,7 @@ try {
 
 const missing = local.filter((name) => !remoteNames.has(name));
 console.log(
-  `EAS ${environment} environment: ${remoteNames.size} vars; .env.local: ${local.length} vars.`,
+  `EAS ${environment} environment: ${remoteNames.size} vars; ${envPath}: ${local.length} vars.`,
 );
 if (remoteNames.size === 0) {
   console.log(
@@ -143,6 +130,13 @@ if (force) {
   console.log(`Pushing ${missing.length} missing var(s): ${missing.join(', ')}`);
 }
 
-run(['env:push', '--environment', environment, '--path', '.env.local', '--force']);
+run([
+  'env:push',
+  '--environment',
+  environment,
+  '--path',
+  pathForCli,
+  '--force',
+]);
 writeFileSync(marker, contentHash + '\n');
 console.log(`Pushed ${envPath} to the ${environment} environment.`);

@@ -52,14 +52,10 @@ if (!project) {
 }
 
 /**
- * The Nx configuration, not just an EAS profile.
- *
- * It is not cosmetic: `write-eas-env` and `sync-eas-env` are configuration-scoped
- * (preview → the EAS `development` environment, production → `production`), and
- * they are the reason a build resolves the same runtime the update publishes to.
- * Running `eas-build` without a configuration cannot work — those targets define
- * no default command — and running it with the wrong one pairs a production
- * profile with the development environment.
+ * The Nx configuration selects more than an EAS profile: `write-eas-env` and
+ * `sync-eas-env` are configuration-scoped, and they are what makes the build and
+ * the update resolve the same runtime. The targets have no default command, so
+ * this cannot be omitted.
  */
 const configuration =
   (argv.configuration as string | undefined) ??

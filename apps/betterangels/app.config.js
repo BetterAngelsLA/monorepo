@@ -1,8 +1,7 @@
-// The runtime version is the Expo fingerprint, which is computed from this
-// config — so the values a build sees must match the ones CI fingerprinted.
-// CI writes the profile env to `.env.local` (gitignored, and still uploaded to
-// EAS because `.easignore` does not exclude it); `.env` holds the committed
-// defaults. Profile values win.
+// The runtime version is the Expo fingerprint, computed from this config, so the
+// values a build sees must match the ones CI fingerprinted. CI supplies the
+// profile env through the EAS environment (tools/scripts/sync-eas-env.mjs);
+// `.env` holds the committed defaults. Profile values win.
 import dotenv from 'dotenv';
 dotenv.config();
 dotenv.config({ path: '.env.local', override: true });

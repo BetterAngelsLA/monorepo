@@ -1,30 +1,13 @@
 #!/usr/bin/env node
 /**
- * Undo the workspace mutation `copy-lockfile` performs.
+ * Undo the workspace mutation `copy-lockfile` performs for EAS Build.
  *
- * Usage:
  *   node tools/scripts/restore-workspace.mjs [--project betterangels]
  *
- * `tools/scripts/eas-build-pre-install.mjs` rewrites the root `package.json`
- * (narrowing `workspaces` to the app) and both `package.json`s' EAS-only fields,
- * because EAS Build needs that shape in the uploaded archive. In CI it runs
- * before the EAS calls, and until now the workflow relied on the mobile step
- * being last so nothing downstream saw the mutated workspace. That is an
- * ordering invariant held only by a comment: one appended step that runs
- * `yarn install` (which `sync-deps` triggers) prunes every other project's
- * dependencies and the next web export dies with `ENOENT`.
- *
- * Running this in an `always()` step restores the tracked files, so a later
- * step no longer sees an EAS-shaped workspace. Note what it does *not* undo:
- * the pruned `node_modules` tree. `yarn install` after the mutation removes
- * other workspaces' packages, and restoring the manifests does not reinstall
- * them — that is why the mobile work still runs after the web export. The
- * difference is that this failure is now a missing-install reinstall rather
- * than silent corruption of tracked files.
- *
- * CI-only, like the script it reverses: outside CI that script is a no-op, so
- * there is nothing to restore, and `git checkout --` on a developer's tree
- * would discard real edits.
+ * `eas-build-pre-install.mjs` rewrites the root and app `package.json` so the
+ * uploaded archive installs. Restoring the tracked files afterwards keeps that
+ * shape from leaking into later steps. It does not un-prune `node_modules`, so
+ * anything that installs still has to run after the EAS build.
  */
 import { execFileSync } from 'child_process';
 import { resolve } from 'path';

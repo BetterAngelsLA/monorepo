@@ -15,19 +15,12 @@ env:
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
 
 jobs:
-  # One job: the EAS update publishes while the web deploy runs (they need nothing
-  # from each other), then the E2E suite, then the mobile build. The mobile step
-  # has to be last: `eas-build` runs `copy-lockfile`
-  # (tools/scripts/eas-build-pre-install.mjs), which rewrites the workspace for
-  # EAS Build (root package.json becomes a single-app workspace). A later
-  # `yarn install` — which `sync-deps` triggers — then prunes the other projects
-  # and the web export dies, so everything that needs the pristine install runs
-  # above it.
+  # One job: the EAS update publishes while the web deploy runs, then E2E, then
+  # the mobile build. The build must be last — `copy-lockfile` reshapes the
+  # workspace for EAS Build, and a later `yarn install` prunes the other projects.
   #
-  # The job itself is not gated on forks: `Preview` can then be a required check
-  # that always reports. Fork PRs get no secrets, so the steps that need them
-  # carry the guard instead, and the job still tells a fork author what was
-  # skipped.
+  # Not gated on forks, so the required `Preview` check always reports; the steps
+  # that need secrets carry the guard.
   Preview:
     runs-on: ubuntu-latest
     environment: preview
@@ -39,15 +32,10 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      # `EAS_BUILD_PLATFORMS` is decided per run in "Set Environment Variables"
-      # from what the change can affect — see the comment there.
-      # Applying this label rebuilds even though a build already exists for the
-      # fingerprint — the escape hatch for a build that failed for a reason we
-      # have since fixed.
+      # `EAS_BUILD_PLATFORMS` is set per run in "Set Environment Variables".
+      # Build even though a build exists for the fingerprint.
       FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
-      # Applying this label re-pushes the EAS environment even when every var is
-      # already there: the deliberate path for rotating a secret (see
-      # tools/scripts/sync-eas-env.mjs).
+      # Re-push the EAS environment even when every var is present.
       FORCE_EAS_ENV_SYNC: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-env-sync') }}
       VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
       VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
@@ -60,12 +48,8 @@ jobs:
       - name: ⏭️ Fork pull request
         if: github.event.pull_request.head.repo.fork
         run: |
-          echo "::notice::Fork PR: previews need secrets, which forks do not receive. Checks-only run."
-          {
-            echo "### Preview skipped"
-            echo
-            echo "This pull request comes from a fork, so the deploy, E2E and EAS steps have no secrets to use."
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice::Fork PR: previews need secrets, which forks do not receive."
+          echo "### Preview skipped — fork PR, no secrets" >> "$GITHUB_STEP_SUMMARY"
 
       - name: 🏗 Check out repo
         uses: actions/checkout@v7
@@ -119,9 +103,7 @@ jobs:
           node-version: 22.21.1
           cache: yarn
 
-      # `--immutable` still reconciles anything stale; the cache only skips the
-      # work of rebuilding an identical tree. Keyed on the lockfile, so a
-      # dependency change is a miss by construction.
+      # Keyed on the lockfile: `--immutable` still reconciles anything stale.
       - name: ♻️ Restore node_modules
         uses: actions/cache@v6
         with:
@@ -161,23 +143,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          # The update runs while the web deploy does, because it is the other
-          # ~2 minutes of a preview and the two do not share anything that
-          # conflicts. It needs neither `copy-lockfile` nor `sync-deps`:
-          # `copy-lockfile` reshapes the workspace for the *build* archive, and the
-          # runtime version is identical either way — resolving the fingerprint
-          # before and after it returns the same hash.
-          #
-          # Both scripts are called directly rather than through `nx run`: the
-          # deploy below is a second Nx process, and two of them on one workspace
-          # contend on the project graph and its locks.
-          node tools/scripts/write-eas-env.mjs --project betterangels --profile preview
-          node tools/scripts/sync-eas-env.mjs --project betterangels --environment development
-          # `.env.local` was only the input to that push: the update and the build
-          # both take their env from EAS (`--environment`), and leaving the file
-          # here would also load it into the *web* export below, which resolves
-          # `EXPO_PUBLIC_*` from `.env` today.
-          rm -f apps/betterangels/.env.local
+          # The update publishes while the web deploy runs: it needs no workspace
+          # reshaping, and its env comes from EAS. The env file stays in the temp
+          # dir so the web export below cannot pick it up.
+          ENV_FILE="$RUNNER_TEMP/eas-env"
+          node tools/scripts/write-eas-env.mjs --project betterangels --profile preview --out "$ENV_FILE"
+          node tools/scripts/sync-eas-env.mjs --project betterangels --environment development --path "$ENV_FILE"
           (
             node tools/scripts/eas-update.mjs --project betterangels --profile preview \
               > /tmp/eas-update.log 2>&1
@@ -188,9 +159,7 @@ jobs:
           # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
 
-          # Reap the update: its output is buffered, so replay it, and fail the
-          # step if it failed. Waiting is cheap — it has had the whole deploy to
-          # finish.
+          # Replay the background output, and fail with it.
           set +e
           wait "$UPDATE_PID"
           set -e
@@ -204,11 +173,8 @@ jobs:
           NX_DAEMON: 'false'
         run: |
           set -euo pipefail
-          # Which apps this run deployed, straight from Nx. Each suite's config
-          # reads it to choose between its branch preview and its own dev server
-          # (tools/shared/e2e-base-url.mjs), so the workflow names no app and no
-          # project: `nx run-many --projects=tag:ci-e2e` picks the suites, and a
-          # project opts in by carrying the tag.
+          # Feeds `tools/shared/e2e-base-url.mjs`: a suite tests its branch
+          # preview when this run deployed that app, and its own server otherwise.
           PREVIEW_DEPLOYED_APPS="$(yarn nx show projects --affected --with-target deploy --configuration preview | tr '\n' ',')"
           export PREVIEW_DEPLOYED_APPS
           echo "Deployed for this run: ${PREVIEW_DEPLOYED_APPS:-none}"
@@ -222,30 +188,17 @@ jobs:
           NX_DAEMON: 'false'
         run: |
           set -euo pipefail
-          # `copy-lockfile` below rewrites the root package.json for EAS Build.
-          # Undo that however this step ends — success, failure, or cancel — so no
-          # later step (or a step someone adds later) reads an EAS-shaped
-          # workspace. It cannot un-prune `node_modules`, which is why the mobile
-          # work still runs after the web export and E2E.
-          #
-          # Called directly rather than through `nx run`: this must not need a
-          # project graph built from the manifests it is undoing.
+          # `copy-lockfile` below reshapes the workspace for EAS Build; restore it
+          # however this step ends. Called directly — it must not need a project
+          # graph built from the manifests it is undoing.
           trap 'node tools/scripts/restore-workspace.mjs --project betterangels || true' EXIT
           yarn nx run betterangels:write-eas-env:preview
 
-          # No `expo prebuild` here on purpose: it would leave `android/` and
-          # `ios/` in the checkout, and `eas update` fingerprints the project as
-          # it finds it — with native directories present it publishes a runtime
-          # no build ever produces, so the update reaches nobody. The build gets
-          # its native projects on the EAS worker (`.easignore` excludes them).
-
-          # `eas-build` rewrites the workspace for EAS Build before it uploads
-          # (copy-lockfile pins the star deps and declares the app the single
-          # workspace), and the runtime it sends is computed from that state. Do
-          # the same here, or we look up and then build a runtime the build will
-          # never produce. Everything that needs the pristine install — the web
-          # export and the E2E suite — has already run; what follows is EAS calls
-          # and archiving.
+          # No `expo prebuild`: it would leave `android/`+`ios/` in the checkout and
+          # the fingerprint would describe a project no build uploads.
+          #
+          # `copy-lockfile` mirrors what `eas-build` uploads, so the runtime looked
+          # up here is the one the build produces.
           yarn nx run betterangels:copy-lockfile
 
           # The resolver prints the whole fingerprint, so take just the runtime.
@@ -255,12 +208,7 @@ jobs:
               | node -e 'let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => console.log(JSON.parse(s).runtimeVersion))'
           }
 
-          # Reuse the build that already exists for this runtime and profile.
-          # `find-build.mjs` holds the rule — a fingerprint builds once, in any
-          # status, and never twice; `force-eas-build` is the way out when a
-          # failed build has poisoned its fingerprint. It also refuses to answer
-          # "no build" when EAS cannot be reached, so a transient error cannot
-          # quietly buy a duplicate build: this step fails instead.
+          # A fingerprint builds once, in any status; `force-eas-build` overrides.
           IFS=',' read -ra PLATFORMS <<< "$EAS_BUILD_PLATFORMS"
           for PLATFORM in "${PLATFORMS[@]}"; do
             RUNTIME="$(runtime_version "$PLATFORM")"
@@ -274,18 +222,10 @@ jobs:
             yarn nx run betterangels:eas-build:preview --platform="$PLATFORM" --wait=false --freezeCredentials=true --json=true
           done
 
-          # The update itself was published by the deploy step, in parallel with
-          # the web deploy. It pins the branch and the EAS environment:
-          # `--auto` would read the git branch and a CI checkout is a detached
-          # HEAD (publishing to a branch named "HEAD"), and without --environment
-          # eas-cli skips the EAS env vars, so the update would get a different
-          # runtime than the build.
-
-          # Mobile preview links (build, update, QR) on the PR.
+          # The update was published by the deploy step. Post the links.
           yarn nx run betterangels:preview-comment
 
-      # Neither of these touches the workspace; they only archive what the E2E
-      # step produced, which is why they can follow the mobile work.
+      # Archiving only; neither touches the workspace.
       - name: Save Nx cache
         if: always() && !cancelled()
         continue-on-error: true

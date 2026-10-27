@@ -1,31 +1,14 @@
 #!/usr/bin/env node
 /**
- * Find the build that already exists for a fingerprint.
+ * Print the build id that already exists for a fingerprint, or nothing.
  *
- * Usage:
- *   node tools/scripts/find-build.mjs --project betterangels \
- *     --platform android --profile preview --runtime <hash> [--json]
+ *   node tools/scripts/find-build.mjs --project <name> --platform <p> \
+ *     --profile <profile> --runtime <hash> [--json] [--force]
  *
- * This is the single implementation of "has this fingerprint been built
- * already", shared by `preview.yml` and `tools/scripts/eas-e2e.ts`, so both
- * cannot drift apart.
- *
- * Status is deliberately ignored: the fingerprint *is* the identity of a build,
- * so a fingerprint that exists in any state — queued, finished, or failed — is
- * not built again. Paying twice for the same inputs buys nothing, and an update
- * only needs the runtime its binary will ship with. `preview.yml` exposes the
- * `force-eas-build` label as the way out once the cause of a failure is fixed.
- *
- * Output contract:
- *   stdout  the build id, or an empty line when there is none (--json: {"id"})
- *   stderr  the reasoning, so the CI log explains the decision
- *   exit 0  a definite answer (including "no build")
- *   exit 1  the lookup never succeeded — the caller must not guess
- *
- * The distinction between "no build" and "could not ask" matters: treating a
- * transient EAS error as "no build" queues a duplicate build, which is exactly
- * the spend this script exists to prevent. Retries absorb a blip; a lookup that
- * keeps failing reports failure and stops the pipeline instead.
+ * Status is ignored: a fingerprint builds once. `--force` (or FORCE_EAS_BUILD)
+ * is the way past a build that failed for a reason that has since been fixed.
+ * Exits 1 rather than reporting "no build" when `build:list` never succeeds, so
+ * an EAS outage cannot silently queue a duplicate.
  */
 import { execFileSync } from 'child_process';
 import { existsSync } from 'fs';

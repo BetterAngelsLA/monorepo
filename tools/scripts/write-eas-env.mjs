@@ -4,7 +4,9 @@ import minimist from 'minimist';
 
 const argv = minimist(process.argv.slice(2));
 if (!argv.project || !argv.profile) {
-  console.error('Usage: write-eas-env.mjs --project <name> --profile <profile>');
+  console.error(
+    'Usage: write-eas-env.mjs --project <name> --profile <profile> [--out <file>]',
+  );
   process.exit(1);
 }
 
@@ -38,7 +40,9 @@ for (const [key, value] of Object.entries(
 // app.config.js exactly like the fingerprint did. The web base path is
 // deliberately absent: it belongs to the web export only and would otherwise
 // make the native runtime branch-specific.
-const envPath = path.join(projectDir, '.env.local');
+const envPath = path.resolve(
+  argv.out ?? path.join(projectDir, '.env.local'),
+);
 fs.writeFileSync(
   envPath,
   [...env].map(([key, value]) => `${key}=${value}`).join('\n') + '\n',

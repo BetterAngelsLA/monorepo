@@ -133,10 +133,8 @@ export function resolveProjectDir(project: string): string {
 /**
  * Write the profile env the runtime version is computed from.
  *
- * `write-eas-env.mjs` is the single place that decides what `.env.local` holds,
- * and both CI paths call it: the workflow through `nx run …:write-eas-env` and
- * this helper. Do not write `.env.local` anywhere else, or a fingerprint can be
- * computed from a different env than the one that gets uploaded.
+ * `write-eas-env.mjs` is the only writer; a second one would let the fingerprint
+ * and the upload disagree.
  */
 export function setupEnv(projectDir: string, profile: string): void {
   console.log(`\n=== Setting up env for profile: ${profile} ===`);
@@ -149,17 +147,10 @@ export function setupEnv(projectDir: string, profile: string): void {
 /**
  * Resolve the runtime version (fingerprint hash) for one platform.
  *
- * Fingerprints are per platform: the same commit resolves to a different runtime
- * for android and ios (different config and native sources), so looking one up
- * with the other's hash always misses and rebuilds a binary that already exists.
- *
- * No `expo prebuild` here, deliberately. `--workflow generic` fingerprints the
- * project as it is uploaded, and `.easignore` keeps `android/` and `ios/` out of
- * that upload — a local prebuild hashes native directories the build never has,
- * producing a runtime no build ever creates. The workflow resolves the same way
- * without prebuilding, and its runtime matches the build's
- * (`CONFIGURE_EXPO_UPDATES` diffs the two and reports no mismatch), so that is
- * the behaviour to mirror.
+ * Fingerprints are per platform, so a lookup keyed on the other platform's hash
+ * always misses. No `expo prebuild`: `--workflow generic` fingerprints the project
+ * as uploaded, and a local prebuild would hash native directories the build never
+ * has.
  */
 export function resolveRuntime(projectDir: string, platform: string): string {
   console.log(`Resolving ${platform} runtime version (fingerprint)...`);
