@@ -98,8 +98,8 @@ jobs:
           # Any lookup failure falls back to building, so a flaky list can never
           # fail the job.
           has_build() {
-            if eas build:list --platform "$1" --runtime-version "$2" --build-profile "$3" \
-              --status finished --limit 1 --json --non-interactive \
+            if (cd apps/betterangels && eas build:list --platform "$1" --runtime-version "$2" \
+              --build-profile "$3" --status finished --limit 1 --json --non-interactive) \
               > /tmp/build-list.json 2>&1; then
               if node tools/scripts/has-build.mjs < /tmp/build-list.json; then
                 echo "Reusing the finished $1 build for $3."
