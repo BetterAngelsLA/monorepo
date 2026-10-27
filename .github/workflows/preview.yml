@@ -140,33 +140,23 @@ jobs:
         continue-on-error: true
         run: |
           cd apps/betterangels
-          eas build:view 16c3ca8c-c448-45b6-9676-353c302b4141 --json > /tmp/b.json 2>&1 || true
+          id=$(eas build:list --platform android --build-profile preview --limit 1 --json --non-interactive \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const b=JSON.parse(s.slice(s.indexOf("["),s.lastIndexOf("]")+1));console.log(b[0]?.id||"")})')
+          echo "newest build: $id"
+          eas build:view "$id" --json > /tmp/b.json 2>&1 || true
           url=$(node -e '
             const fs = require("fs");
             const raw = fs.readFileSync("/tmp/b.json", "utf8");
             const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
             const b = JSON.parse(raw.slice(s, e + 1));
+            console.log("status:", b.status);
             const f = (b.logFiles || [])[0];
             console.log(typeof f === "string" ? f : (f && f.url) || "");
-          ')
-          echo "log url length: ${#url}"
-          code=$(curl -sS -L --compressed -o /tmp/phase.log -w '%{http_code}' "$url")
-          echo "http=$code bytes=$(wc -c < /tmp/phase.log)"
-          echo '--- phases and errors ---'
-          node -e '
-            const fs = require("fs");
-            for (const line of fs.readFileSync("/tmp/phase.log", "utf8").split("\n")) {
-              if (!line.trim()) continue;
-              let e;
-              try { e = JSON.parse(line); } catch { continue; }
-              const isMarker = e.marker === "START_PHASE" || e.marker === "END_PHASE";
-              const isProblem = typeof e.level === "number" && e.level >= 40;
-              if (isMarker) console.log(e.marker, e.phase, e.result || "", (e.msg || "").slice(0, 120));
-              else if (isProblem) console.log("!!", e.phase, e.level, (e.msg || "").slice(0, 400));
-            }
-          '
-          echo '--- last lines ---'
-          wc -l /tmp/phase.log
+          ' | tee /tmp/out)
+          sed -n '1p' /tmp/out
+          url=$(sed -n '2p' /tmp/out)
+          curl -sS -L --compressed -o /tmp/phase.log "$url"
+          node tools/scripts/eas-fingerprint-diff.cjs
 
           # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t eas-update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
