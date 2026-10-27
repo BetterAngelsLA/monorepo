@@ -32,13 +32,6 @@
       },
       "dependsOn": ["sync-deps"]
     },
-    "build-list": {
-      "executor": "@nx/expo:build-list",
-      "cache": false,
-      "options": {
-        "json": true
-      }
-    },
     "prebuild": {
       "command": "expo prebuild --no-install",
       "options": {

@@ -85,20 +85,30 @@ jobs:
           set -euo pipefail
           export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
           yarn nx run betterangels:write-eas-env:preview
-          # EAS prebuilds before fingerprinting; mirror that locally so the
-          # runtime version matches the one the build calculates.
-          npx expo prebuild --no-install
-          ANDROID_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform android --workflow generic)"
-          IOS_RUNTIME="$(npx expo-updates runtimeversion:resolve --platform ios --workflow generic)"
 
-          yarn nx run betterangels:build-list --platform=android --runtimeVersion="$ANDROID_RUNTIME" --buildProfile=preview --json=true > /tmp/bl-android.json
-          node tools/scripts/has-build.mjs /tmp/bl-android.json || yarn nx run betterangels:eas-build:preview --platform=android --wait=false --freezeCredentials=true --json=true
+          # EAS prebuilds before fingerprinting; mirror that inside the app so the
+          # runtime version matches the one the build calculates. From the repo
+          # root expo falls back to the root package.json and fingerprints a
+          # different app entirely.
+          yarn nx run betterangels:prebuild
+          ANDROID_RUNTIME="$(cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" runtimeversion:resolve --platform android --workflow generic)"
+          IOS_RUNTIME="$(cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" runtimeversion:resolve --platform ios --workflow generic)"
 
-          yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=preview --json=true > /tmp/bl-ios.json
-          node tools/scripts/has-build.mjs /tmp/bl-ios.json || yarn nx run betterangels:eas-build:preview --platform=ios --wait=false --freezeCredentials=true --json=true
+          # Skip a build when one already finished for this runtime and profile.
+          has_build() {
+            eas build:list --platform "$1" --runtime-version "$2" --build-profile "$3" \
+              --status finished --limit 1 --json --non-interactive \
+              | node tools/scripts/has-build.mjs
+          }
 
-          yarn nx run betterangels:build-list --platform=ios --runtimeVersion="$IOS_RUNTIME" --buildProfile=development-simulator --json=true > /tmp/bl-sim.json
-          node tools/scripts/has-build.mjs /tmp/bl-sim.json || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
+          has_build android "$ANDROID_RUNTIME" preview \
+            || yarn nx run betterangels:eas-build:preview --platform=android --wait=false --freezeCredentials=true --json=true
+
+          has_build ios "$IOS_RUNTIME" preview \
+            || yarn nx run betterangels:eas-build:preview --platform=ios --wait=false --freezeCredentials=true --json=true
+
+          has_build ios "$IOS_RUNTIME" development-simulator \
+            || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
 
           # Update and web deploy are independent; one graph lets them overlap.
           yarn nx affected -t eas-update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
