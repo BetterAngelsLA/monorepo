@@ -42,6 +42,7 @@ export function MediaLinkPreview(props: TProps) {
 
   const ytVideoId = extractYouTubeVideoId(url);
 
+  // only supports YT for now
   if (!ytVideoId) {
     return <PreviewPlaceholder label="Invalid video URL" />;
   }
@@ -56,7 +57,7 @@ export function MediaLinkPreview(props: TProps) {
     <>
       <YouTubeThumbnail
         videoId={ytVideoId}
-        title={label}
+        title={title ?? undefined}
         onClick={() => setIsOpen(true)}
       />
 

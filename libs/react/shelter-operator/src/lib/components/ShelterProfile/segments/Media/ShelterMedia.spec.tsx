@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ShelterMedia } from './ShelterMedia';
 
 const mocks = vi.hoisted(() => ({
@@ -32,6 +32,28 @@ vi.mock('./Photos/ShelterPhotos', () => ({
 
 const shelterPhotos = () => screen.getByTestId('shelter-photos');
 
+// Same reasoning as the photo grid: assert what the tab shell hands down.
+vi.mock('./MediaLinks/ShelterMediaLinks', () => ({
+  ShelterMediaLinks: ({
+    shelterId,
+    mediaLinks,
+  }: {
+    shelterId: string;
+    mediaLinks: { id: string }[] | null;
+  }) => (
+    <div
+      data-testid="shelter-media-links"
+      data-shelter-id={shelterId}
+      data-media-link-ids={(mediaLinks ?? []).map((link) => link.id).join()}
+    />
+  ),
+}));
+
+const shelterMediaLinks = () => screen.getByTestId('shelter-media-links');
+
+function openMediaLinksTab() {
+  fireEvent.click(screen.getByRole('tab', { name: 'Media Links' }));
+}
 describe('ShelterMedia', () => {
   afterEach(() => {
     mocks.shelter = undefined;
@@ -77,5 +99,32 @@ describe('ShelterMedia', () => {
 
     expect(shelterPhotos().getAttribute('data-photo-ids')).toBe('');
     expect(shelterPhotos().getAttribute('data-hero-image-id')).toBe('none');
+  });
+
+  it('passes the shelter id and media links to the media links tab', () => {
+    mocks.shelter = {
+      photos: [],
+      heroImage: undefined,
+      mediaLinks: [{ id: 'media-link-1' }, { id: 'media-link-2' }],
+    };
+
+    render(<ShelterMedia shelterId="shelter-1" />);
+    openMediaLinksTab();
+
+    expect(shelterMediaLinks().getAttribute('data-shelter-id')).toBe(
+      'shelter-1',
+    );
+    expect(shelterMediaLinks().getAttribute('data-media-link-ids')).toBe(
+      'media-link-1,media-link-2',
+    );
+  });
+
+  it('falls back to an empty media link list', () => {
+    mocks.shelter = { photos: [], heroImage: undefined, mediaLinks: null };
+
+    render(<ShelterMedia shelterId="shelter-1" />);
+    openMediaLinksTab();
+
+    expect(shelterMediaLinks().getAttribute('data-media-link-ids')).toBe('');
   });
 });

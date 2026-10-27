@@ -2,6 +2,9 @@ import {
   BaError,
   BaPermissionError,
   getFieldErrorsOrThrow,
+  getPermissionErrorMessage,
+  isMutationSuccess,
+  type GraphQLResponse,
 } from '@monorepo/ba-platform';
 import { applyFieldErrors } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
@@ -15,6 +18,7 @@ import {
   useShelterPermissions,
   useUpdateMediaLink,
 } from '../../../../../hooks';
+import { deleteMediaLinksMeta } from '../../../../../hooks/useDeleteMediaLinks/__generated__/useDeleteMediaLinks_meta.generated';
 import {
   ConfirmationModal,
   Modal,
@@ -49,6 +53,18 @@ function toFormValues(
     url: mediaLink.url,
     title: mediaLink.title,
   };
+}
+
+/** Turns a failed delete payload into the error the toast layer understands. */
+function toDeleteError(response: GraphQLResponse): Error {
+  const permissionMessage = getPermissionErrorMessage(
+    response,
+    deleteMediaLinksMeta.operationKey,
+  );
+
+  return permissionMessage
+    ? new BaPermissionError(permissionMessage)
+    : new Error('Delete failed');
 }
 
 export function ShelterMediaLinks(props: TProps) {
@@ -104,7 +120,7 @@ export function ShelterMediaLinks(props: TProps) {
       setFormTarget(null);
       showToast({ status: 'success', title: 'Media link added.' });
     } catch (e) {
-      handleSaveError(e, 'createMediaLink');
+      handleMutationError(e, 'createMediaLink', 'Update failed');
     }
   }
 
@@ -143,7 +159,7 @@ export function ShelterMediaLinks(props: TProps) {
       setFormTarget(null);
       showToast({ status: 'success', title: 'Media link updated.' });
     } catch (e) {
-      handleSaveError(e, 'updateMediaLink');
+      handleMutationError(e, 'updateMediaLink', 'Update failed');
     }
   }
 
@@ -153,29 +169,29 @@ export function ShelterMediaLinks(props: TProps) {
     }
 
     try {
-      await deleteMediaLinks({
+      const response = await deleteMediaLinks({
         variables: { data: { ids: [pendingDelete.id] } },
       });
 
+      const result = response.data?.[deleteMediaLinksMeta.operationKey];
+
+      if (!isMutationSuccess(result, deleteMediaLinksMeta.successTypename)) {
+        throw toDeleteError(response);
+      }
+
       showToast({ status: 'success', title: 'Media link deleted.' });
     } catch (e) {
-      console.error(`[deleteMediaLinks error]: ${e}.`);
-
-      showToast({
-        status: 'error',
-        title: 'Delete failed',
-        description: 'Sorry, an unexpected error occurred.',
-      });
+      handleMutationError(e, 'deleteMediaLinks', 'Delete failed');
     } finally {
       setPendingDelete(null);
     }
   }
 
-  function handleSaveError(e: unknown, operation: string) {
+  function handleMutationError(e: unknown, operation: string, title: string) {
     if (e instanceof BaPermissionError) {
       showToast({
         status: 'error',
-        title: 'Update failed',
+        title,
         description: e.message,
       });
 
@@ -191,7 +207,7 @@ export function ShelterMediaLinks(props: TProps) {
 
     showToast({
       status: 'error',
-      title: 'Update failed',
+      title,
       description: 'Sorry, an unexpected error occurred.',
     });
   }
