@@ -161,7 +161,7 @@ jobs:
           UPDATE_PID=$!
 
           # export-web computes its own base path, so it is not in the job env.
-          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
+          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6
 
           # Replay the background output, and fail with it.
           set +e
@@ -191,7 +191,7 @@ jobs:
             exit 0
           fi
           yarn playwright install chromium
-          yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview --output-style=stream
+          yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview
 
       - name: 📱 Mobile preview
         if: github.event.pull_request.head.repo.fork == false
