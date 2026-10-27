@@ -152,9 +152,8 @@ const runtimeOf = (build) =>
 
 const cell = (build) =>
   build
-    ? `[Build Permalink](${buildUrl(build.id)})<br /><details><summary>Details</summary>Status: \`${build.status}\`<br />Distribution: \`${build.distribution ?? ''}\`<br />Build profile: \`${build.buildProfile ?? ''}\`<br />Runtime version: \`${runtimeOf(build)}\`<br />App version: \`${build.appVersion ?? ''}\`<br />Git commit: \`${build.gitCommitHash ?? ''}\`</details>`
-    : // A missing build is a fact about this run, not a missing value.
-      'Not built for this run';
+    ? `[Build Permalink](${buildUrl(build.id)})<br /><details><summary>Details</summary>Distribution: \`${build.distribution ?? ''}\`<br />Build profile: \`${build.buildProfile ?? ''}\`<br />Runtime version: \`${runtimeOf(build)}\`<br />App version: \`${build.appVersion ?? ''}\`<br />Git commit: \`${build.gitCommitHash ?? ''}\`</details>`
+    : 'N/A';
 
 const updateCell = (update) =>
   update
@@ -176,16 +175,7 @@ const table = [
       (p) => `\`${forPlatform(p) ? runtimeOf(forPlatform(p)) : (updates[p]?.runtimeVersion ?? 'N/A')}\``,
     ),
   ],
-  [
-    'Build Details',
-    ...PLATFORMS.map((platform) => {
-      const build = cell(forPlatform(platform));
-      const simulator = platform === 'ios' ? simulator : undefined;
-      return simulator
-        ? `${build}<br />Simulator: [Build Permalink](${buildUrl(simulator.id)})`
-        : build;
-    }),
-  ],
+  ['Build Details', ...PLATFORMS.map((p) => cell(forPlatform(p)))],
   ['Update Details', ...PLATFORMS.map((p) => updateCell(updates[p]))],
   ['Update QR', ...PLATFORMS.map((p) => qrCell(updates[p]))],
 ]
@@ -196,11 +186,12 @@ const body = `<!-- continuous-deploy-fingerprint-projectId:${argv.projectId} -->
 🚀 Expo continuous deployment is ready for **${argv.project}**!
 
 - Project → **${argv.project}**
-- Environment → **${profile}**
+- Environment → **${profile.charAt(0).toUpperCase()}${profile.slice(1)}**
 - Platforms → ${PLATFORMS.map((platform) => `**${platform}**`).join(', ')}
 - Scheme → **${argv.slug}**
 
-${table}`;
+${table}
+${simulator ? `\n**iOS Simulator Build:** [Simulator Build Link](${buildUrl(simulator.id)})` : ''}`;
 
 async function upsertPrComment() {
   const token = process.env.GITHUB_TOKEN;
