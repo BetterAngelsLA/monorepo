@@ -553,6 +553,21 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(actions[0]["actor"], "system (import)")
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["Imported early", "Imported late"])
 
+    def test_system_only_takes_precedence_over_actor_id(self) -> None:
+        """§21: systemOnly wins; actorId is not ANDed in (which would empty the page)."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self._rename_at("By Casey", at=_T1, user=self.org_1_case_manager_1)
+        self._rename_at("Imported", at=_T2, label="import")
+
+        response = self._query(
+            "SHELTER",
+            self.shelter.id,
+            filters={"systemOnly": True, "actorId": str(self.org_1_case_manager_1.id)},
+        )
+        actions = response["data"]["objectAuditLog"]["results"]
+
+        self.assertEqual([action["actor"] for action in actions], ["system (import)"])
+
     def test_actor_filter_narrows_the_log(self) -> None:
         self._grant_permission(self.org_1_case_manager_2, Shelter.perms.VIEW, self.org_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -665,3 +680,32 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         response = self._actors("SHELTER", self.shelter.id)
 
         self.assertGraphQLError(response, "could not be found")
+
+    def test_actors_hide_bed_editors_from_a_shelter_only_role(self) -> None:
+        """An actor whose only events are withheld Bed summaries must not be listed."""
+        # A unique role name: _grant_permission reuses the class-named role, which
+        # setUp already gave Bed/Room/Reservation VIEW. The caller is named so its
+        # own shelter edit renders as that actor rather than as "system".
+        shelter_only = baker.make(User, first_name="Shel", last_name="Only", email="shelter-only@example.com")
+        self._grant_permission(
+            shelter_only,
+            Shelter.perms.VIEW,
+            self.org_1,
+            role_name="Audit Actors Shelter-Only Viewer",
+        )
+        bed_editor = baker.make(User, first_name="Bed", last_name="Editor", email="bed@example.com")
+
+        with audit_context(user=shelter_only):
+            self.shelter.name = "Visible Shelter Rename"
+            self.shelter.save()
+        with audit_context(user=bed_editor):
+            self.bed.name = "Hidden Bed Rename"
+            self.bed.save()
+
+        self.graphql_client.force_login(shelter_only)
+        response = self._actors("SHELTER", self.shelter.id)
+
+        self.assertIsNone(response.get("errors"))
+        labels = [actor["label"] for actor in response["data"]["objectAuditActors"]]
+        self.assertIn(shelter_only.full_name, labels)
+        self.assertNotIn("Bed Editor", labels)

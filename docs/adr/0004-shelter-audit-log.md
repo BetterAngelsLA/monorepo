@@ -1721,9 +1721,13 @@ what the log can actually render.
 - **One entry per frozen user id**, labelled with the most frequent frozen
   name/email for that id; equally frequent names break by recency, then
   alphabetically, so the label never depends on the query plan. The list is
-  ordered by event count, then label, then id. A frozen name without a user id
-  cannot be expressed by `actorId`, so those rare pre-middleware rows are omitted
-  from the selectable list (documented, not silently wrong).
+  ordered by event count, then label, then id, where **event count is raw written
+  rows, not rendered events**: a full-replacement schedule save writes two rows
+  per slot (§13) that netting collapses for display, so an actor who mostly edits
+  schedules ranks above the events the log shows. The ordering is a picker
+  convenience — the actor set and labels are exact. A frozen name without a user
+  id cannot be expressed by `actorId`, so those rare pre-middleware rows are
+  omitted from the selectable list (documented, not silently wrong).
 - **`System` is one synthetic entry** (`id: null`, `isSystem: true`) aggregating
   every event rendered as system — including `system (import)`/`system (clone)`,
   whose context user id is dropped for display (§11) — and is selected with

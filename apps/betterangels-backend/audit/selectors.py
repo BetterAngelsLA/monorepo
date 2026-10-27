@@ -1138,7 +1138,11 @@ def object_audit_actors(
 
     An actor is shown under its most frequent frozen name/email; equally frequent
     names break by recency, then alphabetically, so the label never depends on
-    the query plan. The list is ordered by event count, then label, then id.
+    the query plan. The list is ordered by event count -- **raw written rows**,
+    not rendered events: a full-replacement schedule save writes two rows per
+    slot (§13), which netting collapses for display, so a schedule-heavy actor
+    can rank above the events the log shows. The count is a picker convenience;
+    the actor set and labels are exact.
 
     *hidden_summary_models* mirrors ``object_audit_log``: actors whose only
     events are withheld Bed/Room summaries must not appear either. A frozen
@@ -1203,12 +1207,10 @@ def object_audit_actors(
     )
     actors = [entry[0] for entry in ordered]
     if term:
+        # The System entry's label is "System", so one substring test covers it;
+        # a prefix test would be a strict subset of it.
         lowered = term.lower()
-        actors = [
-            actor
-            for actor in actors
-            if lowered in actor.label.lower() or (actor.is_system and "system".startswith(lowered))
-        ]
+        actors = [actor for actor in actors if lowered in actor.label.lower()]
     return actors[:limit]
 
 

@@ -17,6 +17,8 @@ from pghistory.core import event_models
 from strawberry import ID
 
 from accounts.models import User
+from accounts.role_manager import OrgRoleManager
+from accounts.tests.baker_recipes import organization_recipe
 from audit.selectors import (
     _EXCLUDED_EVENT_MODELS,
     _LABEL_FIELD_OVERRIDES,
@@ -40,7 +42,9 @@ from shelters.enums import (
     MedicalNeedChoices,
     ReferralRequirementChoices,
     ReservationStatusChoices,
+    ScheduleTypeChoices,
 )
+from shelters.groups import SHELTER_OPERATOR
 from shelters.models import (
     Bed,
     Demographic,
@@ -53,6 +57,7 @@ from shelters.models import (
     Schedule,
     Shelter,
 )
+from shelters.services.shelter import shelter_update
 from test_utils.pghistory import backdate_event_rows
 
 
@@ -1522,6 +1527,38 @@ class ObjectAuditLogQueryBudgetTestCase(TestCase):
         self.assertRegex(outer, r'actor_id"?\s*=')
 
 
+class ObjectAuditActorsQueryBudgetTestCase(TestCase):
+    """The actor list is a single aggregate query with the seed filter in SQL (§20)."""
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="S")
+        for name in ("First", "Second"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+
+    def test_actors_is_one_aggregate_query_with_the_seed_filter_in_sql(self) -> None:
+        with CaptureQueriesContext(connection) as captured:
+            actors = object_audit_actors(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual([actor.label for actor in actors], ["Ada Lovelace"])
+        self.assertEqual(len(captured.captured_queries), 1)
+
+        outer = _outer_select(captured.captured_queries[0]["sql"])
+        # Counting and the label tie-break happen in SQL, not by fetching rows.
+        self.assertIn("COUNT(*)", outer)
+        self.assertIn("MAX(", outer)
+        self.assertIn("GROUP BY", outer)
+        # The seed exclusion is a predicate in the outer WHERE (§10/§11). Scope the
+        # check to the WHERE so the projected ``label`` column cannot satisfy it,
+        # and compare columns rather than the literal so parameterization changes
+        # cannot break the assertion.
+        where = outer[outer.index("WHERE") :]
+        self.assertIn('"label"', where)
+
+
 class ObjectAuditLogScheduleNettingTestCase(TestCase):
     """Full-replacement schedule saves are netted to one UPDATE per slot (§13).
 
@@ -1645,6 +1682,34 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
         self.assertEqual(netted["start time"], "10:00:00")
         self.assertEqual(added["day"], "Tuesday")
 
+    def test_netted_snapshot_resolves_fk_labels(self) -> None:
+        """A netted event's snapshot renders FK ids as labels, like any other event."""
+        with audit_context(label="seed"):
+            demographic = Demographic.objects.create(name=DemographicChoices.COUPLES)
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                demographic=demographic,
+            )
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+                demographic=demographic,
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        snapshot = actions[0].events[0].snapshot or {}
+
+        self.assertEqual(snapshot["shelter"], "Scheduled Shelter")
+        self.assertEqual(snapshot["demographic"], "couples")
+
     def test_unchanged_slot_is_not_reported_as_a_change(self) -> None:
         self._replace_schedules(start=time(9, 0), end=time(17, 0))
 
@@ -1653,6 +1718,19 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].events, [])
         self.assertEqual(actions[0].field_changes, {})
+
+    def test_deleted_slots_keep_delete_events(self) -> None:
+        """Removes with no matching add are genuine deletions, not a netted update."""
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual([event.action for event in actions[0].events], ["shelter.schedule.remove"])
+        self.assertEqual([event.kind for event in actions[0].events], ["DELETE"])
+        self.assertIsNone(actions[0].events[0].context)
+        self.assertEqual((actions[0].events[0].field_changes or {})["day"], ["Monday", None])
 
     def test_every_day_slot_keeps_the_day_key_out_of_the_netted_change(self) -> None:
         """``day=None`` means every day: absent from the change, null in context."""
@@ -1711,6 +1789,57 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertTrue(actions[0].truncated)
         self.assertEqual(len(actions[0].events), 2)
+
+
+class ObjectAuditLogScheduleServiceTestCase(TestCase):
+    """The real ``shelter_update`` path fans days out one row per day (§13)."""
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        self.org.users.add(self.user)
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
+
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Scheduled Shelter", organization=self.org)
+            for day in (DayOfWeekChoices.MONDAY, DayOfWeekChoices.TUESDAY):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=day,
+                    start_time=time(9, 0),
+                    end_time=time(17, 0),
+                )
+
+    def test_multi_day_save_nets_one_update_per_day(self) -> None:
+        with audit_context(user=self.user):
+            shelter_update(
+                user=self.user,
+                data={
+                    "id": self.shelter.pk,
+                    "schedules": [
+                        {
+                            "schedule_type": ScheduleTypeChoices.OPERATING,
+                            "days": [DayOfWeekChoices.MONDAY, DayOfWeekChoices.TUESDAY],
+                            "start_time": time(10, 0),
+                            "end_time": time(18, 0),
+                        }
+                    ],
+                },
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)  # the whole service call is one action
+        schedule_events = [event for event in actions[0].events if event.action.startswith("shelter.schedule")]
+        self.assertEqual([event.action for event in schedule_events], ["shelter.schedule.update"] * 2)
+        self.assertEqual(
+            sorted((event.context or {})["day"] for event in schedule_events),
+            ["Monday", "Tuesday"],
+        )
+        for event in schedule_events:
+            changes = event.field_changes or {}
+            self.assertEqual(changes["start time"], ["09:00:00", "10:00:00"])
+            self.assertEqual(changes["end time"], ["17:00:00", "18:00:00"])
 
 
 class ObjectAuditActorsSelectorTestCase(TestCase):
@@ -1844,6 +1973,74 @@ class ObjectAuditActorsSelectorTestCase(TestCase):
         by_id = {actor.id: actor for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")}
 
         self.assertEqual(by_id[str(renamed.pk)].label, "Rosa Parks")
+
+    def test_schedule_saves_rank_by_written_rows_not_rendered_events(self) -> None:
+        """Ordering counts raw rows: a full-replacement save writes two per slot (§13)."""
+        scheduler = baker.make(User, first_name="Sched", last_name="Uler", email="sched@example.com")
+        editor = baker.make(User, first_name="Edit", last_name="Or", email="edit@example.com")
+
+        with audit_context(label="seed"):
+            self.shelter.schedules.all().delete()
+            for hour in (9, 10, 11):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=time(hour, 0),
+                    end_time=time(hour, 30),
+                )
+
+        # One save that changes a single slot renders one netted event but writes
+        # six rows: three removes plus three adds.
+        with audit_context(user=scheduler):
+            self.shelter.schedules.all().delete()
+            for hour in (9, 10, 11):
+                start = time(9, 15) if hour == 9 else time(hour, 0)
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=time(hour, 30),
+                )
+        for index in range(4):
+            with audit_context(user=editor):
+                self.shelter.name = f"edit-{index}"
+                self.shelter.save()
+
+        rendered = [
+            len(action.events)
+            for action in audit_log(obj=self.shelter, target_type="SHELTER")
+            if action.actor == "Sched Uler"
+        ]
+        labels = [actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")]
+
+        self.assertEqual(rendered, [1])  # netting collapsed six writes into one event
+        # Counted as rendered events the editor (4) would outrank the scheduler
+        # (1); counted as written rows the scheduler (6) ranks first. The count is
+        # written rows, so this pins the documented metric.
+        self.assertLess(labels.index("Sched Uler"), labels.index("Edit Or"))
+
+    def test_room_and_bed_targets_scope_the_actor_list(self) -> None:
+        """The list is anchored on the target, not on its shelter or its parent room."""
+        with audit_context(label="seed"):
+            room = Room.objects.create(shelter=self.shelter, name="Room A")
+            bed = Bed.objects.create(shelter=self.shelter, room=room, name="Bed A")
+        with audit_context(user=self.user):
+            bed.name = "Bed B"
+            bed.save()
+        with audit_context(user=self.other_user):
+            room.name = "Room B"
+            room.save()
+
+        self.assertEqual(
+            [actor.label for actor in object_audit_actors(obj=bed, target_type="BED")],
+            ["Ada Lovelace"],
+        )
+        # The bed lives in the room, so its event references the room: the ROOM
+        # log's BedEvent exclusion (§32) must keep the bed's editor out of the list.
+        self.assertEqual(
+            [actor.label for actor in object_audit_actors(obj=room, target_type="ROOM")],
+            ["Grace Hopper"],
+        )
 
     def test_idless_named_actor_is_not_selectable(self) -> None:
         with audit_context(user_name="Ghost", user_email="ghost@example.com"):
