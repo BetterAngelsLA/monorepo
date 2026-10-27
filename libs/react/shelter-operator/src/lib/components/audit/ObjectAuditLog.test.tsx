@@ -4,6 +4,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ObjectAuditLog } from './ObjectAuditLog';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 vi.mock('@monorepo/ba-platform', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@monorepo/ba-platform')>()),
   useActiveOrg: () => ({
@@ -141,7 +145,6 @@ describe('ObjectAuditLog', () => {
     expect(screen.getByRole('button', { name: /retry/i })).not.toBeNull();
     // The actual error is logged; the user only sees the generic message.
     expect(consoleError).toHaveBeenCalled();
-    consoleError.mockRestore();
   });
 
   it('does not append the same page twice on a double click', async () => {
