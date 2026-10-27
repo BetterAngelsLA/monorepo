@@ -248,3 +248,27 @@ When product adopts org ownership/transfer, `ClientProfile` gains
   an explicit admin unshare). Add an admin "shares held by former members" review list
   as a safety net. Schema: one nullable granting-org FK on `Grant` (plus the E00x
   org-principal-forbid check, ADR §2.5); no sharing has shipped, so no backfill.
+
+## Amendment (2026-10-26) — the uploading org is captured on the row
+
+The open sub-decision above ("how `ClientDocument` CHANGE/DELETE expresses the
+creating-org tier") is now half-answered, and the half that is a data question is
+decided:
+
+- `Attachment.upload_org` records the org the upload was made on behalf of.
+  `resolve_upload` sets it from the same permission group it assigns the object
+  permissions to, so it matches the guardian row it will replace.
+- `common/0005_backfill_attachment_upload_org` fills it for historical documents
+  from `AttachmentGroupObjectPermission → PermissionGroup.organization`, skipping
+  conflicts (two orgs on one row) rather than guessing.
+- **The gate is unchanged in this step.** Guardian still authorizes, so parity is
+  preserved; the anchor is captured while the rows that record it still exist.
+- The second half — reading the anchor in `can_obj`/`writable` instead of the
+  guardian object rows — must land before the guardian teardown (#2524). The
+  object-permission tables are the only source this backfill can read, so
+  dropping them first would leave every existing document ownerless.
+
+The anchor is deliberately not an `org_via` hop: reads stay platform-shared, and
+authority is an org-scope check against the column (`can(user, perm, org=…)`), not
+an object grant. Object grants remain person-granular by E006 and are reserved for
+explicit sharing.
