@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from unittest_parametrize import parametrize
 
+from accounts.models import PermissionGroup
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.tests.utils import (
@@ -12,7 +13,7 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
-from common.models import Attachment
+from common.models import Attachment, AttachmentGroupObjectPermission
 from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
 
 
@@ -456,6 +457,65 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertIsNotNone(documents)
             else:
                 self.assertIsNone(documents)
+
+    def test_resolve_anchor_matches_the_org_main_would_grant(self) -> None:
+        """Parity: the anchor is the same group ``main`` assigns the permissions to.
+
+        Nothing in the request decides it — the service resolves the group
+        exactly as before and records that org, so a multi-org caller gets
+        whichever org ``main`` would have granted to.
+        """
+        from django.contrib.contenttypes.models import ContentType
+
+        from accounts.role_manager import OrgRoleManager
+        from accounts.selectors import resolve_permission_group
+        from notes.groups import CASEWORKER
+
+        # A caller in both orgs, so the resolution actually has a choice to make.
+        self.org_1.add_user(self.org_2_case_manager_1)
+        OrgRoleManager(self.org_1).add_roles(self.org_2_case_manager_1, CASEWORKER)
+
+        resolved_org_id = resolve_permission_group(self.org_2_case_manager_1, template=CASEWORKER).organization_id
+
+        self._handle_user_login("org_2_case_manager_1")
+        with (
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
+            patch(
+                "common.services.file_upload.strip_storage_location",
+                side_effect=lambda key: key.removeprefix("media/"),
+            ),
+        ):
+            response = self._resolve_client_document_uploads_fixture(
+                self.client_profile_1["id"],
+                [
+                    {
+                        "presignedKey": "media/attachments/test.pdf",
+                        "uploadToken": "mock-token",
+                        "filename": "test.pdf",
+                        "contentType": "application/pdf",
+                        "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+                    }
+                ],
+            )
+
+        document_id = response["data"]["resolveClientDocumentUploads"]["documents"][0]["id"]
+        document = Attachment.objects.get(id=document_id)
+        self.assertEqual(document.upload_org_id, resolved_org_id)
+        # sanity: the row really is a client document, not a note attachment
+        self.assertEqual(document.content_type, ContentType.objects.get_for_model(ClientProfile))
+
+        # The anchor and the manage grants must name the same org: that is the
+        # invariant the cutover relies on, and it is what main already did.
+        grant_group_ids = set(
+            AttachmentGroupObjectPermission.objects.filter(content_object_id=document_id).values_list(
+                "group_id", flat=True
+            )
+        )
+        grant_org_ids = set(
+            PermissionGroup.objects.filter(group_ptr_id__in=grant_group_ids).values_list("organization_id", flat=True)
+        )
+        self.assertEqual(grant_org_ids, {resolved_org_id})
 
     @parametrize(
         "user_label, should_succeed",

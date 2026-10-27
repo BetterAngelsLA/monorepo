@@ -1,5 +1,6 @@
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { applyFieldErrors } from '@monorepo/react/shared';
+import { ExitPolicyChoices } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import {
@@ -28,8 +29,10 @@ function toUpdateInput(
     visitorsAllowed: data.visitorsAllowed ?? null,
     emergencySurge: data.emergencySurge ?? null,
     exitPolicy: data.exitPolicy,
-    exitPolicyOther: data.exitPolicyOther ?? null,
-    otherRules: data.otherRules ?? null,
+    exitPolicyOther: data.exitPolicy.includes(ExitPolicyChoices.Other)
+      ? (data.exitPolicyOther ?? null)
+      : null,
+    otherRules: data.otherRules || null,
   };
 }
 
@@ -41,7 +44,6 @@ export function ShelterPolicies(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
-  const [formKey, setFormKey] = useState(0);
 
   const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
@@ -70,7 +72,6 @@ export function ShelterPolicies(props: TProps) {
       }
 
       setEditMode(false);
-      setFormKey((k) => k + 1);
 
       showToast({
         status: 'success',
@@ -103,7 +104,6 @@ export function ShelterPolicies(props: TProps) {
 
   return (
     <ShelterPoliciesForm
-      key={formKey}
       values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}

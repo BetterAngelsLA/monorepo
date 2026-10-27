@@ -10,7 +10,11 @@
  *      for builds to complete before running Maestro tests)
  *
  * Usage:
- *   npx ts-node tools/scripts/eas-e2e.ts --project betterangels
+ *   npx ts-node tools/scripts/eas-e2e.ts --project betterangels \
+ *     [--configuration preview|production]
+ *
+ * The configuration (default `preview`) picks the profile env written into the
+ * tracked `.env` and the default build profiles per platform.
  *
  * Required env vars:
  *   EXPO_TOKEN   - EAS authentication token
@@ -32,56 +36,121 @@ import {
   getEnv,
   getOptionalEnv,
   resolveProjectDir,
+  resolveRuntime,
   run,
   runJson,
-  setupEnvAndFingerprint,
+  setupEnv,
 } from './eas-utils';
 
 const project = argv.project as string | undefined;
 if (!project) {
-  console.error('Usage: eas-e2e.ts --project <name>');
+  console.error(
+    'Usage: eas-e2e.ts --project <name> [--configuration preview|production]',
+  );
   process.exit(1);
 }
 
-// Android APKs work on emulators directly; only iOS needs a simulator build
-const androidProfile = 'preview';
-const iosProfile = 'development-simulator';
+/**
+ * The Nx configuration selects more than an EAS profile: it also picks the env
+ * written into the tracked `.env`, which is what the build and the update
+ * resolve. The targets have no default command, so this cannot be omitted.
+ */
+const configuration =
+  (argv.configuration as string | undefined) ??
+  getOptionalEnv('EAS_CONFIGURATION') ??
+  'preview';
+
+/**
+ * Per-configuration EAS profiles, and the identity of the app they install.
+ *
+ * `appId`/`scheme` mirror `BUNDLE_IDENTIFIER` and `scheme` in `app.config.js`
+ * (driven by `APP_VARIANT`): Maestro has to drive the binary the build actually
+ * produced, and a dev build launches a different package than a production one.
+ * They are passed to the EAS workflow as inputs rather than hardcoded there, so
+ * the workflow is not tied to the dev variant.
+ */
+const PROFILES: Record<
+  string,
+  { android: string; ios: string; appId: string; scheme: string }
+> = {
+  preview: {
+    android: 'preview',
+    ios: 'development-simulator',
+    appId: 'la.betterangels.dev.app',
+    scheme: 'betterangels-dev',
+  },
+  production: {
+    android: 'production',
+    ios: 'production',
+    appId: 'la.betterangels.app',
+    scheme: 'betterangels',
+  },
+};
+
+const profiles = PROFILES[configuration];
+if (!profiles) {
+  throw new Error(
+    `Unsupported configuration "${configuration}". Add its profiles to PROFILES in tools/scripts/eas-e2e.ts.`,
+  );
+}
+
+// Android APKs work on emulators directly; only iOS needs a simulator build.
+// Both the build trigger and the workflow's `get-build` filter read these, so
+// they are not overridable: an override here would leave the workflow waiting on
+// a profile nobody built.
+const androidProfile = profiles.android;
+const iosProfile = profiles.ios;
 const branch = getEnv('BRANCH_NAME');
 const projectDir = resolveProjectDir(project);
 
-// 1. Setup env and compute fingerprint (env vars are identical across profiles)
-const fingerprint = setupEnvAndFingerprint(projectDir, androidProfile);
+console.log(`EAS configuration: ${configuration}`);
+console.log(`Profiles: android=${androidProfile}, ios=${iosProfile}`);
+
+// 1. Setup env once (it is identical across profiles). `copy-lockfile` comes
+// next, before anything is resolved or looked up, because it rewrites the
+// manifests the fingerprint hashes: `preview.yml` runs it before resolving the
+// runtime, and a runtime computed from a different workspace state is a runtime
+// no build ever produces.
+setupEnv(projectDir, androidProfile);
+run(`yarn nx run ${project}:copy-lockfile`);
+
+// Resolve each platform's runtime separately: the fingerprints differ, and
+// looking a build up with the other platform's hash always misses.
+const androidRuntime = resolveRuntime(projectDir, 'android');
+const iosRuntime = resolveRuntime(projectDir, 'ios');
 
 // 2. Find or trigger builds for both platforms
-console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
+console.log(
+  `\nChecking for builds: android ${androidRuntime}, ios ${iosRuntime}`,
+);
 
-function findBuildId(platform: string, profile: string): string | undefined {
-  try {
-    const builds = runJson<Array<{ id: string; status: string }>>(
-      `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --non-interactive`,
-    );
-    if (builds.length > 0) {
-      console.log(
-        `Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`,
-      );
-      return builds[0].id;
-    }
-  } catch {
-    // no builds found
-  }
-  return undefined;
+function findBuildId(
+  platform: string,
+  profile: string,
+  runtime: string,
+): string | undefined {
+  // `find-build.mjs` is the same reuse rule the preview pipeline applies: a
+  // fingerprint builds once, in any status, and never twice. It retries a failed
+  // lookup and exits non-zero if EAS never answers, rather than reporting "no
+  // build" and paying for a duplicate.
+  const result = runJson<{ id: string | null }>(
+    `node tools/scripts/find-build.mjs --project ${project} --platform ${platform} --profile ${profile} --runtime ${runtime} --json`,
+  );
+  return result.id ?? undefined;
 }
 
-let androidBuildId = findBuildId('android', androidProfile);
-let iosBuildId = findBuildId('ios', iosProfile);
+let androidBuildId = findBuildId('android', androidProfile, androidRuntime);
+let iosBuildId = findBuildId('ios', iosProfile, iosRuntime);
 
-// Trigger missing builds separately (different profiles per platform)
+// Trigger missing builds separately (different profiles per platform). The
+// configuration supplies the default profile and runs the env dependencies; the
+// explicit --profile still wins for the simulator.
 if (!androidBuildId) {
   console.log(
     `\nTriggering android build (profile: ${androidProfile}, --wait false)...`,
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${androidProfile} --platform android --freeze-credentials --non-interactive --json --no-wait`,
+    `yarn nx run ${project}:eas-build:${configuration} --profile ${androidProfile} --platform android --freezeCredentials=true --json=true --wait=false`,
   );
   androidBuildId = newBuilds[0]?.id;
   console.log(`Triggered android build: ${androidBuildId}`);
@@ -91,7 +160,7 @@ if (!iosBuildId) {
     `\nTriggering ios build (profile: ${iosProfile}, --wait false)...`,
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${iosProfile} --platform ios --freeze-credentials --non-interactive --json --no-wait`,
+    `yarn nx run ${project}:eas-build:${configuration} --profile ${iosProfile} --platform ios --freezeCredentials=true --json=true --wait=false`,
   );
   iosBuildId = newBuilds[0]?.id;
   console.log(`Triggered ios build: ${iosBuildId}`);
@@ -111,8 +180,11 @@ console.log(`\nPublishing update on branch: ${branch}`);
 // this env, which propagates to the bundler it spawns.
 process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
 
+// `eas-update` is a run-commands target: it takes no CLI flags of its own — the
+// branch comes from BRANCH_NAME (set by the workflow) and the machine-readable
+// payload is what the script prints on stdout.
 const updates = runJson<Array<{ group: string; platform: string }>>(
-  `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --non-interactive`,
+  `yarn nx run ${project}:eas-update:${configuration}`,
 );
 const groupId = updates[0]?.group;
 if (!groupId) {
@@ -120,11 +192,14 @@ if (!groupId) {
 }
 console.log(`Update group: ${groupId}`);
 
-// 4. Write GitHub status metadata to .env so the EAS workflow can post commit statuses
+// 4. Write GitHub status metadata to .env.local so the EAS workflow can post
+// commit statuses. `.env.local` (not the committed `.env`) so this never
+// dirties a tracked file; EAS still uploads it because `.easignore` does not
+// exclude it.
 const githubRepository = getOptionalEnv('GITHUB_REPOSITORY');
 const githubStatusSha = getOptionalEnv('GITHUB_STATUS_SHA');
 const githubStatusContext = `eas/e2e/${project}`;
-const envPath = path.join(projectDir, '.env');
+const envPath = path.join(projectDir, '.env.local');
 
 if (githubRepository && githubStatusSha) {
   const statusVars = [
@@ -135,7 +210,7 @@ if (githubRepository && githubStatusSha) {
     `EAS_PROJECT_SLUG=${project}`,
   ];
   fs.appendFileSync(envPath, statusVars.join('\n') + '\n');
-  console.log(`\nWrote GitHub status metadata to .env`);
+  console.log(`\nWrote GitHub status metadata to .env.local`);
 } else {
   console.log(
     '\nSkipping GitHub status metadata (GITHUB_REPOSITORY or GITHUB_STATUS_SHA not set)',
@@ -151,9 +226,13 @@ run(
     `-F update_group_id=${groupId} ` +
     `-F MAESTRO_BA_USER_EMAIL=${process.env.MAESTRO_BA_USER_EMAIL} ` +
     `-F MAESTRO_BA_USER_PASSWORD=${process.env.MAESTRO_BA_USER_PASSWORD} ` +
-    `-F runtime_version=${fingerprint} ` +
-    `-F android_profile=${androidProfile} ` +
-    `-F ios_profile=${iosProfile} ` +
+    `-F app_id=${profiles.appId} ` +
+    `-F scheme=${profiles.scheme} ` +
+    `-F android_runtime_version=${androidRuntime} ` +
+    `-F ios_runtime_version=${iosRuntime} ` +
+    // The workflow derives the build profiles from the configuration, so an
+    // override here would desync the get-build filter from the build.
+    `-F configuration=${configuration} ` +
     `--non-interactive`,
   { cwd: projectDir },
 );

@@ -41,6 +41,41 @@ Repo convention (the runners accept both patterns — this is about consistency)
   patterns and the codebase already has more `*.spec.tsx` files than
   `*.test.tsx`, so this is a preference for new files, not a renaming backlog.
 
+## Preview pipeline (PRs)
+
+Two checks, split by what should block a merge:
+
+- **`BuildTestDeploy (preview)`** — checks only: `lint typecheck test build`. No
+  deploy, no EAS. `main` and `merge_group` still deploy from this workflow.
+- **`Preview`** — one job: web deploy **and** the EAS update in parallel, then the
+  Playwright suites, then the mobile build. Not a required check: it only runs on
+  `pull_request`, and a required check that never reports on `merge_group`
+  deadlocks the merge queue.
+
+### Platforms
+
+`EAS_BUILD_PLATFORMS` is decided per run in the `Set Environment Variables` step:
+android always (the installable artifact), ios only when the change can affect
+the native binary — `package.json`, `yarn.lock`, `apps/betterangels/{app.config.js,
+app.json,eas.json,package.json}` or `ios/`/`android/`. A JS-only change reaches
+devices through the EAS Update, so an ios build would buy nothing.
+
+### Labels
+
+| Label | Effect |
+|---|---|
+| `force-eas-build` | build even though a build exists for the fingerprint (the way out when a failed build poisoned it) |
+| `preview-platforms` | force `android,ios` regardless of the change |
+| `force-eas-env-sync` | re-push the EAS environment even when every variable is present (secret rotation) |
+
+### E2E suites
+
+Both E2E steps run `nx run-many -t e2e --projects=tag:ci-e2e`. A Playwright
+project joins CI by carrying the `ci-e2e` tag; it names no project in the
+workflow. Each suite's `playwright.config.ts` resolves its own target through
+[`tools/shared/e2e-base-url.mjs`](../tools/shared/e2e-base-url.mjs): `BASE_URL`,
+else the branch preview this run deployed, else its own dev server.
+
 ## CI test database cache
 
 The backend CI job restores a PostgreSQL dump instead of replaying the migration chain for every worker.

@@ -36,6 +36,7 @@ from django.utils import timezone
 from pghistory.core import event_models
 
 from audit.models import AuditWriteEvent
+from audit.types import AuditEventFilter
 from shelters.models import Bed, Room, Shelter
 
 # Mechanical columns dropped from rendered changes (ADR 0004 Phase 1 note / §13).
@@ -746,6 +747,7 @@ def object_audit_log(
     *,
     obj: Any,
     target_type: str,
+    filters: AuditEventFilter | None = None,
     after: str | None = None,
     limit: int = 50,
     include_snapshot: bool = False,
@@ -760,6 +762,17 @@ def object_audit_log(
     pgh_id, action_key)`` total order the SQL page query uses, so an event
     inserted between requests cannot shift a later page (offset pagination can
     repeat an action).
+
+    *filters* carries the §21 bounds and actor filter: ``date_from``/``date_to``
+    bound ``pgh_created_at`` (inclusive) and ``actor_id`` restricts to a single
+    acting user. All three are applied as predicates on the aggregate CTE's outer
+    SELECT — in SQL, before the key grouping and the Python grouping below (§10)
+    — so a filtered-out event cannot keep an otherwise-empty action on the page
+    or widen its time span. It can still be visible *through* a surviving event:
+    pghistory computes ``pgh_diff`` against the row's predecessor before
+    filtering, so the earliest surviving event's before/after may start outside
+    the window, and an action's verb is derived only from the anchor rows that
+    survive.
 
     *hidden_fields* maps a model label to the raw attnames that must not be
     rendered for that model, and *hidden_summary_models* lists models whose
@@ -788,6 +801,18 @@ def object_audit_log(
         *_event_model_labels(hidden_summary_models),
     )
     base = AuditWriteEvent.objects.across(*_allowed_event_models(obj, excluded)).references([obj]).exclude(label="seed")
+
+    # Filters are predicates on the aggregate CTE's outer SELECT (§21), applied
+    # before the key grouping so a filtered-out event cannot keep an otherwise
+    # empty action on the page and cannot widen an action's time span.
+    if filters is not None:
+        if filters.date_from is not None:
+            base = base.filter(pgh_created_at__gte=filters.date_from)
+        if filters.date_to is not None:
+            base = base.filter(pgh_created_at__lte=filters.date_to)
+        if filters.actor_id is not None:
+            base = base.filter(actor_id=filters.actor_id)
+
     key_expr = _action_key_expr()
 
     # 1) Action keys for the requested page, grouped and limited in SQL.

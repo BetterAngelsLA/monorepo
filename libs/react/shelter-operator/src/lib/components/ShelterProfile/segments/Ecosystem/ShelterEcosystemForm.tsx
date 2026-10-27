@@ -257,6 +257,7 @@ export function ShelterEcosystemForm(props: TProps) {
               }
               options={SHELTER_PROGRAMS_OPTIONS}
               triggerValue={ShelterProgramChoices.Other}
+              inputMaxLength={255}
               inputError={errors.shelterProgramsOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}
@@ -271,6 +272,7 @@ export function ShelterEcosystemForm(props: TProps) {
               isSearchable={FUNDERS_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN}
               options={FUNDERS_OPTIONS}
               triggerValue={FunderChoices.Other}
+              inputMaxLength={255}
               inputError={errors.fundersOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}

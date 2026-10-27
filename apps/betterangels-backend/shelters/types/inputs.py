@@ -18,6 +18,7 @@ from shelters.enums import (
     EntryRequirementChoices,
     ExitPolicyChoices,
     FunderChoices,
+    MediaLinkTypeChoices,
     MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
@@ -356,3 +357,21 @@ class ResolveShelterPhotoUploadsInput:
 class UpdateShelterPhotoInput:
     id: ID
     photo_type: ShelterPhotoTypeChoices
+
+
+@strawberry.input
+class CreateMediaLinkInput:
+    shelter_id: ID
+    url: NonEmptyString
+    title: Optional[str] = None
+    media_type: MediaLinkTypeChoices = MediaLinkTypeChoices.YOUTUBE
+
+
+@strawberry.input
+class UpdateMediaLinkInput:
+    """Patch-style update — only the fields provided are applied."""
+
+    id: ID
+    url: Maybe[NonBlankString] = UNSET
+    title: Maybe[Optional[str]] = UNSET
+    media_type: Maybe[MediaLinkTypeChoices] = UNSET

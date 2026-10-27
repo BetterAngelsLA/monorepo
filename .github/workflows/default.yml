@@ -287,23 +287,34 @@ jobs:
           fi
           EOF
 
-      - name: 🧹 Lint, typecheck, test, and build
+      - name: 🧹 Lint, typecheck, test, build, and deploy
         run: |
           docker compose run better-angels bash <<'EOF'
           # One Nx invocation lets independent targets overlap: lint/typecheck
-          # while prepare-test-db builds the database, and the EAS build while
-          # the backend suite runs. logical (not auto): xdist's "auto" counts
-          # physical cores and under-provisions SMT runners.
+          # while prepare-test-db builds the database. logical (not auto):
+          # xdist's "auto" counts physical cores and under-provisions SMT
+          # runners.
           export TEST_DB_WORKERS=logical
           export PYTEST_ADDOPTS="-n logical --durations=25"
           # stream task output so pytest's durations/slowest-test table lands in CI
           # EAS/vite builds consume EXPO_TOKEN and cloud credentials; forked
           # PRs still run lint/typecheck/test but must not run build.
+          # Both PR previews (web deploy and EAS update) run in the separate
+          # Preview job, so the required check only runs checks. main and
+          # merge_group still deploy here.
+          #
+          # The mobile targets are deliberately absent: `eas-build`/`eas-update`
+          # rewrite the workspace for EAS Build (copy-lockfile narrows the root
+          # package.json to the app), which must not happen while the web export
+          # and the test suite are using it. They run in the 📱 step at the end.
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
             TARGETS="lint typecheck test"
-          else
+          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             TARGETS="lint typecheck test build"
+          else
+            TARGETS="lint typecheck test build deploy"
           fi
+          # The web export/deploy compute their own base path inside export-web.
           yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --output-style=stream --parallel=6
           EOF
         env:
@@ -312,6 +323,7 @@ jobs:
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
           VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
@@ -322,12 +334,12 @@ jobs:
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
 
-      # Save before deploy/E2E. actions/cache's automatic save is a post-job
-      # action and only runs when the whole job succeeds; a deploy failure
-      # would otherwise throw away the seeded test DB. Explicit save also
-      # replaces the deprecated, non-functional `save-always` input.
+      # Save even when the job fails: main/merge_group still deploy in the
+      # quality step, and an `actions/cache` post-job save only runs on success.
+      # A deploy failure must not throw away the seeded test DB. (Failed Nx
+      # tasks are not cached; the artifact validator still runs on restore.)
       - name: Save Nx cache
-        if: success()
+        if: always() && !cancelled()
         continue-on-error: true
         uses: actions/cache/save@v6
         with:
@@ -348,17 +360,6 @@ jobs:
           schema: main:apps/betterangels-backend/schema.graphql
           fail-on-breaking: true
           approve-label: graphql-inspector:approved-breaking-change
-
-      - name: 💬 Post preview link to PR
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t post-pr-preview
-          EOF
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_EVENT_PATH: ${{ github.event_path }}
 
       - name: 🏗️ Build and push CI base image
         # Nx owns the Dockerfile/target/cache configuration; the container has
@@ -390,55 +391,86 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🚀 Deploy Changes
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-        # `deploy` depends on `export-web` and `export-web` is not cached, so the
-        # browser bundle is built here rather than in a second invocation.
+      - name: 🧪 E2E (Playwright)
+        # After the deploy, which only returns once the edge serves this revision.
+        if: matrix.environment == 'preview' && github.event_name != 'pull_request'
         run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t deploy --configuration ${{ matrix.environment }}
-          EOF
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # `deploy` depends on `build`, so shelter-web and betterangels-admin
-          # are rebuilt here too. Their bundles inline their Maps keys at build
-          # time; without the keys the deployed apps render no map.
-          VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
-          VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
-          # `deploy` runs `export-web`, so the key must be here or the bundle
-          # ships without it.
-          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
+          # Which apps this run deployed, from Nx: each suite's config uses it to
+          # pick its branch preview over its own dev server, so no app or project
+          # is named here (`--projects=tag:ci-e2e` selects the suites).
+          docker compose run --rm better-angels bash -c '
+            set -euo pipefail
+            PREVIEW_DEPLOYED_APPS="$(yarn nx show projects --affected --with-target deploy --configuration preview | tr "\n" ",")"
+            export PREVIEW_DEPLOYED_APPS
+            echo "Deployed for this run: ${PREVIEW_DEPLOYED_APPS:-none}"
+            PROJECTS="$(node tools/shared/e2e-projects.mjs)"
+            if [ -z "$PROJECTS" ]; then
+              echo "::notice::E2E skipped: none of the apps under test was deployed for this run."
+              exit 0
+            fi
+            yarn playwright install chromium
+            yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview --output-style=stream
+          '
 
-      - name: 🧪 E2E shelter-web (preview)
-        # Runs after deploy, because the suite drives the deployed preview: the
-        # deploy step only returns once the edge serves the revision just built,
-        # so these tests describe this commit rather than whatever was there.
-        #
-        # Choosing the target — this branch's preview when `shelter-web` was
-        # deployed, the existing preview or a skip when only the specs changed —
-        # lives in tools/scripts/e2e-shelter.sh, which is runnable locally too.
-        # The preview is only rebuilt and redeployed for affected projects, so an
-        # untouched shelter-web means the deployed site is unchanged and a run
-        # would report on someone else's revision.
-        #
-        # One step per web property, because each has its own origin. That origin
-        # already has a home — `SITE_URL` in the app's `.env.deploy.<config>` —
-        # and the script takes it from there. An e2e project already names its
-        # app with `implicitDependencies`. (Which is also why this can't be
-        # `nx affected -t e2e`: `BASE_URL` is one value for the whole container,
-        # so a second suite in the same step would be handed the wrong origin.)
-        if: matrix.environment == 'preview' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
-        run: |
-          docker compose run --rm better-angels bash tools/scripts/e2e-shelter.sh
-
-      - name: 📎 Upload shelter-e2e report
-        if: always() && matrix.environment == 'preview' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+      - name: 📎 Upload Playwright reports
+        if: always() && matrix.environment == 'preview' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7
         with:
-          name: shelter-e2e-report-${{ env.BRANCH_NAME }}
-          path: dist/.playwright/apps/shelter-e2e
+          name: playwright-report-${{ env.BRANCH_NAME }}
+          path: dist/.playwright/apps
           if-no-files-found: ignore
           retention-days: 7
+
+      # The mobile half of a deploy: one EAS Build per fingerprint and the EAS
+      # Last, outside the quality step: `eas-build`/`eas-update` reshape the
+      # workspace for EAS Build. Push only — a merge-queue run has no real branch.
+      - name: 📱 Mobile builds and update
+        if: github.event_name == 'push'
+        run: |
+          # Restores what `copy-lockfile` rewrites, even when the build fails.
+          docker compose run --rm better-angels bash -c '
+            set -euo pipefail
+            trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
+            # Env, then the EAS-shaped workspace: the runtime is resolved from
+            # both, so they have to match what the build uploads. `sync-deps` is
+            # deliberately absent — it installs, and installing after
+            # `copy-lockfile` prunes the other projects.
+            # Not `nx affected`: an unaffected app would resolve a runtime without
+            # its env and queue a build for a fingerprint nothing uses. The reuse
+            # check below is what makes this a no-op when nothing changed.
+            yarn nx run betterangels:write-eas-env:${{ matrix.environment }} --output-style=stream
+            yarn nx run betterangels:copy-lockfile --output-style=stream
+            # One build per fingerprint, in any status — same rule as the preview.
+            # Both platforms: on main the binary is the release artifact, not a
+            # preview convenience.
+            npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
+              --project betterangels --configuration ${{ matrix.environment }} \
+              --platforms android,ios
+            # The target pins the branch and the EAS environment for the update.
+            yarn nx affected -t eas-update --configuration ${{ matrix.environment }} --output-style=stream
+          '
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
+          EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+          EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+
+      - name: 📣 Announce the deployment
+        # Slack summary per matrix leg; push only.
+        if: github.event_name == 'push'
+        continue-on-error: true
+        run: |
+          docker compose run --rm better-angels bash -c 'yarn nx run betterangels:preview-comment'
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          EAS_PROFILE: ${{ matrix.environment }}
 
       - name: ⏹️ Spin down monorepo environment
         if: always()

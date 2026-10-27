@@ -13,6 +13,7 @@ from common.models import Attachment
 from common.services.exceptions import InvalidUploadTokenError
 from common.services.file_upload import UploadConfirmation, UploadRequest
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
+from notes.groups import CASEWORKER
 
 
 class ValidateContentTypeTest(TestCase):
@@ -135,7 +136,9 @@ class ResolveUploadTest(TestCase):
             content_object=self.client_profile,
             uploads=documents,
             config=CLIENT_DOCUMENT_CONFIG,
+            upload_org_id=self.permission_group.organization_id,
         )
+        mock_perm_group.assert_called_once_with(self.user, template=CASEWORKER)
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")

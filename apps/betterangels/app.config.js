@@ -1,10 +1,10 @@
-// ⚠️ WARNING: DIRTY HACK IN PLACE ⚠️
-// This hack circumvents the CI breaking change where runtime versions don't match.
-// We're using dotenv to load environment variables, effectively bypassing the runtime version mismatch issue.
-// NOTE: We are trusting the continuous deploy fingerprint for now, which is "probably good enough" in this context.
-// This should be revisited in the future to implement a proper solution to handle runtime version mismatches.
+// The runtime version is the Expo fingerprint, computed from this config, so the
+// values a build sees must match the ones CI fingerprinted. CI supplies the
+// profile env through the EAS environment (tools/scripts/sync-eas-env.mjs);
+// `.env` holds the committed defaults. Profile values win.
 import dotenv from 'dotenv';
 dotenv.config();
+dotenv.config({ path: '.env.local', override: true });
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
@@ -177,10 +177,17 @@ export default {
       webGoogleMapsApiKey: process.env.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY,
     },
     owner: 'better-angels',
-    runtimeVersion: process.env.RUNTIME_VERSION,
+    runtimeVersion: { policy: 'fingerprint' },
     experiments: {
       // Subpath the web export is hosted under, e.g. `/branches/<branch>`. Set by
-      // the export-web target; empty for native and root deployments.
+      // the export-web invocation only; absent for native and root deployments.
+      //
+      // It is deliberately not `EXPO_BASE_URL`: this value lands in the fingerprint
+      // (via expoConfig), so a branch-scoped native runtime would make every branch
+      // need its own EAS builds. Web-only config must not move the native runtime.
+      //
+      // Omitted entirely when unset rather than set to `''`: an empty baseUrl is not
+      // a root path to Expo, and the expo-updates build phase rejects the config.
       //
       // Without it the export writes root-absolute `/_expo/...` URLs while the
       // files live under the branch path, so every asset 403s and the page is
@@ -191,7 +198,11 @@ export default {
       // does not, raw-joining it into asset URLs — so a root deploy's `/` shipped
       // `//assets/...` (protocol-relative, i.e. a host called `assets`). Branch
       // paths carry no trailing slash and were already fine.
-      baseUrl: (process.env.EXPO_BASE_URL || '').trim().replace(/\/+$/, ''),
+      ...((process.env.EXPO_WEB_BASE_URL || '').trim().replace(/\/+$/, '')
+        ? {
+            baseUrl: process.env.EXPO_WEB_BASE_URL.trim().replace(/\/+$/, ''),
+          }
+        : {}),
     },
   },
 };
