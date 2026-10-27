@@ -12,7 +12,7 @@
     },
     "test": {
       "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
-      "cache": false
+      "cache": true
     },
     "lint": {
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
