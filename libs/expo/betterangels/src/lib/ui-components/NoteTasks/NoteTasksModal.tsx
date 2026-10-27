@@ -78,8 +78,10 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
       const cleanTeamId = !formData.teamId ? null : formData.teamId;
       const cleanAssigneeId = !formData.assigneeId ? null : formData.assigneeId;
 
+      let result;
+
       if (task?.id) {
-        await updateTask({
+        result = await updateTask({
           variables: {
             data: {
               id: task.id,
@@ -92,7 +94,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           },
         });
       } else {
-        await createTask({
+        result = await createTask({
           variables: {
             data: {
               summary: formData.summary || '',
@@ -111,6 +113,25 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           },
         });
       }
+      // A rejected value (e.g. an assignee who is not in the task's org)
+      // comes back as OperationInfo rather than an exception; without this the
+      // sheet closed as if the save had worked.
+      const payload =
+        result.data && 'updateTask' in result.data
+          ? result.data.updateTask
+          : result.data && 'createTask' in result.data
+            ? result.data.createTask
+            : undefined;
+
+      if (payload?.__typename === 'OperationInfo') {
+        showSnackbar({
+          message: payload.messages[0]?.message ?? 'Failed to save task.',
+          type: 'error',
+        });
+
+        return;
+      }
+
       refetch();
       closeModal();
     } catch (error) {

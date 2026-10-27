@@ -87,8 +87,18 @@ export default function TaskHeader(props: TTaskHeaderProps) {
         },
       });
 
-      if (result.data?.updateTask.__typename === 'OperationInfo') {
-        console.log(result.data.updateTask.messages);
+      const payload = result.data?.updateTask;
+
+      if (payload?.__typename === 'OperationInfo') {
+        // A validation error (an assignee outside the task's organization, for
+        // one) arrives as data, not as a thrown error. Closing the form here
+        // would look like the save worked.
+        showSnackbar({
+          message: payload.messages[0]?.message ?? 'Could not update the task.',
+          type: 'error',
+        });
+
+        return;
       }
 
       closeForm();
