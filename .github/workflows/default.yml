@@ -437,8 +437,11 @@ jobs:
             yarn nx run betterangels:sync-eas-env:${{ matrix.environment }} --output-style=stream
             yarn nx run betterangels:copy-lockfile --output-style=stream
             # One build per fingerprint, in any status — same rule as the preview.
+            # Both platforms: on main the binary is the release artifact, not a
+            # preview convenience.
             npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
-              --project betterangels --configuration ${{ matrix.environment }}
+              --project betterangels --configuration ${{ matrix.environment }} \
+              --platforms android,ios
             # The target pins the branch and the EAS environment for the update.
             yarn nx affected -t eas-update --configuration ${{ matrix.environment }} --output-style=stream
           '
