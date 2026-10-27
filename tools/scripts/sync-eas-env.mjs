@@ -62,7 +62,11 @@ const pathForCli = envPath;
 // not show up as a workspace change.
 const content = readFileSync(envPath, 'utf8');
 const contentHash = createHash('sha256').update(content).digest('hex').slice(0, 16);
-const marker = resolve(tmpdir(), `eas-env-synced-${project}-${environment}`);
+const job = `${process.env.GITHUB_RUN_ID ?? 'local'}-${process.env.GITHUB_JOB ?? 'job'}`;
+const marker = resolve(
+  tmpdir(),
+  `eas-env-synced-${project}-${environment}-${job}`,
+);
 if (
   !force &&
   existsSync(marker) &&

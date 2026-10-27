@@ -79,6 +79,11 @@ jobs:
           if [ "${PREVIEW_PLATFORMS_LABEL:-false}" = 'true' ]; then
             PLATFORMS='android,ios'
             echo 'preview-platforms label: building both platforms.'
+          elif [ -z "$CHANGED" ]; then
+            # No range to inspect (nx-set-shas had nothing to diff). Build both
+            # rather than silently deciding this was JS-only.
+            PLATFORMS='android,ios'
+            echo "::warning::Could not determine changed files ($NX_BASE..$NX_HEAD); building both platforms."
           elif printf '%s\n' "$CHANGED" | grep -Eq "$NATIVE_PATTERN"; then
             PLATFORMS='android,ios'
             echo 'Native code or build config changed; building both platforms:'
@@ -191,7 +196,7 @@ jobs:
           # `copy-lockfile` below reshapes the workspace for EAS Build; restore it
           # however this step ends. Called directly — it must not need a project
           # graph built from the manifests it is undoing.
-          trap 'node tools/scripts/restore-workspace.mjs --project betterangels || true' EXIT
+          trap 'node tools/scripts/restore-workspace.mjs --project betterangels || echo "::warning::Could not restore the EAS-shaped workspace"' EXIT
           yarn nx run betterangels:write-eas-env:preview
 
           # No `expo prebuild`: it would leave `android/`+`ios/` in the checkout and
@@ -201,26 +206,9 @@ jobs:
           # up here is the one the build produces.
           yarn nx run betterangels:copy-lockfile
 
-          # The resolver prints the whole fingerprint, so take just the runtime.
-          runtime_version() {
-            (cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" \
-              runtimeversion:resolve --platform "$1" --workflow generic) \
-              | node -e 'let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => console.log(JSON.parse(s).runtimeVersion))'
-          }
-
           # A fingerprint builds once, in any status; `force-eas-build` overrides.
-          IFS=',' read -ra PLATFORMS <<< "$EAS_BUILD_PLATFORMS"
-          for PLATFORM in "${PLATFORMS[@]}"; do
-            RUNTIME="$(runtime_version "$PLATFORM")"
-            echo "$PLATFORM runtime: $RUNTIME"
-            EXISTING="$(node tools/scripts/find-build.mjs --project betterangels \
-              --platform "$PLATFORM" --profile preview --runtime "$RUNTIME")"
-            if [ -n "$EXISTING" ]; then
-              echo "Reusing the existing $PLATFORM build: $EXISTING"
-              continue
-            fi
-            yarn nx run betterangels:eas-build:preview --platform="$PLATFORM" --wait=false --freezeCredentials=true --json=true
-          done
+          npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
+            --project betterangels --configuration preview
 
           # The update was published by the deploy step. Post the links.
           yarn nx run betterangels:preview-comment

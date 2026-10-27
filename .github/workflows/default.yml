@@ -425,9 +425,18 @@ jobs:
           # Restores what `copy-lockfile` rewrites, even when the build fails.
           docker compose run --rm better-angels bash -c '
             set -euo pipefail
-            trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
-            yarn nx affected -t eas-build --configuration ${{ matrix.environment }} \
-              --wait=false --freezeCredentials=true --output-style=stream
+            trap "node tools/scripts/restore-workspace.mjs --project betterangels || echo '::warning::Could not restore the EAS-shaped workspace'" EXIT
+            # Env, then the EAS-shaped workspace: the runtime is resolved from
+            # both, so they have to match what the build uploads. `sync-deps` is
+            # deliberately absent — it installs, and installing after
+            # `copy-lockfile` prunes the other projects.
+            yarn nx affected -t write-eas-env sync-eas-env \
+              --configuration ${{ matrix.environment }} --output-style=stream
+            yarn nx affected -t copy-lockfile \
+              --configuration ${{ matrix.environment }} --output-style=stream
+            # One build per fingerprint, in any status — same rule as the preview.
+            npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
+              --project betterangels --configuration ${{ matrix.environment }}
             # The target pins the branch and the EAS environment for the update.
             yarn nx affected -t eas-update --configuration ${{ matrix.environment }} --output-style=stream
           '

@@ -84,8 +84,17 @@ try {
 // eas prints notices before the JSON.
 const start = raw.indexOf('[');
 const end = raw.lastIndexOf(']');
-const updates =
-  start >= 0 && end > start ? JSON.parse(raw.slice(start, end + 1)) : [];
+let updates;
+try {
+  updates =
+    start >= 0 && end > start ? JSON.parse(raw.slice(start, end + 1)) : [];
+} catch (error) {
+  // The update may already be published; report what came back instead of a
+  // bare SyntaxError.
+  console.error(`Could not parse eas update output: ${error.message}`);
+  console.error(raw.slice(0, 500));
+  process.exit(1);
+}
 
 if (updates.length === 0) {
   console.error(`eas update returned no updates for ${branch}.`);

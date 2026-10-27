@@ -15,6 +15,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
+import { getBranchBasePath } from './get-base-path.mjs';
+
 /**
  * Find the workspace root by walking up from the working directory.
  *
@@ -100,7 +102,9 @@ export function e2eBaseUrl(app, options = {}) {
     return undefined;
   }
 
-  return `${siteUrl.replace(/\/+$/, '')}/branches/${branch.replace(/\//g, '-')}/`;
+  // The branch base path is the deploy's own rule (get-base-path.mjs), so the
+  // suite addresses the path that was actually published.
+  return `${siteUrl.replace(/\/+$/, '')}${getBranchBasePath()}/`;
 }
 
 const warned = new Set();

@@ -13,6 +13,8 @@ import { execFileSync } from 'child_process';
 import { resolve } from 'path';
 import minimist from 'minimist';
 
+import { workspaceMutations } from './workspace-mutation.mjs';
+
 const argv = minimist(process.argv.slice(2));
 const project = argv.project ?? 'betterangels';
 
@@ -21,12 +23,7 @@ if (!process.env.CI) {
   process.exit(0);
 }
 
-const paths = [
-  'package.json',
-  'yarn.lock',
-  `apps/${project}/package.json`,
-  `apps/${project}/yarn.lock`,
-];
+const paths = workspaceMutations(project);
 
 const git = (args) =>
   execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });

@@ -74,9 +74,9 @@ const updateUrl = (group) =>
 const qrUrl = (groupId) =>
   `https://qr.expo.dev/eas-update?appScheme=${argv.slug}&projectId=${argv.projectId}&groupId=${groupId}`;
 
-function latestBuild(platform, profile) {
+function latestBuild(platform, profile, runtime) {
   try {
-    const builds = runJson([
+    const args = [
       'build:list',
       '--platform',
       platform,
@@ -86,7 +86,12 @@ function latestBuild(platform, profile) {
       '5',
       '--json',
       '--non-interactive',
-    ]);
+    ];
+    // Only the build that ships this update's runtime: without the filter the
+    // newest FINISHED build can belong to a previous commit, and the comment
+    // would pair this update with a binary it can never reach.
+    if (runtime) args.push('--runtime-version', runtime);
+    const builds = runJson(args);
     if (builds.length === 0) return undefined;
     // A real artifact wins over a newer dead one: the reuse rule is "a
     // fingerprint builds once", so a canceled or failed attempt can sit in front
@@ -118,13 +123,13 @@ function latestUpdate(platform) {
   }
 }
 
+const updates = Object.fromEntries(PLATFORMS.map((p) => [p, latestUpdate(p)]));
 const builds = Object.fromEntries(
   BUILDS.map(({ platform, profile }) => [
     `${platform}/${profile}`,
-    latestBuild(platform, profile),
+    latestBuild(platform, profile, updates[platform]?.runtimeVersion),
   ]),
 );
-const updates = Object.fromEntries(PLATFORMS.map((p) => [p, latestUpdate(p)]));
 
 const forPlatform = (platform) => builds[`${platform}/${profile}`];
 const hasData =

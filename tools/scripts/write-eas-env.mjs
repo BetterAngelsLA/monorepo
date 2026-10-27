@@ -34,12 +34,11 @@ for (const [key, value] of Object.entries(
 }
 
 // `.env.local` rather than the committed `.env`: Expo loads it with higher
-// precedence and it is gitignored — which also means it does not travel inside
-// the EAS build archive. The native `sync-eas-env` target pushes these values
-// into the EAS environment (`eas env:push`), so the build evaluates
-// app.config.js exactly like the fingerprint did. The web base path is
-// deliberately absent: it belongs to the web export only and would otherwise
-// make the native runtime branch-specific.
+// precedence and it stays out of git. It is only the input to `sync-eas-env`,
+// which pushes these values into the EAS environment (`eas env:push`) — that
+// store, not this file, is what the build evaluates app.config.js against. The
+// web base path is deliberately absent: it belongs to the web export only and
+// would otherwise make the native runtime branch-specific.
 const envPath = path.resolve(
   argv.out ?? path.join(projectDir, '.env.local'),
 );
