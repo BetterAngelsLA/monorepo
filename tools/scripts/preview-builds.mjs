@@ -43,25 +43,35 @@ const runtimeOf = (build) =>
 const field = (label, value) => `${label}: \`${value ?? '—'}\``;
 
 /** A queued build as `build-missing.ts` records it, shaped like `build:list`. */
-export const fromRecord = ({ buildId, profile, runtime }) => ({
+const fromRecord = ({ buildId, profile, runtime }) => ({
   id: buildId,
   buildProfile: profile,
   runtime: { version: runtime },
 });
 
 /**
- * Which binary the cell shows, and what it says about where it came from.
- *
- * The recorded build is only trusted for the runtime being reported: on a laptop
- * the file outlives the run that wrote it, and a stale id would link a binary
- * this update can never reach.
+ * A record is only trusted for the runtime being reported: on a laptop the file
+ * outlives the run that wrote it, and a stale id would link a binary this update
+ * can never reach.
  */
-const pick = ({ device, triggered, simulator, runtime, error }) => {
-  const record =
-    triggered?.buildId &&
-    (!runtime || !triggered.runtime || triggered.runtime === runtime)
-      ? triggered
-      : undefined;
+const usable = (record, runtime) =>
+  record?.buildId && (!runtime || !record.runtime || record.runtime === runtime)
+    ? record
+    : undefined;
+
+/** Which binary the cell shows, and what it says about where it came from. */
+const pick = ({
+  device,
+  triggered,
+  simulator,
+  simulatorTriggered,
+  runtime,
+  error,
+}) => {
+  const record = usable(triggered, runtime);
+  const simulatorRecord = usable(simulatorTriggered, runtime);
+  const simulatorBuild =
+    simulator ?? (simulatorRecord ? fromRecord(simulatorRecord) : undefined);
 
   if (device) {
     const note =
@@ -78,9 +88,9 @@ const pick = ({ device, triggered, simulator, runtime, error }) => {
       note: record.reused ? NOTES.reused : NOTES.unlisted,
     };
   }
-  if (simulator) {
+  if (simulatorBuild) {
     return {
-      build: simulator,
+      build: simulatorBuild,
       note: error ? NOTES.simulatorAfterError : NOTES.simulator,
     };
   }
@@ -91,8 +101,9 @@ const pick = ({ device, triggered, simulator, runtime, error }) => {
  * Render one platform's cell.
  *
  * `device` is the build found for `<platform>/<profile>`, `triggered` the record
- * `build-missing.ts` wrote for it this run, `simulator` the iOS simulator build,
- * and `error` a `build:list` failure — which must not read as "no build".
+ * `build-missing.ts` wrote for it this run, `simulator` the iOS simulator build
+ * (with its own record), and `error` a `build:list` failure — which must not
+ * read as "no build".
  */
 export function buildCell({
   account,
@@ -101,12 +112,14 @@ export function buildCell({
   device,
   triggered,
   simulator,
+  simulatorTriggered,
   error,
 }) {
   const { build, note } = pick({
     device,
     triggered,
     simulator,
+    simulatorTriggered,
     runtime,
     error,
   });

@@ -158,6 +158,25 @@ describe('buildCell', () => {
     assert.doesNotMatch(cell, /stale-ios/);
   });
 
+  it('uses a recorded simulator build, but only for this runtime', () => {
+    const record = {
+      platform: 'ios',
+      profile: 'development-simulator',
+      runtime: 'e906c369',
+      buildId: 'sim-queued',
+      reused: false,
+    };
+
+    assert.match(
+      render({ simulatorTriggered: record }),
+      new RegExp(`\\[Build Permalink\\]\\(${url('sim-queued')}\\)`),
+    );
+    assert.equal(
+      render({ simulatorTriggered: { ...record, runtime: 'deadbeef' } }),
+      'No build for `e906c369`',
+    );
+  });
+
   it('names the runtime when nothing exists, instead of N/A', () => {
     const cell = render();
 
