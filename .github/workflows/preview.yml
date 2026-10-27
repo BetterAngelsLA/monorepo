@@ -196,8 +196,11 @@ jobs:
           set -euo pipefail
           yarn nx run betterangels:write-eas-env:preview
 
-          # EAS prebuilds inside the app, so do the same instead of from the root.
-          yarn nx run betterangels:prebuild
+          # No `expo prebuild` here on purpose: it would leave `android/` and
+          # `ios/` in the checkout, and `eas update` fingerprints the project as
+          # it finds it — with native directories present it publishes a runtime
+          # no build ever produces, so the update reaches nobody. The build gets
+          # its native projects on the EAS worker (`.easignore` excludes them).
 
           # `eas-build` rewrites the workspace for EAS Build before it uploads
           # (copy-lockfile pins the star deps and declares the app the single
