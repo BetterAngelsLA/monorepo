@@ -1,7 +1,8 @@
-query AuditActors($organizationId: String!) {
+query AuditActors($organizationId: String!, $search: String) {
   organizationMembers(
     organizationId: $organizationId
-    pagination: { limit: 100 }
+    filters: { search: $search }
+    pagination: { limit: 20 }
   ) {
     results {
       id

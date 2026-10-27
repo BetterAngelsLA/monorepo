@@ -7,20 +7,40 @@ export type AuditActorOption = {
   label: string;
 };
 
+/** The backend ignores shorter terms; don't spend a request on them either. */
+export const MIN_ACTOR_SEARCH_LENGTH = 2;
+
+type UseAuditActorsArgs = {
+  /** Gate the request on `view_org_members` (the backend requires it). */
+  enabled?: boolean;
+  /** Search term; the query only runs at two or more characters. */
+  search?: string;
+};
+
 /**
- * Organization members available as actor options for the audit log filter.
+ * Organization members matching *search*, for the audit log's actor filter.
  *
  * The API exposes no actor list for an object's history, so members are the
- * practical source. Note the backend requires `view_org_members`, so callers
- * must gate the actor filter on that permission.
+ * practical source. Requests are on demand: nothing is fetched until *search*
+ * has at least two characters (the backend's own floor), and the query is
+ * skipped entirely unless *enabled* — callers gate on `view_org_members`, which
+ * the backend requires.
  */
-export function useAuditActors() {
+export function useAuditActors({
+  enabled = true,
+  search = '',
+}: UseAuditActorsArgs = {}) {
   const { activeOrg } = useActiveOrg();
   const organizationId = activeOrg?.id ?? '';
+  const term = search.trim();
+  const canSearch =
+    enabled &&
+    Boolean(organizationId) &&
+    term.length >= MIN_ACTOR_SEARCH_LENGTH;
 
   const { data, loading } = useQuery(AuditActorsDocument, {
-    variables: { organizationId },
-    skip: !organizationId,
+    variables: { organizationId, search: term },
+    skip: !canSearch,
   });
 
   const options: AuditActorOption[] = (
