@@ -1,13 +1,13 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { formatScalarDate } from '@monorepo/shared/scalars';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { TaskType } from '../../apollo';
 
 type TaskCardBodyProps = {
   description: TaskType['description'];
   createdAt: TaskType['createdAt'];
-  /** `Created by …`, rendered with the date as the card's footer. */
+  /** The creator's display name; rendered as `by …` beside the date. */
   createdBy?: string;
 };
 
@@ -31,14 +31,38 @@ export default function TaskCardBody(props: TaskCardBodyProps) {
         </>
       ) : null}
       {/*
-        Date and provenance share the footer: both answer "where did this come
-        from", and neither is worth a row of its own above the description.
+        Attribution and timestamp sit at opposite ends rather than being joined
+        into one sentence: `by X · date` was 341px against the 343px a 375pt
+        phone leaves inside the card, so the affiliation silently disappeared.
+        Two ends also give the list a shared right edge for its dates.
       */}
-      <TextRegular color={Colors.NEUTRAL_DARK} size="xs" numberOfLines={1}>
-        {[formatScalarDate(createdAt, 'MM/dd/yyyy'), createdBy]
-          .filter(Boolean)
-          .join(' · ')}
-      </TextRegular>
+      <View style={styles.footer}>
+        {!!createdBy && (
+          <TextRegular
+            size="xs"
+            color={Colors.NEUTRAL_DARK}
+            numberOfLines={1}
+            style={styles.attribution}
+          >
+            by {createdBy}
+          </TextRegular>
+        )}
+        <TextRegular size="xs" color={Colors.NEUTRAL_DARK} numberOfLines={1}>
+          {formatScalarDate(createdAt, 'MM/dd/yyyy')}
+        </TextRegular>
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  attribution: {
+    flexShrink: 1,
+  },
+});
