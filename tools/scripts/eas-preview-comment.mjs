@@ -22,7 +22,7 @@ import path from 'node:path';
 import minimist from 'minimist';
 
 import { bestBuild } from './build-rank.mjs';
-import { buildCell } from './preview-builds.mjs';
+import { buildCell, fromRecord } from './preview-builds.mjs';
 
 const argv = minimist(process.argv.slice(2), {
   string: ['project', 'account', 'slug', 'projectId'],
@@ -167,7 +167,12 @@ const lookups = Object.fromEntries(
 
 const lookupFor = (platform) => lookups[`${platform}/${profile}`] ?? {};
 const buildFor = (platform) => lookupFor(platform).build;
-const simulator = lookups['ios/development-simulator']?.build;
+// A simulator build queued by this run can also be missing from `build:list` for
+// a moment; its recorded id is the link a reviewer needs.
+const simulatorRecord = triggered['ios/development-simulator'];
+const simulator =
+  lookups['ios/development-simulator']?.build ??
+  (simulatorRecord?.buildId ? fromRecord(simulatorRecord) : undefined);
 
 const hasData =
   PLATFORMS.some((platform) => buildFor(platform)) ||
