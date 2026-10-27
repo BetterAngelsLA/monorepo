@@ -92,22 +92,16 @@ jobs:
           # prebuilds inside the app, so do the same instead of from the root.
           yarn nx run betterangels:copy-lockfile
           yarn nx run betterangels:prebuild
-          ANDROID_RUNTIME="$(cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" runtimeversion:resolve --platform android --workflow generic)"
-          IOS_RUNTIME="$(cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" runtimeversion:resolve --platform ios --workflow generic)"
-
+          # The resolver prints the whole fingerprint, so take just the runtime.
+          runtime_version() {
+            (cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" \
+              runtimeversion:resolve --platform "$1" --workflow generic) \
+              | node -e 'let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => console.log(JSON.parse(s).runtimeVersion))'
+          }
+          ANDROID_RUNTIME="$(runtime_version android)"
+          IOS_RUNTIME="$(runtime_version ios)"
           echo "android runtime: $ANDROID_RUNTIME"
           echo "ios runtime: $IOS_RUNTIME"
-          (cd apps/betterangels && eas build:list --platform android --build-profile preview --limit 3 --json --non-interactive) > /tmp/recent.json 2>&1 || true
-          node -e "
-            const fs = require('fs');
-            const raw = fs.readFileSync('/tmp/recent.json', 'utf8');
-            const start = raw.indexOf('[');
-            const end = raw.lastIndexOf(']');
-            if (start < 0 || end < start) { console.log(raw.slice(0, 400)); process.exit(0); }
-            for (const b of JSON.parse(raw.slice(start, end + 1))) {
-              console.log([b.status, b.runtimeVersion, b.fingerprintHash, b.buildProfile].join(' | '));
-            }
-          "
 
           # Skip a build when one already exists for this runtime and profile.
           # A queued build counts: the update only needs the runtime to be the one
