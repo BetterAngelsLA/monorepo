@@ -223,16 +223,20 @@
       "dependsOn": [
         "write-eas-env"
       ],
-      "options": {
-        "cwd": "apps/betterangels"
-      },
       "configurations": {
         "preview": {
-          "command": "eas env:push --environment development --path .env.local --force"
+          "command": "node tools/scripts/sync-eas-env.mjs --project betterangels --environment development"
         },
         "production": {
-          "command": "eas env:push --environment production --path .env.local --force"
+          "command": "node tools/scripts/sync-eas-env.mjs --project betterangels --environment production"
         }
+      }
+    },
+    "restore-workspace": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node tools/scripts/restore-workspace.mjs --project betterangels"
       }
     },
     "eas-update": {

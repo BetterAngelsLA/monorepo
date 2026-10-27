@@ -17,6 +17,8 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import minimist from 'minimist';
 
+import { bestBuild } from './build-rank.mjs';
+
 const argv = minimist(process.argv.slice(2), {
   string: ['project', 'account', 'slug', 'projectId'],
 });
@@ -72,17 +74,6 @@ const updateUrl = (group) =>
 const qrUrl = (groupId) =>
   `https://qr.expo.dev/eas-update?appScheme=${argv.slug}&projectId=${argv.projectId}&groupId=${groupId}`;
 
-// Newest build, but a real artifact wins over a newer dead one: the reuse rule
-// is "a fingerprint builds once", so a canceled or failed attempt can sit in
-// front of the build that actually exists. Reporting the canceled one would
-// link a QR code to nothing.
-const BUILD_RANK = (status) => {
-  const value = String(status ?? '').toUpperCase();
-  if (value === 'FINISHED') return 2;
-  if (['NEW', 'IN_QUEUE', 'IN_PROGRESS'].includes(value)) return 1;
-  return 0;
-};
-
 function latestBuild(platform, profile) {
   try {
     const builds = runJson([
@@ -97,11 +88,11 @@ function latestBuild(platform, profile) {
       '--non-interactive',
     ]);
     if (builds.length === 0) return undefined;
-    // build:list returns newest first, so a stable maximum keeps recency within
-    // the same rank.
-    return builds.reduce((best, build) =>
-      BUILD_RANK(build.status) > BUILD_RANK(best.status) ? build : best,
-    );
+    // A real artifact wins over a newer dead one: the reuse rule is "a
+    // fingerprint builds once", so a canceled or failed attempt can sit in front
+    // of the build that actually exists, and reporting that one would link a QR
+    // code to nothing. `bestBuild` also keeps recency within the same rank.
+    return bestBuild(builds);
   } catch (error) {
     console.error(`Could not list ${platform}/${profile} builds: ${error.message}`);
     return undefined;

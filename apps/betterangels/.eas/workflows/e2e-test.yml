@@ -42,10 +42,14 @@ on:
       MAESTRO_BA_USER_PASSWORD:
         type: string
         required: true
-      runtime_version:
+      android_runtime_version:
         type: string
         required: true
-        description: 'Runtime version (fingerprint hash) for the builds'
+        description: 'Runtime version (fingerprint hash) of the Android build'
+      ios_runtime_version:
+        type: string
+        required: true
+        description: 'Runtime version (fingerprint hash) of the iOS build'
       android_profile:
         type: string
         required: true
@@ -123,7 +127,7 @@ jobs:
     params:
       platform: android
       profile: ${{ inputs.android_profile }}
-      runtime_version: ${{ inputs.runtime_version }}
+      runtime_version: ${{ inputs.android_runtime_version }}
       wait_for_in_progress: true
 
   wait_ios_build:
@@ -132,7 +136,7 @@ jobs:
     params:
       platform: ios
       profile: ${{ inputs.ios_profile }}
-      runtime_version: ${{ inputs.runtime_version }}
+      runtime_version: ${{ inputs.ios_runtime_version }}
       wait_for_in_progress: true
 
   maestro_android_test:

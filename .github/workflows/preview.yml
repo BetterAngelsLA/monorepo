@@ -22,8 +22,12 @@ jobs:
   # `yarn install` — which `sync-deps` triggers — then prunes the other projects
   # and the web export dies, so everything that needs the pristine install runs
   # above it.
+  #
+  # The job itself is not gated on forks: `Preview` can then be a required check
+  # that always reports. Fork PRs get no secrets, so the steps that need them
+  # carry the guard instead, and the job still tells a fork author what was
+  # skipped.
   Preview:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     environment: preview
     permissions:
@@ -34,14 +38,21 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      # A PR preview builds one platform (an installable APK) instead of paying
-      # for android + ios + an ios simulator binary on every push; the EAS Update
-      # is still published for every platform. Also drives the PR comment columns.
-      EAS_BUILD_PLATFORMS: android
+      # Cost control while the pipeline is being proven: one installable APK
+      # instead of paying for android + ios + an ios simulator binary on every
+      # push. The `preview-platforms` label widens it for a PR that needs iOS.
+      # Once proven, this is the knob to replace with "the platforms this change
+      # needs" — do not leave it pinned to one platform for good. The EAS Update
+      # is published for every platform either way.
+      EAS_BUILD_PLATFORMS: ${{ contains(github.event.pull_request.labels.*.name, 'preview-platforms') && 'android,ios' || 'android' }}
       # Applying this label rebuilds even though a build already exists for the
       # fingerprint — the escape hatch for a build that failed for a reason we
       # have since fixed.
       FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
+      # Applying this label re-pushes the EAS environment even when every var is
+      # already there: the deliberate path for rotating a secret (see
+      # tools/scripts/sync-eas-env.mjs).
+      FORCE_EAS_ENV_SYNC: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-env-sync') }}
       VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
       VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
       EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
@@ -50,6 +61,16 @@ jobs:
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
     steps:
+      - name: ⏭️ Fork pull request
+        if: github.event.pull_request.head.repo.fork
+        run: |
+          echo "::notice::Fork PR: previews need secrets, which forks do not receive. Checks-only run."
+          {
+            echo "### Preview skipped"
+            echo
+            echo "This pull request comes from a fork, so the deploy, E2E and EAS steps have no secrets to use."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: 🏗 Check out repo
         uses: actions/checkout@v7
         with:
@@ -66,6 +87,7 @@ jobs:
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
 
       - name: 🐳 Configure AWS credentials
+        if: github.event.pull_request.head.repo.fork == false
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
@@ -96,6 +118,7 @@ jobs:
             nx-cache-v4-${{ runner.os }}-
 
       - name: 🚀 Preview deploy
+        if: github.event.pull_request.head.repo.fork == false
         env:
           CI: 'true'
           NX_DAEMON: 'false'
@@ -105,6 +128,7 @@ jobs:
           yarn nx affected -t export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
 
       - name: 🧪 E2E
+        if: github.event.pull_request.head.repo.fork == false
         env:
           CI: 'true'
           NX_DAEMON: 'false'
@@ -115,7 +139,15 @@ jobs:
           status=$?
           set -e
           if [ "$status" -eq 78 ]; then
-            echo "Skipping e2e: no preview for this branch."
+            # Legitimate only when neither shelter-web nor shelter-e2e was
+            # affected. Say so where a reviewer looks, instead of leaving a
+            # green step that implies the suite ran.
+            echo "::notice::E2E skipped: no shelter-web preview applies to this change."
+            {
+              echo "### E2E skipped"
+              echo
+              echo "Neither \`shelter-web\` nor \`shelter-e2e\` was affected, so there is no preview of this change to test."
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           [ "$status" -eq 0 ] || exit "$status"
@@ -124,9 +156,11 @@ jobs:
           yarn nx run-many -t e2e --projects=shelter-e2e --configuration preview --output-style=stream
 
       - name: 🥟 Install EAS CLI
+        if: github.event.pull_request.head.repo.fork == false
         run: npm install -g eas-cli@24.8.0
 
       - name: 📱 Mobile preview
+        if: github.event.pull_request.head.repo.fork == false
         env:
           CI: 'true'
           NX_DAEMON: 'false'
@@ -156,37 +190,23 @@ jobs:
               | node -e 'let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => console.log(JSON.parse(s).runtimeVersion))'
           }
 
-          # Skip the build when one already exists for this runtime and profile.
-          # Status does not matter: a fingerprint builds once, so a queued,
-          # finished, or even a failed build is reused instead of rebuilt. That
-          # also means a failed build poisons its fingerprint for good, which is
-          # why `FORCE_EAS_BUILD` (the `force-eas-build` label) exists as the
-          # manual way out. Any lookup failure falls back to building.
-          has_build() {
-            if [ "${FORCE_EAS_BUILD:-false}" = "true" ]; then
-              echo "force-eas-build: ignoring existing $1 builds."
-              return 1
-            fi
-            if (cd apps/betterangels && eas build:list --platform "$1" --runtime-version "$3" \
-              --build-profile "$2" --limit 1 --json --non-interactive) \
-              > /tmp/build-list.json 2>&1; then
-              if node tools/scripts/has-build.mjs < /tmp/build-list.json; then
-                echo "Reusing the existing $1 build for $2."
-                return 0
-              fi
-              return 1
-            fi
-            echo "build:list failed for $1/$2; building instead:"
-            tail -5 /tmp/build-list.json
-            return 1
-          }
-
+          # Reuse the build that already exists for this runtime and profile.
+          # `find-build.mjs` holds the rule — a fingerprint builds once, in any
+          # status, and never twice; `force-eas-build` is the way out when a
+          # failed build has poisoned its fingerprint. It also refuses to answer
+          # "no build" when EAS cannot be reached, so a transient error cannot
+          # quietly buy a duplicate build: this step fails instead.
           IFS=',' read -ra PLATFORMS <<< "$EAS_BUILD_PLATFORMS"
           for PLATFORM in "${PLATFORMS[@]}"; do
             RUNTIME="$(runtime_version "$PLATFORM")"
             echo "$PLATFORM runtime: $RUNTIME"
-            has_build "$PLATFORM" preview "$RUNTIME" \
-              || yarn nx run betterangels:eas-build:preview --platform="$PLATFORM" --wait=false --freezeCredentials=true --json=true
+            EXISTING="$(node tools/scripts/find-build.mjs --project betterangels \
+              --platform "$PLATFORM" --profile preview --runtime "$RUNTIME")"
+            if [ -n "$EXISTING" ]; then
+              echo "Reusing the existing $PLATFORM build: $EXISTING"
+              continue
+            fi
+            yarn nx run betterangels:eas-build:preview --platform="$PLATFORM" --wait=false --freezeCredentials=true --json=true
           done
 
           # Publishes the update for every platform the app supports. The target
@@ -198,6 +218,15 @@ jobs:
 
           # Mobile preview links (build, update, QR) on the PR.
           yarn nx run betterangels:preview-comment
+
+      # Put the workspace back the way the checkout had it. The mobile step runs
+      # `copy-lockfile`, which rewrites the root and app `package.json` for EAS
+      # Build; this undoes that, so the rest of the job (and anything added after
+      # it) no longer sees an EAS-shaped workspace. It cannot un-prune
+      # `node_modules`, which is why the mobile work still runs last.
+      - name: 🧹 Restore the workspace
+        if: always() && !cancelled()
+        run: yarn nx run betterangels:restore-workspace --output-style=stream
 
       # Neither of these touches the workspace; they only archive what the E2E
       # step produced, which is why they can follow the mobile work.

@@ -437,8 +437,13 @@ jobs:
       # and outside the quality step, because `eas-build`/`eas-update` rewrite the
       # workspace for EAS Build (`copy-lockfile` narrows the root package.json to
       # the app) — the web export and the suites above must not see that.
+      #
+      # Push to main only. `merge_group` used to run this too: it queued builds for
+      # a throwaway ref and published an update to a branch named after the merge
+      # queue (`gh-readonly-queue/main/pr-…`), and the push that merges to main
+      # then does the real work anyway.
       - name: 📱 Mobile builds and update
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push'
         run: |
           docker compose run --rm better-angels bash -c '
             set -euo pipefail
@@ -458,10 +463,19 @@ jobs:
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
           EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
 
+      # Put the workspace back the way the checkout had it: the mobile step runs
+      # `copy-lockfile`, which rewrites the root and app `package.json` for EAS
+      # Build. The runner is discarded afterwards, but restoring here means "mobile
+      # is last" is no longer the only thing protecting anything added below. It
+      # cannot un-prune node_modules, so ordering still matters for installs.
+      - name: 🧹 Restore the workspace
+        if: always() && !cancelled()
+        run: yarn nx run betterangels:restore-workspace --output-style=stream
+
       - name: 📣 Announce the deployment
-        # Slack summary of the mobile builds/updates; no-ops on PRs. Runs once
-        # per environment matrix leg, reporting that leg's builds.
-        if: github.event_name != 'pull_request'
+        # Slack summary of the mobile builds/updates, once per environment matrix
+        # leg and only on a push — a merge queue run has no builds to announce.
+        if: github.event_name == 'push'
         continue-on-error: true
         run: |
           docker compose run --rm better-angels bash -c 'yarn nx run betterangels:preview-comment'

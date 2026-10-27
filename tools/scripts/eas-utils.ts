@@ -131,35 +131,58 @@ export function resolveProjectDir(project: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Write the profile env, prebuild, then resolve the runtime version the same
- * way an EAS build does. Returns the runtime version (fingerprint hash).
+ * Write the profile env the runtime version is computed from.
  *
- * The prebuild matters: `expo-updates … --workflow generic` fingerprints the
- * generated native projects too, and EAS prebuilds before it fingerprints. A
- * bare `@expo/fingerprint` call would produce a different hash, and every
- * build/update lookup keyed on it would miss.
+ * `write-eas-env.mjs` is the single place that decides what `.env.local` holds,
+ * and both CI paths call it: the workflow through `nx run …:write-eas-env` and
+ * this helper. Do not write `.env.local` anywhere else, or a fingerprint can be
+ * computed from a different env than the one that gets uploaded.
  */
-export function setupEnvAndFingerprint(
-  projectDir: string,
-  profile: string,
-): string {
+export function setupEnv(projectDir: string, profile: string): void {
   console.log(`\n=== Setting up env for profile: ${profile} ===`);
-
   const project = path.basename(projectDir);
-  run(`node tools/scripts/write-eas-env.mjs --project ${project} --profile ${profile}`);
-  // Mirror the build: EAS prebuilds before fingerprinting. Called directly
-  // rather than through `nx run` so this never nests Nx inside a Nx task.
-  run('npx expo prebuild --no-install', { cwd: projectDir });
+  run(
+    `node tools/scripts/write-eas-env.mjs --project ${project} --profile ${profile}`,
+  );
+}
 
-  console.log('Resolving runtime version (fingerprint)...');
+/**
+ * Resolve the runtime version (fingerprint hash) for one platform.
+ *
+ * Fingerprints are per platform: the same commit resolves to a different runtime
+ * for android and ios (different config and native sources), so looking one up
+ * with the other's hash always misses and rebuilds a binary that already exists.
+ *
+ * No `expo prebuild` here, deliberately. `--workflow generic` fingerprints the
+ * project as it is uploaded, and `.easignore` keeps `android/` and `ios/` out of
+ * that upload — a local prebuild hashes native directories the build never has,
+ * producing a runtime no build ever creates. The workflow resolves the same way
+ * without prebuilding, and its runtime matches the build's
+ * (`CONFIGURE_EXPO_UPDATES` diffs the two and reports no mismatch), so that is
+ * the behaviour to mirror.
+ */
+export function resolveRuntime(projectDir: string, platform: string): string {
+  console.log(`Resolving ${platform} runtime version (fingerprint)...`);
   const resolved = runJson<{ runtimeVersion: string }>(
-    'npx expo-updates runtimeversion:resolve --platform android --workflow generic',
+    `npx expo-updates runtimeversion:resolve --platform ${platform} --workflow generic`,
     { cwd: projectDir },
   );
   const hash = resolved.runtimeVersion;
   if (!hash) {
-    throw new Error('expo-updates did not return a runtime version');
+    throw new Error(
+      `expo-updates did not return a runtime version for ${platform}`,
+    );
   }
-  console.log(`Runtime version (fingerprint): ${hash}`);
+  console.log(`${platform} runtime version (fingerprint): ${hash}`);
   return hash;
+}
+
+/** Setup env and resolve the runtime, for callers that need only one platform. */
+export function setupEnvAndFingerprint(
+  projectDir: string,
+  profile: string,
+  platform = 'android',
+): string {
+  setupEnv(projectDir, profile);
+  return resolveRuntime(projectDir, platform);
 }

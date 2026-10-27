@@ -32,9 +32,10 @@ import {
   getEnv,
   getOptionalEnv,
   resolveProjectDir,
+  resolveRuntime,
   run,
   runJson,
-  setupEnvAndFingerprint,
+  setupEnv,
 } from './eas-utils';
 
 const project = argv.project as string | undefined;
@@ -49,35 +50,41 @@ const iosProfile = 'development-simulator';
 const branch = getEnv('BRANCH_NAME');
 const projectDir = resolveProjectDir(project);
 
-// 1. Setup env and compute fingerprint (env vars are identical across profiles)
-const fingerprint = setupEnvAndFingerprint(projectDir, androidProfile);
+// 1. Setup env once (it is identical across profiles). `copy-lockfile` comes
+// next, before anything is resolved or looked up, because it rewrites the
+// manifests the fingerprint hashes: `preview.yml` runs it before resolving the
+// runtime, and a runtime computed from a different workspace state is a runtime
+// no build ever produces.
+setupEnv(projectDir, androidProfile);
+run(`yarn nx run ${project}:copy-lockfile`);
+
+// Resolve each platform's runtime separately: the fingerprints differ, and
+// looking a build up with the other platform's hash always misses.
+const androidRuntime = resolveRuntime(projectDir, 'android');
+const iosRuntime = resolveRuntime(projectDir, 'ios');
 
 // 2. Find or trigger builds for both platforms
-console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
+console.log(
+  `\nChecking for builds: android ${androidRuntime}, ios ${iosRuntime}`,
+);
 
-function findBuildId(platform: string, profile: string): string | undefined {
-  try {
-    // Newest build for this fingerprint, whatever its status: a fingerprint
-    // builds once, so a queued, finished, or failed build is reused rather than
-    // rebuilt.
-    const builds = runJson<Array<{ id: string; status: string }>>(
-      `eas build:list --platform ${platform} --build-profile ${profile} --runtime-version ${fingerprint} --limit 1 --json --non-interactive`,
-      { cwd: projectDir },
-    );
-    if (builds.length > 0) {
-      console.log(
-        `Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`,
-      );
-      return builds[0].id;
-    }
-  } catch {
-    // no builds found
-  }
-  return undefined;
+function findBuildId(
+  platform: string,
+  profile: string,
+  runtime: string,
+): string | undefined {
+  // `find-build.mjs` is the same reuse rule the preview pipeline applies: a
+  // fingerprint builds once, in any status, and never twice. It retries a failed
+  // lookup and exits non-zero if EAS never answers, rather than reporting "no
+  // build" and paying for a duplicate.
+  const result = runJson<{ id: string | null }>(
+    `node tools/scripts/find-build.mjs --project ${project} --platform ${platform} --profile ${profile} --runtime ${runtime} --json`,
+  );
+  return result.id ?? undefined;
 }
 
-let androidBuildId = findBuildId('android', androidProfile);
-let iosBuildId = findBuildId('ios', iosProfile);
+let androidBuildId = findBuildId('android', androidProfile, androidRuntime);
+let iosBuildId = findBuildId('ios', iosProfile, iosRuntime);
 
 // Trigger missing builds separately (different profiles per platform). The
 // `preview` configuration supplies the profile and runs the env/prebuild
@@ -163,7 +170,8 @@ run(
     `-F update_group_id=${groupId} ` +
     `-F MAESTRO_BA_USER_EMAIL=${process.env.MAESTRO_BA_USER_EMAIL} ` +
     `-F MAESTRO_BA_USER_PASSWORD=${process.env.MAESTRO_BA_USER_PASSWORD} ` +
-    `-F runtime_version=${fingerprint} ` +
+    `-F android_runtime_version=${androidRuntime} ` +
+    `-F ios_runtime_version=${iosRuntime} ` +
     `-F android_profile=${androidProfile} ` +
     `-F ios_profile=${iosProfile} ` +
     `--non-interactive`,
