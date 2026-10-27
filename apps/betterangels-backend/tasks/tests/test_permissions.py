@@ -211,7 +211,13 @@ class TaskAssigneeQueryPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsM
         # gate: a caller without tasks.add gets an empty page rather than an
         # OperationInfo, because the field is a connection, not a union.
         if should_succeed:
-            self.assertGreater(response["data"]["taskAssignees"]["totalCount"], 0)
+            results = response["data"]["taskAssignees"]["results"]
+            ids = {row["id"] for row in results}
+
+            # Permitted *and* scoped: a same-org member is listed, another
+            # org's member is not.
+            self.assertIn(str(self.org_1_case_manager_2.pk), ids)
+            self.assertNotIn(str(self.org_2_case_manager_1.pk), ids)
         elif user_label is None:
             self.assertGraphQLUnauthenticated(response)
         else:

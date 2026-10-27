@@ -321,7 +321,16 @@ class TaskListAssigneeQueryCountTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMi
         with self.assertNumQueriesWithoutCache(4):
             response = self.execute_graphql(self.get_tasks_query())
 
-        self.assertEqual(response["data"]["tasks"]["totalCount"], 8)
+        results = response["data"]["tasks"]["results"]
+        self.assertEqual(len(results), 8)
+
+        # The count alone would still pass if `assignee` silently resolved to
+        # null for every row, so assert it actually arrives on each one.
+        self.assertEqual(
+            {row["assignee"]["id"] for row in results},
+            {str(self.org_1_case_manager_2.pk)},
+        )
+
 
 class TaskAssigneeQueryTestCase(GraphQLBaseTestCase):
     """``taskAssignees`` backs the assignee picker on the task form."""
