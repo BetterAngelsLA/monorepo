@@ -117,8 +117,11 @@ console.log(`\nPublishing update on branch: ${branch}`);
 // this env, which propagates to the bundler it spawns.
 process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
 
+// `eas-update` is a run-commands target: it takes no CLI flags of its own — the
+// branch comes from BRANCH_NAME (set by the workflow) and the machine-readable
+// payload is what the script prints on stdout.
 const updates = runJson<Array<{ group: string; platform: string }>>(
-  `yarn nx run ${project}:eas-update:preview --branch "${branch}" --auto --json --non-interactive`,
+  `yarn nx run ${project}:eas-update:preview`,
 );
 const groupId = updates[0]?.group;
 if (!groupId) {

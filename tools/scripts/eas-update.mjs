@@ -92,11 +92,16 @@ if (updates.length === 0) {
   process.exit(1);
 }
 
-console.log(`Published an update to ${branch} (${environment} environment):`);
+// Summary on stderr, the raw `eas update --json` payload on stdout: callers
+// parse stdout (tools/scripts/eas-e2e.ts needs the group id) and a summary line
+// in the middle of it would have to be skipped by hand.
+console.error(`Published an update to ${branch} (${environment} environment):`);
 for (const update of updates) {
   // The runtime is the contract with the binary: it must be the one the build
   // for this commit carries, or the update is never applied.
-  console.log(
+  console.error(
     `  ${update.platform}: runtime ${update.runtimeVersion} · group ${update.group} · update ${update.id}`,
   );
 }
+
+console.log(JSON.stringify(updates));
