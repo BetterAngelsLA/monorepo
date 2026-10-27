@@ -59,6 +59,7 @@
     }
   },
   "cli": {
-    "version": ">= 5"
+    "version": ">= 5",
+    "appVersionSource": "local"
   }
 }

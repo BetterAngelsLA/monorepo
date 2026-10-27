@@ -2,7 +2,7 @@
 #
 # Handles all setup that needs GitHub Secrets and NX monorepo tooling:
 #   1. Compute fingerprint (needs EXPO_PUBLIC_* secrets)
-#   2. Find existing preview builds (via NX build-list target)
+#   2. Find existing preview builds (via `eas build:list`)
 #   3. Publish EAS Update (via NX eas-update target)
 #   4. Trigger the EAS Maestro workflow (eas workflow:run)
 #

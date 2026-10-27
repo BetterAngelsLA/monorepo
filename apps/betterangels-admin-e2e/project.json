@@ -4,7 +4,15 @@
   "projectType": "application",
   "sourceRoot": "apps/betterangels-admin-e2e/src",
   "tags": [],
-  "implicitDependencies": ["betterangels-admin"],
+  "implicitDependencies": [
+    "betterangels-admin"
+  ],
   "// targets": "to see all targets run: nx show project betterangels-admin-e2e --web",
-  "targets": {}
+  "targets": {
+    "e2e": {
+      "options": {
+        "command": "playwright test --pass-with-no-tests"
+      }
+    }
+  }
 }

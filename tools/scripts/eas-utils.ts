@@ -1,5 +1,5 @@
 /**
- * Shared utilities for EAS scripts (eas-deploy.ts, etc.)
+ * Shared utilities for the EAS scripts (eas-e2e.ts).
  *
  * Provides common helpers for:
  *   - CLI arg parsing (minimist)
@@ -131,65 +131,49 @@ export function resolveProjectDir(project: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Write .env with build-profile env vars + EXPO_PUBLIC_* secrets,
- * then compute the Expo fingerprint hash. Returns the hash.
+ * Write the profile env the runtime version is computed from.
+ *
+ * `write-eas-env.mjs` is the only writer; a second one would let the fingerprint
+ * and the upload disagree.
  */
+export function setupEnv(projectDir: string, profile: string): void {
+  console.log(`\n=== Setting up env for profile: ${profile} ===`);
+  const project = path.basename(projectDir);
+  run(
+    `node tools/scripts/write-eas-env.mjs --project ${project} --profile ${profile}`,
+  );
+}
+
+/**
+ * Resolve the runtime version (fingerprint hash) for one platform.
+ *
+ * Fingerprints are per platform, so a lookup keyed on the other platform's hash
+ * always misses. No `expo prebuild`: `--workflow generic` fingerprints the project
+ * as uploaded, and a local prebuild would hash native directories the build never
+ * has.
+ */
+export function resolveRuntime(projectDir: string, platform: string): string {
+  console.log(`Resolving ${platform} runtime version (fingerprint)...`);
+  const resolved = runJson<{ runtimeVersion: string }>(
+    `npx expo-updates runtimeversion:resolve --platform ${platform} --workflow generic`,
+    { cwd: projectDir },
+  );
+  const hash = resolved.runtimeVersion;
+  if (!hash) {
+    throw new Error(
+      `expo-updates did not return a runtime version for ${platform}`,
+    );
+  }
+  console.log(`${platform} runtime version (fingerprint): ${hash}`);
+  return hash;
+}
+
+/** Setup env and resolve the runtime, for callers that need only one platform. */
 export function setupEnvAndFingerprint(
   projectDir: string,
   profile: string,
+  platform = 'android',
 ): string {
-  console.log(`\n=== Setting up env for profile: ${profile} ===`);
-
-  const envPath = path.join(projectDir, '.env');
-  const envMap = new Map<string, string>();
-
-  // Collect EXPO_PUBLIC_* and MAESTRO_* from process.env first (may include
-  // values from the committed .env loaded by NX, or CI secrets).
-  for (const [key, value] of Object.entries(process.env)) {
-    if (
-      (key.startsWith('EXPO_PUBLIC_') || key.startsWith('MAESTRO_')) &&
-      value
-    ) {
-      envMap.set(key, value);
-    }
-  }
-
-  // Then apply eas.json build profile env vars, which take precedence.
-  // This ensures profile-specific values (e.g., production API URL) override
-  // any stale values that NX loaded from the committed .env file.
-  const easJsonPath = path.join(projectDir, 'eas.json');
-  if (fs.existsSync(easJsonPath)) {
-    const easConfig = JSON.parse(fs.readFileSync(easJsonPath, 'utf-8'));
-    const profileEnv = easConfig?.build?.[profile]?.env;
-    if (profileEnv && typeof profileEnv === 'object') {
-      for (const [key, value] of Object.entries(profileEnv)) {
-        envMap.set(key, String(value));
-      }
-    }
-  }
-
-  // Write .env (without RUNTIME_VERSION) so fingerprint includes env var values.
-  const envLines: string[] = [];
-  envMap.forEach((v, k) => {
-    envLines.push(`${k}=${v}`);
-  });
-  fs.writeFileSync(envPath, envLines.join('\n') + '\n');
-
-  // Compute fingerprint — this hash becomes the runtimeVersion.
-  console.log('Computing fingerprint...');
-  const fingerprintJson = run(
-    `node -e "const fp = require('@expo/fingerprint'); fp.createFingerprintAsync('.').then(r => console.log(JSON.stringify(r)));"`,
-    { cwd: projectDir },
-  );
-  const hash = JSON.parse(fingerprintJson).hash as string;
-  console.log(`Runtime version (fingerprint): ${hash}`);
-
-  // Append RUNTIME_VERSION to .env and propagate everything to process.env.
-  fs.appendFileSync(envPath, `RUNTIME_VERSION=${hash}\n`);
-  envMap.set('RUNTIME_VERSION', hash);
-  envMap.forEach((value, key) => {
-    process.env[key] = value;
-  });
-
-  return hash;
+  setupEnv(projectDir, profile);
+  return resolveRuntime(projectDir, platform);
 }

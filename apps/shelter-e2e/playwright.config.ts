@@ -3,6 +3,8 @@ import { resolve } from 'path';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { defineConfig, devices } from '@playwright/test';
 
+import { e2eBaseUrl } from '../../tools/shared/e2e-base-url.mjs';
+
 /**
  * URL of the local dev server.
  *
@@ -13,22 +15,16 @@ import { defineConfig, devices } from '@playwright/test';
 const LOCAL_DEV_SERVER_URL = 'http://localhost:8083/';
 
 /**
- * Base URL of the app under test.
+ * Where the specs run.
  *
- * Defaults to the local dev server. Set `BASE_URL` to run the same specs
- * against a deployed environment — DEV or a branch preview (what CI does):
- *
- *   BASE_URL=https://shelter.dev.betterangels.la/branches/<branch>/ \
- *     yarn nx run shelter-e2e:e2e
+ * `e2eBaseUrl` owns the decision (tools/shared/e2e-base-url.mjs): an explicit
+ * `BASE_URL`, else the branch preview this run deployed, else `undefined` — and
+ * then the local dev server below is used. Both URLs end with `/` so relative
+ * navigation in specs (`page.goto('sign-in')`) resolves under any base path,
+ * including previews served at `/branches/<branch>/`.
  */
-const rawBaseURL = process.env['BASE_URL'] || LOCAL_DEV_SERVER_URL;
-
-/**
- * Always end with `/` so relative navigation in specs (`page.goto('sign-in')`)
- * resolves correctly under any base path — including deployed previews that
- * are served under `/branches/<branch>/`.
- */
-const baseURL = rawBaseURL.endsWith('/') ? rawBaseURL : `${rawBaseURL}/`;
+const previewBaseURL = e2eBaseUrl('shelter-web');
+const baseURL = previewBaseURL ?? LOCAL_DEV_SERVER_URL;
 
 /**
  * The local dev server, started by the run itself unless `BASE_URL` targets a
@@ -46,7 +42,7 @@ const baseURL = rawBaseURL.endsWith('/') ? rawBaseURL : `${rawBaseURL}/`;
  * `reuseExistingServer` is unconditional because Nx already starts the server
  * as a task dependency — and in CI `BASE_URL` makes this block undefined.
  */
-const webServer = process.env['BASE_URL']
+const webServer = previewBaseURL
   ? undefined
   : {
       command: 'npx nx run shelter-web:dev',
@@ -99,7 +95,7 @@ export default defineConfig({
    * below produce a trace at all — with no retries there is no trace to read.
    */
   retries: process.env['CI'] ? 1 : 0,
-  /* Start the local dev server unless a deployed BASE_URL is used. */
+  /* Start the local dev server unless a preview (or BASE_URL) is the target. */
   ...(webServer ? { webServer } : {}),
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
