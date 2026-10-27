@@ -284,9 +284,9 @@ async function notifySlack() {
         text: `*New code has landed in main for project ${argv.project}!* \n*Commit:* \`${commit}\`\n*Message:* ${message}`,
       },
     },
-    section('📱 iOS', 'ios'),
+    section(':iphone: iOS', 'ios'),
     { type: 'divider' },
-    section('🤖 Android', 'android'),
+    section(':robot_face: Android', 'android'),
   ];
 
   const response = await fetch(webhook, {
