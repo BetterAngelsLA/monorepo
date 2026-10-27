@@ -34,14 +34,18 @@ if (!branch) {
   process.exit(1);
 }
 
-const PLATFORMS = ['android', 'ios'];
+// A preview run builds a single platform to keep EAS costs down, so the table
+// follows whatever was built (`EAS_BUILD_PLATFORMS`) instead of hard-coding both.
+const PLATFORMS = (process.env.EAS_BUILD_PLATFORMS ?? 'android,ios')
+  .split(',')
+  .map((platform) => platform.trim())
+  .filter(Boolean);
 // `EAS_PROFILE` lets the main pipeline report the production builds instead;
 // the simulator link only exists for preview.
 const profile = process.env.EAS_PROFILE || 'preview';
 const BUILDS = [
-  { platform: 'android', profile },
-  { platform: 'ios', profile },
-  ...(profile === 'preview'
+  ...PLATFORMS.map((platform) => ({ platform, profile })),
+  ...(profile === 'preview' && PLATFORMS.includes('ios')
     ? [{ platform: 'ios', profile: 'development-simulator' }]
     : []),
 ];
@@ -112,9 +116,11 @@ const builds = Object.fromEntries(
 );
 const updates = Object.fromEntries(PLATFORMS.map((p) => [p, latestUpdate(p)]));
 
-const android = builds[`android/${profile}`];
-const ios = builds[`ios/${profile}`];
-if (!android && !ios && !updates.android && !updates.ios) {
+const forPlatform = (platform) => builds[`${platform}/${profile}`];
+const hasData =
+  PLATFORMS.some((platform) => forPlatform(platform)) ||
+  PLATFORMS.some((platform) => updates[platform]);
+if (!hasData) {
   // EAS was unreachable (missing CLI, expired token, …). Posting a comment full
   // of N/A would be worse than no comment — this runs in a non-required job.
   console.error('No EAS build or update data; skipping the preview summary.');
@@ -142,24 +148,28 @@ const qrCell = (update) =>
     ? `<a href="${qrUrl(update.group)}"><img src="${qrUrl(update.group)}" width="250px" height="250px" /></a>`
     : 'N/A';
 
+const PLATFORM_LABELS = { android: '🤖 Android', ios: '🍎 iOS' };
+const table = [
+  ['&nbsp;', ...PLATFORMS.map((platform) => PLATFORM_LABELS[platform] ?? platform)],
+  ['---', ...PLATFORMS.map(() => '---')],
+  ['Runtime Version', ...PLATFORMS.map((p) => `\`${runtimeOf(forPlatform(p))}\``)],
+  ['Build Details', ...PLATFORMS.map((p) => cell(forPlatform(p)))],
+  ['Update Details', ...PLATFORMS.map((p) => updateCell(updates[p]))],
+  ['Update QR', ...PLATFORMS.map((p) => qrCell(updates[p]))],
+]
+  .map((row) => row.join(' | '))
+  .join('\n');
+
 const body = `<!-- continuous-deploy-fingerprint-projectId:${argv.projectId} -->
 🚀 Expo continuous deployment is ready for **${argv.project}**!
 
 - Project → **${argv.project}**
 - Environment → **${profile}**
-- Platforms → **android**, **ios**
+- Platforms → ${PLATFORMS.map((platform) => `**${platform}**`).join(', ')}
 - Scheme → **${argv.slug}**
 
-&nbsp; | 🤖 Android | 🍎 iOS
---- | --- | ---
-Runtime Version | \`${runtimeOf(android)}\` | \`${runtimeOf(ios)}\`
-Build Details | ${cell(android)} | ${cell(ios)}
-Update Details | ${updateCell(updates.android)} | ${updateCell(updates.ios)}
-Update QR | ${qrCell(updates.android)} | ${qrCell(updates.ios)}
-
-**iOS Simulator Build:** ${
-  simulator ? `[Simulator Build Link](${buildUrl(simulator.id)})` : 'N/A'
-}`;
+${table}
+${simulator ? `\n**iOS Simulator Build:** [Simulator Build Link](${buildUrl(simulator.id)})` : ''}`;
 
 async function upsertPrComment() {
   const token = process.env.GITHUB_TOKEN;
@@ -222,6 +232,10 @@ async function notifySlack() {
     },
   });
 
+  const runtime = PLATFORMS.map((platform) => runtimeOf(forPlatform(platform))).find(
+    (value) => value !== 'N/A',
+  );
+
   const response = await fetch(webhook, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -232,18 +246,27 @@ async function notifySlack() {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `📱 *${argv.project}* deployed to \`${branch}\` (runtime \`${runtimeOf(android) === 'N/A' ? runtimeOf(ios) : runtimeOf(android)}\`)`,
+            text: `📱 *${argv.project}* deployed to \`${branch}\` (runtime \`${runtime ?? 'N/A'}\`)`,
           },
         },
-        section('Android', android, updates.android),
-        section('iOS', ios, updates.ios),
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `${link('iOS simulator build', simulator ? buildUrl(simulator.id) : undefined)}`,
-          },
-        },
+        ...PLATFORMS.map((platform) =>
+          section(
+            PLATFORM_LABELS[platform] ?? platform,
+            forPlatform(platform),
+            updates[platform],
+          ),
+        ),
+        ...(simulator
+          ? [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: link('iOS simulator build', buildUrl(simulator.id)),
+                },
+              },
+            ]
+          : []),
       ],
     }),
   });

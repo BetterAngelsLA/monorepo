@@ -93,50 +93,50 @@ jobs:
 
           # EAS prebuilds inside the app, so do the same instead of from the root.
           yarn nx run betterangels:prebuild
-          # The resolver prints the whole fingerprint, so take just the runtime.
-          runtime_version() {
-            (cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" \
-              runtimeversion:resolve --platform "$1" --workflow generic) \
-              | node -e 'let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => console.log(JSON.parse(s).runtimeVersion))'
-          }
-          ANDROID_RUNTIME="$(runtime_version android)"
-          IOS_RUNTIME="$(runtime_version ios)"
-          echo "android runtime: $ANDROID_RUNTIME"
-          echo "ios runtime: $IOS_RUNTIME"
+          # Builds are the expensive part of this pipeline, so a PR preview builds
+          # one platform — an APK anyone can install — instead of paying for
+          # android + ios + an ios simulator binary on every push. The EAS Update
+          # is still published for every platform. Switch both lines to `ios` to
+          # preview iOS instead.
+          PLATFORM=android
+          PROFILE=preview
+          # Keeps the PR comment to the platform that was actually built.
+          export EAS_BUILD_PLATFORMS="$PLATFORM"
 
-          # Skip a build when one already exists for this runtime and profile.
-          # A queued build counts (the update only needs the runtime the binary
-          # will ship with); a failed one does not, and a failed newest build must
-          # not hide an older finished one — hence the limit and the ranking in
-          # has-build.mjs. Any lookup failure falls back to building.
+          # The resolver prints the whole fingerprint, so take just the runtime.
+          RUNTIME="$(
+            (cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" \
+              runtimeversion:resolve --platform "$PLATFORM" --workflow generic) \
+              | node -e 'let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => console.log(JSON.parse(s).runtimeVersion))'
+          )"
+          echo "$PLATFORM runtime: $RUNTIME"
+
+          # Skip the build when one already exists for this runtime and profile.
+          # Status does not matter: a fingerprint builds once, so a queued,
+          # finished, or even a failed build is reused instead of rebuilt. Any
+          # lookup failure falls back to building.
           has_build() {
-            if (cd apps/betterangels && eas build:list --platform "$1" --runtime-version "$2" \
-              --build-profile "$3" --limit 10 --json --non-interactive) \
+            if (cd apps/betterangels && eas build:list --platform "$1" --runtime-version "$3" \
+              --build-profile "$2" --limit 1 --json --non-interactive) \
               > /tmp/build-list.json 2>&1; then
               if node tools/scripts/has-build.mjs < /tmp/build-list.json; then
-                echo "Reusing the existing $1 build for $3."
+                echo "Reusing the existing $1 build for $2."
                 return 0
               fi
               return 1
             fi
-            echo "build:list failed for $1/$3; building instead:"
+            echo "build:list failed for $1/$2; building instead:"
             tail -5 /tmp/build-list.json
             return 1
           }
 
-          has_build android "$ANDROID_RUNTIME" preview \
-            || yarn nx run betterangels:eas-build:preview --platform=android --wait=false --freezeCredentials=true --json=true
-
-          has_build ios "$IOS_RUNTIME" preview \
-            || yarn nx run betterangels:eas-build:preview --platform=ios --wait=false --freezeCredentials=true --json=true
-
-          has_build ios "$IOS_RUNTIME" development-simulator \
-            || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
+          has_build "$PLATFORM" "$PROFILE" "$RUNTIME" \
+            || yarn nx run betterangels:eas-build:preview --platform="$PLATFORM" --wait=false --freezeCredentials=true --json=true
 
           # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t eas-update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
 
-          # Mobile preview links (builds, updates, QR, simulator) on the PR.
+          # Mobile preview links (build, update, QR) on the PR.
           yarn nx run betterangels:preview-comment
 
       # The mobile preview comment above links the EAS builds/updates for this

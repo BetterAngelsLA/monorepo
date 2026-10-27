@@ -57,8 +57,11 @@ console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
 
 function findBuildId(platform: string, profile: string): string | undefined {
   try {
+    // Newest build for this fingerprint, whatever its status: a fingerprint
+    // builds once, so a queued, finished, or failed build is reused rather than
+    // rebuilt.
     const builds = runJson<Array<{ id: string; status: string }>>(
-      `eas build:list --platform ${platform} --build-profile ${profile} --runtime-version ${fingerprint} --limit 10 --json --non-interactive`,
+      `eas build:list --platform ${platform} --build-profile ${profile} --runtime-version ${fingerprint} --limit 1 --json --non-interactive`,
       { cwd: projectDir },
     );
     if (builds.length > 0) {
