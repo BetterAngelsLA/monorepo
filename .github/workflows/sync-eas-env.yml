@@ -64,7 +64,7 @@ jobs:
                 echo "✅ $name → $target"
               else
                 echo "❌ $name → $target"
-                printf '%s\n' "$out" | tail -5
+                printf '%s\n' "$out" | grep -viE '^\s*-\s' | head -12
                 return 1
               fi
             done
