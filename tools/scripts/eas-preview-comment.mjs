@@ -1,16 +1,17 @@
 /**
  * Mobile preview summary for a PR (and Slack, on main).
  *
- * Replaces the comment payload the old `eas-deploy.ts` posted: per-platform
- * build permalinks, EAS Update permalinks + QR codes, runtime versions, and the
- * iOS simulator build link. It only *reads* EAS state — builds and updates are
- * created by `eas-build` / `eas-update` targets — so it stays reusable from a
- * laptop (`nx run betterangels:preview-comment`) and from both workflows.
+ * Posts the per-platform build permalinks, EAS Update permalinks + QR codes,
+ * runtime versions, and the iOS simulator build link. It only *reads* EAS state —
+ * builds and updates are created by `build-missing.ts` / `eas-update` — so it
+ * stays reusable from a laptop (`nx run betterangels:preview-comment`) and from
+ * both workflows.
  *
  * Env:
  *   BRANCH_NAME            EAS Update branch (required)
  *   PR_NUMBER, GITHUB_TOKEN, GITHUB_REPOSITORY   PR comment (optional)
  *   SLACK_WEBHOOK_URL, GITHUB_EVENT_NAME         Slack (main only)
+ *
  * Flags:
  *   --dry-run              print the comment instead of posting it (or DRY_RUN=1)
  */
@@ -47,11 +48,9 @@ if (!branch) {
   process.exit(1);
 }
 
-// Both platforms always get a column. Every run builds every platform the
-// fingerprint lacks (see `build-missing.ts`), so the lookup should find both; it
-// is still keyed on the update's runtime rather than on what this run built,
-// because a build from an earlier run is just as usable. `buildCell` falls back
-// when nothing exists.
+// Both platforms get a column. The lookup is keyed on the update's runtime, not
+// on what this run built: a build from an earlier run is just as usable.
+// `buildCell` falls back when nothing exists.
 const PLATFORMS = ['android', 'ios'];
 // `EAS_PROFILE` lets the main pipeline report the production builds instead;
 // the simulator link only exists for preview.
@@ -141,11 +140,8 @@ function latestUpdate(platform) {
 
 /**
  * Builds this run resolved, as `build-missing.ts` recorded them — the full `eas`
- * build object, plus whether it was queued here or reused.
- *
- * `eas build --json --no-wait` answers with the build the moment it is queued —
- * the object the old `eas-deploy.ts` linked. `build:list` can lag that slightly,
- * so this file is the fallback, not a second source of truth.
+ * build object, plus whether it was queued here or reused. `build:list` can lag
+ * a just-queued build, so this file is the fallback, not a second source of truth.
  */
 function triggeredBuilds() {
   const file = path.join(projectDir, '.eas-builds.json');

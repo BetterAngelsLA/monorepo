@@ -7,11 +7,10 @@
  *
  * Run after `write-eas-env` and `copy-lockfile`: the runtime resolved here has to
  * be the one the upload produces. `--platforms` defaults to `EAS_BUILD_PLATFORMS`
- * and then to both device platforms: a fingerprint builds once, and a platform
- * skipped for a JS-only change ends up with an update but no binary to run it.
- * Which profile each platform uses, and that a preview also ships an iOS
- * simulator binary, comes from `EAS_CONFIGURATIONS`; the find-or-queue rule
- * itself is `eas-builds.ts`, shared with the E2E trigger.
+ * and then to both device platforms: a fingerprint builds once, so only what is
+ * missing is queued. Which profile each platform uses, and that a preview also
+ * ships an iOS simulator binary, comes from `EAS_CONFIGURATIONS`; the
+ * find-or-queue rule itself is `eas-builds.ts`, shared with the E2E trigger.
  *
  * Every target is written to `<project>/.eas-builds.json` with the build object
  * `eas` returned, whether it was reused or queued here. That is what

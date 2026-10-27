@@ -4,7 +4,6 @@
  *
  * These pin the three shapes the EAS/nx/expo CLIs actually print around their
  * `--json` payload: notices before it, an nx summary after it, and ANSI styling.
- * Every script that shells out to them used to re-implement this scan.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
@@ -60,8 +59,7 @@ describe('parseJsonOutput', () => {
 
 describe('updateGroups', () => {
   it('unwraps the branch wrapper eas update:list prints', () => {
-    // `{ name, id, currentPage: [...] }` — not the array the old first-`[`-to-
-    // last-`]` slice used to lift out of it.
+    // `{ name, id, currentPage: [...] }` — the wrapper, not the array.
     const payload = parseJsonOutput(
       '{"name":"b","id":"1","currentPage":[{"group":"g1"},{"group":"g2"}]}',
     );

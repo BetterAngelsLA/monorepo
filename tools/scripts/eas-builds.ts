@@ -2,10 +2,7 @@
  * Find or queue the EAS build for each target.
  *
  * One implementation for every pipeline that needs a binary: the preview/main
- * step (`build-missing.ts`) and the Maestro E2E trigger (`eas-e2e.ts`). They used
- * to have one each — one calling `eas build`, the other going through the
- * `@nx/expo` `eas-build` target — and drifted in flags and in how they read
- * `eas build --json` (an object for one platform, an array when it fans out).
+ * step (`build-missing.ts`) and the Maestro E2E trigger (`eas-e2e.ts`).
  *
  * Reuse is the pipeline rule: a fingerprint builds once, in any status, so a
  * target with any existing build — queued, finished or failed — is skipped. The

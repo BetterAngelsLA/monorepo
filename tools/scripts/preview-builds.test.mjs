@@ -5,7 +5,7 @@
  * These pin the fallback order the preview comment relies on: a build that
  * exists for the runtime, then the build this run queued (its trigger answer is
  * a valid permalink before `build:list` lists it), then the iOS simulator
- * binary — and never a bare `N/A`, which is what #2455 showed for iOS.
+ * binary — and never a bare `N/A`.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';

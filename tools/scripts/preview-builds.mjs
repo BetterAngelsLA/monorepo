@@ -1,17 +1,9 @@
 /**
  * The "Build Details" cell of the PR preview comment.
  *
- * A preview builds every platform the fingerprint has no build for (android,
- * ios, and the iOS simulator binary), and a fingerprint builds once — so the
- * binary for this runtime usually already exists from an earlier run. The
- * comment still has to tell a reviewer where each platform's binary is, and say
- * so when one genuinely does not exist.
- *
- * `eas-deploy.ts` solved that by triggering a build whenever one was missing and
- * linking the object `eas build --json` returned. Splitting it into
- * `build-missing.ts` + `eas-preview-comment.mjs` dropped both halves: the
- * trigger result is discarded, and the lookup is keyed on what this run built
- * instead of what exists for the runtime. So resolve, in order:
+ * A fingerprint builds once, so the binary for this runtime usually already
+ * exists from an earlier run; when it does not, `build-missing.ts` has just
+ * queued it. Resolve, in order:
  *
  *   1. a device build that exists for this runtime — this run's or an earlier one,
  *   2. the build this run resolved, recorded in `.eas-builds.json` by

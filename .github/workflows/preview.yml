@@ -32,7 +32,6 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      # Which platforms to build is decided per fingerprint by `build-missing.ts`.
       # Build even though a build exists for the fingerprint.
       FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
       # Re-push the EAS environment even when every var is present.
@@ -66,13 +65,6 @@ jobs:
           set -euo pipefail
           BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
-
-          # Which platforms to build is not decided here. `build-missing.ts`
-          # builds every platform this fingerprint has no build for — android,
-          # ios, and the iOS simulator binary — and reuses the rest. A JS-only
-          # change must not skip the iOS device build: the EAS Update it
-          # publishes is useless without a binary of the same runtime to run it,
-          # and a fingerprint that only ever saw JS changes would never get one.
 
       - name: 🐳 Configure AWS credentials
         if: github.event.pull_request.head.repo.fork == false

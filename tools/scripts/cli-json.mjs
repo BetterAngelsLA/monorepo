@@ -38,10 +38,8 @@ export function parseJsonOutput(raw) {
 /**
  * The update groups in an `eas update:list --json` payload.
  *
- * That command does not print the groups as the payload: it prints the branch
- * wrapper `{ name, id, currentPage: [...] }`. The naive first-`[`-to-last-`]`
- * slice every caller used to do happened to grab that inner array, so parsing
- * the object properly means unwrapping it here.
+ * That command prints the branch wrapper `{ name, id, currentPage: [...] }`,
+ * not the groups themselves.
  */
 export function updateGroups(payload) {
   return Array.isArray(payload) ? payload : (payload?.currentPage ?? []);
