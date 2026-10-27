@@ -118,7 +118,9 @@ export function TaskForm(props: TProps) {
                 control={control}
                 render={({ field }) => (
                   <SingleSelect
-                    allowSelectNone={true}
+                    // No "Select team" row in the list: a team is optional, and
+                    // clearing it belongs on the field as the same ⊗ the
+                    // assignee uses, not as a fake item among the teams.
                     label="Team"
                     modalTitle="Team"
                     maxRadioItems={0}
@@ -127,6 +129,7 @@ export function TaskForm(props: TProps) {
                     items={teamItems}
                     selectedValue={field.value}
                     onChange={(value) => field.onChange(value || '')}
+                    onClear={() => field.onChange('')}
                     error={errors.teamId?.message}
                   />
                 )}
