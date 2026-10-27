@@ -105,12 +105,13 @@ jobs:
           echo "ios runtime: $IOS_RUNTIME"
 
           # Skip a build when one already exists for this runtime and profile.
-          # A queued build counts: the update only needs the runtime to be the one
-          # the binary will ship with; a failed one is ignored by the script.
-          # Any lookup failure falls back to building.
+          # A queued build counts (the update only needs the runtime the binary
+          # will ship with); a failed one does not, and a failed newest build must
+          # not hide an older finished one — hence the limit and the ranking in
+          # has-build.mjs. Any lookup failure falls back to building.
           has_build() {
             if (cd apps/betterangels && eas build:list --platform "$1" --runtime-version "$2" \
-              --build-profile "$3" --limit 1 --json --non-interactive) \
+              --build-profile "$3" --limit 10 --json --non-interactive) \
               > /tmp/build-list.json 2>&1; then
               if node tools/scripts/has-build.mjs < /tmp/build-list.json; then
                 echo "Reusing the existing $1 build for $3."

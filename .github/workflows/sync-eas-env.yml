@@ -1,0 +1,84 @@
+name: 🔐 Sync EAS environment variables
+
+# Pushes the mobile app's EXPO_PUBLIC_* secrets into the EAS environment store,
+# so a build evaluates exactly the config CI fingerprinted. Without this the two
+# sides disagree on `extra`, the fingerprints differ, and EAS aborts the build in
+# CONFIGURE_EXPO_UPDATES with a runtime version mismatch.
+#
+# Opt-in per PR via the `sync-eas-env` label: it writes project-level state, so
+# it must not run on every push. Values come from the same GitHub secrets the
+# workflows use, which keeps one source of truth.
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+jobs:
+  sync:
+    if: >-
+      contains(github.event.pull_request.labels.*.name, 'sync-eas-env')
+      && github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    environment: preview
+    permissions:
+      contents: read
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
+      EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+      EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+      MAESTRO_BA_USER_EMAIL: ${{ secrets.MAESTRO_BA_USER_EMAIL }}
+      MAESTRO_BA_USER_PASSWORD: ${{ secrets.MAESTRO_BA_USER_PASSWORD }}
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v7
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+
+      - name: 🥟 Install EAS CLI
+        run: npm install -g eas-cli@24.8.0
+
+      - name: 🔐 Create the variables in every EAS environment
+        working-directory: apps/betterangels
+        run: |
+          set -euo pipefail
+
+          # The preview profile resolves the `development` EAS environment and
+          # production resolves `production`; set both so either build agrees
+          # with what CI fingerprints.
+          set_var() {
+            name="$1"
+            value="$2"
+            if [ -z "${value:-}" ]; then
+              echo "⏭️  $name is unset; leaving EAS untouched."
+              return 0
+            fi
+            for target in development production; do
+              eas env:create --name "$name" --value "$value" \
+                --environment "$target" --visibility sensitive \
+                --scope project --non-interactive --force > /dev/null
+              echo "✅ $name → $target"
+            done
+          }
+
+          set_var EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY "${EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY}"
+          set_var EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY "${EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY}"
+          set_var EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY "${EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY}"
+          set_var EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS "${EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS}"
+          set_var EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID "${EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID}"
+          set_var MAESTRO_BA_USER_EMAIL "${MAESTRO_BA_USER_EMAIL}"
+          set_var MAESTRO_BA_USER_PASSWORD "${MAESTRO_BA_USER_PASSWORD}"
+
+      - name: 🧾 Confirm what EAS now stores
+        working-directory: apps/betterangels
+        run: |
+          set -euo pipefail
+          for target in development production; do
+            echo "--- $target ---"
+            eas env:list --environment "$target" --format long --non-interactive \
+              | grep -E 'EXPO_PUBLIC_|MAESTRO_' || true
+          done
