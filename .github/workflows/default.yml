@@ -425,7 +425,7 @@ jobs:
           # Restores what `copy-lockfile` rewrites, even when the build fails.
           docker compose run --rm better-angels bash -c '
             set -euo pipefail
-            trap "node tools/scripts/restore-workspace.mjs --project betterangels || echo '::warning::Could not restore the EAS-shaped workspace'" EXIT
+            trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
             # Env, then the EAS-shaped workspace: the runtime is resolved from
             # both, so they have to match what the build uploads. `sync-deps` is
             # deliberately absent — it installs, and installing after

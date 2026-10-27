@@ -28,6 +28,16 @@ const paths = workspaceMutations(project);
 const git = (args) =>
   execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
+/**
+ * A restore failure must be visible but must not fail the step it runs in: the
+ * caller is an EXIT trap, and turning a cleanup problem into a red deploy hides
+ * the real result. GitHub renders the annotation.
+ */
+const warn = (message) => {
+  console.error(`[restore-workspace] ${message}`);
+  if (process.env.CI) console.error(`::warning::${message}`);
+};
+
 let dirty;
 try {
   dirty = new Set(
@@ -37,10 +47,10 @@ try {
       .filter(Boolean),
   );
 } catch (error) {
-  console.error(
-    `[restore-workspace] git status failed: ${error?.stderr?.toString().trim() || error.message}`,
+  warn(
+    `git status failed, workspace may stay EAS-shaped: ${error?.stderr?.toString().trim() || error.message}`,
   );
-  process.exit(1);
+  process.exit(0);
 }
 
 const changed = paths.filter((path) => dirty.has(path));
@@ -49,5 +59,11 @@ if (changed.length === 0) {
   process.exit(0);
 }
 
-git(['checkout', '--', ...changed]);
-console.log(`[restore-workspace] Restored ${changed.join(', ')}.`);
+try {
+  git(['checkout', '--', ...changed]);
+  console.log(`[restore-workspace] Restored ${changed.join(', ')}.`);
+} catch (error) {
+  warn(
+    `could not restore ${changed.join(', ')}, workspace may stay EAS-shaped: ${error?.stderr?.toString().trim() || error.message}`,
+  );
+}

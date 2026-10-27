@@ -195,7 +195,7 @@ jobs:
           # `copy-lockfile` below reshapes the workspace for EAS Build; restore it
           # however this step ends. Called directly — it must not need a project
           # graph built from the manifests it is undoing.
-          trap 'node tools/scripts/restore-workspace.mjs --project betterangels || echo "::warning::Could not restore the EAS-shaped workspace"' EXIT
+          trap 'node tools/scripts/restore-workspace.mjs --project betterangels || true' EXIT
           yarn nx run betterangels:write-eas-env:preview
 
           # No `expo prebuild`: it would leave `android/`+`ios/` in the checkout and
