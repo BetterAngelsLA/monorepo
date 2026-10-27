@@ -60,20 +60,28 @@ export default function Task({
       <View style={styles.body}>
         <TaskHeader id={id} task={task} arrivedFrom={arrivedFrom} />
         <TaskUpdatedAt updatedAt={task.updatedAt} />
-        <View>
+        {/*
+          Client and assignee sit two-up, as on the card: both are people the
+          reader acts on, and stacking them cost two extra blocks of height.
+          The creator keeps a line of its own but at caption weight.
+        */}
+        <View style={styles.people}>
           {task.clientProfile && (
             <TaskClient
+              style={styles.person}
               clientProfile={task.clientProfile}
               onPress={handleClientPress}
             />
           )}
-          <TaskCreatedBy
-            organization={task.organization}
-            createdBy={task.createdBy}
-            team={task.team}
-          />
+          {!!task.assignee && (
+            <TaskAssignee style={styles.person} assignee={task.assignee} />
+          )}
         </View>
-        {!!task.assignee && <TaskAssignee assignee={task.assignee} />}
+        <TaskCreatedBy
+          organization={task.organization}
+          createdBy={task.createdBy}
+          team={task.team}
+        />
         {!!task.description && <TaskBody description={task.description} />}
       </View>
       <TaskStatusBtn id={task.id} status={task.status} />
@@ -88,5 +96,14 @@ const styles = StyleSheet.create({
     padding: Spacings.sm,
     paddingTop: Spacings.md,
     gap: Spacings.sm,
+  },
+  people: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: Spacings.sm,
+  },
+  person: {
+    flexBasis: '45%',
+    flexGrow: 1,
   },
 });
