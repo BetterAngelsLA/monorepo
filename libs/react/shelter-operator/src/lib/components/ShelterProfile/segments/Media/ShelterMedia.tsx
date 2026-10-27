@@ -3,6 +3,7 @@ import { useShelterOperatorProfile } from '../../../../hooks';
 import { Tabs } from '../../../base-ui/tabs';
 import { Form } from '../../../form/Form';
 import { MEDIA_TABS, MEDIA_TAB_LABELS, MediaTab } from './constants';
+import { ShelterMediaLinks } from './MediaLinks/ShelterMediaLinks';
 import { ShelterPhotos } from './Photos/ShelterPhotos';
 
 type TProps = {
@@ -20,7 +21,7 @@ export function ShelterMedia(props: TProps) {
     return null;
   }
 
-  const { photos, heroImage } = shelter;
+  const { photos, heroImage, mediaLinks } = shelter;
 
   return (
     <div className="px-6 flex-col flex-1 pb-72">
@@ -40,12 +41,13 @@ export function ShelterMedia(props: TProps) {
           heroImageId={heroImage?.id}
         />
       )}
-      {/* {currentTab === 'videos' && (
-        <ShelterVideosForm onSave={() => undefined} />
-      )}
+
       {currentTab === 'media-links' && (
-        <ShelterMediaLinksForm onSave={() => undefined} />
-      )} */}
+        <ShelterMediaLinks
+          shelterId={shelterId}
+          mediaLinks={mediaLinks || []}
+        />
+      )}
     </div>
   );
 }

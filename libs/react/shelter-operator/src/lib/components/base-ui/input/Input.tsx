@@ -28,6 +28,7 @@ export const Input = forwardRef<
   {
     id,
     label,
+    labelVariant,
     labelSuffix,
     error,
     dataType,
@@ -100,7 +101,7 @@ export const Input = forwardRef<
           labelSuffix={labelSuffix}
           suffixClassName={labelSuffixClassName}
           inputId={inputId}
-          variant={isViewEditMode ? 'offset' : undefined}
+          variant={labelVariant || (isViewEditMode ? 'offset' : undefined)}
           required={required}
         />
       )}

@@ -1,5 +1,5 @@
 const YOUTUBE_REGEX =
-  /(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/;
+  /(?:^|[/.])(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})(?![\w-])/;
 
 export function extractYouTubeVideoId(url: string): string | null {
   const match = url.match(YOUTUBE_REGEX);
