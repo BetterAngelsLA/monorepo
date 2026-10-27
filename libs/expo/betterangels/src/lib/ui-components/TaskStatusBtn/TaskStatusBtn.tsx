@@ -104,7 +104,9 @@ export function TaskStatusBtn(props: TaskStatusBtnProps) {
         type: 'error',
       });
 
-      const cacheId = client.cache.identify({ __typename: 'Task', id });
+      // 'TaskType' is the GraphQL typename the queries return; 'Task' never
+      // matches a cached entity, so this rollback silently did nothing.
+      const cacheId = client.cache.identify({ __typename: 'TaskType', id });
       client.cache.modify({
         id: cacheId,
         fields: {

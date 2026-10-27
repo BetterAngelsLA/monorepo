@@ -3852,6 +3852,7 @@ export type TaskFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<TaskFilter>;
   OR?: InputMaybe<TaskFilter>;
+  assignees?: InputMaybe<Array<Scalars['ID']['input']>>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   clientProfileLookup?: InputMaybe<IdFilterLookup>;
