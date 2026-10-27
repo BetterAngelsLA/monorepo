@@ -182,8 +182,16 @@ jobs:
           PREVIEW_DEPLOYED_APPS="$(yarn nx show projects --affected --with-target deploy --configuration preview | tr '\n' ',')"
           export PREVIEW_DEPLOYED_APPS
           echo "Deployed for this run: ${PREVIEW_DEPLOYED_APPS:-none}"
+          # A suite only runs when this run deployed the app it tests; otherwise it
+          # would drive a local server, and the specs describe the deployed site.
+          PROJECTS="$(node tools/shared/e2e-projects.mjs)"
+          if [ -z "$PROJECTS" ]; then
+            echo "::notice::E2E skipped: none of the apps under test was deployed for this run."
+            echo '### E2E skipped — nothing under test was deployed for this run' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           yarn playwright install chromium
-          yarn nx run-many -t e2e --projects=tag:ci-e2e --configuration preview --output-style=stream
+          yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview --output-style=stream
 
       - name: 📱 Mobile preview
         if: github.event.pull_request.head.repo.fork == false
@@ -195,7 +203,7 @@ jobs:
           # `copy-lockfile` below reshapes the workspace for EAS Build; restore it
           # however this step ends. Called directly — it must not need a project
           # graph built from the manifests it is undoing.
-          trap 'node tools/scripts/restore-workspace.mjs --project betterangels || echo "::warning::Could not restore the EAS-shaped workspace"' EXIT
+          trap 'node tools/scripts/restore-workspace.mjs --project betterangels || true' EXIT
           yarn nx run betterangels:write-eas-env:preview
 
           # No `expo prebuild`: it would leave `android/`+`ios/` in the checkout and

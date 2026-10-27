@@ -403,8 +403,13 @@ jobs:
             PREVIEW_DEPLOYED_APPS="$(yarn nx show projects --affected --with-target deploy --configuration preview | tr "\n" ",")"
             export PREVIEW_DEPLOYED_APPS
             echo "Deployed for this run: ${PREVIEW_DEPLOYED_APPS:-none}"
+            PROJECTS="$(node tools/shared/e2e-projects.mjs)"
+            if [ -z "$PROJECTS" ]; then
+              echo "::notice::E2E skipped: none of the apps under test was deployed for this run."
+              exit 0
+            fi
             yarn playwright install chromium
-            yarn nx run-many -t e2e --projects=tag:ci-e2e --configuration preview --output-style=stream
+            yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview --output-style=stream
           '
 
       - name: 📎 Upload Playwright reports
@@ -425,7 +430,7 @@ jobs:
           # Restores what `copy-lockfile` rewrites, even when the build fails.
           docker compose run --rm better-angels bash -c '
             set -euo pipefail
-            trap "node tools/scripts/restore-workspace.mjs --project betterangels || echo '::warning::Could not restore the EAS-shaped workspace'" EXIT
+            trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
             # Env, then the EAS-shaped workspace: the runtime is resolved from
             # both, so they have to match what the build uploads. `sync-deps` is
             # deliberately absent — it installs, and installing after

@@ -48,7 +48,9 @@ Two checks, split by what should block a merge:
 - **`BuildTestDeploy (preview)`** — checks only: `lint typecheck test build`. No
   deploy, no EAS. `main` and `merge_group` still deploy from this workflow.
 - **`Preview`** — one job: web deploy **and** the EAS update in parallel, then the
-  Playwright suites, then the mobile build. Both checks are required.
+  Playwright suites, then the mobile build. Not a required check: it only runs on
+  `pull_request`, and a required check that never reports on `merge_group`
+  deadlocks the merge queue.
 
 ### Platforms
 
