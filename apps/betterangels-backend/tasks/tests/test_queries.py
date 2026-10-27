@@ -298,6 +298,31 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
 
+class TaskListAssigneeQueryCountTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+    """The list must join the assignee, not fetch it per row."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        for _ in range(8):
+            baker.make(
+                Task,
+                organization=self.org_1,
+                assignee=self.org_1_case_manager_2,
+                created_by=self.org_1_case_manager_1,
+                team=self.org_1_team_1,
+                client_profile=baker.make(ClientProfile),
+            )
+
+    def test_tasks_list_does_not_add_a_query_per_assignee(self) -> None:
+        # A per-row assignee lookup would be 4 + 8 here. The flat count is the
+        # assertion: if `assignee` ever stops being joined, this grows by rows.
+        with self.assertNumQueriesWithoutCache(4):
+            response = self.execute_graphql(self.get_tasks_query())
+
+        self.assertEqual(response["data"]["tasks"]["totalCount"], 8)
+
 class TaskAssigneeQueryTestCase(GraphQLBaseTestCase):
     """``taskAssignees`` backs the assignee picker on the task form."""
 
