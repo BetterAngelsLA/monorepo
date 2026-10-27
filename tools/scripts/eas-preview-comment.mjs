@@ -255,8 +255,10 @@ async function notifySlack() {
   const section = (title, platform) => {
     const build = forPlatform(platform);
     const sim = platform === 'ios' ? simulator : undefined;
+    // The platform headings are not bold in the message this pipeline has always
+    // posted; only the header is.
     const lines = [
-      `*${title}*`,
+      title,
       '',
       link('Update', updates[platform] ? updateUrl(updates[platform].group) : undefined),
       link('Build', build ? buildUrl(build.id) : undefined),
