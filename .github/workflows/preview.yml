@@ -86,10 +86,11 @@ jobs:
           export EXPO_BASE_URL="$(node tools/shared/print-base-path.mjs)"
           yarn nx run betterangels:write-eas-env:preview
 
-          # EAS prebuilds before fingerprinting; mirror that inside the app so the
-          # runtime version matches the one the build calculates. From the repo
-          # root expo falls back to the root package.json and fingerprints a
-          # different app entirely.
+          # Mirror the build environment before fingerprinting: the pre-install
+          # hook resolves star deps and copies packageManager/overrides into the
+          # app package.json, and those files are part of the fingerprint. EAS
+          # prebuilds inside the app, so do the same instead of from the root.
+          yarn nx run betterangels:copy-lockfile
           yarn nx run betterangels:prebuild
           ANDROID_RUNTIME="$(cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" runtimeversion:resolve --platform android --workflow generic)"
           IOS_RUNTIME="$(cd apps/betterangels && "$GITHUB_WORKSPACE/node_modules/.bin/expo-updates" runtimeversion:resolve --platform ios --workflow generic)"
