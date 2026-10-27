@@ -639,7 +639,8 @@ def _schedule_events(
     target_type: str,
     target_id: str,
     resolver: _LabelResolver,
-) -> tuple[list[AuditEventData], dict[tuple[str, Any, str], list[Any]]]:
+    max_events: int | None = None,
+) -> tuple[list[AuditEventData], dict[tuple[str, Any, str], list[Any]], bool]:
     """Net a full-replacement schedule save into per-slot changes (§13).
 
     ``shelter_update`` replaces the schedule set wholesale, so a single field edit
@@ -648,7 +649,9 @@ def _schedule_events(
     UPDATE event per slot whose times actually changed. Slots that were genuinely
     added or removed keep their INSERT/DELETE events.
 
-    Returns ``(events, per_slot_changes)``.
+    *max_events* is the remaining per-action event budget (the same
+    ``MAX_EVENTS_PER_ACTION`` counter the caller uses): netting shares it rather
+    than emitting past the cap. Returns ``(events, per_slot_changes, truncated)``.
     """
 
     def identity(data: dict[str, Any]) -> tuple[Any, ...]:
@@ -677,7 +680,14 @@ def _schedule_events(
         for field_name, pair in changes.items():
             action_changes[(owner, row.pgh_obj_id, field_name)] = pair
 
-    def emit(row: Any, changes: dict[str, list[Any]], *, kind: str | None = None, action: str | None = None) -> None:
+    def emit(row: Any, changes: dict[str, list[Any]], *, kind: str | None = None, action: str | None = None) -> bool:
+        """Append one netted event, respecting the caller's remaining budget.
+
+        Returns False when the budget is exhausted, so callers stop netting and
+        report ``truncated`` instead of emitting past the per-action cap.
+        """
+        if max_events is not None and len(events) >= max_events:
+            return False
         events.append(
             AuditEventData(
                 timestamp=row.pgh_created_at,
@@ -690,6 +700,7 @@ def _schedule_events(
             )
         )
         remember(row, changes)
+        return True
 
     for ident, adds in adds_by_identity.items():
         removes = removes_by_identity.get(ident, [])
@@ -738,31 +749,37 @@ def _schedule_events(
             }
             if not diffs:
                 continue
-            slot: dict[str, list[Any]] = {
-                "day": [render("day", data.get("day")), render("day", data.get("day"))],
-                "schedule_type": [
-                    render("schedule_type", data.get("schedule_type")),
-                    render("schedule_type", data.get("schedule_type")),
-                ],
-            }
+            # A null ``day`` means "every day" (Schedule.day help text); omit it
+            # so the UI's pinned fallback renders "Every day" rather than "—".
+            slot: dict[str, list[Any]] = {}
+            day = render("day", data.get("day"))
+            if day is not None:
+                slot["day"] = [day, day]
+            schedule_type = render("schedule_type", data.get("schedule_type"))
+            if schedule_type is not None:
+                slot["schedule_type"] = [schedule_type, schedule_type]
             slot.update(diffs)
-            emit(add, slot, kind="UPDATE", action="shelter.schedule.update")
+            if not emit(add, slot, kind="UPDATE", action="shelter.schedule.update"):
+                return events, action_changes, True
 
         for add in changed_adds[paired:]:  # genuinely new slots
-            emit(add, _render_keys(_scalar_changes(add, resolver), add.pgh_obj_model))
+            if not emit(add, _render_keys(_scalar_changes(add, resolver), add.pgh_obj_model)):
+                return events, action_changes, True
 
         for rem in removes[paired:]:  # genuinely deleted slots
-            emit(rem, _render_keys(_scalar_changes(rem, resolver), rem.pgh_obj_model))
+            if not emit(rem, _render_keys(_scalar_changes(rem, resolver), rem.pgh_obj_model)):
+                return events, action_changes, True
 
     # Identities with removes but no adds: every slot of that shape was deleted.
     for ident, removes in removes_by_identity.items():
         if ident in adds_by_identity:
             continue
         for rem in removes:
-            emit(rem, _render_keys(_scalar_changes(rem, resolver), rem.pgh_obj_model))
+            if not emit(rem, _render_keys(_scalar_changes(rem, resolver), rem.pgh_obj_model)):
+                return events, action_changes, True
 
     events.sort(key=lambda event: event.timestamp)
-    return events, action_changes
+    return events, action_changes, False
 
 
 def _finalize(value: Any, resolver: _LabelResolver) -> Any:
@@ -1163,9 +1180,16 @@ def _build_action(
         )
 
     # Schedules arrive as a full-replacement remove/add set; net them per slot.
-    schedule_events, schedule_changes = _schedule_events(
-        schedule_rows, target_type=target_type, target_id=target_id, resolver=resolver
+    # They share the action's remaining event budget, so netting cannot emit past
+    # ``MAX_EVENTS_PER_ACTION`` (the cap the loop above enforces for other rows).
+    schedule_events, schedule_changes, schedule_truncated = _schedule_events(
+        schedule_rows,
+        target_type=target_type,
+        target_id=target_id,
+        resolver=resolver,
+        max_events=max(0, MAX_EVENTS_PER_ACTION - len(events)),
     )
+    truncated = truncated or schedule_truncated
     events.extend(schedule_events)
     events.sort(key=lambda event: event.timestamp)
     scalar_changes.update(schedule_changes)

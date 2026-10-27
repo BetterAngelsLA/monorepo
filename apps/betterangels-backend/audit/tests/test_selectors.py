@@ -1572,3 +1572,58 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].events, [])
         self.assertEqual(actions[0].field_changes, {})
+
+    def test_every_day_slot_keeps_the_day_key_out_of_the_netted_change(self) -> None:
+        """``day=None`` means every day; omit it so the UI renders its fallback."""
+        with audit_context(label="seed"):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=None,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=None,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        changes = actions[0].events[0].field_changes or {}
+        self.assertNotIn("day", changes)
+        self.assertEqual(changes["start_time"], ["09:00:00", "10:00:00"])
+        self.assertEqual(changes["end_time"], ["17:00:00", "18:00:00"])
+
+    def test_schedule_netting_respects_the_event_cap(self) -> None:
+        """Netting shares the action's event budget instead of emitting past it."""
+        with audit_context(label="seed"):
+            self.shelter.schedules.all().delete()
+            for start in (time(9, 0), time(10, 0), time(11, 0)):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=time(17, 0),
+                )
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            for start in (time(9, 30), time(10, 30), time(11, 30)):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=time(17, 0),
+                )
+
+        with mock.patch("audit.selectors.MAX_EVENTS_PER_ACTION", 2):
+            actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertTrue(actions[0].truncated)
+        self.assertEqual(len(actions[0].events), 2)
