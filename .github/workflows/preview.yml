@@ -136,6 +136,16 @@ jobs:
           has_build ios "$IOS_RUNTIME" development-simulator \
             || yarn nx run betterangels:eas-build:preview --profile=development-simulator --platform=ios --wait=false --freezeCredentials=true --json=true
 
+      - name: 🩺 Build diagnostics (temporary)
+        continue-on-error: true
+        run: |
+          cd apps/betterangels
+          for id in 16c3ca8c-c448-45b6-9676-353c302b4141 81dc98b8-a722-4c1c-ae2b-055b10653f90 ee457bde-cdfc-4f5c-bf55-55d87afb6c1d; do
+            echo "=== $id ==="
+            eas build:view "$id" --json > /tmp/b.json 2>&1 || true
+            node -e 'const fs=require("fs");const raw=fs.readFileSync("/tmp/b.json","utf8");const s=raw.indexOf("{"),e=raw.lastIndexOf("}");if(s<0){console.log(raw.slice(0,600));process.exit(0)}const b=JSON.parse(raw.slice(s,e+1));console.log("status:",b.status);console.log("error:",JSON.stringify(b.error??null).slice(0,800))'
+          done
+
           # export-web computes its own base path, so it is not in the job env.
           yarn nx affected -t eas-update export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
 
