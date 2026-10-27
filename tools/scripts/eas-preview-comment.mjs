@@ -22,7 +22,7 @@ import path from 'node:path';
 import minimist from 'minimist';
 
 import { bestBuild } from './build-rank.mjs';
-import { parseJsonOutput } from './cli-json.mjs';
+import { parseJsonOutput, updateGroups } from './cli-json.mjs';
 import { buildCell } from './preview-builds.mjs';
 
 const argv = minimist(process.argv.slice(2), {
@@ -120,17 +120,19 @@ function latestBuild(platform, profile, runtime) {
 
 function latestUpdate(platform) {
   try {
-    return runJson([
-      'update:list',
-      '--branch',
-      branch,
-      '--platform',
-      platform,
-      '--limit',
-      '1',
-      '--json',
-      '--non-interactive',
-    ])[0];
+    return updateGroups(
+      runJson([
+        'update:list',
+        '--branch',
+        branch,
+        '--platform',
+        platform,
+        '--limit',
+        '1',
+        '--json',
+        '--non-interactive',
+      ]),
+    )[0];
   } catch (error) {
     console.error(`Could not list ${platform} updates: ${error.message}`);
     return undefined;

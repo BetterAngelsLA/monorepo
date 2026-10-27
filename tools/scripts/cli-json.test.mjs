@@ -9,7 +9,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { parseJsonOutput } from './cli-json.mjs';
+import { parseJsonOutput, updateGroups } from './cli-json.mjs';
 
 describe('parseJsonOutput', () => {
   it('skips notices before an array payload', () => {
@@ -55,5 +55,22 @@ describe('parseJsonOutput', () => {
       () => parseJsonOutput('no payload here'),
       /No JSON in output/,
     );
+  });
+});
+
+describe('updateGroups', () => {
+  it('unwraps the branch wrapper eas update:list prints', () => {
+    // `{ name, id, currentPage: [...] }` — not the array the old first-`[`-to-
+    // last-`]` slice used to lift out of it.
+    const payload = parseJsonOutput(
+      '{"name":"b","id":"1","currentPage":[{"group":"g1"},{"group":"g2"}]}',
+    );
+
+    assert.deepEqual(updateGroups(payload), [{ group: 'g1' }, { group: 'g2' }]);
+  });
+
+  it('passes an array through, and tolerates nothing', () => {
+    assert.deepEqual(updateGroups([{ group: 'g1' }]), [{ group: 'g1' }]);
+    assert.deepEqual(updateGroups(undefined), []);
   });
 });
