@@ -24,7 +24,14 @@ export default function Header({
         only where there is no status bar to fill (web). `insets.top` is 0
         there and the real height on a device.
       */}
-      <View style={[styles.heading, { paddingTop: insets.top }]}>
+      <View
+        style={[
+          styles.heading,
+          // Floor the padding: on web `insets.top` is 0, which left the
+          // wordmark flush against the top edge and read as clipped.
+          { paddingTop: Math.max(insets.top, Spacings.xs) },
+        ]}
+      >
         <View>
           <Logo
             style={{ marginBottom: Spacings.xs }}
