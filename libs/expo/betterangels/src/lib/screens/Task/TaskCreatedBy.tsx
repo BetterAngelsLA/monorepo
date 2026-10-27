@@ -1,5 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { TextStyle } from 'react-native';
 import { formatMemberName } from '../../util/formatMemberName';
 import { TaskQuery } from './__generated__/Task.generated';
 
@@ -7,17 +8,18 @@ type TaskCreatedByProps = {
   createdBy: TaskQuery['task']['createdBy'];
   team?: TaskQuery['task']['team'];
   organization?: TaskQuery['task']['organization'];
+  style?: TextStyle;
 };
 
 /**
- * Who created the task, as a single muted line.
+ * Who created the task, as the left half of the detail's footer line.
  *
- * Matches the card's treatment: the creator is provenance, not someone the
- * reader acts on, so it reads at caption weight beside the date rather than
- * taking an avatar block of its own next to the client and the assignee.
+ * Same word and weight as the card's footer ("by …"), so provenance reads
+ * identically on both surfaces. The affiliation trails it and truncates first
+ * if the line runs out of room — it is the least load-bearing part.
  */
 export default function TaskCreatedBy(props: TaskCreatedByProps) {
-  const { createdBy, team, organization } = props;
+  const { createdBy, team, organization, style } = props;
 
   const name = formatMemberName(createdBy);
   const affiliation = [organization?.name, team?.name]
@@ -27,8 +29,13 @@ export default function TaskCreatedBy(props: TaskCreatedByProps) {
   if (!name) return null;
 
   return (
-    <TextRegular size="xs" color={Colors.NEUTRAL_DARK} numberOfLines={1}>
-      {[`Created by ${name}`, affiliation].filter(Boolean).join(' · ')}
+    <TextRegular
+      size="xs"
+      color={Colors.NEUTRAL_DARK}
+      numberOfLines={1}
+      style={style}
+    >
+      {[`by ${name}`, affiliation].filter(Boolean).join(' · ')}
     </TextRegular>
   );
 }
