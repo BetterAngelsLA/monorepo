@@ -1,0 +1,14 @@
+mutation DeleteMediaLinks($data: BulkDeleteInput!) {
+  deleteMediaLinks(data: $data) {
+    ... on BulkDeleteResult {
+      ids
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

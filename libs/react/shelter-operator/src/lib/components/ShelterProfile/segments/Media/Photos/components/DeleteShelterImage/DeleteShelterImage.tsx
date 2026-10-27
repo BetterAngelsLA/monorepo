@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useDeleteShelterPhotos } from '../../../../../../../hooks/useDeleteShelterPhotos';
 import { ConfirmationModal } from '../../../../../../base-ui/modal/ConfirmationModal';
+import { TableActionBtn } from '../../../../../../base-ui/table';
 import { useToast } from '../../../../../../base-ui/toast';
-import { DeleteShelterImageBtn } from './DeleteShelterImageBtn';
 
 type TProps = {
   photoId: string;
@@ -46,7 +46,9 @@ export function DeleteShelterImage(props: TProps) {
 
   return (
     <>
-      <DeleteShelterImageBtn
+      <TableActionBtn
+        action="delete"
+        label="Delete photo"
         onClick={() => setIsOpen(true)}
         disabled={disabled || loading}
       />

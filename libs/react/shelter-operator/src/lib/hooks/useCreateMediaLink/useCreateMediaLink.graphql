@@ -1,0 +1,18 @@
+mutation CreateMediaLink($data: CreateMediaLinkInput!) {
+  createMediaLink(data: $data) {
+    __typename
+    ... on MediaLinkType {
+      id
+      url
+      title
+      mediaType
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
