@@ -139,6 +139,8 @@ jobs:
           # Mobile preview links (builds, updates, QR, simulator) on the PR.
           yarn nx run betterangels:preview-comment
 
+      # The mobile preview comment above links the EAS builds/updates for this
+      # runtime; it reads EAS state only, so it never queues work itself.
       - name: 🧪 E2E
         env:
           CI: 'true'
