@@ -1,6 +1,6 @@
 import { useActiveOrg } from '@monorepo/ba-platform';
 import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
-import { useDebounce } from '@monorepo/react/shared';
+import { mergeCss, useDebounce } from '@monorepo/react/shared';
 import { endOfDay, startOfDay } from 'date-fns';
 import { X } from 'lucide-react';
 import {
@@ -10,62 +10,42 @@ import {
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent,
 } from 'react';
 import type { AuditActorOption, ObjectAuditLogFilters } from '../../hooks';
 import { MIN_ACTOR_SEARCH_LENGTH, useAuditActors } from '../../hooks';
-import { Button } from '../base-ui/buttons';
 import { Dropdown, type DropdownOption } from '../base-ui/dropdown';
 import { Input } from '../base-ui/input';
-import { Modal } from '../base-ui/modal';
 import { Text } from '../base-ui/text/text';
-import { Calendar, resolvePreset } from '../date-range-filter';
+import {
+  DateRangePicker,
+  PRESET_LABELS,
+  resolvePreset,
+  type DateRange,
+  type DateRangePreset,
+} from '../date-range-filter';
 
-type AuditDatePreset =
-  | 'ALL'
-  | 'LAST_7_DAYS'
-  | 'LAST_30_DAYS'
-  | 'MONTH_TO_DATE'
-  | 'YEAR_TO_DATE'
-  | 'CUSTOM';
+type AuditDatePreset = 'ALL' | DateRangePreset;
 
 const DATE_PRESET_OPTIONS: ReadonlyArray<DropdownOption<AuditDatePreset>> = [
   { value: 'ALL', label: 'All time' },
-  { value: 'LAST_7_DAYS', label: 'Last 7 days' },
-  { value: 'LAST_30_DAYS', label: 'Last 30 days' },
-  { value: 'MONTH_TO_DATE', label: 'Month to date' },
-  { value: 'YEAR_TO_DATE', label: 'Year to date' },
-  { value: 'CUSTOM', label: 'Custom range' },
+  ...(Object.entries(PRESET_LABELS) as Array<[DateRangePreset, string]>).map(
+    ([value, label]) => ({ value, label }),
+  ),
 ];
 
 /** How long to wait after the last keystroke before querying actors. */
 const ACTOR_SEARCH_DEBOUNCE_MS = 300;
 
-type DateRangeValue = { from: Date | null; to: Date | null };
-
-function toFilters(
-  preset: AuditDatePreset,
-  range: DateRangeValue,
+function rangeToFilters(
+  range: DateRange,
   actorId: string | null,
 ): ObjectAuditLogFilters {
-  const boundsFor = (
-    from: Date | null,
-    to: Date | null,
-  ): ObjectAuditLogFilters => ({
-    dateFrom: from ? startOfDay(from).toISOString() : null,
-    dateTo: to ? endOfDay(to).toISOString() : null,
+  return {
+    dateFrom: range.from ? startOfDay(range.from).toISOString() : null,
+    dateTo: range.to ? endOfDay(range.to).toISOString() : null,
     actorId,
-  });
-
-  if (preset === 'ALL') {
-    return { dateFrom: null, dateTo: null, actorId };
-  }
-  if (preset === 'CUSTOM') {
-    return boundsFor(range.from, range.to);
-  }
-
-  const resolved = resolvePreset(preset);
-
-  return boundsFor(resolved.from, resolved.to);
+  };
 }
 
 /**
@@ -86,8 +66,10 @@ function ActorFilter({
   const debouncedSearch = useDebounce(search, ACTOR_SEARCH_DEBOUNCE_MS);
   const { options, loading } = useAuditActors({ search: debouncedSearch });
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
 
   useEffect(() => {
@@ -98,6 +80,7 @@ function ActorFilter({
     const handlePointerDown = (event: PointerEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) {
         setIsOpen(false);
+        setActiveIndex(-1);
       }
     };
 
@@ -105,13 +88,34 @@ function ActorFilter({
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [isOpen]);
 
+  // A new result set starts with no active option.
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    if (activeIndex < 0) {
+      return;
+    }
+    const item = listRef.current?.children[activeIndex] as
+      | HTMLElement
+      | undefined;
+    item?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeIndex]);
+
   const term = debouncedSearch.trim();
   const canSearch = term.length >= MIN_ACTOR_SEARCH_LENGTH;
+  const optionId = (index: number) => `${listboxId}-option-${index}`;
+  const activeOptionId =
+    isOpen && activeIndex >= 0 && activeIndex < options.length
+      ? optionId(activeIndex)
+      : undefined;
 
   const selectActor = (option: AuditActorOption) => {
     setSelectedLabel(option.label);
     setSearch('');
     setIsOpen(false);
+    setActiveIndex(-1);
     onChange(option.id);
   };
 
@@ -119,7 +123,70 @@ function ActorFilter({
     setSelectedLabel(null);
     setSearch('');
     setIsOpen(false);
+    setActiveIndex(-1);
     onChange(null);
+  };
+
+  const handleKeyDown = (
+    event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    if (event.key === 'Escape') {
+      setIsOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+
+    if (!canSearch || options.length === 0) {
+      return;
+    }
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+          setActiveIndex(0);
+          return;
+        }
+        setActiveIndex((index) =>
+          index < 0 || index >= options.length - 1 ? 0 : index + 1,
+        );
+        return;
+      case 'ArrowUp':
+        event.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+          setActiveIndex(options.length - 1);
+          return;
+        }
+        setActiveIndex((index) =>
+          index <= 0 ? options.length - 1 : index - 1,
+        );
+        return;
+      case 'Home':
+        if (!isOpen) {
+          return;
+        }
+        event.preventDefault();
+        setActiveIndex(0);
+        return;
+      case 'End':
+        if (!isOpen) {
+          return;
+        }
+        event.preventDefault();
+        setActiveIndex(options.length - 1);
+        return;
+      case 'Enter':
+        if (!isOpen || activeIndex < 0 || activeIndex >= options.length) {
+          return;
+        }
+        event.preventDefault();
+        selectActor(options[activeIndex]);
+        return;
+      default:
+        return;
+    }
   };
 
   if (actorId) {
@@ -152,28 +219,31 @@ function ActorFilter({
         placeholder="Search actors"
         value={search}
         autoComplete="off"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={listboxId}
+        aria-activedescendant={activeOptionId}
         onFocus={() => setIsOpen(true)}
         onBlur={(event) => {
           if (!containerRef.current?.contains(event.relatedTarget as Node)) {
             setIsOpen(false);
+            setActiveIndex(-1);
           }
         }}
         onChange={(event) => {
           setSearch(event.target.value);
           setIsOpen(true);
+          setActiveIndex(-1);
         }}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            setIsOpen(false);
-          }
-        }}
+        onKeyDown={handleKeyDown}
       />
 
       {isOpen && (
         <div
           id={listboxId}
+          ref={listRef}
           role="listbox"
           aria-label="Actors"
           className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-neutral-90 bg-white p-1 shadow-lg"
@@ -191,15 +261,22 @@ function ActorFilter({
               No actors found.
             </Text>
           ) : (
-            options.map((option) => (
+            options.map((option, index) => (
               <button
+                id={optionId(index)}
                 key={option.id}
                 type="button"
                 role="option"
-                aria-selected={false}
+                aria-selected={index === activeIndex}
+                onMouseEnter={() => setActiveIndex(index)}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => selectActor(option)}
-                className="block w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm text-neutral-20 hover:bg-neutral-99"
+                className={mergeCss([
+                  'block w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm text-neutral-20',
+                  index === activeIndex
+                    ? 'bg-neutral-99'
+                    : 'hover:bg-neutral-99',
+                ])}
               >
                 {option.label}
               </button>
@@ -226,67 +303,64 @@ export function AuditFilterBar({
   );
 
   const [preset, setPreset] = useState<AuditDatePreset>('ALL');
-  const [range, setRange] = useState<DateRangeValue>({ from: null, to: null });
+  const [range, setRange] = useState<DateRange>({ from: null, to: null });
+  const [previewCustom, setPreviewCustom] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [actorId, setActorId] = useState<string | null>(null);
-  const [month, setMonth] = useState<Date>(() => new Date());
-  const [draftRange, setDraftRange] = useState<{
-    from: Date | undefined;
-    to?: Date | undefined;
-  }>({ from: undefined });
-  const [isCustomOpen, setIsCustomOpen] = useState(false);
 
-  const presetValue = useMemo(
-    () => DATE_PRESET_OPTIONS.find((option) => option.value === preset) ?? null,
-    [preset],
-  );
+  const presetValue = useMemo(() => {
+    const value = previewCustom ? 'CUSTOM' : preset;
+
+    return DATE_PRESET_OPTIONS.find((option) => option.value === value) ?? null;
+  }, [preset, previewCustom]);
 
   const handlePresetChange = useCallback(
     (option: DropdownOption<AuditDatePreset> | null) => {
       const next = option?.value ?? 'ALL';
 
       if (next === 'CUSTOM') {
-        const customRange = {
-          from: range.from ?? undefined,
-          to: range.to ?? undefined,
-        };
-        setDraftRange(customRange);
-        setMonth(customRange.from ?? new Date());
-        setIsCustomOpen(true);
+        setPreviewCustom(true);
+        setIsPickerOpen(true);
         return;
       }
 
-      let nextRange: DateRangeValue = { from: null, to: null };
-      if (next !== 'ALL') {
-        const resolved = resolvePreset(next);
-        nextRange = { from: resolved.from, to: resolved.to };
-      }
+      const nextRange: DateRange =
+        next === 'ALL' ? { from: null, to: null } : resolvePreset(next);
 
       setPreset(next);
+      setPreviewCustom(false);
       setRange(nextRange);
-      onChange(toFilters(next, nextRange, actorId));
+      setIsPickerOpen(false);
+      onChange(rangeToFilters(nextRange, actorId));
     },
-    [range.from, range.to, actorId, onChange],
+    [actorId, onChange],
+  );
+
+  const handlePickerOpenChange = useCallback((isOpen: boolean) => {
+    setIsPickerOpen(isOpen);
+    if (!isOpen) {
+      setPreviewCustom(false);
+    }
+  }, []);
+
+  const handlePickerCommit = useCallback(
+    (next: DateRange) => {
+      setPreset('CUSTOM');
+      setPreviewCustom(false);
+      setRange(next);
+      setIsPickerOpen(false);
+      onChange(rangeToFilters(next, actorId));
+    },
+    [actorId, onChange],
   );
 
   const handleActorChange = useCallback(
     (nextActorId: string | null) => {
       setActorId(nextActorId);
-      onChange(toFilters(preset, range, nextActorId));
+      onChange(rangeToFilters(range, nextActorId));
     },
-    [preset, range, onChange],
+    [range, onChange],
   );
-
-  const handleApplyCustom = useCallback(() => {
-    const nextRange: DateRangeValue = {
-      from: draftRange.from ?? null,
-      to: draftRange.to ?? null,
-    };
-    setPreset('CUSTOM');
-    setRange(nextRange);
-    setMonth(nextRange.from ?? new Date());
-    setIsCustomOpen(false);
-    onChange(toFilters('CUSTOM', nextRange, actorId));
-  }, [draftRange, actorId, onChange]);
 
   return (
     <div className="flex flex-wrap items-end gap-3">
@@ -299,39 +373,18 @@ export function AuditFilterBar({
         />
       </div>
 
+      <DateRangePicker
+        className="w-80"
+        value={range}
+        open={isPickerOpen}
+        onOpenChange={handlePickerOpenChange}
+        onDirty={() => setPreviewCustom(true)}
+        onCommit={handlePickerCommit}
+      />
+
       {canViewActors && (
         <ActorFilter actorId={actorId} onChange={handleActorChange} />
       )}
-
-      <Modal
-        isOpen={isCustomOpen}
-        onClose={() => setIsCustomOpen(false)}
-        size="lg"
-      >
-        <div className="flex flex-col gap-4 p-6">
-          <Text variant="subheading" textColor="text-neutral-20">
-            Custom range
-          </Text>
-
-          <Calendar
-            selected={draftRange}
-            month={month}
-            onMonthChange={setMonth}
-            onSelect={(next) =>
-              setDraftRange({ from: next?.from, to: next?.to })
-            }
-          />
-
-          <div className="flex justify-end gap-2">
-            <Button variant="primary" onClick={() => setIsCustomOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" color="blue" onClick={handleApplyCustom}>
-              Apply
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

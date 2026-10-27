@@ -7,7 +7,6 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { addMonths, format, parse } from 'date-fns';
 import { AuditFilterBar } from './AuditFilterBar';
 import { AuditActorsDocument } from '../../hooks/useAuditActors/__generated__/useAuditActors.generated';
 
@@ -35,17 +34,6 @@ class ResizeObserverStub {
 }
 (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
   ResizeObserverStub;
-if (!HTMLDialogElement.prototype.showModal) {
-  HTMLDialogElement.prototype.showModal = function showModal() {
-    this.setAttribute('open', '');
-  };
-  HTMLDialogElement.prototype.close = function close() {
-    this.removeAttribute('open');
-  };
-}
-
-const MONTH_RE =
-  /\b(January|February|March|April|May|June|July|August|September|October|November|December)\b \d{4}/;
 
 function actorMock(search: string, calls?: string[]) {
   return {
@@ -92,19 +80,29 @@ describe('AuditFilterBar', () => {
     org.permissions = [];
   });
 
-  it('navigates months in the custom-range calendar', async () => {
-    renderBar();
+  it('applies a shared preset range', async () => {
+    const onChange = vi.fn();
+    renderBar([], onChange);
+
     fireEvent.click(screen.getByRole('combobox'));
-    fireEvent.click(await screen.findByText('Custom range'));
+    fireEvent.click(await screen.findByText('Last 7 Days'));
 
-    const initialLabel = screen.getByText(MONTH_RE).textContent ?? '';
-    const initialMonth = parse(initialLabel, 'MMMM yyyy', new Date());
-    const expected = format(addMonths(initialMonth, 1), 'MMMM yyyy');
+    expect(onChange).toHaveBeenCalledWith({
+      dateFrom: expect.any(String),
+      dateTo: expect.any(String),
+      actorId: null,
+    });
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: /next month/i }));
+  it('opens the shared date picker for a custom range', async () => {
+    renderBar();
 
-    expect(screen.getByText(expected)).not.toBeNull();
-    expect(screen.getByText(MONTH_RE).textContent).not.toBe(initialLabel);
+    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(await screen.findByText('Custom'));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Select date range' }),
+    ).not.toBeNull();
   });
 
   it('queries actors only after two debounced characters', async () => {
@@ -130,6 +128,29 @@ describe('AuditFilterBar', () => {
     fireEvent.change(input, { target: { value: 'ad' } });
     await waitFor(() => expect(calls).toEqual(['ad']));
     expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
+  });
+
+  it('selects a searched actor with the keyboard', async () => {
+    org.activeOrg = { id: 'org-1', name: 'Org', permissions: [] };
+    org.permissions = [UserOrganizationPermissions.ViewOrgMembers];
+    const onChange = vi.fn();
+
+    renderBar([actorMock('ad')], onChange);
+
+    const input = screen.getByPlaceholderText('Search actors');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'ad' } });
+
+    const option = await screen.findByRole('option', {
+      name: 'Ada Lovelace',
+    });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(option.getAttribute('aria-selected')).toBe('true');
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId: 'user-1' }),
+    );
   });
 
   it('applies and clears the selected actor', async () => {
