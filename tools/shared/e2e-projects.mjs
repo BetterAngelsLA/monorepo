@@ -9,11 +9,14 @@
  * projects comma-separated for `nx run-many --projects=`, and the skips with a
  * reason on stderr.
  *
- * The app under test is the suite's `implicitDependencies`, so nothing is named
- * twice: `shelter-e2e` declares `shelter-web` in its project file.
+ * The suite/app relationship is Nx's: a suite carries the `ci-e2e` tag and names
+ * the app it tests through `implicitDependencies`, so nothing is declared twice
+ * and the graph answers both questions. "Was it deployed in *this* run" is
+ * runtime state the graph cannot express; that is the one condition applied here.
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const deployed = String(process.env.PREVIEW_DEPLOYED_APPS ?? '')
@@ -21,29 +24,24 @@ const deployed = String(process.env.PREVIEW_DEPLOYED_APPS ?? '')
   .map((name) => name.trim())
   .filter(Boolean);
 
-const projects = execFileSync(
-  'yarn',
-  ['nx', 'show', 'projects', '--projects=tag:ci-e2e'],
-  { encoding: 'utf8' },
-)
-  .split('\n')
-  .map((line) => line.trim())
-  .filter(Boolean);
+// The graph, not the project files: it carries the tags and the implicit
+// dependencies (including any a plugin contributes) in one query.
+const graphFile = join(mkdtempSync(join(tmpdir(), 'nx-graph-')), 'graph.json');
+execFileSync('yarn', ['nx', 'graph', '--file', graphFile], { stdio: 'ignore' });
+const { graph } = JSON.parse(readFileSync(graphFile, 'utf8'));
 
-const appsOf = (project) => {
-  try {
-    const manifest = JSON.parse(
-      readFileSync(join(process.cwd(), 'apps', project, 'project.json'), 'utf8'),
-    );
-    return manifest.implicitDependencies ?? [];
-  } catch {
-    return [];
-  }
-};
+const appsOf = (project) =>
+  (graph.dependencies[project] ?? [])
+    .filter(({ type }) => type === 'implicit' || type === 'static')
+    .map(({ target }) => target);
+
+const suites = Object.keys(graph.nodes).filter((name) =>
+  (graph.nodes[name].data?.tags ?? []).includes('ci-e2e'),
+);
 
 const run = [];
 const skipped = [];
-for (const project of projects) {
+for (const project of suites) {
   const apps = appsOf(project);
   if (apps.length === 0 || apps.some((app) => deployed.includes(app))) {
     run.push(project);
