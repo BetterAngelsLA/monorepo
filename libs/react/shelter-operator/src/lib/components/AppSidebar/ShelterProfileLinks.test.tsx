@@ -35,6 +35,17 @@ describe('ShelterProfileLinks', () => {
     expect(screen.queryByText('BA Private')).not.toBeNull();
   });
 
+  it('links the activity segment', () => {
+    mocks.useBaPrivatePermissions.mockReturnValue({ canViewAny: false });
+
+    renderLinks();
+
+    const link = screen.getByText('Activity').closest('a');
+    expect(link?.getAttribute('href')).toBe(
+      '/operator/shelter/shelter-1/profile/activity',
+    );
+  });
+
   it('omits the BA-private link when the user can view no section', () => {
     mocks.useBaPrivatePermissions.mockReturnValue({ canViewAny: false });
 
