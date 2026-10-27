@@ -21,7 +21,9 @@ process.stdin
       process.exit(1);
     }
     if (!Array.isArray(builds)) process.exit(1);
-    process.exit(
-      builds.some((build) => !UNUSABLE.has(build?.status)) ? 0 : 1,
+    // EAS reports upper-case statuses ("ERRORED", "IN_QUEUE").
+    const usable = builds.some(
+      (build) => !UNUSABLE.has(String(build?.status ?? '').toLowerCase()),
     );
+    process.exit(usable ? 0 : 1);
   });
