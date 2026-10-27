@@ -11,8 +11,6 @@
  *   BRANCH_NAME            EAS Update branch (required)
  *   PR_NUMBER, GITHUB_TOKEN, GITHUB_REPOSITORY   PR comment (optional)
  *   SLACK_WEBHOOK_URL, GITHUB_EVENT_NAME         Slack (main only)
- *   EAS_BUILD_PLATFORMS    what this run built; the comment reports both anyway
- *
  * Flags:
  *   --dry-run              print the comment instead of posting it (or DRY_RUN=1)
  */
@@ -49,11 +47,11 @@ if (!branch) {
   process.exit(1);
 }
 
-// Both platforms always get a column. `EAS_BUILD_PLATFORMS` says what this run
-// *built* — a JS-only change deliberately skips the iOS device build — but a
-// fingerprint builds once, so the binary for this runtime usually exists from an
-// earlier run and is worth linking. What a run built must not decide what the
-// comment reports; `buildCell` falls back when nothing exists.
+// Both platforms always get a column. Every run builds every platform the
+// fingerprint lacks (see `build-missing.ts`), so the lookup should find both; it
+// is still keyed on the update's runtime rather than on what this run built,
+// because a build from an earlier run is just as usable. `buildCell` falls back
+// when nothing exists.
 const PLATFORMS = ['android', 'ios'];
 // `EAS_PROFILE` lets the main pipeline report the production builds instead;
 // the simulator link only exists for preview.

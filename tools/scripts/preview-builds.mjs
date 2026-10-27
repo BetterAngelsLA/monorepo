@@ -1,12 +1,11 @@
 /**
  * The "Build Details" cell of the PR preview comment.
  *
- * A preview run only builds what the change needs: a JS-only change ships
- * through the EAS Update, so it builds android and the iOS simulator and skips
- * the iOS device build (see .github/workflows/preview.yml). The comment still
- * has to tell a reviewer where each platform's binary is, and a fingerprint
- * builds once — so the binary for this runtime usually exists already, even
- * when this run did not build it.
+ * A preview builds every platform the fingerprint has no build for (android,
+ * ios, and the iOS simulator binary), and a fingerprint builds once — so the
+ * binary for this runtime usually already exists from an earlier run. The
+ * comment still has to tell a reviewer where each platform's binary is, and say
+ * so when one genuinely does not exist.
  *
  * `eas-deploy.ts` solved that by triggering a build whenever one was missing and
  * linking the object `eas build --json` returned. Splitting it into

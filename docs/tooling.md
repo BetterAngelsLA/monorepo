@@ -54,19 +54,20 @@ Two checks, split by what should block a merge:
 
 ### Platforms
 
-`EAS_BUILD_PLATFORMS` is decided per run in the `Set Environment Variables` step:
-android always (the installable artifact), ios only when the change can affect
-the native binary — `package.json`, `yarn.lock`, `apps/betterangels/{app.config.js,
-app.json,eas.json,package.json}` or `ios/`/`android/`. A JS-only change reaches
-devices through the EAS Update, so an ios build would buy nothing.
+Both device platforms are built — android, ios — plus the iOS simulator binary
+that Maestro drives. Which ones actually queue is decided per fingerprint by
+`tools/scripts/eas-builds.ts`: a fingerprint builds once, so a platform that
+already has a build for it is reused, and only a missing one is queued. Nothing
+is skipped for being a JS-only change: an EAS Update is useless without a binary
+of the same runtime to run it, and a fingerprint that only ever saw JS changes
+would never get one.
 
 ### Labels
 
-| Label | Effect |
-|---|---|
-| `force-eas-build` | build even though a build exists for the fingerprint (the way out when a failed build poisoned it) |
-| `preview-platforms` | force `android,ios` regardless of the change |
-| `force-eas-env-sync` | re-push the EAS environment even when every variable is present (secret rotation) |
+| Label                | Effect                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------- |
+| `force-eas-build`    | build even though a build exists for the fingerprint (the way out when a failed build poisoned it) |
+| `force-eas-env-sync` | re-push the EAS environment even when every variable is present (secret rotation)                  |
 
 ### E2E suites
 
