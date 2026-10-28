@@ -109,29 +109,21 @@ export function ensureBuilds({
     console.log(`Queueing ${platform} build (profile: ${profile})...`);
     // `--wait=false` answers with the build object immediately, before `build:list`
     // lists it: its id is already a working permalink.
-    let payload: EasBuild | EasBuild[] | null = null;
-    try {
-      payload = runJson<EasBuild | EasBuild[]>(
-        'nx',
-        [
-          'run',
-          `${project}:eas-build`,
-          '--platform',
-          platform,
-          '--profile',
-          profile,
-          '--wait=false',
-          '--freezeCredentials',
-          '--json',
-        ],
-        { cwd: process.cwd() },
-      );
-    } catch (error) {
-      console.warn(
-        `Could not read the ${platform} build from eas build output (${error instanceof Error ? error.message : String(error)}); falling back to build:list.`,
-      );
-      return { platform, profile, runtime, build: null, reused: false };
-    }
+    const payload = runJson<EasBuild | EasBuild[]>(
+      'eas',
+      [
+        'build',
+        '--platform',
+        platform,
+        '--profile',
+        profile,
+        '--non-interactive',
+        '--no-wait',
+        '--freeze-credentials',
+        '--json',
+      ],
+      { cwd: projectDir },
+    );
     const build = Array.isArray(payload) ? payload[0] : payload;
     if (!build?.id) {
       console.warn(

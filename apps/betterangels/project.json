@@ -219,6 +219,29 @@
     },
     "build-missing": {
       "cache": false
+    },
+    "eas-build": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "sync-deps",
+        "copy-lockfile",
+        "ensure-symlink"
+      ],
+      "options": {
+        "cwd": "apps/betterangels",
+        "command": "eas build --profile preview --platform all --non-interactive --no-wait --freeze-credentials --json"
+      },
+      "configurations": {
+        "preview": {
+          "cwd": "apps/betterangels",
+          "command": "eas build --profile preview --platform all --non-interactive --no-wait --freeze-credentials --json"
+        },
+        "production": {
+          "cwd": "apps/betterangels",
+          "command": "eas build --profile production --platform all --non-interactive --no-wait --freeze-credentials --json"
+        }
+      }
     }
   }
 }
