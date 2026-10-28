@@ -207,27 +207,6 @@
         }
       }
     },
-    "serve": {
-      "executor": "@nx/expo:serve"
-    },
-    "run-ios": {
-      "executor": "@nx/expo:run",
-      "options": {
-        "platform": "ios"
-      }
-    },
-    "run-android": {
-      "executor": "@nx/expo:run",
-      "options": {
-        "platform": "android"
-      }
-    },
-    "export": {
-      "executor": "@nx/expo:export",
-      "options": {
-        "platform": "all"
-      }
-    },
     "ensure-symlink": {
       "executor": "@nx/expo:ensure-symlink"
     },
