@@ -92,7 +92,15 @@ export default function TabLayout() {
     tabBarActiveTintColor: Colors.PRIMARY_EXTRA_DARK,
     tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
     tabBarStyle: [styles.tabBar, { height: 70 + insets.bottom }],
-    tabBarItemStyle: styles.tabBarItem,
+    // `height` already includes the home-indicator inset, so without this the
+    // 70pt of item content sits at the top of a 104pt bar and the inset reads
+    // as dead space under the labels. Half the inset on each side centres the
+    // content in the bar, matching web where the inset is 0. The add button is
+    // positioned independently and is unaffected.
+    tabBarItemStyle: [
+      styles.tabBarItem,
+      { paddingVertical: 15 + insets.bottom / 2 },
+    ],
     // Every tab screen renders the in-app `Header` itself (logo + title +
     // menu). Leaving the navigator's header on stacked an empty 64pt bar above
     // it — 64pt of dead dark space on web, where there is no status bar to
