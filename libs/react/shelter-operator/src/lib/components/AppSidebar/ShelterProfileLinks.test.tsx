@@ -35,6 +35,15 @@ describe('ShelterProfileLinks', () => {
     expect(screen.queryByText('BA Private')).not.toBeNull();
   });
 
+  it('does not expose the activity segment in the sidebar', () => {
+    mocks.useBaPrivatePermissions.mockReturnValue({ canViewAny: false });
+
+    renderLinks();
+
+    // The log is reached from the Basic Info "Last updated" footer instead.
+    expect(screen.queryByText('Activity')).toBeNull();
+  });
+
   it('omits the BA-private link when the user can view no section', () => {
     mocks.useBaPrivatePermissions.mockReturnValue({ canViewAny: false });
 

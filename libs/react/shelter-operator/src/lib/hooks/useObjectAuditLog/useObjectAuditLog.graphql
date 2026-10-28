@@ -1,0 +1,36 @@
+query ObjectAuditLog(
+  $targetType: AuditTargetType!
+  $objectId: ID!
+  $filters: AuditEventFilter
+  $limit: Int!
+  $after: String
+) {
+  objectAuditLog(
+    targetType: $targetType
+    objectId: $objectId
+    filters: $filters
+    limit: $limit
+    after: $after
+  ) {
+    endCursor
+    hasNextPage
+    results {
+      timestamp
+      actor
+      summary
+      truncated
+      fieldChanges
+      events {
+        timestamp
+        actor
+        kind
+        action
+        targetType
+        targetId
+        summary
+        context
+        fieldChanges
+      }
+    }
+  }
+}

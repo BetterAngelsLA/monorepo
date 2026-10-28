@@ -115,6 +115,7 @@ export function ShelterBasicInfo(props: TProps) {
       onEditClick={canEditShelter ? () => setEditMode(true) : undefined}
       onCancel={onCancel}
       updatedAt={shelter.updatedAt}
+      shelterId={shelterId}
     />
   );
 }
