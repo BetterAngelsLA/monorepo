@@ -233,6 +233,11 @@ class GrantSelectorsTestCase(TestCase):
         self.assertTrue(can_obj(alice, Shelter.perms.VIEW, self.shelter_a))
         self.assertFalse(can_obj(alice, Shelter.perms.VIEW, self.shelter_b))
 
+        # Own-org paths read the column on the row, so the scope being memoized
+        # means the check itself issues no query.
+        with self.assertNumQueries(0):
+            self.assertTrue(can_obj(alice, Shelter.perms.VIEW, self.shelter_a))
+
     def test_can_obj_ignores_a_stale_cached_parent(self) -> None:
         """A re-pointed hop is read from the row, not the object graph."""
         from shelters.models import ContactInfo
@@ -252,6 +257,12 @@ class GrantSelectorsTestCase(TestCase):
 
         self.assertFalse(can_obj(alice, ContactInfo.perms.VIEW, contact))
         self.assertTrue(can_obj(bob, ContactInfo.perms.VIEW, contact))
+
+        # A hop reads only the org-id column from the row: one query, not a
+        # compiled ``visible()`` queryset plus EXISTS. The scope is memoized on
+        # the instance, so the repeat check pays only for that column read.
+        with self.assertNumQueries(1):
+            self.assertTrue(can_obj(bob, ContactInfo.perms.VIEW, contact))
 
     def test_can_obj_shared_tier_is_any_holder_anywhere(self) -> None:
         """ClientProfile declares WRITE_SHARED (RFC 0002 #1): can_obj == can_anywhere."""

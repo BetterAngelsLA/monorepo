@@ -208,6 +208,16 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
         self.assertEqual(payload["totalCount"], 1)
 
     def test_reservations_query_without_permission_returns_empty(self) -> None:
+        # Seed a row the operator *can* see first: without it, "empty" below holds
+        # whether the grant is gone or the query never saw a reservation at all.
+        baker.make(Reservation, bed=self.bed, status=ReservationStatusChoices.CONFIRMED)
+        visible = self.execute_graphql(
+            self.reservations_query,
+            variables={"pagination": {"offset": 0, "limit": 10}},
+        )
+        self.assertIsNone(visible.get("errors"))
+        self.assertEqual(visible["data"]["reservations"]["totalCount"], 1)
+
         # The grant model reads permissions from the Role a Grant references,
         # so removing access means deleting the operator's Grant (ADR 0001).
         revoke_grants(self.operator)
