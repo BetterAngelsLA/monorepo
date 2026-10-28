@@ -22,6 +22,7 @@ test('writes EXPO_WEB_BASE_URL and replaces an existing value', () => {
     encoding: 'utf8',
     env: {
       ...process.env,
+      CI: 'true',
       BRANCH_NAME: 'test-branch',
       BASE_URL_ENV_PATH: envPath,
     },
@@ -36,7 +37,7 @@ test('writes EXPO_WEB_BASE_URL and replaces an existing value', () => {
     !content.includes('EXPO_WEB_BASE_URL=/stale'),
     'stale value replaced',
   );
-  assert.equal(baseUrls[0], 'EXPO_WEB_BASE_URL=/test-branch');
+  assert.equal(baseUrls[0], 'EXPO_WEB_BASE_URL=/branches/test-branch');
   assert.ok(
     content.includes('EXPO_PUBLIC_API_URL=https://api.example'),
     'keeps other vars',
