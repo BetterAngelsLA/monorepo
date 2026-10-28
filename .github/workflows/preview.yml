@@ -195,6 +195,10 @@ jobs:
           # graph built from the manifests it is undoing.
           trap 'node tools/scripts/restore-workspace.mjs --project betterangels || true' EXIT
 
+          # The profile env, then the EAS-shaped workspace: the runtime is
+          # resolved from both, so they have to match what the build uploads.
+          yarn nx run betterangels:write-eas-env:preview
+
           # No `expo prebuild`: it would leave `android/`+`ios/` in the checkout and
           # the fingerprint would describe a project no build uploads.
           #
@@ -203,10 +207,7 @@ jobs:
           yarn nx run betterangels:copy-lockfile
 
           # A fingerprint builds once; a dead one fails the run and
-          # `force-eas-build` overrides. `write-eas-env` rewrites the tracked
-          # `.env` the upload resolves, so the runtime looked up here is the one
-          # the build produces.
-          yarn nx run betterangels:write-eas-env:preview
+          # `force-eas-build` overrides.
           npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
             --project betterangels --configuration preview
 
