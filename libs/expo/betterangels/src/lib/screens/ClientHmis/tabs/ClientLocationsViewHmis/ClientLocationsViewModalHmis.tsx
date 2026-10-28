@@ -28,7 +28,7 @@ export function ClientLocationsViewModalHmis() {
   // in same location (cannot be broken up by clustering)
   const primaryInteraction = selectedInteractions[0];
 
-  const sheetTitle = primaryInteraction.location?.address.street;
+  const sheetTitle = primaryInteraction.location?.address?.street;
   const sheetSubTitle =
     selectedInteractions.length > 1 &&
     `Total ${selectedInteractions.length} interactions`;
