@@ -1,6 +1,11 @@
 export type { ColumnFilterOption } from './header/ColumnFilter';
 export { Table } from './Table';
 export {
+  TableActionBtn,
+  type TActionBtnAction,
+  type TActionBtnVariant,
+} from './TableActionBtn';
+export {
   TableRow,
   TableRowSlot,
   type TableRowCell,

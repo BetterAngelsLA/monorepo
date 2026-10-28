@@ -1,7 +1,9 @@
+from typing import Optional
 from unittest.mock import ANY
 
 from model_bakery import baker
 
+from accounts.models import User
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from notes.models import Note
@@ -60,6 +62,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "assignee": None,
             "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "description": "task description",
             "hmisNote": None,
@@ -103,6 +106,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "assignee": None,
             "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "description": "task description",
             "hmisNote": None,
@@ -292,3 +296,140 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
+
+
+class TaskAssigneeFilterTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+    """`assignees` narrows the list to tasks held by the chosen members."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        self.mine = baker.make(
+            Task,
+            organization=self.org_1,
+            assignee=self.org_1_case_manager_1,
+            created_by=self.org_1_case_manager_1,
+            client_profile=baker.make(ClientProfile),
+        )
+        self.theirs = baker.make(
+            Task,
+            organization=self.org_1,
+            assignee=self.org_1_case_manager_2,
+            created_by=self.org_1_case_manager_1,
+            client_profile=baker.make(ClientProfile),
+        )
+        self.unassigned = baker.make(
+            Task,
+            organization=self.org_1,
+            created_by=self.org_1_case_manager_1,
+            client_profile=baker.make(ClientProfile),
+        )
+
+    def test_filters_by_assignee(self) -> None:
+        response = self.execute_graphql(
+            self.get_tasks_query(),
+            variables={
+                "filters": {"assignees": [str(self.org_1_case_manager_2.pk)]},
+            },
+        )
+
+        ids = {row["id"] for row in response["data"]["tasks"]["results"]}
+
+        self.assertEqual(ids, {str(self.theirs.pk)})
+
+    def test_filter_includes_unassigned_tasks_only_when_not_filtering(self) -> None:
+        response = self.execute_graphql(self.get_tasks_query(), variables={"filters": {}})
+
+        ids = {row["id"] for row in response["data"]["tasks"]["results"]}
+
+        self.assertEqual(ids, {str(self.mine.pk), str(self.theirs.pk), str(self.unassigned.pk)})
+
+
+class TaskListAssigneeQueryCountTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+    """The list must join the assignee, not fetch it per row."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        for _ in range(8):
+            baker.make(
+                Task,
+                organization=self.org_1,
+                assignee=self.org_1_case_manager_2,
+                created_by=self.org_1_case_manager_1,
+                team=self.org_1_team_1,
+                client_profile=baker.make(ClientProfile),
+            )
+
+    def test_tasks_list_does_not_add_a_query_per_assignee(self) -> None:
+        # A per-row assignee lookup would be 4 + 8 here. The flat count is the
+        # assertion: if `assignee` ever stops being joined, this grows by rows.
+        with self.assertNumQueriesWithoutCache(4):
+            response = self.execute_graphql(self.get_tasks_query())
+
+        results = response["data"]["tasks"]["results"]
+        self.assertEqual(len(results), 8)
+
+        # The count alone would still pass if `assignee` silently resolved to
+        # null for every row, so assert it actually arrives on each one.
+        self.assertEqual(
+            {row["assignee"]["id"] for row in results},
+            {str(self.org_1_case_manager_2.pk)},
+        )
+
+
+class TaskAssigneeQueryTestCase(GraphQLBaseTestCase):
+    """``taskAssignees`` backs the assignee picker on the task form."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def task_assignees_query(self, filters: Optional[dict] = None) -> dict:
+        query = """
+            query ($filters: TaskAssigneeFilter) {
+                taskAssignees (filters: $filters) {
+                    totalCount
+                    results { id firstName lastName }
+                }
+            }
+        """
+
+        return self.execute_graphql(query, {"filters": filters})
+
+    def test_task_assignees_lists_org_members(self) -> None:
+        results = self.task_assignees_query()["data"]["taskAssignees"]["results"]
+        member_ids = [u["id"] for u in results]
+
+        self.assertIn(str(self.org_1_case_manager_1.pk), member_ids)
+        self.assertIn(str(self.org_1_case_manager_2.pk), member_ids)
+
+        returned = next(u for u in results if u["id"] == str(self.org_1_case_manager_2.pk))
+        self.assertEqual(returned["firstName"], self.org_1_case_manager_2.first_name)
+        self.assertEqual(returned["lastName"], self.org_1_case_manager_2.last_name)
+
+    def test_task_assignees_excludes_users_outside_every_org(self) -> None:
+        outsider = baker.make(User, first_name="Outside", last_name="User")
+
+        results = self.task_assignees_query()["data"]["taskAssignees"]["results"]
+
+        self.assertNotIn(str(outsider.pk), [u["id"] for u in results])
+
+    def test_task_assignees_excludes_members_of_another_org(self) -> None:
+        # org_2 is not one of the caller's orgs, so neither is its case manager
+        # — offering them would hand the picker an assignee ``Task.clean()``
+        # then rejects.
+        results = self.task_assignees_query()["data"]["taskAssignees"]["results"]
+
+        self.assertNotIn(str(self.org_2_case_manager_1.pk), [u["id"] for u in results])
+
+    def test_task_assignees_search_filters_by_name(self) -> None:
+        self.org_1_case_manager_2.first_name = "Reginald"
+        self.org_1_case_manager_2.last_name = "Tarkington"
+        self.org_1_case_manager_2.save()
+
+        results = self.task_assignees_query({"search": "Tarkington"})["data"]["taskAssignees"]["results"]
+
+        self.assertEqual([u["id"] for u in results], [str(self.org_1_case_manager_2.pk)])

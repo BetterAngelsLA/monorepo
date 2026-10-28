@@ -57,6 +57,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "assignee": None,
             "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
             "organization": {
@@ -99,6 +100,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "assignee": None,
             "hmisNote": None,
             "note": None,
             "organization": {
@@ -261,3 +263,81 @@ class TaskTeamValidationMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMi
         self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
         self.assertEqual(messages[0]["field"], "team")
         self.assertEqual(Task.objects.get(pk=task_id).team_id, self.org_1_team_1.pk)
+
+
+class TaskAssigneeMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+    """A task may only be assigned to a member of its own organization."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.assignee = self.org_1_case_manager_2
+
+    def get_assignee_payload(self, user) -> dict:  # type: ignore[no-untyped-def]
+        return {
+            "id": str(user.pk),
+            "firstName": user.first_name,
+            "lastName": user.last_name,
+        }
+
+    def test_create_task_with_assignee(self) -> None:
+        response = self.create_task_fixture({"summary": "assigned task", "assigneeId": str(self.assignee.pk)})
+
+        created_task = response["data"]["createTask"]
+        self.assertEqual(created_task["assignee"], self.get_assignee_payload(self.assignee))
+        self.assertEqual(Task.objects.get(pk=created_task["id"]).assignee_id, self.assignee.pk)
+
+    def test_create_task_without_assignee(self) -> None:
+        response = self.create_task_fixture({"summary": "unassigned task"})
+
+        self.assertIsNone(response["data"]["createTask"]["assignee"])
+
+    def test_create_task_rejects_an_assignee_from_another_org(self) -> None:
+        response = self.create_task_fixture({"summary": "Org 1 task", "assigneeId": str(self.org_2_case_manager_1.pk)})
+
+        messages = response["data"]["createTask"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["message"], "The selected assignee is not a member of this organization.")
+        self.assertEqual(messages[0]["field"], "assignee")
+        self.assertEqual(Task.objects.filter(summary="Org 1 task").count(), 0)
+
+    def test_update_task_sets_the_assignee(self) -> None:
+        task_id = self.create_task_fixture({"summary": "task to assign"})["data"]["createTask"]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "assigneeId": str(self.assignee.pk)})
+
+        self.assertEqual(response["data"]["updateTask"]["assignee"], self.get_assignee_payload(self.assignee))
+        self.assertEqual(Task.objects.get(pk=task_id).assignee_id, self.assignee.pk)
+
+    def test_update_task_clears_the_assignee(self) -> None:
+        task_id = self.create_task_fixture({"summary": "task to unassign", "assigneeId": str(self.assignee.pk)})[
+            "data"
+        ]["createTask"]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "assigneeId": None})
+
+        self.assertIsNone(response["data"]["updateTask"]["assignee"])
+        self.assertIsNone(Task.objects.get(pk=task_id).assignee_id)
+
+    def test_update_task_omitted_assignee_id_preserves_the_assignee(self) -> None:
+        task_id = self.create_task_fixture({"summary": "task to amend", "assigneeId": str(self.assignee.pk)})["data"][
+            "createTask"
+        ]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "summary": "task amended"})
+
+        self.assertEqual(response["data"]["updateTask"]["assignee"], self.get_assignee_payload(self.assignee))
+        self.assertEqual(Task.objects.get(pk=task_id).assignee_id, self.assignee.pk)
+
+    def test_update_task_rejects_an_assignee_from_another_org(self) -> None:
+        task_id = self.create_task_fixture({"summary": "task to reassign", "assigneeId": str(self.assignee.pk)})[
+            "data"
+        ]["createTask"]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "assigneeId": str(self.org_2_case_manager_1.pk)})
+
+        messages = response["data"]["updateTask"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["message"], "The selected assignee is not a member of this organization.")
+        self.assertEqual(messages[0]["field"], "assignee")
+        self.assertEqual(Task.objects.get(pk=task_id).assignee_id, self.assignee.pk)

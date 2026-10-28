@@ -45,6 +45,8 @@ export { default as RequestedProvidedServicesHmis } from './RequestedProvidedSer
 export { default as SelectStatus } from './SelectStatus';
 export { default as SignInContainer } from './SignInContainer';
 export * from './SortButton';
+export * from './AssigneeSelect';
+export * from './TaskPersonRow';
 export { default as TaskCard } from './TaskCard';
 export type { TClientProfileKind } from './TaskCard';
 export * from './TaskCountIndicator';

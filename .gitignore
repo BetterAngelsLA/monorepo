@@ -13,6 +13,9 @@ dist
 tmp
 /out-tsc
 
+# CI-only: the Nx run report the container writes for the job summary
+/nx-run-report.md
+
 # dependencies
 node_modules
 
@@ -75,6 +78,9 @@ cache/
 # EAS build pre-install hook copies yarn.lock into app directories
 apps/*/yarn.lock
 libs/*/*/yarn.lock
+
+# build-missing.ts -> eas-preview-comment.mjs hand-off for one CI run
+apps/*/.eas-builds.json
 
 # iOS build files
 apps/betterangels/ios/

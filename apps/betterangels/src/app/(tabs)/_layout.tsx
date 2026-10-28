@@ -93,8 +93,11 @@ export default function TabLayout() {
     tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
     tabBarStyle: [styles.tabBar, { height: 70 + insets.bottom }],
     tabBarItemStyle: styles.tabBarItem,
-    headerStyle: { backgroundColor: Colors.BRAND_DARK_BLUE },
-    headerShadowVisible: false,
+    // Every tab screen renders the in-app `Header` itself (logo + title +
+    // menu). Leaving the navigator's header on stacked an empty 64pt bar above
+    // it — 64pt of dead dark space on web, where there is no status bar to
+    // fill. The in-app header now owns the status-bar inset instead.
+    headerShown: false,
   };
 
   return (

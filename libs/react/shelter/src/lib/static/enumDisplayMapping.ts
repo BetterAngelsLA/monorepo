@@ -2,6 +2,7 @@ import {
   EntryRequirementChoices,
   ExitPolicyChoices,
   FunderChoices,
+  MediaLinkTypeChoices,
   ReferralRequirementChoices,
   RoomStyleChoices,
   ShelterChoices,
@@ -129,6 +130,12 @@ export const enumDisplayVaccinationRequirementChoices: {
   [VaccinationRequirementChoices.Tb]: 'TB',
   [VaccinationRequirementChoices.Flu]: 'Flu',
   [VaccinationRequirementChoices.Covid_19]: 'COVID-19',
+};
+
+export const enumDisplayMediaLinkTypeChoices: {
+  [key in MediaLinkTypeChoices]: string;
+} = {
+  [MediaLinkTypeChoices.Youtube]: 'YouTube',
 };
 
 export const enumDisplayShelterPhotoTypeChoices: {

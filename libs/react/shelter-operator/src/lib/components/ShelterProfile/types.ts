@@ -4,3 +4,6 @@ export type ShelterProfileType = UseShelterOperatorProfileResultType;
 
 export type ShelterProfilePhotoType =
   NonNullable<UseShelterOperatorProfileResultType>['photos'][number];
+
+export type ShelterProfileMediaLinkType =
+  NonNullable<UseShelterOperatorProfileResultType>['mediaLinks'][number];

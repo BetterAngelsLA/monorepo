@@ -117,6 +117,22 @@ export function ModelFilters(props: TProps) {
           );
         }
 
+        if (type === 'assignees') {
+          return (
+            <FilterUsers
+              key="assignees"
+              title={headerTitle}
+              buttonLabel={buttonLabel}
+              currentUserId={user?.id}
+              currentUserLabel={currentUserLabel}
+              onChange={(next) => onFilterChange('assignees', next)}
+              initialSelected={selected.assignees}
+              searchPlaceholder={searchPlaceholder}
+              modelName="assignee"
+            />
+          );
+        }
+
         if (type === 'organizations') {
           return (
             <FilterOrganizations

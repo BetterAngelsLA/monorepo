@@ -13,6 +13,8 @@ type TProps = {
   title?: string;
   searchPlaceholder?: string;
   style?: StyleProp<ViewStyle>;
+  /** Noun for the "Displaying N of M …" line in the options screen. */
+  modelName?: string;
 };
 
 export function FilterUsers(props: TProps) {
@@ -25,6 +27,7 @@ export function FilterUsers(props: TProps) {
     title,
     searchPlaceholder,
     style,
+    modelName,
   } = props;
 
   const [selected, setSelected] = useState<TFilterOption[]>(initialSelected);
@@ -44,6 +47,7 @@ export function FilterUsers(props: TProps) {
           searchPlaceholder={searchPlaceholder}
           currentUserLabel={currentUserLabel}
           currentUserId={currentUserId}
+          modelName={modelName}
         />
       ),
       title: title,

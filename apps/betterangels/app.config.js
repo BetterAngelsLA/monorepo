@@ -1,12 +1,28 @@
 // The runtime version is the Expo fingerprint, computed from this config, so the
-// values a build sees must match the ones CI fingerprinted. CI supplies the
-// profile env through the EAS environment (tools/scripts/sync-eas-env.mjs);
-// `.env` holds the committed defaults. Profile values win.
+// values a build sees have to match the ones CI fingerprinted. CI rewrites the
+// tracked `.env` per profile (`tools/scripts/write-eas-env.mjs`) from the GitHub
+// Actions secrets plus the `eas.json` profile env, and that file ships inside the
+// EAS archive — the only way the builder receives them. `.env.local` is the
+// developer override: it never travels, and dotenv applies it last so it still
+// wins locally.
 import dotenv from 'dotenv';
 dotenv.config();
 dotenv.config({ path: '.env.local', override: true });
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
+
+// A production build must not silently bake the dev API. `.env.local` overrides
+// the process env above, so a stale dev pull (or a missing EAS value) would
+// otherwise ship api.dev under the production identity.
+if (
+  IS_PRODUCTION &&
+  process.env.EXPO_PUBLIC_API_URL &&
+  !process.env.EXPO_PUBLIC_API_URL.includes('api.prod')
+) {
+  throw new Error(
+    `Production build but EXPO_PUBLIC_API_URL is ${process.env.EXPO_PUBLIC_API_URL} (expected api.prod).`,
+  );
+}
 
 const HOSTNAME = IS_PRODUCTION
   ? 'api.prod.betterangels.la' // TODO: We should adjust this to be app.betterangels.la
@@ -21,7 +37,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.2.14',
+    version: '1.2.15',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -34,7 +50,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.2.14',
+      buildNumber: '1.2.15',
       associatedDomains: [`applinks:${HOSTNAME}`],
       config: {
         usesNonExemptEncryption: false,

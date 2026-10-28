@@ -41,32 +41,65 @@ Repo convention (the runners accept both patterns — this is about consistency)
   patterns and the codebase already has more `*.spec.tsx` files than
   `*.test.tsx`, so this is a preference for new files, not a renaming backlog.
 
+## App environment
+
+Two inputs, no third store:
+
+- **`apps/betterangels/eas.json`** — the non-secret per-profile values (API and
+  shelter URLs, `APP_VARIANT`, log level). Committed.
+- **GitHub Actions** — the `EXPO_PUBLIC_*` secrets, already in the `env:` of the
+  steps that build or publish.
+
+`tools/scripts/write-eas-env.mjs` merges both into the **tracked**
+`apps/betterangels/.env` before anything resolves app config. That file is the
+only one that travels: `eas build` uploads the git tree, so an untracked
+`.env.local` never reaches the builder. Locally, `.env.local` is the developer
+override and dotenv applies it last.
+
+The runtime version is the Expo fingerprint of `app.config.js`, so a value that
+reaches `expoConfig` must be identical on both sides — a mismatch fails the
+build's `CONFIGURE_EXPO_UPDATES` phase. `EXPO_PUBLIC_*` are inlined when the
+bundle is built, so a value missing from `.env` ships `undefined` with nothing at
+runtime to notice.
+
+On a GitHub runner the file is **not** what `export-web` sees. Nx builds a
+task's environment from dotenv files before its dependencies run, so
+`write-eas-env` — a dependency of `export-web`, and the thing that writes the
+file — arrives too late to influence it through the file alone. One call to that
+script therefore does both: it writes the file (what EAS and `app.config.js`
+read) and, with `--print`, emits the same values as `export` lines for the
+workflow to eval into the shell. Nx never overrides a variable that is already
+set, so those win. A single resolver feeds both, so they cannot disagree — change
+the extra keys in one place: `eas.json` per profile, GitHub secrets for the rest.
+
 ## Preview pipeline (PRs)
 
 Two checks, split by what should block a merge:
 
 - **`BuildTestDeploy (preview)`** — checks only: `lint typecheck test build`. No
   deploy, no EAS. `main` and `merge_group` still deploy from this workflow.
-- **`Preview`** — one job: web deploy **and** the EAS update in parallel, then the
+- **`Preview`** — one job: the EAS update, then the web deploy, then the
   Playwright suites, then the mobile build. Not a required check: it only runs on
   `pull_request`, and a required check that never reports on `merge_group`
   deadlocks the merge queue.
 
 ### Platforms
 
-`EAS_BUILD_PLATFORMS` is decided per run in the `Set Environment Variables` step:
-android always (the installable artifact), ios only when the change can affect
-the native binary — `package.json`, `yarn.lock`, `apps/betterangels/{app.config.js,
-app.json,eas.json,package.json}` or `ios/`/`android/`. A JS-only change reaches
-devices through the EAS Update, so an ios build would buy nothing.
+Both device platforms are built — android, ios — plus the iOS simulator binary
+that Maestro drives. Which ones actually queue is decided per fingerprint by
+`tools/scripts/eas-builds.ts`: a fingerprint builds once, so a platform that
+already has a live build for it is reused, and only a missing one is queued. A
+build that ended `ERRORED` or `CANCELED` is not silently reused — it fails the
+step, because that fingerprint has no binary and a green run would hide it.
+Nothing is skipped for being a JS-only change: an EAS Update is useless without
+a binary of the same runtime to run it, and a fingerprint that only ever saw JS
+changes would never get one.
 
 ### Labels
 
-| Label | Effect |
-|---|---|
+| Label             | Effect                                                                                             |
+| ----------------- | -------------------------------------------------------------------------------------------------- |
 | `force-eas-build` | build even though a build exists for the fingerprint (the way out when a failed build poisoned it) |
-| `preview-platforms` | force `android,ios` regardless of the change |
-| `force-eas-env-sync` | re-push the EAS environment even when every variable is present (secret rotation) |
 
 ### E2E suites
 

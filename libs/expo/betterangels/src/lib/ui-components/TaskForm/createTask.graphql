@@ -17,6 +17,11 @@ mutation CreateTask($data: CreateTaskInput!) {
       createdBy {
         id
       }
+      assignee {
+        id
+        firstName
+        lastName
+      }
       description
       note {
         pk

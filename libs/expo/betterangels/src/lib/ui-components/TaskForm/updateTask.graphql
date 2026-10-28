@@ -17,6 +17,11 @@ mutation UpdateTask($data: UpdateTaskInput!) {
         id
         name
       }
+      assignee {
+        id
+        firstName
+        lastName
+      }
       updatedAt
     }
   }

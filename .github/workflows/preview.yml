@@ -32,11 +32,8 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      # `EAS_BUILD_PLATFORMS` is set per run in "Set Environment Variables".
       # Build even though a build exists for the fingerprint.
       FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
-      # Re-push the EAS environment even when every var is present.
-      FORCE_EAS_ENV_SYNC: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-env-sync') }}
       VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
       VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
       EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
@@ -62,37 +59,10 @@ jobs:
       - name: 🔧 Set Environment Variables
         env:
           RAW_BRANCH_NAME: ${{ github.head_ref }}
-          PREVIEW_PLATFORMS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'preview-platforms') }}
         run: |
           set -euo pipefail
           BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
-
-          # Build what this change can affect, not one platform and not all of
-          # them. Android is always built: it is the installable artifact a
-          # reviewer uses. iOS is added only when the native binary or its config
-          # changed, because a JS-only change reaches the device through the EAS
-          # Update — paying for an ios build then buys nothing. The
-          # `preview-platforms` label forces both.
-          NATIVE_PATTERN='^(package\.json|yarn\.lock|apps/betterangels/(app\.config\.js|app\.json|eas\.json|package\.json|ios/|android/))'
-          CHANGED="$(git diff --name-only "$NX_BASE" "$NX_HEAD" || true)"
-          if [ "${PREVIEW_PLATFORMS_LABEL:-false}" = 'true' ]; then
-            PLATFORMS='android,ios'
-            echo 'preview-platforms label: building both platforms.'
-          elif [ -z "$CHANGED" ]; then
-            # No range to inspect (nx-set-shas had nothing to diff). Build both
-            # rather than silently deciding this was JS-only.
-            PLATFORMS='android,ios'
-            echo "::warning::Could not determine changed files ($NX_BASE..$NX_HEAD); building both platforms."
-          elif printf '%s\n' "$CHANGED" | grep -Eq "$NATIVE_PATTERN"; then
-            PLATFORMS='android,ios'
-            echo 'Native code or build config changed; building both platforms:'
-            printf '%s\n' "$CHANGED" | grep -E "$NATIVE_PATTERN" | head -10
-          else
-            PLATFORMS='android'
-            echo 'JS-only change; android only (iOS ships through the update).'
-          fi
-          echo "EAS_BUILD_PLATFORMS=$PLATFORMS" >> "$GITHUB_ENV"
 
       - name: 🐳 Configure AWS credentials
         if: github.event.pull_request.head.repo.fork == false
@@ -145,30 +115,29 @@ jobs:
         env:
           CI: 'true'
           NX_DAEMON: 'false'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          # The update publishes while the web deploy runs. Its env is the tracked
-          # `.env`, rewritten for this profile: that file ships inside the EAS
-          # archive, which is what the build and the update both resolve app.config
-          # against. The mobile step restores it afterwards.
+          # The profile env, written into the tracked `.env`: that file ships
+          # inside the EAS archive, which is what the update below resolves
+          # app.config against. `export-web` writes it again for its own
+          # configuration, so both see the same values.
           node tools/scripts/write-eas-env.mjs --project betterangels --profile preview
-          (
-            node tools/scripts/eas-update.mjs --project betterangels --profile preview \
-              > /tmp/eas-update.log 2>&1
-            echo $? > /tmp/eas-update.status
-          ) &
-          UPDATE_PID=$!
 
-          # export-web computes its own base path, so it is not in the job env.
-          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --output-style=stream --parallel=6
+          # Before the export, not alongside it: the update's runtime version has
+          # to be the one the build carries, and `write-eas-env` is shared state.
+          node tools/scripts/eas-update.mjs --project betterangels --profile preview
 
-          # Replay the background output, and fail with it.
-          set +e
-          wait "$UPDATE_PID"
-          set -e
-          cat /tmp/eas-update.log
-          [ "$(cat /tmp/eas-update.status)" = '0' ]
+          # Same reason as the main pipeline: Nx fills the task env before its
+          # dependencies run and never overrides what is already set.
+          APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile preview --print)" || exit 1
+          eval "$APP_ENV_EXPORTS"
+
+          # export-web computes its own base path inline; nginx is the ECS proxy,
+          # which a preview deploys the app behind rather than redeploys.
+          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6 --exclude=nginx
 
       - name: 🧪 E2E (Playwright)
         if: github.event.pull_request.head.repo.fork == false
@@ -191,10 +160,36 @@ jobs:
             exit 0
           fi
           yarn playwright install chromium
-          yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview --output-style=stream
+          yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview
+
+      - name: 🔎 Is the mobile app affected?
+        id: mobile-affected
+        if: github.event.pull_request.head.repo.fork == false
+        env:
+          CI: 'true'
+          NX_DAEMON: 'false'
+        run: |
+          set -euo pipefail
+          # A preview builds once per fingerprint and then reports what it
+          # resolved. For a PR that touches nothing the app ships, that binary
+          # belongs to another commit, so the comment describes work this PR did
+          # not change. `affected` includes the app when a library it depends on
+          # changed, so this gates on "the mobile app itself is different".
+          #
+          # Resolve the list before testing it: a failing `nx show projects` must
+          # fail this step, not fall into the else branch and read as "not
+          # affected" on every PR.
+          AFFECTED_PROJECTS="$(yarn nx show projects --affected)"
+          if printf '%s\n' "$AFFECTED_PROJECTS" | grep -qx betterangels; then
+            echo "affected=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "affected=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Mobile preview skipped: betterangels is not affected by this PR."
+            echo '### 📱 Mobile preview skipped — FE not affected' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: 📱 Mobile preview
-        if: github.event.pull_request.head.repo.fork == false
+        if: github.event.pull_request.head.repo.fork == false && steps.mobile-affected.outputs.affected == 'true'
         env:
           CI: 'true'
           NX_DAEMON: 'false'
@@ -204,6 +199,9 @@ jobs:
           # however this step ends. Called directly — it must not need a project
           # graph built from the manifests it is undoing.
           trap 'node tools/scripts/restore-workspace.mjs --project betterangels || true' EXIT
+
+          # The profile env, then the EAS-shaped workspace: the runtime is
+          # resolved from both, so they have to match what the build uploads.
           yarn nx run betterangels:write-eas-env:preview
 
           # No `expo prebuild`: it would leave `android/`+`ios/` in the checkout and
@@ -213,7 +211,8 @@ jobs:
           # up here is the one the build produces.
           yarn nx run betterangels:copy-lockfile
 
-          # A fingerprint builds once, in any status; `force-eas-build` overrides.
+          # A fingerprint builds once; a dead one fails the run and
+          # `force-eas-build` overrides.
           npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
             --project betterangels --configuration preview
 
