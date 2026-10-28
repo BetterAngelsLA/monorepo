@@ -7,7 +7,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatMemberName } from '../../util/formatMemberName';
@@ -27,6 +27,18 @@ type TProps = {
   disabled?: boolean;
   error?: string;
   testId?: string;
+  /** True while the roster is in flight. */
+  loading?: boolean;
+  /** The roster request failed; surfaced instead of an empty list. */
+  loadError?: boolean;
+  /**
+   * The current assignee, when the roster does not contain them — someone who
+   * left the organization. Keeps the field showing a name instead of looking
+   * unassigned while the id is still set.
+   */
+  selectedFallback?: TAssignableMember | null;
+  /** Called the first time the sheet opens, so the roster can load lazily. */
+  onOpen?: () => void;
 };
 
 /**
@@ -50,29 +62,54 @@ export function AssigneeSelect(props: TProps) {
     disabled,
     error,
     testId,
+    loading = false,
+    loadError = false,
+    selectedFallback = null,
+    onOpen: onOpenProp,
   } = props;
 
   const [isOpen, setIsOpen] = useState(false);
 
+  // The roster wins; the fallback only fills in an id the roster no longer has.
+  const withFallback = useMemo(() => {
+    if (
+      !selectedFallback ||
+      items.some((member) => member.id === selectedFallback.id)
+    ) {
+      return items;
+    }
+
+    return [selectedFallback, ...items];
+  }, [items, selectedFallback]);
+
   const pickerItems = useMemo(
     () =>
-      items.map((member) => ({
+      withFallback.map((member) => ({
         value: member.id,
         displayValue: formatMemberName(member),
       })),
-    [items],
+    [withFallback],
   );
 
-  const [filtered, setFiltered] = useState<TAssignableMember[]>(items);
+  const [filtered, setFiltered] = useState<TAssignableMember[]>(withFallback);
+
+  // The roster usually resolves after the form mounts — and may even land while
+  // the sheet is open. Keep the list in step instead of freezing the first
+  // (empty) render.
+  useEffect(() => {
+    setFiltered(withFallback);
+  }, [withFallback]);
 
   const close = () => setIsOpen(false);
 
   const open = () => {
     if (disabled) return;
 
+    onOpenProp?.();
+
     // Start from the full roster: a stale query from the last open would hide
     // the very member the user came back to pick.
-    setFiltered(items);
+    setFiltered(withFallback);
     setIsOpen(true);
   };
 
@@ -145,7 +182,13 @@ export function AssigneeSelect(props: TProps) {
 
                 {!filtered.length && (
                   <TextRegular size="sm" style={styles.empty}>
-                    No members match that name.
+                    {loadError
+                      ? "Couldn't load your organization's members."
+                      : loading
+                        ? 'Loading members…'
+                        : withFallback.length
+                          ? 'No members match that name.'
+                          : 'No members to assign in this organization.'}
                   </TextRegular>
                 )}
               </ScrollView>

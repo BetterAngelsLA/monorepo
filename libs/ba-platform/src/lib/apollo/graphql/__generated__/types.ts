@@ -2710,7 +2710,7 @@ export type Query = {
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
-  /** Members the caller can assign a task to. Gated on tasks.add rather than organizations.view_org_members so a caseworker can pick an assignee without holding the org-admin roster permission. */
+  /** Members the caller can assign a task to. Gated on tasks.add or tasks.change rather than organizations.view_org_members so a caseworker can pick an assignee without holding the org-admin roster permission. */
   taskAssignees: TaskAssigneeTypeOffsetPaginated;
   tasks: TaskTypeOffsetPaginated;
   teams: TeamTypeOffsetPaginated;
@@ -3821,6 +3821,7 @@ export type TaskAssigneeFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<TaskAssigneeFilter>;
   OR?: InputMaybe<TaskAssigneeFilter>;
+  organization?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 

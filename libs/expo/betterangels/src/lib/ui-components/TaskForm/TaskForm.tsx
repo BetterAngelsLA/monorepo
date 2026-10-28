@@ -21,17 +21,42 @@ import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 export type TaskFormData = TFormSchema;
 
+/** What the caller can hand back so the form can mark the offending field. */
+export type TTaskFormSubmitResult = {
+  field?: keyof TaskFormData;
+  message: string;
+};
+
 type TProps = {
   initialValues?: Partial<TaskFormData>;
   onCancel: () => void;
-  onSubmit: (data: TaskFormData) => Promise<void> | void;
+  onSubmit: (
+    data: TaskFormData,
+  ) => Promise<TTaskFormSubmitResult | void> | TTaskFormSubmitResult | void;
 
   // This function comes from the Smart Container (NoteTasksModal)
   onDelete?: () => Promise<void> | void;
+
+  /** The task's organization, when known: narrows the assignee roster. */
+  organizationId?: string | null;
+
+  /** The task's current assignee, so a departed member still renders a name. */
+  selectedAssignee?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null;
 };
 
 export function TaskForm(props: TProps) {
-  const { initialValues, onSubmit, onDelete, onCancel } = props;
+  const {
+    initialValues,
+    onSubmit,
+    onDelete,
+    onCancel,
+    organizationId,
+    selectedAssignee,
+  } = props;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const methods = useForm<TaskFormData>({
@@ -41,7 +66,15 @@ export function TaskForm(props: TProps) {
   });
 
   const { teams } = useOrgTeams();
-  const { assignees } = useTaskAssignees();
+  // The roster is only needed once the picker is opened; fetching it with the
+  // form meant a full roster request for every task sheet, including the ones
+  // where nobody changes the assignee.
+  const [rosterRequested, setRosterRequested] = useState(false);
+  const {
+    assignees,
+    loading: assigneesLoading,
+    error: assigneesError,
+  } = useTaskAssignees({ organizationId, skip: !rosterRequested });
   // Deliberately not memoised with empty deps: `initialValues` can arrive after
   // mount, and a frozen id would drop the task's own (deactivated) team from
   // the item list, leaving the Team field blank.
@@ -76,7 +109,13 @@ export function TaskForm(props: TProps) {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await onSubmit(data);
+      const result = await onSubmit(data);
+
+      // A server-side validation error names the field it belongs to; put it
+      // on that field instead of leaving the user with a toast and a guess.
+      if (result?.field) {
+        methods.setError(result.field, { message: result.message });
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -141,6 +180,10 @@ export function TaskForm(props: TProps) {
               control={control}
               render={({ field }) => (
                 <AssigneeSelect
+                  onOpen={() => setRosterRequested(true)}
+                  loading={assigneesLoading}
+                  loadError={!!assigneesError}
+                  selectedFallback={selectedAssignee}
                   label="Assigned To"
                   placeholder="Select assignee"
                   disabled={isSubmitting}
