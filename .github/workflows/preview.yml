@@ -120,18 +120,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          # export-web reads the EAS environment from `.env.local`; the update is
-          # given the same values by `eas update --environment`.
-          (cd apps/betterangels && eas env:pull development --non-interactive)
+          # The profile env, written into the tracked `.env`: that file ships
+          # inside the EAS archive, which is what the update below resolves
+          # app.config against. `export-web` writes it again for its own
+          # configuration, so both see the same values.
+          node tools/scripts/write-eas-env.mjs --project betterangels --profile preview
 
-          # Before export-web, not alongside it. `base-path` writes the branch
-          # path into `.env.local`, and `app.config.js` loads that file with
-          # `override`, so an update that evaluated the config after it wrote
-          # would fingerprint a branch-scoped runtime version no build carries.
+          # Before the export, not alongside it: the update's runtime version has
+          # to be the one the build carries, and `write-eas-env` is shared state.
           node tools/scripts/eas-update.mjs --project betterangels --profile preview
 
-          # export-web computes its own base path; nginx is the ECS proxy, which
-          # a preview deploys the app behind rather than redeploys.
+          # export-web computes its own base path inline; nginx is the ECS proxy,
+          # which a preview deploys the app behind rather than redeploys.
           yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6 --exclude=nginx
 
       - name: 🧪 E2E (Playwright)
@@ -202,9 +202,11 @@ jobs:
           # up here is the one the build produces.
           yarn nx run betterangels:copy-lockfile
 
-          # A fingerprint builds once, in any status; `force-eas-build` overrides.
-          # The EAS environment is pulled into .env.local for the app config.
-          (cd apps/betterangels && eas env:pull development --non-interactive)
+          # A fingerprint builds once; a dead one fails the run and
+          # `force-eas-build` overrides. `write-eas-env` rewrites the tracked
+          # `.env` the upload resolves, so the runtime looked up here is the one
+          # the build produces.
+          yarn nx run betterangels:write-eas-env:preview
           npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
             --project betterangels --configuration preview
 

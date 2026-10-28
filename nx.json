@@ -65,6 +65,22 @@
         "^production"
       ]
     },
+    "eas-build": {
+      "cache": false,
+      "dependsOn": [
+        "write-eas-env",
+        "sync-deps",
+        "copy-lockfile"
+      ],
+      "configurations": {
+        "preview": {
+          "profile": "preview"
+        },
+        "production": {
+          "profile": "production"
+        }
+      }
+    },
     "e2e": {
       "cache": false,
       "configurations": {

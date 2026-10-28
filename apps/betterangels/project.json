@@ -9,16 +9,15 @@
   ],
   "targets": {
     "export-web": {
-      "executor": "@nx/expo:export",
+      "executor": "nx:run-commands",
       "cache": true,
       "dependsOn": [
-        "sync-deps",
-        "base-path"
+        "write-eas-env",
+        "sync-deps"
       ],
       "options": {
-        "platform": "web",
-        "outputDir": "dist/apps/betterangels",
-        "clear": true
+        "cwd": "apps/betterangels",
+        "command": "EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear"
       },
       "outputs": [
         "{workspaceRoot}/dist/apps/betterangels"
@@ -28,7 +27,7 @@
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
         {
-          "fileset": "{projectRoot}/.env.local",
+          "fileset": "{projectRoot}/.env",
           "includeIgnored": true
         },
         {
@@ -41,27 +40,13 @@
           "env": "VITE_APP_BASE_PATH"
         },
         {
-          "env": "EXPO_PUBLIC_API_URL"
-        },
-        {
-          "env": "EXPO_PUBLIC_DEMO_API_URL"
-        },
-        {
-          "env": "EXPO_PUBLIC_SHELTER_WEB_URL"
-        },
-        {
-          "env": "APP_VARIANT"
-        },
-        {
-          "env": "EXPO_PUBLIC_APP_ENV"
-        },
-        {
-          "env": "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL"
-        },
-        {
-          "env": "EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY"
+          "env": "EXPO_WEB_BASE_URL"
         }
-      ]
+      ],
+      "configurations": {
+        "preview": {},
+        "production": {}
+      }
     },
     "deploy": {
       "executor": "nx:run-commands",
@@ -179,10 +164,23 @@
         "cwd": "apps/betterangels"
       }
     },
+    "write-eas-env": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "configurations": {
+        "preview": {
+          "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile preview"
+        },
+        "production": {
+          "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile production"
+        }
+      }
+    },
     "eas-update": {
       "executor": "nx:run-commands",
       "cache": false,
       "dependsOn": [
+        "write-eas-env",
         "copy-lockfile"
       ],
       "options": {
@@ -197,43 +195,9 @@
         }
       }
     },
-    "ensure-symlink": {
-      "executor": "@nx/expo:ensure-symlink",
-      "cache": false
-    },
     "build-list": {
       "executor": "@nx/expo:build-list",
       "cache": false
-    },
-    "base-path": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "options": {
-        "command": "node tools/scripts/write-base-url.mjs"
-      }
-    },
-    "eas-build": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "dependsOn": [
-        "sync-deps",
-        "copy-lockfile",
-        "ensure-symlink"
-      ],
-      "options": {
-        "cwd": "apps/betterangels",
-        "command": "eas build --profile preview --platform all --non-interactive --no-wait --freeze-credentials --json"
-      },
-      "configurations": {
-        "preview": {
-          "cwd": "apps/betterangels",
-          "command": "eas build --profile preview --platform all --non-interactive --no-wait --freeze-credentials --json"
-        },
-        "production": {
-          "cwd": "apps/betterangels",
-          "command": "eas build --profile production --platform all --non-interactive --no-wait --freeze-credentials --json"
-        }
-      }
     }
   }
 }

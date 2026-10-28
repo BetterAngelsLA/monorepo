@@ -40,6 +40,7 @@ import {
   resolveProjectDir,
   run,
   runJson,
+  setupEnv,
 } from './eas-utils';
 
 const project = argv.project as string | undefined;
@@ -74,12 +75,12 @@ const projectDir = resolveProjectDir(project);
 console.log(`EAS configuration: ${configuration}`);
 console.log(`Profiles: android=${androidProfile}, ios=${iosProfile}`);
 
-// 1. `copy-lockfile` comes first, before anything is resolved or looked up,
-// because it rewrites the manifests the fingerprint hashes: `preview.yml` runs
-// it before resolving the runtime, and a runtime computed from a different
-// workspace state is a runtime no build ever produces. The EAS environment
-// (supplied by the workflow's `eas env:pull`) is what the runtime and the
-// upload resolve.
+// 1. Setup env once (it is identical across profiles). `copy-lockfile` comes
+// next, before anything is resolved or looked up, because it rewrites the
+// manifests the fingerprint hashes: `preview.yml` runs it before resolving the
+// runtime, and a runtime computed from a different workspace state is a runtime
+// no build ever produces.
+setupEnv(projectDir, androidProfile);
 run('yarn', ['nx', 'run', `${project}:copy-lockfile`]);
 
 // 2. Find or queue both builds. This is the preview/main pipelines' rule, so a

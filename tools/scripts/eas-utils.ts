@@ -126,6 +126,25 @@ export function resolveProjectDir(project: string): string {
 // ---------------------------------------------------------------------------
 
 /**
+ * Write the profile env the runtime version is computed from.
+ *
+ * `write-eas-env.mjs` is the only writer; a second one would let the fingerprint
+ * and the upload disagree. It rewrites the tracked `.env`, which is what ships
+ * inside the EAS archive.
+ */
+export function setupEnv(projectDir: string, profile: string): void {
+  console.log(`\n=== Setting up env for profile: ${profile} ===`);
+  const project = path.basename(projectDir);
+  run('node', [
+    'tools/scripts/write-eas-env.mjs',
+    '--project',
+    project,
+    '--profile',
+    profile,
+  ]);
+}
+
+/**
  * Resolve the runtime version (fingerprint hash) for one platform.
  *
  * Fingerprints are per platform, so a lookup keyed on the other platform's hash

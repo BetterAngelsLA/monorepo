@@ -331,15 +331,7 @@ jobs:
           # task's output in a labelled `::group::` fold, and ends with the failed
           # task list. `stream` interleaved every project *and* opted out of that
           # grouping, which buried the failure in hundreds of passing lines.
-          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
-            # Forks have no EXPO_TOKEN: run the checks without the EAS env.
-            yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
-          else
-            # The EAS environment is pulled into `.env.local`, which the Expo CLI
-            # loads: `deploy` runs `export-web` here on main.
-            (cd apps/betterangels && eas env:pull ${{ matrix.environment == 'production' && 'production' || 'development' }} --non-interactive)
-            yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
-          fi
+          yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
@@ -448,14 +440,14 @@ jobs:
           docker compose run --rm better-angels bash -c '
             set -euo pipefail
             trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
-            # The EAS environment, then the EAS-shaped workspace: the runtime is
+            # The profile env, then the EAS-shaped workspace: the runtime is
             # resolved from both, so they have to match what the build uploads.
             # `sync-deps` is deliberately absent — it installs, and installing
             # after `copy-lockfile` prunes the other projects.
             # Not `nx affected`: an unaffected app would resolve a runtime without
             # its env and queue a build for a fingerprint nothing uses. The reuse
             # check below is what makes this a no-op when nothing changed.
-            (cd apps/betterangels && eas env:pull ${{ matrix.environment == 'production' && 'production' || 'development' }} --non-interactive)
+            yarn nx run betterangels:write-eas-env:${{ matrix.environment }}
             yarn nx run betterangels:copy-lockfile
             # One build per fingerprint, in any status — same rule as the preview.
             # Both platforms: on main the binary is the release artifact, not a

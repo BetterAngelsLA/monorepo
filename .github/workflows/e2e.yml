@@ -231,5 +231,4 @@ jobs:
           else
             TARGET_ARGS=(-t "eas-e2e")
           fi
-          (cd apps/betterangels && eas env:pull development --non-interactive)
           yarn nx ${TARGET_ARGS[*]}
