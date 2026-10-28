@@ -163,6 +163,8 @@ export function ObjectAuditLog({
   return (
     <div className={mergeCss(['flex flex-col gap-4', className])}>
       <AuditFilterBar
+        targetType={targetType}
+        objectId={objectId}
         initialPreset={initial.preset}
         initialRange={initial.range}
         onChange={handleFilterChange}

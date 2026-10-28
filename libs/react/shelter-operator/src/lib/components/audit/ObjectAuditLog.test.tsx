@@ -12,6 +12,7 @@ import { endOfDay, format, startOfDay, subDays } from 'date-fns';
 import { useState } from 'react';
 import { ObjectAuditLog } from './ObjectAuditLog';
 import { useObjectAuditLog } from '../../hooks';
+import { AuditActorsDocument } from '../../hooks/useAuditActors/__generated__/useAuditActors.generated';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 
 /** Variables for the hook in isolation: no filters unless a harness passes them. */
@@ -109,6 +110,32 @@ function errorPage(variables: Record<string, unknown>) {
   return {
     request: { query: ObjectAuditLogDocument, variables },
     error: new Error('network down'),
+  };
+}
+
+function actorPage(search: string) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: {
+        targetType: AuditTargetType.Bed,
+        objectId: '7',
+        search,
+        limit: 20,
+      },
+    },
+    result: {
+      data: {
+        objectAuditActors: [
+          {
+            __typename: 'AuditActorType',
+            id: 'user-1',
+            label: 'Ada Lovelace',
+            isSystem: false,
+          },
+        ],
+      },
+    },
   };
 }
 
@@ -328,10 +355,43 @@ describe('ObjectAuditLog', () => {
 
     await screen.findByText('Ada Lovelace');
 
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Date range' }));
     fireEvent.click(await screen.findByText('All Time'));
 
     await screen.findByText('No activity');
+  });
+
+  it('shows the generic empty state when only an actor narrows the log', async () => {
+    // "All Time" plus an actor is filtered but has no date bounds, so the copy
+    // must not claim a date range is what excluded the activity.
+    renderLog([
+      page(logVariables, [makeAction()], null, false),
+      page(baseVariables, [], null, false),
+      page(
+        { ...baseVariables, filters: { actorId: 'user-1' } },
+        [],
+        null,
+        false,
+      ),
+      actorPage('ad'),
+    ]);
+
+    await screen.findByText('Ada Lovelace');
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Date range' }));
+    fireEvent.click(await screen.findByText('All Time'));
+
+    const input = screen.getByPlaceholderText('Search actors');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'ad' } });
+    fireEvent.click(
+      await screen.findByRole('option', { name: 'Ada Lovelace' }),
+    );
+
+    await screen.findByText('No activity');
+    expect(
+      screen.queryByText('No activity in the selected date range.'),
+    ).toBeNull();
   });
 
   it('shows the same window it queries', async () => {
@@ -374,7 +434,7 @@ describe('ObjectAuditLog', () => {
 
     await screen.findByText('DEFAULT WINDOW');
 
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Date range' }));
     fireEvent.click(await screen.findByText('Last 7 Days'));
 
     // The mock only matches the seven-day bounds, so rendering these rows

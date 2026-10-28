@@ -15,18 +15,45 @@ import {
 export const DEFAULT_AUDIT_PRESET: DateRangePresetValue = DEFAULT_PRESET;
 
 /**
- * Derive the inclusive GraphQL bounds from a picked range.
+ * A committed actor filter: one real user, or the synthetic ``System`` entry
+ * (``id: null``) that selects every event with no attributed user. ``label``
+ * exists only so the bar can render the choice once the search box is gone.
+ */
+export type AuditActorSelection = {
+  id: string | null;
+  label: string;
+  isSystem: boolean;
+};
+
+/**
+ * Derive the inclusive GraphQL bounds, plus the actor restriction, from the
+ * bar's state.
  *
  * Both ends are day-aligned in the browser's timezone, the same zone the log
  * renders timestamps in (``auditTime.ts``), so a user's "last 7 days" matches
  * the days they see. ``dateFrom``/``dateTo`` are ``null`` (not ``undefined``)
  * for an open end so that "no filter" has exactly one representation.
+ *
+ * The actor keys are omitted rather than set to ``null`` when nothing is
+ * selected: both spellings mean "unfiltered" to the server, and omitting keeps
+ * the queried variable set identical to the unfiltered one.
  */
-export function rangeToFilters(range: DateRange): ObjectAuditLogFilters {
-  return {
+export function rangeToFilters(
+  range: DateRange,
+  selection: AuditActorSelection | null = null,
+): ObjectAuditLogFilters {
+  const filters: ObjectAuditLogFilters = {
     dateFrom: range.from ? startOfDay(range.from).toISOString() : null,
     dateTo: range.to ? endOfDay(range.to).toISOString() : null,
   };
+
+  if (selection?.isSystem) {
+    filters.systemOnly = true;
+  } else if (selection?.id) {
+    filters.actorId = selection.id;
+  }
+
+  return filters;
 }
 
 export type InitialAuditFilter = {

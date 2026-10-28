@@ -58,6 +58,49 @@ describe('rangeToFilters', () => {
       null,
     );
   });
+
+  it('omits the actor keys when no actor is selected', () => {
+    // Absent, not null: the queried variable set must match the unfiltered one.
+    expect(rangeToFilters({ from: FROM, to: TO })).not.toHaveProperty(
+      'actorId',
+    );
+    expect(rangeToFilters({ from: FROM, to: TO })).not.toHaveProperty(
+      'systemOnly',
+    );
+  });
+
+  it('keeps the dates when an actor is applied', () => {
+    // The two dimensions are independent: picking an actor must not widen the
+    // range that is already on screen.
+    expect(
+      rangeToFilters(
+        { from: FROM, to: TO },
+        {
+          id: 'user-1',
+          label: 'Ada Lovelace',
+          isSystem: false,
+        },
+      ),
+    ).toEqual({
+      dateFrom: startOfDay(FROM).toISOString(),
+      dateTo: endOfDay(TO).toISOString(),
+      actorId: 'user-1',
+    });
+  });
+
+  it('maps the system actor to systemOnly, never to a null actorId', () => {
+    const filters = rangeToFilters(
+      { from: FROM, to: TO },
+      {
+        id: null,
+        label: 'System',
+        isSystem: true,
+      },
+    );
+
+    expect(filters).toHaveProperty('systemOnly', true);
+    expect(filters).not.toHaveProperty('actorId');
+  });
 });
 
 describe('hasDateBounds', () => {
@@ -67,6 +110,17 @@ describe('hasDateBounds', () => {
     expect(hasDateBounds(initialAuditFilter().filters)).toBe(true);
     expect(hasDateBounds({ dateFrom: '2026-06-01T07:00:00.000Z' })).toBe(true);
     expect(hasDateBounds({ dateTo: '2026-06-30T07:00:00.000Z' })).toBe(true);
+  });
+
+  it('ignores the actor filters, so the copy follows the date bounds', () => {
+    // An actor with an "All Time" range is filtered but has no date bounds: the
+    // empty state says "No activity", not "in the selected date range".
+    expect(
+      hasDateBounds({ dateFrom: null, dateTo: null, actorId: 'user-1' }),
+    ).toBe(false);
+    expect(
+      hasDateBounds({ dateFrom: null, dateTo: null, systemOnly: true }),
+    ).toBe(false);
   });
 });
 

@@ -1,8 +1,19 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { MockedProvider } from '@apollo/client/testing/react';
+import { AuditTargetType } from '@monorepo/ba-platform/types';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { endOfDay, startOfDay, subDays } from 'date-fns';
+import type { DateRange, DateRangePresetValue } from '../date-range-filter';
 import { resolvePresetValue } from '../date-range-filter';
 import { AuditFilterBar } from './AuditFilterBar';
+import { AuditActorsDocument } from '../../hooks/useAuditActors/__generated__/useAuditActors.generated';
 
+// jsdom has no ResizeObserver; the preset dropdown measures its anchor on open.
 class ResizeObserverStub {
   observe = vi.fn();
   unobserve = vi.fn();
@@ -21,22 +32,106 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function renderBar(onChange: (filters: unknown) => void = () => undefined) {
-  return render(<AuditFilterBar onChange={onChange} />);
+const actorVariables = (search: string) => ({
+  targetType: AuditTargetType.Bed,
+  objectId: '7',
+  search,
+  limit: 20,
+});
+
+function actorMock(search: string, calls?: string[]) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: actorVariables(search),
+    },
+    result: () => {
+      calls?.push(search);
+      return {
+        data: {
+          objectAuditActors: [
+            {
+              __typename: 'AuditActorType',
+              id: 'user-1',
+              label: 'Ada Lovelace',
+              isSystem: false,
+            },
+          ],
+        },
+      };
+    },
+  };
+}
+
+function systemActorMock(search: string) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: actorVariables(search),
+    },
+    result: () => ({
+      data: {
+        objectAuditActors: [
+          {
+            __typename: 'AuditActorType',
+            id: null,
+            label: 'System',
+            isSystem: true,
+          },
+        ],
+      },
+    }),
+  };
+}
+
+function renderBar({
+  mocks = [],
+  onChange = () => undefined,
+  initialPreset,
+  initialRange,
+}: {
+  mocks?: ReadonlyArray<unknown>;
+  onChange?: (filters: unknown) => void;
+  initialPreset?: DateRangePresetValue;
+  initialRange?: DateRange;
+} = {}) {
+  return render(
+    <MockedProvider mocks={mocks as never} showWarnings={false}>
+      <AuditFilterBar
+        targetType={AuditTargetType.Bed}
+        objectId="7"
+        initialPreset={initialPreset}
+        initialRange={initialRange}
+        onChange={onChange}
+      />
+    </MockedProvider>,
+  );
+}
+
+/** The preset trigger is named for assistive tech; the actor search is the other. */
+function datePreset() {
+  return screen.getByRole('combobox', { name: 'Date range' });
 }
 
 function dateInput(label: string) {
   return screen.getByLabelText(label);
 }
 
+async function selectActor(term: string, name: string) {
+  const input = screen.getByPlaceholderText('Search actors');
+  fireEvent.focus(input);
+  fireEvent.change(input, { target: { value: term } });
+  fireEvent.click(await screen.findByRole('option', { name }));
+}
+
 describe('AuditFilterBar', () => {
   it('opens on the shared default preset without re-emitting it', () => {
     const onChange = vi.fn();
-    renderBar(onChange);
+    renderBar({ onChange });
 
     // The caller seeds its own filter state from the same default, so the bar
     // must not emit a second copy (that would issue a duplicate first query).
-    expect(screen.getByRole('combobox').textContent).toContain('Last 30 Days');
+    expect(datePreset().textContent).toContain('Last 30 Days');
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -44,15 +139,9 @@ describe('AuditFilterBar', () => {
     const onChange = vi.fn();
     const initialRange = resolvePresetValue('LAST_7_DAYS');
 
-    render(
-      <AuditFilterBar
-        initialPreset="LAST_7_DAYS"
-        initialRange={initialRange}
-        onChange={onChange}
-      />,
-    );
+    renderBar({ onChange, initialPreset: 'LAST_7_DAYS', initialRange });
 
-    expect(screen.getByRole('combobox').textContent).toContain('Last 7 Days');
+    expect(datePreset().textContent).toContain('Last 7 Days');
     expect(
       (screen.getByLabelText('Start date') as HTMLInputElement).value,
     ).not.toBe('');
@@ -61,9 +150,9 @@ describe('AuditFilterBar', () => {
 
   it('applies a shared preset range as day-aligned bounds', async () => {
     const onChange = vi.fn();
-    renderBar(onChange);
+    renderBar({ onChange });
 
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(datePreset());
     fireEvent.click(await screen.findByText('Last 7 Days'));
 
     expect(onChange).toHaveBeenCalledWith(
@@ -76,9 +165,9 @@ describe('AuditFilterBar', () => {
 
   it('treats re-selecting the active preset as clearing the filter', async () => {
     const onChange = vi.fn();
-    renderBar(onChange);
+    renderBar({ onChange });
 
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(datePreset());
     // The trigger also reads "Last 30 Days"; the menu item is the later node
     // (the menu is portalled to the end of the document).
     const options = await screen.findAllByText('Last 30 Days');
@@ -87,13 +176,13 @@ describe('AuditFilterBar', () => {
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ dateFrom: null, dateTo: null }),
     );
-    expect(screen.getByRole('combobox').textContent).toContain('All Time');
+    expect(datePreset().textContent).toContain('All Time');
   });
 
   it('opens the shared date picker for a custom range', async () => {
     renderBar();
 
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(datePreset());
     fireEvent.click(await screen.findByText('Custom'));
 
     expect(
@@ -103,9 +192,9 @@ describe('AuditFilterBar', () => {
 
   it('re-opens the calendar instead of clearing a committed custom range', async () => {
     const onChange = vi.fn();
-    renderBar(onChange);
+    renderBar({ onChange });
 
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(datePreset());
     fireEvent.click(await screen.findByText('Custom'));
     fireEvent.change(dateInput('Start date'), {
       target: { value: '06/01/2026' },
@@ -119,7 +208,7 @@ describe('AuditFilterBar', () => {
 
     // Re-selecting the Custom entry must offer the dates back for editing, not
     // reset the filter to All Time.
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(datePreset());
     const options = await screen.findAllByText('Custom');
     fireEvent.click(options[options.length - 1]);
 
@@ -131,9 +220,9 @@ describe('AuditFilterBar', () => {
 
   it('emits the committed custom range as day-aligned bounds', async () => {
     const onChange = vi.fn();
-    renderBar(onChange);
+    renderBar({ onChange });
 
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(datePreset());
     fireEvent.click(await screen.findByText('Custom'));
 
     fireEvent.change(dateInput('Start date'), {
@@ -148,6 +237,117 @@ describe('AuditFilterBar', () => {
       dateFrom: startOfDay(new Date(2026, 5, 1)).toISOString(),
       dateTo: endOfDay(new Date(2026, 5, 15)).toISOString(),
     });
-    expect(screen.getByRole('combobox').textContent).toContain('Custom');
+    expect(datePreset().textContent).toContain('Custom');
+  });
+
+  it('queries actors only after two debounced characters', async () => {
+    const calls: string[] = [];
+    renderBar({ mocks: [actorMock('', calls), actorMock('ad', calls)] });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    });
+    expect(calls).toHaveLength(0);
+
+    const input = screen.getByPlaceholderText('Search actors');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'a' } });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+    expect(calls).toHaveLength(0);
+
+    fireEvent.change(input, { target: { value: 'ad' } });
+    await waitFor(() => expect(calls).toEqual(['ad']));
+    expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
+  });
+
+  it('selects a searched actor with the keyboard', async () => {
+    const onChange = vi.fn();
+
+    renderBar({ mocks: [actorMock('ad')], onChange });
+
+    const input = screen.getByPlaceholderText('Search actors');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'ad' } });
+
+    const option = await screen.findByRole('option', {
+      name: 'Ada Lovelace',
+    });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(option.getAttribute('aria-selected')).toBe('true');
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId: 'user-1' }),
+    );
+  });
+
+  it('applies and clears the selected actor', async () => {
+    const onChange = vi.fn();
+
+    renderBar({ mocks: [actorMock('ad')], onChange });
+
+    await selectActor('ad', 'Ada Lovelace');
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId: 'user-1' }),
+    );
+    expect(screen.queryByPlaceholderText('Search actors')).toBeNull();
+    expect(screen.getByText('Ada Lovelace')).not.toBeNull();
+
+    fireEvent.click(screen.getByLabelText('Clear actor filter'));
+
+    const cleared = onChange.mock.calls.at(-1)?.[0];
+    expect(cleared).not.toHaveProperty('actorId');
+    expect(cleared).not.toHaveProperty('systemOnly');
+    expect(screen.getByPlaceholderText('Search actors')).not.toBeNull();
+  });
+
+  it('filters system events when the system actor is selected', async () => {
+    const onChange = vi.fn();
+
+    renderBar({ mocks: [systemActorMock('sys')], onChange });
+
+    await selectActor('sys', 'System');
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ systemOnly: true }),
+    );
+    expect(onChange.mock.calls.at(-1)?.[0]).not.toHaveProperty('actorId');
+    expect(screen.getByText('System')).not.toBeNull();
+  });
+
+  it('keeps the selected actor when the date range changes', async () => {
+    const onChange = vi.fn();
+
+    renderBar({ mocks: [actorMock('ad')], onChange });
+
+    await selectActor('ad', 'Ada Lovelace');
+
+    // The two dimensions are independent: a new range is emitted together with
+    // the actor still in effect, not in place of it.
+    fireEvent.click(datePreset());
+    fireEvent.click(await screen.findByText('Last 7 Days'));
+
+    expect(onChange.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        actorId: 'user-1',
+        dateFrom: startOfDay(subDays(PINNED_NOW, 6)).toISOString(),
+        dateTo: endOfDay(PINNED_NOW).toISOString(),
+      }),
+    );
+
+    // ...and clearing the actor keeps the range that is on screen.
+    fireEvent.click(screen.getByLabelText('Clear actor filter'));
+
+    const cleared = onChange.mock.calls.at(-1)?.[0];
+    expect(cleared).not.toHaveProperty('actorId');
+    expect(cleared).toEqual(
+      expect.objectContaining({
+        dateFrom: startOfDay(subDays(PINNED_NOW, 6)).toISOString(),
+        dateTo: endOfDay(PINNED_NOW).toISOString(),
+      }),
+    );
   });
 });
