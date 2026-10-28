@@ -194,8 +194,13 @@ class ExplainPermissionTestCase(TestCase):
 
         self.assertFalse(result.cut_over)
         self.assertFalse(result.verdict)  # grant model: no Grant, so no grant verdict
-        self.assertTrue(_arm(result, "legacy rows").holds)
-        self.assertIn("live", _arm(result, "legacy rows").detail)
+        legacy = _arm(result, "legacy rows")
+        self.assertTrue(legacy.holds)
+        self.assertIn("document/import path only", legacy.detail)
+        # The caveat names the surface, not "this domain has not cut over" — the
+        # profile/family writes on this same permission are grant-enforced.
+        self.assertTrue(any("legacy consumer" in note for note in result.notes))
+        self.assertFalse(any("has not cut over" in note for note in result.notes))
 
         reported = organization_permissions(holder)[self.org_a.pk]
         self.assertIn(ClientProfile.perms.CHANGE, reported)

@@ -72,7 +72,11 @@ def _authority(user: "User") -> dict[str, Any]:
 
     Object grants are excluded (``scope_org`` NULL): they never register as an
     org scope.  Memoized on the user instance; :func:`invalidate_scope_cache`
-    drops it with the other authority memos.
+    drops it with the other authority memos.  Membership writes are not
+    invalidated — the through model is third-party and the memo lives on the
+    instance serving the request — so the contract is request-scoped: the
+    instance that served a request keeps its snapshot, and the next request
+    (a fresh ``User``) reads the new membership.
     """
     cache: Optional[dict[str, Any]] = user.__dict__.get("_authority_cache")
     if cache is not None:

@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from difflib import get_close_matches
 from typing import TYPE_CHECKING, Any, Optional
 
-from common.permissions.domain import is_cut_over
+from common.permissions.domain import LEGACY_LIVE_PERMISSIONS, is_cut_over
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -259,11 +259,15 @@ def _legacy_arm(
         qs = qs.filter(organization=org)
     rows = list(qs.select_related("organization").distinct())
 
-    posture = (
-        "inert for this domain (grant-only — never consulted)"
-        if cut_over
-        else "live for this domain (the current authority — not cut over)"
-    )
+    if cut_over:
+        posture = "inert for this domain (grant-only — never consulted)"
+    elif perm in LEGACY_LIVE_PERMISSIONS:
+        posture = (
+            "live for the document/import path only — the profile/family surfaces "
+            "are grant-only (this permission is shared by both)"
+        )
+    else:
+        posture = "live for this domain (the current authority — not cut over)"
     if rows:
         labels = [f"{row.label} @ {row.organization.name}" for row in rows]
         detail = f"{_names(labels)} — {posture}"
@@ -312,10 +316,18 @@ def _notes(
 
     if not cut_over:
         app_label = _split_perm(perm)[0]
-        notes.append(
-            f"domain {app_label!r} has not cut over — enforcement today rides the legacy arm; "
-            "the verdict above is the grant model's (post-cutover) answer"
-        )
+        if perm in LEGACY_LIVE_PERMISSIONS:
+            notes.append(
+                f"{app_label!r} is cut over for the profile/family surfaces (grants are the authority); "
+                "this permission still has a legacy consumer — document uploads load the parent through "
+                "filter_for_user and imports use the legacy check — so the legacy row(s) below stay live "
+                "for that path, not for profile/family writes"
+            )
+        else:
+            notes.append(
+                f"domain {app_label!r} has not cut over — enforcement today rides the legacy arm; "
+                "the verdict above is the grant model's (post-cutover) answer"
+            )
     elif not verdict:
         app_label, codename = _split_perm(perm)
         if PermissionGroup.objects.filter(user=user, **_legacy_carries(app_label, codename)).exists():

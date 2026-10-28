@@ -169,22 +169,22 @@ class DelegationTestCase(TestCase):
         self.assertIn(self.org_b.pk, scoped)  # the direct grant at B remains
         self.assertNotIn(self.shelter_c.pk, self._visible_pks(bob, Shelter.perms.VIEW))
 
-    def test_membership_change_is_not_visible_until_the_next_request(self) -> None:
-        """M9: leaving B keeps B's delegations for the rest of the request.
+    def test_membership_change_drops_the_delegation_on_the_next_request(self) -> None:
+        """M9: the authority snapshot is request-scoped, not cross-request.
 
         ``_authority`` snapshots org membership for the delegation arm, and no
         membership write invalidates it — the through model is third-party and
         the caller's user instance is unreachable from a signal, so only the
-        grant/role services invalidate.  The previous behaviour (per-``scopes()``
-        ``EXISTS``) re-read the database, so a membership change was visible
-        immediately; the snapshot now hides it until the next request.
+        grant/role services invalidate.  The contract is therefore next-request:
+        the instance that served the request keeps the delegated scope until the
+        request ends, and a fresh instance (the next request) re-reads the
+        database and drops it.
 
-        This pins the limit rather than the intent: it fails loudly if the
-        snapshot stops being warmed, widens to ``ALL``, or starts returning the
-        wrong orgs — and it must be flipped to ``assertNotIn`` (and renamed)
-        when membership writes invalidate the snapshot, or when the membership
-        arm stops being cached.  The mirror direction — joining B mid-request —
-        has the same shape and the same fix.
+        This asserts both halves: the same-instance staleness is named as the
+        accepted limit, and the fresh instance pins the behaviour that actually
+        matters — a removed member does not keep the delegated org on their next
+        request.  The previous per-``scopes()`` ``EXISTS`` was fresher within the
+        request; that freshness is the thing the snapshot traded away.
         """
         grant_delegate(principal_org=self.org_b, role=self.shelter_role, scope_org=self.org_c)
         bob = self._acting_member(self.org_b)
@@ -192,9 +192,13 @@ class DelegationTestCase(TestCase):
 
         self.org_b.remove_user(bob)
 
-        # Known limitation: the stale snapshot still contains C. Flip this to
-        # assertNotIn when membership invalidation lands.
+        # Accepted limit: the instance serving this request keeps the snapshot.
         self.assertIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+
+        # The next request builds a fresh user; the revocation is visible there.
+        bob = User.objects.get(pk=bob.pk)
+        self.assertNotIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+        self.assertNotIn(self.shelter_c.pk, self._visible_pks(bob, Shelter.perms.VIEW))
 
     def test_inherited_authority_powers_writes_at_the_delegated_org(self) -> None:
         """Delegation reaches the write checks (can ADD/CHANGE at C), not just reads."""
