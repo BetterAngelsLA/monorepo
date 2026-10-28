@@ -10,7 +10,7 @@ not start the Browser agent. Missing license key or environment disables it.
 Add to `apps/betterangels/.env.local` (do not replace existing settings):
 
 ```dotenv
-EXPO_PUBLIC_NEW_RELIC_BROWSER_LICENSE_KEY=<browser license key from New Relic>
+EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY=<browser license key from New Relic>
 EXPO_PUBLIC_APP_ENV=development
 ```
 

@@ -2,7 +2,7 @@ import { BrowserAgent } from '@newrelic/browser-agent/loaders/browser-agent';
 import Constants from 'expo-constants';
 import { browserPrivacyRules } from './privacy';
 
-const licenseKey = process.env.EXPO_PUBLIC_NEW_RELIC_BROWSER_LICENSE_KEY;
+const licenseKey = process.env.EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY;
 const environment = process.env.EXPO_PUBLIC_APP_ENV;
 const appVersion = Constants.expoConfig?.version ?? 'unknown';
 const monitoringGlobal = globalThis as typeof globalThis & {
