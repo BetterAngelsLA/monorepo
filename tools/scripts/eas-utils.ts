@@ -5,7 +5,7 @@
  *   - CLI arg parsing (minimist)
  *   - Environment variable access
  *   - Command execution with JSON parsing
- *   - .env / fingerprint setup
+ *   - Fingerprint setup
  */
 
 import { execFileSync } from 'child_process';
@@ -129,7 +129,8 @@ export function resolveProjectDir(project: string): string {
  * Write the profile env the runtime version is computed from.
  *
  * `write-eas-env.mjs` is the only writer; a second one would let the fingerprint
- * and the upload disagree.
+ * and the upload disagree. It rewrites the tracked `.env`, which is what ships
+ * inside the EAS archive.
  */
 export function setupEnv(projectDir: string, profile: string): void {
   console.log(`\n=== Setting up env for profile: ${profile} ===`);

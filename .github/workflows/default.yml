@@ -10,6 +10,13 @@ on:
   # event (a queue merge that fast-forwards to the commit it already tested), and
   # then nothing deploys until the next push.
   workflow_dispatch:
+    inputs:
+      force-eas-build:
+        # There is no PR label to lean on here: a build that ended ERRORED leaves
+        # the fingerprint with no binary, and this is the way to queue another.
+        description: Queue a build even though one already exists for the fingerprint
+        type: boolean
+        default: false
 
 env:
   AWS_REGION: us-west-2
@@ -433,10 +440,10 @@ jobs:
           docker compose run --rm better-angels bash -c '
             set -euo pipefail
             trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
-            # Env, then the EAS-shaped workspace: the runtime is resolved from
-            # both, so they have to match what the build uploads. `sync-deps` is
-            # deliberately absent — it installs, and installing after
-            # `copy-lockfile` prunes the other projects.
+            # The profile env, then the EAS-shaped workspace: the runtime is
+            # resolved from both, so they have to match what the build uploads.
+            # `sync-deps` is deliberately absent — it installs, and installing
+            # after `copy-lockfile` prunes the other projects.
             # Not `nx affected`: an unaffected app would resolve a runtime without
             # its env and queue a build for a fingerprint nothing uses. The reuse
             # check below is what makes this a no-op when nothing changed.
@@ -452,6 +459,8 @@ jobs:
             yarn nx affected -t eas-update --configuration ${{ matrix.environment }}
           '
         env:
+          CI: 'true'
+          FORCE_EAS_BUILD: ${{ inputs['force-eas-build'] || 'false' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
