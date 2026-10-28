@@ -13,7 +13,6 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
-    "dotenv": "*",
     "expo-constants": "*",
     "react-native": "*",
     "expo-router": "*",

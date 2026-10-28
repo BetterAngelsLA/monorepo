@@ -27,3 +27,7 @@ android/app/build/
 # and the build then fails resolving them.
 android/
 ios/
+
+# Local environment; the EAS environment is the build source.
+.env
+.env.deploy.*

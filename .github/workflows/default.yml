@@ -331,6 +331,7 @@ jobs:
             # The EAS environment (not the tracked .env) is the app env source.
             (cd apps/betterangels && eas env:exec \
               ${{ matrix.environment == 'production' && 'production' || 'development' }} \
+              --non-interactive \
               "cd ../.. && yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6")
           fi
           EOF
@@ -454,12 +455,14 @@ jobs:
             # preview convenience.
             (cd apps/betterangels && eas env:exec \
               ${{ matrix.environment == 'production' && 'production' || 'development' }} \
+              --non-interactive \
               "cd ../.. && npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
                 --project betterangels --configuration ${{ matrix.environment }} \
                 --platforms android,ios")
             # The target pins the branch and the EAS environment for the update.
             (cd apps/betterangels && eas env:exec \
               ${{ matrix.environment == 'production' && 'production' || 'development' }} \
+              --non-interactive \
               "cd ../.. && yarn nx affected -t eas-update --configuration ${{ matrix.environment }}")
           '
         env:

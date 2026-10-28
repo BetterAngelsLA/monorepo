@@ -1,37 +1,34 @@
 {
   "build": {
-    "development-simulator": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "environment": "development",
+    "base": {
       "env": {
         "EAS_NO_FROZEN_LOCKFILE": "1"
       },
+      "node": "22.21.1"
+    },
+    "development-simulator": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "development",
       "channel": "development",
       "ios": {
         "simulator": true
-      },
-      "node": "22.21.1"
+      }
     },
     "preview": {
+      "extends": "base",
       "distribution": "internal",
       "developmentClient": true,
-      "environment": "development",
-      "env": {
-        "EAS_NO_FROZEN_LOCKFILE": "1"
-      },
-      "node": "22.21.1"
+      "environment": "development"
     },
     "production": {
+      "extends": "base",
       "android": {
         "buildType": "app-bundle"
       },
       "environment": "production",
-      "env": {
-        "EAS_NO_FROZEN_LOCKFILE": "1"
-      },
-      "channel": "production",
-      "node": "22.21.1"
+      "channel": "production"
     }
   },
   "submit": {

@@ -130,7 +130,7 @@ jobs:
           UPDATE_PID=$!
 
           # export-web computes its own base path, so it is not in the job env.
-          (cd apps/betterangels && eas env:exec development \
+          (cd apps/betterangels && eas env:exec development --non-interactive \
             "cd ../.. && yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6")
 
           # Replay the background output, and fail with it.
@@ -210,7 +210,7 @@ jobs:
 
           # A fingerprint builds once, in any status; `force-eas-build` overrides.
           # The EAS environment supplies the profile env (`eas env:exec`).
-          (cd apps/betterangels && eas env:exec development \
+          (cd apps/betterangels && eas env:exec development --non-interactive \
             "cd ../.. && npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
               --project betterangels --configuration preview")
 
