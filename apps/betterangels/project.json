@@ -102,6 +102,7 @@
       "configurations": {
         "preview": {
           "env": {
+            "EXPO_PUBLIC_APP_ENV": "development",
             "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
             "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
             "EXPO_PUBLIC_LOCAL_API_URL": "",
