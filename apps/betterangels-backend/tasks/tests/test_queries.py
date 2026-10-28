@@ -4,8 +4,10 @@ from unittest.mock import ANY
 from model_bakery import baker
 
 from accounts.models import User
+from accounts.role_manager import OrgRoleManager
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
+from notes.groups import CASEWORKER
 from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
@@ -409,6 +411,55 @@ class TaskAssigneeQueryTestCase(GraphQLBaseTestCase):
         returned = next(u for u in results if u["id"] == str(self.org_1_case_manager_2.pk))
         self.assertEqual(returned["firstName"], self.org_1_case_manager_2.first_name)
         self.assertEqual(returned["lastName"], self.org_1_case_manager_2.last_name)
+
+    def test_task_assignees_excludes_deactivated_members(self) -> None:
+        """An offboarded user cannot act on a task, so they are not offered."""
+        deactivated = baker.make(User, is_active=False)
+        self.org_1.add_user(deactivated)
+
+        member_ids = [u["id"] for u in self.task_assignees_query()["data"]["taskAssignees"]["results"]]
+
+        self.assertNotIn(str(deactivated.pk), member_ids)
+
+    def test_task_assignees_are_ordered_by_name(self) -> None:
+        """A stable default, so offset paging cannot skip or repeat rows.
+
+        The two users are created in the *reverse* of name order: if the
+        default `order_by` is dropped the queryset falls back to pk order and
+        this fails, which a fixture whose names already sort by pk would not
+        catch.
+        """
+        created_late = baker.make(User, first_name="Zed", last_name="Last")
+        created_early = baker.make(User, first_name="Abe", last_name="First")
+        self.org_1.add_user(created_late)
+        self.org_1.add_user(created_early)
+
+        first_names = [u["firstName"] for u in self.task_assignees_query()["data"]["taskAssignees"]["results"]]
+
+        self.assertLess(
+            first_names.index("Abe"),
+            first_names.index("Zed"),
+            f"expected name order, got {first_names}",
+        )
+
+    def test_task_assignees_organization_filter_narrows_the_roster(self) -> None:
+        both_orgs = baker.make(User, first_name="Both", last_name="Orgs")
+        self.org_1.add_user(both_orgs)
+        self.org_2.add_user(both_orgs)
+        OrgRoleManager(self.org_1).add_roles(both_orgs, CASEWORKER)
+        OrgRoleManager(self.org_2).add_roles(both_orgs, CASEWORKER)
+
+        self.graphql_client.force_login(both_orgs)
+
+        unfiltered = {u["id"] for u in self.task_assignees_query()["data"]["taskAssignees"]["results"]}
+        filtered = {
+            u["id"]
+            for u in self.task_assignees_query({"organization": str(self.org_2.pk)})["data"]["taskAssignees"]["results"]
+        }
+
+        self.assertIn(str(self.org_2_case_manager_1.pk), filtered)
+        self.assertNotIn(str(self.org_1_case_manager_1.pk), filtered)
+        self.assertTrue(filtered < unfiltered)
 
     def test_task_assignees_excludes_users_outside_every_org(self) -> None:
         outsider = baker.make(User, first_name="Outside", last_name="User")

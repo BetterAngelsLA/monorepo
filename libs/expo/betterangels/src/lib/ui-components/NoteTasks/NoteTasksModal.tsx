@@ -8,7 +8,7 @@ import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generat
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
 
 import { TaskForm } from '../TaskForm';
-import { TaskFormData } from '../TaskForm/TaskForm';
+import { TaskFormData, TTaskFormSubmitResult } from '../TaskForm/TaskForm';
 
 interface INoteTasksModalProps {
   clientProfileId?: string;
@@ -64,12 +64,14 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     },
   });
 
-  const handleSave = async (formData: TaskFormData) => {
+  const handleSave = async (
+    formData: TaskFormData,
+  ): Promise<TTaskFormSubmitResult | void> => {
     // A. Draft Mode
     if (onSubmit) {
       onSubmit(formData, task?.id);
       closeModal();
-      return;
+      return undefined;
     }
 
     // B. Live Mode
@@ -129,7 +131,16 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           type: 'error',
         });
 
-        return;
+        const first = payload.messages[0];
+        const apiField = first?.field ?? null;
+        const field =
+          apiField === 'assignee'
+            ? 'assigneeId'
+            : apiField === 'team'
+              ? 'teamId'
+              : (apiField as keyof TaskFormData | null);
+
+        return { field: field ?? undefined, message: first?.message ?? '' };
       }
 
       refetch();
