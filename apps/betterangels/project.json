@@ -28,7 +28,7 @@
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
         {
-          "fileset": "apps/betterangels/.env.local",
+          "fileset": "{projectRoot}/.env.local",
           "includeIgnored": true
         },
         {
