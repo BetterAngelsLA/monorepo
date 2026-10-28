@@ -7,6 +7,7 @@
   "targets": {
     "build": {
       "executor": "@nx-tools/nx-container:build",
+      "cache": false,
       "options": {
         "context": "apps/nginx",
         "file": "apps/nginx/Dockerfile",
@@ -30,21 +31,11 @@
         }
       }
     },
-    "publish-image": {
-      "command": "yarn nx run nginx:build --skip-nx-cache",
-      "cache": false,
-      "configurations": {
-        "production": {},
-        "preview": {
-          "command": "echo 'Skipping nginx image publish (preview)'"
-        }
-      }
-    },
     "deploy": {
       "command": "tools/deploy/ecs_deploy.sh",
       "dependsOn": [
         {
-          "target": "publish-image",
+          "target": "build",
           "params": "forward"
         }
       ],

@@ -117,6 +117,8 @@ jobs:
         env:
           CI: 'true'
           NX_DAEMON: 'false'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
