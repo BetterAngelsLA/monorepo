@@ -67,7 +67,7 @@ npx -y eas-cli build:list --platform ios --build-profile production --limit 3 --
 
 ## Why expiry goes unnoticed
 
-- **CI cannot renew credentials.** The `eas-build` invocations pass `--freezeCredentials=true` (`apps/betterangels/project.json`, `.github/workflows/preview.yml`, `.github/workflows/default.yml`) — deliberate, so CI never modifies the Apple account — and an expiry stays a hard failure until a human renews it.
+- **CI cannot renew credentials.** The `eas-build` invocations pass `--freezeCredentials=true` (the `eas build` call in `tools/scripts/eas-builds.ts`) — deliberate, so CI never modifies the Apple account — and an expiry stays a hard failure until a human renews it.
 - **CI often skips the build entirely.** The EAS build is skipped when a build already exists for the current app fingerprint in _any_ state — queued, finished, or failed (`tools/scripts/find-build.mjs`, called from `tools/scripts/eas-builds.ts` by both the preview workflow and `tools/scripts/eas-e2e.ts`). Fingerprints change mostly on version bumps (the version fields in `app.config.js` are part of the fingerprint), so credentials can go unexercised for weeks: the last successful prod build was **Aug 31** (v1.2.11), and the next prod build attempt — **Oct 1** — failed on the expired profile.
 - Production builds only run on merges to `main` (`default.yml:25`).
 

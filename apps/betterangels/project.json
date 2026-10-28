@@ -216,6 +216,9 @@
       "options": {
         "command": "node tools/scripts/write-base-url.mjs"
       }
+    },
+    "build-missing": {
+      "cache": false
     }
   }
 }

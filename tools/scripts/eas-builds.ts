@@ -115,7 +115,7 @@ export function ensureBuilds({
         'nx',
         [
           'run',
-          'betterangels:eas-build',
+          `${project}:eas-build`,
           '--platform',
           platform,
           '--profile',
