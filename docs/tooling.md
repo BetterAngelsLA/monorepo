@@ -65,11 +65,12 @@ runtime to notice.
 On a GitHub runner the file is **not** what `export-web` sees. Nx builds a
 task's environment from dotenv files before its dependencies run, so
 `write-eas-env` — a dependency of `export-web`, and the thing that writes the
-file — arrives too late to influence it through the file alone. The same script
-therefore also prints the profile as `export` lines (`--print`), and the workflow
-evals those into the shell first; Nx never overrides a variable that is already
-set. Both paths come from one resolver, so they cannot disagree. Change the
-extra keys in one place: `eas.json` per profile, GitHub secrets for the rest.
+file — arrives too late to influence it through the file alone. One call to that
+script therefore does both: it writes the file (what EAS and `app.config.js`
+read) and, with `--print`, emits the same values as `export` lines for the
+workflow to eval into the shell. Nx never overrides a variable that is already
+set, so those win. A single resolver feeds both, so they cannot disagree — change
+the extra keys in one place: `eas.json` per profile, GitHub secrets for the rest.
 
 ## Preview pipeline (PRs)
 

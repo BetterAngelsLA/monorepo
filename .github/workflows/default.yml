@@ -331,14 +331,10 @@ jobs:
           # task's output in a labelled `::group::` fold, and ends with the failed
           # task list. `stream` interleaved every project *and* opted out of that
           # grouping, which buried the failure in hundreds of passing lines.
-          # Export the profile env into the shell before Nx starts. Nx resolves a
-          # task's environment from dotenv files before its dependencies run, so
-          # `write-eas-env` — a dependency of `export-web` — cannot be what
-          # supplies it; its rewritten `.env` arrives too late. Values already in
-          # the environment survive Nx's file loading, which never overrides them.
-          # Assign first: a failing substitution leaves the shell with nothing,
-          # and `eval ""` would succeed silently — the export would then run
-          # without APP_VARIANT and skip the production guard.
+          # Nx builds a task's env before its dependencies run, so export it here;
+          # Nx never overrides a variable that is already set.
+          # Assign first: `eval ""` on a failed substitution succeeds silently,
+          # which would skip the production guard.
           APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile ${{ matrix.environment }} --print)" || exit 1
           eval "$APP_ENV_EXPORTS"
 
@@ -448,10 +444,8 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           # Restores what `copy-lockfile` rewrites, even when the build fails.
-          # Heredoc, not `bash -c '...'`: the script is long, and a single
-          # apostrophe anywhere in it (a comment, a message) closes the quoted
-          # argument early. The container then runs only the part before it and
-          # the rest silently executes on the runner — with the runner's Node.
+          # Heredoc, not `bash -c '...'`: one apostrophe in the script ends the
+          # quoted argument, and the rest runs on the runner instead.
           docker compose run --rm better-angels bash <<'EOF'
             set -euo pipefail
             trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
@@ -462,11 +456,8 @@ jobs:
             # Not `nx affected`: an unaffected app would resolve a runtime without
             # its env and queue a build for a fingerprint nothing uses. The reuse
             # check below is what makes this a no-op when nothing changed.
-            yarn nx run betterangels:write-eas-env:${{ matrix.environment }}
-            # Resolve the profile env once, here: `build-missing.ts` fingerprints
-            # the build from it and `eas-update` bundles from it, so both have to
-            # read the same values. Nx fills each task environment from dotenv files
-            # before its dependencies run, so the export above cannot supply it.
+            # One resolution: writes the `.env` `build-missing` fingerprints, and
+            # exports it for the tasks, whose env Nx fills before they run.
             APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile ${{ matrix.environment }} --print)" || exit 1
             eval "$APP_ENV_EXPORTS"
             yarn nx run betterangels:copy-lockfile
