@@ -39,6 +39,8 @@ type TProps = {
   selectedFallback?: TAssignableMember | null;
   /** Called the first time the sheet opens, so the roster can load lazily. */
   onOpen?: () => void;
+  /** Override for surfaces that call the roster something else (HMIS). */
+  searchPlaceholder?: string;
 };
 
 /**
@@ -66,6 +68,7 @@ export function AssigneeSelect(props: TProps) {
     loadError = false,
     selectedFallback = null,
     onOpen: onOpenProp,
+    searchPlaceholder = 'Search name',
   } = props;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -158,7 +161,7 @@ export function AssigneeSelect(props: TProps) {
                   data={items}
                   extractSearchText={(member) => formatMemberName(member)}
                   onChange={setFiltered}
-                  placeholder="Search name"
+                  placeholder={searchPlaceholder}
                 />
               </View>
 
