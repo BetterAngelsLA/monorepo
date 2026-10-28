@@ -2274,9 +2274,9 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
 
   """
-  Members the caller can assign a task to. Gated on tasks.add rather than organizations.view_org_members so a caseworker can pick an assignee without holding the org-admin roster permission.
+  Members the caller can assign a task to. Gated on tasks.add or tasks.change rather than organizations.view_org_members so a caseworker can pick an assignee without holding the org-admin roster permission.
   """
-  taskAssignees(pagination: OffsetPaginationInput, filters: TaskAssigneeFilter, ordering: [TaskAssigneeOrder!]! = []): TaskAssigneeTypeOffsetPaginated! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
+  taskAssignees(pagination: OffsetPaginationInput, filters: TaskAssigneeFilter, ordering: [TaskAssigneeOrder!]! = []): TaskAssigneeTypeOffsetPaginated! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}, {app: "tasks", permission: "change_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
   operatorShelter(pk: ID!): OperatorShelterType!
@@ -3034,6 +3034,7 @@ input TaskAssigneeFilter {
   OR: TaskAssigneeFilter
   NOT: TaskAssigneeFilter
   DISTINCT: Boolean
+  organization: ID
   search: String
 }
 

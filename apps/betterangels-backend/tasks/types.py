@@ -156,6 +156,19 @@ class UpdateTaskInput:
 @strawberry_django.filter_type(User)
 class TaskAssigneeFilter:
     @strawberry_django.filter_field
+    def organization(self, queryset: QuerySet, info: Info, value: Optional[ID], prefix: str) -> Q:
+        """Narrow the roster to one organization.
+
+        ``get_queryset`` already bounds this to orgs the caller belongs to, so
+        passing someone else's id yields an empty list rather than widening the
+        result.
+        """
+        if value is None:
+            return Q()
+
+        return Q(organizations_organization=value)
+
+    @strawberry_django.filter_field
     def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
         if value is None:
             return Q()
@@ -210,4 +223,18 @@ class TaskAssigneeType:
         current_user = cast(User, get_current_user(info))
         caller_org_ids = current_user.organizations_organization.values("pk")
 
-        return queryset.filter(organizations_organization__in=caller_org_ids).distinct()
+        # `is_active`: an offboarded caseworker must not be offered as an
+        # assignee — they cannot log in to act on the task.
+        #
+        # The explicit `order_by` gives the offset-paginated list a stable
+        # default; without it the sort is whatever the database returns and
+        # paging can skip or repeat rows. A client-supplied `ordering` replaces
+        # it.
+        return (
+            queryset.filter(
+                organizations_organization__in=caller_org_ids,
+                is_active=True,
+            )
+            .distinct()
+            .order_by("first_name", "last_name", "id")
+        )

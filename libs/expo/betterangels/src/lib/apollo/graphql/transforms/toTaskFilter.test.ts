@@ -204,6 +204,17 @@ describe('toTaskFilter', () => {
     expect(input).toEqual(snapshot);
   });
 
+  it('passes assignee ids through', () => {
+    expect(toTaskFilter({ assignees: ['u1', 'u2'] }).assignees).toEqual([
+      'u1',
+      'u2',
+    ]);
+  });
+
+  it('drops an empty assignee selection instead of filtering on nothing', () => {
+    expect(toTaskFilter({ assignees: [] }).assignees).toBeUndefined();
+  });
+
   it('type-level sanity: return is assignable to TaskFilter', () => {
     const result = toTaskFilter({
       search: 'x',

@@ -27,6 +27,20 @@ type TProps = {
   disabled?: boolean;
   error?: string;
   testId?: string;
+  /** True while the roster is in flight. */
+  loading?: boolean;
+  /** The roster request failed; surfaced instead of an empty list. */
+  loadError?: boolean;
+  /**
+   * The current assignee, when the roster does not contain them — someone who
+   * left the organization. Keeps the field showing a name instead of looking
+   * unassigned while the id is still set.
+   */
+  selectedFallback?: TAssignableMember | null;
+  /** Called the first time the sheet opens, so the roster can load lazily. */
+  onOpen?: () => void;
+  /** Override for surfaces that call the roster something else (HMIS). */
+  searchPlaceholder?: string;
 };
 
 /**
@@ -50,29 +64,52 @@ export function AssigneeSelect(props: TProps) {
     disabled,
     error,
     testId,
+    loading = false,
+    loadError = false,
+    selectedFallback = null,
+    onOpen: onOpenProp,
+    searchPlaceholder = 'Search name',
   } = props;
 
   const [isOpen, setIsOpen] = useState(false);
 
+  // The roster wins; the fallback only fills in an id the roster no longer has.
+  const withFallback = useMemo(() => {
+    if (
+      !selectedFallback ||
+      items.some((member) => member.id === selectedFallback.id)
+    ) {
+      return items;
+    }
+
+    return [selectedFallback, ...items];
+  }, [items, selectedFallback]);
+
   const pickerItems = useMemo(
     () =>
-      items.map((member) => ({
+      withFallback.map((member) => ({
         value: member.id,
         displayValue: formatMemberName(member),
       })),
-    [items],
+    [withFallback],
   );
 
-  const [filtered, setFiltered] = useState<TAssignableMember[]>(items);
+  // Seeded by `SearchListBar`, which re-emits its filtered list whenever the
+  // roster changes (`useTextFilter` depends on `data`). Resetting it here as
+  // well would clobber an in-progress search: the box keeps the typed text
+  // while the list silently reverts to everyone.
+  const [filtered, setFiltered] = useState<TAssignableMember[]>([]);
 
   const close = () => setIsOpen(false);
 
   const open = () => {
     if (disabled) return;
 
+    onOpenProp?.();
+
     // Start from the full roster: a stale query from the last open would hide
     // the very member the user came back to pick.
-    setFiltered(items);
+    setFiltered(withFallback);
     setIsOpen(true);
   };
 
@@ -118,10 +155,14 @@ export function AssigneeSelect(props: TProps) {
                   {label ?? 'Assignee'}
                 </TextRegular>
                 <SearchListBar
-                  data={items}
+                  // `withFallback`, not `items`: the bar re-emits its own
+                  // filtered list on mount, so handing it the raw roster
+                  // dropped a current assignee who has left the org — the row
+                  // the field is rendering by name.
+                  data={withFallback}
                   extractSearchText={(member) => formatMemberName(member)}
                   onChange={setFiltered}
-                  placeholder="Search name"
+                  placeholder={searchPlaceholder}
                 />
               </View>
 
@@ -145,7 +186,13 @@ export function AssigneeSelect(props: TProps) {
 
                 {!filtered.length && (
                   <TextRegular size="sm" style={styles.empty}>
-                    No members match that name.
+                    {loadError
+                      ? "Couldn't load your organization's members."
+                      : loading
+                        ? 'Loading members…'
+                        : withFallback.length
+                          ? 'No members match that name.'
+                          : 'No members to assign in this organization.'}
                   </TextRegular>
                 )}
               </ScrollView>

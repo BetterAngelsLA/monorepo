@@ -35,11 +35,15 @@ class Query:
 
     task_assignees: OffsetPaginated[TaskAssigneeType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(Task.perms.ADD)],
+        # Add *or* change: the picker is used both when creating a task and when
+        # editing one, and editing only requires `tasks.change`. Gating on add
+        # alone left a change-only role staring at an empty sheet.
+        extensions=[HasPerm([Task.perms.ADD, Task.perms.CHANGE])],
         description=(
-            "Members the caller can assign a task to. Gated on tasks.add rather than "
-            "organizations.view_org_members so a caseworker can pick an assignee "
-            "without holding the org-admin roster permission."
+            "Members the caller can assign a task to. Gated on tasks.add or "
+            "tasks.change rather than organizations.view_org_members so a "
+            "caseworker can pick an assignee without holding the org-admin "
+            "roster permission."
         ),
     )
 

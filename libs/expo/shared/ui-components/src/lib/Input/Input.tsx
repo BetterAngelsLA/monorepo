@@ -33,6 +33,8 @@ export interface IInputProps extends TMarginProps, TextInputProps {
   inputStyle?: StyleProp<ViewStyle>;
   borderRadius?: number;
   onDelete?: () => void;
+  /** Spoken label for the clear control; defaults to "clear input". */
+  onDeleteAccessibilityLabel?: string;
   slotLeft?: TInputSlot;
   slotRight?: TInputSlot;
   asSelect?: boolean;
@@ -66,6 +68,7 @@ export function Input(props: IInputProps) {
     inputStyle,
     value,
     onDelete,
+    onDeleteAccessibilityLabel,
     slotLeft,
     slotRight,
     autoCorrect = false,
@@ -153,7 +156,7 @@ export function Input(props: IInputProps) {
             placement="right"
             disabled={disabled}
             onPress={onDelete}
-            accessibilityLabel="clear input"
+            accessibilityLabel={onDeleteAccessibilityLabel ?? 'clear input'}
             accessibilityHint={`clear value for ${label || 'input'}`}
             component={<InputClearIcon />}
           />

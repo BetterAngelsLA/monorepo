@@ -3,6 +3,7 @@ from typing import Optional
 from model_bakery import baker
 from unittest_parametrize import parametrize
 
+from accounts.models import User
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from tasks.models import Task
@@ -180,7 +181,12 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
 
 class TaskAssigneeQueryPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
-    """``taskAssignees`` is part of writing a task, so it follows ``tasks.add``."""
+    """``taskAssignees`` is part of writing a task: add *or* change.
+
+    Editing a task only requires ``tasks.change``, and the same picker serves
+    that screen, so gating on ``tasks.add`` alone left change-only roles with
+    an empty roster.
+    """
 
     def task_assignees_query(self) -> dict:
         query = """
@@ -222,3 +228,25 @@ class TaskAssigneeQueryPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsM
             self.assertGraphQLUnauthenticated(response)
         else:
             self.assertEqual(response["data"]["taskAssignees"]["totalCount"], 0)
+
+    def test_task_assignees_allows_a_change_only_role(self) -> None:
+        from django.contrib.auth.models import Group, Permission
+        from django.contrib.contenttypes.models import ContentType
+
+        user = baker.make(User)
+        self.org_1.add_user(user)
+
+        group = Group.objects.create(name="change-only")
+        group.permissions.add(
+            Permission.objects.get(
+                content_type=ContentType.objects.get_for_model(Task),
+                codename="change_task",
+            )
+        )
+        user.groups.add(group)
+
+        self.graphql_client.force_login(user)
+
+        response = self.task_assignees_query()
+
+        self.assertGreater(response["data"]["taskAssignees"]["totalCount"], 0)
