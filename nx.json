@@ -65,22 +65,6 @@
         "^production"
       ]
     },
-    "eas-build": {
-      "cache": false,
-      "dependsOn": [
-        "sync-deps",
-        "copy-lockfile",
-        "ensure-symlink"
-      ],
-      "configurations": {
-        "preview": {
-          "profile": "preview"
-        },
-        "production": {
-          "profile": "production"
-        }
-      }
-    },
     "e2e": {
       "cache": false,
       "configurations": {

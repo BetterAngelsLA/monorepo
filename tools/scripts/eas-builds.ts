@@ -119,7 +119,7 @@ export function ensureBuilds({
     }
 
     console.log(`Queueing ${platform} build (profile: ${profile})...`);
-    // `--wait=false` answers with the build object immediately, before `build:list`
+    // `--no-wait` answers with the build object immediately, before `build:list`
     // lists it: its id is already a working permalink.
     const payload = runJson<EasBuild | EasBuild[]>(
       'eas',

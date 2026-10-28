@@ -1,8 +1,9 @@
-// The runtime version is the Expo fingerprint, computed from this config. The
-// profile env comes from the EAS environment selected by the build profile's
-// `environment`; `.env`/`.env.local` hold local defaults, loaded here for
-// `expo-updates` fingerprint resolution outside the Expo CLI. `.env.local`
-// overrides so the EAS-pulled values win over the tracked `.env`.
+// The runtime version is the Expo fingerprint, computed from this config, so the
+// values a build sees have to match the ones CI fingerprinted. Those values are
+// the EAS environment selected by the build profile's `environment`. The tracked
+// `.env` only carries local defaults (dotenv leaves an already-set value alone),
+// and `.env.local` — gitignored, so never uploaded — carries what `eas env:pull`
+// wrote, which is why it is the one that overrides.
 import dotenv from 'dotenv';
 dotenv.config();
 dotenv.config({ path: '.env.local', override: true });

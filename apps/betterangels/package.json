@@ -13,6 +13,7 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "dotenv": "*",
     "expo-constants": "*",
     "react-native": "*",
     "expo-router": "*",
@@ -98,8 +99,7 @@
     "libphonenumber-js": "*",
     "validator": "*",
     "rxjs": "*",
-    "http-proxy-middleware": "*",
-    "dotenv": "*"
+    "http-proxy-middleware": "*"
   },
   "devDependencies": {}
 }

@@ -328,10 +328,10 @@ jobs:
             # Forks have no EXPO_TOKEN: run the checks without the EAS env.
             yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
           else
-            # The EAS environment is pulled into .env.local, which export-web
-            # hashes and the Expo CLI loads.
+            # The EAS environment is pulled into `.env.local`, which the Expo CLI
+            # loads: `deploy` runs `export-web` here on main.
             (cd apps/betterangels && eas env:pull ${{ matrix.environment == 'production' && 'production' || 'development' }} --non-interactive)
-              yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
+            yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
           fi
           EOF
         env:

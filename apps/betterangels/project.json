@@ -179,13 +179,6 @@
         "cwd": "apps/betterangels"
       }
     },
-    "restore-workspace": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "options": {
-        "command": "node tools/scripts/restore-workspace.mjs --project betterangels"
-      }
-    },
     "eas-update": {
       "executor": "nx:run-commands",
       "cache": false,
@@ -205,10 +198,12 @@
       }
     },
     "ensure-symlink": {
-      "executor": "@nx/expo:ensure-symlink"
+      "executor": "@nx/expo:ensure-symlink",
+      "cache": false
     },
     "build-list": {
-      "executor": "@nx/expo:build-list"
+      "executor": "@nx/expo:build-list",
+      "cache": false
     },
     "base-path": {
       "executor": "nx:run-commands",

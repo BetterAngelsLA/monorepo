@@ -9,10 +9,12 @@
  *   node tools/scripts/find-build.mjs --project <name> --platform <p> \
  *     --profile <profile> --runtime <hash> [--json] [--force]
  *
- * Status is ignored: a fingerprint builds once. `--force` (or FORCE_EAS_BUILD)
- * is the way past a build that failed for a reason that has since been fixed.
- * Exits 1 rather than reporting "no build" when `build:list` never succeeds, so
- * an EAS outage cannot silently queue a duplicate.
+ * Status is not filtered out here: a fingerprint builds once, and a dead build is
+ * reported rather than treated as "no build" — `eas-builds.ts` turns it into a
+ * failure. `--force` (or FORCE_EAS_BUILD) is the way past a build that failed
+ * for a reason that has since been fixed. Exits 1 rather than reporting
+ * "no build" when `build:list` never succeeds, so an EAS outage cannot silently
+ * queue a duplicate.
  */
 import { execFileSync } from 'child_process';
 import minimist from 'minimist';
@@ -23,9 +25,9 @@ import { parseJsonOutput } from './cli-json.mjs';
 const argv = minimist(process.argv.slice(2));
 const { platform, profile, runtime, project } = argv;
 
-if (!platform || !profile || !runtime) {
+if (!project || !platform || !profile || !runtime) {
   console.error(
-    'Usage: find-build.mjs --platform <p> --profile <profile> --runtime <hash> [--project <name>] [--json] [--attempts 3]',
+    'Usage: find-build.mjs --project <name> --platform <p> --profile <profile> --runtime <hash> [--json] [--attempts 3]',
   );
   process.exit(2);
 }
@@ -54,7 +56,7 @@ const cwd = process.cwd();
 
 const args = [
   'run',
-  'betterangels:build-list',
+  `${project}:build-list`,
   '--platform',
   platform,
   '--buildProfile',

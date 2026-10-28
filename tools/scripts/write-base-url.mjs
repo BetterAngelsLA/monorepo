@@ -5,6 +5,12 @@
  * @nx/expo:export has no `env` option; the Expo CLI reads .env.local. Writing it
  * here keeps the local and CI exports on the same branch path without copying the
  * path logic into the target.
+ *
+ * Only the web export may observe this value: it lands in `expoConfig`
+ * (`experiments.baseUrl`), so once it is in the file, any native job that
+ * evaluates `app.config.js` afterwards — `eas build`, `eas update` — fingerprints
+ * a branch-scoped runtime version no binary carries. Native steps run first, or
+ * re-pull `.env.local` (the preview mobile step does).
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
