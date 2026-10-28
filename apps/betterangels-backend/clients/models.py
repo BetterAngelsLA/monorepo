@@ -118,8 +118,11 @@ class ClientFamilyMember(models.Model):
         original = getattr(self, "_loaded_client_profile_id", None)
         if original is _UNKNOWN_PARENT and self.pk is not None:
             # The FK column was deferred at load time; compare against the stored
-            # parent, not the (unset) attribute, so the guard still fires.
-            original = type(self)._base_manager.filter(pk=self.pk).values_list("client_profile_id", flat=True).first()
+            # parent, not the (unset) attribute, so the guard still fires. The
+            # column name comes from the field because the abstract base does not
+            # declare ``client_profile`` (the concrete subclasses do).
+            parent_field = cast(Any, type(self))._meta.get_field("client_profile")
+            original = type(self)._base_manager.filter(pk=self.pk).values_list(parent_field.attname, flat=True).first()
         current = getattr(self, "client_profile_id", None)
         if original is not None and current != original:
             raise ValidationError("A client's related record cannot be moved to another client.")
