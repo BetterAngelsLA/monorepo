@@ -379,21 +379,14 @@ jobs:
           yarn nx run monorepo-image:publish:ci-base --skip-nx-cache
           EOF
 
-      - name: 🏗️ Build and push production image
-        if: matrix.environment == 'production' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx run monorepo-image:publish:production --skip-nx-cache
-          EOF
-
-      - name: Build production side-effect images
+      - name: Build production imgproxy image
         if: matrix.environment == 'production'
         run: |
-          # imgproxy/nginx push during their build. Their preview builds are
-          # cacheable, but a production cache hit would skip the push for this
-          # commit's image tag.
+          # imgproxy pushes during its build; a production cache hit would skip
+          # the push for this commit's image tag. nginx is published by its
+          # deploy dependency.
           docker compose run better-angels bash <<'EOF'
-          yarn nx run-many -t build --projects=imgproxy,nginx --configuration production --skip-nx-cache
+          yarn nx run-many -t build --projects=imgproxy --configuration production --skip-nx-cache
           EOF
         env:
           # @nx-tools/nx-container reads its action-style input for image metadata.

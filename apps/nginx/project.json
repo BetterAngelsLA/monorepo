@@ -30,8 +30,24 @@
         }
       }
     },
+    "publish-image": {
+      "command": "yarn nx run nginx:build --skip-nx-cache",
+      "cache": false,
+      "configurations": {
+        "production": {},
+        "preview": {
+          "command": "echo 'Skipping nginx image publish (preview)'"
+        }
+      }
+    },
     "deploy": {
       "command": "tools/deploy/ecs_deploy.sh",
+      "dependsOn": [
+        {
+          "target": "publish-image",
+          "params": "forward"
+        }
+      ],
       "configurations": {
         "production": {},
         "preview": {
