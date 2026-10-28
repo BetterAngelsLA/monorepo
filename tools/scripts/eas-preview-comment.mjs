@@ -22,7 +22,13 @@ import minimist from 'minimist';
 
 import { bestBuild } from './build-rank.mjs';
 import { parseJsonOutput, updateGroups } from './cli-json.mjs';
-import { buildCell } from './preview-builds.mjs';
+import {
+  PLATFORMS,
+  buildCell,
+  missingText,
+  pickBuild,
+  slackBlocks,
+} from './preview-builds.mjs';
 
 const argv = minimist(process.argv.slice(2), {
   string: ['project', 'account', 'slug', 'projectId'],
@@ -51,7 +57,6 @@ if (!branch) {
 // Both platforms get a column. The lookup is keyed on the update's runtime, not
 // on what this run built: a build from an earlier run is just as usable.
 // `buildCell` falls back when nothing exists.
-const PLATFORMS = ['android', 'ios'];
 // `EAS_PROFILE` lets the main pipeline report the production builds instead;
 // the simulator link only exists for preview.
 const profile = process.env.EAS_PROFILE || 'preview';
@@ -178,8 +183,17 @@ const lookups = Object.fromEntries(
 const lookupFor = (platform) => lookups[`${platform}/${profile}`] ?? {};
 const buildFor = (platform) => lookupFor(platform).build;
 // A simulator build queued by this run can also be missing from `build:list` for
-// a moment; `buildCell` falls back to the record.
+// a moment; the row falls back to the record, then says why there is no link.
 const simulator = lookups['ios/development-simulator']?.build;
+const simulatorRuntime =
+  updates.ios?.runtimeVersion ??
+  triggered['ios/development-simulator']?.runtime;
+const simulatorResolution = pickBuild({
+  triggered: triggered['ios/development-simulator'],
+  simulator,
+  runtime: simulatorRuntime,
+  error: lookups['ios/development-simulator']?.error,
+});
 
 const hasData =
   PLATFORMS.some((platform) => buildFor(platform)) ||
@@ -199,7 +213,7 @@ const runtimeOf = (build) =>
 
 const updateCell = (update) =>
   update
-    ? `[Update Permalink](${updateUrl(update.group)})<br /><details><summary>Details</summary>Branch: \`${update.branch ?? ''}\`<br />Runtime version: \`${update.runtimeVersion ?? ''}\`<br />Git commit: \`${update.gitCommitHash ?? ''}\`</details>`
+    ? `[Update Permalink](${updateUrl(update.group)})<br /><details><summary>Details</summary>Branch: \`${update.branch ?? ''}\`<br />Runtime version: \`${update.runtimeVersion ?? ''}\`<br />Platforms: \`${update.platforms ?? ''}\`</details>`
     : 'N/A';
 
 const qrCell = (update) =>
@@ -208,9 +222,6 @@ const qrCell = (update) =>
     : 'N/A';
 
 const PLATFORM_LABELS = { android: '🤖 Android', ios: '🍎 iOS' };
-// Slack's headings use the shortcodes the old notification used; the table keeps
-// the glyph labels it has always had. Both are keyed off PLATFORMS.
-const SLACK_LABELS = { android: ':robot_face: Android', ios: ':iphone: iOS' };
 const table = [
   [
     '&nbsp;',
@@ -258,10 +269,16 @@ const body = `<!-- continuous-deploy-fingerprint-projectId:${argv.projectId} -->
 - Scheme → **${argv.slug}**
 
 ${table}
-${
-  simulator && buildFor('ios')
-    ? `\n**iOS Simulator Build:** [Simulator Build Link](${buildUrl(simulator.id)})`
-    : ''
+
+**iOS Simulator Build:** ${
+  simulatorResolution.build
+    ? `[Simulator Build Link](${buildUrl(simulatorResolution.build.id)})`
+    : profile === 'preview'
+      ? missingText({
+          runtime: simulatorRuntime,
+          error: lookups['ios/development-simulator']?.error,
+        })
+      : 'not part of a production build'
 }`;
 
 // A laptop run is how this script is exercised without burning a CI cycle; it
@@ -322,61 +339,35 @@ async function notifySlack() {
   // PR previews get the comment above; only deployments get a Slack ping.
   if (!webhook || process.env.GITHUB_EVENT_NAME === 'pull_request') return;
 
-  const link = (label, url) =>
-    url ? `<${url}|${label}>` : `${label}: not built for this run`;
-  const section = (title, platform) => {
-    const build = buildFor(platform);
-    const sim = platform === 'ios' ? simulator : undefined;
-    // The platform headings are not bold in the message this pipeline has always
-    // posted; only the header is.
-    const lines = [
-      title,
-      '',
-      link(
-        'Update',
-        updates[platform] ? updateUrl(updates[platform].group) : undefined,
-      ),
-      link('Build', build ? buildUrl(build.id) : undefined),
-      ...(sim ? [link('Simulator Build', buildUrl(sim.id))] : []),
-    ];
-    const runtime = build
-      ? runtimeOf(build)
-      : updates[platform]?.runtimeVersion;
-    if (runtime) lines.push(`_Runtime:_ \`${runtime}\``);
-    return {
-      type: 'section',
-      text: { type: 'mrkdwn', text: lines.join('\n') },
-    };
-  };
-
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], {
     encoding: 'utf8',
   }).trim();
   const message = execFileSync('git', ['log', '-1', '--pretty=%s'], {
     encoding: 'utf8',
-  })
-    .trim()
-    // The subject is a PR title, i.e. attacker-controlled for anyone who can open
-    // one: escape the three characters Slack treats as mrkdwn.
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  }).trim();
 
   // Matches the notification this pipeline has always posted: a header, then one
-  // block per platform with Update / Build / Simulator Build links.
-  const blocks = [
-    {
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `*New code has landed in main for project ${argv.project}!* \n*Commit:* \`${commit}\`\n*Message:* ${message}`,
-      },
-    },
-    ...PLATFORMS.flatMap((platform, index) => [
-      ...(index > 0 ? [{ type: 'divider' }] : []),
-      section(SLACK_LABELS[platform] ?? platform, platform),
-    ]),
-  ];
+  // block per platform with Update / Build / Simulator Build rows. Every row is
+  // present in every message — the blocks differ only in what the rows link to.
+  const blocks = slackBlocks({
+    project: argv.project,
+    profile,
+    account: argv.account,
+    slug: argv.slug,
+    projectId: argv.projectId,
+    commit,
+    message,
+    updates,
+    devices: Object.fromEntries(
+      PLATFORMS.map((platform) => [platform, buildFor(platform)]),
+    ),
+    errors: Object.fromEntries(
+      PLATFORMS.map((platform) => [platform, lookupFor(platform).error]),
+    ),
+    triggered,
+    simulator,
+    simulatorError: lookups['ios/development-simulator']?.error,
+  });
 
   const response = await fetch(webhook, {
     method: 'POST',

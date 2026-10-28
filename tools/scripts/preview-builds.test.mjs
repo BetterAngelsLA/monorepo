@@ -10,7 +10,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { buildCell } from './preview-builds.mjs';
+import { buildCell, slackBlocks, slackSection } from './preview-builds.mjs';
 
 const account = 'better-angels';
 const slug = 'betterangels';
@@ -220,5 +220,234 @@ describe('buildCell', () => {
 
     assert.equal(cell, 'Lookup failed for `e906c369` — see the job log');
     assert.doesNotMatch(cell, /No build/);
+  });
+});
+
+const update = {
+  group: 'group-1',
+  branch: 'main',
+  runtimeVersion: 'e906c369',
+  gitCommitHash: 'e906c3690000000000000000000000000000000',
+};
+
+const slack = (overrides = {}) =>
+  slackSection({
+    title: ':iphone: iOS',
+    account,
+    slug,
+    projectId: 'project-1',
+    runtime: 'e906c369',
+    update,
+    device: undefined,
+    triggered: undefined,
+    simulator: undefined,
+    simulatorTriggered: undefined,
+    error: undefined,
+    simulatorRow: true,
+    ...overrides,
+  }).text.text;
+
+describe('slackSection', () => {
+  it('renders Update, Build and Simulator Build in that order', () => {
+    const text = slack({ device: deviceBuild, simulator: simulatorBuild });
+
+    assert.match(text, /^:iphone: iOS\n\n<https:\/\/expo\.dev\/projects\//);
+    assert.match(
+      text,
+      new RegExp(
+        `<https://expo.dev/accounts/${account}/projects/${slug}/builds/device-android\\|Build>`,
+      ),
+    );
+    assert.match(
+      text,
+      new RegExp(
+        `<https://expo.dev/accounts/${account}/projects/${slug}/builds/sim-ios\\|Simulator Build>`,
+      ),
+    );
+    assert.ok(text.indexOf('|Build>') < text.indexOf('|Simulator Build>'));
+  });
+
+  it('keeps the row and the link when build:list lags the queued build', () => {
+    // The regression this pins: the run had a valid permalink, the listing did
+    // not, and the message said "not built for this run" instead of linking it.
+    const text = slack({
+      triggered: {
+        platform: 'ios',
+        profile: 'preview',
+        runtime: 'e906c369',
+        reused: false,
+        build: { id: 'queued-ios', runtime: { version: 'e906c369' } },
+      },
+      simulatorTriggered: {
+        platform: 'ios',
+        profile: 'development-simulator',
+        runtime: 'e906c369',
+        reused: false,
+        build: { id: 'queued-sim', runtime: { version: 'e906c369' } },
+      },
+    });
+
+    assert.match(text, /\|Build>/);
+    assert.match(text, new RegExp(`builds/queued-ios\\|Build>`));
+    assert.match(text, new RegExp(`builds/queued-sim\\|Simulator Build>`));
+  });
+
+  it('reports the build this run resolved when the newest update is an older one', () => {
+    // A tools-only push publishes no update, so `update:list` answers with another
+    // commit's runtime. The build row and the runtime must come from this run's
+    // record, and the update row must name the commit it actually came from.
+    const text = slack({
+      update: {
+        group: 'group-1',
+        branch: 'main',
+        runtimeVersion: 'f96e6a11e37b4f7367eb5223e3f3c38055e582d4',
+        gitCommitHash: '96b88652aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      },
+      runtime: 'f96e6a11e37b4f7367eb5223e3f3c38055e582d4',
+      triggered: {
+        platform: 'ios',
+        profile: 'preview',
+        runtime: 'e906c369',
+        reused: true,
+        build: { id: 'resolved-ios', runtime: { version: 'e906c369' } },
+      },
+    });
+
+    assert.match(text, new RegExp(`builds/resolved-ios\\|Build>`));
+    assert.match(text, /_Runtime:_ `e906c369`/);
+    assert.doesNotMatch(text, /^Build: No build/m);
+  });
+
+  it('blames the runtime the simulator row resolved against', () => {
+    // The record exists but EAS answered without a build object, so the row has
+    // nothing to link — it must not then point at the older update's runtime.
+    const text = slack({
+      runtime: 'f96e6a11e37b4f7367eb5223e3f3c38055e582d4',
+      device: deviceBuild,
+      simulatorTriggered: {
+        platform: 'ios',
+        profile: 'development-simulator',
+        runtime: 'e906c369',
+        reused: false,
+        build: null,
+      },
+    });
+
+    assert.match(text, /Simulator Build: No build for `e906c369`/);
+  });
+
+  it('reports a failed simulator lookup instead of a missing build', () => {
+    const text = slack({ device: deviceBuild, simulatorError: 'EAS is down' });
+
+    assert.match(
+      text,
+      /Simulator Build: Lookup failed for `e906c369` — see the job log/,
+    );
+  });
+
+  it('says why the simulator row has no link instead of dropping it', () => {
+    const text = slack({ device: deviceBuild });
+
+    assert.match(text, /Simulator Build: No build for `e906c369`/);
+    // The device row still renders, and the simulator row is last before runtime.
+    assert.match(text, /\|Build>\nSimulator Build:/);
+  });
+
+  it('renders a row even with no update at all', () => {
+    const text = slack({ update: undefined });
+
+    assert.match(text, /Update: none published for this commit/);
+  });
+
+  it('distinguishes a failed lookup from a missing build', () => {
+    const text = slack({ error: 'EAS is down' });
+
+    assert.match(text, /Build: Lookup failed for `e906c369` — see the job log/);
+    assert.doesNotMatch(text, /^Build: No build/m);
+  });
+});
+
+const blocks = (overrides = {}) =>
+  slackBlocks({
+    project: 'betterangels',
+    profile: 'preview',
+    account,
+    slug,
+    projectId: 'project-1',
+    commit: 'e906c3690000000000000000000000000000000',
+    message: 'feat(shelter): filters (SDB-218)',
+    updates: { android: update, ios: update },
+    devices: {},
+    errors: {},
+    triggered: {},
+    simulator: undefined,
+    simulatorError: undefined,
+    ...overrides,
+  });
+
+const texts = (overrides = {}) =>
+  blocks(overrides)
+    .filter((block) => block.text?.text)
+    .map((block) => block.text.text);
+const sectionFor = (platform, overrides) =>
+  texts(overrides).find((text) => text.startsWith(platform));
+
+const ANDROID = ':robot_face: Android';
+const IOS = ':iphone: iOS';
+
+describe('slackBlocks', () => {
+  it('keeps the header, both platform blocks and the divider between them', () => {
+    assert.deepEqual(
+      blocks().map((block) => block.type),
+      ['section', 'section', 'divider', 'section'],
+    );
+    assert.match(
+      texts()[0],
+      /^\*New code has landed in main for project betterangels!\*/,
+    );
+  });
+
+  it('names the environment, so the two legs of a push differ', () => {
+    assert.match(texts({ profile: 'preview' })[0], /\*Environment:\* Preview/);
+    assert.match(
+      texts({ profile: 'production' })[0],
+      /\*Environment:\* Production/,
+    );
+  });
+
+  it('says a production simulator row is not part of that build', () => {
+    // Driven by the profile, not by a flag the test sets: a caller that stopped
+    // deriving `simulatorProfile` from it fails here.
+    assert.match(
+      sectionFor(IOS, { profile: 'production', devices: { ios: deviceBuild } }),
+      /Simulator Build: not part of a production build/,
+    );
+  });
+
+  it('links the simulator binary on a preview', () => {
+    assert.match(
+      sectionFor(IOS, { simulator: simulatorBuild }),
+      new RegExp(`builds/sim-ios\\|Simulator Build>`),
+    );
+  });
+
+  it('gives only iOS a simulator row', () => {
+    assert.doesNotMatch(
+      sectionFor(ANDROID, { simulator: simulatorBuild }),
+      /Simulator Build/,
+    );
+    assert.match(
+      sectionFor(IOS, { simulator: simulatorBuild }),
+      /Simulator Build/,
+    );
+  });
+
+  it('escapes the commit subject', () => {
+    const header = texts({
+      message: 'feat: <http://evil.test|click> & more',
+    })[0];
+
+    assert.match(header, /&lt;http:\/\/evil\.test\|click&gt; &amp; more/);
+    assert.doesNotMatch(header, /<http:\/\/evil\.test/);
   });
 });

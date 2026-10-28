@@ -39,7 +39,11 @@ export function parseJsonOutput(raw) {
  * The update groups in an `eas update:list --json` payload.
  *
  * That command prints the branch wrapper `{ name, id, currentPage: [...] }`,
- * not the groups themselves.
+ * not the groups themselves. Each group carries `group`, `branch`,
+ * `runtimeVersion`, `platforms`, `message`, `isRollBackToEmbedded`,
+ * `rolloutPercentage` and `codeSigningKey` — but no `gitCommitHash`: the commit is
+ * only in `eas update:view`, so an update cannot be attributed to a commit here.
+ * (`eas build:list` does report `gitCommitHash` for a build.)
  */
 export function updateGroups(payload) {
   return Array.isArray(payload) ? payload : (payload?.currentPage ?? []);
