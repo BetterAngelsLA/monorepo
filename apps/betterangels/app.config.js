@@ -1,7 +1,11 @@
 // The runtime version is the Expo fingerprint, computed from this config. The
 // profile env comes from the EAS environment selected by the build profile's
-// `environment`; `.env`/`.env.local` hold local defaults and are loaded by the
-// Expo CLI.
+// `environment`; `.env`/`.env.local` hold local defaults, loaded here for
+// `expo-updates` fingerprint resolution outside the Expo CLI. `.env.local`
+// overrides so the EAS-pulled values win over the tracked `.env`.
+import dotenv from 'dotenv';
+dotenv.config();
+dotenv.config({ path: '.env.local', override: true });
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 

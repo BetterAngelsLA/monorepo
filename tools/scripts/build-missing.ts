@@ -15,7 +15,7 @@
  * Every target is written to `<project>/.eas-builds.json` with the build object
  * `eas` returned, whether it was reused or queued here. That is what
  * `eas-preview-comment.mjs` renders, and it is a working permalink the moment
- * `eas build --json --no-wait` answers — before `build:list` lists the build.
+ * `nx run betterangels:eas-build --wait=false --json` answers — before `build:list` lists it.
  */
 import { writeFileSync } from 'fs';
 import * as path from 'path';

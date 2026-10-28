@@ -27,7 +27,7 @@ export interface BuildTarget {
   profile: string;
 }
 
-/** A build as `eas` returns it: from `build:list` on reuse, `eas build` here. */
+/** A build as `eas` returns it: from `build:list` on reuse, the build target when queued. */
 export interface EasBuild {
   id: string;
   [field: string]: unknown;
@@ -128,7 +128,7 @@ export function ensureBuilds({
       );
     } catch (error) {
       console.warn(
-        `Could not read the ${platform} build from eas build output; falling back to build:list.`,
+        `Could not read the ${platform} build from eas build output (${error instanceof Error ? error.message : String(error)}); falling back to build:list.`,
       );
       return { platform, profile, runtime, build: null, reused: false };
     }
