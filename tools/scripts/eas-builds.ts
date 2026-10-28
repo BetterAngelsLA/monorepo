@@ -9,8 +9,8 @@
  * one exception is the `force-eas-build` label / FORCE_EAS_BUILD, which
  * `find-build.mjs` honours for a build that failed for a reason since fixed.
  *
- * Run after `write-eas-env` and `copy-lockfile`: the runtime resolved here has to
- * be the one the upload produces.
+ * Run after `copy-lockfile`, inside the EAS environment (`eas env:exec`): the
+ * runtime resolved here has to be the one the upload produces.
  */
 import { execFileSync } from 'child_process';
 import * as path from 'path';

@@ -68,7 +68,6 @@
     "eas-build": {
       "cache": false,
       "dependsOn": [
-        "write-eas-env",
         "sync-deps",
         "copy-lockfile"
       ],

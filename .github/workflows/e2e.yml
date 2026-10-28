@@ -221,7 +221,9 @@ jobs:
         run: |
           PROJECT="${{ steps.pr.outputs.project }}"
           if [ -n "$PROJECT" ]; then
-            yarn nx run "$PROJECT:eas-e2e"
+            TARGET_ARGS=("run" "$PROJECT:eas-e2e")
           else
-            yarn nx affected -t eas-e2e
+            TARGET_ARGS=(-t "eas-e2e")
           fi
+          (cd apps/betterangels && eas env:exec development \
+            "cd ../.. && yarn nx ${TARGET_ARGS[*]}")

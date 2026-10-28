@@ -5,8 +5,8 @@
  *   npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
  *     --project betterangels --configuration preview [--platforms android,ios]
  *
- * Run after `write-eas-env` and `copy-lockfile`: the runtime resolved here has to
- * be the one the upload produces. `--platforms` defaults to `EAS_BUILD_PLATFORMS`
+ * Run after `copy-lockfile`, inside the EAS environment (`eas env:exec`): the
+ * runtime resolved here has to be the one the upload produces. `--platforms` defaults to `EAS_BUILD_PLATFORMS`
  * and then to both device platforms: a fingerprint builds once, so only what is
  * missing is queued. Which profile each platform uses, and that a preview also
  * ships an iOS simulator binary, comes from `EAS_CONFIGURATIONS`; the

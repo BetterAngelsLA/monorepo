@@ -54,7 +54,6 @@
       "executor": "nx:run-commands",
       "cache": true,
       "dependsOn": [
-        "write-eas-env",
         "sync-deps"
       ],
       "options": {
@@ -67,9 +66,6 @@
       "inputs": [
         "production",
         "^production",
-        {
-          "dependentTasksOutputFiles": "apps/betterangels/.env"
-        },
         "{workspaceRoot}/tools/shared/**/*",
         {
           "env": "CI"
@@ -117,8 +113,12 @@
         "command": "node tools/deploy/cloudfront-deploy.mjs"
       },
       "configurations": {
-        "preview": {},
-        "production": {}
+        "preview": {
+          "envFile": "apps/betterangels/.env.deploy.preview"
+        },
+        "production": {
+          "envFile": "apps/betterangels/.env.deploy.production"
+        }
       }
     },
     "post-pr-preview": {
@@ -208,19 +208,6 @@
         "cwd": "apps/betterangels"
       }
     },
-    "write-eas-env": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "outputs": ["{projectRoot}/.env"],
-      "configurations": {
-        "preview": {
-          "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile preview"
-        },
-        "production": {
-          "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile production"
-        }
-      }
-    },
     "restore-workspace": {
       "executor": "nx:run-commands",
       "cache": false,
@@ -232,7 +219,6 @@
       "executor": "nx:run-commands",
       "cache": false,
       "dependsOn": [
-        "write-eas-env",
         "copy-lockfile"
       ],
       "configurations": {

@@ -2,7 +2,7 @@
  * EAS E2E Trigger Script
  *
  * Orchestrates E2E test execution:
- *   1. Setup env and compute fingerprint (same as deploy pipeline)
+ *   1. Compute the fingerprint (same as deploy pipeline)
  *   2. Ensure preview builds exist for this fingerprint (trigger if missing)
  *   3. Publish an EAS Update for the branch
  *   4. Trigger the EAS workflow with build IDs, update group, and build filter
@@ -13,8 +13,8 @@
  *   npx ts-node tools/scripts/eas-e2e.ts --project betterangels \
  *     [--configuration preview|production]
  *
- * The configuration (default `preview`) picks the profile env written into the
- * tracked `.env` and the default build profiles per platform.
+ * The configuration (default `preview`) picks the default build profiles per
+ * platform.
  *
  * Required env vars:
  *   EXPO_TOKEN   - EAS authentication token
@@ -40,7 +40,6 @@ import {
   resolveProjectDir,
   run,
   runJson,
-  setupEnv,
 } from './eas-utils';
 
 const project = argv.project as string | undefined;
@@ -75,12 +74,12 @@ const projectDir = resolveProjectDir(project);
 console.log(`EAS configuration: ${configuration}`);
 console.log(`Profiles: android=${androidProfile}, ios=${iosProfile}`);
 
-// 1. Setup env once (it is identical across profiles). `copy-lockfile` comes
-// next, before anything is resolved or looked up, because it rewrites the
-// manifests the fingerprint hashes: `preview.yml` runs it before resolving the
-// runtime, and a runtime computed from a different workspace state is a runtime
-// no build ever produces.
-setupEnv(projectDir, androidProfile);
+// 1. `copy-lockfile` comes first, before anything is resolved or looked up,
+// because it rewrites the manifests the fingerprint hashes: `preview.yml` runs
+// it before resolving the runtime, and a runtime computed from a different
+// workspace state is a runtime no build ever produces. The EAS environment
+// (supplied by the workflow's `eas env:exec`) is what the runtime and the
+// upload resolve.
 run('yarn', ['nx', 'run', `${project}:copy-lockfile`]);
 
 // 2. Find or queue both builds. This is the preview/main pipelines' rule, so a

@@ -1,10 +1,7 @@
-// The runtime version is the Expo fingerprint, computed from this config, so the
-// values a build sees must match the ones CI fingerprinted. CI supplies the
-// profile env through the EAS environment (tools/scripts/sync-eas-env.mjs);
-// `.env` holds the committed defaults. Profile values win.
-import dotenv from 'dotenv';
-dotenv.config();
-dotenv.config({ path: '.env.local', override: true });
+// The runtime version is the Expo fingerprint, computed from this config. The
+// profile env comes from the EAS environment selected by the build profile's
+// `environment`; `.env`/`.env.local` hold local defaults and are loaded by the
+// Expo CLI.
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
