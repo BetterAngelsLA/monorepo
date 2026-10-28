@@ -20,4 +20,6 @@ export interface IPickerProps extends TMarginProps {
   modalTitle?: string;
   placeholderTextColor?: string;
   testId?: string;
+  /** Renders the clear (⊗) affordance once a value is selected. */
+  onClear?: () => void;
 }

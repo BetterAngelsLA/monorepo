@@ -27,6 +27,11 @@ query Task($id: ID!) {
         firstName
         lastName
       }
+      assignee {
+        id
+        firstName
+        lastName
+      }
       createdAt
       updatedAt
     }

@@ -208,7 +208,17 @@ export function NoteEditHmis(props: TProps) {
             ? noteResult.location?.address.street
             : undefined,
       },
-      tasks: noteResult.tasks || [],
+      // The form reads `teamId` / `assigneeId`, while the query returns
+      // `team` / `assignee` objects. Map them here: a draft that opens with a
+      // blank select writes that blank back on save.
+      tasks: (noteResult.tasks ?? []).map((task) => ({
+        id: task.id,
+        summary: task.summary,
+        description: task.description,
+        status: task.status,
+        teamId: task.team?.id ?? null,
+        assigneeId: task.assignee?.id ?? null,
+      })),
     });
   }, [noteData, methods]);
 

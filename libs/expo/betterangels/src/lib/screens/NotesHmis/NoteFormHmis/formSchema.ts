@@ -11,6 +11,7 @@ const TaskFormSchema = z.object({
   id: z.string().optional(),
   summary: z.string().min(1, 'Title is required.').nullable(),
   teamId: z.string().nullable(),
+  assigneeId: z.string().nullable(),
   description: z.string().nullable(),
   status: z
     .enum(TaskStatusEnum, {

@@ -82,12 +82,23 @@ export default function TaskHeader(props: TTaskHeaderProps) {
             description: task.description,
             status: task.status,
             teamId: task.teamId ?? undefined,
+            assigneeId: task.assigneeId || null,
           },
         },
       });
 
-      if (result.data?.updateTask.__typename === 'OperationInfo') {
-        console.log(result.data.updateTask.messages);
+      const payload = result.data?.updateTask;
+
+      if (payload?.__typename === 'OperationInfo') {
+        // A validation error (an assignee outside the task's organization, for
+        // one) arrives as data, not as a thrown error. Closing the form here
+        // would look like the save worked.
+        showSnackbar({
+          message: payload.messages[0]?.message ?? 'Could not update the task.',
+          type: 'error',
+        });
+
+        return;
       }
 
       closeForm();
@@ -122,7 +133,11 @@ export default function TaskHeader(props: TTaskHeaderProps) {
         <TaskForm
           initialValues={{
             summary: task.summary || '',
-            teamId: task.team?.id ?? undefined,
+            // `null`, not `undefined`: every field in the task form schema is
+            // `.nullable()` but not optional, so an `undefined` team makes
+            // `zodResolver` reject the submit on a team-less task.
+            teamId: task.team?.id ?? null,
+            assigneeId: task.assignee?.id ?? '',
             description: task.description || '',
             status: task.status || TaskStatusEnum.ToDo,
           }}

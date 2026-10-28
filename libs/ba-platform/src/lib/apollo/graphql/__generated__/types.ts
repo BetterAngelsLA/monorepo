@@ -705,6 +705,7 @@ export type CreateNoteServiceRequestInput = {
 export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateNoteTaskInput = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
@@ -828,6 +829,7 @@ export type CreateShelterPayload = OperationInfo | ShelterType;
 export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type CreateTaskInput = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
@@ -2708,6 +2710,8 @@ export type Query = {
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
+  /** Members the caller can assign a task to. Gated on tasks.add rather than organizations.view_org_members so a caseworker can pick an assignee without holding the org-admin roster permission. */
+  taskAssignees: TaskAssigneeTypeOffsetPaginated;
   tasks: TaskTypeOffsetPaginated;
   teams: TeamTypeOffsetPaginated;
 };
@@ -3024,6 +3028,13 @@ export type QuerySocialMediaProfilesArgs = {
 
 export type QueryTaskArgs = {
   pk: Scalars['ID']['input'];
+};
+
+
+export type QueryTaskAssigneesArgs = {
+  filters?: InputMaybe<TaskAssigneeFilter>;
+  ordering?: Array<TaskAssigneeOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -3805,11 +3816,43 @@ export type SwitchType = {
   name: Scalars['String']['output'];
 };
 
+export type TaskAssigneeFilter = {
+  AND?: InputMaybe<TaskAssigneeFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<TaskAssigneeFilter>;
+  OR?: InputMaybe<TaskAssigneeFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type TaskAssigneeOrder = {
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+};
+
+export type TaskAssigneeType = {
+  __typename: 'TaskAssigneeType';
+  firstName?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  lastName?: Maybe<Scalars['String']['output']>;
+  middleName?: Maybe<Scalars['String']['output']>;
+};
+
+export type TaskAssigneeTypeOffsetPaginated = {
+  __typename: 'TaskAssigneeTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<TaskAssigneeType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type TaskFilter = {
   AND?: InputMaybe<TaskFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<TaskFilter>;
   OR?: InputMaybe<TaskFilter>;
+  assignees?: InputMaybe<Array<Scalars['ID']['input']>>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   clientProfileLookup?: InputMaybe<IdFilterLookup>;
@@ -3841,6 +3884,7 @@ export enum TaskStatusEnum {
 
 export type TaskType = {
   __typename: 'TaskType';
+  assignee?: Maybe<UserType>;
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
@@ -4186,6 +4230,7 @@ export type UpdateShelterPhotoPayload = OperationInfo | ShelterPhotoType;
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type UpdateTaskInput = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   status?: InputMaybe<TaskStatusEnum>;
