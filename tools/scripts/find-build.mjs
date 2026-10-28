@@ -62,8 +62,9 @@ const args = [
   '--runtimeVersion',
   runtime,
   '--limit',
-  // Enough to see past a canceled duplicate to the build that actually exists.
-  '10',
+  // Enough to see past canceled/errored duplicates to a FINISHED build, since
+  // `bestBuild` prefers a finished build over a dead one.
+  '100',
   '--json',
   '--interactive=false',
 ];
