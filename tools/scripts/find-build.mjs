@@ -62,9 +62,9 @@ const args = [
   '--runtimeVersion',
   runtime,
   '--limit',
-  // Enough to see past canceled/errored duplicates to a FINISHED build, since
-  // `bestBuild` prefers a finished build over a dead one.
-  '100',
+  // eas-cli caps this at 50; still deep enough to see past canceled/errored
+  // duplicates to a FINISHED build, since `bestBuild` prefers a finished one.
+  '50',
   '--json',
   '--interactive=false',
 ];
