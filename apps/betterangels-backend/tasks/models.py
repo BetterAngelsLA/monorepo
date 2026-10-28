@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 import pghistory
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
@@ -68,6 +70,25 @@ class Task(BaseModel):
     def __str__(self) -> str:
         return self.summary
 
+    # Attributes set by `from_db` so `clean` can tell an untouched assignment
+    # from a changed one.
+    _loaded_assignee_id: Optional[int]
+    _loaded_organization_id: Optional[int]
+
+    @classmethod
+    def from_db(  # type: ignore[override]
+        cls, db: Any, field_names: set[str], values: Any
+    ) -> "Task":
+        instance = super().from_db(db, field_names, values)
+
+        # Remember what was loaded so `clean` can skip re-checking an
+        # assignment that has not changed. Status-only edits were paying for a
+        # membership query they could not affect.
+        instance._loaded_assignee_id = instance.__dict__.get("assignee_id")
+        instance._loaded_organization_id = instance.__dict__.get("organization_id")
+
+        return instance
+
     def clean(self) -> None:
         """Reject a team or an assignee from another organization."""
         super().clean()
@@ -89,6 +110,13 @@ class Task(BaseModel):
         mutations.
         """
         if self.assignee_id is None:
+            return
+
+        if (
+            not self._state.adding
+            and self.assignee_id == getattr(self, "_loaded_assignee_id", None)
+            and self.organization_id == getattr(self, "_loaded_organization_id", None)
+        ):
             return
 
         organization = self.organization
