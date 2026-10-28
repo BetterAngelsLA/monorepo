@@ -553,11 +553,11 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(actions[0]["actor"], "system (import)")
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["Imported early", "Imported late"])
 
-    def test_system_only_takes_precedence_over_actor_id(self) -> None:
-        """§21: systemOnly wins; actorId is not ANDed in (which would empty the page)."""
+    def test_system_only_and_actor_id_compose(self) -> None:
+        """§21: the predicates AND; another actor's system event cannot widen the page."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        self._rename_at("By Casey", at=_T1, user=self.org_1_case_manager_1)
-        self._rename_at("Imported", at=_T2, label="import")
+        self._rename_at("Imported by Casey", at=_T1, user=self.org_1_case_manager_1, label="import")
+        self._rename_at("Imported by Dana", at=_T2, user=self.org_1_case_manager_2, label="import")
 
         response = self._query(
             "SHELTER",
@@ -566,7 +566,22 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         )
         actions = response["data"]["objectAuditLog"]["results"]
 
-        self.assertEqual([action["actor"] for action in actions], ["system (import)"])
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["actor"], "system (import)")
+        self.assertEqual(actions[0]["fieldChanges"]["name"], ["Query Shelter", "Imported by Casey"])
+
+    def test_system_only_with_actor_id_excludes_unattributed_system_events(self) -> None:
+        """An import with no frozen user has no actorId, so the AND yields an empty page."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self._rename_at("Imported", at=_T1, label="import")
+
+        response = self._query(
+            "SHELTER",
+            self.shelter.id,
+            filters={"systemOnly": True, "actorId": str(self.org_1_case_manager_1.id)},
+        )
+
+        self.assertEqual(response["data"]["objectAuditLog"]["results"], [])
 
     def test_actor_filter_narrows_the_log(self) -> None:
         self._grant_permission(self.org_1_case_manager_2, Shelter.perms.VIEW, self.org_1)

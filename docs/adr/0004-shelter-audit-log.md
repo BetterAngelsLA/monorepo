@@ -1275,6 +1275,15 @@ copy belongs to the UI), and `context` is `null` for every non-synthesized event
 the action-level rollup never contains `context` fields either, because they are
 not merged as changes.
 
+**Netted vs real schedule updates.** `shelter.schedule.update` is also a real
+pghistory label: an in-place admin save of an existing `Schedule` row emits it
+with `context: null`. A netted event shares `action` and `kind` with that real
+update and is distinguished only by its non-null `context`. The same logical
+edit can also render differently by write surface: changing a slot's `condition`
+in the admin is one `shelter.schedule.update`, while `shelterUpdate`'s
+delete-and-recreate changes the identity and renders `DELETE` + `INSERT`.
+Netting pairs only time-window edits by design.
+
 **Exclude the primary key:** the pk is present in `pgh_data` for INSERT/REMOVE
 but can never change (the UPDATE branch renders `pgh_diff`, which never contains
 it), so it is dropped from those two branches rather than rendered as
@@ -1679,7 +1688,7 @@ input AuditEventFilter {
   dateFrom: DateTime
   dateTo: DateTime
   actorId: ID
-  systemOnly: Boolean = false
+  systemOnly: Boolean! = false
 }
 
 objectAuditActors(
@@ -1702,8 +1711,10 @@ slots in here.
   `actorName`/`actorEmail`, or a system reason label (`import`/`clone`, §11).
   The SQL predicate mirrors `_actor()`'s precedence exactly (the label check
   first), so "renders as system" and "selected by `systemOnly`" cannot diverge.
-  It takes **precedence over** `actorId` (they are mutually exclusive in the UI);
-  `actorId` cannot express "no actor" because it is also the "no filter" value.
+  The predicates AND: with `actorId` also set, only that actor's import/clone
+  events match, while an unattributed system event cannot match a non-null
+  `actorId`. `actorId` cannot express "no actor" because it is also the "no
+  filter" value.
 - All four are predicates on the aggregate CTE's outer SELECT (§10), applied
   before the key grouping: a filtered-out event cannot keep an otherwise-empty
   action on the page or widen an action's time span. They do not push into the
@@ -1744,6 +1755,10 @@ what the log can actually render.
   floor (shorter terms return `[]` without a query); `limit` is capped at
   `MAX_ACTOR_LIMIT` (50) and rejected with a `ValueError` → `GraphQLError` like
   the other caps. Search is applied before the limit, so any actor is reachable.
+  The first call scans the object's whole history; the full list is cached per
+  object (and per withheld-summary set) for 60 seconds so per-keystroke searches
+  do not rerun the aggregate, and a new actor appears within that window.
+  `MAX_ACTOR_LIMIT`/`limit` caps the response, not the scan.
 - **The list is time-independent by design.** It answers "who has ever acted on
   this object"; `dateFrom`/`dateTo` stay a filter on events. Selecting an actor
   whose activity is all outside the selected window legitimately yields an empty

@@ -9,6 +9,7 @@ from typing import Any
 from unittest import mock
 
 from django.apps import apps
+from django.core.cache import cache
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
@@ -1602,6 +1603,46 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
         changes = actions[0].events[0].field_changes or {}
         self.assertEqual(changes["start time"], ["09:00:00", "10:00:00"])
         self.assertEqual(changes["end time"], ["17:00:00", "18:00:00"])
+        # ``day``/``schedule type`` travel in ``context``; they are not changes.
+        self.assertFalse(
+            any(key.endswith(" day") or key.endswith(" schedule type") for key in actions[0].field_changes)
+        )
+
+    def test_netting_does_not_pair_across_objects(self) -> None:
+        """One context saving two shelters must net each object's rows separately."""
+        with audit_context(label="seed"):
+            other = Shelter.objects.create(name="Other Scheduled Shelter")
+            Schedule.objects.create(
+                shelter=other,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            other.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+            Schedule.objects.create(
+                shelter=other,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+
+        for obj in (self.shelter, other):
+            actions = audit_log(obj=obj, target_type="SHELTER")
+            schedule_events = [
+                event for action in actions for event in action.events if event.action.startswith("shelter.schedule")
+            ]
+
+            self.assertEqual([event.action for event in schedule_events], ["shelter.schedule.update"])
+            self.assertTrue(all(event.target_id == str(obj.pk) for event in schedule_events))
 
     def test_netted_change_keys_match_the_add_remove_keys(self) -> None:
         """Netted updates render §13 display keys, like every other schedule event.
@@ -1638,9 +1679,32 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
         rollup_keys = set(actions[0].field_changes)
         self.assertTrue(any(key.endswith(" start time") for key in rollup_keys))
         self.assertFalse(any(key.endswith("start_time") for key in rollup_keys))
+        # Database-generated schedule columns are derived from start/end; they
+        # must not appear as changes (or in the rollup) on add/remove either.
+        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in added))
+        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in rollup_keys))
         # The rollup holds only real changes: no ``[x, x]`` no-op pair survives.
         for pair in actions[0].field_changes.values():
             self.assertNotEqual(pair[0], pair[1])
+
+    def test_generated_schedule_columns_are_not_rendered(self) -> None:
+        """GeneratedField values are derived, so they are not changes or snapshots."""
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.TUESDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        added = next(event for event in actions[0].events if event.action == "shelter.schedule.add")
+
+        self.assertFalse(
+            any("cycle" in key.lower() or "duration" in key.lower() for key in (added.field_changes or {}))
+        )
+        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in (added.snapshot or {})))
 
     def test_netted_event_carries_the_slot_context(self) -> None:
         """The slot's unchanged identity travels in ``context``, not as a change."""
@@ -1913,6 +1977,7 @@ class ObjectAuditActorsSelectorTestCase(TestCase):
     """``object_audit_actors`` is scoped to the object's own history, not org members."""
 
     def setUp(self) -> None:
+        cache.clear()
         self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
         self.other_user = baker.make(User, first_name="Grace", last_name="Hopper", email="grace@example.com")
         self.bed_user = baker.make(User, first_name="Carol", last_name="Shaw", email="carol@example.com")
@@ -1965,6 +2030,23 @@ class ObjectAuditActorsSelectorTestCase(TestCase):
         self.assertEqual([action.actor for action in actions], ["system (import)"])
         self.assertEqual(actions[0].field_changes["name"], ["Third", "Imported"])
 
+    def test_system_only_and_actor_id_compose(self) -> None:
+        with audit_context(user=self.user, label="import"):
+            self.shelter.name = "Imported by Ada"
+            self.shelter.save()
+        with audit_context(user=self.other_user, label="import"):
+            self.shelter.name = "Imported by Grace"
+            self.shelter.save()
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            filters=AuditEventFilter(actor_id=ID(str(self.user.pk)), system_only=True),
+        )
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Imported", "Imported by Ada"])
+
     def test_hidden_summary_actor_is_omitted(self) -> None:
         with audit_context(user=self.bed_user):
             self.bed.name = "Bed B"
@@ -1992,6 +2074,31 @@ class ObjectAuditActorsSelectorTestCase(TestCase):
             object_audit_actors(obj=self.shelter, target_type="SHELTER", limit=0)
         with self.assertRaises(ValueError):
             object_audit_actors(obj=self.shelter, target_type="SHELTER", limit=MAX_ACTOR_LIMIT + 1)
+
+    def test_search_can_reach_an_actor_outside_the_limit(self) -> None:
+        # Ada has the most events, so a naive top-N-then-filter would miss Grace.
+        self.assertEqual(
+            [
+                actor.label
+                for actor in object_audit_actors(
+                    obj=self.shelter,
+                    target_type="SHELTER",
+                    search="grace",
+                    limit=1,
+                )
+            ],
+            ["Grace Hopper"],
+        )
+
+    def test_actor_list_is_cached_per_object(self) -> None:
+        cache.clear()
+        with CaptureQueriesContext(connection) as first:
+            object_audit_actors(obj=self.shelter, target_type="SHELTER")
+        with CaptureQueriesContext(connection) as second:
+            object_audit_actors(obj=self.shelter, target_type="SHELTER")
+
+        self.assertGreater(len(first), 0)
+        self.assertEqual(len(second), 0)
 
     def test_most_frequent_frozen_name_wins(self) -> None:
         """A rename mid-history must not surface the rarest label for that id."""

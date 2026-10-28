@@ -30,27 +30,46 @@ class AuditTargetType(enum.Enum):
     BED = "BED"
 
 
-@strawberry.input
+@strawberry.input(description="Filters for one object's write audit log (ADR 0004 §21).")
 class AuditEventFilter:
     """Filters for one object's write audit log (ADR 0004 §21).
 
     ``date_from``/``date_to`` are inclusive bounds on the event timestamp;
-    ``actor_id`` is the acting ``User.id`` frozen into the context metadata. A
+    ``actor_id`` is the acting ``User.id`` frozen into the context metadata;
+    ``system_only`` keeps events rendered as system (a system reason label, or
+    no frozen name/email). The predicates AND, so ``actor_id`` +
+    ``system_only`` selects that actor's import/clone events; unattributed
+    system events have no actor id and cannot match a non-null ``actor_id``. A
     single input object keeps ``objectAuditLog``'s argument list stable as
     filters are added: the §30 ``kinds`` filter slots in here rather than
     growing the field's signature.
     """
 
-    date_from: Optional[datetime] = None
-    date_to: Optional[datetime] = None
-    actor_id: Optional[strawberry.ID] = None
+    date_from: Optional[datetime] = strawberry.field(
+        default=None,
+        description="Inclusive lower bound on the event timestamp.",
+    )
+    date_to: Optional[datetime] = strawberry.field(
+        default=None,
+        description="Inclusive upper bound on the event timestamp.",
+    )
+    actor_id: Optional[strawberry.ID] = strawberry.field(
+        default=None,
+        description="The frozen acting User.id; omit to include every actor.",
+    )
     # ``actor_id`` cannot express "no actor": it is also the "no filter" value.
     # ``system_only`` selects the events the UI labels as system (no frozen
     # name/email, or a system reason label such as import/clone).
-    system_only: bool = False
+    system_only: bool = strawberry.field(
+        default=False,
+        description=(
+            "Keep events rendered as system (a system reason label, or no frozen name/email). "
+            "ANDs with actorId: with both set, only that actor's import/clone events match."
+        ),
+    )
 
 
-@strawberry.type
+@strawberry.type(description="One selectable actor for an object's audit log (ADR 0004 §21).")
 class AuditActorType:
     """One selectable actor for an object's audit log (§21).
 
@@ -58,12 +77,25 @@ class AuditActorType:
     ``System`` entry, which is selected via ``AuditEventFilter.system_only``.
     """
 
-    id: Optional[strawberry.ID]
-    label: str
-    is_system: bool = False
+    id: Optional[strawberry.ID] = strawberry.field(
+        description=(
+            "The frozen acting User.id; null for the synthetic System entry, "
+            "which is selected with AuditEventFilter.systemOnly."
+        )
+    )
+    label: str = strawberry.field(
+        description=("Display label: the actor's most frequent frozen name/email, or System for the synthetic entry.")
+    )
+    is_system: bool = strawberry.field(
+        default=False,
+        description=(
+            "True for the synthetic System entry. Key the picker on this, not on label, "
+            "because a real user's frozen name can also be System."
+        ),
+    )
 
 
-@strawberry.type
+@strawberry.type(description="A single pghistory write event, normalized across tracked models.")
 class AuditEventType:
     """A single pghistory write event, normalized across tracked models."""
 
@@ -87,7 +119,7 @@ class AuditEventType:
     context: Optional[JSON] = None
 
 
-@strawberry.type
+@strawberry.type(description="A group of events written under one context (one action, ADR 0004 §12).")
 class AuditActionType:
     """A group of events written under one context (one "action", §12)."""
 
@@ -103,7 +135,7 @@ class AuditActionType:
     truncated: bool = False
 
 
-@strawberry.type
+@strawberry.type(description="One cursor page of audit actions (ADR 0004 §10).")
 class AuditActionPage:
     """One cursor page of audit actions (§10).
 

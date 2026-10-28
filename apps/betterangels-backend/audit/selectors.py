@@ -26,10 +26,11 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import lru_cache
-from typing import Any, Collection, Mapping, Sequence
+from typing import Any, Collection, Mapping, Sequence, cast
 from uuid import UUID
 
 from django.apps import apps
+from django.core.cache import cache
 from django.db.models import Count, Max, Model, Q, TextField
 from django.db.models.functions import Cast, Coalesce
 from django.utils import timezone
@@ -37,7 +38,7 @@ from pghistory.core import event_models
 
 from audit.models import AuditWriteEvent
 from audit.types import AuditEventFilter
-from shelters.models import Bed, Room, Shelter
+from shelters.models import Bed, Room, Schedule, Shelter
 
 # Mechanical columns dropped from rendered changes (ADR 0004 Phase 1 note / §13).
 _MECHANICAL_FIELDS = frozenset({"created_at", "updated_at"})
@@ -49,6 +50,12 @@ MAX_LIMIT = 200
 
 # Upper bound on the distinct actors returned by ``object_audit_actors``.
 MAX_ACTOR_LIMIT = 50
+
+# The actor list is a picker endpoint that a debounced search can hit per
+# keystroke. Its aggregate scans the object's history, so cache the (already
+# authorization-filtered) full list per object for a short window; search and
+# limit are applied to the cached list. New actors appear within this TTL.
+ACTOR_CACHE_SECONDS = 60
 
 # Upper bound on the events rendered for a single action. One ``pghistory``
 # context can wrap an arbitrarily large write (a CSV import wraps its whole
@@ -355,6 +362,28 @@ def _field_meta(model_label: str) -> dict[str, Any]:
 _FIELD_CACHE: dict[str, dict[str, Any]] = {}
 
 
+def _generated_fields(model_label: str) -> set[str]:
+    """Attnames of database-generated columns (e.g. schedule time totals).
+
+    Their values are derived from the real columns already rendered, so they
+    are not changes (§13): an add/remove must not report ``start cycle minutes:
+    [None, 630]`` or ``duration minutes: [None, 60]``.
+    """
+    if model_label in _GENERATED_FIELD_CACHE:
+        return _GENERATED_FIELD_CACHE[model_label]
+    try:
+        model_fields = apps.get_model(model_label)._meta.fields
+    except LookupError:
+        result: set[str] = set()
+    else:
+        result = {f.attname for f in model_fields if getattr(f, "generated", False)}
+    _GENERATED_FIELD_CACHE[model_label] = result
+    return result
+
+
+_GENERATED_FIELD_CACHE: dict[str, set[str]] = {}
+
+
 def _fk_fields(model_label: str) -> dict[str, str]:
     """Map ``<field>_id`` -> related model label for a tracked model (cached)."""
     if model_label in _FK_FIELD_CACHE:
@@ -564,7 +593,9 @@ def _scalar_changes(
     # (the UPDATE branch renders ``pgh_diff``, which never contains it), so it is
     # not a "change". Drop it so a create does not render ``ID: [None, 7]``.
     pk_attname = _pk_attname(obj_model)
-    hidden = _MECHANICAL_FIELDS | set(hidden_fields) | ({pk_attname} if pk_attname else set())
+    hidden = (
+        _MECHANICAL_FIELDS | set(hidden_fields) | ({pk_attname} if pk_attname else set()) | _generated_fields(obj_model)
+    )
 
     if label.endswith(".add"):
         # Only non-null new values: a field that is NULL after creation [None, None]
@@ -601,7 +632,7 @@ def _snapshot(row: Any, resolver: _LabelResolver, hidden_fields: Collection[str]
     fk_fields = _fk_fields(obj_model)
     fields = _field_meta(obj_model)
     keys = _display_keys(obj_model)
-    hidden = set(hidden_fields)
+    hidden = set(hidden_fields) | _generated_fields(obj_model)
 
     snapshot: dict[str, Any] = {}
     for field_name, value in data.items():
@@ -648,10 +679,12 @@ def _merge_scalar(
             target[key] = [old, new]
 
 
-# Full-replacement child models (schedules): ``shelter_update`` deletes every row
-# and bulk-creates the new set, so one logical edit emits a ``.remove`` and an
-# ``.add`` of the same slot. These labels are netted back into a per-slot change.
-_SCHEDULE_LABEL_PREFIX = "shelter.schedule."
+# Schedule is the one full-replacement child model: ``shelter_update`` deletes
+# every row and bulk-creates the new set, so one logical edit emits a ``.remove``
+# and an ``.add`` of the same slot. These rows are netted back into a per-slot
+# change; select them by model, not by a duplicated label prefix, so a label
+# rename cannot silently disable netting. A future full-replacement child needs
+# the same treatment explicitly.
 
 
 def _schedule_events(
@@ -984,13 +1017,17 @@ def object_audit_log(
     inserted between requests cannot shift a later page (offset pagination can
     repeat an action).
 
-    *filters* carries the §21 bounds and actor filter: ``date_from``/``date_to``
-    bound ``pgh_created_at`` (inclusive) and ``actor_id`` restricts to a single
-    acting user. All three are applied as predicates on the aggregate CTE's outer
-    SELECT — in SQL, before the key grouping and the Python grouping below (§10)
-    — so a filtered-out event cannot keep an otherwise-empty action on the page
-    or widen its time span. It can still be visible *through* a surviving event:
-    pghistory computes ``pgh_diff`` against the row's predecessor before
+    *filters* carries the §21 filters: ``date_from``/``date_to`` bound
+    ``pgh_created_at`` (inclusive), ``actor_id`` restricts to a single acting
+    user, and ``system_only`` selects events rendered as system (a system reason
+    label, or no frozen name/email). The predicates AND: ``actor_id`` combined
+    with ``system_only`` selects that actor's import/clone events, while an
+    unattributed system event has no actor id and cannot match a non-null
+    ``actor_id``. All fields are applied as predicates on the aggregate CTE's
+    outer SELECT — in SQL, before the key grouping and the Python grouping below
+    (§10) — so a filtered-out event cannot keep an otherwise-empty action on the
+    page or widen its time span. It can still be visible *through* a surviving
+    event: pghistory computes ``pgh_diff`` against the row's predecessor before
     filtering, so the earliest surviving event's before/after may start outside
     the window, and an action's verb is derived only from the anchor rows that
     survive.
@@ -1031,17 +1068,19 @@ def object_audit_log(
             base = base.filter(pgh_created_at__gte=filters.date_from)
         if filters.date_to is not None:
             base = base.filter(pgh_created_at__lte=filters.date_to)
+        if filters.actor_id is not None:
+            base = base.filter(actor_id=filters.actor_id)
         if filters.system_only:
             # The event's rendered actor is "system" when it has no frozen
             # name/email, and "system (import|clone)" for those reason labels --
-            # the label check comes first, exactly as ``_actor`` does. Matches
-            # those events regardless of whether a context user id survived.
+            # the label check comes first, exactly as ``_actor`` does. This ANDs
+            # with ``actor_id``: an attributed import/clone matches both filters,
+            # while an unattributed system event has no actor id and is excluded
+            # by a non-null actor filter.
             base = base.filter(
                 Q(label__in=_SYSTEM_REASON_LABELS)
                 | ((Q(actor_name="") | Q(actor_name__isnull=True)) & (Q(actor_email="") | Q(actor_email__isnull=True)))
             )
-        elif filters.actor_id is not None:
-            base = base.filter(actor_id=filters.actor_id)
 
     key_expr = _action_key_expr()
 
@@ -1134,6 +1173,16 @@ def object_audit_log(
     )
 
 
+def _actor_cache_key(target_type: str, object_pk: Any, hidden_summary_models: Collection[str]) -> str:
+    """Cache key for the full actor list, including the caller's withheld set.
+
+    The withheld Bed/Room summary models are an authorization input, so they are
+    part of the key; otherwise one caller's filtered list could leak to another.
+    """
+    hidden = ",".join(sorted(hidden_summary_models))
+    return f"audit:actors:v1:{target_type}:{object_pk}:{hidden}"
+
+
 def object_audit_actors(
     *,
     obj: Any,
@@ -1163,6 +1212,11 @@ def object_audit_actors(
     name/email without a user id cannot be expressed by the ``actorId`` filter,
     so those rare pre-middleware rows are omitted from the selectable list.
     Raises ``ValueError`` for an out-of-range ``limit``.
+
+    The full, authorization-filtered list is cached per object for
+    ``ACTOR_CACHE_SECONDS`` (keyed by target type, id, and the withheld-summary
+    set) so per-keystroke searches do not rerun the aggregate; a new actor
+    appears within that window. The first call after a miss still scans history.
     """
     if limit < 1 or limit > MAX_ACTOR_LIMIT:
         raise ValueError(f"limit must be between 1 and {MAX_ACTOR_LIMIT}.")
@@ -1171,55 +1225,67 @@ def object_audit_actors(
     if term and len(term) < 2:
         return []
 
-    excluded = (
-        *_EXCLUDED_EVENT_MODELS,
-        *_SCOPED_EXCLUSIONS.get(target_type, ()),
-        *_event_model_labels(hidden_summary_models),
-    )
-    base = AuditWriteEvent.objects.across(*_allowed_event_models(obj, excluded)).references([obj]).exclude(label="seed")
+    cache_key = _actor_cache_key(target_type, obj.pk, hidden_summary_models)
+    cached = cache.get(cache_key)
+    if cached is None:
+        excluded = (
+            *_EXCLUDED_EVENT_MODELS,
+            *_SCOPED_EXCLUSIONS.get(target_type, ()),
+            *_event_model_labels(hidden_summary_models),
+        )
+        base = (
+            AuditWriteEvent.objects.across(*_allowed_event_models(obj, excluded))
+            .references([obj])
+            .exclude(label="seed")
+        )
 
-    rows = (
-        base.values("actor", "actor_name", "actor_email", "label")
-        .annotate(event_count=Count("*"), last_seen=Max("pgh_created_at"))
-        # Deterministic row order: an actor id can own several frozen names (a
-        # rename), so the first row per id decides the label it is shown under.
-        # Frequency wins, then recency, then the name/id as a final tie-break --
-        # Postgres does not define the order of equal sort keys.
-        .order_by("-event_count", "-last_seen", "actor_name", "actor")
-    )
+        rows = (
+            base.values("actor", "actor_name", "actor_email", "label")
+            .annotate(event_count=Count("*"), last_seen=Max("pgh_created_at"))
+            # Deterministic row order: an actor id can own several frozen names
+            # (a rename), so the first row per id decides the label it is shown
+            # under. Frequency wins, then recency, then the name/id as a final
+            # tie-break -- Postgres does not define the order of equal sort keys.
+            .order_by("-event_count", "-last_seen", "actor_name", "actor")
+        )
 
-    # One entry per actor id (a frozen name can change over time; the most
-    # frequent label wins) plus one aggregated System entry.
-    entries: dict[str, tuple[AuditActorData, int]] = {}
-    for row in rows:
-        name = row["actor_name"] or ""
-        email = row["actor_email"] or ""
-        is_system = row["label"] in _SYSTEM_REASON_LABELS or (not name and not email)
-        if is_system:
-            key = "__system__"
-            actor = AuditActorData(id=None, label="System", is_system=True)
-        else:
-            actor_id = row["actor"]
-            if actor_id is None:
-                continue
-            key = str(actor_id)
-            actor = AuditActorData(id=key, label=name or email or "Unknown")
-        existing = entries.get(key)
-        if existing is None:
-            # Rows arrive ordered ``-event_count``, so an actor's first row
-            # carries its most frequent frozen name; later rows (a rename, or
-            # the same name under a different label) only contribute counts.
-            entries[key] = (actor, row["event_count"])
-        else:
-            entries[key] = (existing[0], existing[1] + row["event_count"])
+        # One entry per actor id (a frozen name can change over time; the most
+        # frequent label wins) plus one aggregated System entry.
+        entries: dict[str, tuple[AuditActorData, int]] = {}
+        for row in rows:
+            name = row["actor_name"] or ""
+            email = row["actor_email"] or ""
+            is_system = row["label"] in _SYSTEM_REASON_LABELS or (not name and not email)
+            if is_system:
+                key = "__system__"
+                actor = AuditActorData(id=None, label="System", is_system=True)
+            else:
+                actor_id = row["actor"]
+                if actor_id is None:
+                    continue
+                key = str(actor_id)
+                actor = AuditActorData(id=key, label=name or email)
+            existing = entries.get(key)
+            if existing is None:
+                # Rows arrive ordered ``-event_count``, so an actor's first row
+                # carries its most frequent frozen name; later rows (a rename, or
+                # the same name under a different label) only contribute counts.
+                entries[key] = (actor, row["event_count"])
+            else:
+                entries[key] = (existing[0], existing[1] + row["event_count"])
 
-    # Deterministic output order: most active first, then label, then id. The SQL
-    # row order above decides which frozen name is kept; this decides list order.
-    ordered = sorted(
-        entries.values(),
-        key=lambda entry: (-entry[1], entry[0].label.lower(), entry[0].id or ""),
-    )
-    actors = [entry[0] for entry in ordered]
+        # Deterministic output order: most active first, then label, then id. The
+        # SQL row order above decides which frozen name is kept; this decides
+        # list order.
+        ordered = sorted(
+            entries.values(),
+            key=lambda entry: (-entry[1], entry[0].label.lower(), entry[0].id or ""),
+        )
+        actors = [entry[0] for entry in ordered]
+        cache.set(cache_key, actors, timeout=ACTOR_CACHE_SECONDS)
+    else:
+        actors = cast(list[AuditActorData], cached)
+
     if term:
         # The System entry's label is "System", so one substring test covers it;
         # a prefix test would be a strict subset of it.
@@ -1295,7 +1361,7 @@ def _build_action(
             )
             continue
 
-        if row.pgh_label.startswith(_SCHEDULE_LABEL_PREFIX) and (
+        if row.pgh_obj_model == Schedule._meta.label and (
             row.pgh_label.endswith(".add") or row.pgh_label.endswith(".remove")
         ):
             schedule_rows.append(row)

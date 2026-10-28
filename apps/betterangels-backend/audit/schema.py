@@ -1,6 +1,6 @@
 """GraphQL surface for the object audit log (ADR 0004 §18, §21)."""
 
-from typing import Optional, assert_never, cast
+from typing import Annotated, Optional, assert_never, cast
 
 import strawberry
 from graphql import GraphQLError
@@ -15,7 +15,7 @@ from shelters.permissions import BA_REVIEW_FIELDS, can_view_ba_review
 from shelters.selectors.operator import bed_get, room_get, shelter_get
 
 from .selectors import object_audit_actors as select_object_audit_actors
-from .selectors import object_audit_log
+from .selectors import object_audit_log as select_object_audit_log
 from .types import (
     AuditActionPage,
     AuditActorType,
@@ -62,7 +62,10 @@ def _hidden_summary_models(user: AccountUser, target_type: AuditTargetType, obj:
 
 @strawberry.type
 class Query:
-    @strawberry.field(permission_classes=[IsAuthenticated])
+    @strawberry.field(
+        permission_classes=[IsAuthenticated],
+        description="One cursor page of one object's write audit log, newest action first.",
+    )
     def object_audit_log(
         self,
         info: Info,
@@ -81,7 +84,8 @@ class Query:
         opts each event into a full-object-state snapshot rendered from the
         event's ``pgh_data`` (ADR 0004 §13).
         ``filters`` windows the log (ADR 0004 §21): ``dateFrom``/``dateTo``
-        bound ``timestamp`` (inclusive) and ``actorId`` restricts to one actor.
+        bound ``timestamp`` (inclusive), ``actorId`` restricts to one actor, and
+        ``systemOnly`` keeps events rendered as system. The predicates AND.
         It is one input object so later filters (the §30 ``kinds``) can be
         added without growing this field's argument list.
 
@@ -100,7 +104,7 @@ class Query:
         hidden_summary_models = _hidden_summary_models(user, target_type, obj)
 
         try:
-            page = object_audit_log(
+            page = select_object_audit_log(
                 obj=obj,
                 target_type=target_type.value,
                 filters=filters,
@@ -116,14 +120,28 @@ class Query:
             raise GraphQLError(str(error)) from error
         return to_action_page(page)
 
-    @strawberry.field(permission_classes=[IsAuthenticated])
+    @strawberry.field(
+        permission_classes=[IsAuthenticated],
+        description=(
+            "Distinct actors in one object's audit log, most active first. "
+            "The synthetic System entry has a null id and is selected with systemOnly."
+        ),
+    )
     def object_audit_actors(
         self,
         info: Info,
         target_type: AuditTargetType,
         object_id: ID,
-        search: str = "",
-        limit: int = 20,
+        search: Annotated[
+            str,
+            strawberry.argument(
+                description="Case-insensitive label substring; shorter than two characters returns []."
+            ),
+        ] = "",
+        limit: Annotated[
+            int,
+            strawberry.argument(description="Maximum actors to return (1-50); out of range is an error, not a clamp."),
+        ] = 20,
     ) -> list[AuditActorType]:
         """Distinct actors in one object's audit log, most active first.
 
@@ -136,6 +154,10 @@ class Query:
         ``search`` filters labels (minimum two characters, matching the UI);
         ``limit`` is capped at ``MAX_ACTOR_LIMIT``. Bed/Room summary actors the
         caller cannot see are excluded, matching ``objectAuditLog``.
+
+        The aggregate scans the object's whole history; the full list is cached
+        for ``ACTOR_CACHE_SECONDS``, so per-keystroke searches do not rerun it.
+        ``limit`` caps the response, not the scan.
         """
         user = cast(AccountUser, get_current_user(info))
         obj = _resolve_target(user, target_type, object_id)
