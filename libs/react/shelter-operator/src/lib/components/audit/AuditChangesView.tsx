@@ -4,11 +4,22 @@ import { Text } from '../base-ui/text/text';
 import {
   formatValue,
   parseFieldChanges,
+  truncateValue,
   type AuditChange,
 } from './auditChanges';
 
+/** The full value goes in the tooltip; the inline text is capped. */
+function displayValue(value: unknown): { text: string; title: string } {
+  const full = formatValue(value);
+
+  return { text: truncateValue(full), title: full };
+}
+
 function renderChange(change: AuditChange): ReactNode {
   if (change.kind === 'multi') {
+    const removed = change.removed.map(formatValue).join(', ');
+    const added = change.added.map(formatValue).join(', ');
+
     return (
       <div key={change.field} className="flex flex-col gap-0.5 py-0.5">
         <Text variant="caption" textColor="text-neutral-50">
@@ -16,19 +27,30 @@ function renderChange(change: AuditChange): ReactNode {
         </Text>
 
         {change.removed.length > 0 && (
-          <Text variant="caption" textColor="text-alert-60">
-            Removed: {change.removed.map(formatValue).join(', ')}
+          <Text
+            variant="caption"
+            textColor="text-alert-60"
+            title={`Removed: ${removed}`}
+          >
+            Removed: {truncateValue(removed)}
           </Text>
         )}
 
         {change.added.length > 0 && (
-          <Text variant="caption" textColor="text-success-30">
-            Added: {change.added.map(formatValue).join(', ')}
+          <Text
+            variant="caption"
+            textColor="text-success-30"
+            title={`Added: ${added}`}
+          >
+            Added: {truncateValue(added)}
           </Text>
         )}
       </div>
     );
   }
+
+  const oldValue = displayValue(change.oldValue);
+  const newValue = displayValue(change.newValue);
 
   return (
     <div
@@ -38,12 +60,22 @@ function renderChange(change: AuditChange): ReactNode {
       <Text variant="caption" textColor="text-neutral-50">
         {change.label}:
       </Text>
-      <Text variant="caption" textColor="text-neutral-50">
-        {formatValue(change.oldValue)}
+      <Text
+        variant="caption"
+        textColor="text-neutral-50"
+        title={oldValue.title}
+      >
+        {oldValue.text}
       </Text>
-      <span className="text-neutral-40">&rarr;</span>
-      <Text variant="caption" textColor="text-neutral-20">
-        {formatValue(change.newValue)}
+      <span aria-hidden="true" className="text-neutral-40">
+        &rarr;
+      </span>
+      <Text
+        variant="caption"
+        textColor="text-neutral-20"
+        title={newValue.title}
+      >
+        {newValue.text}
       </Text>
     </div>
   );

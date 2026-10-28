@@ -1,6 +1,7 @@
 query ObjectAuditLog(
   $targetType: AuditTargetType!
   $objectId: ID!
+  # Wired by the activity-log date-range and actor-filter follow-ups.
   $filters: AuditEventFilter
   $limit: Int!
   $after: String
@@ -17,17 +18,17 @@ query ObjectAuditLog(
     results {
       timestamp
       actor
-      summary
+      # The server capped this bulk action's event list; rendered by the
+      # activity-log hardening follow-up.
       truncated
       fieldChanges
       events {
         timestamp
-        actor
         kind
         action
-        targetType
-        targetId
         summary
+        # A synthesized event's unchanged identity (e.g. a netted schedule
+        # slot's day/type); rendered by the readability follow-up.
         context
         fieldChanges
       }

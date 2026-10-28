@@ -1,4 +1,4 @@
-import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
+import { AuditEventKind } from '@monorepo/ba-platform/types';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { AuditAction, AuditEvent } from '../../hooks';
 import { AuditActionRow } from './AuditActionRow';
@@ -7,11 +7,8 @@ function makeEvent(overrides: Partial<AuditEvent>): AuditEvent {
   return {
     __typename: 'AuditEventType',
     timestamp: '2026-07-01T12:00:00Z',
-    actor: 'Ada Lovelace',
     kind: AuditEventKind.Insert,
     action: 'bed.add',
-    targetType: AuditTargetType.Bed,
-    targetId: '7',
     fieldChanges: {},
     context: null,
     summary: null,
@@ -24,7 +21,6 @@ function makeAction(overrides: Partial<AuditAction>): AuditAction {
     __typename: 'AuditActionType',
     timestamp: '2026-07-01T12:00:00Z',
     actor: 'Ada Lovelace',
-    summary: 'Ada Lovelace created bed 7',
     truncated: false,
     fieldChanges: {},
     events: [],
@@ -54,8 +50,6 @@ describe('AuditActionRow', () => {
             makeEvent({
               summary: 'Updated Room B (3)',
               action: 'room.update',
-              targetType: AuditTargetType.Room,
-              targetId: '3',
             }),
           ],
         })}
@@ -74,8 +68,6 @@ describe('AuditActionRow', () => {
           events: [
             makeEvent({
               action: 'shelter.update',
-              targetType: AuditTargetType.Shelter,
-              targetId: '5',
               fieldChanges: { name: ['Shelter A', 'Shelter B'] },
             }),
           ],
@@ -96,11 +88,22 @@ describe('AuditActionRow', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /details/i }));
+    const toggle = screen.getByRole('button', { name: /details/i });
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-controls')).toBeNull();
+
+    fireEvent.click(toggle);
 
     expect(screen.getAllByText('Created Bed A (7)')).toHaveLength(2);
     expect(
       screen.getByRole('button', { name: /hide details/i }),
     ).not.toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    const controls = toggle.getAttribute('aria-controls');
+
+    expect(controls).not.toBeNull();
+    expect(document.getElementById(controls as string)).not.toBeNull();
   });
 });

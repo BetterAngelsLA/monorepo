@@ -42,7 +42,7 @@ export function useObjectAuditLog({
     [targetType, objectId, pageSize],
   );
 
-  const { data, loading, error, fetchMore } = useQuery<
+  const { data, loading, error, fetchMore, refetch } = useQuery<
     ObjectAuditLogQuery,
     ObjectAuditLogQueryVariables
   >(ObjectAuditLogDocument, {
@@ -83,9 +83,22 @@ export function useObjectAuditLog({
       });
     } catch (error) {
       // Apollo does not set the query-level ``error`` for a failed ``fetchMore``.
+      // NOTE: the activity-log hardening follow-up adds a visible load-more
+      // error state; until then a failed page load is logged only.
       console.error('Failed to load more audit activity', toError(error));
     }
   }, [endCursor, fetchMore, variables]);
+
+  /** Re-run the first page (after a failed load), surfacing failures via `error`. */
+  const retry = useCallback(async () => {
+    try {
+      await refetch();
+    } catch (error) {
+      // `refetch` rejects as well as setting `error`; swallow the rejection so an
+      // unhandled promise cannot escape from the retry button.
+      console.error('Failed to reload audit activity', toError(error));
+    }
+  }, [refetch]);
 
   return {
     actions,
@@ -94,5 +107,6 @@ export function useObjectAuditLog({
     error,
     hasMore,
     loadMore,
+    retry,
   };
 }
