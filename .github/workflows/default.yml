@@ -10,6 +10,13 @@ on:
   # event (a queue merge that fast-forwards to the commit it already tested), and
   # then nothing deploys until the next push.
   workflow_dispatch:
+    inputs:
+      force-eas-build:
+        # There is no PR label to lean on here: a build that ended ERRORED leaves
+        # the fingerprint with no binary, and this is the way to queue another.
+        description: Queue a build even though one already exists for the fingerprint
+        type: boolean
+        default: false
 
 env:
   AWS_REGION: us-west-2
@@ -461,6 +468,7 @@ jobs:
           '
         env:
           CI: 'true'
+          FORCE_EAS_BUILD: ${{ inputs['force-eas-build'] || 'false' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}

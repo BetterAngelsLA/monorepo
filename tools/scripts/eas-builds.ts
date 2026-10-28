@@ -4,10 +4,11 @@
  * One implementation for every pipeline that needs a binary: the preview/main
  * step (`build-missing.ts`) and the Maestro E2E trigger (`eas-e2e.ts`).
  *
- * Reuse is the pipeline rule: a fingerprint builds once, in any status, so a
- * target with a live existing build is skipped (a dead one fails the run). The
- * one exception is the `force-eas-build` label / FORCE_EAS_BUILD, which
- * `find-build.mjs` honours for a build that failed for a reason since fixed.
+ * Reuse is the pipeline rule: a fingerprint builds once, so a target that already
+ * has a live build is skipped, and a dead one (`ERRORED`/`CANCELED`) fails the run
+ * in `find-build.mjs` instead of being quietly retried. The one exception is the
+ * `force-eas-build` label / the `force-eas-build` workflow input / FORCE_EAS_BUILD,
+ * which `find-build.mjs` honours for a build that failed for a reason since fixed.
  *
  * Run after `copy-lockfile`, after `eas env:pull` (`.env.local`): the
  * runtime resolved here has to be the one the upload produces.
@@ -21,12 +22,6 @@ import {
   resolveRuntime,
   runJson,
 } from './eas-utils';
-
-/** Terminal statuses: the build will not produce a binary without a new one. */
-function isDeadBuild(status: unknown): boolean {
-  const value = String(status ?? '').toUpperCase();
-  return value === 'ERRORED' || value === 'CANCELED';
-}
 
 export interface BuildTarget {
   platform: string;
@@ -104,12 +99,6 @@ export function ensureBuilds({
     const runtime = runtimeFor(platform);
     const reusedBuild = existing(platform, profile, runtime);
     if (reusedBuild) {
-      if (isDeadBuild(reusedBuild.status)) {
-        throw new Error(
-          `The existing ${platform}/${profile} build ${reusedBuild.id} is ${reusedBuild.status}; ` +
-            `add the force-eas-build label to rebuild fingerprint ${runtime}.`,
-        );
-      }
       // Name the profile: a preview has both `ios/preview` and
       // `ios/development-simulator`, and "ios" alone cannot tell them apart.
       console.log(

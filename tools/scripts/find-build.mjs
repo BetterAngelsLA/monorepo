@@ -92,13 +92,14 @@ for (let attempt = 1; attempt <= attempts; attempt++) {
       `Found ${platform} build ${id} for ${profile}/${runtime} (status: ${status ?? '?'}).`,
     );
     if (isDeadBuild(status)) {
-      // A failed fingerprint is not retried automatically (that is how the old
-      // pipeline burned money); callers treat this as a failure. The
-      // `force-eas-build` label is the way out.
+      // Not "no build": the fingerprint is taken and has no binary. Failing here
+      // keeps the rule in one place — `eas-builds.ts` just propagates this.
       console.error(
-        `⚠️  That build is ${status}: this fingerprint has no usable ${platform} binary. ` +
-          `Re-run with the force-eas-build label to build it again.`,
+        `The existing ${platform}/${profile} build ${id} is ${status}; re-run ` +
+          `with the force-eas-build label (PR) or the force-eas-build workflow ` +
+          `input to rebuild fingerprint ${runtime}.`,
       );
+      process.exit(1);
     }
     console.log(argv.json ? JSON.stringify(build) : id);
     process.exit(0);

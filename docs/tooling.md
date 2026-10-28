@@ -41,16 +41,37 @@ Repo convention (the runners accept both patterns — this is about consistency)
   patterns and the codebase already has more `*.spec.tsx` files than
   `*.test.tsx`, so this is a preference for new files, not a renaming backlog.
 
+## App environment
+
+One source per environment, and it is the **EAS environment** — `development` for
+the dev/preview builds and the branch previews, `production` for `main`.
+
+- EAS builds read it directly: `eas.json` sets `environment` per profile and the
+  builder injects the values before `app.config.js` runs.
+- CI and local runs pull the same values into `apps/betterangels/.env.local`
+  (`eas env:pull <environment>`). That file is gitignored, so it is never part of
+  the upload.
+- The tracked `apps/betterangels/.env` only carries local defaults. dotenv does
+  not override a value that is already set, so it cannot shadow either of those.
+
+The runtime version is the Expo fingerprint of `app.config.js`, so a value that
+reaches `expoConfig` has to be identical on both sides — a mismatch fails the
+build's `CONFIGURE_EXPO_UPDATES` phase. `EXPO_PUBLIC_*` are inlined when the
+bundle is built: a value missing on the EAS side ships `undefined`, and nothing
+reads it at runtime to notice.
+
 ## Preview pipeline (PRs)
 
 Two checks, split by what should block a merge:
 
 - **`BuildTestDeploy (preview)`** — checks only: `lint typecheck test build`. No
   deploy, no EAS. `main` and `merge_group` still deploy from this workflow.
-- **`Preview`** — one job: web deploy **and** the EAS update in parallel, then the
-  Playwright suites, then the mobile build. Not a required check: it only runs on
-  `pull_request`, and a required check that never reports on `merge_group`
-  deadlocks the merge queue.
+- **`Preview`** — one job: the EAS update, then the web deploy, then the
+  Playwright suites, then the mobile build. The update goes first because the
+  web export writes the branch path into `.env.local` (see `base-path`), which
+  would otherwise move the update's runtime version. Not a required check: it
+  only runs on `pull_request`, and a required check that never reports on
+  `merge_group` deadlocks the merge queue.
 
 ### Platforms
 
