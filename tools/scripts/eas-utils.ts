@@ -1,14 +1,14 @@
 /**
- * Shared utilities for EAS scripts (eas-deploy.ts, etc.)
+ * Shared utilities for the EAS scripts (build-missing.ts, eas-e2e.ts).
  *
  * Provides common helpers for:
  *   - CLI arg parsing (minimist)
  *   - Environment variable access
  *   - Command execution with JSON parsing
- *   - .env / fingerprint setup
+ *   - Fingerprint setup
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import minimist from 'minimist';
 import * as path from 'path';
@@ -17,19 +17,6 @@ import stripAnsi from 'strip-ansi';
 export const argv = minimist(process.argv.slice(2));
 
 export const EAS_ACCOUNT = process.env.EAS_ACCOUNT || 'better-angels';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export interface UpdateResult {
-  platform: string;
-  id: string;
-  group: string;
-  branch: string;
-  gitCommitHash: string;
-  runtimeVersion: string;
-}
 
 // ---------------------------------------------------------------------------
 // Env helpers
@@ -53,15 +40,19 @@ export function getOptionalEnv(name: string): string | undefined {
 
 /**
  * Run a command and return stdout (trimmed).
+ *
+ * Arguments are passed as an array, never interpolated into a shell string: the
+ * callers build them from CLI args and project names.
  */
 export function run(
-  cmd: string,
+  file: string,
+  args: string[] = [],
   opts?: { cwd?: string; silent?: boolean },
 ): string {
   const cwd = opts?.cwd ?? process.cwd();
-  if (!opts?.silent) console.log(`> ${cmd}`);
+  if (!opts?.silent) console.log(`> ${[file, ...args].join(' ')}`);
   try {
-    return execSync(cmd, {
+    return execFileSync(file, args, {
       cwd,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -78,8 +69,12 @@ export function run(
  * Handles nx/eas CLI output that may contain ANSI codes and non-JSON text
  * by finding the first valid JSON array or object in the output.
  */
-export function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
-  const raw = run(cmd, { silent: true, ...opts });
+export function runJson<T>(
+  file: string,
+  args: string[] = [],
+  opts?: { cwd?: string },
+): T {
+  const raw = run(file, args, { silent: true, ...opts });
   const cleaned = stripAnsi(raw);
 
   // Find the first valid JSON object or array in the output.
@@ -131,65 +126,52 @@ export function resolveProjectDir(project: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Write .env with build-profile env vars + EXPO_PUBLIC_* secrets,
- * then compute the Expo fingerprint hash. Returns the hash.
+ * Write the profile env the runtime version is computed from.
+ *
+ * `write-eas-env.mjs` is the only writer; a second one would let the fingerprint
+ * and the upload disagree. It rewrites the tracked `.env`, which is what ships
+ * inside the EAS archive.
  */
-export function setupEnvAndFingerprint(
-  projectDir: string,
-  profile: string,
-): string {
+export function setupEnv(projectDir: string, profile: string): void {
   console.log(`\n=== Setting up env for profile: ${profile} ===`);
+  const project = path.basename(projectDir);
+  run('node', [
+    'tools/scripts/write-eas-env.mjs',
+    '--project',
+    project,
+    '--profile',
+    profile,
+  ]);
+}
 
-  const envPath = path.join(projectDir, '.env');
-  const envMap = new Map<string, string>();
-
-  // Collect EXPO_PUBLIC_* and MAESTRO_* from process.env first (may include
-  // values from the committed .env loaded by NX, or CI secrets).
-  for (const [key, value] of Object.entries(process.env)) {
-    if (
-      (key.startsWith('EXPO_PUBLIC_') || key.startsWith('MAESTRO_')) &&
-      value
-    ) {
-      envMap.set(key, value);
-    }
-  }
-
-  // Then apply eas.json build profile env vars, which take precedence.
-  // This ensures profile-specific values (e.g., production API URL) override
-  // any stale values that NX loaded from the committed .env file.
-  const easJsonPath = path.join(projectDir, 'eas.json');
-  if (fs.existsSync(easJsonPath)) {
-    const easConfig = JSON.parse(fs.readFileSync(easJsonPath, 'utf-8'));
-    const profileEnv = easConfig?.build?.[profile]?.env;
-    if (profileEnv && typeof profileEnv === 'object') {
-      for (const [key, value] of Object.entries(profileEnv)) {
-        envMap.set(key, String(value));
-      }
-    }
-  }
-
-  // Write .env (without RUNTIME_VERSION) so fingerprint includes env var values.
-  const envLines: string[] = [];
-  envMap.forEach((v, k) => {
-    envLines.push(`${k}=${v}`);
-  });
-  fs.writeFileSync(envPath, envLines.join('\n') + '\n');
-
-  // Compute fingerprint — this hash becomes the runtimeVersion.
-  console.log('Computing fingerprint...');
-  const fingerprintJson = run(
-    `node -e "const fp = require('@expo/fingerprint'); fp.createFingerprintAsync('.').then(r => console.log(JSON.stringify(r)));"`,
+/**
+ * Resolve the runtime version (fingerprint hash) for one platform.
+ *
+ * Fingerprints are per platform, so a lookup keyed on the other platform's hash
+ * always misses. No `expo prebuild`: `--workflow generic` fingerprints the project
+ * as uploaded, and a local prebuild would hash native directories the build never
+ * has.
+ */
+export function resolveRuntime(projectDir: string, platform: string): string {
+  console.log(`Resolving ${platform} runtime version (fingerprint)...`);
+  const resolved = runJson<{ runtimeVersion: string }>(
+    'npx',
+    [
+      'expo-updates',
+      'runtimeversion:resolve',
+      '--platform',
+      platform,
+      '--workflow',
+      'generic',
+    ],
     { cwd: projectDir },
   );
-  const hash = JSON.parse(fingerprintJson).hash as string;
-  console.log(`Runtime version (fingerprint): ${hash}`);
-
-  // Append RUNTIME_VERSION to .env and propagate everything to process.env.
-  fs.appendFileSync(envPath, `RUNTIME_VERSION=${hash}\n`);
-  envMap.set('RUNTIME_VERSION', hash);
-  envMap.forEach((value, key) => {
-    process.env[key] = value;
-  });
-
+  const hash = resolved.runtimeVersion;
+  if (!hash) {
+    throw new Error(
+      `expo-updates did not return a runtime version for ${platform}`,
+    );
+  }
+  console.log(`${platform} runtime version (fingerprint): ${hash}`);
   return hash;
 }

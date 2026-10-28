@@ -16,7 +16,7 @@ export type UpdateNoteMutationVariables = Types.Exact<{
 
 
 export type UpdateNoteMutation = { __typename: 'Mutation', updateNote:
-    | { __typename: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: DateTimeString, createdAt: DateTimeString, team?: { __typename: 'TeamType', id: string, name: string } | null, location?: { __typename: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, providedServices: Array<{ __typename: 'ServiceRequestType', id: string, service?: { __typename: 'OrganizationServiceType', id: string, label: string, category?: { __typename: 'OrganizationServiceCategoryType', id: string } | null } | null }>, requestedServices: Array<{ __typename: 'ServiceRequestType', id: string, service?: { __typename: 'OrganizationServiceType', id: string, label: string, category?: { __typename: 'OrganizationServiceCategoryType', id: string } | null } | null }>, clientProfile?: { __typename: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy?: { __typename: 'UserType', id: string, username?: string | null, email?: string | null } | null }
+    | { __typename: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: DateTimeString, createdAt: DateTimeString, team?: { __typename: 'TeamType', id: string, name: string } | null, location?: { __typename: 'LocationType', point: any, pointOfInterest?: string | null, address?: { __typename: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } | null } | null, providedServices: Array<{ __typename: 'ServiceRequestType', id: string, service?: { __typename: 'OrganizationServiceType', id: string, label: string, category?: { __typename: 'OrganizationServiceCategoryType', id: string } | null } | null }>, requestedServices: Array<{ __typename: 'ServiceRequestType', id: string, service?: { __typename: 'OrganizationServiceType', id: string, label: string, category?: { __typename: 'OrganizationServiceCategoryType', id: string } | null } | null }>, clientProfile?: { __typename: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy?: { __typename: 'UserType', id: string, username?: string | null, email?: string | null } | null }
     | { __typename: 'OperationInfo' }
    };
 
@@ -56,7 +56,7 @@ export type UpdateNoteLocationMutationVariables = Types.Exact<{
 
 
 export type UpdateNoteLocationMutation = { __typename: 'Mutation', updateNoteLocation:
-    | { __typename: 'NoteType', id: string, location?: { __typename: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null }
+    | { __typename: 'NoteType', id: string, location?: { __typename: 'LocationType', point: any, pointOfInterest?: string | null, address?: { __typename: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } | null } | null }
     | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 

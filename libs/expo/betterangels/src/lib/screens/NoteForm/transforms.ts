@@ -49,6 +49,7 @@ export function buildNotePayload(
       description: task.description || undefined,
       status: task.status != null ? TASK_STATUS_TO_INT[task.status] : undefined,
       teamId: task.teamId || undefined,
+      assigneeId: task.assigneeId || undefined,
     }));
   }
 
@@ -116,6 +117,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
       description: task.description ?? null,
       status: task.status ?? null,
       teamId: task.team?.id ?? null,
+      assigneeId: task.assignee?.id ?? null,
     })),
   };
 }

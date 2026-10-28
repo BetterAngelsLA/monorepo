@@ -1,0 +1,242 @@
+name: 🚀 Preview
+
+on:
+  pull_request:
+
+# One preview per branch: overlapping runs would race on the same
+# /branches/<branch>/ prefix and on the comment.
+concurrency:
+  group: preview-${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-west-2
+  AWS_ACCOUNT_ID: 174477281453
+  ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+
+jobs:
+  # One job: the EAS update publishes while the web deploy runs, then E2E, then
+  # the mobile build. The build must be last — `copy-lockfile` reshapes the
+  # workspace for EAS Build, and a later `yarn install` prunes the other projects.
+  #
+  # Not gated on forks, so the required `Preview` check always reports; the steps
+  # that need secrets carry the guard.
+  Preview:
+    runs-on: ubuntu-latest
+    environment: preview
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      # Build even though a build exists for the fingerprint.
+      FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
+      VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
+      VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
+      EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
+      EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}
+      EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY }}
+      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
+      EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
+    steps:
+      - name: ⏭️ Fork pull request
+        if: github.event.pull_request.head.repo.fork
+        run: |
+          echo "::notice::Fork PR: previews need secrets, which forks do not receive."
+          echo "### Preview skipped — fork PR, no secrets" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v5
+
+      - name: 🔧 Set Environment Variables
+        env:
+          RAW_BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
+
+      - name: 🐳 Configure AWS credentials
+        if: github.event.pull_request.head.repo.fork == false
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+          cache: yarn
+
+      # Keyed on the lockfile: `--immutable` still reconciles anything stale.
+      - name: ♻️ Restore node_modules
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
+
+      - name: 📦 Install dependencies
+        run: |
+          corepack enable
+          yarn install --immutable
+
+      - name: Restore Nx cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-
+            nx-cache-v4-${{ runner.os }}-${{ github.event.repository.default_branch }}-
+            nx-cache-v4-${{ runner.os }}-
+
+      - name: 🥟 Install EAS CLI
+        if: github.event.pull_request.head.repo.fork == false
+        run: npm install -g eas-cli@24.8.0
+
+      - name: 🚀 Preview deploy and EAS update
+        if: github.event.pull_request.head.repo.fork == false
+        env:
+          CI: 'true'
+          NX_DAEMON: 'false'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # The profile env, written into the tracked `.env`: that file ships
+          # inside the EAS archive, which is what the update below resolves
+          # app.config against. `export-web` writes it again for its own
+          # configuration, so both see the same values.
+          node tools/scripts/write-eas-env.mjs --project betterangels --profile preview
+
+          # Before the export, not alongside it: the update's runtime version has
+          # to be the one the build carries, and `write-eas-env` is shared state.
+          node tools/scripts/eas-update.mjs --project betterangels --profile preview
+
+          # Same reason as the main pipeline: Nx fills the task env before its
+          # dependencies run and never overrides what is already set.
+          APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile preview --print)" || exit 1
+          eval "$APP_ENV_EXPORTS"
+
+          # export-web computes its own base path inline; nginx is the ECS proxy,
+          # which a preview deploys the app behind rather than redeploys.
+          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6 --exclude=nginx
+
+      - name: 🧪 E2E (Playwright)
+        if: github.event.pull_request.head.repo.fork == false
+        env:
+          CI: 'true'
+          NX_DAEMON: 'false'
+        run: |
+          set -euo pipefail
+          # Feeds `tools/shared/e2e-base-url.mjs`: a suite tests its branch
+          # preview when this run deployed that app, and its own server otherwise.
+          PREVIEW_DEPLOYED_APPS="$(yarn nx show projects --affected --with-target deploy --configuration preview | tr '\n' ',')"
+          export PREVIEW_DEPLOYED_APPS
+          echo "Deployed for this run: ${PREVIEW_DEPLOYED_APPS:-none}"
+          # A suite only runs when this run deployed the app it tests; otherwise it
+          # would drive a local server, and the specs describe the deployed site.
+          PROJECTS="$(node tools/shared/e2e-projects.mjs)"
+          if [ -z "$PROJECTS" ]; then
+            echo "::notice::E2E skipped: none of the apps under test was deployed for this run."
+            echo '### E2E skipped — nothing under test was deployed for this run' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          yarn playwright install chromium
+          yarn nx run-many -t e2e --projects="$PROJECTS" --configuration preview
+
+      - name: 🔎 Is the mobile app affected?
+        id: mobile-affected
+        if: github.event.pull_request.head.repo.fork == false
+        env:
+          CI: 'true'
+          NX_DAEMON: 'false'
+        run: |
+          set -euo pipefail
+          # A preview builds once per fingerprint and then reports what it
+          # resolved. For a PR that touches nothing the app ships, that binary
+          # belongs to another commit, so the comment describes work this PR did
+          # not change. `affected` includes the app when a library it depends on
+          # changed, so this gates on "the mobile app itself is different".
+          #
+          # Resolve the list before testing it: a failing `nx show projects` must
+          # fail this step, not fall into the else branch and read as "not
+          # affected" on every PR.
+          AFFECTED_PROJECTS="$(yarn nx show projects --affected)"
+          if printf '%s\n' "$AFFECTED_PROJECTS" | grep -qx betterangels; then
+            echo "affected=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "affected=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Mobile preview skipped: betterangels is not affected by this PR."
+            echo '### 📱 Mobile preview skipped — FE not affected' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: 📱 Mobile preview
+        if: github.event.pull_request.head.repo.fork == false && steps.mobile-affected.outputs.affected == 'true'
+        env:
+          CI: 'true'
+          NX_DAEMON: 'false'
+        run: |
+          set -euo pipefail
+          # `copy-lockfile` below reshapes the workspace for EAS Build; restore it
+          # however this step ends. Called directly — it must not need a project
+          # graph built from the manifests it is undoing.
+          trap 'node tools/scripts/restore-workspace.mjs --project betterangels || true' EXIT
+
+          # The profile env, then the EAS-shaped workspace: the runtime is
+          # resolved from both, so they have to match what the build uploads.
+          yarn nx run betterangels:write-eas-env:preview
+
+          # No `expo prebuild`: it would leave `android/`+`ios/` in the checkout and
+          # the fingerprint would describe a project no build uploads.
+          #
+          # `copy-lockfile` mirrors what `eas-build` uploads, so the runtime looked
+          # up here is the one the build produces.
+          yarn nx run betterangels:copy-lockfile
+
+          # A fingerprint builds once; a dead one fails the run and
+          # `force-eas-build` overrides.
+          npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
+            --project betterangels --configuration preview
+
+          # The update was published by the deploy step. Post the links.
+          yarn nx run betterangels:preview-comment
+
+      # Archiving only; neither touches the workspace.
+      - name: Save Nx cache
+        if: always() && !cancelled()
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            .nx/cache
+            .nx/workspace-data/*.db*
+          key: nx-cache-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: 📎 Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          # Every suite's preset writes under dist/.playwright/apps/<project>,
+          # so one upload covers whichever suites ran.
+          name: playwright-report-${{ env.BRANCH_NAME }}
+          path: dist/.playwright/apps
+          if-no-files-found: ignore
+          retention-days: 7

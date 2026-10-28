@@ -145,6 +145,7 @@ class Attachment(BaseModel):
         content_object: Generic relation to the associated model instance.
         namespace: Optional field for further categorization within specific contexts.
         uploaded_by: Reference to the User who uploaded the file.
+        upload_org: The organization the upload was made on behalf of.
     """
 
     file = models.FileField(upload_to=get_unique_file_path)
@@ -160,6 +161,21 @@ class Attachment(BaseModel):
 
     uploaded_by = models.ForeignKey(
         "accounts.User", on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments"
+    )
+
+    # The write anchor for domains that read platform-shared but are owned by the
+    # uploader's org (client documents — RFC 0002 / ADR 0002, decision 2).  It is
+    # deliberately *not* an ``org_via`` hop: reads stay shared, and authority is an
+    # org-scope check against this column.  Nullable because it is set per upload
+    # (``resolve_upload``) and rows predate it; the backfill in
+    # ``common/0005_backfill_attachment_upload_org`` fills historical documents
+    # from the guardian group rows that recorded the same fact.
+    upload_org = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="uploaded_attachments",
     )
 
     def __str__(self) -> str:

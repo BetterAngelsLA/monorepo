@@ -34,6 +34,7 @@ def task_create(
             description=item.get("description") or "",
             status=item.get("status") or Task.Status.TO_DO,
             team_id=item.get("team_id"),
+            assignee_id=item.get("assignee_id"),
             note=note,
             hmis_note=hmis_note,
             client_profile=client_profile,

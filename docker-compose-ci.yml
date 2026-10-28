@@ -23,6 +23,11 @@ services:
       # Keep Nx from leaving a daemon writing the cache while Actions archives
       # .nx; CI has no cross-command daemon benefit worth the race.
       - NX_DAEMON=false
+      # Nx appends its run report (failed tasks, timings) to this file. It is a
+      # workspace path because the container runs as uid 1000 and the runner's
+      # own $GITHUB_STEP_SUMMARY belongs to uid 1001; the workflow publishes this
+      # file in "Publish Nx run report".
+      - GITHUB_STEP_SUMMARY=/workspace/nx-run-report.md
       # Never let a test/typecheck command rewrite uv.lock mid-run; the test DB
       # manifest hashes uv.lock and a rewritten lock invalidates the next run.
       - UV_LOCKED=1

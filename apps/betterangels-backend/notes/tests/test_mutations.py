@@ -196,6 +196,24 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(note.requested_services.count(), 1)
         self.assertEqual(note.tasks.count(), 1)
 
+    def test_nested_task_without_assignee_stores_null(self) -> None:
+        """An omitted nested assignee must not reach the FK as ``UNSET``.
+
+        ``asdict`` drops ``UNSET`` members at every level, so ``task_create``
+        sees no ``assignee_id`` key at all. This pins that the column lands as
+        NULL rather than as a sentinel object.
+        """
+        response = self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "tasks": [{"summary": "Follow up call"}],
+            }
+        )
+
+        self.assertIsNone(response.get("errors"))
+        task = Note.objects.get(pk=self.note["id"]).tasks.get()
+        self.assertIsNone(task.assignee_id)
+
     def test_update_note_replaces_nested_relations(self) -> None:
         """Test that sending nested relations replaces existing ones (delete old + create new)."""
         bag_svc = OrganizationService.objects.get(label="Bag(s)")

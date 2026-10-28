@@ -17,5 +17,6 @@ export * from './useClientProgramsHmis';
 export { useUser } from '../providers/user/UserProvider';
 export { useInitialLocation } from './useInitialLocation';
 export { useOrgTeams } from './useOrgTeams/useOrgTeams';
+export { useTaskAssignees } from './useTaskAssignees/useTaskAssignees';
 export { default as useClearLocalSession } from './user/useClearLocalSession';
 export { default as useSignOut } from './user/useSignOut';

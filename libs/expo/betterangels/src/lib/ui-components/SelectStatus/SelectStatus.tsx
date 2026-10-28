@@ -7,7 +7,6 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronIcon } from './ChevronIcon';
 
 type SelectStatusProps = {
@@ -27,8 +26,6 @@ export function SelectStatus({
   title,
 }: SelectStatusProps) {
   const [open, setOpen] = useState(false);
-  const insets = useSafeAreaInsets();
-  const bottomOffset = insets.bottom;
 
   const current = useMemo(
     () => options.find((o) => o.value === value),
@@ -77,8 +74,12 @@ export function SelectStatus({
           backgroundColor: Colors.WHITE,
         }}
         contentStyle={{
+          // The sheet's SafeAreaView already resolves the bottom inset. Adding
+          // it here as well double-counted on iOS and left the last option
+          // flush against the edge on web, where the inset is 0.
           paddingHorizontal: Spacings.md,
-          paddingBottom: bottomOffset, // tightened: safe-area only (no extra spacing)
+          paddingTop: Spacings.xs,
+          paddingBottom: Spacings.md,
         }}
       >
         <View style={styles.sheet}>

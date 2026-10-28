@@ -32,6 +32,7 @@ function pruneFilter<T extends Record<string, unknown>>(filter: T): Partial<T> {
 type TProps = {
   search?: string;
   authors?: string[];
+  assignees?: string[];
   organizations?: string[];
   teamIds?: string[];
   taskStatus?: string[];
@@ -48,6 +49,7 @@ export function toTaskFilter(props: TProps): TaskFilter {
   const {
     search,
     authors,
+    assignees,
     organizations,
     clientProfiles,
     hmisClientProfiles,
@@ -63,6 +65,7 @@ export function toTaskFilter(props: TProps): TaskFilter {
   const allFilters: TaskFilter = {
     search: toNonEmptyStringOrUndefined(search),
     authors,
+    assignees,
     organizations,
     clientProfiles,
     hmisClientProfiles,

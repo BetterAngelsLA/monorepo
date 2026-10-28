@@ -1,0 +1,17 @@
+mutation UpdateMediaLink($data: UpdateMediaLinkInput!) {
+  updateMediaLink(data: $data) {
+    ... on MediaLinkType {
+      id
+      url
+      title
+      mediaType
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

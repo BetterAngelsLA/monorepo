@@ -3,14 +3,14 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/shelter-e2e/tests",
-  "tags": [],
-  "implicitDependencies": ["shelter-web"],
+  "tags": [
+    "ci-e2e"
+  ],
+  "implicitDependencies": [
+    "shelter-web"
+  ],
   "// targets": "to see all targets run: nx show project shelter-e2e --web",
   "targets": {
-    "e2e": {
-      "// inputs": "Declaring inputs replaces the ones @nx/playwright infers, so `...` keeps them and appends the one thing they miss: a deployed run is only replayable for the URL it ran against.",
-      "inputs": ["...", { "env": "BASE_URL" }]
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
