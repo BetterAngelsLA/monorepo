@@ -129,9 +129,10 @@ jobs:
           ) &
           UPDATE_PID=$!
 
-          # export-web computes its own base path, so it is not in the job env.
-          (cd apps/betterangels && eas env:exec development --non-interactive \
-            "cd ../.. && yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6")
+          # The EAS environment is pulled into .env.local, which export-web hashes
+          # and the Expo CLI loads. export-web computes its own base path.
+          (cd apps/betterangels && eas env:pull development --non-interactive)
+          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6
 
           # Replay the background output, and fail with it.
           set +e
@@ -209,10 +210,10 @@ jobs:
           yarn nx run betterangels:copy-lockfile
 
           # A fingerprint builds once, in any status; `force-eas-build` overrides.
-          # The EAS environment supplies the profile env (`eas env:exec`).
-          (cd apps/betterangels && eas env:exec development --non-interactive \
-            "cd ../.. && npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
-              --project betterangels --configuration preview")
+          # The EAS environment is pulled into .env.local for the app config.
+          (cd apps/betterangels && eas env:pull development --non-interactive)
+          npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
+            --project betterangels --configuration preview
 
           # The update was published by the deploy step. Post the links.
           yarn nx run betterangels:preview-comment

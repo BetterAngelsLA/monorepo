@@ -58,7 +58,8 @@
       ],
       "options": {
         "cwd": "apps/betterangels",
-        "command": "EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear"
+        "command": "EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear",
+        "envFile": "apps/betterangels/.env.local"
       },
       "outputs": [
         "{workspaceRoot}/dist/apps/betterangels"
@@ -67,6 +68,10 @@
         "production",
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
+        {
+          "fileset": "apps/betterangels/.env.local",
+          "includeIgnored": true
+        },
         {
           "env": "CI"
         },

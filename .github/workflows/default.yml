@@ -328,11 +328,10 @@ jobs:
             # Forks have no EXPO_TOKEN: run the checks without the EAS env.
             yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
           else
-            # The EAS environment (not the tracked .env) is the app env source.
-            (cd apps/betterangels && eas env:exec \
-              ${{ matrix.environment == 'production' && 'production' || 'development' }} \
-              --non-interactive \
-              "cd ../.. && yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6")
+            # The EAS environment is pulled into .env.local, which export-web
+            # hashes and the Expo CLI loads.
+            (cd apps/betterangels && eas env:pull ${{ matrix.environment == 'production' && 'production' || 'development' }} --non-interactive)
+            yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
           fi
           EOF
         env:
@@ -449,21 +448,16 @@ jobs:
             # Not `nx affected`: an unaffected app would resolve a runtime without
             # its env and queue a build for a fingerprint nothing uses. The reuse
             # check below is what makes this a no-op when nothing changed.
+            (cd apps/betterangels && eas env:pull ${{ matrix.environment == 'production' && 'production' || 'development' }} --non-interactive)
             yarn nx run betterangels:copy-lockfile
             # One build per fingerprint, in any status — same rule as the preview.
             # Both platforms: on main the binary is the release artifact, not a
             # preview convenience.
-            (cd apps/betterangels && eas env:exec \
-              ${{ matrix.environment == 'production' && 'production' || 'development' }} \
-              --non-interactive \
-              "cd ../.. && npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
-                --project betterangels --configuration ${{ matrix.environment }} \
-                --platforms android,ios")
+            npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
+              --project betterangels --configuration ${{ matrix.environment }} \
+              --platforms android,ios
             # The target pins the branch and the EAS environment for the update.
-            (cd apps/betterangels && eas env:exec \
-              ${{ matrix.environment == 'production' && 'production' || 'development' }} \
-              --non-interactive \
-              "cd ../.. && yarn nx affected -t eas-update --configuration ${{ matrix.environment }}")
+            yarn nx affected -t eas-update --configuration ${{ matrix.environment }}
           '
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
