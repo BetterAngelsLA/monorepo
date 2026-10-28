@@ -1,9 +1,14 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import type { AuditAction } from '../../hooks';
 import { AuditEventRow } from './AuditEventRow';
 import { AuditChangesView } from './AuditChangesView';
+import {
+  AuditEventContext,
+  formatAuditEventContext,
+} from './AuditEventContext';
+import { subjectActionFor } from './auditChanges';
 import {
   formatAuditTimestamp,
   formatAuditTimestampAbsolute,
@@ -13,18 +18,38 @@ import { Text } from '../base-ui/text/text';
 /**
  * One grouped action (all events written under a single request context).
  *
- * NOTE: the activity-log follow-ups add the two pieces this card does not render
- * yet:
- *   - `event.context` (a synthesized event's unchanged identity, e.g. a netted
- *     schedule slot's day/type) is shown by the readability pass;
- *   - `action.truncated` (the server capped a bulk action's event list) is
- *     surfaced by the hardening pass.
- * Until then a capped bulk action renders only the rows the server returned.
+ * NOTE: the activity-log hardening pass still owes `action.truncated` (the
+ * server capped a bulk action's event list); until it lands a capped bulk action
+ * renders only the rows the server returned.
  */
 export function AuditActionRow({ action }: { action: AuditAction }) {
   const [expanded, setExpanded] = useState(false);
   const detailsId = useId();
   const hasEvents = action.events.length > 0;
+
+  // The merged action-level changes belong to one subject; use its action for
+  // schedule-specific display options. Its keys are qualified per row
+  // (`Schedule 209 start time`), which `parseFieldChanges` matches by suffix.
+  const subjectAction = subjectActionFor(action);
+
+  // A netted schedule change carries the slot's unchanged identity (day/type) in
+  // `context`. One action can cover several slots (Mon–Fri hours), so show each
+  // distinct line rather than only the first. Keying on the rendered line also
+  // drops events whose context has nothing to show, so an unrenderable context
+  // cannot leave an empty gap in the card.
+  const contexts = useMemo(() => {
+    const byLine = new Map<string, unknown>();
+
+    for (const event of action.events) {
+      const line = formatAuditEventContext(event.context);
+
+      if (line !== null && !byLine.has(line)) {
+        byLine.set(line, event.context);
+      }
+    }
+
+    return Array.from(byLine);
+  }, [action.events]);
 
   // Summarized events (§32) are one-liners, not field changes: a shelter action
   // that only touches a bed would otherwise render an empty card body.
@@ -83,7 +108,19 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
         </div>
       )}
 
-      <AuditChangesView value={action.fieldChanges} className="mt-3" />
+      {contexts.length > 0 && (
+        <div className="mt-3 flex flex-col gap-1">
+          {contexts.map(([line, context]) => (
+            <AuditEventContext key={line} context={context} />
+          ))}
+        </div>
+      )}
+
+      <AuditChangesView
+        value={action.fieldChanges}
+        actionKey={subjectAction}
+        className="mt-3"
+      />
 
       {expanded && hasEvents && (
         <div id={detailsId} className="mt-2 flex flex-col">

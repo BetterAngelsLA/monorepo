@@ -1,43 +1,90 @@
 import {
+  displayOptionsForAction,
   formatFieldValue,
   formatValue,
   humanizeAction,
   MAX_VALUE_LENGTH,
   parseFieldChanges,
   stripHtmlToText,
+  subjectActionFor,
   truncateValue,
 } from './auditChanges';
 
 describe('parseFieldChanges', () => {
-  it('parses scalar and multi-value changes', () => {
+  it('drops the absent/`false` is exception default a schedule create carries', () => {
+    const changes = parseFieldChanges(
+      {
+        'is exception': [null, false],
+        'start time': ['09:00:00', '10:00:00'],
+        'end time': ['17:00:00', '18:00:00'],
+      },
+      displayOptionsForAction('shelter.schedule.add'),
+    );
+
+    expect(changes.map((change) => change.field)).toEqual([
+      'start time',
+      'end time',
+    ]);
+    expect(changes[0]).toMatchObject({
+      oldValue: '09:00:00',
+      newValue: '10:00:00',
+    });
+  });
+
+  it('drops the same default on the qualified key the collapsed card renders', () => {
+    // §13 qualifies a related row's key (`<Model> <id> <field>`), and the
+    // action-level rollup is what a collapsed card shows. A bare-key-only rule
+    // would leave the noise on screen.
+    const changes = parseFieldChanges(
+      {
+        'Schedule 209 is exception': [null, false],
+        'Schedule 209 start time': [null, '09:00:00'],
+      },
+      displayOptionsForAction('shelter.schedule.add'),
+    );
+
+    expect(changes.map((change) => change.field)).toEqual([
+      'Schedule 209 start time',
+    ]);
+  });
+
+  it('keeps a real is exception change, bare or qualified', () => {
+    // The rule drops the *default*, never an actual exception/regular flip.
+    for (const field of ['is exception', 'Schedule 209 is exception']) {
+      const changes = parseFieldChanges(
+        { [field]: [false, true] },
+        displayOptionsForAction('shelter.schedule.update'),
+      );
+
+      expect(changes.map((change) => change.field)).toEqual([field]);
+    }
+  });
+
+  it('keeps the is exception default outside schedule events', () => {
+    // A future field with the same display name on another subject must not be
+    // curated by the schedule rule.
+    const changes = parseFieldChanges({ 'is exception': [null, false] });
+
+    expect(changes.map((change) => change.field)).toEqual(['is exception']);
+  });
+
+  it('hides the pk and generated columns by display name', () => {
+    // Defence in depth: `_scalar_changes` already drops these (§13). Keys are
+    // display names — the pk is `ID` — and may be qualified.
     const changes = parseFieldChanges({
-      name: ['Shelter A', 'Shelter B'],
+      ID: [null, 7],
+      'Schedule 209 start cycle minutes': [60, 120],
+      'duration minutes': [90, 120],
+      name: ['Same', 'Same'],
       demographics: [['Women'], ['Men']],
     });
 
-    expect(changes.map((change) => change.field)).toEqual([
-      'name',
-      'demographics',
-    ]);
+    expect(changes.map((change) => change.field)).toEqual(['demographics']);
     expect(changes[0]).toMatchObject({
-      kind: 'scalar',
-      oldValue: 'Shelter A',
-      newValue: 'Shelter B',
-    });
-    expect(changes[1]).toMatchObject({
       kind: 'multi',
       removed: ['Women'],
       added: ['Men'],
     });
-  });
-
-  it('drops unchanged and empty pair changes', () => {
-    const changes = parseFieldChanges({
-      name: ['Same', 'Same'],
-      demographics: [[], []],
-    });
-
-    expect(changes).toEqual([]);
   });
 
   it('ignores a non-object payload', () => {
@@ -117,6 +164,25 @@ describe('formatFieldValue', () => {
       'not_a_storage_choice',
     );
     expect(formatFieldValue('Pets', null)).toBe('\u2014');
+  });
+});
+
+describe('subjectActionFor', () => {
+  it('picks the schedule event, if any', () => {
+    expect(
+      subjectActionFor({
+        events: [
+          { action: 'bed.update' },
+          { action: 'shelter.schedule.update' },
+        ],
+      }),
+    ).toBe('shelter.schedule.update');
+  });
+
+  it('returns undefined without a schedule event', () => {
+    expect(subjectActionFor({ events: [{ action: 'bed.update' }] })).toBe(
+      undefined,
+    );
   });
 });
 

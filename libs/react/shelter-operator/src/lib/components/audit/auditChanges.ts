@@ -6,7 +6,8 @@
  *   - multi-value:    { "field": [[removed...], [added...]] }
  *
  * Keys are display names (`start time`, not `start_time`), and every entry is a
- * real change.
+ * real change: unchanged identity for synthesized events arrives separately as
+ * `AuditEvent.context`, never in `fieldChanges`.
  */
 
 import { sanitizeHtml } from '@monorepo/react/shared';
@@ -111,6 +112,71 @@ export function truncateValue(
   }
 
   return `${value.slice(0, maxLength - 1).trimEnd()}\u2026`;
+}
+
+/**
+ * Fields hidden from every event, as display names.
+ *
+ * Defence in depth only: ``_scalar_changes`` already drops the pk and the
+ * DB-generated columns server-side (§13) — the pk through its ``hidden`` set,
+ * the generated totals through ``_generated_fields`` — so they never reach a
+ * payload today. The log keeps rendering sanely if that projection ever loosens.
+ *
+ * The pk's display name is ``ID`` (Django's auto-pk ``verbose_name``); keys are
+ * matched case-insensitively so either spelling works.
+ */
+const HIDDEN_FIELDS = ['id', 'start cycle minutes', 'duration minutes'];
+
+const SCHEDULE_ACTION_PREFIX = 'shelter.schedule';
+
+export type ParseFieldChangesOptions = {
+  /** Display names dropped when both the old and new value are absent or `false`. */
+  dropWhenBothFalsey?: readonly string[];
+};
+
+/**
+ * Display rules keyed off the event's action.
+ *
+ * A schedule create/delete carries every populated column, including the
+ * `is_exception` default as ``[null, false]`` — that is not a change, so drop it.
+ */
+export function displayOptionsForAction(
+  action?: string,
+): ParseFieldChangesOptions {
+  if (action?.startsWith(SCHEDULE_ACTION_PREFIX)) {
+    return { dropWhenBothFalsey: ['is exception'] };
+  }
+
+  return {};
+}
+
+/**
+ * True when a `field_changes` key names *field*.
+ *
+ * A key is the display name (`is exception`) when the row is the log's own
+ * object, or qualified with the owner and id (`Schedule 209 is exception`) when
+ * it is a related one — the action-level rollup merges both kinds into one map
+ * (§13), and the collapsed card renders it. Matching the suffix is what makes a
+ * rule fire on both shapes.
+ */
+function matchesField(key: string, field: string): boolean {
+  const normalizedKey = key.toLowerCase();
+  const normalizedField = field.toLowerCase();
+
+  return (
+    normalizedKey === normalizedField ||
+    normalizedKey.endsWith(` ${normalizedField}`)
+  );
+}
+
+/**
+ * Absent (`null`/`undefined`) or explicitly `false`.
+ *
+ * Deliberately not "falsey": `0` and `''` are real values, and a rule that
+ * silently dropped them would hide a genuine change.
+ */
+function isAbsentOrFalse(value: unknown): boolean {
+  return value === null || value === undefined || value === false;
 }
 
 /** `exit_policy` -> `Exit Policy` */
@@ -236,18 +302,28 @@ function isArrayPair(value: unknown): value is [unknown[], unknown[]] {
 }
 
 /**
- * NOTE: schedule-specific display curation (for example dropping the falsey
- * `is exception` default that a schedule create/delete carries) is part of the
- * activity-log readability/hardening follow-up; this branch renders every pair
- * the backend reports.
+ * Parse the untyped `field_changes` JSON into renderable changes.
+ *
+ * Keys arrive as display names (`start time`), qualified with the owner and id
+ * when the row belongs to another object (`Schedule 209 start time`). *options*
+ * carries the action-specific display rules (`displayOptionsForAction`).
  */
-export function parseFieldChanges(value: unknown): AuditChange[] {
+export function parseFieldChanges(
+  value: unknown,
+  options: ParseFieldChangesOptions = {},
+): AuditChange[] {
+  const { dropWhenBothFalsey = [] } = options;
+
   const parsed: AuditChange[] = [];
 
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     for (const [field, raw] of Object.entries(
       value as Record<string, unknown>,
     )) {
+      if (HIDDEN_FIELDS.some((hidden) => matchesField(field, hidden))) {
+        continue;
+      }
+
       const label = humanizeFieldName(field);
 
       if (isArrayPair(raw)) {
@@ -263,6 +339,14 @@ export function parseFieldChanges(value: unknown): AuditChange[] {
 
       const [oldValue, newValue] = Array.isArray(raw) ? raw : [undefined, raw];
 
+      if (
+        dropWhenBothFalsey.some((dropped) => matchesField(field, dropped)) &&
+        isAbsentOrFalse(oldValue) &&
+        isAbsentOrFalse(newValue)
+      ) {
+        continue;
+      }
+
       // Only surface fields the write actually changed.
       if (oldValue === newValue) {
         continue;
@@ -273,4 +357,13 @@ export function parseFieldChanges(value: unknown): AuditChange[] {
   }
 
   return parsed;
+}
+
+/** The event action that drives display options for an action's merged changes. */
+export function subjectActionFor(action: {
+  events: ReadonlyArray<{ action: string }>;
+}): string | undefined {
+  return action.events.find((event) =>
+    event.action.startsWith(SCHEDULE_ACTION_PREFIX),
+  )?.action;
 }

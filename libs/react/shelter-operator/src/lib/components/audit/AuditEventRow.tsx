@@ -2,6 +2,7 @@ import { AuditEventKind } from '@monorepo/ba-platform/types';
 import { mergeCss } from '@monorepo/react/shared';
 import type { AuditEvent } from '../../hooks';
 import { AuditChangesView } from './AuditChangesView';
+import { AuditEventContext } from './AuditEventContext';
 import { humanizeAction } from './auditChanges';
 import {
   formatAuditTimestamp,
@@ -60,7 +61,11 @@ export function AuditEventRow({ event }: { event: AuditEvent }) {
         </Text>
       </div>
 
-      {!event.summary && <AuditChangesView value={event.fieldChanges} />}
+      <AuditEventContext context={event.context} />
+
+      {!event.summary && (
+        <AuditChangesView value={event.fieldChanges} actionKey={event.action} />
+      )}
     </div>
   );
 }

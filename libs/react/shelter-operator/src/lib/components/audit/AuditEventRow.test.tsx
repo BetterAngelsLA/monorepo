@@ -22,6 +22,8 @@ describe('AuditEventRow', () => {
       <AuditEventRow
         event={makeEvent({
           summary: 'Updated Bed A (7)',
+          // A summary event should never carry changes, but pin the rendering
+          // guard: if a payload ever did, the row must not show it.
           fieldChanges: { name: ['Bed A', 'Bed B'] },
         })}
       />,
@@ -43,6 +45,65 @@ describe('AuditEventRow', () => {
 
     expect(screen.getByText(/Street Parking/)).not.toBeNull();
     expect(screen.queryByText(/street/)).toBeNull();
+  });
+
+  it('renders the unchanged slot context of a netted schedule change', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          action: 'shelter.schedule.update',
+          context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+          fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
+    expect(screen.getByText('Start time:')).not.toBeNull();
+  });
+
+  it('renders "Every day" when the slot context has no day', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          action: 'shelter.schedule.update',
+          context: { day: null, 'schedule type': 'Operating Hours' },
+          fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText('Day: Every day \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
+  });
+
+  it('renders no context line for an event without one', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({ fieldChanges: { name: ['Bed A', 'Bed B'] } })}
+      />,
+    );
+
+    expect(screen.queryByText(/Day:|\u00b7/)).toBeNull();
+  });
+
+  it('caps a long context value so the line stays one line', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          action: 'shelter.schedule.update',
+          context: { day: 'Monday', 'schedule type': 'x'.repeat(200) },
+        })}
+      />,
+    );
+
+    const line = screen.getByText(/^Day: Monday/).textContent;
+
+    expect(line?.endsWith('\u2026')).toBe(true);
+    expect(line?.length).toBeLessThan(200);
   });
 
   it('renders field changes when there is no summary', () => {

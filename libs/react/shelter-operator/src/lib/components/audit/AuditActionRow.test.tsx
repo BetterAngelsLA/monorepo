@@ -38,6 +38,7 @@ describe('AuditActionRow', () => {
       />,
     );
 
+    // Visible in the always-visible card body, not only in the expanded details.
     expect(screen.getByText('Created Bed A (7)')).not.toBeNull();
   });
 
@@ -101,6 +102,55 @@ describe('AuditActionRow', () => {
     expect(screen.queryByText(/shared_storage/)).toBeNull();
   });
 
+  it('shows the schedule slot context on the collapsed card', () => {
+    render(
+      <AuditActionRow
+        action={makeAction({
+          fieldChanges: { 'Schedule 7 start time': ['09:00:00', '10:00:00'] },
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.update',
+              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
+  });
+
+  it('shows a line per slot when an action nets several schedule slots', () => {
+    render(
+      <AuditActionRow
+        action={makeAction({
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.update',
+              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+            }),
+            makeEvent({
+              action: 'shelter.schedule.update',
+              context: { day: 'Tuesday', 'schedule type': 'Operating Hours' },
+              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
+    expect(
+      screen.getByText('Day: Tuesday \u00b7 Schedule type: Operating Hours'),
+    ).not.toBeNull();
+  });
+
   it('keeps event rows in the expanded details', () => {
     render(
       <AuditActionRow
@@ -117,6 +167,7 @@ describe('AuditActionRow', () => {
 
     fireEvent.click(toggle);
 
+    // One line in the card body, one in the expanded event row.
     expect(screen.getAllByText('Created Bed A (7)')).toHaveLength(2);
     expect(
       screen.getByRole('button', { name: /hide details/i }),
@@ -127,5 +178,82 @@ describe('AuditActionRow', () => {
 
     expect(controls).not.toBeNull();
     expect(document.getElementById(controls as string)).not.toBeNull();
+  });
+
+  it('curates the schedule default on the collapsed card', () => {
+    // Payload shape copied from a schedule create on a shelter log: the
+    // action-level keys are qualified, so the rule has to match by suffix.
+    render(
+      <AuditActionRow
+        action={makeAction({
+          fieldChanges: {
+            'Schedule 209 day': [null, 'Monday'],
+            'Schedule 209 end time': [null, '10:00:00'],
+            'Schedule 209 is exception': [null, false],
+            'Schedule 209 start time': [null, '09:00:00'],
+          },
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.add',
+              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.queryByText(/is exception/i)).toBeNull();
+    expect(screen.getByText('Schedule 209 start time:')).not.toBeNull();
+  });
+
+  it('keeps a real is exception change on the card', () => {
+    render(
+      <AuditActionRow
+        action={makeAction({
+          fieldChanges: { 'Schedule 209 is exception': [false, true] },
+          events: [makeEvent({ action: 'shelter.schedule.update' })],
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Schedule 209 is exception:')).not.toBeNull();
+  });
+
+  it('shows one line when several slots share the same context', () => {
+    const context = { day: 'Monday', 'schedule type': 'Operating Hours' };
+
+    render(
+      <AuditActionRow
+        action={makeAction({
+          events: [
+            makeEvent({ action: 'shelter.schedule.update', context }),
+            makeEvent({ action: 'shelter.schedule.update', context }),
+          ],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getAllByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
+    ).toHaveLength(1);
+  });
+
+  it('renders no empty context block when a context has nothing to show', () => {
+    const { container } = render(
+      <AuditActionRow
+        action={makeAction({
+          // A context whose only entry has no fallback copy renders nothing; the
+          // card must not leave the wrapper's spacing behind.
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.update',
+              context: { condition: null },
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(container.querySelector('.mt-3')).toBeNull();
   });
 });
