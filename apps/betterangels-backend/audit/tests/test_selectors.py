@@ -1603,10 +1603,7 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
         changes = actions[0].events[0].field_changes or {}
         self.assertEqual(changes["start time"], ["09:00:00", "10:00:00"])
         self.assertEqual(changes["end time"], ["17:00:00", "18:00:00"])
-        # ``day``/``schedule type`` travel in ``context``; they are not changes.
-        self.assertFalse(
-            any(key.endswith(" day") or key.endswith(" schedule type") for key in actions[0].field_changes)
-        )
+        self.assertEqual(set(changes), {"start time", "end time"})
 
     def test_netting_does_not_pair_across_objects(self) -> None:
         """One context saving two shelters must net each object's rows separately."""
