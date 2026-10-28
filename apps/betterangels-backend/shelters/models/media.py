@@ -11,6 +11,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django_choices_field import TextChoicesField
 
+from common.constants import YOUTUBE_URL_REGEX
 from common.models import BaseModel, OrgScoped
 from shelters.enums import MediaLinkTypeChoices, ShelterPhotoTypeChoices
 
@@ -114,7 +115,7 @@ class Video(OrgScoped, BaseModel):
 
 
 YOUTUBE_URL_VALIDATOR = RegexValidator(
-    regex=r"(?:youtube\.com/(?:watch\?.*v=|embed/|shorts/)|youtu\.be/)[\w-]{11}",
+    regex=YOUTUBE_URL_REGEX,
     message="Enter a valid YouTube URL.",
 )
 
