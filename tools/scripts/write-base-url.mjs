@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const envPath = path.resolve('apps/betterangels/.env.local');
-const baseUrl = execFileSync('node', ['tools/shared/print-base-path.mjs'], {
+const baseUrl = execFileSync('node', [path.join(import.meta.dirname, '../shared/print-base-path.mjs')], {
   encoding: 'utf8',
 }).trim();
 
