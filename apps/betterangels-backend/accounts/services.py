@@ -915,7 +915,7 @@ def role_assign(*, user: UserModel, role: Role) -> None:
     user.groups.add(role)
 
     # A same-request re-read of authority for this user must see the new role —
-    # ``_global_tier_cache`` memoizes the global-tier EXISTS checks per permission.
+    # ``_authority_cache`` / ``_can_anywhere_cache`` memoize the grant snapshot per user.
     from common.permissions.selectors import invalidate_scope_cache
 
     invalidate_scope_cache(user)
@@ -930,8 +930,8 @@ def role_remove(*, user: UserModel, role: Role) -> None:
     """
     user.groups.remove(role)
 
-    # A same-request re-read must stop seeing the revoked role — ``_global_tier_cache``
-    # memoizes the global-tier EXISTS checks per permission.
+    # A same-request re-read must stop seeing the revoked role — ``_authority_cache`` /
+    # ``_can_anywhere_cache`` memoize the grant snapshot per user.
     from common.permissions.selectors import invalidate_scope_cache
 
     invalidate_scope_cache(user)

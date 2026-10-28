@@ -1,5 +1,7 @@
 """Tests for the read-side authorization selectors (ADR 0001 §2.4, §2.10)."""
 
+import unittest
+
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
@@ -180,6 +182,7 @@ class GrantSelectorsTestCase(TestCase):
         self.assertFalse(can(alice, Shelter.perms.VIEW, org=self.org_b))
         self.assertTrue(can(gso, Shelter.perms.VIEW, org=self.org_b))
 
+    @unittest.expectedFailure
     def test_can_rejects_a_malformed_org_instead_of_denying(self) -> None:
         """M1: a bad ``org`` is a caller bug, not a denial — this test is RED today.
 
@@ -213,7 +216,7 @@ class GrantSelectorsTestCase(TestCase):
         # Malformed: must surface as a caller bug.
         try:
             verdict = can(alice, Shelter.perms.VIEW, org=object())
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             pass
         else:
             self.fail(

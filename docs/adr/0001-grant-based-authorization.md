@@ -500,7 +500,7 @@ The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
 | Org grants (org→org view/edit) | `Grant(principal_org, role, scope_org)` + delegation arm | ✅ (granularity limits, §3) |
 | Object grants | `Grant(…, scope_object_*)` + ancestor cascade | ✅ schema / ⚠️ wired at clients cutover |
 | Cross-org grants | delegation + multi-scope rows | ✅ |
-| Outreach app (notes/clients/…) | `org_via` on each model + §2.4 tiers | ⚠️ notes §5, clients §5.1 |
+| Outreach app (notes/clients/…) | `org_via` on each model + §2.4 tiers | ⚠️ notes/tasks §5 · ✅ clients §5.1 profile + family (documents/imports still legacy) |
 | Shelter-first isolation | phased cutover, §4 | ✅ |
 | Client sharing (future) | data edge feeding `org_paths()`; object arm for per-record | ✅ v1 decided (2026-09-02) — BA-created person object grants; org-level edge future (§7.4) |
 

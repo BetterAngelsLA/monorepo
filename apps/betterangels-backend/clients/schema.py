@@ -346,14 +346,17 @@ def upsert_or_delete_client_related_object(
 
 @strawberry.type
 class Query:
-    """Client reads — grant authority via the row checker (ADR 0001 §5.1).
+    """Client reads — grant authority via the checker (ADR 0001 §5.1).
 
     The profile + family fields keep their declarative extensions and swap the
-    predicate: ``perm_checker=can_anywhere_checker`` evaluates ``can_obj`` per
-    resolved row — on the SHARED-tier client models that is "holds the
-    permission anywhere" (RFC 0002), and list fields drop refused rows exactly
-    as the legacy per-row guardian filter did.  Document and import surfaces
-    intentionally remain on their legacy gates until their own cutovers.
+    predicate: ``perm_checker=can_anywhere_checker`` runs once per field at
+    resolution time and is row-invariant — on the SHARED-tier client models that
+    is "holds the permission anywhere" (RFC 0002), which is what the legacy
+    model-level CASEWORKER permission did.  List fields return an empty page on
+    denial (``fail_silently=True``) instead of an error; single reads refuse.
+    Nested family rows ride the parent profile, as on ``main``.  Document and
+    import surfaces intentionally remain on their legacy gates until their own
+    cutovers.
     """
 
     @strawberry_django.field(
@@ -462,12 +465,14 @@ class Query:
 class Mutation:
     """Client mutations — grant authority via the checkers (ADR 0001 §5.1).
 
-    Creates evaluate ``can_anywhere`` (the platform-shared create rule) and
-    row-scoped writes load the row through ``visible()`` (the fetch is the gate) — SHARED tier on
-    the client family (RFC 0002): any holder of the permission may act, exactly
-    what the legacy model-level CASEWORKER permissions did.  The profile
-    fetch/edit bodies load through ``visible()``.  Document and import surfaces
-    intentionally remain on their legacy gates until their own cutovers.
+    Creates evaluate ``can_anywhere`` (the platform-shared create rule), and the
+    profile mutations load the row through ``visible()`` (the fetch is the gate).
+    The standalone family mutations (``updateClientContact`` et al.) are gated on
+    the permission only: the client family is SHARED tier (RFC 0002), so holding
+    ``CHANGE``/``DELETE`` anywhere authorizes any row and there is no per-row
+    predicate to apply.  Nested family writes ride the parent profile.  Document
+    and import surfaces intentionally remain on their legacy gates until their
+    own cutovers.
     """
 
     @strawberry_django.mutation(

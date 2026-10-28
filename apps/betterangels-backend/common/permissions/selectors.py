@@ -250,9 +250,11 @@ def invalidate_scope_cache(user: "User") -> None:
     serves the stale decision (a cached ``ALL`` sentinel is the hard-stale
     case).  The same request-scope staleness applies to the effective-report memos
     (``global_permissions`` / ``organization_effective_permissions``), so they
-    are dropped here too.  Org→org delegation rows have no single user
-    principal, and the selectors are consumed per request on fresh user
-    instances, so those flows need no per-user invalidation here.
+    are dropped here too.  Delegation writes (``grant_delegate`` / ``grant_delete``
+    on an org principal) have no single user principal to reach from here, so
+    invalidation is caller-supplied: pass the instance serving the request
+    (``acting_user``).  Fanning out to DB-loaded members would clear memos on
+    instances nobody reads and leave the caller's cache stale.
     """
     user.__dict__.pop("_authority_cache", None)
     user.__dict__.pop("_can_anywhere_cache", None)
