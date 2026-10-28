@@ -1,0 +1,1 @@
+export { YouTubeThumbnail } from './YouTubeThumbnail';

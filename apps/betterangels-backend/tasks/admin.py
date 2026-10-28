@@ -14,6 +14,7 @@ class TaskAdmin(ExportActionMixin, admin.ModelAdmin):
         "client_profile_name",
         "hmis_client_profile",
         "created_by_name",
+        "assignee",
         "team",
         "organization",
         "status",
@@ -39,6 +40,9 @@ class TaskAdmin(ExportActionMixin, admin.ModelAdmin):
         "created_by__first_name",
         "created_by__last_name",
         "created_by__email",
+        "assignee__first_name",
+        "assignee__last_name",
+        "assignee__email",
         "organization__name",
     )
     readonly_fields = (

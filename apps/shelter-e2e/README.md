@@ -150,33 +150,37 @@ Environment notes for the home specs:
 
 ## CI
 
-Runs in the `🧪 E2E shelter-web (preview)` step of
-[`.github/workflows/default.yml`](../../.github/workflows/default.yml), inside
-the same monorepo container every other CI step uses — not a host runner with
-`setup-node`, so the image supplies everything except the browser, which the run
-installs itself:
+Runs in the `🧪 E2E (Playwright)` step of
+[`default.yml`](../../.github/workflows/default.yml) on `main`/`merge_group`, and
+in the same step of [`preview.yml`](../../.github/workflows/preview.yml) for PR
+previews. Both steps run every Playwright project tagged `ci-e2e`
+(`nx run-many -t e2e --projects=tag:ci-e2e`), so a new suite joins CI by
+carrying the tag rather than by editing a workflow. The main-pipeline run happens inside the same monorepo container
+every other CI step uses — not a host runner with `setup-node`, so the image
+supplies everything except the browser, which the run installs itself:
 
 - **Browsers** are installed by the run itself
-  (`yarn playwright install chromium` in `tools/scripts/e2e-shelter.sh`). CI
+  (`yarn playwright install chromium`). CI
   builds the `production` stage, which carries the system libraries but not the
   binaries: that image is also the ECS task image, and the backend task never
   launches a browser. The install uses the same `yarn.lock` as `node_modules`,
   so the browser cannot drift from the installed Playwright.
 - **The target is chosen by
-  [`tools/scripts/e2e-shelter.sh`](../../tools/scripts/e2e-shelter.sh)**, the
-  same script you can run locally: `shelter-web` affected means this branch's
-  preview, a `shelter-e2e`-only change means that preview if it exists and a
-  skip otherwise. It probes the served `<base href>` before running — a missing
-  branch path returns 403, and the page has no `<base>` at all. The script
-  exports `BASE_URL`, which is also what stops the suite starting its own dev
-  server and testing a local build instead — which looks like a pass.
+  [`tools/shared/e2e-base-url.mjs`](../../tools/shared/e2e-base-url.mjs)**, in
+  this project's `playwright.config.ts`: an explicit `BASE_URL` wins, else the
+  branch preview when this run deployed `shelter-web`
+  (`PREVIEW_DEPLOYED_APPS`, computed by the workflow from `nx affected`), else
+  `undefined` and the suite starts its own dev server. That last case is the
+  "nothing was deployed for this branch" one — a specs-only change on a PR — and
+  it tests the source rather than a URL that does not exist.
 - **Order** is after `deploy`, which returns only once the edge serves the
   revision just built, so the run describes this commit rather than whatever was
   deployed before it.
-- **Run through Playwright, not Nx**: the script calls
-  `yarn playwright test -c apps/shelter-e2e`. A deployed run asserts something
-  about a live site, so its result is never replayed: the deployed revision can
-  change without any input in this repo changing.
+- **Run through Nx** (`nx run-many -t e2e --projects=tag:ci-e2e`), so the
+  inferred Playwright target supplies the webserver ordering and the report
+  outputs. The target is `cache: false`: a deployed run asserts something about a
+  live site, and the deployed revision can change without any input in this repo
+  changing.
 
 `nx affected -t e2e` is deliberately not used: `BASE_URL` is one value for the
 whole container, so a second suite in the same invocation would be handed the

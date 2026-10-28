@@ -1,18 +1,18 @@
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { ShelterPhotoTypeChoices } from '@monorepo/ba-platform/types';
 import { applyFieldErrors } from '@monorepo/react/shared';
 import { useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
-import { ShelterPhotoTypeChoices } from '@monorepo/ba-platform/types';
 import { useUpdateShelterPhoto } from '../../../../../../../hooks/useUpdateShelterPhoto';
 import { updateShelterPhotoMeta } from '../../../../../../../hooks/useUpdateShelterPhoto/__generated__/useUpdateShelterPhoto_meta.generated';
 import { Modal, ModalBody, ModalHeader } from '../../../../../../base-ui/modal';
+import { TableActionBtn } from '../../../../../../base-ui/table';
 import { useToast } from '../../../../../../base-ui/toast';
 import {
   formFieldNames,
   ShelterPhotoForm,
   type ShelterPhotoFormData,
 } from '../../ShelterPhotoForm';
-import { EditShelterPhotoBtn } from './EditShelterPhotoBtn';
 
 type TProps = {
   photoId: string;
@@ -74,7 +74,9 @@ export function EditShelterPhoto(props: TProps) {
 
   return (
     <>
-      <EditShelterPhotoBtn
+      <TableActionBtn
+        action="edit"
+        label="Edit photo type"
         onClick={() => setIsOpen(true)}
         disabled={disabled || loading}
       />

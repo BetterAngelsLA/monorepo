@@ -1,0 +1,22 @@
+query TaskAssignees(
+  $filters: TaskAssigneeFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [TaskAssigneeOrder!]! = [
+    { firstName: ASC_NULLS_LAST }
+    { lastName: ASC_NULLS_LAST }
+    { id: DESC }
+  ]
+) {
+  taskAssignees(
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
+    totalCount
+    results {
+      id
+      firstName
+      lastName
+    }
+  }
+}

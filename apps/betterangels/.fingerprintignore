@@ -1,0 +1,5 @@
+# Nx metadata and local env files: not native runtime inputs. The values that
+# matter reach the fingerprint through `expoConfig`, in app.config.js.
+project.json
+.env
+.env.local

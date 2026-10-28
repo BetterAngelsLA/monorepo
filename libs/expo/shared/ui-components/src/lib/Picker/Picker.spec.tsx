@@ -25,3 +25,28 @@ it('opens from a press on the field and reports the chosen value', async () => {
 
   expect(onChange).toHaveBeenCalledWith('silver-lake');
 });
+
+it('reports a clear when the field holds a value', async () => {
+  const onClear = vi.fn();
+
+  await render(
+    <Picker
+      items={items}
+      placeholder="Select team"
+      selectedValue="echo-park"
+      onClear={onClear}
+    />,
+  );
+
+  await fireEvent.press(screen.getByLabelText('clear input'));
+
+  expect(onClear).toHaveBeenCalled();
+});
+
+it('offers no clear affordance when the field cannot be cleared', async () => {
+  await render(
+    <Picker items={items} placeholder="Select team" selectedValue="echo-park" />,
+  );
+
+  expect(screen.queryByLabelText('clear input')).toBeNull();
+});
