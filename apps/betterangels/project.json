@@ -67,6 +67,9 @@
       "inputs": [
         "production",
         "^production",
+        {
+          "dependentTasksOutputFiles": "apps/betterangels/.env"
+        },
         "{workspaceRoot}/tools/shared/**/*",
         {
           "env": "CI"
@@ -208,6 +211,7 @@
     "write-eas-env": {
       "executor": "nx:run-commands",
       "cache": false,
+      "outputs": ["{projectRoot}/.env"],
       "configurations": {
         "preview": {
           "command": "node tools/scripts/write-eas-env.mjs --project betterangels --profile preview"
