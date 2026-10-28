@@ -181,7 +181,10 @@ export function TaskForm(props: TProps) {
               render={({ field }) => (
                 <AssigneeSelect
                   onOpen={() => setRosterRequested(true)}
-                  loading={assigneesLoading}
+                  // Before the first open the request is skipped, not
+                  // finished: without this the sheet can render one frame of
+                  // "no members in this organization".
+                  loading={assigneesLoading || !rosterRequested}
                   loadError={!!assigneesError}
                   selectedFallback={selectedAssignee}
                   label="Assigned To"

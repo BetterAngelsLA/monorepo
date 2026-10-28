@@ -7,7 +7,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatMemberName } from '../../util/formatMemberName';
@@ -94,14 +94,11 @@ export function AssigneeSelect(props: TProps) {
     [withFallback],
   );
 
-  const [filtered, setFiltered] = useState<TAssignableMember[]>(withFallback);
-
-  // The roster usually resolves after the form mounts — and may even land while
-  // the sheet is open. Keep the list in step instead of freezing the first
-  // (empty) render.
-  useEffect(() => {
-    setFiltered(withFallback);
-  }, [withFallback]);
+  // Seeded by `SearchListBar`, which re-emits its filtered list whenever the
+  // roster changes (`useTextFilter` depends on `data`). Resetting it here as
+  // well would clobber an in-progress search: the box keeps the typed text
+  // while the list silently reverts to everyone.
+  const [filtered, setFiltered] = useState<TAssignableMember[]>([]);
 
   const close = () => setIsOpen(false);
 

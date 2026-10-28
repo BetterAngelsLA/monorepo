@@ -422,12 +422,25 @@ class TaskAssigneeQueryTestCase(GraphQLBaseTestCase):
         self.assertNotIn(str(deactivated.pk), member_ids)
 
     def test_task_assignees_are_ordered_by_name(self) -> None:
-        """A stable default, so offset paging cannot skip or repeat rows."""
-        results = self.task_assignees_query()["data"]["taskAssignees"]["results"]
+        """A stable default, so offset paging cannot skip or repeat rows.
 
-        keys = [(u["firstName"] or "", u["lastName"] or "", int(u["id"])) for u in results]
+        The two users are created in the *reverse* of name order: if the
+        default `order_by` is dropped the queryset falls back to pk order and
+        this fails, which a fixture whose names already sort by pk would not
+        catch.
+        """
+        created_late = baker.make(User, first_name="Zed", last_name="Last")
+        created_early = baker.make(User, first_name="Abe", last_name="First")
+        self.org_1.add_user(created_late)
+        self.org_1.add_user(created_early)
 
-        self.assertEqual(keys, sorted(keys))
+        first_names = [u["firstName"] for u in self.task_assignees_query()["data"]["taskAssignees"]["results"]]
+
+        self.assertLess(
+            first_names.index("Abe"),
+            first_names.index("Zed"),
+            f"expected name order, got {first_names}",
+        )
 
     def test_task_assignees_organization_filter_narrows_the_roster(self) -> None:
         both_orgs = baker.make(User, first_name="Both", last_name="Orgs")
