@@ -155,7 +155,11 @@ export function AssigneeSelect(props: TProps) {
                   {label ?? 'Assignee'}
                 </TextRegular>
                 <SearchListBar
-                  data={items}
+                  // `withFallback`, not `items`: the bar re-emits its own
+                  // filtered list on mount, so handing it the raw roster
+                  // dropped a current assignee who has left the org — the row
+                  // the field is rendering by name.
+                  data={withFallback}
                   extractSearchText={(member) => formatMemberName(member)}
                   onChange={setFiltered}
                   placeholder={searchPlaceholder}
