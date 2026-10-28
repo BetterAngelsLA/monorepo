@@ -27,11 +27,6 @@ interface TabIconProps {
   label: string;
 }
 
-/** Height of the tab bar's content area, excluding the bottom safe-area inset. */
-export const TAB_BAR_HEIGHT = 56;
-/** Diameter of the floating add button; matches the content area so it centres. */
-const PLUS_SIZE = 56;
-
 const TabIcon = ({
   focused,
   color,
@@ -96,17 +91,7 @@ export default function TabLayout() {
     tabBarShowLabel: false,
     tabBarActiveTintColor: Colors.PRIMARY_EXTRA_DARK,
     tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
-    tabBarStyle: [
-      styles.tabBar,
-      {
-        // 56 of content plus the home-indicator inset, with the inset as
-        // padding: the tab content was previously centred in a 70pt bar and
-        // then had the inset added on top, which left ~30pt of dead space and
-        // pushed the labels down over the home indicator.
-        height: TAB_BAR_HEIGHT + insets.bottom,
-        paddingBottom: insets.bottom,
-      },
-    ],
+    tabBarStyle: [styles.tabBar, { height: 70 + insets.bottom }],
     tabBarItemStyle: styles.tabBarItem,
     // Every tab screen renders the in-app `Header` itself (logo + title +
     // menu). Leaving the navigator's header on stacked an empty 64pt bar above
@@ -177,18 +162,7 @@ export default function TabLayout() {
       */}
       {!hmisProdDemoEnabled && (
         <View
-          // Centred in the tab bar's content area rather than floating above
-          // it: the previous offset put the button's centre ~20pt higher than
-          // the tab icons it sits between.
-          style={[
-            styles.plusButtonOverlay,
-            {
-              bottom: insets.bottom,
-              width: PLUS_SIZE,
-              height: PLUS_SIZE,
-              marginLeft: -PLUS_SIZE / 2,
-            },
-          ]}
+          style={[styles.plusButtonOverlay, { bottom: insets.bottom + 24 }]}
         >
           <Pressable
             testID="main-plus-tab-btn"
@@ -231,13 +205,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   tabBarItem: {
-    paddingVertical: 0,
+    paddingVertical: 15,
   },
   tabIconContainer: {
     alignItems: 'center',
     minWidth: 80,
     justifyContent: 'center',
-    gap: 2,
   },
   labelText: {
     textAlign: 'center',
@@ -249,6 +222,9 @@ const styles = StyleSheet.create({
   plusButtonOverlay: {
     position: 'absolute',
     left: '50%',
+    marginLeft: -40,
+    height: 80,
+    width: 80,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
@@ -257,8 +233,8 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
   },
   plusButton: {
-    height: 46,
-    width: 46,
+    height: 66,
+    width: 66,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
@@ -266,7 +242,7 @@ const styles = StyleSheet.create({
   },
   plusButtonPressed: {
     backgroundColor: Colors.PRIMARY_DARK,
-    height: 44,
-    width: 44,
+    height: 64,
+    width: 64,
   },
 });
