@@ -6,7 +6,10 @@ import { TaskStatusEnum } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { TaskForm } from '../../ui-components';
-import { TaskFormData } from '../../ui-components/TaskForm/TaskForm';
+import {
+  TaskFormData,
+  TTaskFormSubmitResult,
+} from '../../ui-components/TaskForm/TaskForm';
 import { DeleteTaskDocument } from '../../ui-components/TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../../ui-components/TaskForm/__generated__/updateTask.generated';
 import { TaskQuery } from './__generated__/Task.generated';
@@ -70,7 +73,32 @@ export default function TaskHeader(props: TTaskHeaderProps) {
     },
   });
 
-  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
+  /** The API speaks model field names; the form speaks form field names. */
+  const API_FIELD_TO_FORM: Record<string, keyof TaskFormData> = {
+    assignee: 'assigneeId',
+    team: 'teamId',
+    summary: 'summary',
+    description: 'description',
+    status: 'status',
+  };
+
+  function toSubmitResult(
+    messages: { field?: string | null; message: string }[],
+  ): TTaskFormSubmitResult | void {
+    const first = messages[0];
+
+    if (!first) return;
+
+    return {
+      field: first.field ? API_FIELD_TO_FORM[first.field] : undefined,
+      message: first.message,
+    };
+  }
+
+  const onSubmit = async (
+    task: TaskFormData,
+    closeForm: () => void,
+  ): Promise<TTaskFormSubmitResult | void> => {
     if (!id) return;
 
     try {
@@ -98,7 +126,9 @@ export default function TaskHeader(props: TTaskHeaderProps) {
           type: 'error',
         });
 
-        return;
+        return toSubmitResult(
+          payload.messages as { field?: string | null; message: string }[],
+        );
       }
 
       closeForm();
@@ -131,6 +161,16 @@ export default function TaskHeader(props: TTaskHeaderProps) {
       presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
         <TaskForm
+          organizationId={task.organization?.id ?? null}
+          selectedAssignee={
+            task.assignee
+              ? {
+                  id: task.assignee.id,
+                  firstName: task.assignee.firstName,
+                  lastName: task.assignee.lastName,
+                }
+              : null
+          }
           initialValues={{
             summary: task.summary || '',
             // `null`, not `undefined`: every field in the task form schema is

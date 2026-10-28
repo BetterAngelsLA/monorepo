@@ -51,6 +51,7 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
       asSelect
       onPress={onOpen}
       onDelete={onClear}
+      onDeleteAccessibilityLabel={label ? `clear ${label}` : 'clear selection'}
       style={style}
       disabled={disabled}
       required={required}
