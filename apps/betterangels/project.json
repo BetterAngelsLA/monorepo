@@ -16,7 +16,7 @@
       ],
       "options": {
         "platform": "web",
-        "outputDir": "../../dist/apps/betterangels",
+        "outputDir": "dist/apps/betterangels",
         "clear": true
       },
       "outputs": [
