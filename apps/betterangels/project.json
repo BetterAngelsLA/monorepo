@@ -187,23 +187,20 @@
       }
     },
     "eas-update": {
-      "executor": "@nx/expo:update",
+      "executor": "nx:run-commands",
       "cache": false,
       "dependsOn": [
         "copy-lockfile"
       ],
       "options": {
-        "branch": "preview",
-        "message": "Deploy preview",
-        "platform": "all",
-        "interactive": false
+        "command": "node tools/scripts/eas-update.mjs --project betterangels --profile preview"
       },
       "configurations": {
         "preview": {
-          "branch": "preview"
+          "command": "node tools/scripts/eas-update.mjs --project betterangels --profile preview"
         },
         "production": {
-          "branch": "production"
+          "command": "node tools/scripts/eas-update.mjs --project betterangels --profile production"
         }
       }
     },

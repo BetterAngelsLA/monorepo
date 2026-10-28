@@ -78,7 +78,7 @@ console.log(`Profiles: android=${androidProfile}, ios=${iosProfile}`);
 // because it rewrites the manifests the fingerprint hashes: `preview.yml` runs
 // it before resolving the runtime, and a runtime computed from a different
 // workspace state is a runtime no build ever produces. The EAS environment
-// (supplied by the workflow's `eas env:exec`) is what the runtime and the
+// (supplied by the workflow's `eas env:pull`) is what the runtime and the
 // upload resolve.
 run('yarn', ['nx', 'run', `${project}:copy-lockfile`]);
 
@@ -113,7 +113,7 @@ console.log(`\nPublishing update on branch: ${branch}`);
 // this env, which propagates to the bundler it spawns.
 process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
 
-// `eas-update` is a run-commands target: it takes no CLI flags of its own — the
+// `eas-update` is a run-commands target wrapping the eas-update script — the
 // branch comes from BRANCH_NAME (set by the workflow) and the machine-readable
 // payload is what the script prints on stdout.
 const updates = runJson<Array<{ group: string; platform: string }>>('yarn', [
