@@ -6,6 +6,7 @@ from unittest_parametrize import parametrize
 from accounts.models import PermissionGroup
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
+from clients.schema import DELETE_CLIENT_DENIED, MODIFY_CLIENT_DENIED
 from clients.tests.utils import (
     ClientContactBaseTestCase,
     ClientHouseholdMemberBaseTestCase,
@@ -164,6 +165,47 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"])
         else:
             self.assertIsNotNone(response["errors"])
+
+    def test_client_denials_keep_the_client_specific_copy(self) -> None:
+        """M6: a denied client write should name the client, not the generic app message.
+
+        ``MODIFY_CLIENT_DENIED`` / ``DELETE_CLIENT_DENIED`` are the copy these
+        mutations used to return.  The cutover moved the denial into the
+        permission extension, whose default message is the generic "You don't
+        have permission to access this app.", so the specific copy is now
+        unreachable for a forbidden client (it survives only for a missing id).
+
+        Asserts the intended copy, so it is RED today and turns green when the
+        extension carries ``message=`` (or the resolver is what refuses).  If the
+        generic copy is the decision, update
+        ``test_update_client_profile_permission`` instead and delete this test.
+        """
+        self._handle_user_login("non_case_manager_user")
+        profile_id = self.client_profile_1["id"]
+
+        update = self._update_client_profile_fixture({"id": profile_id, "nickname": "nope"})
+        self.assertEqual([error["message"] for error in update["errors"]], [MODIFY_CLIENT_DENIED])
+
+        delete = self.execute_graphql(
+            """
+            mutation DeleteClientProfile($id: ID!) {
+                deleteClientProfile(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+            """,
+            {"id": profile_id},
+        )
+        self.assertEqual([error["message"] for error in delete["errors"]], [DELETE_CLIENT_DENIED])
 
     @parametrize(
         "user_label, expected_client_count",

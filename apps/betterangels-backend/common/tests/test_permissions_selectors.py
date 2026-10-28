@@ -180,6 +180,49 @@ class GrantSelectorsTestCase(TestCase):
         self.assertFalse(can(alice, Shelter.perms.VIEW, org=self.org_b))
         self.assertTrue(can(gso, Shelter.perms.VIEW, org=self.org_b))
 
+    def test_can_rejects_a_malformed_org_instead_of_denying(self) -> None:
+        """M1: a bad ``org`` is a caller bug, not a denial — this test is RED today.
+
+        ``can()`` gates creates at 30 call sites.  Its rewrite coerces *org* and
+        swallows ``TypeError``/``ValueError``, so a caller that passes garbage is
+        reported as "not authorized" instead of as the bug it is — the failure
+        mode that costs hours ("I have the perm but can't create").
+
+        The contract this test asserts:
+
+        * a well-formed org the user holds nothing in → plain ``False``;
+        * a well-formed but non-model id (``"<pk>"``) → still resolved, which is
+          the coercion's whole purpose;
+        * a malformed org → an error, never a ``False``.
+
+        Expected to fail until the coercion stops swallowing (the natural fix is
+        to drop the ``try``/``except`` and let ``int()`` raise).  If the decision
+        is instead to keep the fail-closed coercion, delete this test and pin
+        ``is False`` for the same input — but cover the coercion either way.
+        ``org=None`` is a separate decision and deliberately not asserted here.
+        """
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+
+        # Well-formed, unauthorized: a denial, not an error.
+        self.assertFalse(can(alice, Shelter.perms.VIEW, org=self.org_b))
+
+        # Well-formed but non-model: still resolved.
+        self.assertTrue(can(alice, Shelter.perms.VIEW, org=str(self.org_a.pk)))
+
+        # Malformed: must surface as a caller bug.
+        try:
+            verdict = can(alice, Shelter.perms.VIEW, org=object())
+        except (TypeError, ValueError):
+            pass
+        else:
+            self.fail(
+                f"can() returned {verdict!r} for a malformed org instead of raising: "
+                "a caller bug is reported as a denial, so 'I have the perm but cannot "
+                "create' carries no signal. Widen the except clause if the fix raises "
+                "a custom type."
+            )
+
     def test_can_obj_is_the_row_filter_on_one_row(self) -> None:
         alice = baker.make(User)
         grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
