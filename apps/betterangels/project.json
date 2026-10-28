@@ -41,6 +41,39 @@
         },
         {
           "env": "EXPO_WEB_BASE_URL"
+        },
+        {
+          "env": "APP_VARIANT"
+        },
+        {
+          "env": "EXPO_PUBLIC_APP_ENV"
+        },
+        {
+          "env": "EXPO_PUBLIC_API_URL"
+        },
+        {
+          "env": "EXPO_PUBLIC_DEMO_API_URL"
+        },
+        {
+          "env": "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL"
+        },
+        {
+          "env": "EXPO_PUBLIC_SHELTER_WEB_URL"
+        },
+        {
+          "env": "EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY"
+        },
+        {
+          "env": "EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY"
+        },
+        {
+          "env": "EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY"
+        },
+        {
+          "env": "EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS"
+        },
+        {
+          "env": "EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID"
         }
       ],
       "configurations": {

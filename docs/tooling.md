@@ -62,6 +62,15 @@ build's `CONFIGURE_EXPO_UPDATES` phase. `EXPO_PUBLIC_*` are inlined when the
 bundle is built, so a value missing from `.env` ships `undefined` with nothing at
 runtime to notice.
 
+On a GitHub runner the file is **not** what `export-web` sees. Nx builds a
+task's environment from dotenv files before its dependencies run, so
+`write-eas-env` — a dependency of `export-web`, and the thing that writes the
+file — arrives too late to influence it through the file alone. The same script
+therefore also prints the profile as `export` lines (`--print`), and the workflow
+evals those into the shell first; Nx never overrides a variable that is already
+set. Both paths come from one resolver, so they cannot disagree. Change the
+extra keys in one place: `eas.json` per profile, GitHub secrets for the rest.
+
 ## Preview pipeline (PRs)
 
 Two checks, split by what should block a merge:

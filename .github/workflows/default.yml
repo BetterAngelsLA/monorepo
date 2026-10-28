@@ -331,6 +331,17 @@ jobs:
           # task's output in a labelled `::group::` fold, and ends with the failed
           # task list. `stream` interleaved every project *and* opted out of that
           # grouping, which buried the failure in hundreds of passing lines.
+          # Export the profile env into the shell before Nx starts. Nx resolves a
+          # task's environment from dotenv files before its dependencies run, so
+          # `write-eas-env` — a dependency of `export-web` — cannot be what
+          # supplies it; its rewritten `.env` arrives too late. Values already in
+          # the environment survive Nx's file loading, which never overrides them.
+          # Assign first: a failing substitution leaves the shell with nothing,
+          # and `eval ""` would succeed silently — the export would then run
+          # without APP_VARIANT and skip the production guard.
+          APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile ${{ matrix.environment }} --print)" || exit 1
+          eval "$APP_ENV_EXPORTS"
+
           yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
           EOF
         env:
@@ -448,6 +459,12 @@ jobs:
             # its env and queue a build for a fingerprint nothing uses. The reuse
             # check below is what makes this a no-op when nothing changed.
             yarn nx run betterangels:write-eas-env:${{ matrix.environment }}
+            # Resolve the profile env once, here: `build-missing.ts` fingerprints
+            # the build from it and `eas-update` bundles from it, so both have to
+            # read the same values. Nx fills each task's env from dotenv files
+            # before its dependencies run, so the export above cannot supply it.
+            APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile ${{ matrix.environment }} --print)" || exit 1
+            eval "$APP_ENV_EXPORTS"
             yarn nx run betterangels:copy-lockfile
             # One build per fingerprint, in any status — same rule as the preview.
             # Both platforms: on main the binary is the release artifact, not a
