@@ -89,9 +89,9 @@ for (let attempt = 1; attempt <= attempts; attempt++) {
       `Found ${platform} build ${id} for ${profile}/${runtime} (status: ${status ?? '?'}).`,
     );
     if (isDeadBuild(status)) {
-      // Reused on purpose: a failed fingerprint is not retried (that is how the
-      // old pipeline burned money), so say what this means rather than leaving a
-      // caller to discover it. `force-eas-build` is the way out.
+      // A failed fingerprint is not retried automatically (that is how the old
+      // pipeline burned money); callers treat this as a failure. The
+      // `force-eas-build` label is the way out.
       console.error(
         `⚠️  That build is ${status}: this fingerprint has no usable ${platform} binary. ` +
           `Re-run with the force-eas-build label to build it again.`,

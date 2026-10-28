@@ -5,7 +5,7 @@
  * step (`build-missing.ts`) and the Maestro E2E trigger (`eas-e2e.ts`).
  *
  * Reuse is the pipeline rule: a fingerprint builds once, in any status, so a
- * target with any existing build — queued, finished or failed — is skipped. The
+ * target with a live existing build is skipped (a dead one fails the run). The
  * one exception is the `force-eas-build` label / FORCE_EAS_BUILD, which
  * `find-build.mjs` honours for a build that failed for a reason since fixed.
  *
@@ -15,6 +15,7 @@
 import { execFileSync } from 'child_process';
 import * as path from 'path';
 
+import { isDeadBuild } from './build-rank';
 import {
   getEnv,
   resolveProjectDir,
@@ -98,6 +99,12 @@ export function ensureBuilds({
     const runtime = runtimeFor(platform);
     const reusedBuild = existing(platform, profile, runtime);
     if (reusedBuild) {
+      if (isDeadBuild(reusedBuild.status)) {
+        throw new Error(
+          `The existing ${platform}/${profile} build ${reusedBuild.id} is ${reusedBuild.status}; ` +
+            `add the force-eas-build label to rebuild fingerprint ${runtime}.`,
+        );
+      }
       // Name the profile: a preview has both `ios/preview` and
       // `ios/development-simulator`, and "ios" alone cannot tell them apart.
       console.log(
