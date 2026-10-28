@@ -3,3 +3,6 @@
 project.json
 .env
 .env.local
+# Prebuilt native dirs (expo prebuild) are not source; EAS creates them mid-build.
+ios
+android
