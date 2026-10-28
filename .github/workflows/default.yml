@@ -448,7 +448,11 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           # Restores what `copy-lockfile` rewrites, even when the build fails.
-          docker compose run --rm better-angels bash -c '
+          # Heredoc, not `bash -c '...'`: the script is long, and a single
+          # apostrophe anywhere in it (a comment, a message) closes the quoted
+          # argument early. The container then runs only the part before it and
+          # the rest silently executes on the runner — with the runner's Node.
+          docker compose run --rm better-angels bash <<'EOF'
             set -euo pipefail
             trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
             # The profile env, then the EAS-shaped workspace: the runtime is
@@ -461,7 +465,7 @@ jobs:
             yarn nx run betterangels:write-eas-env:${{ matrix.environment }}
             # Resolve the profile env once, here: `build-missing.ts` fingerprints
             # the build from it and `eas-update` bundles from it, so both have to
-            # read the same values. Nx fills each task's env from dotenv files
+            # read the same values. Nx fills each task environment from dotenv files
             # before its dependencies run, so the export above cannot supply it.
             APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile ${{ matrix.environment }} --print)" || exit 1
             eval "$APP_ENV_EXPORTS"
@@ -474,7 +478,7 @@ jobs:
               --platforms android,ios
             # The target pins the branch and the EAS environment for the update.
             yarn nx affected -t eas-update --configuration ${{ matrix.environment }}
-          '
+          EOF
         env:
           CI: 'true'
           FORCE_EAS_BUILD: ${{ inputs['force-eas-build'] || 'false' }}
