@@ -37,7 +37,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.2.15',
+    version: '1.2.16',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -50,7 +50,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.2.15',
+      buildNumber: '1.2.16',
       associatedDomains: [`applinks:${HOSTNAME}`],
       config: {
         usesNonExemptEncryption: false,
@@ -86,7 +86,7 @@ export default {
         },
       ],
       config: {},
-      versionCode: 87,
+      versionCode: 88,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
