@@ -9,6 +9,19 @@ dotenv.config({ path: '.env.local', override: true });
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
+// A production build must not silently bake the dev API. `.env.local` overrides
+// the process env above, so a stale dev pull (or a missing EAS value) would
+// otherwise ship api.dev under the production identity.
+if (
+  IS_PRODUCTION &&
+  process.env.EXPO_PUBLIC_API_URL &&
+  !process.env.EXPO_PUBLIC_API_URL.includes('api.prod')
+) {
+  throw new Error(
+    `Production build but EXPO_PUBLIC_API_URL is ${process.env.EXPO_PUBLIC_API_URL} (expected api.prod).`,
+  );
+}
+
 const HOSTNAME = IS_PRODUCTION
   ? 'api.prod.betterangels.la' // TODO: We should adjust this to be app.betterangels.la
   : 'api.dev.betterangels.la'; // TODO: We should adjust this to be app.dev.betterangels.la
