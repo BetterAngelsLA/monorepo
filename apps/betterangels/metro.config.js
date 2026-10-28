@@ -23,6 +23,23 @@ config.transformer.minifierConfig.compress.drop_console = true;
 
 const { transformer, resolver } = config;
 
+// Lazy web chunks for hoisted packages arrive as ./node_modules/... entries.
+// This repo has no workspace manifest, so Expo resolves those entries against
+// the app directory even though the packages live at the repository root.
+// Resolve only these web entry requests from the actual hoisted package path.
+const previousResolveRequest = resolver.resolveRequest;
+const resolveRequest = (context, moduleName, platform) => {
+  const resolve = previousResolveRequest ?? context.resolveRequest;
+  if (
+    platform === 'web' &&
+    path.resolve(context.originModulePath) === projectRoot &&
+    moduleName.startsWith('./node_modules/')
+  ) {
+    return resolve(context, path.resolve(workspaceRoot, moduleName), platform);
+  }
+  return resolve(context, moduleName, platform);
+};
+
 config.transformer = {
   ...transformer,
   babelTransformerPath: require.resolve('react-native-svg-transformer'),
@@ -30,6 +47,7 @@ config.transformer = {
 
 config.resolver = {
   ...resolver,
+  resolveRequest,
   assetExts: resolver.assetExts.filter((ext) => ext !== 'svg'),
   sourceExts: [...resolver.sourceExts, 'svg'],
 };
