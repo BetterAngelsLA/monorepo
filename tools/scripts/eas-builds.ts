@@ -15,13 +15,18 @@
 import { execFileSync } from 'child_process';
 import * as path from 'path';
 
-import { isDeadBuild } from './build-rank';
 import {
   getEnv,
   resolveProjectDir,
   resolveRuntime,
   runJson,
 } from './eas-utils';
+
+/** Terminal statuses: the build will not produce a binary without a new one. */
+function isDeadBuild(status: unknown): boolean {
+  const value = String(status ?? '').toUpperCase();
+  return value === 'ERRORED' || value === 'CANCELED';
+}
 
 export interface BuildTarget {
   platform: string;
