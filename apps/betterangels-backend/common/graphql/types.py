@@ -230,7 +230,7 @@ class TransformableImageType:
 @strawberry_django.type(Location)
 class LocationType:
     id: Optional[ID]
-    address: AddressType
+    address: Optional[AddressType]
     point: auto
     point_of_interest: auto
 

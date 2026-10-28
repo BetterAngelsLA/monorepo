@@ -12,6 +12,7 @@ interface IDirectionsPopupProps {
         state?: string | undefined | null;
         zipCode?: string | undefined | null;
       }
+    | null
     | undefined;
 }
 

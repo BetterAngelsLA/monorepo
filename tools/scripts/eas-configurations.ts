@@ -1,8 +1,9 @@
 /**
  * What each Nx configuration means to EAS.
  *
- * The names appear in `nx.json` (the `eas-build` configurations), in the Maestro
- * orchestration and in the preview build step, so they live here once:
+ * The names appear in `apps/betterangels/project.json` (the `eas-build` target's
+ * configurations), in the Maestro orchestration and in the preview build step, so
+ * they live here once:
  *
  * - `device`: the profile a device/emulator build uses, per platform.
  * - `simulatorProfile`: previews also ship an iOS simulator binary, and Maestro

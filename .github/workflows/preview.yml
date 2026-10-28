@@ -34,8 +34,6 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       # Build even though a build exists for the fingerprint.
       FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
-      # Re-push the EAS environment even when every var is present.
-      FORCE_EAS_ENV_SYNC: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-env-sync') }}
       VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
       VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
       EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
@@ -122,27 +120,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          # The update publishes while the web deploy runs. Its env is the tracked
-          # `.env`, rewritten for this profile: that file ships inside the EAS
-          # archive, which is what the build and the update both resolve app.config
-          # against. The mobile step restores it afterwards.
+          # The profile env, written into the tracked `.env`: that file ships
+          # inside the EAS archive, which is what the update below resolves
+          # app.config against. `export-web` writes it again for its own
+          # configuration, so both see the same values.
           node tools/scripts/write-eas-env.mjs --project betterangels --profile preview
-          (
-            node tools/scripts/eas-update.mjs --project betterangels --profile preview \
-              > /tmp/eas-update.log 2>&1
-            echo $? > /tmp/eas-update.status
-          ) &
-          UPDATE_PID=$!
 
-          # export-web computes its own base path, so it is not in the job env.
-          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6
+          # Before the export, not alongside it: the update's runtime version has
+          # to be the one the build carries, and `write-eas-env` is shared state.
+          node tools/scripts/eas-update.mjs --project betterangels --profile preview
 
-          # Replay the background output, and fail with it.
-          set +e
-          wait "$UPDATE_PID"
-          set -e
-          cat /tmp/eas-update.log
-          [ "$(cat /tmp/eas-update.status)" = '0' ]
+          # export-web computes its own base path inline; nginx is the ECS proxy,
+          # which a preview deploys the app behind rather than redeploys.
+          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6 --exclude=nginx
 
       - name: 🧪 E2E (Playwright)
         if: github.event.pull_request.head.repo.fork == false
@@ -204,6 +194,9 @@ jobs:
           # however this step ends. Called directly — it must not need a project
           # graph built from the manifests it is undoing.
           trap 'node tools/scripts/restore-workspace.mjs --project betterangels || true' EXIT
+
+          # The profile env, then the EAS-shaped workspace: the runtime is
+          # resolved from both, so they have to match what the build uploads.
           yarn nx run betterangels:write-eas-env:preview
 
           # No `expo prebuild`: it would leave `android/`+`ios/` in the checkout and
@@ -213,7 +206,8 @@ jobs:
           # up here is the one the build produces.
           yarn nx run betterangels:copy-lockfile
 
-          # A fingerprint builds once, in any status; `force-eas-build` overrides.
+          # A fingerprint builds once; a dead one fails the run and
+          # `force-eas-build` overrides.
           npx ts-node --project tools/tsconfig.tools.json tools/scripts/build-missing.ts \
             --project betterangels --configuration preview
 

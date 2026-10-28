@@ -3,7 +3,7 @@
  *
  * A fingerprint can hold a failed attempt, a retry and a canceled duplicate. Rank
  * by what the build can tell you and keep the newest within a rank. This does not
- * affect reuse: `find-build.mjs` treats any build as "do not build again".
+ * affect reuse: `find-build.mjs` fails on a dead build rather than reusing it.
  */
 export const BUILD_STATUS_RANK = {
   FINISHED: 3,

@@ -4,13 +4,14 @@
  * One implementation for every pipeline that needs a binary: the preview/main
  * step (`build-missing.ts`) and the Maestro E2E trigger (`eas-e2e.ts`).
  *
- * Reuse is the pipeline rule: a fingerprint builds once, in any status, so a
- * target with any existing build — queued, finished or failed — is skipped. The
- * one exception is the `force-eas-build` label / FORCE_EAS_BUILD, which
- * `find-build.mjs` honours for a build that failed for a reason since fixed.
+ * Reuse is the pipeline rule: a fingerprint builds once, so a target that already
+ * has a live build is skipped, and a dead one (`ERRORED`/`CANCELED`) fails the run
+ * in `find-build.mjs` instead of being quietly retried. The one exception is the
+ * `force-eas-build` label / the `force-eas-build` workflow input / FORCE_EAS_BUILD,
+ * which `find-build.mjs` honours for a build that failed for a reason since fixed.
  *
- * Run after `write-eas-env` and `copy-lockfile`: the runtime resolved here has to
- * be the one the upload produces.
+ * Run after `write-eas-env` and `copy-lockfile`: the runtime resolved here has
+ * to be the one the upload produces.
  */
 import { execFileSync } from 'child_process';
 import * as path from 'path';
@@ -27,7 +28,7 @@ export interface BuildTarget {
   profile: string;
 }
 
-/** A build as `eas` returns it: from `build:list` on reuse, `eas build` here. */
+/** A build as `eas` returns it: from `build:list` on reuse, the build target when queued. */
 export interface EasBuild {
   id: string;
   [field: string]: unknown;
