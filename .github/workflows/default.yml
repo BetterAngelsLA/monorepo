@@ -408,6 +408,7 @@ jobs:
           # `deploy` runs `export-web`, so the key must be here or the bundle
           # ships without it.
           EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
+          EXPO_PUBLIC_NEW_RELIC_BROWSER_LICENSE_KEY: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_BROWSER_LICENSE_KEY }}
 
       - name: 🧪 E2E shelter-web (preview)
         # Runs after deploy, because the suite drives the deployed preview: the
