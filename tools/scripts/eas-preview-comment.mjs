@@ -1,70 +1,75 @@
 /**
  * Mobile preview summary for a PR (and Slack, on main).
  *
- * Replaces the comment payload the old `eas-deploy.ts` posted: per-platform
- * build permalinks, EAS Update permalinks + QR codes, runtime versions, and the
- * iOS simulator build link. It only *reads* EAS state — builds and updates are
- * created by `eas-build` / `eas-update` targets — so it stays reusable from a
- * laptop (`nx run betterangels:preview-comment`) and from both workflows.
+ * Posts the per-platform build permalinks, EAS Update permalinks + QR codes,
+ * runtime versions, and the iOS simulator build link. It only *reads* EAS state —
+ * builds and updates are created by `build-missing.ts` / `eas-update` — so it
+ * stays reusable from a laptop (`nx run betterangels:preview-comment`) and from
+ * both workflows.
  *
  * Env:
  *   BRANCH_NAME            EAS Update branch (required)
  *   PR_NUMBER, GITHUB_TOKEN, GITHUB_REPOSITORY   PR comment (optional)
  *   SLACK_WEBHOOK_URL, GITHUB_EVENT_NAME         Slack (main only)
+ *
+ * Flags:
+ *   --dry-run              print the comment instead of posting it (or DRY_RUN=1)
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import minimist from 'minimist';
 
 import { bestBuild } from './build-rank.mjs';
+import { parseJsonOutput, updateGroups } from './cli-json.mjs';
+import { buildCell } from './preview-builds.mjs';
 
 const argv = minimist(process.argv.slice(2), {
   string: ['project', 'account', 'slug', 'projectId'],
 });
 
-const usage = 'node tools/scripts/eas-preview-comment.mjs --project <name> --account <eas-account> --slug <slug> --projectId <id>';
+const usage =
+  'node tools/scripts/eas-preview-comment.mjs --project <name> --account <eas-account> --slug <slug> --projectId <id>';
 if (!argv.project || !argv.account || !argv.slug || !argv.projectId) {
   console.error(usage);
   process.exit(1);
 }
 
 const projectDir = path.resolve('apps', argv.project);
+// Local runs have no `eas` on PATH; fail with this rather than an ENOENT from
+// the first EAS call.
+if (!existsSync(path.join(projectDir, 'eas.json'))) {
+  console.error(`${projectDir}/eas.json is missing.`);
+  process.exit(1);
+}
 const branch = process.env.BRANCH_NAME;
 if (!branch) {
   console.error('BRANCH_NAME is required (the EAS Update branch).');
   process.exit(1);
 }
 
-// Both platforms always get a column: the app supports both, and the update is
-// published for both even when a run only built one of them. Which builds exist
-// is what `EAS_BUILD_PLATFORMS` decides, per column.
+// Both platforms get a column. The lookup is keyed on the update's runtime, not
+// on what this run built: a build from an earlier run is just as usable.
+// `buildCell` falls back when nothing exists.
 const PLATFORMS = ['android', 'ios'];
-const BUILT = (process.env.EAS_BUILD_PLATFORMS ?? PLATFORMS.join(','))
-  .split(',')
-  .map((platform) => platform.trim())
-  .filter(Boolean);
 // `EAS_PROFILE` lets the main pipeline report the production builds instead;
 // the simulator link only exists for preview.
 const profile = process.env.EAS_PROFILE || 'preview';
 const BUILDS = [
-  ...BUILT.map((platform) => ({ platform, profile })),
+  ...PLATFORMS.map((platform) => ({ platform, profile })),
   ...(profile === 'preview'
     ? [{ platform: 'ios', profile: 'development-simulator' }]
     : []),
 ];
 
-/** `eas` prints notices before the JSON; take the outermost array. */
 function runJson(args) {
-  const raw = execFileSync('eas', args, {
-    cwd: projectDir,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  const start = raw.indexOf('[');
-  const end = raw.lastIndexOf(']');
-  if (start < 0 || end < start) throw new Error(`No JSON in eas ${args[0]} output`);
-  return JSON.parse(raw.slice(start, end + 1));
+  return parseJsonOutput(
+    execFileSync('eas', args, {
+      cwd: projectDir,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }),
+  );
 }
 
 const buildUrl = (id) =>
@@ -78,82 +83,119 @@ const qrUrl = (groupId) =>
 
 function latestBuild(platform, profile, runtime) {
   try {
-    const args = [
+    // Only the build that ships this update's runtime. Callers only ask once they
+    // have one: unfiltered, `build:list` reports the newest build for any commit,
+    // and the comment would pair this update with a binary it can never reach.
+    const builds = runJson([
       'build:list',
       '--platform',
       platform,
       '--build-profile',
       profile,
+      '--runtime-version',
+      runtime,
+      // Same allowance as `find-build.mjs`: enough to see past a canceled
+      // duplicate to the build that actually exists.
       '--limit',
-      '5',
+      '10',
       '--json',
       '--non-interactive',
-    ];
-    // Only the build that ships this update's runtime: without the filter the
-    // newest FINISHED build can belong to a previous commit, and the comment
-    // would pair this update with a binary it can never reach.
-    if (runtime) args.push('--runtime-version', runtime);
-    const builds = runJson(args);
-    if (builds.length === 0) return undefined;
+    ]);
+    if (builds.length === 0) return { build: undefined };
     // A real artifact wins over a newer dead one: the reuse rule is "a
     // fingerprint builds once", so a canceled or failed attempt can sit in front
     // of the build that actually exists, and reporting that one would link a QR
     // code to nothing. `bestBuild` also keeps recency within the same rank.
-    return bestBuild(builds);
+    return { build: bestBuild(builds) };
   } catch (error) {
-    console.error(`Could not list ${platform}/${profile} builds: ${error.message}`);
-    return undefined;
+    console.error(
+      `Could not list ${platform}/${profile} builds: ${error.message}`,
+    );
+    // Not the same as "no build": the cell says the lookup failed rather than
+    // rendering an N/A that reads like a missing binary.
+    return { error: error.message };
   }
 }
 
 function latestUpdate(platform) {
   try {
-    return runJson([
-      'update:list',
-      '--branch',
-      branch,
-      '--platform',
-      platform,
-      '--limit',
-      '1',
-      '--json',
-      '--non-interactive',
-    ])[0];
+    return updateGroups(
+      runJson([
+        'update:list',
+        '--branch',
+        branch,
+        '--platform',
+        platform,
+        '--limit',
+        '1',
+        '--json',
+        '--non-interactive',
+      ]),
+    )[0];
   } catch (error) {
     console.error(`Could not list ${platform} updates: ${error.message}`);
     return undefined;
   }
 }
 
+/**
+ * Builds this run resolved, as `build-missing.ts` recorded them — the full `eas`
+ * build object, plus whether it was queued here or reused. `build:list` can lag
+ * a just-queued build, so this file is the fallback, not a second source of truth.
+ */
+function triggeredBuilds() {
+  const file = path.join(projectDir, '.eas-builds.json');
+  if (!existsSync(file)) return {};
+  try {
+    const entries = JSON.parse(readFileSync(file, 'utf8'));
+    if (!Array.isArray(entries)) throw new Error('expected an array');
+    return Object.fromEntries(
+      entries.map((entry) => [`${entry.platform}/${entry.profile}`, entry]),
+    );
+  } catch (error) {
+    console.error(`Could not read ${file}: ${error.message}`);
+    return {};
+  }
+}
+
 const updates = Object.fromEntries(PLATFORMS.map((p) => [p, latestUpdate(p)]));
-const builds = Object.fromEntries(
-  BUILDS.map(({ platform, profile }) => [
-    `${platform}/${profile}`,
-    latestBuild(platform, profile, updates[platform]?.runtimeVersion),
-  ]),
+const triggered = triggeredBuilds();
+const lookups = Object.fromEntries(
+  BUILDS.map(({ platform, profile }) => {
+    const runtime = updates[platform]?.runtimeVersion;
+    if (!runtime) {
+      // No runtime, no lookup: the filter is what keeps the comment from pairing
+      // an update with a binary it cannot reach. Say so instead.
+      return [
+        `${platform}/${profile}`,
+        { error: `no ${platform} runtime from the update` },
+      ];
+    }
+    return [`${platform}/${profile}`, latestBuild(platform, profile, runtime)];
+  }),
 );
 
-const forPlatform = (platform) => builds[`${platform}/${profile}`];
+const lookupFor = (platform) => lookups[`${platform}/${profile}`] ?? {};
+const buildFor = (platform) => lookupFor(platform).build;
+// A simulator build queued by this run can also be missing from `build:list` for
+// a moment; `buildCell` falls back to the record.
+const simulator = lookups['ios/development-simulator']?.build;
+
 const hasData =
-  PLATFORMS.some((platform) => forPlatform(platform)) ||
+  PLATFORMS.some((platform) => buildFor(platform)) ||
   PLATFORMS.some((platform) => updates[platform]);
 if (!hasData) {
   // EAS was unreachable (missing CLI, expired token, …). Posting a comment full
-  // of N/A would be worse than no comment — this runs in a non-required job.
+  // of lookups that failed would be worse than no comment — this runs in a
+  // non-required job.
   console.error('No EAS build or update data; skipping the preview summary.');
   process.exit(0);
 }
-const simulator = builds['ios/development-simulator'];
 
 // `eas build:list` reports the runtime under `runtime.version` (and the
 // fingerprint hash alongside); there is no top-level `runtimeVersion`.
 const runtimeOf = (build) =>
   build?.runtime?.version ?? build?.fingerprint?.hash ?? 'N/A';
-
-const cell = (build) =>
-  build
-    ? `[Build Permalink](${buildUrl(build.id)})<br /><details><summary>Details</summary>Distribution: \`${build.distribution ?? ''}\`<br />Build profile: \`${build.buildProfile ?? ''}\`<br />Runtime version: \`${runtimeOf(build)}\`<br />App version: \`${build.appVersion ?? ''}\`<br />Git commit: \`${build.gitCommitHash ?? ''}\`</details>`
-    : 'N/A';
 
 const updateCell = (update) =>
   update
@@ -170,15 +212,37 @@ const PLATFORM_LABELS = { android: '🤖 Android', ios: '🍎 iOS' };
 // the glyph labels it has always had. Both are keyed off PLATFORMS.
 const SLACK_LABELS = { android: ':robot_face: Android', ios: ':iphone: iOS' };
 const table = [
-  ['&nbsp;', ...PLATFORMS.map((platform) => PLATFORM_LABELS[platform] ?? platform)],
+  [
+    '&nbsp;',
+    ...PLATFORMS.map((platform) => PLATFORM_LABELS[platform] ?? platform),
+  ],
   ['---', ...PLATFORMS.map(() => '---')],
   [
     'Runtime Version',
     ...PLATFORMS.map(
-      (p) => `\`${forPlatform(p) ? runtimeOf(forPlatform(p)) : (updates[p]?.runtimeVersion ?? 'N/A')}\``,
+      (p) =>
+        `\`${
+          buildFor(p)
+            ? runtimeOf(buildFor(p))
+            : (updates[p]?.runtimeVersion ?? 'unknown')
+        }\``,
     ),
   ],
-  ['Build Details', ...PLATFORMS.map((p) => cell(forPlatform(p)))],
+  [
+    'Build Details',
+    ...PLATFORMS.map((p) =>
+      buildCell({
+        account: argv.account,
+        slug: argv.slug,
+        runtime: updates[p]?.runtimeVersion,
+        device: buildFor(p),
+        triggered: triggered[`${p}/${profile}`],
+        simulator: p === 'ios' ? simulator : undefined,
+        simulatorTriggered: triggered[`${p}/development-simulator`],
+        error: lookupFor(p).error,
+      }),
+    ),
+  ],
   ['Update Details', ...PLATFORMS.map((p) => updateCell(updates[p]))],
   ['Update QR', ...PLATFORMS.map((p) => qrCell(updates[p]))],
 ]
@@ -194,7 +258,18 @@ const body = `<!-- continuous-deploy-fingerprint-projectId:${argv.projectId} -->
 - Scheme → **${argv.slug}**
 
 ${table}
-${simulator ? `\n**iOS Simulator Build:** [Simulator Build Link](${buildUrl(simulator.id)})` : ''}`;
+${
+  simulator && buildFor('ios')
+    ? `\n**iOS Simulator Build:** [Simulator Build Link](${buildUrl(simulator.id)})`
+    : ''
+}`;
+
+// A laptop run is how this script is exercised without burning a CI cycle; it
+// prints the same body the comment would carry.
+if (argv['dry-run'] || process.env.DRY_RUN === '1') {
+  console.log(body);
+  process.exit(0);
+}
 
 async function upsertPrComment() {
   const token = process.env.GITHUB_TOKEN;
@@ -237,7 +312,9 @@ async function upsertPrComment() {
     console.error(`Could not post comment: ${response.status}`);
     return;
   }
-  console.log(existing ? 'Updated the preview comment.' : 'Created the preview comment.');
+  console.log(
+    existing ? 'Updated the preview comment.' : 'Created the preview comment.',
+  );
 }
 
 async function notifySlack() {
@@ -248,20 +325,28 @@ async function notifySlack() {
   const link = (label, url) =>
     url ? `<${url}|${label}>` : `${label}: not built for this run`;
   const section = (title, platform) => {
-    const build = forPlatform(platform);
+    const build = buildFor(platform);
     const sim = platform === 'ios' ? simulator : undefined;
     // The platform headings are not bold in the message this pipeline has always
     // posted; only the header is.
     const lines = [
       title,
       '',
-      link('Update', updates[platform] ? updateUrl(updates[platform].group) : undefined),
+      link(
+        'Update',
+        updates[platform] ? updateUrl(updates[platform].group) : undefined,
+      ),
       link('Build', build ? buildUrl(build.id) : undefined),
       ...(sim ? [link('Simulator Build', buildUrl(sim.id))] : []),
     ];
-    const runtime = build ? runtimeOf(build) : updates[platform]?.runtimeVersion;
+    const runtime = build
+      ? runtimeOf(build)
+      : updates[platform]?.runtimeVersion;
     if (runtime) lines.push(`_Runtime:_ \`${runtime}\``);
-    return { type: 'section', text: { type: 'mrkdwn', text: lines.join('\n') } };
+    return {
+      type: 'section',
+      text: { type: 'mrkdwn', text: lines.join('\n') },
+    };
   };
 
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], {
@@ -299,15 +384,10 @@ async function notifySlack() {
     body: JSON.stringify({ channel: '#tech-outreach-main', blocks }),
   });
   if (!response.ok) {
-    console.error(`Slack notification failed: ${response.status} ${await response.text()}`);
+    console.error(
+      `Slack notification failed: ${response.status} ${await response.text()}`,
+    );
   }
-}
-
-// Local runs have no `eas` on PATH and no PR/Slack context; make that explicit
-// rather than failing half way.
-if (!existsSync(path.join(projectDir, 'eas.json'))) {
-  console.error(`${projectDir}/eas.json is missing.`);
-  process.exit(1);
 }
 
 // Best effort: the preview itself already succeeded, and this step should not

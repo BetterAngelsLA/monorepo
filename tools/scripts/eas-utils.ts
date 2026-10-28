@@ -1,5 +1,5 @@
 /**
- * Shared utilities for the EAS scripts (eas-e2e.ts).
+ * Shared utilities for the EAS scripts (build-missing.ts, eas-e2e.ts).
  *
  * Provides common helpers for:
  *   - CLI arg parsing (minimist)
@@ -8,7 +8,7 @@
  *   - .env / fingerprint setup
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import minimist from 'minimist';
 import * as path from 'path';
@@ -17,19 +17,6 @@ import stripAnsi from 'strip-ansi';
 export const argv = minimist(process.argv.slice(2));
 
 export const EAS_ACCOUNT = process.env.EAS_ACCOUNT || 'better-angels';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export interface UpdateResult {
-  platform: string;
-  id: string;
-  group: string;
-  branch: string;
-  gitCommitHash: string;
-  runtimeVersion: string;
-}
 
 // ---------------------------------------------------------------------------
 // Env helpers
@@ -53,15 +40,19 @@ export function getOptionalEnv(name: string): string | undefined {
 
 /**
  * Run a command and return stdout (trimmed).
+ *
+ * Arguments are passed as an array, never interpolated into a shell string: the
+ * callers build them from CLI args and project names.
  */
 export function run(
-  cmd: string,
+  file: string,
+  args: string[] = [],
   opts?: { cwd?: string; silent?: boolean },
 ): string {
   const cwd = opts?.cwd ?? process.cwd();
-  if (!opts?.silent) console.log(`> ${cmd}`);
+  if (!opts?.silent) console.log(`> ${[file, ...args].join(' ')}`);
   try {
-    return execSync(cmd, {
+    return execFileSync(file, args, {
       cwd,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -78,8 +69,12 @@ export function run(
  * Handles nx/eas CLI output that may contain ANSI codes and non-JSON text
  * by finding the first valid JSON array or object in the output.
  */
-export function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
-  const raw = run(cmd, { silent: true, ...opts });
+export function runJson<T>(
+  file: string,
+  args: string[] = [],
+  opts?: { cwd?: string },
+): T {
+  const raw = run(file, args, { silent: true, ...opts });
   const cleaned = stripAnsi(raw);
 
   // Find the first valid JSON object or array in the output.
@@ -139,9 +134,13 @@ export function resolveProjectDir(project: string): string {
 export function setupEnv(projectDir: string, profile: string): void {
   console.log(`\n=== Setting up env for profile: ${profile} ===`);
   const project = path.basename(projectDir);
-  run(
-    `node tools/scripts/write-eas-env.mjs --project ${project} --profile ${profile}`,
-  );
+  run('node', [
+    'tools/scripts/write-eas-env.mjs',
+    '--project',
+    project,
+    '--profile',
+    profile,
+  ]);
 }
 
 /**
@@ -155,7 +154,15 @@ export function setupEnv(projectDir: string, profile: string): void {
 export function resolveRuntime(projectDir: string, platform: string): string {
   console.log(`Resolving ${platform} runtime version (fingerprint)...`);
   const resolved = runJson<{ runtimeVersion: string }>(
-    `npx expo-updates runtimeversion:resolve --platform ${platform} --workflow generic`,
+    'npx',
+    [
+      'expo-updates',
+      'runtimeversion:resolve',
+      '--platform',
+      platform,
+      '--workflow',
+      'generic',
+    ],
     { cwd: projectDir },
   );
   const hash = resolved.runtimeVersion;
@@ -166,14 +173,4 @@ export function resolveRuntime(projectDir: string, platform: string): string {
   }
   console.log(`${platform} runtime version (fingerprint): ${hash}`);
   return hash;
-}
-
-/** Setup env and resolve the runtime, for callers that need only one platform. */
-export function setupEnvAndFingerprint(
-  projectDir: string,
-  profile: string,
-  platform = 'android',
-): string {
-  setupEnv(projectDir, profile);
-  return resolveRuntime(projectDir, platform);
 }

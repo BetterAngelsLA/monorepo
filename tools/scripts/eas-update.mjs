@@ -20,7 +20,11 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import minimist from 'minimist';
 
-const argv = minimist(process.argv.slice(2), { string: ['project', 'profile'] });
+import { parseJsonOutput } from './cli-json.mjs';
+
+const argv = minimist(process.argv.slice(2), {
+  string: ['project', 'profile'],
+});
 
 if (!argv.project || !argv.profile) {
   console.error(
@@ -36,7 +40,8 @@ if (!branch) {
 }
 
 // Matches the environment each build profile resolves (apps/betterangels/eas.json).
-const environment = argv.profile === 'production' ? 'production' : 'development';
+const environment =
+  argv.profile === 'production' ? 'production' : 'development';
 const projectDir = path.resolve('apps', argv.project);
 
 // Non-interactive `eas update` insists on a branch *and* a message. `--auto`
@@ -81,13 +86,9 @@ try {
   process.exit(1);
 }
 
-// eas prints notices before the JSON.
-const start = raw.indexOf('[');
-const end = raw.lastIndexOf(']');
 let updates;
 try {
-  updates =
-    start >= 0 && end > start ? JSON.parse(raw.slice(start, end + 1)) : [];
+  updates = parseJsonOutput(raw);
 } catch (error) {
   // The update may already be published; report what came back instead of a
   // bare SyntaxError.
@@ -96,7 +97,7 @@ try {
   process.exit(1);
 }
 
-if (updates.length === 0) {
+if (!Array.isArray(updates) || updates.length === 0) {
   console.error(`eas update returned no updates for ${branch}.`);
   process.exit(1);
 }
