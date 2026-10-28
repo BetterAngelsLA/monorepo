@@ -63,19 +63,21 @@ const message = commitSubject() || `Deploy ${branch}`;
 let raw;
 try {
   raw = execFileSync(
-    'nx',
+    'eas',
     [
-      'run',
-      'betterangels:eas-update',
+      'update',
       '--branch',
       branch,
       '--message',
       message,
+      '--environment',
+      environment,
       '--platform',
       'all',
+      '--non-interactive',
       '--json',
     ],
-    { cwd: process.cwd(), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+    { cwd: projectDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
   );
 } catch (error) {
   if (error.stdout) process.stdout.write(error.stdout);
