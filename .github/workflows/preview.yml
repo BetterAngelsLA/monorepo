@@ -130,9 +130,8 @@ jobs:
           # to be the one the build carries, and `write-eas-env` is shared state.
           node tools/scripts/eas-update.mjs --project betterangels --profile preview
 
-          # Same reason as the main pipeline: Nx fills the task env from dotenv
-          # files before dependencies run, so export the profile first and let
-          # those values survive its non-overriding file load.
+          # Same reason as the main pipeline: Nx fills the task env before its
+          # dependencies run and never overrides what is already set.
           APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile preview --print)" || exit 1
           eval "$APP_ENV_EXPORTS"
 
