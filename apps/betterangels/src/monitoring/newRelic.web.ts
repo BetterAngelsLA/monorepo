@@ -1,8 +1,10 @@
 import { BrowserAgent } from '@newrelic/browser-agent/loaders/browser-agent';
 import Constants from 'expo-constants';
+import { browserPrivacyRules } from './privacy';
 
 const licenseKey = process.env.EXPO_PUBLIC_NEW_RELIC_BROWSER_LICENSE_KEY;
 const environment = process.env.EXPO_PUBLIC_APP_ENV;
+const appVersion = Constants.expoConfig?.version ?? 'unknown';
 const monitoringGlobal = globalThis as typeof globalThis & {
   outreachBrowserAgent?: BrowserAgent;
 };
@@ -24,7 +26,7 @@ if (
       sa: 1,
       jsAttributes: {
         environment,
-        appVersion: Constants.expoConfig?.version ?? 'unknown',
+        appVersion,
         platform: 'web',
       },
     },
@@ -49,25 +51,7 @@ if (
       session_trace: { enabled: false },
       logging: { enabled: false },
       user_actions: { enabled: false },
-      // Redact common identifiers from URLs and error messages before harvest.
-      // These rules are defense in depth, not a substitute for reviewing payloads.
-      obfuscate: [
-        {
-          // Client, note, file, task and relation routes use numeric IDs.
-          // Apply to all numeric path segments, including nested routes.
-          regex: /\/\d+(?=[/?#\s]|$)/g,
-          replacement: '/[id]',
-        },
-        {
-          regex:
-            /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi,
-          replacement: '[id]',
-        },
-        {
-          regex: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
-          replacement: '[email]',
-        },
-      ],
+      obfuscate: browserPrivacyRules(environment, appVersion),
     },
   });
 }

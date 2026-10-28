@@ -86,9 +86,90 @@ Before production rollout, inspect outgoing events using synthetic records and
 review URL/error content for additional required redaction.
 
 The synthetic-client review exposed numeric client IDs in `pageUrl` and
-`targetUrl`. Numeric path redaction was added in response; fresh ingested events
-must be checked after a full reload. Already-ingested events are not changed by
-this configuration update. Privacy acceptance remains pending.
+`targetUrl`. Numeric path redaction was added in response. Subsequent supplied
+events showed `/client/[id]` and `/clients/[id]/edit` in navigation URLs, including
+previous URLs. Tested click text was null or `See Details`. A synthetic error's
+email, numeric path ID, and UUID were replaced with placeholders. Its stack trace
+was empty, so that test did not verify stack-trace redaction. Already-ingested
+events are not changed by this configuration update. Privacy acceptance remains
+pending.
+
+### Code privacy review (2026-10-28)
+
+Reviewed the web initializer, monitoring API usage in the app and shared libraries,
+application error paths, and the installed Browser agent 1.324.1 source.
+The findings below describe the state before the protections added in the next section.
+
+- The web initializer adds only environment, app version, and platform. The
+  application search found no web calls adding client identity/custom events.
+  The shared mobile monitoring hook has an empty web implementation.
+- AJAX payload capture, replay, session traces, logging, user actions, and
+  performance details/marks/measures are explicitly disabled. Body-size fields
+  in the inspected events are sizes, not body contents.
+- **Finding: navigation click text.** In the installed agent,
+  `src/features/soft_navigations/aggregate/index.js` reads an anchor, button, or
+  input's `title`, `value`, or `innerText` into `actionText`. Disabling
+  `user_actions` does not disable this separate collection path. Generic text in
+  the supplied sample does not establish safety for all clickable client data.
+- **Finding: arbitrary error text.** Common screen errors use fixed messages, but
+  shared HMIS API code propagates dynamic errors. Unhandled application or library
+  errors can contain values not covered by the email/UUID/numeric-path patterns,
+  such as names, notes, or tokens. Console logging being disabled does not disable
+  uncaught error reporting. This is an exposure path, not evidence those values
+  have already been ingested.
+- The installed error aggregator applies obfuscation to error payloads, but that
+  does not prove the existing patterns cover all sensitive stack/error text.
+- Supplied telemetry includes network-derived location and session/trace
+  identifiers; their acceptability still needs to be established for this app.
+
+### Protections added after review
+
+`browserPrivacyRules` now adds an event-scoped rule for `BrowserInteraction` and
+`JavaScriptError`: strings other than exact configured environment, app version,
+and platform values become `[redacted]`. This uses the agent's supported
+`eventFilter` option. It deliberately removes navigation URLs/names, action text,
+error messages/classes/causes, and nonempty stack contents from those payloads.
+Because rules operate on values rather than field names, an exact match to one of
+the three allowed metadata values remains wherever it occurs. Do not put personal
+information in deployment metadata or add custom identity attributes.
+
+Tradeoff: error diagnostics and navigation URL breakdowns are no longer readable
+in those events. Numeric metrics remain; the route-change category is encoded
+before obfuscation. PageView-based sessions and page-load timings are unaffected
+by the new scoped rule. Existing global ID/email patterns still apply to other
+event types. This does not constitute a universal privacy guarantee for all URLs,
+all event types, numeric custom attributes, or historical data.
+
+Offline tests against the installed agent's real obfuscator, error aggregator,
+and navigation serializer pass: a synthetic name/note/token and nonempty stack
+are removed, two error occurrences remain counted, route-change duration/category
+survive, deployment tags survive, and PageView session/timing values survive.
+Run from the repository root:
+
+```sh
+yarn esbuild apps/betterangels/src/monitoring/privacy.spec.ts --bundle --platform=node --outfile=/tmp/outreach-privacy-test.cjs
+node --test /tmp/outreach-privacy-test.cjs
+```
+
+These tests import installed agent internals intentionally to detect behavioral
+changes on upgrades. They do not start an agent or send data to New Relic.
+
+### Pending ingestion verification
+
+1. Restart the local server and fully reload the browser (Fast Refresh retains the
+   old agent instance).
+2. Navigate through the synthetic client's summary, details, and edit screens.
+3. Generate a synthetic error with a nonempty stack and fake name/note/token text.
+   Do not use real client data. Record the test time.
+4. Inspect new `BrowserInteraction` and `JavaScriptError` events after that time:
+   text should be `[redacted]` (or absent), environment/version should remain,
+   errors should still be counted, and route durations/categories should remain.
+   Do not filter by the original error message: it is now removed.
+5. Recheck the dashboard and repeat on a deployed build. Network-derived location
+   and session/trace metadata acceptance is still pending. Existing events are
+   not retroactively scrubbed.
+
+Reference: [New Relic browser obfuscation](https://docs.newrelic.com/docs/browser/new-relic-browser/configuration/obfuscate-browser-agent-data/).
 
 Remaining work: review captured payloads for sensitive data, confirm acceptance
 of the time-on-page proxy, configure and verify production ingestion, and share
