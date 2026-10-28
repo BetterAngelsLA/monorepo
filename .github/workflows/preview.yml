@@ -133,7 +133,6 @@ jobs:
           # The EAS environment is pulled into .env.local, which export-web hashes
           # and the Expo CLI loads. export-web computes its own base path.
           (cd apps/betterangels && eas env:pull development --non-interactive)
-          echo "EXPO_WEB_BASE_URL=$(node tools/shared/print-base-path.mjs)" >> apps/betterangels/.env.local
           yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6 --exclude=nginx
 
           # Replay the background output, and fail with it.

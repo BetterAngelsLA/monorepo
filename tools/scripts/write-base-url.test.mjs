@@ -17,14 +17,26 @@ test('writes EXPO_WEB_BASE_URL and replaces an existing value', () => {
     'EXPO_PUBLIC_API_URL=https://api.example\nEXPO_WEB_BASE_URL=/stale\n',
   );
 
-  execFileSync(process.execPath, [script], { cwd: dir, encoding: 'utf8' });
+  execFileSync(process.execPath, [script], {
+    cwd: dir,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      BRANCH_NAME: 'test-branch',
+      BASE_URL_ENV_PATH: envPath,
+    },
+  });
 
   const content = fs.readFileSync(envPath, 'utf8');
   const baseUrls = content
     .split('\n')
     .filter((line) => line.startsWith('EXPO_WEB_BASE_URL='));
   assert.equal(baseUrls.length, 1, 'exactly one EXPO_WEB_BASE_URL');
-  assert.match(baseUrls[0], /^EXPO_WEB_BASE_URL=\/.+$|^EXPO_WEB_BASE_URL=\/$/);
+  assert.ok(
+    !content.includes('EXPO_WEB_BASE_URL=/stale'),
+    'stale value replaced',
+  );
+  assert.equal(baseUrls[0], 'EXPO_WEB_BASE_URL=/test-branch');
   assert.ok(
     content.includes('EXPO_PUBLIC_API_URL=https://api.example'),
     'keeps other vars',

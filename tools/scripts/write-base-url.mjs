@@ -10,10 +10,16 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const envPath = path.resolve('apps/betterangels/.env.local');
-const baseUrl = execFileSync('node', [path.join(import.meta.dirname, '../shared/print-base-path.mjs')], {
-  encoding: 'utf8',
-}).trim();
+const envPath = process.env.BASE_URL_ENV_PATH
+  ? path.resolve(process.env.BASE_URL_ENV_PATH)
+  : path.resolve(import.meta.dirname, '../../apps/betterangels/.env.local');
+const baseUrl = execFileSync(
+  'node',
+  [path.join(import.meta.dirname, '../shared/print-base-path.mjs')],
+  {
+    encoding: 'utf8',
+  },
+).trim();
 
 let content = '';
 try {
