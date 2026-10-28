@@ -15,8 +15,6 @@
  * an EAS outage cannot silently queue a duplicate.
  */
 import { execFileSync } from 'child_process';
-import { existsSync } from 'fs';
-import { join, resolve } from 'path';
 import minimist from 'minimist';
 
 import { bestBuild, isDeadBuild } from './build-rank.mjs';
@@ -52,12 +50,11 @@ const parseBuilds = (raw) => {
   return builds;
 };
 
-const cwd = project ? resolve(process.cwd(), 'apps', project) : process.cwd();
-const localEas = resolve(process.cwd(), 'node_modules/.bin/eas');
-const eas = existsSync(localEas) ? localEas : 'eas';
+const cwd = process.cwd();
 
 const args = [
-  'build:list',
+  'run',
+  'betterangels:build-list',
   '--platform',
   platform,
   '--build-profile',
@@ -74,7 +71,7 @@ const args = [
 let lastError;
 for (let attempt = 1; attempt <= attempts; attempt++) {
   try {
-    const raw = execFileSync(eas, args, {
+    const raw = execFileSync('nx', args, {
       cwd,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],

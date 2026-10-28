@@ -110,14 +110,14 @@ export function ensureBuilds({
     // `--no-wait` answers with the build object immediately, before `build:list`
     // lists it: its id is already a working permalink.
     const payload = runJson<EasBuild | EasBuild[]>(
-      'eas',
+      'nx',
       [
-        'build',
+        'run',
+        'betterangels:eas-build',
         '--platform',
         platform,
         '--profile',
         profile,
-        '--non-interactive',
         '--no-wait',
         '--freeze-credentials',
         '--json',

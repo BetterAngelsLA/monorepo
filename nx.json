@@ -69,7 +69,8 @@
       "cache": false,
       "dependsOn": [
         "sync-deps",
-        "copy-lockfile"
+        "copy-lockfile",
+        "ensure-symlink"
       ],
       "configurations": {
         "preview": {
