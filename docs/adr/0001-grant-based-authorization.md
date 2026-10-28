@@ -759,7 +759,7 @@ still needs at its cutover:
 | **Teams** | `Team.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — no scoped `Role` row yet | **Cut over (§5.3)** — no guardian rows; org reads/writes via `can()`/`can_obj` on the role-backed admin roles | None (after §5.3) |
 | **Reports** | report row `.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — role-backed as of §5.3 | **Cut over (§5.3)** — DRF + GraphQL reads authorize through the grant predicate | None (after §5.3) |
 | **Notes** | `Note.organization` | `()` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
-| **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy model-level perms on CASEWORKER (no per-record rows) | parity-first: SHARED write via `can_anywhere` (RFC 0002); owner-tier (`created_by_org`) parked | §5.1 / RFC 0002 |
+| **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | **Cut over** — grant-only, SHARED tier (RFC 0002); documents/imports remain legacy (`LEGACY_LIVE_PERMISSIONS`) | parity-first: SHARED write via `can_anywhere` (RFC 0002); owner-tier (`created_by_org`) parked | §5.1 / RFC 0002 |
 | **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
 | **Reference data** (City, SPA, lookups, media) | global data, no org | n/a | legacy GSO `PermissionGroup` template (global tier) | stays on the global tier — never org-scoped | None — by design |
 

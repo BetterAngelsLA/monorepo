@@ -38,11 +38,40 @@ over.
 #: whole bundle rides the scoped ``Caseworker`` Role; the template carries no
 #: referral permission, so nothing legacy is left to consult).
 #:
-#: **Client documents are the exception.**  They are still owned through
-#: guardian object rows and two upload mutations still load the parent through
-#: ``filter_for_user``, so the document surface keeps a live legacy consumer
-#: until the CREATOR/UPLOADER tier lands.  Don't rely on "inert" for docs.
+#: **Client documents and imports are the exception.**  They are still owned
+#: through guardian object rows / the legacy permission arm, and two upload
+#: mutations still load the parent through ``filter_for_user``, so those
+#: permissions keep a live legacy consumer until the CREATOR/UPLOADER tier lands.
+#: They are named in :data:`LEGACY_LIVE_PERMISSIONS`, which is what the reporting
+#: surfaces consult — don't rely on "inert" for docs or imports.
 LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams", "reports", "organizations", "clients", "referrals"})
+
+#: Permissions inside an inert app that still have a live legacy consumer.
+#:
+#: The flag is per app, but the cutover is per permission: these are still
+#: honoured by ``user.has_perm`` paths that have not moved to grants (documents'
+#: parent load and the import surfaces), so reporting the whole app as inert
+#: would make the per-org report and ``explain_permission`` understate real
+#: authority — a false negative for exactly the permission those paths check.
+LEGACY_LIVE_PERMISSIONS: frozenset[str] = frozenset(
+    {
+        # document uploads still load the parent through ``filter_for_user``
+        "clients.change_clientprofile",
+        # import surfaces still gate on the legacy permission
+        "clients.add_clientprofileimportrecord",
+    }
+)
+
+
+def is_cut_over(perm: str) -> bool:
+    """Whether *perm* is enforced by grants only (legacy rows are inert).
+
+    App-level for every domain except the ``LEGACY_LIVE_PERMISSIONS`` carve-out,
+    which keeps its legacy consumer until documents and imports cut over.
+    """
+    app_label = perm.split(".", 1)[0]
+    return app_label in LEGACY_INERT_APPS and perm not in LEGACY_LIVE_PERMISSIONS
+
 
 #: Domains where the global tier is enforceable at any org — exactly the
 #: grant-only set (the effective per-org report may fold global-tier

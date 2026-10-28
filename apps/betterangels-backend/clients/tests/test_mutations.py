@@ -36,9 +36,9 @@ from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadRe
 
 
 @override_settings(IMGPROXY_KEY="", IMGPROXY_SALT="")
-# The photo mutations authorize through `visible`/`can_obj` (grant model) instead
-# of the guardian `filter_for_user` prefilter, so their counts are two lower than
-# the pre-cutover expectations.
+# The photo mutations authorize through the grant snapshot (`visible`/`can_obj`)
+# instead of the guardian `filter_for_user` prefilter, so these pins are two to
+# three queries *higher* than the pre-cutover expectations (measured, not inherited).
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

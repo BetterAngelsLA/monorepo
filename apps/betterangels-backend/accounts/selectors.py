@@ -217,7 +217,7 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
     """
     from collections import defaultdict
 
-    from common.permissions.domain import LEGACY_INERT_APPS
+    from common.permissions.domain import is_cut_over
     from common.permissions.selectors import switchable_orgs
 
     from .models import Grant, PermissionGroup
@@ -253,14 +253,15 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
         if principal_org_id in member_org_ids and perm in held_in_org.get(principal_org_id, set()):
             inherited_in_org[org_id].add(perm)
 
-    # Legacy PermissionGroup perms, non-inert apps only — one joined query.
+    # Legacy PermissionGroup perms, inert domains only (minus the per-permission
+    # carve-out — documents and imports still consult these) — one joined query.
     legacy_in_org: dict[int, set[str]] = defaultdict(set)
     for org_id, app, codename in PermissionGroup.objects.filter(user=user, organization_id__in=org_ids).values_list(
         "organization_id",
         "permissions__content_type__app_label",
         "permissions__codename",
     ):
-        if app not in LEGACY_INERT_APPS:
+        if not is_cut_over(f"{app}.{codename}"):
             legacy_in_org[org_id].add(f"{app}.{codename}")
 
     # Only orgs with at least one permission are materialized (see the docstring
@@ -287,14 +288,16 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     ALL), so
     only their global permissions fold into an org entry.  Every org-admin
     domain has cut over grant-only (member management ``organizations.*`` on the
-    org root, teams, reports, shelters — all in ``LEGACY_INERT_APPS``), so the
-    fold carries the full ORG_ADMIN bundle and the caseworker/client domains
-    (notes/clients) still enforced per org by legacy ``PermissionGroup`` rows
-    (strawberry ``HasPerm`` at an org the user holds a template group in).
-    Those legacy-only domains never consult the
+    org root, teams, reports, shelters — all in ``LEGACY_INERT_APPS``), and
+    clients cut over with RFC 0002, so the fold carries the full ORG_ADMIN and
+    client bundles.  Notes are still enforced per org by legacy
+    ``PermissionGroup`` rows (strawberry ``HasPerm`` at an org the user holds a
+    template group in), and the client document/import carve-out
+    (``LEGACY_LIVE_PERMISSIONS``) is reported from the legacy arm even though its
+    app is inert.  Those legacy permissions never consult the
     global tier — folding their global permissions in would advertise controls
     the backend refuses (e.g. a superuser with no group at that org, or a
-    ``user_permission`` on a legacy-only perm).  Their permissions reach an
+    ``user_permission`` on a legacy-only perm).  They reach an
     entry only through the org-scoped legacy arm
     (``organization_permissions``).
 

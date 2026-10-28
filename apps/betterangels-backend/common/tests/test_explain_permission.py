@@ -18,6 +18,7 @@ from django.test import TestCase
 from model_bakery import baker
 
 from accounts.models import Grant, Role, User
+from accounts.selectors import organization_permissions
 from accounts.services import grant_create, grant_delegate, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from clients.models import ClientProfile
@@ -172,6 +173,38 @@ class ExplainPermissionTestCase(TestCase):
         self.assertTrue(legacy.holds)
         self.assertIn("live", legacy.detail)
         self.assertTrue(any("has not cut over" in note for note in result.notes))
+
+    def test_client_document_permission_stays_live_after_the_cut_over(self) -> None:
+        """The carve-out: ``clients`` is inert per app, but documents still read legacy.
+
+        ``change_clientprofile`` is the parent-load permission the two document
+        upload mutations check through ``filter_for_user``, so a legacy-only
+        holder really does carry it.  Reporting it as inert would make both the
+        explanation and the per-org report understate live authority.
+        """
+        group = make_permission_group(organization=self.org_a, template_name="Caseworker")
+        group.permissions.add(
+            Permission.objects.get(content_type__app_label="clients", codename="change_clientprofile")
+        )
+        holder = baker.make(User)
+        self.org_a.add_user(holder)
+        add_legacy_membership(holder, group=group)
+
+        result = explain(holder, ClientProfile.perms.CHANGE, org=self.org_a)
+
+        self.assertFalse(result.cut_over)
+        self.assertFalse(result.verdict)  # grant model: no Grant, so no grant verdict
+        self.assertTrue(_arm(result, "legacy rows").holds)
+        self.assertIn("live", _arm(result, "legacy rows").detail)
+
+        reported = organization_permissions(holder)[self.org_a.pk]
+        self.assertIn(ClientProfile.perms.CHANGE, reported)
+        self.assertNotIn(ClientProfile.perms.VIEW, reported)  # not granted, not reported
+
+        # The family permission on the same app is genuinely inert for this holder.
+        family = explain(holder, ClientProfile.perms.VIEW, org=self.org_a)
+        self.assertTrue(family.cut_over)
+        self.assertFalse(_arm(family, "legacy rows").holds)
 
     def test_legacy_only_holder_denied_in_object_mode(self) -> None:
         """The divergence that makes the caveat load-bearing.

@@ -81,6 +81,10 @@ def get_client_profile_photo_file_path(instance: Model, filename: str) -> str:
     return os.path.join("client_profile_photos/", unique_filename)
 
 
+_UNKNOWN_PARENT = object()
+"""Baseline marker: the row was loaded without its ``client_profile_id`` column."""
+
+
 class ClientFamilyMember(models.Model):
     """A client-family row cannot be moved to a different client.
 
@@ -89,6 +93,10 @@ class ClientFamilyMember(models.Model):
     so a payload cannot reparent a contact, HMIS, household, or social row.
     The merge service moves rows with ``queryset.update()``, which bypasses
     ``save()``, so merges are unaffected.
+
+    A ``.only()``/``.defer()`` load does not carry the FK column, so ``from_db``
+    records an unknown baseline and ``save`` reads the stored parent before
+    comparing — the guard cannot be skipped by narrowing the queryset.
     """
 
     class Meta:
@@ -97,8 +105,9 @@ class ClientFamilyMember(models.Model):
     @classmethod
     def from_db(cls, db: Any, field_names: Any, values: Any, *args: Any, **kwargs: Any) -> "ClientFamilyMember":
         instance = super().from_db(db, field_names, values, *args, **kwargs)
-        if "client_profile_id" in field_names:
-            instance._loaded_client_profile_id = getattr(instance, "client_profile_id", None)
+        instance._loaded_client_profile_id = (
+            getattr(instance, "client_profile_id", None) if "client_profile_id" in field_names else _UNKNOWN_PARENT
+        )
         return instance
 
     def refresh_from_db(self, *args: Any, **kwargs: Any) -> None:
@@ -107,6 +116,10 @@ class ClientFamilyMember(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         original = getattr(self, "_loaded_client_profile_id", None)
+        if original is _UNKNOWN_PARENT and self.pk is not None:
+            # The FK column was deferred at load time; compare against the stored
+            # parent, not the (unset) attribute, so the guard still fires.
+            original = type(self)._base_manager.filter(pk=self.pk).values_list("client_profile_id", flat=True).first()
         current = getattr(self, "client_profile_id", None)
         if original is not None and current != original:
             raise ValidationError("A client's related record cannot be moved to another client.")

@@ -12,9 +12,12 @@ that fed it are then walked one by one:
 * **legacy rows** — ``PermissionGroup`` membership, with the domain's live/inert
   posture (``common.permissions.domain``).
 
-Legacy-only domains (notes/clients) have not cut over: enforcement today rides
+Notes are a legacy-only domain and have not cut over: enforcement today rides
 the legacy arm, and the verdict here is what the grant model would answer — the
-difference between the two is exactly the cutover's remaining surface.
+difference between the two is exactly the cutover's remaining surface.  Clients
+cut over for the profile/family surfaces; the document and import permissions
+listed in ``LEGACY_LIVE_PERMISSIONS`` keep their legacy consumer, so
+``cut_over`` is per permission, not per app.
 """
 
 from __future__ import annotations
@@ -23,7 +26,7 @@ from dataclasses import dataclass
 from difflib import get_close_matches
 from typing import TYPE_CHECKING, Any, Optional
 
-from common.permissions.domain import LEGACY_INERT_APPS
+from common.permissions.domain import is_cut_over
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -364,7 +367,7 @@ def explain(
     if org is not None and obj is not None:
         raise ValueError("pass at most one of org= / obj=")
     mode = "object" if obj is not None else "org" if org is not None else "anywhere"
-    cut_over = app_label in LEGACY_INERT_APPS
+    cut_over = is_cut_over(perm)
 
     if obj is not None:
         verdict = can_obj(user, perm, obj)

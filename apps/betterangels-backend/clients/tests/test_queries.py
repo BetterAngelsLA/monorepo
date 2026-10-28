@@ -296,25 +296,28 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
 
     @parametrize(
-        ("search_value, expected_client_profile_count"),
+        ("search_value, expected_client_profile_count, expected_query_count"),
         [
-            ("tod ch gust toa", 1),  # name search matching inactive client
-            ("tod pea", 0),  # no match first_name, last_name search
-            ("HMISid", 2),  # hmis_id search matching two clients
-            ("HMISidL", 1),  # hmis_id search matching one client
-            ("HMISidP", 2),  # hmis_id search matching two clients
-            ("2125551212", 1),  # exact phone match on client 1
-            ("(212) 555-1212", 1),  # formatted phone match on client 1
-            ("212-555-1212", 1),  # hyphenated phone match on client 1
-            ("718", 1),  # partial phone match on client 1 secondary phone
-            ("347", 1),  # partial phone match on client 2 phone
-            ("5551212", 2),  # partial phone match on both clients
-            ("tod 5551212", 1),  # name + phone match on same client
-            ("tod 347", 0),  # phone term matches a different client than name term
-            ("pea 718", 0),  # phone term matches a different client than name term
+            ("tod ch gust toa", 1, 6),  # name search matching inactive client
+            ("tod pea", 0, 6),  # no match first_name, last_name search
+            ("HMISid", 2, 6),  # hmis_id search matching two clients
+            ("HMISidL", 1, 6),  # hmis_id search matching one client
+            ("HMISidP", 2, 6),  # hmis_id search matching two clients
+            # Phone terms join the phone-number table: one query more than name/HMIS.
+            ("2125551212", 1, 7),  # exact phone match on client 1
+            ("(212) 555-1212", 1, 7),  # formatted phone match on client 1
+            ("212-555-1212", 1, 7),  # hyphenated phone match on client 1
+            ("718", 1, 7),  # partial phone match on client 1 secondary phone
+            ("347", 1, 7),  # partial phone match on client 2 phone
+            ("5551212", 2, 7),  # partial phone match on both clients
+            ("tod 5551212", 1, 7),  # name + phone match on same client
+            ("tod 347", 0, 7),  # phone term matches a different client than name term
+            ("pea 718", 0, 7),  # phone term matches a different client than name term
         ],
     )
-    def test_client_profiles_query_text_search(self, search_value: str, expected_client_profile_count: int) -> None:
+    def test_client_profiles_query_text_search(
+        self, search_value: str, expected_client_profile_count: int, expected_query_count: int
+    ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         query = """
@@ -328,7 +331,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
 
-        with self.assertMaxNumQueriesWithoutCache(7):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"search": search_value})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)

@@ -1,17 +1,18 @@
 # RFC 0002 — Per-model read/write tiers & the client domain (ADR 0001 §5.1 / §7.6)
 
-**Status:** Implemented (2026-09-10) — the client family (`ClientProfile`,
-`ClientContact`, `ClientHouseholdMember`, `HmisProfile`, `SocialMediaProfile`)
-enforces through the grant checkers: SHARED read / SHARED write, list reads
-scope via type-level `get_queryset` hooks (empty-not-error parity), single
-reads and mutations refuse; `clients` joined `LEGACY_INERT_APPS` and
-`CASEWORKER_ROLE` carries the bundle.  Was: Proposed — records the per-model
+**Status:** Implemented (2026-09-10, amended 2026-10-27) — the client family
+(`ClientProfile`, `ClientContact`, `ClientHouseholdMember`, `HmisProfile`,
+`SocialMediaProfile`) enforces through the grant checkers: SHARED read / SHARED
+write, the root list fields carry `HasPerm(..., fail_silently=True)` so a denial
+is an empty page, and single reads and mutations refuse; `clients` joined
+`LEGACY_INERT_APPS` and `CASEWORKER_ROLE` carries the bundle.  Was: Proposed —
+records the per-model
 tiering product rule (2026-09-02) and the client-domain write-tier decision;
 the architectural prerequisite (decoupling read scope from write scope,
 § Precondition) was the work that gated the cutover.  Remaining: client
 documents (CREATOR/UPLOADER tier), import surfaces, and the shelter-operator
 read-surface narrow (dedupe search).
-**Date:** 2026-09-02 (amended 2026-09-02)
+**Date:** 2026-09-02 (amended 2026-09-02, 2026-10-27)
 **Scope:** Resolves ADR 0001 §7.6 (the §5.1 client-writes design) and establishes the
 per-model read/write-tier vocabulary that the caseworker domains (RFC 0003) inherit.
 Gates the clients cutover (ADR §4 phase 4). Independent of the tier-3 FE surfacing
