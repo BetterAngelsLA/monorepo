@@ -461,6 +461,7 @@ jobs:
             yarn nx affected -t eas-update --configuration ${{ matrix.environment }}
           '
         env:
+          CI: 'true'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}

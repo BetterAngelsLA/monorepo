@@ -98,7 +98,8 @@
     "libphonenumber-js": "*",
     "validator": "*",
     "rxjs": "*",
-    "http-proxy-middleware": "*"
+    "http-proxy-middleware": "*",
+    "dotenv": "*"
   },
   "devDependencies": {}
 }

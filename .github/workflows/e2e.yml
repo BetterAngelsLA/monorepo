@@ -221,6 +221,10 @@ jobs:
         run: |
           PROJECT="${{ steps.pr.outputs.project }}"
           if [ -n "$PROJECT" ]; then
+            if ! [[ "$PROJECT" =~ ^[A-Za-z0-9_-]+$ ]]; then
+              echo "Invalid project name: $PROJECT" >&2
+              exit 1
+            fi
             TARGET_ARGS=("run" "$PROJECT:eas-e2e")
           else
             TARGET_ARGS=(-t "eas-e2e")

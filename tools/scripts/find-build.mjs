@@ -57,15 +57,15 @@ const args = [
   'betterangels:build-list',
   '--platform',
   platform,
-  '--build-profile',
+  '--buildProfile',
   profile,
-  '--runtime-version',
+  '--runtimeVersion',
   runtime,
   '--limit',
   // Enough to see past a canceled duplicate to the build that actually exists.
   '10',
   '--json',
-  '--non-interactive',
+  '--interactive=false',
 ];
 
 let lastError;

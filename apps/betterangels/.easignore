@@ -30,4 +30,5 @@ ios/
 
 # Local environment; the EAS environment is the build source.
 .env
+.env.local
 .env.deploy.*
