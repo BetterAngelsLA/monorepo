@@ -135,6 +135,11 @@ export const GET_NOTE = gql`
           id
           name
         }
+        assignee {
+          id
+          firstName
+          lastName
+        }
         description
         status
         createdAt

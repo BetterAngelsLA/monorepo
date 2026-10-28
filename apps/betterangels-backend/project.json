@@ -23,6 +23,13 @@
     },
     "deploy": {
       "command": "tools/deploy/ecs_deploy.sh",
+      "dependsOn": [
+        {
+          "projects": ["monorepo-image"],
+          "target": "publish-image",
+          "params": "forward"
+        }
+      ],
       "configurations": {
         "production": {},
         "preview": {

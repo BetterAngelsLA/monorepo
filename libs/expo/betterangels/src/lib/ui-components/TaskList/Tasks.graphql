@@ -44,6 +44,11 @@ query Tasks(
         firstName
         lastName
       }
+      assignee {
+        id
+        firstName
+        lastName
+      }
       createdAt
       updatedAt
     }

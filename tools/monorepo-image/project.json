@@ -36,7 +36,10 @@
         "builder": "${BUILDX_BUILDER}",
         "push": true,
         "provenance": "false",
-        "cache-from": ["type=registry,ref=${BRANCH_CACHE}", "type=registry,ref=${MAIN_CACHE}"],
+        "cache-from": [
+          "type=registry,ref=${BRANCH_CACHE}",
+          "type=registry,ref=${MAIN_CACHE}"
+        ],
         "cache-to": ["type=registry,ref=${BRANCH_CACHE},mode=max"]
       },
       "configurations": {
@@ -47,6 +50,16 @@
         "production": {
           "target": "production",
           "tags": ["${MONOREPO_IMAGE}:${DOCKER_TAG}"]
+        }
+      }
+    },
+    "publish-image": {
+      "command": "yarn nx run monorepo-image:publish:production",
+      "cache": false,
+      "configurations": {
+        "production": {},
+        "preview": {
+          "command": "echo 'Skipping monorepo image publish (preview)'"
         }
       }
     }

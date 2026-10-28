@@ -2,7 +2,7 @@
  * EAS E2E Trigger Script
  *
  * Orchestrates E2E test execution:
- *   1. Setup env and compute fingerprint (same as deploy pipeline)
+ *   1. Compute the fingerprint (same as deploy pipeline)
  *   2. Ensure preview builds exist for this fingerprint (trigger if missing)
  *   3. Publish an EAS Update for the branch
  *   4. Trigger the EAS workflow with build IDs, update group, and build filter
@@ -13,8 +13,8 @@
  *   npx ts-node tools/scripts/eas-e2e.ts --project betterangels \
  *     [--configuration preview|production]
  *
- * The configuration (default `preview`) picks the profile env written into the
- * tracked `.env` and the default build profiles per platform.
+ * The configuration (default `preview`) picks the default build profiles per
+ * platform.
  *
  * Required env vars:
  *   EXPO_TOKEN   - EAS authentication token
@@ -114,13 +114,15 @@ console.log(`\nPublishing update on branch: ${branch}`);
 // this env, which propagates to the bundler it spawns.
 process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
 
-// `eas-update` is a run-commands target: it takes no CLI flags of its own — the
+// `eas-update` is a run-commands target wrapping the eas-update script — the
 // branch comes from BRANCH_NAME (set by the workflow) and the machine-readable
 // payload is what the script prints on stdout.
-const updates = runJson<Array<{ group: string; platform: string }>>('yarn', [
-  'nx',
-  'run',
-  `${project}:eas-update:${configuration}`,
+const updates = runJson<Array<{ group: string; platform: string }>>('node', [
+  'tools/scripts/eas-update.mjs',
+  '--project',
+  project,
+  '--profile',
+  configuration,
 ]);
 const groupId = updates[0]?.group;
 if (!groupId) {

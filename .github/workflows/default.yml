@@ -10,6 +10,13 @@ on:
   # event (a queue merge that fast-forwards to the commit it already tested), and
   # then nothing deploys until the next push.
   workflow_dispatch:
+    inputs:
+      force-eas-build:
+        # There is no PR label to lean on here: a build that ended ERRORED leaves
+        # the fingerprint with no binary, and this is the way to queue another.
+        description: Queue a build even though one already exists for the fingerprint
+        type: boolean
+        default: false
 
 env:
   AWS_REGION: us-west-2
@@ -324,6 +331,13 @@ jobs:
           # task's output in a labelled `::group::` fold, and ends with the failed
           # task list. `stream` interleaved every project *and* opted out of that
           # grouping, which buried the failure in hundreds of passing lines.
+          # Nx builds a task's env before its dependencies run, so export it here;
+          # Nx never overrides a variable that is already set.
+          # Assign first: `eval ""` on a failed substitution succeeds silently,
+          # which would skip the production guard.
+          APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile ${{ matrix.environment }} --print)" || exit 1
+          eval "$APP_ENV_EXPORTS"
+
           yarn nx affected -t $TARGETS --configuration ${{ matrix.environment }} --parallel=6
           EOF
         env:
@@ -379,21 +393,14 @@ jobs:
           yarn nx run monorepo-image:publish:ci-base --skip-nx-cache
           EOF
 
-      - name: 🏗️ Build and push production image
-        if: matrix.environment == 'production' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx run monorepo-image:publish:production --skip-nx-cache
-          EOF
-
-      - name: Build production side-effect images
+      - name: Build production imgproxy image
         if: matrix.environment == 'production'
         run: |
-          # imgproxy/nginx push during their build. Their preview builds are
-          # cacheable, but a production cache hit would skip the push for this
-          # commit's image tag.
+          # imgproxy pushes during its build; a production cache hit would skip
+          # the push for this commit's image tag. nginx is published by its
+          # deploy dependency.
           docker compose run better-angels bash <<'EOF'
-          yarn nx run-many -t build --projects=imgproxy,nginx --configuration production --skip-nx-cache
+          yarn nx run-many -t build --projects=imgproxy --configuration production --skip-nx-cache
           EOF
         env:
           # @nx-tools/nx-container reads its action-style input for image metadata.
@@ -437,17 +444,22 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           # Restores what `copy-lockfile` rewrites, even when the build fails.
-          docker compose run --rm better-angels bash -c '
+          # Heredoc, not `bash -c '...'`: one apostrophe in the script ends the
+          # quoted argument, and the rest runs on the runner instead.
+          docker compose run --rm better-angels bash <<'EOF'
             set -euo pipefail
             trap "node tools/scripts/restore-workspace.mjs --project betterangels || true" EXIT
-            # Env, then the EAS-shaped workspace: the runtime is resolved from
-            # both, so they have to match what the build uploads. `sync-deps` is
-            # deliberately absent — it installs, and installing after
-            # `copy-lockfile` prunes the other projects.
+            # The profile env, then the EAS-shaped workspace: the runtime is
+            # resolved from both, so they have to match what the build uploads.
+            # `sync-deps` is deliberately absent — it installs, and installing
+            # after `copy-lockfile` prunes the other projects.
             # Not `nx affected`: an unaffected app would resolve a runtime without
             # its env and queue a build for a fingerprint nothing uses. The reuse
             # check below is what makes this a no-op when nothing changed.
-            yarn nx run betterangels:write-eas-env:${{ matrix.environment }}
+            # One resolution: writes the `.env` `build-missing` fingerprints, and
+            # exports it for the tasks, whose env Nx fills before they run.
+            APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile ${{ matrix.environment }} --print)" || exit 1
+            eval "$APP_ENV_EXPORTS"
             yarn nx run betterangels:copy-lockfile
             # One build per fingerprint, in any status — same rule as the preview.
             # Both platforms: on main the binary is the release artifact, not a
@@ -457,8 +469,10 @@ jobs:
               --platforms android,ios
             # The target pins the branch and the EAS environment for the update.
             yarn nx affected -t eas-update --configuration ${{ matrix.environment }}
-          '
+          EOF
         env:
+          CI: 'true'
+          FORCE_EAS_BUILD: ${{ inputs['force-eas-build'] || 'false' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}

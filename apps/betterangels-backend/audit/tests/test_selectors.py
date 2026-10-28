@@ -3,12 +3,13 @@
 import base64
 import json
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from types import SimpleNamespace
 from typing import Any
 from unittest import mock
 
 from django.apps import apps
+from django.core.cache import cache
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
@@ -17,27 +18,34 @@ from pghistory.core import event_models
 from strawberry import ID
 
 from accounts.models import User
+from accounts.role_manager import OrgRoleManager
+from accounts.tests.baker_recipes import organization_recipe
 from audit.selectors import (
     _EXCLUDED_EVENT_MODELS,
     _LABEL_FIELD_OVERRIDES,
+    MAX_ACTOR_LIMIT,
     MAX_LIMIT,
     _label_field,
     _LabelResolver,
     _m2m_meta,
     _scalar_changes,
     _through_event_meta,
+    object_audit_actors,
     object_audit_log,
 )  # noqa: F401 -- the cursor-aware API is exercised directly by the pagination tests
 from audit.tests.utils import audit_context, audit_log, clear_history_context
 from audit.types import AuditEventFilter
 from clients.models import ClientProfile
 from shelters.enums import (
+    DayOfWeekChoices,
     DemographicChoices,
     ExitPolicyChoices,
     MedicalNeedChoices,
     ReferralRequirementChoices,
     ReservationStatusChoices,
+    ScheduleTypeChoices,
 )
+from shelters.groups import SHELTER_OPERATOR
 from shelters.models import (
     Bed,
     Demographic,
@@ -47,8 +55,10 @@ from shelters.models import (
     Reservation,
     ReservationClient,
     Room,
+    Schedule,
     Shelter,
 )
+from shelters.services.shelter import shelter_update
 from test_utils.pghistory import backdate_event_rows
 
 
@@ -1516,3 +1526,698 @@ class ObjectAuditLogQueryBudgetTestCase(TestCase):
         outer = _outer_select(queries[0]["sql"])
         self.assertRegex(outer, r'pgh_created_at"?\s*>=')
         self.assertRegex(outer, r'actor_id"?\s*=')
+
+
+class ObjectAuditActorsQueryBudgetTestCase(TestCase):
+    """The actor list is a single aggregate query with the seed filter in SQL (§20)."""
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="S")
+        for name in ("First", "Second"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+
+    def test_actors_is_one_aggregate_query_with_the_seed_filter_in_sql(self) -> None:
+        with CaptureQueriesContext(connection) as captured:
+            actors = object_audit_actors(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual([actor.label for actor in actors], ["Ada Lovelace"])
+        self.assertEqual(len(captured.captured_queries), 1)
+
+        outer = _outer_select(captured.captured_queries[0]["sql"])
+        # Counting and the label tie-break happen in SQL, not by fetching rows.
+        self.assertIn("COUNT(*)", outer)
+        self.assertIn("MAX(", outer)
+        self.assertIn("GROUP BY", outer)
+        # The seed exclusion is a predicate in the outer WHERE (§10/§11). Scope the
+        # check to the WHERE so the projected ``label`` column cannot satisfy it,
+        # and compare columns rather than the literal so parameterization changes
+        # cannot break the assertion.
+        where = outer[outer.index("WHERE") :]
+        self.assertIn('"label"', where)
+
+
+class ObjectAuditLogScheduleNettingTestCase(TestCase):
+    """Full-replacement schedule saves are netted to one UPDATE per slot (§13).
+
+    ``shelter_update`` replaces the schedule set wholesale (delete all, then
+    bulk-create), so a single time edit emits a ``.remove`` and an ``.add`` of
+    the same slot. The selector pairs them back up instead of rendering a
+    deletion and a creation the user never made.
+    """
+
+    def setUp(self) -> None:
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Scheduled Shelter")
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+
+    def _replace_schedules(self, *, start: time, end: time) -> None:
+        """The same delete-then-create shape ``shelter_update`` uses."""
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=start,
+                end_time=end,
+            )
+
+    def test_time_edit_is_one_update_event_not_a_remove_plus_add(self) -> None:
+        self._replace_schedules(start=time(10, 0), end=time(18, 0))
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual([event.action for event in actions[0].events], ["shelter.schedule.update"])
+        self.assertEqual([event.kind for event in actions[0].events], ["UPDATE"])
+
+        changes = actions[0].events[0].field_changes or {}
+        self.assertEqual(changes["start time"], ["09:00:00", "10:00:00"])
+        self.assertEqual(changes["end time"], ["17:00:00", "18:00:00"])
+        self.assertEqual(set(changes), {"start time", "end time"})
+
+    def test_netting_does_not_pair_across_objects(self) -> None:
+        """One context saving two shelters must net each object's rows separately."""
+        with audit_context(label="seed"):
+            other = Shelter.objects.create(name="Other Scheduled Shelter")
+            Schedule.objects.create(
+                shelter=other,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            other.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+            Schedule.objects.create(
+                shelter=other,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+
+        for obj in (self.shelter, other):
+            actions = audit_log(obj=obj, target_type="SHELTER")
+            schedule_events = [
+                event for action in actions for event in action.events if event.action.startswith("shelter.schedule")
+            ]
+
+            self.assertEqual([event.action for event in schedule_events], ["shelter.schedule.update"])
+            self.assertTrue(all(event.target_id == str(obj.pk) for event in schedule_events))
+
+    def test_netted_change_keys_match_the_add_remove_keys(self) -> None:
+        """Netted updates render §13 display keys, like every other schedule event.
+
+        A single save can net one slot and add another; both must key
+        ``field_changes`` identically (``start time``, not ``start_time``) or the
+        action-level rollup carries two shapes for one field.
+        """
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.TUESDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+        events = {event.action: event for event in actions[0].events}
+
+        netted = events["shelter.schedule.update"].field_changes or {}
+        added = events["shelter.schedule.add"].field_changes or {}
+        self.assertEqual(set(netted), {"start time", "end time"})
+        self.assertIn("start time", added)
+        self.assertNotIn("start_time", netted)
+        self.assertNotIn("start_time", added)
+
+        rollup_keys = set(actions[0].field_changes)
+        self.assertTrue(any(key.endswith(" start time") for key in rollup_keys))
+        self.assertFalse(any(key.endswith("start_time") for key in rollup_keys))
+        # Database-generated schedule columns are derived from start/end; they
+        # must not appear as changes (or in the rollup) on add/remove either.
+        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in added))
+        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in rollup_keys))
+        # The rollup holds only real changes: no ``[x, x]`` no-op pair survives.
+        for pair in actions[0].field_changes.values():
+            self.assertNotEqual(pair[0], pair[1])
+
+    def test_generated_schedule_columns_are_not_rendered(self) -> None:
+        """GeneratedField values are derived, so they are not changes or snapshots."""
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.TUESDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        added = next(event for event in actions[0].events if event.action == "shelter.schedule.add")
+
+        self.assertFalse(
+            any("cycle" in key.lower() or "duration" in key.lower() for key in (added.field_changes or {}))
+        )
+        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in (added.snapshot or {})))
+
+    def test_netted_event_carries_the_slot_context(self) -> None:
+        """The slot's unchanged identity travels in ``context``, not as a change."""
+        self._replace_schedules(start=time(10, 0), end=time(18, 0))
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+        event = actions[0].events[0]
+
+        self.assertEqual(event.context, {"day": "Monday", "schedule type": "Operating Hours"})
+        self.assertEqual(set(event.field_changes or {}), {"start time", "end time"})
+        self.assertFalse([pair for pair in actions[0].field_changes.values() if pair[0] == pair[1]])
+
+    def test_netted_and_genuine_events_carry_snapshots(self) -> None:
+        """``include_snapshot`` still populates schedule events after netting."""
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.TUESDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        events = {event.action: event for event in actions[0].events}
+
+        netted = events["shelter.schedule.update"].snapshot or {}
+        added = events["shelter.schedule.add"].snapshot or {}
+
+        self.assertTrue(netted, "the netted UPDATE must carry a snapshot")
+        self.assertTrue(added, "the genuine INSERT must carry a snapshot")
+        # A netted UPDATE snapshots the post-change state; the old row is gone.
+        self.assertEqual(netted["start time"], "10:00:00")
+        self.assertEqual(added["day"], "Tuesday")
+
+    def test_netted_snapshot_resolves_fk_labels(self) -> None:
+        """A netted event's snapshot renders FK ids as labels, like any other event."""
+        with audit_context(label="seed"):
+            demographic = Demographic.objects.create(name=DemographicChoices.COUPLES)
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                demographic=demographic,
+            )
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+                demographic=demographic,
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        snapshot = actions[0].events[0].snapshot or {}
+
+        self.assertEqual(snapshot["shelter"], "Scheduled Shelter")
+        self.assertEqual(snapshot["demographic"], "couples")
+
+    def test_unchanged_slot_is_not_reported_as_a_change(self) -> None:
+        self._replace_schedules(start=time(9, 0), end=time(17, 0))
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].events, [])
+        self.assertEqual(actions[0].field_changes, {})
+
+    def test_multiple_residual_slots_render_as_delete_and_insert(self) -> None:
+        """No stable provenance across a replacement: only a 1:1 residual nets."""
+        with audit_context(label="seed"):
+            self.shelter.schedules.all().delete()
+            for start, end in ((time(9, 0), time(12, 0)), (time(10, 0), time(11, 0))):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=end,
+                )
+        # Two windows edited in one save; a positional zip used to pair them
+        # across (09:00→09:30, 10:00→10:30) and invent that story.
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            for start, end in ((time(10, 30), time(12, 0)), (time(9, 30), time(11, 0))):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=end,
+                )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(
+            sorted(event.kind for event in actions[0].events),
+            ["DELETE", "DELETE", "INSERT", "INSERT"],
+        )
+        self.assertTrue(all(event.context is None for event in actions[0].events))
+
+    def test_hidden_fields_are_redacted_from_genuine_events(self) -> None:
+        """A withheld raw attname never reaches a schedule add/remove field map (§18)."""
+        with audit_context(user=self.user):
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.TUESDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            hidden_fields={"shelters.Schedule": ("day",)},
+        )
+        event = next(event for event in actions[0].events if event.action == "shelter.schedule.add")
+
+        changes = event.field_changes or {}
+        self.assertNotIn("day", changes)
+        self.assertIn("start time", changes)
+
+    def test_hidden_fields_are_redacted_from_netted_changes_and_context(self) -> None:
+        """The synthesized diff and context honour the same withheld set (§18)."""
+        self._replace_schedules(start=time(10, 0), end=time(18, 0))
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            hidden_fields={"shelters.Schedule": ("start_time", "day")},
+        )
+        event = actions[0].events[0]
+
+        self.assertEqual(set(event.field_changes or {}), {"end time"})
+        self.assertEqual(event.context, {"schedule type": "Operating Hours"})
+
+    def test_deleted_slots_keep_delete_events(self) -> None:
+        """Removes with no matching add are genuine deletions, not a netted update."""
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual([event.action for event in actions[0].events], ["shelter.schedule.remove"])
+        self.assertEqual([event.kind for event in actions[0].events], ["DELETE"])
+        self.assertIsNone(actions[0].events[0].context)
+        self.assertEqual((actions[0].events[0].field_changes or {})["day"], ["Monday", None])
+
+    def test_every_day_slot_keeps_the_day_key_out_of_the_netted_change(self) -> None:
+        """``day=None`` means every day: absent from the change, null in context."""
+        with audit_context(label="seed"):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=None,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=None,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        event = actions[0].events[0]
+        changes = event.field_changes or {}
+        self.assertNotIn("day", changes)
+        self.assertEqual(changes["start time"], ["09:00:00", "10:00:00"])
+        self.assertEqual(changes["end time"], ["17:00:00", "18:00:00"])
+        # The UI renders "Every day" from the null; the copy stays in the UI.
+        self.assertIsNone((event.context or {})["day"])
+
+    def test_schedule_netting_respects_the_event_cap(self) -> None:
+        """Netting shares the action's event budget instead of emitting past it."""
+        with audit_context(label="seed"):
+            self.shelter.schedules.all().delete()
+            for start in (time(9, 0), time(10, 0), time(11, 0)):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=time(17, 0),
+                )
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            for start in (time(9, 30), time(10, 30), time(11, 30)):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=time(17, 0),
+                )
+
+        with mock.patch("audit.selectors.MAX_EVENTS_PER_ACTION", 2):
+            actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)
+        self.assertTrue(actions[0].truncated)
+        self.assertEqual(len(actions[0].events), 2)
+
+
+class ObjectAuditLogScheduleServiceTestCase(TestCase):
+    """The real ``shelter_update`` path fans days out one row per day (§13)."""
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        self.org.users.add(self.user)
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
+
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Scheduled Shelter", organization=self.org)
+            for day in (DayOfWeekChoices.MONDAY, DayOfWeekChoices.TUESDAY):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=day,
+                    start_time=time(9, 0),
+                    end_time=time(17, 0),
+                )
+
+    def test_multi_day_save_nets_one_update_per_day(self) -> None:
+        with audit_context(user=self.user):
+            shelter_update(
+                user=self.user,
+                data={
+                    "id": self.shelter.pk,
+                    "schedules": [
+                        {
+                            "schedule_type": ScheduleTypeChoices.OPERATING,
+                            "days": [DayOfWeekChoices.MONDAY, DayOfWeekChoices.TUESDAY],
+                            "start_time": time(10, 0),
+                            "end_time": time(18, 0),
+                        }
+                    ],
+                },
+            )
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+
+        self.assertEqual(len(actions), 1)  # the whole service call is one action
+        schedule_events = [event for event in actions[0].events if event.action.startswith("shelter.schedule")]
+        self.assertEqual([event.action for event in schedule_events], ["shelter.schedule.update"] * 2)
+        self.assertEqual(
+            sorted((event.context or {})["day"] for event in schedule_events),
+            ["Monday", "Tuesday"],
+        )
+        for event in schedule_events:
+            changes = event.field_changes or {}
+            self.assertEqual(changes["start time"], ["09:00:00", "10:00:00"])
+            self.assertEqual(changes["end time"], ["17:00:00", "18:00:00"])
+
+
+class ObjectAuditActorsSelectorTestCase(TestCase):
+    """``object_audit_actors`` is scoped to the object's own history, not org members."""
+
+    def setUp(self) -> None:
+        cache.clear()
+        self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
+        self.other_user = baker.make(User, first_name="Grace", last_name="Hopper", email="grace@example.com")
+        self.bed_user = baker.make(User, first_name="Carol", last_name="Shaw", email="carol@example.com")
+
+        with audit_context(label="seed"):
+            self.shelter = Shelter.objects.create(name="Actors Shelter")
+            self.bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        for name in ("First", "Second"):
+            with audit_context(user=self.user):
+                self.shelter.name = name
+                self.shelter.save()
+        with audit_context(user=self.other_user):
+            self.shelter.name = "Third"
+            self.shelter.save()
+        with audit_context(label="import"):
+            self.shelter.name = "Imported"
+            self.shelter.save()
+
+    def test_lists_distinct_actors_with_one_system_entry(self) -> None:
+        actors = object_audit_actors(obj=self.shelter, target_type="SHELTER")
+        by_label = {actor.label: actor for actor in actors}
+
+        self.assertEqual(set(by_label), {"Ada Lovelace", "Grace Hopper", "System"})
+        self.assertEqual(by_label["Ada Lovelace"].id, str(self.user.pk))
+        self.assertFalse(by_label["Ada Lovelace"].is_system)
+        self.assertIsNone(by_label["System"].id)
+        self.assertTrue(by_label["System"].is_system)
+
+    def test_search_filters_user_labels_and_system(self) -> None:
+        self.assertEqual(
+            [actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER", search="ada")],
+            ["Ada Lovelace"],
+        )
+        self.assertEqual(
+            [actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER", search="sys")],
+            ["System"],
+        )
+        self.assertEqual(object_audit_actors(obj=self.shelter, target_type="SHELTER", search="zz"), [])
+        # The search has the same two-character floor as the UI.
+        self.assertEqual(object_audit_actors(obj=self.shelter, target_type="SHELTER", search="a"), [])
+
+    def test_system_only_filter_returns_only_system_events(self) -> None:
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            filters=AuditEventFilter(system_only=True),
+        )
+
+        self.assertEqual([action.actor for action in actions], ["system (import)"])
+        self.assertEqual(actions[0].field_changes["name"], ["Third", "Imported"])
+
+    def test_system_only_and_actor_id_compose(self) -> None:
+        with audit_context(user=self.user, label="import"):
+            self.shelter.name = "Imported by Ada"
+            self.shelter.save()
+        with audit_context(user=self.other_user, label="import"):
+            self.shelter.name = "Imported by Grace"
+            self.shelter.save()
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            filters=AuditEventFilter(actor_id=ID(str(self.user.pk)), system_only=True),
+        )
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].field_changes["name"], ["Imported", "Imported by Ada"])
+
+    def test_hidden_summary_actor_is_omitted(self) -> None:
+        with audit_context(user=self.bed_user):
+            self.bed.name = "Bed B"
+            self.bed.save()
+
+        labels = {actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")}
+        self.assertIn("Carol Shaw", labels)
+
+        hidden = {
+            actor.label
+            for actor in object_audit_actors(
+                obj=self.shelter,
+                target_type="SHELTER",
+                hidden_summary_models={Bed._meta.label},
+            )
+        }
+        self.assertNotIn("Carol Shaw", hidden)
+
+    def test_limit_and_validation(self) -> None:
+        actors = object_audit_actors(obj=self.shelter, target_type="SHELTER", limit=1)
+
+        # Ada wrote twice, Grace and System once each.
+        self.assertEqual([actor.label for actor in actors], ["Ada Lovelace"])
+        with self.assertRaises(ValueError):
+            object_audit_actors(obj=self.shelter, target_type="SHELTER", limit=0)
+        with self.assertRaises(ValueError):
+            object_audit_actors(obj=self.shelter, target_type="SHELTER", limit=MAX_ACTOR_LIMIT + 1)
+
+    def test_search_can_reach_an_actor_outside_the_limit(self) -> None:
+        # Ada has the most events, so a naive top-N-then-filter would miss Grace.
+        self.assertEqual(
+            [
+                actor.label
+                for actor in object_audit_actors(
+                    obj=self.shelter,
+                    target_type="SHELTER",
+                    search="grace",
+                    limit=1,
+                )
+            ],
+            ["Grace Hopper"],
+        )
+
+    def test_actor_list_is_cached_per_object(self) -> None:
+        cache.clear()
+        with CaptureQueriesContext(connection) as first:
+            object_audit_actors(obj=self.shelter, target_type="SHELTER")
+        with CaptureQueriesContext(connection) as second:
+            object_audit_actors(obj=self.shelter, target_type="SHELTER")
+
+        self.assertGreater(len(first), 0)
+        self.assertEqual(len(second), 0)
+
+    def test_most_frequent_frozen_name_wins(self) -> None:
+        """A rename mid-history must not surface the rarest label for that id."""
+        renamed = baker.make(User, first_name="Rosa", last_name="Parks", email="rosa@example.com")
+        for name in ("Rosa Parks", "Rosa Parks"):
+            with audit_context(user=renamed):
+                self.shelter.name = name
+                self.shelter.save()
+        renamed.last_name = "P."
+        renamed.save()
+        with audit_context(user=renamed):
+            self.shelter.name = "Renamed"
+            self.shelter.save()
+
+        by_id = {actor.id: actor for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")}
+
+        self.assertEqual(by_id[str(renamed.pk)].label, "Rosa Parks")
+
+    def test_equally_frequent_names_break_the_tie_by_recency(self) -> None:
+        """One event under each name picks the most recently written one."""
+        # The older name is the one that would win an alphabetical tie-break, so
+        # this asserts recency rather than merely asserting determinism.
+        renamed = baker.make(User, first_name="Rosa", last_name="P.", email="rosa@example.com")
+
+        with audit_context(user=renamed):
+            self.shelter.name = "Older"
+            self.shelter.save()
+        renamed.last_name = "Parks"
+        renamed.save()
+        with audit_context(user=renamed):
+            self.shelter.name = "Newer"
+            self.shelter.save()
+
+        # Every event in one test transaction shares NOW(), so pin the two rows
+        # apart: the tie-break is a real chronological comparison, not a name sort.
+        events = Shelter.pgh_event_model.objects.filter(  # type: ignore[attr-defined]
+            pgh_obj_id=self.shelter.pk, pgh_label="shelter.update"
+        )
+        backdate_event_rows(
+            events.filter(name="Older"), pgh_created_at=datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+        )
+        backdate_event_rows(
+            events.filter(name="Newer"), pgh_created_at=datetime(2026, 1, 2, 12, 0, tzinfo=timezone.utc)
+        )
+
+        by_id = {actor.id: actor for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")}
+
+        self.assertEqual(by_id[str(renamed.pk)].label, "Rosa Parks")
+
+    def test_schedule_saves_rank_by_written_rows_not_rendered_events(self) -> None:
+        """Ordering counts raw rows: a full-replacement save writes two per slot (§13)."""
+        scheduler = baker.make(User, first_name="Sched", last_name="Uler", email="sched@example.com")
+        editor = baker.make(User, first_name="Edit", last_name="Or", email="edit@example.com")
+
+        with audit_context(label="seed"):
+            self.shelter.schedules.all().delete()
+            for hour in (9, 10, 11):
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=time(hour, 0),
+                    end_time=time(hour, 30),
+                )
+
+        # One save that changes a single slot renders one netted event but writes
+        # six rows: three removes plus three adds.
+        with audit_context(user=scheduler):
+            self.shelter.schedules.all().delete()
+            for hour in (9, 10, 11):
+                start = time(9, 15) if hour == 9 else time(hour, 0)
+                Schedule.objects.create(
+                    shelter=self.shelter,
+                    day=DayOfWeekChoices.MONDAY,
+                    start_time=start,
+                    end_time=time(hour, 30),
+                )
+        for index in range(4):
+            with audit_context(user=editor):
+                self.shelter.name = f"edit-{index}"
+                self.shelter.save()
+
+        rendered = [
+            len(action.events)
+            for action in audit_log(obj=self.shelter, target_type="SHELTER")
+            if action.actor == "Sched Uler"
+        ]
+        labels = [actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")]
+
+        self.assertEqual(rendered, [1])  # netting collapsed six writes into one event
+        # Counted as rendered events the editor (4) would outrank the scheduler
+        # (1); counted as written rows the scheduler (6) ranks first. The count is
+        # written rows, so this pins the documented metric.
+        self.assertLess(labels.index("Sched Uler"), labels.index("Edit Or"))
+
+    def test_room_and_bed_targets_scope_the_actor_list(self) -> None:
+        """The list is anchored on the target, not on its shelter or its parent room."""
+        with audit_context(label="seed"):
+            room = Room.objects.create(shelter=self.shelter, name="Room A")
+            bed = Bed.objects.create(shelter=self.shelter, room=room, name="Bed A")
+        with audit_context(user=self.user):
+            bed.name = "Bed B"
+            bed.save()
+        with audit_context(user=self.other_user):
+            room.name = "Room B"
+            room.save()
+
+        self.assertEqual(
+            [actor.label for actor in object_audit_actors(obj=bed, target_type="BED")],
+            ["Ada Lovelace"],
+        )
+        # The bed lives in the room, so its event references the room: the ROOM
+        # log's BedEvent exclusion (§32) must keep the bed's editor out of the list.
+        self.assertEqual(
+            [actor.label for actor in object_audit_actors(obj=room, target_type="ROOM")],
+            ["Grace Hopper"],
+        )
+
+    def test_idless_named_actor_is_not_selectable(self) -> None:
+        with audit_context(user_name="Ghost", user_email="ghost@example.com"):
+            self.shelter.name = "Ghosted"
+            self.shelter.save()
+
+        labels = {actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")}
+
+        self.assertNotIn("Ghost", labels)

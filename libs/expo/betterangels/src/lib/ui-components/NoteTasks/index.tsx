@@ -23,6 +23,7 @@ export interface TaskFormData {
   description?: string | null;
   status?: TaskStatusEnum | null;
   teamId?: string | null;
+  assigneeId?: string | null;
 }
 
 interface INoteTasksProps {
@@ -99,7 +100,9 @@ export default function NoteTasks(props: INoteTasksProps) {
       summary: data.summary,
       description: data.description || '',
       status: (data.status as TaskStatusEnum) || TaskStatusEnum.ToDo,
-      teamId: data.teamId ?? teamId ?? null,
+      // `||`, not `??`: a cleared select reports '' and must land as null.
+      teamId: data.teamId || teamId || null,
+      assigneeId: data.assigneeId || null,
     };
 
     if (existingId) {
@@ -189,6 +192,9 @@ export default function NoteTasks(props: INoteTasksProps) {
           description: taskToEdit.description || undefined,
           status: taskToEdit.status,
           teamId: taskToEdit.teamId,
+          // Without this the modal opens with no assignee, and saving writes
+          // that blank back — silently clearing a task's assignee.
+          assigneeId: taskToEdit.assigneeId,
         } as UpdateTaskInput)
       : undefined;
 

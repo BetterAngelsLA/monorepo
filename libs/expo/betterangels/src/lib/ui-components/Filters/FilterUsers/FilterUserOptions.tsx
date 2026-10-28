@@ -28,6 +28,8 @@ type TProps = {
   valueKey?: keyof TFilterOption;
   labelKey?: keyof TFilterOption;
   style?: StyleProp<ViewStyle>;
+  /** Noun for the "Displaying N of M …" line. */
+  modelName?: string;
 };
 
 export function FilterUserOptions(props: TProps) {
@@ -39,6 +41,7 @@ export function FilterUserOptions(props: TProps) {
     searchPlaceholder,
     valueKey = 'id',
     labelKey = 'label',
+    modelName = 'author',
   } = props;
   const [localSelected, setLocalSelected] =
     useState<TFilterOption[]>(initialSelected);
@@ -122,7 +125,7 @@ export function FilterUserOptions(props: TProps) {
           loadMore,
           hasMore,
           totalItems: total,
-          modelName: 'author',
+          modelName,
           estimatedItemSize: 48,
         }}
       />

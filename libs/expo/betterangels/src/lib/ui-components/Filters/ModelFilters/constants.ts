@@ -16,6 +16,11 @@ export const modelFilterConfigDefault: Record<
     headerTitle: 'Filter - Author',
     searchPlaceholder: 'Search authors',
   },
+  assignees: {
+    buttonLabel: 'All Assignees',
+    headerTitle: 'Filter - Assignee',
+    searchPlaceholder: 'Search assignees',
+  },
   organizations: {
     buttonLabel: 'All Organizations',
     headerTitle: 'Filter - Organizations',

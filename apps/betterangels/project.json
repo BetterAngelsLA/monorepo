@@ -8,48 +8,6 @@
     "scope:betterangels"
   ],
   "targets": {
-    "start": {
-      "command": "expo start --port 8081",
-      "options": {
-        "cwd": "apps/betterangels"
-      },
-      "dependsOn": [
-        "sync-deps"
-      ]
-    },
-    "serve": {
-      "command": "expo start --web",
-      "options": {
-        "cwd": "apps/betterangels"
-      }
-    },
-    "run-ios": {
-      "command": "expo run:ios",
-      "options": {
-        "cwd": "apps/betterangels"
-      },
-      "dependsOn": [
-        "sync-deps"
-      ]
-    },
-    "run-android": {
-      "command": "expo run:android",
-      "options": {
-        "cwd": "apps/betterangels"
-      },
-      "dependsOn": [
-        "sync-deps"
-      ]
-    },
-    "prebuild": {
-      "command": "expo prebuild --no-install",
-      "options": {
-        "cwd": "apps/betterangels"
-      },
-      "dependsOn": [
-        "sync-deps"
-      ]
-    },
     "export-web": {
       "executor": "nx:run-commands",
       "cache": true,
@@ -69,6 +27,10 @@
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
         {
+          "fileset": "{projectRoot}/.env",
+          "includeIgnored": true
+        },
+        {
           "env": "CI"
         },
         {
@@ -78,13 +40,7 @@
           "env": "VITE_APP_BASE_PATH"
         },
         {
-          "env": "EXPO_PUBLIC_API_URL"
-        },
-        {
-          "env": "EXPO_PUBLIC_DEMO_API_URL"
-        },
-        {
-          "env": "EXPO_PUBLIC_SHELTER_WEB_URL"
+          "env": "EXPO_WEB_BASE_URL"
         },
         {
           "env": "APP_VARIANT"
@@ -93,10 +49,31 @@
           "env": "EXPO_PUBLIC_APP_ENV"
         },
         {
+          "env": "EXPO_PUBLIC_API_URL"
+        },
+        {
+          "env": "EXPO_PUBLIC_DEMO_API_URL"
+        },
+        {
           "env": "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL"
         },
         {
+          "env": "EXPO_PUBLIC_SHELTER_WEB_URL"
+        },
+        {
           "env": "EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY"
+        },
+        {
+          "env": "EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY"
+        },
+        {
+          "env": "EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY"
+        },
+        {
+          "env": "EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS"
+        },
+        {
+          "env": "EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID"
         }
       ],
       "configurations": {
@@ -114,8 +91,12 @@
         "command": "node tools/deploy/cloudfront-deploy.mjs"
       },
       "configurations": {
-        "preview": {},
-        "production": {}
+        "preview": {
+          "envFile": "apps/betterangels/.env.deploy.preview"
+        },
+        "production": {
+          "envFile": "apps/betterangels/.env.deploy.production"
+        }
       }
     },
     "post-pr-preview": {
@@ -168,6 +149,14 @@
         ]
       }
     },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": [
+          "apps/betterangels/**/*.{ts,tsx,js,jsx}"
+        ]
+      }
+    },
     "e2e": {
       "executor": "nx:run-commands",
       "defaultConfiguration": "ios",
@@ -190,8 +179,11 @@
       }
     },
     "copy-lockfile": {
-      "command": "node tools/scripts/eas-build-pre-install.mjs . apps/betterangels",
-      "cache": false
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node tools/scripts/eas-build-pre-install.mjs . apps/betterangels"
+      }
     },
     "sync-deps": {
       "executor": "@nx/expo:sync-deps",
@@ -217,13 +209,6 @@
         }
       }
     },
-    "restore-workspace": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "options": {
-        "command": "node tools/scripts/restore-workspace.mjs --project betterangels"
-      }
-    },
     "eas-update": {
       "executor": "nx:run-commands",
       "cache": false,
@@ -231,6 +216,9 @@
         "write-eas-env",
         "copy-lockfile"
       ],
+      "options": {
+        "command": "node tools/scripts/eas-update.mjs --project betterangels --profile preview"
+      },
       "configurations": {
         "preview": {
           "command": "node tools/scripts/eas-update.mjs --project betterangels --profile preview"
@@ -239,6 +227,10 @@
           "command": "node tools/scripts/eas-update.mjs --project betterangels --profile production"
         }
       }
+    },
+    "build-list": {
+      "executor": "@nx/expo:build-list",
+      "cache": false
     }
   }
 }
