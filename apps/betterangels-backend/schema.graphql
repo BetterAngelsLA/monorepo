@@ -88,12 +88,16 @@ enum AttachmentType {
   UNKNOWN
 }
 
+"""One cursor page of audit actions (ADR 0004 §10)."""
 type AuditActionPage {
   results: [AuditActionType!]!
   endCursor: String
   hasNextPage: Boolean!
 }
 
+"""
+A group of events written under one context (one action, ADR 0004 §12).
+"""
 type AuditActionType {
   timestamp: DateTime!
   actor: String!
@@ -103,10 +107,39 @@ type AuditActionType {
   truncated: Boolean!
 }
 
+"""One selectable actor for an object's audit log (ADR 0004 §21)."""
+type AuditActorType {
+  """
+  The frozen acting User.id; null for the synthetic System entry, which is selected with AuditEventFilter.systemOnly.
+  """
+  id: ID
+
+  """
+  Display label: the actor's most frequent frozen name/email, or System for the synthetic entry.
+  """
+  label: String!
+
+  """
+  True for the synthetic System entry. Key the picker on this, not on label, because a real user's frozen name can also be System.
+  """
+  isSystem: Boolean!
+}
+
+"""Filters for one object's write audit log (ADR 0004 §21)."""
 input AuditEventFilter {
+  """Inclusive lower bound on the event timestamp."""
   dateFrom: DateTime = null
+
+  """Inclusive upper bound on the event timestamp."""
   dateTo: DateTime = null
+
+  """The frozen acting User.id; omit to include every actor."""
   actorId: ID = null
+
+  """
+  Keep events rendered as system (a system reason label, or no frozen name/email). ANDs with actorId: with both set, only that actor's import/clone events match.
+  """
+  systemOnly: Boolean! = false
 }
 
 enum AuditEventKind {
@@ -115,6 +148,7 @@ enum AuditEventKind {
   DELETE
 }
 
+"""A single pghistory write event, normalized across tracked models."""
 type AuditEventType {
   timestamp: DateTime!
   actor: String!
@@ -125,6 +159,7 @@ type AuditEventType {
   fieldChanges: JSON
   snapshot: JSON
   summary: String
+  context: JSON
 }
 
 enum AuditTargetType {
@@ -2184,7 +2219,27 @@ type Query {
   currentUser: CurrentUserType!
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
+
+  """One cursor page of one object's write audit log, newest action first."""
   objectAuditLog(targetType: AuditTargetType!, objectId: ID!, filters: AuditEventFilter = null, after: String = null, limit: Int! = 50, includeSnapshot: Boolean! = false): AuditActionPage!
+
+  """
+  Distinct actors in one object's audit log, most active first. The synthetic System entry has a null id and is selected with systemOnly.
+  """
+  objectAuditActors(
+    targetType: AuditTargetType!
+    objectId: ID!
+
+    """
+    Case-insensitive label substring; shorter than two characters returns [].
+    """
+    search: String! = ""
+
+    """
+    Maximum actors to return (1-50); out of range is an error, not a clamp.
+    """
+    limit: Int! = 20
+  ): [AuditActorType!]!
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)

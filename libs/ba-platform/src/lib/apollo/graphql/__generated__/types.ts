@@ -85,6 +85,7 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
+/** One cursor page of audit actions (ADR 0004 §10). */
 export type AuditActionPage = {
   __typename: 'AuditActionPage';
   endCursor?: Maybe<Scalars['String']['output']>;
@@ -92,6 +93,7 @@ export type AuditActionPage = {
   results: Array<AuditActionType>;
 };
 
+/** A group of events written under one context (one action, ADR 0004 §12). */
 export type AuditActionType = {
   __typename: 'AuditActionType';
   actor: Scalars['String']['output'];
@@ -102,10 +104,27 @@ export type AuditActionType = {
   truncated: Scalars['Boolean']['output'];
 };
 
+/** One selectable actor for an object's audit log (ADR 0004 §21). */
+export type AuditActorType = {
+  __typename: 'AuditActorType';
+  /** The frozen acting User.id; null for the synthetic System entry, which is selected with AuditEventFilter.systemOnly. */
+  id?: Maybe<Scalars['ID']['output']>;
+  /** True for the synthetic System entry. Key the picker on this, not on label, because a real user's frozen name can also be System. */
+  isSystem: Scalars['Boolean']['output'];
+  /** Display label: the actor's most frequent frozen name/email, or System for the synthetic entry. */
+  label: Scalars['String']['output'];
+};
+
+/** Filters for one object's write audit log (ADR 0004 §21). */
 export type AuditEventFilter = {
+  /** The frozen acting User.id; omit to include every actor. */
   actorId?: InputMaybe<Scalars['ID']['input']>;
+  /** Inclusive lower bound on the event timestamp. */
   dateFrom?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Inclusive upper bound on the event timestamp. */
   dateTo?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Keep events rendered as system (a system reason label, or no frozen name/email). ANDs with actorId: with both set, only that actor's import/clone events match. */
+  systemOnly?: Scalars['Boolean']['input'];
 };
 
 export enum AuditEventKind {
@@ -114,10 +133,12 @@ export enum AuditEventKind {
   Update = 'UPDATE'
 }
 
+/** A single pghistory write event, normalized across tracked models. */
 export type AuditEventType = {
   __typename: 'AuditEventType';
   action: Scalars['String']['output'];
   actor: Scalars['String']['output'];
+  context?: Maybe<Scalars['JSON']['output']>;
   fieldChanges?: Maybe<Scalars['JSON']['output']>;
   kind: AuditEventKind;
   snapshot?: Maybe<Scalars['JSON']['output']>;
@@ -2684,6 +2705,9 @@ export type Query = {
   interactionsByRegion: Array<RegionCountType>;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
+  /** Distinct actors in one object's audit log, most active first. The synthetic System entry has a null id and is selected with systemOnly. */
+  objectAuditActors: Array<AuditActorType>;
+  /** One cursor page of one object's write audit log, newest action first. */
   objectAuditLog: AuditActionPage;
   operatorShelter: OperatorShelterType;
   operatorShelters: OperatorShelterTypeOffsetPaginated;
@@ -2877,6 +2901,14 @@ export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryObjectAuditActorsArgs = {
+  limit?: Scalars['Int']['input'];
+  objectId: Scalars['ID']['input'];
+  search?: Scalars['String']['input'];
+  targetType: AuditTargetType;
 };
 
 
