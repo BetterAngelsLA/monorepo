@@ -8,58 +8,16 @@
     "scope:betterangels"
   ],
   "targets": {
-    "start": {
-      "command": "expo start --port 8081",
-      "options": {
-        "cwd": "apps/betterangels"
-      },
-      "dependsOn": [
-        "sync-deps"
-      ]
-    },
-    "serve": {
-      "command": "expo start --web",
-      "options": {
-        "cwd": "apps/betterangels"
-      }
-    },
-    "run-ios": {
-      "command": "expo run:ios",
-      "options": {
-        "cwd": "apps/betterangels"
-      },
-      "dependsOn": [
-        "sync-deps"
-      ]
-    },
-    "run-android": {
-      "command": "expo run:android",
-      "options": {
-        "cwd": "apps/betterangels"
-      },
-      "dependsOn": [
-        "sync-deps"
-      ]
-    },
-    "prebuild": {
-      "command": "expo prebuild --no-install",
-      "options": {
-        "cwd": "apps/betterangels"
-      },
-      "dependsOn": [
-        "sync-deps"
-      ]
-    },
     "export-web": {
-      "executor": "nx:run-commands",
+      "executor": "@nx/expo:export",
       "cache": true,
       "dependsOn": [
         "sync-deps"
       ],
       "options": {
-        "cwd": "apps/betterangels",
-        "command": "EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear",
-        "envFile": "apps/betterangels/.env.local"
+        "platform": "web",
+        "outputDir": "../../dist/apps/betterangels",
+        "clear": true
       },
       "outputs": [
         "{workspaceRoot}/dist/apps/betterangels"
@@ -102,11 +60,7 @@
         {
           "env": "EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY"
         }
-      ],
-      "configurations": {
-        "preview": {},
-        "production": {}
-      }
+      ]
     },
     "deploy": {
       "executor": "nx:run-commands",
@@ -174,6 +128,13 @@
             "command": "tsc --noEmit -p tsconfig.spec.json"
           }
         ]
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels",
+        "command": "eslint ."
       }
     },
     "e2e": {
