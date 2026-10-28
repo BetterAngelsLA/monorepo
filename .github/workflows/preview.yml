@@ -123,6 +123,7 @@ jobs:
           # The update publishes while the web deploy runs. Both read the same
           # EAS environment; export-web and the deploy run inside it.
           (
+            set +e
             node tools/scripts/eas-update.mjs --project betterangels --profile preview \
               > /tmp/eas-update.log 2>&1
             echo $? > /tmp/eas-update.status

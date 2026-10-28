@@ -122,7 +122,7 @@ export function ensureBuilds({
         '--freezeCredentials',
         '--json',
       ],
-      { cwd: projectDir },
+      { cwd: process.cwd() },
     );
     const build = Array.isArray(payload) ? payload[0] : payload;
     if (!build?.id) {

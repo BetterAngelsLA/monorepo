@@ -75,7 +75,7 @@ try {
       'all',
       '--json',
     ],
-    { cwd: projectDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+    { cwd: process.cwd(), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
   );
 } catch (error) {
   if (error.stdout) process.stdout.write(error.stdout);
