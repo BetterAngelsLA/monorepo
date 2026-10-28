@@ -702,6 +702,7 @@ input CreateNoteTaskInput {
   description: String = null
   status: Int = null
   teamId: ID
+  assigneeId: ID
 }
 
 input CreateOrganizationInput {
@@ -827,6 +828,7 @@ input CreateTaskInput {
   hmisNote: ID
   summary: String!
   teamId: ID
+  assigneeId: ID
   status: TaskStatusEnum
 }
 
@@ -2215,6 +2217,11 @@ type Query {
   regionDimensions: [RegionDimensionInfo!]!
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+
+  """
+  Members the caller can assign a task to. Gated on tasks.add rather than organizations.view_org_members so a caseworker can pick an assignee without holding the org-admin roster permission.
+  """
+  taskAssignees(pagination: OffsetPaginationInput, filters: TaskAssigneeFilter, ordering: [TaskAssigneeOrder!]! = []): TaskAssigneeTypeOffsetPaginated! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
   operatorShelter(pk: ID!): OperatorShelterType!
@@ -2967,6 +2974,37 @@ type SwitchType {
   lastModified: DateTime
 }
 
+input TaskAssigneeFilter {
+  AND: TaskAssigneeFilter
+  OR: TaskAssigneeFilter
+  NOT: TaskAssigneeFilter
+  DISTINCT: Boolean
+  search: String
+}
+
+input TaskAssigneeOrder {
+  firstName: Ordering
+  lastName: Ordering
+  id: Ordering
+}
+
+type TaskAssigneeType {
+  id: ID!
+  firstName: String
+  lastName: String
+  middleName: String
+}
+
+type TaskAssigneeTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [TaskAssigneeType!]!
+}
+
 input TaskFilter {
   clientProfile: ID
   hmisClientProfile: ID
@@ -2980,6 +3018,7 @@ input TaskFilter {
   clientProfiles: [ID!]
   hmisClientProfiles: [ID!]
   authors: [ID!]
+  assignees: [ID!]
   organizations: [ID!]
   status: [TaskStatusEnum!]
   teamIds: [ID!]
@@ -3007,6 +3046,7 @@ type TaskType {
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
+  assignee: UserType
   description: String
   note: DjangoModelType
   hmisNote: DjangoModelType
@@ -3355,6 +3395,7 @@ input UpdateTaskInput {
   description: String
   summary: String
   teamId: ID
+  assigneeId: ID
   status: TaskStatusEnum
 }
 

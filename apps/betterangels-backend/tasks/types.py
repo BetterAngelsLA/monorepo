@@ -1,10 +1,12 @@
-from typing import TYPE_CHECKING, Annotated, Optional
+from typing import TYPE_CHECKING, Annotated, Optional, cast
 
 import strawberry
 import strawberry_django
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from strawberry import ID, UNSET, Info, Maybe, auto
+from strawberry_django.auth.utils import get_current_user
 
+from accounts.models import User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.graphql.types import make_in_filter
@@ -27,6 +29,7 @@ class TaskFilter:
     client_profiles = make_in_filter("client_profile", ID)
     hmis_client_profiles = make_in_filter("hmis_client_profile", ID)
     authors = make_in_filter("created_by", ID)
+    assignees = make_in_filter("assignee", ID)
     organizations = make_in_filter("organization", ID)
     status = make_in_filter("status", TaskStatusEnum)
     team_ids = make_in_filter("team", ID)
@@ -107,6 +110,7 @@ class TaskType:
     client_profile: Optional[ClientProfileType]
     created_at: auto
     created_by: UserType
+    assignee: Optional[UserType]
     description: auto
     note: auto
     hmis_note: auto
@@ -129,6 +133,7 @@ class CreateTaskInput:
     hmis_note: Optional[ID]
     summary: str
     team_id: Maybe[ID | None]
+    assignee_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]
 
 
@@ -144,4 +149,65 @@ class UpdateTaskInput:
     description: auto
     summary: auto
     team_id: Maybe[ID | None]
+    assignee_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]
+
+
+@strawberry_django.filter_type(User)
+class TaskAssigneeFilter:
+    @strawberry_django.filter_field
+    def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
+        if value is None:
+            return Q()
+
+        search_terms = value.split()
+        query = Q()
+
+        for term in search_terms:
+            query &= Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(middle_name__icontains=term)
+
+        return query
+
+
+@strawberry_django.order_type(User, one_of=False)
+class TaskAssigneeOrder:
+    first_name: auto
+    last_name: auto
+    id: auto
+
+
+@strawberry_django.type(
+    User,
+    filters=TaskAssigneeFilter,
+    ordering=TaskAssigneeOrder,
+)
+class TaskAssigneeType:
+    """A member of the caller's org who a task can be assigned to.
+
+    Deliberately narrower than ``OrganizationMemberType``: choosing an assignee
+    is part of writing a task, so it is gated on ``tasks.add`` rather than on
+    ``organizations.view_org_members`` — a caseworker can assign a task without
+    being able to administer the roster. Exposes only the name, which is all the
+    assignee picker and the task card render.
+    """
+
+    id: ID
+    first_name: auto
+    last_name: auto
+    middle_name: auto
+
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet[User], info: Info) -> QuerySet[User]:
+        """Restrict to members of the organizations the caller belongs to.
+
+        For the common single-org caller this is exactly the set
+        ``Task.clean()`` accepts. A caller in several orgs sees the union —
+        there is no request-scoped "active org" on this side to narrow it with
+        — so the write path is still the authority: it rejects an assignee who
+        is not in the *task's* org. ``distinct()`` because a user in several of
+        the caller's orgs matches once per shared org.
+        """
+        current_user = cast(User, get_current_user(info))
+        caller_org_ids = current_user.organizations_organization.values("pk")
+
+        return queryset.filter(organizations_organization__in=caller_org_ids).distinct()

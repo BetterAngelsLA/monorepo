@@ -1,3 +1,4 @@
+import { CheckIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
@@ -34,6 +35,10 @@ export function PickerItem(props: TProps) {
               {displayValue || value}
             </TextRegular>
           </View>
+
+          {isSelected && (
+            <CheckIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
+          )}
         </View>
       )}
     </Pressable>

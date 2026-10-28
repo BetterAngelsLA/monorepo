@@ -238,6 +238,7 @@ class CreateNoteTaskInput:
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
     team_id: Maybe[ID | None]
+    assignee_id: Maybe[ID | None]
 
 
 @strawberry.input
