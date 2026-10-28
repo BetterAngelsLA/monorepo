@@ -138,19 +138,6 @@ export function ShelterProfileLinks(props: IProps) {
         >
           Media
         </Sidebar.Link>
-        <Sidebar.Link
-          to={shelterProfileRoute(
-            shelterId,
-            profileRouteConfig.children.activity,
-          )}
-          isActive={isShelterProfileRoute(pathname, {
-            segment: profileRouteConfig.children.activity,
-          })}
-          collapsed={!isOpen}
-          replace
-        >
-          Activity
-        </Sidebar.Link>
         {canViewBaPrivate && (
           <Sidebar.Link
             to={shelterProfileRoute(

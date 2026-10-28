@@ -35,15 +35,13 @@ describe('ShelterProfileLinks', () => {
     expect(screen.queryByText('BA Private')).not.toBeNull();
   });
 
-  it('links the activity segment', () => {
+  it('does not expose the activity segment in the sidebar', () => {
     mocks.useBaPrivatePermissions.mockReturnValue({ canViewAny: false });
 
     renderLinks();
 
-    const link = screen.getByText('Activity').closest('a');
-    expect(link?.getAttribute('href')).toBe(
-      '/operator/shelter/shelter-1/profile/activity',
-    );
+    // The log is reached from the Basic Info "Last updated" footer instead.
+    expect(screen.queryByText('Activity')).toBeNull();
   });
 
   it('omits the BA-private link when the user can view no section', () => {
