@@ -7,7 +7,7 @@ import {
 import { ApolloProvider, useApolloClient } from '@apollo/client/react';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ObjectAuditLog } from './ObjectAuditLog';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 
@@ -42,6 +42,21 @@ function makeAction(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function pageData(
+  results: Array<Record<string, unknown>>,
+  endCursor: string | null,
+  hasNextPage: boolean,
+) {
+  return {
+    objectAuditLog: {
+      __typename: 'AuditActionPage',
+      endCursor,
+      hasNextPage,
+      results,
+    },
+  };
+}
+
 function page(
   variables: Record<string, unknown>,
   results: Array<Record<string, unknown>>,
@@ -50,16 +65,7 @@ function page(
 ) {
   return {
     request: { query: ObjectAuditLogDocument, variables },
-    result: {
-      data: {
-        objectAuditLog: {
-          __typename: 'AuditActionPage',
-          endCursor,
-          hasNextPage,
-          results,
-        },
-      },
-    },
+    result: { data: pageData(results, endCursor, hasNextPage) },
   };
 }
 
@@ -78,29 +84,61 @@ function renderLog(mocks: ReadonlyArray<unknown>) {
   );
 }
 
-/** A client whose first request succeeds and whose later requests fail. */
+/** First request succeeds, the refresh fails, and the retry succeeds. */
 function makeClientThatFailsOnRefresh() {
   let calls = 0;
   const link = new ApolloLink(
     () =>
       new Observable((observer) => {
         calls += 1;
-        if (calls === 1) {
+
+        if (calls === 2) {
+          observer.error(new Error('network down'));
+          return;
+        }
+
+        observer.next({ data: pageData([makeAction()], null, false) });
+        observer.complete();
+      }),
+  );
+
+  return new ApolloClient({ link, cache: new InMemoryCache() });
+}
+
+/** Page one, page two, a failed refresh, then a retry that replays both pages. */
+function makePagedClientThatFailsOnRefresh() {
+  let pageOneCalls = 0;
+  const link = new ApolloLink(
+    (operation) =>
+      new Observable((observer) => {
+        const after = operation.variables.after as string | undefined;
+
+        if (!after) {
+          pageOneCalls += 1;
+
+          if (pageOneCalls === 2) {
+            observer.error(new Error('network down'));
+            return;
+          }
+
+          observer.next({ data: pageData([makeAction()], 'c1', true) });
+          observer.complete();
+          return;
+        }
+
+        if (after === 'c1') {
           observer.next({
-            data: {
-              objectAuditLog: {
-                __typename: 'AuditActionPage',
-                endCursor: null,
-                hasNextPage: false,
-                results: [makeAction()],
-              },
-            },
+            data: pageData(
+              [makeAction({ fieldChanges: { name: ['Bed A', 'PAGE2'] } })],
+              null,
+              false,
+            ),
           });
           observer.complete();
           return;
         }
 
-        observer.error(new Error('network down'));
+        observer.error(new Error(`unexpected cursor ${after}`));
       }),
   );
 
@@ -177,10 +215,8 @@ describe('ObjectAuditLog', () => {
     expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
   });
 
-  it('keeps cached actions when a refresh fails and offers a retry', async () => {
-    const consoleError = vi
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
+  it('keeps cached actions when a refresh fails, then recovers on retry', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     render(
       <ApolloProvider client={makeClientThatFailsOnRefresh()}>
@@ -197,8 +233,43 @@ describe('ObjectAuditLog', () => {
     ).not.toBeNull();
     // The cached action must survive the failed refresh.
     expect(screen.getByText('Ada Lovelace')).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'Retry' })).not.toBeNull();
 
-    consoleError.mockRestore();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await waitFor(() =>
+      expect(screen.queryByText('Couldn\u2019t refresh activity.')).toBeNull(),
+    );
+    expect(screen.getByText('Ada Lovelace')).not.toBeNull();
+  });
+
+  it('replays loaded pages when retrying a failed refresh', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    render(
+      <ApolloProvider client={makePagedClientThatFailsOnRefresh()}>
+        <ObjectAuditLog targetType={AuditTargetType.Bed} objectId="7" />
+        <RefreshTrigger />
+      </ApolloProvider>,
+    );
+
+    await screen.findByText('Bed B');
+    fireEvent.click(screen.getByRole('button', { name: /load more/i }));
+    expect(await screen.findByText('PAGE2')).not.toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'refresh' }));
+    expect(
+      await screen.findByText('Couldn\u2019t refresh activity.'),
+    ).not.toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await waitFor(() =>
+      expect(screen.queryByText('Couldn\u2019t refresh activity.')).toBeNull(),
+    );
+    // Both pages are reloaded: page one, then the appended page replayed from
+    // its cursor.
+    expect(await screen.findByText('PAGE2')).not.toBeNull();
+    expect(screen.getByText('Bed B')).not.toBeNull();
+    expect(screen.getAllByText('Name:')).toHaveLength(2);
   });
 });

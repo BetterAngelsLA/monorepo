@@ -9,6 +9,8 @@
  * real change.
  */
 
+import { sanitizeHtml } from '@monorepo/react/shared';
+
 export type AuditScalarChange = {
   kind: 'scalar';
   field: string;
@@ -32,55 +34,55 @@ const ACTION_VERBS = new Set(['add', 'remove', 'update', 'status_change']);
 /** Longest rendered value; longer ones are truncated (see `truncateValue`). */
 export const MAX_VALUE_LENGTH = 140;
 
-const HTML_TAG = /<[a-z][^>]*>/i;
-const HTML_BLOCK_BOUNDARY =
-  /<\/(?:p|div|li|h[1-6]|tr|td|th|blockquote)>|<br\s*\/?>/gi;
-const HTML_TAG_ANY = /<[^>]+>/g;
-const HTML_ENTITY = /&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi;
+const TEXT_BLOCK_TAGS = [
+  'p',
+  'div',
+  'br',
+  'li',
+  'ul',
+  'ol',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'tr',
+  'td',
+  'th',
+];
 
-const NAMED_ENTITIES: Record<string, string> = {
-  amp: '&',
-  apos: "'",
-  gt: '>',
-  lt: '<',
-  nbsp: ' ',
-  quot: '"',
-};
-
-function codePointToString(code: number): string | null {
-  return Number.isFinite(code) && code >= 0 && code <= 0x10ffff
-    ? String.fromCodePoint(code)
-    : null;
-}
-
-function decodeHtmlEntities(value: string): string {
-  return value.replace(HTML_ENTITY, (match, decimal, hex, named) => {
-    if (decimal) {
-      return codePointToString(Number(decimal)) ?? match;
-    }
-    if (hex) {
-      return codePointToString(parseInt(hex, 16)) ?? match;
-    }
-
-    return NAMED_ENTITIES[String(named).toLowerCase()] ?? match;
-  });
-}
+/** Blocks that should separate adjacent text when the markup is flattened. */
+const TEXT_BLOCK_ELEMENTS = TEXT_BLOCK_TAGS.join(',');
 
 /**
- * Rich-text fields (a shelter description or notes) are stored as HTML. The
- * log renders text, so block boundaries become spaces and tags are dropped.
- * A string without a tag is returned untouched, so `a < b` is not markup.
+ * Rich-text fields (a shelter description or notes) are stored as HTML. The log
+ * renders plain text, so the shared sanitizer keeps only block-level text
+ * containers (scripts and unknown markup are discarded) and the browser's HTML
+ * parser then flattens that safe subtree: entities are decoded and block
+ * boundaries become spaces so paragraphs do not run together.
+ *
+ * React escapes the result, so no HTML is injected. The no-DOM fallback uses
+ * the sanitizer's tag-free text form, which is likewise rendered as text.
  */
 export function stripHtmlToText(value: string): string {
-  if (!HTML_TAG.test(value)) {
-    return value;
+  const safeHtml = sanitizeHtml(value, {
+    allowedTags: TEXT_BLOCK_TAGS,
+    allowedAttributes: {},
+  });
+
+  if (typeof DOMParser === 'undefined') {
+    return sanitizeHtml(safeHtml);
   }
 
-  return value
-    .replace(HTML_BLOCK_BOUNDARY, ' ')
-    .replace(HTML_TAG_ANY, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const doc = new DOMParser().parseFromString(safeHtml, 'text/html');
+
+  doc.body.querySelectorAll(TEXT_BLOCK_ELEMENTS).forEach((element) => {
+    element.append(' ');
+  });
+
+  return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
 
 /** Shorten a rendered value for inline display; the full value stays in `title`. */
@@ -128,9 +130,7 @@ export function formatValue(value: unknown): string {
     return String(value);
   }
   if (typeof value === 'string') {
-    const text = decodeHtmlEntities(stripHtmlToText(value))
-      .replace(/\s+/g, ' ')
-      .trim();
+    const text = stripHtmlToText(value);
 
     return text || '\u2014';
   }

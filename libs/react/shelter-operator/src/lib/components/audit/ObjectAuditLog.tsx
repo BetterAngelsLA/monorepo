@@ -78,6 +78,7 @@ export function ObjectAuditLog({
             <Button
               variant="primary-sm"
               color="blue"
+              disabled={loadingMore}
               onClick={() => {
                 void retry();
               }}

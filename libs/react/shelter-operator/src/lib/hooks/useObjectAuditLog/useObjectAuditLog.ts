@@ -1,5 +1,4 @@
-import { useCallback, useMemo } from 'react';
-import { toError } from '@monorepo/react/shared';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@apollo/client/react';
 import {
   ObjectAuditLogDocument,
@@ -27,6 +26,11 @@ type UseObjectAuditLogArgs = {
  * last page. ``loadMore`` follows ``endCursor`` and appends the next page, so an
  * event written between requests cannot repeat or skip an action the way an
  * offset would.
+ *
+ * ``retry`` re-runs the first page and then replays the cursors the user had
+ * already loaded: Apollo's ``refetch`` replaces the cached result with page one
+ * only, so replaying preserves the activity that was on screen before the
+ * failure.
  */
 export function useObjectAuditLog({
   targetType,
@@ -56,14 +60,20 @@ export function useObjectAuditLog({
   const hasMore = data?.objectAuditLog.hasNextPage ?? false;
   const endCursor = data?.objectAuditLog.endCursor ?? null;
 
-  const loadMore = useCallback(async () => {
-    if (!endCursor) {
-      return;
-    }
+  // Cursors used by `loadMore`, in page order. Kept in a ref because they are
+  // only read by `retry`; a new object starts with an empty chain.
+  const pageCursorsRef = useRef<string[]>([]);
+  const retryingRef = useRef(false);
 
-    try {
+  useEffect(() => {
+    pageCursorsRef.current = [];
+  }, [variables]);
+
+  /** Fetch the page after *after* and append it to the cached result. */
+  const appendPage = useCallback(
+    async (after: string) => {
       await fetchMore({
-        variables: { ...variables, after: endCursor },
+        variables: { ...variables, after },
         updateQuery: (previous, { fetchMoreResult }) => {
           if (!fetchMoreResult) {
             return previous;
@@ -81,24 +91,55 @@ export function useObjectAuditLog({
           };
         },
       });
-    } catch (error) {
+    },
+    [fetchMore, variables],
+  );
+
+  const loadMore = useCallback(async () => {
+    if (!endCursor) {
+      return;
+    }
+
+    const cursor = endCursor;
+
+    try {
+      await appendPage(cursor);
+      pageCursorsRef.current = [...pageCursorsRef.current, cursor];
+    } catch {
       // Apollo does not set the query-level ``error`` for a failed ``fetchMore``.
       // NOTE: the activity-log hardening follow-up adds a visible load-more
       // error state; until then a failed page load is logged only.
-      console.error('Failed to load more audit activity', toError(error));
+      // Log a stable event name, never the Apollo error (it carries the response
+      // payload and operation variables).
+      console.error('audit_log_load_more_failed');
     }
-  }, [endCursor, fetchMore, variables]);
+  }, [appendPage, endCursor]);
 
-  /** Re-run the first page (after a failed load), surfacing failures via `error`. */
+  /**
+   * Re-run the first page (after a failed load), then re-append the pages that
+   * were already loaded. Failures surface through the query's `error`.
+   */
   const retry = useCallback(async () => {
+    if (retryingRef.current) {
+      return;
+    }
+
+    retryingRef.current = true;
+
     try {
       await refetch();
-    } catch (error) {
+
+      for (const cursor of pageCursorsRef.current) {
+        await appendPage(cursor);
+      }
+    } catch {
       // `refetch` rejects as well as setting `error`; swallow the rejection so an
       // unhandled promise cannot escape from the retry button.
-      console.error('Failed to reload audit activity', toError(error));
+      console.error('audit_log_reload_failed');
+    } finally {
+      retryingRef.current = false;
     }
-  }, [refetch]);
+  }, [appendPage, refetch]);
 
   return {
     actions,

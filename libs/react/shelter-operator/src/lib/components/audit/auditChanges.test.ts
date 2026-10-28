@@ -61,6 +61,8 @@ describe('formatValue', () => {
     expect(formatValue('<p>Fish &amp; Chips</p>')).toBe('Fish & Chips');
     expect(formatValue('&lt;tag&gt;')).toBe('<tag>');
     expect(formatValue('<p></p>')).toBe('\u2014');
+    expect(formatValue('<p>Hi</p><script>alert(1)</script>')).toBe('Hi');
+    expect(formatValue('a<br>b')).toBe('a b');
   });
 
   it('leaves plain text with an angle bracket untouched', () => {
