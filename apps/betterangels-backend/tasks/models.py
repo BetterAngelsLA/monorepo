@@ -94,10 +94,18 @@ class Task(BaseModel):
         organization = self.organization
 
         if organization is None:
-            raise ValidationError({"assignee": "An assignee cannot be set on a task with no organization."})
+            # Deleting an organization nulls `organization_id` (SET_NULL) but
+            # leaves `assignee_id` behind. Rejecting that combination outright
+            # would freeze the row: every later save — an unrelated status
+            # edit included — would fail validation. Only new tasks are held to
+            # the rule; orphans stay editable.
+            if self._state.adding:
+                raise ValidationError({"assignee": "An assignee cannot be set on a task with no organization."})
+
+            return
 
         if not can_match(field=User._meta.pk, value=self.assignee_id):
-            return
+            raise ValidationError({"assignee": f"The selected assignee is not valid: {self.assignee_id}."})
 
         if not organization.users.filter(pk=self.assignee_id).exists():
             raise ValidationError({"assignee": "The selected assignee is not a member of this organization."})

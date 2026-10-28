@@ -89,11 +89,25 @@ class TaskAssigneeOrgValidationTestCase(TestCase):
 
         task.clean()
 
-    def test_clean_rejects_an_assignee_on_an_org_less_task(self) -> None:
-        task = baker.make(Task, organization=None, assignee=None)
-        task.assignee = self.member
+    def test_clean_rejects_an_assignee_on_a_new_org_less_task(self) -> None:
+        task = Task(organization=None, assignee=self.member)
 
         with self.assertRaises(ValidationError) as ctx:
             task.clean()
 
         self.assertIn("assignee", ctx.exception.message_dict)
+
+    def test_clean_allows_an_org_less_assigned_task_that_already_exists(self) -> None:
+        # The shape an organization deletion leaves behind. It has to stay
+        # editable, or the row can never be saved again.
+        task = baker.make(Task, organization=None, assignee=self.member)
+
+        task.clean()
+
+    def test_clean_rejects_an_assignee_that_cannot_match_a_user(self) -> None:
+        task = Task(organization=self.org, assignee_id="not-a-user-pk")
+
+        with self.assertRaises(ValidationError) as ctx:
+            task.clean()
+
+        self.assertIn("not-a-user-pk", ctx.exception.message_dict["assignee"][0])
