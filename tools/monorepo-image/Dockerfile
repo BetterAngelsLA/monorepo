@@ -1,9 +1,40 @@
 # syntax=docker/dockerfile:1
-FROM python:3.14.8-trixie AS base
+
+# Runtime base: the Python app plus the system libraries GeoDjango needs
+# (libpq for psycopg, gdal-bin for GDAL/GEOS/PROJ). Deliberately free of Docker,
+# AWS CLI, Node, EAS, psql and the Playwright libraries: the production stage
+# builds from here, and none of that is on the request path.
+FROM python:3.14.8-trixie AS runtime-base
 
 ENV PYTHONUNBUFFERED=1
+RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
+    apt-get update \
+    && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      libpq5 \
+      gdal-bin \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --gid 1000 betterangels \
   && useradd --uid 1000 --gid betterangels --shell /bin/bash --create-home betterangels
+
+# Python - uv (pinned version)
+COPY --from=ghcr.io/astral-sh/uv:0.11.23 /uv /uvx /usr/local/bin/
+ENV UV_LINK_MODE=copy
+
+ENV PATH=/workspace/.venv/bin:$PATH:/home/betterangels/.local/bin
+RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betterangels \
+    && chown -R betterangels:betterangels /workspace /home/betterangels
+WORKDIR /workspace
+USER betterangels
+
+# Development/CI base: the runtime plus the toolchain the dev container, CI and
+# the Playwright stages use (Docker CLI, psql, AWS CLI, Node/EAS, Chromium libs).
+# Back to root for the package installs; the stage ends as `betterangels`, which
+# is how every stage below expects to run.
+FROM runtime-base AS base
+USER root
 
 # Docker
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
@@ -109,22 +140,17 @@ RUN npm install -g eas-cli@24.8.0
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
-# Python - uv (pinned version)
-COPY --from=ghcr.io/astral-sh/uv:0.11.23 /uv /uvx /usr/local/bin/
-ENV UV_LINK_MODE=copy
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
-    # Install Systems Packages
+    # Install Systems Packages (runtime libs come from runtime-base)
     && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
       git \
       jq \
       wget \
-      zip \
-      libpq5 \
-      gdal-bin
+      zip
 
 # Playwright (Chromium) runtime dependencies — lets devs run the Playwright e2e
 # suites locally against the browser the `playwright`/`development` stages carry,
@@ -171,10 +197,6 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       libxkbcommon0 \
       libxrandr2
 
-ENV PATH=/workspace/.venv/bin:$PATH:/home/betterangels/.local/bin
-RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betterangels \
-    && chown -R betterangels:betterangels /workspace /home/betterangels
-WORKDIR /workspace
 USER betterangels
 
 # Dependency-free base for CI. The checkout and node_modules/.venv are
@@ -189,6 +211,18 @@ COPY --chown=betterangels --parents \
   /workspace/
 RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
     uv sync --no-install-project
+
+# Runtime venv: no dev group (pytest and friends are not on the request path).
+# Built on `base` so a source-build dependency still has the toolchain; only the
+# venv is copied into the runtime image, which stays on runtime-base.
+FROM base AS uv-runtime
+COPY --chown=betterangels --parents \
+  pyproject.toml \
+  uv.lock \
+  apps/betterangels-backend/pyproject.toml \
+  /workspace/
+RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
+    uv sync --no-install-project --no-dev
 
 FROM base AS yarn
 COPY --chown=betterangels --parents \
@@ -215,8 +249,9 @@ RUN yarn playwright install chromium
 # `FROM playwright` on purpose: the browser is a developer tool, so the image
 # that runs the e2e suites owns it, together with the node_modules it needs; the
 # Python venv comes from `uv-stage`. The last stage — the one ECS and CI build
-# by default — is `production`, which stops at `yarn`: the backend task never
-# launches a browser, and CI installs Chromium in the e2e step instead.
+# by default — is `production`, which carries only the Python venv and the repo:
+# the backend task never launches a browser or Node, so it does not copy the
+# yarn stage (the CI e2e step installs Chromium itself).
 FROM playwright AS development
 COPY --from=uv-stage --link /workspace /workspace
 USER root
@@ -236,7 +271,18 @@ USER betterangels
 RUN git config --global --add safe.directory "*"
 
 # Production Build
-FROM base AS production
-COPY --from=uv-stage --link /workspace /workspace
-COPY --from=yarn --link /workspace /workspace
+#
+# The backend runtime is Python only (gunicorn, celery, manage.py) — it never
+# launches Node or a browser, so the yarn stage (node_modules, ~2.3 GB in this
+# monorepo) is deliberately not copied here. The image also builds on
+# runtime-base, not the dev base: no Docker CLI, AWS CLI, Node, EAS, psql or
+# Chromium libraries. Both cuts are pure pull time off every Fargate task, and
+# skipping the yarn stage shortens the CI image build.
+FROM runtime-base AS production
+COPY --from=uv-runtime --link /workspace /workspace
 COPY --chown=betterangels . /workspace
+
+# The venv is built on `base` but runs here: fail the build, not the deploy, if
+# a compiled extension or a GIS shared library is missing from runtime-base.
+# (The preview deploy exercises the same imports end to end.)
+RUN python -c "import ctypes.util, django, psycopg; missing = [n for n in ('gdal', 'geos_c', 'proj') if not ctypes.util.find_library(n)]; assert not missing, missing; print('runtime libs ok')"
