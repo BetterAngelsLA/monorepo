@@ -8,6 +8,10 @@ class HealthzTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"ok")
         self.assertEqual(response["Content-Type"], "text/plain")
+        self.assertEqual(response["Cache-Control"], "no-store")
+
+    def test_accepts_trailing_slash(self) -> None:
+        self.assertEqual(self.client.get("/healthz/").status_code, 200)
 
     def test_accepts_head(self) -> None:
         response = self.client.head("/healthz")

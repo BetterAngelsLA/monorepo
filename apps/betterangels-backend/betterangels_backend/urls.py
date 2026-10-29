@@ -33,6 +33,7 @@ from .views import healthz
 urlpatterns = [
     path("", RedirectView.as_view(url="/admin/", permanent=False), name="home"),
     path("healthz", healthz, name="healthz"),
+    path("healthz/", healthz),
     path("", include("accounts.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls"), name="accounts"),
