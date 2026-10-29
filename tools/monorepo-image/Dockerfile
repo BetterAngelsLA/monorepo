@@ -4,7 +4,7 @@
 # (libpq for psycopg, gdal-bin for GDAL/GEOS/PROJ). Deliberately free of Docker,
 # AWS CLI, Node, EAS, psql and the Playwright libraries: the production stage
 # builds from here, and none of that is on the request path.
-FROM python:3.14.8-trixie AS runtime-base
+FROM python:3.14.8-trixie AS slim-base
 
 ENV PYTHONUNBUFFERED=1
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
@@ -19,15 +19,19 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
 RUN groupadd --gid 1000 betterangels \
   && useradd --uid 1000 --gid betterangels --shell /bin/bash --create-home betterangels
 
-# Python - uv (pinned version)
-COPY --from=ghcr.io/astral-sh/uv:0.11.23 /uv /uvx /usr/local/bin/
-ENV UV_LINK_MODE=copy
-
 ENV PATH=/workspace/.venv/bin:$PATH:/home/betterangels/.local/bin
 RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betterangels \
     && chown -R betterangels:betterangels /workspace /home/betterangels
 WORKDIR /workspace
 USER betterangels
+
+# Build-time base: the runtime plus uv, which the venv stages need. `production`
+# deliberately builds on `slim-base`, not here, so the uv binaries (51 MB) do not
+# ship in the image that runs.
+FROM slim-base AS runtime-base
+
+COPY --from=ghcr.io/astral-sh/uv:0.11.23 /uv /uvx /usr/local/bin/
+ENV UV_LINK_MODE=copy
 
 # Development/CI base: the runtime plus the toolchain the dev container, CI and
 # the Playwright stages use (Docker CLI, psql, AWS CLI, Node/EAS, Chromium libs).
@@ -278,9 +282,11 @@ RUN git config --global --add safe.directory "*"
 # runtime-base, not the dev base: no Docker CLI, AWS CLI, Node, EAS, psql or
 # Chromium libraries. Both cuts are pure pull time off every Fargate task, and
 # skipping the yarn stage shortens the CI image build.
-FROM runtime-base AS production
+FROM slim-base AS production
 COPY --from=uv-runtime --link /workspace /workspace
-COPY --chown=betterangels . /workspace
+# Only the app is copied: the mobile/web trees and the repo root are not on the
+# runtime path, and every megabyte here is pulled by every Fargate task.
+COPY --chown=betterangels apps/betterangels-backend /workspace/apps/betterangels-backend
 
 # The venv is built on `base` but runs here: fail the build, not the deploy, if
 # a compiled extension or a GIS shared library is missing from runtime-base.
